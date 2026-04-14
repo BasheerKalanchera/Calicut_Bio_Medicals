@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calicut Bio Medicals - Unified Data Architecture</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .architecture-container {
+            max-width: 1000px;
+            width: 100%;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .tier {
+            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 6px solid #ccc;
+            position: relative;
+        }
+
+        .tier-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Tier Specific Colors */
+        .tier-1 {
+            background-color: #fdfefe;
+            border-color: #95a5a6;
+        }
+
+        .tier-1 .tier-title {
+            color: #7f8c8d;
+        }
+
+        .tier-2 {
+            background-color: #ebf5fb;
+            border-color: #3498db;
+        }
+
+        .tier-2 .tier-title {
+            color: #2980b9;
+        }
+
+        .tier-3 {
+            background-color: #f5eef8;
+            border-color: #9b59b6;
+        }
+
+        .tier-3 .tier-title {
+            color: #8e44ad;
+        }
+
+        .tier-4 {
+            background-color: #eafaf1;
+            border-color: #2ecc71;
+        }
+
+        .tier-4 .tier-title {
+            color: #27ae60;
+        }
+
+        .component-row {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            /* Increased gap for sub-blocks */
+            flex-wrap: wrap;
+        }
+
+        .sub-block {
+            border: 1px dashed #bdc3c7;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fbfbfb;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .sub-block-title {
+            font-size: 0.85em;
+            color: #7f8c8d;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .component-box {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            flex: 1;
+            min-width: 180px;
+            max-width: 250px;
+        }
+
+        .sub-block .component-box {
+            width: 90%;
+            max-width: none;
+            flex: none;
+        }
+
+        .component-box.new {
+            border: 2px dashed #3498db;
+            background-color: #f0faff;
+        }
+
+        .box-title {
+            font-weight: bold;
+            font-size: 1.05em;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .box-desc {
+            font-size: 0.85em;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .flow-connections {
+            text-align: center;
+            margin: 0 0 10px 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            /* Match component-row gap */
+            width: 100%;
+        }
+
+        .flow-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            min-width: 300px;
+            /* Align with sub-block */
+        }
+
+        .arrow-symbol {
+            font-size: 24px;
+            color: #bdc3c7;
+            line-height: 1;
+        }
+
+        .flow-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .highlight {
+            color: #d35400;
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #eee;
+            border-radius: 4px;
+            font-size: 0.7em;
+            margin-top: 5px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="architecture-container">
+        <h2>Unified Data & AI Architecture - REALTIME SYNC</h2>
+
+        <!-- TIER 1 -->
+        <div class="tier tier-1">
+            <div class="tier-title">Tier 1: Source Systems</div>
+            <div class="component-row">
+
+                <!-- SUB-BLOCK A: Legacy Bi-Directional -->
+                <div class="sub-block">
+                    <div class="sub-block-title">Legacy Systems (Read/Write)</div>
+                    <div class="component-box">
+                        <div class="box-title">Legacy CRM</div>
+                        <div class="box-desc">Sales Pipeline & Leads.<br><span class="highlight">Write-Back
+                                Target</span></div>
+                    </div>
+                    <div class="component-box">
+                        <div class="box-title">Services App</div>
+                        <div class="box-desc">Warranty & Repair Logs.<br><span class="highlight">Write-Back
+                                Target</span></div>
+                    </div>
+                </div>
+
+                <!-- SUB-BLOCK B: Inventory/Offline One-Way -->
+                <div class="sub-block">
+                    <div class="sub-block-title">Inventory & Offline (Read-Only)</div>
+                    <div class="component-box new">
+                        <div class="box-title">Tally Prime</div>
+                        <div class="box-desc">Inventory & Stock Status.<br><em>On-Premise Sync</em></div>
+                    </div>
+                    <div class="component-box new">
+                        <div class="box-title">Offline Data</div>
+                        <div class="box-desc">CSV/Excel Uploads<br><em>(Digitization Sprint)</em></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- CONNECTOR: Grouped Arrows -->
+        <div class="flow-connections">
+            <div class="flow-arrow">
+                <div class="arrow-symbol">&#8645;</div>
+                <div class="flow-label">Two-Way Sync<br>(Real-Time)</div>
+            </div>
+            <div class="flow-arrow">
+                <div class="arrow-symbol">&#8595;</div>
+                <div class="flow-label">One-Way Sync<br>(Read Only)</div>
+            </div>
+        </div>
+
+        <!-- TIER 2 -->
+        <div class="tier tier-2">
+            <div class="tier-title">Tier 2: Unified Data Hub (The "State")</div>
+            <div class="component-row" style="gap: 20px;">
+                <div class="component-box" style="flex: 1;">
+                    <div class="box-title">Central Data Warehouse</div>
+                    <div class="box-desc">Single source of truth merging CRM, Service, and Tally data.</div>
+                </div>
+                <!-- NEW: Sync Manager -->
+                <div class="component-box new" style="flex: 1;">
+                    <div class="box-title">Sync Manager (Queue)</div>
+                    <div class="box-desc">Handles <strong>Write-Back</strong> to Legacy Apps.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-connections" style="justify-content: center;">
+            <div class="flow-arrow" style="min-width: auto;">
+                <div class="arrow-symbol">&#8645;</div>
+                <div class="flow-label">Real-time Read/Write</div>
+            </div>
+        </div>
+
+        <!-- TIER 3 -->
+        <div class="tier tier-3">
+            <div class="tier-title">Tier 3: AI & Logic Engines (The Brain)</div>
+            <div class="component-row">
+                <div class="component-box">
+                    <div class="box-title">AI Orchestrator</div>
+                    <div class="box-desc">Whisper + Gemini (Voice-to-JSON).</div>
+                </div>
+                <div class="component-box">
+                    <div class="box-title">Routing Engine</div>
+                    <div class="box-desc">Google Maps Optimization.</div>
+                </div>
+                <div class="component-box">
+                    <div class="box-title">Whitespace Logic</div>
+                    <div class="box-desc">Finds untapped doctors.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-connections">
+            <div class="flow-arrow">
+                <div class="arrow-symbol">&#8645;</div>
+                <div class="flow-label">Chat & Actions</div>
+            </div>
+        </div>
+
+        <!-- TIER 4 -->
+        <div class="tier tier-4">
+            <div class="tier-title">Tier 4: Engagement Layer (The Interface)</div>
+            <div class="component-row">
+                <div class="component-box">
+                    <div class="box-title">WhatsApp Bot</div>
+                    <div class="box-desc">
+                        <ul>
+                            <li style="text-align: left;">Log Visits (Voice)</li>
+                            <li style="text-align: left;">Check Stock <span class="tag">Real-time</span></li>
+                            <li style="text-align: left;"><span class="highlight">Update CRM</span> (Via Sync Manager)
+                            </li>
+                        </ul>
+                        <div style="font-size: 0.75em; margin-top: 5px; color: #999;">*All writes go to Warehouse first.
+                        </div>
+                    </div>
+                </div>
+                <div class="component-box">
+                    <div class="box-title">Management BI</div>
+                    <div class="box-desc">Metabase Dashboards.<br><em>Sales + Service + Inventory</em></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

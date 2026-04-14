@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logical Systems Architecture - Calicut Bio Medicals</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .arch-container {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .layer {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            background-color: #fafbfc;
+        }
+
+        .layer-title {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #ffffff;
+            padding: 0 10px;
+            font-weight: bold;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+        }
+
+        .node-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .node {
+            background: #ffffff;
+            border: 2px solid;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            min-width: 180px;
+            flex: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .node-title {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .node-desc {
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        /* Layer Specific Styling */
+        .layer-client {
+            border-color: #2ecc71;
+            background-color: #f4fdf8;
+        }
+
+        .layer-client .layer-title {
+            color: #27ae60;
+            border-color: #2ecc71;
+        }
+
+        .layer-client .node {
+            border-color: #2ecc71;
+        }
+
+        .layer-middleware {
+            border-color: #9b59b6;
+            background-color: #fbf6fd;
+        }
+
+        .layer-middleware .layer-title {
+            color: #8e44ad;
+            border-color: #9b59b6;
+        }
+
+        .layer-middleware .node {
+            border-color: #9b59b6;
+        }
+
+        .layer-data {
+            border-color: #3498db;
+            background-color: #f4f9fd;
+        }
+
+        .layer-data .layer-title {
+            color: #2980b9;
+            border-color: #3498db;
+        }
+
+        .layer-data .node {
+            border-color: #3498db;
+        }
+
+        .layer-source {
+            border-color: #e67e22;
+            background-color: #fdf8f4;
+        }
+
+        .layer-source .layer-title {
+            color: #d35400;
+            border-color: #e67e22;
+        }
+
+        .layer-source .node {
+            border-color: #e67e22;
+        }
+
+        /* Connectors */
+        .flow {
+            text-align: center;
+            margin: -5px 0 15px 0;
+            color: #7f8c8d;
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .flow-line {
+            width: 2px;
+            height: 20px;
+            background-color: #bdc3c7;
+            margin: 5px 0;
+        }
+
+        .protocol {
+            background: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-family: monospace;
+            border: 1px solid #bdc3c7;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="arch-container">
+        <h2>Logical Systems Architecture</h2>
+
+        <div class="layer layer-client">
+            <div class="layer-title">Client / Presentation Layer</div>
+            <div class="node-container">
+                <div class="node">
+                    <div class="node-title">📱 WhatsApp Business API</div>
+                    <div class="node-desc">Sales Rep UI (Voice & Text)</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">📊 Metabase / BI Tool</div>
+                    <div class="node-desc">Management Dashboard (Read-Only)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow">
+            <div class="flow-line"></div>
+            <div><span class="protocol">HTTPS / Webhooks</span> &nbsp; | &nbsp; <span class="protocol">JDBC (Port
+                    5432)</span></div>
+            <div class="flow-line"></div>
+        </div>
+
+        <div class="layer layer-middleware">
+            <div class="layer-title">Middleware & AI Orchestration (e.g., n8n)</div>
+            <div class="node-container">
+                <div class="node">
+                    <div class="node-title">🎧 Webhook Listener</div>
+                    <div class="node-desc">Receives WhatsApp Payload</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">🧠 LLM Node</div>
+                    <div class="node-desc">Entity Extraction & Formatting</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">⚙️ Business Logic Sync</div>
+                    <div class="node-desc">Deduplication & Data Routing</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">🗺️ Geospatial API</div>
+                    <div class="node-desc">Google Maps Route Clustering</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow">
+            <div class="flow-line"></div>
+            <div><span class="protocol">SQL / ORM</span> &nbsp; | &nbsp; <span class="protocol">REST API (JSON)</span>
+            </div>
+            <div class="flow-line"></div>
+        </div>
+
+        <div class="layer layer-data">
+            <div class="layer-title">Unified Data Hub (Self-Hosted / Cloud DB)</div>
+            <div class="node-container">
+                <div class="node">
+                    <div class="node-title">🗄️ PostgreSQL Data Warehouse</div>
+                    <div class="node-desc">Single Source of Truth (SSOT)</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">🔄 ETL / CRON Jobs</div>
+                    <div class="node-desc">Batch Processing & Sync</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">🔍 Whitespace Script</div>
+                    <div class="node-desc">Python Lead Generation Logic</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow">
+            <div class="flow-line"></div>
+            <div><span class="protocol">REST API (GET/POST)</span> &nbsp; | &nbsp; <span class="protocol">Batch Upload
+                    (CSV)</span></div>
+            <div class="flow-line"></div>
+        </div>
+
+        <div class="layer layer-source">
+            <div class="layer-title">Vendor Systems & External Data (Legacy / Siloed)</div>
+            <div class="node-container">
+                <div class="node">
+                    <div class="node-title">🏢 Delhi Vendor CRM API</div>
+                    <div class="node-desc">Sales & Deals Database</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">🔧 Service App API</div>
+                    <div class="node-desc">Warranty & Maintenance DB</div>
+                </div>
+                <div class="node">
+                    <div class="node-title">📄 Kannur DMO Data</div>
+                    <div class="node-desc">External Flat Files (Excel)</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

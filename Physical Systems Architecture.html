@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physical Systems Architecture - Calicut Bio Medicals</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #e67e22;
+            --danger-color: #c0392b;
+            --server-bg: #ecf0f1;
+            --connector-color: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .diagram-container {
+            width: 100%;
+            max-width: 1600px;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 60px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            font-size: 1.8rem;
+        }
+
+        /* MASTER LAYOUT */
+        .topology-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 60px;
+            position: relative;
+            align-items: center;
+        }
+
+        /* SHARED COMPONENT STYLES */
+        .box {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s ease;
+        }
+
+        .box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-color: var(--accent-color);
+        }
+
+        .label-main {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 5px;
+        }
+
+        .label-sub {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .logical-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            color: #555;
+        }
+
+        /* Logical Color Coding */
+        .tag.client {
+            border-left: 3px solid var(--success-color);
+        }
+
+        .tag.mid {
+            border-left: 3px solid #9b59b6;
+        }
+
+        .tag.data {
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .tag.source {
+            border-left: 3px solid var(--warning-color);
+        }
+
+
+        /* === ZONE 1: USERS (Left) === */
+        .zone-users {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .user-device {
+            border-left: 4px solid var(--success-color);
+        }
+
+        /* === ZONE 2: INFRASTRUCTURE (Center) === */
+        .zone-infra {
+            background: #f8fcfd;
+            border: 2px dashed #bdc3c7;
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .infra-title {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 15px;
+            font-weight: bold;
+            color: #7f8c8d;
+            border: 1px solid #bdc3c7;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .docker-host {
+            background: #2c3e50;
+            border-radius: 8px;
+            padding: 20px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(44, 62, 80, 0.2);
+        }
+
+        .docker-label {
+            text-align: center;
+            font-family: monospace;
+            color: #ecf0f1;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .container-rack {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .container-box {
+            background: white;
+            color: #333;
+            border-radius: 6px;
+            padding: 12px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #2c3e50;
+        }
+
+        /* DB Cylinder Shape */
+        .db-shape {
+            position: relative;
+        }
+
+        .db-icon {
+            font-size: 1.2rem;
+        }
+
+
+        /* === ZONE 3: CLOUD (Right) === */
+        .zone-cloud {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .cloud-box {
+            border-top: 4px solid var(--accent-color);
+            background: #fbfdff;
+        }
+
+
+        /* === CONNECTORS (Visual Lines) === */
+        .connector-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .line-h-left {
+            position: absolute;
+            top: 50%;
+            left: 280px;
+            /* End of Zone 1 */
+            right: calc(100% - 370px);
+            /* Start of Zone 2 */
+            height: 2px;
+            border-top: 2px dashed #bdc3c7;
+        }
+
+        .line-h-right {
+            position: absolute;
+            top: 50%;
+            right: 300px;
+            /* End of Zone 3 */
+            left: calc(100% - 350px);
+            /* End of Zone 2 */
+            height: 2px;
+            border-top: 2px dashed #bdc3c7;
+        }
+
+        /* Firewall Icon styling */
+        .firewall-badge {
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #c0392b;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 1.2rem;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 50px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="diagram-container">
+        <h2>Physical Infrastructure Topology</h2>
+
+        <div class="topology-grid">
+
+            <!-- LEFT: USERS -->
+            <div class="zone-users">
+                <div class="box user-device">
+                    <span class="label-main">📱 Sales Smartphone</span>
+                    <span class="label-sub">Android / iOS App</span>
+                    <div class="logical-tags">
+                        <span class="tag client">WhatsApp Business API UI</span>
+                    </div>
+                </div>
+
+                <div class="box user-device">
+                    <span class="label-main">💻 Management Laptop</span>
+                    <span class="label-sub">Web Browser (Chrome)</span>
+                    <div class="logical-tags">
+                        <span class="tag client">Metabase Dashboard View</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CENTER: INFRASTRUCTURE -->
+            <div class="zone-infra">
+                <div class="infra-title">🔒 Virtual Private Server (VPS) / Cloud Instance</div>
+                <div class="firewall-badge" title="Firewall / Port Security">🛡️</div>
+
+                <div class="docker-host">
+                    <div class="docker-label">🐳 Docker Host (Linux/Ubuntu) - Internal Network</div>
+
+                    <div class="container-rack">
+
+                        <!-- n8n -->
+                        <div class="container-box">
+                            <div class="container-header">⚙️ n8n Container</div>
+                            <div class="logical-tags">
+                                <span class="tag mid">Webhook Listener</span>
+                                <span class="tag mid">LLM Node Logic</span>
+                                <span class="tag mid">Business Logic</span>
+                            </div>
+                        </div>
+
+                        <!-- Python -->
+                        <div class="container-box">
+                            <div class="container-header">🐍 Python Worker</div>
+                            <div class="logical-tags">
+                                <span class="tag data">Whitespace Script</span>
+                                <span class="tag data">ETL Sync Jobs</span>
+                            </div>
+                        </div>
+
+                        <!-- Postgres -->
+                        <div class="container-box db-shape">
+                            <div class="container-header">🗄️ PostgreSQL DB</div>
+                            <div class="logical-tags">
+                                <span class="tag data">Data Warehouse (SSOT)</span>
+                                <span class="tag data">Relational Tables</span>
+                            </div>
+                        </div>
+
+                        <!-- Metabase -->
+                        <div class="container-box">
+                            <div class="container-header">📊 Metabase BI</div>
+                            <div class="logical-tags">
+                                <span class="tag client">Dashboard Logic</span>
+                                <span class="tag client">Visualization Engine</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: CLOUD -->
+            <div class="zone-cloud">
+                <div class="box cloud-box">
+                    <span class="label-main">💬 Meta Cloud</span>
+                    <div class="logical-tags">
+                        <span class="tag mid">WhatsApp Cloud API Gateway</span>
+                    </div>
+                </div>
+
+                <div class="box cloud-box">
+                    <span class="label-main">🧠 OpenAI API</span>
+                    <div class="logical-tags">
+                        <span class="tag mid">LLM Inference Engine</span>
+                    </div>
+                </div>
+
+                <div class="box cloud-box">
+                    <span class="label-main">🗺️ Google Maps Platform</span>
+                    <div class="logical-tags">
+                        <span class="tag mid">Geospatial / Geocoding API</span>
+                    </div>
+                </div>
+
+                <div class="box cloud-box">
+                    <span class="label-main">🏢 Vendor Clouds</span>
+                    <div class="logical-tags">
+                        <span class="tag source">Vendor CRM API</span>
+                        <span class="tag source">Service App API</span>
+                        <span class="tag source">Kannur DMO Data</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connector Lines -->
+            <div class="connector-lines">
+                <div class="line-h-left"></div>
+                <div class="line-h-right"></div>
+            </div>
+
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="dot" style="background: var(--success-color)"></div> Client Logic
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: #9b59b6"></div> Orchestration Logic
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: var(--accent-color)"></div> Data Layer
+            </div>
+            <div class="legend-item">
+                <div class="dot" style="background: var(--warning-color)"></div> External Source
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calicut Bio Medicals - Current State</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .architecture-container {
+            max-width: 1000px;
+            width: 100%;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid #bdc3c7;
+        }
+
+        h2 {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #c0392b;
+            margin-bottom: 40px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .silo-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .silo {
+            border: 2px dashed #95a5a6;
+            padding: 20px;
+            border-radius: 8px;
+            width: 220px;
+            background-color: #fcfcfc;
+            position: relative;
+        }
+
+        .silo-title {
+            text-align: center;
+            font-weight: bold;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dcdcdc;
+            padding-bottom: 10px;
+        }
+
+        .app-box {
+            background: #fff;
+            border: 1px solid #bdc3c7;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .app-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .user-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .manual-arrow {
+            color: #e74c3c;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .barrier {
+            border-right: 4px solid #c0392b;
+            height: 100px;
+            position: absolute;
+            right: -22px;
+            top: 50px;
+            opacity: 0.3;
+        }
+
+        .no-data {
+            text-align: center;
+            font-style: italic;
+            color: #e74c3c;
+            font-size: 0.8em;
+            margin-top: 20px;
+            border: 1px solid #fadbd8;
+            background: #fdedec;
+            padding: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="architecture-container">
+        <h2>Current State Architecture</h2>
+        <div class="subtitle">Disjointed Silos & Manual Effort</div>
+
+        <div class="silo-container">
+
+            <!-- SILO 1: SALES -->
+            <div class="silo">
+                <div class="silo-title">Sales Department</div>
+                <div class="app-box">
+                    <span class="user-icon">👤</span>
+                    <div class="app-name">Sales Rep</div>
+                </div>
+                <div class="manual-arrow">&#8595; Manual Entry</div>
+                <div class="app-box">
+                    <div class="app-name">Legacy CRM</div>
+                    <div style="font-size:0.8em; color:#777;">Quote Generation</div>
+                </div>
+                <div class="barrier"></div>
+            </div>
+
+            <!-- SILO 2: SERVICE -->
+            <div class="silo">
+                <div class="silo-title">Service Department</div>
+                <div class="app-box">
+                    <span class="user-icon">🔧</span>
+                    <div class="app-name">Technician</div>
+                </div>
+                <div class="manual-arrow">&#8595; Manual Entry</div>
+                <div class="app-box">
+                    <div class="app-name">Service App</div>
+                    <div style="font-size:0.8em; color:#777;">Warranty Logs</div>
+                </div>
+                <div class="barrier"></div>
+            </div>
+
+            <!-- SILO 3: FINANCE -->
+            <div class="silo">
+                <div class="silo-title">Finance / Admin</div>
+                <div class="app-box">
+                    <span class="user-icon">💼</span>
+                    <div class="app-name">Accountant</div>
+                </div>
+                <div class="manual-arrow">&#8595; Manual Entry</div>
+                <div class="app-box">
+                    <div class="app-name">Tally Prime</div>
+                    <div style="font-size:0.8em; color:#777;">Invoicing & Stock</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="no-data">
+            <strong>&#9888; The Problem:</strong> No Data flows between these silos.<br>
+            A Sales Rep doesn't know a machine is broken (Service).<br>
+            A Technician doesn't know an invoice is pending (Finance).
+        </div>
+
+    </div>
+
+</body>
+
+</html>

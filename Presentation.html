@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOW: Discovery & System Readiness</title>
+    <style>
+        /* Neutral Color Palette & Typography */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f4f5;
+            color: #333333;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Deck Container */
+        .deck-container {
+            position: relative;
+            width: 1000px;
+            max-width: 95vw;
+            height: 650px;
+            max-height: 85vh;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+            border: 1px solid #e4e4e7;
+            overflow: hidden;
+        }
+
+        /* Individual Slides */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 70px;
+            box-sizing: border-box;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Typography & Formatting */
+        h1 {
+            font-size: 2.2em;
+            color: #18181b;
+            margin-top: 0;
+            border-bottom: 2px solid #e4e4e7;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            font-size: 1.2em;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        ul {
+            font-size: 1.2em;
+            line-height: 1.5;
+            color: #3f3f46;
+            margin: 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin-bottom: 12px;
+        }
+
+        .highlight-text {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #27272a;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f4f4f5;
+            border-left: 4px solid #a1a1aa;
+        }
+
+        /* Navigation Controls */
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            cursor: pointer;
+            border: 1px solid #d4d4d8;
+            border-radius: 4px;
+            background-color: #ffffff;
+            color: #3f3f46;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #f4f4f5;
+            border-color: #a1a1aa;
+        }
+
+        button:disabled {
+            background-color: #f4f4f5;
+            color: #a1a1aa;
+            cursor: not-allowed;
+            border-color: #e4e4e7;
+        }
+
+        .slide-counter {
+            font-size: 1em;
+            color: #71717a;
+            font-weight: 500;
+        }
+
+        /* Specific styling for the title slide */
+        .title-slide {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title-slide h1 {
+            border-bottom: none;
+            font-size: 3.2em;
+            margin-bottom: 10px;
+        }
+
+        .title-slide h2 {
+            font-size: 1.8em;
+            color: #52525b;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="deck-container" id="deck">
+
+        <!-- Slide 1 -->
+        <div class="slide title-slide active">
+            <h2>Statement of Work</h2>
+            <h1>Discovery &amp; System Readiness</h1>
+            <p style="font-size: 1.5em; color: #52525b; margin-top: 20px;">Prepared for: Calicut Bio Medicals</p>
+            <p style="font-size: 1.2em; color: #a1a1aa;">Date: March 2026</p>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+            <h1>Executive Summary &amp; Objective</h1>
+            <p style="font-size: 1.2em; margin-bottom: 15px;">Lay the strategic and technical foundation for a
+                performance-driven CRM workflow designed for your <strong>Top-Performing sales staff</strong>.</p>
+            <ul>
+                <li><strong>Clarity Before Commitment:</strong> Optimize current CRM investment before considering
+                    structural changes to eliminate the risk of building on incompatible legacy systems.</li>
+                <li><strong>Identify Friction:</strong> Assess usability, adoption barriers, and informal workflows
+                    (like WhatsApp & Excel) to align improvements with actual sales behavior.</li>
+                <li><strong>Evidence-Based Choices:</strong> Determine if current CRM is technically capable of
+                    supporting modern, AI-driven workflows safely.</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+            <h1>Scope of Work: 2-Week Diagnostic</h1>
+            <div style="display: flex; gap: 30px; margin-top: 10px;">
+                <div style="flex: 1;">
+                    <p style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">Phase A: Workflow &amp; System
+                    </p>
+                    <ul style="font-size: 1.1em;">
+                        <li><strong>Field Shadowing:</strong> 3 half-day sessions with your top performers to map daily
+                            workflows & bottlenecks.</li>
+                        <li><strong>Capability Assessment:</strong> Analyze CRM APIs, database, and webhooks for future
+                            enhancement readiness.</li>
+                    </ul>
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;">Phase B: Data Readiness</p>
+                    <ul style="font-size: 1.1em;">
+                        <li><strong>Data Baseline:</strong> Quantify current time-to-quote and process performance to
+                            prove future ROI.</li>
+                        <li><strong>Hygiene Audit:</strong> Ensure CRM data is clean/structured for AI to read
+                            accurately without hallucinating.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-text" style="font-size: 1.1em; padding: 10px; margin-top: 15px;">Focus: Top Performers
+                only. Read-only access. No active coding or data changes.</div>
+        </div>
+
+        <!-- Slide 4 -->
+        <div class="slide">
+            <h1>The Deliverables</h1>
+            <p style="font-size: 1.1em; margin-bottom: 15px;">A written report and review session with leadership
+                detailing:</p>
+            <ul>
+                <li><strong>Workflow Map &amp; CRM Evaluation:</strong> Teardown of top-performer friction and a
+                    definitive technical recommendation on CRM infrastructure adequacy.</li>
+                <li><strong>Prioritized Improvement Matrix:</strong> Sequenced action plan for usability fixes,
+                    integrations, and structural considerations.</li>
+                <li><strong>Baseline Performance Metrics:</strong> Historical benchmarks for outcome-based building.
+                </li>
+                <li><strong>Implementation Roadmap:</strong> Concrete, data-backed estimate for either an Agentic
+                    workflow POC, interface layering, or a hybrid architecture.</li>
+            </ul>
+        </div>
+
+        <!-- Slide 5 -->
+        <div class="slide">
+            <h1>Project Investment &amp; Framework</h1>
+            <div style="display: flex; gap: 40px; margin-top: 10px;">
+                <div style="flex: 1;">
+                    <p style="font-size: 1.2em; font-weight: bold;">Investment</p>
+                    <ul style="font-size: 1.1em;">
+                        <li><strong>Total:</strong> ₹49,000 (excl. taxes)</li>
+                        <li><strong>Structure:</strong> Fixed-fee diagnostic</li>
+                        <li><strong>Terms:</strong> 50% start / 50% delivery</li>
+                    </ul>
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 1.2em; font-weight: bold;">Data Security</p>
+                    <ul style="font-size: 1.1em;">
+                        <li>Full Mutual NDA executed up front</li>
+                        <li>Live environment, strict Read-Only access</li>
+                        <li>No data downloaded or stored locally</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-text" style="padding: 10px; margin-top: 20px;">Provides absolute cost certainty while
+                validating tech and baselines.</div>
+        </div>
+
+        <!-- Slide 6 -->
+        <div class="slide">
+            <h1>Client Obligations &amp; Timelines</h1>
+            <ul>
+                <li><strong>Access:</strong> Provide read-only CRM access 3–5 days prior to shadowing.</li>
+                <li><strong>Availability:</strong> Ensure timely access to Top-Performing staff for mandatory shadowing
+                    sessions.</li>
+                <li><strong>Vendor Collaboration:</strong> Facilitate required technical discussions with the current
+                    CRM vendor.</li>
+            </ul>
+            <p
+                style="font-size: 1.2em; margin-top: 20px; color: #52525b; border-left: 4px solid #f59e0b; padding-left: 15px;">
+                <em>Note: The 2-week timeline is contingent upon vendor responsiveness and shadowing availability.
+                    Delays will pause and proportionally extend the schedule.</em>
+            </p>
+        </div>
+
+        <!-- Slide 7 -->
+        <div class="slide">
+            <h1>Next Steps: Strategic Execution</h1>
+            <p style="font-size: 1.2em; margin-bottom: 15px;">Post-Discovery, we determine the correct strategic path
+                using factual data:</p>
+            <ul>
+                <li><strong>Pathway A (CRM is Viable):</strong> We mutually agree on the highest-value workflow to build
+                    as a working Proof of Concept (e.g., WhatsApp Voice bot) with a formal scope.</li>
+                <li><strong>Pathway B (CRM is Inadequate):</strong> We execute a new vendor selection based on a
+                    comprehensive roadmap to migrate your sales team to a modern, AI-ready platform.</li>
+            </ul>
+            <div class="highlight-text">Both pathways ensure your investment is completely protected.</div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button id="prevBtn" onclick="changeSlide(-1)" disabled>Previous</button>
+        <span class="slide-counter" id="counter">1 / 7</span>
+        <button id="nextBtn" onclick="changeSlide(1)">Next</button>
+    </div>
+
+    <script>
+        let currentSlideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const counter = document.getElementById('counter');
+
+        function updateDeck() {
+            // Hide all slides
+            slides.forEach((slide) => {
+                slide.classList.remove('active');
+            });
+
+            // Show current slide
+            slides[currentSlideIndex].classList.add('active');
+
+            // Update counter
+            if (counter) {
+                counter.innerText = `${currentSlideIndex + 1} / ${slides.length}`;
+            }
+
+            // Handle buttons state
+            if (prevBtn) prevBtn.disabled = currentSlideIndex === 0;
+            if (nextBtn) nextBtn.disabled = currentSlideIndex === slides.length - 1;
+        }
+
+        function changeSlide(direction) {
+            currentSlideIndex += direction;
+            if (currentSlideIndex < 0) currentSlideIndex = 0;
+            if (currentSlideIndex >= slides.length) currentSlideIndex = slides.length - 1;
+            updateDeck();
+        }
+
+        // Ensure accurate state on load
+        updateDeck();
+    </script>
+</body>
+
+</html>
