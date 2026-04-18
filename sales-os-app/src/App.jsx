@@ -160,8 +160,15 @@ export default function App() {
 
   const [contacts, setContacts] = useState(() => {
     const saved = localStorage.getItem("sales_os_contacts");
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : initialContacts;
   });
+
+  const [reminders, setReminders] = useState(() => JSON.parse(localStorage.getItem("sales_os_reminders") || "[]"));
+
+  // Unified Interaction State
+  const [isSchedulingFollowUp, setIsSchedulingFollowUp] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpText, setFollowUpText] = useState("");
 
   const [activities, setActivities] = useState(() => {
     const saved = localStorage.getItem("sales_os_activities");
@@ -186,16 +193,20 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("sales_os_contacts", JSON.stringify(contacts));
-  }, [contacts]);
+    localStorage.setItem("sales_os_deals", JSON.stringify(deals));
+  }, [deals]);
 
   useEffect(() => {
     localStorage.setItem("sales_os_activities", JSON.stringify(activities));
   }, [activities]);
 
   useEffect(() => {
-    localStorage.setItem("sales_os_catalog", JSON.stringify(catalog));
-  }, [catalog]);
+    localStorage.setItem("sales_os_contacts", JSON.stringify(contacts));
+  }, [contacts]);
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_reminders", JSON.stringify(reminders));
+  }, [reminders]);
 
   const updateDeal = (id, updates) => {
     setDeals(prev => prev.map(d => (d.id === id ? { ...d, ...updates } : d)));
@@ -210,9 +221,11 @@ export default function App() {
   const addActivity = () => {
     if (!activityInput.trim()) return;
 
+    const accountId = selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(c => selectedDeal.name.includes(c.name))?.id : null);
+
     const newActivity = {
       id: Date.now(),
-      accountId: selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(c => selectedDeal.name.includes(c.name))?.id : null),
+      accountId: accountId,
       dealId: selectedDeal?.id || null,
       type: "interaction",
       notes: (currentUser === "Manager" ? "👑 Manager Note: " : "") + activityInput,
@@ -221,6 +234,20 @@ export default function App() {
     };
 
     setActivities(prev => [newActivity, ...prev]);
+
+    // Phase 7: Create Reminder
+    if (isSchedulingFollowUp && followUpDate) {
+      const newReminder = {
+        id: Date.now() + 1,
+        accountId: accountId,
+        dealId: selectedDeal?.id || null,
+        text: followUpText || `Follow up: ${activityInput.substring(0, 30)}...`,
+        dueDate: followUpDate,
+        status: "pending",
+        owner: currentUser
+      };
+      setReminders(prev => [newReminder, ...prev]);
+    }
 
     // Audit Trail: If this was a stage change, log it
     if (pendingStage && selectedDeal) {
@@ -236,6 +263,25 @@ export default function App() {
     setActivityInput("");
     setPendingStage(null);
     setShowActivity(false);
+    // Reset scheduling state
+    setIsSchedulingFollowUp(false);
+    setFollowUpDate("");
+    setFollowUpText("");
+  };
+
+  const completeReminder = (reminder) => {
+    setReminders(prev => prev.map(r => r.id === reminder.id ? { ...r, status: "completed" } : r));
+
+    const completionActivity = {
+      id: Date.now(),
+      accountId: reminder.accountId,
+      dealId: reminder.dealId,
+      type: "interaction",
+      notes: `✅ TASK COMPLETED: ${reminder.text}`,
+      date: "Just now",
+      owner: currentUser
+    };
+    setActivities(prev => [completionActivity, ...prev]);
   };
 
   const logAuditActivity = (accountId, dealId, message) => {
@@ -399,6 +445,7 @@ export default function App() {
             <div className="space-y-1">
               {[
                 { id: "pipeline", label: "Pipeline View", icon: "📊" },
+                { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
@@ -504,9 +551,7 @@ export default function App() {
             <div className="text-lg sm:text-2xl font-extrabold text-red-900">₹{lostDealsValue.toFixed(1).replace(/\.0$/, '')}L</div>
           </div>
         </div>
-      )
-      }
-
+      )}
       {/* Pipeline */}
       {
         view === "pipeline" && (
@@ -656,7 +701,81 @@ export default function App() {
         )
       }
 
-      {/* Customers View */}
+      {/* Reminders View (Phase 7 Refinement) */}
+      {view === "reminders" && (
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 bg-gray-50/50">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Task Management</h3>
+              <h2 className="text-3xl font-black text-gray-800 tracking-tight">Next Actions</h2>
+            </div>
+            <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+              <span className="text-lg mr-2">📅</span>
+              <span className="text-sm font-black text-gray-700">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {/* Group reminders by owner for Manager, or just show for User */}
+            {(currentUser === "Manager" ? ["Manager", ...new Set(reminders.map(r => r.owner))].filter((v, i, a) => a.indexOf(v) === i) : [currentUser]).map(owner => {
+              const userReminders = reminders.filter(r => r.owner === owner && r.status === "pending");
+              if (userReminders.length === 0 && currentUser !== "Manager") return (
+                <div key="none" className="bg-white border-2 border-dashed border-gray-100 rounded-[32px] p-10 text-center animate-in fade-in duration-700">
+                  <span className="text-4xl mb-4 block">🎉</span>
+                  <div className="text-gray-400 font-bold text-sm italic">All caught up! No pending actions.</div>
+                </div>
+              );
+              if (userReminders.length === 0 && currentUser === "Manager") return null;
+
+              return (
+                <div key={owner} className="animate-in fade-in slide-in-from-bottom-4 duration-500 mb-8">
+                  {currentUser === "Manager" && (
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-2 flex justify-between">
+                      <span>{owner === "Manager" ? "My Tasks" : `${owner}'s Tasks`}</span>
+                      <span>{userReminders.length} Pending</span>
+                    </h3>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {userReminders.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).map(r => {
+                      const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
+                      const hospital = customers.find(c => c.id === r.accountId);
+                      return (
+                        <div key={r.id} className={`bg-white p-5 rounded-[32px] border-2 shadow-sm transition-all hover:shadow-md ${isOverdue ? 'border-red-100' : 'border-white'}`}>
+                          <div className="flex justify-between items-start mb-3">
+                            <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                              {isOverdue ? "Overdue" : "Upcoming"}
+                            </span>
+                            <span className={`text-[10px] font-black ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>{r.dueDate}</span>
+                          </div>
+                          <div className="text-lg font-black text-gray-800 mb-1 leading-tight">{r.text}</div>
+                          <div
+                            onClick={() => {
+                              const deal = deals.find(d => d.id === r.dealId);
+                              if (deal) setSelectedDeal(deal);
+                              else if (hospital) setSelectedAccount(hospital);
+                            }}
+                            className="text-[11px] text-blue-600 font-bold mb-6 hover:underline cursor-pointer flex items-center gap-1"
+                          >
+                            📍 {hospital?.name || "Unknown Hospital"} &rarr;
+                          </div>
+                          <button
+                            onClick={() => completeReminder(r)}
+                            className="w-full py-3 bg-gray-50 hover:bg-green-600 text-gray-400 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-100 hover:border-green-600 flex items-center justify-center gap-2"
+                          >
+                            Complete Task
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Customer Directory Screen */}
       {
         view === "customers" && (
           <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50">
@@ -916,6 +1035,32 @@ export default function App() {
                 </div>
               )}
 
+              {/* Deal Specific Next Actions (Phase 7) */}
+              {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").length > 0 && (
+                <div className="mb-8 p-6 bg-indigo-50/50 border-2 border-indigo-100 rounded-[32px] shadow-sm animate-in zoom-in-95 duration-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
+                      Next Step for this Lead
+                    </h3>
+                  </div>
+                  {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").map(r => (
+                    <div key={r.id} className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-sm flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div className="text-sm font-black text-gray-800 leading-tight">{r.text}</div>
+                        <div className="text-[10px] font-bold text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">{r.dueDate}</div>
+                      </div>
+                      <button
+                        onClick={() => completeReminder(r)}
+                        className="w-full py-2.5 bg-indigo-600 hover:bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-indigo-900/10 flex items-center justify-center gap-2"
+                      >
+                        ✓ Mark Goal as Reached
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <button
                 onClick={() => setShowActivity(true)}
                 className="w-full bg-indigo-600 text-white py-4.5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/10 mb-8 active:scale-95 transition-all flex items-center justify-center gap-3 border-b-4 border-indigo-800"
@@ -1063,7 +1208,33 @@ export default function App() {
               </section>
 
               <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
-                <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider">Deal History</h3>
+                <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider flex justify-between items-center">
+                  Reminders & Follow-ups
+                  <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-200 font-black uppercase tracking-widest">Next Steps</span>
+                </h3>
+                <div className="space-y-3">
+                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").map(r => (
+                    <div key={r.id} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="text-xs font-black text-gray-800 leading-tight">{r.text}</div>
+                        <div className="text-[10px] font-bold text-gray-400 whitespace-nowrap ml-2">{r.dueDate}</div>
+                      </div>
+                      <button
+                        onClick={() => completeReminder(r)}
+                        className="w-full mt-2 py-2 bg-indigo-50 hover:bg-green-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100 hover:border-green-600"
+                      >
+                        ✓ Complete Task
+                      </button>
+                    </div>
+                  ))}
+                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").length === 0 && (
+                    <div className="text-gray-400 text-xs italic py-4 text-center bg-white rounded-2xl border border-dashed border-gray-200">No pending follow-ups.</div>
+                  )}
+                </div>
+              </section>
+
+              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
+                <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider italic opacity-60">Deal History</h3>
                 <div className="space-y-3">
                   {deals.filter(d => d.name.includes(selectedAccount.name)).map(d => (
                     <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
@@ -1112,12 +1283,48 @@ export default function App() {
                 <button onClick={() => setShowActivity(false)} className="text-gray-400 hover:text-gray-800 font-bold text-lg">&times;</button>
               </div>
               <textarea
-                className="w-full border border-gray-200 p-3 mb-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[120px]"
+                className="w-full border border-gray-200 p-3 mb-4 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm min-h-[100px]"
                 value={activityInput}
                 onChange={(e) => setActivityInput(e.target.value)}
                 placeholder="What did you discuss? (e.g. Discussed demo with HOD)"
                 autoFocus
               />
+
+              <div className="mb-4 bg-blue-50/50 p-3 rounded-2xl border border-blue-100">
+                <label className="flex items-center gap-2 cursor-pointer mb-2">
+                  <input
+                    type="checkbox"
+                    checked={isSchedulingFollowUp}
+                    onChange={(e) => setIsSchedulingFollowUp(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Schedule Follow-up?</span>
+                </label>
+
+                {isSchedulingFollowUp && (
+                  <div className="space-y-3 mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Due Date</label>
+                      <input
+                        type="date"
+                        className="w-full border border-gray-200 p-2 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                        value={followUpDate}
+                        onChange={(e) => setFollowUpDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Follow-up Task (Optional)</label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-200 p-2 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="E.g. Send quote, Call again"
+                        value={followUpText}
+                        onChange={(e) => setFollowUpText(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowActivity(false)}
