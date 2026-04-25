@@ -12,9 +12,9 @@ const stageProbability = {
 };
 
 const initialRepData = {
-  "Basheer": { zone: "North Kerala", target: { total: 100, ultrasound: 60, ventilator: 25, criticalcare: 15 } },
-  "Amit": { zone: "South Kerala", target: { total: 150, ultrasound: 90, ventilator: 40, criticalcare: 20 } },
-  "Rahul": { zone: "Bangalore", target: { total: 120, ultrasound: 70, ventilator: 30, criticalcare: 20 } }
+  "Basheer": { zone: "North Kerala", target: { annual: 100, q1: 25, q2: 25, q3: 25, q4: 25 } },
+  "Amit": { zone: "South Kerala", target: { annual: 160, q1: 40, q2: 40, q3: 40, q4: 40 } },
+  "Rahul": { zone: "Bangalore", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } }
 };
 
 // 🔷 Demo dataset
@@ -73,9 +73,9 @@ const initialCatalog = [
   { id: 4, name: "SonoScape E2", category: "Ultrasound", priceRange: "₹8L - ₹12L", url: "https://www.sonoscapeindia.in/productdetails-58-sonoscape-e2-compact-color-doppler-ultrasound-system" },
   { id: 5, name: "SonoScape P60 Exp", category: "Ultrasound", priceRange: "₹40L - ₹55L", url: "https://www.sonoscapeindia.in/productdetails-3-intelligent-future-attainable" },
 
-  // --- Ventilator (Magnamed) ---
-  { id: 6, name: "Magnamed Fleximag Max", category: "Ventilator", priceRange: "₹18L - ₹28L", url: "https://www.inovacoesmagnamed.com.br/fleximagmaxen" },
-  { id: 7, name: "Magnamed OxyMag", category: "Ventilator", priceRange: "₹8L - ₹15L", url: "https://www.inovacoesmagnamed.com.br/oxymag-en" },
+  // --- Critical Care (Magnamed) ---
+  { id: 6, name: "Magnamed Fleximag Max", category: "Critical Care", priceRange: "₹18L - ₹28L", url: "https://www.inovacoesmagnamed.com.br/fleximagmaxen" },
+  { id: 7, name: "Magnamed OxyMag", category: "Critical Care", priceRange: "₹8L - ₹15L", url: "https://www.inovacoesmagnamed.com.br/oxymag-en" },
 
   // --- Critical Care (EDAN / Magnamed) ---
   { id: 8, name: "EDAN i15 Blood Gas", category: "Critical Care", priceRange: "₹5L - ₹8L", url: "https://www.edan.com/product/e/i15_Blood_Gas_and_Chemistry_Analysis_System.html" },
@@ -84,12 +84,13 @@ const initialCatalog = [
 ];
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState("Manager");
-  const [managerFilter, setManagerFilter] = useState("All");
-  const [view, setView] = useState("pipeline");
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("sales_os_currentUser") || "Manager");
+  const [managerFilter, setManagerFilter] = useState(() => localStorage.getItem("sales_os_managerFilter") || "All");
+  const [view, setView] = useState(() => localStorage.getItem("sales_os_view") || "pipeline");
   const [metricFilter, setMetricFilter] = useState(null);
-  const [targetSubjectFilter, setTargetSubjectFilter] = useState("total");
+  const [targetSubjectFilter, setTargetSubjectFilter] = useState("annual");
   const [drilldownReport, setDrilldownReport] = useState(null); // Report Drilldown
+  const [hideHaroonNotification, setHideHaroonNotification] = useState(false); // Haroon Notification simulator
 
   const [repData, setRepData] = useState(() => {
     const saved = localStorage.getItem("sales_os_repdata");
@@ -98,11 +99,20 @@ export default function App() {
       parsed["Basheer"] = parsed["You"];
       delete parsed["You"];
     }
+    // Flush old target format
+    if (parsed["Basheer"] && parsed["Basheer"].target.total !== undefined) {
+      localStorage.removeItem("sales_os_repdata");
+      return initialRepData;
+    }
     return parsed;
   });
   useEffect(() => {
     localStorage.setItem("sales_os_repdata", JSON.stringify(repData));
   }, [repData]);
+
+  useEffect(() => { localStorage.setItem("sales_os_currentUser", currentUser); }, [currentUser]);
+  useEffect(() => { localStorage.setItem("sales_os_managerFilter", managerFilter); }, [managerFilter]);
+  useEffect(() => { localStorage.setItem("sales_os_view", view); }, [view]);
 
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem("sales_os_customers");
@@ -181,7 +191,7 @@ export default function App() {
   const [catalog, setCatalog] = useState(() => {
     const saved = localStorage.getItem("sales_os_catalog");
     // Force reset if stale data includes competitor products or missing categories
-    if (saved && (saved.includes("Mindray") || saved.includes("General Imaging") || saved.includes("productdetails-56"))) {
+    if (saved && (saved.includes("Mindray") || saved.includes("General Imaging") || saved.includes("productdetails-56") || saved.includes("Ventilator"))) {
       localStorage.removeItem("sales_os_catalog");
       return initialCatalog;
     }
@@ -200,11 +210,33 @@ export default function App() {
   const [followUpDate, setFollowUpDate] = useState("");
   const [followUpText, setFollowUpText] = useState("");
 
+  const getFormattedDateTime = () => {
+    const now = new Date();
+    const d = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    const t = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${d}, ${t}`;
+  };
+
   const [activities, setActivities] = useState(() => {
     const saved = localStorage.getItem("sales_os_activities");
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      let parsed = JSON.parse(saved);
+      // 🛠️ Data Cleaning for Demo Persistence
+      return parsed.map(a => {
+        let n = a.notes;
+        n = n.replace(/^👑 Manager Note: /, "");
+        n = n.replace(/^👑 Manager Interaction: /, "");
+        n = n.replace(/^\[MANAGER NOTE\] /, "");
+        n = n.replace(/^\[.*?\] /, "");
 
-    // Legacy migration: Pull timeline from initialDeals if no activities exist
+        return {
+          ...a,
+          notes: n,
+          date: a.date === "Just now" ? "25 Apr, 07:15 AM" : a.date
+        };
+      });
+    }
+
     const initialActivities = [];
     initialDeals.forEach(deal => {
       deal.timeline.forEach((t, index) => {
@@ -212,9 +244,9 @@ export default function App() {
           id: `${deal.id}-${index}`,
           accountId: initialCustomers.find(c => deal.name.includes(c.name))?.id || 1,
           dealId: deal.id,
-          type: t.text.includes("Manager") ? "manager_note" : "interaction",
-          notes: t.text,
-          date: deal.lastActivity,
+          notes: t.text.replace(/^\[.*?\] /, ""),
+          purpose: t.text.includes("Manager") ? "Manager Note" : (t.text.includes("[") ? t.text.split("]")[0].replace("[", "") : "Interaction"),
+          date: "24 Apr, 04:30 PM",
           owner: deal.owner
         });
       });
@@ -237,6 +269,24 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("sales_os_reminders", JSON.stringify(reminders));
   }, [reminders]);
+
+  // Patch: Ensure reminders attached to a deal correctly inherit the deal's owner rather than the person who logged it
+  useEffect(() => {
+    if (deals.length > 0 && reminders.length > 0) {
+      const needsPatch = reminders.some(r => r.dealId && deals.find(d => d.id === r.dealId)?.owner !== r.owner);
+      if (needsPatch) {
+        setReminders(prev => prev.map(r => {
+          if (r.dealId) {
+            const deal = deals.find(d => d.id === r.dealId);
+            if (deal && deal.owner !== r.owner) {
+              return { ...r, owner: deal.owner };
+            }
+          }
+          return r;
+        }));
+      }
+    }
+  }, [deals]);
 
   useEffect(() => {
     localStorage.setItem("sales_os_assets", JSON.stringify(assets));
@@ -272,9 +322,7 @@ export default function App() {
       if (!lostCompetitor) { alert("Please enter the Competitor Name."); return; }
       finalNotes = `Deal Lost to ${lostCompetitor} due to ${lostReason}. ` + activityInput;
     } else {
-      if (activityPurpose !== "Deal Follow-up") {
-        finalNotes = `[${activityPurpose.toUpperCase()}] ` + activityInput;
-      }
+      finalNotes = activityInput;
     }
     if (!finalNotes.trim() && !isClosureDatePrompt && !isLostPrompt) return;
 
@@ -282,9 +330,9 @@ export default function App() {
       id: Date.now(),
       accountId: accountId,
       dealId: selectedDeal?.id || null,
-      type: "interaction",
-      notes: (currentUser === "Manager" ? "👑 Manager Note: " : "") + finalNotes,
-      date: "Just now",
+      notes: finalNotes,
+      purpose: activityPurpose,
+      date: getFormattedDateTime(),
       owner: currentUser
     };
 
@@ -299,7 +347,7 @@ export default function App() {
         text: followUpText || `Follow up: ${activityInput.substring(0, 30)}...`,
         dueDate: followUpDate,
         status: "pending",
-        owner: currentUser
+        owner: selectedDeal?.owner || currentUser
       };
       setReminders(prev => [newReminder, ...prev]);
     }
@@ -358,7 +406,7 @@ export default function App() {
       accountId: accountId,
       dealId: dealId,
       type: "audit",
-      notes: `🚨 [AUDIT] ${message}`,
+      notes: `🔄 ${message}`,
       date: "Just now",
       owner: currentUser
     };
@@ -472,14 +520,13 @@ export default function App() {
       if (product) return product.category.toLowerCase().replace(" ", "");
     }
     const name = deal.name.toLowerCase();
-    if (name.includes("ventilator") || name.includes("magnamed") || name.includes("fleximag") || name.includes("oxymag")) return "ventilator";
-    if (name.includes("monitor") || name.includes("defibrillator") || name.includes("ecg") || name.includes("gas") || name.includes("analyzer") || name.includes("blood") || name.includes("critical")) return "criticalcare";
+    if (name.includes("ventilator") || name.includes("magnamed") || name.includes("fleximag") || name.includes("oxymag") || name.includes("monitor") || name.includes("defibrillator") || name.includes("ecg") || name.includes("gas") || name.includes("analyzer") || name.includes("blood") || name.includes("critical")) return "criticalcare";
     return "ultrasound";
   };
 
-  const activePipelineDeals = dashboardDealsRibbon.filter(d => d.stage !== "Order" && d.stage !== "Lost" && (targetSubjectFilter === "total" || getDealCategory(d) === targetSubjectFilter));
+  const activePipelineDeals = dashboardDealsRibbon.filter(d => d.stage !== "Order" && d.stage !== "Lost");
 
-  const ordersDeals = dashboardDealsRibbon.filter(d => d.stage === "Order" && (targetSubjectFilter === "total" || getDealCategory(d) === targetSubjectFilter));
+  const ordersDeals = dashboardDealsRibbon.filter(d => d.stage === "Order");
   const bookedRevenue = ordersDeals.reduce((sum, deal) => sum + parseValue(deal.value), 0);
   const attainment = targetQuota > 0 ? Math.round((bookedRevenue / targetQuota) * 100) : 0;
 
@@ -488,7 +535,7 @@ export default function App() {
 
   const probableForecastValue = activePipelineDeals.reduce((sum, deal) => sum + (parseValue(deal.value) * (deal.probability / 100)), 0);
 
-  const lostDeals = dashboardDealsRibbon.filter(d => d.stage === "Lost" && (targetSubjectFilter === "total" || getDealCategory(d) === targetSubjectFilter));
+  const lostDeals = dashboardDealsRibbon.filter(d => d.stage === "Lost");
   const lostDealsValue = lostDeals.reduce((sum, deal) => sum + parseValue(deal.value), 0);
 
   const getDaysAgo = (lastActivityStr) => {
@@ -502,7 +549,7 @@ export default function App() {
   const matchesMetricFilter = (deal) => {
     if (!metricFilter) return true;
     if (metricFilter === "orders") return deal.stage === "Order";
-    if (metricFilter === "hot") return deal.probability >= 70 && deal.stage !== "Order" && deal.stage !== "Lost";
+    if (metricFilter === "hot") return deal.stage !== "Order" && deal.stage !== "Lost";
     if (metricFilter === "won") return deal.stage === "Order" && deal.isLastMonth;
     if (metricFilter === "lost") return deal.stage === "Lost";
     if (metricFilter === "stagnant") return deal.stage !== "Order" && deal.stage !== "Lost" && getDaysAgo(deal.lastActivity) > 7;
@@ -540,10 +587,10 @@ export default function App() {
             <div className="space-y-1">
               {[
                 { id: "pipeline", label: "Pipeline View", icon: "📊" },
-                { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
+                { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "insights", label: "Insights", icon: "💡" },
                 ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Settings", icon: "⚙️" }] : [])
               ].map(item => (
@@ -617,7 +664,7 @@ export default function App() {
             className="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xs sm:text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center gap-2"
           >
             <span className="text-lg">＋</span>
-            <span className="hidden sm:inline">Lead</span>
+            <span>Lead</span>
           </button>
         </div>
       </div>
@@ -638,10 +685,11 @@ export default function App() {
             <div className="flex justify-between items-start mb-0.5 sm:mb-1">
               <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="text-[10px] sm:text-xs text-blue-700 font-bold uppercase tracking-wider cursor-pointer">Target vs Actual</div>
               <select className="text-[9px] font-bold bg-white text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 outline-none cursor-pointer" value={targetSubjectFilter} onChange={e => setTargetSubjectFilter(e.target.value)}>
-                <option value="total">All Products</option>
-                <option value="ultrasound">Ultrasound</option>
-                <option value="ventilator">Ventilator</option>
-                <option value="criticalcare">Critical Care</option>
+                <option value="annual">Annual Target</option>
+                <option value="q1">Q1 Target</option>
+                <option value="q2">Q2 Target</option>
+                <option value="q3">Q3 Target</option>
+                <option value="q4">Q4 Target</option>
               </select>
             </div>
             <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="cursor-pointer">
@@ -858,7 +906,7 @@ export default function App() {
                       const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
                       const hospital = customers.find(c => c.id === r.accountId);
                       return (
-                        <div key={r.id} className={`bg-white p-5 rounded-[32px] border-2 shadow-sm transition-all hover:shadow-md ${isOverdue ? 'border-red-100' : 'border-white'}`}>
+                        <div key={r.id} className={`bg-white p-5 rounded-[32px] border-2 shadow-sm transition-all hover:shadow-md ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-white'}`}>
                           <div className="flex justify-between items-start mb-3">
                             <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
                               {isOverdue ? "Overdue" : "Upcoming"}
@@ -1029,7 +1077,6 @@ export default function App() {
             >
               <option>All</option>
               <option>Ultrasound</option>
-              <option>Ventilator</option>
               <option>Critical Care</option>
             </select>
           </div>
@@ -1075,11 +1122,10 @@ export default function App() {
               <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Phase 1 Analytics</h3>
               <h2 className="text-2xl sm:text-3xl font-black text-gray-800 tracking-tight">Reporting Dashboard</h2>
             </div>
-            {currentUser !== "Manager" && (
-              <div className="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 border border-orange-200">
-                <span>🔒</span> Showing only your deals
-              </div>
-            )}
+            {currentUser !== "Manager" && <div className="bg-gray-100 text-gray-400 font-extrabold text-[10px] px-3 py-1 rounded-lg uppercase text-center ml-4 border border-gray-200">
+              <span className="text-gray-600 sm:text-xs text-[11px] block">{dashboardDeals.filter(matchesMetricFilter).length}</span> Total
+            </div>
+            }
           </div>
 
           {/* KPI Row */}
@@ -1092,14 +1138,14 @@ export default function App() {
               const activeD = dashboardDealsRibbon.filter(d => d.stage !== "Order" && d.stage !== "Lost");
               const stagnantDeals = activeD.filter(d => getDaysAgo(d.lastActivity) > 7);
 
-              // Demo Tracking
-              const demoedDeals = dashboardDealsRibbon.filter(d => d.stage === "Demo" || d.timeline?.some(t => t.text?.toLowerCase().includes("demo")));
-              const wonDemoDeals = demoedDeals.filter(d => d.stage === "Order");
-              const demoConvRate = demoedDeals.length > 0 ? Math.round((wonDemoDeals.length / demoedDeals.length) * 100) : 0;
+              // Demo Tracking (Closed Deals Only)
+              const closedDealsForDemo = dashboardDealsRibbon.filter(d => d.stage === "Order" || d.stage === "Lost");
+              const demoedClosedDeals = closedDealsForDemo.filter(d => d.timeline?.some(t => t.text?.toLowerCase().includes("demo")));
+              const wonDemoDeals = demoedClosedDeals.filter(d => d.stage === "Order");
+              const demoConvRate = demoedClosedDeals.length > 0 ? Math.round((wonDemoDeals.length / demoedClosedDeals.length) * 100) : 0;
 
-              const usndVal = dashboardDealsRibbon.filter(d => getDealCategory(d) === "ultrasound").reduce((acc, d) => acc + parseValue(d.value), 0);
-              const ventVal = dashboardDealsRibbon.filter(d => getDealCategory(d) === "ventilator").reduce((acc, d) => acc + parseValue(d.value), 0);
-              const ccVal = dashboardDealsRibbon.filter(d => getDealCategory(d) === "criticalcare").reduce((acc, d) => acc + parseValue(d.value), 0);
+              const usndVal = activeD.filter(d => getDealCategory(d) === "ultrasound").reduce((acc, d) => acc + parseValue(d.value), 0);
+              const ccVal = activeD.filter(d => getDealCategory(d) === "criticalcare").reduce((acc, d) => acc + parseValue(d.value), 0);
 
               return (
                 <>
@@ -1124,20 +1170,19 @@ export default function App() {
                   </div>
 
                   <div
-                    onClick={() => setDrilldownReport({ title: "Demo-to-Order Conversions", data: demoedDeals })}
+                    onClick={() => setDrilldownReport({ title: "Demo-to-Order Conversions", data: demoedClosedDeals })}
                     className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
                     <div className="text-[10px] font-black text-gray-400 group-hover:text-blue-500 uppercase tracking-widest mb-2 flex justify-between">Demo Conversion <span>🔬</span></div>
                     <div className="text-3xl font-extrabold text-gray-800">{demoConvRate}%</div>
                     <div className="text-[10px] text-gray-500 font-bold mt-3 bg-gray-50 rounded-lg px-2 py-1 inline-block w-fit border border-gray-100 uppercase tracking-wider">
-                      {wonDemoDeals.length} out of {demoedDeals.length} Demos &rarr;
+                      {wonDemoDeals.length} out of {demoedClosedDeals.length} Demos &rarr;
                     </div>
                   </div>
 
                   <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex justify-between">Product Pipeline <span>📊</span></div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex justify-between">Active Pipeline <span>📊</span></div>
                     <div className="flex flex-col justify-end gap-1 mt-auto">
                       <div onClick={() => setDrilldownReport({ title: "Active Ultrasound Pipeline", data: activeD.filter(d => getDealCategory(d) === "ultrasound") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"><span className="text-indigo-600">Ultrasound</span> <span className="flex items-center gap-1">₹{usndVal}L <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
-                      <div onClick={() => setDrilldownReport({ title: "Active Ventilator Pipeline", data: activeD.filter(d => getDealCategory(d) === "ventilator") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-emerald-50 border border-transparent hover:border-emerald-100 transition-colors"><span className="text-emerald-600">Ventilat.</span> <span className="flex items-center gap-1">₹{ventVal}L <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
                       <div onClick={() => setDrilldownReport({ title: "Active Critical Care Pipeline", data: activeD.filter(d => getDealCategory(d) === "criticalcare") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"><span className="text-rose-600">C.Care</span> <span className="flex items-center gap-1">₹{ccVal}L <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
                     </div>
                   </div>
@@ -1166,7 +1211,14 @@ export default function App() {
                         <div className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">{repData[rep]?.zone}</div>
                       </div>
                     </div>
-                    {pendingCount > 0 && <span className="bg-red-100 text-red-600 text-[9px] font-black uppercase px-2 py-1 rounded-lg border border-red-200">{pendingCount} Actions</span>}
+                    {pendingCount > 0 && (
+                      <span
+                        onClick={() => setView('reminders')}
+                        className="bg-red-100 text-red-600 text-[9px] font-black uppercase px-2 py-1 rounded-lg border border-red-200 cursor-pointer hover:bg-red-200 transition-colors active:scale-95 shadow-sm"
+                      >
+                        {pendingCount} Actions
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-3 mt-auto">
                     <div
@@ -1275,7 +1327,7 @@ export default function App() {
               </div>
 
               {(selectedDeal.risk === 'High' || selectedDeal.risk === 'Medium') && (selectedDeal.riskReason || selectedDeal.decisionContext) && (
-                <div className="mb-10 p-5 bg-red-50/50 border-2 border-red-100 text-red-800 rounded-[28px] text-[13px] flex gap-3 shadow-inner">
+                <div className="mb-6 p-5 bg-red-50/50 border-2 border-red-100 text-red-800 rounded-[28px] text-[13px] flex gap-3 shadow-inner">
                   <span className="text-xl">⚠️</span>
                   <div>
                     <span className="font-black uppercase text-[10px] block mb-1 tracking-widest opacity-70">Strategic Risk Alert</span>
@@ -1283,6 +1335,21 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              <div className="grid grid-cols-2 gap-3 mb-10">
+                <div className="bg-white p-5 rounded-[28px] border-2 border-gray-100 shadow-sm">
+                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Lead Source</div>
+                  <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
+                    <span className="text-blue-500">📍</span> {selectedDeal.source || "Direct Inquiry"}
+                  </div>
+                </div>
+                <div className="bg-white p-5 rounded-[28px] border-2 border-gray-100 shadow-sm">
+                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Marketing Campaign</div>
+                  <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
+                    <span className="text-pink-500">📣</span> {selectedDeal.campaign || "No Campaign"}
+                  </div>
+                </div>
+              </div>
 
               {/* Deal Specific Next Actions (Phase 7) */}
               {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").length > 0 && (
@@ -1293,29 +1360,51 @@ export default function App() {
                       Next Step for this Lead
                     </h3>
                   </div>
-                  {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").map(r => (
-                    <div key={r.id} className="bg-white p-4 rounded-2xl border border-indigo-50 shadow-sm flex flex-col gap-3">
-                      <div className="flex justify-between items-start">
-                        <div className="text-sm font-black text-gray-800 leading-tight">{r.text}</div>
-                        <div className="text-[10px] font-bold text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">{r.dueDate}</div>
-                      </div>
-                      <button
-                        onClick={() => completeReminder(r)}
-                        className="w-full py-2.5 bg-indigo-600 hover:bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-indigo-900/10 flex items-center justify-center gap-2"
-                      >
-                        ✓ Mark Goal as Reached
-                      </button>
-                    </div>
-                  ))}
+                  {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending")
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                    .map(r => {
+                      const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
+                      return (
+                        <div key={r.id} className={`bg-white p-4 rounded-2xl border-2 shadow-sm flex flex-col gap-3 ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-indigo-50'}`}>
+                          <div className="flex justify-between items-start">
+                            <div className="text-sm font-black text-gray-800 leading-tight">{r.text}</div>
+                            <div className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-indigo-400 bg-indigo-50 border-indigo-100'}`}>{r.dueDate}</div>
+                          </div>
+                          <button
+                            onClick={() => completeReminder(r)}
+                            className="w-full py-2.5 bg-indigo-600 hover:bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-indigo-900/10 flex items-center justify-center gap-2"
+                          >
+                            ✓ Mark Goal as Reached
+                          </button>
+                        </div>
+                      );
+                    })}
                 </div>
               )}
 
-              <button
-                onClick={() => setShowActivity(true)}
-                className="w-full bg-indigo-600 text-white py-4.5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/10 mb-8 active:scale-95 transition-all flex items-center justify-center gap-3 border-b-4 border-indigo-800"
-              >
-                <span>➕</span> {currentUser === "Manager" ? "Add Manager Note" : "Add Interaction"}
-              </button>
+              {currentUser === "Manager" ? (
+                <div className="flex gap-2 mb-8">
+                  <button
+                    onClick={() => setShowActivity(true)}
+                    className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 border-b-4 border-indigo-800"
+                  >
+                    <span>💬</span> Add Interaction
+                  </button>
+                  <button
+                    onClick={() => { setActivityPurpose("Manager Note"); setShowActivity(true); }}
+                    className="flex-1 bg-blue-600 text-white py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 border-b-4 border-blue-800"
+                  >
+                    <span>🛡️</span> Manager Note
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowActivity(true)}
+                  className="w-full bg-indigo-600 text-white py-4.5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/10 mb-8 active:scale-95 transition-all flex items-center justify-center gap-3 border-b-4 border-indigo-800"
+                >
+                  <span>➕</span> Add Interaction
+                </button>
+              )}
 
 
               <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2 flex justify-between items-center">
@@ -1342,15 +1431,21 @@ export default function App() {
 
               <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2">Timeline</h3>
               {activities.filter(a => a.dealId === selectedDeal.id).length === 0 && <div className="text-gray-500 italic text-sm">No activity yet</div>}
-              {activities.filter(a => a.dealId === selectedDeal.id).map((a, i) => (
-                <div key={i} className={`p-2 my-2 rounded text-sm shadow-sm ${a.notes.includes("Manager Note") ? "bg-indigo-50 border border-indigo-200 text-indigo-900" : "bg-gray-50 border border-gray-200 text-gray-800"}`}>
-                  <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">
-                    <span>{a.owner} · {a.type}</span>
-                    <span>{a.date}</span>
+              {activities.filter(a => a.dealId === selectedDeal.id).map((a, i) => {
+                const isManagerNote = a.purpose === "Manager Note";
+                return (
+                  <div key={i} className={`p-3 my-3 rounded-2xl text-sm shadow-sm border-2 ${isManagerNote ? "bg-emerald-50 border-emerald-100 text-emerald-900" : (a.owner === "Manager" ? "bg-indigo-50 border-indigo-100 text-indigo-900" : "bg-gray-50 border-gray-100 text-gray-800")}`}>
+                    <div className="flex justify-between text-[9px] font-black mb-2 uppercase tracking-[0.1em] opacity-60">
+                      <span>{a.owner} · {isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION")}</span>
+                      <span>{a.date}</span>
+                    </div>
+                    <div className="font-semibold leading-tight">
+                      {isManagerNote && <span className="mr-1">👑</span>}
+                      {a.notes}
+                    </div>
                   </div>
-                  {a.notes}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )
@@ -1558,20 +1653,25 @@ export default function App() {
                   <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-200 font-black uppercase tracking-widest">Next Steps</span>
                 </h3>
                 <div className="space-y-3">
-                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").map(r => (
-                    <div key={r.id} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="text-xs font-black text-gray-800 leading-tight">{r.text}</div>
-                        <div className="text-[10px] font-bold text-gray-400 whitespace-nowrap ml-2">{r.dueDate}</div>
-                      </div>
-                      <button
-                        onClick={() => completeReminder(r)}
-                        className="w-full mt-2 py-2 bg-indigo-50 hover:bg-green-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100 hover:border-green-600"
-                      >
-                        ✓ Complete Task
-                      </button>
-                    </div>
-                  ))}
+                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending")
+                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                    .map(r => {
+                      const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
+                      return (
+                        <div key={r.id} className={`p-4 bg-white border-2 rounded-2xl shadow-sm ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-gray-100'}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="text-xs font-black text-gray-800 leading-tight">{r.text}</div>
+                            <div className={`text-[10px] font-bold whitespace-nowrap ml-2 px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-gray-400 border-none'}`}>{r.dueDate}</div>
+                          </div>
+                          <button
+                            onClick={() => completeReminder(r)}
+                            className="w-full mt-2 py-2 bg-indigo-50 hover:bg-green-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100 hover:border-green-600"
+                          >
+                            ✓ Complete Task
+                          </button>
+                        </div>
+                      )
+                    })}
                   {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").length === 0 && (
                     <div className="text-gray-400 text-xs italic py-4 text-center bg-white rounded-2xl border border-dashed border-gray-200">No pending follow-ups.</div>
                   )}
@@ -1598,20 +1698,26 @@ export default function App() {
             <section className="mt-8 mb-12">
               <h3 className="font-black text-gray-800 border-b-2 border-indigo-100 pb-3 mb-6 text-sm uppercase tracking-[0.2em] text-indigo-900 px-2">Unified Interaction History</h3>
               <div className="relative pl-10 pr-2 border-l-4 border-indigo-50/50 space-y-8 ml-4">
-                {activities.filter(a => a.accountId === selectedAccount.id).map((a, i) => (
-                  <div key={i} className="relative">
-                    <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500")}`}></div>
-                    <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5")}`}>
-                      <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest">
-                        <span className={a.type === 'audit' ? "text-red-600" : (a.dealId ? "text-blue-500" : "text-indigo-600")}>
-                          {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (a.dealId ? (deals.find(d => d.id === a.dealId)?.name.split('–')[1] || "DEAL") : "MARKETING VISIT")}
-                        </span>
-                        <span className="text-gray-400 font-bold">{a.date}</span>
+                {activities.filter(a => a.accountId === selectedAccount.id).map((a, i) => {
+                  const isManagerNote = a.purpose === "Manager Note";
+                  return (
+                    <div key={i} className="relative">
+                      <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (isManagerNote ? "bg-emerald-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500"))}`}></div>
+                      <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (isManagerNote ? "bg-emerald-50 border-emerald-100 shadow-emerald-900/5" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5"))}`}>
+                        <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest leading-none">
+                          <span className={a.type === 'audit' ? "text-red-600" : (isManagerNote ? "text-emerald-600" : (a.dealId ? "text-blue-500" : "text-indigo-600"))}>
+                            {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION"))}
+                          </span>
+                          <span className="text-gray-400 font-bold">{a.date}</span>
+                        </div>
+                        <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : (isManagerNote ? "text-emerald-900" : "text-gray-800")}`}>
+                          {isManagerNote && <span className="mr-1">👑</span>}
+                          {a.notes}
+                        </div>
                       </div>
-                      <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : "text-gray-800"}`}>{a.notes}</div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -1624,21 +1730,36 @@ export default function App() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100]">
             <div className="bg-white p-6 rounded-2xl w-[320px] shadow-2xl transition-all scale-100">
               <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 className="font-bold text-gray-800 text-sm uppercase">
-                  {isClosureDatePrompt ? "Confirm Closure Date" : isLostPrompt ? "Loss Analysis" : "Add Interaction"}
+                <h3 className={`font-black text-sm uppercase tracking-tight ${activityPurpose === "Manager Note" ? "text-emerald-700" : "text-gray-800"}`}>
+                  {activityPurpose === "Manager Note" ? "Strategic Manager Note" : (isClosureDatePrompt ? "Confirm Closure Date" : isLostPrompt ? "Loss Analysis" : "Add Interaction")}
                 </h3>
                 <button onClick={() => { setShowActivity(false); setIsClosureDatePrompt(false); setIsLostPrompt(false); setPendingStage(null); setActivityPurpose("Deal Follow-up"); }} className="text-gray-400 hover:text-gray-800 font-bold text-lg">&times;</button>
               </div>
 
-              {!isClosureDatePrompt && !isLostPrompt && (
+              {activityPurpose === "Manager Note" && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-[10px] font-bold leading-tight flex gap-2">
+                  <span>💡</span>
+                  This note will be highlighted in Green for the sales rep and bypasses standard activity tagging.
+                </div>
+              )}
+
+              {!isClosureDatePrompt && !isLostPrompt && activityPurpose !== "Manager Note" && (
                 <div className="mb-4">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Activity Purpose</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Purpose</label>
                   <select className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                     value={activityPurpose} onChange={(e) => setActivityPurpose(e.target.value)}>
                     {selectedDeal && <option>Deal Follow-up</option>}
                     <option>Field Scanning</option>
                     <option>Marketing</option>
-                    <option>Service Issue / Feedback</option>
+                    <option>Negotiation Meeting</option>
+                    <option>PO Follow up</option>
+                    <option>Payment Follow up</option>
+                    <option>Installation</option>
+                    <option>Application Support</option>
+                    <option>Demo</option>
+                    <option>Demo Feedback</option>
+                    <option>Service Issue</option>
+                    <option>Feedback</option>
                   </select>
                 </div>
               )}
@@ -2131,7 +2252,7 @@ export default function App() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {Object.keys(repData[rep].target).map(category => (
                     <div key={category} className="bg-white p-3 border rounded-xl shadow-sm">
-                      <label className="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">{category === 'total' ? 'Overall Quota' : category}</label>
+                      <label className="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">{category === 'annual' ? 'Annual Quota' : `${category.toUpperCase()} Quota`}</label>
                       <div className="relative">
                         <span className="absolute left-3 top-2.5 font-bold text-gray-400">₹</span>
                         <input type="number" value={repData[rep].target[category]} onChange={(e) => {
@@ -2290,6 +2411,44 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Haroon Notification (Due Today or Overdue) */}
+      {(() => {
+        const todayDate = new Date();
+        // Format YYYY-MM-DD reliably covering standard local time offsets
+        const offset = todayDate.getTimezoneOffset();
+        const todayLocal = new Date(todayDate.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+
+        const myDueToday = reminders.filter(r => new Date(r.dueDate) <= new Date(todayLocal) && r.status === "pending" && (currentUser === "Manager" || r.owner === currentUser));
+
+        if (myDueToday.length > 0 && !hideHaroonNotification) {
+          const isManager = currentUser === "Manager";
+          return (
+            <div className="fixed bottom-6 right-6 left-6 sm:left-auto bg-green-50 rounded-2xl shadow-2xl border-2 border-green-500 overflow-hidden z-[5000] max-w-sm animate-in slide-in-from-bottom-8">
+              <div className="bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 flex justify-between items-center">
+                <span className="flex items-center gap-2 animate-pulse">🛎️ Priority Action Required</span>
+                <button onClick={() => setHideHaroonNotification(true)} className="hover:bg-green-600 rounded px-1">&times;</button>
+              </div>
+              <div className="p-4 flex gap-4">
+                <div className="bg-white text-green-600 h-12 w-12 rounded-xl flex flex-col justify-center items-center shadow-inner font-black shrink-0 border border-green-100">
+                  <span className="text-[10px] uppercase">{new Date().toLocaleString('default', { month: 'short' })}</span>
+                  <span className="text-xl leading-none">{new Date().getDate()}</span>
+                </div>
+                <div>
+                  {/* Removed redundant header as requested */}
+                  <p className="text-xs text-green-700 font-medium mt-1">
+                    {isManager ? "The team has " : "You have "} {myDueToday.length} action{myDueToday.length > 1 ? 's' : ''} requiring attention today.
+                  </p>
+                  <button onClick={() => { setView("reminders"); setHideHaroonNotification(true); }} className="mt-2 text-[10px] font-black bg-white text-green-600 px-3 py-1.5 rounded border border-green-200 uppercase tracking-widest hover:bg-green-100">
+                    View Actions &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
     </div>
   );
