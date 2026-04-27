@@ -20,29 +20,29 @@ const initialRepData = {
 // 🔷 Demo dataset
 const initialDeals = [
   // --- "Basheer" (Salesperson 1) ---
-  { id: 1, name: "Al Shifa Hospital – SonoScape S50", stage: "Qualified", value: "₹22L", probability: 30, owner: "Basheer", risk: "Low", lastActivity: "Just now", timeline: [{ text: "Doctor interested in S50 Elite, requirement discussed" }] },
-  { id: 2, name: "City Scan – SonoScape E2", stage: "Demo", value: "₹18L", probability: 50, owner: "Basheer", risk: "Low", lastActivity: "Just now", timeline: [{ text: "Demo scheduled for E2 portable" }] },
-  { id: 3, name: "Iqra SonoScape X3", stage: "Order", value: "₹30L", probability: 100, owner: "Basheer", risk: "Low", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false },
-  { id: 4, name: "MIMS Clinic - P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", risk: "Medium", riskReason: "Budget approval delayed by CFO.", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }] },
-  { id: 5, name: "Baby Memorial - Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", risk: "High", riskReason: "Competitor heavily discounting.", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }] },
-  { id: 101, name: "Fathima Hospital - Defibrillator", stage: "Order", value: "₹10L", probability: 100, owner: "Basheer", risk: "Low", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true },
-  { id: 102, name: "Wayanad Medical - Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", risk: "High", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true },
+  { id: 1, name: "Al Shifa Hospital – SonoScape S50", stage: "Qualified", value: "₹22L", probability: 30, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Doctor interested in S50 Elite, requirement discussed" }], isPriority: false },
+  { id: 2, name: "City Scan – SonoScape E2", stage: "Demo", value: "₹18L", probability: 50, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Demo scheduled for E2 portable" }] },
+  { id: 3, name: "Iqra SonoScape X3", stage: "Order", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false },
+  { id: 4, name: "MIMS Clinic - P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }] },
+  { id: 5, name: "Baby Memorial - Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }], isPriority: true },
+  { id: 101, name: "Fathima Hospital - Defibrillator", stage: "Order", value: "₹10L", probability: 100, owner: "Basheer", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true },
+  { id: 102, name: "Wayanad Medical - Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true },
 
   // --- "Amit" (Salesperson 2) ---
-  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", risk: "Low", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }] },
-  { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", risk: "High", riskReason: "Tender process highly competitive.", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }] },
-  { id: 8, name: "Lakeshore Hospital - Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", risk: "Low", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }] },
-  { id: 9, name: "KIMS Trivandrum - Defibrillators", stage: "Order", value: "₹20L", probability: 100, owner: "Amit", risk: "Low", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false },
-  { id: 10, name: "SUT Hospital - ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", risk: "Medium", riskReason: "Customer requested extended warranty.", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }] },
-  { id: 103, name: "Amrita Hospital Kochi - SonoScape S22", stage: "Order", value: "₹25L", probability: 100, owner: "Amit", risk: "Low", lastActivity: "18d ago", timeline: [{ text: "Delivered" }], isLastMonth: true },
+  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }] },
+  { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }] },
+  { id: 8, name: "Lakeshore Hospital - Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }], isPriority: false },
+  { id: 9, name: "KIMS Trivandrum - Defibrillators", stage: "Order", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false },
+  { id: 10, name: "SUT Hospital - ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }] },
+  { id: 103, name: "Amrita Hospital Kochi - SonoScape S22", stage: "Order", value: "₹25L", probability: 100, owner: "Amit", lastActivity: "18d ago", timeline: [{ text: "Delivered" }], isLastMonth: true },
 
   // --- "Rahul" (Salesperson 3 - Bangalore Region) ---
-  { id: 11, name: "Apollo Hospitals – SonoScape P60", stage: "Negotiation", value: "₹25L", probability: 70, owner: "Rahul", risk: "Medium", riskReason: "Decision maker out of office for 2 weeks.", lastActivity: "2d ago", timeline: [{ text: "Commercial discussion ongoing" }] },
-  { id: 12, name: "NIMHANS - MRI Setup", stage: "Lead", value: "₹200L", probability: 10, owner: "Rahul", risk: "High", riskReason: "Technical specs need customization.", lastActivity: "4d ago", timeline: [{ text: "RFP received" }] },
-  { id: 13, name: "Manipal Hospital - Portable X-Ray", stage: "Demo", value: "₹10L", probability: 50, owner: "Rahul", risk: "Low", lastActivity: "1h ago", timeline: [{ text: "Scheduled demo" }] },
-  { id: 14, name: "Aster CMI - Hematology Analyzer", stage: "Order", value: "₹9L", probability: 100, owner: "Rahul", risk: "Low", lastActivity: "1d ago", timeline: [{ text: "Installation completed" }], isLastMonth: false },
-  { id: 15, name: "Fortis Hospital - SonoScape HD-500", stage: "Qualified", value: "₹45L", probability: 30, owner: "Rahul", risk: "Low", lastActivity: "Just now", timeline: [{ text: "Technical presentation delivered" }] },
-  { id: 104, name: "Sakra World - Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", risk: "High", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true }
+  { id: 11, name: "Apollo Hospitals – SonoScape P60", stage: "Negotiation", value: "₹25L", probability: 70, owner: "Rahul", lastActivity: "2d ago", timeline: [{ text: "Commercial discussion ongoing" }] },
+  { id: 12, name: "NIMHANS - MRI Setup", stage: "Lead", value: "₹200L", probability: 10, owner: "Rahul", lastActivity: "4d ago", timeline: [{ text: "RFP received" }] },
+  { id: 13, name: "Manipal Hospital - Portable X-Ray", stage: "Demo", value: "₹10L", probability: 50, owner: "Rahul", lastActivity: "1h ago", timeline: [{ text: "Scheduled demo" }], isPriority: true },
+  { id: 14, name: "Aster CMI - Hematology Analyzer", stage: "Order", value: "₹9L", probability: 100, owner: "Rahul", lastActivity: "1d ago", timeline: [{ text: "Installation completed" }], isLastMonth: false },
+  { id: 15, name: "Fortis Hospital - SonoScape HD-500", stage: "Qualified", value: "₹45L", probability: 30, owner: "Rahul", lastActivity: "Just now", timeline: [{ text: "Technical presentation delivered" }] },
+  { id: 104, name: "Sakra World - Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true }
 ];
 
 // 🔷 Customer Dataset (Phase 2)
@@ -67,20 +67,59 @@ const initialCustomers = [
 
 const initialCatalog = [
   // --- Ultrasound (SonoScape) ---
-  { id: 1, name: "SonoScape S50 Elite", category: "Ultrasound", priceRange: "₹25L - ₹35L", url: "https://www.sonoscapeindia.in/productdetails-5-discover-and-embrace-elite" },
-  { id: 2, name: "SonoScape X3", category: "Ultrasound", priceRange: "₹12L - ₹18L", url: "https://www.sonoscapeindia.in/productdetails-25-small-size-smart-sight" },
-  { id: 3, name: "SonoScape HD-550", category: "Ultrasound", priceRange: "₹45L - ₹75L", url: "https://www.sonoscapeindia.in/productdetails-10-full-hd-video-endoscopy-system" },
-  { id: 4, name: "SonoScape E2", category: "Ultrasound", priceRange: "₹8L - ₹12L", url: "https://www.sonoscapeindia.in/productdetails-58-sonoscape-e2-compact-color-doppler-ultrasound-system" },
-  { id: 5, name: "SonoScape P60 Exp", category: "Ultrasound", priceRange: "₹40L - ₹55L", url: "https://www.sonoscapeindia.in/productdetails-3-intelligent-future-attainable" },
+  {
+    id: 1, name: "SonoScape S50 Elite", category: "Ultrasound", priceRange: "₹25L - ₹35L",
+    collaterals: [
+      { label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-5-discover-and-embrace-elite" },
+      { label: "Clinical Images", url: "https://www.sonoscape.com/product/clinical_images/s50" }
+    ]
+  },
+  {
+    id: 2, name: "SonoScape X3", category: "Ultrasound", priceRange: "₹12L - ₹18L",
+    collaterals: [{ label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-25-small-size-smart-sight" }]
+  },
+  {
+    id: 3, name: "SonoScape HD-550", category: "Ultrasound", priceRange: "₹45L - ₹75L",
+    collaterals: [{ label: "Official Page", url: "https://www.sonoscapeindia.in/productdetails-10-full-hd-video-endoscopy-system" }]
+  },
+  {
+    id: 4, name: "SonoScape E2", category: "Ultrasound", priceRange: "₹8L - ₹12L",
+    collaterals: [{ label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-58-sonoscape-e2-compact-color-doppler-ultrasound-system" }]
+  },
+  {
+    id: 5, name: "SonoScape P60 Exp", category: "Ultrasound", priceRange: "₹40L - ₹55L",
+    collaterals: [
+      { label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-3-intelligent-future-attainable" },
+      { label: "Video Demo", url: "https://www.youtube.com/watch?v=demo" }
+    ]
+  },
 
   // --- Critical Care (Magnamed) ---
-  { id: 6, name: "Magnamed Fleximag Max", category: "Critical Care", priceRange: "₹18L - ₹28L", url: "https://www.inovacoesmagnamed.com.br/fleximagmaxen" },
-  { id: 7, name: "Magnamed OxyMag", category: "Critical Care", priceRange: "₹8L - ₹15L", url: "https://www.inovacoesmagnamed.com.br/oxymag-en" },
+  {
+    id: 6, name: "Magnamed Fleximag Max", category: "Critical Care", priceRange: "₹18L - ₹28L",
+    collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/fleximagmaxen" }]
+  },
+  {
+    id: 7, name: "Magnamed OxyMag", category: "Critical Care", priceRange: "₹8L - ₹15L",
+    collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/oxymag-en" }]
+  },
 
   // --- Critical Care (EDAN / Magnamed) ---
-  { id: 8, name: "EDAN i15 Blood Gas", category: "Critical Care", priceRange: "₹5L - ₹8L", url: "https://www.edan.com/product/e/i15_Blood_Gas_and_Chemistry_Analysis_System.html" },
-  { id: 9, name: "EDAN elite V Series", category: "Critical Care", priceRange: "₹12L - ₹22L", url: "https://www.edan.com/product/i/PM_elite_V_Series.html" },
-  { id: 10, name: "Magnamed Ventmeter", category: "Critical Care", priceRange: "₹4L - ₹6L", url: "https://www.inovacoesmagnamed.com.br/ventmeter-en" }
+  {
+    id: 8, name: "EDAN i15 Blood Gas", category: "Critical Care", priceRange: "₹5L - ₹8L",
+    collaterals: [
+      { label: "Brochure", url: "https://www.edan.com/product/e/i15_Blood_Gas_and_Chemistry_Analysis_System.html" },
+      { label: "Catalog Extract", url: "file:///C:/Users/Basheer/.gemini/antigravity/brain/4a1141d4-664e-49f1-b6fb-2bd5ed4da440/extract_edan_poct_1776388853938.webp" }
+    ]
+  },
+  {
+    id: 9, name: "EDAN elite V Series", category: "Critical Care", priceRange: "₹12L - ₹22L",
+    collaterals: [{ label: "Brochure", url: "https://www.edan.com/product/i/PM_elite_V_Series.html" }]
+  },
+  {
+    id: 10, name: "Magnamed Ventmeter", category: "Critical Care", priceRange: "₹4L - ₹6L",
+    collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/ventmeter-en" }]
+  }
 ];
 
 export default function App() {
@@ -156,7 +195,12 @@ export default function App() {
       return initialDeals;
     }
     const parsed = saved ? JSON.parse(saved) : initialDeals;
-    return parsed.map(d => d.owner === "You" ? { ...d, owner: "Basheer" } : d);
+    // Migrate: ensure every deal has isPriority field (defaults to false)
+    return parsed.map(d => ({
+      ...d,
+      owner: d.owner === "You" ? "Basheer" : d.owner,
+      isPriority: d.isPriority === true ? true : false
+    }));
   });
 
   const [customerSearch, setCustomerSearch] = useState("");
@@ -173,6 +217,8 @@ export default function App() {
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
   const [newStakeholderName, setNewStakeholderName] = useState("");
   const [newStakeholderRole, setNewStakeholderRole] = useState("");
+  const [newStakeholderPhone, setNewStakeholderPhone] = useState("");
+  const [newStakeholderEmail, setNewStakeholderEmail] = useState("");
 
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("All");
   const [wizardCategoryFilter, setWizardCategoryFilter] = useState("Ultrasound");
@@ -183,10 +229,13 @@ export default function App() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [newProductName, setNewProductName] = useState("");
   const [newProductCategory, setNewProductCategory] = useState("Ultrasound");
   const [newProductUrl, setNewProductUrl] = useState("");
+  const [newProductPrice, setNewProductPrice] = useState("");
+  const [newProductCollaterals, setNewProductCollaterals] = useState([]);
 
   const [catalog, setCatalog] = useState(() => {
     const saved = localStorage.getItem("sales_os_catalog");
@@ -196,6 +245,23 @@ export default function App() {
       return initialCatalog;
     }
     return saved ? JSON.parse(saved) : initialCatalog;
+  });
+
+  const [categoryAssignments, setCategoryAssignments] = useState(() => {
+    const saved = localStorage.getItem("sales_os_categoryAssignments");
+    return saved ? JSON.parse(saved) : {
+      "North Kerala": { "Ultrasound": "Basheer", "Critical Care": "Amit" },
+      "South Kerala": { "Ultrasound": "Amit", "Critical Care": "Basheer" },
+      "Bangalore": { "Ultrasound": "Rahul", "Critical Care": "Rahul" }
+    };
+  });
+
+  const [teams, setTeams] = useState(() => {
+    const saved = localStorage.getItem("sales_os_teams");
+    return saved ? JSON.parse(saved) : {
+      "Basheer": ["Basheer", "Rahul"],
+      "Amit": ["Amit"]
+    };
   });
 
   const [contacts, setContacts] = useState(() => {
@@ -269,6 +335,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("sales_os_reminders", JSON.stringify(reminders));
   }, [reminders]);
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_catalog", JSON.stringify(catalog));
+  }, [catalog]);
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_categoryAssignments", JSON.stringify(categoryAssignments));
+  }, [categoryAssignments]);
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_teams", JSON.stringify(teams));
+  }, [teams]);
 
   // Patch: Ensure reminders attached to a deal correctly inherit the deal's owner rather than the person who logged it
   useEffect(() => {
@@ -452,26 +530,77 @@ export default function App() {
 
   const createLead = () => {
     if (!selectedCustomerId) return;
-
     const customer = customers.find(c => c.id === parseInt(selectedCustomerId));
 
-    const newDeal = {
-      id: Date.now(),
-      name: `${customer.name} – ${leadName || "General Equipment"}`,
-      stage: "Lead",
-      value: leadValue ? `₹${leadValue}L` : "₹0L",
-      probability: 10,
-      owner: currentUser === "Manager" ? "Basheer" : currentUser,
-      risk: "Low",
-      lastActivity: "Just now",
-      timeline: [],
-      productIds: selectedProducts, // Store associated machines
-      source: leadSource,
-      campaign: leadCampaign,
-      region: leadRegion
-    };
+    // Identify categories
+    const selectedProductsObjs = catalog.filter(p => selectedProducts.includes(p.id));
+    const categories = [...new Set(selectedProductsObjs.map(p => {
+      // Direct category names from catalog
+      if (p.category === "Ultrasound") return "Ultrasound";
+      // Merge all others (Critical Care, Ventilator etc) into Critical Care per recent rules
+      return "Critical Care";
+    }))];
 
-    setDeals(prev => [newDeal, ...prev]);
+    // Splitting Logic: Trigger only if BOTH Ultrasound and Critical Care are present
+    if (categories.includes("Ultrasound") && categories.includes("Critical Care")) {
+      const gId = `GRP-${Date.now()}`;
+
+      const newDeals = categories.map(cat => {
+        const catProducts = selectedProductsObjs.filter(p => {
+          const pCat = p.category === "Ultrasound" ? "Ultrasound" : "Critical Care";
+          return pCat === cat;
+        });
+        const catProdIds = catProducts.map(p => p.id);
+        const catProdNames = catProducts.map(p => p.name).join(" & ");
+
+        // Find Supervisory Manager from Routing Map
+        const supervisoryManager = categoryAssignments[customer.zone]?.[cat] || "Manager";
+
+        return {
+          id: Date.now() + Math.random(),
+          name: `${customer.name} – ${catProdNames} (${cat})`,
+          stage: "Lead",
+          value: "₹0L", // User needs to set value for splits
+          probability: 10,
+          owner: currentUser === "Manager" ? supervisoryManager : currentUser,
+          supervisoryManager: supervisoryManager,
+          lastActivity: "Just now",
+          timeline: [{ text: `[SYSTEM] Automatically split from multi-category requirement. Group ID: ${gId}` }],
+          productIds: catProdIds,
+          groupId: gId,
+          category: cat,
+          source: leadSource,
+          campaign: leadCampaign,
+          region: customer.zone,
+          isPriority: false
+        };
+      });
+
+      setDeals(prev => [...newDeals, ...prev]);
+    } else {
+      // Single category or no categories (General)
+      const primaryCat = categories[0] || "Ultrasound";
+      const supervisoryManager = categoryAssignments[customer.zone]?.[primaryCat] || "Manager";
+
+      const newDeal = {
+        id: Date.now(),
+        name: `${customer.name} – ${leadName || "General Equipment"}`,
+        stage: "Lead",
+        value: leadValue ? `₹${leadValue}L` : "₹0L",
+        probability: 10,
+        owner: currentUser === "Manager" ? supervisoryManager : currentUser,
+        supervisoryManager: supervisoryManager,
+        lastActivity: "Just now",
+        timeline: [],
+        productIds: selectedProducts,
+        category: primaryCat,
+        source: leadSource,
+        campaign: leadCampaign,
+        region: customer.zone,
+        isPriority: false
+      };
+      setDeals(prev => [newDeal, ...prev]);
+    }
 
     // Reset wizard
     setLeadName("");
@@ -731,49 +860,66 @@ export default function App() {
                       {visibleDeals.filter(d => d.stage === stage).length}
                     </span>
                   </div>
-                  {visibleDeals.filter(d => d.stage === stage).map(deal => {
-                    const isMatch = matchesMetricFilter(deal);
-                    return (
-                      <div
-                        key={deal.id}
-                        className={`p-3 rounded-xl shadow mb-3 cursor-pointer transition-all duration-300 border-l-4 ${metricFilter && isMatch ? 'ring-2 ring-blue-400 shadow-lg scale-[1.02]' : metricFilter && !isMatch ? 'opacity-30' : ''}`}
-                        style={{
-                          backgroundColor: 'white',
-                          borderLeftColor: deal.risk === 'High' ? '#ef4444' : deal.risk === 'Medium' ? '#eab308' : '#22c55e'
-                        }}
-                        onClick={() => setSelectedDeal(deal)}
-                      >
-                        <div className="font-bold text-blue-900 text-sm mb-1 leading-tight">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const acc = customers.find(c => deal.name.includes(c.name));
-                              if (acc) setSelectedAccount(acc);
-                            }}
-                            className="hover:underline text-blue-600 decoration-blue-200"
-                          >
-                            {deal.name.split("–")[0]}
-                          </span>
-                          <span className="text-gray-300 font-normal mx-1">/</span>
-                          <span className="text-gray-700">{deal.name.split("–")[1] || deal.name}</span>
-                        </div>
-                        <div className="text-sm">{deal.value}</div>
-                        <div className="text-sm">🎯 {deal.probability}%</div>
-                        <div className="text-xs text-gray-500">{deal.lastActivity}</div>
-                        <div className="text-xs">Owner: {deal.owner}</div>
-                        <div className="text-xs">Risk: {deal.risk}</div>
-
-                        <select
-                          className="mt-2 w-full border rounded text-sm"
-                          value={deal.stage}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => changeStage(deal, e.target.value)}
+                  {visibleDeals.filter(d => d.stage === stage)
+                    .sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0) || b.probability - a.probability)
+                    .map(deal => {
+                      const isMatch = matchesMetricFilter(deal);
+                      return (
+                        <div
+                          key={deal.id}
+                          className={`p-3 rounded-xl shadow mb-3 cursor-pointer transition-all duration-300 border-l-4 ${metricFilter && isMatch ? 'ring-2 ring-blue-400 shadow-lg scale-[1.02]' : metricFilter && !isMatch ? 'opacity-30' : ''}`}
+                          style={{
+                            backgroundColor: 'white',
+                            borderLeftColor: deal.isPriority ? '#fbbf24' : '#60a5fa'
+                          }}
+                          onClick={() => setSelectedDeal(deal)}
                         >
-                          {stages.map(s => <option key={s}>{s}</option>)}
-                        </select>
-                      </div>
-                    );
-                  })}
+                          <div className="font-bold text-blue-900 text-sm mb-1 leading-tight">
+                            <span
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const acc = customers.find(c => deal.name.includes(c.name));
+                                if (acc) setSelectedAccount(acc);
+                              }}
+                              className="hover:underline text-blue-600 decoration-blue-200"
+                            >
+                              {deal.name.split("–")[0]}
+                            </span>
+                            <span className="text-gray-300 font-normal mx-1">/</span>
+                            <span className="text-gray-700">{deal.name.split("–")[1] || deal.name}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm font-bold mt-2">
+                            <div className="text-gray-900">{deal.value}</div>
+                            <div className="text-blue-600">🎯 {deal.probability}%</div>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] text-gray-500 mt-1 uppercase font-black tracking-widest opacity-70">
+                            <div>⏳ {deal.lastActivity}</div>
+                            <div>👤 {deal.owner}</div>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-3 mb-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateDeal(deal.id, { isPriority: !deal.isPriority });
+                              }}
+                              className={`p-1 w-7 h-7 rounded-lg transition-all flex items-center justify-center ${deal.isPriority ? "bg-amber-100 text-amber-500 shadow-sm border border-amber-200" : "bg-gray-50/50 text-gray-200 hover:text-gray-400 border border-transparent"}`}
+                            >
+                              <span className="text-sm leading-none">{deal.isPriority ? "⭐" : "☆"}</span>
+                            </button>
+                          </div>
+
+                          <select
+                            className="mt-2 w-full border rounded text-sm"
+                            value={deal.stage}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => changeStage(deal, e.target.value)}
+                          >
+                            {stages.map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </div>
+                      );
+                    })}
                 </div>
               ))}
             </div>
@@ -817,23 +963,13 @@ export default function App() {
                 }
                 return true;
               }))
-                .filter(d => {
-                  if (!metricFilter) return true;
-                  if (metricFilter === "orders") return d.stage === "Order";
-                  if (metricFilter === "hot") return d.probability >= 70 && d.stage !== "Order" && d.stage !== "Lost";
-                  if (metricFilter === "won") return d.stage === "Order" && d.isLastMonth;
-                  if (metricFilter === "lost") return d.stage === "Lost";
-                  return true;
-                })
-                .sort((a, b) => {
-                  const riskScore = { "High": 3, "Medium": 2, "Low": 1 };
-                  return (riskScore[b.risk] || 0) - (riskScore[a.risk] || 0);
-                })
+                .filter(matchesMetricFilter)
+                .sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0) || b.probability - a.probability)
                 .map(deal => (
                   <div
                     key={deal.id}
-                    className="bg-white p-3 mb-2 rounded shadow border-l-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                    style={{ borderLeftColor: deal.risk === 'High' ? '#ef4444' : deal.risk === 'Medium' ? '#eab308' : '#22c55e' }}
+                    className="bg-white p-3 mb-2 rounded shadow border-l-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
+                    style={{ borderLeftColor: deal.isPriority ? '#fbbf24' : '#60a5fa' }}
                     onClick={() => setSelectedDeal(deal)}
                   >
                     <div className="flex justify-between items-center">
@@ -853,13 +989,11 @@ export default function App() {
                       </div>
                       <div className="font-bold text-gray-700">{deal.value}</div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">Stage: {deal.stage} &nbsp;|&nbsp; Owner: <strong>{deal.owner}</strong></div>
-                    <div className="text-sm text-gray-500 mt-1">🎯 {deal.probability}% &nbsp;|&nbsp; Risk: <span className={`font-semibold ${deal.risk === 'High' ? 'text-red-500' : deal.risk === 'Medium' ? 'text-yellow-500' : 'text-green-600'}`}>{deal.risk}</span> &nbsp;|&nbsp; Last Act: {deal.lastActivity}</div>
-                    {(deal.risk === "High" || deal.risk === "Medium") && deal.riskReason && (
-                      <div className="mt-2 p-2 bg-gray-50 border rounded text-xs text-gray-700 italic border-l-2 border-l-gray-400">
-                        <strong>Decision Context: </strong>{deal.riskReason}
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-600 mt-1 uppercase font-black text-[9px] tracking-widest opacity-60">Stage: {deal.stage} &nbsp;|&nbsp; Owner: <span className="text-blue-600">{deal.owner}</span></div>
+                    <div className="text-sm text-gray-500 mt-2 flex items-center justify-between">
+                      <div className="font-bold text-gray-800">🎯 {deal.probability}% &nbsp;|&nbsp; ⏳ {deal.lastActivity}</div>
+                      {deal.isPriority && <div className="text-amber-400 font-bold text-xs uppercase tracking-tighter">★ Priority</div>}
+                    </div>
                   </div>
                 ))}
             </div>
@@ -1060,13 +1194,22 @@ export default function App() {
             <div>
               <h2 className="text-2xl font-black text-gray-800 tracking-tight">Product Catalog</h2>
             </div>
-            <button
-              onClick={() => setIsAddingProduct(true)}
-              className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:shadow-xl active:scale-95 transition-all flex items-center gap-2"
-            >
-              <span className="text-lg">＋</span>
-              Machine
-            </button>
+            {currentUser === "Manager" && (
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setNewProductName("");
+                  setNewProductCategory("Ultrasound");
+                  setNewProductPrice("");
+                  setNewProductCollaterals([]);
+                  setIsProductModalOpen(true);
+                }}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:shadow-xl active:scale-95 transition-all flex items-center gap-2"
+              >
+                <span className="text-lg">＋</span>
+                Machine
+              </button>
+            )}
           </div>
 
           <div className="mb-8">
@@ -1089,18 +1232,36 @@ export default function App() {
                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{prod.category}</span>
                     <h3 className="font-extrabold text-gray-800 text-xl group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prod.name}</h3>
                   </div>
+                  {currentUser === "Manager" && (
+                    <button
+                      onClick={() => {
+                        setEditingProduct(prod);
+                        setNewProductName(prod.name);
+                        setNewProductCategory(prod.category);
+                        setNewProductPrice(prod.priceRange || "");
+                        setNewProductCollaterals(prod.collaterals || [{ label: "Brochure", url: prod.url }]);
+                        setIsProductModalOpen(true);
+                      }}
+                      className="w-8 h-8 bg-gray-50 flex items-center justify-center rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100 shadow-sm"
+                    >
+                      ✎
+                    </button>
+                  )}
                 </div>
                 <div className="text-xs font-bold text-gray-400 uppercase tracking-[0.1em] mb-6">Estimated Range: <span className="text-gray-700">{prod.priceRange}</span></div>
 
-                <div className="mt-auto pt-4 border-t border-gray-50 flex gap-2">
-                  <a
-                    href={prod.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 text-center py-4 bg-gray-50 border-2 border-gray-100 text-blue-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm"
-                  >
-                    View Brochure & Images &rarr;
-                  </a>
+                <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 gap-2">
+                  {(prod.collaterals || [{ label: "Brochure & specs", url: prod.url }]).map((link, idx) => (
+                    <a
+                      key={idx}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full text-center py-3 bg-gray-50 border border-gray-100 text-blue-600 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>📄</span> {link.label} &rarr;
+                    </a>
+                  ))}
                 </div>
               </div>
             ))}
@@ -1129,7 +1290,7 @@ export default function App() {
           </div>
 
           {/* KPI Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             {(() => {
               const decidedDeals = dashboardDealsRibbon.filter(d => d.stage === "Order" || d.stage === "Lost");
               const wonDeals = decidedDeals.filter(d => d.stage === "Order");
@@ -1149,6 +1310,21 @@ export default function App() {
 
               return (
                 <>
+                  <div
+                    onClick={() => {
+                      const priorityDeals = activeD.filter(d => d.isPriority || d.probability >= 70);
+                      setDrilldownReport({ title: "Weekly Focus: High Priority & Starred", data: priorityDeals });
+                    }}
+                    className="bg-gradient-to-br from-amber-500 to-orange-600 p-5 rounded-2xl shadow-lg border border-amber-400 flex flex-col justify-between hover:scale-[1.02] transition-all cursor-pointer text-white sm:col-span-2 lg:col-span-1">
+                    <div className="text-[10px] font-black text-white/80 uppercase tracking-widest mb-2 flex justify-between">Weekly Focus <span>⭐</span></div>
+                    <div className="text-3xl font-extrabold">
+                      {activeD.filter(d => d.isPriority || d.probability >= 70).length}
+                    </div>
+                    <div className="text-[9px] text-white/90 font-bold mt-3 bg-black/10 rounded-lg px-2 py-1 inline-block w-fit border border-white/20 uppercase tracking-wider">
+                      High Prob & Starred &rarr;
+                    </div>
+                  </div>
+
                   <div
                     onClick={() => setDrilldownReport({ title: "Closed Won Deals", data: wonDeals })}
                     className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group">
@@ -1268,8 +1444,9 @@ export default function App() {
                   >
                     {selectedDeal.name.split('–')[0]} &rarr;
                   </div>
-                  <h2 className="font-extrabold text-3xl text-gray-800 leading-tight uppercase tracking-tight">
+                  <h2 className="font-extrabold text-3xl text-gray-800 leading-tight uppercase tracking-tight flex items-center gap-3">
                     {selectedDeal.name.split('–')[1] || selectedDeal.name}
+                    {selectedDeal.isPriority && <span className="text-amber-400 text-2xl">⭐</span>}
                   </h2>
                 </div>
                 <button
@@ -1280,7 +1457,7 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-3 gap-3 mb-8">
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100/50 shadow-inner">
                   <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 opacity-60">Stage</div>
                   <div className="text-[11px] font-black text-gray-800 uppercase tracking-tight">{selectedDeal.stage}</div>
@@ -1288,10 +1465,6 @@ export default function App() {
                 <div className="bg-blue-50/30 p-4 rounded-3xl border border-blue-50 shadow-inner">
                   <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5 opacity-70">Probability</div>
                   <div className="text-[13px] font-black text-blue-600">{selectedDeal.probability}%</div>
-                </div>
-                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100/50 shadow-inner">
-                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 opacity-60">Risk</div>
-                  <div className={`text-[11px] font-black uppercase tracking-tight ${selectedDeal.risk === 'High' ? 'text-red-500' : selectedDeal.risk === 'Medium' ? 'text-orange-500' : 'text-green-500'}`}>{selectedDeal.risk}</div>
                 </div>
               </div>
 
@@ -1326,15 +1499,58 @@ export default function App() {
                 </div>
               </div>
 
-              {(selectedDeal.risk === 'High' || selectedDeal.risk === 'Medium') && (selectedDeal.riskReason || selectedDeal.decisionContext) && (
-                <div className="mb-6 p-5 bg-red-50/50 border-2 border-red-100 text-red-800 rounded-[28px] text-[13px] flex gap-3 shadow-inner">
-                  <span className="text-xl">⚠️</span>
-                  <div>
-                    <span className="font-black uppercase text-[10px] block mb-1 tracking-widest opacity-70">Strategic Risk Alert</span>
-                    {selectedDeal.riskReason || selectedDeal.decisionContext}
+              {/* PO Grouping / Linked Deals UI */}
+              {selectedDeal.groupId && (
+                <div className="mb-10 bg-white p-6 rounded-[32px] border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/30 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700"></div>
+                  <div className="relative">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="text-blue-500">🔗</span> Shared Purchase Order Group
+                    </h3>
+                    <div className="space-y-3">
+                      {deals.filter(d => d.groupId === selectedDeal.groupId && d.id !== selectedDeal.id).map(linked => (
+                        <div key={linked.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                          <div>
+                            <div className="text-[11px] font-black text-gray-800 leading-tight uppercase tracking-tight">{linked.name.split('–')[1] || linked.name}</div>
+                            <div className="text-[9px] font-bold text-gray-400 uppercase">{linked.owner} • {linked.stage}</div>
+                          </div>
+                          <button
+                            onClick={() => setSelectedDeal(linked)}
+                            className="bg-white px-3 py-1.5 rounded-xl border border-gray-100 text-[9px] font-black text-blue-600 hover:bg-blue-600 hover:text-white transition-all uppercase tracking-widest shadow-sm"
+                          >
+                            View
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    {/* PO Detail Linking */}
+                    <div className="mt-6 pt-5 border-t border-gray-100 flex gap-4 items-center">
+                      <div className="flex-1">
+                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group PO Reference</label>
+                        <input
+                          type="text"
+                          placeholder="Link to common PO..."
+                          className="w-full bg-white border-2 border-gray-50 p-2 rounded-xl text-xs font-bold outline-none focus:border-blue-200 transition-all"
+                          value={selectedDeal.groupPONumber || ""}
+                          onChange={(e) => {
+                            const updatedVal = e.target.value;
+                            setDeals(prev => prev.map(d => d.groupId === selectedDeal.groupId ? { ...d, groupPONumber: updatedVal } : d));
+                            setSelectedDeal(prev => ({ ...prev, groupPONumber: updatedVal }));
+                          }}
+                        />
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group Total</div>
+                        <div className="text-sm font-black text-blue-900">
+                          ₹{deals.filter(d => d.groupId === selectedDeal.groupId).reduce((acc, d) => acc + (parseInt(d.value.replace('₹', '').replace('L', '')) || 0), 0)}L
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
+
+
 
               <div className="grid grid-cols-2 gap-3 mb-10">
                 <div className="bg-white p-5 rounded-[28px] border-2 border-gray-100 shadow-sm">
@@ -1590,8 +1806,26 @@ export default function App() {
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        <a
+                          href={`tel:${c.phone}`}
+                          title="Call Stakeholder"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
+                          onClick={(e) => !c.phone && e.preventDefault()}
+                        >
+                          📞
+                        </a>
+                        <a
+                          href={c.phone ? `https://wa.me/${c.phone.replace(/\D/g, '')}` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="WhatsApp Message"
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
+                          onClick={(e) => !c.phone && e.preventDefault()}
+                        >
+                          💬
+                        </a>
                         <button
-                          onClick={() => { setEditingStakeholder(c); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); }}
+                          onClick={() => { setEditingStakeholder(c); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); setNewStakeholderPhone(c.phone || ""); setNewStakeholderEmail(c.email || ""); }}
                           className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-[10px]"
                         >
                           ✎
@@ -1614,7 +1848,7 @@ export default function App() {
                           }}
                           className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all font-bold text-[10px] ${currentUser !== "Manager" ? "opacity-30 cursor-not-allowed" : ""}`}
                         >
-                          ✕
+                          🗑
                         </button>
                       </div>
                     </div>
@@ -1682,9 +1916,12 @@ export default function App() {
                 <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider italic opacity-60">Deal History</h3>
                 <div className="space-y-3">
                   {deals.filter(d => d.name.includes(selectedAccount.name)).map(d => (
-                    <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
+                    <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" style={{ borderLeftWidth: '4px', borderLeftColor: d.isPriority ? '#fbbf24' : 'transparent' }} onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
                       <div>
-                        <div className="text-sm font-black text-blue-900 leading-tight">{d.name.split('–')[1] || d.name}</div>
+                        <div className="text-sm font-black text-blue-900 leading-tight flex items-center gap-2">
+                          {d.isPriority && <span className="text-amber-400">⭐</span>}
+                          {d.name.split('–')[1] || d.name}
+                        </div>
                         <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider">{d.stage} · {d.owner}</div>
                       </div>
                       <div className="font-black text-blue-900 text-lg">{d.value}</div>
@@ -1720,7 +1957,7 @@ export default function App() {
                 })}
               </div>
             </section>
-          </div>
+          </div >
         )
       }
 
@@ -2077,6 +2314,26 @@ export default function App() {
                     onChange={(e) => setNewStakeholderRole(e.target.value)}
                   />
                 </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Phone / WhatsApp</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all placeholder:font-medium"
+                    placeholder="+91 98765 43210"
+                    value={newStakeholderPhone}
+                    onChange={(e) => setNewStakeholderPhone(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Email Address</label>
+                  <input
+                    type="email"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all placeholder:font-medium"
+                    placeholder="doctor@hospital.com"
+                    value={newStakeholderEmail}
+                    onChange={(e) => setNewStakeholderEmail(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="mt-8 flex gap-3">
                 <button
@@ -2089,12 +2346,14 @@ export default function App() {
                   onClick={() => {
                     if (newStakeholderName && newStakeholderRole) {
                       if (editingStakeholder) {
-                        setContacts(prev => prev.map(con => con.id === editingStakeholder.id ? { ...con, name: newStakeholderName, role: newStakeholderRole } : con));
+                        setContacts(prev => prev.map(con => con.id === editingStakeholder.id ? { ...con, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail } : con));
                       } else {
-                        setContacts([...contacts, { id: Date.now(), accountId: selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(cust => selectedDeal.name.includes(cust.name))?.id : null), name: newStakeholderName, role: newStakeholderRole, influenceLevel: "Medium" }]);
+                        setContacts([...contacts, { id: Date.now(), accountId: selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(cust => selectedDeal.name.includes(cust.name))?.id : null), name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, influenceLevel: "Medium" }]);
                       }
                       setNewStakeholderName("");
                       setNewStakeholderRole("");
+                      setNewStakeholderPhone("");
+                      setNewStakeholderEmail("");
                       setEditingStakeholder(null);
                       setIsAddingStakeholder(false);
                     }
@@ -2111,237 +2370,105 @@ export default function App() {
       }
 
       {/* Edit Lead Modal */}
-      {isEditingLead && editLeadData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1200] p-4">
-          <div className="bg-white p-6 rounded-[32px] w-full max-w-[360px] shadow-2xl">
-            <h3 className="font-black text-gray-800 text-xl mb-6 tracking-tight uppercase">Edit Lead Details</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Deal Name</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editLeadData.name.split('–')[1] || editLeadData.name}
-                  onChange={(e) => setEditLeadData({ ...editLeadData, name: `${editLeadData.name.split('–')[0]}–${e.target.value}` })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+      {
+        isEditingLead && editLeadData && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1200] p-4">
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[360px] shadow-2xl">
+              <h3 className="font-black text-gray-800 text-xl mb-6 tracking-tight uppercase">Edit Lead Details</h3>
+              <div className="space-y-4">
                 <div>
-                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Value (₹ Lakhs)</label>
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Deal Name</label>
                   <input
                     type="text"
                     className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    value={editLeadData.value}
-                    onChange={(e) => setEditLeadData({ ...editLeadData, value: e.target.value })}
+                    value={editLeadData.name.split('–')[1] || editLeadData.name}
+                    onChange={(e) => setEditLeadData({ ...editLeadData, name: `${editLeadData.name.split('–')[0]}–${e.target.value}` })}
                   />
                 </div>
-                <div>
-                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Risk</label>
-                  <select
-                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    value={editLeadData.risk}
-                    onChange={(e) => {
-                      const newRisk = e.target.value;
-                      if (newRisk === 'Low') {
-                        setEditLeadData({ ...editLeadData, risk: newRisk, riskReason: '' });
-                      } else {
-                        setEditLeadData({ ...editLeadData, risk: newRisk });
-                      }
-                    }}
-                  >
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
-                </div>
-                {(editLeadData.risk === 'Medium' || editLeadData.risk === 'High') && (
-                  <div className="col-span-2">
-                    <label className="text-[9px] font-bold text-orange-500 uppercase tracking-widest mb-1 block">Risk Reason *</label>
-                    <textarea
-                      className="w-full border border-orange-200 p-3.5 rounded-2xl bg-orange-50/50 font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 min-h-[70px]"
-                      placeholder="Why is this deal Medium/High risk?"
-                      value={editLeadData.riskReason || ''}
-                      onChange={(e) => setEditLeadData({ ...editLeadData, riskReason: e.target.value })}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Value (₹ Lakhs)</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editLeadData.value}
+                      onChange={(e) => setEditLeadData({ ...editLeadData, value: e.target.value })}
                     />
                   </div>
-                )}
-              </div>
-              <div>
-                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Current Stage</label>
-                <select
-                  className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                  value={editLeadData.stage}
-                  onChange={(e) => setEditLeadData({ ...editLeadData, stage: e.target.value, probability: stageProbability[e.target.value] })}
-                >
-                  {stages.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => { setIsEditingLead(false); setEditLeadData(null); }}
-                className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setDeals(prev => prev.map(d => d.id === editLeadData.id ? editLeadData : d));
-                  setSelectedDeal(editLeadData);
-                  setIsEditingLead(false);
-                  setEditLeadData(null);
-                }}
-                className="flex-1 px-4 py-3.5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )
-      }
-
-      {/* Asset Form Modal */}
-      {showAssetModal && selectedAccount && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100]">
-          <div className="bg-white p-6 rounded-2xl w-[320px] shadow-2xl transition-all scale-100">
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h3 className="font-bold text-gray-800 text-sm uppercase tracking-widest">Log Equipment</h3>
-              <button onClick={() => { setShowAssetModal(false); setNewAssetModel(""); setNewAssetNotes(""); }} className="text-gray-400 hover:text-gray-800 font-bold text-lg">&times;</button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Equipment Model *</label>
-                <input type="text" className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50" placeholder="e.g. SonoScape S50" value={newAssetModel} onChange={e => setNewAssetModel(e.target.value)} autoFocus />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Installation Date *</label>
-                <input type="date" className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 cursor-pointer" value={newAssetInstallDate} onChange={e => setNewAssetInstallDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Service Notes / Status</label>
-                <textarea className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 min-h-[60px]" placeholder="Warranty status, upcoming service..." value={newAssetNotes} onChange={e => setNewAssetNotes(e.target.value)} />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { setShowAssetModal(false); setNewAssetModel(""); setNewAssetNotes(""); }} className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Cancel</button>
-                <button disabled={!newAssetModel} onClick={() => {
-                  setAssets([{ id: Date.now(), accountId: selectedAccount.id, type: newAssetModel, installDate: newAssetInstallDate, notes: newAssetNotes }, ...assets]);
-                  setShowAssetModal(false);
-                  setNewAssetModel("");
-                  setNewAssetNotes("");
-                }} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md">Log Asset</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings View */}
-      {view === "settings" && currentUser === "Manager" && (
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto w-full bg-gray-50">
-          <h2 className="text-2xl font-black text-gray-800 mb-6 uppercase tracking-tight flex items-center gap-3"><span className="text-3xl">⚙️</span> Target Setting</h2>
-          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm max-w-4xl mx-auto">
-            <div className="mb-6 opacity-60 text-sm font-medium">Update the sales quotas and targets for your field representatives. Changes take effect universally across the dashboard widgets.</div>
-            {Object.keys(repData).map(rep => (
-              <div key={rep} className="mb-6 p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                <h3 className="font-extrabold text-blue-900 text-lg mb-4 flex justify-between items-end border-b pb-2">
-                  <span>{rep === "Basheer" ? "Manager (Basheer)" : rep}</span>
-                  <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-lg uppercase tracking-widest">Zone: {repData[rep].zone}</span>
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.keys(repData[rep].target).map(category => (
-                    <div key={category} className="bg-white p-3 border rounded-xl shadow-sm">
-                      <label className="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">{category === 'annual' ? 'Annual Quota' : `${category.toUpperCase()} Quota`}</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 font-bold text-gray-400">₹</span>
-                        <input type="number" value={repData[rep].target[category]} onChange={(e) => {
-                          const updated = { ...repData };
-                          updated[rep].target[category] = parseInt(e.target.value) || 0;
-                          setRepData(updated);
-                        }} className="pl-8 pr-3 py-2 border border-gray-100 rounded-lg w-full font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <div>
+                    <div className="col-span-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase mb-3 block tracking-widest flex justify-between">
+                        <span>Deal Probability</span>
+                        <span className="text-blue-600">{editLeadData.probability}%</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                        value={editLeadData.probability}
+                        onChange={(e) => setEditLeadData({ ...editLeadData, probability: parseInt(e.target.value) })}
+                      />
+                      <div className="flex justify-between mt-2 text-[8px] font-bold text-gray-400 uppercase tracking-tighter">
+                        <span>0% (Cold)</span>
+                        <span>50% (Demo)</span>
+                        <span>100% (Order)</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Add Product Modal */}
-
-      {
-        isAddingProduct && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-4">
-            <div className="bg-white p-6 rounded-3xl w-full max-w-[400px] shadow-2xl">
-              <h3 className="font-extrabold text-gray-800 text-xl mb-6 tracking-tight">Add New Machine</h3>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Machine Name</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all placeholder:font-medium"
-                    placeholder="E.g. SonoScape S50 Elite"
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    autoFocus
-                  />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase mb-3 block tracking-widest flex justify-between">
+                      <span>Current Stage</span>
+                      <span className="text-blue-600 italic">Mandatory Interaction</span>
+                    </label>
+                    <select
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                      value={editLeadData.stage}
+                      onChange={(e) => {
+                        const newStage = e.target.value;
+                        if (newStage !== editLeadData.stage) {
+                          // Change the draft stage
+                          setEditLeadData({ ...editLeadData, stage: newStage, probability: stageProbability[newStage] });
+                          // Also trigger the interaction modal flow
+                          changeStage(editLeadData, newStage);
+                        }
+                      }}
+                    >
+                      {stages.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Category</label>
-                  <select
-                    value={newProductCategory}
-                    onChange={(e) => setNewProductCategory(e.target.value)}
-                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest">⭐ Priority Flag</span>
+                    <span className="text-[9px] text-amber-600 font-bold">Highlight in pipeline report</span>
+                  </div>
+                  <button
+                    onClick={() => setEditLeadData({ ...editLeadData, isPriority: !editLeadData.isPriority })}
+                    className={`w-12 h-6 rounded-full transition-all relative ${editLeadData.isPriority ? 'bg-amber-400' : 'bg-gray-200'}`}
                   >
-                    <option>Ultrasound</option>
-                    <option>Ventilator</option>
-                    <option>Critical Care</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Official Brochure URL (Collateral)</label>
-                  <input
-                    type="url"
-                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
-                    placeholder="https://www.manufacturer.com/..."
-                    value={newProductUrl}
-                    onChange={(e) => setNewProductUrl(e.target.value)}
-                  />
-                  <p className="text-[9px] text-gray-400 mt-2 italic font-medium px-1 leading-relaxed">Best practice: Use the official website link to ensure the latest documentation and reduce app size.</p>
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${editLeadData.isPriority ? 'left-7' : 'left-1'}`}></div>
+                  </button>
                 </div>
               </div>
 
               <div className="mt-8 flex gap-3">
                 <button
-                  onClick={() => setIsAddingProduct(false)}
+                  onClick={() => { setIsEditingLead(false); setEditLeadData(null); }}
                   className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => {
-                    if (newProductName) {
-                      const newProd = {
-                        id: Date.now(),
-                        name: newProductName,
-                        category: newProductCategory,
-                        priceRange: "TBD",
-                        url: newProductUrl || "#"
-                      };
-                      setCatalog([...catalog, newProd]);
-                      setNewProductName("");
-                      setNewProductUrl("");
-                      setIsAddingProduct(false);
-                    }
+                    setDeals(prev => prev.map(d => d.id === editLeadData.id ? editLeadData : d));
+                    setSelectedDeal(editLeadData);
+                    setIsEditingLead(false);
+                    setEditLeadData(null);
                   }}
-                  disabled={!newProductName}
-                  className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${newProductName ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"}`}
+                  className="flex-1 px-4 py-3.5 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200"
                 >
                   Save
                 </button>
@@ -2351,105 +2478,323 @@ export default function App() {
         )
       }
 
-      {/* Drilldown Report Modal */}
-      {drilldownReport && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[250] p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="bg-gray-50 w-full max-w-4xl max-h-[90vh] sm:rounded-[32px] rounded-t-[32px] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8">
-
-            <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
-              <div>
-                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{drilldownReport.data.length} Deals Found</h3>
-                <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">{drilldownReport.title}</h2>
+      {/* Asset Form Modal */}
+      {
+        showAssetModal && selectedAccount && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100]">
+            <div className="bg-white p-6 rounded-2xl w-[320px] shadow-2xl transition-all scale-100">
+              <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 className="font-bold text-gray-800 text-sm uppercase tracking-widest">Log Equipment</h3>
+                <button onClick={() => { setShowAssetModal(false); setNewAssetModel(""); setNewAssetNotes(""); }} className="text-gray-400 hover:text-gray-800 font-bold text-lg">&times;</button>
               </div>
-              <button onClick={() => setDrilldownReport(null)} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                <span className="text-xl text-gray-500 font-black">&times;</span>
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              {drilldownReport.data.length === 0 ? (
-                <div className="text-center py-20 text-gray-400 font-bold italic">No deals match this report filter.</div>
-              ) : (
-                <div className="grid gap-3">
-                  {drilldownReport.data.map(deal => (
-                    <div key={deal.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div>
-                        <div className="font-bold text-blue-900">{deal.name}</div>
-                        <div className="text-xs text-gray-500 mt-1 flex gap-3">
-                          <span>👤 {deal.owner}</span>
-                          <span>⏳ {deal.lastActivity}</span>
-                          <span>🚩 {deal.stage}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="font-extrabold text-gray-800">{deal.value}</div>
-                          <div className={`text-[10px] font-black uppercase tracking-wider ${deal.risk === "High" ? "text-red-500" : deal.risk === "Medium" ? "text-yellow-600" : "text-green-600"}`}>{deal.risk} Risk</div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setDrilldownReport(null);
-                            setSelectedDeal(deal);
-                          }}
-                          className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition-colors"
-                        >
-                          View Deal
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="p-4 bg-white border-t border-gray-200 text-right">
-              <button onClick={() => setDrilldownReport(null)} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors">
-                Close Report
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Haroon Notification (Due Today or Overdue) */}
-      {(() => {
-        const todayDate = new Date();
-        // Format YYYY-MM-DD reliably covering standard local time offsets
-        const offset = todayDate.getTimezoneOffset();
-        const todayLocal = new Date(todayDate.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
-
-        const myDueToday = reminders.filter(r => new Date(r.dueDate) <= new Date(todayLocal) && r.status === "pending" && (currentUser === "Manager" || r.owner === currentUser));
-
-        if (myDueToday.length > 0 && !hideHaroonNotification) {
-          const isManager = currentUser === "Manager";
-          return (
-            <div className="fixed bottom-6 right-6 left-6 sm:left-auto bg-green-50 rounded-2xl shadow-2xl border-2 border-green-500 overflow-hidden z-[5000] max-w-sm animate-in slide-in-from-bottom-8">
-              <div className="bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 flex justify-between items-center">
-                <span className="flex items-center gap-2 animate-pulse">🛎️ Priority Action Required</span>
-                <button onClick={() => setHideHaroonNotification(true)} className="hover:bg-green-600 rounded px-1">&times;</button>
-              </div>
-              <div className="p-4 flex gap-4">
-                <div className="bg-white text-green-600 h-12 w-12 rounded-xl flex flex-col justify-center items-center shadow-inner font-black shrink-0 border border-green-100">
-                  <span className="text-[10px] uppercase">{new Date().toLocaleString('default', { month: 'short' })}</span>
-                  <span className="text-xl leading-none">{new Date().getDate()}</span>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Equipment Model *</label>
+                  <input type="text" className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50" placeholder="e.g. SonoScape S50" value={newAssetModel} onChange={e => setNewAssetModel(e.target.value)} autoFocus />
                 </div>
                 <div>
-                  {/* Removed redundant header as requested */}
-                  <p className="text-xs text-green-700 font-medium mt-1">
-                    {isManager ? "The team has " : "You have "} {myDueToday.length} action{myDueToday.length > 1 ? 's' : ''} requiring attention today.
-                  </p>
-                  <button onClick={() => { setView("reminders"); setHideHaroonNotification(true); }} className="mt-2 text-[10px] font-black bg-white text-green-600 px-3 py-1.5 rounded border border-green-200 uppercase tracking-widest hover:bg-green-100">
-                    View Actions &rarr;
-                  </button>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Installation Date *</label>
+                  <input type="date" className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 cursor-pointer" value={newAssetInstallDate} onChange={e => setNewAssetInstallDate(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Service Notes / Status</label>
+                  <textarea className="w-full border border-gray-200 p-2 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 min-h-[60px]" placeholder="Warranty status, upcoming service..." value={newAssetNotes} onChange={e => setNewAssetNotes(e.target.value)} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowAssetModal(false); setNewAssetModel(""); setNewAssetNotes(""); }} className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                  <button disabled={!newAssetModel} onClick={() => {
+                    setAssets([{ id: Date.now(), accountId: selectedAccount.id, type: newAssetModel, installDate: newAssetInstallDate, notes: newAssetNotes }, ...assets]);
+                    setShowAssetModal(false);
+                    setNewAssetModel("");
+                    setNewAssetNotes("");
+                  }} className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md">Log Asset</button>
                 </div>
               </div>
             </div>
-          );
-        }
-        return null;
-      })()}
+          </div>
+        )
+      }
 
-    </div>
+      {/* Settings View */}
+      {
+        view === "settings" && currentUser === "Manager" && (
+          <div className="flex-1 p-4 sm:p-6 overflow-y-auto w-full bg-gray-50">
+            <h2 className="text-2xl font-black text-gray-800 mb-6 uppercase tracking-tight flex items-center gap-3"><span className="text-3xl">⚙️</span> Target Setting</h2>
+            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm max-w-4xl mx-auto">
+              <div className="mb-6 opacity-60 text-sm font-medium">Update the sales quotas and targets for your field representatives. Changes take effect universally across the dashboard widgets.</div>
+              {Object.keys(repData).map(rep => (
+                <div key={rep} className="mb-6 p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                  <h3 className="font-extrabold text-blue-900 text-lg mb-4 flex justify-between items-end border-b pb-2">
+                    <span>{rep === "Basheer" ? "Manager (Basheer)" : rep}</span>
+                    <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-lg uppercase tracking-widest">Zone: {repData[rep].zone}</span>
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {Object.keys(repData[rep].target).map(category => (
+                      <div key={category} className="bg-white p-3 border rounded-xl shadow-sm">
+                        <label className="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">{category === 'annual' ? 'Annual Quota' : `${category.toUpperCase()} Quota`}</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 font-bold text-gray-400">₹</span>
+                          <input type="number" value={repData[rep].target[category]} onChange={(e) => {
+                            const updated = { ...repData };
+                            updated[rep].target[category] = parseInt(e.target.value) || 0;
+                            setRepData(updated);
+                          }} className="pl-8 pr-3 py-2 border border-gray-100 rounded-lg w-full font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {/* Product Management Modal */}
+      {
+        isProductModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[420px] shadow-2xl flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-gray-800 text-xl tracking-tight uppercase">
+                  {editingProduct ? "Edit Product" : "Add New Machine"}
+                </h3>
+                <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-800 text-2xl font-bold">&times;</button>
+              </div>
+
+              <div className="space-y-5 overflow-y-auto pr-2 custom-scrollbar pb-4 flex-1">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Machine Name</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Category</label>
+                    <select
+                      value={newProductCategory}
+                      onChange={(e) => setNewProductCategory(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option>Ultrasound</option>
+                      <option>Critical Care</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Price Range</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                      placeholder="₹25L - ₹35L"
+                      value={newProductPrice}
+                      onChange={(e) => setNewProductPrice(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Collateral Links</label>
+                    <button
+                      onClick={() => setNewProductCollaterals([...newProductCollaterals, { label: "", url: "" }])}
+                      className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg uppercase tracking-wider hover:bg-blue-100"
+                    >
+                      + Add Link
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {newProductCollaterals.map((link, idx) => (
+                      <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2 relative group">
+                        <button
+                          onClick={() => setNewProductCollaterals(newProductCollaterals.filter((_, i) => i !== idx))}
+                          className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          &times;
+                        </button>
+                        <input
+                          type="text"
+                          placeholder="Label (e.g. Brochure)"
+                          className="w-full bg-white border border-gray-100 p-2 rounded-xl text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500"
+                          value={link.label}
+                          onChange={(e) => {
+                            const updated = [...newProductCollaterals];
+                            updated[idx].label = e.target.value;
+                            setNewProductCollaterals(updated);
+                          }}
+                        />
+                        <input
+                          type="url"
+                          placeholder="URL (https://...)"
+                          className="w-full bg-white border border-gray-100 p-2 rounded-xl text-xs font-medium outline-none focus:ring-1 focus:ring-blue-500"
+                          value={link.url}
+                          onChange={(e) => {
+                            const updated = [...newProductCollaterals];
+                            updated[idx].url = e.target.value;
+                            setNewProductCollaterals(updated);
+                          }}
+                        />
+                      </div>
+                    ))}
+                    {newProductCollaterals.length === 0 && (
+                      <div className="text-center py-4 bg-gray-50 border-2 border-dashed border-gray-100 rounded-2xl text-[10px] text-gray-400 font-bold uppercase tracking-widest italic">No collaterals added</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (newProductName) {
+                      const productData = {
+                        id: editingProduct ? editingProduct.id : Date.now(),
+                        name: newProductName,
+                        category: newProductCategory,
+                        priceRange: newProductPrice || "TBD",
+                        collaterals: newProductCollaterals.filter(l => l.label && l.url)
+                      };
+
+                      if (editingProduct) {
+                        setCatalog(prev => prev.map(p => p.id === editingProduct.id ? productData : p));
+                      } else {
+                        setCatalog(prev => [...prev, productData]);
+                      }
+
+                      setIsProductModalOpen(false);
+                      setEditingProduct(null);
+                      setNewProductName("");
+                      setNewProductPrice("");
+                      setNewProductCollaterals([]);
+                    }
+                  }}
+                  disabled={!newProductName}
+                  className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${newProductName ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"}`}
+                >
+                  {editingProduct ? "Update Catalog" : "Add to Catalog"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Drilldown Report Modal */}
+      {
+        drilldownReport && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[250] p-0 sm:p-4 animate-in fade-in duration-200">
+            <div className="bg-gray-50 w-full max-w-4xl max-h-[90vh] sm:rounded-[32px] rounded-t-[32px] overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-bottom-8">
+
+              <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-white sticky top-0 z-10">
+                <div>
+                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{drilldownReport.data.length} Deals Found</h3>
+                  <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">{drilldownReport.title}</h2>
+                </div>
+                <button onClick={() => setDrilldownReport(null)} className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <span className="text-xl text-gray-500 font-black">&times;</span>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                {drilldownReport.data.length === 0 ? (
+                  <div className="text-center py-20 text-gray-400 font-bold italic">No deals match this report filter.</div>
+                ) : (
+                  <div className="grid gap-3">
+                    {drilldownReport.data.map(deal => (
+                      <div key={deal.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <div className="font-bold text-blue-900 flex items-center gap-2">
+                            {deal.isPriority && <span className="text-amber-400">⭐</span>}
+                            {deal.name}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 flex gap-3">
+                            <span>👤 {deal.owner}</span>
+                            <span>⏳ {deal.lastActivity}</span>
+                            <span>🚩 {deal.stage}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="font-extrabold text-gray-800">{deal.value}</div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setDrilldownReport(null);
+                              setSelectedDeal(deal);
+                            }}
+                            className="px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg font-bold text-xs transition-colors"
+                          >
+                            View Deal
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-white border-t border-gray-200 text-right">
+                <button onClick={() => setDrilldownReport(null)} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors">
+                  Close Report
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )
+      }
+
+      {/* Haroon Notification (Due Today or Overdue) */}
+      {
+        (() => {
+          const todayDate = new Date();
+          // Format YYYY-MM-DD reliably covering standard local time offsets
+          const offset = todayDate.getTimezoneOffset();
+          const todayLocal = new Date(todayDate.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+
+          const myDueToday = reminders.filter(r => new Date(r.dueDate) <= new Date(todayLocal) && r.status === "pending" && (currentUser === "Manager" || r.owner === currentUser));
+
+          if (myDueToday.length > 0 && !hideHaroonNotification) {
+            const isManager = currentUser === "Manager";
+            return (
+              <div className="fixed bottom-6 right-6 left-6 sm:left-auto bg-green-50 rounded-2xl shadow-2xl border-2 border-green-500 overflow-hidden z-[5000] max-w-sm animate-in slide-in-from-bottom-8">
+                <div className="bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 flex justify-between items-center">
+                  <span className="flex items-center gap-2 animate-pulse">🛎️ Priority Action Required</span>
+                  <button onClick={() => setHideHaroonNotification(true)} className="hover:bg-green-600 rounded px-1">&times;</button>
+                </div>
+                <div className="p-4 flex gap-4">
+                  <div className="bg-white text-green-600 h-12 w-12 rounded-xl flex flex-col justify-center items-center shadow-inner font-black shrink-0 border border-green-100">
+                    <span className="text-[10px] uppercase">{new Date().toLocaleString('default', { month: 'short' })}</span>
+                    <span className="text-xl leading-none">{new Date().getDate()}</span>
+                  </div>
+                  <div>
+                    {/* Removed redundant header as requested */}
+                    <p className="text-xs text-green-700 font-medium mt-1">
+                      {isManager ? "The team has " : "You have "} {myDueToday.length} action{myDueToday.length > 1 ? 's' : ''} requiring attention today.
+                    </p>
+                    <button onClick={() => { setView("reminders"); setHideHaroonNotification(true); }} className="mt-2 text-[10px] font-black bg-white text-green-600 px-3 py-1.5 rounded border border-green-200 uppercase tracking-widest hover:bg-green-100">
+                      View Actions &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()
+      }
+
+    </div >
   );
 }
