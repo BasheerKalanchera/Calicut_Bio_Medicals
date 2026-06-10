@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 
-const stages = ["Lead", "Qualified", "Demo", "Negotiation", "Order", "Lost"];
+const stages = ["Lead", "Qualified", "Demo", "Negotiation", "Order", "Closed Won", "Lost"];
 
 const stageProbability = {
   Lead: 10,
   Qualified: 30,
   Demo: 50,
   Negotiation: 70,
-  Order: 100,
+  Order: 90,
+  "Closed Won": 100,
   Lost: 0
 };
 
@@ -20,33 +21,60 @@ const initialRepData = {
 const mockContributorsList = ["Basheer", "Amit", "Rahul", "Ahmed", "Rashid", "Niyas", "Firoz", "Anoop"];
 const mockRolesList = ["Account Manager", "Product Specialist", "Clinical Specialist", "Sales Engineer", "Closer", "Manager"];
 
+const isHoldOverdue = (deal) => {
+  if (deal.state !== "On Hold" || !deal.holdReactivationDate) return false;
+  const today = new Date();
+  const offset = today.getTimezoneOffset();
+  const todayLocal = new Date(today.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+  return deal.holdReactivationDate < todayLocal;
+};
+
+const getReactivationOverdueDays = (deal) => {
+  if (!deal.holdReactivationDate) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const reactDate = new Date(deal.holdReactivationDate);
+  reactDate.setHours(0, 0, 0, 0);
+  const diffTime = today - reactDate;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+};
+
+const deriveHandoverStatus = (checklist) => {
+  if (!checklist || checklist.length === 0) return "Pending";
+  const completedCount = checklist.filter(Boolean).length;
+  if (completedCount === 0) return "Pending";
+  if (completedCount === checklist.length) return "Completed";
+  return "In Progress";
+};
+
 // 🔷 Demo dataset
 const initialDeals = [
   // --- "Basheer" (Salesperson 1) ---
   { id: 1, name: "Al Shifa Hospital – SonoScape S50", stage: "Qualified", value: "₹22L", probability: 30, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Doctor interested in S50 Elite, requirement discussed" }], isPriority: false, state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 60 }, { user: "Amit", role: "Product Specialist", split: 40 }] },
   { id: 2, name: "City Scan – SonoScape E2", stage: "Demo", value: "₹18L", probability: 50, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Demo scheduled for E2 portable" }], state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 80 }, { user: "Rahul", role: "Clinical Specialist", split: 15 }] },
 
-  { id: 3, name: "Iqra SonoScape X3", stage: "Order", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false, state: "Active" },
-  { id: 4, name: "MIMS Clinic - P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }], state: "Active" },
-  { id: 5, name: "Baby Memorial - Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }], isPriority: true, state: "Active" },
-  { id: 101, name: "Fathima Hospital - Defibrillator", stage: "Order", value: "₹10L", probability: 100, owner: "Basheer", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true, state: "Active" },
-  { id: 102, name: "Wayanad Medical - Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true, state: "Active" },
+  { id: 3, name: "Iqra Hospital – SonoScape X3", stage: "Closed Won", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false, state: "Active", poNumber: "PO-39281" },
+  { id: 4, name: "MIMS Clinic – P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }], state: "Active" },
+  { id: 5, name: "Baby Memorial – Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }], isPriority: true, state: "Active" },
+  { id: 101, name: "Fathima Hospital – Defibrillator", stage: "Closed Won", value: "₹10L", probability: 100, owner: "Basheer", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true, state: "Active", poNumber: "PO-19203" },
+  { id: 102, name: "Wayanad Medical – Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true, state: "Active" },
 
   // --- "Amit" (Salesperson 2) ---
   { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }], state: "Active" },
   { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }], state: "On Hold", holdReason: "Budget Approval Pending", holdNotes: "State budget allocation delayed to next fiscal quarter. HOD confirmed interest remains.", holdReactivationDate: "2026-08-15" },
-  { id: 8, name: "Lakeshore Hospital - Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }], isPriority: false, state: "Active" },
-  { id: 9, name: "KIMS Trivandrum - Defibrillators", stage: "Order", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false, state: "Active" },
-  { id: 10, name: "SUT Hospital - ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }], state: "Active" },
-  { id: 103, name: "Amrita Hospital Kochi - SonoScape S22", stage: "Order", value: "₹25L", probability: 100, owner: "Amit", lastActivity: "18d ago", timeline: [{ text: "Delivered" }], isLastMonth: true, state: "Active" },
+  { id: 8, name: "Lakeshore Hospital – Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }], isPriority: false, state: "Active" },
+  { id: 9, name: "KIMS Trivandrum – Defibrillators", stage: "Closed Won", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false, state: "Active", poNumber: "PO-48291" },
+  { id: 10, name: "SUT Hospital – ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }], state: "Active" },
+  { id: 103, name: "Amrita Hospital Kochi – SonoScape S22", stage: "Closed Won", value: "₹25L", probability: 100, owner: "Amit", lastActivity: "18d ago", timeline: [{ text: "Delivered" }], isLastMonth: true, state: "Active", poNumber: "PO-29381" },
 
   // --- "Rahul" (Salesperson 3 - Bangalore Region) ---
   { id: 11, name: "Apollo Hospitals – SonoScape P60", stage: "Negotiation", value: "₹25L", probability: 70, owner: "Rahul", lastActivity: "2d ago", timeline: [{ text: "Commercial discussion ongoing" }], state: "Active" },
-  { id: 12, name: "NIMHANS - MRI Setup", stage: "Lead", value: "₹200L", probability: 10, owner: "Rahul", lastActivity: "4d ago", timeline: [{ text: "RFP received" }], state: "On Hold", holdReason: "Regulatory Approval", holdNotes: "AERB clearance pending for MRI installation. Expected 2-3 month delay.", holdReactivationDate: "2026-09-01" },
-  { id: 13, name: "Manipal Hospital - Portable X-Ray", stage: "Demo", value: "₹10L", probability: 50, owner: "Rahul", lastActivity: "1h ago", timeline: [{ text: "Scheduled demo" }], isPriority: true, state: "Active" },
-  { id: 14, name: "Aster CMI - Hematology Analyzer", stage: "Order", value: "₹9L", probability: 100, owner: "Rahul", lastActivity: "1d ago", timeline: [{ text: "Installation completed" }], isLastMonth: false, state: "Active" },
-  { id: 15, name: "Fortis Hospital - SonoScape HD-500", stage: "Qualified", value: "₹45L", probability: 30, owner: "Rahul", lastActivity: "Just now", timeline: [{ text: "Technical presentation delivered" }], state: "Active" },
-  { id: 104, name: "Sakra World - Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true, state: "Active" }
+  { id: 12, name: "NIMHANS – MRI Setup", stage: "Lead", value: "₹200L", probability: 10, owner: "Rahul", lastActivity: "4d ago", timeline: [{ text: "RFP received" }], state: "On Hold", holdReason: "Regulatory Approval", holdNotes: "AERB clearance pending for MRI installation. Expected 2-3 month delay.", holdReactivationDate: "2026-05-10" },
+  { id: 13, name: "Manipal Hospital – Portable X-Ray", stage: "Demo", value: "₹10L", probability: 50, owner: "Rahul", lastActivity: "1h ago", timeline: [{ text: "Scheduled demo" }], isPriority: true, state: "Active" },
+  { id: 14, name: "Aster CMI – Hematology Analyzer", stage: "Closed Won", value: "₹9L", probability: 100, owner: "Rahul", lastActivity: "1d ago", timeline: [{ text: "Installation completed" }], isLastMonth: false, state: "Active", poNumber: "PO-18302" },
+  { id: 15, name: "Fortis Hospital – SonoScape HD-500", stage: "Qualified", value: "₹45L", probability: 30, owner: "Rahul", lastActivity: "Just now", timeline: [{ text: "Technical presentation delivered" }], state: "Active" },
+  { id: 104, name: "Sakra World – Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true, state: "Active" }
 ];
 
 // 🔷 Customer Dataset (Phase 2)
@@ -66,8 +94,12 @@ const initialCustomers = [
   { id: 12, name: "NIMHANS", zone: "Bangalore", city: "Bangalore" },
   { id: 13, name: "Manipal Hospital", zone: "Bangalore", city: "Bangalore" },
   { id: 14, name: "Aster CMI", zone: "Bangalore", city: "Bangalore" },
-  { id: 15, name: "Fortis Hospital", zone: "Bangalore", city: "Bangalore" }
+  { id: 15, name: "Fortis Hospital", zone: "Bangalore", city: "Bangalore" },
+  { id: 17, name: "Fathima Hospital", zone: "North Kerala", city: "Calicut" },
+  { id: 18, name: "Wayanad Medical", zone: "North Kerala", city: "Wayanad" },
+  { id: 19, name: "Sakra World", zone: "Bangalore", city: "Bangalore" }
 ];
+
 
 const initialCatalog = [
   // --- Ultrasound (SonoScape) ---
@@ -160,7 +192,14 @@ export default function App() {
 
   const [customers, setCustomers] = useState(() => {
     const saved = localStorage.getItem("sales_os_customers");
-    return saved ? JSON.parse(saved) : initialCustomers;
+    if (!saved) return initialCustomers;
+    let parsed = JSON.parse(saved);
+    initialCustomers.forEach(initC => {
+      if (!parsed.some(c => c.id === initC.id || c.name === initC.name)) {
+        parsed.push(initC);
+      }
+    });
+    return parsed;
   });
 
   useEffect(() => {
@@ -199,7 +238,88 @@ export default function App() {
       localStorage.removeItem("sales_os_deals");
       return initialDeals;
     }
-    const parsed = saved ? JSON.parse(saved) : initialDeals;
+    let parsed = saved ? JSON.parse(saved) : initialDeals;
+
+    // Migrate older localStorage formats
+    parsed = parsed.map(d => {
+      if (d.name) {
+        let name = d.name;
+
+        // Correct wrong hospital names that got appended or are incorrect
+        if (name.includes("Iqra UST m/c")) {
+          name = name.replace("Iqra UST m/c", "Iqra Hospital");
+        }
+        if (name.includes("Baby Memorial - Patient Monitor")) {
+          name = name.replace("Baby Memorial - Patient Monitor", "Baby Memorial");
+        }
+        if (name.includes("SUT Hospital - ECG Machines")) {
+          name = name.replace("SUT Hospital - ECG Machines", "SUT Hospital");
+        }
+
+        // Restore proper name structure with EN dash if missing
+        if (!name.includes("–")) {
+          if (name.includes(" - ")) name = name.replace(" - ", " – ");
+          else if (name.includes(" -")) name = name.replace(" -", " – ");
+          else if (name.includes("- ")) name = name.replace("- ", " – ");
+          else if (name.includes("-")) name = name.replace("-", " – ");
+          else {
+            const initD = initialDeals.find(item => item.id === d.id);
+            if (initD) {
+              name = initD.name;
+            } else {
+              name = `${name} – Equipment`;
+            }
+          }
+        }
+
+        // Prevent duplicate hospital or equipment name suffix
+        if (name.includes("–")) {
+          let parts = name.split("–").map(p => p.trim());
+          if (parts.length === 2) {
+            let [hosp, equip] = parts;
+            if (hosp.includes(" - ")) {
+              hosp = hosp.split(" - ")[0].trim();
+            }
+            if (equip.startsWith(hosp)) {
+              equip = equip.replace(hosp, "").trim();
+              if (equip.startsWith("-")) equip = equip.substring(1).trim();
+              if (equip.startsWith("–")) equip = equip.substring(1).trim();
+            }
+            if (!equip) {
+              const initD = initialDeals.find(item => item.id === d.id);
+              if (initD && initD.name.includes("–")) {
+                equip = initD.name.split("–")[1].trim();
+              } else {
+                equip = "Equipment";
+              }
+            }
+            name = `${hosp} – ${equip}`;
+          }
+        }
+        d.name = name;
+      }
+
+      // Migrate Closed Won deals stuck in "Order" stage
+      if (d.stage === "Order" && (d.probability === 100 || d.poNumber || [3, 9, 14, 101, 103].includes(d.id))) {
+        let productIds = d.productIds || [];
+        if (productIds.length === 0) {
+          if (d.id === 3) productIds = [2]; // SonoScape X3
+          else if (d.id === 9) productIds = [9]; // EDAN elite V Series
+          else if (d.id === 14) productIds = [8]; // EDAN i15 Blood Gas
+          else if (d.id === 101) productIds = [9];
+          else if (d.id === 103) productIds = [1]; // SonoScape S50 Elite
+          else productIds = [1];
+        }
+        return {
+          ...d,
+          stage: "Closed Won",
+          probability: 100,
+          productIds
+        };
+      }
+      return d;
+    });
+
     // Migrate: ensure every deal has isPriority field (defaults to false)
     return parsed.map(d => {
       let contributors = d.contributors;
@@ -217,6 +337,7 @@ export default function App() {
         owner: d.owner === "You" ? "Basheer" : d.owner,
         isPriority: d.isPriority === true ? true : false,
         state: d.state || "Active",
+        poNumber: d.poNumber || "",
         contributors
       };
     });
@@ -248,6 +369,33 @@ export default function App() {
 
   const originalDeal = editLeadData ? deals.find(d => d.id === editLeadData.id) : null;
   const stageChanged = originalDeal && editLeadData && editLeadData.stage !== originalDeal.stage;
+
+  const openEditModal = (deal, preSelectedStage = null) => {
+    const stage = preSelectedStage || deal.stage;
+
+    setEditLeadData({
+      ...deal,
+      stage: stage,
+      activityInput: "",
+      activityPurpose: stage === "Negotiation" ? "Negotiation Meeting" : (stage === "Lost" ? "Loss Analysis" : "Deal Follow-up"),
+      closureDate: stage === "Negotiation" ? (deal.expectedClosureDate || "") : "",
+      isSchedulingFollowUp: false,
+      followUpDate: "",
+      followUpText: "",
+      budgetRange: deal.budgetRange || "",
+      demoDate: deal.demoDate || "",
+      demoOutcome: deal.demoOutcome || "",
+      handoverOwner: deal.handoverOwner || deal.owner || "",
+      deliveryNotes: deal.deliveryNotes || "",
+      installationRequirements: deal.installationRequirements || "",
+      specialCommitments: deal.specialCommitments || "",
+      handoverChecklist: deal.handoverChecklist || [false, false, false],
+      handoverStatus: deal.handoverStatus || "Pending",
+      poNumber: deal.poNumber || ""
+    });
+    setIsEditingLead(true);
+  };
+
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -696,9 +844,21 @@ export default function App() {
     return "ultrasound";
   };
 
-  const activePipelineDeals = dashboardDealsRibbon.filter(d => d.stage !== "Order" && d.stage !== "Lost" && d.state !== "On Hold");
+  const getBackLabel = () => {
+    switch (view) {
+      case "pipeline": return "Deals Pipeline";
+      case "manager": return "Deals List";
+      case "customers": return "Customer Directory";
+      case "catalog": return "Product Catalog";
+      case "reminders": return "Next Actions";
+      case "insights": return "Insights";
+      default: return "Dashboard";
+    }
+  };
 
-  const ordersDeals = dashboardDealsRibbon.filter(d => d.stage === "Order" && d.state !== "On Hold");
+  const activePipelineDeals = dashboardDealsRibbon.filter(d => d.stage !== "Closed Won" && d.stage !== "Lost" && d.state !== "On Hold");
+
+  const ordersDeals = dashboardDealsRibbon.filter(d => d.stage === "Closed Won" && d.state !== "On Hold");
   const bookedRevenue = ordersDeals.reduce((sum, deal) => sum + parseValue(deal.value), 0);
   const attainment = targetQuota > 0 ? Math.round((bookedRevenue / targetQuota) * 100) : 0;
 
@@ -717,16 +877,19 @@ export default function App() {
   };
 
   const stagnantDealsCount = activePipelineDeals.filter(d => getDaysAgo(d.lastActivity) > 7).length;
+  const overdueHoldCount = visibleDeals.filter(isHoldOverdue).length;
 
   const matchesMetricFilter = (deal) => {
     if (!metricFilter) return true;
-    if (metricFilter === "orders") return deal.stage === "Order";
-    if (metricFilter === "hot") return deal.stage !== "Order" && deal.stage !== "Lost";
-    if (metricFilter === "won") return deal.stage === "Order" && deal.isLastMonth;
+    if (metricFilter === "orders") return deal.stage === "Closed Won";
+    if (metricFilter === "hot") return deal.stage !== "Closed Won" && deal.stage !== "Lost";
+    if (metricFilter === "won") return deal.stage === "Closed Won" && deal.isLastMonth;
     if (metricFilter === "lost") return deal.stage === "Lost";
-    if (metricFilter === "stagnant") return deal.stage !== "Order" && deal.stage !== "Lost" && getDaysAgo(deal.lastActivity) > 7;
+    if (metricFilter === "stagnant") return deal.stage !== "Closed Won" && deal.stage !== "Lost" && getDaysAgo(deal.lastActivity) > 7;
+    if (metricFilter === "overduehold") return isHoldOverdue(deal);
     return true;
   };
+
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden relative">
@@ -758,7 +921,7 @@ export default function App() {
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 px-2">Main Navigation</h3>
             <div className="space-y-1">
               {[
-                { id: "pipeline", label: "Pipeline View", icon: "📊" },
+                { id: "pipeline", label: "Deals Pipeline", icon: "📊" },
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
@@ -842,11 +1005,23 @@ export default function App() {
       </div>
 
       {/* Stagnation Banner */}
-      {!selectedDeal && (view === "pipeline" || view === "manager") && stagnantDealsCount > 0 && (
-        <div className="bg-amber-100 border-b border-amber-200 px-4 py-2 flex items-center gap-3">
-          <span className="text-amber-600 font-bold">⚠️ Action Required</span>
-          <span className="text-amber-800 text-sm font-semibold">{stagnantDealsCount} pipeline deal{stagnantDealsCount > 1 ? 's have' : ' has'} no activity over the last 7 days.</span>
-          <button onClick={() => setMetricFilter("stagnant")} className="ml-auto bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase transition-colors shadow-sm">Review Stagnant</button>
+      {!selectedDeal && (view === "pipeline" || view === "manager") && (stagnantDealsCount > 0 || overdueHoldCount > 0) && (
+        <div className="bg-amber-100 border-b border-amber-200 px-4 py-2 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-amber-600 font-bold">⚠️ Action Required</span>
+            <span className="text-amber-800 text-sm font-semibold">
+              {stagnantDealsCount > 0 && `${stagnantDealsCount} pipeline deal${stagnantDealsCount > 1 ? 's have' : ' has'} no activity over the last 7 days. `}
+              {overdueHoldCount > 0 && `${overdueHoldCount} On Hold deal${overdueHoldCount > 1 ? 's are' : ' is'} overdue for reactivation.`}
+            </span>
+          </div>
+          <div className="flex gap-2 sm:ml-auto">
+            {stagnantDealsCount > 0 && (
+              <button onClick={() => setMetricFilter(metricFilter === "stagnant" ? null : "stagnant")} className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-colors shadow-sm ${metricFilter === "stagnant" ? "bg-amber-700 text-white" : "bg-amber-500 hover:bg-amber-600 text-white"}`}>Review Stagnant</button>
+            )}
+            {overdueHoldCount > 0 && (
+              <button onClick={() => setMetricFilter(metricFilter === "overduehold" ? null : "overduehold")} className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider transition-colors shadow-sm ${metricFilter === "overduehold" ? "bg-red-700 text-white" : "bg-red-500 hover:bg-red-600 text-white"}`}>Review Overdue Hold</button>
+            )}
+          </div>
         </div>
       )}
 
@@ -913,7 +1088,8 @@ export default function App() {
                           className={`p-3 rounded-xl shadow mb-3 cursor-pointer transition-all duration-300 border-l-4 ${deal.state === "On Hold" ? 'opacity-75' : ''} ${metricFilter && isMatch ? 'ring-2 ring-blue-400 shadow-lg scale-[1.02]' : metricFilter && !isMatch ? 'opacity-30' : ''}`}
                           style={{
                             backgroundColor: 'white',
-                            borderLeftColor: deal.isPriority ? '#fbbf24' : '#60a5fa'
+                            borderLeftColor: isHoldOverdue(deal) ? '#ef4444' : (deal.isPriority ? '#fbbf24' : '#60a5fa'),
+                            borderLeftWidth: isHoldOverdue(deal) ? '6px' : '4px'
                           }}
                           onClick={() => setSelectedDeal(deal)}
                         >
@@ -931,6 +1107,7 @@ export default function App() {
                             <span className="text-gray-300 font-normal mx-1">/</span>
                             <span className="text-gray-700">{deal.name.split("–")[1] || deal.name}</span>
                             {deal.state === "On Hold" && <span className="ml-1 px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md whitespace-nowrap">⏸ On Hold</span>}
+                            {isHoldOverdue(deal) && <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md whitespace-nowrap animate-pulse">🚨 Reactivation Overdue</span>}
                           </div>
                           <div className="flex justify-between items-center text-sm font-bold mt-2">
                             <div className="text-gray-900">{deal.value}</div>
@@ -965,7 +1142,7 @@ export default function App() {
                             className="mt-2 w-full border rounded text-sm"
                             value={deal.stage}
                             onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => changeStage(deal, e.target.value)}
+                            onChange={(e) => openEditModal(deal, e.target.value)}
                           >
                             {stages.map(s => <option key={s}>{s}</option>)}
                           </select>
@@ -1021,7 +1198,7 @@ export default function App() {
                   <div
                     key={deal.id}
                     className="bg-white p-3 mb-2 rounded shadow border-l-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
-                    style={{ borderLeftColor: deal.isPriority ? '#fbbf24' : '#60a5fa' }}
+                    style={{ borderLeftColor: isHoldOverdue(deal) ? '#ef4444' : (deal.isPriority ? '#fbbf24' : '#60a5fa'), borderLeftWidth: isHoldOverdue(deal) ? '6px' : '4px' }}
                     onClick={() => setSelectedDeal(deal)}
                   >
                     <div className="flex justify-between items-center">
@@ -1051,6 +1228,7 @@ export default function App() {
                         <span className="text-blue-600">{deal.owner}</span>
                       )}
                       {deal.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
+                      {isHoldOverdue(deal) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
                     </div>
                     <div className="text-sm text-gray-500 mt-2 flex items-center justify-between">
                       <div className="font-bold text-gray-800">🎯 {deal.probability}% &nbsp;|&nbsp; ⏳ {deal.lastActivity}</div>
@@ -1489,8 +1667,18 @@ export default function App() {
                 onClick={() => setSelectedDeal(null)}
                 className="mb-6 bg-gray-50 text-gray-400 hover:text-blue-600 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1 w-fit transition-all uppercase tracking-wider border border-gray-100"
               >
-                &larr; Back to Dashboard
+                &larr; Back to {getBackLabel()}
               </button>
+
+              {isHoldOverdue(selectedDeal) && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl flex items-start gap-3 shadow-sm animate-pulse">
+                  <span className="text-xl">🚨</span>
+                  <div className="text-xs font-semibold leading-relaxed">
+                    <span className="font-extrabold uppercase block text-[10px] text-red-600 tracking-wider mb-0.5">Hold Reactivation Overdue</span>
+                    This opportunity has remained On Hold past its expected reactivation date of <span className="font-extrabold underline">{selectedDeal.holdReactivationDate}</span>. Please resume the deal or update the hold reactivation settings.
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -1504,7 +1692,7 @@ export default function App() {
                     }}
                     className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] cursor-pointer hover:underline mb-2"
                   >
-                    {selectedDeal.name.split('–')[0]} &rarr;
+                    &larr; {selectedDeal.name.split('–')[0]}
                   </div>
                   <h2 className="font-extrabold text-3xl text-gray-800 leading-tight uppercase tracking-tight flex items-center gap-3">
                     {selectedDeal.name.split('–')[1] || selectedDeal.name}
@@ -1512,7 +1700,7 @@ export default function App() {
                   </h2>
                 </div>
                 <button
-                  onClick={() => { setEditLeadData(selectedDeal); setIsEditingLead(true); }}
+                  onClick={() => openEditModal(selectedDeal)}
                   className="w-12 h-12 bg-white border-2 border-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50/50 transition-all font-bold text-xl shadow-sm"
                 >
                   ✎
@@ -1663,6 +1851,112 @@ export default function App() {
                 </div>
               )}
 
+              {/* Closed Won Handover Review Widget (PB-005) */}
+              {(selectedDeal.stage === "Order" || selectedDeal.stage === "Closed Won") && (
+                <div className="mb-6 animate-in fade-in duration-300">
+                  <div className="bg-white p-6 rounded-[32px] border-2 border-gray-100 shadow-sm space-y-4">
+                    <div className="flex justify-between items-center border-b pb-3 border-gray-50">
+                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <span>📦</span> Closed Won Handover
+                      </div>
+                      {(() => {
+                        const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                        const status = deriveHandoverStatus(checklist);
+                        const badgeColors = {
+                          Completed: "bg-emerald-500 text-white",
+                          "In Progress": "bg-blue-500 text-white",
+                          Pending: "bg-amber-500 text-white"
+                        };
+                        return (
+                          <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${badgeColors[status] || "bg-gray-500 text-white"}`}>
+                            {status}
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Handover Coordinator</span>
+                        <span className="font-extrabold uppercase text-gray-800">{selectedDeal.handoverOwner || selectedDeal.owner || "Basheer"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Checklist Completion</span>
+                        {(() => {
+                          const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                          const completedCount = checklist.filter(Boolean).length;
+                          const pct = Math.round((completedCount / checklist.length) * 100);
+                          const filled = "■".repeat(completedCount);
+                          const empty = "□".repeat(checklist.length - completedCount);
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-gray-500 text-[10px] tracking-widest bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">[{filled}{empty}]</span>
+                              <span className="font-extrabold text-blue-600">{pct}%</span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    {selectedDeal.poNumber && (
+                      <div className="mt-3 pt-3 border-t border-gray-50 flex flex-col">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Purchase Order Number</span>
+                        <span className="font-extrabold text-blue-700 uppercase">{selectedDeal.poNumber}</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 pt-3 border-t border-gray-50">
+                      <div>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Handover Checklist Items</span>
+                        <div className="space-y-1.5 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                          {[
+                            "Delivery schedule aligned with hospital readiness",
+                            "Installation pre-requisites review completed",
+                            "Clinical support staff assigned for onboarding"
+                          ].map((item, idx) => {
+                            const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                            const checked = checklist[idx] || false;
+                            return (
+                              <div key={idx} className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                                <span className={checked ? "text-emerald-500 text-sm font-black" : "text-gray-300 text-sm"}>
+                                  {checked ? "✓" : "○"}
+                                </span>
+                                <span className={checked ? "line-through text-gray-400" : "text-gray-700"}>{item}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Delivery Notes</span>
+                        <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                          {selectedDeal.deliveryNotes || <span className="text-gray-400 italic">No delivery notes entered.</span>}
+                        </div>
+                      </div>
+
+                      {selectedDeal.installationRequirements && (
+                        <div>
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Installation Requirements</span>
+                          <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                            {selectedDeal.installationRequirements}
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedDeal.specialCommitments && (
+                        <div>
+                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Special Commitments</span>
+                          <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                            {selectedDeal.specialCommitments}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
 
               <div className="grid grid-cols-2 gap-3 mb-10">
@@ -1736,11 +2030,8 @@ export default function App() {
               )}
 
 
-              <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2 flex justify-between items-center">
+              <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2">
                 Key Contacts
-                <button className="text-xs text-blue-600 font-semibold" onClick={() => {
-                  setIsAddingStakeholder(true);
-                }}>+ Add</button>
               </h3>
               <div className="flex gap-2 overflow-x-auto pb-2">
                 {contacts.filter(c => {
@@ -2029,7 +2320,7 @@ export default function App() {
                 <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider italic opacity-60">Deal History</h3>
                 <div className="space-y-3">
                   {deals.filter(d => d.name.includes(selectedAccount.name)).map(d => (
-                    <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" style={{ borderLeftWidth: '4px', borderLeftColor: d.isPriority ? '#fbbf24' : 'transparent' }} onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
+                    <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" style={{ borderLeftWidth: '4px', borderLeftColor: isHoldOverdue(d) ? '#ef4444' : (d.isPriority ? '#fbbf24' : 'transparent') }} onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
                       <div>
                         <div className="text-sm font-black text-blue-900 leading-tight flex items-center gap-2">
                           {d.isPriority && <span className="text-amber-400">⭐</span>}
@@ -2038,6 +2329,7 @@ export default function App() {
                         <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider flex items-center gap-2">
                           <span>{d.stage} · {d.owner}</span>
                           {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
+                          {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
                         </div>
                       </div>
                       <div className="font-black text-blue-900 text-lg">{d.value}</div>
@@ -2405,7 +2697,7 @@ export default function App() {
       {/* Stakeholder Modal */}
       {
         isAddingStakeholder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1150] p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1300] p-4">
             <div className="bg-white p-6 rounded-3xl w-full max-w-[320px] shadow-2xl scale-100 transition-all">
               <h3 className="font-extrabold text-gray-800 text-xl mb-6 tracking-tight uppercase">{editingStakeholder ? "Update Stakeholder" : "Add Stakeholder"}</h3>
               <div className="space-y-4">
@@ -2464,7 +2756,8 @@ export default function App() {
                       if (editingStakeholder) {
                         setContacts(prev => prev.map(con => con.id === editingStakeholder.id ? { ...con, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail } : con));
                       } else {
-                        setContacts([...contacts, { id: Date.now(), accountId: selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(cust => selectedDeal.name.includes(cust.name))?.id : null), name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, influenceLevel: "Medium" }]);
+                        const accId = selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(cust => selectedDeal.name.includes(cust.name))?.id : (editLeadData ? customers.find(cust => editLeadData.name.includes(cust.name))?.id : null));
+                        setContacts([...contacts, { id: Date.now(), accountId: accId, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, influenceLevel: "Medium" }]);
                       }
                       setNewStakeholderName("");
                       setNewStakeholderRole("");
@@ -2566,88 +2859,285 @@ export default function App() {
                       {stages.map(s => <option key={s}>{s}</option>)}
                     </select>
                   </div>
+                  <div className="col-span-2 grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Lead Source</label>
+                      <select
+                        className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        value={editLeadData.source || "Direct Inquiry"}
+                        onChange={(e) => setEditLeadData({ ...editLeadData, source: e.target.value })}
+                      >
+                        <option value="Direct Inquiry">Direct Inquiry</option>
+                        <option value="Referral">Referral</option>
+                        <option value="CME/Conference">CME/Conference</option>
+                        <option value="Cold Call">Cold Call</option>
+                        <option value="Website">Website</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Marketing Campaign</label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="E.g. Q4 CME Event"
+                        value={editLeadData.campaign || ""}
+                        onChange={(e) => setEditLeadData({ ...editLeadData, campaign: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
+                  {/* Exit Criteria: Associated Products & Budget Range */}
+                  {["Qualified", "Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) && (
+                    <div className="col-span-2 space-y-3 p-4 bg-blue-50/20 border border-blue-100/50 rounded-2xl">
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Associated Products</label>
+                        <div className="bg-white border border-gray-100 p-3 rounded-xl space-y-2 max-h-32 overflow-y-auto">
+                          {catalog.map(prod => {
+                            const isSelected = (editLeadData.productIds || []).includes(prod.id);
+                            return (
+                              <label key={prod.id} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    const newProductIds = isSelected
+                                      ? (editLeadData.productIds || []).filter(id => id !== prod.id)
+                                      : [...(editLeadData.productIds || []), prod.id];
+                                    const selectedProductNames = catalog.filter(p => newProductIds.includes(p.id)).map(p => p.name);
+                                    const hospitalName = editLeadData.name.split('–')[0] || editLeadData.name;
+                                    const newName = selectedProductNames.length > 0
+                                      ? `${hospitalName}–${selectedProductNames.join(" & ")}`
+                                      : editLeadData.name;
+                                    setEditLeadData({
+                                      ...editLeadData,
+                                      productIds: newProductIds,
+                                      name: newName
+                                    });
+                                  }}
+                                />
+                                <span>{prod.name} ({prod.category})</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Budget Range *</label>
+                        <select
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editLeadData.budgetRange || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, budgetRange: e.target.value })}
+                        >
+                          <option value="">Select Budget Range...</option>
+                          <option value="₹5L - ₹10L">₹5L - ₹10L</option>
+                          <option value="₹10L - ₹15L">₹10L - ₹15L</option>
+                          <option value="₹15L - ₹25L">₹15L - ₹25L</option>
+                          <option value="₹25L - ₹40L">₹25L - ₹40L</option>
+                          <option value="₹40L+">₹40L+</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exit Criteria: Demo Date & Outcome */}
+                  {["Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) && (
+                    <div className="col-span-2 grid grid-cols-2 gap-3 p-4 bg-purple-50/20 border border-purple-100/50 rounded-2xl">
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Demo Date *</label>
+                        <input
+                          type="date"
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                          value={editLeadData.demoDate || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, demoDate: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Demo Outcome *</label>
+                        <select
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editLeadData.demoOutcome || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, demoOutcome: e.target.value })}
+                        >
+                          <option value="">Select Outcome...</option>
+                          <option value="Demo Successful - Highly Interested">Demo Successful - Highly Interested</option>
+                          <option value="Decision Pending">Decision Pending</option>
+                          <option value="Product Rejected">Product Rejected</option>
+                          <option value="Demo not required">Demo not required</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expected Closure Date (Qualified to Negotiation/Order) */}
+                  {["Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) && (
+                    <div className="col-span-2">
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Expected Closure Date *</label>
+                      <input
+                        type="date"
+                        className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        value={editLeadData.closureDate || editLeadData.expectedClosureDate || ""}
+                        onChange={(e) => setEditLeadData({ ...editLeadData, closureDate: e.target.value, expectedClosureDate: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {/* Lost Fields */}
+                  {editLeadData.stage === "Lost" && (
+                    <div className="col-span-2 grid grid-cols-2 gap-3 p-4 bg-red-50/20 border border-red-100/50 rounded-2xl">
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Lost Competitor *</label>
+                        <input
+                          type="text"
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="E.g. Mindray, GE"
+                          value={editLeadData.lostCompetitor || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, lostCompetitor: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Lost Reason *</label>
+                        <select
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editLeadData.lostReason || "Price"}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, lostReason: e.target.value })}
+                        >
+                          <option value="Price">Price</option>
+                          <option value="Feature Missing">Feature Missing</option>
+                          <option value="Relationship / Competitor Entrenched">Relationship / Competitor Entrenched</option>
+                          <option value="Budget Cancelled">Budget Cancelled</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Closed Won Handover Setup */}
+                  {["Order", "Closed Won"].includes(editLeadData.stage) && (
+                    <div className="col-span-2 border border-gray-100 p-4 rounded-2xl bg-gray-50/50 space-y-4">
+                      <div className="text-[10px] font-black text-blue-700 uppercase tracking-widest flex items-center gap-1.5">
+                        <span>📦</span> Handover Setup
+                      </div>
+
+                      {editLeadData.stage === "Closed Won" && (
+                        <div>
+                          <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Purchase Order Number *</label>
+                          <input
+                            type="text"
+                            className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="E.g. PO-12345"
+                            value={editLeadData.poNumber || ""}
+                            onChange={(e) => setEditLeadData({ ...editLeadData, poNumber: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Handover Coordinator *</label>
+                        <select
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editLeadData.handoverOwner || editLeadData.owner || "Basheer"}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, handoverOwner: e.target.value })}
+                        >
+                          {mockContributorsList.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Delivery Notes *</label>
+                        <textarea
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[50px]"
+                          placeholder="Enter downstream delivery and scheduling notes..."
+                          value={editLeadData.deliveryNotes || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, deliveryNotes: e.target.value })}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Installation Requirements</label>
+                        <textarea
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[50px]"
+                          placeholder="Power supply, room dimensions..."
+                          value={editLeadData.installationRequirements || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, installationRequirements: e.target.value })}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Special Commitments</label>
+                        <textarea
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 min-h-[50px]"
+                          placeholder="Extended warranty, probes..."
+                          value={editLeadData.specialCommitments || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, specialCommitments: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Handover Checklist</label>
+                        {[
+                          "Delivery schedule aligned with hospital readiness",
+                          "Installation pre-requisites review completed",
+                          "Clinical support staff assigned for onboarding"
+                        ].map((item, idx) => {
+                          const checklist = editLeadData.handoverChecklist || [false, false, false];
+                          const checked = checklist[idx] || false;
+                          return (
+                            <label key={idx} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const updatedChecklist = [...checklist];
+                                  updatedChecklist[idx] = e.target.checked;
+                                  setEditLeadData({ ...editLeadData, handoverChecklist: updatedChecklist });
+                                }}
+                              />
+                              <span>{item}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stage Transition Interaction Notes */}
                   {stageChanged && (
                     <div className="col-span-2 mt-4 p-4 rounded-2xl border border-blue-100 bg-blue-50/30 space-y-4">
                       <div className="text-[10px] font-black text-blue-700 uppercase tracking-widest flex items-center gap-1">
                         <span>💬</span> Stage Transition Interaction
                       </div>
 
-                      {/* Expected Closure Date for Negotiation */}
-                      {editLeadData.stage === "Negotiation" && (
-                        <div>
-                          <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Expected Closure Date *</label>
-                          <input
-                            type="date"
-                            className="w-full bg-white border border-gray-100 p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                            value={editLeadData.closureDate || ""}
-                            onChange={(e) => setEditLeadData({ ...editLeadData, closureDate: e.target.value })}
-                          />
-                        </div>
-                      )}
-
-                      {/* Loss Fields for Lost */}
-                      {editLeadData.stage === "Lost" && (
-                        <div className="space-y-3">
-                          <div>
-                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Competitor Name *</label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Mindray, GE, Siemens..."
-                              className="w-full bg-white border border-gray-100 p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                              value={editLeadData.lostCompetitor || ""}
-                              onChange={(e) => setEditLeadData({ ...editLeadData, lostCompetitor: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Loss Reason *</label>
-                            <select
-                              className="w-full bg-white border border-gray-100 p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                              value={editLeadData.lostReason || "Price"}
-                              onChange={(e) => setEditLeadData({ ...editLeadData, lostReason: e.target.value })}
-                            >
-                              <option>Price</option>
-                              <option>Feature Missing</option>
-                              <option>Relationship / Competitor Entrenched</option>
-                              <option>Budget Cancelled</option>
-                            </select>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Purpose Select for other stages */}
-                      {editLeadData.stage !== "Negotiation" && editLeadData.stage !== "Lost" && (
-                        <div>
-                          <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Purpose</label>
-                          <select
-                            className="w-full bg-white border border-gray-100 p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                            value={editLeadData.activityPurpose || "Deal Follow-up"}
-                            onChange={(e) => setEditLeadData({ ...editLeadData, activityPurpose: e.target.value })}
-                          >
-                            <option>Deal Follow-up</option>
-                            <option>Field Scanning</option>
-                            <option>Marketing</option>
-                            <option>Negotiation Meeting</option>
-                            <option>PO Follow up</option>
-                            <option>Payment Follow up</option>
-                            <option>Installation</option>
-                            <option>Application Support</option>
-                            <option>Demo</option>
-                            <option>Demo Feedback</option>
-                            <option>Service Issue</option>
-                            <option>Feedback</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Notes text area */}
                       <div>
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">
-                          {editLeadData.stage === "Lost" ? "Loss Details *" : editLeadData.stage === "Negotiation" ? "Negotiation Summary *" : "Interaction Notes *"}
-                        </label>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Purpose</label>
+                        <select
+                          className="w-full bg-white border border-gray-100 p-2.5 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                          value={editLeadData.activityPurpose || "Deal Follow-up"}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, activityPurpose: e.target.value })}
+                        >
+                          <option>Deal Follow-up</option>
+                          <option>Field Scanning</option>
+                          <option>Marketing</option>
+                          <option>Negotiation Meeting</option>
+                          <option>PO Follow up</option>
+                          <option>Payment Follow up</option>
+                          <option>Installation</option>
+                          <option>Application Support</option>
+                          <option>Demo</option>
+                          <option>Demo Feedback</option>
+                          <option>Service Issue</option>
+                          <option>Service Interaction</option>
+                          <option>Feedback</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Transition Notes *</label>
                         <textarea
                           className="w-full bg-white border border-gray-100 p-3 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
-                          placeholder={editLeadData.stage === "Lost" ? "Additional loss details..." : editLeadData.stage === "Negotiation" ? "Negotiation summary..." : "What did you discuss?"}
+                          placeholder="What did you discuss during this stage change?"
                           value={editLeadData.activityInput || ""}
                           onChange={(e) => setEditLeadData({ ...editLeadData, activityInput: e.target.value })}
                         />
@@ -2860,6 +3350,67 @@ export default function App() {
                     ＋ Add Contributor
                   </button>
                 </div>
+
+                {/* Key Contacts Section */}
+                <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Key Contacts</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingStakeholder(true);
+                      }}
+                      className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition-colors"
+                    >
+                      ＋ Add
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {contacts.filter(c => {
+                      const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
+                      return c.accountId === accId;
+                    }).map(c => (
+                      <div key={c.id} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-gray-800 leading-tight">{c.name}</div>
+                          <div className="text-[9px] text-gray-400 font-bold uppercase">{c.role}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingStakeholder(c);
+                              setNewStakeholderName(c.name);
+                              setNewStakeholderRole(c.role);
+                              setNewStakeholderPhone(c.phone || "");
+                              setNewStakeholderEmail(c.email || "");
+                              setIsAddingStakeholder(true);
+                            }}
+                            className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center font-bold text-[10px] transition-colors"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setContacts(prev => prev.filter(con => con.id !== c.id));
+                            }}
+                            className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center font-bold text-sm transition-colors"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {contacts.filter(c => {
+                      const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
+                      return c.accountId === accId;
+                    }).length === 0 && (
+                      <div className="text-gray-400 text-[10px] font-bold italic text-center py-2">No key contacts added yet.</div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="mt-8 flex gap-3">
@@ -2879,53 +3430,107 @@ export default function App() {
                     const originalDeal = deals.find(d => d.id === editLeadData.id);
                     if (!originalDeal) return;
 
-                    // 1. Contributor splits verification if stage is Order
-                    if (editLeadData.stage === "Order") {
-                      const contributors = editLeadData.contributors || [];
-                      const totalSplit = contributors.reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
-                      if (totalSplit !== 100) {
-                        if (totalSplit < 100) {
-                          setCustomAlert({
-                            title: "Split Verification",
-                            message: `Contribution allocation must total 100%.\n\nCurrent total: ${totalSplit}%`,
-                            type: "warning"
-                          });
-                        } else {
-                          setCustomAlert({
-                            title: "Split Verification",
-                            message: `Contribution allocation exceeds 100%.\n\nCurrent total: ${totalSplit}%`,
-                            type: "warning"
-                          });
-                        }
+                    const targetStage = editLeadData.stage;
+
+                    // 1. Stage Exit Criteria Validations
+
+                    // Lead -> Qualified: Product or Budget Range is missing
+                    if (["Qualified", "Demo", "Negotiation", "Order", "Closed Won"].includes(targetStage)) {
+                      if (!editLeadData.productIds || editLeadData.productIds.length === 0 || !editLeadData.budgetRange) {
+                        setCustomAlert({
+                          title: "Qualification Criteria Required",
+                          message: "Please enter Budget Range and select Products to Qualify the deal.",
+                          type: "warning"
+                        });
                         return;
                       }
                     }
 
-                    // 2. Stage change validations (inline fields)
-                    const stageChanged = originalDeal && editLeadData.stage !== originalDeal.stage;
-                    if (stageChanged) {
-                      // Check for note
-                      if (!editLeadData.activityInput || !editLeadData.activityInput.trim()) {
+                    // Qualified -> Demo: Demo Date is missing
+                    if (["Demo", "Negotiation", "Order", "Closed Won"].includes(targetStage)) {
+                      if (editLeadData.demoOutcome !== "Demo not required" && !editLeadData.demoDate) {
                         setCustomAlert({
-                          title: "Notes Required",
-                          message: editLeadData.stage === "Lost" ? "Please enter Loss Details." : editLeadData.stage === "Negotiation" ? "Please enter a Negotiation Summary." : "Please enter Interaction Notes.",
+                          title: "Demo Details Required",
+                          message: "Please enter Demo Date for the demo.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                    }
+
+                    // Demo -> Negotiation: Demo Outcome or Expected Closure Date is missing
+                    if (["Negotiation", "Order", "Closed Won"].includes(targetStage)) {
+                      const finalClosureDate = editLeadData.closureDate || editLeadData.expectedClosureDate;
+                      if (!editLeadData.demoOutcome || !finalClosureDate) {
+                        setCustomAlert({
+                          title: "Negotiation Details Required",
+                          message: "Please enter Demo Outcome and Expected Closure Date to transition to Negotiation.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                    }
+
+                    // Negotiation -> Order: Value, Product Details, Splits (where applicable), or Handover Info is missing
+                    if (["Order", "Closed Won"].includes(targetStage)) {
+                      // Value check: must be non-zero
+                      const rawVal = editLeadData.value || "";
+                      const cleanVal = parseFloat(rawVal.replace(/[^\d.]/g, "")) || 0;
+                      if (cleanVal <= 0) {
+                        setCustomAlert({
+                          title: "Value Required",
+                          message: "Please enter a valid non-zero deal value.",
                           type: "warning"
                         });
                         return;
                       }
 
-                      // Expected closure date validation
-                      if (editLeadData.stage === "Negotiation" && !editLeadData.closureDate) {
+                      // Product Details check
+                      if (!editLeadData.productIds || editLeadData.productIds.length === 0) {
                         setCustomAlert({
-                          title: "Date Required",
-                          message: "Please enter Expected Closure Date.",
+                          title: "Products Required",
+                          message: "Please select at least one product.",
                           type: "warning"
                         });
                         return;
                       }
 
-                      // Competitor validation
-                      if (editLeadData.stage === "Lost" && (!editLeadData.lostCompetitor || !editLeadData.lostCompetitor.trim())) {
+                      // Handover coordinator check
+                      if (!editLeadData.handoverOwner) {
+                        setCustomAlert({
+                          title: "Handover Coordinator Required",
+                          message: "Please select a Handover Coordinator.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+
+                      // Delivery Notes check
+                      if (!editLeadData.deliveryNotes || !editLeadData.deliveryNotes.trim()) {
+                        setCustomAlert({
+                          title: "Delivery Notes Required",
+                          message: "Please fill in the Delivery Notes for the handover.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+
+                      // Split verification (total must equal 100%)
+                      const contributors = editLeadData.contributors || [];
+                      const totalSplit = contributors.reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
+                      if (totalSplit !== 100) {
+                        setCustomAlert({
+                          title: "Split Verification",
+                          message: `Contribution allocation must total 100%.\n\nCurrent total: ${totalSplit}%`,
+                          type: "warning"
+                        });
+                        return;
+                      }
+                    }
+
+                    // Any Stage -> Closed Lost (Lost): Loss Reason or Competitor is missing
+                    if (targetStage === "Lost") {
+                      if (!editLeadData.lostCompetitor || !editLeadData.lostCompetitor.trim()) {
                         setCustomAlert({
                           title: "Competitor Required",
                           message: "Please enter Competitor Name.",
@@ -2933,27 +3538,69 @@ export default function App() {
                         });
                         return;
                       }
-
-                      // Follow-up Date validation if checked
-                      if (editLeadData.isSchedulingFollowUp && !editLeadData.followUpDate) {
+                      if (!editLeadData.lostReason || !editLeadData.lostReason.trim()) {
                         setCustomAlert({
-                          title: "Date Required",
-                          message: "Please set a Due Date for the follow-up task.",
+                          title: "Reason Required",
+                          message: "Please select Lost Reason.",
                           type: "warning"
                         });
                         return;
                       }
                     }
 
+                    // Order -> Closed Won: Purchase Order Number or Product Details is missing
+                    if (targetStage === "Closed Won") {
+                      if (!editLeadData.poNumber || !editLeadData.poNumber.trim()) {
+                        setCustomAlert({
+                          title: "Purchase Order Number Required",
+                          message: "Please enter the Purchase Order Number.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                      if (!editLeadData.productIds || editLeadData.productIds.length === 0) {
+                        setCustomAlert({
+                          title: "Products Required",
+                          message: "Please select at least one product.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                    }
+
+                    // 2. Transition notes & follow-up validations if stage changed
+                    const stageChanged = originalDeal && editLeadData.stage !== originalDeal.stage;
+                    if (stageChanged) {
+                      if (!editLeadData.activityInput || !editLeadData.activityInput.trim()) {
+                        setCustomAlert({
+                          title: "Notes Required",
+                          message: editLeadData.stage === "Lost" ? "Please enter Loss Details." : editLeadData.stage === "Negotiation" ? "Please enter a Negotiation Summary." : editLeadData.stage === "Closed Won" ? "Please enter Closed Won Notes." : "Please enter Interaction Notes.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                    }
+
+                    if (editLeadData.isSchedulingFollowUp && !editLeadData.followUpDate) {
+                      setCustomAlert({
+                        title: "Date Required",
+                        message: "Please set a Due Date for the follow-up task.",
+                        type: "warning"
+                      });
+                      return;
+                    }
+
                     // 3. Process activity logging if stage changed
                     if (stageChanged) {
                       const accountId = selectedAccount ? selectedAccount.id : (originalDeal ? customers.find(c => originalDeal.name.includes(c.name))?.id : null);
-                      
+
                       let finalNotes = editLeadData.activityInput || "";
                       if (editLeadData.stage === "Negotiation" && editLeadData.closureDate) {
                         finalNotes = `Moved to Negotiation. Exp. Closure: ${editLeadData.closureDate}. ` + finalNotes;
                       } else if (editLeadData.stage === "Lost") {
                         finalNotes = `Deal Lost to ${editLeadData.lostCompetitor || "Competitor"} due to ${editLeadData.lostReason || "Price"}. ` + finalNotes;
+                      } else if (editLeadData.stage === "Closed Won") {
+                        finalNotes = `Deal Closed Won with PO ${editLeadData.poNumber || "N/A"}. ` + finalNotes;
                       }
 
                       const newActivity = {
@@ -2961,7 +3608,7 @@ export default function App() {
                         accountId: accountId,
                         dealId: editLeadData.id,
                         notes: finalNotes,
-                        purpose: editLeadData.stage === "Negotiation" ? "Negotiation Meeting" : (editLeadData.stage === "Lost" ? "Loss Analysis" : (editLeadData.activityPurpose || "Deal Follow-up")),
+                        purpose: editLeadData.stage === "Negotiation" ? "Negotiation Meeting" : (editLeadData.stage === "Lost" ? "Loss Analysis" : (editLeadData.stage === "Closed Won" ? "PO Follow up" : (editLeadData.activityPurpose || "Deal Follow-up"))),
                         date: getFormattedDateTime(),
                         owner: currentUser
                       };
@@ -2988,22 +3635,19 @@ export default function App() {
                       probability: stageChanged ? stageProbability[editLeadData.stage] : editLeadData.probability,
                     };
 
-                    if (stageChanged) {
-                      if (editLeadData.stage === "Negotiation" && editLeadData.closureDate) {
-                        savedDealData.expectedClosureDate = editLeadData.closureDate;
-                      }
-                      if (editLeadData.stage === "Lost") {
-                        savedDealData.lostCompetitor = editLeadData.lostCompetitor;
-                        savedDealData.lostReason = editLeadData.lostReason;
-                      }
+                    // Map expected closure date
+                    if (editLeadData.closureDate) {
+                      savedDealData.expectedClosureDate = editLeadData.closureDate;
                     }
 
-                    // Delete the UI state variables
+                    // Derived handover status if Won
+                    if (editLeadData.stage === "Order" || editLeadData.stage === "Closed Won") {
+                      savedDealData.handoverStatus = deriveHandoverStatus(editLeadData.handoverChecklist || [false, false, false]);
+                    }
+
+                    // Clean up temporary UI state variables
                     delete savedDealData.activityInput;
                     delete savedDealData.activityPurpose;
-                    delete savedDealData.closureDate;
-                    delete savedDealData.lostCompetitor;
-                    delete savedDealData.lostReason;
                     delete savedDealData.isSchedulingFollowUp;
                     delete savedDealData.followUpDate;
                     delete savedDealData.followUpText;
@@ -3257,7 +3901,7 @@ export default function App() {
                 ) : (
                   <div className="grid gap-3">
                     {drilldownReport.data.map(deal => (
-                      <div key={deal.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div key={deal.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 border-l-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" style={{ borderLeftColor: isHoldOverdue(deal) ? '#ef4444' : (deal.isPriority ? '#fbbf24' : 'transparent'), borderLeftWidth: '4px' }}>
                         <div>
                           <div className="font-bold text-blue-900 flex items-center gap-2">
                             {deal.isPriority && <span className="text-amber-400">⭐</span>}
@@ -3274,6 +3918,7 @@ export default function App() {
                             <span>⏳ {deal.lastActivity}</span>
                             <span>🚩 {deal.stage}</span>
                             {deal.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
+                            {isHoldOverdue(deal) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">

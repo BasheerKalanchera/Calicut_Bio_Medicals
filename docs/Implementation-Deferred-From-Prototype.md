@@ -14,6 +14,7 @@ Action:
 Must be included during
 ERD, API Design and SDD.
 
+
 ID: DF-002
 
 Requirement:
@@ -28,6 +29,126 @@ Not required for Prototype Freeze.
 
 Action:
 Review during SDD preparation.
+
+---
+
+ID: DF-003
+
+Requirement:
+Opportunity Governance Workflows
+
+Source:
+PRD Section 8.1
+Capability Coverage Review
+
+Reason:
+Approval workflows are required for production governance but are not necessary for validating core CRM workflows during the prototype phase.
+
+The capability introduces significant workflow, authorization and security complexity that should be addressed during architecture and detailed design.
+
+Examples:
+
+* Probability Override Approval
+* Stage Exception Approval
+* Discount Approval
+* Split Ownership Approval
+* High Value Opportunity Approval
+
+Action:
+Document as an architectural requirement.
+
+Review during:
+
+* Business Rules Register
+* Design Decisions Register
+* Security Architecture
+* API Design
+* SDD Preparation
+
+Status:
+Deferred From Prototype
+
+---
+
+ID: DF-004
+
+Requirement:
+Document Management
+
+Source:
+PRD Section 1.4
+PRD Data Model B.2.13
+Capability Coverage Review
+
+Reason:
+Document management is required for production operations but is not essential for validating CRM workflows during the prototype phase.
+
+The capability introduces file storage, document security, document versioning and document lifecycle management requirements that should be addressed during architecture and detailed design.
+
+Examples:
+
+* PNDT Approvals
+* Form B Documents
+* Purchase Orders
+* Contracts
+* Quotations
+* Installation Certificates
+* Warranty Documents
+
+Action:
+Review during:
+
+* ERD Design
+* Storage Architecture Design
+* API Design
+* Security Design
+* SDD Preparation
+
+Expected Architecture:
+
+* Document Metadata → PostgreSQL
+* Document Files → Supabase Storage
+
+Status:
+Deferred From Prototype
+
+---
+
+ID: DF-005
+
+Requirement:
+Project Management Capabilities
+
+Source:
+PRD Section 3.6
+PB-026 – Project Opportunity Foundation
+
+Reason:
+Phase 1 supports only Project entity provisioning and Opportunity-to-Project association.
+
+Operational Project Management capabilities are not required for Prototype Freeze and introduce additional workflow, reporting, forecasting, analytics, and governance complexity beyond the approved Phase 1 scope.
+
+Examples:
+
+* Project Workspaces
+* Project Dashboards
+* Project Reporting
+* Project Forecasting
+* Project Progress Tracking
+* Project-Level Analytics
+* Project Approval Workflows
+
+Action:
+Review during:
+
+* ERD Design
+* API Design
+* Reporting & Analytics Design
+* Forecasting Design
+* SDD Preparation
+
+Status:
+Deferred From Prototype
 
 ## Future Enhancement Candidates
 

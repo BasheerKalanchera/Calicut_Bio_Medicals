@@ -39,16 +39,21 @@
 
 ---
 
-### PB-003 – Stage Exit Criteria Enforcement
+### PB-003 – Stage Transition Validation Enforcement
+
 * **Source:** REC-03
 * **Business Area:** Opportunity Management
-* **Description:** Enforce mandatory fields check before allowing an opportunity to advance in pipeline stages.
+* **Description:** Enforce mandatory information requirements before allowing an opportunity to progress through lifecycle stage transitions.
 * **Prototype Change Required:** Stage transition validation dialogs and blocking save rules.
+
 * **Acceptance Criteria:**
-  * Block transition to "Qualified" if Product or Budget range is missing
-  * Block transition to "Demo" if Demo Date or Demo Outcome is missing
-  * Block transition to "Closed Won" if Order Value or Product details are missing
-  * Block transition to "Closed Lost" if Loss Reason or Competitor is missing
+  * Block transition from **Lead → Qualified** if Product or Budget Range is missing
+  * Block transition from **Qualified → Demo** if Demo Date is missing
+  * Block transition from **Demo → Negotiation** if Demo Outcome or Expected Closure Date is missing
+  * Block transition from **Negotiation → Order** if Order Value, Product Details, Shared Ownership Validation (where applicable), or Handover Information is missing
+  * Block transition from **Any Stage → Closed Lost** if Loss Reason or Competitor Information is missing
+  * Block transition from **Order → Closed Won** if Purchase Order Number or Product Details is missing
+
 * **Dependencies:** None
 * **Priority:** P1 Critical
 
@@ -326,6 +331,49 @@
 
 ---
 
+### PB-025 – Beat Planning Foundation
+
+* **Source:** PRD Section 6.1, PM Review Finding
+* **Business Area:** Sales Execution
+* **Description:** Build foundational Beat Planning capability allowing sales representatives to create, submit, and track planned hospital visits and expected revenue coverage.
+* **Prototype Change Required:** New Beat Planning workspace, beat plan creation form, manager approval workflow status indicators, and mock beat plan data model.
+* **Acceptance Criteria:**
+  * Salesperson can create Beat Plan entries
+  * Beat Plan captures hospital, visit date, visit purpose, and expected revenue
+  * Beat Plan status supports Draft, Submitted, Approved
+  * Manager can view submitted Beat Plans
+  * Beat Plan data is available for dashboard and reporting calculations
+  * Beat Plan Progress metrics can be derived from captured data
+  * Beat Plan Compliance metrics can be derived from captured data
+* **Dependencies:** None
+* **Priority:** P1 Critical
+
+
+### PB-026 – Project Opportunity Foundation
+
+* **Source:** PRD Section 3.6
+* **Business Area:** Opportunity Management
+
+* **Description:** Provide prototype coverage for future Project Opportunity Management by introducing a lightweight Project entity that can be associated with a Customer and referenced by multiple Opportunities.
+
+* **Prototype Change Required:** Add a simple Project Master screen, Project creation/edit form, and Project lookup field within Opportunity screens. Project functionality is limited to association and grouping. Project management workflows, dashboards, forecasting, reporting, and analytics are excluded.
+
+* **Acceptance Criteria:**
+  * User can create a Project
+  * Project is associated with a Customer
+  * Project captures Project Name, Project Type, Status, and Expected Close Date
+  * Opportunity can optionally reference a Project
+  * Multiple Opportunities can be linked to the same Project
+  * Opportunity detail view displays associated Project
+  * No Project-level workflow exists
+  * No Project-level dashboard exists
+  * No Project-level reporting exists
+  * No Project-level forecasting exists
+
+* **Dependencies:** PB-001 – Account Structure & Hierarchy
+
+* **Priority:** P1 Critical
+
 ## Suggested Implementation Sequence
 
 Group work into waves ordered logically by dependencies to maximize efficiency and build a solid foundation.
@@ -340,13 +388,15 @@ Focus on the basic deal management, state controls, logging requirements, and va
 6. **PB-005 – Closed-Won Handover** (P1 Critical)
 7. **PB-010 – Mandatory Interaction Logging** (P1 Critical)
 8. **PB-020 – Pre-Lead Scanning** (P1 Critical)
+9. **PB-025 – Beat Planning Foundation** (P1 Critical)
+10. **PB-026 – Project Opportunity Foundation** (P1 Critical)
 
 ### Wave 2 – Territory & Security Foundations
 Introduce catalog structures, geographic boundaries, routing splits, and category target setups.
-9. **PB-014 – Product & SBU Assignment Structure** (P1 Critical)
-10. **PB-001 – Account Structure & Hierarchy** (P1 Critical)
-11. **PB-018 – Target Management by Product Category** (P1 Critical)
-12. **PB-023 – Opportunity Auto-Splitting (Dual Categories)** (P1 Critical)
+11. **PB-014 – Product & SBU Assignment Structure** (P1 Critical)
+12. **PB-001 – Account Structure & Hierarchy** (P1 Critical)
+13. **PB-018 – Target Management by Product Category** (P1 Critical)
+14. **PB-023 – Opportunity Auto-Splitting (Dual Categories)** (P1 Critical)
 
 ### Wave 3 – Dashboards & Reporting
 Compile metric aggregations, build dashboards (Salesperson, Manager, GM), and create tabular operational reports.
