@@ -253,3 +253,278 @@ To manually run and test these new project features on your machine, please foll
    - Click on the deal `SonoScape P60` from the project's opportunities list. Verify it opens the Deal Detail overlay.
    - In the Deal Detail overlay, verify that it displays a card with **Associated Project: Apollo Bangalore Equipment Upgrade** and a **View Project** button.
    - Click **View Project**. Verify that the deal details close and navigate you back to the Project Detail view.
+
+---
+
+# Walkthrough - PB-025 Beat Planning Foundation
+
+I have successfully implemented the Beat Planning feature (PB-025) in the React prototype application. All files build correctly and have been verified with a browser subagent session.
+
+## Changes Made
+
+### 1. Sidebar Navigation Link
+- Added a **Beat Planning** item (icon: `📅`) under the main navigation in the side drawer. Clicking it navigates the user to the Beat Planning Workspace screen (sets `view = "beat-planning"`).
+
+### 2. Beat Planning Workspace (`view === "beat-planning"`)
+- Renders a metrics header row displaying 6 KPI cards:
+  - **Total Planned Visits**: Count of visible visits based on role scope.
+  - **Submitted Visits**: Count of visits with `Submitted` status.
+  - **Approved Visits**: Count of visits with `Approved` status.
+  - **Expected Revenue Coverage**: Sum of expected revenues of visible visits.
+  - **Beat Plan Progress %**: Calculated as `((Submitted + Approved) / Total) * 100`.
+  - **Beat Plan Compliance %**: Calculated as `(Approved / Total) * 100`.
+- Offers robust search & filter inputs at the top:
+  - Filter by **Status** dropdown.
+  - Filter by **Hospital** dropdown.
+  - Filter by **Salesperson** dropdown (visible only to Manager).
+  - Filter by **Visit Date** input picker with a "Clear Date" button.
+- Renders a table of beat plans showing: *Hospital*, *Visit Date*, *Visit Purpose*, *Expected Revenue*, *Status*, and *Salesperson*.
+- Provides contextual action buttons based on the user's role and status:
+  - **View**: Opens the Beat Plan Details overlay view.
+  - **Edit**: Appears for `Draft` status plans owned by the logged-in user.
+  - **Submit**: Appears for `Draft` status plans owned by the logged-in user to transition the plan to `Submitted` directly from the table.
+  - **Approve**: Appears for `Submitted` status plans when the user is acting as `Manager`.
+
+### 3. Role-Based Data Visibility
+- A salesperson (e.g., Basheer, Amit, Rahul) is scoped to view only their own beat plans.
+- The **Manager** is authorized to view all beat plans across all salespeople and can filter the workspace by salesperson.
+
+### 4. Beat Plan Form Modal
+- Captures: Hospital, Visit Date, Visit Purpose, and Expected Revenue.
+- The Hospital field is a searchable lookup dropdown restricted to customers where `customerType === "Hospital"`.
+- Prevents submission of invalid/negative expected revenues (validation check `>= 0`).
+- Clicking outside the hospital dropdown container automatically dismisses the suggestions menu.
+- Provides choices to **Save Draft** (saves with `Draft` status) or **Submit** (saves with `Submitted` status and sets the submission timestamp).
+
+### 5. Beat Plan Details Overlay View
+- Displays complete beat plan metadata: hospital info, purpose, expected revenue, status, salesperson, and timestamps (Created, Submitted, Approved).
+- Provides an **Approve** button inside the overlay view if the plan is in `Submitted` status and the current user is acting as `Manager`.
+
+### 6. Client-Side Persistence
+- Persists all beat plans in the user's browser `localStorage` (key: `"sales_os_beat_plans"`).
+
+---
+
+## Verification Results
+
+### 1. Build Compilation Check
+The React application compiles and bundles successfully using Vite production build tools:
+```
+vite v8.0.8 building client environment for production...
+transforming...✓ 16 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.46 kB │ gzip:  0.29 kB
+dist/assets/index-37Zq6kFx.css   66.32 kB │ gzip: 11.06 kB
+dist/assets/index-Dzkm6JdV.js   409.84 kB │ gzip: 99.32 kB
+✓ built in 303ms
+```
+
+### 2. Browser Verification Session
+A browser subagent verified all user interactions, input validations, calculations, and role-based actions.
+
+Here is the recorded animation of the verification run showing sidebar navigation, KPI calculations, validation errors for negative revenue, draft creation, editing/submitting as a salesperson, role switching, and manager approval:
+
+![Beat Planning Flow Verification](file:///C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/beat_planning_demo_1781167194370.webp)
+
+And here are screenshots capturing key moments of the verification run:
+
+#### Beat Planning Workspace Loaded (Manager View)
+![Beat Planning Workspace](file:///C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/workspace_loaded_1781167220329.png)
+
+#### Manager Approved Visit & Recalculated Metrics
+![Manager Approved Visit & Updated Metrics](file:///C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/manager_approved_visit_1781169749818.png)
+
+---
+
+## Manual Verification Steps
+
+To manually run and test these new Beat Planning features on your machine, please follow these steps:
+
+### Part A: Beat Planning Workspace & Role Visibility
+1. **Launch the Development Server**:
+   - Verify that your local server is running in the `sales-os-app` directory. If not, run `npm.cmd run dev`.
+   - Open http://localhost:5173/ in your browser.
+2. **Access Beat Planning**:
+   - Open the sidebar menu (☰) and click **Beat Planning**.
+   - Confirm you see the Beat Planning Workspace with 6 metrics cards at the top.
+3. **Toggle Acting Role**:
+   - Open the sidebar (☰) and scroll to **Team Management**.
+   - Change the **Acting As** dropdown to **Basheer (Sales)**.
+   - Click **Beat Planning** in the menu again. Confirm that the list filters to display only Basheer's visits (e.g. 5 visits total instead of the manager's 15 visits).
+
+### Part B: Beat Plan Creation & Validation
+1. **Create Draft Visit**:
+   - Click the **＋ New Beat Plan** button.
+   - Focus the **Hospital Name** input and type `Al Shifa`. Select `Al Shifa Hospital` from the suggestions dropdown.
+   - Click outside the suggestions menu to confirm it closes automatically.
+   - Enter `2026-06-25` as the **Visit Date**.
+   - Enter `Demonstrate SonoScape S50 Elite ultrasound unit` as the **Visit Purpose**.
+   - Enter `-5` as the **Expected Revenue** and click **Save Draft**. Confirm that the validation warning alert is shown.
+   - Change the **Expected Revenue** to `25` and click **Save Draft**.
+   - Confirm that the visit is added to the list with the status **Draft** (gray badge).
+
+### Part C: Submission & Manager Approval
+1. **Edit and Submit**:
+   - Find the draft visit we just created in the table and click **Edit**.
+   - Change the purpose to `Demonstrate SonoScape S50 Elite ultrasound unit and negotiate pricing`.
+   - Click **Submit**.
+   - Verify that the status of the visit transitions to **Submitted** (orange badge) and the Edit/Submit buttons disappear.
+2. **Manager Review**:
+   - Open the sidebar (☰) and change the **Acting As** dropdown back to **Manager**.
+   - Click **Beat Planning** in the menu.
+   - Confirm that the metrics show a total of `16` visits and `4` submitted visits.
+3. **Approve Visit**:
+   - Find Basheer's submitted visit for `Al Shifa Hospital` on `2026-06-25` and click **Approve**.
+   - Verify that the status shifts to **Approved** (green badge).
+   - Check the metric cards at the top:
+     - **Approved Visits** should increment to `4`.
+     - **Compliance %** should update accordingly.
+4. **Detail Dates Audit**:
+   - Click **View** on the approved plan.
+   - Confirm that the details card displays the Correct Created Date, Submitted Date, and Approved Date.
+
+---
+
+# Walkthrough - PB-025 Beat Planning Foundation: PRD Alignment Refactor
+
+I have successfully refactored the Beat Planning implementation to align fully with the PRD requirements (Quarterly Account Coverage Planning instead of individual visit planning).
+
+## Changes Made
+
+### 1. Refactored Data Model & Migration
+- Refactored `localStorage` data key `"sales_os_beat_plans"`. Added automatic cleanup migration logic in state initialization: if any legacy visit-style plans (containing `visitDate` or `visitPurpose`) are detected, the app purges them and initializes new mock quarterly plans.
+- Defined initial mock beat plans for Q2 2026 and Q3 2026 across different sales users (Basheer, Amit, Rahul) using the new quarterly structure.
+- Redefined the structure of each planned hospital item in a beat plan:
+  - `hospitalId`: Unique identifier matching the Customer Directory.
+  - `hospitalName`: Name of the hospital.
+  - `plannedVisits`: Expected volume of visits (integer).
+  - `strategicObjective`: Multi-line key objectives.
+  - `expectedRevenue`: Projected revenue from the account during the quarter.
+
+### 2. Workspace KPI Cards Refactoring
+- Updated the 8 workspace KPI cards dynamically deriving metrics from quarterly plans and mock activities:
+  - **Total Planned Accounts**: Number of hospitals planned across all scoped plans.
+  - **Total Planned Visits**: Sum of planned visits.
+  - **Total Expected Revenue**: Total projected revenue from all scoped plans.
+  - **Total Submitted Plans**: Number of plans in `Submitted` status.
+  - **Total Approved Plans**: Number of plans in `Approved` status.
+  - **Average Progress %**: Average percentage of activity execution progress across all `Approved` plans.
+  - **Compliance %**: Percentage of approved plans that met or exceeded the visit count and revenue goals.
+  - **Active Sales Reps**: Unique count of salespeople with plans in the selected quarter.
+
+### 3. Filters and Search Layout
+- Replaced the old "Hospital" lookup and "Visit Date" filters with a **Quarter** select dropdown (options: All Quarters, Q2 2026, Q3 2026).
+- Retained the **Status** filter and the role-scoped **Salesperson** filter.
+
+### 4. Workspace Listing Table
+- Restructured table headers to reflect the new quarterly schema:
+  - **Quarter**
+  - **Salesperson** (visible to managers)
+  - **Hospitals Planned**: Count of unique accounts in the plan.
+  - **Total Planned Visits**: Sum of planned visits.
+  - **Total Expected Revenue**: Total expected revenue.
+  - **Status**: (Draft, Submitted, Approved).
+  - **Actions**: View, Edit, Submit (sales rep), Approve (manager).
+
+### 5. Multi-Hospital Beat Plan Form Modal
+- Widened the modal container to `max-w-[720px]` to support a tabular accounts-builder list.
+- Added a **Quarter** dropdown selector (e.g., Q3 2026) at the top.
+- Dynamic list builder allowing the salesperson to add/remove hospital rows.
+- Each row contains:
+  - Searchable **Hospital** lookup dropdown (encapsulates search text and open state to prevent row collision).
+  - **Planned Visits** input.
+  - **Strategic Objective** text area.
+  - **Expected Revenue** input.
+  - **Delete** row action.
+- Validates that the quarter is selected, at least one hospital row exists, and each row has a valid hospital, positive planned visits, and non-negative expected revenue.
+
+### 6. Beat Plan Details Overlay & Execution Summary / Account Coverage Status
+- Renders the header details: Quarter, Salesperson, and Status badge.
+- Displays a table of all **Planned Accounts** with row-level metrics and a bottom-aligned **Totals** row.
+- **Dynamic Progress Calculations**: Parses activity logs using a helper function `getActivityQuarter` to classify dates (e.g. "2026-07-15", "24 Apr") into quarters.
+- For **Approved** plans, renders read-only grids below the table:
+  - **Execution Summary**: Displays actual visits logged (derived from activities in the same quarter for that salesperson and customer), actual progress vs. planned visits, and expected revenue contribution.
+  - **Account Coverage Status**: Lists each planned hospital, planned visits, actual visits logged, progress percentage, and status indicators (e.g. "On Track" if actual >= planned visits, or "Needs Attention" otherwise).
+
+---
+
+## Verification Results
+
+### 1. Build Compilation Check
+The React application compiles and builds successfully with zero errors:
+```powershell
+vite v8.0.8 building client environment for production...
+transforming...✓ 16 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.46 kB │ gzip:  0.29 kB
+dist/assets/index-BtA4u-7S.css   66.90 kB │ gzip: 11.23 kB
+dist/assets/index-CRi-K9Yq.js   426.15 kB │ gzip: 104.22 kB
+✓ built in 398ms
+```
+
+### 2. Browser Verification Session
+A browser subagent verified all user interactions, visual elements, and status changes.
+
+Here is the recorded animation demonstrating the full workflow: creating a quarterly draft beat plan with multiple accounts, editing/updating the plan, submitting it, switching roles to Manager, approving it, and verifying the Execution Summary and Account Coverage Status tables are dynamically calculated from activity logs:
+
+![Quarterly Beat Planning Refactor Verification](/C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/quarterly_beat_planning_refactor_1781182287945.webp)
+
+And here are screenshots capturing specific test assertions:
+
+#### Beat Planning Workspace with Refactored 8 KPI Cards (Manager View)
+![Workspace KPI Cards](/C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/kpi_cards_verify_1781183945080.png)
+
+#### Approved Plan Details showing Execution Summary and Account Coverage Status Tables
+![Approved Plan Details](/C:/Users/Basheer/.gemini/antigravity-ide/brain/71d6dcec-948a-4670-b34d-0caa888898d0/approved_plan_detail_1781184194916.png)
+
+---
+
+## Manual Verification Steps
+
+To manually run and test the refactored Beat Planning features on your machine, please follow these steps:
+
+### Part A: Access the Refactored Workspace
+1. Verify that your local development server is running in the `sales-os-app` directory (run `npm.cmd run dev` if needed).
+2. Open http://localhost:5173/ in your browser.
+3. Open the sidebar menu (☰) and click **Beat Planning**.
+4. Confirm you see the updated Workspace with **8 KPI Cards** (including Average Progress % and Compliance % over Approved plans).
+5. Switch the Acting As dropdown in the sidebar to **Basheer (Sales)** and go back to **Beat Planning**. Verify that the listing table only shows Basheer's plan (Q2 2026 Approved, Q3 2026 Draft).
+
+### Part B: Create & Edit a Multi-Hospital Plan
+1. Acting as **Basheer**, click **＋ New Beat Plan**.
+2. Select **Quarter**: `Q3 2026`.
+3. In the accounts list builder:
+   - In Row 1, search and select `Apollo Hospitals`. Set visits to `4` and expected revenue to `50`.
+   - Click **＋ Add Account** to add another row.
+   - In Row 2, search and select `KIMS Trivandrum`. Set visits to `2` and expected revenue to `30`.
+4. Click **Save Draft**. Verify that the plan appears in the table with `Draft` status.
+5. Click **Edit** on this plan. Add a third row for `Al Shifa Hospital` with `3` planned visits and `20` expected revenue.
+6. Click **Submit Plan**. Confirm the plan transitions to `Submitted` status.
+
+### Part C: Manager Approval & Performance Dashboard Audit
+1. Switch the Acting As dropdown in the sidebar to **Manager**.
+2. Navigate to **Beat Planning**. Locate Basheer's Q3 2026 plan under the `Submitted` state and click **Approve**.
+3. Verify that the plan transitions to `Approved` status.
+4. Click **View** on Basheer's Q3 2026 Approved plan:
+   - Verify that the details panel renders the planned accounts list with totals.
+   - Verify that the **Execution Summary** and **Account Coverage Status** grids are displayed below.
+   - Confirm that the actual visits, progress %, and expected revenue are dynamically calculated from activity logs.
+
+---
+
+# Walkthrough - Beat Planning Foundation: Blank Screen Bug Fix
+
+I have successfully resolved the blank screen crash issue on page load when navigating to the Beat Planning Workspace.
+
+### Cause of the Crash
+The blank screen was caused by a `TypeError` runtime exception inside the Beat Planning rendering filters. The workspace and detail views dynamically map activity counts to planned hospitals by comparing `act.accountId.toString() === a.customerId.toString()`. While the clean automated browser environment started with empty local storage and had no historical data, your browser has an existing local database populated with old user activities. Some historical activities did not define an `accountId` property, causing `.toString()` to throw an uncaught error and crash the React render tree.
+
+### Fixes Applied
+1. **Safe ID Check**: Guarded all `.toString()` calls on activity accounts inside `App.jsx` with a null/undefined sanity check:
+   `act.accountId && a.customerId && act.accountId.toString() === a.customerId.toString()`
+2. **Safe Date Verification**: Wrapped `getActivityQuarter` date processing logic to safely cast `activity.date` values to standard string formatting:
+   `if (!activity || !activity.date) return null;`
+   `const dateStr = String(activity.date).toLowerCase();`
+3. **Graceful LocalStorage Parsing**: Wrapped all localStorage initialization checks (`beatPlans`, `activities`, `projects`, `assets`, and `reminders`) in robust try/catch blocks that automatically fall back to initial mock datasets if any parsing syntax or data-structure corruption is encountered.

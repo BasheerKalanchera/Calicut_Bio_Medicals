@@ -123,11 +123,92 @@ const initialProjects = [
   { id: "8", projectName: "TMC Critical Care Block Extension", projectType: "Expansion", status: "Active", expectedCloseDate: "2027-01-10", customerId: "7", customerName: "Trivandrum Medical College" },
   { id: "9", projectName: "KIMS Radiology Digitalization", projectType: "Digital Transformation", status: "Active", expectedCloseDate: "2026-10-30", customerId: "9", customerName: "KIMS Trivandrum" },
   { id: "10", projectName: "Baby Memorial Pediatrics Renovation", projectType: "Renovation", status: "Planning", expectedCloseDate: "2026-12-01", customerId: "5", customerName: "Baby Memorial" },
-  { id: "11", projectName: "MIMS Clinic Ultrasound Upgrade", projectType: "Equipment Upgrade", status: "Completed", expectedCloseDate: "2026-04-20", customerId: "4", customerName: "MIMS Clinic" },
-  { id: "12", projectName: "Lakeshore Hospital Expansion", projectType: "Expansion", status: "Planning", expectedCloseDate: "2027-04-15", customerId: "8", customerName: "Lakeshore Hospital" }
+  { id: "11", projectName: "MIMS Clinic Ultrasound Upgrade", projectType: "Equipment Upgrade", status: "Completed", expectedCloseDate: "2026-04-20", customerId: "4", customerName: "MIMS Clinic" }
 ];
 
-
+const initialBeatPlans = [
+  {
+    id: "1",
+    userId: "Basheer",
+    userName: "Basheer",
+    quarter: "Q3 2026",
+    status: "Approved",
+    createdDate: "2026-06-08",
+    submittedDate: "2026-06-09",
+    approvedDate: "2026-06-10",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "1-1", beatPlanId: "1", customerId: "11", customerName: "Apollo Hospitals", plannedVisitCount: 4, strategicObjective: "Expand ultrasound footprint", expectedRevenue: 50 },
+      { id: "1-2", beatPlanId: "1", customerId: "9", customerName: "KIMS Trivandrum", plannedVisitCount: 3, strategicObjective: "ICU modernization discussions", expectedRevenue: 35 },
+      { id: "1-3", beatPlanId: "1", customerId: "6", customerName: "Aster Medcity", plannedVisitCount: 5, strategicObjective: "Multi-department engagement", expectedRevenue: 75 }
+    ]
+  },
+  {
+    id: "2",
+    userId: "Basheer",
+    userName: "Basheer",
+    quarter: "Q2 2026",
+    status: "Approved",
+    createdDate: "2026-03-10",
+    submittedDate: "2026-03-12",
+    approvedDate: "2026-03-15",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "2-1", beatPlanId: "2", customerId: "1", customerName: "Al Shifa Hospital", plannedVisitCount: 3, strategicObjective: "Demonstrate SonoScape S50", expectedRevenue: 20 },
+      { id: "2-2", beatPlanId: "2", customerId: "3", customerName: "Iqra Hospital", plannedVisitCount: 2, strategicObjective: "PO discussions for X3", expectedRevenue: 15 }
+    ]
+  },
+  {
+    id: "3",
+    userId: "Amit",
+    userName: "Amit",
+    quarter: "Q3 2026",
+    status: "Submitted",
+    createdDate: "2026-06-10",
+    submittedDate: "2026-06-11",
+    accounts: [
+      { id: "3-1", beatPlanId: "3", customerId: "8", customerName: "Lakeshore Hospital", plannedVisitCount: 2, strategicObjective: "Expand patient monitoring solutions", expectedRevenue: 15 },
+      { id: "3-2", beatPlanId: "3", customerId: "7", customerName: "Trivandrum Medical College", plannedVisitCount: 4, strategicObjective: "Demo HD-550 endoscopy system", expectedRevenue: 40 }
+    ]
+  },
+  {
+    id: "4",
+    userId: "Rahul",
+    userName: "Rahul",
+    quarter: "Q4 2026",
+    status: "Draft",
+    createdDate: "2026-06-11",
+    accounts: [
+      { id: "4-1", beatPlanId: "4", customerId: "13", customerName: "Manipal Hospital", plannedVisitCount: 3, strategicObjective: "Product demonstrations", expectedRevenue: 10 },
+      { id: "4-2", beatPlanId: "4", customerId: "19", customerName: "Sakra World", plannedVisitCount: 2, strategicObjective: "Follow up on ventilators", expectedRevenue: 12 }
+    ]
+  },
+  {
+    id: "5",
+    userId: "Amit",
+    userName: "Amit",
+    quarter: "Q4 2026",
+    status: "Draft",
+    createdDate: "2026-06-11",
+    accounts: [
+      { id: "5-1", beatPlanId: "5", customerId: "10", customerName: "SUT Hospital", plannedVisitCount: 3, strategicObjective: "Regular account coverage", expectedRevenue: 8 }
+    ]
+  },
+  {
+    id: "6",
+    userId: "Rahul",
+    userName: "Rahul",
+    quarter: "Q3 2026",
+    status: "Approved",
+    createdDate: "2026-06-08",
+    submittedDate: "2026-06-09",
+    approvedDate: "2026-06-10",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "6-1", beatPlanId: "6", customerId: "15", customerName: "Fortis Hospital", plannedVisitCount: 4, strategicObjective: "Ultrasound upgrades and purchase meet", expectedRevenue: 45 }
+    ]
+  }
+];
 
 const initialCatalog = [
   // --- Ultrasound (SonoScape) ---
@@ -185,6 +266,46 @@ const initialCatalog = [
     collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/ventmeter-en" }]
   }
 ];
+
+const getActivityQuarter = (activity) => {
+  if (!activity || !activity.date) return null;
+  const dateStr = String(activity.date).toLowerCase();
+
+  // If it's a timestamp or ISO date string (e.g. "2026-07-15")
+  if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+    if (parts.length >= 2) {
+      const year = parseInt(parts[0]);
+      const month = parseInt(parts[1]);
+      if (!isNaN(year) && !isNaN(month)) {
+        const q = Math.ceil(month / 3);
+        return `Q${q} ${year}`;
+      }
+    }
+  }
+
+  // Parse standard string like "24 Apr, 04:30 PM"
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  let foundMonthIdx = -1;
+  for (let i = 0; i < 12; i++) {
+    if (dateStr.includes(months[i])) {
+      foundMonthIdx = i;
+      break;
+    }
+  }
+
+  if (foundMonthIdx !== -1) {
+    const monthNum = foundMonthIdx + 1;
+    const q = Math.ceil(monthNum / 3);
+    return `Q${q} 2026`;
+  }
+
+  // Fallback to current date's quarter
+  const now = new Date();
+  const monthNum = now.getMonth() + 1;
+  const q = Math.ceil(monthNum / 3);
+  return `Q${q} 2026`;
+};
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("sales_os_currentUser") || "Manager");
@@ -260,7 +381,18 @@ export default function App() {
   const [lostCompetitor, setLostCompetitor] = useState("");
   const [lostReason, setLostReason] = useState("Price");
 
-  const [projects, setProjects] = useState(() => JSON.parse(localStorage.getItem("sales_os_projects")) || initialProjects);
+  const [projects, setProjects] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_os_projects");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Error loading projects", e);
+    }
+    return initialProjects;
+  });
   const [selectedProject, setSelectedProject] = useState(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -279,6 +411,42 @@ export default function App() {
   const [projectSearchText, setProjectSearchText] = useState("");
   const [projectTypeFilter, setProjectTypeFilter] = useState("All Types");
   const [projectStatusFilter, setProjectStatusFilter] = useState("All Statuses");
+
+  const [beatPlans, setBeatPlans] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_os_beat_plans");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Migration: if saved plans are of the old visit-planning structure, clear and reload defaults
+          if (parsed.length > 0 && (parsed[0].visitDate !== undefined || parsed[0].accounts === undefined)) {
+            localStorage.removeItem("sales_os_beat_plans");
+            return initialBeatPlans;
+          }
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error("Error loading beat plans", e);
+    }
+    return initialBeatPlans;
+  });
+  const [selectedBeatPlan, setSelectedBeatPlan] = useState(null);
+  const [isBeatPlanModalOpen, setIsBeatPlanModalOpen] = useState(false);
+  const [editingBeatPlan, setEditingBeatPlan] = useState(null);
+
+  // Form states for beat plans
+  const [formBeatPlanQuarter, setFormBeatPlanQuarter] = useState("Q3 2026");
+  const [formBeatPlanAccounts, setFormBeatPlanAccounts] = useState([]);
+
+  // Filters for beat plans
+  const [beatStatusFilter, setBeatStatusFilter] = useState("All Statuses");
+  const [beatSalespersonFilter, setBeatSalespersonFilter] = useState("All Salespersons");
+  const [beatQuarterFilter, setBeatQuarterFilter] = useState("All Quarters");
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_beat_plans", JSON.stringify(beatPlans));
+  }, [beatPlans]);
 
   // State inside lead wizard for associating a project during opportunity creation
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -431,7 +599,18 @@ export default function App() {
   const [customerClassFilter, setCustomerClassFilter] = useState("All Classes");
   const [customerSpecialtyFilter, setCustomerSpecialtyFilter] = useState("All Specialties");
   const [activityPurpose, setActivityPurpose] = useState("Deal Follow-up");
-  const [assets, setAssets] = useState(() => JSON.parse(localStorage.getItem("sales_os_assets")) || []);
+  const [assets, setAssets] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_os_assets");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Error loading assets", e);
+    }
+    return [];
+  });
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
 
   const lastAccountIdRef = React.useRef(null);
@@ -497,6 +676,32 @@ export default function App() {
     document.addEventListener("mousedown", handleProjectCustomerClick);
     return () => document.removeEventListener("mousedown", handleProjectCustomerClick);
   }, [isFormCustomerLookupOpen, formCustomerId, customers]);
+
+  useEffect(() => {
+    const handleBeatHospitalClick = (e) => {
+      if (!document.body.contains(e.target)) return;
+      setFormBeatPlanAccounts(prev => {
+        if (prev.length === 0) return prev;
+        let changed = false;
+        const next = prev.map(a => {
+          if (!a.isLookupOpen) return a;
+          const container = e.target.closest(`.beat-row-hospital-lookup-container-${a.id}`);
+          if (!container) {
+            changed = true;
+            return {
+              ...a,
+              isLookupOpen: false,
+              searchText: a.customerName || ""
+            };
+          }
+          return a;
+        });
+        return changed ? next : prev;
+      });
+    };
+    document.addEventListener("mousedown", handleBeatHospitalClick);
+    return () => document.removeEventListener("mousedown", handleBeatHospitalClick);
+  }, []);
 
   const [newStakeholderName, setNewStakeholderName] = useState("");
   const [newStakeholderRole, setNewStakeholderRole] = useState("");
@@ -582,7 +787,18 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialContacts;
   });
 
-  const [reminders, setReminders] = useState(() => JSON.parse(localStorage.getItem("sales_os_reminders") || "[]"));
+  const [reminders, setReminders] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sales_os_reminders");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error("Error loading reminders", e);
+    }
+    return [];
+  });
 
   // Unified Interaction State
   const [isSchedulingFollowUp, setIsSchedulingFollowUp] = useState(false);
@@ -597,23 +813,29 @@ export default function App() {
   };
 
   const [activities, setActivities] = useState(() => {
-    const saved = localStorage.getItem("sales_os_activities");
-    if (saved) {
-      let parsed = JSON.parse(saved);
-      // 🛠️ Data Cleaning for Demo Persistence
-      return parsed.map(a => {
-        let n = a.notes;
-        n = n.replace(/^👑 Manager Note: /, "");
-        n = n.replace(/^👑 Manager Interaction: /, "");
-        n = n.replace(/^\[MANAGER NOTE\] /, "");
-        n = n.replace(/^\[.*?\] /, "");
+    try {
+      const saved = localStorage.getItem("sales_os_activities");
+      if (saved) {
+        let parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // 🛠️ Data Cleaning for Demo Persistence
+          return parsed.map(a => {
+            let n = a.notes || "";
+            n = n.replace(/^👑 Manager Note: /, "");
+            n = n.replace(/^👑 Manager Interaction: /, "");
+            n = n.replace(/^\[MANAGER NOTE\] /, "");
+            n = n.replace(/^\[.*?\] /, "");
 
-        return {
-          ...a,
-          notes: n,
-          date: a.date === "Just now" ? "25 Apr, 07:15 AM" : a.date
-        };
-      });
+            return {
+              ...a,
+              notes: n,
+              date: a.date === "Just now" ? "25 Apr, 07:15 AM" : a.date
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error loading activities", e);
     }
 
     const initialActivities = [];
@@ -630,6 +852,31 @@ export default function App() {
         });
       });
     });
+
+    // Custom activities for Beat Planning execution tracking
+    const customMockActivities = [
+      // Basheer Q3 2026 activities (Jul-Sep 2026)
+      { id: "bp-act-1", accountId: "11", dealId: null, notes: "Initial discussion on ultrasound expansion", purpose: "Field Visit", date: "2026-07-15", owner: "Basheer" },
+      { id: "bp-act-2", accountId: "11", dealId: null, notes: "Technical specifications review for Apollo Hospitals", purpose: "Demo", date: "2026-08-02", owner: "Basheer" },
+      { id: "bp-act-3", accountId: "11", dealId: null, notes: "Commercial quote discussion with Apollo procurement", purpose: "Proposal Discussion", date: "2026-08-20", owner: "Basheer" },
+      
+      { id: "bp-act-4", accountId: "6", dealId: null, notes: "ICU renovation site visit at Aster Medcity", purpose: "Field Visit", date: "2026-07-10", owner: "Basheer" },
+      { id: "bp-act-5", accountId: "6", dealId: null, notes: "Met Chief Radiologist regarding S80 demo feedback", purpose: "Demo", date: "2026-07-28", owner: "Basheer" },
+      { id: "bp-act-6", accountId: "6", dealId: null, notes: "Aster procurement budget meeting", purpose: "Negotiation Meeting", date: "2026-08-12", owner: "Basheer" },
+      { id: "bp-act-7", accountId: "6", dealId: null, notes: "Follow up call on final PO status", purpose: "Phone Call", date: "2026-09-01", owner: "Basheer" },
+      { id: "bp-act-8", accountId: "6", dealId: null, notes: "Installed demo machine checkup", purpose: "Field Visit", date: "2026-09-15", owner: "Basheer" },
+      
+      // Basheer Q2 2026 activities (Apr-Jun 2026)
+      { id: "bp-act-9", accountId: "1", dealId: null, notes: "Met Al Shifa clinical lead", purpose: "Field Visit", date: "2026-04-10", owner: "Basheer" },
+      { id: "bp-act-10", accountId: "1", dealId: null, notes: "Conducted S50 demo", purpose: "Demo", date: "2026-04-20", owner: "Basheer" },
+      { id: "bp-act-11", accountId: "1", dealId: null, notes: "Sent commercial draft quote", purpose: "Proposal Discussion", date: "2026-05-05", owner: "Basheer" },
+      { id: "bp-act-12", accountId: "1", dealId: null, notes: "Negotiation meeting with purchase director", purpose: "Negotiation Meeting", date: "2026-05-25", owner: "Basheer" },
+      
+      { id: "bp-act-13", accountId: "3", dealId: null, notes: "Iqra Hospital new wing discussion", purpose: "Field Visit", date: "2026-05-15", owner: "Basheer" },
+      { id: "bp-act-14", accountId: "3", dealId: null, notes: "PO sign off discussion for X3", purpose: "Proposal Discussion", date: "2026-06-10", owner: "Basheer" }
+    ];
+    initialActivities.push(...customMockActivities);
+
     return initialActivities;
   });
 
@@ -895,6 +1142,131 @@ export default function App() {
     setIsProjectModalOpen(true);
   };
 
+  const saveBeatPlan = (shouldSubmit = false) => {
+    if (!formBeatPlanQuarter) {
+      setCustomAlert({ title: "Required Field", message: "Please select a Quarter.", type: "warning" });
+      return;
+    }
+    if (formBeatPlanAccounts.length === 0) {
+      setCustomAlert({ title: "No Accounts", message: "Please add at least one Hospital/Account.", type: "warning" });
+      return;
+    }
+    
+    // Validate all rows
+    for (let i = 0; i < formBeatPlanAccounts.length; i++) {
+      const a = formBeatPlanAccounts[i];
+      if (!a.customerId) {
+        setCustomAlert({ title: "Missing Hospital", message: `Please select a Hospital for Row ${i + 1}.`, type: "warning" });
+        return;
+      }
+      const visits = parseInt(a.plannedVisitCount);
+      if (isNaN(visits) || visits <= 0) {
+        setCustomAlert({ title: "Invalid Visits", message: `Planned Visit Count must be a positive number for Row ${i + 1}.`, type: "warning" });
+        return;
+      }
+      if (!a.strategicObjective.trim()) {
+        setCustomAlert({ title: "Missing Strategic Objective", message: `Please enter a Strategic Objective for Row ${i + 1}.`, type: "warning" });
+        return;
+      }
+      const rev = parseFloat(a.expectedRevenue);
+      if (isNaN(rev) || rev < 0) {
+        setCustomAlert({ title: "Invalid Revenue", message: `Expected Revenue must be a non-negative number for Row ${i + 1}.`, type: "warning" });
+        return;
+      }
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const planId = editingBeatPlan ? editingBeatPlan.id : Date.now().toString();
+
+    const accountsData = formBeatPlanAccounts.map((a, idx) => ({
+      id: a.id || `${planId}-${idx}-${Date.now()}`,
+      beatPlanId: planId,
+      customerId: a.customerId,
+      customerName: a.customerName,
+      plannedVisitCount: parseInt(a.plannedVisitCount),
+      strategicObjective: a.strategicObjective.trim(),
+      expectedRevenue: parseFloat(a.expectedRevenue)
+    }));
+
+    const beatPlanData = {
+      id: planId,
+      userId: editingBeatPlan ? editingBeatPlan.userId : currentUser,
+      userName: editingBeatPlan ? editingBeatPlan.userName : currentUser,
+      quarter: formBeatPlanQuarter,
+      status: shouldSubmit ? "Submitted" : (editingBeatPlan ? editingBeatPlan.status : "Draft"),
+      createdDate: editingBeatPlan ? editingBeatPlan.createdDate : todayStr,
+      submittedDate: shouldSubmit ? todayStr : (editingBeatPlan ? editingBeatPlan.submittedDate : undefined),
+      approvedDate: editingBeatPlan ? editingBeatPlan.approvedDate : undefined,
+      approvedBy: editingBeatPlan ? editingBeatPlan.approvedBy : undefined,
+      accounts: accountsData
+    };
+
+    if (editingBeatPlan) {
+      setBeatPlans(prev => prev.map(bp => bp.id === editingBeatPlan.id ? beatPlanData : bp));
+    } else {
+      setBeatPlans(prev => [...prev, beatPlanData]);
+    }
+
+    // Reset form states
+    setFormBeatPlanQuarter("Q3 2026");
+    setFormBeatPlanAccounts([]);
+    setEditingBeatPlan(null);
+    setIsBeatPlanModalOpen(false);
+  };
+
+  const openNewBeatPlanModal = () => {
+    setEditingBeatPlan(null);
+    setFormBeatPlanQuarter("Q3 2026");
+    // Add one blank row initially
+    setFormBeatPlanAccounts([
+      { id: Date.now().toString(), customerId: "", customerName: "", searchText: "", isLookupOpen: false, plannedVisitCount: 1, strategicObjective: "", expectedRevenue: 0 }
+    ]);
+    setIsBeatPlanModalOpen(true);
+  };
+
+  const openEditBeatPlanModal = (bp) => {
+    setEditingBeatPlan(bp);
+    setFormBeatPlanQuarter(bp.quarter);
+    setFormBeatPlanAccounts(bp.accounts.map(a => ({
+      id: a.id,
+      customerId: a.customerId,
+      customerName: a.customerName,
+      searchText: a.customerName,
+      isLookupOpen: false,
+      plannedVisitCount: a.plannedVisitCount,
+      strategicObjective: a.strategicObjective,
+      expectedRevenue: a.expectedRevenue
+    })));
+    setIsBeatPlanModalOpen(true);
+  };
+
+  const submitBeatPlanDirectly = (bp) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const updated = {
+      ...bp,
+      status: "Submitted",
+      submittedDate: todayStr
+    };
+    setBeatPlans(prev => prev.map(item => item.id === bp.id ? updated : item));
+    if (selectedBeatPlan && selectedBeatPlan.id === bp.id) {
+      setSelectedBeatPlan(updated);
+    }
+  };
+
+  const approveBeatPlan = (bp) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const updated = {
+      ...bp,
+      status: "Approved",
+      approvedDate: todayStr,
+      approvedBy: currentUser
+    };
+    setBeatPlans(prev => prev.map(item => item.id === bp.id ? updated : item));
+    if (selectedBeatPlan && selectedBeatPlan.id === bp.id) {
+      setSelectedBeatPlan(updated);
+    }
+  };
+
   const handleCancelNewCustomer = () => {
     setIsCreatingCustomer(false);
     setNewCustomerName("");
@@ -1108,6 +1480,7 @@ export default function App() {
       case "manager": return "Deals List";
       case "customers": return "Customer Directory";
       case "projects": return "Projects Master";
+      case "beat-planning": return "Beat Planning Workspace";
       case "catalog": return "Product Catalog";
       case "reminders": return "Next Actions";
       case "insights": return "Insights";
@@ -1184,6 +1557,7 @@ export default function App() {
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
                 { id: "projects", label: "Projects", icon: "📁" },
+                { id: "beat-planning", label: "Beat Planning", icon: "📅" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
                 { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "insights", label: "Insights", icon: "💡" },
@@ -1197,6 +1571,7 @@ export default function App() {
                     setSelectedDeal(null);
                     setSelectedAccount(null);
                     setSelectedProject(null);
+                    setSelectedBeatPlan(null);
                   }}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${view === item.id ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
                 >
@@ -1862,6 +2237,268 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Beat Planning Workspace Screen */}
+      {view === "beat-planning" && (() => {
+        const visibleBeatPlans = currentUser === "Manager" ? beatPlans : beatPlans.filter(bp => bp.userId === currentUser);
+
+        const filteredBeatPlans = visibleBeatPlans.filter(bp => {
+          const matchesStatus = beatStatusFilter === "All Statuses" || bp.status === beatStatusFilter;
+          const matchesSalesperson = beatSalespersonFilter === "All Salespersons" || bp.userId === beatSalespersonFilter;
+          const matchesQuarter = beatQuarterFilter === "All Quarters" || bp.quarter === beatQuarterFilter;
+          return matchesStatus && matchesSalesperson && matchesQuarter;
+        });
+
+        const totalBeatPlansCount = visibleBeatPlans.length;
+        const submittedPlansCount = visibleBeatPlans.filter(bp => bp.status === "Submitted").length;
+        const approvedPlansCount = visibleBeatPlans.filter(bp => bp.status === "Approved").length;
+        
+        // Sum expected revenue and count planned hospitals and visits
+        const allVisibleAccounts = visibleBeatPlans.flatMap(bp => bp.accounts || []);
+        const hospitalsPlannedCount = new Set(allVisibleAccounts.map(a => a.customerId)).size;
+        const totalPlannedVisits = allVisibleAccounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0);
+        const totalExpectedRevenue = allVisibleAccounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0);
+
+        // Progress & Compliance Averages (considering Approved beat plans only)
+        const approvedPlans = visibleBeatPlans.filter(bp => bp.status === "Approved");
+        let avgProgress = 0;
+        let avgCompliance = 0;
+
+        if (approvedPlans.length > 0) {
+          let progressSum = 0;
+          let complianceSum = 0;
+
+          approvedPlans.forEach(bp => {
+            const bpPlannedVisits = bp.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0);
+            let bpActivitiesLogged = 0;
+            let coveredHospitals = 0;
+
+            bp.accounts.forEach(a => {
+              const matchingActs = activities.filter(act => 
+                act.accountId && a.customerId && act.accountId.toString() === a.customerId.toString() &&
+                getActivityQuarter(act) === bp.quarter
+              );
+              bpActivitiesLogged += matchingActs.length;
+              if (matchingActs.length > 0) {
+                coveredHospitals += 1;
+              }
+            });
+
+            const progressVal = bpPlannedVisits > 0 
+              ? Math.min(100, (bpActivitiesLogged / bpPlannedVisits) * 100) 
+              : 0;
+            progressSum += progressVal;
+
+            const complianceVal = bp.accounts.length > 0 
+              ? (coveredHospitals / bp.accounts.length) * 100 
+              : 0;
+            complianceSum += complianceVal;
+          });
+
+          avgProgress = progressSum / approvedPlans.length;
+          avgCompliance = complianceSum / approvedPlans.length;
+        }
+
+        const uniqueSalespersons = [...new Set(visibleBeatPlans.map(bp => bp.userId))];
+
+        return (
+          <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Planning</h3>
+                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Beat Planning Workspace</h2>
+              </div>
+              <button
+                onClick={openNewBeatPlanModal}
+                className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
+              >
+                <span>📅</span> + New Beat Plan
+              </button>
+            </div>
+
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Total Plans</span>
+                <div className="text-xl font-black text-blue-900">{totalBeatPlansCount}</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Hospitals</span>
+                <div className="text-xl font-black text-blue-900">{hospitalsPlannedCount}</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Planned Visits</span>
+                <div className="text-xl font-black text-blue-900">{totalPlannedVisits}</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Expected Rev</span>
+                <div className="text-xl font-black text-blue-900">₹{totalExpectedRevenue}L</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Submitted</span>
+                <div className="text-xl font-black text-orange-600">{submittedPlansCount}</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Approved</span>
+                <div className="text-xl font-black text-green-600">{approvedPlansCount}</div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Avg Progress</span>
+                <div className="text-xl font-black text-blue-900">{Math.round(avgProgress)}%</div>
+                <div className="w-full bg-gray-100 rounded-full h-1 mt-2 overflow-hidden">
+                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${avgProgress}%` }}></div>
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Avg Compliance</span>
+                <div className="text-xl font-black text-green-700">{Math.round(avgCompliance)}%</div>
+                <div className="w-full bg-gray-100 rounded-full h-1 mt-2 overflow-hidden">
+                  <div className="h-full bg-green-600 rounded-full" style={{ width: `${avgCompliance}%` }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex-grow flex-1 min-w-[150px]">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Filter Status</label>
+                <select
+                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={beatStatusFilter}
+                  onChange={(e) => setBeatStatusFilter(e.target.value)}
+                >
+                  <option value="All Statuses">All Statuses</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Submitted">Submitted</option>
+                  <option value="Approved">Approved</option>
+                </select>
+              </div>
+
+              <div className="flex-grow flex-1 min-w-[150px]">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Filter Quarter</label>
+                <select
+                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={beatQuarterFilter}
+                  onChange={(e) => setBeatQuarterFilter(e.target.value)}
+                >
+                  <option value="All Quarters">All Quarters</option>
+                  <option value="Q1 2026">Q1 2026</option>
+                  <option value="Q2 2026">Q2 2026</option>
+                  <option value="Q3 2026">Q3 2026</option>
+                  <option value="Q4 2026">Q4 2026</option>
+                </select>
+              </div>
+
+              {currentUser === "Manager" && (
+                <div className="flex-grow flex-1 min-w-[150px]">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5">Filter Salesperson</label>
+                  <select
+                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    value={beatSalespersonFilter}
+                    onChange={(e) => setBeatSalespersonFilter(e.target.value)}
+                  >
+                    <option value="All Salespersons">All Salespersons</option>
+                    {uniqueSalespersons.map(sp => (
+                      <option key={sp} value={sp}>{sp}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* List Table */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                      <th className="px-6 py-4">Quarter</th>
+                      <th className="px-6 py-4">Salesperson</th>
+                      <th className="px-6 py-4">Hospitals Planned</th>
+                      <th className="px-6 py-4">Total Planned Visits</th>
+                      <th className="px-6 py-4">Total Expected Revenue</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                    {filteredBeatPlans.map(bp => {
+                      const hospitalsCount = bp.accounts ? bp.accounts.length : 0;
+                      const totalVisits = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0) : 0;
+                      const totalRev = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0) : 0;
+
+                      return (
+                        <tr key={bp.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 font-bold text-blue-600">
+                            <button
+                              onClick={() => setSelectedBeatPlan(bp)}
+                              className="hover:underline font-bold text-left"
+                            >
+                              {bp.quarter}
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 text-xs font-bold text-gray-500">{bp.userName}</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">{hospitalsCount}</td>
+                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">{totalVisits}</td>
+                          <td className="px-6 py-4 font-bold text-gray-900">₹{totalRev}L</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                              bp.status === "Approved" ? "bg-green-50 text-green-700 border border-green-200" :
+                              bp.status === "Submitted" ? "bg-orange-50 text-orange-700 border border-orange-200" :
+                              "bg-gray-100 text-gray-600 border border-gray-200"
+                            }`}>
+                              {bp.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                            <button
+                              onClick={() => setSelectedBeatPlan(bp)}
+                              className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                            >
+                              View
+                            </button>
+                            {bp.status === "Draft" && bp.userId === currentUser && (
+                              <>
+                                <button
+                                  onClick={() => openEditBeatPlanModal(bp)}
+                                  className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => submitBeatPlanDirectly(bp)}
+                                  className="bg-orange-50 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-orange-600 hover:text-white transition-colors"
+                                >
+                                  Submit
+                                </button>
+                              </>
+                            )}
+                            {bp.status === "Submitted" && currentUser === "Manager" && (
+                              <button
+                                onClick={() => approveBeatPlan(bp)}
+                                className="bg-green-50 text-green-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600 hover:text-white transition-colors"
+                              >
+                                Approve
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filteredBeatPlans.length === 0 && (
+                      <tr>
+                        <td colSpan="7" className="text-center py-12 text-gray-400 italic">
+                          No beat plans found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Product Catalog Screen */}
       {view === "catalog" && (
@@ -4989,6 +5626,473 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Beat Plan Detail View Overlay */}
+      {selectedBeatPlan && (
+        <div className="fixed inset-0 bg-white overflow-y-auto z-[1000] animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-6 pb-8 rounded-b-[40px] shadow-2xl relative border-b-4 border-blue-400">
+            <button
+              onClick={() => setSelectedBeatPlan(null)}
+              className="mb-4 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 w-fit transition-all uppercase tracking-wider border border-white/30"
+            >
+              &larr; Back to Beat Plans
+            </button>
+
+            <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Beat Plan Profile Details</div>
+            <h2 className="font-bold text-3xl leading-tight mb-3 uppercase tracking-tight">{selectedBeatPlan.quarter} Beat Plan</h2>
+            
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest mt-4">
+              <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">👤 Planner: {selectedBeatPlan.userName}</span>
+              <span className={`px-2.5 py-1.5 rounded-lg border ${
+                selectedBeatPlan.status === "Approved" ? "bg-green-500/20 border-green-400/30 text-green-200" :
+                selectedBeatPlan.status === "Submitted" ? "bg-orange-500/20 border-orange-400/30 text-orange-200" :
+                "bg-gray-500/20 border-gray-400/30 text-gray-200"
+              }`}>
+                ⚡ {selectedBeatPlan.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6 pb-24 max-w-4xl mx-auto space-y-8 mt-4">
+            
+            {/* Planned Accounts Section */}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+              <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider border-b pb-2">Planned Accounts</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100 text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3">Hospital</th>
+                      <th className="px-4 py-3 text-center">Planned Visits</th>
+                      <th className="px-4 py-3">Strategic Objective</th>
+                      <th className="px-4 py-3 text-right">Expected Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                    {selectedBeatPlan.accounts && selectedBeatPlan.accounts.map(a => (
+                      <tr key={a.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => {
+                              const cust = customers.find(c => c.id.toString() === a.customerId.toString());
+                              if (cust) {
+                                setSelectedAccount(cust);
+                                setSelectedBeatPlan(null);
+                              }
+                            }}
+                            className="text-blue-600 hover:underline font-bold text-left"
+                          >
+                            {a.customerName}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-center font-bold text-gray-600">{a.plannedVisitCount}</td>
+                        <td className="px-4 py-3 text-gray-500 italic max-w-[250px] truncate" title={a.strategicObjective}>{a.strategicObjective}</td>
+                        <td className="px-4 py-3 text-right font-bold text-gray-900">₹{a.expectedRevenue}L</td>
+                      </tr>
+                    ))}
+                    {/* Totals Row */}
+                    {(() => {
+                      const totalHosp = selectedBeatPlan.accounts ? selectedBeatPlan.accounts.length : 0;
+                      const totalVisits = selectedBeatPlan.accounts ? selectedBeatPlan.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0) : 0;
+                      const totalRev = selectedBeatPlan.accounts ? selectedBeatPlan.accounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0) : 0;
+                      
+                      return (
+                        <tr className="bg-gray-50/50 font-black text-gray-900 border-t border-gray-200">
+                          <td className="px-4 py-3 text-gray-500 uppercase tracking-wider">Total ({totalHosp} Hospitals)</td>
+                          <td className="px-4 py-3 text-center">{totalVisits}</td>
+                          <td className="px-4 py-3"></td>
+                          <td className="px-4 py-3 text-right text-blue-900">₹{totalRev}L</td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Execution Analytics Section (Only for Approved Plans) */}
+            {selectedBeatPlan.status === "Approved" && (() => {
+              const plannedHospitals = selectedBeatPlan.accounts ? selectedBeatPlan.accounts.length : 0;
+              const totalPlannedVisits = selectedBeatPlan.accounts ? selectedBeatPlan.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0) : 0;
+              
+              let coveredHospitals = 0;
+              let totalActivitiesLogged = 0;
+              
+              const accountsWithMetrics = selectedBeatPlan.accounts.map(a => {
+                const matchingActs = activities.filter(act => 
+                  act.accountId && a.customerId && act.accountId.toString() === a.customerId.toString() &&
+                  getActivityQuarter(act) === selectedBeatPlan.quarter
+                );
+                
+                const loggedCount = matchingActs.length;
+                totalActivitiesLogged += loggedCount;
+                if (loggedCount > 0) {
+                  coveredHospitals += 1;
+                }
+                
+                const progress = a.plannedVisitCount > 0 
+                  ? Math.min(100, Math.round((loggedCount / a.plannedVisitCount) * 100)) 
+                  : 0;
+                
+                return {
+                  ...a,
+                  activitiesLogged: loggedCount,
+                  progressPercent: progress,
+                  covered: loggedCount > 0
+                };
+              });
+
+              const compliancePercent = plannedHospitals > 0 
+                ? Math.round((coveredHospitals / plannedHospitals) * 100) 
+                : 0;
+              const progressPercent = totalPlannedVisits > 0 
+                ? Math.min(100, Math.round((totalActivitiesLogged / totalPlannedVisits) * 100)) 
+                : 0;
+
+              return (
+                <div className="space-y-6">
+                  {/* Execution Summary Cards */}
+                  <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+                    <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider border-b pb-2">Execution Summary</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Planned Hospitals</span>
+                        <span className="text-lg font-black text-blue-900">{plannedHospitals}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Covered Hospitals</span>
+                        <span className="text-lg font-black text-blue-900">{coveredHospitals}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Compliance %</span>
+                        <span className="text-lg font-black text-green-600">{compliancePercent}%</span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Planned Visits</span>
+                        <span className="text-lg font-black text-blue-900">{totalPlannedVisits}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Activities Logged</span>
+                        <span className="text-lg font-black text-blue-900">{totalActivitiesLogged}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-2xl border border-gray-100">
+                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Progress %</span>
+                        <span className="text-lg font-black text-blue-950">{progressPercent}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Account Coverage Status Table */}
+                  <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+                    <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider border-b pb-2">Account Coverage Status</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-left text-xs">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-100 text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                            <th className="px-4 py-3">Hospital</th>
+                            <th className="px-4 py-3 text-center">Planned Visits</th>
+                            <th className="px-4 py-3 text-center">Activities Logged</th>
+                            <th className="px-4 py-3 text-center">Progress %</th>
+                            <th className="px-4 py-3 text-center">Covered</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 font-medium text-gray-700">
+                          {accountsWithMetrics.map(am => (
+                            <tr key={am.id} className="hover:bg-gray-50/50">
+                              <td className="px-4 py-3 font-bold text-gray-900">{am.customerName}</td>
+                              <td className="px-4 py-3 text-center font-bold text-gray-500">{am.plannedVisitCount}</td>
+                              <td className="px-4 py-3 text-center font-bold text-gray-500">{am.activitiesLogged}</td>
+                              <td className="px-4 py-3 text-center font-bold text-gray-900">{am.progressPercent}%</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                                  am.covered ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+                                }`}>
+                                  {am.covered ? "Yes" : "No"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Info Timestamps */}
+            <div className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner space-y-4">
+              <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider border-b pb-2">Audit Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold text-gray-500">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Created Date:</span>
+                    <span className="font-bold text-gray-700">{selectedBeatPlan.createdDate}</span>
+                  </div>
+                  {selectedBeatPlan.submittedDate && (
+                    <div className="flex justify-between">
+                      <span>Submitted Date:</span>
+                      <span className="font-bold text-gray-700">{selectedBeatPlan.submittedDate}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {selectedBeatPlan.approvedDate && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Approved Date:</span>
+                      <span className="font-bold">{selectedBeatPlan.approvedDate}</span>
+                    </div>
+                  )}
+                  {selectedBeatPlan.approvedBy && (
+                    <div className="flex justify-between text-green-700">
+                      <span>Approved By:</span>
+                      <span className="font-bold">{selectedBeatPlan.approvedBy}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              {selectedBeatPlan.status === "Draft" && selectedBeatPlan.userId === currentUser && (
+                <button
+                  onClick={() => {
+                    submitBeatPlanDirectly(selectedBeatPlan);
+                  }}
+                  className="bg-orange-600 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md hover:bg-orange-700"
+                >
+                  Submit Plan
+                </button>
+              )}
+              {selectedBeatPlan.status === "Submitted" && currentUser === "Manager" && (
+                <button
+                  onClick={() => {
+                    approveBeatPlan(selectedBeatPlan);
+                  }}
+                  className="bg-green-600 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md hover:bg-green-700"
+                >
+                  Approve Plan
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedBeatPlan(null)}
+                className="bg-gray-100 text-gray-600 px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-gray-200"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Beat Plan Form Modal */}
+      {isBeatPlanModalOpen && (() => {
+        const isFormValid = formBeatPlanQuarter && formBeatPlanAccounts.length > 0 && formBeatPlanAccounts.every(a => 
+          a.customerId && 
+          parseInt(a.plannedVisitCount) > 0 && 
+          a.strategicObjective.trim() !== "" && 
+          parseFloat(a.expectedRevenue) >= 0
+        );
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4 animate-in fade-in duration-200">
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[720px] shadow-2xl flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-gray-800 text-xl tracking-tight uppercase">
+                  {editingBeatPlan ? "Edit Beat Plan" : "Create Beat Plan"}
+                </h3>
+                <button onClick={() => setIsBeatPlanModalOpen(false)} className="text-gray-400 hover:text-gray-800 text-2xl font-bold">&times;</button>
+              </div>
+
+              <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar pb-4 flex-1">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Quarter *</label>
+                  <select
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all cursor-pointer"
+                    value={formBeatPlanQuarter}
+                    onChange={(e) => setFormBeatPlanQuarter(e.target.value)}
+                  >
+                    <option value="Q1 2026">Q1 2026</option>
+                    <option value="Q2 2026">Q2 2026</option>
+                    <option value="Q3 2026">Q3 2026</option>
+                    <option value="Q4 2026">Q4 2026</option>
+                  </select>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b pb-2">
+                    <span className="text-xs font-black text-gray-600 uppercase tracking-wider">Hospitals Planned *</span>
+                    <button
+                      onClick={() => setFormBeatPlanAccounts(prev => [...prev, { id: Date.now().toString(), customerId: "", customerName: "", searchText: "", isLookupOpen: false, plannedVisitCount: 1, strategicObjective: "", expectedRevenue: 0 }])}
+                      className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl text-xs font-black hover:bg-blue-600 hover:text-white transition-all uppercase tracking-wider"
+                    >
+                      ＋ Add Hospital
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {formBeatPlanAccounts.map((a, idx) => (
+                      <div key={a.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200/50 space-y-3 relative">
+                        <button
+                          onClick={() => setFormBeatPlanAccounts(prev => prev.filter(item => item.id !== a.id))}
+                          className="absolute top-3 right-3 text-red-500 hover:text-red-700 font-black text-[10px] uppercase tracking-wider"
+                          title="Remove Account"
+                        >
+                          ✕ Remove
+                        </button>
+                        
+                        <div className={`relative beat-row-hospital-lookup-container beat-row-hospital-lookup-container-${a.id}`}>
+                          <label className="text-[9px] font-black text-gray-400 uppercase mb-1 block tracking-widest">Hospital Name *</label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-800 transition-all pr-8"
+                              placeholder="Search Hospital..."
+                              value={a.searchText}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? {
+                                  ...item,
+                                  searchText: val,
+                                  customerId: val ? item.customerId : "",
+                                  customerName: val ? item.customerName : "",
+                                  isLookupOpen: true
+                                } : item));
+                              }}
+                              onFocus={() => {
+                                setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? { ...item, isLookupOpen: true } : item));
+                              }}
+                            />
+                            {a.searchText && (
+                              <button
+                                onClick={() => {
+                                  setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? { ...item, searchText: "", customerId: "", customerName: "", isLookupOpen: true } : item));
+                                }}
+                                className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 font-bold text-base"
+                              >
+                                &times;
+                              </button>
+                            )}
+                          </div>
+
+                          {a.isLookupOpen && (
+                            <div className="absolute z-[1200] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[140px] overflow-y-auto">
+                              {customers
+                                .filter(c => c.customerType === "Hospital")
+                                .filter(c =>
+                                  c.name?.toLowerCase().includes(a.searchText.toLowerCase()) || a.searchText === ""
+                                )
+                                .map(c => (
+                                  <div
+                                    key={c.id}
+                                    onClick={() => {
+                                      setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? {
+                                        ...item,
+                                        customerId: c.id.toString(),
+                                        customerName: c.name,
+                                        searchText: c.name,
+                                        isLookupOpen: false
+                                      } : item));
+                                    }}
+                                    className={`p-2 border-b cursor-pointer text-xs hover:bg-blue-50 transition-colors ${a.customerId.toString() === c.id.toString() ? 'bg-blue-100 font-bold' : ''}`}
+                                  >
+                                    <div className="font-bold text-gray-800">{c.name}</div>
+                                    <div className="text-[8px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                                  </div>
+                                ))}
+                              {customers.filter(c => c.customerType === "Hospital").filter(c =>
+                                c.name?.toLowerCase().includes(a.searchText.toLowerCase())
+                              ).length === 0 && (
+                                <div className="p-3 text-xs text-gray-500 italic text-center">No hospitals found</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[9px] font-black text-gray-400 uppercase mb-1 block tracking-widest">Planned Visits *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-800 transition-all"
+                              value={a.plannedVisitCount}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? { ...item, plannedVisitCount: val } : item));
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-black text-gray-400 uppercase mb-1 block tracking-widest">Expected Rev (₹L) *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-800 transition-all"
+                              value={a.expectedRevenue}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? { ...item, expectedRevenue: val } : item));
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-[9px] font-black text-gray-400 uppercase mb-1 block tracking-widest">Strategic Objective *</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. ICU modernization discussions"
+                            className="w-full border border-gray-200 p-2.5 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-gray-800 transition-all"
+                            value={a.strategicObjective}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setFormBeatPlanAccounts(prev => prev.map(item => item.id === a.id ? { ...item, strategicObjective: val } : item));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {formBeatPlanAccounts.length === 0 && (
+                    <div className="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400 italic text-xs">
+                      No hospitals planned yet. Click "＋ Add Hospital" to start coverage planning.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={() => setIsBeatPlanModalOpen(false)}
+                  className="flex-grow px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => saveBeatPlan(false)}
+                  disabled={!isFormValid}
+                  className={`px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex-grow cursor-pointer ${
+                    isFormValid ? "bg-gray-600 hover:bg-gray-700 shadow-gray-200" : "bg-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  Save Draft
+                </button>
+                <button
+                  onClick={() => saveBeatPlan(true)}
+                  disabled={!isFormValid}
+                  className={`px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg flex-grow cursor-pointer ${
+                    isFormValid ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"
+                  }`}
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Custom Alert Modal */}
       {customAlert && (() => {
