@@ -374,6 +374,35 @@
 
 * **Priority:** P1 Critical
 
+### PB-026B – Customer 360 Project Visibility
+
+* **Source:** PB-026 UX Enhancement
+
+* **Business Area:** Opportunity Management / Customer Management
+
+* **Description:** Improve Project discoverability by displaying customer-associated Projects within the Customer 360 view and providing a convenient Project creation entry point from the customer context.
+
+* **Prototype Change Required:** Add a Projects section to Customer 360 showing Projects linked to the current Customer. Add a Create Project action that launches the existing Project creation flow with the Customer automatically pre-populated.
+
+* **Acceptance Criteria:**
+
+  * Customer 360 displays Projects associated with the current Customer
+  * Projects section displays Project Name, Project Type, Status, and Expected Close Date
+  * User can navigate from Customer 360 to a Project detail view
+  * User can create a new Project directly from Customer 360
+  * Creating a Project from Customer 360 automatically pre-populates the Customer field
+  * Multiple Projects can be displayed for a single Customer
+  * Existing Project functionality is reused
+  * No Project-level workflow exists
+  * No Project-level dashboard exists
+  * No Project-level reporting exists
+  * No Project-level forecasting exists
+
+* **Dependencies:** PB-026 – Project Opportunity Foundation
+
+* **Priority:** P3 Nice to Have
+
+
 ## Suggested Implementation Sequence
 
 Group work into waves ordered logically by dependencies to maximize efficiency and build a solid foundation.

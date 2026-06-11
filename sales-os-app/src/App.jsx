@@ -51,30 +51,35 @@ const deriveHandoverStatus = (checklist) => {
 // 🔷 Demo dataset
 const initialDeals = [
   // --- "Basheer" (Salesperson 1) ---
-  { id: 1, name: "Al Shifa Hospital – SonoScape S50", stage: "Qualified", value: "₹22L", probability: 30, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Doctor interested in S50 Elite, requirement discussed" }], isPriority: false, state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 60 }, { user: "Amit", role: "Product Specialist", split: 40 }] },
+  { id: 1, name: "Al Shifa Hospital – SonoScape S50", stage: "Qualified", value: "₹22L", probability: 30, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Doctor interested in S50 Elite, requirement discussed" }], isPriority: false, state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 60 }, { user: "Amit", role: "Product Specialist", split: 40 }], projectId: "7", projectName: "Al Shifa Patient Monitor Upgrade" },
   { id: 2, name: "City Scan – SonoScape E2", stage: "Demo", value: "₹18L", probability: 50, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Demo scheduled for E2 portable" }], state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 80 }, { user: "Rahul", role: "Clinical Specialist", split: 15 }] },
 
-  { id: 3, name: "Iqra Hospital – SonoScape X3", stage: "Closed Won", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false, state: "Active", poNumber: "PO-39281" },
+  { id: 3, name: "Iqra Hospital – SonoScape X3", stage: "Closed Won", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false, state: "Active", poNumber: "PO-39281", projectId: "6", projectName: "Iqra Hospital New Wing Construction" },
   { id: 4, name: "MIMS Clinic – P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }], state: "Active" },
   { id: 5, name: "Baby Memorial – Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }], isPriority: true, state: "Active" },
   { id: 101, name: "Fathima Hospital – Defibrillator", stage: "Closed Won", value: "₹10L", probability: 100, owner: "Basheer", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true, state: "Active", poNumber: "PO-19203" },
   { id: 102, name: "Wayanad Medical – Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true, state: "Active" },
 
   // --- "Amit" (Salesperson 2) ---
-  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }], state: "Active" },
+  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }], state: "Active", projectId: "5", projectName: "Aster Medcity Urology Renovation" },
   { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }], state: "On Hold", holdReason: "Budget Approval Pending", holdNotes: "State budget allocation delayed to next fiscal quarter. HOD confirmed interest remains.", holdReactivationDate: "2026-08-15" },
   { id: 8, name: "Lakeshore Hospital – Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }], isPriority: false, state: "Active" },
-  { id: 9, name: "KIMS Trivandrum – Defibrillators", stage: "Closed Won", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false, state: "Active", poNumber: "PO-48291" },
+  { id: 9, name: "KIMS Trivandrum – Defibrillators", stage: "Closed Won", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false, state: "Active", poNumber: "PO-48291", projectId: "9", projectName: "KIMS Radiology Digitalization" },
   { id: 10, name: "SUT Hospital – ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }], state: "Active" },
   { id: 103, name: "Amrita Hospital Kochi – SonoScape S22", stage: "Closed Won", value: "₹25L", probability: 100, owner: "Amit", lastActivity: "18d ago", timeline: [{ text: "Delivered" }], isLastMonth: true, state: "Active", poNumber: "PO-29381" },
 
   // --- "Rahul" (Salesperson 3 - Bangalore Region) ---
-  { id: 11, name: "Apollo Hospitals – SonoScape P60", stage: "Negotiation", value: "₹25L", probability: 70, owner: "Rahul", lastActivity: "2d ago", timeline: [{ text: "Commercial discussion ongoing" }], state: "Active" },
+  { id: 11, name: "Apollo Hospitals – SonoScape P60", stage: "Negotiation", value: "₹25L", probability: 70, owner: "Rahul", lastActivity: "2d ago", timeline: [{ text: "Commercial discussion ongoing" }], state: "Active", projectId: "3", projectName: "Apollo Bangalore Equipment Upgrade" },
   { id: 12, name: "NIMHANS – MRI Setup", stage: "Lead", value: "₹200L", probability: 10, owner: "Rahul", lastActivity: "4d ago", timeline: [{ text: "RFP received" }], state: "On Hold", holdReason: "Regulatory Approval", holdNotes: "AERB clearance pending for MRI installation. Expected 2-3 month delay.", holdReactivationDate: "2026-05-10" },
   { id: 13, name: "Manipal Hospital – Portable X-Ray", stage: "Demo", value: "₹10L", probability: 50, owner: "Rahul", lastActivity: "1h ago", timeline: [{ text: "Scheduled demo" }], isPriority: true, state: "Active" },
   { id: 14, name: "Aster CMI – Hematology Analyzer", stage: "Closed Won", value: "₹9L", probability: 100, owner: "Rahul", lastActivity: "1d ago", timeline: [{ text: "Installation completed" }], isLastMonth: false, state: "Active", poNumber: "PO-18302" },
   { id: 15, name: "Fortis Hospital – SonoScape HD-500", stage: "Qualified", value: "₹45L", probability: 30, owner: "Rahul", lastActivity: "Just now", timeline: [{ text: "Technical presentation delivered" }], state: "Active" },
-  { id: 104, name: "Sakra World – Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true, state: "Active" }
+  { id: 104, name: "Sakra World – Ventilators", stage: "Lost", value: "₹40L", probability: 0, owner: "Rahul", lastActivity: "12d ago", timeline: [{ text: "Lost to competitor" }], isLastMonth: true, state: "Active" },
+
+  // --- Mock Project Opportunities for Apollo Healthcare Group (PB-026/PB-026B) ---
+  { id: 105, name: "Apollo Healthcare Group – MRI Equipment Upgrade", stage: "Negotiation", value: "₹80L", probability: 70, owner: "Basheer", lastActivity: "2d ago", timeline: [{ text: "Discussing technical specifications for MRI block expansion" }], state: "Active", projectId: "1", projectName: "Apollo North Hospital Expansion" },
+  { id: 106, name: "Apollo Healthcare Group – Cath Lab Expansion", stage: "Demo", value: "₹120L", probability: 50, owner: "Rahul", lastActivity: "Just now", timeline: [{ text: "Site inspection scheduled for new Cath Lab" }], state: "Active", projectId: "1", projectName: "Apollo North Hospital Expansion" },
+  { id: 107, name: "Apollo Healthcare Group – HIS Modernization", stage: "Qualified", value: "₹65L", probability: 30, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Requirement gathering for HIS upgrade complete" }], state: "Active", projectId: "2", projectName: "Apollo Digital Transformation Program" }
 ];
 
 // 🔷 Customer Dataset (Phase 2)
@@ -106,6 +111,22 @@ const initialCustomers = [
 ];
 
 const initialContacts = [];
+
+const initialProjects = [
+  { id: "1", projectName: "Apollo North Hospital Expansion", projectType: "Expansion", status: "Active", expectedCloseDate: "2026-12-15", customerId: "20", customerName: "Apollo Healthcare Group" },
+  { id: "2", projectName: "Apollo Digital Transformation Program", projectType: "Digital Transformation", status: "Planning", expectedCloseDate: "2027-06-30", customerId: "20", customerName: "Apollo Healthcare Group" },
+  { id: "3", projectName: "Apollo Bangalore Equipment Upgrade", projectType: "Equipment Upgrade", status: "Active", expectedCloseDate: "2026-09-10", customerId: "11", customerName: "Apollo Hospitals" },
+  { id: "4", projectName: "Aster DM Digital Health Initiative", projectType: "Digital Transformation", status: "Planning", expectedCloseDate: "2027-02-18", customerId: "21", customerName: "Aster DM Healthcare" },
+  { id: "5", projectName: "Aster Medcity Urology Renovation", projectType: "Renovation", status: "On Hold", expectedCloseDate: "2026-11-20", customerId: "6", customerName: "Aster Medcity" },
+  { id: "6", projectName: "Iqra Hospital New Wing Construction", projectType: "New Hospital Build", status: "Active", expectedCloseDate: "2028-03-05", customerId: "3", customerName: "Iqra Hospital" },
+  { id: "7", projectName: "Al Shifa Patient Monitor Upgrade", projectType: "Equipment Upgrade", status: "Completed", expectedCloseDate: "2026-05-15", customerId: "1", customerName: "Al Shifa Hospital" },
+  { id: "8", projectName: "TMC Critical Care Block Extension", projectType: "Expansion", status: "Active", expectedCloseDate: "2027-01-10", customerId: "7", customerName: "Trivandrum Medical College" },
+  { id: "9", projectName: "KIMS Radiology Digitalization", projectType: "Digital Transformation", status: "Active", expectedCloseDate: "2026-10-30", customerId: "9", customerName: "KIMS Trivandrum" },
+  { id: "10", projectName: "Baby Memorial Pediatrics Renovation", projectType: "Renovation", status: "Planning", expectedCloseDate: "2026-12-01", customerId: "5", customerName: "Baby Memorial" },
+  { id: "11", projectName: "MIMS Clinic Ultrasound Upgrade", projectType: "Equipment Upgrade", status: "Completed", expectedCloseDate: "2026-04-20", customerId: "4", customerName: "MIMS Clinic" },
+  { id: "12", projectName: "Lakeshore Hospital Expansion", projectType: "Expansion", status: "Planning", expectedCloseDate: "2027-04-15", customerId: "8", customerName: "Lakeshore Hospital" }
+];
+
 
 
 const initialCatalog = [
@@ -238,6 +259,34 @@ export default function App() {
   const [isLostPrompt, setIsLostPrompt] = useState(false);
   const [lostCompetitor, setLostCompetitor] = useState("");
   const [lostReason, setLostReason] = useState("Price");
+
+  const [projects, setProjects] = useState(() => JSON.parse(localStorage.getItem("sales_os_projects")) || initialProjects);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+
+  // Form states for projects
+  const [formProjectName, setFormProjectName] = useState("");
+  const [formCustomerId, setFormCustomerId] = useState("");
+  const [formCustomerSearchText, setFormCustomerSearchText] = useState("");
+  const [isFormCustomerLookupOpen, setIsFormCustomerLookupOpen] = useState(false);
+  const [formProjectType, setFormProjectType] = useState("New Hospital Build");
+  const [formProjectStatus, setFormProjectStatus] = useState("Planning");
+  const [formExpectedCloseDate, setFormExpectedCloseDate] = useState("");
+  const [isFormCustomerLocked, setIsFormCustomerLocked] = useState(false);
+
+  // Search & Filter states for projects master
+  const [projectSearchText, setProjectSearchText] = useState("");
+  const [projectTypeFilter, setProjectTypeFilter] = useState("All Types");
+  const [projectStatusFilter, setProjectStatusFilter] = useState("All Statuses");
+
+  // State inside lead wizard for associating a project during opportunity creation
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_projects", JSON.stringify(projects));
+  }, [projects]);
+
 
   const [showNewLead, setShowNewLead] = useState(false);
   const [leadWizardStep, setLeadWizardStep] = useState(1);
@@ -431,6 +480,24 @@ export default function App() {
     document.addEventListener("mousedown", handleCreateDocumentClick);
     return () => document.removeEventListener("mousedown", handleCreateDocumentClick);
   }, [isCreatingParentLookup, newParentCustomerId, customers]);
+
+  useEffect(() => {
+    const handleProjectCustomerClick = (e) => {
+      if (!document.body.contains(e.target)) return;
+      if (isFormCustomerLookupOpen && !e.target.closest(".project-customer-lookup-container")) {
+        setIsFormCustomerLookupOpen(false);
+        if (!formCustomerId) {
+          setFormCustomerSearchText("");
+        } else {
+          const cust = customers.find(c => c.id.toString() === formCustomerId.toString());
+          setFormCustomerSearchText(cust ? cust.name : "");
+        }
+      }
+    };
+    document.addEventListener("mousedown", handleProjectCustomerClick);
+    return () => document.removeEventListener("mousedown", handleProjectCustomerClick);
+  }, [isFormCustomerLookupOpen, formCustomerId, customers]);
+
   const [newStakeholderName, setNewStakeholderName] = useState("");
   const [newStakeholderRole, setNewStakeholderRole] = useState("");
   const [newStakeholderPhone, setNewStakeholderPhone] = useState("");
@@ -758,6 +825,76 @@ export default function App() {
     setActivities(prev => [auditActivity, ...prev]);
   };
 
+  const saveProject = () => {
+    if (!formProjectName.trim() || !formCustomerId) {
+      setCustomAlert({
+        title: "Required Fields",
+        message: "Please enter Project Name and select a Customer.",
+        type: "warning"
+      });
+      return;
+    }
+    const customerObj = customers.find(c => c.id.toString() === formCustomerId.toString());
+    const projectData = {
+      id: editingProject ? editingProject.id : Date.now().toString(),
+      projectName: formProjectName.trim(),
+      customerId: formCustomerId,
+      customerName: customerObj ? customerObj.name : "",
+      projectType: formProjectType,
+      status: formProjectStatus,
+      expectedCloseDate: formExpectedCloseDate
+    };
+
+    if (editingProject) {
+      setProjects(prev => prev.map(p => p.id === editingProject.id ? projectData : p));
+      setDeals(prev => prev.map(d => d.projectId === editingProject.id ? { ...d, projectName: formProjectName.trim() } : d));
+    } else {
+      setProjects(prev => [...prev, projectData]);
+    }
+
+    setFormProjectName("");
+    setFormCustomerId("");
+    setFormCustomerSearchText("");
+    setFormProjectType("New Hospital Build");
+    setFormProjectStatus("Planning");
+    setFormExpectedCloseDate("");
+    setEditingProject(null);
+    setIsProjectModalOpen(false);
+    setIsFormCustomerLocked(false);
+  };
+
+  const openEditProjectModal = (proj) => {
+    setEditingProject(proj);
+    setFormProjectName(proj.projectName);
+    setFormCustomerId(proj.customerId);
+    const cust = customers.find(c => c.id.toString() === proj.customerId.toString());
+    setFormCustomerSearchText(cust ? cust.name : "");
+    setFormProjectType(proj.projectType);
+    setFormProjectStatus(proj.status);
+    setFormExpectedCloseDate(proj.expectedCloseDate || "");
+    setIsFormCustomerLocked(false);
+    setIsProjectModalOpen(true);
+  };
+
+  const openNewProjectModal = (prePopulatedCustomerId = "") => {
+    setEditingProject(null);
+    setFormProjectName("");
+    if (prePopulatedCustomerId) {
+      setFormCustomerId(prePopulatedCustomerId.toString());
+      const cust = customers.find(c => c.id.toString() === prePopulatedCustomerId.toString());
+      setFormCustomerSearchText(cust ? cust.name : "");
+      setIsFormCustomerLocked(true);
+    } else {
+      setFormCustomerId("");
+      setFormCustomerSearchText("");
+      setIsFormCustomerLocked(false);
+    }
+    setFormProjectType("New Hospital Build");
+    setFormProjectStatus("Planning");
+    setFormExpectedCloseDate("");
+    setIsProjectModalOpen(true);
+  };
+
   const handleCancelNewCustomer = () => {
     setIsCreatingCustomer(false);
     setNewCustomerName("");
@@ -847,6 +984,9 @@ export default function App() {
       return "Critical Care";
     }))];
 
+    const associatedProj = selectedProjectId ? projects.find(p => p.id === selectedProjectId) : null;
+    const projFields = associatedProj ? { projectId: associatedProj.id, projectName: associatedProj.projectName } : {};
+
     // Splitting Logic: Trigger only if BOTH Ultrasound and Critical Care are present
     if (categories.includes("Ultrasound") && categories.includes("Critical Care")) {
       const gId = `GRP-${Date.now()}`;
@@ -878,7 +1018,8 @@ export default function App() {
           source: leadSource,
           campaign: leadCampaign,
           region: customer.zone,
-          isPriority: false
+          isPriority: false,
+          ...projFields
         };
       });
 
@@ -903,7 +1044,8 @@ export default function App() {
         source: leadSource,
         campaign: leadCampaign,
         region: customer.zone,
-        isPriority: false
+        isPriority: false,
+        ...projFields
       };
       setDeals(prev => [newDeal, ...prev]);
     }
@@ -916,6 +1058,7 @@ export default function App() {
     setLeadRegion("North Kerala");
     setSelectedCustomerId("");
     setSelectedProducts([]);
+    setSelectedProjectId("");
     setLeadWizardStep(1);
     setShowNewLead(false);
   };
@@ -964,6 +1107,7 @@ export default function App() {
       case "pipeline": return "Deals Pipeline";
       case "manager": return "Deals List";
       case "customers": return "Customer Directory";
+      case "projects": return "Projects Master";
       case "catalog": return "Product Catalog";
       case "reminders": return "Next Actions";
       case "insights": return "Insights";
@@ -1039,6 +1183,7 @@ export default function App() {
                 { id: "pipeline", label: "Deals Pipeline", icon: "📊" },
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
+                { id: "projects", label: "Projects", icon: "📁" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
                 { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "insights", label: "Insights", icon: "💡" },
@@ -1051,6 +1196,7 @@ export default function App() {
                     setIsSidebarOpen(false);
                     setSelectedDeal(null);
                     setSelectedAccount(null);
+                    setSelectedProject(null);
                   }}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${view === item.id ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
                 >
@@ -1574,6 +1720,148 @@ export default function App() {
           </div>
         )
       }
+
+      {/* Projects Master Screen */}
+      {view === "projects" && (
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Projects Master</h2>
+            <button
+              onClick={() => openNewProjectModal("")}
+              className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
+            >
+              <span>📁</span> + New Project
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div className="flex-1 relative">
+              <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+              <input
+                type="text"
+                placeholder="Search Projects"
+                className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                value={projectSearchText}
+                onChange={(e) => setProjectSearchText(e.target.value)}
+                autoComplete="off"
+              />
+              {projectSearchText && (
+                <button
+                  onClick={() => setProjectSearchText("")}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+            <select
+              className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={projectTypeFilter}
+              onChange={(e) => setProjectTypeFilter(e.target.value)}
+            >
+              <option value="All Types">All Types</option>
+              <option value="New Hospital Build">New Hospital Build</option>
+              <option value="Expansion">Expansion</option>
+              <option value="Equipment Upgrade">Equipment Upgrade</option>
+              <option value="Renovation">Renovation</option>
+              <option value="Digital Transformation">Digital Transformation</option>
+            </select>
+            <select
+              className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              value={projectStatusFilter}
+              onChange={(e) => setProjectStatusFilter(e.target.value)}
+            >
+              <option value="All Statuses">All Statuses</option>
+              <option value="Planning">Planning</option>
+              <option value="Active">Active</option>
+              <option value="On Hold">On Hold</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">Project Name</th>
+                    <th className="px-6 py-4">Customer</th>
+                    <th className="px-6 py-4">Project Type</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Expected Close Date</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                  {projects
+                    .filter(proj => {
+                      const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
+                        proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
+                      const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
+                      const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
+                      return matchesSearch && matchesType && matchesStatus;
+                    })
+                    .map(proj => (
+                      <tr key={proj.id} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-gray-900">{proj.projectName}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => {
+                              const cust = customers.find(c => c.id.toString() === proj.customerId.toString());
+                              if (cust) setSelectedAccount(cust);
+                            }}
+                            className="text-blue-600 hover:underline font-bold"
+                          >
+                            {proj.customerName}
+                          </button>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-gray-500">{proj.projectType}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                            proj.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" :
+                            proj.status === "Planning" ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                            proj.status === "On Hold" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                            "bg-gray-100 text-gray-700 border border-gray-200"
+                          }`}>
+                            {proj.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">{proj.expectedCloseDate || "N/A"}</td>
+                        <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                          <button
+                            onClick={() => setSelectedProject(proj)}
+                            className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => openEditProjectModal(proj)}
+                            className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  {projects.filter(proj => {
+                    const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
+                      proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
+                    const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
+                    const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
+                    return matchesSearch && matchesType && matchesStatus;
+                  }).length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12 text-gray-400 italic">
+                        No projects found matching the filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Product Catalog Screen */}
       {view === "catalog" && (
@@ -2122,6 +2410,27 @@ export default function App() {
                 </div>
               </div>
 
+              {selectedDeal.projectId && (
+                <div className="mb-10 bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-center justify-between">
+                  <div>
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-60">Associated Project</div>
+                    <div className="text-sm font-extrabold text-gray-800">{selectedDeal.projectName}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const proj = projects.find(p => p.id === selectedDeal.projectId);
+                      if (proj) {
+                        setSelectedProject(proj);
+                        setSelectedDeal(null);
+                      }
+                    }}
+                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all"
+                  >
+                    View Project &rarr;
+                  </button>
+                </div>
+              )}
+
               {/* Deal Specific Next Actions (Phase 7) */}
               {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").length > 0 && (
                 <div className="mb-8 p-6 bg-indigo-50/50 border-2 border-indigo-100 rounded-[32px] shadow-sm animate-in zoom-in-95 duration-300">
@@ -2527,6 +2836,54 @@ export default function App() {
                     </div>
                   ))}
                   {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && <div className="text-gray-400 text-xs italic py-4 text-center">No stakeholders listed.</div>}
+                </div>
+              </section>
+
+              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
+                <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
+                  Projects
+                  <button
+                    onClick={() => openNewProjectModal(selectedAccount.id)}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                  >
+                    + Project
+                  </button>
+                </h3>
+                <div className="grid grid-cols-1 gap-2">
+                  {projects
+                    .filter(p => p.customerId.toString() === selectedAccount.id.toString())
+                    .map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setSelectedProject(p);
+                          setSelectedAccount(null);
+                        }}
+                        className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center group"
+                      >
+                        <div>
+                          <div className="text-sm font-black text-gray-800 leading-tight group-hover:text-blue-900 transition-colors">{p.projectName}</div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
+                            <span>{p.projectType}</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
+                              p.status === "Active" ? "bg-green-50 text-green-700 border-green-200" :
+                              p.status === "Planning" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                              p.status === "On Hold" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                              "bg-gray-100 text-gray-700 border-gray-200"
+                            }`}>{p.status}</span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
+                          <span className="text-gray-400 group-hover:text-blue-600 transition-colors">&rarr;</span>
+                        </div>
+                      </div>
+                    ))}
+                  {projects.filter(p => p.customerId.toString() === selectedAccount.id.toString()).length === 0 && (
+                    <div className="text-gray-400 text-xs italic py-4 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                      No projects listed.
+                    </div>
+                  )}
                 </div>
               </section>
 
@@ -2965,6 +3322,25 @@ export default function App() {
                     {customers.find(c => c.id === parseInt(selectedCustomerId))?.name}
                   </div>
 
+                  {(() => {
+                    const custProjects = projects.filter(p => p.customerId.toString() === selectedCustomerId.toString());
+                    return custProjects.length > 0 ? (
+                      <div className="mb-4">
+                        <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Associated Project</label>
+                        <select
+                          className="w-full border border-gray-100 p-2.5 rounded-lg focus:ring-blue-500 outline-none bg-gray-50 text-xs font-bold cursor-pointer"
+                          value={selectedProjectId}
+                          onChange={(e) => setSelectedProjectId(e.target.value)}
+                        >
+                          <option value="">None (Independent Deal)</option>
+                          {custProjects.map(proj => (
+                            <option key={proj.id} value={proj.id}>{proj.projectName}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null;
+                  })()}
+
                   <label className="text-xs text-gray-500 font-bold uppercase mb-2 block">Choose Machines from Catalog</label>
                   <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1 no-scrollbar overflow-y-hidden">
                     {["Ultrasound", "Ventilator", "Critical Care"].map(cat => (
@@ -3140,6 +3516,35 @@ export default function App() {
                     onChange={(e) => setEditLeadData({ ...editLeadData, name: `${editLeadData.name.split('–')[0]}–${e.target.value}` })}
                   />
                 </div>
+
+                {(() => {
+                  const dealCust = customers.find(c => editLeadData.name.includes(c.name));
+                  const dealCustProjects = dealCust ? projects.filter(p => p.customerId.toString() === dealCust.id.toString()) : [];
+                  return dealCustProjects.length > 0 ? (
+                    <div>
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Associated Project</label>
+                      <select
+                        className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        value={editLeadData.projectId || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const proj = projects.find(p => p.id === val);
+                          setEditLeadData({
+                            ...editLeadData,
+                            projectId: val || "",
+                            projectName: proj ? proj.projectName : ""
+                          });
+                        }}
+                      >
+                        <option value="">None (Independent Deal)</option>
+                        {dealCustProjects.map(proj => (
+                          <option key={proj.id} value={proj.id}>{proj.projectName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null;
+                })()}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Value (₹ Lakhs)</label>
@@ -4337,6 +4742,253 @@ export default function App() {
           return null;
         })()
       }
+
+      {/* Project Detail View Overlay */}
+      {selectedProject && (
+        <div className="fixed inset-0 bg-white overflow-y-auto z-[1000] animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-6 pb-8 rounded-b-[40px] shadow-2xl relative border-b-4 border-blue-400">
+            <button
+              onClick={() => setSelectedProject(null)}
+              className="mb-4 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 w-fit transition-all uppercase tracking-wider border border-white/30"
+            >
+              &larr; Back to Projects
+            </button>
+
+            <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Project Details Profile</div>
+            <h2 className="font-bold text-3xl leading-tight mb-3 uppercase tracking-tight">{selectedProject.projectName}</h2>
+            
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest mt-4">
+              <button
+                onClick={() => {
+                  const cust = customers.find(c => c.id.toString() === selectedProject.customerId.toString());
+                  if (cust) {
+                    setSelectedAccount(cust);
+                    setSelectedProject(null);
+                  }
+                }}
+                className="bg-blue-500/30 hover:bg-blue-500/50 text-white px-2.5 py-1.5 rounded-lg border border-blue-400/30 transition-all flex items-center gap-1 normal-case shadow-sm cursor-pointer"
+              >
+                <span>🏥 Customer:</span>
+                <span className="underline font-bold">{selectedProject.customerName}</span>
+              </button>
+              <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">🏷️ {selectedProject.projectType}</span>
+              <span className={`px-2.5 py-1.5 rounded-lg border ${
+                selectedProject.status === "Active" ? "bg-green-500/20 border-green-400/30 text-green-200" :
+                selectedProject.status === "Planning" ? "bg-blue-500/20 border-blue-400/30 text-blue-200" :
+                selectedProject.status === "On Hold" ? "bg-amber-500/20 border-amber-400/30 text-amber-200" :
+                "bg-gray-500/20 border-gray-400/30 text-gray-200"
+              }`}>
+                ⚡ {selectedProject.status}
+              </span>
+              <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">📅 Exp Close: {selectedProject.expectedCloseDate || "N/A"}</span>
+            </div>
+          </div>
+
+          <div className="p-4 sm:p-6 pb-24 max-w-5xl mx-auto space-y-6 mt-4">
+            <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
+              <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
+                Associated Opportunities
+                <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-200 font-black uppercase tracking-widest">
+                  {deals.filter(d => d.projectId === selectedProject.id).length} Deals
+                </span>
+              </h3>
+              
+              <div className="space-y-3">
+                {deals
+                  .filter(d => d.projectId === selectedProject.id)
+                  .map(d => (
+                    <div
+                      key={d.id}
+                      onClick={() => {
+                        setSelectedDeal(d);
+                        setSelectedProject(null);
+                      }}
+                      className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center"
+                    >
+                      <div>
+                        <div className="text-sm font-black text-blue-900 leading-tight">
+                          {d.name.split("–")[1] || d.name}
+                        </div>
+                        <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider flex items-center gap-2">
+                          <span>{d.stage} · {d.owner}</span>
+                          {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
+                          {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-extrabold text-blue-900 text-lg">{d.value}</div>
+                          <div className="text-[9px] font-bold text-gray-400">🎯 {d.probability}%</div>
+                        </div>
+                        <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
+                          <span className="text-gray-400 group-hover:text-blue-600 transition-colors">&rarr;</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                {deals.filter(d => d.projectId === selectedProject.id).length === 0 && (
+                  <div className="text-gray-400 text-xs italic py-8 text-center bg-white rounded-2xl border border-dashed border-gray-200">
+                    No active or historical deals linked to this project.
+                  </div>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      )}
+
+      {/* Project Creation/Edit Modal */}
+      {isProjectModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4 animate-in fade-in duration-200">
+          <div className="bg-white p-6 rounded-[32px] w-full max-w-[400px] shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-black text-gray-800 text-xl tracking-tight uppercase">
+                {editingProject ? "Edit Project" : "Add New Project"}
+              </h3>
+              <button onClick={() => setIsProjectModalOpen(false)} className="text-gray-400 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div className="space-y-5 overflow-y-auto pr-2 custom-scrollbar pb-4 flex-1">
+              <div>
+                <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Project Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Apollo Cardiac Wing Phase 2"
+                  className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                  value={formProjectName}
+                  onChange={(e) => setFormProjectName(e.target.value)}
+                  autoFocus
+                />
+              </div>
+
+              <div className="relative project-customer-lookup-container">
+                <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Customer Name *</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className={`w-full border border-gray-100 p-3.5 rounded-2xl font-bold text-sm outline-none transition-all pr-8 ${isFormCustomerLocked ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-50 text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500'}`}
+                    placeholder="Search Customer..."
+                    value={formCustomerSearchText}
+                    disabled={isFormCustomerLocked}
+                    onChange={(e) => {
+                      if (isFormCustomerLocked) return;
+                      setFormCustomerSearchText(e.target.value);
+                      setIsFormCustomerLookupOpen(true);
+                      if (!e.target.value) {
+                        setFormCustomerId("");
+                      }
+                    }}
+                    onFocus={() => {
+                      if (!isFormCustomerLocked) setIsFormCustomerLookupOpen(true);
+                    }}
+                    onClick={() => {
+                      if (!isFormCustomerLocked) setIsFormCustomerLookupOpen(true);
+                    }}
+                  />
+                  {formCustomerSearchText && !isFormCustomerLocked && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFormCustomerSearchText("");
+                        setFormCustomerId("");
+                        setIsFormCustomerLookupOpen(true);
+                      }}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 font-bold text-lg"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+                {isFormCustomerLookupOpen && !isFormCustomerLocked && (
+                  <div className="absolute z-[1200] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[160px] overflow-y-auto">
+                    {customers
+                      .filter(c =>
+                        c.name?.toLowerCase().includes(formCustomerSearchText.toLowerCase()) || formCustomerSearchText === ""
+                      )
+                      .map(c => (
+                        <div
+                          key={c.id}
+                          onClick={() => {
+                            setFormCustomerId(c.id.toString());
+                            setFormCustomerSearchText(c.name);
+                            setIsFormCustomerLookupOpen(false);
+                          }}
+                          className={`p-2 border-b cursor-pointer text-xs hover:bg-blue-50 transition-colors ${formCustomerId.toString() === c.id.toString() ? 'bg-blue-100 font-bold' : ''}`}
+                        >
+                          <div className="font-bold text-gray-800">{c.name}</div>
+                          <div className="text-[9px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                        </div>
+                      ))}
+                    {customers.filter(c =>
+                      c.name?.toLowerCase().includes(formCustomerSearchText.toLowerCase())
+                    ).length === 0 && (
+                      <div className="p-3 text-xs text-gray-500 italic text-center">No customers found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Project Type</label>
+                  <select
+                    value={formProjectType}
+                    onChange={(e) => setFormProjectType(e.target.value)}
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all cursor-pointer"
+                  >
+                    <option value="New Hospital Build">New Hospital Build</option>
+                    <option value="Expansion">Expansion</option>
+                    <option value="Equipment Upgrade">Equipment Upgrade</option>
+                    <option value="Renovation">Renovation</option>
+                    <option value="Digital Transformation">Digital Transformation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Status</label>
+                  <select
+                    value={formProjectStatus}
+                    onChange={(e) => setFormProjectStatus(e.target.value)}
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all cursor-pointer"
+                  >
+                    <option value="Planning">Planning</option>
+                    <option value="Active">Active</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Expected Close Date</label>
+                <input
+                  type="date"
+                  className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all cursor-pointer"
+                  value={formExpectedCloseDate}
+                  onChange={(e) => setFormExpectedCloseDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="mt-8 flex gap-3">
+              <button
+                onClick={() => setIsProjectModalOpen(false)}
+                className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveProject}
+                disabled={!formProjectName.trim() || !formCustomerId}
+                className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${
+                  formProjectName.trim() && formCustomerId ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"
+                }`}
+              >
+                {editingProject ? "Update Project" : "Add Project"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Alert Modal */}
       {customAlert && (() => {
