@@ -79,26 +79,33 @@ const initialDeals = [
 
 // 🔷 Customer Dataset (Phase 2)
 const initialCustomers = [
-  { id: 1, name: "Al Shifa Hospital", zone: "North Kerala", city: "Malappuram" },
-  { id: 2, name: "City Scan", zone: "North Kerala", city: "Calicut" },
-  { id: 3, name: "Iqra Hospital", zone: "North Kerala", city: "Calicut" },
-  { id: 4, name: "MIMS Clinic", zone: "North Kerala", city: "Calicut" },
-  { id: 5, name: "Baby Memorial", zone: "North Kerala", city: "Calicut" },
-  { id: 6, name: "Aster Medcity", zone: "South Kerala", city: "Kochi" },
-  { id: 7, name: "Trivandrum Medical College", zone: "South Kerala", city: "Trivandrum" },
-  { id: 8, name: "Lakeshore Hospital", zone: "South Kerala", city: "Kochi" },
-  { id: 9, name: "KIMS Trivandrum", zone: "South Kerala", city: "Trivandrum" },
-  { id: 10, name: "SUT Hospital", zone: "South Kerala", city: "Trivandrum" },
-  { id: 16, name: "Amrita Hospital", zone: "South Kerala", city: "Kochi" },
-  { id: 11, name: "Apollo Hospitals", zone: "Bangalore", city: "Bangalore" },
-  { id: 12, name: "NIMHANS", zone: "Bangalore", city: "Bangalore" },
-  { id: 13, name: "Manipal Hospital", zone: "Bangalore", city: "Bangalore" },
-  { id: 14, name: "Aster CMI", zone: "Bangalore", city: "Bangalore" },
-  { id: 15, name: "Fortis Hospital", zone: "Bangalore", city: "Bangalore" },
-  { id: 17, name: "Fathima Hospital", zone: "North Kerala", city: "Calicut" },
-  { id: 18, name: "Wayanad Medical", zone: "North Kerala", city: "Wayanad" },
-  { id: 19, name: "Sakra World", zone: "Bangalore", city: "Bangalore" }
+  { id: 1, name: "Al Shifa Hospital", zone: "North Kerala", city: "Malappuram", customerType: "Hospital" },
+  { id: 2, name: "City Scan", zone: "North Kerala", city: "Calicut", customerType: "Hospital" },
+  { id: 3, name: "Iqra Hospital", zone: "North Kerala", city: "Calicut", customerType: "Hospital" },
+  { id: 4, name: "MIMS Clinic", zone: "North Kerala", city: "Calicut", customerType: "Hospital" },
+  { id: 5, name: "Baby Memorial", zone: "North Kerala", city: "Calicut", customerType: "Hospital" },
+  { id: 6, name: "Aster Medcity", zone: "South Kerala", city: "Kochi", customerType: "Hospital", parentCustomerId: "21" },
+  { id: 7, name: "Trivandrum Medical College", zone: "South Kerala", city: "Trivandrum", customerType: "Hospital" },
+  { id: 8, name: "Lakeshore Hospital", zone: "South Kerala", city: "Kochi", customerType: "Hospital" },
+  { id: 9, name: "KIMS Trivandrum", zone: "South Kerala", city: "Trivandrum", customerType: "Hospital" },
+  { id: 10, name: "SUT Hospital", zone: "South Kerala", city: "Trivandrum", customerType: "Hospital" },
+  { id: 16, name: "Amrita Hospital", zone: "South Kerala", city: "Kochi", customerType: "Hospital" },
+  { id: 11, name: "Apollo Hospitals", zone: "Bangalore", city: "Bangalore", customerType: "Hospital", parentCustomerId: "20", class: "Class A", specialty: "Multi Speciality" },
+  { id: 12, name: "NIMHANS", zone: "Bangalore", city: "Bangalore", customerType: "Hospital" },
+  { id: 13, name: "Manipal Hospital", zone: "Bangalore", city: "Bangalore", customerType: "Hospital" },
+  { id: 14, name: "Aster CMI", zone: "Bangalore", city: "Bangalore", customerType: "Hospital", parentCustomerId: "21", class: "Class A", specialty: "Multi Speciality" },
+  { id: 15, name: "Fortis Hospital", zone: "Bangalore", city: "Bangalore", customerType: "Hospital" },
+  { id: 17, name: "Fathima Hospital", zone: "North Kerala", city: "Calicut", customerType: "Hospital" },
+  { id: 18, name: "Wayanad Medical", zone: "North Kerala", city: "Wayanad", customerType: "Hospital" },
+  { id: 19, name: "Sakra World", zone: "Bangalore", city: "Bangalore", customerType: "Hospital" },
+  { id: 20, name: "Apollo Healthcare Group", zone: "Bangalore", city: "Bangalore", customerType: "Corporate Group", class: "Corporate", specialty: "Multi Speciality" },
+  { id: 21, name: "Aster DM Healthcare", zone: "South Kerala", city: "Kochi", customerType: "Corporate Group", class: "Corporate", specialty: "Multi Speciality" },
+  { id: 23, name: "Apollo Clinic", zone: "Bangalore", city: "Bangalore", customerType: "Hospital", parentCustomerId: "20", class: "Clinic", specialty: "General" },
+  { id: 24, name: "Apollo Cardiology Department", zone: "Bangalore", city: "Bangalore", customerType: "Department", parentCustomerId: "11", class: "Class A", specialty: "Cardiology" },
+  { id: 25, name: "Aster Urology Department", zone: "South Kerala", city: "Kochi", customerType: "Department", parentCustomerId: "6", class: "Class A", specialty: "Urology" }
 ];
+
+const initialContacts = [];
 
 
 const initialCatalog = [
@@ -195,8 +202,23 @@ export default function App() {
     if (!saved) return initialCustomers;
     let parsed = JSON.parse(saved);
     initialCustomers.forEach(initC => {
-      if (!parsed.some(c => c.id === initC.id || c.name === initC.name)) {
+      const existing = parsed.find(c => c.id === initC.id || c.name === initC.name);
+      if (!existing) {
         parsed.push(initC);
+      } else {
+        if (initC.customerType && !existing.customerType) {
+          existing.customerType = initC.customerType;
+        }
+        if (initC.parentCustomerId && !existing.parentCustomerId) {
+          existing.parentCustomerId = initC.parentCustomerId;
+        }
+        // Force update class and specialty properties for correct directory filtering
+        if (initC.class && !existing.class) {
+          existing.class = initC.class;
+        }
+        if (initC.specialty && !existing.specialty) {
+          existing.specialty = initC.specialty;
+        }
       }
     });
     return parsed;
@@ -231,6 +253,13 @@ export default function App() {
   const [leadRegion, setLeadRegion] = useState("North Kerala");
   const [newCustomerClass, setNewCustomerClass] = useState("Class A");
   const [newCustomerSpecialty, setNewCustomerSpecialty] = useState("General");
+  const [newCustomerType, setNewCustomerType] = useState("Hospital");
+  const [newParentCustomerId, setNewParentCustomerId] = useState("");
+  const [parentSearchText, setParentSearchText] = useState("");
+  const [isCreatingParentLookup, setIsCreatingParentLookup] = useState(false);
+  const [editParentSearchText, setEditParentSearchText] = useState("");
+  const [isEditingParent, setIsEditingParent] = useState(false);
+
 
   const [deals, setDeals] = useState(() => {
     const saved = localStorage.getItem("sales_os_deals");
@@ -355,6 +384,53 @@ export default function App() {
   const [activityPurpose, setActivityPurpose] = useState("Deal Follow-up");
   const [assets, setAssets] = useState(() => JSON.parse(localStorage.getItem("sales_os_assets")) || []);
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
+
+  const lastAccountIdRef = React.useRef(null);
+
+  useEffect(() => {
+    if (selectedAccount) {
+      if (lastAccountIdRef.current !== selectedAccount.id) {
+        lastAccountIdRef.current = selectedAccount.id;
+        const parent = customers.find(c => c.id.toString() === selectedAccount.parentCustomerId?.toString());
+        setEditParentSearchText(parent ? parent.name : "");
+        setIsEditingParent(false);
+      }
+    } else {
+      lastAccountIdRef.current = null;
+      setEditParentSearchText("");
+      setIsEditingParent(false);
+    }
+  }, [selectedAccount, customers]);
+
+  useEffect(() => {
+    const handleDocumentClick = (e) => {
+      if (!document.body.contains(e.target)) return;
+      if (isEditingParent && !e.target.closest(".parent-lookup-container")) {
+        setIsEditingParent(false);
+        const parent = customers.find(c => c.id.toString() === selectedAccount?.parentCustomerId?.toString());
+        setEditParentSearchText(parent ? parent.name : "");
+      }
+    };
+    document.addEventListener("mousedown", handleDocumentClick);
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
+  }, [isEditingParent, selectedAccount, customers]);
+
+  useEffect(() => {
+    const handleCreateDocumentClick = (e) => {
+      if (!document.body.contains(e.target)) return;
+      if (isCreatingParentLookup && !e.target.closest(".create-parent-lookup-container")) {
+        setIsCreatingParentLookup(false);
+        if (!newParentCustomerId) {
+          setParentSearchText("");
+        } else {
+          const parent = customers.find(c => c.id.toString() === newParentCustomerId.toString());
+          setParentSearchText(parent ? parent.name : "");
+        }
+      }
+    };
+    document.addEventListener("mousedown", handleCreateDocumentClick);
+    return () => document.removeEventListener("mousedown", handleCreateDocumentClick);
+  }, [isCreatingParentLookup, newParentCustomerId, customers]);
   const [newStakeholderName, setNewStakeholderName] = useState("");
   const [newStakeholderRole, setNewStakeholderRole] = useState("");
   const [newStakeholderPhone, setNewStakeholderPhone] = useState("");
@@ -682,6 +758,32 @@ export default function App() {
     setActivities(prev => [auditActivity, ...prev]);
   };
 
+  const handleCancelNewCustomer = () => {
+    setIsCreatingCustomer(false);
+    setNewCustomerName("");
+    setNewCustomerCity("");
+    setNewCustomerZone("North Kerala");
+    setNewCustomerClass("Class A");
+    setNewCustomerSpecialty("General");
+    setNewCustomerType("Hospital");
+    setNewParentCustomerId("");
+    setParentSearchText("");
+  };
+
+  const handleCloseLeadWizard = () => {
+    setShowNewLead(false);
+    setLeadWizardStep(1);
+    setIsCreatingCustomer(false);
+    setNewCustomerName("");
+    setNewCustomerCity("");
+    setNewCustomerZone("North Kerala");
+    setNewCustomerClass("Class A");
+    setNewCustomerSpecialty("General");
+    setNewCustomerType("Hospital");
+    setNewParentCustomerId("");
+    setParentSearchText("");
+  };
+
   const handleSaveCustomer = () => {
     if (!newCustomerName.trim()) return;
     const newCustomer = {
@@ -690,11 +792,24 @@ export default function App() {
       zone: newCustomerZone,
       city: newCustomerCity,
       class: newCustomerClass,
-      specialty: newCustomerSpecialty
+      specialty: newCustomerSpecialty,
+      customerType: newCustomerType || "Hospital",
+      parentCustomerId: newParentCustomerId ? newParentCustomerId.toString() : ""
     };
     setCustomers(prev => [...prev, newCustomer]);
     setSelectedCustomerId(newCustomer.id);
     setIsCreatingCustomer(false);
+    
+    // Reset form fields
+    setNewCustomerName("");
+    setNewCustomerCity("");
+    setNewCustomerZone("North Kerala");
+    setNewCustomerClass("Class A");
+    setNewCustomerSpecialty("General");
+    setNewCustomerType("Hospital");
+    setNewParentCustomerId("");
+    setParentSearchText("");
+
     // If we're on the customers view, we just wanted to add a customer, so close modal
     if (view === "customers") {
       setShowNewLead(false);
@@ -1402,10 +1517,43 @@ export default function App() {
                       </div>
                       <div>
                         <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">{acc.name}</div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
                           <span>📍 {acc.city}</span>
                           <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                           <span>🌐 {acc.zone}</span>
+                          {acc.customerType && (
+                            <>
+                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
+                                acc.customerType === "Corporate Group"
+                                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                                  : acc.customerType === "Department"
+                                  ? "bg-pink-50 text-pink-700 border-pink-200"
+                                  : "bg-blue-50 text-blue-700 border-blue-200"
+                              }`}>🏷️ {acc.customerType}</span>
+                            </>
+                          )}
+                          {acc.class && (
+                            <>
+                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-indigo-50 text-indigo-700 border-indigo-200">📁 {acc.class}</span>
+                            </>
+                          )}
+                          {acc.specialty && (
+                            <>
+                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-emerald-50 text-emerald-700 border-emerald-200">✨ {acc.specialty}</span>
+                            </>
+                          )}
+                          {acc.parentCustomerId && (() => {
+                            const parent = customers.find(c => c.id.toString() === acc.parentCustomerId.toString());
+                            return parent ? (
+                              <>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className="text-gray-500 font-medium normal-case">🔗 Parent: <span className="text-gray-700 font-bold">{parent.name}</span></span>
+                              </>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -2085,9 +2233,36 @@ export default function App() {
 
               <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Customer 360 Profile</div>
               <h2 className="font-bold text-3xl leading-tight mb-3 uppercase tracking-tight">{selectedAccount.name}</h2>
-              <div className="flex items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest">
                 <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">📍 {selectedAccount.city}</span>
                 <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">🌐 {selectedAccount.zone}</span>
+                {selectedAccount.customerType && (
+                  <span className={`px-2.5 py-1.5 rounded-lg border ${
+                    selectedAccount.customerType === "Corporate Group"
+                      ? "bg-purple-500/20 border-purple-400/30 text-purple-200"
+                      : selectedAccount.customerType === "Department"
+                      ? "bg-pink-500/20 border-pink-400/30 text-pink-200"
+                      : "bg-blue-500/20 border-blue-400/30 text-blue-200"
+                  }`}>🏷️ {selectedAccount.customerType}</span>
+                )}
+                {selectedAccount.class && (
+                  <span className="bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 px-2.5 py-1.5 rounded-lg">📁 {selectedAccount.class}</span>
+                )}
+                {selectedAccount.specialty && (
+                  <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2.5 py-1.5 rounded-lg">✨ {selectedAccount.specialty}</span>
+                )}
+                {selectedAccount.parentCustomerId && (() => {
+                  const parent = customers.find(c => c.id.toString() === selectedAccount.parentCustomerId.toString());
+                  return parent ? (
+                    <button
+                      onClick={() => setSelectedAccount(parent)}
+                      className="bg-blue-500/30 hover:bg-blue-500/50 text-white px-2.5 py-1.5 rounded-lg border border-blue-400/30 transition-all flex items-center gap-1 normal-case shadow-sm cursor-pointer"
+                    >
+                      <span>🔗 Parent:</span>
+                      <span className="underline font-bold">{parent.name}</span>
+                    </button>
+                  ) : null;
+                })()}
               </div>
 
               <div className="mt-5 flex gap-2">
@@ -2185,6 +2360,100 @@ export default function App() {
                   <option value="Neutral">😐 Neutral</option>
                   <option value="Detractor">📉 Detractor</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Customer Type</label>
+                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  value={selectedAccount.customerType || "Hospital"}
+                  onChange={(e) => {
+                    const updated = { ...selectedAccount, customerType: e.target.value };
+                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                    setSelectedAccount(updated);
+                  }}
+                >
+                  <option value="Corporate Group">Corporate Group</option>
+                  <option value="Hospital">Hospital</option>
+                  <option value="Department">Department</option>
+                </select>
+              </div>
+              <div className="relative parent-lookup-container">
+                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Parent Customer</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 pr-6"
+                    placeholder="None (Search...)"
+                    value={editParentSearchText}
+                    onChange={(e) => {
+                      setEditParentSearchText(e.target.value);
+                      setIsEditingParent(true);
+                      if (!e.target.value) {
+                        const updated = { ...selectedAccount, parentCustomerId: "" };
+                        setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                        setSelectedAccount(updated);
+                      }
+                    }}
+                    onFocus={() => {
+                      setIsEditingParent(true);
+                      setEditParentSearchText("");
+                    }}
+                    onClick={() => {
+                      setIsEditingParent(true);
+                    }}
+                  />
+                  {editParentSearchText && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditParentSearchText("");
+                        const updated = { ...selectedAccount, parentCustomerId: "" };
+                        setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                        setSelectedAccount(updated);
+                        setIsEditingParent(true);
+                      }}
+                      className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 font-black text-sm"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+                {isEditingParent && (
+                  <div className="absolute z-[1200] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[160px] overflow-y-auto">
+                    <div 
+                      onClick={() => {
+                        const updated = { ...selectedAccount, parentCustomerId: "" };
+                        setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
+                        setSelectedAccount(updated);
+                        setEditParentSearchText("");
+                        setIsEditingParent(false);
+                      }}
+                      className="p-2 border-b cursor-pointer text-xs text-gray-500 italic hover:bg-gray-50 transition-colors"
+                    >
+                      Clear / No Parent
+                    </div>
+                    {customers
+                      .filter(c =>
+                        c.id.toString() !== selectedAccount.id.toString() && // Self-parent validation
+                        (c.name?.toLowerCase().includes(editParentSearchText.toLowerCase()) || editParentSearchText === "")
+                      )
+                      .map(c => (
+                        <div
+                          key={c.id}
+                          onClick={() => {
+                            const updated = { ...selectedAccount, parentCustomerId: c.id.toString() };
+                            setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
+                            setSelectedAccount(updated);
+                            setEditParentSearchText(c.name);
+                            setIsEditingParent(false);
+                          }}
+                          className={`p-2 border-b cursor-pointer text-xs hover:bg-blue-50 transition-colors ${selectedAccount.parentCustomerId?.toString() === c.id.toString() ? 'bg-blue-100' : ''}`}
+                        >
+                          <div className="font-bold text-gray-800">{c.name}</div>
+                          <div className="text-[9px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2504,7 +2773,7 @@ export default function App() {
             <div className="bg-white p-5 rounded-xl w-[350px] shadow-2xl">
               <div className="flex justify-between items-center mb-4 border-b pb-2">
                 <h3 className="font-bold text-gray-800">{isCreatingCustomer ? "Create New Account" : (leadWizardStep === 1 ? "Step 1: Select Account" : "Step 2: Lead Details")}</h3>
-                <button onClick={() => { setShowNewLead(false); setLeadWizardStep(1); setIsCreatingCustomer(false); }} className="text-gray-400 hover:text-gray-800 font-bold text-xl leading-none">&times;</button>
+                <button onClick={handleCloseLeadWizard} className="text-gray-400 hover:text-gray-800 font-bold text-xl leading-none">&times;</button>
               </div>
 
               {isCreatingCustomer ? (
@@ -2533,7 +2802,7 @@ export default function App() {
                   </select>
 
                   <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Specialty</label>
-                  <select className="w-full border border-gray-300 p-2 mb-4 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newCustomerSpecialty} onChange={(e) => setNewCustomerSpecialty(e.target.value)}>
+                  <select className="w-full border border-gray-300 p-2 mb-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={newCustomerSpecialty} onChange={(e) => setNewCustomerSpecialty(e.target.value)}>
                     <option>General</option>
                     <option>Multi Speciality</option>
                     <option>Urology</option>
@@ -2546,8 +2815,85 @@ export default function App() {
                     <option>Pediatrics</option>
                   </select>
 
+                  <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Customer Type</label>
+                  <select className="w-full border border-gray-300 p-2 mb-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" value={newCustomerType} onChange={(e) => setNewCustomerType(e.target.value)}>
+                    <option value="Corporate Group">Corporate Group</option>
+                    <option value="Hospital">Hospital</option>
+                    <option value="Department">Department</option>
+                  </select>
+
+                  <label className="text-xs text-gray-500 font-bold uppercase mb-1 block">Parent Customer</label>
+                  <div className="relative mb-4 create-parent-lookup-container">
+                    <div className="relative">
+                      <input
+                        className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm pr-6"
+                        placeholder="Search Parent Customer..."
+                        value={parentSearchText}
+                        onChange={(e) => {
+                          setParentSearchText(e.target.value);
+                          setIsCreatingParentLookup(true);
+                          if (!e.target.value) {
+                            setNewParentCustomerId("");
+                          }
+                        }}
+                        onFocus={() => {
+                          setIsCreatingParentLookup(true);
+                          setParentSearchText("");
+                        }}
+                        onClick={() => {
+                          setIsCreatingParentLookup(true);
+                        }}
+                      />
+                      {parentSearchText && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setParentSearchText("");
+                            setNewParentCustomerId("");
+                            setIsCreatingParentLookup(true);
+                          }}
+                          className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 font-black text-sm"
+                        >
+                          &times;
+                        </button>
+                      )}
+                    </div>
+                    {isCreatingParentLookup && (
+                      <div className="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-[160px] overflow-y-auto">
+                        <div 
+                          onClick={() => {
+                            setNewParentCustomerId("");
+                            setParentSearchText("");
+                            setIsCreatingParentLookup(true);
+                          }}
+                          className="p-2 border-b cursor-pointer text-xs text-gray-500 italic hover:bg-gray-50 transition-colors"
+                        >
+                          Clear / No Parent
+                        </div>
+                        {customers
+                          .filter(c =>
+                            c.name?.toLowerCase().includes(parentSearchText.toLowerCase()) || parentSearchText === ""
+                          )
+                          .map(c => (
+                            <div
+                              key={c.id}
+                              onClick={() => {
+                                setNewParentCustomerId(c.id);
+                                setParentSearchText(c.name);
+                                setIsCreatingParentLookup(false);
+                              }}
+                              className={`p-2 border-b cursor-pointer hover:bg-blue-50 transition-colors ${newParentCustomerId === c.id ? 'bg-blue-100' : ''}`}
+                            >
+                              <div className="text-sm font-bold text-gray-800">{c.name}</div>
+                              <div className="text-[10px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
-                    <button onClick={() => setIsCreatingCustomer(false)} className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors">Cancel</button>
+                    <button onClick={handleCancelNewCustomer} className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold hover:bg-gray-200 transition-colors">Cancel</button>
                     <button onClick={handleSaveCustomer} disabled={!newCustomerName.trim()} className={`flex-1 px-3 py-2 rounded-lg font-semibold text-white transition-colors ${newCustomerName.trim() ? "bg-green-600 hover:bg-green-700" : "bg-gray-300 cursor-not-allowed"}`}>Save Account</button>
                   </div>
                 </div>
