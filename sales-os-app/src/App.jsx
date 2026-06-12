@@ -214,6 +214,7 @@ const initialCatalog = [
   // --- Ultrasound (SonoScape) ---
   {
     id: 1, name: "SonoScape S50 Elite", category: "Ultrasound", priceRange: "₹25L - ₹35L",
+    brand: "Sonoscape", model: "S50 Elite", sbu: "Imaging", oem: "Sonoscape",
     collaterals: [
       { label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-5-discover-and-embrace-elite" },
       { label: "Clinical Images", url: "https://www.sonoscape.com/product/clinical_images/s50" }
@@ -221,18 +222,22 @@ const initialCatalog = [
   },
   {
     id: 2, name: "SonoScape X3", category: "Ultrasound", priceRange: "₹12L - ₹18L",
+    brand: "Sonoscape", model: "X3", sbu: "Imaging", oem: "Sonoscape",
     collaterals: [{ label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-25-small-size-smart-sight" }]
   },
   {
     id: 3, name: "SonoScape HD-550", category: "Ultrasound", priceRange: "₹45L - ₹75L",
+    brand: "Sonoscape", model: "HD-550", sbu: "Imaging", oem: "Sonoscape",
     collaterals: [{ label: "Official Page", url: "https://www.sonoscapeindia.in/productdetails-10-full-hd-video-endoscopy-system" }]
   },
   {
     id: 4, name: "SonoScape E2", category: "Ultrasound", priceRange: "₹8L - ₹12L",
+    brand: "Sonoscape", model: "E2", sbu: "Imaging", oem: "Sonoscape",
     collaterals: [{ label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-58-sonoscape-e2-compact-color-doppler-ultrasound-system" }]
   },
   {
     id: 5, name: "SonoScape P60 Exp", category: "Ultrasound", priceRange: "₹40L - ₹55L",
+    brand: "Sonoscape", model: "P60 Exp", sbu: "Imaging", oem: "Sonoscape",
     collaterals: [
       { label: "Brochure", url: "https://www.sonoscapeindia.in/productdetails-3-intelligent-future-attainable" },
       { label: "Video Demo", url: "https://www.youtube.com/watch?v=demo" }
@@ -242,16 +247,19 @@ const initialCatalog = [
   // --- Critical Care (Magnamed) ---
   {
     id: 6, name: "Magnamed Fleximag Max", category: "Critical Care", priceRange: "₹18L - ₹28L",
+    brand: "Magnamed", model: "Fleximag Max", sbu: "Critical Care", oem: "Magnamed",
     collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/fleximagmaxen" }]
   },
   {
     id: 7, name: "Magnamed OxyMag", category: "Critical Care", priceRange: "₹8L - ₹15L",
+    brand: "Magnamed", model: "OxyMag", sbu: "Critical Care", oem: "Magnamed",
     collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/oxymag-en" }]
   },
 
   // --- Critical Care (EDAN / Magnamed) ---
   {
     id: 8, name: "EDAN i15 Blood Gas", category: "Critical Care", priceRange: "₹5L - ₹8L",
+    brand: "EDAN", model: "i15 Blood Gas", sbu: "Critical Care", oem: "Edan",
     collaterals: [
       { label: "Brochure", url: "https://www.edan.com/product/e/i15_Blood_Gas_and_Chemistry_Analysis_System.html" },
       { label: "Catalog Extract", url: "file:///C:/Users/Basheer/.gemini/antigravity/brain/4a1141d4-664e-49f1-b6fb-2bd5ed4da440/extract_edan_poct_1776388853938.webp" }
@@ -259,10 +267,12 @@ const initialCatalog = [
   },
   {
     id: 9, name: "EDAN elite V Series", category: "Critical Care", priceRange: "₹12L - ₹22L",
+    brand: "EDAN", model: "elite V Series", sbu: "Critical Care", oem: "Edan",
     collaterals: [{ label: "Brochure", url: "https://www.edan.com/product/i/PM_elite_V_Series.html" }]
   },
   {
     id: 10, name: "Magnamed Ventmeter", category: "Critical Care", priceRange: "₹4L - ₹6L",
+    brand: "Magnamed", model: "Ventmeter", sbu: "Critical Care", oem: "Magnamed",
     collaterals: [{ label: "Brochure", url: "https://www.inovacoesmagnamed.com.br/ventmeter-en" }]
   }
 ];
@@ -578,12 +588,39 @@ export default function App() {
           contributors = [{ user: d.owner === "You" ? "Basheer" : d.owner, role: "Account Manager", split: 100 }];
         }
       }
+      let productIds = d.productIds || [];
+      if (productIds.length === 0) {
+        if (d.id === 1) productIds = [1];
+        else if (d.id === 2) productIds = [4];
+        else if (d.id === 3) productIds = [2];
+        else if (d.id === 4) productIds = [5];
+        else if (d.id === 5) productIds = [9];
+        else if (d.id === 6) productIds = [1];
+        else if (d.id === 7) productIds = [3];
+        else if (d.id === 8) productIds = [9];
+        else if (d.id === 9) productIds = [9];
+        else if (d.id === 10) productIds = [10];
+        else if (d.id === 11) productIds = [5];
+        else if (d.id === 12) productIds = [3];
+        else if (d.id === 13) productIds = [4];
+        else if (d.id === 14) productIds = [8];
+        else if (d.id === 15) productIds = [3];
+        else if (d.id === 101) productIds = [9];
+        else if (d.id === 102) productIds = [9];
+        else if (d.id === 103) productIds = [1];
+        else if (d.id === 104) productIds = [7];
+        else if (d.id === 105) productIds = [3];
+        else if (d.id === 106) productIds = [3];
+        else if (d.id === 107) productIds = [3];
+        else productIds = [1];
+      }
       return {
         ...d,
         owner: d.owner === "You" ? "Basheer" : d.owner,
         isPriority: d.isPriority === true ? true : false,
         state: d.state || "Active",
         poNumber: d.poNumber || "",
+        productIds,
         contributors
       };
     });
@@ -750,19 +787,29 @@ export default function App() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [newProductName, setNewProductName] = useState("");
-  const [newProductCategory, setNewProductCategory] = useState("Ultrasound");
-  const [newProductUrl, setNewProductUrl] = useState("");
+  const [newProductBrand, setNewProductBrand] = useState("");
+  const [newProductModel, setNewProductModel] = useState("");
+  const [newProductSbu, setNewProductSbu] = useState("Imaging");
+  const [newProductOem, setNewProductOem] = useState("Sonoscape");
   const [newProductPrice, setNewProductPrice] = useState("");
   const [newProductCollaterals, setNewProductCollaterals] = useState([]);
 
   const [catalog, setCatalog] = useState(() => {
     const saved = localStorage.getItem("sales_os_catalog");
-    // Force reset if stale data includes competitor products or missing categories
-    if (saved && (saved.includes("Mindray") || saved.includes("General Imaging") || saved.includes("productdetails-56") || saved.includes("Ventilator"))) {
-      localStorage.removeItem("sales_os_catalog");
-      return initialCatalog;
+    // Force reset if stale data includes competitor products or missing categories/SBU, or outdated OEM mappings
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0 && (parsed.some(p => !p.sbu) || parsed.some(p => p.brand === "EDAN" && p.oem === "Mindray"))) {
+          localStorage.removeItem("sales_os_catalog");
+          return initialCatalog;
+        }
+        return parsed;
+      } catch (e) {
+        return initialCatalog;
+      }
     }
-    return saved ? JSON.parse(saved) : initialCatalog;
+    return initialCatalog;
   });
 
   const [categoryAssignments, setCategoryAssignments] = useState(() => {
@@ -1472,6 +1519,16 @@ export default function App() {
     const name = deal.name.toLowerCase();
     if (name.includes("ventilator") || name.includes("magnamed") || name.includes("fleximag") || name.includes("oxymag") || name.includes("monitor") || name.includes("defibrillator") || name.includes("ecg") || name.includes("gas") || name.includes("analyzer") || name.includes("blood") || name.includes("critical")) return "criticalcare";
     return "ultrasound";
+  };
+
+  const getDealSbu = (deal) => {
+    if (deal.productIds && deal.productIds.length > 0) {
+      const product = catalog.find(p => p.id === deal.productIds[0]);
+      if (product && product.sbu) return product.sbu;
+    }
+    const cat = getDealCategory(deal);
+    if (cat === "criticalcare") return "Critical Care";
+    return "Imaging";
   };
 
   const getBackLabel = () => {
@@ -2512,7 +2569,10 @@ export default function App() {
                 onClick={() => {
                   setEditingProduct(null);
                   setNewProductName("");
-                  setNewProductCategory("Ultrasound");
+                  setNewProductBrand("");
+                  setNewProductModel("");
+                  setNewProductSbu("Imaging");
+                  setNewProductOem("Sonoscape");
                   setNewProductPrice("");
                   setNewProductCollaterals([]);
                   setIsProductModalOpen(true);
@@ -2531,60 +2591,95 @@ export default function App() {
               value={catalogCategoryFilter}
               onChange={(e) => setCatalogCategoryFilter(e.target.value)}
             >
-              <option>All</option>
-              <option>Ultrasound</option>
-              <option>Critical Care</option>
+              <option value="All">All SBUs</option>
+              <option value="Imaging">Imaging</option>
+              <option value="Critical Care">Critical Care</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {catalog.filter(p => catalogCategoryFilter === "All" || p.category === catalogCategoryFilter).map(prod => (
-              <div key={prod.id} className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl hover:border-blue-200 transition-all group flex flex-col p-6">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{prod.category}</span>
-                    <h3 className="font-extrabold text-gray-800 text-xl group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prod.name}</h3>
-                  </div>
-                  {currentUser === "Manager" && (
-                    <button
-                      onClick={() => {
-                        setEditingProduct(prod);
-                        setNewProductName(prod.name);
-                        setNewProductCategory(prod.category);
-                        setNewProductPrice(prod.priceRange || "");
-                        setNewProductCollaterals(prod.collaterals || [{ label: "Brochure", url: prod.url }]);
-                        setIsProductModalOpen(true);
-                      }}
-                      className="w-8 h-8 bg-gray-50 flex items-center justify-center rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all border border-transparent hover:border-blue-100 shadow-sm"
-                    >
-                      ✎
-                    </button>
-                  )}
-                </div>
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-[0.1em] mb-6">Estimated Range: <span className="text-gray-700">{prod.priceRange}</span></div>
-
-                <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 gap-2">
-                  {(prod.collaterals || [{ label: "Brochure & specs", url: prod.url }]).map((link, idx) => (
-                    <a
-                      key={idx}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full text-center py-3 bg-gray-50 border border-gray-100 text-blue-600 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-2"
-                    >
-                      <span>📄</span> {link.label} &rarr;
-                    </a>
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">Product</th>
+                    <th className="px-6 py-4">Brand</th>
+                    <th className="px-6 py-4">Model</th>
+                    <th className="px-6 py-4">SBU</th>
+                    <th className="px-6 py-4">OEM</th>
+                    <th className="px-6 py-4">Price Range</th>
+                    <th className="px-6 py-4">Collaterals</th>
+                    {currentUser === "Manager" && <th className="px-6 py-4 text-right">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                  {catalog.filter(p => catalogCategoryFilter === "All" || p.sbu === catalogCategoryFilter).map(prod => (
+                    <tr key={prod.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 font-bold text-gray-900 uppercase tracking-tight">{prod.name}</td>
+                      <td className="px-6 py-4 text-gray-500 font-semibold">{prod.brand || "—"}</td>
+                      <td className="px-6 py-4 text-gray-500 font-semibold">{prod.model || "—"}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${
+                          prod.sbu === "Imaging" ? "bg-indigo-50 text-indigo-700 border border-indigo-200" :
+                          prod.sbu === "Critical Care" ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                          "bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}>
+                          {prod.sbu || "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 font-semibold">{prod.oem || "—"}</td>
+                      <td className="px-6 py-4 text-xs font-bold text-gray-700">{prod.priceRange}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-1 max-w-[150px]">
+                          {(prod.collaterals || []).map((link, idx) => (
+                            <a
+                              key={idx}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-xs flex items-center gap-1"
+                            >
+                              <span>📄</span> {link.label || "Link"}
+                            </a>
+                          ))}
+                          {(!prod.collaterals || prod.collaterals.length === 0) && (
+                            <span className="text-gray-400 italic text-xs">—</span>
+                          )}
+                        </div>
+                      </td>
+                      {currentUser === "Manager" && (
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => {
+                              setEditingProduct(prod);
+                              setNewProductName(prod.name);
+                              setNewProductBrand(prod.brand || "");
+                              setNewProductModel(prod.model || "");
+                              setNewProductSbu(prod.sbu || "Imaging");
+                              setNewProductOem(prod.oem || "Sonoscape");
+                              setNewProductPrice(prod.priceRange || "");
+                              setNewProductCollaterals(prod.collaterals || []);
+                              setIsProductModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 bg-gray-50 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all border border-transparent hover:border-blue-100 shadow-sm"
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      )}
+                    </tr>
                   ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {catalog.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-[32px] border-2 border-dashed border-gray-100 italic text-gray-400">
-              No products found in the catalog.
+                  {catalog.filter(p => catalogCategoryFilter === "All" || p.sbu === catalogCategoryFilter).length === 0 && (
+                    <tr>
+                      <td colSpan={currentUser === "Manager" ? 8 : 7} className="text-center py-12 text-gray-400 italic">
+                        No products found in this SBU.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -2618,8 +2713,8 @@ export default function App() {
               const wonDemoDeals = demoedClosedDeals.filter(d => d.stage === "Order");
               const demoConvRate = demoedClosedDeals.length > 0 ? Math.round((wonDemoDeals.length / demoedClosedDeals.length) * 100) : 0;
 
-              const usndVal = activeD.filter(d => getDealCategory(d) === "ultrasound").reduce((acc, d) => acc + parseValue(d.value), 0);
-              const ccVal = activeD.filter(d => getDealCategory(d) === "criticalcare").reduce((acc, d) => acc + parseValue(d.value), 0);
+              const imagingVal = activeD.filter(d => getDealSbu(d) === "Imaging").reduce((acc, d) => acc + parseValue(d.value), 0);
+              const criticalCareVal = activeD.filter(d => getDealSbu(d) === "Critical Care").reduce((acc, d) => acc + parseValue(d.value), 0);
 
               return (
                 <>
@@ -2669,10 +2764,10 @@ export default function App() {
                   </div>
 
                   <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex justify-between">Active Pipeline <span>📊</span></div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex justify-between">Pipeline by SBU <span>📊</span></div>
                     <div className="flex flex-col justify-end gap-1 mt-auto">
-                      <div onClick={() => setDrilldownReport({ title: "Active Ultrasound Pipeline", data: activeD.filter(d => getDealCategory(d) === "ultrasound") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"><span className="text-indigo-600">Ultrasound</span> <span className="flex items-center gap-1">₹{usndVal}L <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
-                      <div onClick={() => setDrilldownReport({ title: "Active Critical Care Pipeline", data: activeD.filter(d => getDealCategory(d) === "criticalcare") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"><span className="text-rose-600">C.Care</span> <span className="flex items-center gap-1">₹{ccVal}L <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
+                      <div onClick={() => setDrilldownReport({ title: "Active Imaging Pipeline", data: activeD.filter(d => getDealSbu(d) === "Imaging") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"><span className="text-indigo-600">Imaging</span> <span className="flex items-center gap-1">₹{(imagingVal / 100).toFixed(1)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
+                      <div onClick={() => setDrilldownReport({ title: "Active Critical Care Pipeline", data: activeD.filter(d => getDealSbu(d) === "Critical Care") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"><span className="text-rose-600">Critical Care</span> <span className="flex items-center gap-1">₹{(criticalCareVal / 100).toFixed(1)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
                     </div>
                   </div>
                 </>
@@ -2780,10 +2875,14 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-3 gap-3 mb-4">
                 <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100/50 shadow-inner">
                   <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 opacity-60">Stage</div>
                   <div className="text-[11px] font-black text-gray-800 uppercase tracking-tight">{selectedDeal.stage}</div>
+                </div>
+                <div className="bg-indigo-50/30 p-4 rounded-3xl border border-indigo-50 shadow-inner">
+                  <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1.5 opacity-70">SBU (Derived)</div>
+                  <div className="text-[11px] font-black text-indigo-800 uppercase tracking-tight">{getDealSbu(selectedDeal)}</div>
                 </div>
                 <div className="bg-blue-50/30 p-4 rounded-3xl border border-blue-50 shadow-inner">
                   <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5 opacity-70">Probability</div>
@@ -5147,31 +5246,71 @@ export default function App() {
                     className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
                     value={newProductName}
                     onChange={(e) => setNewProductName(e.target.value)}
+                    placeholder="e.g. SonoScape S50 Elite"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Category</label>
-                    <select
-                      value={newProductCategory}
-                      onChange={(e) => setNewProductCategory(e.target.value)}
-                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
-                    >
-                      <option>Ultrasound</option>
-                      <option>Critical Care</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Price Range</label>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Brand</label>
                     <input
                       type="text"
                       className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
-                      placeholder="₹25L - ₹35L"
-                      value={newProductPrice}
-                      onChange={(e) => setNewProductPrice(e.target.value)}
+                      placeholder="e.g. Sonoscape"
+                      value={newProductBrand}
+                      onChange={(e) => setNewProductBrand(e.target.value)}
                     />
                   </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Model</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                      placeholder="e.g. X3"
+                      value={newProductModel}
+                      onChange={(e) => setNewProductModel(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">SBU *</label>
+                    <select
+                      value={newProductSbu}
+                      onChange={(e) => setNewProductSbu(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="Imaging">Imaging</option>
+                      <option value="Critical Care">Critical Care</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">OEM Partner *</label>
+                    <select
+                      value={newProductOem}
+                      onChange={(e) => setNewProductOem(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="Sonoscape">Sonoscape</option>
+                      <option value="Magnamed">Magnamed</option>
+                      <option value="Mindray">Mindray</option>
+                      <option value="Edan">Edan</option>
+                      <option value="GE Healthcare">GE Healthcare</option>
+                      <option value="Philips">Philips</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Price Range</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    placeholder="e.g. ₹25L - ₹35L"
+                    value={newProductPrice}
+                    onChange={(e) => setNewProductPrice(e.target.value)}
+                  />
                 </div>
 
                 <div className="pt-2">
@@ -5234,11 +5373,15 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => {
-                    if (newProductName) {
+                    if (newProductName && newProductSbu && newProductOem) {
                       const productData = {
                         id: editingProduct ? editingProduct.id : Date.now(),
                         name: newProductName,
-                        category: newProductCategory,
+                        brand: newProductBrand,
+                        model: newProductModel,
+                        sbu: newProductSbu,
+                        oem: newProductOem,
+                        category: newProductSbu === "Imaging" ? "Ultrasound" : "Critical Care",
                         priceRange: newProductPrice || "TBD",
                         collaterals: newProductCollaterals.filter(l => l.label && l.url)
                       };
@@ -5252,12 +5395,16 @@ export default function App() {
                       setIsProductModalOpen(false);
                       setEditingProduct(null);
                       setNewProductName("");
+                      setNewProductBrand("");
+                      setNewProductModel("");
+                      setNewProductSbu("Imaging");
+                      setNewProductOem("Sonoscape");
                       setNewProductPrice("");
                       setNewProductCollaterals([]);
                     }
                   }}
-                  disabled={!newProductName}
-                  className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${newProductName ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"}`}
+                  disabled={!newProductName || !newProductSbu || !newProductOem}
+                  className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${(newProductName && newProductSbu && newProductOem) ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"}`}
                 >
                   {editingProduct ? "Update Catalog" : "Add to Catalog"}
                 </button>
