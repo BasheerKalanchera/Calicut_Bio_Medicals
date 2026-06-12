@@ -210,6 +210,12 @@ const initialBeatPlans = [
   }
 ];
 
+const initialUsers = [
+  { id: 1, name: "Basheer", employeeId: "EMP-001", email: "basheer@cabio.in", mobile: "9876543210", role: "Sales Executive", zone: "North Kerala", sbu: "Imaging", manager: "Sales Manager", status: "Active" },
+  { id: 2, name: "Rahul", employeeId: "EMP-002", email: "rahul@cabio.in", mobile: "9876543211", role: "Sales Executive", zone: "South Kerala", sbu: "Critical Care", manager: "Sales Manager", status: "Active" },
+  { id: 3, name: "Amit", employeeId: "EMP-003", email: "amit@cabio.in", mobile: "9876543212", role: "Sales Executive", zone: "South Kerala", sbu: "Imaging", manager: "Sales Manager", status: "Active" }
+];
+
 const initialCatalog = [
   // --- Ultrasound (SonoScape) ---
   {
@@ -812,6 +818,33 @@ export default function App() {
     return initialCatalog;
   });
 
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem("sales_os_users");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        return initialUsers;
+      }
+    }
+    return initialUsers;
+  });
+
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
+
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmployeeId, setNewUserEmployeeId] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserMobile, setNewUserMobile] = useState("");
+  const [newUserRole, setNewUserRole] = useState("Sales Executive");
+  const [newUserZone, setNewUserZone] = useState("North Kerala");
+  const [newUserSbu, setNewUserSbu] = useState("Imaging");
+  const [newUserReportingManager, setNewUserReportingManager] = useState("Sales Manager");
+  const [newUserStatus, setNewUserStatus] = useState("Active");
+
   const [categoryAssignments, setCategoryAssignments] = useState(() => {
     const saved = localStorage.getItem("sales_os_categoryAssignments");
     return saved ? JSON.parse(saved) : {
@@ -954,6 +987,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("sales_os_teams", JSON.stringify(teams));
   }, [teams]);
+
+  useEffect(() => {
+    localStorage.setItem("sales_os_users", JSON.stringify(users));
+  }, [users]);
 
   // Patch: Ensure reminders attached to a deal correctly inherit the deal's owner rather than the person who logged it
   useEffect(() => {
@@ -1541,6 +1578,7 @@ export default function App() {
       case "catalog": return "Product Catalog";
       case "reminders": return "Next Actions";
       case "insights": return "Insights";
+      case "users": return "User Management";
       default: return "Dashboard";
     }
   };
@@ -1580,6 +1618,8 @@ export default function App() {
   };
 
 
+  const isAdmin = currentUser === "Manager" || users.find(u => u.name === currentUser)?.role === "Admin";
+
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden relative">
 
@@ -1592,8 +1632,8 @@ export default function App() {
       )}
 
       {/* Sidebar / Side Drawer Content */}
-      <div className={`fixed top-0 left-0 h-full w-[280px] bg-white z-[210] shadow-2xl transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-blue-900 text-white">
+      <div className={`fixed top-0 left-0 h-full w-[280px] bg-white z-[210] shadow-2xl transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} flex flex-col`}>
+        <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-blue-900 text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg">
               <img src="/Cabio%20logo.jpeg" alt="Logo" className="w-full h-full object-contain" />
@@ -1605,10 +1645,11 @@ export default function App() {
           </button>
         </div>
 
-        <div className="p-4 space-y-6 mt-4">
+        {/* Scrollable Navigation Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           <section>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 px-2">Main Navigation</h3>
-            <div className="space-y-1">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Main Navigation</h3>
+            <div className="space-y-0.5">
               {[
                 { id: "pipeline", label: "Deals Pipeline", icon: "📊" },
                 { id: "manager", label: "Deals List", icon: "📋" },
@@ -1618,6 +1659,7 @@ export default function App() {
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
                 { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "insights", label: "Insights", icon: "💡" },
+                ...(isAdmin ? [{ id: "users", label: "Users", icon: "👥" }] : []),
                 ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Settings", icon: "⚙️" }] : [])
               ].map(item => (
                 <button
@@ -1630,26 +1672,28 @@ export default function App() {
                     setSelectedProject(null);
                     setSelectedBeatPlan(null);
                   }}
-                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-sm transition-all ${view === item.id ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${view === item.id ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
                 >
-                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-lg">{item.icon}</span>
                   {item.label}
                 </button>
               ))}
             </div>
           </section>
 
-          <section className="pt-6 border-t border-gray-100">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 px-2">Team Management</h3>
-            <div className="bg-gray-50 p-3 rounded-2xl space-y-3">
+          <section className="pt-4 border-t border-gray-100">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Team Management</h3>
+            <div className="bg-gray-50 p-2.5 rounded-xl space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Acting As:</label>
               <select
                 value={currentUser}
                 onChange={(e) => {
-                  setCurrentUser(e.target.value);
-                  if (e.target.value !== "Manager") setView("pipeline");
+                  const newUser = e.target.value;
+                  setCurrentUser(newUser);
+                  const isNewAdmin = newUser === "Manager" || users.find(u => u.name === newUser)?.role === "Admin";
+                  if (!isNewAdmin) setView("pipeline");
                 }}
-                className="w-full bg-white border border-gray-200 p-2.5 rounded-xl text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="Manager">👑 Manager</option>
                 <option value="Basheer">👤 Basheer (Sales)</option>
@@ -1660,14 +1704,26 @@ export default function App() {
           </section>
         </div>
 
-        <div className="absolute bottom-8 left-6 right-6">
-          <div className="p-4 bg-gradient-to-br from-blue-900 to-indigo-900 rounded-2xl text-white shadow-xl">
-            <div className="text-[10px] font-black opacity-60 uppercase mb-1">Logged in as</div>
-            <div className="font-bold flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              {currentUser === "Manager" ? "Administrator" : currentUser}
-            </div>
-          </div>
+        {/* Fixed Footer Profile Card */}
+        <div className="p-4 border-t border-gray-100 shrink-0 bg-white">
+          {(() => {
+            const currentProfile = users.find(u => u.name === currentUser);
+            return (
+              <div className="p-3 bg-gradient-to-br from-blue-900 to-indigo-900 rounded-xl text-white shadow-lg">
+                <div className="text-[9px] font-black opacity-60 uppercase mb-0.5">Logged in as</div>
+                <div className="font-bold flex items-center gap-2 mb-0.5 text-xs sm:text-sm">
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+                  {currentUser === "Manager" ? "Administrator" : currentUser}
+                </div>
+                {currentProfile && (
+                  <div className="text-[9px] opacity-85 leading-normal border-t border-white/10 pt-1 mt-1">
+                    <div>{currentProfile.role} • {currentProfile.zone}</div>
+                    <div className="font-bold text-blue-200 uppercase tracking-wider text-[7px] mt-0.5 bg-white/10 px-1 py-0.5 rounded w-fit">SBU: {currentProfile.sbu}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
@@ -5221,6 +5277,388 @@ export default function App() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )
+      }
+
+      {/* Users Management Screen */}
+      {view === "users" && isAdmin && (
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 bg-gray-50">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight">User Management</h2>
+            </div>
+            <button
+              onClick={() => {
+                setEditingUser(null);
+                setNewUserName("");
+                setNewUserEmployeeId("");
+                setNewUserEmail("");
+                setNewUserMobile("");
+                setNewUserRole("Sales Executive");
+                setNewUserZone("North Kerala");
+                setNewUserSbu("Imaging");
+                setNewUserReportingManager("Sales Manager");
+                setNewUserStatus("Active");
+                setIsUserModalOpen(true);
+              }}
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-200 hover:shadow-xl active:scale-95 transition-all flex items-center gap-2"
+            >
+              <span className="text-lg">＋</span>
+              User
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">User</th>
+                    <th className="px-6 py-4">Role</th>
+                    <th className="px-6 py-4">Zone</th>
+                    <th className="px-6 py-4">SBU</th>
+                    <th className="px-6 py-4">Manager</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                  {users.map(u => (
+                    <tr key={u.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="font-bold text-gray-900 uppercase tracking-tight">{u.name}</div>
+                          {u.employeeId && <div className="text-[10px] text-gray-400 font-bold tracking-wider">{u.employeeId}</div>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-bold text-gray-500">{u.role}</td>
+                      <td className="px-6 py-4 text-xs font-bold text-gray-500">{u.zone}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${
+                          u.sbu === "Imaging" ? "bg-indigo-50 text-indigo-700 border border-indigo-200" :
+                          u.sbu === "Critical Care" ? "bg-rose-50 text-rose-700 border border-rose-200" :
+                          "bg-gray-100 text-gray-700 border border-gray-200"
+                        }`}>
+                          {u.sbu || "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-bold text-gray-500">{u.manager || "—"}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                          u.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" :
+                          "bg-gray-100 text-gray-400 border border-gray-200"
+                        }`}>
+                          {u.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                        <button
+                          onClick={() => setViewingUser(u)}
+                          className="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-transparent hover:border-blue-100 shadow-sm"
+                        >
+                          👁 View
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingUser(u);
+                            setNewUserName(u.name);
+                            setNewUserEmployeeId(u.employeeId || "");
+                            setNewUserEmail(u.email || "");
+                            setNewUserMobile(u.mobile || "");
+                            setNewUserRole(u.role || "Sales Executive");
+                            setNewUserZone(u.zone || "North Kerala");
+                            setNewUserSbu(u.sbu || "Imaging");
+                            setNewUserReportingManager(u.manager || "Sales Manager");
+                            setNewUserStatus(u.status || "Active");
+                            setIsUserModalOpen(true);
+                          }}
+                          className="px-2.5 py-1.5 bg-gray-50 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-bold transition-all border border-transparent hover:border-blue-100 shadow-sm"
+                        >
+                          ✎ Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="text-center py-12 text-gray-400 italic">
+                        No users found in user master.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Management Create/Edit Modal */}
+      {
+        isUserModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[420px] shadow-2xl flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-gray-800 text-xl tracking-tight uppercase">
+                  {editingUser ? "Edit User Details" : "Create New User"}
+                </h3>
+                <button onClick={() => setIsUserModalOpen(false)} className="text-gray-400 hover:text-gray-800 text-2xl font-bold">&times;</button>
+              </div>
+
+              <div className="space-y-5 overflow-y-auto pr-2 custom-scrollbar pb-4 flex-1">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">User Name *</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    placeholder="e.g. Basheer"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Employee ID</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                      placeholder="e.g. EMP-001"
+                      value={newUserEmployeeId}
+                      onChange={(e) => setNewUserEmployeeId(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Mobile Number</label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                      placeholder="e.g. 9876543210"
+                      value={newUserMobile}
+                      onChange={(e) => setNewUserMobile(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Email Address</label>
+                  <input
+                    type="email"
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    placeholder="e.g. basheer@cabio.in"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Role *</label>
+                    <select
+                      value={newUserRole}
+                      onChange={(e) => setNewUserRole(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="Sales Executive">Sales Executive</option>
+                      <option value="Sales Manager">Sales Manager</option>
+                      <option value="General Manager">General Manager</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Zone *</label>
+                    <select
+                      value={newUserZone}
+                      onChange={(e) => setNewUserZone(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="North Kerala">North Kerala</option>
+                      <option value="South Kerala">South Kerala</option>
+                      <option value="Central Kerala">Central Kerala</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">SBU *</label>
+                    <select
+                      value={newUserSbu}
+                      onChange={(e) => setNewUserSbu(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="Imaging">Imaging</option>
+                      <option value="Critical Care">Critical Care</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Reporting Manager *</label>
+                    <select
+                      value={newUserReportingManager}
+                      onChange={(e) => setNewUserReportingManager(e.target.value)}
+                      className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    >
+                      <option value="Sales Manager">Sales Manager</option>
+                      <option value="General Manager">General Manager</option>
+                      <option value="Basheer">Basheer</option>
+                      <option value="Rahul">Rahul</option>
+                      <option value="Amit">Amit</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Status *</label>
+                  <select
+                    value={newUserStatus}
+                    onChange={(e) => setNewUserStatus(e.target.value)}
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  onClick={() => setIsUserModalOpen(false)}
+                  className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (newUserName) {
+                      const userData = {
+                        id: editingUser ? editingUser.id : Date.now(),
+                        name: newUserName,
+                        employeeId: newUserEmployeeId,
+                        email: newUserEmail,
+                        mobile: newUserMobile,
+                        role: newUserRole,
+                        zone: newUserZone,
+                        sbu: newUserSbu,
+                        manager: newUserReportingManager,
+                        status: newUserStatus
+                      };
+
+                      if (editingUser) {
+                        setUsers(prev => prev.map(u => u.id === editingUser.id ? userData : u));
+                      } else {
+                        setUsers(prev => [...prev, userData]);
+                      }
+
+                      setIsUserModalOpen(false);
+                      setEditingUser(null);
+                      setNewUserName("");
+                      setNewUserEmployeeId("");
+                      setNewUserEmail("");
+                      setNewUserMobile("");
+                      setNewUserRole("Sales Executive");
+                      setNewUserZone("North Kerala");
+                      setNewUserSbu("Imaging");
+                      setNewUserReportingManager("Sales Manager");
+                      setNewUserStatus("Active");
+                    }
+                  }}
+                  disabled={!newUserName}
+                  className={`flex-1 px-4 py-3.5 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg ${newUserName ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200" : "bg-gray-300 cursor-not-allowed"}`}
+                >
+                  {editingUser ? "Update User" : "Create User"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* User Profile Details Modal */}
+      {
+        viewingUser && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4">
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[420px] shadow-2xl flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-gray-800 text-xl tracking-tight uppercase">
+                  User Profile
+                </h3>
+                <button onClick={() => setViewingUser(null)} className="text-gray-400 hover:text-gray-800 text-2xl font-bold">&times;</button>
+              </div>
+
+              <div className="space-y-6 overflow-y-auto pr-2 custom-scrollbar pb-4 flex-1">
+                {/* Profile Header */}
+                <div className="flex items-center gap-4 border-b border-gray-50 pb-5">
+                  <div className="w-16 h-16 rounded-[24px] bg-blue-100 text-blue-700 flex items-center justify-center text-2xl font-bold shadow-inner">
+                    {viewingUser.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight leading-tight">{viewingUser.name}</h2>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-0.5">{viewingUser.role}</p>
+                  </div>
+                </div>
+
+                {/* SBU Prominent Display */}
+                <div className="p-5 rounded-3xl border border-gray-100 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 shadow-sm relative overflow-hidden">
+                  <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1.5">Strategic Business Unit</div>
+                  <div className="text-3xl font-black text-indigo-900 tracking-tight flex items-center gap-2">
+                    {viewingUser.sbu}
+                    <span className="text-base font-normal text-indigo-400 bg-white px-2 py-0.5 rounded-lg border border-indigo-100 uppercase tracking-wider text-[9px]">
+                      {viewingUser.sbu === "Imaging" ? "Imaging Division" : "Critical Care Division"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* User Details Grid */}
+                <div className="grid grid-cols-2 gap-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
+                  <div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Employee ID</div>
+                    <div className="text-sm font-bold text-gray-800 uppercase">{viewingUser.employeeId || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Zone Assignment</div>
+                    <div className="text-sm font-bold text-gray-800 uppercase">{viewingUser.zone}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Reporting Manager</div>
+                    <div className="text-sm font-bold text-gray-800 uppercase">{viewingUser.manager || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</div>
+                    <div>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                        viewingUser.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" :
+                        "bg-gray-100 text-gray-400 border border-gray-200"
+                      }`}>
+                        {viewingUser.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b pb-1">Contact Details</h4>
+                  <div>
+                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Email</span>
+                    <a href={`mailto:${viewingUser.email}`} className="text-xs font-bold text-blue-600 hover:underline">{viewingUser.email || "—"}</a>
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Mobile</span>
+                    <a href={`tel:${viewingUser.mobile}`} className="text-xs font-bold text-gray-700">{viewingUser.mobile || "—"}</a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <button
+                  onClick={() => setViewingUser(null)}
+                  className="w-full px-4 py-3.5 bg-gray-100 text-gray-700 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+                >
+                  Close Profile
+                </button>
+              </div>
             </div>
           </div>
         )

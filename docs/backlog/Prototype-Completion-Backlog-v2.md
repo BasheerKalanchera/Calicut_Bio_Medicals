@@ -304,20 +304,6 @@
 
 ---
 
-### PB-023 – Opportunity Auto-Splitting (Dual Categories)
-* **Source:** REC-29
-* **Business Area:** Opportunity Management
-* **Description:** Enforce routing rules when opportunities include products spanning both Imaging (Ultrasound) and Critical Care categories by auto-splitting the lead.
-* **Prototype Change Required:** Auto-split handler inside lead creation logic.
-* **Acceptance Criteria:**
-  * Multi-category lead creation triggers automatic split into SBU-specific deals
-  * Auto-assigns SBU specialist owners based on regional routing matrices
-  * Links both split opportunities to the same parent Group ID in history logs
-* **Dependencies:** PB-014
-* **Priority:** P1 Critical
-
----
-
 ### PB-024 – Overdue On-Hold Reactivation Edge Case
 * **Source:** REC-33
 * **Business Area:** Opportunity Management
@@ -402,6 +388,57 @@
 
 * **Priority:** P3 Nice to Have
 
+### PB-027 – User Master & SBU Assignment
+
+* **Source:** Enterprise Foundation Readiness / Multi-SBU Support
+* **Business Area:** User Management
+* **Description:** Introduce a lightweight User Master and User Management capability to support user profile administration, organizational assignment, and Strategic Business Unit (SBU) reporting readiness. The implementation should support assignment of users to Zones, Roles, Managers, and SBUs while remaining intentionally simple and avoiding full identity management or security administration functionality.
+* **Prototype Change Required:** Add User entity, User Management screen, User Create/Edit forms, and SBU assignment support.
+* **Acceptance Criteria:**
+
+  * User Master supports:
+
+    * User Name
+    * Employee ID
+    * Email
+    * Mobile Number
+    * Role
+    * Zone
+    * SBU
+    * Reporting Manager
+    * Status
+  * User Management screen available
+  * User List displays:
+
+    * User Name
+    * Role
+    * Zone
+    * SBU
+    * Reporting Manager
+    * Status
+  * User Create functionality available
+  * User Edit functionality available
+  * SBU values supported:
+
+    * Imaging
+    * Critical Care
+  * Role values supported:
+
+    * Sales Executive
+    * Sales Manager
+    * General Manager
+    * Admin
+  * Reporting Manager assignment supported
+  * User Profile displays assigned SBU
+  * Existing prototype functionality remains unaffected
+* **Dependencies:** PB-014 Product & SBU Assignment Structure
+* **Priority:** P2 Medium
+* **Notes:**
+
+  * User SBU is intended for reporting and organizational assignment purposes.
+  * Opportunity SBU remains derived from Product SBU.
+  * Customer records are not assigned to an SBU.
+  * Security, authentication, authorization, and multi-SBU user assignment are out of scope for Phase 1.
 
 ## Suggested Implementation Sequence
 
@@ -425,7 +462,6 @@ Introduce catalog structures, geographic boundaries, routing splits, and categor
 11. **PB-014 – Product & SBU Assignment Structure** (P1 Critical)
 12. **PB-001 – Account Structure & Hierarchy** (P1 Critical)
 13. **PB-018 – Target Management by Product Category** (P1 Critical)
-14. **PB-023 – Opportunity Auto-Splitting (Dual Categories)** (P1 Critical)
 
 ### Wave 3 – Dashboards & Reporting
 Compile metric aggregations, build dashboards (Salesperson, Manager, GM), and create tabular operational reports.
