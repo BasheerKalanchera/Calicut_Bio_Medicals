@@ -1712,15 +1712,15 @@ export default function App() {
 
   const getBackLabel = () => {
     switch (view) {
-      case "pipeline": return "Deals Pipeline";
-      case "manager": return "Deals List";
-      case "customers": return "Customer Directory";
-      case "projects": return "Projects Master";
-      case "beat-planning": return "Beat Planning Workspace";
+      case "pipeline":
+      case "manager": return "Opportunities";
+      case "customers": return "Customers";
+      case "projects": return "Projects";
+      case "beat-planning": return "Coverage Planning";
       case "catalog": return "Product Catalog";
       case "reminders": return "Next Actions";
       case "insights": return "Insights";
-      case "users": return "User Management";
+      case "users": return "Users";
       default: return "Dashboard";
     }
   };
@@ -1788,40 +1788,67 @@ export default function App() {
         </div>
 
         {/* Scrollable Navigation Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-          <section>
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Main Navigation</h3>
-            <div className="space-y-0.5">
-              {[
-                { id: "pipeline", label: "Deals Pipeline", icon: "📊" },
-                { id: "manager", label: "Deals List", icon: "📋" },
-                { id: "customers", label: "Customer Directory", icon: "🏥" },
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0">
+          {[
+            {
+              title: "SALES PLANNING",
+              items: [
+                ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Planning", icon: "🎯" }] : []),
+                { id: "beat-planning", label: "Coverage Planning", icon: "📅" }
+              ]
+            },
+            {
+              title: "SALES EXECUTION",
+              items: [
+                { id: "customers", label: "Customers", icon: "🏥" },
                 { id: "projects", label: "Projects", icon: "📁" },
-                { id: "beat-planning", label: "Coverage Planning", icon: "📅" },
+                { id: "pipeline", label: "Opportunities", icon: "📊" },
+                { id: "reminders", label: "Next Actions", icon: "✅" }
+              ]
+            },
+            {
+              title: "ANALYTICS",
+              items: [
+                { id: "insights", label: "Insights", icon: "💡" }
+              ]
+            },
+            {
+              title: "ADMINISTRATION",
+              items: [
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
-                { id: "reminders", label: "Next Actions", icon: "✅" },
-                { id: "insights", label: "Insights", icon: "💡" },
-                ...(isAdmin ? [{ id: "users", label: "Users", icon: "👥" }] : []),
-                ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Planning", icon: "🎯" }] : [])
-              ].map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setView(item.id);
-                    setIsSidebarOpen(false);
-                    setSelectedDeal(null);
-                    setSelectedAccount(null);
-                    setSelectedProject(null);
-                    setSelectedBeatPlan(null);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${view === item.id ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
-                >
-                  <span className="text-lg">{item.icon}</span>
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </section>
+                ...(isAdmin ? [{ id: "users", label: "Users", icon: "👥" }] : [])
+              ]
+            }
+          ].map(section => {
+            if (section.items.length === 0) return null;
+            return (
+              <section key={section.title}>
+                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">{section.title}</h3>
+                <div className="space-y-0.5">
+                  {section.items.map(item => {
+                    const isActive = view === item.id || (item.id === "pipeline" && view === "manager");
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setView(item.id);
+                          setIsSidebarOpen(false);
+                          setSelectedDeal(null);
+                          setSelectedAccount(null);
+                          setSelectedProject(null);
+                          setSelectedBeatPlan(null);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${isActive ? "bg-blue-50 text-blue-700 shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
 
           <section className="pt-4 border-t border-gray-100">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Team Management</h3>
@@ -1920,43 +1947,76 @@ export default function App() {
 
       {/* Dashboard Metrics (Manager & Rep) */}
       {!selectedDeal && (view === "pipeline" || view === "manager") && (
-        <div className="bg-white border-b px-2 sm:px-4 py-2 sm:py-3 shadow-sm z-10 relative grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4">
-          <div className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm transition-all flex flex-col justify-between ${metricFilter === "orders" ? "bg-blue-100 border-2 border-blue-500 ring-2 ring-blue-300" : "bg-blue-50 border border-blue-200 hover:shadow-md"}`}>
-            <div className="flex justify-between items-start mb-0.5 sm:mb-1">
-              <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="text-[10px] sm:text-xs text-blue-700 font-bold uppercase tracking-wider cursor-pointer">Target vs Actual</div>
-              <select className="text-[9px] font-bold bg-white text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 outline-none cursor-pointer" value={targetSubjectFilter} onChange={e => setTargetSubjectFilter(e.target.value)}>
-                <option value="annual">Annual Target</option>
-                <option value="q1">Q1 Target</option>
-                <option value="q2">Q2 Target</option>
-                <option value="q3">Q3 Target</option>
-                <option value="q4">Q4 Target</option>
-              </select>
-            </div>
-            <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="cursor-pointer">
-              <div className="text-lg sm:text-2xl font-extrabold text-blue-900">
-                ₹{(bookedRevenue / 100).toFixed(2)} Cr <span className="text-[10px] sm:text-sm text-blue-600 font-semibold">/ ₹{(targetQuota / 100).toFixed(2)} Cr</span>
-              </div>
-              <div className="w-full bg-blue-200 rounded-full h-1 sm:h-1.5 mt-1 sm:mt-2 overflow-hidden shadow-inner">
-                <div className={`h-full rounded-full whitespace-nowrap transition-all duration-700 ${attainment >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${Math.min(100, attainment)}%` }}></div>
-              </div>
-            </div>
-          </div>
-          <div onClick={() => setMetricFilter(metricFilter === "hot" ? null : "hot")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all flex flex-col justify-between ${metricFilter === "hot" ? "bg-orange-100 border-2 border-orange-500 ring-2 ring-orange-300" : "bg-orange-50 border border-orange-200 hover:shadow-md"}`}>
+        <>
+          <div className="bg-white border-b px-4 py-3.5 flex justify-between items-center shadow-sm z-10 relative">
             <div>
-              <div className="text-[10px] sm:text-xs text-orange-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Risk-Weighted Forecast</div>
-              <div className="text-lg sm:text-2xl font-extrabold text-orange-900">₹{(probableForecastValue / 100).toFixed(2)} Cr</div>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
+              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Opportunities</h2>
             </div>
-            <div className="text-[9px] text-orange-600 mt-1 font-semibold">{activePipelineDeals.length} active deals</div>
+            
+            <div className="bg-gray-150 p-1 rounded-xl flex gap-1 border border-gray-200 shadow-inner">
+              <button
+                type="button"
+                onClick={() => setView("pipeline")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  view === "pipeline"
+                    ? "bg-white text-blue-700 shadow-sm border border-gray-200/50"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                📊 Kanban
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("manager")}
+                className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                  view === "manager"
+                    ? "bg-white text-blue-700 shadow-sm border border-gray-200/50"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                📋 List
+              </button>
+            </div>
           </div>
-          <div onClick={() => setMetricFilter(metricFilter === "won" ? null : "won")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "won" ? "bg-emerald-100 border-2 border-emerald-500 ring-2 ring-emerald-300" : "bg-emerald-50 border border-emerald-200 hover:shadow-md"}`}>
-            <div className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Won Last Month</div>
-            <div className="text-lg sm:text-2xl font-extrabold text-emerald-900">₹{(lastMonthWonValue / 100).toFixed(2)} Cr</div>
+          <div className="bg-white border-b px-2 sm:px-4 py-2 sm:py-3 shadow-sm z-10 relative grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-4">
+            <div className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm transition-all flex flex-col justify-between ${metricFilter === "orders" ? "bg-blue-100 border-2 border-blue-500 ring-2 ring-blue-300" : "bg-blue-50 border border-blue-200 hover:shadow-md"}`}>
+              <div className="flex justify-between items-start mb-0.5 sm:mb-1">
+                <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="text-[10px] sm:text-xs text-blue-700 font-bold uppercase tracking-wider cursor-pointer">Target vs Actual</div>
+                <select className="text-[9px] font-bold bg-white text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 outline-none cursor-pointer" value={targetSubjectFilter} onChange={e => setTargetSubjectFilter(e.target.value)}>
+                  <option value="annual">Annual Target</option>
+                  <option value="q1">Q1 Target</option>
+                  <option value="q2">Q2 Target</option>
+                  <option value="q3">Q3 Target</option>
+                  <option value="q4">Q4 Target</option>
+                </select>
+              </div>
+              <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="cursor-pointer">
+                <div className="text-lg sm:text-2xl font-extrabold text-blue-900">
+                  ₹{(bookedRevenue / 100).toFixed(2)} Cr <span className="text-[10px] sm:text-sm text-blue-600 font-semibold">/ ₹{(targetQuota / 100).toFixed(2)} Cr</span>
+                </div>
+                <div className="w-full bg-blue-200 rounded-full h-1 sm:h-1.5 mt-1 sm:mt-2 overflow-hidden shadow-inner">
+                  <div className={`h-full rounded-full whitespace-nowrap transition-all duration-700 ${attainment >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${Math.min(100, attainment)}%` }}></div>
+                </div>
+              </div>
+            </div>
+            <div onClick={() => setMetricFilter(metricFilter === "hot" ? null : "hot")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all flex flex-col justify-between ${metricFilter === "hot" ? "bg-orange-100 border-2 border-orange-500 ring-2 ring-orange-300" : "bg-orange-50 border border-orange-200 hover:shadow-md"}`}>
+              <div>
+                <div className="text-[10px] sm:text-xs text-orange-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Risk-Weighted Forecast</div>
+                <div className="text-lg sm:text-2xl font-extrabold text-orange-900">₹{(probableForecastValue / 100).toFixed(2)} Cr</div>
+              </div>
+              <div className="text-[9px] text-orange-600 mt-1 font-semibold">{activePipelineDeals.length} active deals</div>
+            </div>
+            <div onClick={() => setMetricFilter(metricFilter === "won" ? null : "won")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "won" ? "bg-emerald-100 border-2 border-emerald-500 ring-2 ring-emerald-300" : "bg-emerald-50 border border-emerald-200 hover:shadow-md"}`}>
+              <div className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Won Last Month</div>
+              <div className="text-lg sm:text-2xl font-extrabold text-emerald-900">₹{(lastMonthWonValue / 100).toFixed(2)} Cr</div>
+            </div>
+            <div onClick={() => setMetricFilter(metricFilter === "lost" ? null : "lost")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "lost" ? "bg-red-100 border-2 border-red-500 ring-2 ring-red-300" : "bg-red-50 border border-red-200 hover:shadow-md"}`}>
+              <div className="text-[10px] sm:text-xs text-red-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Lost Deals</div>
+              <div className="text-lg sm:text-2xl font-extrabold text-red-900">₹{(lostDealsValue / 100).toFixed(2)} Cr</div>
+            </div>
           </div>
-          <div onClick={() => setMetricFilter(metricFilter === "lost" ? null : "lost")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "lost" ? "bg-red-100 border-2 border-red-500 ring-2 ring-red-300" : "bg-red-50 border border-red-200 hover:shadow-md"}`}>
-            <div className="text-[10px] sm:text-xs text-red-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Lost Deals</div>
-            <div className="text-lg sm:text-2xl font-extrabold text-red-900">₹{(lostDealsValue / 100).toFixed(2)} Cr</div>
-          </div>
-        </div>
+        </>
       )}
       {/* Pipeline */}
       {
@@ -2139,7 +2199,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 bg-gray-50/50">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Task Management</h3>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
               <h2 className="text-3xl font-black text-gray-800 tracking-tight">Next Actions</h2>
             </div>
             <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
@@ -2213,7 +2273,10 @@ export default function App() {
         view === "customers" && (
           <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Customer Directory</h2>
+              <div>
+                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
+                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Customers</h2>
+              </div>
               <button
                 onClick={() => { setShowNewLead(true); setIsCreatingCustomer(true); }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
@@ -2357,7 +2420,10 @@ export default function App() {
       {view === "projects" && (
         <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Projects Master</h2>
+            <div>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
+              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Projects</h2>
+            </div>
             <button
               onClick={() => openNewProjectModal("")}
               className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
@@ -2600,7 +2666,7 @@ export default function App() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Planning</h3>
-                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Coverage Planning Workspace</h2>
+                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Coverage Planning</h2>
               </div>
               <button
                 onClick={openNewBeatPlanModal}
@@ -2872,7 +2938,8 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-2xl font-black text-gray-800 tracking-tight">Product Catalog</h2>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Administration</h3>
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight font-black">Product Catalog</h2>
             </div>
             {currentUser === "Manager" && (
               <button
@@ -2998,8 +3065,8 @@ export default function App() {
         <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50 p-4 sm:p-6 pb-24">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Phase 1 Analytics</h3>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-800 tracking-tight">Reporting Dashboard</h2>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Analytics</h3>
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-800 tracking-tight">Insights</h2>
             </div>
             {currentUser !== "Manager" && <div className="bg-gray-100 text-gray-400 font-extrabold text-[10px] px-3 py-1 rounded-lg uppercase text-center ml-4 border border-gray-200">
               <span className="text-gray-600 sm:text-xs text-[11px] block">{dashboardDeals.filter(matchesMetricFilter).length}</span> Total
@@ -5505,7 +5572,10 @@ export default function App() {
       {
         view === "settings" && currentUser === "Manager" && (
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto w-full bg-gray-50">
-            <h2 className="text-2xl font-black text-gray-800 mb-6 uppercase tracking-tight flex items-center gap-3"><span className="text-3xl">🎯</span> Target Planning Workspace</h2>
+            <div className="mb-6">
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Planning</h3>
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight font-black">Target Planning</h2>
+            </div>
             
             {/* Planning Controls Block */}
             <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm mb-6 max-w-4xl mx-auto animate-in fade-in duration-200">
@@ -5888,7 +5958,8 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 bg-gray-50">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-2xl font-black text-gray-800 tracking-tight">User Management</h2>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Administration</h3>
+              <h2 className="text-2xl font-black text-gray-800 tracking-tight font-black">Users</h2>
             </div>
             <button
               onClick={() => {
