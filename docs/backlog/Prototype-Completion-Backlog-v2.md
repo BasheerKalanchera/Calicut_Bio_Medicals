@@ -245,17 +245,142 @@
 
 ---
 
-### PB-018 – Target Management by Product Category
-* **Source:** REC-20
-* **Business Area:** Targets & Quotas
-* **Description:** Allow quotas and targets configuration broken down by product categories.
-* **Prototype Change Required:** target setting grids in Settings view to configure quarterly/annual targets by category.
-* **Acceptance Criteria:**
-  * Manager can set targets specifically for Imaging (Ultrasound) category
-  * Manager can set targets specifically for Critical Care category
-  * Total category quotas rollup matches individual annual/quarterly quota targets
-* **Dependencies:** PB-014
-* **Priority:** P1 Critical
+### PB-018 – Target Planning Foundation
+
+* **Source:** REC-20, Product Review Findings
+* **Business Area:** Sales Planning
+
+#### Description
+
+Build foundational Target Planning capability enabling annual and quarterly revenue targets to be defined and allocated across Product Categories (SBUs) and Sales Team members.
+
+Target Planning serves as the starting point for the Sales Planning process and provides target visibility required by Coverage Planning and reporting modules.
+
+The solution should support a hybrid planning approach where management allocates targets while maintaining visibility of allocation gaps and reconciliation totals.
+
+#### Prototype Change Required
+
+Create a Target Planning workspace supporting:
+
+* Planning Period selection
+
+  * Annual
+  * Quarterly
+
+* Product Category (SBU) target allocation
+
+  * Imaging
+  * Critical Care
+
+* Sales Team target allocation within each Product Category
+
+* Target reconciliation and validation calculations
+
+* Target summary reporting
+
+#### Acceptance Criteria
+
+##### Planning Hierarchy
+
+System supports target allocation across:
+
+```text
+Corporate Target
+        ↓
+Product Category (SBU)
+        ↓
+Salesperson
+```
+
+Supported Product Categories:
+
+* Imaging
+* Critical Care
+
+##### Product Category Allocation
+
+* Manager can define annual targets by Product Category
+* Manager can define quarterly targets by Product Category
+* System displays total allocated target across Product Categories
+* System displays remaining allocation gap or over-allocation
+
+Example:
+
+```text
+Corporate Target = ₹10 Cr
+
+Imaging = ₹6 Cr
+Critical Care = ₹4 Cr
+
+Status = Fully Allocated
+```
+
+##### Sales Team Allocation
+
+* Manager can allocate Product Category targets to individual sales team members
+* System displays total allocated value for the Product Category
+* System displays allocation gap or excess allocation
+
+Example:
+
+```text
+Imaging Target = ₹6 Cr
+
+Basheer = ₹3 Cr
+Rahul = ₹2 Cr
+
+Gap = ₹1 Cr
+```
+
+##### Reconciliation & Validation
+
+* System automatically calculates allocated totals
+* System highlights under-allocation
+* System highlights over-allocation
+* System displays allocation status
+
+Example statuses:
+
+* Fully Allocated
+* Under Allocated
+* Over Allocated
+
+##### Target Visibility
+
+* Assigned quarterly target is visible to the salesperson
+* Assigned quarterly target is available within PB-025 Coverage Planning
+* Assigned quarterly target is available for dashboard reporting
+
+##### Reporting Support
+
+The following metrics are available for reporting:
+
+* Corporate Target
+* Product Category Target
+* Salesperson Target
+* Allocation Gap
+* Allocation Status
+
+##### Explicitly Out Of Scope
+
+The following capabilities shall NOT be implemented in Phase 1:
+
+* Territory-based target allocation
+* Zone-level target allocation
+* Incentive calculations
+* Commission calculations
+* Forecasting engine
+* AI-based target recommendations
+* Historical performance-based target suggestions
+
+#### Dependencies
+
+* PB-014
+
+#### Priority
+
+* P1 Critical
+
 
 ---
 
@@ -317,22 +442,111 @@
 
 ---
 
-### PB-025 – Beat Planning Foundation
+### PB-025 – Coverage Planning Foundation
 
-* **Source:** PRD Section 6.1, PM Review Finding
-* **Business Area:** Sales Execution
-* **Description:** Build foundational Beat Planning capability allowing sales representatives to create, submit, and track planned hospital visits and expected revenue coverage.
-* **Prototype Change Required:** New Beat Planning workspace, beat plan creation form, manager approval workflow status indicators, and mock beat plan data model.
-* **Acceptance Criteria:**
-  * Salesperson can create Beat Plan entries
-  * Beat Plan captures hospital, visit date, visit purpose, and expected revenue
-  * Beat Plan status supports Draft, Submitted, Approved
-  * Manager can view submitted Beat Plans
-  * Beat Plan data is available for dashboard and reporting calculations
-  * Beat Plan Progress metrics can be derived from captured data
-  * Beat Plan Compliance metrics can be derived from captured data
-* **Dependencies:** None
-* **Priority:** P1 Critical
+* **Source:** PRD Section 6.1, Product Review Findings
+* **Business Area:** Sales Planning
+
+#### Description
+
+Build foundational Coverage Planning capability enabling sales representatives to create Quarterly Account Coverage Plans aligned with assigned revenue targets.
+
+Coverage Planning is a sales planning activity and not a visit scheduling module.
+
+The objective is to help salespeople identify which customer accounts will contribute toward achievement of their quarterly targets, define coverage frequency for those accounts, and visualize target coverage gaps.
+
+#### Prototype Change Required
+
+Create a Coverage Planning workspace supporting:
+
+* Quarterly planning period selection
+* Account selection
+* Coverage frequency definition
+* Expected revenue contribution planning
+* Target coverage calculations
+* Plan submission workflow
+* Manager review visibility
+
+#### Acceptance Criteria
+
+##### Planning Structure
+
+* Salesperson can create a Coverage Plan for a selected quarter
+* Salesperson can add one or more customer accounts to the Coverage Plan
+* Salesperson can define coverage frequency per account:
+
+  * Monthly
+  * Bi-Monthly
+  * Quarterly
+  * Custom
+
+##### Revenue Coverage Planning
+
+* Salesperson can capture Expected Contribution for each account
+* Expected Contribution supports positive currency values
+* Planned Contribution is automatically calculated as the sum of all account contributions
+
+##### Target Integration
+
+* Assigned Quarterly Target is displayed within the Coverage Plan
+
+* System calculates Target Coverage Percentage
+
+Formula:
+
+```text
+Target Coverage % =
+(Planned Contribution ÷ Quarterly Target) × 100
+```
+
+* System calculates Coverage Gap
+
+Formula:
+
+```text
+Coverage Gap =
+Quarterly Target − Planned Contribution
+```
+
+##### Status & Workflow
+
+* Coverage Plan supports:
+
+  * Draft
+  * Submitted
+  * Approved
+
+* Manager can view submitted Coverage Plans
+
+* Manager can view target coverage calculations
+
+##### Visibility & Reporting
+
+* Planned Contribution is available for reporting
+* Target Coverage % is available for reporting
+* Coverage Gap is available for reporting
+* Coverage Plan data can be consumed by dashboards
+
+##### Explicitly Out Of Scope
+
+The following capabilities shall NOT be implemented in Phase 1:
+
+* Visit scheduling
+* Calendar planning
+* Opportunity creation
+* Opportunity forecasting
+* Probability-weighted pipeline
+* Win-rate calculations
+* Separate Pipeline Planning module
+
+#### Dependencies
+
+* PB-024 Target Management
+
+#### Priority
+
+* P1 Critical
+
 
 
 ### PB-026 – Project Opportunity Foundation
@@ -454,14 +668,14 @@ Focus on the basic deal management, state controls, logging requirements, and va
 6. **PB-005 – Closed-Won Handover** (P1 Critical)
 7. **PB-010 – Mandatory Interaction Logging** (P1 Critical)
 8. **PB-020 – Pre-Lead Scanning** (P1 Critical)
-9. **PB-025 – Beat Planning Foundation** (P1 Critical)
+9. **PB-025 – Coverage Planning Foundation** (P1 Critical)
 10. **PB-026 – Project Opportunity Foundation** (P1 Critical)
 
 ### Wave 2 – Territory & Security Foundations
 Introduce catalog structures, geographic boundaries, routing splits, and category target setups.
 11. **PB-014 – Product & SBU Assignment Structure** (P1 Critical)
 12. **PB-001 – Account Structure & Hierarchy** (P1 Critical)
-13. **PB-018 – Target Management by Product Category** (P1 Critical)
+13. **PB-018 – Target Planning Foundation** (P1 Critical)
 
 ### Wave 3 – Dashboards & Reporting
 Compile metric aggregations, build dashboards (Salesperson, Manager, GM), and create tabular operational reports.

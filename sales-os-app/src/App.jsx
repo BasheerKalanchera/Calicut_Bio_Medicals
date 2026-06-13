@@ -15,10 +15,19 @@ const stageProbability = {
 const initialRepData = {
   "Basheer": { zone: "North Kerala", target: { annual: 100, q1: 25, q2: 25, q3: 25, q4: 25 } },
   "Amit": { zone: "South Kerala", target: { annual: 160, q1: 40, q2: 40, q3: 40, q4: 40 } },
-  "Rahul": { zone: "Bangalore", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } }
+  "Rahul": { zone: "South Kerala", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } },
+  "Ahmed": { zone: "Central Kerala", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } },
+  "Sales Manager": { zone: "North Kerala", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } },
+  "Sales Manager ": { zone: "South Kerala", target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } }
 };
 
-const mockContributorsList = ["Basheer", "Amit", "Rahul", "Ahmed", "Rashid", "Niyas", "Firoz", "Anoop"];
+const initialSbuTargets = {
+  overall: { annual: 10.0, q1: 2.5, q2: 2.5, q3: 2.5, q4: 2.5 },
+  imaging: { annual: 6.0, q1: 1.5, q2: 1.5, q3: 1.5, q4: 1.5 },
+  criticalCare: { annual: 4.0, q1: 1.0, q2: 1.0, q3: 1.0, q4: 1.0 }
+};
+
+const mockContributorsList = ["Basheer", "Amit", "Rahul", "Ahmed", "Sales Manager", "Sales Manager ", "Niyas", "Firoz", "Anoop"];
 const mockRolesList = ["Account Manager", "Product Specialist", "Clinical Specialist", "Sales Engineer", "Closer", "Manager"];
 
 const isHoldOverdue = (deal) => {
@@ -207,13 +216,58 @@ const initialBeatPlans = [
     accounts: [
       { id: "6-1", beatPlanId: "6", customerId: "15", customerName: "Fortis Hospital", plannedVisitCount: 4, strategicObjective: "Ultrasound upgrades and purchase meet", expectedRevenue: 45 }
     ]
+  },
+  {
+    id: "7",
+    userId: "Ahmed",
+    userName: "Ahmed",
+    quarter: "Q3 2026",
+    status: "Approved",
+    createdDate: "2026-06-08",
+    submittedDate: "2026-06-09",
+    approvedDate: "2026-06-10",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "7-1", beatPlanId: "7", customerId: "6", customerName: "Aster Medcity", plannedVisitCount: 3, strategicObjective: "Regular check-in", expectedRevenue: 15 }
+    ]
+  },
+  {
+    id: "8",
+    userId: "Sales Manager",
+    userName: "Sales Manager",
+    quarter: "Q3 2026",
+    status: "Approved",
+    createdDate: "2026-06-08",
+    submittedDate: "2026-06-09",
+    approvedDate: "2026-06-10",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "8-1", beatPlanId: "8", customerId: "1", customerName: "Al Shifa Hospital", plannedVisitCount: 4, strategicObjective: "Equipment demo", expectedRevenue: 22 }
+    ]
+  },
+  {
+    id: "9",
+    userId: "Sales Manager ",
+    userName: "Sales Manager ",
+    quarter: "Q3 2026",
+    status: "Approved",
+    createdDate: "2026-06-08",
+    submittedDate: "2026-06-09",
+    approvedDate: "2026-06-10",
+    approvedBy: "Manager",
+    accounts: [
+      { id: "9-1", beatPlanId: "9", customerId: "8", customerName: "Lakeshore Hospital", plannedVisitCount: 3, strategicObjective: "Follow up meet", expectedRevenue: 12 }
+    ]
   }
 ];
 
 const initialUsers = [
   { id: 1, name: "Basheer", employeeId: "EMP-001", email: "basheer@cabio.in", mobile: "9876543210", role: "Sales Executive", zone: "North Kerala", sbu: "Imaging", manager: "Sales Manager", status: "Active" },
-  { id: 2, name: "Rahul", employeeId: "EMP-002", email: "rahul@cabio.in", mobile: "9876543211", role: "Sales Executive", zone: "South Kerala", sbu: "Critical Care", manager: "Sales Manager", status: "Active" },
-  { id: 3, name: "Amit", employeeId: "EMP-003", email: "amit@cabio.in", mobile: "9876543212", role: "Sales Executive", zone: "South Kerala", sbu: "Imaging", manager: "Sales Manager", status: "Active" }
+  { id: 2, name: "Rahul", employeeId: "EMP-002", email: "rahul@cabio.in", mobile: "9876543211", role: "Sales Executive", zone: "South Kerala", sbu: "Critical Care", manager: "Sales Manager ", status: "Active" },
+  { id: 3, name: "Amit", employeeId: "EMP-003", email: "amit@cabio.in", mobile: "9876543212", role: "Sales Executive", zone: "South Kerala", sbu: "Imaging", manager: "Sales Manager", status: "Active" },
+  { id: 4, name: "Ahmed", employeeId: "EMP-004", email: "ahmed@cabio.in", mobile: "9876543213", role: "Sales Executive", zone: "Central Kerala", sbu: "Critical Care", manager: "Sales Manager ", status: "Active" },
+  { id: 5, name: "Sales Manager", employeeId: "EMP-005", email: "manager@cabio.in", mobile: "9876543214", role: "Sales Manager", zone: "North Kerala", sbu: "Imaging", manager: "General Manager", status: "Active" },
+  { id: 6, name: "Sales Manager ", employeeId: "EMP-006", email: "manager_cc@cabio.in", mobile: "9876543215", role: "Sales Manager", zone: "South Kerala", sbu: "Critical Care", manager: "General Manager", status: "Active" }
 ];
 
 const initialCatalog = [
@@ -340,8 +394,10 @@ export default function App() {
       parsed["Basheer"] = parsed["You"];
       delete parsed["You"];
     }
-    // Flush old target format
-    if (parsed["Basheer"] && parsed["Basheer"].target.total !== undefined) {
+    const requiredNames = ["Basheer", "Rahul", "Amit", "Ahmed", "Sales Manager", "Sales Manager "];
+    const hasAllRequired = requiredNames.every(name => parsed[name] !== undefined);
+    // Flush old target format or if not matched with exactly 6 salespersons
+    if ((parsed["Basheer"] && parsed["Basheer"].target.total !== undefined) || !hasAllRequired || Object.keys(parsed).length !== 6) {
       localStorage.removeItem("sales_os_repdata");
       return initialRepData;
     }
@@ -350,6 +406,18 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("sales_os_repdata", JSON.stringify(repData));
   }, [repData]);
+
+  const [sbuTargets, setSbuTargets] = useState(() => {
+    const saved = localStorage.getItem("sales_os_sbu_targets");
+    return saved ? JSON.parse(saved) : initialSbuTargets;
+  });
+  useEffect(() => {
+    localStorage.setItem("sales_os_sbu_targets", JSON.stringify(sbuTargets));
+  }, [sbuTargets]);
+
+  const [settingsTab, setSettingsTab] = useState("category");
+  const [planningPeriod, setPlanningPeriod] = useState("annual");
+  const [sbuTeamTab, setSbuTeamTab] = useState("Imaging");
 
   useEffect(() => { localStorage.setItem("sales_os_currentUser", currentUser); }, [currentUser]);
   useEffect(() => { localStorage.setItem("sales_os_managerFilter", managerFilter); }, [managerFilter]);
@@ -433,7 +501,9 @@ export default function App() {
       const saved = localStorage.getItem("sales_os_beat_plans");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        const requiredNames = ["Basheer", "Rahul", "Amit", "Ahmed", "Sales Manager", "Sales Manager "];
+        const hasAllRequired = requiredNames.every(name => parsed.some(bp => bp.userId === name));
+        if (Array.isArray(parsed) && parsed.length >= 9 && hasAllRequired) {
           // Migration: if saved plans are of the old visit-planning structure, clear and reload defaults
           if (parsed.length > 0 && (parsed[0].visitDate !== undefined || parsed[0].accounts === undefined)) {
             localStorage.removeItem("sales_os_beat_plans");
@@ -445,6 +515,7 @@ export default function App() {
     } catch (e) {
       console.error("Error loading beat plans", e);
     }
+    localStorage.setItem("sales_os_beat_plans", JSON.stringify(initialBeatPlans));
     return initialBeatPlans;
   });
   const [selectedBeatPlan, setSelectedBeatPlan] = useState(null);
@@ -823,11 +894,19 @@ export default function App() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        const imagingCount = parsed.filter(u => u.sbu === "Imaging").length;
+        const ccCount = parsed.filter(u => u.sbu === "Critical Care").length;
+        const requiredNames = ["Basheer", "Rahul", "Amit", "Ahmed", "Sales Manager", "Sales Manager "];
+        const hasAllRequired = requiredNames.every(name => parsed.some(u => u.name === name));
+        
+        if (parsed.length === 6 && imagingCount === 3 && ccCount === 3 && hasAllRequired) {
+          return parsed;
+        }
       } catch (e) {
-        return initialUsers;
+        // fallback
       }
     }
+    localStorage.setItem("sales_os_users", JSON.stringify(initialUsers));
     return initialUsers;
   });
 
@@ -992,6 +1071,53 @@ export default function App() {
     localStorage.setItem("sales_os_users", JSON.stringify(users));
   }, [users]);
 
+  // Sync target settings data (repData) dynamically with the defined system users
+  useEffect(() => {
+    let updated = false;
+    const nextRepData = { ...repData };
+    
+    users.forEach(user => {
+      const existingKey = Object.keys(nextRepData).find(k => k.toLowerCase() === user.name.toLowerCase());
+      
+      if (!existingKey) {
+        nextRepData[user.name] = {
+          zone: user.zone || "North Kerala",
+          target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 }
+        };
+        updated = true;
+      } else {
+        let entryUpdated = false;
+        const entry = { ...nextRepData[existingKey] };
+        
+        if (entry.zone !== user.zone) {
+          entry.zone = user.zone || "North Kerala";
+          entryUpdated = true;
+        }
+        
+        if (existingKey !== user.name) {
+          nextRepData[user.name] = entry;
+          delete nextRepData[existingKey];
+          updated = true;
+        } else if (entryUpdated) {
+          nextRepData[existingKey] = entry;
+          updated = true;
+        }
+      }
+    });
+
+    Object.keys(nextRepData).forEach(repName => {
+      const existsInUsers = users.some(u => u.name.toLowerCase() === repName.toLowerCase());
+      if (!existsInUsers) {
+        delete nextRepData[repName];
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      setRepData(nextRepData);
+    }
+  }, [users, repData]);
+
   // Patch: Ensure reminders attached to a deal correctly inherit the deal's owner rather than the person who logged it
   useEffect(() => {
     if (deals.length > 0 && reminders.length > 0) {
@@ -1013,6 +1139,22 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("sales_os_assets", JSON.stringify(assets));
   }, [assets]);
+
+  const getNextEmployeeId = () => {
+    let maxNum = 0;
+    users.forEach(u => {
+      if (u.employeeId && u.employeeId.startsWith("EMP-")) {
+        const numStr = u.employeeId.substring(4);
+        const num = parseInt(numStr, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    const nextNum = maxNum + 1;
+    const padded = String(nextNum).padStart(3, "0");
+    return `EMP-${padded}`;
+  };
 
   const updateDeal = (id, updates) => {
     setDeals(prev => prev.map(d => (d.id === id ? { ...d, ...updates } : d)));
@@ -1655,12 +1797,12 @@ export default function App() {
                 { id: "manager", label: "Deals List", icon: "📋" },
                 { id: "customers", label: "Customer Directory", icon: "🏥" },
                 { id: "projects", label: "Projects", icon: "📁" },
-                { id: "beat-planning", label: "Beat Planning", icon: "📅" },
+                { id: "beat-planning", label: "Coverage Planning", icon: "📅" },
                 { id: "catalog", label: "Product Catalog", icon: "📦" },
                 { id: "reminders", label: "Next Actions", icon: "✅" },
                 { id: "insights", label: "Insights", icon: "💡" },
                 ...(isAdmin ? [{ id: "users", label: "Users", icon: "👥" }] : []),
-                ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Settings", icon: "⚙️" }] : [])
+                ...(currentUser === "Manager" ? [{ id: "settings", label: "Target Planning", icon: "🎯" }] : [])
               ].map(item => (
                 <button
                   key={item.id}
@@ -1696,9 +1838,11 @@ export default function App() {
                 className="w-full bg-white border border-gray-200 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="Manager">👑 Manager</option>
-                <option value="Basheer">👤 Basheer (Sales)</option>
-                <option value="Amit">👤 Amit (Sales)</option>
-                <option value="Rahul">👤 Rahul (Sales)</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.name}>
+                    👤 {u.name === "Sales Manager " ? "Sales Manager (CC)" : (u.name === "Sales Manager" ? "Sales Manager (Imaging)" : u.name)} (Sales)
+                  </option>
+                ))}
               </select>
             </div>
           </section>
@@ -1713,7 +1857,7 @@ export default function App() {
                 <div className="text-[9px] font-black opacity-60 uppercase mb-0.5">Logged in as</div>
                 <div className="font-bold flex items-center gap-2 mb-0.5 text-xs sm:text-sm">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                  {currentUser === "Manager" ? "Administrator" : currentUser}
+                  {currentUser === "Manager" ? "Administrator" : (currentUser === "Sales Manager " ? "Sales Manager (CC)" : (currentUser === "Sales Manager" ? "Sales Manager (Imaging)" : currentUser))}
                 </div>
                 {currentProfile && (
                   <div className="text-[9px] opacity-85 leading-normal border-t border-white/10 pt-1 mt-1">
@@ -1790,7 +1934,7 @@ export default function App() {
             </div>
             <div onClick={() => setMetricFilter(metricFilter === "orders" ? null : "orders")} className="cursor-pointer">
               <div className="text-lg sm:text-2xl font-extrabold text-blue-900">
-                ₹{bookedRevenue.toFixed(1).replace(/\.0$/, '')}L <span className="text-[10px] sm:text-sm text-blue-600 font-semibold">/ ₹{targetQuota}L</span>
+                ₹{(bookedRevenue / 100).toFixed(2)} Cr <span className="text-[10px] sm:text-sm text-blue-600 font-semibold">/ ₹{(targetQuota / 100).toFixed(2)} Cr</span>
               </div>
               <div className="w-full bg-blue-200 rounded-full h-1 sm:h-1.5 mt-1 sm:mt-2 overflow-hidden shadow-inner">
                 <div className={`h-full rounded-full whitespace-nowrap transition-all duration-700 ${attainment >= 100 ? 'bg-green-500' : 'bg-blue-600'}`} style={{ width: `${Math.min(100, attainment)}%` }}></div>
@@ -1800,17 +1944,17 @@ export default function App() {
           <div onClick={() => setMetricFilter(metricFilter === "hot" ? null : "hot")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all flex flex-col justify-between ${metricFilter === "hot" ? "bg-orange-100 border-2 border-orange-500 ring-2 ring-orange-300" : "bg-orange-50 border border-orange-200 hover:shadow-md"}`}>
             <div>
               <div className="text-[10px] sm:text-xs text-orange-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Risk-Weighted Forecast</div>
-              <div className="text-lg sm:text-2xl font-extrabold text-orange-900">₹{probableForecastValue.toFixed(1).replace(/\.0$/, '')}L</div>
+              <div className="text-lg sm:text-2xl font-extrabold text-orange-900">₹{(probableForecastValue / 100).toFixed(2)} Cr</div>
             </div>
             <div className="text-[9px] text-orange-600 mt-1 font-semibold">{activePipelineDeals.length} active deals</div>
           </div>
           <div onClick={() => setMetricFilter(metricFilter === "won" ? null : "won")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "won" ? "bg-emerald-100 border-2 border-emerald-500 ring-2 ring-emerald-300" : "bg-emerald-50 border border-emerald-200 hover:shadow-md"}`}>
             <div className="text-[10px] sm:text-xs text-emerald-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Won Last Month</div>
-            <div className="text-lg sm:text-2xl font-extrabold text-emerald-900">₹{lastMonthWonValue.toFixed(1).replace(/\.0$/, '')}L</div>
+            <div className="text-lg sm:text-2xl font-extrabold text-emerald-900">₹{(lastMonthWonValue / 100).toFixed(2)} Cr</div>
           </div>
           <div onClick={() => setMetricFilter(metricFilter === "lost" ? null : "lost")} className={`p-2 sm:p-3 rounded-lg sm:flex-1 shadow-sm cursor-pointer transition-all ${metricFilter === "lost" ? "bg-red-100 border-2 border-red-500 ring-2 ring-red-300" : "bg-red-50 border border-red-200 hover:shadow-md"}`}>
             <div className="text-[10px] sm:text-xs text-red-700 font-bold uppercase tracking-wider mb-0.5 sm:mb-1">Lost Deals</div>
-            <div className="text-lg sm:text-2xl font-extrabold text-red-900">₹{lostDealsValue.toFixed(1).replace(/\.0$/, '')}L</div>
+            <div className="text-lg sm:text-2xl font-extrabold text-red-900">₹{(lostDealsValue / 100).toFixed(2)} Cr</div>
           </div>
         </div>
       )}
@@ -2362,18 +2506,18 @@ export default function App() {
           return matchesStatus && matchesSalesperson && matchesQuarter;
         });
 
-        const totalBeatPlansCount = visibleBeatPlans.length;
-        const submittedPlansCount = visibleBeatPlans.filter(bp => bp.status === "Submitted").length;
-        const approvedPlansCount = visibleBeatPlans.filter(bp => bp.status === "Approved").length;
+        const totalBeatPlansCount = filteredBeatPlans.length;
+        const submittedPlansCount = filteredBeatPlans.filter(bp => bp.status === "Submitted").length;
+        const approvedPlansCount = filteredBeatPlans.filter(bp => bp.status === "Approved").length;
         
         // Sum expected revenue and count planned hospitals and visits
-        const allVisibleAccounts = visibleBeatPlans.flatMap(bp => bp.accounts || []);
-        const hospitalsPlannedCount = new Set(allVisibleAccounts.map(a => a.customerId)).size;
+        const allVisibleAccounts = filteredBeatPlans.flatMap(bp => bp.accounts || []);
+        const hospitalsPlannedCount = allVisibleAccounts.length;
         const totalPlannedVisits = allVisibleAccounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0);
         const totalExpectedRevenue = allVisibleAccounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0);
 
         // Progress & Compliance Averages (considering Approved beat plans only)
-        const approvedPlans = visibleBeatPlans.filter(bp => bp.status === "Approved");
+        const approvedPlans = filteredBeatPlans.filter(bp => bp.status === "Approved");
         let avgProgress = 0;
         let avgCompliance = 0;
 
@@ -2412,14 +2556,51 @@ export default function App() {
           avgCompliance = complianceSum / approvedPlans.length;
         }
 
-        const uniqueSalespersons = [...new Set(visibleBeatPlans.map(bp => bp.userId))];
+        const uniqueSalespersons = users.filter(u => u.role !== "Admin" && u.role !== "General Manager").map(u => u.name);
+
+        const salespersonName = currentUser === "Manager" ? (beatSalespersonFilter !== "All Salespersons" ? beatSalespersonFilter : null) : currentUser;
+        const isAllQuarters = beatQuarterFilter === "All Quarters";
+        const activeQuarterVal = isAllQuarters ? "2026 Full Year" : beatQuarterFilter;
+        
+        let repTargetLakhs = 0;
+        let plannedRevenueLakhs = 0;
+        
+        if (salespersonName) {
+          if (isAllQuarters) {
+            repTargetLakhs = repData[salespersonName]?.target?.annual || 0;
+            plannedRevenueLakhs = beatPlans
+              .filter(bp => bp.userId === salespersonName)
+              .reduce((sum, bp) => sum + (bp.accounts?.reduce((s, a) => s + (Number(a.expectedRevenue) || 0), 0) || 0), 0);
+          } else {
+            const activeQuarterKey = activeQuarterVal.split(" ")[0].toLowerCase();
+            repTargetLakhs = repData[salespersonName]?.target?.[activeQuarterKey] || 0;
+            const repBeatPlan = beatPlans.find(bp => bp.userId === salespersonName && bp.quarter === activeQuarterVal);
+            plannedRevenueLakhs = repBeatPlan?.accounts?.reduce((sum, a) => sum + (Number(a.expectedRevenue) || 0), 0) || 0;
+          }
+        } else {
+          // Team Level Target Planning Alignment (when "All Salespersons" is selected)
+          if (isAllQuarters) {
+            repTargetLakhs = Object.values(repData).reduce((sum, r) => sum + (r.target?.annual || 0), 0);
+            plannedRevenueLakhs = beatPlans
+              .reduce((sum, bp) => sum + (bp.accounts?.reduce((s, a) => s + (Number(a.expectedRevenue) || 0), 0) || 0), 0);
+          } else {
+            const activeQuarterKey = activeQuarterVal.split(" ")[0].toLowerCase();
+            repTargetLakhs = Object.values(repData).reduce((sum, r) => sum + (r.target?.[activeQuarterKey] || 0), 0);
+            plannedRevenueLakhs = beatPlans
+              .filter(bp => bp.quarter === activeQuarterVal)
+              .reduce((sum, bp) => sum + (bp.accounts?.reduce((s, a) => s + (Number(a.expectedRevenue) || 0), 0) || 0), 0);
+          }
+        }
+        
+        const coveragePercent = repTargetLakhs > 0 ? Math.round((plannedRevenueLakhs / repTargetLakhs) * 100) : 0;
+        const coverageGapLakhs = repTargetLakhs - plannedRevenueLakhs;
 
         return (
           <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Planning</h3>
-                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Beat Planning Workspace</h2>
+                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Coverage Planning Workspace</h2>
               </div>
               <button
                 onClick={openNewBeatPlanModal}
@@ -2428,6 +2609,53 @@ export default function App() {
                 <span>📅</span> + New Beat Plan
               </button>
             </div>
+
+            {(salespersonName || beatSalespersonFilter === "All Salespersons") && (
+              <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white p-6 rounded-[28px] shadow-lg border border-indigo-500/20 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 animate-in fade-in duration-200">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xl">🎯</span>
+                    <span className="text-[10px] text-indigo-300 font-extrabold uppercase tracking-[0.2em]">Target Planning Alignment</span>
+                  </div>
+                  <h3 className="text-lg font-black tracking-tight">
+                    Target Coverage for <span className="text-blue-400">{salespersonName || "All Salespersons"}</span> ({activeQuarterVal})
+                  </h3>
+                  <p className="text-xs text-indigo-200/60 mt-1">
+                    Comparing {isAllQuarters ? "annual" : "quarterly"} quota target vs total expected revenue from planned hospitals.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-4 w-full md:w-auto">
+                  <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px]">
+                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Target Quota</span>
+                    <span className="text-md font-black">₹{repTargetLakhs} Lakhs</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px]">
+                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Planned Contribution</span>
+                    <span className="text-md font-black">₹{plannedRevenueLakhs} Lakhs</span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px]">
+                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Coverage Gap</span>
+                    <span className={`text-md font-black ${coverageGapLakhs > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+                      {coverageGapLakhs > 0 ? `₹${coverageGapLakhs} Lakhs` : "No Gap"}
+                    </span>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px] flex flex-col justify-between">
+                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Coverage %</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`text-md font-black ${coveragePercent >= 100 ? "text-emerald-400" : "text-amber-400"}`}>
+                        {coveragePercent}%
+                      </span>
+                      <div className="w-12 bg-white/20 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${coveragePercent >= 100 ? "bg-emerald-400" : "bg-amber-400"}`}
+                          style={{ width: `${Math.min(100, coveragePercent)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
@@ -2512,7 +2740,9 @@ export default function App() {
                   >
                     <option value="All Salespersons">All Salespersons</option>
                     {uniqueSalespersons.map(sp => (
-                      <option key={sp} value={sp}>{sp}</option>
+                      <option key={sp} value={sp}>
+                        {sp === "Sales Manager " ? "Sales Manager (CC)" : (sp === "Sales Manager" ? "Sales Manager (Imaging)" : sp)}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -2527,6 +2757,7 @@ export default function App() {
                     <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
                       <th className="px-6 py-4">Quarter</th>
                       <th className="px-6 py-4">Salesperson</th>
+                      <th className="px-6 py-4">Target Quota</th>
                       <th className="px-6 py-4">Hospitals Planned</th>
                       <th className="px-6 py-4">Total Planned Visits</th>
                       <th className="px-6 py-4">Total Expected Revenue</th>
@@ -2535,72 +2766,95 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                    {filteredBeatPlans.map(bp => {
-                      const hospitalsCount = bp.accounts ? bp.accounts.length : 0;
-                      const totalVisits = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0) : 0;
-                      const totalRev = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0) : 0;
+                    {(() => {
+                      const parseQuarterForSorting = (qStr) => {
+                        if (!qStr) return { year: 0, q: 0 };
+                        const parts = qStr.split(" ");
+                        const qNum = parseInt(parts[0].replace("Q", ""), 10) || 0;
+                        const yearNum = parseInt(parts[1], 10) || 0;
+                        return { year: yearNum, q: qNum };
+                      };
 
-                      return (
-                        <tr key={bp.id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-blue-600">
-                            <button
-                              onClick={() => setSelectedBeatPlan(bp)}
-                              className="hover:underline font-bold text-left"
-                            >
-                              {bp.quarter}
-                            </button>
-                          </td>
-                          <td className="px-6 py-4 text-xs font-bold text-gray-500">{bp.userName}</td>
-                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">{hospitalsCount}</td>
-                          <td className="px-6 py-4 text-xs font-semibold text-gray-500">{totalVisits}</td>
-                          <td className="px-6 py-4 font-bold text-gray-900">₹{totalRev}L</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                              bp.status === "Approved" ? "bg-green-50 text-green-700 border border-green-200" :
-                              bp.status === "Submitted" ? "bg-orange-50 text-orange-700 border border-orange-200" :
-                              "bg-gray-100 text-gray-600 border border-gray-200"
-                            }`}>
-                              {bp.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                            <button
-                              onClick={() => setSelectedBeatPlan(bp)}
-                              className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
-                            >
-                              View
-                            </button>
-                            {bp.status === "Draft" && bp.userId === currentUser && (
-                              <>
-                                <button
-                                  onClick={() => openEditBeatPlanModal(bp)}
-                                  className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => submitBeatPlanDirectly(bp)}
-                                  className="bg-orange-50 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-orange-600 hover:text-white transition-colors"
-                                >
-                                  Submit
-                                </button>
-                              </>
-                            )}
-                            {bp.status === "Submitted" && currentUser === "Manager" && (
+                      const sortedPlans = [...filteredBeatPlans].sort((a, b) => {
+                        const pa = parseQuarterForSorting(a.quarter);
+                        const pb = parseQuarterForSorting(b.quarter);
+                        if (pa.year !== pb.year) return pa.year - pb.year;
+                        return pa.q - pb.q;
+                      });
+
+                      return sortedPlans.map(bp => {
+                        const hospitalsCount = bp.accounts ? bp.accounts.length : 0;
+                        const totalVisits = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.plannedVisitCount || 0), 0) : 0;
+                        const totalRev = bp.accounts ? bp.accounts.reduce((sum, a) => sum + (a.expectedRevenue || 0), 0) : 0;
+
+                        const bpQuarterKey = bp.quarter.split(" ")[0].toLowerCase();
+                        const bpTarget = repData[bp.userId]?.target?.[bpQuarterKey] || 0;
+
+                        return (
+                          <tr key={bp.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-blue-600">
                               <button
-                                onClick={() => approveBeatPlan(bp)}
-                                className="bg-green-50 text-green-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600 hover:text-white transition-colors"
+                                onClick={() => setSelectedBeatPlan(bp)}
+                                className="hover:underline font-bold text-left"
                               >
-                                Approve
+                                {bp.quarter}
                               </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td className="px-6 py-4 text-xs font-bold text-gray-500">
+                              {bp.userName === "Sales Manager " ? "Sales Manager (CC)" : (bp.userName === "Sales Manager" ? "Sales Manager (Imaging)" : bp.userName)}
+                            </td>
+                            <td className="px-6 py-4 text-xs font-black text-indigo-950">₹{bpTarget} Lakhs</td>
+                            <td className="px-6 py-4 text-xs font-semibold text-gray-500">{hospitalsCount}</td>
+                            <td className="px-6 py-4 text-xs font-semibold text-gray-500">{totalVisits}</td>
+                            <td className="px-6 py-4 font-bold text-gray-900">₹{totalRev}L</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                bp.status === "Approved" ? "bg-green-50 text-green-700 border border-green-200" :
+                                bp.status === "Submitted" ? "bg-orange-50 text-orange-700 border border-orange-200" :
+                                "bg-gray-100 text-gray-600 border border-gray-200"
+                              }`}>
+                                {bp.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                              <button
+                                onClick={() => setSelectedBeatPlan(bp)}
+                                className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                              >
+                                View
+                              </button>
+                              {bp.status === "Draft" && bp.userId === currentUser && (
+                                <>
+                                  <button
+                                    onClick={() => openEditBeatPlanModal(bp)}
+                                    className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => submitBeatPlanDirectly(bp)}
+                                    className="bg-orange-50 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-orange-600 hover:text-white transition-colors"
+                                  >
+                                    Submit
+                                  </button>
+                                </>
+                              )}
+                              {bp.status === "Submitted" && currentUser === "Manager" && (
+                                <button
+                                  onClick={() => approveBeatPlan(bp)}
+                                  className="bg-green-50 text-green-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600 hover:text-white transition-colors"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                     {filteredBeatPlans.length === 0 && (
                       <tr>
-                        <td colSpan="7" className="text-center py-12 text-gray-400 italic">
+                        <td colSpan="8" className="text-center py-12 text-gray-400 italic">
                           No beat plans found.
                         </td>
                       </tr>
@@ -2756,17 +3010,17 @@ export default function App() {
           {/* KPI Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             {(() => {
-              const decidedDeals = dashboardDealsRibbon.filter(d => d.stage === "Order" || d.stage === "Lost");
-              const wonDeals = decidedDeals.filter(d => d.stage === "Order");
+              const decidedDeals = dashboardDealsRibbon.filter(d => d.stage === "Closed Won" || d.stage === "Lost");
+              const wonDeals = decidedDeals.filter(d => d.stage === "Closed Won");
               const winRate = decidedDeals.length > 0 ? Math.round((wonDeals.length / decidedDeals.length) * 100) : 0;
 
-              const activeD = dashboardDealsRibbon.filter(d => d.stage !== "Order" && d.stage !== "Lost" && d.state !== "On Hold");
+              const activeD = dashboardDealsRibbon.filter(d => d.stage !== "Closed Won" && d.stage !== "Lost" && d.state !== "On Hold");
               const stagnantDeals = activeD.filter(d => getDaysAgo(d.lastActivity) > 7);
 
               // Demo Tracking (Closed Deals Only)
-              const closedDealsForDemo = dashboardDealsRibbon.filter(d => d.stage === "Order" || d.stage === "Lost");
+              const closedDealsForDemo = dashboardDealsRibbon.filter(d => d.stage === "Closed Won" || d.stage === "Lost");
               const demoedClosedDeals = closedDealsForDemo.filter(d => d.timeline?.some(t => t.text?.toLowerCase().includes("demo")));
-              const wonDemoDeals = demoedClosedDeals.filter(d => d.stage === "Order");
+              const wonDemoDeals = demoedClosedDeals.filter(d => d.stage === "Closed Won");
               const demoConvRate = demoedClosedDeals.length > 0 ? Math.round((wonDemoDeals.length / demoedClosedDeals.length) * 100) : 0;
 
               const imagingVal = activeD.filter(d => getDealSbu(d) === "Imaging").reduce((acc, d) => acc + parseValue(d.value), 0);
@@ -2822,8 +3076,8 @@ export default function App() {
                   <div className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
                     <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex justify-between">Pipeline by SBU <span>📊</span></div>
                     <div className="flex flex-col justify-end gap-1 mt-auto">
-                      <div onClick={() => setDrilldownReport({ title: "Active Imaging Pipeline", data: activeD.filter(d => getDealSbu(d) === "Imaging") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"><span className="text-indigo-600">Imaging</span> <span className="flex items-center gap-1">₹{(imagingVal / 100).toFixed(1)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
-                      <div onClick={() => setDrilldownReport({ title: "Active Critical Care Pipeline", data: activeD.filter(d => getDealSbu(d) === "Critical Care") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"><span className="text-rose-600">Critical Care</span> <span className="flex items-center gap-1">₹{(criticalCareVal / 100).toFixed(1)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
+                      <div onClick={() => setDrilldownReport({ title: "Active Imaging Pipeline", data: activeD.filter(d => getDealSbu(d) === "Imaging") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-colors"><span className="text-indigo-600">Imaging</span> <span className="flex items-center gap-1">₹{(imagingVal / 100).toFixed(2)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
+                      <div onClick={() => setDrilldownReport({ title: "Active Critical Care Pipeline", data: activeD.filter(d => getDealSbu(d) === "Critical Care") })} className="flex justify-between items-center text-xs font-bold p-1.5 -mx-1.5 rounded-lg cursor-pointer hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors"><span className="text-rose-600">Critical Care</span> <span className="flex items-center gap-1">₹{(criticalCareVal / 100).toFixed(2)} Cr <span className="text-[10px] text-gray-300">&rarr;</span></span></div>
                     </div>
                   </div>
                 </>
@@ -2833,10 +3087,10 @@ export default function App() {
 
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 pl-1">Salesperson Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {["Basheer", "Amit", "Rahul"].filter(rep => currentUser === "Manager" || currentUser === rep).map(rep => {
+            {Object.keys(repData).filter(rep => currentUser === "Manager" || currentUser === rep).map(rep => {
               const repDeals = deals.filter(d => d.owner === rep);
-              const wonTotal = repDeals.filter(d => d.stage === "Order" && d.state !== "On Hold").reduce((a, b) => a + parseValue(b.value), 0);
-              const pipeTotal = repDeals.filter(d => d.stage !== "Order" && d.stage !== "Lost" && d.state !== "On Hold").reduce((a, b) => a + parseValue(b.value), 0);
+              const wonTotal = repDeals.filter(d => d.stage === "Closed Won" && d.state !== "On Hold").reduce((a, b) => a + parseValue(b.value), 0);
+              const pipeTotal = repDeals.filter(d => d.stage !== "Closed Won" && d.stage !== "Lost" && d.state !== "On Hold").reduce((a, b) => a + parseValue(b.value), 0);
               const pendingCount = reminders.filter(r => r.owner === rep && r.status === "pending").length;
 
               return (
@@ -2862,16 +3116,16 @@ export default function App() {
                   </div>
                   <div className="space-y-3 mt-auto">
                     <div
-                      onClick={() => setDrilldownReport({ title: `${rep}: Closed Won Deals`, data: repDeals.filter(d => d.stage === "Order") })}
+                      onClick={() => setDrilldownReport({ title: `${rep}: Closed Won Deals`, data: repDeals.filter(d => d.stage === "Closed Won") })}
                       className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-100 transition-colors group">
                       <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Closed Won</span>
-                      <span className="font-extrabold text-emerald-600 flex items-center gap-2">₹{wonTotal}L <span className="text-[10px] opacity-0 group-hover:opacity-100 text-gray-400">&rarr;</span></span>
+                      <span className="font-extrabold text-emerald-600 flex items-center gap-2">₹{(wonTotal / 100).toFixed(2)} Cr <span className="text-[10px] opacity-0 group-hover:opacity-100 text-gray-400">&rarr;</span></span>
                     </div>
                     <div
-                      onClick={() => setDrilldownReport({ title: `${rep}: Active Pipeline`, data: repDeals.filter(d => d.stage !== "Order" && d.stage !== "Lost") })}
+                      onClick={() => setDrilldownReport({ title: `${rep}: Active Pipeline`, data: repDeals.filter(d => d.stage !== "Closed Won" && d.stage !== "Lost") })}
                       className="flex justify-between items-center bg-blue-50 p-3 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors group">
                       <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Active Pipeline</span>
-                      <span className="font-extrabold text-blue-900 flex items-center gap-2">₹{pipeTotal}L <span className="text-[10px] opacity-0 group-hover:opacity-100 text-blue-300">&rarr;</span></span>
+                      <span className="font-extrabold text-blue-900 flex items-center gap-2">₹{(pipeTotal / 100).toFixed(2)} Cr <span className="text-[10px] opacity-0 group-hover:opacity-100 text-blue-300">&rarr;</span></span>
                     </div>
                   </div>
                 </div>
@@ -5251,32 +5505,379 @@ export default function App() {
       {
         view === "settings" && currentUser === "Manager" && (
           <div className="flex-1 p-4 sm:p-6 overflow-y-auto w-full bg-gray-50">
-            <h2 className="text-2xl font-black text-gray-800 mb-6 uppercase tracking-tight flex items-center gap-3"><span className="text-3xl">⚙️</span> Target Setting</h2>
-            <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm max-w-4xl mx-auto">
-              <div className="mb-6 opacity-60 text-sm font-medium">Update the sales quotas and targets for your field representatives. Changes take effect universally across the dashboard widgets.</div>
-              {Object.keys(repData).map(rep => (
-                <div key={rep} className="mb-6 p-5 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
-                  <h3 className="font-extrabold text-blue-900 text-lg mb-4 flex justify-between items-end border-b pb-2">
-                    <span>{rep === "Basheer" ? "Manager (Basheer)" : rep}</span>
-                    <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-lg uppercase tracking-widest">Zone: {repData[rep].zone}</span>
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Object.keys(repData[rep].target).map(category => (
-                      <div key={category} className="bg-white p-3 border rounded-xl shadow-sm">
-                        <label className="block text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-1">{category === 'annual' ? 'Annual Quota' : `${category.toUpperCase()} Quota`}</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5 font-bold text-gray-400">₹</span>
-                          <input type="number" value={repData[rep].target[category]} onChange={(e) => {
-                            const updated = { ...repData };
-                            updated[rep].target[category] = parseInt(e.target.value) || 0;
-                            setRepData(updated);
-                          }} className="pl-8 pr-3 py-2 border border-gray-100 rounded-lg w-full font-black text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+            <h2 className="text-2xl font-black text-gray-800 mb-6 uppercase tracking-tight flex items-center gap-3"><span className="text-3xl">🎯</span> Target Planning Workspace</h2>
+            
+            {/* Planning Controls Block */}
+            <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm mb-6 max-w-4xl mx-auto animate-in fade-in duration-200">
+              {/* Planning Period Selector */}
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Select Planning Period</label>
+                <div className="flex flex-wrap gap-2">
+                  {["annual", "q1", "q2", "q3", "q4"].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setPlanningPeriod(p)}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                        planningPeriod === p
+                          ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-100 scale-105"
+                          : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
+                      }`}
+                    >
+                      {p === "annual" ? "Annual" : p.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Planning View Switcher */}
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Workspace Perspective</label>
+                <div className="bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/50">
+                  <button
+                    onClick={() => setSettingsTab("category")}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                      settingsTab === "category"
+                        ? "bg-white text-blue-700 shadow-sm font-black"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    SBU Allocation
+                  </button>
+                  <button
+                    onClick={() => setSettingsTab("team")}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                      settingsTab === "team"
+                        ? "bg-white text-blue-700 shadow-sm font-black"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Sales Team Allocation
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto space-y-6">
+              {(() => {
+                const getTeamTotalForSbu = (sbuName, period) => {
+                  let totalLakhs = 0;
+                  const repsInSbu = [];
+                  Object.keys(repData).forEach(rep => {
+                    const userObj = users.find(u => u.name.toLowerCase() === rep.toLowerCase());
+                    const userSbu = userObj?.sbu || (rep === "Rahul" ? "Critical Care" : "Imaging");
+                    if (userSbu === sbuName) {
+                      repsInSbu.push(rep);
+                    }
+                  });
+                  repsInSbu.forEach(rep => {
+                    totalLakhs += Number(repData[rep]?.target?.[period]) || 0;
+                  });
+                  return totalLakhs / 100; // convert to Cr
+                };
+
+                const uniqueSbus = Array.from(new Set(users.map(u => u.sbu).filter(Boolean)));
+                if (!uniqueSbus.includes("Imaging")) uniqueSbus.push("Imaging");
+                if (!uniqueSbus.includes("Critical Care")) uniqueSbus.push("Critical Care");
+
+                const selectedPeriod = planningPeriod;
+                const corporateTarget = Number(sbuTargets.overall[selectedPeriod]) || 0;
+                const imagingTarget = Number(sbuTargets.imaging[selectedPeriod]) || 0;
+                const criticalCareTarget = Number(sbuTargets.criticalCare[selectedPeriod]) || 0;
+                const sumCategories = imagingTarget + criticalCareTarget;
+                const categoryDiff = corporateTarget - sumCategories;
+                
+                let reconciliationStatus = "Fully Allocated";
+                let badgeColor = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                let dotColor = "bg-emerald-400";
+                
+                if (Math.abs(categoryDiff) > 0.001) {
+                  if (categoryDiff > 0) {
+                    reconciliationStatus = "Under Allocated";
+                    badgeColor = "bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                    dotColor = "bg-amber-400 animate-pulse";
+                  } else {
+                    reconciliationStatus = "Over Allocated";
+                    badgeColor = "bg-red-500/20 text-red-300 border border-red-500/30";
+                    dotColor = "bg-red-400 animate-pulse";
+                  }
+                }
+
+                if (settingsTab === "category") {
+                  return (
+                    <div className="space-y-6 animate-in fade-in duration-200">
+                      <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                        <h3 className="font-extrabold text-blue-900 text-lg mb-2">Target Allocation ({selectedPeriod === "annual" ? "Annual" : selectedPeriod.toUpperCase()})</h3>
+                        <div className="mb-6 opacity-60 text-sm font-medium">Allocate top-level corporate goals across Strategic Business Units for the selected period.</div>
+
+                        {/* Category Reconciliation Summary Card */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-6 rounded-[24px] shadow-md mb-6">
+                          {/* Corporate Target */}
+                          <div className="flex flex-col justify-between">
+                            <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Corporate Target</span>
+                            <div className="mt-2">
+                              <span className="text-2xl font-black">₹{corporateTarget.toFixed(1).replace(/\.0$/, '')} Cr</span>
+                            </div>
+                            <span className="text-[10px] text-indigo-300/60 mt-1">Base period goal</span>
+                          </div>
+                          
+                          {/* SBU Allocated Sum */}
+                          <div className="flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-4">
+                            <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Total Allocated SBU</span>
+                            <div className="mt-2">
+                              <span className="text-2xl font-black">₹{sumCategories.toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '')} Cr</span>
+                            </div>
+                            <span className="text-[10px] text-indigo-300/60 mt-1">Sum of SBU targets</span>
+                          </div>
+
+                          {/* Gap/Excess */}
+                          <div className="flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-4">
+                            <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Gap / Excess</span>
+                            <div className="mt-2">
+                              <span className={`text-2xl font-black ${categoryDiff > 0 ? "text-amber-300" : categoryDiff < 0 ? "text-rose-300" : "text-emerald-300"}`}>
+                                {categoryDiff === 0 ? "₹0.0 Cr" : `${categoryDiff > 0 ? "+" : ""}${categoryDiff.toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '')} Cr`}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-indigo-300/60 mt-1">
+                              {categoryDiff > 0 ? "Under-allocated" : categoryDiff < 0 ? "Over-allocated" : "Reconciled"}
+                            </span>
+                          </div>
+
+                          {/* Status */}
+                          <div className="flex flex-col justify-between border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-4">
+                            <span className="text-[10px] text-indigo-200 font-bold uppercase tracking-wider">Reconciliation Status</span>
+                            <div className="mt-2">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${badgeColor}`}>
+                                <span className={`w-2 h-2 rounded-full ${dotColor}`}></span>
+                                {reconciliationStatus}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-indigo-300/60 mt-1">Compliance Check</span>
+                          </div>
+                        </div>
+
+                        {/* Input Form */}
+                        <div className="bg-gray-50/50 p-6 rounded-[24px] border border-gray-100 shadow-sm space-y-6">
+                          <div>
+                            <h4 className="text-sm font-extrabold text-blue-900 mb-2 flex items-center gap-2">
+                              <span>🏢</span> Corporate Target
+                            </h4>
+                            <div className="relative max-w-xs">
+                              <span className="absolute left-3 top-3 font-black text-gray-400 text-sm">₹</span>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={sbuTargets.overall[selectedPeriod]}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const updated = { ...sbuTargets };
+                                  updated.overall[selectedPeriod] = val === "" ? "" : (parseFloat(val) || 0);
+                                  setSbuTargets(updated);
+                                }}
+                                className="pl-6 pr-10 py-2.5 border border-gray-200 rounded-xl w-full font-black text-gray-800 text-sm text-right focus:ring-2 focus:ring-blue-500 bg-white outline-none"
+                              />
+                              <span className="absolute right-3 top-3 text-xs text-gray-400 font-bold">Cr</span>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-100 pt-6">
+                            <h4 className="text-sm font-extrabold text-blue-900 mb-4 flex items-center gap-2">
+                              <span>📊</span> SBU Allocations
+                            </h4>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                              <div className="bg-white p-5 rounded-2xl border border-gray-155 shadow-sm">
+                                <label className="block text-[10px] uppercase tracking-widest font-extrabold text-indigo-600 mb-2">
+                                  Imaging SBU Target
+                                </label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-3 font-black text-gray-400 text-sm">₹</span>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={sbuTargets.imaging[selectedPeriod]}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const updated = { ...sbuTargets };
+                                      updated.imaging[selectedPeriod] = val === "" ? "" : (parseFloat(val) || 0);
+                                      setSbuTargets(updated);
+                                    }}
+                                    className="pl-6 pr-10 py-2.5 border border-gray-200 rounded-xl w-full font-black text-gray-800 text-sm text-right focus:ring-2 focus:ring-blue-500 outline-none"
+                                  />
+                                  <span className="absolute right-3 top-3 text-xs text-gray-400 font-bold">Cr</span>
+                                </div>
+                              </div>
+
+                              <div className="bg-white p-5 rounded-2xl border border-gray-155 shadow-sm">
+                                <label className="block text-[10px] uppercase tracking-widest font-extrabold text-rose-600 mb-2">
+                                  Critical Care SBU Target
+                                </label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-3 font-black text-gray-400 text-sm">₹</span>
+                                  <input
+                                    type="number"
+                                    step="0.1"
+                                    value={sbuTargets.criticalCare[selectedPeriod]}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      const updated = { ...sbuTargets };
+                                      updated.criticalCare[selectedPeriod] = val === "" ? "" : (parseFloat(val) || 0);
+                                      setSbuTargets(updated);
+                                    }}
+                                    className="pl-6 pr-10 py-2.5 border border-gray-200 rounded-xl w-full font-black text-gray-800 text-sm text-right focus:ring-2 focus:ring-blue-500 outline-none"
+                                  />
+                                  <span className="absolute right-3 top-3 text-xs text-gray-400 font-bold">Cr</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div className="space-y-8 animate-in fade-in duration-200">
+                      {/* SBU Sub-tab navigation */}
+                      <div className="flex justify-center">
+                        <div className="bg-gray-100 p-1 rounded-2xl flex gap-1 border border-gray-200/50">
+                          <button
+                            onClick={() => setSbuTeamTab("Imaging")}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                              sbuTeamTab === "Imaging"
+                                ? "bg-white text-blue-700 shadow-sm font-black"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            Imaging SBU
+                          </button>
+                          <button
+                            onClick={() => setSbuTeamTab("Critical Care")}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                              sbuTeamTab === "Critical Care"
+                                ? "bg-white text-blue-700 shadow-sm font-black"
+                                : "text-gray-500 hover:text-gray-700"
+                            }`}
+                          >
+                            Critical Care SBU
+                          </button>
+                        </div>
+                      </div>
+
+                      {uniqueSbus.filter(sbuName => sbuName === sbuTeamTab).map(sbuName => {
+                        const targetKey = sbuName === "Critical Care" ? "criticalCare" : sbuName.toLowerCase();
+                        const sbuCategoryTarget = Number(sbuTargets[targetKey]?.[selectedPeriod]) || 0;
+                        
+                        // Find reps in this SBU
+                        const repsInSbu = [];
+                        Object.keys(repData).forEach(rep => {
+                          const userObj = users.find(u => u.name.toLowerCase() === rep.toLowerCase());
+                          const userSbu = userObj?.sbu || (rep === "Rahul" ? "Critical Care" : "Imaging");
+                          if (userSbu === sbuName) {
+                            repsInSbu.push(rep);
+                          }
+                        });
+
+                        // Calculate SBU rollup total in Cr
+                        let sbuTeamTotalLakhs = 0;
+                        repsInSbu.forEach(rep => {
+                          sbuTeamTotalLakhs += Number(repData[rep]?.target?.[selectedPeriod]) || 0;
+                        });
+                        const sbuTeamTotalCr = sbuTeamTotalLakhs / 100;
+                        const sbuGap = sbuCategoryTarget - sbuTeamTotalCr;
+
+                        let sbuStatus = "Fully Allocated";
+                        let sbuBadge = "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                        let sbuDot = "bg-emerald-400";
+                        
+                        if (Math.abs(sbuGap) > 0.001) {
+                          if (sbuGap > 0) {
+                            sbuStatus = "Under Allocated";
+                            sbuBadge = "bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                            sbuDot = "bg-amber-400 animate-pulse";
+                          } else {
+                            sbuStatus = "Over Allocated";
+                            sbuBadge = "bg-red-500/20 text-red-300 border border-red-500/30";
+                            sbuDot = "bg-red-400 animate-pulse";
+                          }
+                        }
+
+                        const isCc = sbuName === "Critical Care";
+                        const bgGradient = isCc ? "from-rose-900 to-slate-900" : "from-indigo-900 to-slate-900";
+
+                        return (
+                          <div key={sbuName} className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+                            {/* Header Panel card */}
+                            <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 bg-gradient-to-br ${bgGradient} text-white p-6 rounded-[24px] shadow-md`}>
+                              <div>
+                                <span className="text-[9px] opacity-60 font-black uppercase tracking-wider block">Target</span>
+                                <span className="text-xl font-black mt-1 block">₹{sbuCategoryTarget.toFixed(2).replace(/\.00$/, '').replace(/\.0$/, '')} Cr</span>
+                              </div>
+                              <div className="border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-4">
+                                <span className="text-[9px] opacity-60 font-black uppercase tracking-wider block">Team Quota Rollup</span>
+                                <span className="text-xl font-black mt-1 block">₹{sbuTeamTotalCr.toFixed(2)} Cr</span>
+                              </div>
+                              <div className="border-t md:border-t-0 md:border-l border-white/10 pt-3 md:pt-0 md:pl-4 flex flex-col justify-between">
+                                <span className="text-[9px] opacity-60 font-black uppercase tracking-wider block">Compliance</span>
+                                <div className="mt-1">
+                                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${sbuBadge}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${sbuDot}`}></span>
+                                    {sbuStatus}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Reconciliation details */}
+                            {Math.abs(sbuGap) > 0.001 && (
+                              <div className={`p-4 rounded-2xl border text-xs font-bold ${sbuGap > 0 ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-red-50 text-red-800 border-red-200"}`}>
+                                {sbuGap > 0 ? (
+                                  <span>⚠️ SBU target is under-allocated to representatives by <span className="font-extrabold">₹{sbuGap.toFixed(2)} Cr</span> ({Math.round(sbuGap * 100)} Lakhs). Please allocate the remaining quota.</span>
+                                ) : (
+                                  <span>⚠️ Representative quotas exceed SBU target by <span className="font-extrabold">₹{Math.abs(sbuGap).toFixed(2)} Cr</span> ({Math.round(Math.abs(sbuGap) * 100)} Lakhs). Please reduce representative allocations.</span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Representatives Grid */}
+                            <div className="space-y-4">
+                              <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Representatives & Quota Allocations</h5>
+                              {repsInSbu.map(rep => (
+                                <div key={rep} className="bg-gray-50/50 p-4 border border-gray-150 rounded-2xl hover:bg-gray-50 hover:shadow-sm transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                  <div>
+                                    <h6 className="font-extrabold text-blue-900 text-sm uppercase tracking-tight">{rep === "Basheer" ? "Manager (Basheer)" : (rep === "Sales Manager " ? "Sales Manager (CC)" : (rep === "Sales Manager" ? "Sales Manager (Imaging)" : rep))}</h6>
+                                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mt-0.5">Zone: {repData[rep]?.zone}</span>
+                                  </div>
+                                  
+                                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <div className="text-[10px] text-right font-bold text-gray-400 w-24">
+                                      Quota Value
+                                      <span className="block text-[8px] text-blue-600 font-extrabold mt-0.5">({((repData[rep]?.target?.[selectedPeriod] || 0) / 100).toFixed(2)} Cr)</span>
+                                    </div>
+                                    <div className="relative flex-1 sm:flex-none w-36">
+                                      <span className="absolute left-2.5 top-2.5 font-black text-gray-400 text-xs">₹</span>
+                                      <input
+                                        type="number"
+                                        value={repData[rep]?.target?.[selectedPeriod] || ""}
+                                        onChange={(e) => {
+                                          const updated = { ...repData };
+                                          updated[rep].target[selectedPeriod] = parseInt(e.target.value) || 0;
+                                          setRepData(updated);
+                                        }}
+                                        className="pl-5 pr-12 py-2 border border-gray-200 rounded-xl w-full font-black text-gray-800 text-xs focus:ring-2 focus:ring-blue-500 outline-none text-right"
+                                      />
+                                      <span className="absolute right-2.5 top-2.5 text-[9px] text-gray-400 font-bold uppercase">Lakhs</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+              })()}
             </div>
           </div>
         )
@@ -5293,7 +5894,7 @@ export default function App() {
               onClick={() => {
                 setEditingUser(null);
                 setNewUserName("");
-                setNewUserEmployeeId("");
+                setNewUserEmployeeId(getNextEmployeeId());
                 setNewUserEmail("");
                 setNewUserMobile("");
                 setNewUserRole("Sales Executive");
@@ -5546,9 +6147,51 @@ export default function App() {
                       };
 
                       if (editingUser) {
+                        const oldName = editingUser.name;
+                        const newName = newUserName;
                         setUsers(prev => prev.map(u => u.id === editingUser.id ? userData : u));
+                        
+                        if (oldName !== newName) {
+                          setRepData(prev => {
+                            const next = { ...prev };
+                            if (next[oldName]) {
+                              next[newName] = next[oldName];
+                              delete next[oldName];
+                            }
+                            return next;
+                          });
+                          
+                          setBeatPlans(prev => prev.map(bp => {
+                            if (bp.userId === oldName) {
+                              return { ...bp, userId: newName, userName: newName };
+                            }
+                            return bp;
+                          }));
+                          
+                          setDeals(prev => prev.map(d => {
+                            let updated = false;
+                            let newOwner = d.owner;
+                            if (d.owner === oldName) {
+                              newOwner = newName;
+                              updated = true;
+                            }
+                            let newContributors = d.contributors;
+                            if (d.contributors && d.contributors.some(c => c.user === oldName)) {
+                              newContributors = d.contributors.map(c => c.user === oldName ? { ...c, user: newName } : c);
+                              updated = true;
+                            }
+                            return updated ? { ...d, owner: newOwner, contributors: newContributors } : d;
+                          }));
+                        }
                       } else {
                         setUsers(prev => [...prev, userData]);
+                        setRepData(prev => {
+                          if (prev[newUserName]) return prev;
+                          return {
+                            ...prev,
+                            [newUserName]: { zone: newUserZone, target: { annual: 120, q1: 30, q2: 30, q3: 30, q4: 30 } }
+                          };
+                        });
                       }
 
                       setIsUserModalOpen(false);
@@ -6240,6 +6883,61 @@ export default function App() {
 
           <div className="p-4 sm:p-6 pb-24 max-w-4xl mx-auto space-y-8 mt-4">
             
+            {/* Target Coverage & Planning Alignment Card */}
+            {(() => {
+              const modalRepName = selectedBeatPlan.userId;
+              const modalQuarterVal = selectedBeatPlan.quarter;
+              const modalQuarterKey = modalQuarterVal.split(" ")[0].toLowerCase();
+              const modalRepTargetLakhs = repData[modalRepName]?.target?.[modalQuarterKey] || 0;
+              const modalPlannedRevenueLakhs = selectedBeatPlan.accounts?.reduce((sum, a) => sum + (Number(a.expectedRevenue) || 0), 0) || 0;
+              const modalCoveragePercent = modalRepTargetLakhs > 0 ? Math.round((modalPlannedRevenueLakhs / modalRepTargetLakhs) * 100) : 0;
+              const modalCoverageGapLakhs = modalRepTargetLakhs - modalPlannedRevenueLakhs;
+
+              return (
+                <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-6 rounded-3xl border border-indigo-850 shadow-xl space-y-4 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-2 pb-2 border-b border-white/10">
+                    <span className="text-xl">🎯</span>
+                    <h3 className="font-black text-sm uppercase tracking-wider">Target Coverage & Planning Alignment</h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-widest block">Quarterly Target</span>
+                      <span className="text-xl font-black block mt-1">₹{modalRepTargetLakhs} Lakhs</span>
+                      <span className="text-[9px] text-white/40 block mt-0.5">Assigned quota</span>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-widest block">Planned Contribution</span>
+                      <span className="text-xl font-black block mt-1">₹{modalPlannedRevenueLakhs} Lakhs</span>
+                      <span className="text-[9px] text-white/40 block mt-0.5">Total from beat plan</span>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                      <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-widest block">Coverage Gap</span>
+                      <span className={`text-xl font-black block mt-1 ${modalCoverageGapLakhs > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+                        {modalCoverageGapLakhs > 0 ? `₹${modalCoverageGapLakhs} Lakhs` : "No Gap"}
+                      </span>
+                      <span className="text-[9px] text-white/40 block mt-0.5">
+                        {modalCoverageGapLakhs > 0 ? "Under-allocated gap" : "Fully covered"}
+                      </span>
+                    </div>
+                    <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col justify-between">
+                      <div>
+                        <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-widest block">Target Coverage %</span>
+                        <span className={`text-xl font-black block mt-1 ${modalCoveragePercent >= 100 ? "text-emerald-400" : "text-amber-400"}`}>
+                          {modalCoveragePercent}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden mt-2">
+                        <div
+                          className={`h-full rounded-full ${modalCoveragePercent >= 100 ? "bg-emerald-400" : "bg-amber-400"}`}
+                          style={{ width: `${Math.min(100, modalCoveragePercent)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
             {/* Planned Accounts Section */}
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
               <h3 className="font-black text-gray-800 text-sm uppercase tracking-wider border-b pb-2">Planned Accounts</h3>
@@ -6520,8 +7218,12 @@ export default function App() {
                     {formBeatPlanAccounts.map((a, idx) => (
                       <div key={a.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200/50 space-y-3 relative">
                         <button
-                          onClick={() => setFormBeatPlanAccounts(prev => prev.filter(item => item.id !== a.id))}
-                          className="absolute top-3 right-3 text-red-500 hover:text-red-700 font-black text-[10px] uppercase tracking-wider"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormBeatPlanAccounts(prev => prev.filter(item => item.id !== a.id));
+                          }}
+                          className="absolute top-3 right-3 text-red-500 hover:text-red-700 font-black text-[10px] uppercase tracking-wider z-20 cursor-pointer"
                           title="Remove Account"
                         >
                           ✕ Remove
