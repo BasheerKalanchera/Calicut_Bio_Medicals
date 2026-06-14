@@ -1714,8 +1714,8 @@ export default function App() {
     switch (view) {
       case "pipeline":
       case "manager": return "Opportunities";
-      case "customers": return "Customers";
-      case "projects": return "Projects";
+      case "customers":
+      case "projects": return "Account Management";
       case "beat-planning": return "Coverage Planning";
       case "catalog": return "Product Catalog";
       case "reminders": return "Next Actions";
@@ -1800,14 +1800,13 @@ export default function App() {
             {
               title: "SALES EXECUTION",
               items: [
-                { id: "customers", label: "Customers", icon: "🏥" },
-                { id: "projects", label: "Projects", icon: "📁" },
+                { id: "customers", label: "Account Management", icon: "🏥" },
                 { id: "pipeline", label: "Opportunities", icon: "📊" },
                 { id: "reminders", label: "Next Actions", icon: "✅" }
               ]
             },
             {
-              title: "ANALYTICS",
+              title: "PERFORMANCE",
               items: [
                 { id: "insights", label: "Insights", icon: "💡" }
               ]
@@ -1826,7 +1825,9 @@ export default function App() {
                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">{section.title}</h3>
                 <div className="space-y-0.5">
                   {section.items.map(item => {
-                    const isActive = view === item.id || (item.id === "pipeline" && view === "manager");
+                    const isActive = view === item.id || 
+                      (item.id === "pipeline" && view === "manager") ||
+                      (item.id === "customers" && view === "projects");
                     return (
                       <button
                         key={item.id}
@@ -1851,7 +1852,7 @@ export default function App() {
           })}
 
           <section className="pt-4 border-t border-gray-100">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Team Management</h3>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">Role Switcher</h3>
             <div className="bg-gray-50 p-2.5 rounded-xl space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase block mb-1">Acting As:</label>
               <select
@@ -2268,296 +2269,323 @@ export default function App() {
         </div>
       )}
 
-      {/* Customer Directory Screen */}
-      {
-        view === "customers" && (
-          <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
-                <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Customers</h2>
-              </div>
-              <button
-                onClick={() => { setShowNewLead(true); setIsCreatingCustomer(true); }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
-              >
-                <span>🏥</span> + New Customer
-              </button>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex-1 relative">
-                <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Search Hospital"
-                  className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                  value={customerSearchText}
-                  onChange={(e) => setCustomerSearchText(e.target.value)}
-                  autoComplete="off"
-                />
-                {customerSearchText && (
-                  <button
-                    onClick={() => setCustomerSearchText("")}
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
-                  >
-                    &times;
-                  </button>
-                )}
-              </div>
-              <select
-                className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                value={customerZoneFilter}
-                onChange={(e) => setCustomerZoneFilter(e.target.value)}
-              >
-                <option>All Zones</option>
-                <option>North Kerala</option>
-                <option>South Kerala</option>
-                <option>Bangalore</option>
-              </select>
-              <select className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" value={customerClassFilter} onChange={(e) => setCustomerClassFilter(e.target.value)}>
-                <option>All Classes</option>
-                <option value="Class A">Class A</option>
-                <option value="Class B">Class B</option>
-                <option value="Class C">Class C</option>
-                <option value="Class D">Class D</option>
-                <option value="Corporate">Corporate</option>
-                <option value="Clinic">Clinic</option>
-              </select>
-              <select className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" value={customerSpecialtyFilter} onChange={(e) => setCustomerSpecialtyFilter(e.target.value)}>
-                <option>All Specialties</option>
-                <option value="Multi Speciality">Multi Speciality</option>
-                <option value="Urology">Urology</option>
-                <option value="Ortho">Ortho</option>
-                <option value="Cardiac">Cardiac</option>
-                <option value="IVF">IVF</option>
-                <option value="Cardiology">Cardiology</option>
-                <option value="Radiology">Radiology</option>
-                <option value="Gynecology">Gynecology</option>
-                <option value="Pediatrics">Pediatrics</option>
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              {customers
-                .filter(acc =>
-                  (customerZoneFilter === "All Zones" || acc.zone === customerZoneFilter) &&
-                  (customerClassFilter === "All Classes" || acc.class === customerClassFilter || (!acc.class && customerClassFilter === 'All Classes')) &&
-                  (customerSpecialtyFilter === "All Specialties" || acc.specialty === customerSpecialtyFilter || (!acc.specialty && customerSpecialtyFilter === 'All Specialties')) &&
-                  acc.name?.toLowerCase().startsWith(customerSearchText.toLowerCase())
-                )
-                .map(acc => (
-                  <div
-                    key={acc.id}
-                    onClick={() => setSelectedAccount(acc)}
-                    className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        {acc.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">{acc.name}</div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
-                          <span>📍 {acc.city}</span>
-                          <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                          <span>🌐 {acc.zone}</span>
-                          {acc.customerType && (
-                            <>
-                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
-                                acc.customerType === "Corporate Group"
-                                  ? "bg-purple-50 text-purple-700 border-purple-200"
-                                  : acc.customerType === "Department"
-                                  ? "bg-pink-50 text-pink-700 border-pink-200"
-                                  : "bg-blue-50 text-blue-700 border-blue-200"
-                              }`}>🏷️ {acc.customerType}</span>
-                            </>
-                          )}
-                          {acc.class && (
-                            <>
-                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-indigo-50 text-indigo-700 border-indigo-200">📁 {acc.class}</span>
-                            </>
-                          )}
-                          {acc.specialty && (
-                            <>
-                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-emerald-50 text-emerald-700 border-emerald-200">✨ {acc.specialty}</span>
-                            </>
-                          )}
-                          {acc.parentCustomerId && (() => {
-                            const parent = customers.find(c => c.id.toString() === acc.parentCustomerId.toString());
-                            return parent ? (
-                              <>
-                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                <span className="text-gray-500 font-medium normal-case">🔗 Parent: <span className="text-gray-700 font-bold">{parent.name}</span></span>
-                              </>
-                            ) : null;
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
-                      <span className="text-gray-400 group-hover:text-blue-600 transition-colors">&rarr;</span>
-                    </div>
-                  </div>
-                ))}
-              {customers.filter(acc =>
-                (customerZoneFilter === "All Zones" || acc.zone === customerZoneFilter) &&
-                acc.name?.toLowerCase().startsWith(customerSearchText.toLowerCase())
-              ).length === 0 && (
-                  <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-                    No customers match your filters.
-                  </div>
-                )}
-            </div>
-          </div>
-        )
-      }
-
-      {/* Projects Master Screen */}
-      {view === "projects" && (
+      {/* Account Management Workspace (Customers + Projects Tabs) */}
+      {(view === "customers" || view === "projects") && (
         <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Sales Execution</h3>
-              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Projects</h2>
+              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight font-black">Account Management</h2>
             </div>
-            <button
-              onClick={() => openNewProjectModal("")}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2"
-            >
-              <span>📁</span> + New Project
-            </button>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex-1 relative">
-              <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
-              <input
-                type="text"
-                placeholder="Search Projects"
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                value={projectSearchText}
-                onChange={(e) => setProjectSearchText(e.target.value)}
-                autoComplete="off"
-              />
-              {projectSearchText && (
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              {/* Tab Selector */}
+              <div className="bg-gray-200/60 p-1 rounded-2xl flex gap-1 border border-gray-300/50 shadow-inner">
                 <button
-                  onClick={() => setProjectSearchText("")}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                  onClick={() => setView("customers")}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                    view === "customers"
+                      ? "bg-white text-blue-700 shadow-sm font-black"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
-                  &times;
+                  🏥 Customers
+                </button>
+                <button
+                  onClick={() => setView("projects")}
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                    view === "projects"
+                      ? "bg-white text-blue-700 shadow-sm font-black"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  📁 Projects
+                </button>
+              </div>
+
+              {/* Action Button depending on active tab */}
+              {view === "customers" ? (
+                <button
+                  onClick={() => { setShowNewLead(true); setIsCreatingCustomer(true); }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2 h-[38px]"
+                >
+                  <span>🏥</span> + New Customer
+                </button>
+              ) : (
+                <button
+                  onClick={() => openNewProjectModal("")}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:bg-blue-700 transition-all flex items-center gap-2 h-[38px]"
+                >
+                  <span>📁</span> + New Project
                 </button>
               )}
             </div>
-            <select
-              className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              value={projectTypeFilter}
-              onChange={(e) => setProjectTypeFilter(e.target.value)}
-            >
-              <option value="All Types">All Types</option>
-              <option value="New Hospital Build">New Hospital Build</option>
-              <option value="Expansion">Expansion</option>
-              <option value="Equipment Upgrade">Equipment Upgrade</option>
-              <option value="Renovation">Renovation</option>
-              <option value="Digital Transformation">Digital Transformation</option>
-            </select>
-            <select
-              className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              value={projectStatusFilter}
-              onChange={(e) => setProjectStatusFilter(e.target.value)}
-            >
-              <option value="All Statuses">All Statuses</option>
-              <option value="Planning">Planning</option>
-              <option value="Active">Active</option>
-              <option value="On Hold">On Hold</option>
-              <option value="Completed">Completed</option>
-            </select>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
-                    <th className="px-6 py-4">Project Name</th>
-                    <th className="px-6 py-4">Customer</th>
-                    <th className="px-6 py-4">Project Type</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Expected Close Date</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
-                  {projects
-                    .filter(proj => {
-                      const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
-                        proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
-                      const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
-                      const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
-                      return matchesSearch && matchesType && matchesStatus;
-                    })
-                    .map(proj => (
-                      <tr key={proj.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-gray-900">{proj.projectName}</td>
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => {
-                              const cust = customers.find(c => c.id.toString() === proj.customerId.toString());
-                              if (cust) setSelectedAccount(cust);
-                            }}
-                            className="text-blue-600 hover:underline font-bold"
-                          >
-                            {proj.customerName}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-bold text-gray-500">{proj.projectType}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
-                            proj.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" :
-                            proj.status === "Planning" ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                            proj.status === "On Hold" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                            "bg-gray-100 text-gray-700 border border-gray-200"
-                          }`}>
-                            {proj.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-gray-500">{proj.expectedCloseDate || "N/A"}</td>
-                        <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                          <button
-                            onClick={() => setSelectedProject(proj)}
-                            className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
-                          >
-                            View
-                          </button>
-                          <button
-                            onClick={() => openEditProjectModal(proj)}
-                            className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
-                          >
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  {projects.filter(proj => {
-                    const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
-                      proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
-                    const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
-                    const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
-                    return matchesSearch && matchesType && matchesStatus;
-                  }).length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="text-center py-12 text-gray-400 italic">
-                        No projects found matching the filters.
-                      </td>
-                    </tr>
+          {/* TAB 1 Content: Customers */}
+          {view === "customers" && (
+            <div className="animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search Hospital"
+                    className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                    value={customerSearchText}
+                    onChange={(e) => setCustomerSearchText(e.target.value)}
+                    autoComplete="off"
+                  />
+                  {customerSearchText && (
+                    <button
+                      onClick={() => setCustomerSearchText("")}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                    >
+                      &times;
+                    </button>
                   )}
-                </tbody>
-              </table>
+                </div>
+                <select
+                  className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                  value={customerZoneFilter}
+                  onChange={(e) => setCustomerZoneFilter(e.target.value)}
+                >
+                  <option>All Zones</option>
+                  <option>North Kerala</option>
+                  <option>South Kerala</option>
+                  <option>Bangalore</option>
+                </select>
+                <select className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" value={customerClassFilter} onChange={(e) => setCustomerClassFilter(e.target.value)}>
+                  <option>All Classes</option>
+                  <option value="Class A">Class A</option>
+                  <option value="Class B">Class B</option>
+                  <option value="Class C">Class C</option>
+                  <option value="Class D">Class D</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Clinic">Clinic</option>
+                </select>
+                <select className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500" value={customerSpecialtyFilter} onChange={(e) => setCustomerSpecialtyFilter(e.target.value)}>
+                  <option>All Specialties</option>
+                  <option value="Multi Speciality">Multi Speciality</option>
+                  <option value="Urology">Urology</option>
+                  <option value="Ortho">Ortho</option>
+                  <option value="Cardiac">Cardiac</option>
+                  <option value="IVF">IVF</option>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Radiology">Radiology</option>
+                  <option value="Gynecology">Gynecology</option>
+                  <option value="Pediatrics">Pediatrics</option>
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                {customers
+                  .filter(acc =>
+                    (customerZoneFilter === "All Zones" || acc.zone === customerZoneFilter) &&
+                    (customerClassFilter === "All Classes" || acc.class === customerClassFilter || (!acc.class && customerClassFilter === 'All Classes')) &&
+                    (customerSpecialtyFilter === "All Specialties" || acc.specialty === customerSpecialtyFilter || (!acc.specialty && customerSpecialtyFilter === 'All Specialties')) &&
+                    acc.name?.toLowerCase().startsWith(customerSearchText.toLowerCase())
+                  )
+                  .map(acc => (
+                    <div
+                      key={acc.id}
+                      onClick={() => setSelectedAccount(acc)}
+                      className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                          {acc.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">{acc.name}</div>
+                          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
+                            <span>📍 {acc.city}</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span>🌐 {acc.zone}</span>
+                            {acc.customerType && (
+                              <>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
+                                  acc.customerType === "Corporate Group"
+                                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                                    : acc.customerType === "Department"
+                                    ? "bg-pink-50 text-pink-700 border-pink-200"
+                                    : "bg-blue-50 text-blue-700 border-blue-200"
+                                }`}>🏷️ {acc.customerType}</span>
+                              </>
+                            )}
+                            {acc.class && (
+                              <>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-indigo-50 text-indigo-700 border-indigo-200">📁 {acc.class}</span>
+                              </>
+                            )}
+                            {acc.specialty && (
+                              <>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-emerald-50 text-emerald-700 border-emerald-200">✨ {acc.specialty}</span>
+                              </>
+                            )}
+                            {acc.parentCustomerId && (() => {
+                              const parent = customers.find(c => c.id.toString() === acc.parentCustomerId.toString());
+                              return parent ? (
+                                <>
+                                  <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                  <span className="text-gray-500 font-medium normal-case">🔗 Parent: <span className="text-gray-700 font-bold">{parent.name}</span></span>
+                                </>
+                              ) : null;
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
+                        <span className="text-gray-400 group-hover:text-blue-600 transition-colors">&rarr;</span>
+                      </div>
+                    </div>
+                  ))}
+                {customers.filter(acc =>
+                  (customerZoneFilter === "All Zones" || acc.zone === customerZoneFilter) &&
+                  acc.name?.toLowerCase().startsWith(customerSearchText.toLowerCase())
+                ).length === 0 && (
+                    <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
+                      No customers match your filters.
+                    </div>
+                  )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* TAB 2 Content: Projects */}
+          {view === "projects" && (
+            <div className="animate-in fade-in duration-200">
+              <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex-1 relative">
+                  <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+                  <input
+                    type="text"
+                    placeholder="Search Projects"
+                    className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                    value={projectSearchText}
+                    onChange={(e) => setProjectSearchText(e.target.value)}
+                    autoComplete="off"
+                  />
+                  {projectSearchText && (
+                    <button
+                      onClick={() => setProjectSearchText("")}
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+                <select
+                  className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={projectTypeFilter}
+                  onChange={(e) => setProjectTypeFilter(e.target.value)}
+                >
+                  <option value="All Types">All Types</option>
+                  <option value="New Hospital Build">New Hospital Build</option>
+                  <option value="Expansion">Expansion</option>
+                  <option value="Equipment Upgrade">Equipment Upgrade</option>
+                  <option value="Renovation">Renovation</option>
+                  <option value="Digital Transformation">Digital Transformation</option>
+                </select>
+                <select
+                  className="bg-gray-50 border-none rounded-xl px-4 py-2 text-sm font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={projectStatusFilter}
+                  onChange={(e) => setProjectStatusFilter(e.target.value)}
+                >
+                  <option value="All Statuses">All Statuses</option>
+                  <option value="Planning">Planning</option>
+                  <option value="Active">Active</option>
+                  <option value="On Hold">On Hold</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-left">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                        <th className="px-6 py-4">Project Name</th>
+                        <th className="px-6 py-4">Customer</th>
+                        <th className="px-6 py-4">Project Type</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Expected Close Date</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
+                      {projects
+                        .filter(proj => {
+                          const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
+                            proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
+                          const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
+                          const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
+                          return matchesSearch && matchesType && matchesStatus;
+                        })
+                        .map(proj => (
+                          <tr key={proj.id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-gray-900">{proj.projectName}</td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => {
+                                  const cust = customers.find(c => c.id.toString() === proj.customerId.toString());
+                                  if (cust) setSelectedAccount(cust);
+                                }}
+                                className="text-blue-600 hover:underline font-bold"
+                              >
+                                {proj.customerName}
+                              </button>
+                            </td>
+                            <td className="px-6 py-4 text-xs font-bold text-gray-500">{proj.projectType}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                                proj.status === "Active" ? "bg-green-50 text-green-700 border border-green-200" :
+                                proj.status === "Planning" ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                                proj.status === "On Hold" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                "bg-gray-100 text-gray-700 border border-gray-200"
+                              }`}>
+                                {proj.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-xs font-semibold text-gray-500">{proj.expectedCloseDate || "N/A"}</td>
+                            <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                              <button
+                                onClick={() => setSelectedProject(proj)}
+                                className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition-colors"
+                              >
+                                View
+                              </button>
+                              <button
+                                onClick={() => openEditProjectModal(proj)}
+                                className="bg-gray-50 text-gray-600 px-3 py-1 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                              >
+                                Edit
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      {projects.filter(proj => {
+                        const matchesSearch = proj.projectName?.toLowerCase().includes(projectSearchText.toLowerCase()) ||
+                          proj.customerName?.toLowerCase().includes(projectSearchText.toLowerCase());
+                        const matchesType = projectTypeFilter === "All Types" || proj.projectType === projectTypeFilter;
+                        const matchesStatus = projectStatusFilter === "All Statuses" || proj.status === projectStatusFilter;
+                        return matchesSearch && matchesType && matchesStatus;
+                      }).length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="text-center py-12 text-gray-400 italic">
+                            No projects found matching the filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -3065,7 +3093,7 @@ export default function App() {
         <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50 p-4 sm:p-6 pb-24">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Analytics</h3>
+              <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Performance</h3>
               <h2 className="text-2xl sm:text-3xl font-black text-gray-800 tracking-tight">Insights</h2>
             </div>
             {currentUser !== "Manager" && <div className="bg-gray-100 text-gray-400 font-extrabold text-[10px] px-3 py-1 rounded-lg uppercase text-center ml-4 border border-gray-200">
