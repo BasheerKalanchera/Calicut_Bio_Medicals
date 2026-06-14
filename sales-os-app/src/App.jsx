@@ -726,6 +726,7 @@ export default function App() {
     return [];
   });
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
+  const [active360Tab, setActive360Tab] = useState("overview");
 
   const lastAccountIdRef = React.useRef(null);
 
@@ -736,6 +737,7 @@ export default function App() {
         const parent = customers.find(c => c.id.toString() === selectedAccount.parentCustomerId?.toString());
         setEditParentSearchText(parent ? parent.name : "");
         setIsEditingParent(false);
+        setActive360Tab("overview");
       }
     } else {
       lastAccountIdRef.current = null;
@@ -1761,6 +1763,39 @@ export default function App() {
 
 
   const isAdmin = currentUser === "Manager" || users.find(u => u.name === currentUser)?.role === "Admin";
+
+  // Computed variables for Customer 360 (when selectedAccount is active)
+  const accountContacts = selectedAccount ? contacts.filter(c => c.accountId === selectedAccount.id) : [];
+  const primaryContact = selectedAccount ? (accountContacts.find(c => c.role?.toLowerCase().includes("primary")) || accountContacts[0] || null) : null;
+
+  const accountActivities = selectedAccount ? activities.filter(a => a.accountId === selectedAccount.id && a.type !== 'audit') : [];
+  const lastInteraction = accountActivities[0] || null;
+
+  const openFollowUpsCount = selectedAccount ? reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").length : 0;
+
+  const accountAssets = selectedAccount ? assets.filter(a => a.accountId === selectedAccount.id) : [];
+  const totalInstalledCount = accountAssets.length;
+  const imagingCount = accountAssets.filter(a => /sonoscape|scan|mri|x-ray|radiology|ultrasound|imaging/i.test(a.type || '')).length;
+  const criticalCareCount = accountAssets.filter(a => /defibrillator|ventilator|monitor|ecg|critical/i.test(a.type || '')).length;
+
+  const getLatestInstallDate = () => {
+    if (accountAssets.length === 0) return "No Installs";
+    const dates = accountAssets
+      .map(a => a.installDate)
+      .filter(Boolean)
+      .map(d => new Date(d));
+    if (dates.length === 0) return "No Installs";
+    const maxDate = new Date(Math.max(...dates));
+    return maxDate.toISOString().split('T')[0];
+  };
+  const latestInstallDate = selectedAccount ? getLatestInstallDate() : "";
+
+  const accountDeals = selectedAccount ? deals.filter(d => d.name.includes(selectedAccount.name)) : [];
+  const openDeals = accountDeals.filter(d => d.stage !== "Closed Won" && d.stage !== "Lost");
+  const openOpportunitiesCount = openDeals.length;
+  const totalPipelineLakhs = openDeals.reduce((sum, deal) => sum + parseValue(deal.value), 0);
+  const weightedPipelineLakhs = openDeals.reduce((sum, deal) => sum + (parseValue(deal.value) * ((deal.probability || 0) / 100)), 0);
+  const wonRevenueYTDLakhs = accountDeals.filter(d => d.stage === "Closed Won").reduce((sum, deal) => sum + parseValue(deal.value), 0);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden relative">
@@ -3673,21 +3708,27 @@ export default function App() {
       {
         selectedAccount && (
           <div className="fixed inset-0 bg-white overflow-y-auto z-[1000]">
-            <div className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-6 pb-8 rounded-b-[40px] shadow-2xl relative border-b-4 border-blue-400">
-              <button
-                onClick={() => setSelectedAccount(null)}
-                className="mb-4 bg-white/20 hover:bg-white/30 text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 w-fit transition-all uppercase tracking-wider border border-white/30"
-              >
-                &larr; Back
-              </button>
+            {/* Sticky Top Bar (compact, height ~72px) */}
+            <div className="sticky top-0 z-50 bg-gradient-to-br from-blue-900 to-indigo-900 text-white p-4 px-6 shadow-md flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setSelectedAccount(null)}
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full text-xs font-black transition-all uppercase tracking-wider border border-white/20"
+                >
+                  &larr; Back
+                </button>
+                <div>
+                  <div className="text-[9px] font-black opacity-50 uppercase tracking-[0.2em]">Customer 360 Profile</div>
+                  <h2 className="font-bold text-xl leading-tight uppercase tracking-tight">{selectedAccount.name}</h2>
+                </div>
+              </div>
 
-              <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Customer 360 Profile</div>
-              <h2 className="font-bold text-3xl leading-tight mb-3 uppercase tracking-tight">{selectedAccount.name}</h2>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest">
-                <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">📍 {selectedAccount.city}</span>
-                <span className="bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/10">🌐 {selectedAccount.zone}</span>
+              {/* Compact info chips */}
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold opacity-90">
+                <span className="bg-white/10 px-2 py-1 rounded-md border border-white/10">📍 {selectedAccount.city}</span>
+                <span className="bg-white/10 px-2 py-1 rounded-md border border-white/10">🌐 {selectedAccount.zone}</span>
                 {selectedAccount.customerType && (
-                  <span className={`px-2.5 py-1.5 rounded-lg border ${
+                  <span className={`px-2 py-1 rounded-md border ${
                     selectedAccount.customerType === "Corporate Group"
                       ? "bg-purple-500/20 border-purple-400/30 text-purple-200"
                       : selectedAccount.customerType === "Department"
@@ -3696,17 +3737,17 @@ export default function App() {
                   }`}>🏷️ {selectedAccount.customerType}</span>
                 )}
                 {selectedAccount.class && (
-                  <span className="bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 px-2.5 py-1.5 rounded-lg">📁 {selectedAccount.class}</span>
+                  <span className="bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 px-2 py-1 rounded-md">📁 {selectedAccount.class}</span>
                 )}
                 {selectedAccount.specialty && (
-                  <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2.5 py-1.5 rounded-lg">✨ {selectedAccount.specialty}</span>
+                  <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2 py-1 rounded-md">✨ {selectedAccount.specialty}</span>
                 )}
                 {selectedAccount.parentCustomerId && (() => {
                   const parent = customers.find(c => c.id.toString() === selectedAccount.parentCustomerId.toString());
                   return parent ? (
                     <button
                       onClick={() => setSelectedAccount(parent)}
-                      className="bg-blue-500/30 hover:bg-blue-500/50 text-white px-2.5 py-1.5 rounded-lg border border-blue-400/30 transition-all flex items-center gap-1 normal-case shadow-sm cursor-pointer"
+                      className="bg-blue-500/30 hover:bg-blue-500/50 text-white px-2 py-1 rounded-md border border-blue-400/30 transition-all flex items-center gap-1 normal-case shadow-sm cursor-pointer"
                     >
                       <span>🔗 Parent:</span>
                       <span className="underline font-bold">{parent.name}</span>
@@ -3715,12 +3756,13 @@ export default function App() {
                 })()}
               </div>
 
-              <div className="mt-5 flex gap-2">
+              {/* Action Buttons */}
+              <div className="flex gap-2">
                 <button
                   onClick={() => setShowActivity(true)}
-                  className="flex-1 bg-white text-blue-900 px-3 py-2.5 rounded-xl font-black shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 border-b-2 border-gray-200 text-xs"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold shadow-md active:scale-95 transition-all flex items-center gap-1.5 text-xs"
                 >
-                  <span className="text-base">💬</span> + Interaction
+                  <span>💬</span> + Interaction
                 </button>
                 <button
                   onClick={() => {
@@ -3729,409 +3771,717 @@ export default function App() {
                     setLeadWizardStep(2);
                     setShowNewLead(true);
                   }}
-                  className="flex-1 bg-blue-500 text-white px-3 py-2.5 rounded-xl font-black shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 border-b-2 border-blue-700 text-xs"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-bold shadow-md active:scale-95 transition-all flex items-center gap-1.5 text-xs"
                 >
-                  <span className="text-base">🚀</span> + Lead
+                  <span>🚀</span> + Lead
                 </button>
               </div>
             </div>
 
-            {/* Admin Tags Card */}
-            <div className="mx-4 -mt-5 mb-4 bg-white p-4 rounded-2xl shadow-lg border border-gray-100 grid grid-cols-2 gap-3 relative z-10">
-              <div>
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Class</label>
-                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedAccount.class || "Class A"}
-                  onChange={(e) => {
-                    if (currentUser !== "Manager") { setCustomAlert({ title: "Admin Access Required", message: "Only Admins can update Class.", type: "warning" }); return; }
-                    const updated = { ...selectedAccount, class: e.target.value };
-                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                    setSelectedAccount(updated);
-                  }}
+            {/* Tab Selector Bar (sticky underneath the header) */}
+            <div className="sticky top-[72px] z-40 bg-white border-b border-gray-200 shadow-sm px-6 py-2.5 flex gap-2 overflow-x-auto">
+              {[
+                { id: "overview", label: "Overview", icon: "📊" },
+                { id: "stakeholders", label: "Stakeholders", icon: "👥" },
+                { id: "projects", label: "Projects", icon: "📂" },
+                { id: "opportunities", label: "Opportunities", icon: "💼" },
+                { id: "installed_base", label: "Installed Base", icon: "⚙️" },
+                { id: "activity_timeline", label: "Activity Timeline", icon: "📜" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActive360Tab(tab.id)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                    active360Tab === tab.id
+                      ? "bg-blue-50 border-blue-600 text-blue-700 shadow-sm"
+                      : "border-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-55"
+                  }`}
                 >
-                  <option value="Class A">Class A</option>
-                  <option value="Class B">Class B</option>
-                  <option value="Class C">Class C</option>
-                  <option value="Class D">Class D</option>
-                  <option value="Corporate">Corporate</option>
-                  <option value="Clinic">Clinic</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Specialty</label>
-                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedAccount.specialty || "General"}
-                  onChange={(e) => {
-                    if (currentUser !== "Manager") { setCustomAlert({ title: "Admin Access Required", message: "Only Admins can update Specialty.", type: "warning" }); return; }
-                    const updated = { ...selectedAccount, specialty: e.target.value };
-                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                    setSelectedAccount(updated);
-                  }}
-                >
-                  <option value="General">General</option>
-                  <option value="Multi Speciality">Multi Speciality</option>
-                  <option value="Urology">Urology</option>
-                  <option value="Ortho">Ortho</option>
-                  <option value="Cardiac">Cardiac</option>
-                  <option value="IVF">IVF</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Radiology">Radiology</option>
-                  <option value="Gynecology">Gynecology</option>
-                  <option value="Pediatrics">Pediatrics</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Payer Status</label>
-                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedAccount.payerStatus || "Unknown Payer"}
-                  onChange={(e) => {
-                    const updated = { ...selectedAccount, payerStatus: e.target.value };
-                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                    setSelectedAccount(updated);
-                  }}
-                >
-                  <option value="Good Paymaster">✅ Good Paymaster</option>
-                  <option value="Average Payer">⚖️ Average Payer</option>
-                  <option value="Problematic Payer">⚠️ Problematic Payer</option>
-                  <option value="Unknown Payer">Unknown Payer</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">NPS Status</label>
-                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedAccount.npsStatus || "Neutral"}
-                  onChange={(e) => {
-                    const updated = { ...selectedAccount, npsStatus: e.target.value };
-                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                    setSelectedAccount(updated);
-                  }}
-                >
-                  <option value="Promoter">⭐ Promoter</option>
-                  <option value="Neutral">😐 Neutral</option>
-                  <option value="Detractor">📉 Detractor</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Customer Type</label>
-                <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={selectedAccount.customerType || "Hospital"}
-                  onChange={(e) => {
-                    const updated = { ...selectedAccount, customerType: e.target.value };
-                    setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                    setSelectedAccount(updated);
-                  }}
-                >
-                  <option value="Corporate Group">Corporate Group</option>
-                  <option value="Hospital">Hospital</option>
-                  <option value="Department">Department</option>
-                </select>
-              </div>
-              <div className="relative parent-lookup-container">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Parent Customer</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 pr-6"
-                    placeholder="None (Search...)"
-                    value={editParentSearchText}
-                    onChange={(e) => {
-                      setEditParentSearchText(e.target.value);
-                      setIsEditingParent(true);
-                      if (!e.target.value) {
-                        const updated = { ...selectedAccount, parentCustomerId: "" };
-                        setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                        setSelectedAccount(updated);
-                      }
-                    }}
-                    onFocus={() => {
-                      setIsEditingParent(true);
-                      setEditParentSearchText("");
-                    }}
-                    onClick={() => {
-                      setIsEditingParent(true);
-                    }}
-                  />
-                  {editParentSearchText && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditParentSearchText("");
-                        const updated = { ...selectedAccount, parentCustomerId: "" };
-                        setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                        setSelectedAccount(updated);
-                        setIsEditingParent(true);
-                      }}
-                      className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 font-black text-sm"
-                    >
-                      &times;
-                    </button>
-                  )}
-                </div>
-                {isEditingParent && (
-                  <div className="absolute z-[1200] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[160px] overflow-y-auto">
-                    <div 
-                      onClick={() => {
-                        const updated = { ...selectedAccount, parentCustomerId: "" };
-                        setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
-                        setSelectedAccount(updated);
-                        setEditParentSearchText("");
-                        setIsEditingParent(false);
-                      }}
-                      className="p-2 border-b cursor-pointer text-xs text-gray-500 italic hover:bg-gray-50 transition-colors"
-                    >
-                      Clear / No Parent
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Content Container based on Active Tab */}
+            <div className="bg-gray-50/50 min-h-[calc(100vh-130px)]">
+
+              {/* OVERVIEW TAB */}
+              {active360Tab === "overview" && (
+                <div className="p-6 max-w-7xl mx-auto space-y-6">
+                  {/* Row 1: Customer Profile */}
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4 text-gray-800">
+                      <span className="text-lg">📋</span>
+                      <h3 className="font-black text-sm uppercase tracking-wider">Customer Profile</h3>
                     </div>
-                    {customers
-                      .filter(c =>
-                        c.id.toString() !== selectedAccount.id.toString() && // Self-parent validation
-                        (c.name?.toLowerCase().includes(editParentSearchText.toLowerCase()) || editParentSearchText === "")
-                      )
-                      .map(c => (
-                        <div
-                          key={c.id}
-                          onClick={() => {
-                            const updated = { ...selectedAccount, parentCustomerId: c.id.toString() };
-                            setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      {/* Class */}
+                      <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Class</label>
+                        <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                          value={selectedAccount.class || "Class A"}
+                          onChange={(e) => {
+                            if (currentUser !== "Manager") { setCustomAlert({ title: "Admin Access Required", message: "Only Admins can update Class.", type: "warning" }); return; }
+                            const updated = { ...selectedAccount, class: e.target.value };
+                            setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
                             setSelectedAccount(updated);
-                            setEditParentSearchText(c.name);
-                            setIsEditingParent(false);
                           }}
-                          className={`p-2 border-b cursor-pointer text-xs hover:bg-blue-50 transition-colors ${selectedAccount.parentCustomerId?.toString() === c.id.toString() ? 'bg-blue-100' : ''}`}
                         >
-                          <div className="font-bold text-gray-800">{c.name}</div>
-                          <div className="text-[9px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                          <option value="Class A">Class A</option>
+                          <option value="Class B">Class B</option>
+                          <option value="Class C">Class C</option>
+                          <option value="Class D">Class D</option>
+                          <option value="Corporate">Corporate</option>
+                          <option value="Clinic">Clinic</option>
+                        </select>
+                      </div>
+
+                      {/* Specialty */}
+                      <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Specialty</label>
+                        <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                          value={selectedAccount.specialty || "General"}
+                          onChange={(e) => {
+                            if (currentUser !== "Manager") { setCustomAlert({ title: "Admin Access Required", message: "Only Admins can update Specialty.", type: "warning" }); return; }
+                            const updated = { ...selectedAccount, specialty: e.target.value };
+                            setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                            setSelectedAccount(updated);
+                          }}
+                        >
+                          <option value="General">General</option>
+                          <option value="Multi Speciality">Multi Speciality</option>
+                          <option value="Urology">Urology</option>
+                          <option value="Ortho">Ortho</option>
+                          <option value="Cardiac">Cardiac</option>
+                          <option value="IVF">IVF</option>
+                          <option value="Cardiology">Cardiology</option>
+                          <option value="Radiology">Radiology</option>
+                          <option value="Gynecology">Gynecology</option>
+                          <option value="Pediatrics">Pediatrics</option>
+                        </select>
+                      </div>
+
+                      {/* Customer Type */}
+                      <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Customer Type</label>
+                        <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                          value={selectedAccount.customerType || "Hospital"}
+                          onChange={(e) => {
+                            const updated = { ...selectedAccount, customerType: e.target.value };
+                            setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                            setSelectedAccount(updated);
+                          }}
+                        >
+                          <option value="Corporate Group">Corporate Group</option>
+                          <option value="Hospital">Hospital</option>
+                          <option value="Department">Department</option>
+                        </select>
+                      </div>
+
+                      {/* Parent Customer Lookup */}
+                      <div className="relative parent-lookup-container">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Parent Customer</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 pr-6"
+                            placeholder="None (Search...)"
+                            value={editParentSearchText}
+                            onChange={(e) => {
+                              setEditParentSearchText(e.target.value);
+                              setIsEditingParent(true);
+                              if (!e.target.value) {
+                                const updated = { ...selectedAccount, parentCustomerId: "" };
+                                setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                                setSelectedAccount(updated);
+                              }
+                            }}
+                            onFocus={() => {
+                              setIsEditingParent(true);
+                              setEditParentSearchText("");
+                            }}
+                            onClick={() => {
+                              setIsEditingParent(true);
+                            }}
+                          />
+                          {editParentSearchText && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditParentSearchText("");
+                                const updated = { ...selectedAccount, parentCustomerId: "" };
+                                setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                                setSelectedAccount(updated);
+                                setIsEditingParent(true);
+                              }}
+                              className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 font-black text-sm"
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+                        {isEditingParent && (
+                          <div className="absolute z-[1200] left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[160px] overflow-y-auto">
+                            <div 
+                              onClick={() => {
+                                const updated = { ...selectedAccount, parentCustomerId: "" };
+                                setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
+                                setSelectedAccount(updated);
+                                setEditParentSearchText("");
+                                setIsEditingParent(false);
+                              }}
+                              className="p-2 border-b cursor-pointer text-xs text-gray-500 italic hover:bg-gray-50 transition-colors"
+                            >
+                              Clear / No Parent
+                            </div>
+                            {customers
+                              .filter(c =>
+                                c.id.toString() !== selectedAccount.id.toString() && // Self-parent validation
+                                (c.name?.toLowerCase().includes(editParentSearchText.toLowerCase()) || editParentSearchText === "")
+                              )
+                              .map(c => (
+                                <div
+                                  key={c.id}
+                                  onClick={() => {
+                                    const updated = { ...selectedAccount, parentCustomerId: c.id.toString() };
+                                    setCustomers(prev => prev.map(cust => cust.id === selectedAccount.id ? updated : cust));
+                                    setSelectedAccount(updated);
+                                    setEditParentSearchText(c.name);
+                                    setIsEditingParent(false);
+                                  }}
+                                  className={`p-2 border-b cursor-pointer text-xs hover:bg-blue-50 transition-colors ${selectedAccount.parentCustomerId?.toString() === c.id.toString() ? 'bg-blue-100' : ''}`}
+                                >
+                                  <div className="font-bold text-gray-800">{c.name}</div>
+                                  <div className="text-[9px] text-gray-500 uppercase font-semibold">{c.city} · {c.zone}</div>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Relationship Health & Installed Base Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Relationship Health */}
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-4 text-gray-800">
+                          <span className="text-lg">❤️</span>
+                          <h3 className="font-black text-sm uppercase tracking-wider">Relationship Health</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Primary Contact */}
+                          <div className="bg-blue-50/40 p-3.5 rounded-2xl border border-blue-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Primary Contact</span>
+                              {primaryContact ? (
+                                <div>
+                                  <div className="text-xs font-black text-gray-800 leading-tight">{primaryContact.name}</div>
+                                  <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mt-0.5">{primaryContact.role}</div>
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-gray-400 italic">None Listed</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Last Interaction */}
+                          <div className="bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Last Interaction</span>
+                              {lastInteraction ? (
+                                <div>
+                                  <div className="text-xs font-black text-gray-800 leading-tight">{lastInteraction.date}</div>
+                                  <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mt-0.5">{lastInteraction.purpose || "Interaction"}</div>
+                                </div>
+                              ) : (
+                                <div className="text-[10px] text-gray-400 italic">No interaction logged</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Open Follow-Ups */}
+                          <div className="bg-rose-50/40 p-3.5 rounded-2xl border border-rose-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Open Follow-Ups</span>
+                              <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-xl font-black text-rose-700">{openFollowUpsCount}</span>
+                                <span className="text-[10px] font-bold text-gray-500">Pending</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* NPS Status Select */}
+                          <div className="bg-amber-50/40 p-3.5 rounded-2xl border border-amber-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">NPS Status</span>
+                              <select 
+                                className="w-full bg-white border border-amber-200/50 p-1 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 mt-1"
+                                value={selectedAccount.npsStatus || "Neutral"}
+                                onChange={(e) => {
+                                  const updated = { ...selectedAccount, npsStatus: e.target.value };
+                                  setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                                  setSelectedAccount(updated);
+                                }}
+                              >
+                                <option value="Promoter">⭐ Promoter</option>
+                                <option value="Neutral">😐 Neutral</option>
+                                <option value="Detractor">📉 Detractor</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment/Payer Status */}
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Payment Status</label>
+                        <select 
+                          className="w-full bg-gray-50 border border-gray-200 p-2 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                          value={selectedAccount.payerStatus || "Unknown Payer"}
+                          onChange={(e) => {
+                            const updated = { ...selectedAccount, payerStatus: e.target.value };
+                            setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                            setSelectedAccount(updated);
+                          }}
+                        >
+                          <option value="Good Paymaster">✅ Good Paymaster</option>
+                          <option value="Average Payer">⚖️ Average Payer</option>
+                          <option value="Problematic Payer">⚠️ Problematic Payer</option>
+                          <option value="Unknown Payer">Unknown Payer</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Installed Base Summary */}
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-4 text-gray-800">
+                          <span className="text-lg">⚙️</span>
+                          <h3 className="font-black text-sm uppercase tracking-wider">Installed Base Summary</h3>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* Total Installed Equipment */}
+                          <div className="bg-teal-50/40 p-3.5 rounded-2xl border border-teal-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Total Installed</span>
+                              <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-xl font-black text-teal-700">{totalInstalledCount}</span>
+                                <span className="text-[10px] font-bold text-gray-500">Assets</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Imaging Equipment */}
+                          <div className="bg-violet-50/40 p-3.5 rounded-2xl border border-violet-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Imaging Equipment</span>
+                              <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-xl font-black text-violet-700">{imagingCount}</span>
+                                <span className="text-[10px] font-bold text-gray-500">Devices</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Critical Care Equipment */}
+                          <div className="bg-fuchsia-50/40 p-3.5 rounded-2xl border border-fuchsia-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Critical Care</span>
+                              <div className="flex items-baseline gap-2 mt-1">
+                                <span className="text-xl font-black text-fuchsia-700">{criticalCareCount}</span>
+                                <span className="text-[10px] font-bold text-gray-500">Devices</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Latest Installation Date */}
+                          <div className="bg-emerald-50/40 p-3.5 rounded-2xl border border-emerald-100/30 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Latest Install</span>
+                              <div className="text-xs font-black text-emerald-800 mt-2">{latestInstallDate}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Account Revenue Summary */}
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4 text-gray-800">
+                      <span className="text-lg">💼</span>
+                      <h3 className="font-black text-sm uppercase tracking-wider">Account Revenue Summary</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div className="p-4 bg-blue-50/30 rounded-2xl border border-blue-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Open Opportunities</span>
+                        <span className="text-2xl font-black text-blue-900">{openOpportunitiesCount}</span>
+                      </div>
+                      <div className="p-4 bg-indigo-50/30 rounded-2xl border border-indigo-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Total Pipeline</span>
+                        <span className="text-2xl font-black text-indigo-950">₹{totalPipelineLakhs.toFixed(1).replace(/\.0$/, '')}L</span>
+                      </div>
+                      <div className="p-4 bg-violet-50/30 rounded-2xl border border-violet-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Weighted Pipeline</span>
+                        <span className="text-2xl font-black text-violet-955">₹{weightedPipelineLakhs.toFixed(1).replace(/\.0$/, '')}L</span>
+                      </div>
+                      <div className="p-4 bg-emerald-50/30 rounded-2xl border border-emerald-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider block mb-1">Won Revenue YTD</span>
+                        <span className="text-2xl font-black text-emerald-800">₹{wonRevenueYTDLakhs.toFixed(1).replace(/\.0$/, '')}L</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STAKEHOLDERS TAB */}
+              {active360Tab === "stakeholders" && (
+                <div className="p-6 max-w-4xl mx-auto">
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="font-black text-gray-800 mb-6 flex justify-between items-center text-sm uppercase tracking-wider">
+                      Stakeholders
+                      <button
+                        onClick={() => { setEditingStakeholder(null); setIsAddingStakeholder(true); }}
+                        className="bg-blue-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                      >
+                        + Add Contact
+                      </button>
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {contacts.filter(c => c.accountId === selectedAccount.id).map(c => (
+                        <div key={c.id} className="p-4 bg-gray-50/50 border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">{c.name.charAt(0)}</div>
+                            <div>
+                              <div className="text-sm font-black text-gray-800 leading-tight">{c.name}</div>
+                              <div className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-0.5">{c.role}</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <a
+                              href={`tel:${c.phone}`}
+                              title="Call Stakeholder"
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
+                              onClick={(e) => !c.phone && e.preventDefault()}
+                            >
+                              📞
+                            </a>
+                            <a
+                              href={c.phone ? `https://wa.me/${c.phone.replace(/\D/g, '')}` : "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="WhatsApp Message"
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-emerald-50 text-emerald-650 hover:bg-emerald-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
+                              onClick={(e) => !c.phone && e.preventDefault()}
+                            >
+                              💬
+                            </a>
+                            <button
+                              onClick={() => { setEditingStakeholder(c); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); setNewStakeholderPhone(c.phone || ""); setNewStakeholderEmail(c.email || ""); }}
+                              className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-[10px]"
+                            >
+                              ✎
+                            </button>
+                            <button
+                              onClick={() => {
+                                const isUsed = activities.some(a => a.notes.includes(c.name));
+                                if (currentUser !== "Manager") {
+                                  setCustomAlert({ title: "Admin Access Required", message: "Only Managers can delete stakeholders.", type: "warning" });
+                                  return;
+                                }
+                                if (isUsed) {
+                                  setCustomAlert({ title: "Cannot Delete Stakeholder", message: `${c.name} is currently linked to active leads or interaction history. Try updating their details instead.`, type: "error" });
+                                  return;
+                                }
+                                if (window.confirm(`Are you sure you want to remove ${c.name}? This action will be logged in the audit trail.`)) {
+                                  logAuditActivity(selectedAccount.id, null, `Stakeholder Removed: ${c.name} (${c.role})`);
+                                  setContacts(prev => prev.filter(con => con.id !== c.id));
+                                }
+                              }}
+                              className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-650 hover:bg-red-50 transition-all font-bold text-[10px] ${currentUser !== "Manager" ? "opacity-30 cursor-not-allowed" : ""}`}
+                            >
+                              🗑
+                            </button>
+                          </div>
                         </div>
                       ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
-                <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
-                  Stakeholders
-                  <button
-                    onClick={() => { setEditingStakeholder(null); setIsAddingStakeholder(true); }}
-                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    + Add
-                  </button>
-                </h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {contacts.filter(c => c.accountId === selectedAccount.id).map(c => (
-                    <div key={c.id} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">{c.name.charAt(0)}</div>
-                        <div>
-                          <div className="text-sm font-black text-gray-800 leading-tight">{c.name}</div>
-                          <div className="text-[10px] text-blue-500 font-black uppercase tracking-widest">{c.role}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <a
-                          href={`tel:${c.phone}`}
-                          title="Call Stakeholder"
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-green-50 text-green-600 hover:bg-green-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
-                          onClick={(e) => !c.phone && e.preventDefault()}
-                        >
-                          📞
-                        </a>
-                        <a
-                          href={c.phone ? `https://wa.me/${c.phone.replace(/\D/g, '')}` : "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="WhatsApp Message"
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all font-bold text-[10px] ${c.phone ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-gray-50 text-gray-200 cursor-not-allowed"}`}
-                          onClick={(e) => !c.phone && e.preventDefault()}
-                        >
-                          💬
-                        </a>
-                        <button
-                          onClick={() => { setEditingStakeholder(c); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); setNewStakeholderPhone(c.phone || ""); setNewStakeholderEmail(c.email || ""); }}
-                          className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-[10px]"
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={() => {
-                            const isUsed = activities.some(a => a.notes.includes(c.name));
-                            if (currentUser !== "Manager") {
-                              setCustomAlert({ title: "Admin Access Required", message: "Only Managers can delete stakeholders.", type: "warning" });
-                              return;
-                            }
-                            if (isUsed) {
-                              setCustomAlert({ title: "Cannot Delete Stakeholder", message: `${c.name} is currently linked to active leads or interaction history. Try updating their details instead.`, type: "error" });
-                              return;
-                            }
-                            if (window.confirm(`Are you sure you want to remove ${c.name}? This action will be logged in the audit trail.`)) {
-                              logAuditActivity(selectedAccount.id, null, `Stakeholder Removed: ${c.name} (${c.role})`);
-                              setContacts(prev => prev.filter(con => con.id !== c.id));
-                            }
-                          }}
-                          className={`w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all font-bold text-[10px] ${currentUser !== "Manager" ? "opacity-30 cursor-not-allowed" : ""}`}
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && <div className="text-gray-400 text-xs italic py-4 text-center">No stakeholders listed.</div>}
-                </div>
-              </section>
-
-              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
-                <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
-                  Projects
-                  <button
-                    onClick={() => openNewProjectModal(selectedAccount.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
-                  >
-                    + Project
-                  </button>
-                </h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {projects
-                    .filter(p => p.customerId.toString() === selectedAccount.id.toString())
-                    .map(p => (
-                      <div
-                        key={p.id}
-                        onClick={() => {
-                          setSelectedProject(p);
-                          setSelectedAccount(null);
-                        }}
-                        className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center group"
-                      >
-                        <div>
-                          <div className="text-sm font-black text-gray-800 leading-tight group-hover:text-blue-900 transition-colors">{p.projectName}</div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
-                            <span>{p.projectType}</span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
-                              p.status === "Active" ? "bg-green-50 text-green-700 border-green-200" :
-                              p.status === "Planning" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                              p.status === "On Hold" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                              "bg-gray-100 text-gray-700 border-gray-200"
-                            }`}>{p.status}</span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
-                          <span className="text-gray-400 group-hover:text-blue-600 transition-colors">&rarr;</span>
-                        </div>
-                      </div>
-                    ))}
-                  {projects.filter(p => p.customerId.toString() === selectedAccount.id.toString()).length === 0 && (
-                    <div className="text-gray-400 text-xs italic py-4 text-center bg-white rounded-2xl border border-dashed border-gray-200">
-                      No projects listed.
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner mt-6">
-                <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
-                  Installed Equipment
-                  <button onClick={() => {
-                    setNewAssetInstallDate(new Date().toISOString().split('T')[0]);
-                    setShowAssetModal(true);
-                  }} className="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm">
-                    + Equipment
-                  </button>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {assets.filter(a => a.accountId === selectedAccount.id).map(a => (
-                    <div key={a.id} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col gap-1 border-l-4 border-l-indigo-400">
-                      <div className="flex justify-between items-start">
-                        <div className="text-sm font-black text-gray-800 leading-tight">{a.type}</div>
-                        <div className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-widest whitespace-nowrap">Inst: {a.installDate}</div>
-                      </div>
-                      {a.notes && <div className="text-xs text-gray-600 font-medium mt-1">{a.notes}</div>}
-                    </div>
-                  ))}
-                  {assets.filter(a => a.accountId === selectedAccount.id).length === 0 && <div className="text-gray-400 text-xs italic py-4 text-center md:col-span-2 bg-white rounded-2xl border border-dashed border-gray-200">No installed equipment logged.</div>}
-                </div>
-              </section>
-
-              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
-                <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider flex justify-between items-center">
-                  Reminders & Follow-ups
-                  <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-200 font-black uppercase tracking-widest">Next Steps</span>
-                </h3>
-                <div className="space-y-3">
-                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending")
-                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                    .map(r => {
-                      const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
-                      return (
-                        <div key={r.id} className={`p-4 bg-white border-2 rounded-2xl shadow-sm ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-gray-100'}`}>
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="text-xs font-black text-gray-800 leading-tight">{r.text}</div>
-                            <div className={`text-[10px] font-bold whitespace-nowrap ml-2 px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-gray-400 border-none'}`}>{r.dueDate}</div>
-                          </div>
+                      {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
+                          <span className="text-4xl mb-3">🤝</span>
+                          <h4 className="text-sm font-black text-gray-805 mb-1">No Stakeholders Added</h4>
+                          <p className="text-xs text-gray-550 max-w-sm mb-4">Key contacts, medical officers, and purchase managers. Add stakeholders to map the decision-making unit.</p>
                           <button
-                            onClick={() => completeReminder(r)}
-                            className="w-full mt-2 py-2 bg-indigo-50 hover:bg-green-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100 hover:border-green-600"
+                            onClick={() => { setEditingStakeholder(null); setIsAddingStakeholder(true); }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
                           >
-                            ✓ Complete Task
+                            + Add Stakeholder
                           </button>
                         </div>
-                      )
-                    })}
-                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").length === 0 && (
-                    <div className="text-gray-400 text-xs italic py-4 text-center bg-white rounded-2xl border border-dashed border-gray-200">No pending follow-ups.</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PROJECTS TAB */}
+              {active360Tab === "projects" && (
+                <div className="p-6 max-w-4xl mx-auto">
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="font-black text-gray-800 mb-6 flex justify-between items-center text-sm uppercase tracking-wider">
+                      Projects
+                      <button
+                        onClick={() => openNewProjectModal(selectedAccount.id)}
+                        className="bg-blue-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                      >
+                        + Project
+                      </button>
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {projects
+                        .filter(p => p.customerId.toString() === selectedAccount.id.toString())
+                        .map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              setSelectedProject(p);
+                              setSelectedAccount(null);
+                            }}
+                            className="p-4 bg-gray-50/50 border border-gray-100 rounded-2xl shadow-sm hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex justify-between items-center group"
+                          >
+                            <div>
+                              <div className="text-sm font-black text-gray-800 leading-tight group-hover:text-blue-900 transition-colors">{p.projectName}</div>
+                              <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-404 uppercase tracking-wider mt-1.5">
+                                <span>{p.projectType}</span>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
+                                  p.status === "Active" ? "bg-green-50 text-green-700 border-green-200" :
+                                  p.status === "Planning" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                  p.status === "On Hold" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                  "bg-gray-100 text-gray-700 border-gray-200"
+                                }`}>{p.status}</span>
+                              </div>
+                            </div>
+                            <div className="bg-white p-2 rounded-xl group-hover:bg-blue-50 transition-colors border border-gray-100">
+                              <span className="text-gray-400 group-hover:text-blue-600 transition-colors font-bold">&rarr;</span>
+                            </div>
+                          </div>
+                        ))}
+                      {projects.filter(p => p.customerId.toString() === selectedAccount.id.toString()).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
+                          <span className="text-4xl mb-3">📂</span>
+                          <h4 className="text-sm font-black text-gray-800 mb-1">No Projects Logged</h4>
+                          <p className="text-xs text-gray-550 max-w-sm mb-4">Track facility upgrades, expansion phases, or equipment procurement programs here.</p>
+                          <button
+                            onClick={() => openNewProjectModal(selectedAccount.id)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            + Start Project
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* OPPORTUNITIES TAB */}
+              {active360Tab === "opportunities" && (
+                <div className="p-6 max-w-4xl mx-auto">
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="font-black text-gray-800 mb-6 flex justify-between items-center text-sm uppercase tracking-wider">
+                      Opportunities & Deals
+                      <button
+                        onClick={() => {
+                          setSelectedCustomerId(selectedAccount.id);
+                          setCustomerSearch(selectedAccount.name);
+                          setLeadWizardStep(2);
+                          setShowNewLead(true);
+                        }}
+                        className="bg-blue-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
+                      >
+                        + Opportunity
+                      </button>
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {deals.filter(d => d.name.includes(selectedAccount.name)).map(d => (
+                        <div 
+                          key={d.id} 
+                          className="p-4 bg-gray-50/50 border border-gray-100 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all border-b-4" 
+                          style={{ borderLeftWidth: '4px', borderLeftColor: isHoldOverdue(d) ? '#ef4444' : (d.isPriority ? '#fbbf24' : 'transparent') }} 
+                          onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}
+                        >
+                          <div>
+                            <div className="text-sm font-black text-blue-900 leading-tight flex items-center gap-2">
+                              {d.isPriority && <span className="text-amber-400">⭐</span>}
+                              {d.name.split('–')[1] || d.name}
+                            </div>
+                            <div className="text-[9px] text-gray-400 font-black mt-1.5 uppercase tracking-wider flex flex-wrap items-center gap-2">
+                              <span>{d.stage} · {d.owner}</span>
+                              {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
+                              {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
+                            </div>
+                          </div>
+                          <div className="font-black text-blue-900 text-lg">{d.value}</div>
+                        </div>
+                      ))}
+                      {deals.filter(d => d.name.includes(selectedAccount.name)).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
+                          <span className="text-4xl mb-3">💼</span>
+                          <h4 className="text-sm font-black text-gray-800 mb-1">No Opportunities Found</h4>
+                          <p className="text-xs text-gray-500 max-w-sm mb-4">Sales leads, tenders, or product purchase quotes. Create an opportunity to track this deal in the sales funnel.</p>
+                          <button
+                            onClick={() => {
+                              setSelectedCustomerId(selectedAccount.id);
+                              setCustomerSearch(selectedAccount.name);
+                              setLeadWizardStep(2);
+                              setShowNewLead(true);
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            + New Opportunity
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* INSTALLED BASE TAB */}
+              {active360Tab === "installed_base" && (
+                <div className="p-6 max-w-4xl mx-auto">
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <h3 className="font-black text-gray-800 mb-6 flex justify-between items-center text-sm uppercase tracking-wider">
+                      Installed Equipment
+                      <button 
+                        onClick={() => {
+                          setNewAssetInstallDate(new Date().toISOString().split('T')[0]);
+                          setShowAssetModal(true);
+                        }} 
+                        className="bg-indigo-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+                      >
+                        + Equipment
+                      </button>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {assets.filter(a => a.accountId === selectedAccount.id).map(a => (
+                        <div key={a.id} className="p-3.5 bg-gray-50/50 border border-gray-100 rounded-2xl shadow-sm flex flex-col gap-1 border-l-4 border-l-indigo-400">
+                          <div className="flex justify-between items-start">
+                            <div className="text-sm font-black text-gray-800 leading-tight">{a.type}</div>
+                            <div className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-widest whitespace-nowrap">Inst: {a.installDate}</div>
+                          </div>
+                          {a.notes && <div className="text-xs text-gray-650 font-medium mt-1.5">{a.notes}</div>}
+                        </div>
+                      ))}
+                      {assets.filter(a => a.accountId === selectedAccount.id).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center md:col-span-2">
+                          <span className="text-4xl mb-3">⚙️</span>
+                          <h4 className="text-sm font-black text-gray-800 mb-1">No Installed Equipment</h4>
+                          <p className="text-xs text-gray-550 max-w-sm mb-4">Log the diagnostic scanners, patient monitors, or critical care devices currently operating at this site.</p>
+                          <button
+                            onClick={() => {
+                              setNewAssetInstallDate(new Date().toISOString().split('T')[0]);
+                              setShowAssetModal(true);
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            + Log Equipment
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ACTIVITY TIMELINE TAB */}
+              {active360Tab === "activity_timeline" && (
+                <div className="p-6 max-w-4xl mx-auto space-y-6">
+                  {/* Reminders list (only visible if reminders exist) */}
+                  {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending").length > 0 && (
+                    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                      <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider flex justify-between items-center">
+                        Reminders & Follow-ups
+                        <span className="text-[10px] bg-indigo-100 text-indigo-605 px-2 py-0.5 rounded-lg border border-indigo-200 font-black uppercase tracking-widest">Next Steps</span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {reminders.filter(r => r.accountId === selectedAccount.id && r.status === "pending")
+                          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                          .map(r => {
+                            const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
+                            return (
+                              <div key={r.id} className={`p-4 bg-gray-50/50 border-2 rounded-2xl shadow-sm flex flex-col justify-between ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-gray-100'}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                  <div className="text-xs font-black text-gray-800 leading-tight">{r.text}</div>
+                                  <div className={`text-[10px] font-bold whitespace-nowrap ml-2 px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-gray-400 border-none'}`}>{r.dueDate}</div>
+                                </div>
+                                <button
+                                  onClick={() => completeReminder(r)}
+                                  className="w-full mt-2 py-2 bg-indigo-50 hover:bg-green-600 text-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border border-indigo-100 hover:border-green-600 cursor-pointer"
+                                >
+                                  ✓ Complete Task
+                                </button>
+                              </div>
+                            )
+                          })}
+                      </div>
+                    </div>
                   )}
-                </div>
-              </section>
 
-              <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
-                <h3 className="font-black text-gray-800 mb-4 text-sm uppercase tracking-wider italic opacity-60">Deal History</h3>
-                <div className="space-y-3">
-                  {deals.filter(d => d.name.includes(selectedAccount.name)).map(d => (
-                    <div key={d.id} className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm flex justify-between items-center cursor-pointer hover:border-blue-400 transition-all border-b-4" style={{ borderLeftWidth: '4px', borderLeftColor: isHoldOverdue(d) ? '#ef4444' : (d.isPriority ? '#fbbf24' : 'transparent') }} onClick={() => { setSelectedDeal(d); setSelectedAccount(null); }}>
-                      <div>
-                        <div className="text-sm font-black text-blue-900 leading-tight flex items-center gap-2">
-                          {d.isPriority && <span className="text-amber-400">⭐</span>}
-                          {d.name.split('–')[1] || d.name}
-                        </div>
-                        <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider flex items-center gap-2">
-                          <span>{d.stage} · {d.owner}</span>
-                          {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
-                          {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
-                        </div>
-                      </div>
-                      <div className="font-black text-blue-900 text-lg">{d.value}</div>
+                  {/* Interaction history */}
+                  <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex justify-between items-center mb-6 border-b pb-4">
+                      <h3 className="font-black text-gray-805 text-sm uppercase tracking-wider">Unified Interaction History</h3>
+                      <button
+                        onClick={() => setShowActivity(true)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl font-bold shadow-md active:scale-95 transition-all flex items-center gap-1.5 text-xs cursor-pointer"
+                      >
+                        <span>💬</span> + Interaction
+                      </button>
                     </div>
-                  ))}
-                  {deals.filter(d => d.name.includes(selectedAccount.name)).length === 0 && <div className="text-gray-400 text-xs italic py-4 text-center">No active or historical deals.</div>}
+
+                    <div className="relative pl-10 pr-2 border-l-4 border-indigo-50/50 space-y-8 ml-4">
+                      {activities.filter(a => a.accountId === selectedAccount.id).map((a, i) => {
+                        const isManagerNote = a.purpose === "Manager Note";
+                        return (
+                          <div key={i} className="relative">
+                            <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (isManagerNote ? "bg-emerald-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500"))}`}></div>
+                            <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (isManagerNote ? "bg-emerald-50 border-emerald-100 shadow-emerald-900/5" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5"))}`}>
+                              <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest leading-none">
+                                <span className={a.type === 'audit' ? "text-red-650" : (isManagerNote ? "text-emerald-600" : (a.dealId ? "text-blue-500" : "text-indigo-650"))}>
+                                  {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION"))}
+                                </span>
+                                <span className="text-gray-400 font-bold">{a.date}</span>
+                              </div>
+                              <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : (isManagerNote ? "text-emerald-900" : "text-gray-800")}`}>
+                                {isManagerNote && <span className="mr-1">👑</span>}
+                                {a.notes}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {activities.filter(a => a.accountId === selectedAccount.id).length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
+                          <span className="text-4xl mb-3">📜</span>
+                          <h4 className="text-sm font-black text-gray-850 mb-1">No Interactions Recorded</h4>
+                          <p className="text-xs text-gray-550 max-w-sm mb-4">Keep track of meetings, phone calls, demo feedback, and manager instructions. Log your first touchpoint.</p>
+                          <button
+                            onClick={() => setShowActivity(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                          >
+                            + Log Interaction
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </section>
+              )}
+
             </div>
-
-            <section className="mt-8 mb-12">
-              <h3 className="font-black text-gray-800 border-b-2 border-indigo-100 pb-3 mb-6 text-sm uppercase tracking-[0.2em] text-indigo-900 px-2">Unified Interaction History</h3>
-              <div className="relative pl-10 pr-2 border-l-4 border-indigo-50/50 space-y-8 ml-4">
-                {activities.filter(a => a.accountId === selectedAccount.id).map((a, i) => {
-                  const isManagerNote = a.purpose === "Manager Note";
-                  return (
-                    <div key={i} className="relative">
-                      <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (isManagerNote ? "bg-emerald-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500"))}`}></div>
-                      <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (isManagerNote ? "bg-emerald-50 border-emerald-100 shadow-emerald-900/5" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5"))}`}>
-                        <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest leading-none">
-                          <span className={a.type === 'audit' ? "text-red-600" : (isManagerNote ? "text-emerald-600" : (a.dealId ? "text-blue-500" : "text-indigo-600"))}>
-                            {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION"))}
-                          </span>
-                          <span className="text-gray-400 font-bold">{a.date}</span>
-                        </div>
-                        <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : (isManagerNote ? "text-emerald-900" : "text-gray-800")}`}>
-                          {isManagerNote && <span className="mr-1">👑</span>}
-                          {a.notes}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
           </div >
         )
       }
