@@ -831,6 +831,19 @@ export default function App() {
   const [isEditingLead, setIsEditingLead] = useState(false);
   const [editLeadData, setEditLeadData] = useState(null);
 
+  const [activeOpportunityTab, setActiveOpportunityTab] = useState("overview");
+  const [activeEditTab, setActiveEditTab] = useState("overview");
+
+  useEffect(() => {
+    setActiveOpportunityTab("overview");
+  }, [selectedDeal?.id]);
+
+  useEffect(() => {
+    if (isEditingLead) {
+      setActiveEditTab("overview");
+    }
+  }, [isEditingLead]);
+
   const originalDeal = editLeadData ? deals.find(d => d.id === editLeadData.id) : null;
   const stageChanged = originalDeal && editLeadData && editLeadData.stage !== originalDeal.stage;
 
@@ -3267,438 +3280,612 @@ export default function App() {
 
       {/* Deal Detail */}
       {/* Deal Detail */}
+      {/* Deal Detail */}
+      {/* Deal Detail */}
       {
         selectedDeal && (
-          <div className="fixed inset-0 bg-white overflow-y-auto z-[999]">
-            <div className="p-4 max-w-2xl mx-auto pb-24">
-              <button
-                onClick={() => setSelectedDeal(null)}
-                className="mb-6 bg-gray-50 text-gray-400 hover:text-blue-600 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1 w-fit transition-all uppercase tracking-wider border border-gray-100"
-              >
-                &larr; Back to {getBackLabel()}
-              </button>
-
-              {isHoldOverdue(selectedDeal) && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl flex items-start gap-3 shadow-sm animate-pulse">
-                  <span className="text-xl">🚨</span>
-                  <div className="text-xs font-semibold leading-relaxed">
-                    <span className="font-extrabold uppercase block text-[10px] text-red-600 tracking-wider mb-0.5">Hold Reactivation Overdue</span>
-                    This opportunity has remained On Hold past its expected reactivation date of <span className="font-extrabold underline">{selectedDeal.holdReactivationDate}</span>. Please resume the deal or update the hold reactivation settings.
+          <div className="fixed inset-0 bg-white z-[999] flex flex-col h-full">
+            {/* Sticky Header */}
+            <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-[1000] w-full px-4 py-3 flex-shrink-0">
+              <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {/* Back and Customer Row */}
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <button
+                      onClick={() => setSelectedDeal(null)}
+                      className="text-gray-400 hover:text-blue-600 text-xs font-black transition-all uppercase tracking-wider flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                    >
+                      &larr; Back to {getBackLabel()}
+                    </button>
+                    <span className="text-gray-300">|</span>
+                    <div
+                      onClick={() => {
+                        const acc = customers.find(c => selectedDeal.name.includes(c.name));
+                        if (acc) {
+                          setSelectedAccount(acc);
+                          setSelectedDeal(null);
+                        }
+                      }}
+                      className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] cursor-pointer hover:underline"
+                    >
+                      {selectedDeal.name.split('–')[0]}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <div
-                    onClick={() => {
-                      const acc = customers.find(c => selectedDeal.name.includes(c.name));
-                      if (acc) {
-                        setSelectedAccount(acc);
-                        setSelectedDeal(null);
-                      }
-                    }}
-                    className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] cursor-pointer hover:underline mb-2"
-                  >
-                    &larr; {selectedDeal.name.split('–')[0]}
-                  </div>
-                  <h2 className="font-extrabold text-3xl text-gray-800 leading-tight uppercase tracking-tight flex items-center gap-3">
+                  {/* Deal Name and Priority Star */}
+                  <h2 className="font-extrabold text-xl md:text-2xl text-gray-800 leading-tight uppercase tracking-tight flex items-center gap-2 truncate">
                     {selectedDeal.name.split('–')[1] || selectedDeal.name}
-                    {selectedDeal.isPriority && <span className="text-amber-400 text-2xl">⭐</span>}
+                    {selectedDeal.isPriority && <span className="text-amber-400 flex-shrink-0">⭐</span>}
                   </h2>
                 </div>
-                <button
-                  onClick={() => openEditModal(selectedDeal)}
-                  className="w-12 h-12 bg-white border-2 border-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:text-blue-600 hover:border-blue-100 hover:bg-blue-50/50 transition-all font-bold text-xl shadow-sm"
-                >
-                  ✎
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100/50 shadow-inner">
-                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1.5 opacity-60">Stage</div>
-                  <div className="text-[11px] font-black text-gray-800 uppercase tracking-tight">{selectedDeal.stage}</div>
-                </div>
-                <div className="bg-indigo-50/30 p-4 rounded-3xl border border-indigo-50 shadow-inner">
-                  <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1.5 opacity-70">SBU (Derived)</div>
-                  <div className="text-[11px] font-black text-indigo-800 uppercase tracking-tight">{getDealSbu(selectedDeal)}</div>
-                </div>
-                <div className="bg-blue-50/30 p-4 rounded-3xl border border-blue-50 shadow-inner">
-                  <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5 opacity-70">Probability</div>
-                  <div className="text-[13px] font-black text-blue-600">{selectedDeal.probability}%</div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEditModal(selectedDeal)}
+                    className="w-10 h-10 bg-white border border-gray-200 hover:border-blue-100 rounded-2xl flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50/50 transition-all font-bold text-lg shadow-sm cursor-pointer"
+                    title="Edit Opportunity"
+                  >
+                    ✎
+                  </button>
                 </div>
               </div>
 
-              {/* Opportunity State (PB-002) */}
-              <div className={`p-5 rounded-3xl border-2 mb-8 transition-all duration-300 ${selectedDeal.state === "On Hold" ? "bg-amber-50/50 border-amber-200" : "bg-gray-50/30 border-gray-100"}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Opportunity State</div>
-                  <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${selectedDeal.state === "On Hold" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white"}`}>
-                    {selectedDeal.state === "On Hold" ? "⏸ On Hold" : "✅ Active"}
-                  </span>
+              {/* Compact Status Badges */}
+              <div className="max-w-2xl mx-auto mt-3 flex flex-wrap gap-2 items-center">
+                {/* Stage Badge */}
+                <div className="flex items-center gap-1 bg-gray-50 px-2.5 py-1 rounded-xl border border-gray-100 text-[10px] font-black tracking-tight text-gray-700">
+                  <span className="text-gray-400 uppercase font-black mr-0.5">Stage:</span>
+                  <span className="uppercase text-gray-800">{selectedDeal.stage}</span>
                 </div>
+                {/* Value Badge */}
+                <div className="flex items-center gap-1 bg-indigo-50/30 px-2.5 py-1 rounded-xl border border-indigo-50/50 text-[10px] font-black tracking-tight text-indigo-700">
+                  <span className="text-indigo-400 uppercase font-black mr-0.5">Value:</span>
+                  <span className="text-indigo-900">{selectedDeal.value}</span>
+                </div>
+                {/* Probability Badge */}
+                <div className="flex items-center gap-1 bg-blue-50/30 px-2.5 py-1 rounded-xl border border-blue-50/50 text-[10px] font-black tracking-tight text-blue-700">
+                  <span className="text-blue-400 uppercase font-black mr-0.5">Prob:</span>
+                  <span className="text-blue-600">{selectedDeal.probability}%</span>
+                </div>
+                {/* SBU Badge */}
+                <div className="flex items-center gap-1 bg-purple-50/30 px-2.5 py-1 rounded-xl border border-purple-50/50 text-[10px] font-black tracking-tight text-purple-700">
+                  <span className="text-purple-400 uppercase font-black mr-0.5">SBU:</span>
+                  <span className="text-purple-900 uppercase">{getDealSbu(selectedDeal)}</span>
+                </div>
+                {/* Status Badge */}
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-[10px] font-black tracking-tight ${selectedDeal.state === "On Hold" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
+                  <span>{selectedDeal.state === "On Hold" ? "⏸ ON HOLD" : "✅ ACTIVE"}</span>
+                </div>
+              </div>
 
-                {selectedDeal.state === "On Hold" && (
-                  <div className="space-y-3 mt-4 pt-4 border-t border-amber-200/50 text-xs font-semibold text-gray-700">
-                    <div className="flex justify-between py-1 border-b border-amber-100/30">
-                      <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Hold Reason</span>
-                      <span className="font-extrabold">{selectedDeal.holdReason || "N/A"}</span>
-                    </div>
-                    <div className="py-1">
-                      <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest block mb-1">Hold Notes</span>
-                      <div className="bg-amber-50/30 border border-amber-100/50 p-2.5 rounded-xl text-gray-600 font-medium text-xs leading-relaxed italic whitespace-pre-wrap">
-                        {selectedDeal.holdNotes || "No details entered."}
-                      </div>
-                    </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Expected Reactivation</span>
-                      <span className="font-extrabold text-amber-900">{selectedDeal.holdReactivationDate || "Not scheduled"}</span>
+              {/* Tab Navigation */}
+              <div className="max-w-2xl mx-auto mt-4 flex border-b border-gray-100 overflow-x-auto gap-1">
+                {[
+                  { id: "overview", label: "Overview", icon: "📋" },
+                  { id: "products", label: "Products", icon: "📦" },
+                  { id: "contacts", label: "Contacts", icon: "👥" },
+                  { id: "activity", label: "Activity", icon: "💬" },
+                  { id: "team", label: "Team", icon: "🤝" }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveOpportunityTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold tracking-wide transition-all border-b-2 whitespace-nowrap cursor-pointer -mb-[2px] ${
+                      activeOpportunityTab === tab.id
+                        ? "border-blue-600 text-blue-700 bg-blue-50/30 font-black"
+                        : "border-transparent text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Scrollable Tab Content Container */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/40">
+              <div className="max-w-2xl mx-auto pb-24">
+                
+                {/* Hold Reactivation Warning */}
+                {isHoldOverdue(selectedDeal) && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-2xl flex items-start gap-3 shadow-sm animate-pulse">
+                    <span className="text-xl">🚨</span>
+                    <div className="text-xs font-semibold leading-relaxed">
+                      <span className="font-extrabold uppercase block text-[10px] text-red-600 tracking-wider mb-0.5">Hold Reactivation Overdue</span>
+                      This opportunity has remained On Hold past its expected reactivation date of <span className="font-extrabold underline">{selectedDeal.holdReactivationDate}</span>. Please resume the deal or update the hold reactivation settings.
                     </div>
                   </div>
                 )}
-              </div>
 
-
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-[32px] border border-blue-100 flex items-center justify-between shadow-sm mb-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 text-2xl shadow-md border border-blue-50">👤</div>
-                  <div>
-                    <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Assigned Owner</div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-base font-black text-indigo-900 uppercase">{selectedDeal.owner}</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Estimated Value</div>
-                  <div className="text-2xl font-black text-indigo-900 tracking-tighter">{selectedDeal.value}</div>
-                </div>
-              </div>
-
-              {/* Opportunity Contributors Card (PB-004) */}
-              <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm mb-10">
-                <div className="flex justify-between items-center mb-4 border-b pb-3">
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opportunity Contributors</div>
-                  {(() => {
-                    const totalSplit = (selectedDeal.contributors || []).reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
-                    return totalSplit === 100 ? (
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-wider rounded-xl">
-                        ✅ Allocation: {totalSplit}%
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 text-[9px] font-black uppercase tracking-wider rounded-xl">
-                        ⚠️ Allocation: {totalSplit}%
-                      </span>
-                    );
-                  })()}
-                </div>
-
-                <div className="divide-y divide-gray-50">
-                  {(selectedDeal.contributors || []).map((c, idx) => (
-                    <div key={idx} className="py-2.5 flex items-center justify-between text-xs font-semibold">
-                      <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">
-                          {c.user.substring(0, 2).toUpperCase()}
-                        </span>
+                {activeOpportunityTab === "overview" && (
+                  <div className="space-y-6">
+                    {/* Assigned Owner & Value Card */}
+                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-[32px] border border-blue-100 flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 text-2xl shadow-md border border-blue-50">👤</div>
                         <div>
-                          <div className="text-gray-800 font-extrabold uppercase">{c.user}</div>
-                          <div className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">{c.role}</div>
-                        </div>
-                      </div>
-                      <div className="font-extrabold text-blue-900 text-sm">{c.split}%</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* PO Grouping / Linked Deals UI */}
-              {selectedDeal.groupId && (
-                <div className="mb-10 bg-white p-6 rounded-[32px] border-2 border-gray-50 shadow-sm relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/30 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700"></div>
-                  <div className="relative">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <span className="text-blue-500">🔗</span> Shared Purchase Order Group
-                    </h3>
-                    <div className="space-y-3">
-                      {deals.filter(d => d.groupId === selectedDeal.groupId && d.id !== selectedDeal.id).map(linked => (
-                        <div key={linked.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                          <div>
-                            <div className="text-[11px] font-black text-gray-800 leading-tight uppercase tracking-tight">{linked.name.split('–')[1] || linked.name}</div>
-                            <div className="text-[9px] font-bold text-gray-400 uppercase">{linked.owner} • {linked.stage}</div>
+                          <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Assigned Owner</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-base font-black text-indigo-900 uppercase">{selectedDeal.owner}</div>
                           </div>
-                          <button
-                            onClick={() => setSelectedDeal(linked)}
-                            className="bg-white px-3 py-1.5 rounded-xl border border-gray-100 text-[9px] font-black text-blue-600 hover:bg-blue-600 hover:text-white transition-all uppercase tracking-widest shadow-sm"
-                          >
-                            View
-                          </button>
                         </div>
-                      ))}
-                    </div>
-                    {/* PO Detail Linking */}
-                    <div className="mt-6 pt-5 border-t border-gray-100 flex gap-4 items-center">
-                      <div className="flex-1">
-                        <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group PO Reference</label>
-                        <input
-                          type="text"
-                          placeholder="Link to common PO..."
-                          className="w-full bg-white border-2 border-gray-50 p-2 rounded-xl text-xs font-bold outline-none focus:border-blue-200 transition-all"
-                          value={selectedDeal.groupPONumber || ""}
-                          onChange={(e) => {
-                            const updatedVal = e.target.value;
-                            setDeals(prev => prev.map(d => d.groupId === selectedDeal.groupId ? { ...d, groupPONumber: updatedVal } : d));
-                            setSelectedDeal(prev => ({ ...prev, groupPONumber: updatedVal }));
-                          }}
-                        />
                       </div>
                       <div className="text-right">
-                        <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group Total</div>
-                        <div className="text-sm font-black text-blue-900">
-                          ₹{deals.filter(d => d.groupId === selectedDeal.groupId).reduce((acc, d) => acc + (parseInt(d.value.replace('₹', '').replace('L', '')) || 0), 0)}L
+                        <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Estimated Value</div>
+                        <div className="text-2xl font-black text-indigo-900 tracking-tighter">{selectedDeal.value}</div>
+                      </div>
+                    </div>
+
+                    {/* Hold Reason / Notes Details if On Hold */}
+                    {selectedDeal.state === "On Hold" && (
+                      <div className="p-5 rounded-3xl border-2 border-amber-200 bg-amber-50/50 shadow-sm">
+                        <div className="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <span>⏸</span> Hold Settings & Context
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Closed Won Handover Review Widget (PB-005) */}
-              {(selectedDeal.stage === "Order" || selectedDeal.stage === "Closed Won") && (
-                <div className="mb-6 animate-in fade-in duration-300">
-                  <div className="bg-white p-6 rounded-[32px] border-2 border-gray-100 shadow-sm space-y-4">
-                    <div className="flex justify-between items-center border-b pb-3 border-gray-50">
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                        <span>📦</span> Closed Won Handover
-                      </div>
-                      {(() => {
-                        const checklist = selectedDeal.handoverChecklist || [false, false, false];
-                        const status = deriveHandoverStatus(checklist);
-                        const badgeColors = {
-                          Completed: "bg-emerald-500 text-white",
-                          "In Progress": "bg-blue-500 text-white",
-                          Pending: "bg-amber-500 text-white"
-                        };
-                        return (
-                          <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${badgeColors[status] || "bg-gray-500 text-white"}`}>
-                            {status}
-                          </span>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Handover Coordinator</span>
-                        <span className="font-extrabold uppercase text-gray-800">{selectedDeal.handoverOwner || selectedDeal.owner || "Basheer"}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Checklist Completion</span>
-                        {(() => {
-                          const checklist = selectedDeal.handoverChecklist || [false, false, false];
-                          const completedCount = checklist.filter(Boolean).length;
-                          const pct = Math.round((completedCount / checklist.length) * 100);
-                          const filled = "■".repeat(completedCount);
-                          const empty = "□".repeat(checklist.length - completedCount);
-                          return (
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-gray-500 text-[10px] tracking-widest bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">[{filled}{empty}]</span>
-                              <span className="font-extrabold text-blue-600">{pct}%</span>
+                        <div className="space-y-3 pt-3 border-t border-amber-200/30 text-xs font-semibold text-gray-700">
+                          <div className="flex justify-between py-1 border-b border-amber-100/30">
+                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Hold Reason</span>
+                            <span className="font-extrabold">{selectedDeal.holdReason || "N/A"}</span>
+                          </div>
+                          <div className="py-1">
+                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest block mb-1">Hold Notes</span>
+                            <div className="bg-white/60 border border-amber-100/50 p-2.5 rounded-xl text-gray-600 font-medium text-xs leading-relaxed italic whitespace-pre-wrap">
+                              {selectedDeal.holdNotes || "No details entered."}
                             </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {selectedDeal.poNumber && (
-                      <div className="mt-3 pt-3 border-t border-gray-50 flex flex-col">
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Purchase Order Number</span>
-                        <span className="font-extrabold text-blue-700 uppercase">{selectedDeal.poNumber}</span>
+                          </div>
+                          <div className="flex justify-between py-1">
+                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-widest">Expected Reactivation</span>
+                            <span className="font-extrabold text-amber-900">{selectedDeal.holdReactivationDate || "Not scheduled"}</span>
+                          </div>
+                        </div>
                       </div>
                     )}
 
-                    <div className="space-y-3 pt-3 border-t border-gray-50">
-                      <div>
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Handover Checklist Items</span>
-                        <div className="space-y-1.5 bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                          {[
-                            "Delivery schedule aligned with hospital readiness",
-                            "Installation pre-requisites review completed",
-                            "Clinical support staff assigned for onboarding"
-                          ].map((item, idx) => {
-                            const checklist = selectedDeal.handoverChecklist || [false, false, false];
-                            const checked = checklist[idx] || false;
-                            return (
-                              <div key={idx} className="flex items-center gap-2 text-xs font-bold text-gray-700">
-                                <span className={checked ? "text-emerald-500 text-sm font-black" : "text-gray-300 text-sm"}>
-                                  {checked ? "✓" : "○"}
+                    {/* Lead Source and Marketing Campaign */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Lead Source</div>
+                        <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
+                          <span className="text-blue-500">📍</span> {selectedDeal.source || "Direct Inquiry"}
+                        </div>
+                      </div>
+                      <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Marketing Campaign</div>
+                        <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
+                          <span className="text-pink-500">📣</span> {selectedDeal.campaign || "No Campaign"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Associated Project */}
+                    {selectedDeal.projectId && (
+                      <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-center justify-between">
+                        <div>
+                          <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-60">Associated Project</div>
+                          <div className="text-sm font-extrabold text-gray-800">{selectedDeal.projectName}</div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const proj = projects.find(p => p.id === selectedDeal.projectId);
+                            if (proj) {
+                              setSelectedProject(proj);
+                              setSelectedDeal(null);
+                            }
+                          }}
+                          className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                        >
+                          View Project &rarr;
+                        </button>
+                      </div>
+                    )}
+
+                    {/* PO Grouping / Linked Deals UI */}
+                    {selectedDeal.groupId && (
+                      <div className="bg-white p-6 rounded-[32px] border-2 border-gray-50 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/30 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700"></div>
+                        <div className="relative">
+                          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span className="text-blue-500">🔗</span> Shared Purchase Order Group
+                          </h3>
+                          <div className="space-y-3">
+                            {deals.filter(d => d.groupId === selectedDeal.groupId && d.id !== selectedDeal.id).map(linked => (
+                              <div key={linked.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                <div>
+                                  <div className="text-[11px] font-black text-gray-800 leading-tight uppercase tracking-tight">{linked.name.split('–')[1] || linked.name}</div>
+                                  <div className="text-[9px] font-bold text-gray-400 uppercase">{linked.owner} • {linked.stage}</div>
+                                </div>
+                                <button
+                                  onClick={() => setSelectedDeal(linked)}
+                                  className="bg-white px-3 py-1.5 rounded-xl border border-gray-100 text-[9px] font-black text-blue-600 hover:bg-blue-600 hover:text-white transition-all uppercase tracking-widest shadow-sm cursor-pointer"
+                                >
+                                  View
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          {/* PO Detail Linking */}
+                          <div className="mt-6 pt-5 border-t border-gray-100 flex gap-4 items-center">
+                            <div className="flex-1">
+                              <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group PO Reference</label>
+                              <input
+                                type="text"
+                                placeholder="Link to common PO..."
+                                className="w-full bg-white border-2 border-gray-50 p-2 rounded-xl text-xs font-bold outline-none focus:border-blue-200 transition-all"
+                                value={selectedDeal.groupPONumber || ""}
+                                onChange={(e) => {
+                                  const updatedVal = e.target.value;
+                                  setDeals(prev => prev.map(d => d.groupId === selectedDeal.groupId ? { ...d, groupPONumber: updatedVal } : d));
+                                  setSelectedDeal(prev => ({ ...prev, groupPONumber: updatedVal }));
+                                }}
+                              />
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Group Total</div>
+                              <div className="text-sm font-black text-blue-900">
+                                ₹{deals.filter(d => d.groupId === selectedDeal.groupId).reduce((acc, d) => acc + (parseInt(d.value.replace('₹', '').replace('L', '')) || 0), 0)}L
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Closed Won Handover Review Widget (PB-005) */}
+                    {(selectedDeal.stage === "Order" || selectedDeal.stage === "Closed Won") && (
+                      <div className="animate-in fade-in duration-300">
+                        <div className="bg-white p-6 rounded-[32px] border-2 border-gray-100 shadow-sm space-y-4">
+                          <div className="flex justify-between items-center border-b pb-3 border-gray-50">
+                            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <span>📦</span> Closed Won Handover
+                            </div>
+                            {(() => {
+                              const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                              const status = deriveHandoverStatus(checklist);
+                              const badgeColors = {
+                                Completed: "bg-emerald-500 text-white",
+                                "In Progress": "bg-blue-500 text-white",
+                                Pending: "bg-amber-500 text-white"
+                              };
+                              return (
+                                <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-xl ${badgeColors[status] || "bg-gray-500 text-white"}`}>
+                                  {status}
                                 </span>
-                                <span className={checked ? "line-through text-gray-400" : "text-gray-700"}>{item}</span>
+                              );
+                            })()}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-gray-700">
+                            <div className="flex flex-col">
+                              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Handover Coordinator</span>
+                              <span className="font-extrabold uppercase text-gray-800">{selectedDeal.handoverOwner || selectedDeal.owner || "Basheer"}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Checklist Completion</span>
+                              {(() => {
+                                const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                                const completedCount = checklist.filter(Boolean).length;
+                                const pct = Math.round((completedCount / checklist.length) * 100);
+                                const filled = "■".repeat(completedCount);
+                                const empty = "□".repeat(checklist.length - completedCount);
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-gray-500 text-[10px] tracking-widest bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">[{filled}{empty}]</span>
+                                    <span className="font-extrabold text-blue-600">{pct}%</span>
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+
+                          {selectedDeal.poNumber && (
+                            <div className="mt-3 pt-3 border-t border-gray-50 flex flex-col">
+                              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Purchase Order Number</span>
+                              <span className="font-extrabold text-blue-700 uppercase">{selectedDeal.poNumber}</span>
+                            </div>
+                          )}
+
+                          <div className="space-y-3 pt-3 border-t border-gray-50">
+                            <div>
+                              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-1">Handover Checklist Items</span>
+                              <div className="space-y-1.5 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                                {[
+                                  "Delivery schedule aligned with hospital readiness",
+                                  "Installation pre-requisites review completed",
+                                  "Clinical support staff assigned for onboarding"
+                                ].map((item, idx) => {
+                                  const checklist = selectedDeal.handoverChecklist || [false, false, false];
+                                  const checked = checklist[idx] || false;
+                                  return (
+                                    <div key={idx} className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                                      <span className={checked ? "text-emerald-500 text-sm font-black" : "text-gray-300 text-sm"}>
+                                        {checked ? "✓" : "○"}
+                                      </span>
+                                      <span className={checked ? "line-through text-gray-400" : "text-gray-700"}>{item}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Delivery Notes</span>
+                              <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                                {selectedDeal.deliveryNotes || <span className="text-gray-400 italic">No delivery notes entered.</span>}
+                              </div>
+                            </div>
+
+                            {selectedDeal.installationRequirements && (
+                              <div>
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Installation Requirements</span>
+                                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                                  {selectedDeal.installationRequirements}
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedDeal.specialCommitments && (
+                              <div>
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Special Commitments</span>
+                                <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
+                                  {selectedDeal.specialCommitments}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Deal Specific Next Actions */}
+                    {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").length > 0 && (
+                      <div className="p-6 bg-indigo-50/50 border-2 border-indigo-100 rounded-[32px] shadow-sm animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
+                            Next Step for this Lead
+                          </h3>
+                        </div>
+                        {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending")
+                          .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+                          .map(r => {
+                            const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
+                            return (
+                              <div key={r.id} className={`bg-white p-4 rounded-2xl border-2 shadow-sm flex flex-col gap-3 ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-indigo-50'}`}>
+                                <div className="flex justify-between items-start">
+                                  <div className="text-sm font-black text-gray-800 leading-tight">{r.text}</div>
+                                  <div className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-indigo-400 bg-indigo-50 border-indigo-100'}`}>{r.dueDate}</div>
+                                </div>
+                                <button
+                                  onClick={() => completeReminder(r)}
+                                  className="w-full py-2.5 bg-indigo-600 hover:bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-indigo-900/10 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                  ✓ Mark Goal as Reached
+                                </button>
                               </div>
                             );
                           })}
-                        </div>
                       </div>
-
-                      <div>
-                        <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Delivery Notes</span>
-                        <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
-                          {selectedDeal.deliveryNotes || <span className="text-gray-400 italic">No delivery notes entered.</span>}
-                        </div>
-                      </div>
-
-                      {selectedDeal.installationRequirements && (
-                        <div>
-                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Installation Requirements</span>
-                          <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
-                            {selectedDeal.installationRequirements}
-                          </div>
-                        </div>
-                      )}
-
-                      {selectedDeal.specialCommitments && (
-                        <div>
-                          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Special Commitments</span>
-                          <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 text-gray-600 font-medium text-xs whitespace-pre-wrap leading-relaxed">
-                            {selectedDeal.specialCommitments}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
 
-
-
-              <div className="grid grid-cols-2 gap-3 mb-10">
-                <div className="bg-white p-5 rounded-[28px] border-2 border-gray-100 shadow-sm">
-                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Lead Source</div>
-                  <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
-                    <span className="text-blue-500">📍</span> {selectedDeal.source || "Direct Inquiry"}
-                  </div>
-                </div>
-                <div className="bg-white p-5 rounded-[28px] border-2 border-gray-100 shadow-sm">
-                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 opacity-60">Marketing Campaign</div>
-                  <div className="text-[13px] font-extrabold text-gray-700 flex items-center gap-2">
-                    <span className="text-pink-500">📣</span> {selectedDeal.campaign || "No Campaign"}
-                  </div>
-                </div>
-              </div>
-
-              {selectedDeal.projectId && (
-                <div className="mb-10 bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-center justify-between">
-                  <div>
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 opacity-60">Associated Project</div>
-                    <div className="text-sm font-extrabold text-gray-800">{selectedDeal.projectName}</div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const proj = projects.find(p => p.id === selectedDeal.projectId);
-                      if (proj) {
-                        setSelectedProject(proj);
-                        setSelectedDeal(null);
+                {activeOpportunityTab === "products" && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Associated Products</h3>
+                    {(() => {
+                      const dealProducts = catalog.filter(p => (selectedDeal.productIds || []).includes(p.id));
+                      if (dealProducts.length === 0) {
+                        return <div className="text-gray-400 text-xs italic bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm text-center">No products associated with this opportunity.</div>;
                       }
-                    }}
-                    className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 hover:text-white transition-all"
-                  >
-                    View Project &rarr;
-                  </button>
-                </div>
-              )}
-
-              {/* Deal Specific Next Actions (Phase 7) */}
-              {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending").length > 0 && (
-                <div className="mb-8 p-6 bg-indigo-50/50 border-2 border-indigo-100 rounded-[32px] shadow-sm animate-in zoom-in-95 duration-300">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-[10px] font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
-                      <span className="w-2 h-2 bg-indigo-600 rounded-full animate-pulse"></span>
-                      Next Step for this Lead
-                    </h3>
-                  </div>
-                  {reminders.filter(r => r.dealId === selectedDeal.id && r.status === "pending")
-                    .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-                    .map(r => {
-                      const isOverdue = new Date(r.dueDate) < new Date().setHours(0, 0, 0, 0);
                       return (
-                        <div key={r.id} className={`bg-white p-4 rounded-2xl border-2 shadow-sm flex flex-col gap-3 ${isOverdue ? 'border-red-200 bg-red-50/10' : 'border-indigo-50'}`}>
-                          <div className="flex justify-between items-start">
-                            <div className="text-sm font-black text-gray-800 leading-tight">{r.text}</div>
-                            <div className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${isOverdue ? 'text-red-500 bg-red-50 border-red-200' : 'text-indigo-400 bg-indigo-50 border-indigo-100'}`}>{r.dueDate}</div>
-                          </div>
-                          <button
-                            onClick={() => completeReminder(r)}
-                            className="w-full py-2.5 bg-indigo-600 hover:bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-indigo-900/10 flex items-center justify-center gap-2"
-                          >
-                            ✓ Mark Goal as Reached
-                          </button>
+                        <div className="space-y-3">
+                          {dealProducts.map(p => (
+                            <div key={p.id} className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex flex-col gap-3">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{p.category}</div>
+                                  <h4 className="font-extrabold text-gray-800 text-base">{p.name}</h4>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Price Range</div>
+                                  <div className="text-xs font-bold text-gray-700">{p.priceRange}</div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100/50 text-xs font-semibold text-gray-600">
+                                <div>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Brand</span>
+                                  <span className="text-gray-800">{p.brand || "N/A"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">Model</span>
+                                  <span className="text-gray-800">{p.model || "N/A"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">SBU</span>
+                                  <span className="text-gray-800 uppercase">{p.sbu || "N/A"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">OEM</span>
+                                  <span className="text-gray-800">{p.oem || "N/A"}</span>
+                                </div>
+                              </div>
+                              {p.collaterals && p.collaterals.length > 0 && (
+                                <div className="flex flex-wrap gap-2 items-center mt-1">
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest mr-1">Collaterals:</span>
+                                  {p.collaterals.map((col, idx) => (
+                                    <a
+                                      key={idx}
+                                      href={col.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider border border-blue-100 flex items-center gap-1 transition-all cursor-pointer"
+                                    >
+                                      <span>📄</span> {col.label}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       );
-                    })}
-                </div>
-              )}
-
-              {currentUser === "Manager" ? (
-                <div className="flex gap-2 mb-8">
-                  <button
-                    onClick={() => setShowActivity(true)}
-                    className="flex-1 bg-indigo-600 text-white py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-indigo-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 border-b-4 border-indigo-800"
-                  >
-                    <span>💬</span> Add Interaction
-                  </button>
-                  <button
-                    onClick={() => { setActivityPurpose("Manager Note"); setShowActivity(true); }}
-                    className="flex-1 bg-blue-600 text-white py-4 rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-900/10 active:scale-95 transition-all flex items-center justify-center gap-2 border-b-4 border-blue-800"
-                  >
-                    <span>🛡️</span> Manager Note
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowActivity(true)}
-                  className="w-full bg-indigo-600 text-white py-4.5 rounded-[24px] font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/10 mb-8 active:scale-95 transition-all flex items-center justify-center gap-3 border-b-4 border-indigo-800"
-                >
-                  <span>➕</span> Add Interaction
-                </button>
-              )}
-
-
-              <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2">
-                Key Contacts
-              </h3>
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {contacts.filter(c => {
-                  const accId = customers.find(cust => selectedDeal.name.includes(cust.name))?.id;
-                  return c.accountId === accId;
-                }).map(c => (
-                  <div key={c.id} className="min-w-[120px] p-2 bg-blue-50 border border-blue-100 rounded-lg shadow-sm">
-                    <div className="text-sm font-bold text-blue-900 leading-tight">{c.name}</div>
-                    <div className="text-[10px] text-blue-600 font-semibold uppercase">{c.role}</div>
+                    })()}
                   </div>
-                ))}
-                {contacts.filter(c => {
-                  const accId = customers.find(cust => selectedDeal.name.includes(cust.name))?.id;
-                  return c.accountId === accId;
-                }).length === 0 && <div className="text-gray-400 text-xs italic">No contacts added</div>}
+                )}
+
+                {activeOpportunityTab === "contacts" && (
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Key Contacts / Stakeholders</h3>
+                    {(() => {
+                      const accId = customers.find(cust => selectedDeal.name.includes(cust.name))?.id;
+                      const dealContacts = contacts.filter(c => c.accountId === accId);
+                      if (dealContacts.length === 0) {
+                        return <div className="text-gray-400 text-xs italic bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm text-center">No key contacts added yet.</div>;
+                      }
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {dealContacts.map(c => (
+                            <div key={c.id} className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-start gap-4">
+                              <span className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm flex-shrink-0 uppercase">
+                                {c.name.substring(0, 2)}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex justify-between items-start mb-1 gap-2 flex-wrap">
+                                  <h4 className="font-extrabold text-gray-800 text-sm truncate uppercase">{c.name}</h4>
+                                  {c.influenceLevel && (
+                                    <span className={`px-2 py-0.5 rounded-lg border text-[8px] font-black uppercase tracking-wider ${
+                                      c.influenceLevel === "High" ? "bg-red-50 text-red-600 border-red-100" :
+                                      c.influenceLevel === "Medium" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                      "bg-green-50 text-green-600 border-green-100"
+                                    }`}>
+                                      {c.influenceLevel} Influence
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">{c.role}</div>
+                                <div className="space-y-1 text-xs font-semibold text-gray-600">
+                                  {c.phone && <div className="flex items-center gap-1.5"><span className="text-gray-400 text-[10px]">📞</span> {c.phone}</div>}
+                                  {c.email && <div className="flex items-center gap-1.5 truncate" title={c.email}><span className="text-gray-400 text-[10px]">✉️</span> {c.email}</div>}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {activeOpportunityTab === "activity" && (
+                  <div className="space-y-6">
+                    {/* Add Interaction Buttons */}
+                    <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm">
+                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Log Activity</div>
+                      {currentUser === "Manager" ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowActivity(true)}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-b-2 border-indigo-800"
+                          >
+                            <span>💬</span> Add Interaction
+                          </button>
+                          <button
+                            onClick={() => { setActivityPurpose("Manager Note"); setShowActivity(true); }}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-b-2 border-blue-800"
+                          >
+                            <span>🛡️</span> Manager Note
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowActivity(true)}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer border-b-2 border-indigo-800"
+                        >
+                          <span>➕</span> Add Interaction
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Chronological Activities Timeline */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Interaction Timeline</h3>
+                      {(() => {
+                        const dealActivities = activities.filter(a => a.dealId === selectedDeal.id);
+                        if (dealActivities.length === 0) {
+                          return <div className="text-gray-500 italic text-sm text-center bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm">No activity logged yet for this opportunity.</div>;
+                        }
+                        return (
+                          <div className="relative border-l border-gray-100 pl-4 ml-2 space-y-4">
+                            {dealActivities.map((a, i) => {
+                              const isManagerNote = a.purpose === "Manager Note";
+                              return (
+                                <div key={i} className="relative">
+                                  {/* Timeline marker */}
+                                  <span className={`absolute -left-[22px] top-1.5 w-3 h-3 rounded-full border-2 border-white ${isManagerNote ? "bg-emerald-50" : (a.owner === "Manager" ? "bg-indigo-50" : "bg-blue-50")}`}></span>
+                                  
+                                  <div className={`p-4 rounded-2xl text-xs shadow-sm border-2 leading-relaxed ${isManagerNote ? "bg-emerald-50/70 border-emerald-100 text-emerald-950" : (a.owner === "Manager" ? "bg-indigo-50/70 border-indigo-100 text-indigo-950" : "bg-gray-50/70 border-gray-100 text-gray-800")}`}>
+                                    <div className="flex justify-between text-[8px] font-black mb-1.5 uppercase tracking-wider opacity-60">
+                                      <span>{a.owner} · {isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION")}</span>
+                                      <span>{a.date}</span>
+                                    </div>
+                                    <div className="font-semibold text-xs leading-normal">
+                                      {isManagerNote && <span className="mr-1">👑</span>}
+                                      {a.notes}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {activeOpportunityTab === "team" && (
+                  <div className="space-y-4">
+                    <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                      <div className="flex justify-between items-center mb-4 border-b pb-3 border-gray-50">
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opportunity Contributors</div>
+                        {(() => {
+                          const totalSplit = (selectedDeal.contributors || []).reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
+                          return totalSplit === 100 ? (
+                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-black uppercase tracking-wider rounded-xl">
+                              ✅ Allocation: {totalSplit}%
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-100 text-[9px] font-black uppercase tracking-wider rounded-xl">
+                              ⚠️ Allocation: {totalSplit}%
+                            </span>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="divide-y divide-gray-50">
+                        {(selectedDeal.contributors || []).length === 0 ? (
+                          <div className="text-gray-400 text-xs italic text-center py-4">No team contributors assigned.</div>
+                        ) : (
+                          (selectedDeal.contributors || []).map((c, idx) => (
+                            <div key={idx} className="py-3 flex items-center justify-between text-xs font-semibold">
+                              <div className="flex items-center gap-3">
+                                <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px] border border-blue-100 uppercase">
+                                  {c.user.substring(0, 2)}
+                                </span>
+                                <div>
+                                  <div className="text-gray-800 font-extrabold uppercase">{c.user}</div>
+                                  <div className="text-[8px] text-gray-400 font-bold uppercase tracking-wider">{c.role}</div>
+                                </div>
+                              </div>
+                              <div className="font-extrabold text-blue-900 text-sm bg-blue-50/50 px-3 py-1 rounded-xl border border-blue-50/30">{c.split}%</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
-
-              <h3 className="mt-6 font-bold text-gray-800 border-b pb-1 mb-2">Timeline</h3>
-              {activities.filter(a => a.dealId === selectedDeal.id).length === 0 && <div className="text-gray-500 italic text-sm">No activity yet</div>}
-              {activities.filter(a => a.dealId === selectedDeal.id).map((a, i) => {
-                const isManagerNote = a.purpose === "Manager Note";
-                return (
-                  <div key={i} className={`p-3 my-3 rounded-2xl text-sm shadow-sm border-2 ${isManagerNote ? "bg-emerald-50 border-emerald-100 text-emerald-900" : (a.owner === "Manager" ? "bg-indigo-50 border-indigo-100 text-indigo-900" : "bg-gray-50 border-gray-100 text-gray-800")}`}>
-                    <div className="flex justify-between text-[9px] font-black mb-2 uppercase tracking-[0.1em] opacity-60">
-                      <span>{a.owner} · {isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION")}</span>
-                      <span>{a.date}</span>
-                    </div>
-                    <div className="font-semibold leading-tight">
-                      {isManagerNote && <span className="mr-1">👑</span>}
-                      {a.notes}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )
@@ -4995,9 +5182,36 @@ export default function App() {
       {
         isEditingLead && editLeadData && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1200] p-4">
-            <div className="bg-white p-6 rounded-[32px] w-full max-w-[360px] shadow-2xl flex flex-col max-h-[90vh]">
-              <h3 className="font-black text-gray-800 text-xl mb-6 tracking-tight uppercase">Edit Lead Details</h3>
+            <div className="bg-white p-6 rounded-[32px] w-full max-w-[480px] shadow-2xl flex flex-col max-h-[90vh]">
+              <h3 className="font-black text-gray-800 text-lg mb-4 tracking-tight uppercase">Edit Opportunity</h3>
+
+              {/* Edit Drawer Tabs */}
+              <div className="flex gap-1 mb-4 border-b border-gray-100 pb-0 overflow-x-auto">
+                {[
+                  { id: "overview", label: "Overview", icon: "📋" },
+                  { id: "products", label: "Products", icon: "📦" },
+                  { id: "contacts", label: "Contacts", icon: "👥" },
+                  { id: "team", label: "Team", icon: "🤝" }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveEditTab(tab.id)}
+                    className={`flex items-center gap-1 px-3 py-2 text-[10px] font-bold tracking-wide transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                      activeEditTab === tab.id
+                        ? "border-blue-600 text-blue-700 bg-blue-50/50"
+                        : "border-transparent text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
               <div className="space-y-4 overflow-y-auto pr-1.5 custom-scrollbar pb-2 flex-1">
+                {activeEditTab === "overview" && (
+                  <div className="space-y-4">
                 <div>
                   <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">Deal Name</label>
                   <input
@@ -5128,58 +5342,22 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Exit Criteria: Associated Products & Budget Range */}
+                  {/* Exit Criteria: Budget Range */}
                   {["Qualified", "Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) && (
-                    <div className="col-span-2 space-y-3 p-4 bg-blue-50/20 border border-blue-100/50 rounded-2xl">
-                      <div>
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Associated Products</label>
-                        <div className="bg-white border border-gray-100 p-3 rounded-xl space-y-2 max-h-32 overflow-y-auto">
-                          {catalog.map(prod => {
-                            const isSelected = (editLeadData.productIds || []).includes(prod.id);
-                            return (
-                              <label key={prod.id} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                                  checked={isSelected}
-                                  onChange={() => {
-                                    const newProductIds = isSelected
-                                      ? (editLeadData.productIds || []).filter(id => id !== prod.id)
-                                      : [...(editLeadData.productIds || []), prod.id];
-                                    const selectedProductNames = catalog.filter(p => newProductIds.includes(p.id)).map(p => p.name);
-                                    const hospitalName = editLeadData.name.split('–')[0] || editLeadData.name;
-                                    const newName = selectedProductNames.length > 0
-                                      ? `${hospitalName}–${selectedProductNames.join(" & ")}`
-                                      : editLeadData.name;
-                                    setEditLeadData({
-                                      ...editLeadData,
-                                      productIds: newProductIds,
-                                      name: newName
-                                    });
-                                  }}
-                                />
-                                <span>{prod.name} ({prod.category})</span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Budget Range *</label>
-                        <select
-                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
-                          value={editLeadData.budgetRange || ""}
-                          onChange={(e) => setEditLeadData({ ...editLeadData, budgetRange: e.target.value })}
-                        >
-                          <option value="">Select Budget Range...</option>
-                          <option value="₹5L - ₹10L">₹5L - ₹10L</option>
-                          <option value="₹10L - ₹15L">₹10L - ₹15L</option>
-                          <option value="₹15L - ₹25L">₹15L - ₹25L</option>
-                          <option value="₹25L - ₹40L">₹25L - ₹40L</option>
-                          <option value="₹40L+">₹40L+</option>
-                        </select>
-                      </div>
+                    <div className="col-span-2">
+                      <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Budget Range *</label>
+                      <select
+                        className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        value={editLeadData.budgetRange || ""}
+                        onChange={(e) => setEditLeadData({ ...editLeadData, budgetRange: e.target.value })}
+                      >
+                        <option value="">Select Budget Range...</option>
+                        <option value="₹5L - ₹10L">₹5L - ₹10L</option>
+                        <option value="₹10L - ₹15L">₹10L - ₹15L</option>
+                        <option value="₹15L - ₹25L">₹15L - ₹25L</option>
+                        <option value="₹25L - ₹40L">₹25L - ₹40L</option>
+                        <option value="₹40L+">₹40L+</option>
+                      </select>
                     </div>
                   )}
 
@@ -5502,157 +5680,208 @@ export default function App() {
                     )}
                   </div>
                 )}
-
-                {/* Opportunity Contributors Card (PB-004) */}
-                <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Opportunity Contributors</span>
-                    {(() => {
-                      const totalSplit = (editLeadData.contributors || []).reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
-                      return totalSplit === 100 ? (
-                        <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[8px] font-black uppercase tracking-widest rounded-lg">
-                          ✅ Allocation: {totalSplit}%
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-black uppercase tracking-widest rounded-lg animate-pulse">
-                          ⚠️ Allocation: {totalSplit}%
-                        </span>
-                      );
-                    })()}
                   </div>
+                )}
 
-                  <div className="space-y-2">
-                    {(editLeadData.contributors || []).map((c, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-100">
-                        <select
-                          className="flex-1 min-w-0 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                          value={c.user}
-                          onChange={(e) => {
-                            const updated = [...(editLeadData.contributors || [])];
-                            updated[idx] = { ...updated[idx], user: e.target.value };
-                            setEditLeadData({ ...editLeadData, contributors: updated });
-                          }}
-                        >
-                          {mockContributorsList.map(u => <option key={u} value={u}>{u}</option>)}
-                        </select>
-
-                        <select
-                          className="flex-1 min-w-0 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                          value={c.role}
-                          onChange={(e) => {
-                            const updated = [...(editLeadData.contributors || [])];
-                            updated[idx] = { ...updated[idx], role: e.target.value };
-                            setEditLeadData({ ...editLeadData, contributors: updated });
-                          }}
-                        >
-                          {mockRolesList.map(r => <option key={r} value={r}>{r}</option>)}
-                        </select>
-
-                        <div className="flex items-center gap-1 w-16 shrink-0">
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            className="w-12 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 text-center outline-none focus:ring-2 focus:ring-blue-500"
-                            value={c.split}
-                            onChange={(e) => {
-                              const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                              const updated = [...(editLeadData.contributors || [])];
-                              updated[idx] = { ...updated[idx], split: val };
-                              setEditLeadData({ ...editLeadData, contributors: updated });
-                            }}
-                          />
-                          <span className="text-xs font-bold text-gray-400">%</span>
+                {/* PRODUCTS TAB (EDIT) */}
+                {activeEditTab === "products" && (
+                  <div className="space-y-4">
+                    {["Qualified", "Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) ? (
+                      <div className="p-4 bg-blue-50/20 border border-blue-100/50 rounded-2xl">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Associated Products</label>
+                        <div className="bg-white border border-gray-100 p-3 rounded-xl space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                          {catalog.map(prod => {
+                            const isSelected = (editLeadData.productIds || []).includes(prod.id);
+                            return (
+                              <label key={prod.id} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer py-1 hover:bg-gray-50 px-1 rounded transition-colors">
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                  checked={isSelected}
+                                  onChange={() => {
+                                    const newProductIds = isSelected
+                                      ? (editLeadData.productIds || []).filter(id => id !== prod.id)
+                                      : [...(editLeadData.productIds || []), prod.id];
+                                    const selectedProductNames = catalog.filter(p => newProductIds.includes(p.id)).map(p => p.name);
+                                    const hospitalName = editLeadData.name.split('–')[0] || editLeadData.name;
+                                    const newName = selectedProductNames.length > 0
+                                      ? `${hospitalName}–${selectedProductNames.join(" & ")}`
+                                      : editLeadData.name;
+                                    setEditLeadData({
+                                      ...editLeadData,
+                                      productIds: newProductIds,
+                                      name: newName
+                                    });
+                                  }}
+                                />
+                                <span>{prod.name} ({prod.category})</span>
+                              </label>
+                            );
+                          })}
                         </div>
+                      </div>
+                    ) : (
+                      <div className="text-gray-400 text-xs italic text-center py-8">
+                        Products can only be associated when the deal is Qualified or beyond.
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                        {(editLeadData.contributors || []).length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = (editLeadData.contributors || []).filter((_, i) => i !== idx);
+                {/* CONTACTS TAB (EDIT) */}
+                {activeEditTab === "contacts" && (
+                  <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Key Contacts</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingStakeholder(true);
+                        }}
+                        className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition-colors"
+                      >
+                        ＋ Add
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {contacts.filter(c => {
+                        const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
+                        return c.accountId === accId;
+                      }).map(c => (
+                        <div key={c.id} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm">
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-gray-800 leading-tight">{c.name}</div>
+                            <div className="text-[9px] text-gray-400 font-bold uppercase">{c.role}</div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingStakeholder(c);
+                                setNewStakeholderName(c.name);
+                                setNewStakeholderRole(c.role);
+                                setNewStakeholderPhone(c.phone || "");
+                                setNewStakeholderEmail(c.email || "");
+                                setIsAddingStakeholder(true);
+                              }}
+                              className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center font-bold text-[10px] transition-colors"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContacts(prev => prev.filter(con => con.id !== c.id));
+                              }}
+                              className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center font-bold text-sm transition-colors"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {contacts.filter(c => {
+                        const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
+                        return c.accountId === accId;
+                      }).length === 0 && (
+                        <div className="text-gray-400 text-[10px] font-bold italic text-center py-2">No key contacts added yet.</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TEAM TAB (EDIT) */}
+                {activeEditTab === "team" && (
+                  <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Opportunity Contributors</span>
+                      {(() => {
+                        const totalSplit = (editLeadData.contributors || []).reduce((acc, curr) => acc + (parseInt(curr.split) || 0), 0);
+                        return totalSplit === 100 ? (
+                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[8px] font-black uppercase tracking-widest rounded-lg">
+                            ✅ Allocation: {totalSplit}%
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-black uppercase tracking-widest rounded-lg animate-pulse">
+                            ⚠️ Allocation: {totalSplit}%
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="space-y-2">
+                      {(editLeadData.contributors || []).map((c, idx) => (
+                        <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-xl border border-gray-100">
+                          <select
+                            className="flex-1 min-w-0 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                            value={c.user}
+                            onChange={(e) => {
+                              const updated = [...(editLeadData.contributors || [])];
+                              updated[idx] = { ...updated[idx], user: e.target.value };
                               setEditLeadData({ ...editLeadData, contributors: updated });
                             }}
-                            className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 hover:text-red-500 flex items-center justify-center font-bold text-sm shrink-0 transition-colors"
                           >
-                            &times;
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                            {mockContributorsList.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = [...(editLeadData.contributors || []), { user: "Ahmed", role: "Product Specialist", split: 0 }];
-                      setEditLeadData({ ...editLeadData, contributors: updated });
-                    }}
-                    className="mt-3 w-full py-2 bg-blue-50/50 hover:bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.99]"
-                  >
-                    ＋ Add Contributor
-                  </button>
-                </div>
+                          <select
+                            className="flex-1 min-w-0 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+                            value={c.role}
+                            onChange={(e) => {
+                              const updated = [...(editLeadData.contributors || [])];
+                              updated[idx] = { ...updated[idx], role: e.target.value };
+                              setEditLeadData({ ...editLeadData, contributors: updated });
+                            }}
+                          >
+                            {mockRolesList.map(r => <option key={r} value={r}>{r}</option>)}
+                          </select>
 
-                {/* Key Contacts Section */}
-                <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Key Contacts</span>
+                          <div className="flex items-center gap-1 w-16 shrink-0">
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              className="w-12 bg-gray-50 border border-gray-100 p-2 rounded-lg text-xs font-bold text-gray-700 text-center outline-none focus:ring-2 focus:ring-blue-500"
+                              value={c.split}
+                              onChange={(e) => {
+                                const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                const updated = [...(editLeadData.contributors || [])];
+                                updated[idx] = { ...updated[idx], split: val };
+                                setEditLeadData({ ...editLeadData, contributors: updated });
+                              }}
+                            />
+                            <span className="text-xs font-bold text-gray-400">%</span>
+                          </div>
+
+                          {(editLeadData.contributors || []).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (editLeadData.contributors || []).filter((_, i) => i !== idx);
+                                setEditLeadData({ ...editLeadData, contributors: updated });
+                              }}
+                              className="w-7 h-7 rounded-full bg-gray-50 text-gray-400 hover:text-red-500 flex items-center justify-center font-bold text-sm shrink-0 transition-colors"
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => {
-                        setIsAddingStakeholder(true);
+                        const updated = [...(editLeadData.contributors || []), { user: "Ahmed", role: "Product Specialist", split: 0 }];
+                        setEditLeadData({ ...editLeadData, contributors: updated });
                       }}
-                      className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition-colors"
+                      className="mt-3 w-full py-2 bg-blue-50/50 hover:bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-1 active:scale-[0.99]"
                     >
-                      ＋ Add
+                      ＋ Add Contributor
                     </button>
                   </div>
-
-                  <div className="space-y-2">
-                    {contacts.filter(c => {
-                      const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
-                      return c.accountId === accId;
-                    }).map(c => (
-                      <div key={c.id} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm">
-                        <div className="min-w-0">
-                          <div className="text-xs font-bold text-gray-800 leading-tight">{c.name}</div>
-                          <div className="text-[9px] text-gray-400 font-bold uppercase">{c.role}</div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingStakeholder(c);
-                              setNewStakeholderName(c.name);
-                              setNewStakeholderRole(c.role);
-                              setNewStakeholderPhone(c.phone || "");
-                              setNewStakeholderEmail(c.email || "");
-                              setIsAddingStakeholder(true);
-                            }}
-                            className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 flex items-center justify-center font-bold text-[10px] transition-colors"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setContacts(prev => prev.filter(con => con.id !== c.id));
-                            }}
-                            className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center font-bold text-sm transition-colors"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {contacts.filter(c => {
-                      const accId = customers.find(cust => editLeadData.name.includes(cust.name))?.id;
-                      return c.accountId === accId;
-                    }).length === 0 && (
-                      <div className="text-gray-400 text-[10px] font-bold italic text-center py-2">No key contacts added yet.</div>
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="mt-8 flex gap-3">
