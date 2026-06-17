@@ -895,6 +895,7 @@ export default function App() {
   const [newStakeholderRole, setNewStakeholderRole] = useState("");
   const [newStakeholderPhone, setNewStakeholderPhone] = useState("");
   const [newStakeholderEmail, setNewStakeholderEmail] = useState("");
+  const [newStakeholderNps, setNewStakeholderNps] = useState("Neutral");
 
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("All");
   const [wizardCategoryFilter, setWizardCategoryFilter] = useState("Ultrasound");
@@ -932,7 +933,8 @@ export default function App() {
       followUpDate: "",
       followUpText: "",
       budgetRange: deal.budgetRange || "",
-      demoDate: deal.demoDate || "",
+      demoFromDate: deal.demoFromDate || "",
+      demoToDate: deal.demoToDate || "",
       demoOutcome: deal.demoOutcome || "",
       handoverOwner: deal.handoverOwner || deal.owner || "",
       deliveryNotes: deal.deliveryNotes || "",
@@ -2273,6 +2275,11 @@ export default function App() {
                             {deal.projectName && (
                               <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal shadow-sm">
                                 📂 {deal.projectName}
+                              </span>
+                            )}
+                            {deal.demoFromDate && deal.demoToDate && (
+                              <span className="px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal shadow-sm">
+                                📅 Demo: {deal.demoFromDate} to {deal.demoToDate}
                               </span>
                             )}
                           </div>
@@ -3623,6 +3630,27 @@ export default function App() {
                       </div>
                     </div>
 
+                    {/* Expected Demo Period */}
+                    {(selectedDeal.demoFromDate || selectedDeal.demoToDate || selectedDeal.demoOutcome) && (
+                      <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm">
+                        <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 opacity-60">Expected Demo Period</div>
+                        <div className="space-y-2 text-xs font-semibold text-gray-700">
+                          {selectedDeal.demoFromDate && selectedDeal.demoToDate && (
+                            <div className="flex justify-between py-1 border-b border-gray-50">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Demo Window</span>
+                              <span className="font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-100">{selectedDeal.demoFromDate} to {selectedDeal.demoToDate}</span>
+                            </div>
+                          )}
+                          {selectedDeal.demoOutcome && (
+                            <div className="flex justify-between py-1">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Demo Outcome</span>
+                              <span className="font-extrabold text-gray-800">{selectedDeal.demoOutcome}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Associated Project */}
                     {selectedDeal.projectId && (
                       <div className="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm flex items-center justify-between">
@@ -4411,23 +4439,29 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* NPS Status Select */}
+                          {/* Stakeholder NPS */}
                           <div className="bg-amber-50/40 p-3.5 rounded-2xl border border-amber-100/30 flex flex-col justify-between">
-                            <div>
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">NPS Status</span>
-                              <select 
-                                className="w-full bg-white border border-amber-200/50 p-1 rounded-lg text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-500 mt-1"
-                                value={selectedAccount.npsStatus || "Neutral"}
-                                onChange={(e) => {
-                                  const updated = { ...selectedAccount, npsStatus: e.target.value };
-                                  setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                                  setSelectedAccount(updated);
-                                }}
-                              >
-                                <option value="Promoter">⭐ Promoter</option>
-                                <option value="Neutral">😐 Neutral</option>
-                                <option value="Detractor">📉 Detractor</option>
-                              </select>
+                            <div className="flex flex-col h-full justify-between">
+                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Stakeholder NPS</span>
+                              <div className="overflow-y-auto max-h-[85px] space-y-1.5 pr-1 mt-1">
+                                {contacts.filter(c => c.accountId === selectedAccount.id).map(c => (
+                                  <div key={c.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5 border-b border-amber-100/20 last:border-b-0">
+                                    <span className="font-bold text-gray-700 truncate max-w-[90px]" title={c.name}>{c.name}</span>
+                                    {c.npsStatus === "Promoter" && (
+                                      <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded text-[8px] font-black border border-emerald-100/50">Promoter</span>
+                                    )}
+                                    {c.npsStatus === "Detractor" && (
+                                      <span className="px-1.5 py-0.2 bg-red-50 text-red-700 rounded text-[8px] font-black border border-red-100/50">Detractor</span>
+                                    )}
+                                    {(c.npsStatus === "Neutral" || !c.npsStatus) && (
+                                      <span className="px-1.5 py-0.2 bg-gray-50 text-gray-500 rounded text-[8px] font-black border border-gray-200">Neutral</span>
+                                    )}
+                                  </div>
+                                ))}
+                                {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && (
+                                  <div className="text-[9px] text-gray-400 italic">No stakeholders listed</div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -4541,7 +4575,7 @@ export default function App() {
                     <h3 className="font-black text-gray-800 mb-6 flex justify-between items-center text-sm uppercase tracking-wider">
                       Stakeholders
                       <button
-                        onClick={() => { setEditingStakeholder(null); setIsAddingStakeholder(true); }}
+                        onClick={() => { setEditingStakeholder(null); setNewStakeholderNps("Neutral"); setIsAddingStakeholder(true); }}
                         className="bg-blue-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-blue-700 transition-colors shadow-sm"
                       >
                         + Add Contact
@@ -4553,7 +4587,18 @@ export default function App() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">{c.name.charAt(0)}</div>
                             <div>
-                              <div className="text-sm font-black text-gray-800 leading-tight">{c.name}</div>
+                              <div className="flex items-center flex-wrap gap-1.5">
+                                <span className="text-sm font-black text-gray-800 leading-tight">{c.name}</span>
+                                {c.npsStatus === "Promoter" && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100">⭐ Promoter</span>
+                                )}
+                                {c.npsStatus === "Detractor" && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-red-50 text-red-700 border border-red-100">📉 Detractor</span>
+                                )}
+                                {(c.npsStatus === "Neutral" || !c.npsStatus) && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-gray-50 text-gray-500 border border-gray-200">😐 Neutral</span>
+                                )}
+                              </div>
                               <div className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-0.5">{c.role}</div>
                             </div>
                           </div>
@@ -4577,7 +4622,7 @@ export default function App() {
                               💬
                             </a>
                             <button
-                              onClick={() => { setEditingStakeholder(c); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); setNewStakeholderPhone(c.phone || ""); setNewStakeholderEmail(c.email || ""); }}
+                              onClick={() => { setEditingStakeholder(c); setNewStakeholderNps(c.npsStatus || "Neutral"); setIsAddingStakeholder(true); setNewStakeholderName(c.name); setNewStakeholderRole(c.role); setNewStakeholderPhone(c.phone || ""); setNewStakeholderEmail(c.email || ""); }}
                               className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-bold text-[10px]"
                             >
                               ✎
@@ -4608,10 +4653,10 @@ export default function App() {
                       {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && (
                         <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
                           <span className="text-4xl mb-3">🤝</span>
-                          <h4 className="text-sm font-black text-gray-805 mb-1">No Stakeholders Added</h4>
+                          <h4 className="text-sm font-black text-gray-850 mb-1">No Stakeholders Added</h4>
                           <p className="text-xs text-gray-550 max-w-sm mb-4">Key contacts, medical officers, and purchase managers. Add stakeholders to map the decision-making unit.</p>
                           <button
-                            onClick={() => { setEditingStakeholder(null); setIsAddingStakeholder(true); }}
+                            onClick={() => { setEditingStakeholder(null); setNewStakeholderNps("Neutral"); setIsAddingStakeholder(true); }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
                           >
                             + Add Stakeholder
@@ -4722,6 +4767,11 @@ export default function App() {
                               {d.projectName && (
                                 <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal">
                                   📂 {d.projectName}
+                                </span>
+                              )}
+                              {d.demoFromDate && d.demoToDate && (
+                                <span className="px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal">
+                                  📅 Demo: {d.demoFromDate} to {d.demoToDate}
                                 </span>
                               )}
                             </div>
@@ -5410,10 +5460,30 @@ export default function App() {
                     onChange={(e) => setNewStakeholderEmail(e.target.value)}
                   />
                 </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">NPS Status</label>
+                  <select
+                    className="w-full border border-gray-100 p-3.5 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                    value={newStakeholderNps}
+                    onChange={(e) => setNewStakeholderNps(e.target.value)}
+                  >
+                    <option value="Promoter">⭐ Promoter</option>
+                    <option value="Neutral">😐 Neutral</option>
+                    <option value="Detractor">📉 Detractor</option>
+                  </select>
+                </div>
               </div>
               <div className="mt-8 flex gap-3">
                 <button
-                  onClick={() => { setIsAddingStakeholder(false); setEditingStakeholder(null); setNewStakeholderName(""); setNewStakeholderRole(""); }}
+                  onClick={() => {
+                    setIsAddingStakeholder(false);
+                    setEditingStakeholder(null);
+                    setNewStakeholderName("");
+                    setNewStakeholderRole("");
+                    setNewStakeholderPhone("");
+                    setNewStakeholderEmail("");
+                    setNewStakeholderNps("Neutral");
+                  }}
                   className="flex-1 px-4 py-3.5 bg-gray-50 text-gray-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-100 transition-colors"
                 >
                   Cancel
@@ -5422,15 +5492,16 @@ export default function App() {
                   onClick={() => {
                     if (newStakeholderName && newStakeholderRole) {
                       if (editingStakeholder) {
-                        setContacts(prev => prev.map(con => con.id === editingStakeholder.id ? { ...con, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail } : con));
+                        setContacts(prev => prev.map(con => con.id === editingStakeholder.id ? { ...con, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, npsStatus: newStakeholderNps } : con));
                       } else {
                         const accId = selectedAccount ? selectedAccount.id : (selectedDeal ? customers.find(cust => selectedDeal.name.includes(cust.name))?.id : (editLeadData ? customers.find(cust => editLeadData.name.includes(cust.name))?.id : null));
-                        setContacts([...contacts, { id: Date.now(), accountId: accId, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, influenceLevel: "Medium" }]);
+                        setContacts([...contacts, { id: Date.now(), accountId: accId, name: newStakeholderName, role: newStakeholderRole, phone: newStakeholderPhone, email: newStakeholderEmail, influenceLevel: "Medium", npsStatus: newStakeholderNps }]);
                       }
                       setNewStakeholderName("");
                       setNewStakeholderRole("");
                       setNewStakeholderPhone("");
                       setNewStakeholderEmail("");
+                      setNewStakeholderNps("Neutral");
                       setEditingStakeholder(null);
                       setIsAddingStakeholder(false);
                     }
@@ -5637,19 +5708,29 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Exit Criteria: Demo Date & Outcome */}
+                  {/* Exit Criteria: Expected Demo Period & Outcome */}
                   {["Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) && (
                     <div className="col-span-2 grid grid-cols-2 gap-3 p-4 bg-purple-50/20 border border-purple-100/50 rounded-2xl">
+                      <div className="col-span-2 font-black text-[10px] text-purple-700 uppercase tracking-wider mb-1">Expected Demo Period</div>
                       <div>
-                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Demo Date *</label>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">From Date *</label>
                         <input
                           type="date"
                           className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          value={editLeadData.demoDate || ""}
-                          onChange={(e) => setEditLeadData({ ...editLeadData, demoDate: e.target.value })}
+                          value={editLeadData.demoFromDate || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, demoFromDate: e.target.value })}
                         />
                       </div>
                       <div>
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">To Date *</label>
+                        <input
+                          type="date"
+                          className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                          value={editLeadData.demoToDate || ""}
+                          onChange={(e) => setEditLeadData({ ...editLeadData, demoToDate: e.target.value })}
+                        />
+                      </div>
+                      <div className="col-span-2">
                         <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Demo Outcome *</label>
                         <select
                           className="w-full border border-gray-100 p-2.5 rounded-xl text-xs font-bold bg-white outline-none focus:ring-2 focus:ring-blue-500"
@@ -6006,6 +6087,8 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          setEditingStakeholder(null);
+                          setNewStakeholderNps("Neutral");
                           setIsAddingStakeholder(true);
                         }}
                         className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-100 transition-colors"
@@ -6029,6 +6112,7 @@ export default function App() {
                               type="button"
                               onClick={() => {
                                 setEditingStakeholder(c);
+                                setNewStakeholderNps(c.npsStatus || "Neutral");
                                 setNewStakeholderName(c.name);
                                 setNewStakeholderRole(c.role);
                                 setNewStakeholderPhone(c.phone || "");
@@ -6188,25 +6272,43 @@ export default function App() {
                       }
                     }
 
-                    // Qualified -> Demo: Demo Date is missing
+                    // Qualified -> Demo: Expected Demo Period is missing or invalid
                     if (["Demo", "Negotiation", "Order", "Closed Won"].includes(targetStage)) {
-                      if (editLeadData.demoOutcome !== "Demo not required" && !editLeadData.demoDate) {
-                        setCustomAlert({
-                          title: "Demo Details Required",
-                          message: "Please enter Demo Date for the demo.",
-                          type: "warning"
-                        });
-                        return;
+                      if (editLeadData.demoOutcome !== "Demo not required") {
+                        if (!editLeadData.demoFromDate || !editLeadData.demoToDate) {
+                          setCustomAlert({
+                            title: "Expected Demo Period Required",
+                            message: "Both Expected Demo From Date and To Date are mandatory.",
+                            type: "warning"
+                          });
+                          return;
+                        }
+                        if (new Date(editLeadData.demoToDate) < new Date(editLeadData.demoFromDate)) {
+                          setCustomAlert({
+                            title: "Invalid Expected Demo Period",
+                            message: "Expected Demo To Date must be greater than or equal to From Date.",
+                            type: "warning"
+                          });
+                          return;
+                        }
                       }
                     }
 
                     // Demo -> Negotiation: Demo Outcome or Expected Closure Date is missing
                     if (["Negotiation", "Order", "Closed Won"].includes(targetStage)) {
                       const finalClosureDate = editLeadData.closureDate || editLeadData.expectedClosureDate;
-                      if (!editLeadData.demoOutcome || !finalClosureDate) {
+                      if (!editLeadData.demoOutcome) {
                         setCustomAlert({
-                          title: "Negotiation Details Required",
-                          message: "Please enter Demo Outcome and Expected Closure Date to transition to Negotiation.",
+                          title: "Demo Outcome Required",
+                          message: "Please select a Demo Outcome to transition to Negotiation.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                      if (!finalClosureDate) {
+                        setCustomAlert({
+                          title: "Expected Closure Date Required",
+                          message: "Please enter Expected Closure Date to transition to Negotiation.",
                           type: "warning"
                         });
                         return;
@@ -7721,10 +7823,15 @@ export default function App() {
                         <div className="text-sm font-black text-blue-900 leading-tight">
                           {d.name.split("–")[1] || d.name}
                         </div>
-                        <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider flex items-center gap-2">
+                        <div className="text-[9px] text-gray-400 font-black mt-1 uppercase tracking-wider flex items-center gap-2 flex-wrap">
                           <span>{d.stage} · {d.owner}</span>
                           {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
                           {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
+                          {d.demoFromDate && d.demoToDate && (
+                            <span className="px-2 py-0.5 bg-purple-50 border border-purple-200 text-purple-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal">
+                              📅 Demo: {d.demoFromDate} to {d.demoToDate}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
