@@ -64,14 +64,14 @@ const initialDeals = [
   { id: 2, name: "City Scan – SonoScape E2", stage: "Demo", value: "₹18L", probability: 50, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "Demo scheduled for E2 portable" }], state: "Active", contributors: [{ user: "Basheer", role: "Account Manager", split: 80 }, { user: "Rahul", role: "Clinical Specialist", split: 15 }] },
 
   { id: 3, name: "Iqra Hospital – SonoScape X3", stage: "Closed Won", value: "₹30L", probability: 100, owner: "Basheer", lastActivity: "Just now", timeline: [{ text: "PO confirmed" }], isLastMonth: false, state: "Active", poNumber: "PO-39281", projectId: "6", projectName: "Iqra Hospital New Wing Construction" },
-  { id: 4, name: "MIMS Clinic – P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }], state: "Active" },
+  { id: 4, name: "MIMS Clinic – P40 Elite", stage: "Lead", value: "₹15L", probability: 10, owner: "Basheer", lastActivity: "1d ago", timeline: [{ text: "Cold call, showed interest" }], state: "Active", projectId: "11", projectName: "MIMS Clinic Ultrasound Upgrade" },
   { id: 5, name: "Baby Memorial – Patient Monitor", stage: "Negotiation", value: "₹8L", probability: 70, owner: "Basheer", lastActivity: "2h ago", timeline: [{ text: "Price negotiation round 1" }], isPriority: true, state: "Active" },
   { id: 101, name: "Fathima Hospital – Defibrillator", stage: "Closed Won", value: "₹10L", probability: 100, owner: "Basheer", lastActivity: "20d ago", timeline: [{ text: "Installed" }], isLastMonth: true, state: "Active", poNumber: "PO-19203" },
   { id: 102, name: "Wayanad Medical – Patient Monitor", stage: "Lost", value: "₹5L", probability: 0, owner: "Basheer", lastActivity: "15d ago", timeline: [{ text: "Budget constraints" }], isLastMonth: true, state: "Active" },
 
   // --- "Amit" (Salesperson 2) ---
-  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }], state: "Active", projectId: "5", projectName: "Aster Medcity Urology Renovation" },
-  { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }], state: "On Hold", holdReason: "Budget Approval Pending", holdNotes: "State budget allocation delayed to next fiscal quarter. HOD confirmed interest remains.", holdReactivationDate: "2026-08-15" },
+  { id: 6, name: "Aster Medcity – SonoScape S80", stage: "Demo", value: "₹28L", probability: 50, owner: "Amit", lastActivity: "1d ago", timeline: [{ text: "Demo completed, awaiting feedback" }], state: "On Hold", holdReason: "Customer Internal Approval", holdNotes: "Urology department renovation on hold due to equipment sourcing revision.", holdReactivationDate: "2026-09-15", projectId: "5", projectName: "Aster Medcity Urology Renovation" },
+  { id: 7, name: "Trivandrum Medical College – SonoScape HD-550", stage: "Qualified", value: "₹150L", probability: 30, owner: "Amit", lastActivity: "2d ago", timeline: [{ text: "Met HOD, budget approved" }], state: "On Hold", holdReason: "Budget Approval Pending", holdNotes: "State budget allocation delayed to next fiscal quarter. HOD confirmed interest remains.", holdReactivationDate: "2026-08-15", projectId: "8", projectName: "TMC Critical Care Block Extension" },
   { id: 8, name: "Lakeshore Hospital – Patient Monitors", stage: "Lead", value: "₹12L", probability: 10, owner: "Amit", lastActivity: "3d ago", timeline: [{ text: "Initial inquiry email" }], isPriority: false, state: "Active" },
   { id: 9, name: "KIMS Trivandrum – Defibrillators", stage: "Closed Won", value: "₹20L", probability: 100, owner: "Amit", lastActivity: "4h ago", timeline: [{ text: "Advance payment received" }], isLastMonth: false, state: "Active", poNumber: "PO-48291", projectId: "9", projectName: "KIMS Radiology Digitalization" },
   { id: 10, name: "SUT Hospital – ECG Machines", stage: "Negotiation", value: "₹5L", probability: 70, owner: "Amit", lastActivity: "Just now", timeline: [{ text: "Waiting for final sign-off" }], state: "Active" },
@@ -386,6 +386,8 @@ export default function App() {
   const [drilldownReport, setDrilldownReport] = useState(null); // Report Drilldown
   const [hideHaroonNotification, setHideHaroonNotification] = useState(false); // Haroon Notification simulator
   const [customAlert, setCustomAlert] = useState(null); // Custom Alert Modal: { title, message, type }
+  const [listHospitalFilter, setListHospitalFilter] = useState("All");
+  const [listProjectFilter, setListProjectFilter] = useState("All");
 
   const [repData, setRepData] = useState(() => {
     const saved = localStorage.getItem("sales_os_repdata");
@@ -490,6 +492,9 @@ export default function App() {
   const [formProjectStatus, setFormProjectStatus] = useState("Planning");
   const [formExpectedCloseDate, setFormExpectedCloseDate] = useState("");
   const [isFormCustomerLocked, setIsFormCustomerLocked] = useState(false);
+  const [formProjectHoldReason, setFormProjectHoldReason] = useState("Budget Approval Pending");
+  const [formProjectHoldNotes, setFormProjectHoldNotes] = useState("");
+  const [formProjectHoldReactivationDate, setFormProjectHoldReactivationDate] = useState("");
 
   // Search & Filter states for projects master
   const [projectSearchText, setProjectSearchText] = useState("");
@@ -691,11 +696,48 @@ export default function App() {
         else if (d.id === 107) productIds = [3];
         else productIds = [1];
       }
+      let projectId = d.projectId;
+      let projectName = d.projectName;
+      let state = d.state || "Active";
+      let holdReason = d.holdReason;
+      let holdNotes = d.holdNotes;
+      let holdReactivationDate = d.holdReactivationDate;
+
+      if (d.id === 1) { projectId = "7"; projectName = "Al Shifa Patient Monitor Upgrade"; }
+      else if (d.id === 3) { projectId = "6"; projectName = "Iqra Hospital New Wing Construction"; }
+      else if (d.id === 4) { projectId = "11"; projectName = "MIMS Clinic Ultrasound Upgrade"; }
+      else if (d.id === 6) {
+        projectId = "5";
+        projectName = "Aster Medcity Urology Renovation";
+        state = "On Hold";
+        holdReason = holdReason || "Customer Internal Approval";
+        holdNotes = holdNotes || "Urology department renovation on hold due to equipment sourcing revision.";
+        holdReactivationDate = holdReactivationDate || "2026-09-15";
+      }
+      else if (d.id === 7) {
+        projectId = "8";
+        projectName = "TMC Critical Care Block Extension";
+        state = "On Hold";
+        holdReason = holdReason || "Budget Approval Pending";
+        holdNotes = holdNotes || "State budget allocation delayed to next fiscal quarter. HOD confirmed interest remains.";
+        holdReactivationDate = holdReactivationDate || "2026-08-15";
+      }
+      else if (d.id === 9) { projectId = "9"; projectName = "KIMS Radiology Digitalization"; }
+      else if (d.id === 11) { projectId = "3"; projectName = "Apollo Bangalore Equipment Upgrade"; }
+      else if (d.id === 105) { projectId = "1"; projectName = "Apollo North Hospital Expansion"; }
+      else if (d.id === 106) { projectId = "1"; projectName = "Apollo North Hospital Expansion"; }
+      else if (d.id === 107) { projectId = "2"; projectName = "Apollo Digital Transformation Program"; }
+
       return {
         ...d,
         owner: d.owner === "You" ? "Basheer" : d.owner,
         isPriority: d.isPriority === true ? true : false,
-        state: d.state || "Active",
+        state,
+        holdReason,
+        holdNotes,
+        holdReactivationDate,
+        projectId,
+        projectName,
         poNumber: d.poNumber || "",
         productIds,
         contributors
@@ -1322,6 +1364,27 @@ export default function App() {
       });
       return;
     }
+
+    // On Hold validation: Hold Notes and Expected Reactivation Date are mandatory
+    if (formProjectStatus === "On Hold") {
+      if (!formProjectHoldNotes || !formProjectHoldNotes.trim()) {
+        setCustomAlert({
+          title: "Hold Notes Required",
+          message: "Please enter Hold Notes explaining why this project is being put on hold.",
+          type: "warning"
+        });
+        return;
+      }
+      if (!formProjectHoldReactivationDate) {
+        setCustomAlert({
+          title: "Reactivation Date Required",
+          message: "Please set an Expected Reactivation Date for this on-hold project.",
+          type: "warning"
+        });
+        return;
+      }
+    }
+
     const customerObj = customers.find(c => c.id.toString() === formCustomerId.toString());
     const projectData = {
       id: editingProject ? editingProject.id : Date.now().toString(),
@@ -1330,7 +1393,10 @@ export default function App() {
       customerName: customerObj ? customerObj.name : "",
       projectType: formProjectType,
       status: formProjectStatus,
-      expectedCloseDate: formExpectedCloseDate
+      expectedCloseDate: formExpectedCloseDate,
+      holdReason: formProjectStatus === "On Hold" ? formProjectHoldReason : undefined,
+      holdNotes: formProjectStatus === "On Hold" ? formProjectHoldNotes : undefined,
+      holdReactivationDate: formProjectStatus === "On Hold" ? formProjectHoldReactivationDate : undefined
     };
 
     if (editingProject) {
@@ -1346,6 +1412,9 @@ export default function App() {
     setFormProjectType("New Hospital Build");
     setFormProjectStatus("Planning");
     setFormExpectedCloseDate("");
+    setFormProjectHoldReason("Budget Approval Pending");
+    setFormProjectHoldNotes("");
+    setFormProjectHoldReactivationDate("");
     setEditingProject(null);
     setIsProjectModalOpen(false);
     setIsFormCustomerLocked(false);
@@ -1360,6 +1429,9 @@ export default function App() {
     setFormProjectType(proj.projectType);
     setFormProjectStatus(proj.status);
     setFormExpectedCloseDate(proj.expectedCloseDate || "");
+    setFormProjectHoldReason(proj.holdReason || "Budget Approval Pending");
+    setFormProjectHoldNotes(proj.holdNotes || "");
+    setFormProjectHoldReactivationDate(proj.holdReactivationDate || "");
     setIsFormCustomerLocked(false);
     setIsProjectModalOpen(true);
   };
@@ -1380,6 +1452,9 @@ export default function App() {
     setFormProjectType("New Hospital Build");
     setFormProjectStatus("Planning");
     setFormExpectedCloseDate("");
+    setFormProjectHoldReason("Budget Approval Pending");
+    setFormProjectHoldNotes("");
+    setFormProjectHoldReactivationDate("");
     setIsProjectModalOpen(true);
   };
 
@@ -1774,6 +1849,33 @@ export default function App() {
     return true;
   };
 
+  const getFilteredDeals = () => {
+    let list = (currentUser !== "Manager" || managerFilter === "All" ? visibleDeals : visibleDeals.filter(d => {
+      if (managerFilter.startsWith("Zone:")) {
+        return repData[d.owner]?.zone === managerFilter.split(":")[1];
+      } else if (managerFilter.startsWith("Rep:")) {
+        return d.owner === managerFilter.split(":")[1];
+      }
+      return true;
+    }));
+
+    list = list.filter(matchesMetricFilter);
+
+    if (listHospitalFilter !== "All") {
+      list = list.filter(d => d.name.split("–")[0].trim() === listHospitalFilter);
+    }
+
+    if (listProjectFilter !== "All") {
+      if (listProjectFilter === "None") {
+        list = list.filter(d => !d.projectId);
+      } else {
+        list = list.filter(d => d.projectName === listProjectFilter || d.projectId === projects.find(p => p.projectName === listProjectFilter)?.id);
+      }
+    }
+
+    return list;
+  };
+
 
   const isAdmin = currentUser === "Manager" || users.find(u => u.name === currentUser)?.role === "Admin";
 
@@ -2128,7 +2230,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 mt-3 mb-2">
+                          <div className="flex items-center gap-2 mt-3 mb-2 flex-wrap">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -2138,6 +2240,11 @@ export default function App() {
                             >
                               <span className="text-sm leading-none">{deal.isPriority ? "⭐" : "☆"}</span>
                             </button>
+                            {deal.projectName && (
+                              <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal shadow-sm">
+                                📂 {deal.projectName}
+                              </span>
+                            )}
                           </div>
 
                           <select
@@ -2160,43 +2267,68 @@ export default function App() {
 
       {/* Manager View */}
       {
-        view === "manager" && (
-          <div className="flex-1 overflow-y-auto min-h-0 bg-white">
-            <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-4 border-b border-gray-100 shadow-sm flex justify-between items-center gap-4">
-              <h2 className="font-black text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
-                <span className="text-blue-600">📋</span> {currentUser === "Manager" ? "Leads List" : "My Deals"}
-                <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-lg text-gray-400 font-black">{dashboardDeals.length} Total</span>
-              </h2>
-              {currentUser === "Manager" && (
-                <select
-                  value={managerFilter}
-                  onChange={(e) => setManagerFilter(e.target.value)}
-                  className="bg-gray-50 border border-gray-200 text-gray-800 text-[11px] font-black rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase"
-                >
-                  <option value="All">All Regions</option>
-                  <option value="Zone:North Kerala">Zone: North Kerala</option>
-                  <option value="Zone:South Kerala">Zone: South Kerala</option>
-                  <option value="Zone:Bangalore">Zone: Bangalore</option>
-                  <optgroup label="Sales Reps">
-                    <option value="Rep:Basheer">Rep: Basheer</option>
-                    <option value="Rep:Amit">Rep: Amit</option>
-                    <option value="Rep:Rahul">Rep: Rahul</option>
-                  </optgroup>
-                </select>
-              )}
-            </div>
-            <div className="p-3">
-              {(currentUser !== "Manager" || managerFilter === "All" ? visibleDeals : visibleDeals.filter(d => {
-                if (managerFilter.startsWith("Zone:")) {
-                  return repData[d.owner]?.zone === managerFilter.split(":")[1];
-                } else if (managerFilter.startsWith("Rep:")) {
-                  return d.owner === managerFilter.split(":")[1];
-                }
-                return true;
-              }))
-                .filter(matchesMetricFilter)
-                .sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0) || b.probability - a.probability)
-                .map(deal => (
+        view === "manager" && (() => {
+          const uniqueHospitals = Array.from(new Set(deals.map(d => d.name.split("–")[0].trim()).filter(Boolean))).sort();
+          const uniqueProjects = Array.from(new Set(projects.map(p => p.projectName).filter(Boolean))).sort();
+          
+          return (
+            <div className="flex-1 overflow-y-auto min-h-0 bg-white">
+              <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-4 py-4 border-b border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h2 className="font-black text-gray-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                  <span className="text-blue-600">📋</span> {currentUser === "Manager" ? "Leads List" : "My Deals"}
+                  <span className="text-[10px] bg-gray-100 px-2 py-1 rounded-lg text-gray-400 font-black">
+                    {getFilteredDeals().length} Total
+                  </span>
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+                  {/* Hospital Filter */}
+                  <select
+                    value={listHospitalFilter}
+                    onChange={(e) => setListHospitalFilter(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 text-gray-800 text-[11px] font-black rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase cursor-pointer"
+                  >
+                    <option value="All">All Hospitals</option>
+                    {uniqueHospitals.map(hosp => (
+                      <option key={hosp} value={hosp}>{hosp}</option>
+                    ))}
+                  </select>
+
+                  {/* Project Filter */}
+                  <select
+                    value={listProjectFilter}
+                    onChange={(e) => setListProjectFilter(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 text-gray-800 text-[11px] font-black rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase cursor-pointer"
+                  >
+                    <option value="All">All Projects</option>
+                    <option value="None">No Project</option>
+                    {uniqueProjects.map(proj => (
+                      <option key={proj} value={proj}>{proj}</option>
+                    ))}
+                  </select>
+
+                  {currentUser === "Manager" && (
+                    <select
+                      value={managerFilter}
+                      onChange={(e) => setManagerFilter(e.target.value)}
+                      className="bg-gray-50 border border-gray-200 text-gray-800 text-[11px] font-black rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 transition-all uppercase cursor-pointer"
+                    >
+                      <option value="All">All Regions</option>
+                      <option value="Zone:North Kerala">Zone: North Kerala</option>
+                      <option value="Zone:South Kerala">Zone: South Kerala</option>
+                      <option value="Zone:Bangalore">Zone: Bangalore</option>
+                      <optgroup label="Sales Reps">
+                        <option value="Rep:Basheer">Rep: Basheer</option>
+                        <option value="Rep:Amit">Rep: Amit</option>
+                        <option value="Rep:Rahul">Rep: Rahul</option>
+                      </optgroup>
+                    </select>
+                  )}
+                </div>
+              </div>
+              <div className="p-3">
+                {getFilteredDeals()
+                  .sort((a, b) => (b.isPriority ? 1 : 0) - (a.isPriority ? 1 : 0) || b.probability - a.probability)
+                  .map(deal => (
                   <div
                     key={deal.id}
                     className="bg-white p-3 mb-2 rounded shadow border-l-4 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm"
@@ -2220,7 +2352,7 @@ export default function App() {
                       </div>
                       <div className="font-bold text-gray-700">{deal.value}</div>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1 uppercase font-black text-[9px] tracking-widest opacity-60 flex items-center gap-2">
+                    <div className="text-sm text-gray-600 mt-1 uppercase font-black text-[9px] tracking-widest opacity-60 flex flex-wrap items-center gap-2">
                       <span>Stage: {deal.stage} &nbsp;|&nbsp; Owner: </span>
                       {deal.contributors && deal.contributors.length > 1 ? (
                         <span className="inline-flex items-center gap-1 bg-indigo-600 text-white px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-wider shadow-sm">
@@ -2231,6 +2363,11 @@ export default function App() {
                       )}
                       {deal.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
                       {isHoldOverdue(deal) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
+                      {deal.projectName && (
+                        <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal shadow-sm">
+                          📂 {deal.projectName}
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-500 mt-2 flex items-center justify-between">
                       <div className="font-bold text-gray-800">🎯 {deal.probability}% &nbsp;|&nbsp; ⏳ {deal.lastActivity}</div>
@@ -2240,8 +2377,8 @@ export default function App() {
                 ))}
             </div>
           </div>
-        )
-      }
+        );
+      })()}
 
       {/* Reminders View (Phase 7 Refinement) */}
       {view === "reminders" && (
@@ -2768,7 +2905,7 @@ export default function App() {
                 </div>
                 <div className="flex flex-wrap gap-4 w-full md:w-auto">
                   <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px]">
-                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Target Quota</span>
+                    <span className="text-[9px] text-indigo-300 font-extrabold uppercase tracking-wider block">Sales Team Allocation</span>
                     <span className="text-md font-black">₹{repTargetLakhs} Lakhs</span>
                   </div>
                   <div className="bg-white/5 border border-white/10 px-4 py-2.5 rounded-2xl flex-1 md:flex-none min-w-[110px]">
@@ -3905,7 +4042,7 @@ export default function App() {
                   &larr; Back
                 </button>
                 <div>
-                  <div className="text-[9px] font-black opacity-50 uppercase tracking-[0.2em]">Customer 360 Profile</div>
+                  <div className="text-[9px] font-black opacity-50 uppercase tracking-[0.2em]">Customer 360</div>
                   <h2 className="font-bold text-xl leading-tight uppercase tracking-tight">{selectedAccount.name}</h2>
                 </div>
               </div>
@@ -3969,11 +4106,11 @@ export default function App() {
             <div className="sticky top-[72px] z-40 bg-white border-b border-gray-200 shadow-sm px-6 py-2.5 flex gap-2 overflow-x-auto">
               {[
                 { id: "overview", label: "Overview", icon: "📊" },
-                { id: "stakeholders", label: "Stakeholders", icon: "👥" },
                 { id: "projects", label: "Projects", icon: "📂" },
                 { id: "opportunities", label: "Opportunities", icon: "💼" },
-                { id: "installed_base", label: "Installed Base", icon: "⚙️" },
-                { id: "activity_timeline", label: "Activity Timeline", icon: "📜" }
+                { id: "activity_timeline", label: "Activity Timeline", icon: "📜" },
+                { id: "stakeholders", label: "Stakeholders", icon: "👥" },
+                { id: "installed_base", label: "Installed Base", icon: "⚙️" }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -4295,11 +4432,11 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Row 3: Account Revenue Summary */}
+                  {/* Row 3: Opportunities Summary */}
                   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
                     <div className="flex items-center gap-2 mb-4 text-gray-800">
                       <span className="text-lg">💼</span>
-                      <h3 className="font-black text-sm uppercase tracking-wider">Account Revenue Summary</h3>
+                      <h3 className="font-black text-sm uppercase tracking-wider">Opportunities Summary</h3>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                       <div className="p-4 bg-blue-50/30 rounded-2xl border border-blue-50/50">
@@ -4508,6 +4645,11 @@ export default function App() {
                               <span>{d.stage} · {d.owner}</span>
                               {d.state === "On Hold" && <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md">⏸ On Hold</span>}
                               {isHoldOverdue(d) && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[7px] font-black uppercase tracking-wider rounded-md animate-pulse">🚨 Reactivation Overdue</span>}
+                              {d.projectName && (
+                                <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[8px] font-black rounded-md flex items-center gap-1 normal-case tracking-normal">
+                                  📂 {d.projectName}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="font-black text-blue-900 text-lg">{d.value}</div>
@@ -5182,34 +5324,42 @@ export default function App() {
       {
         isEditingLead && editLeadData && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1200] p-4">
-            <div className="bg-white p-6 rounded-[32px] w-full max-w-[480px] shadow-2xl flex flex-col max-h-[90vh]">
-              <h3 className="font-black text-gray-800 text-lg mb-4 tracking-tight uppercase">Edit Opportunity</h3>
+            <div className="bg-white rounded-[32px] w-full max-w-[480px] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+              
+              {/* Sticky Header Section */}
+              <div className="p-6 pb-2 border-b border-gray-100 bg-white flex-shrink-0">
+                <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-0.5">
+                  {editLeadData.name.split('–')[0].trim()}
+                </div>
+                <h3 className="font-black text-gray-800 text-lg mb-3 tracking-tight uppercase">Edit Opportunity</h3>
 
-              {/* Edit Drawer Tabs */}
-              <div className="flex gap-1 mb-4 border-b border-gray-100 pb-0 overflow-x-auto">
-                {[
-                  { id: "overview", label: "Overview", icon: "📋" },
-                  { id: "products", label: "Products", icon: "📦" },
-                  { id: "contacts", label: "Contacts", icon: "👥" },
-                  { id: "team", label: "Team", icon: "🤝" }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveEditTab(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-2 text-[10px] font-bold tracking-wide transition-all border-b-2 whitespace-nowrap cursor-pointer ${
-                      activeEditTab === tab.id
-                        ? "border-blue-600 text-blue-700 bg-blue-50/50"
-                        : "border-transparent text-gray-400 hover:text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span>{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
+                {/* Edit Drawer Tabs */}
+                <div className="flex gap-1 border-b border-gray-100 pb-0 overflow-x-auto">
+                  {[
+                    { id: "overview", label: "Overview", icon: "📋" },
+                    { id: "products", label: "Products", icon: "📦" },
+                    { id: "contacts", label: "Contacts", icon: "👥" },
+                    { id: "team", label: "Team", icon: "🤝" }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveEditTab(tab.id)}
+                      className={`flex items-center gap-1 px-3 py-2 text-[10px] font-bold tracking-wide transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                        activeEditTab === tab.id
+                          ? "border-blue-600 text-blue-700 bg-blue-50/50"
+                          : "border-transparent text-gray-400 hover:text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-4 overflow-y-auto pr-1.5 custom-scrollbar pb-2 flex-1">
+              {/* Scrollable Content Section */}
+              <div className="space-y-4 overflow-y-auto p-6 pr-4 custom-scrollbar pb-2 flex-1 bg-gray-50/10">
                 {activeEditTab === "overview" && (
                   <div className="space-y-4">
                 <div>
@@ -5659,7 +5809,7 @@ export default function App() {
                           </select>
                         </div>
                         <div>
-                          <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Hold Notes</label>
+                          <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Hold Notes *</label>
                           <textarea
                             className="w-full bg-white border border-amber-200 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400 min-h-[50px]"
                             placeholder="Details about why this opportunity is on hold..."
@@ -5668,7 +5818,7 @@ export default function App() {
                           />
                         </div>
                         <div>
-                          <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Expected Reactivation Date</label>
+                          <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Expected Reactivation Date *</label>
                           <input
                             type="date"
                             className="w-full bg-white border border-amber-200 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400"
@@ -5686,45 +5836,39 @@ export default function App() {
                 {/* PRODUCTS TAB (EDIT) */}
                 {activeEditTab === "products" && (
                   <div className="space-y-4">
-                    {["Qualified", "Demo", "Negotiation", "Order", "Closed Won"].includes(editLeadData.stage) ? (
-                      <div className="p-4 bg-blue-50/20 border border-blue-100/50 rounded-2xl">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Associated Products</label>
-                        <div className="bg-white border border-gray-100 p-3 rounded-xl space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                          {catalog.map(prod => {
-                            const isSelected = (editLeadData.productIds || []).includes(prod.id);
-                            return (
-                              <label key={prod.id} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer py-1 hover:bg-gray-50 px-1 rounded transition-colors">
-                                <input
-                                  type="checkbox"
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                                  checked={isSelected}
-                                  onChange={() => {
-                                    const newProductIds = isSelected
-                                      ? (editLeadData.productIds || []).filter(id => id !== prod.id)
-                                      : [...(editLeadData.productIds || []), prod.id];
-                                    const selectedProductNames = catalog.filter(p => newProductIds.includes(p.id)).map(p => p.name);
-                                    const hospitalName = editLeadData.name.split('–')[0] || editLeadData.name;
-                                    const newName = selectedProductNames.length > 0
-                                      ? `${hospitalName}–${selectedProductNames.join(" & ")}`
-                                      : editLeadData.name;
-                                    setEditLeadData({
-                                      ...editLeadData,
-                                      productIds: newProductIds,
-                                      name: newName
-                                    });
-                                  }}
-                                />
-                                <span>{prod.name} ({prod.category})</span>
-                              </label>
-                            );
-                          })}
-                        </div>
+                    <div className="p-4 bg-blue-50/20 border border-blue-100/50 rounded-2xl">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Associated Products</label>
+                      <div className="bg-white border border-gray-100 p-3 rounded-xl space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                        {catalog.map(prod => {
+                          const isSelected = (editLeadData.productIds || []).includes(prod.id);
+                          return (
+                            <label key={prod.id} className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer py-1 hover:bg-gray-50 px-1 rounded transition-colors">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                checked={isSelected}
+                                onChange={() => {
+                                  const newProductIds = isSelected
+                                    ? (editLeadData.productIds || []).filter(id => id !== prod.id)
+                                    : [...(editLeadData.productIds || []), prod.id];
+                                  const selectedProductNames = catalog.filter(p => newProductIds.includes(p.id)).map(p => p.name);
+                                  const hospitalName = editLeadData.name.split('–')[0] || editLeadData.name;
+                                  const newName = selectedProductNames.length > 0
+                                    ? `${hospitalName}–${selectedProductNames.join(" & ")}`
+                                    : editLeadData.name;
+                                  setEditLeadData({
+                                    ...editLeadData,
+                                    productIds: newProductIds,
+                                    name: newName
+                                  });
+                                }}
+                              />
+                              <span>{prod.name} ({prod.category})</span>
+                            </label>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <div className="text-gray-400 text-xs italic text-center py-8">
-                        Products can only be associated when the deal is Qualified or beyond.
-                      </div>
-                    )}
+                    </div>
                   </div>
                 )}
 
@@ -5884,7 +6028,8 @@ export default function App() {
                 )}
               </div>
 
-              <div className="mt-8 flex gap-3">
+              {/* Sticky Footer Section */}
+              <div className="p-6 pt-4 border-t border-gray-100 bg-white flex gap-3 flex-shrink-0 mt-auto">
                 <button
                   type="button"
                   onClick={() => {
@@ -6059,6 +6204,26 @@ export default function App() {
                         type: "warning"
                       });
                       return;
+                    }
+
+                    // On Hold validation: Hold Notes and Expected Reactivation Date are mandatory
+                    if (editLeadData.state === "On Hold") {
+                      if (!editLeadData.holdNotes || !editLeadData.holdNotes.trim()) {
+                        setCustomAlert({
+                          title: "Hold Notes Required",
+                          message: "Please enter Hold Notes explaining why this opportunity is being put on hold.",
+                          type: "warning"
+                        });
+                        return;
+                      }
+                      if (!editLeadData.holdReactivationDate) {
+                        setCustomAlert({
+                          title: "Reactivation Date Required",
+                          message: "Please set an Expected Reactivation Date for this on-hold opportunity.",
+                          type: "warning"
+                        });
+                        return;
+                      }
                     }
 
                     // 3. Process activity logging if stage changed
@@ -7328,6 +7493,84 @@ export default function App() {
           </div>
 
           <div className="p-4 sm:p-6 pb-24 max-w-5xl mx-auto space-y-6 mt-4">
+            {/* If project status is On Hold, show why associated leads are on hold */}
+            {selectedProject.status === "On Hold" && (
+              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <span className="text-xl">⏸️</span>
+                  <div className="flex-1">
+                    <h4 className="font-extrabold text-amber-900 text-sm uppercase tracking-wide mb-2">
+                      Project & Lead On Hold Details
+                    </h4>
+
+                    {/* Project-level hold details */}
+                    <div className="mb-4 pb-4 border-b border-amber-200/50">
+                      <div className="text-xs font-black text-amber-800 uppercase tracking-wider mb-2">
+                        📁 Project Hold Context
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
+                        <div>
+                          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Hold Reason</span>
+                          <span className="text-xs font-bold text-gray-700">{selectedProject.holdReason || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Expected Reactivation</span>
+                          <span className="text-xs font-bold text-gray-700">{selectedProject.holdReactivationDate || "N/A"}</span>
+                        </div>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Hold Notes</span>
+                        <p className="text-xs text-gray-600 mt-0.5 leading-relaxed bg-white/50 p-2.5 rounded-xl border border-amber-100/50">{selectedProject.holdNotes || "No notes provided."}</p>
+                      </div>
+                    </div>
+
+                    {/* Associated deals on hold */}
+                    {(() => {
+                      const onHoldDeals = deals.filter(
+                        d => d.projectId === selectedProject.id && d.state === "On Hold"
+                      );
+                      if (onHoldDeals.length > 0) {
+                        return (
+                          <div className="space-y-4">
+                            <div className="text-xs font-black text-amber-800 uppercase tracking-wider">
+                              Associated Leads On Hold
+                            </div>
+                            {onHoldDeals.map(d => (
+                              <div key={d.id} className="border-t border-amber-200/50 pt-3 first:border-t-0 first:pt-0">
+                                <div className="text-xs font-black text-amber-800 uppercase tracking-wider mb-1">
+                                  Lead: {d.name}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
+                                  <div>
+                                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Hold Reason</span>
+                                    <span className="text-xs font-bold text-gray-700">{d.holdReason || "N/A"}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Reactivation Date</span>
+                                    <span className="text-xs font-bold text-gray-700">{d.holdReactivationDate || "N/A"}</span>
+                                  </div>
+                                </div>
+                                <div className="mt-2">
+                                  <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest block">Hold Notes / Details</span>
+                                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed bg-white/50 p-2.5 rounded-xl border border-amber-100/50">{d.holdNotes || "No notes provided."}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <p className="text-xs text-amber-700">
+                            No associated leads are currently on hold.
+                          </p>
+                        );
+                      }
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <section className="bg-gray-50 p-5 rounded-3xl border border-gray-100 shadow-inner">
               <h3 className="font-black text-gray-800 mb-4 flex justify-between items-center text-sm uppercase tracking-wider">
                 Associated Opportunities
@@ -7501,6 +7744,48 @@ export default function App() {
                 </div>
               </div>
 
+              {/* On Hold fields - conditionally shown */}
+              {formProjectStatus === "On Hold" && (
+                <div className={`p-4 rounded-2xl border transition-all bg-amber-50 border-amber-200 space-y-3`}>
+                  <div className="text-[10px] font-black text-amber-800 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>⏸</span> Hold Settings
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Hold Reason</label>
+                    <select
+                      className="w-full bg-white border border-amber-200 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400"
+                      value={formProjectHoldReason}
+                      onChange={(e) => setFormProjectHoldReason(e.target.value)}
+                    >
+                      <option>Budget Approval Pending</option>
+                      <option>Tender Delayed</option>
+                      <option>Construction Delay</option>
+                      <option>Regulatory Approval</option>
+                      <option>Customer Internal Approval</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Hold Notes *</label>
+                    <textarea
+                      className="w-full bg-white border border-amber-200 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400 min-h-[50px]"
+                      placeholder="Details about why this project is on hold..."
+                      value={formProjectHoldNotes}
+                      onChange={(e) => setFormProjectHoldNotes(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Expected Reactivation Date *</label>
+                    <input
+                      type="date"
+                      className="w-full bg-white border border-amber-200 p-2.5 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-amber-400"
+                      value={formProjectHoldReactivationDate}
+                      onChange={(e) => setFormProjectHoldReactivationDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-[9px] font-black text-gray-400 uppercase mb-1.5 block tracking-widest">Expected Close Date</label>
                 <input
@@ -7544,7 +7829,7 @@ export default function App() {
               &larr; Back to Beat Plans
             </button>
 
-            <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Beat Plan Profile Details</div>
+            <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] mb-1">Beat Plan Details</div>
             <h2 className="font-bold text-3xl leading-tight mb-3 uppercase tracking-tight">{selectedBeatPlan.quarter} Beat Plan</h2>
             
             <div className="flex flex-wrap items-center gap-2 text-xs font-bold opacity-80 uppercase tracking-widest mt-4">
@@ -7575,7 +7860,7 @@ export default function App() {
                 <div className="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-6 rounded-3xl border border-indigo-850 shadow-xl space-y-4 animate-in fade-in duration-200">
                   <div className="flex items-center gap-2 pb-2 border-b border-white/10">
                     <span className="text-xl">🎯</span>
-                    <h3 className="font-black text-sm uppercase tracking-wider">Target Coverage & Planning Alignment</h3>
+                    <h3 className="font-black text-sm uppercase tracking-wider">Target Planning Alignment</h3>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
