@@ -33,11 +33,13 @@ The navigation sidebar (L1904 – L1966) is structured into logical sections:
 
 ### 1.3 Customer 360 View Workspace (L3997 – L4800)
 * **Trigger:** Conditionally rendered when a customer account is selected (`selectedAccount` state is non-null).
-* **UI Layout:** Full-screen detail overlay panel controlled by a sub-tab navigation state (`active360Tab` local state).
+* **UI Layout:** Full-screen detail overlay panel.
+  - *Desktop:* Renders a horizontal sticky tab selector bar.
+  - *Mobile:* Renders a responsive **Custom Dropdown Selector** (toggled by the `is360TabsDropdownOpen` state) to prevent horizontal scrolling and improve accessibility.
 * **Sub-Tabs Inventory:**
-  1. **Overview Tab (L4098):** Displays customer profile details (Name, Zone, City, Class, Specialty, Type, and Parent Corporate Group lookup). Includes interactive selectors to update:
-     - *NPS Status / Customer Sentiment:* Select dropdown (`Promoter`, `Neutral`, `Detractor`). Captures `selectedAccount.npsStatus`.
-     - *Payer Status / Financial Behavior:* Select dropdown (`Good Paymaster`, `Average Payer`, `Problematic Payer`, `Unknown Payer`). Captures `selectedAccount.payerStatus`.
+  1. **Overview Tab (L4098):** Displays customer profile details (Name, Zone, City, Class, Specialty, Type, and Parent Corporate Group lookup). Includes:
+     - **Relationship Health Card (Redesigned):** Structured as a double-column dashboard block. The left column stacks Primary Contact details, Last Interaction details, and Open Follow-up counts. The right column houses the Stakeholder Sentiment (NPS) list.
+     - *Payment Status / Financial Behavior:* A tag-style select dropdown (`Good Paymaster`, `Average Payer`, `Problematic Payer`, `Unknown Payer`) positioned inside the card header.
   2. **Stakeholders Tab (L4428):** Lists contact details of stakeholders associated with this customer. Includes buttons to add/remove contacts.
   3. **Projects Tab (L4517):** Renders corporate projects associated with this hospital. Links to the Project Creation modal.
   4. **Opportunities Tab (L4578):** Displays a listing of all opportunities associated with this hospital (active, won, lost), including value and win probability.

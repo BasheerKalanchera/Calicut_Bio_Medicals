@@ -790,6 +790,7 @@ export default function App() {
   });
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
   const [active360Tab, setActive360Tab] = useState("overview");
+  const [is360TabsDropdownOpen, setIs360TabsDropdownOpen] = useState(false);
 
   const [activitySearchText, setActivitySearchText] = useState("");
   const [dealActivitySearchText, setDealActivitySearchText] = useState("");
@@ -4205,7 +4206,72 @@ export default function App() {
             </div>
 
             {/* Tab Selector Bar (sticky underneath the header) */}
-            <div className="sticky top-[72px] z-40 bg-white border-b border-gray-200 shadow-sm px-6 py-2.5 flex gap-2 overflow-x-auto">
+            {/* Mobile View: Custom Dropdown Menu */}
+            <div className="sm:hidden sticky top-[72px] z-40 bg-white border-b border-gray-200 shadow-sm px-4 py-2.5">
+              <button
+                onClick={() => setIs360TabsDropdownOpen(!is360TabsDropdownOpen)}
+                className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-gray-700 active:scale-[0.99] transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <span>
+                    {
+                      [
+                        { id: "overview", label: "Overview", icon: "📊" },
+                        { id: "projects", label: "Projects", icon: "📂" },
+                        { id: "opportunities", label: "Opportunities", icon: "💼" },
+                        { id: "activity_timeline", label: "Activity Timeline", icon: "📜" },
+                        { id: "stakeholders", label: "Stakeholders", icon: "👥" },
+                        { id: "installed_base", label: "Installed Base", icon: "⚙️" }
+                      ].find(t => t.id === active360Tab)?.icon
+                    }
+                  </span>
+                  <span>
+                    {
+                      [
+                        { id: "overview", label: "Overview", icon: "📊" },
+                        { id: "projects", label: "Projects", icon: "📂" },
+                        { id: "opportunities", label: "Opportunities", icon: "💼" },
+                        { id: "activity_timeline", label: "Activity Timeline", icon: "📜" },
+                        { id: "stakeholders", label: "Stakeholders", icon: "👥" },
+                        { id: "installed_base", label: "Installed Base", icon: "⚙️" }
+                      ].find(t => t.id === active360Tab)?.label
+                    }
+                  </span>
+                </div>
+                <span className="text-gray-400 text-[10px]">{is360TabsDropdownOpen ? "▲" : "▼"}</span>
+              </button>
+              {is360TabsDropdownOpen && (
+                <div className="absolute left-4 right-4 mt-1.5 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden py-1.5 transition-all">
+                  {[
+                    { id: "overview", label: "Overview", icon: "📊" },
+                    { id: "projects", label: "Projects", icon: "📂" },
+                    { id: "opportunities", label: "Opportunities", icon: "💼" },
+                    { id: "activity_timeline", label: "Activity Timeline", icon: "📜" },
+                    { id: "stakeholders", label: "Stakeholders", icon: "👥" },
+                    { id: "installed_base", label: "Installed Base", icon: "⚙️" }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActive360Tab(tab.id);
+                        setIs360TabsDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-4 py-3 text-left text-xs font-bold transition-colors ${
+                        active360Tab === tab.id
+                          ? "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+                          : "text-gray-600 hover:bg-gray-50 border-l-4 border-transparent"
+                      }`}
+                    >
+                      <span>{tab.icon}</span>
+                      <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop View: Horizontal Tab Bar */}
+            <div className="hidden sm:flex sticky top-[72px] z-40 bg-white border-b border-gray-200 shadow-sm px-6 py-2.5 gap-2 overflow-x-auto">
               {[
                 { id: "overview", label: "Overview", icon: "📊" },
                 { id: "projects", label: "Projects", icon: "📂" },
@@ -4393,97 +4459,116 @@ export default function App() {
                     {/* Relationship Health */}
                     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center gap-2 mb-4 text-gray-800">
-                          <span className="text-lg">❤️</span>
-                          <h3 className="font-black text-sm uppercase tracking-wider">Relationship Health</h3>
+                        {/* Title and Payment Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 text-gray-800">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">❤️</span>
+                            <h3 className="font-black text-sm uppercase tracking-wider">Relationship Health</h3>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200/80 px-2 py-1 rounded-xl shadow-inner w-full sm:w-auto">
+                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-wider whitespace-nowrap pl-1">Payment:</span>
+                            <select 
+                              className="bg-transparent border-0 py-0.5 pr-6 pl-1 text-[10px] font-black text-gray-700 outline-none cursor-pointer w-full focus:ring-0"
+                              value={selectedAccount.payerStatus || "Unknown Payer"}
+                              onChange={(e) => {
+                                const updated = { ...selectedAccount, payerStatus: e.target.value };
+                                setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
+                                setSelectedAccount(updated);
+                              }}
+                            >
+                              <option value="Good Paymaster">✅ Good Paymaster</option>
+                              <option value="Average Payer">⚖️ Average Payer</option>
+                              <option value="Problematic Payer">⚠️ Problematic Payer</option>
+                              <option value="Unknown Payer">Unknown Payer</option>
+                            </select>
+                          </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {/* Primary Contact */}
-                          <div className="bg-blue-50/40 p-3.5 rounded-2xl border border-blue-100/30 flex flex-col justify-between">
-                            <div>
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Primary Contact</span>
-                              {primaryContact ? (
-                                <div>
-                                  <div className="text-xs font-black text-gray-800 leading-tight">{primaryContact.name}</div>
-                                  <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mt-0.5">{primaryContact.role}</div>
-                                </div>
-                              ) : (
-                                <div className="text-[10px] text-gray-400 italic">None Listed</div>
-                              )}
-                            </div>
-                          </div>
 
-                          {/* Last Interaction */}
-                          <div className="bg-indigo-50/40 p-3.5 rounded-2xl border border-indigo-100/30 flex flex-col justify-between">
-                            <div>
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Last Interaction</span>
-                              {lastInteraction ? (
-                                <div>
-                                  <div className="text-xs font-black text-gray-800 leading-tight">{lastInteraction.date}</div>
-                                  <div className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider mt-0.5">{lastInteraction.purpose || "Interaction"}</div>
-                                </div>
-                              ) : (
-                                <div className="text-[10px] text-gray-400 italic">No interaction logged</div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Open Follow-Ups */}
-                          <div className="bg-rose-50/40 p-3.5 rounded-2xl border border-rose-100/30 flex flex-col justify-between">
-                            <div>
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Open Follow-Ups</span>
-                              <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-xl font-black text-rose-700">{openFollowUpsCount}</span>
-                                <span className="text-[10px] font-bold text-gray-500">Pending</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Stakeholder NPS */}
-                          <div className="bg-amber-50/40 p-3.5 rounded-2xl border border-amber-100/30 flex flex-col justify-between">
-                            <div className="flex flex-col h-full justify-between">
-                              <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">Stakeholder NPS</span>
-                              <div className="overflow-y-auto max-h-[85px] space-y-1.5 pr-1 mt-1">
-                                {contacts.filter(c => c.accountId === selectedAccount.id).map(c => (
-                                  <div key={c.id} className="flex items-center justify-between gap-1 text-[10px] py-0.5 border-b border-amber-100/20 last:border-b-0">
-                                    <span className="font-bold text-gray-700 truncate max-w-[90px]" title={c.name}>{c.name}</span>
-                                    {c.npsStatus === "Promoter" && (
-                                      <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 rounded text-[8px] font-black border border-emerald-100/50">Promoter</span>
-                                    )}
-                                    {c.npsStatus === "Detractor" && (
-                                      <span className="px-1.5 py-0.2 bg-red-50 text-red-700 rounded text-[8px] font-black border border-red-100/50">Detractor</span>
-                                    )}
-                                    {(c.npsStatus === "Neutral" || !c.npsStatus) && (
-                                      <span className="px-1.5 py-0.2 bg-gray-50 text-gray-500 rounded text-[8px] font-black border border-gray-200">Neutral</span>
-                                    )}
-                                  </div>
-                                ))}
-                                {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && (
-                                  <div className="text-[9px] text-gray-400 italic">No stakeholders listed</div>
+                        {/* Sub-sections Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          {/* Left Details Column */}
+                          <div className="space-y-3">
+                            {/* Primary Contact */}
+                            <div className="bg-gray-50/50 p-3.5 rounded-2xl border border-gray-100 flex items-center gap-3">
+                              <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-md shadow-sm border border-blue-100/30">👤</div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block leading-none mb-1">Primary Contact</span>
+                                {primaryContact ? (
+                                  <>
+                                    <div className="text-xs font-black text-gray-800 truncate leading-snug">{primaryContact.name}</div>
+                                    <div className="text-[9px] text-blue-600 font-bold uppercase tracking-wider leading-none mt-0.5">{primaryContact.role}</div>
+                                  </>
+                                ) : (
+                                  <div className="text-[10px] text-gray-400 italic">None Assigned</div>
                                 )}
                               </div>
                             </div>
+
+                            {/* Last Interaction */}
+                            <div className="bg-gray-50/50 p-3.5 rounded-2xl border border-gray-100 flex items-center gap-3">
+                              <div className="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-md shadow-sm border border-indigo-100/30">📅</div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block leading-none mb-1">Last Interaction</span>
+                                {lastInteraction ? (
+                                  <>
+                                    <div className="text-xs font-black text-gray-800 truncate leading-snug">{lastInteraction.date}</div>
+                                    <div className="text-[9px] text-indigo-600 font-bold uppercase tracking-wider leading-none mt-0.5">{lastInteraction.purpose || "Interaction"}</div>
+                                  </>
+                                ) : (
+                                  <div className="text-[10px] text-gray-400 italic">No interactions logged</div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Open Follow-Ups */}
+                            <div className="bg-gray-50/50 p-3.5 rounded-2xl border border-gray-100 flex items-center gap-3">
+                              <div className="w-9 h-9 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-md shadow-sm border border-rose-100/30">🚨</div>
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block leading-none mb-1">Open Follow-Ups</span>
+                                <div className="flex items-baseline gap-1.5 mt-0.5">
+                                  <span className="text-base font-black text-rose-700 leading-none">{openFollowUpsCount}</span>
+                                  <span className="text-[9px] font-bold text-gray-500 leading-none">Actions Pending</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Sentiment Column */}
+                          <div className="bg-gray-50/50 p-3.5 rounded-2xl border border-gray-100 flex flex-col justify-between min-h-[175px]">
+                            <div className="flex flex-col h-full justify-between">
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest block">Stakeholder Sentiment</span>
+                                  <span className="text-[8px] font-bold text-gray-400">Total: {contacts.filter(c => c.accountId === selectedAccount.id).length}</span>
+                                </div>
+                                <div className="overflow-y-auto max-h-[120px] space-y-1.5 pr-1 mt-1">
+                                  {contacts.filter(c => c.accountId === selectedAccount.id).map(c => (
+                                    <div key={c.id} className="flex items-center justify-between gap-1 text-[10px] py-1 border-b border-gray-200/40 last:border-b-0">
+                                      <div className="flex flex-col min-w-0">
+                                        <span className="font-black text-gray-700 truncate max-w-[100px]" title={c.name}>{c.name}</span>
+                                        <span className="text-[8px] text-gray-400 font-bold uppercase tracking-wider truncate max-w-[100px]">{c.role}</span>
+                                      </div>
+                                      <div>
+                                        {c.npsStatus === "Promoter" && (
+                                          <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded text-[7px] font-black border border-emerald-100/50 uppercase">Promoter</span>
+                                        )}
+                                        {c.npsStatus === "Detractor" && (
+                                          <span className="px-1.5 py-0.5 bg-red-50 text-red-700 rounded text-[7px] font-black border border-red-100/50 uppercase">Detractor</span>
+                                        )}
+                                        {(c.npsStatus === "Neutral" || !c.npsStatus) && (
+                                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-[7px] font-black border border-gray-250 uppercase">Neutral</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {contacts.filter(c => c.accountId === selectedAccount.id).length === 0 && (
+                                    <div className="text-[9px] text-gray-400 italic text-center py-8">No stakeholders assigned</div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Payment/Payer Status */}
-                      <div className="mt-4 pt-3 border-t border-gray-100">
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Payment Status</label>
-                        <select 
-                          className="w-full bg-gray-50 border border-gray-200 p-2 rounded-xl text-xs font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
-                          value={selectedAccount.payerStatus || "Unknown Payer"}
-                          onChange={(e) => {
-                            const updated = { ...selectedAccount, payerStatus: e.target.value };
-                            setCustomers(prev => prev.map(c => c.id === selectedAccount.id ? updated : c));
-                            setSelectedAccount(updated);
-                          }}
-                        >
-                          <option value="Good Paymaster">✅ Good Paymaster</option>
-                          <option value="Average Payer">⚖️ Average Payer</option>
-                          <option value="Problematic Payer">⚠️ Problematic Payer</option>
-                          <option value="Unknown Payer">Unknown Payer</option>
-                        </select>
                       </div>
                     </div>
 
