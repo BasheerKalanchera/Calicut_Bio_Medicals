@@ -377,6 +377,27 @@ const getActivityQuarter = (activity) => {
   return `Q${q} 2026`;
 };
 
+const parseActivityDate = (dateStr) => {
+  if (!dateStr) return new Date(0);
+  if (dateStr === "Just now") return new Date();
+  if (dateStr.includes("ago")) {
+    const now = new Date();
+    const val = parseInt(dateStr) || 0;
+    if (dateStr.includes("h ago")) {
+      now.setHours(now.getHours() - val);
+    } else if (dateStr.includes("d ago")) {
+      now.setDate(now.getDate() - val);
+    }
+    return now;
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+    return new Date(dateStr);
+  }
+  const withYear = dateStr.includes("202") ? dateStr : dateStr.replace(",", " 2026,");
+  const parsed = new Date(withYear);
+  return isNaN(parsed.getTime()) ? new Date(dateStr) : parsed;
+};
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem("sales_os_currentUser") || "Manager");
   const [managerFilter, setManagerFilter] = useState(() => localStorage.getItem("sales_os_managerFilter") || "All");
@@ -770,6 +791,9 @@ export default function App() {
   const [selectedAccount, setSelectedAccount] = useState(null); // For 360 view
   const [active360Tab, setActive360Tab] = useState("overview");
 
+  const [activitySearchText, setActivitySearchText] = useState("");
+  const [dealActivitySearchText, setDealActivitySearchText] = useState("");
+
   const lastAccountIdRef = React.useRef(null);
 
   useEffect(() => {
@@ -780,13 +804,19 @@ export default function App() {
         setEditParentSearchText(parent ? parent.name : "");
         setIsEditingParent(false);
         setActive360Tab("overview");
+        setActivitySearchText("");
       }
     } else {
       lastAccountIdRef.current = null;
       setEditParentSearchText("");
       setIsEditingParent(false);
+      setActivitySearchText("");
     }
   }, [selectedAccount, customers]);
+
+  useEffect(() => {
+    setDealActivitySearchText("");
+  }, [selectedDeal]);
 
   useEffect(() => {
     const handleDocumentClick = (e) => {
@@ -3499,7 +3529,7 @@ export default function App() {
                   { id: "overview", label: "Overview", icon: "📋" },
                   { id: "products", label: "Products", icon: "📦" },
                   { id: "contacts", label: "Contacts", icon: "👥" },
-                  { id: "activity", label: "Activity", icon: "💬" },
+                  { id: "activity", label: "Activity Timeline", icon: "💬" },
                   { id: "team", label: "Team", icon: "🤝" }
                 ].map(tab => (
                   <button
@@ -3944,34 +3974,78 @@ export default function App() {
 
                     {/* Chronological Activities Timeline */}
                     <div className="space-y-4">
-                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Interaction Timeline</h3>
+                      <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Interaction History</h3>
                       {(() => {
-                        const dealActivities = activities.filter(a => a.dealId === selectedDeal.id);
+                        const dealActivities = activities.filter(a => a.dealId?.toString() === selectedDeal.id?.toString());
                         if (dealActivities.length === 0) {
                           return <div className="text-gray-500 italic text-sm text-center bg-white p-6 rounded-[28px] border border-gray-100 shadow-sm">No activity logged yet for this opportunity.</div>;
                         }
+                        
+                        const filteredDealActivities = dealActivities.filter(a => {
+                          if (!dealActivitySearchText.trim()) return true;
+                          const searchLower = dealActivitySearchText.toLowerCase();
+                          const matchesNotes = (a.notes || "").toLowerCase().includes(searchLower);
+                          const matchesOwner = (a.owner || "").toLowerCase().includes(searchLower);
+                          const matchesPurpose = (a.type === 'audit' ? "SYSTEM AUDIT" : (a.purpose || "INTERACTION")).toLowerCase().includes(searchLower);
+                          const matchesDate = (a.date || "").toLowerCase().includes(searchLower);
+                          return matchesNotes || matchesOwner || matchesPurpose || matchesDate;
+                        });
+
+                        const sortedFilteredDealActivities = [...filteredDealActivities].sort((a, b) => parseActivityDate(b.date) - parseActivityDate(a.date));
+
                         return (
-                          <div className="relative border-l border-gray-100 pl-4 ml-2 space-y-4">
-                            {dealActivities.map((a, i) => {
-                              const isManagerNote = a.purpose === "Manager Note";
-                              return (
-                                <div key={i} className="relative">
-                                  {/* Timeline marker */}
-                                  <span className={`absolute -left-[22px] top-1.5 w-3 h-3 rounded-full border-2 border-white ${isManagerNote ? "bg-emerald-50" : (a.owner === "Manager" ? "bg-indigo-50" : "bg-blue-50")}`}></span>
-                                  
-                                  <div className={`p-4 rounded-2xl text-xs shadow-sm border-2 leading-relaxed ${isManagerNote ? "bg-emerald-50/70 border-emerald-100 text-emerald-950" : (a.owner === "Manager" ? "bg-indigo-50/70 border-indigo-100 text-indigo-950" : "bg-gray-50/70 border-gray-100 text-gray-800")}`}>
-                                    <div className="flex justify-between text-[8px] font-black mb-1.5 uppercase tracking-wider opacity-60">
-                                      <span>{a.owner} · {isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION")}</span>
-                                      <span>{a.date}</span>
+                          <div className="space-y-4 mt-2">
+                            {/* Search Input */}
+                            <div className="relative">
+                              <span className="absolute left-3.5 top-2.5 text-gray-400 text-xs">🔍</span>
+                              <input
+                                type="text"
+                                placeholder="Search interactions by notes, owner, purpose, or date..."
+                                className="w-full pl-9 pr-8 py-2 bg-white border border-gray-150 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-gray-700 transition-all shadow-sm"
+                                value={dealActivitySearchText}
+                                onChange={(e) => setDealActivitySearchText(e.target.value)}
+                                autoComplete="off"
+                              />
+                              {dealActivitySearchText && (
+                                <button
+                                  onClick={() => setDealActivitySearchText("")}
+                                  className="absolute right-3.5 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs bg-transparent border-0 outline-none cursor-pointer"
+                                >
+                                  &times;
+                                </button>
+                              )}
+                            </div>
+
+                            {sortedFilteredDealActivities.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center shadow-sm">
+                                <span className="text-4xl mb-3">🔍</span>
+                                <h4 className="text-sm font-black text-gray-850 mb-1">No Matching Interactions</h4>
+                                <p className="text-xs text-gray-550 max-w-sm">No activity records match your search term "{dealActivitySearchText}".</p>
+                              </div>
+                            ) : (
+                              <div className="relative border-l border-gray-100 pl-4 ml-2 space-y-4 pt-2">
+                                {sortedFilteredDealActivities.map((a, i) => {
+                                  const isManagerNote = a.purpose === "Manager Note";
+                                  return (
+                                    <div key={i} className="relative">
+                                      {/* Timeline marker */}
+                                      <span className={`absolute -left-[22px] top-1.5 w-3 h-3 rounded-full border-2 border-white ${isManagerNote ? "bg-emerald-50" : (a.owner === "Manager" ? "bg-indigo-50" : "bg-blue-50")}`}></span>
+                                      
+                                      <div className={`p-4 rounded-2xl text-xs shadow-sm border-2 leading-relaxed ${isManagerNote ? "bg-emerald-50/70 border-emerald-100 text-emerald-950" : (a.owner === "Manager" ? "bg-indigo-50/70 border-indigo-100 text-indigo-950" : "bg-gray-50/70 border-gray-100 text-gray-800")}`}>
+                                        <div className="flex justify-between text-[8px] font-black mb-1.5 uppercase tracking-wider opacity-60">
+                                          <span>{a.owner} · {isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION")}</span>
+                                          <span>{a.date}</span>
+                                        </div>
+                                        <div className="font-semibold text-xs leading-normal">
+                                          {isManagerNote && <span className="mr-1">👑</span>}
+                                          {a.notes}
+                                        </div>
+                                      </div>
                                     </div>
-                                    <div className="font-semibold text-xs leading-normal">
-                                      {isManagerNote && <span className="mr-1">👑</span>}
-                                      {a.notes}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         );
                       })()}
@@ -4771,41 +4845,93 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className="relative pl-10 pr-2 border-l-4 border-indigo-50/50 space-y-8 ml-4">
-                      {activities.filter(a => a.accountId === selectedAccount.id).map((a, i) => {
-                        const isManagerNote = a.purpose === "Manager Note";
+                    {(() => {
+                      const accountActivitiesForTimeline = activities.filter(a => a.accountId?.toString() === selectedAccount.id?.toString());
+                      
+                      if (accountActivitiesForTimeline.length === 0) {
                         return (
-                          <div key={i} className="relative">
-                            <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (isManagerNote ? "bg-emerald-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500"))}`}></div>
-                            <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (isManagerNote ? "bg-emerald-50 border-emerald-100 shadow-emerald-900/5" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5"))}`}>
-                              <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest leading-none">
-                                <span className={a.type === 'audit' ? "text-red-650" : (isManagerNote ? "text-emerald-600" : (a.dealId ? "text-blue-500" : "text-indigo-650"))}>
-                                  {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION"))}
-                                </span>
-                                <span className="text-gray-400 font-bold">{a.date}</span>
-                              </div>
-                              <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : (isManagerNote ? "text-emerald-900" : "text-gray-800")}`}>
-                                {isManagerNote && <span className="mr-1">👑</span>}
-                                {a.notes}
-                              </div>
-                            </div>
+                          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center mt-4">
+                            <span className="text-4xl mb-3">📜</span>
+                            <h4 className="text-sm font-black text-gray-850 mb-1">No Interactions Recorded</h4>
+                            <p className="text-xs text-gray-550 max-w-sm mb-4">Keep track of meetings, phone calls, demo feedback, and manager instructions. Log your first touchpoint.</p>
+                            <button
+                              onClick={() => setShowActivity(true)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
+                            >
+                              + Log Interaction
+                            </button>
                           </div>
                         );
-                      })}
-                      {activities.filter(a => a.accountId === selectedAccount.id).length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
-                          <span className="text-4xl mb-3">📜</span>
-                          <h4 className="text-sm font-black text-gray-850 mb-1">No Interactions Recorded</h4>
-                          <p className="text-xs text-gray-550 max-w-sm mb-4">Keep track of meetings, phone calls, demo feedback, and manager instructions. Log your first touchpoint.</p>
-                          <button
-                            onClick={() => setShowActivity(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
-                          >
-                            + Log Interaction
-                          </button>
+                      }
+
+                      const filteredActivities = accountActivitiesForTimeline.filter(a => {
+                        if (!activitySearchText.trim()) return true;
+                        const searchLower = activitySearchText.toLowerCase();
+                        const matchesNotes = (a.notes || "").toLowerCase().includes(searchLower);
+                        const matchesOwner = (a.owner || "").toLowerCase().includes(searchLower);
+                        const matchesPurpose = (a.type === 'audit' ? "SYSTEM AUDIT" : (a.purpose || "INTERACTION")).toLowerCase().includes(searchLower);
+                        const matchesDate = (a.date || "").toLowerCase().includes(searchLower);
+                        return matchesNotes || matchesOwner || matchesPurpose || matchesDate;
+                      });
+
+                      const sortedFilteredActivities = [...filteredActivities].sort((a, b) => parseActivityDate(b.date) - parseActivityDate(a.date));
+
+                      return (
+                        <div className="space-y-4 mt-4">
+                          {/* Search Input */}
+                          <div className="relative">
+                            <span className="absolute left-3.5 top-2.5 text-gray-400 text-xs">🔍</span>
+                            <input
+                              type="text"
+                              placeholder="Search interactions by notes, owner, purpose, or date..."
+                              className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-150 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-xs font-semibold text-gray-700 transition-all shadow-inner"
+                              value={activitySearchText}
+                              onChange={(e) => setActivitySearchText(e.target.value)}
+                              autoComplete="off"
+                            />
+                            {activitySearchText && (
+                              <button
+                                onClick={() => setActivitySearchText("")}
+                                className="absolute right-3.5 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs bg-transparent border-0 outline-none cursor-pointer"
+                              >
+                                &times;
+                              </button>
+                            )}
+                          </div>
+
+                          {sortedFilteredActivities.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-gray-200 rounded-3xl bg-white text-center">
+                              <span className="text-4xl mb-3">🔍</span>
+                              <h4 className="text-sm font-black text-gray-850 mb-1">No Matching Interactions</h4>
+                              <p className="text-xs text-gray-550 max-w-sm">No activity records match your search term "{activitySearchText}".</p>
+                            </div>
+                          ) : (
+                            <div className="relative pl-10 pr-2 border-l-4 border-indigo-50/50 space-y-8 ml-4 mt-6">
+                              {sortedFilteredActivities.map((a, i) => {
+                                const isManagerNote = a.purpose === "Manager Note";
+                                return (
+                                  <div key={i} className="relative">
+                                    <div className={`absolute -left-[54px] top-6 w-6 h-6 rounded-xl rotate-45 border-4 border-white shadow-md z-10 transition-transform hover:scale-110 ${a.type === 'audit' ? "bg-red-500" : (isManagerNote ? "bg-emerald-500" : (a.dealId ? "bg-blue-500" : "bg-indigo-500"))}`}></div>
+                                    <div className={`p-6 rounded-[32px] shadow-sm border-2 transition-all hover:shadow-md ${a.type === 'audit' ? "bg-red-50/30 border-red-100" : (isManagerNote ? "bg-emerald-50 border-emerald-100 shadow-emerald-900/5" : (a.dealId ? "bg-white border-blue-50 shadow-blue-900/5" : "bg-indigo-50/50 border-indigo-100 shadow-indigo-900/5"))}`}>
+                                      <div className="flex justify-between items-start mb-3 text-[10px] font-black uppercase tracking-widest leading-none">
+                                        <span className={a.type === 'audit' ? "text-red-650" : (isManagerNote ? "text-emerald-600" : (a.dealId ? "text-blue-500" : "text-indigo-650"))}>
+                                          {a.owner} · {a.type === 'audit' ? "SYSTEM AUDIT" : (isManagerNote ? "MANAGER NOTE" : (a.purpose || "INTERACTION"))}
+                                        </span>
+                                        <span className="text-gray-400 font-bold">{a.date}</span>
+                                      </div>
+                                      <div className={`text-[13px] leading-relaxed font-bold ${a.type === 'audit' ? "text-red-900 italic font-black" : (isManagerNote ? "text-emerald-900" : "text-gray-800")}`}>
+                                        {isManagerNote && <span className="mr-1">👑</span>}
+                                        {a.notes}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
