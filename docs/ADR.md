@@ -146,8 +146,9 @@ Examples include relationship building, prospecting, installed base reviews, and
 
 ### ADR-017: Phase 1 Audit Logging Strategy
 
-* **Decision:** Implement centralized database-level audit logging for business-critical entities while deferring dedicated audit management screens to future phases. Audit logging is a technical infrastructure capability and does not introduce an Audit Log business entity into the Enterprise Data Model.
+* **Decision:** Use PostgreSQL audit logging mechanisms and database triggers to capture changes to business-critical entities.
 * **Status:** Accepted (Foundation Architecture Decision)
-* **Rationale:** The system requires traceability and accountability for critical business changes without introducing unnecessary Phase 1 complexity. Audit history is an implementation concern rather than a business domain concept. The EDM defines what must be auditable; the Physical Data Model defines how auditability is implemented.
+* **Rationale:** Provides immutable server-side auditability independent of application logic.
 * **Impact:** PostgreSQL triggers and a centralized audit_log table will capture changes to critical business entities. The audit_log table is a technical implementation artifact and must not be modeled as an EDM business entity. Dedicated audit dashboards, audit search screens, and audit reports remain out of scope for Phase 1.
+* **Consequences:** Audit history will be generated automatically by the database and exposed through reporting APIs when required.
 * **Affected Modules:** Database Infrastructure, Security Architecture, User Management, Product Management, Account Management, Opportunity Pipeline, Target Planning, Coverage Planning.

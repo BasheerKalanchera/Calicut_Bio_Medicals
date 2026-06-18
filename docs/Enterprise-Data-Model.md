@@ -74,7 +74,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 **Coverage Plan Entry**
     *Description:* Coverage assignment for a specific Account within a Coverage Plan.
     *Relationships:* Coverage Plan (Many:1), Account (Many:1).
-    *Attributes:* Coverage Frequency, Strategic Objective, Expected Contribution.
+    *Attributes:* Coverage Frequency, Strategic Objective, Target Revenue (Lakhs).
     *Cardinality:* 1 Coverage Plan Entry belongs to 1 Coverage Plan and references 1 Account.
 
 
