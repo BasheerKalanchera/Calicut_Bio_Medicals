@@ -1,8 +1,9 @@
 # Cabio Sales OS - Business Rules Catalog (Phase 1)
 
-**Version:** 1.0  
-**Date:** June 18, 2026  
-**Status:** Foundation Day 1 Draft
+**Version:** 2.0  
+**Date:** June 20, 2026  
+**Status:** Architecture Consistency Review Implemented  
+**Previous Version:** 1.0 (Foundation Day 1 Draft — June 18, 2026)
 
 ---
 
@@ -16,7 +17,9 @@ This document defines the core business logic, validation rules, and state-trans
 ### BR-PL-01: Quota Hierarchy
 *   **Rule:** Target Plans must be defined at the User + SBU + Quarter level.
 *   **Constraint:** A user cannot have two overlapping target plans for the same SBU in the same quarter.
+*   **Planning Period Format:** Planning periods must use the `YYYY-Qn` format (e.g., `2026-Q1`). The fiscal year follows the Indian Fiscal Year (April–March): Q1 = April–June, Q2 = July–September, Q3 = October–December, Q4 = January–March.
 *   **Pillar Alignment:** Target Planning.
+*   **Reference:** ADR-019 (Planning Calendar Model).
 
 ### BR-PL-02: Coverage Plan Strategy (Replaces Beat Planning)
 *   **Rule:** Coverage Plans focus on **Strategic Objectives** and **Target Revenue**, not visit frequency.
@@ -28,13 +31,13 @@ This document defines the core business logic, validation rules, and state-trans
 * **Rule:** Every Coverage Plan must be associated with an approved Target Plan.
 * **Constraint:** Coverage Plans cannot be created unless a Target Plan exists for the same User, SBU, and Planning Period.
 * **Purpose:** Maintains the Target → Coverage → Opportunity → Revenue planning hierarchy.
+* **Reference:** ADR-013 (Planning Hierarchy), ADR-019 (Planning Calendar Model).
 
 ### BR-PL-04: Opportunity Origination Classification
-* **Rule:** Every Opportunity must be classified as either:
-  * Coverage Plan Originated
-  * Opportunistic
-* **Constraint:** Coverage-originated Opportunities must reference the Coverage Plan Entry that initiated the opportunity.
-* **Purpose:** Maintains traceability between Coverage Planning and Pipeline Generation.
+* **Rule:** Every Opportunity must be classified by Lead Source using the LeadSource master entity.
+* **Constraint:** Coverage-originated Opportunities must have `lead_source_id` set to the `COVERAGE_PLAN` Lead Source value. A direct FK from Opportunity to Coverage Plan Entry is not implemented in Phase 1.
+* **Purpose:** Maintains traceability between Coverage Planning and Pipeline Generation through the Lead Source classification model.
+* **Reference:** ADR-020 (LeadSource Master Entity).
 
 ---
 
@@ -51,25 +54,77 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 | Transition | Mandatory Requirements |
 | :--- | :--- |
-| **Lead → Qualified** | 1. Product identified.<br>2. Budget Range defined.<br>3. Lead Source defined using values from Appendix A. |
+| **Lead → Qualified** | 1. Product identified.<br>2. Budget Range defined.<br>3. Lead Source defined using values from the LeadSource master entity (see Appendix A). |
 | **Qualified → Demo** | 1. Demo Date defined (single date or date range). |
-| **Demo → Negotiation** | 1. Demo Outcome recorded.<br>2. Expected Closure Date defined. |
+| **Demo → Clinical Evaluation** | 1. Demo Outcome recorded.<br>2. Clinical contact identified (doctor or biomedical engineer).<br>3. Clinical evaluation start date defined. |
+| **Clinical Evaluation → Negotiation** | 1. Clinical Evaluation Outcome recorded.<br>2. Expected Closure Date defined. |
 | **Negotiation → Order** | 1. Order Value confirmed.<br>2. Product Details defined.<br>3. Shared Ownership Validation completed (if applicable).<br>4. Handover Information completed. |
-| **Order → Closed Won** | 1. Purchase Order Number entered.<br>2. Product Details confirmed. |
-| **Any Stage → Closed Lost** | 1. Loss Reason defined using values from Appendix A.<br>2. Competitor Information recorded. |
+| **Order → Delivery & Installation** | 1. Purchase Order Number entered.<br>2. Delivery Date scheduled.<br>3. Installation Site confirmed. |
 
-### BR-OP-02: "On Hold" Discipline (ADR-005)
-* **Rule:** Moving an opportunity to "On Hold" is a guarded transition.
-* **Mandatory Fields:** `hold_reason` (Enum) and `reactivation_date` (Date).
+### BR-OP-02: "On-Hold" Status Discipline (ADR-005)
+* **Rule:** Moving an opportunity to the "On-Hold" status is a guarded transition.
+* **Mandatory Fields:** `hold_reason_id` (Master Data) and `reactivation_date` (Date).
 * **Validation:** `reactivation_date` must be in the future.
 * **Logic:** When `current_date >= reactivation_date`, the system must flag the opportunity as "Reactivation Overdue" in all insights views.
-* **Audit Requirement:** Changes to `hold_reason` or `reactivation_date` must be recorded in audit history.
+* **Audit Requirement:** Changes to `hold_reason_id` or `reactivation_date` must be recorded in audit history.
 
-### BR-OP-03: Closed Lost Validation
-* **Rule:** Moving an Opportunity to Closed Lost is a guarded transition.
-* **Mandatory Fields:** `loss_reason`
-* **Optional Fields:** `loss_notes`, `competitor_name`
-* **Validation:** Closed Lost opportunities must retain historical stage, value, and contributor information for reporting purposes.
+### BR-OP-03: Lost Status Validation
+* **Rule:** Moving an Opportunity to the Lost status is a guarded transition.
+* **Mandatory Fields:** `loss_reason_id` (Master Data).
+* **Conditional Fields:** `competitor_name` (Free Text) is required **only** when the selected loss reason represents a competitor win. It is optional for all other loss reasons.
+* **Optional Fields:** `loss_notes`
+* **Validation:** Lost opportunities must retain historical stage, value, and contributor information for reporting purposes.
+* **Reference:** ACR — CBR-04.
+
+### BR-OP-04: Opportunity Project Association
+* **Rule:** Opportunities may exist with or without a Project.
+* **Constraint:** `project_id` is optional (nullable) on the Opportunity entity.
+* **Rationale:** Not all Opportunities arise from a formal project or tender. Direct account requirements, referrals, and opportunistic deals may not be associated with a Project.
+* **Reference:** ADR-014 (Account → Project → Opportunity Relationship Model).
+
+### BR-OP-05: Status Transition Rules
+* **Rule:** Status is independent of Stage. An Opportunity can transition to Won, Lost, or On-Hold from any stage.
+* **Won Requirements:** To transition to Won from any stage, `PO Number` and `Product Details` must be confirmed.
+* **Lost Requirements:** See BR-OP-03.
+* **On-Hold Requirements:** See BR-OP-02.
+
+### BR-OP-06: Stalled Opportunity Detection
+* **Rule:** An opportunity automatically transitions to the "Stalled" status if no activity (visit, call, email, meeting, note) is recorded against it for 180 consecutive days.
+* **Exit Rule:** The Stalled status automatically reverts to Active when any activity is logged.
+* **Notifications:** The salesperson and their manager receive notifications when an opportunity becomes Stalled.
+* **Forecasting:** Stalled opportunities are excluded from committed pipeline forecasts.
+
+### BR-OP-07: Forecasting & Pipeline Inclusion
+* **Won:** Included as closed-won revenue.
+* **Active:** Included in active pipeline and forecast calculations based on weighted probability.
+* **On-Hold:** Excluded from committed pipeline/forecasts.
+* **Stalled:** Excluded from committed pipeline/forecasts.
+* **Lost:** Excluded entirely.
+
+### BR-OP-08: Win Probability Rules
+* Opportunity.win_probability defaults to OpportunityStage.default_win_probability when an Opportunity is created.
+* Salespeople may manually override win_probability.
+* Valid range is 0–100.
+* Once manually overridden, subsequent Stage changes must NOT automatically overwrite the user-defined probability.
+* The manually overridden value remains in effect until the user explicitly changes it again.
+* Stage default probabilities remain available as guidance values and approved reporting reference data.
+
+### BR-OP-09: Terminal Status Governance
+* WON and LOST are terminal Opportunity statuses.
+* Opportunities in WON or LOST status cannot be reopened.
+* Opportunities in WON or LOST status cannot participate in normal Stage or Status transitions.
+* Historical WON and LOST records remain immutable for:
+  * Forecasting
+  * Pipeline analytics
+  * Conversion reporting
+  * Pipeline leakage analysis
+* If a previously LOST opportunity becomes active again, a new Opportunity must be created.
+* Any administrative modification of a WON or LOST Opportunity must be captured in audit history.
+
+### BR-OP-10: Default Opportunity Status
+* All newly created Opportunities must default to ACTIVE status.
+* Exceptions are permitted only for approved data migration or administrative import processes.
+* User-facing Opportunity creation workflows must not allow direct creation of Opportunities in WON, LOST, STALLED, or ON_HOLD status.
 
 ---
 
@@ -94,17 +149,26 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 *   **Precision:** Numeric(15, 2).
 
 ### BR-FIN-03: Opportunity Value Calculation
-* **Rule:** Opportunity financial value is derived from associated Opportunity Items.
-* **Calculation:**
+* **Rule:** Opportunity financial value operates in dual-mode based on whether Opportunity Items have been entered.
+* **Mode 1 — Indicative Value (no items present):** When no Opportunity Items exist, the `indicative_value` field (manually entered by the sales executive) serves as the working pipeline estimate.
+* **Mode 2 — Calculated Value (items present):** When one or more Opportunity Items exist, the system-calculated value becomes authoritative.
   * `Extended Value = Quantity × Unit Price – Discount`
   * `Opportunity Value = Sum of Extended Values`
-* **Constraint:** Opportunity Value is system-calculated and cannot be manually overridden.
-* **Validation:** Opportunity Value must equal the total value of all active Opportunity Items.
+* **Constraint:** When Opportunity Items exist, the calculated value cannot be manually overridden. `indicative_value` is retained in the record but is not used for pipeline or forecast calculations.
+* **Validation:** When items exist, Opportunity Value must equal the total value of all active Opportunity Items.
+* **Reference:** ADR-026 (Opportunity Value Model — Dual-Mode Valuation).
 
 ### BR-FIN-04: Split Governance
 * **Rule:** Contributor splits may be modified only while an Opportunity remains open.
 * **Constraint:** Split changes must preserve the 100% allocation rule.
 * **Audit Requirement:** All split changes must be captured in audit history.
+
+### BR-FIN-05: Default Opportunity Split Assignment
+* **Rule:** When no contributor split is explicitly entered during Opportunity creation, the system automatically creates a 100% split assigned to the opportunity creator.
+* **Constraint:** The auto-created default split must comply with BR-FIN-01 (100% rule).
+* **Logic:** The default split may be modified after creation, subject to BR-FIN-04 (Split Governance).
+* **Reference:** ADR-003 (Multi-SBU Contributor Splits).
+
 ---
 
 # 5. Account & Stakeholder Rules
@@ -121,13 +185,34 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 # 6. Activity & Interaction Rules
 
-### BR-ACT-01: Opportunity Support (ADR-006)
-*   **Rule:** Every interaction (Activity) should ideally be linked to an **Opportunity** to count towards pipeline velocity.
-*   **Logic:** Activities linked only to an Account (with no Opportunity) are classified as "Account Scanning/Profiling" and do not contribute to forecast confidence scores.
+### BR-ACT-01: Activity Account Requirement (ADR-006 — clarified June 20, 2026)
+* **Rule:** Every Activity must be associated with an Account. Activities may optionally be linked to a Project and/or Opportunity to provide additional business context.
+* **Database Constraints:**
+  * `account_id` — NOT NULL (mandatory)
+  * `project_id` — nullable (optional Project linkage)
+  * `opportunity_id` — nullable (optional Opportunity linkage)
+* **Classification Logic:**
+  * Activities linked to an Opportunity contribute to pipeline velocity and forecast confidence scores.
+  * Activities linked to a Project (with no Opportunity) are classified as "Project Engagement" activities.
+  * Activities linked only to an Account (with no Project or Opportunity) are classified as "Account Scanning/Profiling" and do not contribute to forecast confidence scores.
+* **Constraint:** An Activity without an Account reference must be rejected at both the application layer and the database layer.
 
 ### BR-ACT-02: Manager Push (Logging)
 *   **Rule:** Managers can log "Manager Notes" on any Opportunity.
 *   **Visibility:** These are highlighted in the activity timeline and cannot be deleted or edited by the Sales Executive owner.
+
+### BR-ACT-03: Activity Account Constraint — Database Enforcement
+* **Rule:** The Activity Account Requirement (BR-ACT-01) must be enforced at the database level in addition to application-layer validation.
+* **Constraint:** `account_id` must be defined as NOT NULL in the `activity` table physical schema. This is the authoritative database-level enforcement mechanism.
+* **Nullability Summary:**
+
+  | Column | Nullability | Purpose |
+  | :--- | :--- | :--- |
+  | `account_id` | NOT NULL | Mandatory. Every Activity must belong to an Account. |
+  | `project_id` | NULLABLE | Optional. Provides Project context when applicable. |
+  | `opportunity_id` | NULLABLE | Optional. Provides Opportunity context when applicable. |
+
+* **Purpose:** Ensures every Activity record is always directly traceable to a customer Account. Database-level NOT NULL enforcement provides a safety net independent of application validation logic and API layer behaviour.
 
 ---
 
@@ -138,12 +223,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Examples:** Opportunities, Contributor Splits, Target Plans, Coverage Plans, and Projects.
 * **Constraint:** Users must be able to identify who made a change and when the change occurred.
 * **Constraint:** Audit history must not be editable through standard application workflows.
+
 ---
 
 # 8. Unresolved Logic (Needs Discussion)
 1.  **Split Approval:** Does a cross-SBU split require approval from both SBU managers?
-2.  **Order Cancellation:** If an "Order" is cancelled, does it go back to "Negotiation" or straight to "Lost"?
-3.  **Tender Timeline:** If a Project (Tender) bid deadline is missed, does the system automatically mark all linked Opportunities as "Lost"?
+2.  **Tender Timeline:** If a Project (Tender) bid deadline is missed, does the system automatically mark all linked Opportunities as "Lost"?
 
 ---
 
@@ -151,17 +236,21 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ## Lead Source Values
 
-The system shall support the following Lead Source values:
+Lead Source values are managed in the **LeadSource master entity** (`lead_source` table) and are configurable by an administrator. The following values must be seeded on initial system setup:
 
-* WEBSITE
-* REFERRAL
-* EXISTING_CUSTOMER
-* PRINCIPAL
-* DISTRIBUTOR
-* TENDER
-* EVENT
-* COLD_OUTREACH
-* OTHER
+| Value | Description |
+| :--- | :--- |
+| `COVERAGE_PLAN` | Opportunity originated from a strategic Coverage Plan account entry |
+| `REFERRAL` | Referred by a doctor, partner, or professional associate |
+| `EXISTING_CUSTOMER` | Originated from an existing installed base or account relationship |
+| `TENDER` | Government or institutional tender / procurement program |
+| `OEM_REFERRAL` | Referred by an Original Equipment Manufacturer (OEM / principal) |
+| `WEBSITE` | Inbound enquiry via website or digital channel |
+| `COLD_CALL` | Proactive outreach to a new prospect with no prior relationship |
+| `WALK_IN` | Walk-in customer or direct in-person contact initiated by the customer |
+| `OTHER` | Uncategorised or unlisted source |
+
+> **Note:** `COVERAGE_PLAN` must be used for Coverage Plan-originated Opportunities. A direct FK from Opportunity to Coverage Plan Entry is not implemented in Phase 1 (ADR-020).
 
 ## Hold Reason Values
 
@@ -187,4 +276,3 @@ The system shall support the following Loss Reason values:
 * TIMING_DELAY
 * NO_DECISION
 * OTHER
-

@@ -1,6 +1,8 @@
 # Cabio Sales OS - Complete Architecture Decision Register (ADR)
 
-This document serves as the formal Architecture Decision Register for the Cabio Sales OS project, compiled from the PRD, GEMINI.md mandates, Traceability Matrix, and Phase 0B prototype evolution. 
+This document serves as the formal Architecture Decision Register for the Cabio Sales OS project, compiled from the PRD, GEMINI.md mandates, Traceability Matrix, Phase 0B prototype evolution, and Architecture Consistency Review dispositions.
+
+**Last Updated:** June 20, 2026 — Architecture Consistency Review (ACR) implementation. ADR-018 through ADR-027 added. ADR-003, ADR-006, and ADR-013 updated.
 
 ---
 
@@ -16,9 +18,9 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 ### ADR-013: Target → Coverage → Opportunity → Revenue Planning Hierarchy
 
 * **Decision:** Establish the primary Sales Operating Model hierarchy as Target Planning → Coverage Planning → Opportunity Planning → Revenue Achievement.
-* **Status:** Accepted (Mandated by GEMINI.md)
+* **Status:** Accepted (Mandated by GEMINI.md; updated by ACR — MFK-02)
 * **Rationale:** Revenue outcomes should be driven by planned targets and strategic account coverage rather than reactive opportunity management. This hierarchy aligns sales execution activities with business growth objectives.
-* **Impact:** Coverage Plans must be traceable to Targets. Opportunities must be traceable to Coverage Plans. Revenue performance must be traceable to Opportunities. Dashboards, forecasts, and management reviews must align with this hierarchy.
+* **Impact:** Coverage Plans must carry a `target_plan_id` FK to link back to the originating Target Plan, enforcing the Target → Coverage traceability. Opportunity traceability to Coverage Plans is maintained through the Lead Source classification model (ADR-020). Revenue performance must be traceable to Opportunities. Dashboards, forecasts, and management reviews must align with this hierarchy.
 * **Affected Modules:** Target Planning, Coverage Planning, Opportunity Pipeline, Reporting, Forecasting, Performance Insights.
 
 ---
@@ -34,9 +36,9 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 
 ### ADR-003: Multi-SBU Contributor Splits (100% Rule)
 *   **Decision:** Opportunities support shared ownership across Strategic Business Units (SBUs) via a strict 100% split model.
-*   **Status:** Accepted (Implemented in Prototype App.jsx)
+*   **Status:** Accepted (Implemented in Prototype App.jsx; updated by ACR — MA-07)
 *   **Rationale:** High-value hospital setups require cross-collaboration (e.g., Imaging + Critical Care). A unified Opportunity with split credit prevents "double-counting" in organizational rollups.
-*   **Impact:** Revenue rollups must calculate `Value * Split%`. SBU isolation logic must allow cross-SBU read access for shared deals.
+*   **Impact:** Revenue rollups must calculate `Value × Split%`. SBU isolation logic must allow cross-SBU read access for shared deals. When no split is explicitly entered during Opportunity creation, the system automatically creates a 100% split assigned to the opportunity creator, ensuring the 100% allocation rule is always satisfied from the point of creation.
 *   **Affected Modules:** Opportunity Pipeline, Target Planning, Insights.
 
 ### ADR-004: Tender Consolidation within Projects
@@ -47,26 +49,25 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 *   **Affected Modules:** Account Management, Opportunity Pipeline.
 
 ### ADR-005: Forced Pipeline Reactivation Discipline
-*   **Decision:** Moving an opportunity to "On Hold" strictly requires a `hold_reason` and a `reactivation_date`.
-*   **Status:** Accepted (Implemented in Prototype App.jsx / PRD 2.7)
+*   **Decision:** Moving an opportunity to the "On-Hold" status strictly requires a `hold_reason_id` and a `reactivation_date`.
+*   **Status:** Accepted (Implemented in Prototype App.jsx / PRD 2.7; Updated via Architecture Review for Status decoupling)
 *   **Rationale:** Prevents "parking" dead deals in the pipeline to artificially inflate forecasts. Forces a systematic review of stagnant deals.
-*   **Impact:** Pipeline state machine requires multi-field validation. Requires dashboard alerts for overdue hold reactivations.
+*   **Impact:** Status transition rules require multi-field validation. Requires dashboard alerts for overdue hold reactivations.
 *   **Affected Modules:** Opportunity Pipeline, Action Reminders.
 
 ### ADR-006: Hierarchical Activity Support Flow
-*   **Decision:** Activities and Interactions exist to support either Opportunity Progression or Strategic Account Development.
-*   **Status:** Accepted (Mandated by GEMINI.md)
-*   **Rationale:** Activities should support either: Opportunity Progression OR Strategic Account Development. Activities may exist before an Opportunity is created.
-Examples include relationship building, prospecting, installed base reviews, and account development activities.
-*   **Impact:** `opportunity_id` is a primary linkage for interaction logs, tying daily effort directly to pipeline progression.
-*   **Affected Modules:** Sales Execution, Activity Timelines.
+*   **Decision:** Every Activity must be associated with an Account. Activities may optionally be linked to a Project and/or Opportunity to provide additional business context. Activities exist to support Opportunity Progression, Project-Level Engagement, or Strategic Account Development — and may be created before an Opportunity exists.
+*   **Status:** Accepted (Mandated by GEMINI.md; updated by ACR — CBR-03, ADD-06; documentation clarified June 20, 2026)
+*   **Rationale:** In Cabio's medical equipment sales domain, all interactions occur with or at a customer account. Account is therefore the mandatory anchor for every Activity. Project and Opportunity linkages provide optional additional business context that supports pipeline velocity tracking, project engagement reporting, and activity classification. Requiring Account prevents orphaned activity records and ensures all activity history is always directly accessible from the Account view without requiring joins through Project or Opportunity.
+*   **Impact:** Activity entity: `account_id` FK (**NOT NULL** — mandatory), `project_id` FK (nullable — optional Project linkage), `opportunity_id` FK (nullable — optional Opportunity linkage). The database-level enforcement is `account_id NOT NULL`. No OR-based CHECK constraint is required.
+*   **Affected Modules:** Sales Execution, Activity Timelines, Business Rules Engine, Database Infrastructure.
 
 ### ADR-014: Account → Project → Opportunity Relationship Model
 
 * **Decision:** Use Projects as the primary business grouping mechanism between Accounts and Opportunities.
 * **Status:** Accepted (PRD, GEMINI.md, Prototype Evolution)
 * **Rationale:** Medical equipment sales are frequently driven by expansion programs, modernization initiatives, tender programs, and capital expenditure projects. Grouping Opportunities under Projects provides business context and improves reporting.
-* **Impact:** Opportunities may optionally belong to Projects. Project-level forecasting, stakeholder engagement tracking, activity tracking, and reporting become possible. Government tender scenarios will be modeled using the same relationship structure.
+* **Impact:** Opportunities may optionally belong to Projects. `project_id` is nullable on the Opportunity entity. Project-level forecasting, stakeholder engagement tracking, activity tracking, and reporting become possible. Government tender scenarios will be modeled using the same relationship structure.
 * **Affected Modules:** Account Management, Project Management, Opportunity Pipeline, Reporting, Stakeholder Management.
 
 ### ADR-015: Opportunity Creation at Any Sales Stage
@@ -76,6 +77,36 @@ Examples include relationship building, prospecting, installed base reviews, and
 * **Rationale:** Medical equipment sales do not always follow a traditional lead-to-order journey. Opportunities frequently enter the system at different stages based on field intelligence, tenders, referrals, or direct customer engagement.
 * **Impact:** Opportunity creation workflows, APIs, and validation logic must support creation at any stage. Pipeline reports and conversion metrics must not assume Lead-originated opportunities.
 * **Affected Modules:** Opportunity Pipeline, Forecasting, Reporting, Business Rules Engine, API Layer.
+
+### ADR-018: Organizational Structure Entities — SBU and Zone
+
+* **Decision:** Formally model Strategic Business Unit (SBU) and Zone as first-class database entities with defined attributes and relationships.
+* **Status:** Accepted (ACR — ME-01, ME-02)
+* **Rationale:** SBUs are referenced throughout the data model (Products, Target Plans, Coverage Plans, Users, Security). Zone is used for reporting and organizational structure. Both require formal entity representation to support consistent FK references, RLS policy evaluation, and administrative management without hardcoding values.
+* **Impact:**
+  * **SBU entity:** `sbu_id`, `name`, `description`. Relationships: Product (1:M), Target Plan (1:M), User (M:1).
+  * **Zone entity:** `zone_id`, `name`, `description`. Relationships: User (M:1).
+  * Zone is **not** used for target allocation. Zone is used for reporting and security scoping only.
+* **Affected Modules:** Product Catalog, Target Planning, Coverage Planning, Security Model, Reporting, User Management.
+
+### ADR-019: Planning Calendar Model — Period Format and Fiscal Year
+
+* **Decision:** Standardize the planning period format as `YYYY-Qn`. Define the fiscal year as the Indian Fiscal Year (April–March).
+* **Status:** Accepted (ACR — MA-01, MA-02)
+* **Rationale:** An undefined planning period format creates inconsistency across Target Plans, Coverage Plans, and reporting. The Indian Fiscal Year (April–March) aligns with the customer's business calendar and standard accounting practices in India.
+* **Impact:**
+  * Planning period stored as `VARCHAR` in `YYYY-Qn` format (e.g., `2026-Q1`).
+  * Fiscal quarter mapping: Q1 = April–June, Q2 = July–September, Q3 = October–December, Q4 = January–March.
+  * All fiscal period references across the system must follow this convention.
+* **Affected Modules:** Target Planning, Coverage Planning, Reporting, Forecasting.
+
+### ADR-022: Project Ownership Model
+
+* **Decision:** Every Project must have an `owner_id` FK referencing the User entity. The default owner is the record creator. Ownership may be reassigned by a manager.
+* **Status:** Accepted (ACR — MR-02, ADD-05)
+* **Rationale:** Projects (including tenders) require clear ownership for accountability, pipeline reporting, and security scoping. Without an owner, project-level forecasting and performance metrics cannot be attributed to a responsible user.
+* **Impact:** Project entity gains `owner_id` FK (→ User, NOT NULL). The application layer sets `owner_id` to the creator's user ID on record creation. Ownership reassignment requires manager-level permission. RLS policies on Project may use `owner_id` for user-scoped access.
+* **Affected Modules:** Project Management, Account Management, Reporting, Security Model.
 
 ---
 
@@ -103,6 +134,51 @@ Examples include relationship building, prospecting, installed base reviews, and
 * **Impact:** Product records belong to a single SBU. Reporting, target allocation, coverage planning, and visibility rules leverage the SBU structure directly. Additional hierarchy levels may be introduced in future phases if required.
 * **Affected Modules:** Product Catalog, Opportunity Pipeline, Reporting, Target Planning, Coverage Planning, Security Model.
 
+### ADR-020: LeadSource Master Entity
+
+* **Decision:** Introduce a LeadSource master entity. Add a `lead_source_id` FK to the Opportunity entity. Coverage Plan traceability is represented through a `COVERAGE_PLAN` Lead Source value — not through a direct FK from Opportunity to Coverage Plan Entry.
+* **Status:** Accepted (ACR — MFK-04, ADD-01, ADD-02)
+* **Rationale:** Tracking the origin of Opportunities is critical for pipeline analytics and coverage plan effectiveness measurement. A master entity allows Lead Source values to be managed without schema changes. Coverage Plan traceability is maintained through the `COVERAGE_PLAN` Lead Source value without introducing a brittle FK that couples Opportunity to a specific Coverage Plan Entry record.
+* **Impact:**
+  * LeadSource entity: `lead_source_id`, `name`, `description`, `is_active`.
+  * Opportunity entity gains `lead_source_id` FK (→ LeadSource, nullable).
+  * Initial seed values: `COVERAGE_PLAN`, `REFERRAL`, `EXISTING_CUSTOMER`, `TENDER`, `OEM_REFERRAL`, `WEBSITE`, `COLD_CALL`, `WALK_IN`, `OTHER`.
+* **Affected Modules:** Opportunity Pipeline, Coverage Planning, Reporting, Lead Source Analytics.
+
+### ADR-021: OpportunityStakeholder Junction Entity
+
+* **Decision:** Add an OpportunityStakeholder junction entity linking Opportunities to Stakeholders, with influence-level and role attributes at the Opportunity level.
+* **Status:** Accepted (ACR — MR-04, ADD-03)
+* **Rationale:** Stakeholders influence Opportunities differently from their general relationship with an Account. Opportunity-level stakeholder mapping enables influence tracking, execution planning, and relationship intelligence at the deal level. A junction entity supports M:M cardinality and allows rich attributes on the relationship itself.
+* **Impact:**
+  * OpportunityStakeholder entity: `opportunity_id` FK, `stakeholder_id` FK, `influence_level` (Enum: HIGH, MEDIUM, LOW), `decision_role` (Text), `notes` (Text).
+  * Relationship: Opportunity ↔ Stakeholder is M:M via this junction.
+* **Affected Modules:** Opportunity Pipeline, Stakeholder Management, Account Management.
+
+### ADR-023: Reminder Context Model — Activity-Linked Reminders
+
+* **Decision:** Reminders are linked to Activities via an `activity_id` FK. Reminders inherit business context (Account, Project, Opportunity) from the parent Activity. Polymorphic Reminder relationships are not implemented in Phase 1.
+* **Status:** Accepted (ACR — MFK-06, ADD-04)
+* **Rationale:** Polymorphic relationships (where a FK can reference multiple different tables) require complex application logic and cannot be enforced by standard referential integrity constraints. Routing Reminder context through Activity is simpler, consistent, and sufficient for Phase 1 requirements.
+* **Impact:** Reminder entity carries `activity_id` FK (→ Activity) and `assigned_to_user_id` FK (→ User). Reminder does not carry direct FKs to Account, Project, or Opportunity. Business context is resolved by traversing the parent Activity record.
+* **Affected Modules:** Activity Management, Action Reminders, Notifications.
+
+### ADR-026: Opportunity Value Model — Dual-Mode Valuation
+
+* **Decision:** Support dual-mode Opportunity valuation. When no Opportunity Items exist, `indicative_value` (manually entered) serves as the working pipeline estimate. When Opportunity Items are added, the system-calculated value (sum of line item extended values) becomes authoritative and overrides `indicative_value` for all pipeline and forecast calculations.
+* **Status:** Accepted (ACR — CBR-01)
+* **Rationale:** Early-stage opportunities frequently lack product-level detail. Forcing line item entry before products are confirmed blocks pipeline creation and reduces adoption. `indicative_value` allows pipeline planning without premature product commitment. Once items are added, the system enforces calculated accuracy.
+* **Impact:** Opportunity entity gains `indicative_value` (Numeric 15,2, nullable). Application logic: if Opportunity Items exist → use calculated value; if no items exist → use `indicative_value`. BR-FIN-03 updated accordingly.
+* **Affected Modules:** Opportunity Pipeline, Financial Reporting, Forecasting.
+
+### ADR-027: Installed Asset Competitor Equipment Model
+
+* **Decision:** Extend the Installed Asset entity to support competitor equipment. `product_id` becomes nullable. Add `is_competitor_equipment` (Boolean) and `competitor_product_name` (Text) attributes.
+* **Status:** Accepted (ACR — MA-04)
+* **Rationale:** Salespeople need to track competitor equipment installed at accounts for competitive analysis and replacement opportunity identification. A nullable `product_id` with competitor flags avoids the need for a separate competitor product catalog in Phase 1.
+* **Impact:** Installed Asset: `product_id` nullable. `is_competitor_equipment` (Boolean, default FALSE). `competitor_product_name` (Text, nullable). Application constraint: when `is_competitor_equipment = TRUE`, `product_id` may be NULL and `competitor_product_name` should be populated.
+* **Affected Modules:** Account Management, Installed Asset Tracking, Opportunity Pipeline.
+
 ---
 
 ## 4. Security Architecture
@@ -113,6 +189,14 @@ Examples include relationship building, prospecting, installed base reviews, and
 *   **Rationale:** Prevents data clutter and competitive conflicts between SBUs while maintaining a single source of truth for the enterprise.
 *   **Impact:** Supabase/PostgreSQL schema must heavily utilize RLS policies based on the authenticated user's SBU token claims.
 *   **Affected Modules:** Database Infrastructure, Auth Context, All Queries.
+
+### ADR-024: Authentication Strategy — Supabase auth.users and user_profiles
+
+* **Decision:** Use Supabase `auth.users` as the identity provider, combined with a `public.user_profiles` extension table for all business-specific user attributes.
+* **Status:** Accepted (ACR — MA-06)
+* **Rationale:** Supabase `auth.users` handles authentication and session management. Business attributes (SBU assignment, Zone, Role) must be stored separately to allow RLS policy evaluation without modifying the auth schema, which is owned and managed by Supabase.
+* **Impact:** `auth.users` stores identity and credentials. `user_profiles` stores `sbu_id`, `zone_id`, `role_id`, display name, and other business attributes. RLS policies reference `user_profiles` for data scoping decisions. The `user_profiles` table uses the same UUID primary key as `auth.users`.
+* **Affected Modules:** Identity & Access, Database Infrastructure, Security Architecture, All Modules using Auth Context.
 
 ---
 
@@ -143,7 +227,6 @@ Examples include relationship building, prospecting, installed base reviews, and
 *   **Impact:** Defines the CI/CD pipeline, developer local setup, and repository structure for the upcoming Foundation period.
 *   **Affected Modules:** Full System Stack.
 
-
 ### ADR-017: Phase 1 Audit Logging Strategy
 
 * **Decision:** Use PostgreSQL audit logging mechanisms and database triggers to capture changes to business-critical entities.
@@ -152,3 +235,24 @@ Examples include relationship building, prospecting, installed base reviews, and
 * **Impact:** PostgreSQL triggers and a centralized audit_log table will capture changes to critical business entities. The audit_log table is a technical implementation artifact and must not be modeled as an EDM business entity. Dedicated audit dashboards, audit search screens, and audit reports remain out of scope for Phase 1.
 * **Consequences:** Audit history will be generated automatically by the database and exposed through reporting APIs when required.
 * **Affected Modules:** Database Infrastructure, Security Architecture, User Management, Product Management, Account Management, Opportunity Pipeline, Target Planning, Coverage Planning.
+
+### ADR-025: Document Storage Architecture — Supabase Storage with Metadata Entity
+
+* **Decision:** Store document files in Supabase Storage. The Document entity in the relational database stores metadata only (file name, type, size, storage path, and linked entity references).
+* **Status:** Accepted (ACR — MA-05, ADD-07)
+* **Rationale:** Storing binary files in the relational database increases backup size, query latency, and operational complexity. Supabase Storage provides scalable, cost-effective object storage with access control integrated with Supabase Auth.
+* **Impact:**
+  * Document entity attributes: `document_id`, `file_name`, `file_type`, `file_size_bytes`, `storage_path`, `account_id` (nullable FK), `project_id` (nullable FK), `opportunity_id` (nullable FK), `product_id` (nullable FK), `uploaded_by_user_id` FK, `uploaded_at`.
+  * At least one entity FK (`account_id`, `project_id`, `opportunity_id`, or `product_id`) must be non-null.
+  * Application-level constraint enforces document context; no polymorphic FK used.
+* **Affected Modules:** Document Management, Account Management, Project Management, Opportunity Pipeline, Product Catalog.
+
+### ADR-028: Opportunity Stage and Status Decoupling Model
+* **Decision:** Formally adopt the decoupled architecture (Option B) where Won and Lost are operational statuses, not pipeline stages. Stages and Statuses will be implemented as reference/master data entities rather than hardcoded enums.
+* **Status:** Accepted (Approved June 20, 2026 via Architecture Specification)
+* **Rationale:** A decoupled model allows the stage to be permanently preserved at the point of win or loss, enabling accurate pipeline leakage analysis ("Where are we losing deals?"). Implementing these as master data allows dynamic configuration of display orders, default win probabilities, and operational flags (e.g., `is_terminal`) without schema changes. The model also encompasses the automated system-driven "Stalled" status triggered by 180 days of inactivity.
+* **Impact:**
+  * New master entities: `OpportunityStage` and `OpportunityStatus`.
+  * `Opportunity` entity uses `stage_id` and `status_id` foreign keys.
+  * Stalled background job required for 180-day inactivity detection.
+* **Affected Modules:** Opportunity Pipeline, Forecasting, Reporting, Business Rules Engine.
