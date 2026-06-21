@@ -49,6 +49,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 | **OpportunityStatus** | Master list of operational states (Active, Won, Lost, etc.). | Admin |
 | **LossReason** | Categorized reasons for why an Opportunity was lost. | Admin |
 | **HoldReason** | Categorized reasons for placing an Opportunity On-Hold. | Admin |
+| **ProjectStatus** | Master list of operational states for a Project. | Admin |
 | **Target Plan** | Annual/Quarterly revenue quotas assigned to a user and SBU. | General Manager |
 | **Coverage Plan** | Quarterly strategic mapping of accounts to a sales executive. | Sales Manager |
 | **Coverage Plan Entry** | Strategic account-level coverage objectives and revenue targets within a Coverage Plan. | Sales Manager |
@@ -161,13 +162,28 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
   * *Seed Values:* CUSTOMER_DELAY, BUDGET_PENDING, PROCUREMENT_DELAY, REGULATORY_APPROVAL_PENDING, COMPETITOR_EVALUATION, INTERNAL_RESOURCE_CONSTRAINT, OTHER.
   * *Cardinality:* 1 HoldReason value is referenced by M Opportunities.
 
+* **ProjectStatus**
+  * *Description:* Master reference entity defining the lifecycle status of a Project.
+  * *Relationships:* Project (1:Many).
+  * *Key Attributes:* `status_id`, `status_code`, `status_name`, `is_active` (Boolean).
+  * *Seed Values:* DRAFT, ACTIVE, BID_SUBMITTED, AWARDED, LOST, CLOSED.
+  * *Cardinality:* 1 ProjectStatus value is referenced by M Projects.
+
+* **Product**
+  * *Description:* Represents a sellable medical equipment product offered by Cabio.
+  * *Relationships:* SBU (Many:1), Opportunity Item (1:Many), Installed Asset (1:Many).
+  * *Key Attributes:* `product_id`, `sbu_id` (FK → SBU), `name`, `oem_name` (Text), `model_number` (Text), `category_name` (Text), `description` (Text), `is_active` (Boolean).
+  * *Note:* `category_name` supports basic reporting (e.g., Ultrasound, Ventilator) without introducing a complex category hierarchy, adhering to Phase 1 constraints.
+
 ---
 
 ### 5.3 Execution Entities
 
 * **Account**
   * *Description:* Central entity for all sales activity.
-  * *Relationships:* Parent Account (Many:1), Stakeholders (1:Many), Projects (1:Many), Activities (1:Many), Installed Assets (1:Many).
+  * *Relationships:* Parent Account (Many:1), Stakeholders (1:Many), Projects (1:Many), Activities (1:Many), Installed Assets (1:Many), Managing SBU (Many:1).
+  * *Key Attributes:* `managing_sbu_id` (FK → SBU, nullable).
+  * *Security Note:* While Accounts are globally visible, `managing_sbu_id` explicitly designates the SBU holding edit rights, fulfilling ADR-009 "SBU Scoped (Edit)" without relying on audit metadata such as `created_by`.
 
 * **Stakeholder**
   * *Description:* Holds individual NPS and Decision roles. Sentiment tracked at stakeholder level, not account level.
@@ -175,8 +191,8 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 
 * **Project**
   * *Description:* The Tender vehicle or strategic expansion initiative.
-  * *Relationships:* Account (Many:1), Opportunities (1:Many), Owner/User (Many:1), Activities (1:Many).
-  * *Key Attributes:* `owner_id` (FK → User, NOT NULL). Default owner is the record creator.
+  * *Relationships:* Account (Many:1), Opportunities (1:Many), Owner/User (Many:1), Activities (1:Many), ProjectStatus (Many:1).
+  * *Key Attributes:* `owner_id` (FK → User, NOT NULL), `status_id` (FK → ProjectStatus, NOT NULL). Default owner is the record creator.
   * *Reference:* ADR-022 (Project Ownership Model).
 
 * **Opportunity**
@@ -187,6 +203,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
     * `status_id` (FK → OpportunityStatus, NOT NULL)
     * `win_probability` (Numeric, defaults to Stage probability, may be overridden)
     * `loss_reason_id` (FK → LossReason, nullable, required if Status = LOST)
+    * `loss_notes` (Text, nullable)
     * `competitor_name` (Text, nullable, free text, required if loss reason = COMPETITOR_WON)
     * `lead_source_id` (FK → LeadSource, nullable)
     * `indicative_value` (Numeric 15,2, nullable — used when no Opportunity Items exist)
@@ -219,7 +236,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
   * *Cardinality:* 1 Opportunity has M Opportunity Items.
 
 * **Activity**
-  * *Description:* A logged interaction (Call, Visit, Demo, Email) that must be associated with an Account. Activities may optionally be linked to a Project and/or Opportunity to provide additional business context.
+  * *Description:* A logged interaction (Call, Visit, Demo, Email) that must be associated with an Account. Activities may optionally be linked to a Project and/or Opportunity to provide additional business context. (Immutable entity — cannot be edited or deleted).
   * *Relationships:* Account (Many:1, **mandatory**), Project (Many:1, **nullable**), Opportunity (Many:1, **nullable**), User/Owner (Many:1).
   * *Key Attributes:* `account_id` (FK → Account, **NOT NULL**), `project_id` (FK → Project, nullable), `opportunity_id` (FK → Opportunity, nullable), `activity_type`, `activity_date`, `notes`.
   * *Database Constraint:* `account_id NOT NULL`. No OR-based CHECK constraint is required. Project and Opportunity linkages are optional and enforced at the application layer.
