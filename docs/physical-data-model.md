@@ -13,10 +13,9 @@ This document translates the approved Enterprise Data Model (EDM) into a concret
 - **Date Filtering:** B-Tree indexes on commonly queried dates (`activity.activity_date`, `opportunity.expected_closure_date`, `reminder.due_date`).
 
 ### 1.2 Audit Strategy
-- **Mechanism:** PostgreSQL Triggers capturing changes into a centralized `audit_log` table.
-- **Monitored Entities:** `opportunity`, `split`, `target_plan`, `coverage_plan_entry`, `project`.
-- **Recorded Fields:** Table name, record ID, user ID (derived from `auth.uid()`), action (`INSERT`, `UPDATE`, `DELETE`), previous payload (JSONB), new payload (JSONB), timestamp.
-- **Immutability:** The `audit_log` table is append-only. No application user, including admins, can modify or delete records.
+- **Mechanism:** Operational auditing is delegated to Supabase native auditing and PostgreSQL logging.
+- **Metadata Fields:** Standard `created_at`, `created_by`, `updated_at`, and `updated_by` metadata columns are leveraged on transaction entities for business traceability.
+- **Scope:** Custom `audit_log` tables and triggers are intentionally omitted from Phase 1.
 
 ### 1.3 Soft Delete Strategy
 - **Master Data:** Soft delete applied (`is_active` boolean) to all reference data (`opportunity_stage`, `opportunity_status`, `lead_source`, `loss_reason`, `hold_reason`, `product`) to preserve historical associations in old records.
