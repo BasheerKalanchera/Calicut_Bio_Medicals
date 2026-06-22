@@ -93,6 +93,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Exit Rule:** The Stalled status automatically reverts to Active when any activity is logged.
 * **Notifications:** The salesperson and their manager receive notifications when an opportunity becomes Stalled.
 * **Forecasting:** Stalled opportunities are excluded from committed pipeline forecasts.
+* **Implementation Note:** This rule is expected to be executed by a scheduled background process (OpportunityMonitoringJob / OpportunityLifecycleJob) rather than a user-initiated API operation.
 
 ### BR-OP-07: Forecasting & Pipeline Inclusion
 * **Won:** Included as closed-won revenue.
