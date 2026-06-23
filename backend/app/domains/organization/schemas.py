@@ -1,0 +1,38 @@
+import uuid
+
+from pydantic import BaseModel, ConfigDict
+
+
+class SBUNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class ZoneNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class UserMeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    display_name: str
+    is_active: bool | None
+    role_name: str
+    sbu: SBUNested
+    zone: ZoneNested | None
+
+
+class UserListResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    display_name: str
+    sbu_id: uuid.UUID
+    zone_id: uuid.UUID | None
+    role_id: uuid.UUID

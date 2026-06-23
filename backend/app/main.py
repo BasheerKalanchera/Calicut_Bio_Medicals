@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import health
+from app.api.routers import auth, health, master_data
 from app.api.schemas import ErrorResponse
 from app.core.config import settings
 from app.core.exceptions import (
@@ -103,8 +103,9 @@ def _register_exception_handlers(application: FastAPI) -> None:
 
 def _register_routers(application: FastAPI) -> None:
     application.include_router(health.router, prefix="/api/v1")
-    # Phase 2B.3: auth, master_data routers
-    # Phase 2C+: domain routers (accounts, opportunities, etc.)
+    application.include_router(auth.router, prefix="/api/v1")
+    application.include_router(master_data.router, prefix="/api/v1")
+    # Phase 2C.2+: domain routers (accounts, opportunities, etc.)
 
 
 app = create_app()
