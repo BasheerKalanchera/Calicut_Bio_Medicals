@@ -16,6 +16,14 @@ class AuthenticationError(AppError):
     pass
 
 
+class InvalidTokenError(AuthenticationError):
+    pass
+
+
+class UserNotFoundError(AuthenticationError):
+    pass
+
+
 class AuthorizationError(AppError):
     pass
 

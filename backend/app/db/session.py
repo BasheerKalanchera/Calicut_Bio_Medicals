@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
@@ -25,3 +26,8 @@ def get_db() -> Generator[Session, None, None]:
         raise
     finally:
         db.close()
+
+
+def set_rls_context(db: Session, user_id: uuid.UUID) -> None:
+    # Phase 2E will implement: db.execute(text("SET LOCAL app.current_user_id = :id"), {"id": str(user_id)})
+    pass
