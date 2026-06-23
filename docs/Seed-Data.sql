@@ -81,3 +81,31 @@ INSERT INTO lead_source (id, name, description) VALUES
 ('66666666-6666-6666-6666-600000000008', 'WALK_IN', 'Walk In'),
 ('66666666-6666-6666-6666-600000000009', 'OTHER', 'Other')
 ON CONFLICT (name) DO NOTHING;
+
+-- ==========================================
+-- 7. ROLES (Approved Values)
+-- ==========================================
+INSERT INTO role (id, role_name) VALUES
+('77777777-7777-7777-7777-700000000001', 'Sales Executive'),
+('77777777-7777-7777-7777-700000000002', 'Sales Manager'),
+('77777777-7777-7777-7777-700000000003', 'General Manager'),
+('77777777-7777-7777-7777-700000000004', 'Admin')
+ON CONFLICT (role_name) DO NOTHING;
+
+-- ==========================================
+-- 8. STRATEGIC BUSINESS UNITS (Approved Values)
+-- ==========================================
+INSERT INTO sbu (id, name, description) VALUES
+('88888888-8888-8888-8888-800000000001', 'Imaging', 'Imaging Division'),
+('88888888-8888-8888-8888-800000000002', 'Critical Care', 'Critical Care Division')
+ON CONFLICT (name) DO NOTHING;
+
+-- ==========================================
+-- 9. ZONES (Approved Values)
+-- ==========================================
+INSERT INTO zone (id, name, description) VALUES
+('99999999-9999-9999-9999-900000000001', 'North Kerala', 'North Kerala Zone'),
+('99999999-9999-9999-9999-900000000002', 'South Kerala', 'South Kerala Zone'),
+('99999999-9999-9999-9999-900000000003', 'Central Kerala', 'Central Kerala Zone'),
+('99999999-9999-9999-9999-900000000004', 'Bangalore', 'Bangalore Zone')
+ON CONFLICT (name) DO NOTHING;

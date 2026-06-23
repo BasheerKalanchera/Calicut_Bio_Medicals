@@ -346,3 +346,89 @@ SELECT
         0
     ) as effective_value_lakhs
 FROM opportunity o;
+
+-- ==========================================
+-- 8. TRIGGER FUNCTION & TRIGGERS
+-- ==========================================
+
+CREATE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON user_profile
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON target_plan
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON coverage_plan
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON product
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON account
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON stakeholder
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON project
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON opportunity
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON coverage_plan_entry
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON opportunity_stakeholder
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON split
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON opportunity_item
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON reminder
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON installed_asset
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ==========================================
+-- 9. PERFORMANCE INDEXES
+-- ==========================================
+
+-- Text search (requires pg_trgm extension)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX idx_account_name_trgm ON account USING GIN (name gin_trgm_ops);
+CREATE INDEX idx_opportunity_name_trgm ON opportunity USING GIN (name gin_trgm_ops);
+
+-- Date filtering (B-Tree)
+CREATE INDEX idx_activity_activity_date ON activity (activity_date);
+CREATE INDEX idx_opportunity_expected_closure_date ON opportunity (expected_closure_date);
+CREATE INDEX idx_reminder_due_date ON reminder (due_date);
+
+-- Foreign key indexes (high-value join paths)
+CREATE INDEX idx_opportunity_account_id ON opportunity (account_id);
+CREATE INDEX idx_opportunity_owner_id ON opportunity (owner_id);
+CREATE INDEX idx_opportunity_stage_id ON opportunity (stage_id);
+CREATE INDEX idx_opportunity_status_id ON opportunity (status_id);
+CREATE INDEX idx_activity_account_id ON activity (account_id);
+CREATE INDEX idx_activity_user_id ON activity (user_id);
+CREATE INDEX idx_activity_opportunity_id ON activity (opportunity_id);
+CREATE INDEX idx_stakeholder_account_id ON stakeholder (account_id);
+CREATE INDEX idx_project_account_id ON project (account_id);
+CREATE INDEX idx_project_owner_id ON project (owner_id);
+CREATE INDEX idx_reminder_activity_id ON reminder (activity_id);
+CREATE INDEX idx_reminder_assigned_to_user_id ON reminder (assigned_to_user_id);
+CREATE INDEX idx_installed_asset_account_id ON installed_asset (account_id);
+CREATE INDEX idx_document_account_id ON document (account_id);
+CREATE INDEX idx_document_opportunity_id ON document (opportunity_id);
