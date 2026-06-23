@@ -49,10 +49,80 @@ def test_alembic_versions_directory_exists():
     assert versions_path.is_dir(), "alembic/versions/ directory not found"
 
 
-def test_metadata_contains_no_tables_before_entity_models():
-    """Registry imports succeed but no tables exist yet (entity models not defined)."""
+def test_all_25_tables_registered():
     import app.db.registry  # noqa: F401
     from app.db.base import Base
 
     table_count = len(Base.metadata.tables)
-    assert table_count == 0, f"Expected 0 tables before entity models, found {table_count}"
+    assert table_count == 25, f"Expected 25 tables, found {table_count}"
+
+
+def test_mapper_configuration_succeeds():
+    from sqlalchemy.orm import configure_mappers
+
+    import app.db.registry  # noqa: F401
+
+    configure_mappers()
+
+
+def test_all_relationships_resolve():
+    from sqlalchemy.orm import configure_mappers
+
+    import app.db.registry  # noqa: F401
+    from app.db.base import Base
+
+    configure_mappers()
+    rel_count = sum(len(m.relationships) for m in Base.registry.mappers)
+    assert rel_count == 86, f"Expected 86 relationships, found {rel_count}"
+
+
+def test_reference_models_importable():
+    from app.domains.reference.models import (
+        SBU,
+        HoldReason,
+        LeadSource,
+        LossReason,
+        OpportunityStage,
+        OpportunityStatus,
+        ProjectStatus,
+        Role,
+        Zone,
+    )
+
+    assert all(
+        [Role, SBU, Zone, LeadSource, OpportunityStage, OpportunityStatus, ProjectStatus, LossReason, HoldReason]
+    )
+
+
+def test_organization_models_importable():
+    from app.domains.organization.models import UserProfile
+
+    assert UserProfile.__tablename__ == "user_profile"
+
+
+def test_opportunity_models_importable():
+    from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
+
+    assert Opportunity.__tablename__ == "opportunity"
+    assert OpportunityStakeholder.__tablename__ == "opportunity_stakeholder"
+    assert Split.__tablename__ == "split"
+    assert OpportunityItem.__tablename__ == "opportunity_item"
+
+
+def test_activity_uses_created_at_mixin():
+    from app.db.base import CreatedAtMixin
+    from app.domains.activity.models import Activity
+
+    assert issubclass(Activity, CreatedAtMixin)
+    assert hasattr(Activity, "created_at")
+    assert hasattr(Activity, "created_by")
+    assert not hasattr(Activity, "updated_at")
+
+
+def test_document_has_no_audit_mixin():
+    from app.db.base import AuditMixin
+    from app.domains.document.models import Document
+
+    assert not issubclass(Document, AuditMixin)
+    assert hasattr(Document, "uploaded_at")
+    assert hasattr(Document, "uploaded_by_user_id")

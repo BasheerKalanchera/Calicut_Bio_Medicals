@@ -309,6 +309,7 @@ account: Mapped["Account"] = relationship(
 ```
 
 - Default lazy loading: `"selectin"` for collections, `"joined"` for single references.
+- Override to `lazy="select"` is permitted for back-reference collections on reference entities (SBU, Zone, Role, LeadSource, OpportunityStage, OpportunityStatus, ProjectStatus, LossReason, HoldReason) and high-fanout parent entities (UserProfile, Product), where eager loading would cause excessive queries with no business benefit. The override must be explicit (`lazy="select"`), not implicit (omitting lazy).
 - Always define both sides with `back_populates`.
 - Never use `backref`.
 
@@ -571,7 +572,7 @@ class AccountRepository(BaseRepository[Account]):
 
 ### Reference Repository
 
-Reference/master data tables (`opportunity_stage`, `opportunity_status`, `lead_source`, `loss_reason`, `hold_reason`, `project_status`, `sbu`, `zone`, `role`, `product`) use `is_active` soft delete. Active filtering must be encapsulated in the repository, not scattered across services or routers.
+Reference/master data tables (`opportunity_stage`, `opportunity_status`, `lead_source`, `loss_reason`, `hold_reason`, `project_status`, `sbu`, `zone`, `product`) use `is_active` soft delete. Active filtering must be encapsulated in the repository, not scattered across services or routers. Note: `role` does not have `is_active` (per Physical-Schema.sql) and uses `BaseRepository`, not `ReferenceRepository`.
 
 ```python
 class ReferenceRepository(BaseRepository[ModelType]):
@@ -1600,3 +1601,5 @@ async def update_account(
 | 9 | 12 (Configuration — Secrets Handling) | Changed "secrets come from the hosting platform's environment (Vercel, Railway, etc.)" to platform-neutral wording. | Document should not assume a specific deployment target. |
 | 10 | 9 (Authentication — new RLS Context Propagation subsection) | Added architectural requirements for propagating authenticated user identity to PostgreSQL for RLS evaluation. Defined architecture flow. Deferred technical mechanism to Phase 2E. | Document declared "RLS First" but did not define how user identity reaches PostgreSQL. Repositories and services must remain RLS-unaware. |
 | 11 | 13 (Testing — new Coverage Requirements subsection) | Added quantitative coverage standards: 80% overall, 90% service layer, 100% critical business rule paths. Specified `pytest-cov` as the tool with CI enforcement. | No objective coverage criteria existed for code review or CI governance. |
+| 12 | 6 (Repository — Reference Repository) | Removed `role` from the ReferenceRepository `is_active` table list. Added note that Role uses BaseRepository. | Physical-Schema.sql `role` table has no `is_active` column. Schema is authoritative per Section 3. |
+| 13 | 4 (SQLAlchemy — Relationships) | Added approved `lazy="select"` override clause for back-reference collections on reference entities and high-fanout parent entities (UserProfile, Product). | Applying `selectin` to all 43 collections would cause excessive queries on reference lookups and UserProfile loads with no business benefit. |

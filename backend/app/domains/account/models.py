@@ -1,0 +1,61 @@
+import uuid
+
+from sqlalchemy import UUID, CheckConstraint, ForeignKey, Index, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import AuditMixin, Base
+
+
+class Account(AuditMixin, Base):
+    __tablename__ = "account"
+    __table_args__ = (
+        CheckConstraint(
+            "payer_behavior IN ('GOOD', 'AVERAGE', 'PROBLEMATIC', 'UNKNOWN')",
+            name="ck_account_payer_behavior",
+        ),
+        Index("idx_account_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    parent_account_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("account.id"), nullable=True
+    )
+    managing_sbu_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    parent_account: Mapped["Account | None"] = relationship(
+        back_populates="child_accounts", remote_side="Account.id", lazy="joined"
+    )
+    child_accounts: Mapped[list["Account"]] = relationship(back_populates="parent_account", lazy="selectin")
+    managing_sbu: Mapped["SBU | None"] = relationship(back_populates="managed_accounts", lazy="joined")
+
+    stakeholders: Mapped[list["Stakeholder"]] = relationship(back_populates="account", lazy="selectin")
+    projects: Mapped[list["Project"]] = relationship(back_populates="account", lazy="selectin")
+    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="account", lazy="selectin")
+    activities: Mapped[list["Activity"]] = relationship(back_populates="account", lazy="selectin")
+    installed_assets: Mapped[list["InstalledAsset"]] = relationship(back_populates="account", lazy="selectin")
+    documents: Mapped[list["Document"]] = relationship(back_populates="account", lazy="selectin")
+    coverage_plan_entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="account", lazy="selectin")
+
+
+class Stakeholder(AuditMixin, Base):
+    __tablename__ = "stakeholder"
+    __table_args__ = (
+        CheckConstraint("nps_score >= -100 AND nps_score <= 100", name="ck_stakeholder_nps_score"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("account.id"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    nps_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    account: Mapped["Account"] = relationship(back_populates="stakeholders", lazy="joined")
+    opportunity_stakeholders: Mapped[list["OpportunityStakeholder"]] = relationship(
+        back_populates="stakeholder", lazy="selectin"
+    )
