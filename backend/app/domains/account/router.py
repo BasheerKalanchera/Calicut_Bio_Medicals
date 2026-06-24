@@ -14,6 +14,8 @@ from app.domains.account.schemas import (
     AccountUpdate,
 )
 from app.domains.account.service import AccountService
+from app.domains.account.workspace_schemas import WorkspaceResponse
+from app.domains.account.workspace_service import WorkspaceService
 from app.domains.organization.models import UserProfile
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
@@ -23,6 +25,12 @@ def _get_service(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> AccountService:
     return AccountService(repository=AccountRepository(db))
+
+
+def _get_workspace_service(
+    db: Session = Depends(get_db),  # noqa: B008
+) -> WorkspaceService:
+    return WorkspaceService(repository=AccountRepository(db))
 
 
 @router.get("")
@@ -85,3 +93,13 @@ async def update_account(
 ) -> APIResponse[AccountResponse]:
     account = service.update_account(account_id, body, updated_by=current_user.id)
     return APIResponse(data=AccountResponse.model_validate(account))
+
+
+@router.get("/{account_id}/workspace")
+async def get_workspace(
+    account_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: WorkspaceService = Depends(_get_workspace_service),  # noqa: B008
+) -> APIResponse[WorkspaceResponse]:
+    workspace = service.get_workspace(account_id)
+    return APIResponse(data=workspace)
