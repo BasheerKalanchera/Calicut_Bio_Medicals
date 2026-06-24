@@ -1,15 +1,18 @@
 import uuid
 from datetime import UTC, datetime, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import jwt as pyjwt
 import pytest
-from jose import jwt
+from cryptography.hazmat.primitives.asymmetric import ec
 
 from app.core.exceptions import AuthenticationError, InvalidTokenError, UserNotFoundError
 from app.core.security import decode_jwt, extract_user_id
 
-TEST_SECRET = "test-jwt-secret"
 TEST_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
+_TEST_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
+_TEST_PUBLIC_KEY = _TEST_PRIVATE_KEY.public_key()
+_WRONG_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
 
 
 def _create_token(
@@ -17,15 +20,24 @@ def _create_token(
     *,
     expired: bool = False,
     audience: str = "authenticated",
-    secret: str = TEST_SECRET,
+    key: ec.EllipticCurvePrivateKey = _TEST_PRIVATE_KEY,
 ) -> str:
     now = datetime.now(UTC)
     exp = now + (timedelta(hours=-1) if expired else timedelta(hours=1))
-    return jwt.encode(
+    return pyjwt.encode(
         {"sub": str(user_id), "aud": audience, "exp": exp, "iat": now, "role": "authenticated"},
-        secret,
-        algorithm="HS256",
+        key,
+        algorithm="ES256",
     )
+
+
+@pytest.fixture(autouse=True)
+def _mock_jwk_client():
+    mock_signing_key = MagicMock()
+    mock_signing_key.key = _TEST_PUBLIC_KEY
+    with patch("app.core.security._get_jwk_client") as mock_client:
+        mock_client.return_value.get_signing_key_from_jwt.return_value = mock_signing_key
+        yield
 
 
 class TestDecodeJWT:
@@ -36,7 +48,7 @@ class TestDecodeJWT:
         assert payload["aud"] == "authenticated"
 
     def test_invalid_signature_raises(self):
-        token = _create_token(secret="wrong-secret")
+        token = _create_token(key=_WRONG_PRIVATE_KEY)
         with pytest.raises(InvalidTokenError):
             decode_jwt(token)
 

@@ -1,9 +1,20 @@
+from __future__ import annotations
+
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
+
+if TYPE_CHECKING:
+    from app.domains.activity.models import Activity, Reminder
+    from app.domains.document.models import Document
+    from app.domains.opportunity.models import Opportunity, Split
+    from app.domains.planning.models import CoveragePlan, TargetPlan
+    from app.domains.project.models import Project
+    from app.domains.reference.models import Role, SBU, Zone
 
 
 class UserProfile(AuditMixin, Base):

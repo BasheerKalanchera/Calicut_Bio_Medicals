@@ -1,20 +1,29 @@
 import uuid
+from functools import lru_cache
 
-from jose import JWTError, jwt
+import jwt
+from jwt import PyJWKClient
 
 from app.core.config import settings
 from app.core.exceptions import InvalidTokenError
 
 
+@lru_cache(maxsize=1)
+def _get_jwk_client() -> PyJWKClient:
+    jwks_url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/.well-known/jwks.json"
+    return PyJWKClient(jwks_url, cache_jwk_set=True, lifespan=3600)
+
+
 def decode_jwt(token: str) -> dict:
     try:
+        signing_key = _get_jwk_client().get_signing_key_from_jwt(token)
         return jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET.get_secret_value(),
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["ES256"],
             audience="authenticated",
         )
-    except JWTError as e:
+    except (jwt.PyJWTError, jwt.exceptions.PyJWKClientError) as e:
         raise InvalidTokenError(str(e)) from e
 
 

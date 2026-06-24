@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DATABASE_URL: SecretStr
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: SecretStr
-    SUPABASE_JWT_SECRET: SecretStr
+    SUPABASE_JWT_SECRET: SecretStr | None = None
 
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
