@@ -1,0 +1,363 @@
+import uuid
+from datetime import UTC, datetime
+from unittest.mock import MagicMock
+
+from fastapi.testclient import TestClient
+
+from app.api.dependencies import get_current_user
+from app.db.session import get_db
+from app.domains.account.models import Account
+from app.domains.organization.models import UserProfile
+from app.main import app
+
+TEST_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
+TEST_ACCOUNT_ID = uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+TEST_SBU_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+
+
+def _mock_user() -> MagicMock:
+    user = MagicMock(spec=UserProfile)
+    user.id = TEST_USER_ID
+    user.is_active = True
+    return user
+
+
+def _mock_sbu() -> MagicMock:
+    sbu = MagicMock()
+    sbu.id = TEST_SBU_ID
+    sbu.name = "Imaging"
+    return sbu
+
+
+def _mock_account(**overrides) -> MagicMock:
+    now = datetime.now(UTC)
+    defaults = {
+        "id": TEST_ACCOUNT_ID,
+        "name": "Test Hospital",
+        "parent_account_id": None,
+        "managing_sbu_id": TEST_SBU_ID,
+        "payer_behavior": "GOOD",
+        "created_at": now,
+        "updated_at": now,
+        "managing_sbu": _mock_sbu(),
+        "parent_account": None,
+    }
+    defaults.update(overrides)
+    account = MagicMock(spec=Account)
+    for k, v in defaults.items():
+        setattr(account, k, v)
+    return account
+
+
+def _setup_overrides(mock_db: MagicMock) -> None:
+    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+    app.dependency_overrides[get_db] = lambda: mock_db
+
+
+def _teardown_overrides() -> None:
+    app.dependency_overrides.clear()
+
+
+class TestListAccounts:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get("/api/v1/accounts")
+        assert response.status_code == 401
+
+    def test_returns_paginated_accounts(self, client: TestClient) -> None:
+        account = _mock_account()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [account]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/accounts")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        data = body["data"]
+        assert "items" in data
+        assert "total" in data
+        assert data["total"] == 1
+        assert data["items"][0]["name"] == "Test Hospital"
+
+    def test_search_filter(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/accounts?search=apollo")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+
+    def test_sbu_filter(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/accounts?sbu_id={TEST_SBU_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+
+    def test_pagination_params(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/accounts?page=2&page_size=10")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data"]["page"] == 2
+        assert body["data"]["page_size"] == 10
+
+
+class TestGetAccount:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/accounts/{TEST_ACCOUNT_ID}")
+        assert response.status_code == 401
+
+    def test_returns_account_detail(self, client: TestClient) -> None:
+        account = _mock_account()
+        mock_db = MagicMock()
+        mock_db.get.return_value = account
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/accounts/{TEST_ACCOUNT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        assert body["data"]["id"] == str(TEST_ACCOUNT_ID)
+        assert body["data"]["name"] == "Test Hospital"
+        assert body["data"]["managing_sbu"]["name"] == "Imaging"
+
+    def test_not_found_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = None
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/accounts/{uuid.uuid4()}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404
+
+
+class TestCreateAccount:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.post("/api/v1/accounts", json={"name": "New Hospital"})
+        assert response.status_code == 401
+
+    def test_creates_account(self, client: TestClient) -> None:
+        account = _mock_account(name="New Hospital")
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.get.return_value = _mock_sbu()
+
+        def _capture_add(obj):
+            for attr in ["id", "name", "parent_account_id", "managing_sbu_id",
+                         "payer_behavior", "created_at", "updated_at",
+                         "managing_sbu", "parent_account"]:
+                if not hasattr(obj, attr) or getattr(obj, attr) is None:
+                    setattr(obj, attr, getattr(account, attr))
+
+        mock_db.add.side_effect = _capture_add
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(
+                "/api/v1/accounts",
+                json={"name": "New Hospital", "managing_sbu_id": str(TEST_SBU_ID)},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 201
+        body = response.json()
+        assert body["success"] is True
+
+    def test_empty_name_returns_422(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        _setup_overrides(mock_db)
+        try:
+            response = client.post("/api/v1/accounts", json={"name": ""})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422
+
+    def test_duplicate_name_returns_409(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post("/api/v1/accounts", json={"name": "Existing Hospital"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 409
+
+    def test_invalid_payer_behavior_returns_422(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(
+                "/api/v1/accounts",
+                json={"name": "Hospital", "payer_behavior": "RANDOM_VALUE"},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422
+
+    def test_valid_payer_behaviors_accepted(self, client: TestClient) -> None:
+        for behavior in ["GOOD", "AVERAGE", "PROBLEMATIC", "UNKNOWN"]:
+            account = _mock_account(name="Hospital", payer_behavior=behavior)
+            mock_db = MagicMock()
+            mock_db.scalar.return_value = 0
+            mock_db.get.return_value = _mock_sbu()
+
+            def _capture_add(obj, _acct=account):
+                for attr in ["id", "name", "parent_account_id", "managing_sbu_id",
+                             "payer_behavior", "created_at", "updated_at",
+                             "managing_sbu", "parent_account"]:
+                    if not hasattr(obj, attr) or getattr(obj, attr) is None:
+                        setattr(obj, attr, getattr(_acct, attr))
+
+            mock_db.add.side_effect = _capture_add
+
+            _setup_overrides(mock_db)
+            try:
+                response = client.post(
+                    "/api/v1/accounts",
+                    json={"name": "Hospital", "payer_behavior": behavior},
+                )
+            finally:
+                _teardown_overrides()
+
+            assert response.status_code == 201, f"Failed for {behavior}"
+
+    def test_invalid_sbu_returns_400(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.get.return_value = None
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(
+                "/api/v1/accounts",
+                json={"name": "Hospital", "managing_sbu_id": str(uuid.uuid4())},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 400
+
+    def test_invalid_parent_account_returns_400(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.get.return_value = None
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(
+                "/api/v1/accounts",
+                json={"name": "Hospital", "parent_account_id": str(uuid.uuid4())},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 400
+
+
+class TestUpdateAccount:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.put(
+            f"/api/v1/accounts/{TEST_ACCOUNT_ID}", json={"name": "Updated"}
+        )
+        assert response.status_code == 401
+
+    def test_updates_account(self, client: TestClient) -> None:
+        account = _mock_account()
+        mock_db = MagicMock()
+        mock_db.get.return_value = account
+        mock_db.scalar.return_value = 0
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.put(
+                f"/api/v1/accounts/{TEST_ACCOUNT_ID}",
+                json={"name": "Updated Hospital"},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+
+    def test_not_found_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = None
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.put(
+                f"/api/v1/accounts/{uuid.uuid4()}",
+                json={"name": "Updated"},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404
+
+    def test_self_parent_returns_400(self, client: TestClient) -> None:
+        account = _mock_account()
+        mock_db = MagicMock()
+        mock_db.get.return_value = account
+        mock_db.scalar.return_value = 0
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.put(
+                f"/api/v1/accounts/{TEST_ACCOUNT_ID}",
+                json={"parent_account_id": str(TEST_ACCOUNT_ID)},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 400
+
+    def test_invalid_payer_behavior_returns_422(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        _setup_overrides(mock_db)
+        try:
+            response = client.put(
+                f"/api/v1/accounts/{TEST_ACCOUNT_ID}",
+                json={"payer_behavior": "INVALID"},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422

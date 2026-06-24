@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from app.domains.opportunity.models import Opportunity, Split
     from app.domains.planning.models import CoveragePlan, TargetPlan
     from app.domains.project.models import Project
-    from app.domains.reference.models import Role, SBU, Zone
+    from app.domains.reference.models import SBU, Role, Zone
 
 
 class UserProfile(AuditMixin, Base):
@@ -27,31 +27,31 @@ class UserProfile(AuditMixin, Base):
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 
-    sbu: Mapped["SBU"] = relationship(back_populates="user_profiles", lazy="joined")
-    zone: Mapped["Zone | None"] = relationship(back_populates="user_profiles", lazy="joined")
-    role: Mapped["Role"] = relationship(back_populates="user_profiles", lazy="joined")
+    sbu: Mapped[SBU] = relationship(back_populates="user_profiles", lazy="joined")
+    zone: Mapped[Zone | None] = relationship(back_populates="user_profiles", lazy="joined")
+    role: Mapped[Role] = relationship(back_populates="user_profiles", lazy="joined")
 
-    target_plans: Mapped[list["TargetPlan"]] = relationship(
+    target_plans: Mapped[list[TargetPlan]] = relationship(
         back_populates="user", foreign_keys="[TargetPlan.user_id]", lazy="select"
     )
-    coverage_plans: Mapped[list["CoveragePlan"]] = relationship(
+    coverage_plans: Mapped[list[CoveragePlan]] = relationship(
         back_populates="user", foreign_keys="[CoveragePlan.user_id]", lazy="select"
     )
-    owned_projects: Mapped[list["Project"]] = relationship(
+    owned_projects: Mapped[list[Project]] = relationship(
         back_populates="owner", foreign_keys="[Project.owner_id]", lazy="select"
     )
-    owned_opportunities: Mapped[list["Opportunity"]] = relationship(
+    owned_opportunities: Mapped[list[Opportunity]] = relationship(
         back_populates="owner", foreign_keys="[Opportunity.owner_id]", lazy="select"
     )
-    splits: Mapped[list["Split"]] = relationship(
+    splits: Mapped[list[Split]] = relationship(
         back_populates="user", foreign_keys="[Split.user_id]", lazy="select"
     )
-    activities: Mapped[list["Activity"]] = relationship(
+    activities: Mapped[list[Activity]] = relationship(
         back_populates="user", foreign_keys="[Activity.user_id]", lazy="select"
     )
-    assigned_reminders: Mapped[list["Reminder"]] = relationship(
+    assigned_reminders: Mapped[list[Reminder]] = relationship(
         back_populates="assigned_to_user", foreign_keys="[Reminder.assigned_to_user_id]", lazy="select"
     )
-    uploaded_documents: Mapped[list["Document"]] = relationship(
+    uploaded_documents: Mapped[list[Document]] = relationship(
         back_populates="uploaded_by_user", foreign_keys="[Document.uploaded_by_user_id]", lazy="select"
     )

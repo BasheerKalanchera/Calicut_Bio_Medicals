@@ -14,6 +14,8 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.core.logging import logger, setup_logging
+from app.domains.account import router as account_router
+from app.domains.account import stakeholder_router
 from app.middleware.correlation_id import CorrelationIdMiddleware
 
 
@@ -105,7 +107,8 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(health.router, prefix="/api/v1")
     application.include_router(auth.router, prefix="/api/v1")
     application.include_router(master_data.router, prefix="/api/v1")
-    # Phase 2C.2+: domain routers (accounts, opportunities, etc.)
+    application.include_router(account_router.router, prefix="/api/v1")
+    application.include_router(stakeholder_router.router, prefix="/api/v1")
 
 
 app = create_app()
