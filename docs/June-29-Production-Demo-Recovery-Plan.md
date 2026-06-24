@@ -324,22 +324,73 @@ Customer 360 tabs can be populated from one API call:
 
 # Phase 2D – Frontend Integration
 
-## Objective
+## Architecture Decision
 
-Connect existing React prototype to production APIs.
+Preserve `App.jsx` prototype completely unchanged. Build a separate `DemoApp.jsx` using the Phase 2D.1 integration foundation. Both applications are available simultaneously via client-side routing:
+
+```text
+/prototype    →  App.jsx (original mock-data prototype, untouched)
+/demo         →  DemoApp.jsx (production app, live APIs)
+/             →  Redirects to /demo (authenticated) or login screen
+```
+
+### Rationale
+
+* Prototype remains a living reference for Sprint 2+ feature development
+* Zero risk of breaking prototype screens not yet API-connected (pipeline, beat planning, targets, activities)
+* Trivial rollback — `/prototype` always works regardless of API state
+* Clean separation enables independent iteration on production screens
 
 ---
 
-## Screen 1 – Customer Directory
+## Phase 2D.1 – Integration Foundation (Completed)
+
+### Deliverables
+
+* Supabase client (`src/lib/supabase.js`)
+* Axios API client with Bearer token injection (`src/lib/api.js`)
+* AuthContext with session + user profile management (`src/contexts/AuthContext.jsx`)
+* Login screen (`src/components/LoginScreen.jsx`)
+* Service modules: `auth.js`, `accounts.js`, `products.js`
+* AuthGate in `main.jsx`
+
+### Status
+
+```text
+COMPLETE
+```
+
+---
+
+## Phase 2D.2 – DemoApp Shell & Customer Directory
+
+### Deliverables
+
+#### DemoApp Shell
+
+```text
+src/DemoApp.jsx
+```
+
+Production application shell with:
+
+* Sidebar navigation (Customer Directory, Product Catalog)
+* Auth header with user profile, role, SBU, zone
+* Sign out
+* View routing
+
+#### Customer Directory Screen
+
+```text
+src/screens/CustomerDirectoryScreen.jsx
+```
 
 ### Features
 
 * Search
-* Zone filter
-* Account Type filter
 * SBU filter
-* Customer list
-* Customer navigation
+* Customer list from live API
+* Click-through to Customer 360
 
 ### API Dependencies
 
@@ -350,25 +401,31 @@ GET /accounts/{id}
 
 ---
 
-## Screen 2 – Customer 360 Workspace
+## Phase 2D.3 – Customer 360 Integration
+
+### Deliverables
+
+```text
+src/screens/Customer360Screen.jsx
+```
 
 ### Tabs
 
 #### Overview
 
-Account summary
+Account summary with SBU, payer behavior
 
 #### Stakeholders
 
-Stakeholder listing
+Stakeholder listing with NPS score, sentiment
 
 #### Projects
 
-Project listing
+Project listing with status, owner, bid date
 
 #### Installed Base
 
-Asset listing
+Asset listing with product, department, competitor equipment
 
 ### API Dependency
 
@@ -378,12 +435,19 @@ GET /accounts/{id}/workspace
 
 ---
 
-## Screen 3 – Product Catalog
+## Phase 2D.4 – Product Catalog Integration
+
+### Deliverables
+
+```text
+src/screens/ProductCatalogScreen.jsx
+```
 
 ### Features
 
 * Product search
 * SBU filtering
+* Brand filtering
 * Product detail view
 
 ### API Dependencies
@@ -395,104 +459,131 @@ GET /products/{id}
 
 ---
 
-# Daily Execution Plan
+## Phase 2D.5 – Route Setup & Demo Hardening
 
-## June 24
+### Deliverables
 
-### Account Management
-
-Deliver:
-
-* Account Repository
-* Account Service
-* Account Schemas
-* Account Router
-* Repository Tests
-* Service Tests
-* API Tests
-
-### Exit Criteria
+#### Route Configuration
 
 ```text
-Customer Directory APIs operational
+src/main.jsx (updated)
+```
+
+```text
+/              →  /demo (default, authenticated)
+/demo          →  DemoApp.jsx with live APIs
+/prototype     →  App.jsx with mock data
+```
+
+#### Demo Validation
+
+Verify every screen in the production demo app:
+
+* Customer Directory: search, filters, navigation
+* Customer 360: overview, stakeholders, projects, installed base
+* Product Catalog: search, SBU filter, detail view
+* Authentication: login, session persistence, sign out
+* Error handling: loading states, API failures, empty states
+
+---
+
+# Daily Execution Plan
+
+## June 24 (Completed)
+
+### Backend: Phase 2C.2
+
+Delivered:
+
+* WP1 – Account Management (hardened)
+* WP2 – Stakeholder Management
+* WP3 – Product Catalog
+* WP4 – Customer 360 Workspace API
+
+### Frontend: Phase 2D.1
+
+Delivered:
+
+* Integration Foundation (Supabase, Axios, AuthContext, services, login)
+
+### Results
+
+```text
+154 backend tests passing, 99% coverage
+Frontend builds successfully
 ```
 
 ---
 
 ## June 25
 
-### Stakeholder Management
+### Phase 2D.2 – DemoApp Shell & Customer Directory
 
 Deliver:
 
-* Stakeholder Repository
-* Stakeholder Service
-* Stakeholder Schemas
-* Stakeholder APIs
-* Tests
+* Route setup (`react-router-dom`)
+* DemoApp.jsx shell
+* CustomerDirectoryScreen.jsx
+* `/prototype` and `/demo` both functional
 
 ### Exit Criteria
 
 ```text
-Stakeholder management operational
+Customer Directory loads live data from API
+Prototype accessible at /prototype unchanged
 ```
 
 ---
 
 ## June 26
 
-### Product Catalog
+### Phase 2D.3 – Customer 360
 
 Deliver:
 
-* Product Repository
-* Product Service
-* Product Schemas
-* Product Router
-* Tests
+* Customer360Screen.jsx
+* All 4 tabs populated from workspace API
 
 ### Exit Criteria
 
 ```text
-Product catalog operational
+Customer 360 displays live stakeholders, projects, installed assets
 ```
 
 ---
 
 ## June 27
 
-### Customer 360
+### Phase 2D.4 – Product Catalog
 
 Deliver:
 
-* Workspace endpoint
-* Aggregation service
-* Integration tests
+* ProductCatalogScreen.jsx
+* SBU and search filtering operational
 
 ### Exit Criteria
 
 ```text
-Customer 360 API operational
+Product catalog loads and filters live data
 ```
 
 ---
 
 ## June 28
 
-### Frontend Integration & Stabilization
+### Phase 2D.5 – Demo Hardening & Stabilization
 
 Deliver:
 
-* Customer Directory connected
-* Customer 360 connected
-* Product Catalog connected
+* Loading states and error handling
+* Empty state displays
+* End-to-end demo walkthrough
 * Bug fixes
-* Demo validation
 
 ### Exit Criteria
 
 ```text
-End-to-end demo walkthrough succeeds
+Complete demo flow succeeds end-to-end against live Supabase
 ```
 
 ---
@@ -504,9 +595,9 @@ End-to-end demo walkthrough succeeds
 ## Demonstration Flow
 
 ```text
-Login
+Login (Supabase Auth)
     ↓
-Customer Directory
+Customer Directory (/demo)
     ↓
 Search Customer
     ↓
@@ -521,6 +612,13 @@ Open Product Catalog
 Filter By SBU
     ↓
 View Product Details
+```
+
+## Available Routes
+
+```text
+/demo         Production demo with live APIs
+/prototype    Original prototype with mock data (reference)
 ```
 
 ---
@@ -539,6 +637,7 @@ Forecasting
 Performance Dashboards
 Advanced RBAC
 RLS Fine-Tuning
+Prototype-to-Production Migration (remaining screens)
 ```
 
 ## Success Definition
@@ -551,5 +650,6 @@ The June 29 demo is successful if a user can:
 4. View stakeholders, projects, and installed assets.
 5. Browse and filter products.
 6. Perform all actions against the live Supabase database.
+7. Access the original prototype at `/prototype` for reference.
 
 This becomes the baseline production release from which Sprint 2 can expand into Projects, Opportunities, Activities, and eventually the full Sales OS planning capabilities.
