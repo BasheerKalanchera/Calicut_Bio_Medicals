@@ -1,0 +1,79 @@
+import uuid
+from unittest.mock import MagicMock
+
+import pytest
+
+from app.core.exceptions import NotFoundError
+from app.domains.product.models import Product
+from app.domains.product.repository import ProductRepository
+from app.domains.product.service import ProductService
+
+
+def _make_repo(**overrides) -> MagicMock:
+    repo = MagicMock(spec=ProductRepository)
+    for k, v in overrides.items():
+        setattr(repo, k, v)
+    return repo
+
+
+def _make_product(**overrides) -> MagicMock:
+    defaults = {
+        "id": uuid.uuid4(),
+        "sbu_id": uuid.uuid4(),
+        "name": "SonoScape S50",
+        "oem_name": "SonoScape",
+        "model_number": "S50",
+        "category_name": "Ultrasound",
+        "description": "Premium ultrasound",
+        "is_active": True,
+    }
+    defaults.update(overrides)
+    obj = MagicMock(spec=Product)
+    for k, v in defaults.items():
+        setattr(obj, k, v)
+    return obj
+
+
+class TestGetProduct:
+    def test_returns_product(self):
+        product = _make_product()
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+
+        service = ProductService(repository=repo)
+        assert service.get_product(product.id) is product
+
+    def test_raises_not_found(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = None
+
+        service = ProductService(repository=repo)
+        with pytest.raises(NotFoundError, match="Product"):
+            service.get_product(uuid.uuid4())
+
+
+class TestListProducts:
+    def test_delegates_to_repository(self):
+        repo = _make_repo()
+        repo.list_products.return_value = ([], 0)
+
+        service = ProductService(repository=repo)
+        _results, total = service.list_products(
+            offset=0, limit=10, search="sono", sbu_id=None, brand="SonoScape"
+        )
+
+        repo.list_products.assert_called_once_with(
+            offset=0, limit=10, search="sono", sbu_id=None, brand="SonoScape"
+        )
+        assert total == 0
+
+    def test_returns_products(self):
+        product = _make_product()
+        repo = _make_repo()
+        repo.list_products.return_value = ([product], 1)
+
+        service = ProductService(repository=repo)
+        results, total = service.list_products()
+
+        assert total == 1
+        assert results[0] is product
