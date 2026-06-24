@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "./contexts/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import CustomerDirectoryScreen from "./screens/CustomerDirectoryScreen";
 import Customer360Screen from "./screens/Customer360Screen";
 import ProductCatalogScreen from "./screens/ProductCatalogScreen";
@@ -179,16 +180,18 @@ export default function DemoApp() {
 
       {/* Main content */}
       <div className="flex-1 overflow-hidden">
-        {view === "customers" && (
-          <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
-        )}
-        {view === "customer360" && selectedAccountId && (
-          <Customer360Screen
-            accountId={selectedAccountId}
-            onBack={handleBack360}
-          />
-        )}
-        {view === "catalog" && <ProductCatalogScreen />}
+        <ErrorBoundary>
+          {view === "customers" && (
+            <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
+          )}
+          {view === "customer360" && selectedAccountId && (
+            <Customer360Screen
+              accountId={selectedAccountId}
+              onBack={handleBack360}
+            />
+          )}
+          {view === "catalog" && <ProductCatalogScreen />}
+        </ErrorBoundary>
       </div>
     </div>
   );

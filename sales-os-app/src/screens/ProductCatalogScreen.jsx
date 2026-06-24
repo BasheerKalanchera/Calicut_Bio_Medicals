@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { listProducts, getProduct } from "../services/products";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 
 function ProductDetail({ productId, onBack }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchProduct = useCallback(() => {
     setLoading(true);
     setError(null);
     getProduct(productId)
@@ -14,6 +15,10 @@ function ProductDetail({ productId, onBack }) {
       .catch((err) => setError(err.message || "Failed to load product"))
       .finally(() => setLoading(false));
   }, [productId]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
   if (loading) {
     return (
@@ -34,8 +39,14 @@ function ProductDetail({ productId, onBack }) {
         >
           &larr; Back to Catalog
         </button>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={fetchProduct}
+            className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+          >
+            Retry
+          </button>
         </div>
       </>
     );
@@ -104,14 +115,17 @@ export default function ProductCatalogScreen() {
 
   const [selectedProductId, setSelectedProductId] = useState(null);
 
-  useEffect(() => {
+  const debouncedSearch = useDebouncedValue(search);
+  const debouncedBrand = useDebouncedValue(brandFilter);
+
+  const fetchProducts = useCallback(() => {
     setLoading(true);
     setError(null);
 
     const params = { page, page_size: pageSize };
-    if (search) params.search = search;
+    if (debouncedSearch) params.search = debouncedSearch;
     if (sbuFilter) params.sbu_id = sbuFilter;
-    if (brandFilter) params.brand = brandFilter;
+    if (debouncedBrand) params.brand = debouncedBrand;
 
     listProducts(params)
       .then((data) => {
@@ -120,7 +134,11 @@ export default function ProductCatalogScreen() {
       })
       .catch((err) => setError(err.message || "Failed to load products"))
       .finally(() => setLoading(false));
-  }, [search, sbuFilter, brandFilter, page]);
+  }, [debouncedSearch, sbuFilter, debouncedBrand, page]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -204,8 +222,14 @@ export default function ProductCatalogScreen() {
 
       {/* Error state */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold mb-4">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold mb-4 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={fetchProducts}
+            className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+          >
+            Retry
+          </button>
         </div>
       )}
 

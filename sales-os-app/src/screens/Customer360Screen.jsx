@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getWorkspace } from "../services/accounts";
 
 const TABS = [
@@ -251,7 +251,7 @@ export default function Customer360Screen({ accountId, onBack }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
+  const fetchWorkspace = useCallback(() => {
     setLoading(true);
     setError(null);
     getWorkspace(accountId)
@@ -259,6 +259,10 @@ export default function Customer360Screen({ accountId, onBack }) {
       .catch((err) => setError(err.message || "Failed to load workspace"))
       .finally(() => setLoading(false));
   }, [accountId]);
+
+  useEffect(() => {
+    fetchWorkspace();
+  }, [fetchWorkspace]);
 
   if (loading) {
     return (
@@ -283,8 +287,14 @@ export default function Customer360Screen({ accountId, onBack }) {
             &larr; Back
           </button>
         </div>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={fetchWorkspace}
+            className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

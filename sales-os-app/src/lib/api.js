@@ -21,7 +21,16 @@ api.interceptors.response.use(
       supabase.auth.signOut();
       window.location.href = "/";
     }
-    return Promise.reject(error);
+    const detail =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Something went wrong";
+    const enriched = new Error(
+      typeof detail === "string" ? detail : JSON.stringify(detail)
+    );
+    enriched.status = error.response?.status;
+    return Promise.reject(enriched);
   }
 );
 

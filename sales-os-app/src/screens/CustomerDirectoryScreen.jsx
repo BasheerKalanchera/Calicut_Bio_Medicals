@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { listAccounts } from "../services/accounts";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 
 export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const [accounts, setAccounts] = useState([]);
@@ -12,12 +13,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
-  useEffect(() => {
+  const debouncedSearch = useDebouncedValue(search);
+
+  const fetchAccounts = useCallback(() => {
     setLoading(true);
     setError(null);
 
     const params = { page, page_size: pageSize };
-    if (search) params.search = search;
+    if (debouncedSearch) params.search = debouncedSearch;
     if (sbuFilter) params.sbu_id = sbuFilter;
 
     listAccounts(params)
@@ -27,7 +30,11 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
       })
       .catch((err) => setError(err.message || "Failed to load accounts"))
       .finally(() => setLoading(false));
-  }, [search, sbuFilter, page]);
+  }, [debouncedSearch, sbuFilter, page]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -76,8 +83,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
 
       {/* Error state */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold mb-4">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold mb-4 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={fetchAccounts}
+            className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
+          >
+            Retry
+          </button>
         </div>
       )}
 

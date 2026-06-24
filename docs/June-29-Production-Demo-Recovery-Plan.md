@@ -463,10 +463,10 @@ GET /products/{id}
 
 ### Deliverables
 
-#### Route Configuration
+#### Route Configuration (Completed in 2D.2)
 
 ```text
-src/main.jsx (updated)
+src/main.jsx
 ```
 
 ```text
@@ -474,6 +474,17 @@ src/main.jsx (updated)
 /demo          →  DemoApp.jsx with live APIs
 /prototype     →  App.jsx with mock data
 ```
+
+#### Demo Hardening
+
+* `src/components/ErrorBoundary.jsx` — React Error Boundary wrapping DemoApp content area; prevents white-screen crashes during demo with styled recovery UI and "Try Again" button
+* `src/hooks/useDebouncedValue.js` — 300ms debounce hook for search/filter inputs
+* `src/lib/api.js` — Enhanced error interceptor extracts backend `detail`/`message` instead of raw Axios errors
+* All screens: search inputs debounced, error states include Retry buttons
+* Customer Directory: debounced search
+* Product Catalog: debounced search + brand filter
+* Customer 360: retry on workspace load failure
+* Product Detail: retry on product load failure
 
 #### Demo Validation
 
@@ -484,6 +495,12 @@ Verify every screen in the production demo app:
 * Product Catalog: search, SBU filter, detail view
 * Authentication: login, session persistence, sign out
 * Error handling: loading states, API failures, empty states
+
+### Status
+
+```text
+COMPLETE
+```
 
 ---
 
