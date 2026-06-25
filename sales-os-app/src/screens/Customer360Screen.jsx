@@ -4,14 +4,25 @@ import {
   updateAccount,
   createStakeholder,
   updateStakeholder,
+  createProject,
+  updateProject,
+  createOpportunity,
+  updateOpportunity,
 } from "../services/accounts";
-import { listSbus } from "../services/masterData";
+import {
+  listSbus,
+  listProjectStatuses,
+  listStages,
+  listStatuses,
+  listUsers,
+} from "../services/masterData";
 import FormModal from "../components/FormModal";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "stakeholders", label: "Stakeholders" },
   { id: "projects", label: "Projects" },
+  { id: "opportunities", label: "Opportunities" },
   { id: "installed", label: "Installed Base" },
 ];
 
@@ -154,46 +165,145 @@ function StakeholdersTab({ stakeholders, onAdd, onEdit }) {
   );
 }
 
-function ProjectsTab({ projects }) {
-  if (projects.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-        No projects found for this account.
-      </div>
-    );
-  }
-
+function ProjectsTab({ projects, onAdd, onEdit }) {
   return (
     <div className="space-y-3">
-      {projects.map((p) => (
-        <div
-          key={p.id}
-          className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
+      <div className="flex items-center justify-between mb-1">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          Projects ({projects.length})
+        </h4>
+        <button
+          onClick={onAdd}
+          className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-bold text-gray-800">{p.name}</div>
-            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
-              {p.status.status_name}
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-            <div>
-              <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                Owner:{" "}
-              </span>
-              <span className="font-bold">{p.owner.display_name}</span>
+          + Add
+        </button>
+      </div>
+
+      {projects.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
+          No projects found for this account.
+        </div>
+      ) : (
+        projects.map((p) => (
+          <div
+            key={p.id}
+            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-bold text-gray-800">{p.name}</div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
+                  {p.status.status_name}
+                </span>
+                <button
+                  onClick={() => onEdit(p)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
-            {p.bid_submission_date && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
               <div>
                 <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                  Bid Date:{" "}
+                  Owner:{" "}
                 </span>
-                <span className="font-bold">{p.bid_submission_date}</span>
+                <span className="font-bold">{p.owner.display_name}</span>
               </div>
-            )}
+              {p.bid_submission_date && (
+                <div>
+                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                    Bid Date:{" "}
+                  </span>
+                  <span className="font-bold">{p.bid_submission_date}</span>
+                </div>
+              )}
+            </div>
           </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function OpportunitiesTab({ opportunities, onAdd, onEdit }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-1">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          Opportunities ({opportunities.length})
+        </h4>
+        <button
+          onClick={onAdd}
+          className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider"
+        >
+          + Add
+        </button>
+      </div>
+
+      {opportunities.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
+          No opportunities found for this account.
         </div>
-      ))}
+      ) : (
+        opportunities.map((o) => (
+          <div
+            key={o.id}
+            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-bold text-gray-800">{o.name}</div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-amber-50 text-amber-700 border-amber-200">
+                  {o.stage.stage_name}
+                </span>
+                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
+                  {o.status.status_name}
+                </span>
+                <button
+                  onClick={() => onEdit(o)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+              <div>
+                <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                  Owner:{" "}
+                </span>
+                <span className="font-bold">{o.owner.display_name}</span>
+              </div>
+              <div>
+                <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                  Win %:{" "}
+                </span>
+                <span
+                  className={`font-black ${
+                    Number(o.win_probability) >= 70
+                      ? "text-emerald-600"
+                      : Number(o.win_probability) >= 40
+                        ? "text-amber-600"
+                        : "text-red-600"
+                  }`}
+                >
+                  {o.win_probability}%
+                </span>
+              </div>
+              {o.indicative_value && (
+                <div>
+                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                    Value:{" "}
+                  </span>
+                  <span className="font-bold">{o.indicative_value}L</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
@@ -333,7 +443,8 @@ export default function Customer360Screen({ accountId, onBack }) {
     );
   }
 
-  const { account, stakeholders, projects, installed_assets } = workspace;
+  const { account, stakeholders, projects, opportunities, installed_assets } =
+    workspace;
 
   // Edit Account state
   const [showEditAccount, setShowEditAccount] = useState(false);
@@ -408,6 +519,168 @@ export default function Customer360Screen({ accountId, onBack }) {
     fetchWorkspace();
   };
 
+  // --- Master data for dropdowns (lazy-loaded) ---
+  const [projectStatuses, setProjectStatuses] = useState([]);
+  const [stages, setStages] = useState([]);
+  const [oppStatuses, setOppStatuses] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  const loadProjectMasterData = async () => {
+    const loads = [];
+    if (projectStatuses.length === 0)
+      loads.push(listProjectStatuses().then(setProjectStatuses).catch(() => {}));
+    if (users.length === 0)
+      loads.push(listUsers().then(setUsers).catch(() => {}));
+    await Promise.all(loads);
+  };
+
+  const loadOpportunityMasterData = async () => {
+    const loads = [];
+    if (stages.length === 0)
+      loads.push(listStages().then(setStages).catch(() => {}));
+    if (oppStatuses.length === 0)
+      loads.push(listStatuses().then(setOppStatuses).catch(() => {}));
+    if (users.length === 0)
+      loads.push(listUsers().then(setUsers).catch(() => {}));
+    await Promise.all(loads);
+  };
+
+  // --- Create Project state ---
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectStatusId, setNewProjectStatusId] = useState("");
+  const [newProjectOwnerId, setNewProjectOwnerId] = useState("");
+  const [newProjectBidDate, setNewProjectBidDate] = useState("");
+
+  const openCreateProject = async () => {
+    setNewProjectName("");
+    setNewProjectStatusId("");
+    setNewProjectOwnerId("");
+    setNewProjectBidDate("");
+    setShowCreateProject(true);
+    await loadProjectMasterData();
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProjectName.trim()) throw new Error("Project name is required");
+    if (!newProjectOwnerId) throw new Error("Owner is required");
+    if (!newProjectStatusId) throw new Error("Status is required");
+    const payload = {
+      name: newProjectName.trim(),
+      owner_id: newProjectOwnerId,
+      status_id: newProjectStatusId,
+    };
+    if (newProjectBidDate) payload.bid_submission_date = newProjectBidDate;
+    await createProject(accountId, payload);
+    fetchWorkspace();
+  };
+
+  // --- Edit Project state ---
+  const [editingProject, setEditingProject] = useState(null);
+  const [editProjectName, setEditProjectName] = useState("");
+  const [editProjectStatusId, setEditProjectStatusId] = useState("");
+  const [editProjectOwnerId, setEditProjectOwnerId] = useState("");
+  const [editProjectBidDate, setEditProjectBidDate] = useState("");
+
+  const openEditProject = async (p) => {
+    setEditingProject(p);
+    setEditProjectName(p.name || "");
+    setEditProjectStatusId(p.status?.id || "");
+    setEditProjectOwnerId(p.owner?.id || "");
+    setEditProjectBidDate(p.bid_submission_date || "");
+    await loadProjectMasterData();
+  };
+
+  const handleUpdateProject = async () => {
+    if (!editProjectName.trim()) throw new Error("Project name is required");
+    const payload = {
+      name: editProjectName.trim(),
+      owner_id: editProjectOwnerId || undefined,
+      status_id: editProjectStatusId || undefined,
+    };
+    if (editProjectBidDate) payload.bid_submission_date = editProjectBidDate;
+    await updateProject(editingProject.id, payload);
+    fetchWorkspace();
+  };
+
+  // --- Create Opportunity state ---
+  const [showCreateOpp, setShowCreateOpp] = useState(false);
+  const [newOppName, setNewOppName] = useState("");
+  const [newOppProjectId, setNewOppProjectId] = useState("");
+  const [newOppStageId, setNewOppStageId] = useState("");
+  const [newOppStatusId, setNewOppStatusId] = useState("");
+  const [newOppOwnerId, setNewOppOwnerId] = useState("");
+  const [newOppWinProb, setNewOppWinProb] = useState("");
+  const [newOppValue, setNewOppValue] = useState("");
+
+  const openCreateOpp = async () => {
+    setNewOppName("");
+    setNewOppProjectId("");
+    setNewOppStageId("");
+    setNewOppStatusId("");
+    setNewOppOwnerId("");
+    setNewOppWinProb("");
+    setNewOppValue("");
+    setShowCreateOpp(true);
+    await loadOpportunityMasterData();
+  };
+
+  const handleCreateOpp = async () => {
+    if (!newOppName.trim()) throw new Error("Opportunity name is required");
+    if (!newOppOwnerId) throw new Error("Owner is required");
+    if (!newOppStageId) throw new Error("Stage is required");
+    if (!newOppStatusId) throw new Error("Status is required");
+    if (newOppWinProb === "") throw new Error("Win probability is required");
+    const payload = {
+      name: newOppName.trim(),
+      owner_id: newOppOwnerId,
+      stage_id: newOppStageId,
+      status_id: newOppStatusId,
+      win_probability: Number(newOppWinProb),
+    };
+    if (newOppProjectId) payload.project_id = newOppProjectId;
+    if (newOppValue !== "") payload.indicative_value = Number(newOppValue);
+    await createOpportunity(accountId, payload);
+    fetchWorkspace();
+  };
+
+  // --- Edit Opportunity state ---
+  const [editingOpp, setEditingOpp] = useState(null);
+  const [editOppName, setEditOppName] = useState("");
+  const [editOppProjectId, setEditOppProjectId] = useState("");
+  const [editOppStageId, setEditOppStageId] = useState("");
+  const [editOppStatusId, setEditOppStatusId] = useState("");
+  const [editOppOwnerId, setEditOppOwnerId] = useState("");
+  const [editOppWinProb, setEditOppWinProb] = useState("");
+  const [editOppValue, setEditOppValue] = useState("");
+
+  const openEditOpp = async (o) => {
+    setEditingOpp(o);
+    setEditOppName(o.name || "");
+    setEditOppProjectId(o.project_id || "");
+    setEditOppStageId(o.stage?.id || "");
+    setEditOppStatusId(o.status?.id || "");
+    setEditOppOwnerId(o.owner?.id || "");
+    setEditOppWinProb(o.win_probability != null ? String(o.win_probability) : "");
+    setEditOppValue(o.indicative_value != null ? String(o.indicative_value) : "");
+    await loadOpportunityMasterData();
+  };
+
+  const handleUpdateOpp = async () => {
+    if (!editOppName.trim()) throw new Error("Opportunity name is required");
+    const payload = {
+      name: editOppName.trim(),
+      owner_id: editOppOwnerId || undefined,
+      stage_id: editOppStageId || undefined,
+      status_id: editOppStatusId || undefined,
+      win_probability: editOppWinProb !== "" ? Number(editOppWinProb) : undefined,
+    };
+    if (editOppProjectId) payload.project_id = editOppProjectId;
+    if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
+    await updateOpportunity(editingOpp.id, payload);
+    fetchWorkspace();
+  };
+
   const labelClass =
     "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
   const inputClass =
@@ -460,11 +733,11 @@ export default function Customer360Screen({ accountId, onBack }) {
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-black text-amber-600">
-            {installed_assets.length}
+          <div className="text-2xl font-black text-emerald-600">
+            {opportunities.length}
           </div>
           <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
-            Assets
+            Opportunities
           </div>
         </div>
       </div>
@@ -497,7 +770,20 @@ export default function Customer360Screen({ accountId, onBack }) {
           onEdit={openEditStakeholder}
         />
       )}
-      {activeTab === "projects" && <ProjectsTab projects={projects} />}
+      {activeTab === "projects" && (
+        <ProjectsTab
+          projects={projects}
+          onAdd={openCreateProject}
+          onEdit={openEditProject}
+        />
+      )}
+      {activeTab === "opportunities" && (
+        <OpportunitiesTab
+          opportunities={opportunities}
+          onAdd={openCreateOpp}
+          onEdit={openEditOpp}
+        />
+      )}
       {activeTab === "installed" && (
         <InstalledBaseTab assets={installed_assets} />
       )}
@@ -637,6 +923,330 @@ export default function Customer360Screen({ accountId, onBack }) {
             <option value="NEUTRAL">Neutral</option>
             <option value="NEGATIVE">Negative</option>
           </select>
+        </div>
+      </FormModal>
+
+      {/* Create Project Modal */}
+      <FormModal
+        isOpen={showCreateProject}
+        onClose={() => setShowCreateProject(false)}
+        title="New Project"
+        onSubmit={handleCreateProject}
+        submitLabel="Create"
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            className={inputClass}
+            placeholder="Enter project name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Status *</label>
+          <select
+            value={newProjectStatusId}
+            onChange={(e) => setNewProjectStatusId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select status</option>
+            {projectStatuses.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.status_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Owner *</label>
+          <select
+            value={newProjectOwnerId}
+            onChange={(e) => setNewProjectOwnerId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select owner</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.display_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Bid Submission Date</label>
+          <input
+            type="date"
+            value={newProjectBidDate}
+            onChange={(e) => setNewProjectBidDate(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+      </FormModal>
+
+      {/* Edit Project Modal */}
+      <FormModal
+        isOpen={editingProject !== null}
+        onClose={() => setEditingProject(null)}
+        title="Edit Project"
+        onSubmit={handleUpdateProject}
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={editProjectName}
+            onChange={(e) => setEditProjectName(e.target.value)}
+            className={inputClass}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Status</label>
+          <select
+            value={editProjectStatusId}
+            onChange={(e) => setEditProjectStatusId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select status</option>
+            {projectStatuses.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.status_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Owner</label>
+          <select
+            value={editProjectOwnerId}
+            onChange={(e) => setEditProjectOwnerId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select owner</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.display_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Bid Submission Date</label>
+          <input
+            type="date"
+            value={editProjectBidDate}
+            onChange={(e) => setEditProjectBidDate(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+      </FormModal>
+
+      {/* Create Opportunity Modal */}
+      <FormModal
+        isOpen={showCreateOpp}
+        onClose={() => setShowCreateOpp(false)}
+        title="New Opportunity"
+        onSubmit={handleCreateOpp}
+        submitLabel="Create"
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={newOppName}
+            onChange={(e) => setNewOppName(e.target.value)}
+            className={inputClass}
+            placeholder="Enter opportunity name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Project</label>
+          <select
+            value={newOppProjectId}
+            onChange={(e) => setNewOppProjectId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">None</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Stage *</label>
+          <select
+            value={newOppStageId}
+            onChange={(e) => setNewOppStageId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select stage</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.stage_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Status *</label>
+          <select
+            value={newOppStatusId}
+            onChange={(e) => setNewOppStatusId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select status</option>
+            {oppStatuses.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.status_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Owner *</label>
+          <select
+            value={newOppOwnerId}
+            onChange={(e) => setNewOppOwnerId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select owner</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.display_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Win Probability % *</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={newOppWinProb}
+            onChange={(e) => setNewOppWinProb(e.target.value)}
+            className={inputClass}
+            placeholder="0 – 100"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Indicative Value (Lakhs)</label>
+          <input
+            type="number"
+            min="0"
+            value={newOppValue}
+            onChange={(e) => setNewOppValue(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. 25.50"
+          />
+        </div>
+      </FormModal>
+
+      {/* Edit Opportunity Modal */}
+      <FormModal
+        isOpen={editingOpp !== null}
+        onClose={() => setEditingOpp(null)}
+        title="Edit Opportunity"
+        onSubmit={handleUpdateOpp}
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={editOppName}
+            onChange={(e) => setEditOppName(e.target.value)}
+            className={inputClass}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Project</label>
+          <select
+            value={editOppProjectId}
+            onChange={(e) => setEditOppProjectId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">None</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Stage</label>
+          <select
+            value={editOppStageId}
+            onChange={(e) => setEditOppStageId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select stage</option>
+            {stages.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.stage_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Status</label>
+          <select
+            value={editOppStatusId}
+            onChange={(e) => setEditOppStatusId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select status</option>
+            {oppStatuses.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.status_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Owner</label>
+          <select
+            value={editOppOwnerId}
+            onChange={(e) => setEditOppOwnerId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select owner</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.display_name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Win Probability %</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={editOppWinProb}
+            onChange={(e) => setEditOppWinProb(e.target.value)}
+            className={inputClass}
+            placeholder="0 – 100"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Indicative Value (Lakhs)</label>
+          <input
+            type="number"
+            min="0"
+            value={editOppValue}
+            onChange={(e) => setEditOppValue(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. 25.50"
+          />
         </div>
       </FormModal>
     </div>

@@ -42,3 +42,23 @@ export async function updateStakeholder(stakeholderId, data) {
   const response = await api.put(`/stakeholders/${stakeholderId}`, data);
   return response.data.data;
 }
+
+export async function createProject(accountId, data) {
+  const response = await api.post(`/accounts/${accountId}/projects`, data);
+  return response.data.data;
+}
+
+export async function updateProject(projectId, data) {
+  const response = await api.put(`/projects/${projectId}`, data);
+  return response.data.data;
+}
+
+export async function createOpportunity(accountId, data) {
+  const response = await api.post(`/accounts/${accountId}/opportunities`, data);
+  return response.data.data;
+}
+
+export async function updateOpportunity(opportunityId, data) {
+  const response = await api.put(`/opportunities/${opportunityId}`, data);
+  return response.data.data;
+}

@@ -5,6 +5,7 @@ from app.domains.account.repository import AccountRepository
 from app.domains.account.workspace_schemas import (
     WorkspaceAccount,
     WorkspaceInstalledAsset,
+    WorkspaceOpportunity,
     WorkspaceProject,
     WorkspaceResponse,
     WorkspaceStakeholder,
@@ -29,6 +30,10 @@ class WorkspaceService:
             projects=[
                 WorkspaceProject.model_validate(p)
                 for p in account.projects
+            ],
+            opportunities=[
+                WorkspaceOpportunity.model_validate(o)
+                for o in account.opportunities
             ],
             installed_assets=[
                 WorkspaceInstalledAsset.model_validate(a)
