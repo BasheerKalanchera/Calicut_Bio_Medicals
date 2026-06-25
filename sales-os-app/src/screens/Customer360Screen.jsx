@@ -1,5 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { getWorkspace } from "../services/accounts";
+import {
+  getWorkspace,
+  updateAccount,
+  createStakeholder,
+  updateStakeholder,
+} from "../services/accounts";
+import { listSbus } from "../services/masterData";
+import FormModal from "../components/FormModal";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -51,7 +58,7 @@ function NpsIndicator({ score }) {
   return <span className={`font-black text-lg ${color}`}>{score}</span>;
 }
 
-function OverviewTab({ account }) {
+function OverviewTab({ account, onEdit }) {
   const fields = [
     { label: "Account Name", value: account.name },
     { label: "SBU", value: account.managing_sbu?.name || "—" },
@@ -64,9 +71,17 @@ function OverviewTab({ account }) {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-          Account Details
-        </h4>
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+            Account Details
+          </h4>
+          <button
+            onClick={onEdit}
+            className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
+          >
+            Edit
+          </button>
+        </div>
         <div className="space-y-4">
           {fields.map((f) => (
             <div key={f.label}>
@@ -82,41 +97,59 @@ function OverviewTab({ account }) {
   );
 }
 
-function StakeholdersTab({ stakeholders }) {
-  if (stakeholders.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-        No stakeholders found for this account.
-      </div>
-    );
-  }
-
+function StakeholdersTab({ stakeholders, onAdd, onEdit }) {
   return (
     <div className="space-y-3">
-      {stakeholders.map((s) => (
-        <div
-          key={s.id}
-          className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"
+      <div className="flex items-center justify-between mb-1">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          Stakeholders ({stakeholders.length})
+        </h4>
+        <button
+          onClick={onAdd}
+          className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm">
-              {s.name.charAt(0)}
-            </div>
-            <div>
-              <div className="font-bold text-gray-800">{s.name}</div>
-              <div className="flex items-center gap-2 mt-1">
-                <SentimentBadge sentiment={s.sentiment} />
+          + Add
+        </button>
+      </div>
+
+      {stakeholders.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
+          No stakeholders found for this account.
+        </div>
+      ) : (
+        stakeholders.map((s) => (
+          <div
+            key={s.id}
+            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm">
+                {s.name.charAt(0)}
+              </div>
+              <div>
+                <div className="font-bold text-gray-800">{s.name}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <SentimentBadge sentiment={s.sentiment} />
+                </div>
               </div>
             </div>
-          </div>
-          <div className="text-center">
-            <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">
-              NPS
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">
+                  NPS
+                </div>
+                <NpsIndicator score={s.nps_score} />
+              </div>
+              <button
+                onClick={() => onEdit(s)}
+                className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider"
+              >
+                Edit
+              </button>
             </div>
-            <NpsIndicator score={s.nps_score} />
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
@@ -302,6 +335,84 @@ export default function Customer360Screen({ accountId, onBack }) {
 
   const { account, stakeholders, projects, installed_assets } = workspace;
 
+  // Edit Account state
+  const [showEditAccount, setShowEditAccount] = useState(false);
+  const [sbus, setSbus] = useState([]);
+  const [editAccountName, setEditAccountName] = useState("");
+  const [editAccountSbuId, setEditAccountSbuId] = useState("");
+  const [editAccountPayer, setEditAccountPayer] = useState("");
+
+  const openEditAccount = async () => {
+    setEditAccountName(account.name || "");
+    setEditAccountSbuId(account.managing_sbu?.id || "");
+    setEditAccountPayer(account.payer_behavior || "");
+    setShowEditAccount(true);
+    if (sbus.length === 0) {
+      try {
+        const data = await listSbus();
+        setSbus(data.items || data);
+      } catch {}
+    }
+  };
+
+  const handleUpdateAccount = async () => {
+    if (!editAccountName.trim()) throw new Error("Customer name is required");
+    const payload = { name: editAccountName.trim() };
+    if (editAccountSbuId) payload.managing_sbu_id = editAccountSbuId;
+    if (editAccountPayer) payload.payer_behavior = editAccountPayer;
+    await updateAccount(accountId, payload);
+    fetchWorkspace();
+  };
+
+  // Create Stakeholder state
+  const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
+  const [newStakeholderName, setNewStakeholderName] = useState("");
+  const [newStakeholderNps, setNewStakeholderNps] = useState("");
+  const [newStakeholderSentiment, setNewStakeholderSentiment] = useState("");
+
+  const openCreateStakeholder = () => {
+    setNewStakeholderName("");
+    setNewStakeholderNps("");
+    setNewStakeholderSentiment("");
+    setShowCreateStakeholder(true);
+  };
+
+  const handleCreateStakeholder = async () => {
+    if (!newStakeholderName.trim()) throw new Error("Stakeholder name is required");
+    const payload = { name: newStakeholderName.trim() };
+    if (newStakeholderNps !== "") payload.nps_score = Number(newStakeholderNps);
+    if (newStakeholderSentiment) payload.sentiment = newStakeholderSentiment;
+    await createStakeholder(accountId, payload);
+    fetchWorkspace();
+  };
+
+  // Edit Stakeholder state
+  const [editingStakeholder, setEditingStakeholder] = useState(null);
+  const [editStakeholderName, setEditStakeholderName] = useState("");
+  const [editStakeholderNps, setEditStakeholderNps] = useState("");
+  const [editStakeholderSentiment, setEditStakeholderSentiment] = useState("");
+
+  const openEditStakeholder = (s) => {
+    setEditingStakeholder(s);
+    setEditStakeholderName(s.name || "");
+    setEditStakeholderNps(s.nps_score != null ? String(s.nps_score) : "");
+    setEditStakeholderSentiment(s.sentiment || "");
+  };
+
+  const handleUpdateStakeholder = async () => {
+    if (!editStakeholderName.trim()) throw new Error("Stakeholder name is required");
+    const payload = { name: editStakeholderName.trim() };
+    if (editStakeholderNps !== "") payload.nps_score = Number(editStakeholderNps);
+    if (editStakeholderSentiment) payload.sentiment = editStakeholderSentiment;
+    await updateStakeholder(editingStakeholder.id, payload);
+    fetchWorkspace();
+  };
+
+  const labelClass =
+    "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
+  const inputClass =
+    "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
+
   return (
     <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
       {/* Header */}
@@ -376,14 +487,158 @@ export default function Customer360Screen({ accountId, onBack }) {
       </div>
 
       {/* Tab content */}
-      {activeTab === "overview" && <OverviewTab account={account} />}
+      {activeTab === "overview" && (
+        <OverviewTab account={account} onEdit={openEditAccount} />
+      )}
       {activeTab === "stakeholders" && (
-        <StakeholdersTab stakeholders={stakeholders} />
+        <StakeholdersTab
+          stakeholders={stakeholders}
+          onAdd={openCreateStakeholder}
+          onEdit={openEditStakeholder}
+        />
       )}
       {activeTab === "projects" && <ProjectsTab projects={projects} />}
       {activeTab === "installed" && (
         <InstalledBaseTab assets={installed_assets} />
       )}
+
+      {/* Edit Account Modal */}
+      <FormModal
+        isOpen={showEditAccount}
+        onClose={() => setShowEditAccount(false)}
+        title="Edit Customer"
+        onSubmit={handleUpdateAccount}
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={editAccountName}
+            onChange={(e) => setEditAccountName(e.target.value)}
+            className={inputClass}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>SBU</label>
+          <select
+            value={editAccountSbuId}
+            onChange={(e) => setEditAccountSbuId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select SBU</option>
+            {sbus.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Payer Behavior</label>
+          <select
+            value={editAccountPayer}
+            onChange={(e) => setEditAccountPayer(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select behavior</option>
+            <option value="GOOD">Good</option>
+            <option value="AVERAGE">Average</option>
+            <option value="PROBLEMATIC">Problematic</option>
+            <option value="UNKNOWN">Unknown</option>
+          </select>
+        </div>
+      </FormModal>
+
+      {/* Create Stakeholder Modal */}
+      <FormModal
+        isOpen={showCreateStakeholder}
+        onClose={() => setShowCreateStakeholder(false)}
+        title="New Stakeholder"
+        onSubmit={handleCreateStakeholder}
+        submitLabel="Create"
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={newStakeholderName}
+            onChange={(e) => setNewStakeholderName(e.target.value)}
+            className={inputClass}
+            placeholder="Enter stakeholder name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>NPS Score</label>
+          <input
+            type="number"
+            min="-100"
+            max="100"
+            value={newStakeholderNps}
+            onChange={(e) => setNewStakeholderNps(e.target.value)}
+            className={inputClass}
+            placeholder="-100 to 100"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Sentiment</label>
+          <select
+            value={newStakeholderSentiment}
+            onChange={(e) => setNewStakeholderSentiment(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select sentiment</option>
+            <option value="POSITIVE">Positive</option>
+            <option value="NEUTRAL">Neutral</option>
+            <option value="NEGATIVE">Negative</option>
+          </select>
+        </div>
+      </FormModal>
+
+      {/* Edit Stakeholder Modal */}
+      <FormModal
+        isOpen={editingStakeholder !== null}
+        onClose={() => setEditingStakeholder(null)}
+        title="Edit Stakeholder"
+        onSubmit={handleUpdateStakeholder}
+      >
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input
+            type="text"
+            value={editStakeholderName}
+            onChange={(e) => setEditStakeholderName(e.target.value)}
+            className={inputClass}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>NPS Score</label>
+          <input
+            type="number"
+            min="-100"
+            max="100"
+            value={editStakeholderNps}
+            onChange={(e) => setEditStakeholderNps(e.target.value)}
+            className={inputClass}
+            placeholder="-100 to 100"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Sentiment</label>
+          <select
+            value={editStakeholderSentiment}
+            onChange={(e) => setEditStakeholderSentiment(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Select sentiment</option>
+            <option value="POSITIVE">Positive</option>
+            <option value="NEUTRAL">Neutral</option>
+            <option value="NEGATIVE">Negative</option>
+          </select>
+        </div>
+      </FormModal>
     </div>
   );
 }

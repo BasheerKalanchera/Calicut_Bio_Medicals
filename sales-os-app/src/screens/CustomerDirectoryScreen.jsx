@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import { listAccounts } from "../services/accounts";
+import { listAccounts, createAccount } from "../services/accounts";
+import { listSbus } from "../services/masterData";
+import FormModal from "../components/FormModal";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 export default function CustomerDirectoryScreen({ onSelectAccount }) {
@@ -13,7 +15,35 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [sbus, setSbus] = useState([]);
+  const [formName, setFormName] = useState("");
+  const [formSbuId, setFormSbuId] = useState("");
+  const [formPayerBehavior, setFormPayerBehavior] = useState("");
+
   const debouncedSearch = useDebouncedValue(search);
+
+  const openCreateModal = async () => {
+    setFormName("");
+    setFormSbuId("");
+    setFormPayerBehavior("");
+    setShowCreateModal(true);
+    if (sbus.length === 0) {
+      try {
+        const data = await listSbus();
+        setSbus(data.items || data);
+      } catch {}
+    }
+  };
+
+  const handleCreateAccount = async () => {
+    if (!formName.trim()) throw new Error("Customer name is required");
+    const payload = { name: formName.trim() };
+    if (formSbuId) payload.managing_sbu_id = formSbuId;
+    if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
+    await createAccount(payload);
+    fetchAccounts();
+  };
 
   const fetchAccounts = useCallback(() => {
     setLoading(true);
@@ -50,6 +80,12 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
             Customer Directory
           </h2>
         </div>
+        <button
+          onClick={openCreateModal}
+          className="px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm"
+        >
+          + Add Customer
+        </button>
       </div>
 
       {/* Filters */}
@@ -194,6 +230,61 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
           )}
         </>
       )}
+
+      <FormModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="New Customer"
+        onSubmit={handleCreateAccount}
+        submitLabel="Create"
+      >
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+            Name *
+          </label>
+          <input
+            type="text"
+            value={formName}
+            onChange={(e) => setFormName(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+            placeholder="Enter customer name"
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+            SBU
+          </label>
+          <select
+            value={formSbuId}
+            onChange={(e) => setFormSbuId(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+          >
+            <option value="">Select SBU</option>
+            {sbus.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+            Payer Behavior
+          </label>
+          <select
+            value={formPayerBehavior}
+            onChange={(e) => setFormPayerBehavior(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+          >
+            <option value="">Select behavior</option>
+            <option value="GOOD">Good</option>
+            <option value="AVERAGE">Average</option>
+            <option value="PROBLEMATIC">Problematic</option>
+            <option value="UNKNOWN">Unknown</option>
+          </select>
+        </div>
+      </FormModal>
     </div>
   );
 }
