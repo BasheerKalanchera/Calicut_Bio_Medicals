@@ -22,12 +22,17 @@ async def list_installed_assets(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
 ) -> APIResponse[list[WorkspaceInstalledAsset]]:
-    if not db.get(Account, account_id):
+    from sqlalchemy.orm import noload
+    
+    account_exists = db.scalar(select(1).where(Account.id == account_id))
+    if not account_exists:
         raise NotFoundError(f"Account {account_id} not found")
+        
     assets = list(
         db.scalars(
             select(InstalledAsset)
             .where(InstalledAsset.account_id == account_id)
+            .options(noload(InstalledAsset.account))
             .order_by(InstalledAsset.installation_date)
         ).all()
     )

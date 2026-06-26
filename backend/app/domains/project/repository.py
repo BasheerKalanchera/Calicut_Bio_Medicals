@@ -17,6 +17,7 @@ class ProjectRepository(BaseRepository[Project]):
             select(Project)
             .where(Project.account_id == account_id)
             .options(
+                noload(Project.account),
                 noload(Project.opportunities),
                 noload(Project.activities),
                 noload(Project.documents),
@@ -26,4 +27,4 @@ class ProjectRepository(BaseRepository[Project]):
         return list(self.db.scalars(stmt).unique().all())
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
-        return self.db.get(Account, account_id) is not None
+        return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0

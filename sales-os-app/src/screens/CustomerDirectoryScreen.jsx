@@ -73,7 +73,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   };
 
   const isMountedRef = useRef(true);
-  useEffect(() => { return () => { isMountedRef.current = false; }; }, []);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const fetchAccounts = useCallback((opts = {}) => {
     const params = { page, page_size: pageSize };

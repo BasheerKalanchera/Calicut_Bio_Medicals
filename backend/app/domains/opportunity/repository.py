@@ -17,6 +17,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             select(Opportunity)
             .where(Opportunity.account_id == account_id)
             .options(
+                noload(Opportunity.account),
                 noload(Opportunity.opportunity_stakeholders),
                 noload(Opportunity.splits),
                 noload(Opportunity.items),
@@ -28,4 +29,4 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         return list(self.db.scalars(stmt).unique().all())
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
-        return self.db.get(Account, account_id) is not None
+        return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
