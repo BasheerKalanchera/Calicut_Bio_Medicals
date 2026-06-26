@@ -38,7 +38,6 @@ def _get_workspace_service(
 async def list_accounts(
     search: str | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),  # noqa: B008
-    sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -50,7 +49,6 @@ async def list_accounts(
         limit=page_size,
         search=search,
         zone_id=zone_id,
-        sbu_id=sbu_id,
     )
     total_pages = (total + page_size - 1) // page_size
 
@@ -88,7 +86,9 @@ async def create_account(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: AccountService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[AccountResponse]:
-    account = service.create_account(body, created_by=current_user.id)
+    account = service.create_account(
+        body, created_by=current_user.id, default_zone_id=current_user.zone_id
+    )
     return APIResponse(data=AccountResponse.model_validate(account))
 
 

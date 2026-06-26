@@ -8,7 +8,7 @@ from app.domains.account.models import Account, Stakeholder
 from app.domains.asset.models import InstalledAsset
 from app.domains.opportunity.models import Opportunity
 from app.domains.project.models import Project
-from app.domains.reference.models import SBU
+from app.domains.reference.models import Zone
 
 
 class AccountRepository(BaseRepository[Account]):
@@ -22,9 +22,8 @@ class AccountRepository(BaseRepository[Account]):
         limit: int = 50,
         search: str | None = None,
         zone_id: uuid.UUID | None = None,
-        sbu_id: uuid.UUID | None = None,
     ) -> tuple[list[Account], int]:
-        # For the directory listing we only need name + managing_sbu + payer_behavior.
+        # For the directory listing we only need name + zone + payer_behavior.
         # The Account model has 7 lazy="selectin" relationships which each fire a separate
         # SQL round-trip to Supabase (~150ms each). Suppress them all with noload() so
         # the directory query runs in 2 queries (count + select) instead of 9+.
@@ -44,8 +43,8 @@ class AccountRepository(BaseRepository[Account]):
 
         if search:
             stmt = stmt.where(Account.name.ilike(f"%{search}%"))
-        if sbu_id:
-            stmt = stmt.where(Account.managing_sbu_id == sbu_id)
+        if zone_id:
+            stmt = stmt.where(Account.zone_id == zone_id)
 
         stmt = stmt.order_by(Account.name)
 
@@ -103,8 +102,8 @@ class AccountRepository(BaseRepository[Account]):
         ).first()
         return account, counts
 
-    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
-        return self.db.get(SBU, sbu_id) is not None
+    def zone_exists(self, zone_id: uuid.UUID) -> bool:
+        return self.db.get(Zone, zone_id) is not None
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return self.db.get(Account, account_id) is not None

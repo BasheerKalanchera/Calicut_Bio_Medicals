@@ -2057,6 +2057,20 @@ export default function App() {
               </select>
             </div>
           </section>
+
+          {/* Demo link */}
+          <section className="pt-4 border-t border-gray-100">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">
+              PRODUCTION
+            </h3>
+            <a
+              href="/demo"
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-500 hover:bg-gray-50 transition-all"
+            >
+              <span className="text-lg">🚀</span>
+              Demo (Live API)
+            </a>
+          </section>
         </div>
 
         {/* Fixed Footer Profile Card */}

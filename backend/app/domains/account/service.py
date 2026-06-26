@@ -29,25 +29,23 @@ class AccountService:
         limit: int = 50,
         search: str | None = None,
         zone_id: uuid.UUID | None = None,
-        sbu_id: uuid.UUID | None = None,
     ) -> tuple[list[Account], int]:
         return self.repository.list_accounts(
             offset=offset,
             limit=limit,
             search=search,
             zone_id=zone_id,
-            sbu_id=sbu_id,
         )
 
     def _validate_references(
         self,
         *,
-        managing_sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
         parent_account_id: uuid.UUID | None = None,
         account_id: uuid.UUID | None = None,
     ) -> None:
-        if managing_sbu_id is not None and not self.repository.sbu_exists(managing_sbu_id):
-            raise ValidationError(f"SBU {managing_sbu_id} does not exist")
+        if zone_id is not None and not self.repository.zone_exists(zone_id):
+            raise ValidationError(f"Zone {zone_id} does not exist")
 
         if parent_account_id is not None:
             if account_id is not None and parent_account_id == account_id:
@@ -55,19 +53,29 @@ class AccountService:
             if not self.repository.account_exists(parent_account_id):
                 raise ValidationError(f"Parent account {parent_account_id} does not exist")
 
-    def create_account(self, data: AccountCreate, *, created_by: uuid.UUID) -> Account:
+    def create_account(
+        self,
+        data: AccountCreate,
+        *,
+        created_by: uuid.UUID,
+        default_zone_id: uuid.UUID | None = None,
+    ) -> Account:
         if self.repository.exists_by_name(data.name):
             raise ConflictError(f"Account with name '{data.name}' already exists")
 
+        zone_id = data.zone_id if data.zone_id else default_zone_id
+        if not zone_id:
+            raise ValidationError("Zone is required. No zone was provided and the creating user has no zone assigned.")
+
         self._validate_references(
-            managing_sbu_id=data.managing_sbu_id,
+            zone_id=zone_id,
             parent_account_id=data.parent_account_id,
         )
 
         account = Account(
             name=data.name,
             parent_account_id=data.parent_account_id,
-            managing_sbu_id=data.managing_sbu_id,
+            zone_id=zone_id,
             payer_behavior=data.payer_behavior,
             created_by=created_by,
             updated_by=created_by,
@@ -89,7 +97,7 @@ class AccountService:
             raise ConflictError(f"Account with name '{new_name}' already exists")
 
         self._validate_references(
-            managing_sbu_id=updates.get("managing_sbu_id"),
+            zone_id=updates.get("zone_id"),
             parent_account_id=updates.get("parent_account_id"),
             account_id=account_id,
         )

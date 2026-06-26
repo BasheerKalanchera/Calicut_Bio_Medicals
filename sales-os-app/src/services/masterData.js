@@ -5,6 +5,11 @@ export async function listSbus() {
   return response.data.data;
 }
 
+export async function listZones() {
+  const response = await api.get("/master-data/zones");
+  return response.data.data;
+}
+
 export async function listProjectStatuses() {
   const response = await api.get("/master-data/project-statuses");
   return response.data.data;

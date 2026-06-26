@@ -15,7 +15,7 @@ class PayerBehavior(StrEnum):
 class AccountBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     parent_account_id: uuid.UUID | None = None
-    managing_sbu_id: uuid.UUID | None = None
+    zone_id: uuid.UUID
     payer_behavior: PayerBehavior | None = None
 
 
@@ -26,11 +26,11 @@ class AccountCreate(AccountBase):
 class AccountUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     parent_account_id: uuid.UUID | None = None
-    managing_sbu_id: uuid.UUID | None = None
+    zone_id: uuid.UUID | None = None
     payer_behavior: PayerBehavior | None = None
 
 
-class SBUNested(BaseModel):
+class ZoneNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -43,9 +43,9 @@ class AccountListResponse(BaseModel):
     id: uuid.UUID
     name: str
     parent_account_id: uuid.UUID | None
-    managing_sbu_id: uuid.UUID | None
+    zone_id: uuid.UUID
     payer_behavior: str | None
-    managing_sbu: SBUNested | None
+    zone: ZoneNested
 
 
 class AccountResponse(BaseModel):
@@ -54,11 +54,11 @@ class AccountResponse(BaseModel):
     id: uuid.UUID
     name: str
     parent_account_id: uuid.UUID | None
-    managing_sbu_id: uuid.UUID | None
+    zone_id: uuid.UUID
     payer_behavior: str | None
     created_at: datetime
     updated_at: datetime
-    managing_sbu: SBUNested | None
+    zone: ZoneNested
     parent_account: AccountListResponse | None
 
 

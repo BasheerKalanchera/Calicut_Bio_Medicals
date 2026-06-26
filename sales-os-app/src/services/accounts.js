@@ -1,9 +1,9 @@
 import api from "../lib/api";
 
-export async function listAccounts({ search, sbu_id, page = 1, page_size = 50 } = {}) {
+export async function listAccounts({ search, zone_id, page = 1, page_size = 50 } = {}) {
   const params = { page, page_size };
   if (search) params.search = search;
-  if (sbu_id) params.sbu_id = sbu_id;
+  if (zone_id) params.zone_id = zone_id;
   const response = await api.get("/accounts", { params });
   return response.data.data;
 }

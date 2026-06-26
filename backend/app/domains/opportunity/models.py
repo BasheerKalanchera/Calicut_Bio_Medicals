@@ -37,6 +37,9 @@ class Opportunity(AuditMixin, Base):
     account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("account.id"), nullable=False, index=True
     )
+    sbu_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True
+    )
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("project.id"), nullable=True
     )
@@ -69,6 +72,7 @@ class Opportunity(AuditMixin, Base):
     po_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
+    sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")
     project: Mapped["Project | None"] = relationship(back_populates="opportunities", lazy="joined")
     owner: Mapped["UserProfile"] = relationship(
         back_populates="owned_opportunities", foreign_keys=[owner_id], lazy="joined"

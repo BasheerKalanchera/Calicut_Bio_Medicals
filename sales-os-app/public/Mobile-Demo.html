@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales OS – Live Demo</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .demo-title {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .demo-title span {
+            color: #60a5fa;
+        }
+
+        /* Phone Frame */
+        .phone-frame {
+            width: 412px;
+            height: 915px;
+            background: #000;
+            border-radius: 36px;
+            padding: 10px;
+            box-shadow:
+                0 0 0 2px #333,
+                0 0 0 4px #1a1a1a,
+                0 25px 80px rgba(0, 0, 0, 0.6),
+                0 0 60px rgba(96, 165, 250, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Pixel 7 Punch-hole Camera */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 12px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            border: 2px solid #333;
+            z-index: 10;
+        }
+
+        /* Screen */
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 28px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .phone-screen iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Side buttons */
+        .phone-frame::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: 180px;
+            width: 4px;
+            height: 80px;
+            background: #333;
+            border-radius: 0 2px 2px 0;
+        }
+
+        .bottom-bar {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 5px;
+            background: #555;
+            border-radius: 3px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .demo-footer {
+            margin-top: 28px;
+            color: #475569;
+            font-size: 12px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-title">
+        <span>Calicut Bio Medicals</span> · Sales OS Demo
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <iframe src="/demo"></iframe>
+        </div>
+        <div class="bottom-bar"></div>
+    </div>
+
+    <div class="demo-footer">
+        Swipe & interact inside the phone · Built with React
+    </div>
+</body>
+
+</html>

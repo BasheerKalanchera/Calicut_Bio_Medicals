@@ -24,11 +24,13 @@ class OpportunityService:
         data: OpportunityCreate,
         *,
         created_by: uuid.UUID,
+        sbu_id: uuid.UUID,
     ) -> Opportunity:
         self._require_account(account_id)
 
         opportunity = Opportunity(
             account_id=account_id,
+            sbu_id=sbu_id,
             name=data.name,
             owner_id=data.owner_id,
             stage_id=data.stage_id,

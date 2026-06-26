@@ -1,0 +1,675 @@
+﻿diff --git a/backend/app/domains/account/models.py b/backend/app/domains/account/models.py
+index a7fa628..268f15e 100644
+--- a/backend/app/domains/account/models.py
++++ b/backend/app/domains/account/models.py
+@@ -20,8 +20,8 @@ class Account(AuditMixin, Base):
+     parent_account_id: Mapped[uuid.UUID | None] = mapped_column(
+         UUID(as_uuid=True), ForeignKey("account.id"), nullable=True
+     )
+-    managing_sbu_id: Mapped[uuid.UUID | None] = mapped_column(
+-        UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=True
++    zone_id: Mapped[uuid.UUID] = mapped_column(
++        UUID(as_uuid=True), ForeignKey("zone.id"), nullable=False
+     )
+     name: Mapped[str] = mapped_column(String(255), nullable=False)
+     payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
+@@ -30,7 +30,7 @@ class Account(AuditMixin, Base):
+         back_populates="child_accounts", remote_side="Account.id", lazy="joined"
+     )
+     child_accounts: Mapped[list["Account"]] = relationship(back_populates="parent_account", lazy="selectin")
+-    managing_sbu: Mapped["SBU | None"] = relationship(back_populates="managed_accounts", lazy="joined")
++    zone: Mapped["Zone"] = relationship(back_populates="accounts", lazy="joined")
+ 
+     stakeholders: Mapped[list["Stakeholder"]] = relationship(back_populates="account", lazy="selectin")
+     projects: Mapped[list["Project"]] = relationship(back_populates="account", lazy="selectin")
+diff --git a/backend/app/domains/account/repository.py b/backend/app/domains/account/repository.py
+index 460a67d..3235800 100644
+--- a/backend/app/domains/account/repository.py
++++ b/backend/app/domains/account/repository.py
+@@ -8,7 +8,7 @@ from app.domains.account.models import Account, Stakeholder
+ from app.domains.asset.models import InstalledAsset
+ from app.domains.opportunity.models import Opportunity
+ from app.domains.project.models import Project
+-from app.domains.reference.models import SBU
++from app.domains.reference.models import Zone
+ 
+ 
+ class AccountRepository(BaseRepository[Account]):
+@@ -22,9 +22,8 @@ class AccountRepository(BaseRepository[Account]):
+         limit: int = 50,
+         search: str | None = None,
+         zone_id: uuid.UUID | None = None,
+-        sbu_id: uuid.UUID | None = None,
+     ) -> tuple[list[Account], int]:
+-        # For the directory listing we only need name + managing_sbu + payer_behavior.
++        # For the directory listing we only need name + zone + payer_behavior.
+         # The Account model has 7 lazy="selectin" relationships which each fire a separate
+         # SQL round-trip to Supabase (~150ms each). Suppress them all with noload() so
+         # the directory query runs in 2 queries (count + select) instead of 9+.
+@@ -44,8 +43,8 @@ class AccountRepository(BaseRepository[Account]):
+ 
+         if search:
+             stmt = stmt.where(Account.name.ilike(f"%{search}%"))
+-        if sbu_id:
+-            stmt = stmt.where(Account.managing_sbu_id == sbu_id)
++        if zone_id:
++            stmt = stmt.where(Account.zone_id == zone_id)
+ 
+         stmt = stmt.order_by(Account.name)
+ 
+@@ -103,8 +102,8 @@ class AccountRepository(BaseRepository[Account]):
+         ).first()
+         return account, counts
+ 
+-    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
+-        return self.db.get(SBU, sbu_id) is not None
++    def zone_exists(self, zone_id: uuid.UUID) -> bool:
++        return self.db.get(Zone, zone_id) is not None
+ 
+     def account_exists(self, account_id: uuid.UUID) -> bool:
+         return self.db.get(Account, account_id) is not None
+diff --git a/backend/app/domains/account/router.py b/backend/app/domains/account/router.py
+index eb15081..1e6e705 100644
+--- a/backend/app/domains/account/router.py
++++ b/backend/app/domains/account/router.py
+@@ -38,7 +38,6 @@ def _get_workspace_service(
+ async def list_accounts(
+     search: str | None = Query(None),
+     zone_id: uuid.UUID | None = Query(None),  # noqa: B008
+-    sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
+     page: int = Query(default=1, ge=1),
+     page_size: int = Query(default=50, ge=1, le=100),
+     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+@@ -50,7 +49,6 @@ async def list_accounts(
+         limit=page_size,
+         search=search,
+         zone_id=zone_id,
+-        sbu_id=sbu_id,
+     )
+     total_pages = (total + page_size - 1) // page_size
+ 
+@@ -88,7 +86,9 @@ async def create_account(
+     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+     service: AccountService = Depends(_get_service),  # noqa: B008
+ ) -> APIResponse[AccountResponse]:
+-    account = service.create_account(body, created_by=current_user.id)
++    account = service.create_account(
++        body, created_by=current_user.id, default_zone_id=current_user.zone_id
++    )
+     return APIResponse(data=AccountResponse.model_validate(account))
+ 
+ 
+diff --git a/backend/app/domains/account/schemas.py b/backend/app/domains/account/schemas.py
+index 89a028a..d574121 100644
+--- a/backend/app/domains/account/schemas.py
++++ b/backend/app/domains/account/schemas.py
+@@ -15,7 +15,7 @@ class PayerBehavior(StrEnum):
+ class AccountBase(BaseModel):
+     name: str = Field(..., min_length=1, max_length=255)
+     parent_account_id: uuid.UUID | None = None
+-    managing_sbu_id: uuid.UUID | None = None
++    zone_id: uuid.UUID
+     payer_behavior: PayerBehavior | None = None
+ 
+ 
+@@ -26,11 +26,11 @@ class AccountCreate(AccountBase):
+ class AccountUpdate(BaseModel):
+     name: str | None = Field(None, min_length=1, max_length=255)
+     parent_account_id: uuid.UUID | None = None
+-    managing_sbu_id: uuid.UUID | None = None
++    zone_id: uuid.UUID | None = None
+     payer_behavior: PayerBehavior | None = None
+ 
+ 
+-class SBUNested(BaseModel):
++class ZoneNested(BaseModel):
+     model_config = ConfigDict(from_attributes=True)
+ 
+     id: uuid.UUID
+@@ -43,9 +43,9 @@ class AccountListResponse(BaseModel):
+     id: uuid.UUID
+     name: str
+     parent_account_id: uuid.UUID | None
+-    managing_sbu_id: uuid.UUID | None
++    zone_id: uuid.UUID
+     payer_behavior: str | None
+-    managing_sbu: SBUNested | None
++    zone: ZoneNested
+ 
+ 
+ class AccountResponse(BaseModel):
+@@ -54,11 +54,11 @@ class AccountResponse(BaseModel):
+     id: uuid.UUID
+     name: str
+     parent_account_id: uuid.UUID | None
+-    managing_sbu_id: uuid.UUID | None
++    zone_id: uuid.UUID
+     payer_behavior: str | None
+     created_at: datetime
+     updated_at: datetime
+-    managing_sbu: SBUNested | None
++    zone: ZoneNested
+     parent_account: AccountListResponse | None
+ 
+ 
+diff --git a/backend/app/domains/account/service.py b/backend/app/domains/account/service.py
+index e8db2a1..306f841 100644
+--- a/backend/app/domains/account/service.py
++++ b/backend/app/domains/account/service.py
+@@ -29,25 +29,23 @@ class AccountService:
+         limit: int = 50,
+         search: str | None = None,
+         zone_id: uuid.UUID | None = None,
+-        sbu_id: uuid.UUID | None = None,
+     ) -> tuple[list[Account], int]:
+         return self.repository.list_accounts(
+             offset=offset,
+             limit=limit,
+             search=search,
+             zone_id=zone_id,
+-            sbu_id=sbu_id,
+         )
+ 
+     def _validate_references(
+         self,
+         *,
+-        managing_sbu_id: uuid.UUID | None = None,
++        zone_id: uuid.UUID | None = None,
+         parent_account_id: uuid.UUID | None = None,
+         account_id: uuid.UUID | None = None,
+     ) -> None:
+-        if managing_sbu_id is not None and not self.repository.sbu_exists(managing_sbu_id):
+-            raise ValidationError(f"SBU {managing_sbu_id} does not exist")
++        if zone_id is not None and not self.repository.zone_exists(zone_id):
++            raise ValidationError(f"Zone {zone_id} does not exist")
+ 
+         if parent_account_id is not None:
+             if account_id is not None and parent_account_id == account_id:
+@@ -55,19 +53,29 @@ class AccountService:
+             if not self.repository.account_exists(parent_account_id):
+                 raise ValidationError(f"Parent account {parent_account_id} does not exist")
+ 
+-    def create_account(self, data: AccountCreate, *, created_by: uuid.UUID) -> Account:
++    def create_account(
++        self,
++        data: AccountCreate,
++        *,
++        created_by: uuid.UUID,
++        default_zone_id: uuid.UUID | None = None,
++    ) -> Account:
+         if self.repository.exists_by_name(data.name):
+             raise ConflictError(f"Account with name '{data.name}' already exists")
+ 
++        zone_id = data.zone_id if data.zone_id else default_zone_id
++        if not zone_id:
++            raise ValidationError("Zone is required. No zone was provided and the creating user has no zone assigned.")
++
+         self._validate_references(
+-            managing_sbu_id=data.managing_sbu_id,
++            zone_id=zone_id,
+             parent_account_id=data.parent_account_id,
+         )
+ 
+         account = Account(
+             name=data.name,
+             parent_account_id=data.parent_account_id,
+-            managing_sbu_id=data.managing_sbu_id,
++            zone_id=zone_id,
+             payer_behavior=data.payer_behavior,
+             created_by=created_by,
+             updated_by=created_by,
+@@ -89,7 +97,7 @@ class AccountService:
+             raise ConflictError(f"Account with name '{new_name}' already exists")
+ 
+         self._validate_references(
+-            managing_sbu_id=updates.get("managing_sbu_id"),
++            zone_id=updates.get("zone_id"),
+             parent_account_id=updates.get("parent_account_id"),
+             account_id=account_id,
+         )
+diff --git a/backend/app/domains/account/workspace_schemas.py b/backend/app/domains/account/workspace_schemas.py
+index 06a5e22..edf0a5b 100644
+--- a/backend/app/domains/account/workspace_schemas.py
++++ b/backend/app/domains/account/workspace_schemas.py
+@@ -5,6 +5,13 @@ from decimal import Decimal
+ from pydantic import BaseModel, ConfigDict
+ 
+ 
++class ZoneNested(BaseModel):
++    model_config = ConfigDict(from_attributes=True)
++
++    id: uuid.UUID
++    name: str
++
++
+ class SBUNested(BaseModel):
+     model_config = ConfigDict(from_attributes=True)
+ 
+@@ -42,9 +49,9 @@ class WorkspaceAccount(BaseModel):
+     id: uuid.UUID
+     name: str
+     parent_account_id: uuid.UUID | None
+-    managing_sbu_id: uuid.UUID | None
++    zone_id: uuid.UUID
+     payer_behavior: str | None
+-    managing_sbu: SBUNested | None
++    zone: ZoneNested
+ 
+ 
+ class WorkspaceStakeholder(BaseModel):
+@@ -99,11 +106,13 @@ class WorkspaceOpportunity(BaseModel):
+     id: uuid.UUID
+     name: str
+     project_id: uuid.UUID | None
++    sbu_id: uuid.UUID
+     win_probability: Decimal
+     indicative_value: Decimal | None
+     stage: OpportunityStageNested
+     status: OpportunityStatusNested
+     owner: OwnerNested
++    sbu: SBUNested
+ 
+ 
+ class WorkspaceResponse(BaseModel):
+diff --git a/backend/app/domains/opportunity/models.py b/backend/app/domains/opportunity/models.py
+index aaa063b..833deb2 100644
+--- a/backend/app/domains/opportunity/models.py
++++ b/backend/app/domains/opportunity/models.py
+@@ -37,6 +37,9 @@ class Opportunity(AuditMixin, Base):
+     account_id: Mapped[uuid.UUID] = mapped_column(
+         UUID(as_uuid=True), ForeignKey("account.id"), nullable=False, index=True
+     )
++    sbu_id: Mapped[uuid.UUID] = mapped_column(
++        UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True
++    )
+     project_id: Mapped[uuid.UUID | None] = mapped_column(
+         UUID(as_uuid=True), ForeignKey("project.id"), nullable=True
+     )
+@@ -69,6 +72,7 @@ class Opportunity(AuditMixin, Base):
+     po_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+ 
+     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
++    sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")
+     project: Mapped["Project | None"] = relationship(back_populates="opportunities", lazy="joined")
+     owner: Mapped["UserProfile"] = relationship(
+         back_populates="owned_opportunities", foreign_keys=[owner_id], lazy="joined"
+diff --git a/backend/app/domains/opportunity/router.py b/backend/app/domains/opportunity/router.py
+index b0c9fd8..a43a57b 100644
+--- a/backend/app/domains/opportunity/router.py
++++ b/backend/app/domains/opportunity/router.py
+@@ -43,7 +43,7 @@ async def create_opportunity(
+     service: OpportunityService = Depends(_get_service),  # noqa: B008
+ ) -> APIResponse[OpportunityResponse]:
+     opportunity = service.create_opportunity(
+-        account_id, body, created_by=current_user.id
++        account_id, body, created_by=current_user.id, sbu_id=current_user.sbu_id
+     )
+     return APIResponse(data=OpportunityResponse.model_validate(opportunity))
+ 
+diff --git a/backend/app/domains/opportunity/schemas.py b/backend/app/domains/opportunity/schemas.py
+index 734b26f..a2cf7f9 100644
+--- a/backend/app/domains/opportunity/schemas.py
++++ b/backend/app/domains/opportunity/schemas.py
+@@ -5,6 +5,13 @@ from decimal import Decimal
+ from pydantic import BaseModel, ConfigDict, Field
+ 
+ 
++class SBUNested(BaseModel):
++    model_config = ConfigDict(from_attributes=True)
++
++    id: uuid.UUID
++    name: str
++
++
+ class OpportunityCreate(BaseModel):
+     name: str = Field(..., min_length=1, max_length=255)
+     owner_id: uuid.UUID
+@@ -30,6 +37,7 @@ class OpportunityResponse(BaseModel):
+ 
+     id: uuid.UUID
+     account_id: uuid.UUID
++    sbu_id: uuid.UUID
+     name: str
+     owner_id: uuid.UUID
+     stage_id: uuid.UUID
+@@ -39,3 +47,4 @@ class OpportunityResponse(BaseModel):
+     indicative_value: Decimal | None
+     created_at: datetime
+     updated_at: datetime
++    sbu: SBUNested
+diff --git a/backend/app/domains/opportunity/service.py b/backend/app/domains/opportunity/service.py
+index 597fe1a..6e8a75f 100644
+--- a/backend/app/domains/opportunity/service.py
++++ b/backend/app/domains/opportunity/service.py
+@@ -24,11 +24,13 @@ class OpportunityService:
+         data: OpportunityCreate,
+         *,
+         created_by: uuid.UUID,
++        sbu_id: uuid.UUID,
+     ) -> Opportunity:
+         self._require_account(account_id)
+ 
+         opportunity = Opportunity(
+             account_id=account_id,
++            sbu_id=sbu_id,
+             name=data.name,
+             owner_id=data.owner_id,
+             stage_id=data.stage_id,
+diff --git a/backend/app/domains/reference/models.py b/backend/app/domains/reference/models.py
+index 50f9671..67a9029 100644
+--- a/backend/app/domains/reference/models.py
++++ b/backend/app/domains/reference/models.py
+@@ -28,7 +28,7 @@ class SBU(Base):
+     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="sbu", lazy="select")
+     products: Mapped[list["Product"]] = relationship(back_populates="sbu", lazy="select")
+     target_plans: Mapped[list["TargetPlan"]] = relationship(back_populates="sbu", lazy="select")
+-    managed_accounts: Mapped[list["Account"]] = relationship(back_populates="managing_sbu", lazy="select")
++    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="sbu", lazy="select")
+ 
+ 
+ class Zone(Base):
+@@ -40,6 +40,7 @@ class Zone(Base):
+     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
+ 
+     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="zone", lazy="select")
++    accounts: Mapped[list["Account"]] = relationship(back_populates="zone", lazy="select")
+ 
+ 
+ class LeadSource(Base):
+diff --git a/sales-os-app/public/phone-demo.html b/sales-os-app/public/phone-demo.html
+index 8e31159..5c4f3bf 100644
+--- a/sales-os-app/public/phone-demo.html
++++ b/sales-os-app/public/phone-demo.html
+@@ -4,7 +4,7 @@
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+-    <title>Sales OS ΓÇô Live Demo</title>
++    <title>Sales OS ΓÇô Prototype</title>
+     <style>
+         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+ 
+@@ -127,7 +127,7 @@
+ 
+     <div class="phone-frame">
+         <div class="phone-screen">
+-            <iframe src="/"></iframe>
++            <iframe src="/prototype"></iframe>
+         </div>
+         <div class="bottom-bar"></div>
+     </div>
+diff --git a/sales-os-app/src/App.jsx b/sales-os-app/src/App.jsx
+index f0374bb..6eed7da 100644
+--- a/sales-os-app/src/App.jsx
++++ b/sales-os-app/src/App.jsx
+@@ -2057,6 +2057,20 @@ export default function App() {
+               </select>
+             </div>
+           </section>
++
++          {/* Demo link */}
++          <section className="pt-4 border-t border-gray-100">
++            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">
++              PRODUCTION
++            </h3>
++            <a
++              href="/demo"
++              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-500 hover:bg-gray-50 transition-all"
++            >
++              <span className="text-lg">≡ƒÜÇ</span>
++              Demo (Live API)
++            </a>
++          </section>
+         </div>
+ 
+         {/* Fixed Footer Profile Card */}
+diff --git a/sales-os-app/src/screens/Customer360Screen.jsx b/sales-os-app/src/screens/Customer360Screen.jsx
+index bc779f5..9388853 100644
+--- a/sales-os-app/src/screens/Customer360Screen.jsx
++++ b/sales-os-app/src/screens/Customer360Screen.jsx
+@@ -14,7 +14,7 @@ import {
+   listInstalledAssets,
+ } from "../services/accounts";
+ import {
+-  listSbus,
++  listZones,
+   listProjectStatuses,
+   listStages,
+   listStatuses,
+@@ -76,7 +76,7 @@ function NpsIndicator({ score }) {
+ function OverviewTab({ account, onEdit }) {
+   const fields = [
+     { label: "Account Name", value: account.name },
+-    { label: "SBU", value: account.managing_sbu?.name || "ΓÇö" },
++    { label: "Zone", value: account.zone?.name || "ΓÇö" },
+     {
+       label: "Payer Behavior",
+       value: <PayerBadge behavior={account.payer_behavior} />,
+@@ -405,9 +405,9 @@ export default function Customer360Screen({ accountId, onBack }) {
+ 
+   // Edit Account state ΓÇö must be declared before any early returns
+   const [showEditAccount, setShowEditAccount] = useState(false);
+-  const [sbus, setSbus] = useState([]);
++  const [zones, setZones] = useState([]);
+   const [editAccountName, setEditAccountName] = useState("");
+-  const [editAccountSbuId, setEditAccountSbuId] = useState("");
++  const [editAccountZoneId, setEditAccountZoneId] = useState("");
+   const [editAccountPayer, setEditAccountPayer] = useState("");
+ 
+   // Create Stakeholder state
+@@ -539,21 +539,21 @@ export default function Customer360Screen({ accountId, onBack }) {
+ 
+   const openEditAccount = async () => {
+     setEditAccountName(account.name || "");
+-    setEditAccountSbuId(account.managing_sbu?.id || "");
++    setEditAccountZoneId(account.zone?.id || "");
+     setEditAccountPayer(account.payer_behavior || "");
+     setShowEditAccount(true);
+-    if (sbus.length === 0) {
++    if (zones.length === 0) {
+       try {
+-        const data = await listSbus();
+-        setSbus(data.items || data);
++        const data = await listZones();
++        setZones(data.items || data);
+       } catch {}
+     }
+   };
+ 
+   const handleUpdateAccount = async () => {
+     if (!editAccountName.trim()) throw new Error("Customer name is required");
+-    const payload = { name: editAccountName.trim() };
+-    if (editAccountSbuId) payload.managing_sbu_id = editAccountSbuId;
++    if (!editAccountZoneId) throw new Error("Zone is required");
++    const payload = { name: editAccountName.trim(), zone_id: editAccountZoneId };
+     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
+     await updateAccount(accountId, payload);
+     const data = await getAccount(accountId);
+@@ -747,9 +747,9 @@ export default function Customer360Screen({ accountId, onBack }) {
+           </h2>
+         </div>
+         <div className="flex items-center gap-2 shrink-0">
+-          {account.managing_sbu && (
+-            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-indigo-50 text-indigo-700 border-indigo-200">
+-              {account.managing_sbu.name}
++          {account.zone && (
++            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">
++              {account.zone.name}
+             </span>
+           )}
+           <PayerBadge behavior={account.payer_behavior} />
+@@ -844,16 +844,16 @@ export default function Customer360Screen({ accountId, onBack }) {
+           />
+         </div>
+         <div>
+-          <label className={labelClass}>SBU</label>
++          <label className={labelClass}>Zone *</label>
+           <select
+-            value={editAccountSbuId}
+-            onChange={(e) => setEditAccountSbuId(e.target.value)}
++            value={editAccountZoneId}
++            onChange={(e) => setEditAccountZoneId(e.target.value)}
+             className={inputClass}
+           >
+-            <option value="">Select SBU</option>
+-            {sbus.map((s) => (
+-              <option key={s.id} value={s.id}>
+-                {s.name}
++            <option value="">Select zone</option>
++            {zones.map((z) => (
++              <option key={z.id} value={z.id}>
++                {z.name}
+               </option>
+             ))}
+           </select>
+diff --git a/sales-os-app/src/screens/CustomerDirectoryScreen.jsx b/sales-os-app/src/screens/CustomerDirectoryScreen.jsx
+index af7cc62..169fdb2 100644
+--- a/sales-os-app/src/screens/CustomerDirectoryScreen.jsx
++++ b/sales-os-app/src/screens/CustomerDirectoryScreen.jsx
+@@ -1,6 +1,6 @@
+ import { useEffect, useState, useCallback, useRef } from "react";
+ import { listAccounts, createAccount } from "../services/accounts";
+-import { listSbus } from "../services/masterData";
++import { listZones } from "../services/masterData";
+ import FormModal from "../components/FormModal";
+ import useDebouncedValue from "../hooks/useDebouncedValue";
+ 
+@@ -37,35 +37,35 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
+   const [error, setError] = useState(null);
+ 
+   const [search, setSearch] = useState("");
+-  const [sbuFilter, setSbuFilter] = useState("");
++  const [zoneFilter, setZoneFilter] = useState("");
+   const [page, setPage] = useState(1);
+   const pageSize = 50;
+ 
+   const [showCreateModal, setShowCreateModal] = useState(false);
+-  const [sbus, setSbus] = useState([]);
++  const [zones, setZones] = useState([]);
+   const [formName, setFormName] = useState("");
+-  const [formSbuId, setFormSbuId] = useState("");
++  const [formZoneId, setFormZoneId] = useState("");
+   const [formPayerBehavior, setFormPayerBehavior] = useState("");
+ 
+   const debouncedSearch = useDebouncedValue(search);
+ 
+   const openCreateModal = async () => {
+     setFormName("");
+-    setFormSbuId("");
++    setFormZoneId("");
+     setFormPayerBehavior("");
+     setShowCreateModal(true);
+-    if (sbus.length === 0) {
++    if (zones.length === 0) {
+       try {
+-        const data = await listSbus();
+-        setSbus(data.items || data);
++        const data = await listZones();
++        setZones(data.items || data);
+       } catch {}
+     }
+   };
+ 
+   const handleCreateAccount = async () => {
+     if (!formName.trim()) throw new Error("Customer name is required");
+-    const payload = { name: formName.trim() };
+-    if (formSbuId) payload.managing_sbu_id = formSbuId;
++    if (!formZoneId) throw new Error("Zone is required");
++    const payload = { name: formName.trim(), zone_id: formZoneId };
+     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
+     await createAccount(payload);
+     accountListCache.clear(); // Bust cache so new customer appears immediately
+@@ -81,7 +81,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
+   const fetchAccounts = useCallback((opts = {}) => {
+     const params = { page, page_size: pageSize };
+     if (debouncedSearch) params.search = debouncedSearch;
+-    if (sbuFilter) params.sbu_id = sbuFilter;
++    if (zoneFilter) params.zone_id = zoneFilter;
+ 
+     const cacheKey = getCacheKey(params);
+     const cached = getCached(cacheKey);
+@@ -118,7 +118,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
+         if (!isMountedRef.current) return;
+         if (!isBackgroundRefresh) setLoading(false);
+       });
+-  }, [debouncedSearch, sbuFilter, page]);
++  }, [debouncedSearch, zoneFilter, page]);
+ 
+   useEffect(() => {
+     fetchAccounts();
+@@ -216,15 +216,9 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
+                       {account.name}
+                     </div>
+                     <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
+-                      {account.managing_sbu && (
+-                        <span
+-                          className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
+-                            account.managing_sbu.name === "Imaging"
+-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+-                              : "bg-rose-50 text-rose-700 border-rose-200"
+-                          }`}
+-                        >
+-                          {account.managing_sbu.name}
++                      {account.zone && (
++                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-teal-50 text-teal-700 border-teal-200">
++                          {account.zone.name}
+                         </span>
+                       )}
+                       {account.payer_behavior && (
+@@ -311,17 +305,17 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
+         </div>
+         <div>
+           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+-            SBU
++            Zone *
+           </label>
+           <select
+-            value={formSbuId}
+-            onChange={(e) => setFormSbuId(e.target.value)}
++            value={formZoneId}
++            onChange={(e) => setFormZoneId(e.target.value)}
+             className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+           >
+-            <option value="">Select SBU</option>
+-            {sbus.map((s) => (
+-              <option key={s.id} value={s.id}>
+-                {s.name}
++            <option value="">Select zone</option>
++            {zones.map((z) => (
++              <option key={z.id} value={z.id}>
++                {z.name}
+               </option>
+             ))}
+           </select>
+diff --git a/sales-os-app/src/services/accounts.js b/sales-os-app/src/services/accounts.js
+index 79c1cfb..e40d4dc 100644
+--- a/sales-os-app/src/services/accounts.js
++++ b/sales-os-app/src/services/accounts.js
+@@ -1,9 +1,9 @@
+ import api from "../lib/api";
+ 
+-export async function listAccounts({ search, sbu_id, page = 1, page_size = 50 } = {}) {
++export async function listAccounts({ search, zone_id, page = 1, page_size = 50 } = {}) {
+   const params = { page, page_size };
+   if (search) params.search = search;
+-  if (sbu_id) params.sbu_id = sbu_id;
++  if (zone_id) params.zone_id = zone_id;
+   const response = await api.get("/accounts", { params });
+   return response.data.data;
+ }
+diff --git a/sales-os-app/src/services/masterData.js b/sales-os-app/src/services/masterData.js
+index e6d3e37..d9611f0 100644
+--- a/sales-os-app/src/services/masterData.js
++++ b/sales-os-app/src/services/masterData.js
+@@ -5,6 +5,11 @@ export async function listSbus() {
+   return response.data.data;
+ }
+ 
++export async function listZones() {
++  const response = await api.get("/master-data/zones");
++  return response.data.data;
++}
++
+ export async function listProjectStatuses() {
+   const response = await api.get("/master-data/project-statuses");
+   return response.data.data;

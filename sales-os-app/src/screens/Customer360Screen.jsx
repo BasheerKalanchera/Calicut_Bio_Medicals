@@ -14,7 +14,7 @@ import {
   listInstalledAssets,
 } from "../services/accounts";
 import {
-  listSbus,
+  listZones,
   listProjectStatuses,
   listStages,
   listStatuses,
@@ -76,7 +76,7 @@ function NpsIndicator({ score }) {
 function OverviewTab({ account, onEdit }) {
   const fields = [
     { label: "Account Name", value: account.name },
-    { label: "SBU", value: account.managing_sbu?.name || "—" },
+    { label: "Zone", value: account.zone?.name || "—" },
     {
       label: "Payer Behavior",
       value: <PayerBadge behavior={account.payer_behavior} />,
@@ -405,9 +405,9 @@ export default function Customer360Screen({ accountId, onBack }) {
 
   // Edit Account state — must be declared before any early returns
   const [showEditAccount, setShowEditAccount] = useState(false);
-  const [sbus, setSbus] = useState([]);
+  const [zones, setZones] = useState([]);
   const [editAccountName, setEditAccountName] = useState("");
-  const [editAccountSbuId, setEditAccountSbuId] = useState("");
+  const [editAccountZoneId, setEditAccountZoneId] = useState("");
   const [editAccountPayer, setEditAccountPayer] = useState("");
 
   // Create Stakeholder state
@@ -539,21 +539,21 @@ export default function Customer360Screen({ accountId, onBack }) {
 
   const openEditAccount = async () => {
     setEditAccountName(account.name || "");
-    setEditAccountSbuId(account.managing_sbu?.id || "");
+    setEditAccountZoneId(account.zone?.id || "");
     setEditAccountPayer(account.payer_behavior || "");
     setShowEditAccount(true);
-    if (sbus.length === 0) {
+    if (zones.length === 0) {
       try {
-        const data = await listSbus();
-        setSbus(data.items || data);
+        const data = await listZones();
+        setZones(data.items || data);
       } catch {}
     }
   };
 
   const handleUpdateAccount = async () => {
     if (!editAccountName.trim()) throw new Error("Customer name is required");
-    const payload = { name: editAccountName.trim() };
-    if (editAccountSbuId) payload.managing_sbu_id = editAccountSbuId;
+    if (!editAccountZoneId) throw new Error("Zone is required");
+    const payload = { name: editAccountName.trim(), zone_id: editAccountZoneId };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId, payload);
     const data = await getAccount(accountId);
@@ -747,9 +747,9 @@ export default function Customer360Screen({ accountId, onBack }) {
           </h2>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {account.managing_sbu && (
-            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-indigo-50 text-indigo-700 border-indigo-200">
-              {account.managing_sbu.name}
+          {account.zone && (
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">
+              {account.zone.name}
             </span>
           )}
           <PayerBadge behavior={account.payer_behavior} />
@@ -844,16 +844,16 @@ export default function Customer360Screen({ accountId, onBack }) {
           />
         </div>
         <div>
-          <label className={labelClass}>SBU</label>
+          <label className={labelClass}>Zone *</label>
           <select
-            value={editAccountSbuId}
-            onChange={(e) => setEditAccountSbuId(e.target.value)}
+            value={editAccountZoneId}
+            onChange={(e) => setEditAccountZoneId(e.target.value)}
             className={inputClass}
           >
-            <option value="">Select SBU</option>
-            {sbus.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
+            <option value="">Select zone</option>
+            {zones.map((z) => (
+              <option key={z.id} value={z.id}>
+                {z.name}
               </option>
             ))}
           </select>

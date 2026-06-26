@@ -28,7 +28,7 @@ class SBU(Base):
     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="sbu", lazy="select")
     products: Mapped[list["Product"]] = relationship(back_populates="sbu", lazy="select")
     target_plans: Mapped[list["TargetPlan"]] = relationship(back_populates="sbu", lazy="select")
-    managed_accounts: Mapped[list["Account"]] = relationship(back_populates="managing_sbu", lazy="select")
+    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="sbu", lazy="select")
 
 
 class Zone(Base):
@@ -40,6 +40,7 @@ class Zone(Base):
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 
     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="zone", lazy="select")
+    accounts: Mapped[list["Account"]] = relationship(back_populates="zone", lazy="select")
 
 
 class LeadSource(Base):

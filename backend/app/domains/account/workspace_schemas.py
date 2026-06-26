@@ -5,6 +5,13 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 
+class ZoneNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 class SBUNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -42,9 +49,9 @@ class WorkspaceAccount(BaseModel):
     id: uuid.UUID
     name: str
     parent_account_id: uuid.UUID | None
-    managing_sbu_id: uuid.UUID | None
+    zone_id: uuid.UUID
     payer_behavior: str | None
-    managing_sbu: SBUNested | None
+    zone: ZoneNested
 
 
 class WorkspaceStakeholder(BaseModel):
@@ -99,11 +106,13 @@ class WorkspaceOpportunity(BaseModel):
     id: uuid.UUID
     name: str
     project_id: uuid.UUID | None
+    sbu_id: uuid.UUID
     win_probability: Decimal
     indicative_value: Decimal | None
     stage: OpportunityStageNested
     status: OpportunityStatusNested
     owner: OwnerNested
+    sbu: SBUNested
 
 
 class WorkspaceResponse(BaseModel):

@@ -20,8 +20,8 @@ class Account(AuditMixin, Base):
     parent_account_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("account.id"), nullable=True
     )
-    managing_sbu_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=True
+    zone_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("zone.id"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
@@ -30,7 +30,7 @@ class Account(AuditMixin, Base):
         back_populates="child_accounts", remote_side="Account.id", lazy="joined"
     )
     child_accounts: Mapped[list["Account"]] = relationship(back_populates="parent_account", lazy="selectin")
-    managing_sbu: Mapped["SBU | None"] = relationship(back_populates="managed_accounts", lazy="joined")
+    zone: Mapped["Zone"] = relationship(back_populates="accounts", lazy="joined")
 
     stakeholders: Mapped[list["Stakeholder"]] = relationship(back_populates="account", lazy="selectin")
     projects: Mapped[list["Project"]] = relationship(back_populates="account", lazy="selectin")

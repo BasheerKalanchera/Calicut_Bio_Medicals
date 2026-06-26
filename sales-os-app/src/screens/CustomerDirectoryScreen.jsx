@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { listAccounts, createAccount } from "../services/accounts";
-import { listSbus } from "../services/masterData";
+import { listZones } from "../services/masterData";
 import FormModal from "../components/FormModal";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
@@ -37,35 +37,35 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const [error, setError] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [sbuFilter, setSbuFilter] = useState("");
+  const [zoneFilter, setZoneFilter] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [sbus, setSbus] = useState([]);
+  const [zones, setZones] = useState([]);
   const [formName, setFormName] = useState("");
-  const [formSbuId, setFormSbuId] = useState("");
+  const [formZoneId, setFormZoneId] = useState("");
   const [formPayerBehavior, setFormPayerBehavior] = useState("");
 
   const debouncedSearch = useDebouncedValue(search);
 
   const openCreateModal = async () => {
     setFormName("");
-    setFormSbuId("");
+    setFormZoneId("");
     setFormPayerBehavior("");
     setShowCreateModal(true);
-    if (sbus.length === 0) {
+    if (zones.length === 0) {
       try {
-        const data = await listSbus();
-        setSbus(data.items || data);
+        const data = await listZones();
+        setZones(data.items || data);
       } catch {}
     }
   };
 
   const handleCreateAccount = async () => {
     if (!formName.trim()) throw new Error("Customer name is required");
-    const payload = { name: formName.trim() };
-    if (formSbuId) payload.managing_sbu_id = formSbuId;
+    if (!formZoneId) throw new Error("Zone is required");
+    const payload = { name: formName.trim(), zone_id: formZoneId };
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
     await createAccount(payload);
     accountListCache.clear(); // Bust cache so new customer appears immediately
@@ -81,7 +81,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const fetchAccounts = useCallback((opts = {}) => {
     const params = { page, page_size: pageSize };
     if (debouncedSearch) params.search = debouncedSearch;
-    if (sbuFilter) params.sbu_id = sbuFilter;
+    if (zoneFilter) params.zone_id = zoneFilter;
 
     const cacheKey = getCacheKey(params);
     const cached = getCached(cacheKey);
@@ -118,7 +118,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
         if (!isMountedRef.current) return;
         if (!isBackgroundRefresh) setLoading(false);
       });
-  }, [debouncedSearch, sbuFilter, page]);
+  }, [debouncedSearch, zoneFilter, page]);
 
   useEffect(() => {
     fetchAccounts();
@@ -216,15 +216,9 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
                       {account.name}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
-                      {account.managing_sbu && (
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border ${
-                            account.managing_sbu.name === "Imaging"
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                              : "bg-rose-50 text-rose-700 border-rose-200"
-                          }`}
-                        >
-                          {account.managing_sbu.name}
+                      {account.zone && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-teal-50 text-teal-700 border-teal-200">
+                          {account.zone.name}
                         </span>
                       )}
                       {account.payer_behavior && (
@@ -311,17 +305,17 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
         </div>
         <div>
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
-            SBU
+            Zone *
           </label>
           <select
-            value={formSbuId}
-            onChange={(e) => setFormSbuId(e.target.value)}
+            value={formZoneId}
+            onChange={(e) => setFormZoneId(e.target.value)}
             className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
           >
-            <option value="">Select SBU</option>
-            {sbus.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
+            <option value="">Select zone</option>
+            {zones.map((z) => (
+              <option key={z.id} value={z.id}>
+                {z.name}
               </option>
             ))}
           </select>
