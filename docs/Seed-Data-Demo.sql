@@ -28,7 +28,7 @@
 -- Demo login user — Sales Executive, Imaging, North Kerala
 INSERT INTO user_profile (id, sbu_id, zone_id, role_id, display_name, is_active)
 VALUES (
-  'dddddddd-dddd-dddd-dddd-010000000001',  -- REPLACE with actual Supabase auth user UUID
+  '3339381f-10e0-43b0-a507-b1e1bdabf0ce',  -- REPLACE with actual Supabase auth user UUID
   '88888888-8888-8888-8888-800000000001',   -- Imaging SBU
   '99999999-9999-9999-9999-900000000001',   -- North Kerala Zone
   '77777777-7777-7777-7777-700000000001',   -- Sales Executive role

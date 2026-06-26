@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
@@ -16,6 +16,11 @@ class ProjectRepository(BaseRepository[Project]):
         stmt = (
             select(Project)
             .where(Project.account_id == account_id)
+            .options(
+                noload(Project.opportunities),
+                noload(Project.activities),
+                noload(Project.documents),
+            )
             .order_by(Project.name)
         )
         return list(self.db.scalars(stmt).unique().all())

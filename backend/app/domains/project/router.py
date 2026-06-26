@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse
 from app.db.session import get_db
+from app.domains.account.workspace_schemas import WorkspaceProject
 from app.domains.organization.models import UserProfile
 from app.domains.project.repository import ProjectRepository
 from app.domains.project.schemas import (
@@ -22,6 +23,16 @@ def _get_service(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> ProjectService:
     return ProjectService(repository=ProjectRepository(db))
+
+
+@router.get("/accounts/{account_id}/projects")
+async def list_projects(
+    account_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ProjectService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[WorkspaceProject]]:
+    projects = service.list_by_account(account_id)
+    return APIResponse(data=[WorkspaceProject.model_validate(p) for p in projects])
 
 
 @router.post("/accounts/{account_id}/projects", status_code=201)

@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.domains.account.repository import AccountRepository
 from app.domains.account.schemas import (
     AccountCreate,
+    AccountDetailResponse,
     AccountListResponse,
     AccountResponse,
     AccountUpdate,
@@ -69,9 +70,16 @@ async def get_account(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: AccountService = Depends(_get_service),  # noqa: B008
-) -> APIResponse[AccountResponse]:
-    account = service.get_account(account_id)
-    return APIResponse(data=AccountResponse.model_validate(account))
+) -> APIResponse[AccountDetailResponse]:
+    account, counts = service.get_account_with_counts(account_id)
+    base = AccountResponse.model_validate(account).model_dump()
+    base.update({
+        "stakeholder_count": counts.stakeholder_count,
+        "project_count": counts.project_count,
+        "opportunity_count": counts.opportunity_count,
+        "asset_count": counts.asset_count,
+    })
+    return APIResponse(data=AccountDetailResponse(**base))
 
 
 @router.post("", status_code=201)

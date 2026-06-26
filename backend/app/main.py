@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,12 +16,31 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.core.logging import logger, setup_logging
+from app.db.session import warm_pool
 from app.domains.account import router as account_router
 from app.domains.account import stakeholder_router
+from app.domains.asset import router as asset_router
 from app.domains.opportunity import router as opportunity_router
 from app.domains.product import router as product_router
 from app.domains.project import router as project_router
 from app.middleware.correlation_id import CorrelationIdMiddleware
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Startup: pre-warm the DB connection pool so the first user request is fast.
+
+    warm_pool() performs a blocking TCP connection to Supabase (~4-6s).
+    Running it in a thread executor lets the server start accepting requests
+    immediately while the pool warms up concurrently in the background.
+    """
+    import asyncio
+
+    loop = asyncio.get_event_loop()
+    logger.info("warming_db_pool")
+    await loop.run_in_executor(None, warm_pool)
+    logger.info("db_pool_warmed")
+    yield
 
 
 def create_app() -> FastAPI:
@@ -31,6 +52,7 @@ def create_app() -> FastAPI:
         docs_url="/api/v1/docs",
         redoc_url="/api/v1/redoc",
         openapi_url="/api/v1/openapi.json",
+        lifespan=lifespan,
     )
 
     application.add_middleware(CorrelationIdMiddleware)
@@ -112,6 +134,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(master_data.router, prefix="/api/v1")
     application.include_router(account_router.router, prefix="/api/v1")
     application.include_router(stakeholder_router.router, prefix="/api/v1")
+    application.include_router(asset_router.router, prefix="/api/v1")
     application.include_router(project_router.router, prefix="/api/v1")
     application.include_router(opportunity_router.router, prefix="/api/v1")
     application.include_router(product_router.router, prefix="/api/v1")

@@ -14,6 +14,10 @@ class ProjectService:
         if not self.repository.account_exists(account_id):
             raise NotFoundError(f"Account {account_id} not found")
 
+    def list_by_account(self, account_id: uuid.UUID) -> list[Project]:
+        self._require_account(account_id)
+        return self.repository.list_by_account(account_id)
+
     def create_project(
         self,
         account_id: uuid.UUID,

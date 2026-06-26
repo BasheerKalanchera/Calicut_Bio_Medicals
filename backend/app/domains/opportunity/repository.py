@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
@@ -16,6 +16,13 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         stmt = (
             select(Opportunity)
             .where(Opportunity.account_id == account_id)
+            .options(
+                noload(Opportunity.opportunity_stakeholders),
+                noload(Opportunity.splits),
+                noload(Opportunity.items),
+                noload(Opportunity.activities),
+                noload(Opportunity.documents),
+            )
             .order_by(Opportunity.name)
         )
         return list(self.db.scalars(stmt).unique().all())

@@ -16,6 +16,12 @@ class AccountService:
             raise NotFoundError(f"Account {account_id} not found")
         return account
 
+    def get_account_with_counts(self, account_id: uuid.UUID) -> tuple:
+        account, counts = self.repository.get_account_with_counts(account_id)
+        if not account:
+            raise NotFoundError(f"Account {account_id} not found")
+        return account, counts
+
     def list_accounts(
         self,
         *,

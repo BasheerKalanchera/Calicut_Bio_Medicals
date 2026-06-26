@@ -60,3 +60,10 @@ class AccountResponse(BaseModel):
     updated_at: datetime
     managing_sbu: SBUNested | None
     parent_account: AccountListResponse | None
+
+
+class AccountDetailResponse(AccountResponse):
+    stakeholder_count: int
+    project_count: int
+    opportunity_count: int
+    asset_count: int

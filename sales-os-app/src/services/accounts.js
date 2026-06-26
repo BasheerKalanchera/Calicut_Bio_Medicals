@@ -28,6 +28,21 @@ export async function getWorkspace(accountId) {
   return response.data.data;
 }
 
+export async function listOpportunities(accountId) {
+  const response = await api.get(`/accounts/${accountId}/opportunities`);
+  return response.data.data;
+}
+
+export async function listProjects(accountId) {
+  const response = await api.get(`/accounts/${accountId}/projects`);
+  return response.data.data;
+}
+
+export async function listInstalledAssets(accountId) {
+  const response = await api.get(`/accounts/${accountId}/installed-assets`);
+  return response.data.data;
+}
+
 export async function listStakeholders(accountId) {
   const response = await api.get(`/accounts/${accountId}/stakeholders`);
   return response.data.data;

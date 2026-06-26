@@ -1,13 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  getWorkspace,
+  getAccount,
   updateAccount,
+  listStakeholders,
   createStakeholder,
   updateStakeholder,
+  listProjects,
   createProject,
   updateProject,
+  listOpportunities,
   createOpportunity,
   updateOpportunity,
+  listInstalledAssets,
 } from "../services/accounts";
 import {
   listSbus,
@@ -389,23 +393,111 @@ function InstalledBaseTab({ assets }) {
 }
 
 export default function Customer360Screen({ accountId, onBack }) {
-  const [workspace, setWorkspace] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [stakeholders, setStakeholders] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [opportunities, setOpportunities] = useState([]);
+  const [installed, setInstalled] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
-  const fetchWorkspace = useCallback(() => {
+  // Edit Account state — must be declared before any early returns
+  const [showEditAccount, setShowEditAccount] = useState(false);
+  const [sbus, setSbus] = useState([]);
+  const [editAccountName, setEditAccountName] = useState("");
+  const [editAccountSbuId, setEditAccountSbuId] = useState("");
+  const [editAccountPayer, setEditAccountPayer] = useState("");
+
+  // Create Stakeholder state
+  const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
+  const [newStakeholderName, setNewStakeholderName] = useState("");
+  const [newStakeholderNps, setNewStakeholderNps] = useState("");
+  const [newStakeholderSentiment, setNewStakeholderSentiment] = useState("");
+
+  // Edit Stakeholder state
+  const [editingStakeholder, setEditingStakeholder] = useState(null);
+  const [editStakeholderName, setEditStakeholderName] = useState("");
+  const [editStakeholderNps, setEditStakeholderNps] = useState("");
+  const [editStakeholderSentiment, setEditStakeholderSentiment] = useState("");
+
+  // Master data for dropdowns (lazy-loaded)
+  const [projectStatuses, setProjectStatuses] = useState([]);
+  const [stages, setStages] = useState([]);
+  const [oppStatuses, setOppStatuses] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  // Create Project state
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectStatusId, setNewProjectStatusId] = useState("");
+  const [newProjectOwnerId, setNewProjectOwnerId] = useState("");
+  const [newProjectBidDate, setNewProjectBidDate] = useState("");
+
+  // Edit Project state
+  const [editingProject, setEditingProject] = useState(null);
+  const [editProjectName, setEditProjectName] = useState("");
+  const [editProjectStatusId, setEditProjectStatusId] = useState("");
+  const [editProjectOwnerId, setEditProjectOwnerId] = useState("");
+  const [editProjectBidDate, setEditProjectBidDate] = useState("");
+
+  // Create Opportunity state
+  const [showCreateOpp, setShowCreateOpp] = useState(false);
+  const [newOppName, setNewOppName] = useState("");
+  const [newOppProjectId, setNewOppProjectId] = useState("");
+  const [newOppStageId, setNewOppStageId] = useState("");
+  const [newOppStatusId, setNewOppStatusId] = useState("");
+  const [newOppOwnerId, setNewOppOwnerId] = useState("");
+  const [newOppWinProb, setNewOppWinProb] = useState("");
+  const [newOppValue, setNewOppValue] = useState("");
+
+  // Edit Opportunity state
+  const [editingOpp, setEditingOpp] = useState(null);
+  const [editOppName, setEditOppName] = useState("");
+  const [editOppProjectId, setEditOppProjectId] = useState("");
+  const [editOppStageId, setEditOppStageId] = useState("");
+  const [editOppStatusId, setEditOppStatusId] = useState("");
+  const [editOppOwnerId, setEditOppOwnerId] = useState("");
+  const [editOppWinProb, setEditOppWinProb] = useState("");
+  const [editOppValue, setEditOppValue] = useState("");
+
+  const loadAccount = useCallback(() => {
     setLoading(true);
+    setDetailLoading(true);
     setError(null);
-    getWorkspace(accountId)
-      .then(setWorkspace)
-      .catch((err) => setError(err.message || "Failed to load workspace"))
-      .finally(() => setLoading(false));
+
+    getAccount(accountId)
+      .then((data) => {
+        setAccount(data);
+        setLoading(false);
+
+        Promise.allSettled([
+          listStakeholders(accountId),
+          listProjects(accountId),
+          listOpportunities(accountId),
+          listInstalledAssets(accountId),
+        ]).then((results) => {
+          const [sh, pr, op, as_] = results;
+          if (sh.status === "fulfilled") setStakeholders(sh.value);
+          if (pr.status === "fulfilled") setProjects(pr.value);
+          if (op.status === "fulfilled") setOpportunities(op.value);
+          if (as_.status === "fulfilled") setInstalled(as_.value);
+          setDetailLoading(false);
+        });
+      })
+      .catch((err) => {
+        setError(err.message || "Failed to load account");
+        setLoading(false);
+        setDetailLoading(false);
+      });
   }, [accountId]);
 
   useEffect(() => {
-    fetchWorkspace();
-  }, [fetchWorkspace]);
+    loadAccount();
+  }, [loadAccount]);
+
+  // --- Early returns for loading/error (AFTER all hooks) ---
 
   if (loading) {
     return (
@@ -433,7 +525,7 @@ export default function Customer360Screen({ accountId, onBack }) {
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between">
           <span>{error}</span>
           <button
-            onClick={fetchWorkspace}
+            onClick={loadAccount}
             className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all"
           >
             Retry
@@ -443,15 +535,7 @@ export default function Customer360Screen({ accountId, onBack }) {
     );
   }
 
-  const { account, stakeholders, projects, opportunities, installed_assets } =
-    workspace;
-
-  // Edit Account state
-  const [showEditAccount, setShowEditAccount] = useState(false);
-  const [sbus, setSbus] = useState([]);
-  const [editAccountName, setEditAccountName] = useState("");
-  const [editAccountSbuId, setEditAccountSbuId] = useState("");
-  const [editAccountPayer, setEditAccountPayer] = useState("");
+  // --- Event handlers ---
 
   const openEditAccount = async () => {
     setEditAccountName(account.name || "");
@@ -472,14 +556,9 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (editAccountSbuId) payload.managing_sbu_id = editAccountSbuId;
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId, payload);
-    fetchWorkspace();
+    const data = await getAccount(accountId);
+    setAccount(data);
   };
-
-  // Create Stakeholder state
-  const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
-  const [newStakeholderName, setNewStakeholderName] = useState("");
-  const [newStakeholderNps, setNewStakeholderNps] = useState("");
-  const [newStakeholderSentiment, setNewStakeholderSentiment] = useState("");
 
   const openCreateStakeholder = () => {
     setNewStakeholderName("");
@@ -494,14 +573,10 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (newStakeholderNps !== "") payload.nps_score = Number(newStakeholderNps);
     if (newStakeholderSentiment) payload.sentiment = newStakeholderSentiment;
     await createStakeholder(accountId, payload);
-    fetchWorkspace();
+    const [sh, acct] = await Promise.all([listStakeholders(accountId), getAccount(accountId)]);
+    setStakeholders(sh);
+    setAccount(acct);
   };
-
-  // Edit Stakeholder state
-  const [editingStakeholder, setEditingStakeholder] = useState(null);
-  const [editStakeholderName, setEditStakeholderName] = useState("");
-  const [editStakeholderNps, setEditStakeholderNps] = useState("");
-  const [editStakeholderSentiment, setEditStakeholderSentiment] = useState("");
 
   const openEditStakeholder = (s) => {
     setEditingStakeholder(s);
@@ -516,14 +591,9 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (editStakeholderNps !== "") payload.nps_score = Number(editStakeholderNps);
     if (editStakeholderSentiment) payload.sentiment = editStakeholderSentiment;
     await updateStakeholder(editingStakeholder.id, payload);
-    fetchWorkspace();
+    const sh = await listStakeholders(accountId);
+    setStakeholders(sh);
   };
-
-  // --- Master data for dropdowns (lazy-loaded) ---
-  const [projectStatuses, setProjectStatuses] = useState([]);
-  const [stages, setStages] = useState([]);
-  const [oppStatuses, setOppStatuses] = useState([]);
-  const [users, setUsers] = useState([]);
 
   const loadProjectMasterData = async () => {
     const loads = [];
@@ -545,13 +615,6 @@ export default function Customer360Screen({ accountId, onBack }) {
     await Promise.all(loads);
   };
 
-  // --- Create Project state ---
-  const [showCreateProject, setShowCreateProject] = useState(false);
-  const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectStatusId, setNewProjectStatusId] = useState("");
-  const [newProjectOwnerId, setNewProjectOwnerId] = useState("");
-  const [newProjectBidDate, setNewProjectBidDate] = useState("");
-
   const openCreateProject = async () => {
     setNewProjectName("");
     setNewProjectStatusId("");
@@ -572,15 +635,10 @@ export default function Customer360Screen({ accountId, onBack }) {
     };
     if (newProjectBidDate) payload.bid_submission_date = newProjectBidDate;
     await createProject(accountId, payload);
-    fetchWorkspace();
+    const [pr, acct] = await Promise.all([listProjects(accountId), getAccount(accountId)]);
+    setProjects(pr);
+    setAccount(acct);
   };
-
-  // --- Edit Project state ---
-  const [editingProject, setEditingProject] = useState(null);
-  const [editProjectName, setEditProjectName] = useState("");
-  const [editProjectStatusId, setEditProjectStatusId] = useState("");
-  const [editProjectOwnerId, setEditProjectOwnerId] = useState("");
-  const [editProjectBidDate, setEditProjectBidDate] = useState("");
 
   const openEditProject = async (p) => {
     setEditingProject(p);
@@ -600,18 +658,9 @@ export default function Customer360Screen({ accountId, onBack }) {
     };
     if (editProjectBidDate) payload.bid_submission_date = editProjectBidDate;
     await updateProject(editingProject.id, payload);
-    fetchWorkspace();
+    const pr = await listProjects(accountId);
+    setProjects(pr);
   };
-
-  // --- Create Opportunity state ---
-  const [showCreateOpp, setShowCreateOpp] = useState(false);
-  const [newOppName, setNewOppName] = useState("");
-  const [newOppProjectId, setNewOppProjectId] = useState("");
-  const [newOppStageId, setNewOppStageId] = useState("");
-  const [newOppStatusId, setNewOppStatusId] = useState("");
-  const [newOppOwnerId, setNewOppOwnerId] = useState("");
-  const [newOppWinProb, setNewOppWinProb] = useState("");
-  const [newOppValue, setNewOppValue] = useState("");
 
   const openCreateOpp = async () => {
     setNewOppName("");
@@ -641,18 +690,10 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (newOppProjectId) payload.project_id = newOppProjectId;
     if (newOppValue !== "") payload.indicative_value = Number(newOppValue);
     await createOpportunity(accountId, payload);
-    fetchWorkspace();
+    const [op, acct] = await Promise.all([listOpportunities(accountId), getAccount(accountId)]);
+    setOpportunities(op);
+    setAccount(acct);
   };
-
-  // --- Edit Opportunity state ---
-  const [editingOpp, setEditingOpp] = useState(null);
-  const [editOppName, setEditOppName] = useState("");
-  const [editOppProjectId, setEditOppProjectId] = useState("");
-  const [editOppStageId, setEditOppStageId] = useState("");
-  const [editOppStatusId, setEditOppStatusId] = useState("");
-  const [editOppOwnerId, setEditOppOwnerId] = useState("");
-  const [editOppWinProb, setEditOppWinProb] = useState("");
-  const [editOppValue, setEditOppValue] = useState("");
 
   const openEditOpp = async (o) => {
     setEditingOpp(o);
@@ -678,7 +719,8 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (editOppProjectId) payload.project_id = editOppProjectId;
     if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
     await updateOpportunity(editingOpp.id, payload);
-    fetchWorkspace();
+    const op = await listOpportunities(accountId);
+    setOpportunities(op);
   };
 
   const labelClass =
@@ -718,7 +760,7 @@ export default function Customer360Screen({ accountId, onBack }) {
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
           <div className="text-2xl font-black text-violet-600">
-            {stakeholders.length}
+            {account.stakeholder_count}
           </div>
           <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
             Stakeholders
@@ -726,7 +768,7 @@ export default function Customer360Screen({ accountId, onBack }) {
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
           <div className="text-2xl font-black text-blue-600">
-            {projects.length}
+            {account.project_count}
           </div>
           <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
             Projects
@@ -734,7 +776,7 @@ export default function Customer360Screen({ accountId, onBack }) {
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
           <div className="text-2xl font-black text-emerald-600">
-            {opportunities.length}
+            {account.opportunity_count}
           </div>
           <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
             Opportunities
@@ -764,28 +806,24 @@ export default function Customer360Screen({ accountId, onBack }) {
         <OverviewTab account={account} onEdit={openEditAccount} />
       )}
       {activeTab === "stakeholders" && (
-        <StakeholdersTab
-          stakeholders={stakeholders}
-          onAdd={openCreateStakeholder}
-          onEdit={openEditStakeholder}
-        />
+        detailLoading
+          ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
+          : <StakeholdersTab stakeholders={stakeholders} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} />
       )}
       {activeTab === "projects" && (
-        <ProjectsTab
-          projects={projects}
-          onAdd={openCreateProject}
-          onEdit={openEditProject}
-        />
+        detailLoading
+          ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
+          : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />
       )}
       {activeTab === "opportunities" && (
-        <OpportunitiesTab
-          opportunities={opportunities}
-          onAdd={openCreateOpp}
-          onEdit={openEditOpp}
-        />
+        detailLoading
+          ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
+          : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />
       )}
       {activeTab === "installed" && (
-        <InstalledBaseTab assets={installed_assets} />
+        detailLoading
+          ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
+          : <InstalledBaseTab assets={installed} />
       )}
 
       {/* Edit Account Modal */}

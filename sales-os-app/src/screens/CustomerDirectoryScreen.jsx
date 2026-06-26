@@ -1,8 +1,34 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { listAccounts, createAccount } from "../services/accounts";
 import { listSbus } from "../services/masterData";
 import FormModal from "../components/FormModal";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+
+// ---------------------------------------------------------------------------
+// Module-level stale-while-revalidate cache
+// Persists across component mounts so navigating back from Customer 360
+// shows the list instantly instead of showing a loading spinner every time.
+// ---------------------------------------------------------------------------
+const CACHE_TTL_MS = 30_000; // 30 seconds
+const accountListCache = new Map(); // key → { items, total, fetchedAt }
+
+function getCacheKey(params) {
+  return JSON.stringify(params);
+}
+
+function getCached(key) {
+  const entry = accountListCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) {
+    accountListCache.delete(key);
+    return null;
+  }
+  return entry;
+}
+
+function setCache(key, data) {
+  accountListCache.set(key, { ...data, fetchedAt: Date.now() });
+}
 
 export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const [accounts, setAccounts] = useState([]);
@@ -42,24 +68,53 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
     if (formSbuId) payload.managing_sbu_id = formSbuId;
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
     await createAccount(payload);
+    accountListCache.clear(); // Bust cache so new customer appears immediately
     fetchAccounts();
   };
 
-  const fetchAccounts = useCallback(() => {
-    setLoading(true);
-    setError(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => { return () => { isMountedRef.current = false; }; }, []);
 
+  const fetchAccounts = useCallback((opts = {}) => {
     const params = { page, page_size: pageSize };
     if (debouncedSearch) params.search = debouncedSearch;
     if (sbuFilter) params.sbu_id = sbuFilter;
 
+    const cacheKey = getCacheKey(params);
+    const cached = getCached(cacheKey);
+    const isBackgroundRefresh = opts.background === true;
+
+    if (cached && !isBackgroundRefresh) {
+      // Serve cached data immediately — no loading spinner
+      setAccounts(cached.items);
+      setTotal(cached.total);
+      setLoading(false);
+      setError(null);
+      // Kick off a silent background refresh to keep data fresh
+      fetchAccounts({ background: true });
+      return;
+    }
+
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+      setError(null);
+    }
+
     listAccounts(params)
       .then((data) => {
+        if (!isMountedRef.current) return;
+        setCache(cacheKey, { items: data.items, total: data.total });
         setAccounts(data.items);
         setTotal(data.total);
       })
-      .catch((err) => setError(err.message || "Failed to load accounts"))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!isMountedRef.current) return;
+        if (!isBackgroundRefresh) setError(err.message || "Failed to load accounts");
+      })
+      .finally(() => {
+        if (!isMountedRef.current) return;
+        if (!isBackgroundRefresh) setLoading(false);
+      });
   }, [debouncedSearch, sbuFilter, page]);
 
   useEffect(() => {
