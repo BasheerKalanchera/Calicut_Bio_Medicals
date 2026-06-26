@@ -62,14 +62,17 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
     }
   };
 
+  const listContainerRef = useRef(null);
+
   const handleCreateAccount = async () => {
     if (!formName.trim()) throw new Error("Customer name is required");
     if (!formZoneId) throw new Error("Zone is required");
     const payload = { name: formName.trim(), zone_id: formZoneId };
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
     await createAccount(payload);
-    accountListCache.clear(); // Bust cache so new customer appears immediately
-    fetchAccounts();
+    accountListCache.clear();
+    fetchAccounts({ background: true });
+    listContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const isMountedRef = useRef(true);
@@ -127,7 +130,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
+    <div ref={listContainerRef} className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>

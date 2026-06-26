@@ -301,8 +301,8 @@ class TestUpdateAccount:
     def test_updates_account(self, client: TestClient) -> None:
         account = _mock_account()
         mock_db = MagicMock()
-        mock_db.get.return_value = account
-        mock_db.scalar.return_value = 0
+        # scalar calls in order: get_for_update → account, exists_by_name → 0
+        mock_db.scalar.side_effect = [account, 0]
 
         _setup_overrides(mock_db)
         try:
@@ -319,7 +319,8 @@ class TestUpdateAccount:
 
     def test_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        # get_for_update returns None → NotFoundError → 404
+        mock_db.scalar.return_value = None
 
         _setup_overrides(mock_db)
         try:
@@ -335,8 +336,8 @@ class TestUpdateAccount:
     def test_self_parent_returns_400(self, client: TestClient) -> None:
         account = _mock_account()
         mock_db = MagicMock()
-        mock_db.get.return_value = account
-        mock_db.scalar.return_value = 0
+        # get_for_update → account; self-parent check raises before any further scalar calls
+        mock_db.scalar.return_value = account
 
         _setup_overrides(mock_db)
         try:

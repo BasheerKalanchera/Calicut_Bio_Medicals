@@ -29,6 +29,9 @@ def _make_stakeholder(**overrides) -> MagicMock:
         "id": uuid.uuid4(),
         "account_id": TEST_ACCOUNT_ID,
         "name": "Dr. Test",
+        "designation": None,
+        "email": None,
+        "phone": None,
         "nps_score": 50,
         "sentiment": "Positive",
     }
@@ -64,7 +67,7 @@ class TestGetStakeholder:
     def test_returns_stakeholder(self):
         stakeholder = _make_stakeholder()
         repo = _make_repo()
-        repo.get_by_id.return_value = stakeholder
+        repo.get_for_update.return_value = stakeholder
 
         service = StakeholderService(repository=repo)
         assert service.get_stakeholder(stakeholder.id) is stakeholder
@@ -83,12 +86,22 @@ class TestCreateStakeholder:
         repo = _make_repo()
         service = StakeholderService(repository=repo)
 
-        data = StakeholderCreate(name="Dr. New", nps_score=80, sentiment="Positive")
+        data = StakeholderCreate(
+            name="Dr. New",
+            designation="Chief Radiologist",
+            email="dr.new@hospital.com",
+            phone="+91-9876543210",
+            nps_score=80,
+            sentiment="Positive",
+        )
         result = service.create_stakeholder(
             TEST_ACCOUNT_ID, data, created_by=TEST_USER_ID
         )
 
         assert result.name == "Dr. New"
+        assert result.designation == "Chief Radiologist"
+        assert result.email == "dr.new@hospital.com"
+        assert result.phone == "+91-9876543210"
         assert result.nps_score == 80
         assert result.account_id == TEST_ACCOUNT_ID
         assert result.created_by == TEST_USER_ID
@@ -121,7 +134,7 @@ class TestUpdateStakeholder:
     def test_updates_name(self):
         stakeholder = _make_stakeholder()
         repo = _make_repo()
-        repo.get_by_id.return_value = stakeholder
+        repo.get_for_update.return_value = stakeholder
 
         service = StakeholderService(repository=repo)
         data = StakeholderUpdate(name="Dr. Updated")
@@ -137,7 +150,7 @@ class TestUpdateStakeholder:
             name="Dr. Original", nps_score=70, sentiment="Positive"
         )
         repo = _make_repo()
-        repo.get_by_id.return_value = stakeholder
+        repo.get_for_update.return_value = stakeholder
 
         service = StakeholderService(repository=repo)
         data = StakeholderUpdate(name="Dr. Renamed")
@@ -149,7 +162,7 @@ class TestUpdateStakeholder:
     def test_explicit_null_clears_field(self):
         stakeholder = _make_stakeholder(nps_score=70, sentiment="Positive")
         repo = _make_repo()
-        repo.get_by_id.return_value = stakeholder
+        repo.get_for_update.return_value = stakeholder
 
         service = StakeholderService(repository=repo)
         data = StakeholderUpdate.model_validate(
@@ -162,7 +175,7 @@ class TestUpdateStakeholder:
 
     def test_raises_not_found(self):
         repo = _make_repo()
-        repo.get_by_id.return_value = None
+        repo.get_for_update.return_value = None
 
         service = StakeholderService(repository=repo)
         data = StakeholderUpdate(name="Dr. Updated")

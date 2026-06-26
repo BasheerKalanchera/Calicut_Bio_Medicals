@@ -179,7 +179,7 @@ export default function DemoApp() {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col">
         <ErrorBoundary>
           {view === "customers" && (
             <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />

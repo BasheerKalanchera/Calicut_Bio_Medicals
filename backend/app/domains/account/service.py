@@ -85,7 +85,9 @@ class AccountService:
     def update_account(
         self, account_id: uuid.UUID, data: AccountUpdate, *, updated_by: uuid.UUID
     ) -> Account:
-        account = self.get_account(account_id)
+        account = self.repository.get_for_update(account_id)
+        if not account:
+            raise NotFoundError(f"Account {account_id} not found")
         updates = data.model_dump(exclude_unset=True)
 
         new_name = updates.get("name")

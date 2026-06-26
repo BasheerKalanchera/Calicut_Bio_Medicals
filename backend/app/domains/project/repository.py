@@ -26,5 +26,17 @@ class ProjectRepository(BaseRepository[Project]):
         )
         return list(self.db.scalars(stmt).unique().all())
 
+    def get_for_update(self, project_id: uuid.UUID) -> "Project | None":
+        return self.db.scalar(
+            select(Project)
+            .where(Project.id == project_id)
+            .options(
+                noload(Project.account),
+                noload(Project.opportunities),
+                noload(Project.activities),
+                noload(Project.documents),
+            )
+        )
+
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0

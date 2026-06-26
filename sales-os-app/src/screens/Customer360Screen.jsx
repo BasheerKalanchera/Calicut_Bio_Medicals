@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   getAccount,
   updateAccount,
@@ -143,9 +143,22 @@ function StakeholdersTab({ stakeholders, onAdd, onEdit }) {
               </div>
               <div>
                 <div className="font-bold text-gray-800">{s.name}</div>
+                {s.designation && (
+                  <div className="text-xs text-gray-500 mt-0.5">{s.designation}</div>
+                )}
                 <div className="flex items-center gap-2 mt-1">
                   <SentimentBadge sentiment={s.sentiment} />
                 </div>
+                {(s.email || s.phone) && (
+                  <div className="flex items-center gap-3 mt-1">
+                    {s.email && (
+                      <span className="text-[10px] text-gray-400">{s.email}</span>
+                    )}
+                    {s.phone && (
+                      <span className="text-[10px] text-gray-400">{s.phone}</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -413,12 +426,18 @@ export default function Customer360Screen({ accountId, onBack }) {
   // Create Stakeholder state
   const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
   const [newStakeholderName, setNewStakeholderName] = useState("");
+  const [newStakeholderDesignation, setNewStakeholderDesignation] = useState("");
+  const [newStakeholderEmail, setNewStakeholderEmail] = useState("");
+  const [newStakeholderPhone, setNewStakeholderPhone] = useState("");
   const [newStakeholderNps, setNewStakeholderNps] = useState("");
   const [newStakeholderSentiment, setNewStakeholderSentiment] = useState("");
 
   // Edit Stakeholder state
   const [editingStakeholder, setEditingStakeholder] = useState(null);
   const [editStakeholderName, setEditStakeholderName] = useState("");
+  const [editStakeholderDesignation, setEditStakeholderDesignation] = useState("");
+  const [editStakeholderEmail, setEditStakeholderEmail] = useState("");
+  const [editStakeholderPhone, setEditStakeholderPhone] = useState("");
   const [editStakeholderNps, setEditStakeholderNps] = useState("");
   const [editStakeholderSentiment, setEditStakeholderSentiment] = useState("");
 
@@ -461,6 +480,20 @@ export default function Customer360Screen({ accountId, onBack }) {
   const [editOppOwnerId, setEditOppOwnerId] = useState("");
   const [editOppWinProb, setEditOppWinProb] = useState("");
   const [editOppValue, setEditOppValue] = useState("");
+
+  const chipBarRef = useRef(null);
+
+  const handleTabChange = useCallback((tabId) => {
+    setActiveTab(tabId);
+    setTimeout(() => {
+      if (chipBarRef.current) {
+        const activeChip = chipBarRef.current.querySelector(`[data-tab="${tabId}"]`);
+        if (activeChip) {
+          activeChip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        }
+      }
+    }, 50);
+  }, []);
 
   const loadAccount = useCallback(() => {
     setLoading(true);
@@ -556,12 +589,14 @@ export default function Customer360Screen({ accountId, onBack }) {
     const payload = { name: editAccountName.trim(), zone_id: editAccountZoneId };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId, payload);
-    const data = await getAccount(accountId);
-    setAccount(data);
+    getAccount(accountId).then(setAccount).catch(() => {});
   };
 
   const openCreateStakeholder = () => {
     setNewStakeholderName("");
+    setNewStakeholderDesignation("");
+    setNewStakeholderEmail("");
+    setNewStakeholderPhone("");
     setNewStakeholderNps("");
     setNewStakeholderSentiment("");
     setShowCreateStakeholder(true);
@@ -570,17 +605,22 @@ export default function Customer360Screen({ accountId, onBack }) {
   const handleCreateStakeholder = async () => {
     if (!newStakeholderName.trim()) throw new Error("Stakeholder name is required");
     const payload = { name: newStakeholderName.trim() };
+    if (newStakeholderDesignation.trim()) payload.designation = newStakeholderDesignation.trim();
+    if (newStakeholderEmail.trim()) payload.email = newStakeholderEmail.trim();
+    if (newStakeholderPhone.trim()) payload.phone = newStakeholderPhone.trim();
     if (newStakeholderNps !== "") payload.nps_score = Number(newStakeholderNps);
     if (newStakeholderSentiment) payload.sentiment = newStakeholderSentiment;
     await createStakeholder(accountId, payload);
-    const [sh, acct] = await Promise.all([listStakeholders(accountId), getAccount(accountId)]);
-    setStakeholders(sh);
-    setAccount(acct);
+    listStakeholders(accountId).then(setStakeholders).catch(() => {});
+    getAccount(accountId).then(setAccount).catch(() => {});
   };
 
   const openEditStakeholder = (s) => {
     setEditingStakeholder(s);
     setEditStakeholderName(s.name || "");
+    setEditStakeholderDesignation(s.designation || "");
+    setEditStakeholderEmail(s.email || "");
+    setEditStakeholderPhone(s.phone || "");
     setEditStakeholderNps(s.nps_score != null ? String(s.nps_score) : "");
     setEditStakeholderSentiment(s.sentiment || "");
   };
@@ -588,11 +628,13 @@ export default function Customer360Screen({ accountId, onBack }) {
   const handleUpdateStakeholder = async () => {
     if (!editStakeholderName.trim()) throw new Error("Stakeholder name is required");
     const payload = { name: editStakeholderName.trim() };
+    payload.designation = editStakeholderDesignation.trim() || null;
+    payload.email = editStakeholderEmail.trim() || null;
+    payload.phone = editStakeholderPhone.trim() || null;
     if (editStakeholderNps !== "") payload.nps_score = Number(editStakeholderNps);
     if (editStakeholderSentiment) payload.sentiment = editStakeholderSentiment;
     await updateStakeholder(editingStakeholder.id, payload);
-    const sh = await listStakeholders(accountId);
-    setStakeholders(sh);
+    listStakeholders(accountId).then(setStakeholders).catch(() => {});
   };
 
   const loadProjectMasterData = async () => {
@@ -635,9 +677,8 @@ export default function Customer360Screen({ accountId, onBack }) {
     };
     if (newProjectBidDate) payload.bid_submission_date = newProjectBidDate;
     await createProject(accountId, payload);
-    const [pr, acct] = await Promise.all([listProjects(accountId), getAccount(accountId)]);
-    setProjects(pr);
-    setAccount(acct);
+    listProjects(accountId).then(setProjects).catch(() => {});
+    getAccount(accountId).then(setAccount).catch(() => {});
   };
 
   const openEditProject = async (p) => {
@@ -658,8 +699,7 @@ export default function Customer360Screen({ accountId, onBack }) {
     };
     if (editProjectBidDate) payload.bid_submission_date = editProjectBidDate;
     await updateProject(editingProject.id, payload);
-    const pr = await listProjects(accountId);
-    setProjects(pr);
+    listProjects(accountId).then(setProjects).catch(() => {});
   };
 
   const openCreateOpp = async () => {
@@ -680,6 +720,11 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (!newOppStageId) throw new Error("Stage is required");
     if (!newOppStatusId) throw new Error("Status is required");
     if (newOppWinProb === "") throw new Error("Win probability is required");
+    const _newStage = stages.find((s) => s.id === newOppStageId);
+    const _qualifiedStage = stages.find((s) => s.stage_code === "QUALIFIED");
+    if (_newStage && _qualifiedStage && _newStage.display_order >= _qualifiedStage.display_order && newOppValue === "") {
+      throw new Error("Indicative value is required for Qualified stage and above");
+    }
     const payload = {
       name: newOppName.trim(),
       owner_id: newOppOwnerId,
@@ -690,9 +735,7 @@ export default function Customer360Screen({ accountId, onBack }) {
     if (newOppProjectId) payload.project_id = newOppProjectId;
     if (newOppValue !== "") payload.indicative_value = Number(newOppValue);
     await createOpportunity(accountId, payload);
-    const [op, acct] = await Promise.all([listOpportunities(accountId), getAccount(accountId)]);
-    setOpportunities(op);
-    setAccount(acct);
+    listOpportunities(accountId).then(setOpportunities).catch(() => {});
   };
 
   const openEditOpp = async (o) => {
@@ -709,6 +752,11 @@ export default function Customer360Screen({ accountId, onBack }) {
 
   const handleUpdateOpp = async () => {
     if (!editOppName.trim()) throw new Error("Opportunity name is required");
+    const _editStage = stages.find((s) => s.id === editOppStageId);
+    const _qualifiedStage = stages.find((s) => s.stage_code === "QUALIFIED");
+    if (_editStage && _qualifiedStage && _editStage.display_order >= _qualifiedStage.display_order && editOppValue === "") {
+      throw new Error("Indicative value is required for Qualified stage and above");
+    }
     const payload = {
       name: editOppName.trim(),
       owner_id: editOppOwnerId || undefined,
@@ -717,10 +765,9 @@ export default function Customer360Screen({ accountId, onBack }) {
       win_probability: editOppWinProb !== "" ? Number(editOppWinProb) : undefined,
     };
     if (editOppProjectId) payload.project_id = editOppProjectId;
-    if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
+    payload.indicative_value = editOppValue !== "" ? Number(editOppValue) : null;
     await updateOpportunity(editingOpp.id, payload);
-    const op = await listOpportunities(accountId);
-    setOpportunities(op);
+    listOpportunities(accountId).then(setOpportunities).catch(() => {});
   };
 
   const labelClass =
@@ -784,21 +831,44 @@ export default function Customer360Screen({ accountId, onBack }) {
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-white p-1 rounded-2xl shadow-sm border border-gray-100 mb-4 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-0 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-sm"
-                : "text-gray-500 hover:bg-gray-50"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Filter Chips — Material Design scrollable chip row */}
+      <div className="relative mb-4">
+        <div
+          ref={chipBarRef}
+          className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                data-tab={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full
+                            text-sm font-bold whitespace-nowrap transition-all duration-200
+                            border focus:outline-none active:scale-95 ${
+                  isActive
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
+                }`}
+              >
+                {isActive && (
+                  <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+        {/* Right-edge gradient — scroll affordance; colour matches bg-gray-50 parent */}
+        <div
+          className="absolute right-0 top-0 h-full w-10 pointer-events-none"
+          style={{ background: "linear-gradient(to left, #f9fafb, transparent)" }}
+        />
       </div>
 
       {/* Tab content */}
@@ -894,6 +964,36 @@ export default function Customer360Screen({ accountId, onBack }) {
           />
         </div>
         <div>
+          <label className={labelClass}>Designation</label>
+          <input
+            type="text"
+            value={newStakeholderDesignation}
+            onChange={(e) => setNewStakeholderDesignation(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Chief Radiologist"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Email</label>
+          <input
+            type="email"
+            value={newStakeholderEmail}
+            onChange={(e) => setNewStakeholderEmail(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. doctor@hospital.com"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Phone</label>
+          <input
+            type="tel"
+            value={newStakeholderPhone}
+            onChange={(e) => setNewStakeholderPhone(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. +91-9876543210"
+          />
+        </div>
+        <div>
           <label className={labelClass}>NPS Score</label>
           <input
             type="number"
@@ -935,6 +1035,36 @@ export default function Customer360Screen({ accountId, onBack }) {
             onChange={(e) => setEditStakeholderName(e.target.value)}
             className={inputClass}
             autoFocus
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Designation</label>
+          <input
+            type="text"
+            value={editStakeholderDesignation}
+            onChange={(e) => setEditStakeholderDesignation(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Chief Radiologist"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Email</label>
+          <input
+            type="email"
+            value={editStakeholderEmail}
+            onChange={(e) => setEditStakeholderEmail(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. doctor@hospital.com"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Phone</label>
+          <input
+            type="tel"
+            value={editStakeholderPhone}
+            onChange={(e) => setEditStakeholderPhone(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. +91-9876543210"
           />
         </div>
         <div>
@@ -1120,7 +1250,11 @@ export default function Customer360Screen({ accountId, onBack }) {
           <label className={labelClass}>Stage *</label>
           <select
             value={newOppStageId}
-            onChange={(e) => setNewOppStageId(e.target.value)}
+            onChange={(e) => {
+              const selected = stages.find((s) => s.id === e.target.value);
+              setNewOppStageId(e.target.value);
+              if (selected) setNewOppWinProb(String(selected.default_win_probability));
+            }}
             className={inputClass}
           >
             <option value="">Select stage</option>
@@ -1223,7 +1357,11 @@ export default function Customer360Screen({ accountId, onBack }) {
           <label className={labelClass}>Stage</label>
           <select
             value={editOppStageId}
-            onChange={(e) => setEditOppStageId(e.target.value)}
+            onChange={(e) => {
+              const selected = stages.find((s) => s.id === e.target.value);
+              setEditOppStageId(e.target.value);
+              if (selected) setEditOppWinProb(String(selected.default_win_probability));
+            }}
             className={inputClass}
           >
             <option value="">Select stage</option>
@@ -1280,6 +1418,7 @@ export default function Customer360Screen({ accountId, onBack }) {
           <label className={labelClass}>Indicative Value (Lakhs)</label>
           <input
             type="number"
+            step="any"
             min="0"
             value={editOppValue}
             onChange={(e) => setEditOppValue(e.target.value)}

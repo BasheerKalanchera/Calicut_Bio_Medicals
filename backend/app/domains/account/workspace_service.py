@@ -17,7 +17,7 @@ class WorkspaceService:
         self.repository = repository
 
     def get_workspace(self, account_id: uuid.UUID) -> WorkspaceResponse:
-        account = self.repository.get_by_id(account_id)
+        account = self.repository.get_for_workspace(account_id)
         if not account:
             raise NotFoundError(f"Account {account_id} not found")
 

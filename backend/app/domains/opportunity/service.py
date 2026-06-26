@@ -26,8 +26,6 @@ class OpportunityService:
         created_by: uuid.UUID,
         sbu_id: uuid.UUID,
     ) -> Opportunity:
-        self._require_account(account_id)
-
         opportunity = Opportunity(
             account_id=account_id,
             sbu_id=sbu_id,
@@ -50,7 +48,7 @@ class OpportunityService:
         *,
         updated_by: uuid.UUID,
     ) -> Opportunity:
-        opportunity = self.repository.get_by_id(opportunity_id)
+        opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
 

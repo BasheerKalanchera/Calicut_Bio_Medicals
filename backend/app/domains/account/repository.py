@@ -102,8 +102,36 @@ class AccountRepository(BaseRepository[Account]):
         ).first()
         return account, counts
 
+    def get_for_update(self, account_id: uuid.UUID) -> "Account | None":
+        return self.db.scalar(
+            select(Account)
+            .where(Account.id == account_id)
+            .options(
+                noload(Account.child_accounts),
+                noload(Account.stakeholders),
+                noload(Account.projects),
+                noload(Account.opportunities),
+                noload(Account.activities),
+                noload(Account.installed_assets),
+                noload(Account.documents),
+                noload(Account.coverage_plan_entries),
+            )
+        )
+
+    def get_for_workspace(self, account_id: uuid.UUID) -> "Account | None":
+        return self.db.scalar(
+            select(Account)
+            .where(Account.id == account_id)
+            .options(
+                noload(Account.activities),
+                noload(Account.documents),
+                noload(Account.coverage_plan_entries),
+                noload(Account.child_accounts),
+            )
+        )
+
     def zone_exists(self, zone_id: uuid.UUID) -> bool:
-        return self.db.get(Zone, zone_id) is not None
+        return (self.db.scalar(select(func.count()).where(Zone.id == zone_id)) or 0) > 0
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
-        return self.db.get(Account, account_id) is not None
+        return (self.db.scalar(select(func.count()).where(Account.id == account_id)) or 0) > 0

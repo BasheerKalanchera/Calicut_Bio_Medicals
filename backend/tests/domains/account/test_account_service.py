@@ -46,7 +46,7 @@ class TestGetAccount:
     def test_returns_account(self):
         account = _make_account()
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
 
         service = AccountService(repository=repo)
         assert service.get_account(account.id) is account
@@ -132,7 +132,7 @@ class TestUpdateAccount:
     def test_updates_name(self):
         account = _make_account(name="Old Name")
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
 
         service = AccountService(repository=repo)
         data = AccountUpdate(name="New Name")
@@ -149,7 +149,7 @@ class TestUpdateAccount:
             payer_behavior="GOOD",
         )
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
 
         service = AccountService(repository=repo)
         data = AccountUpdate(name="Renamed Hospital")
@@ -166,7 +166,7 @@ class TestUpdateAccount:
             payer_behavior="GOOD",
         )
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
 
         service = AccountService(repository=repo)
         data = AccountUpdate.model_validate(
@@ -181,7 +181,7 @@ class TestUpdateAccount:
     def test_rejects_duplicate_name_on_update(self):
         account = _make_account(name="Old Name")
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
         repo.exists_by_name.return_value = True
 
         service = AccountService(repository=repo)
@@ -192,7 +192,7 @@ class TestUpdateAccount:
 
     def test_raises_not_found(self):
         repo = _make_repo()
-        repo.get_by_id.return_value = None
+        repo.get_for_update.return_value = None
 
         service = AccountService(repository=repo)
         data = AccountUpdate(name="New Name")
@@ -204,7 +204,7 @@ class TestUpdateAccount:
         account_id = uuid.uuid4()
         account = _make_account(id=account_id)
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
 
         service = AccountService(repository=repo)
         data = AccountUpdate.model_validate({"parent_account_id": str(account_id)})
@@ -215,7 +215,7 @@ class TestUpdateAccount:
     def test_rejects_invalid_sbu_on_update(self):
         account = _make_account()
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
         repo.sbu_exists.return_value = False
 
         service = AccountService(repository=repo)
@@ -227,7 +227,7 @@ class TestUpdateAccount:
     def test_rejects_invalid_parent_on_update(self):
         account = _make_account()
         repo = _make_repo()
-        repo.get_by_id.return_value = account
+        repo.get_for_update.return_value = account
         repo.account_exists.return_value = False
 
         service = AccountService(repository=repo)

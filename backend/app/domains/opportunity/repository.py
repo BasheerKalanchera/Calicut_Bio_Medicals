@@ -28,5 +28,26 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         )
         return list(self.db.scalars(stmt).unique().all())
 
+    def get_for_update(self, opportunity_id: uuid.UUID) -> "Opportunity | None":
+        return self.db.scalar(
+            select(Opportunity)
+            .where(Opportunity.id == opportunity_id)
+            .options(
+                noload(Opportunity.account),
+                noload(Opportunity.project),
+                noload(Opportunity.owner),
+                noload(Opportunity.stage),
+                noload(Opportunity.status),
+                noload(Opportunity.lead_source),
+                noload(Opportunity.loss_reason),
+                noload(Opportunity.hold_reason),
+                noload(Opportunity.opportunity_stakeholders),
+                noload(Opportunity.splits),
+                noload(Opportunity.items),
+                noload(Opportunity.activities),
+                noload(Opportunity.documents),
+            )
+        )
+
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0

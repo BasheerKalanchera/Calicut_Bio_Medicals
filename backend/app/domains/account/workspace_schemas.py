@@ -59,6 +59,9 @@ class WorkspaceStakeholder(BaseModel):
 
     id: uuid.UUID
     name: str
+    designation: str | None
+    email: str | None
+    phone: str | None
     nps_score: int | None
     sentiment: str | None
 

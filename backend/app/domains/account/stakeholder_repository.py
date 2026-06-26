@@ -27,5 +27,16 @@ class StakeholderRepository(BaseRepository[Stakeholder]):
         )
         return list(self.db.scalars(stmt).unique().all())
 
+    def get_for_update(self, stakeholder_id: uuid.UUID) -> "Stakeholder | None":
+        from sqlalchemy.orm import noload
+        return self.db.scalar(
+            select(Stakeholder)
+            .where(Stakeholder.id == stakeholder_id)
+            .options(
+                noload(Stakeholder.account),
+                noload(Stakeholder.opportunity_stakeholders),
+            )
+        )
+
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0

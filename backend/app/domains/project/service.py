@@ -25,8 +25,6 @@ class ProjectService:
         *,
         created_by: uuid.UUID,
     ) -> Project:
-        self._require_account(account_id)
-
         project = Project(
             account_id=account_id,
             name=data.name,
@@ -45,7 +43,7 @@ class ProjectService:
         *,
         updated_by: uuid.UUID,
     ) -> Project:
-        project = self.repository.get_by_id(project_id)
+        project = self.repository.get_for_update(project_id)
         if not project:
             raise NotFoundError(f"Project {project_id} not found")
 

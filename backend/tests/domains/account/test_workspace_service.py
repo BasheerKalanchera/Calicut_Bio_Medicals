@@ -48,6 +48,9 @@ def _mock_stakeholder() -> MagicMock:
     obj = MagicMock()
     obj.id = uuid.uuid4()
     obj.name = "Dr. Test"
+    obj.designation = "Chief Radiologist"
+    obj.email = "dr.test@hospital.com"
+    obj.phone = "+91-9876543210"
     obj.nps_score = 80
     obj.sentiment = "Positive"
     return obj
@@ -102,7 +105,7 @@ class TestGetWorkspace:
         )
 
         repo = MagicMock(spec=AccountRepository)
-        repo.get_by_id.return_value = account
+        repo.get_for_workspace.return_value = account
 
         service = WorkspaceService(repository=repo)
         result = service.get_workspace(TEST_ACCOUNT_ID)
@@ -123,7 +126,7 @@ class TestGetWorkspace:
     def test_returns_empty_collections(self):
         account = _mock_account()
         repo = MagicMock(spec=AccountRepository)
-        repo.get_by_id.return_value = account
+        repo.get_for_workspace.return_value = account
 
         service = WorkspaceService(repository=repo)
         result = service.get_workspace(TEST_ACCOUNT_ID)
@@ -135,7 +138,7 @@ class TestGetWorkspace:
 
     def test_raises_not_found(self):
         repo = MagicMock(spec=AccountRepository)
-        repo.get_by_id.return_value = None
+        repo.get_for_workspace.return_value = None
 
         service = WorkspaceService(repository=repo)
         with pytest.raises(NotFoundError, match="Account"):
@@ -152,7 +155,7 @@ class TestGetWorkspace:
 
         account = _mock_account(installed_assets=[asset])
         repo = MagicMock(spec=AccountRepository)
-        repo.get_by_id.return_value = account
+        repo.get_for_workspace.return_value = account
 
         service = WorkspaceService(repository=repo)
         result = service.get_workspace(TEST_ACCOUNT_ID)

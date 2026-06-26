@@ -52,6 +52,9 @@ class Stakeholder(AuditMixin, Base):
         UUID(as_uuid=True), ForeignKey("account.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    designation: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
     nps_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
 

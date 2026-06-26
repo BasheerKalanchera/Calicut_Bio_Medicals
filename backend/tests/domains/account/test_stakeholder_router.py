@@ -28,6 +28,9 @@ def _mock_stakeholder(**overrides) -> MagicMock:
         "id": TEST_STAKEHOLDER_ID,
         "account_id": TEST_ACCOUNT_ID,
         "name": "Dr. Test",
+        "designation": None,
+        "email": None,
+        "phone": None,
         "nps_score": 50,
         "sentiment": "Positive",
         "created_at": now,
@@ -106,8 +109,8 @@ class TestCreateStakeholder:
         mock_db.get.return_value = MagicMock()
 
         def _capture_add(obj):
-            for attr in ["id", "account_id", "name", "nps_score", "sentiment",
-                         "created_at", "updated_at"]:
+            for attr in ["id", "account_id", "name", "designation", "email", "phone",
+                         "nps_score", "sentiment", "created_at", "updated_at"]:
                 if not hasattr(obj, attr) or getattr(obj, attr) is None:
                     setattr(obj, attr, getattr(stakeholder, attr))
 
@@ -179,7 +182,8 @@ class TestUpdateStakeholder:
     def test_updates_stakeholder(self, client: TestClient) -> None:
         stakeholder = _mock_stakeholder()
         mock_db = MagicMock()
-        mock_db.get.return_value = stakeholder
+        # get_for_update uses db.scalar
+        mock_db.scalar.return_value = stakeholder
 
         _setup_overrides(mock_db)
         try:
@@ -196,7 +200,8 @@ class TestUpdateStakeholder:
 
     def test_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        # get_for_update returns None → NotFoundError → 404
+        mock_db.scalar.return_value = None
 
         _setup_overrides(mock_db)
         try:

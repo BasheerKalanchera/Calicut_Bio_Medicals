@@ -31,11 +31,12 @@ class StakeholderService:
         *,
         created_by: uuid.UUID,
     ) -> Stakeholder:
-        self._require_account(account_id)
-
         stakeholder = Stakeholder(
             account_id=account_id,
             name=data.name,
+            designation=data.designation,
+            email=data.email,
+            phone=data.phone,
             nps_score=data.nps_score,
             sentiment=data.sentiment,
             created_by=created_by,
@@ -50,7 +51,9 @@ class StakeholderService:
         *,
         updated_by: uuid.UUID,
     ) -> Stakeholder:
-        stakeholder = self.get_stakeholder(stakeholder_id)
+        stakeholder = self.repository.get_for_update(stakeholder_id)
+        if not stakeholder:
+            raise NotFoundError(f"Stakeholder {stakeholder_id} not found")
         updates = data.model_dump(exclude_unset=True)
 
         for field, value in updates.items():
