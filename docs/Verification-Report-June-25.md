@@ -15,12 +15,12 @@ Here is the current status of the June 29 Customer Demo manual verification test
 | ✅ **PASS** | **FLOW 5: Edit Account** | Successfully edited account name and reverted. |
 | ✅ **PASS** | **FLOW 6: Stakeholders** | Verified NPS color coding logic, created, and edited a stakeholder. |
 | ✅ **PASS** | **FLOW 7: Projects** | Verified validation, creation, and status badge updates. |
-| ⏸️ **PAUSED** | **FLOW 8: Opportunities** | *Pending.* Testing started but backend API hung. Will resume tomorrow. |
-| ⏳ **PENDING** | **FLOW 9: Installed Base** | Not started. |
-| ⏳ **PENDING** | **FLOW 10: Navigation — Back to Directory** | Not started. |
-| ⏳ **PENDING** | **FLOW 11: Product Catalog** | Not started. |
-| ⏳ **PENDING** | **FLOW 12: Sidebar Navigation** | Not started. |
-| ⏳ **PENDING** | **FLOW 13: Logout + Session Persistence** | Not started. |
+| ✅ **PASS** | **FLOW 8: Opportunities** | Validated creating opportunities (with and without projects). Fixed HTML input validation issue for decimals. |
+| ✅ **PASS** | **FLOW 9: Installed Base** | Verified the list of installed assets displays correctly. |
+| ✅ **PASS** | **FLOW 10: Navigation — Back to Directory** | Customer Directory loads instantly from cache. |
+| ✅ **PASS** | **FLOW 11: Product Catalog** | Catalog list and filtering components load properly via sidebar. |
+| ✅ **PASS** | **FLOW 12: Sidebar Navigation** | Seamless transition between all available sidebar routes without crashing. |
+| ✅ **PASS** | **FLOW 13: Logout + Session Persistence** | Successfully signed out, redirected to login, and verified session clear on hard refresh. |
 
 ---
 
@@ -32,13 +32,10 @@ Here is the current status of the June 29 Customer Demo manual verification test
 > * **Root Cause:** Early return statements (`if (loading)` and `if (error)`) were placed before numerous `useState` declarations.
 > * **Fix Applied:** I restructured `Customer360Screen.jsx` to move all hook declarations to the top of the component, ensuring they run consistently on every render.
 
-> [!WARNING]
-> **Backend Stability Issue**
-> While testing Flow 8, the backend `uvicorn` process became unresponsive (holding multiple `CLOSE_WAIT` sockets) and caused the frontend API calls to hang. I killed the hung process. 
-> * **Next Steps for Tomorrow:** We will need to start a fresh `uvicorn` backend server before resuming Flow 8.
+> [!TIP]
+> **Performance Optimizations (June 26)**
+> Resolved severe API bottlenecking during parallel prefetching in the Customer 360 view by stripping redundant `lazy=\"joined\"` Account lookups from the Stakeholder, Project, Opportunity, and Asset endpoints.
 
-## Next Steps for Tomorrow
+## Conclusion
 
-1. Start the backend server (`cd backend && uvicorn app.main:app --reload`).
-2. Start the frontend dev server (`cd sales-os-app && npm run dev`) if it's not already running.
-3. Resume testing starting from **Flow 8: Opportunities**.
+All core functionalities (Flows 1-13) for the June 29 Customer Demo have been manually verified and pass all checks. The system is stable and performant.

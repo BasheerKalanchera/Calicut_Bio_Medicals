@@ -1177,6 +1177,7 @@ export default function Customer360Screen({ accountId, onBack }) {
           <label className={labelClass}>Indicative Value (Lakhs)</label>
           <input
             type="number"
+            step="any"
             min="0"
             value={newOppValue}
             onChange={(e) => setNewOppValue(e.target.value)}
