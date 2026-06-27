@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { listAccounts, createAccount } from "../services/accounts";
+import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
 import { listZones } from "../services/masterData";
 import FormModal from "../components/FormModal";
 import useDebouncedValue from "../hooks/useDebouncedValue";
@@ -109,17 +109,33 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
     listAccounts(params)
       .then((data) => {
         if (!isMountedRef.current) return;
-        setCache(cacheKey, { items: data.items, total: data.total });
-        setAccounts(data.items);
+        const items = data.items;
+        setAccounts(items);
         setTotal(data.total);
+        if (!isBackgroundRefresh) setLoading(false);
+
+        const ids = items.map((a) => a.id);
+        if (ids.length === 0) {
+          setCache(cacheKey, { items, total: data.total });
+          return;
+        }
+        getAccountCounts(ids)
+          .then((counts) => {
+            if (!isMountedRef.current) return;
+            const merged = items.map((a) => ({ ...a, ...(counts[a.id] || {}) }));
+            setAccounts(merged);
+            setCache(cacheKey, { items: merged, total: data.total });
+          })
+          .catch(() => {
+            setCache(cacheKey, { items, total: data.total });
+          });
       })
       .catch((err) => {
         if (!isMountedRef.current) return;
-        if (!isBackgroundRefresh) setError(err.message || "Failed to load accounts");
-      })
-      .finally(() => {
-        if (!isMountedRef.current) return;
-        if (!isBackgroundRefresh) setLoading(false);
+        if (!isBackgroundRefresh) {
+          setError(err.message || "Failed to load accounts");
+          setLoading(false);
+        }
       });
   }, [debouncedSearch, zoneFilter, page]);
 
@@ -207,7 +223,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
             {accounts.map((account) => (
               <div
                 key={account.id}
-                onClick={() => onSelectAccount(account.id)}
+                onClick={() => onSelectAccount(account)}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
               >
                 <div className="flex items-center gap-4">

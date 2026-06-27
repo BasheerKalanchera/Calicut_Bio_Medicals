@@ -53,6 +53,11 @@ export default function FormModal({
     >
       <form
         onSubmit={handleSubmit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) {
+            e.preventDefault();
+          }
+        }}
         className="bg-white max-w-md w-full rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="p-6">

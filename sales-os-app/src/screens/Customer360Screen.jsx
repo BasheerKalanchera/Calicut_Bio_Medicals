@@ -405,14 +405,17 @@ function InstalledBaseTab({ assets }) {
   );
 }
 
-export default function Customer360Screen({ accountId, onBack }) {
-  const [account, setAccount] = useState(null);
+export default function Customer360Screen({ accountId, initialAccount = null, onBack }) {
+  const [account, setAccount] = useState(initialAccount);
   const [stakeholders, setStakeholders] = useState([]);
   const [projects, setProjects] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
   const [installed, setInstalled] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialAccount);
+  const [stakeholdersLoading, setStakeholdersLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [opportunitiesLoading, setOpportunitiesLoading] = useState(true);
+  const [installedLoading, setInstalledLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -486,45 +489,47 @@ export default function Customer360Screen({ accountId, onBack }) {
   const handleTabChange = useCallback((tabId) => {
     setActiveTab(tabId);
     setTimeout(() => {
-      if (chipBarRef.current) {
-        const activeChip = chipBarRef.current.querySelector(`[data-tab="${tabId}"]`);
-        if (activeChip) {
-          activeChip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      const container = chipBarRef.current;
+      if (container) {
+        const chip = container.querySelector(`[data-tab="${tabId}"]`);
+        if (chip) {
+          const scrollLeft =
+            chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
+          container.scrollTo({ left: scrollLeft, behavior: "smooth" });
         }
       }
     }, 50);
   }, []);
 
   const loadAccount = useCallback(() => {
-    setLoading(true);
-    setDetailLoading(true);
+    if (!initialAccount) setLoading(true);
+    setStakeholdersLoading(true);
+    setProjectsLoading(true);
+    setOpportunitiesLoading(true);
+    setInstalledLoading(true);
     setError(null);
 
     getAccount(accountId)
-      .then((data) => {
-        setAccount(data);
-        setLoading(false);
-
-        Promise.allSettled([
-          listStakeholders(accountId),
-          listProjects(accountId),
-          listOpportunities(accountId),
-          listInstalledAssets(accountId),
-        ]).then((results) => {
-          const [sh, pr, op, as_] = results;
-          if (sh.status === "fulfilled") setStakeholders(sh.value);
-          if (pr.status === "fulfilled") setProjects(pr.value);
-          if (op.status === "fulfilled") setOpportunities(op.value);
-          if (as_.status === "fulfilled") setInstalled(as_.value);
-          setDetailLoading(false);
-        });
-      })
+      .then((data) => { setAccount(data); setLoading(false); })
       .catch((err) => {
-        setError(err.message || "Failed to load account");
-        setLoading(false);
-        setDetailLoading(false);
+        if (!initialAccount) {
+          setError(err.message || "Failed to load account");
+          setLoading(false);
+        }
       });
-  }, [accountId]);
+
+    listStakeholders(accountId)
+      .then(setStakeholders).catch(() => {}).finally(() => setStakeholdersLoading(false));
+
+    listProjects(accountId)
+      .then(setProjects).catch(() => {}).finally(() => setProjectsLoading(false));
+
+    listOpportunities(accountId)
+      .then(setOpportunities).catch(() => {}).finally(() => setOpportunitiesLoading(false));
+
+    listInstalledAssets(accountId)
+      .then(setInstalled).catch(() => {}).finally(() => setInstalledLoading(false));
+  }, [accountId, initialAccount]);
 
   useEffect(() => {
     loadAccount();
@@ -781,53 +786,43 @@ export default function Customer360Screen({ accountId, onBack }) {
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={onBack}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider"
+          className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0"
+          aria-label="Back"
         >
-          &larr; Back
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
-            Customer 360
-          </h3>
-          <h2 className="font-extrabold text-xl text-gray-800 tracking-tight truncate">
+          <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight">
             {account.name}
           </h2>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {account.zone && (
-            <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">
-              {account.zone.name}
-            </span>
-          )}
-          <PayerBadge behavior={account.payer_behavior} />
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {account.zone && (
+              <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">
+                {account.zone.name}
+              </span>
+            )}
+            <PayerBadge behavior={account.payer_behavior} />
+          </div>
         </div>
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-black text-violet-600">
-            {account.stakeholder_count}
-          </div>
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
-            Stakeholders
-          </div>
+      <div className="flex items-center justify-around bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 mb-4">
+        <div className="text-center">
+          <div className="text-xl font-black text-violet-600">{account.stakeholder_count ?? '—'}</div>
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Stakeholders</div>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-black text-blue-600">
-            {account.project_count}
-          </div>
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
-            Projects
-          </div>
+        <div className="w-px h-8 bg-gray-100" />
+        <div className="text-center">
+          <div className="text-xl font-black text-blue-600">{account.project_count ?? '—'}</div>
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Projects</div>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-center">
-          <div className="text-2xl font-black text-emerald-600">
-            {account.opportunity_count}
-          </div>
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-1">
-            Opportunities
-          </div>
+        <div className="w-px h-8 bg-gray-100" />
+        <div className="text-center">
+          <div className="text-xl font-black text-emerald-600">{account.opportunity_count ?? '—'}</div>
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Opportunities</div>
         </div>
       </div>
 
@@ -836,7 +831,7 @@ export default function Customer360Screen({ accountId, onBack }) {
         <div
           ref={chipBarRef}
           className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden"
-          style={{ scrollbarWidth: "none" }}
+          style={{ scrollbarWidth: "none", paddingRight: "50vw" }}
         >
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -876,22 +871,22 @@ export default function Customer360Screen({ accountId, onBack }) {
         <OverviewTab account={account} onEdit={openEditAccount} />
       )}
       {activeTab === "stakeholders" && (
-        detailLoading
+        stakeholdersLoading
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
           : <StakeholdersTab stakeholders={stakeholders} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} />
       )}
       {activeTab === "projects" && (
-        detailLoading
+        projectsLoading
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
           : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />
       )}
       {activeTab === "opportunities" && (
-        detailLoading
+        opportunitiesLoading
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
           : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />
       )}
       {activeTab === "installed" && (
-        detailLoading
+        installedLoading
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
           : <InstalledBaseTab assets={installed} />
       )}

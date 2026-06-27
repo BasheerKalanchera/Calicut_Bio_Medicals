@@ -67,3 +67,10 @@ class AccountDetailResponse(AccountResponse):
     project_count: int
     opportunity_count: int
     asset_count: int
+
+
+class AccountCountsEntry(BaseModel):
+    stakeholder_count: int
+    project_count: int
+    opportunity_count: int
+    asset_count: int

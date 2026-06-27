@@ -13,6 +13,11 @@ export async function getAccount(accountId) {
   return response.data.data;
 }
 
+export async function getAccountCounts(ids) {
+  const response = await api.get("/accounts/counts", { params: { ids: ids.join(",") } });
+  return response.data.data;
+}
+
 export async function createAccount(data) {
   const response = await api.post("/accounts", data);
   return response.data.data;

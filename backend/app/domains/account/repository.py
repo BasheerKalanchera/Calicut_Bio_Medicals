@@ -102,6 +102,53 @@ class AccountRepository(BaseRepository[Account]):
         ).first()
         return account, counts
 
+    def fetch_counts_for_accounts(self, account_ids: list[uuid.UUID]) -> dict[uuid.UUID, dict]:
+        if not account_ids:
+            return {}
+
+        sh_map = {
+            r.account_id: r.cnt
+            for r in self.db.execute(
+                select(Stakeholder.account_id, func.count().label("cnt"))
+                .where(Stakeholder.account_id.in_(account_ids))
+                .group_by(Stakeholder.account_id)
+            ).all()
+        }
+        pr_map = {
+            r.account_id: r.cnt
+            for r in self.db.execute(
+                select(Project.account_id, func.count().label("cnt"))
+                .where(Project.account_id.in_(account_ids))
+                .group_by(Project.account_id)
+            ).all()
+        }
+        opp_map = {
+            r.account_id: r.cnt
+            for r in self.db.execute(
+                select(Opportunity.account_id, func.count().label("cnt"))
+                .where(Opportunity.account_id.in_(account_ids))
+                .group_by(Opportunity.account_id)
+            ).all()
+        }
+        ast_map = {
+            r.account_id: r.cnt
+            for r in self.db.execute(
+                select(InstalledAsset.account_id, func.count().label("cnt"))
+                .where(InstalledAsset.account_id.in_(account_ids))
+                .group_by(InstalledAsset.account_id)
+            ).all()
+        }
+
+        return {
+            aid: {
+                "stakeholder_count": sh_map.get(aid, 0),
+                "project_count": pr_map.get(aid, 0),
+                "opportunity_count": opp_map.get(aid, 0),
+                "asset_count": ast_map.get(aid, 0),
+            }
+            for aid in account_ids
+        }
+
     def get_for_update(self, account_id: uuid.UUID) -> "Account | None":
         return self.db.scalar(
             select(Account)

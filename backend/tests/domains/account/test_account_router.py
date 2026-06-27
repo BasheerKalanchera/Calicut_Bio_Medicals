@@ -169,6 +169,62 @@ class TestGetAccount:
         assert response.status_code == 404
 
 
+class TestGetAccountCounts:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/accounts/counts?ids={TEST_ACCOUNT_ID}")
+        assert response.status_code == 401
+
+    def test_returns_counts_for_accounts(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        def _row(aid, cnt):
+            r = MagicMock()
+            r.account_id = aid
+            r.cnt = cnt
+            return r
+
+        mock_db.execute.return_value.all.side_effect = [
+            [_row(TEST_ACCOUNT_ID, 3)],  # stakeholders
+            [_row(TEST_ACCOUNT_ID, 2)],  # projects
+            [_row(TEST_ACCOUNT_ID, 5)],  # opportunities
+            [_row(TEST_ACCOUNT_ID, 1)],  # assets
+        ]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/accounts/counts?ids={TEST_ACCOUNT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        counts = body["data"][str(TEST_ACCOUNT_ID)]
+        assert counts["stakeholder_count"] == 3
+        assert counts["project_count"] == 2
+        assert counts["opportunity_count"] == 5
+        assert counts["asset_count"] == 1
+
+    def test_empty_ids_returns_empty(self, client: TestClient) -> None:
+        _setup_overrides(MagicMock())
+        try:
+            response = client.get("/api/v1/accounts/counts?ids=")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {}
+
+    def test_missing_ids_param_returns_422(self, client: TestClient) -> None:
+        _setup_overrides(MagicMock())
+        try:
+            response = client.get("/api/v1/accounts/counts")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422
+
+
 class TestCreateAccount:
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
         response = client.post("/api/v1/accounts", json={"name": "New Hospital"})

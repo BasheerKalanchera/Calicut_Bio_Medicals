@@ -24,21 +24,21 @@ export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
   const [view, setView] = useState("customers");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
 
-  function handleSelectAccount(accountId) {
-    setSelectedAccountId(accountId);
+  function handleSelectAccount(account) {
+    setSelectedAccount(account);
     setView("customer360");
   }
 
   function handleBack360() {
-    setSelectedAccountId(null);
+    setSelectedAccount(null);
     setView("customers");
   }
 
   function navigate(viewId) {
     setView(viewId);
-    setSelectedAccountId(null);
+    setSelectedAccount(null);
     setIsSidebarOpen(false);
   }
 
@@ -181,12 +181,13 @@ export default function DemoApp() {
       {/* Main content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         <ErrorBoundary>
-          {view === "customers" && (
+          <div className={`flex-1 overflow-hidden flex flex-col ${view === "customers" ? "" : "hidden"}`}>
             <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
-          )}
-          {view === "customer360" && selectedAccountId && (
+          </div>
+          {view === "customer360" && selectedAccount && (
             <Customer360Screen
-              accountId={selectedAccountId}
+              accountId={selectedAccount.id}
+              initialAccount={selectedAccount}
               onBack={handleBack360}
             />
           )}

@@ -8,6 +8,7 @@ from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
 from app.domains.account.repository import AccountRepository
 from app.domains.account.schemas import (
+    AccountCountsEntry,
     AccountCreate,
     AccountDetailResponse,
     AccountListResponse,
@@ -61,6 +62,17 @@ async def list_accounts(
             total_pages=total_pages,
         )
     )
+
+
+@router.get("/counts")
+async def get_account_counts(
+    ids: str = Query(..., description="Comma-separated account UUIDs"),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: AccountService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[dict[str, AccountCountsEntry]]:
+    account_ids = [uuid.UUID(i.strip()) for i in ids.split(",") if i.strip()]
+    counts = service.get_counts_for_accounts(account_ids)
+    return APIResponse(data={str(k): v for k, v in counts.items()})
 
 
 @router.get("/{account_id}")

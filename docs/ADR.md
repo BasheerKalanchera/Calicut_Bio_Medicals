@@ -2,7 +2,7 @@
 
 This document serves as the formal Architecture Decision Register for the Cabio Sales OS project, compiled from the PRD, GEMINI.md mandates, Traceability Matrix, Phase 0B prototype evolution, and Architecture Consistency Review dispositions.
 
-**Last Updated:** June 20, 2026 — Architecture Consistency Review (ACR) implementation. ADR-018 through ADR-027 added. ADR-003, ADR-006, and ADR-013 updated.
+**Last Updated:** June 27, 2026 — ADR-029 and ADR-030 added (frontend performance architecture decisions from Customer Directory and Customer 360 implementation).
 
 ---
 
@@ -246,6 +246,25 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * At least one entity FK (`account_id`, `project_id`, `opportunity_id`, or `product_id`) must be non-null.
   * Application-level constraint enforces document context; no polymorphic FK used.
 * **Affected Modules:** Document Management, Account Management, Project Management, Opportunity Pipeline, Product Catalog.
+
+### ADR-029: Lazy Batch COUNT Endpoint for Aggregate Metrics
+
+* **Decision:** Aggregate counts per account (stakeholder, project, opportunity, asset) are served by a dedicated `GET /accounts/counts?ids=...` endpoint using 4 batch `GROUP BY account_id` queries. The frontend fires this endpoint lazily — after the list renders — and merges the results into account state.
+* **Status:** Accepted (June 27, 2026)
+* **Rationale:** Two alternatives were explicitly evaluated and rejected:
+  * *Correlated scalar subqueries in the list query* — executes N × 4 index lookups per list page (N = page size). At 500 accounts with 50 opportunities each, this adds O(N × 4) database operations to every directory load. Rejected for scale.
+  * *Counts embedded in `AccountListResponse`* — permanently couples list endpoint latency to count query performance. Rejected because counts are secondary context that do not block the directory render and should not delay it.
+  * *Chosen approach* — a dedicated batch endpoint runs 4 `GROUP BY` queries, each scanning indexed rows for all requested IDs in a single pass. Cost is O(1 scan × 4) regardless of page size. The frontend fires it in the background after the directory list renders; results merge into account state and the SWR cache so that subsequent back-navigations return counts instantly.
+* **Impact:** New `GET /accounts/counts` endpoint in the account router. Must be declared before `GET /{account_id}` to avoid route collision. Frontend `CustomerDirectoryScreen` fires the counts request in the background after the list renders. Merged results stored in the module-level SWR cache. `Customer360Screen` receives counts via `initialAccount` prop on navigation.
+* **Affected Modules:** Account Management (backend router, repository, service), Customer Directory Screen, Customer 360 Screen.
+
+### ADR-030: CSS-Hidden Always-Mounted Screens for Back-Navigation
+
+* **Decision:** Screens the user navigates back to (screens that are the "parent" in a list → detail navigation flow) stay mounted in the DOM behind a Tailwind `hidden` class. They are never unmounted on navigation.
+* **Status:** Accepted (June 27, 2026)
+* **Rationale:** The rejected alternative — conditional `&&` rendering — unmounts the component on navigation to a child screen and remounts it on return. This resets all component state (scroll position, filter values, search input, in-flight data) and triggers a full data refetch. Stale-While-Revalidate caching partially mitigates the refetch cost, but scroll position and UI state cannot be recovered from a cache. The chosen approach matches the pattern used by all production mobile navigation frameworks (iOS `UINavigationController`, Android back stack, React Navigation Stack Navigator): the parent screen stays in memory while the child is on top.
+* **Impact:** In `DemoApp.jsx`, list/directory screens are wrapped in a div that is always rendered but toggled between `""` and `"hidden"` class. Detail screens (`Customer360Screen`) continue to conditionally mount/unmount — they receive full `initialData` from the parent on mount, so remount cost is negligible. This pattern must be applied to all future list → detail navigation pairs in the application.
+* **Affected Modules:** `DemoApp.jsx`, all future list screens (Coverage Plans, Opportunities pipeline, Target Plans). Does not affect modal dialogs or overlays.
 
 ### ADR-028: Opportunity Stage and Status Decoupling Model
 * **Decision:** Formally adopt the decoupled architecture (Option B) where Won and Lost are operational statuses, not pipeline stages. Stages and Statuses will be implemented as reference/master data entities rather than hardcoded enums.
