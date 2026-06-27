@@ -73,7 +73,7 @@ def test_all_relationships_resolve():
 
     configure_mappers()
     rel_count = sum(len(m.relationships) for m in Base.registry.mappers)
-    assert rel_count == 86, f"Expected 86 relationships, found {rel_count}"
+    assert rel_count == 88, f"Expected 88 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

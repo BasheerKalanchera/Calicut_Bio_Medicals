@@ -74,7 +74,7 @@ class TestGetStakeholder:
 
     def test_raises_not_found(self):
         repo = _make_repo()
-        repo.get_by_id.return_value = None
+        repo.get_for_update.return_value = None
 
         service = StakeholderService(repository=repo)
         with pytest.raises(NotFoundError, match="Stakeholder"):

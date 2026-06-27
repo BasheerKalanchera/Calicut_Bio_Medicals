@@ -19,7 +19,7 @@ class StakeholderService:
         return self.repository.list_by_account(account_id)
 
     def get_stakeholder(self, stakeholder_id: uuid.UUID) -> Stakeholder:
-        stakeholder = self.repository.get_by_id(stakeholder_id)
+        stakeholder = self.repository.get_for_update(stakeholder_id)
         if not stakeholder:
             raise NotFoundError(f"Stakeholder {stakeholder_id} not found")
         return stakeholder
@@ -31,6 +31,7 @@ class StakeholderService:
         *,
         created_by: uuid.UUID,
     ) -> Stakeholder:
+        self._require_account(account_id)
         stakeholder = Stakeholder(
             account_id=account_id,
             name=data.name,

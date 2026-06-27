@@ -10,7 +10,7 @@ def _make_account(**overrides) -> MagicMock:
         "id": uuid.uuid4(),
         "name": "Test Hospital",
         "parent_account_id": None,
-        "managing_sbu_id": None,
+        "zone_id": None,
         "payer_behavior": None,
     }
     defaults.update(overrides)
@@ -107,20 +107,20 @@ class TestAccountRepositoryExistsByName:
         assert repo.exists_by_name("Nonexistent") is False
 
 
-class TestAccountRepositorySbuExists:
-    def test_returns_true_when_sbu_found(self):
+class TestAccountRepositoryZoneExists:
+    def test_returns_true_when_zone_found(self):
         mock_db = MagicMock()
-        mock_db.get.return_value = MagicMock()
+        mock_db.scalar.return_value = 1
 
         repo = AccountRepository(mock_db)
-        assert repo.sbu_exists(uuid.uuid4()) is True
+        assert repo.zone_exists(uuid.uuid4()) is True
 
-    def test_returns_false_when_sbu_not_found(self):
+    def test_returns_false_when_zone_not_found(self):
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = 0
 
         repo = AccountRepository(mock_db)
-        assert repo.sbu_exists(uuid.uuid4()) is False
+        assert repo.zone_exists(uuid.uuid4()) is False
 
 
 class TestAccountRepositoryAccountExists:

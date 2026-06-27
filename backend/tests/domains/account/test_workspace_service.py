@@ -10,14 +10,14 @@ from app.domains.account.repository import AccountRepository
 from app.domains.account.workspace_service import WorkspaceService
 
 TEST_ACCOUNT_ID = uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-TEST_SBU_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+TEST_ZONE_ID = uuid.UUID("33333333-3333-3333-3333-333333333333")
 
 
-def _mock_sbu() -> MagicMock:
-    sbu = MagicMock()
-    sbu.id = TEST_SBU_ID
-    sbu.name = "Imaging"
-    return sbu
+def _mock_zone() -> MagicMock:
+    zone = MagicMock()
+    zone.id = TEST_ZONE_ID
+    zone.name = "South Zone"
+    return zone
 
 
 def _mock_status() -> MagicMock:
@@ -84,9 +84,9 @@ def _mock_account(
     account.id = TEST_ACCOUNT_ID
     account.name = "Test Hospital"
     account.parent_account_id = None
-    account.managing_sbu_id = TEST_SBU_ID
+    account.zone_id = TEST_ZONE_ID
     account.payer_behavior = "GOOD"
-    account.managing_sbu = _mock_sbu()
+    account.zone = _mock_zone()
     account.stakeholders = stakeholders or []
     account.projects = projects or []
     account.installed_assets = installed_assets or []
@@ -111,7 +111,7 @@ class TestGetWorkspace:
         result = service.get_workspace(TEST_ACCOUNT_ID)
 
         assert result.account.name == "Test Hospital"
-        assert result.account.managing_sbu.name == "Imaging"
+        assert result.account.zone.name == "South Zone"
         assert len(result.stakeholders) == 1
         assert result.stakeholders[0].name == "Dr. Test"
         assert result.stakeholders[0].nps_score == 80

@@ -11,14 +11,14 @@ from app.domains.account.schemas import AccountCreate, AccountUpdate
 from app.domains.account.service import AccountService
 
 TEST_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
-TEST_SBU_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
-TEST_PARENT_ID = uuid.UUID("33333333-3333-3333-3333-333333333333")
+TEST_ZONE_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+TEST_PARENT_ID = uuid.UUID("44444444-4444-4444-4444-444444444444")
 
 
 def _make_repo(**overrides) -> MagicMock:
     repo = MagicMock(spec=AccountRepository)
     repo.exists_by_name.return_value = False
-    repo.sbu_exists.return_value = True
+    repo.zone_exists.return_value = True
     repo.account_exists.return_value = True
     repo.create.side_effect = lambda obj: obj
     repo.update.side_effect = lambda obj: obj
@@ -32,7 +32,7 @@ def _make_account(**overrides) -> MagicMock:
         "id": uuid.uuid4(),
         "name": "Test Hospital",
         "parent_account_id": None,
-        "managing_sbu_id": TEST_SBU_ID,
+        "zone_id": TEST_ZONE_ID,
         "payer_behavior": "GOOD",
     }
     defaults.update(overrides)
@@ -46,7 +46,7 @@ class TestGetAccount:
     def test_returns_account(self):
         account = _make_account()
         repo = _make_repo()
-        repo.get_for_update.return_value = account
+        repo.get_by_id.return_value = account
 
         service = AccountService(repository=repo)
         assert service.get_account(account.id) is account
@@ -69,7 +69,7 @@ class TestListAccounts:
         _results, total = service.list_accounts(offset=0, limit=10, search="test")
 
         repo.list_accounts.assert_called_once_with(
-            offset=0, limit=10, search="test", zone_id=None, sbu_id=None
+            offset=0, limit=10, search="test", zone_id=None
         )
         assert total == 0
 
@@ -79,7 +79,7 @@ class TestCreateAccount:
         repo = _make_repo()
         service = AccountService(repository=repo)
 
-        data = AccountCreate(name="New Hospital", managing_sbu_id=TEST_SBU_ID)
+        data = AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID)
         result = service.create_account(data, created_by=TEST_USER_ID)
 
         assert result.name == "New Hospital"
@@ -90,19 +90,19 @@ class TestCreateAccount:
         repo.exists_by_name.return_value = True
 
         service = AccountService(repository=repo)
-        data = AccountCreate(name="Existing Hospital")
+        data = AccountCreate(name="Existing Hospital", zone_id=TEST_ZONE_ID)
 
         with pytest.raises(ConflictError, match="already exists"):
             service.create_account(data, created_by=TEST_USER_ID)
 
-    def test_rejects_invalid_sbu(self):
+    def test_rejects_invalid_zone(self):
         repo = _make_repo()
-        repo.sbu_exists.return_value = False
+        repo.zone_exists.return_value = False
 
         service = AccountService(repository=repo)
-        data = AccountCreate(name="New Hospital", managing_sbu_id=uuid.uuid4())
+        data = AccountCreate(name="New Hospital", zone_id=uuid.uuid4())
 
-        with pytest.raises(ValidationError, match=r"SBU.*does not exist"):
+        with pytest.raises(ValidationError, match=r"Zone.*does not exist"):
             service.create_account(data, created_by=TEST_USER_ID)
 
     def test_rejects_invalid_parent_account(self):
@@ -110,7 +110,9 @@ class TestCreateAccount:
         repo.account_exists.return_value = False
 
         service = AccountService(repository=repo)
-        data = AccountCreate(name="New Hospital", parent_account_id=uuid.uuid4())
+        data = AccountCreate(
+            name="New Hospital", zone_id=TEST_ZONE_ID, parent_account_id=uuid.uuid4()
+        )
 
         with pytest.raises(ValidationError, match=r"Parent account.*does not exist"):
             service.create_account(data, created_by=TEST_USER_ID)
@@ -119,13 +121,13 @@ class TestCreateAccount:
         repo = _make_repo()
         service = AccountService(repository=repo)
 
-        data = AccountCreate(name="New Hospital", payer_behavior="GOOD")
+        data = AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, payer_behavior="GOOD")
         result = service.create_account(data, created_by=TEST_USER_ID)
         assert result.payer_behavior == "GOOD"
 
     def test_rejects_invalid_payer_behavior(self):
         with pytest.raises(PydanticValidationError):
-            AccountCreate(name="New Hospital", payer_behavior="RANDOM_VALUE")
+            AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, payer_behavior="RANDOM_VALUE")
 
 
 class TestUpdateAccount:
@@ -144,7 +146,7 @@ class TestUpdateAccount:
     def test_omitted_field_unchanged(self):
         account = _make_account(
             name="Hospital",
-            managing_sbu_id=TEST_SBU_ID,
+            zone_id=TEST_ZONE_ID,
             parent_account_id=TEST_PARENT_ID,
             payer_behavior="GOOD",
         )
@@ -155,13 +157,12 @@ class TestUpdateAccount:
         data = AccountUpdate(name="Renamed Hospital")
         service.update_account(account.id, data, updated_by=TEST_USER_ID)
 
-        assert account.managing_sbu_id == TEST_SBU_ID
+        assert account.zone_id == TEST_ZONE_ID
         assert account.parent_account_id == TEST_PARENT_ID
         assert account.payer_behavior == "GOOD"
 
     def test_explicit_null_clears_field(self):
         account = _make_account(
-            managing_sbu_id=TEST_SBU_ID,
             parent_account_id=TEST_PARENT_ID,
             payer_behavior="GOOD",
         )
@@ -170,12 +171,11 @@ class TestUpdateAccount:
 
         service = AccountService(repository=repo)
         data = AccountUpdate.model_validate(
-            {"parent_account_id": None, "managing_sbu_id": None, "payer_behavior": None}
+            {"parent_account_id": None, "payer_behavior": None}
         )
         service.update_account(account.id, data, updated_by=TEST_USER_ID)
 
         assert account.parent_account_id is None
-        assert account.managing_sbu_id is None
         assert account.payer_behavior is None
 
     def test_rejects_duplicate_name_on_update(self):
@@ -212,16 +212,16 @@ class TestUpdateAccount:
         with pytest.raises(ValidationError, match="cannot be its own parent"):
             service.update_account(account_id, data, updated_by=TEST_USER_ID)
 
-    def test_rejects_invalid_sbu_on_update(self):
+    def test_rejects_invalid_zone_on_update(self):
         account = _make_account()
         repo = _make_repo()
         repo.get_for_update.return_value = account
-        repo.sbu_exists.return_value = False
+        repo.zone_exists.return_value = False
 
         service = AccountService(repository=repo)
-        data = AccountUpdate.model_validate({"managing_sbu_id": str(uuid.uuid4())})
+        data = AccountUpdate.model_validate({"zone_id": str(uuid.uuid4())})
 
-        with pytest.raises(ValidationError, match=r"SBU.*does not exist"):
+        with pytest.raises(ValidationError, match=r"Zone.*does not exist"):
             service.update_account(account.id, data, updated_by=TEST_USER_ID)
 
     def test_rejects_invalid_parent_on_update(self):

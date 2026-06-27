@@ -73,14 +73,14 @@ class TestStakeholderRepositoryCreate:
 class TestStakeholderRepositoryAccountExists:
     def test_returns_true_when_account_found(self):
         mock_db = MagicMock()
-        mock_db.get.return_value = MagicMock()
+        mock_db.scalar.return_value = 1
 
         repo = StakeholderRepository(mock_db)
         assert repo.account_exists(uuid.uuid4()) is True
 
     def test_returns_false_when_account_not_found(self):
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None
 
         repo = StakeholderRepository(mock_db)
         assert repo.account_exists(uuid.uuid4()) is False

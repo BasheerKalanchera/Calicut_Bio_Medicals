@@ -12,7 +12,7 @@ from app.main import app
 
 TEST_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 TEST_ACCOUNT_ID = uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-TEST_SBU_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
+TEST_ZONE_ID = uuid.UUID("33333333-3333-3333-3333-333333333333")
 
 
 def _mock_user() -> MagicMock:
@@ -22,11 +22,11 @@ def _mock_user() -> MagicMock:
     return user
 
 
-def _mock_sbu() -> MagicMock:
-    sbu = MagicMock()
-    sbu.id = TEST_SBU_ID
-    sbu.name = "Imaging"
-    return sbu
+def _mock_zone() -> MagicMock:
+    zone = MagicMock()
+    zone.id = TEST_ZONE_ID
+    zone.name = "South Zone"
+    return zone
 
 
 def _mock_account(**overrides) -> MagicMock:
@@ -35,11 +35,11 @@ def _mock_account(**overrides) -> MagicMock:
         "id": TEST_ACCOUNT_ID,
         "name": "Test Hospital",
         "parent_account_id": None,
-        "managing_sbu_id": TEST_SBU_ID,
+        "zone_id": TEST_ZONE_ID,
         "payer_behavior": "GOOD",
         "created_at": now,
         "updated_at": now,
-        "managing_sbu": _mock_sbu(),
+        "zone": _mock_zone(),
         "parent_account": None,
     }
     defaults.update(overrides)
@@ -97,14 +97,14 @@ class TestListAccounts:
 
         assert response.status_code == 200
 
-    def test_sbu_filter(self, client: TestClient) -> None:
+    def test_zone_filter(self, client: TestClient) -> None:
         mock_db = MagicMock()
         mock_db.scalar.return_value = 0
         mock_db.scalars.return_value.unique.return_value.all.return_value = []
 
         _setup_overrides(mock_db)
         try:
-            response = client.get(f"/api/v1/accounts?sbu_id={TEST_SBU_ID}")
+            response = client.get(f"/api/v1/accounts?zone_id={TEST_ZONE_ID}")
         finally:
             _teardown_overrides()
 
@@ -135,7 +135,13 @@ class TestGetAccount:
     def test_returns_account_detail(self, client: TestClient) -> None:
         account = _mock_account()
         mock_db = MagicMock()
-        mock_db.get.return_value = account
+        mock_db.scalar.return_value = account
+        counts = MagicMock()
+        counts.stakeholder_count = 0
+        counts.project_count = 0
+        counts.opportunity_count = 0
+        counts.asset_count = 0
+        mock_db.execute.return_value.first.return_value = counts
 
         _setup_overrides(mock_db)
         try:
@@ -148,11 +154,11 @@ class TestGetAccount:
         assert body["success"] is True
         assert body["data"]["id"] == str(TEST_ACCOUNT_ID)
         assert body["data"]["name"] == "Test Hospital"
-        assert body["data"]["managing_sbu"]["name"] == "Imaging"
+        assert body["data"]["zone"]["name"] == "South Zone"
 
     def test_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None
 
         _setup_overrides(mock_db)
         try:
@@ -171,13 +177,12 @@ class TestCreateAccount:
     def test_creates_account(self, client: TestClient) -> None:
         account = _mock_account(name="New Hospital")
         mock_db = MagicMock()
-        mock_db.scalar.return_value = 0
-        mock_db.get.return_value = _mock_sbu()
+        mock_db.scalar.side_effect = [0, 1]  # exists_by_name=0, zone_exists=1
 
         def _capture_add(obj):
-            for attr in ["id", "name", "parent_account_id", "managing_sbu_id",
+            for attr in ["id", "name", "parent_account_id", "zone_id",
                          "payer_behavior", "created_at", "updated_at",
-                         "managing_sbu", "parent_account"]:
+                         "zone", "parent_account"]:
                 if not hasattr(obj, attr) or getattr(obj, attr) is None:
                     setattr(obj, attr, getattr(account, attr))
 
@@ -187,7 +192,7 @@ class TestCreateAccount:
         try:
             response = client.post(
                 "/api/v1/accounts",
-                json={"name": "New Hospital", "managing_sbu_id": str(TEST_SBU_ID)},
+                json={"name": "New Hospital", "zone_id": str(TEST_ZONE_ID)},
             )
         finally:
             _teardown_overrides()
@@ -212,7 +217,10 @@ class TestCreateAccount:
 
         _setup_overrides(mock_db)
         try:
-            response = client.post("/api/v1/accounts", json={"name": "Existing Hospital"})
+            response = client.post(
+                "/api/v1/accounts",
+                json={"name": "Existing Hospital", "zone_id": str(TEST_ZONE_ID)},
+            )
         finally:
             _teardown_overrides()
 
@@ -235,13 +243,12 @@ class TestCreateAccount:
         for behavior in ["GOOD", "AVERAGE", "PROBLEMATIC", "UNKNOWN"]:
             account = _mock_account(name="Hospital", payer_behavior=behavior)
             mock_db = MagicMock()
-            mock_db.scalar.return_value = 0
-            mock_db.get.return_value = _mock_sbu()
+            mock_db.scalar.side_effect = [0, 1]  # exists_by_name=0, zone_exists=1
 
             def _capture_add(obj, _acct=account):
-                for attr in ["id", "name", "parent_account_id", "managing_sbu_id",
+                for attr in ["id", "name", "parent_account_id", "zone_id",
                              "payer_behavior", "created_at", "updated_at",
-                             "managing_sbu", "parent_account"]:
+                             "zone", "parent_account"]:
                     if not hasattr(obj, attr) or getattr(obj, attr) is None:
                         setattr(obj, attr, getattr(_acct, attr))
 
@@ -251,23 +258,23 @@ class TestCreateAccount:
             try:
                 response = client.post(
                     "/api/v1/accounts",
-                    json={"name": "Hospital", "payer_behavior": behavior},
+                    json={"name": "Hospital", "payer_behavior": behavior,
+                          "zone_id": str(TEST_ZONE_ID)},
                 )
             finally:
                 _teardown_overrides()
 
             assert response.status_code == 201, f"Failed for {behavior}"
 
-    def test_invalid_sbu_returns_400(self, client: TestClient) -> None:
+    def test_invalid_zone_returns_400(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.scalar.return_value = 0
-        mock_db.get.return_value = None
+        mock_db.scalar.side_effect = [0, 0]  # exists_by_name=0, zone_exists=0
 
         _setup_overrides(mock_db)
         try:
             response = client.post(
                 "/api/v1/accounts",
-                json={"name": "Hospital", "managing_sbu_id": str(uuid.uuid4())},
+                json={"name": "Hospital", "zone_id": str(uuid.uuid4())},
             )
         finally:
             _teardown_overrides()
@@ -276,14 +283,14 @@ class TestCreateAccount:
 
     def test_invalid_parent_account_returns_400(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.scalar.return_value = 0
-        mock_db.get.return_value = None
+        mock_db.scalar.side_effect = [0, 1, 0]  # exists_by_name=0, zone_exists=1, account_exists=0
 
         _setup_overrides(mock_db)
         try:
             response = client.post(
                 "/api/v1/accounts",
-                json={"name": "Hospital", "parent_account_id": str(uuid.uuid4())},
+                json={"name": "Hospital", "zone_id": str(TEST_ZONE_ID),
+                      "parent_account_id": str(uuid.uuid4())},
             )
         finally:
             _teardown_overrides()

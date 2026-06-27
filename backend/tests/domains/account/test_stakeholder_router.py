@@ -60,7 +60,7 @@ class TestListStakeholders:
     def test_returns_stakeholders(self, client: TestClient) -> None:
         stakeholder = _mock_stakeholder()
         mock_db = MagicMock()
-        mock_db.get.return_value = MagicMock()
+        mock_db.scalar.return_value = 1
         mock_db.scalars.return_value.unique.return_value.all.return_value = [
             stakeholder
         ]
@@ -82,7 +82,7 @@ class TestListStakeholders:
 
     def test_invalid_account_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None
 
         _setup_overrides(mock_db)
         try:
@@ -106,7 +106,7 @@ class TestCreateStakeholder:
     def test_creates_stakeholder(self, client: TestClient) -> None:
         stakeholder = _mock_stakeholder(name="Dr. New")
         mock_db = MagicMock()
-        mock_db.get.return_value = MagicMock()
+        mock_db.scalar.return_value = 1
 
         def _capture_add(obj):
             for attr in ["id", "account_id", "name", "designation", "email", "phone",
@@ -144,7 +144,7 @@ class TestCreateStakeholder:
 
     def test_invalid_account_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None
 
         _setup_overrides(mock_db)
         try:
