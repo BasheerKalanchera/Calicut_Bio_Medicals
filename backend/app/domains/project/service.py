@@ -18,6 +18,14 @@ class ProjectService:
         self._require_account(account_id)
         return self.repository.list_by_account(account_id)
 
+    def list_all(
+        self,
+        search: str | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Project], int]:
+        return self.repository.list_all(search=search, offset=offset, limit=limit)
+
     def create_project(
         self,
         account_id: uuid.UUID,

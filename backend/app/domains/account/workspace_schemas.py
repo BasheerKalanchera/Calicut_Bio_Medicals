@@ -66,6 +66,13 @@ class WorkspaceStakeholder(BaseModel):
     sentiment: str | None
 
 
+class AccountNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 class WorkspaceProject(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -74,6 +81,10 @@ class WorkspaceProject(BaseModel):
     status: ProjectStatusNested
     owner: OwnerNested
     bid_submission_date: date | None
+
+
+class WorkspaceProjectWithAccount(WorkspaceProject):
+    account: AccountNested
 
 
 class WorkspaceInstalledAsset(BaseModel):

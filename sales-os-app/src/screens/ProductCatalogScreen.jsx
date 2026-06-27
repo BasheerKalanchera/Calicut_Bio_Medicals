@@ -154,71 +154,75 @@ export default function ProductCatalogScreen() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
-            Administration
-          </h3>
-          <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">
-            Product Catalog
-          </h2>
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+      {/* Fixed: title + filters */}
+      <div className="px-4 pt-4 bg-gray-50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
+              Administration
+            </h3>
+            <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">
+              Product Catalog
+            </h2>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-        <div className="flex-1 relative">
-          <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            autoComplete="off"
-          />
-          {search && (
-            <button
-              onClick={() => {
-                setSearch("");
+        <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex-1 relative">
+            <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
                 setPage(1);
               }}
-              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
-            >
-              &times;
-            </button>
-          )}
-        </div>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Filter by brand..."
-            className="w-full sm:w-44 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-            value={brandFilter}
-            onChange={(e) => {
-              setBrandFilter(e.target.value);
-              setPage(1);
-            }}
-            autoComplete="off"
-          />
-          {brandFilter && (
-            <button
-              onClick={() => {
-                setBrandFilter("");
+              autoComplete="off"
+            />
+            {search && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Filter by brand..."
+              className="w-full sm:w-44 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+              value={brandFilter}
+              onChange={(e) => {
+                setBrandFilter(e.target.value);
                 setPage(1);
               }}
-              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
-            >
-              &times;
-            </button>
-          )}
+              autoComplete="off"
+            />
+            {brandFilter && (
+              <button
+                onClick={() => {
+                  setBrandFilter("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
+              >
+                &times;
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </div>{/* end fixed header */}
+
+      {/* Scrollable product list */}
+      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
 
       {/* Error state */}
       {error && (
@@ -341,6 +345,7 @@ export default function ProductCatalogScreen() {
           )}
         </>
       )}
+      </div>{/* end scrollable list */}
     </div>
   );
 }

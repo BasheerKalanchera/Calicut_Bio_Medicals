@@ -73,6 +73,16 @@ export async function updateProject(projectId, data) {
   return response.data.data;
 }
 
+export async function createInstalledAsset(accountId, data) {
+  const response = await api.post(`/accounts/${accountId}/installed-assets`, data);
+  return response.data.data;
+}
+
+export async function updateInstalledAsset(assetId, data) {
+  const response = await api.put(`/installed-assets/${assetId}`, data);
+  return response.data.data;
+}
+
 export async function createOpportunity(accountId, data) {
   const response = await api.post(`/accounts/${accountId}/opportunities`, data);
   return response.data.data;

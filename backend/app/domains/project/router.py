@@ -1,12 +1,12 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
-from app.api.schemas import APIResponse
+from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
-from app.domains.account.workspace_schemas import WorkspaceProject
+from app.domains.account.workspace_schemas import WorkspaceProject, WorkspaceProjectWithAccount
 from app.domains.organization.models import UserProfile
 from app.domains.project.repository import ProjectRepository
 from app.domains.project.schemas import (
@@ -23,6 +23,28 @@ def _get_service(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> ProjectService:
     return ProjectService(repository=ProjectRepository(db))
+
+
+@router.get("/projects")
+async def list_all_projects(
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ProjectService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[PaginatedResponse[WorkspaceProjectWithAccount]]:
+    offset = (page - 1) * page_size
+    projects, total = service.list_all(search=search, offset=offset, limit=page_size)
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    return APIResponse(
+        data=PaginatedResponse(
+            items=[WorkspaceProjectWithAccount.model_validate(p) for p in projects],
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=total_pages,
+        )
+    )
 
 
 @router.get("/accounts/{account_id}/projects")

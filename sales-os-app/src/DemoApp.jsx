@@ -4,6 +4,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import CustomerDirectoryScreen from "./screens/CustomerDirectoryScreen";
 import Customer360Screen from "./screens/Customer360Screen";
 import ProductCatalogScreen from "./screens/ProductCatalogScreen";
+import ProjectDirectoryScreen from "./screens/ProjectDirectoryScreen";
 
 const NAV_SECTIONS = [
   {
@@ -25,6 +26,7 @@ export default function DemoApp() {
   const [view, setView] = useState("customers");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [accountSubTab, setAccountSubTab] = useState("customers");
 
   function handleSelectAccount(account) {
     setSelectedAccount(account);
@@ -181,9 +183,37 @@ export default function DemoApp() {
       {/* Main content */}
       <div className="flex-1 overflow-hidden flex flex-col">
         <ErrorBoundary>
+          {/* Account Management — always mounted, sub-tabbed */}
           <div className={`flex-1 overflow-hidden flex flex-col ${view === "customers" ? "" : "hidden"}`}>
-            <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
+            {/* Sub-tab bar */}
+            <div className="flex px-4 pt-2 bg-white border-b border-gray-100 shrink-0">
+              {[
+                { id: "customers", label: "Customers" },
+                { id: "projects", label: "All Projects" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setAccountSubTab(tab.id)}
+                  className={`px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all -mb-px ${
+                    accountSubTab === tab.id
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-400 hover:text-gray-600"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {/* Customer Directory — always mounted */}
+            <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "customers" ? "" : "hidden"}`}>
+              <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
+            </div>
+            {/* Project Directory — always mounted */}
+            <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "projects" ? "" : "hidden"}`}>
+              <ProjectDirectoryScreen />
+            </div>
           </div>
+
           {view === "customer360" && selectedAccount && (
             <Customer360Screen
               accountId={selectedAccount.id}

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   getAccount,
+  getAccountCounts,
   updateAccount,
   listStakeholders,
   createStakeholder,
@@ -12,6 +13,8 @@ import {
   createOpportunity,
   updateOpportunity,
   listInstalledAssets,
+  createInstalledAsset,
+  updateInstalledAsset,
 } from "../services/accounts";
 import {
   listZones,
@@ -20,6 +23,7 @@ import {
   listStatuses,
   listUsers,
 } from "../services/masterData";
+import { listProducts } from "../services/products";
 import FormModal from "../components/FormModal";
 
 const TABS = [
@@ -70,16 +74,15 @@ function PayerBadge({ behavior }) {
 
 function SentimentBadge({ sentiment }) {
   if (!sentiment) return null;
-  const styles = {
-    POSITIVE: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    NEUTRAL: "bg-amber-50 text-amber-700 border-amber-200",
-    NEGATIVE: "bg-red-50 text-red-700 border-red-200",
+  const config = {
+    PROMOTER:  { label: "Promoter",  cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    NEUTRAL:   { label: "Neutral",   cls: "bg-amber-50 text-amber-700 border-amber-200" },
+    DETRACTOR: { label: "Detractor", cls: "bg-red-50 text-red-700 border-red-200" },
   };
+  const { label, cls } = config[sentiment] || { label: sentiment, cls: "bg-gray-50 text-gray-600 border-gray-200" };
   return (
-    <span
-      className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${styles[sentiment] || "bg-gray-50 text-gray-600 border-gray-200"}`}
-    >
-      {sentiment}
+    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${cls}`}>
+      {label}
     </span>
   );
 }
@@ -347,82 +350,98 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit }) {
   );
 }
 
-function InstalledBaseTab({ assets }) {
-  if (assets.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-        No installed assets found for this account.
-      </div>
-    );
-  }
-
+function InstalledBaseTab({ assets, onAdd, onEdit }) {
   return (
     <div className="space-y-3">
-      {assets.map((a) => {
-        const productName = a.is_competitor_equipment
-          ? a.competitor_product_name || "Unknown Competitor"
-          : a.product?.name || "Unknown Product";
-        const modelInfo =
-          !a.is_competitor_equipment && a.product?.model_number
-            ? a.product.model_number
-            : null;
-        const oemInfo =
-          !a.is_competitor_equipment && a.product?.oem_name
-            ? a.product.oem_name
-            : null;
+      <div className="flex items-center justify-between mb-1">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          Installed Base ({assets.length})
+        </h4>
+        <button
+          onClick={onAdd}
+          className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
+        >
+          + Add
+        </button>
+      </div>
 
-        return (
-          <div
-            key={a.id}
-            className={`bg-white p-4 rounded-2xl shadow-sm border ${a.is_competitor_equipment ? "border-red-200" : "border-gray-100"}`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="font-bold text-gray-800">{productName}</div>
-                {a.is_competitor_equipment && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black border bg-red-50 text-red-600 border-red-200">
-                    COMPETITOR
-                  </span>
+      {assets.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
+          No installed assets found for this account.
+        </div>
+      ) : (
+        assets.map((a) => {
+          const productName = a.is_competitor_equipment
+            ? a.competitor_product_name || "Unknown Competitor"
+            : a.product?.name || "Unknown Product";
+          const modelInfo =
+            !a.is_competitor_equipment && a.product?.model_number
+              ? a.product.model_number
+              : null;
+          const oemInfo =
+            !a.is_competitor_equipment && a.product?.oem_name
+              ? a.product.oem_name
+              : null;
+
+          return (
+            <div
+              key={a.id}
+              className={`bg-white p-4 rounded-2xl shadow-sm border ${a.is_competitor_equipment ? "border-red-200" : "border-gray-100"}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="font-bold text-gray-800">{productName}</div>
+                  {a.is_competitor_equipment && (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black border bg-red-50 text-red-600 border-red-200">
+                      COMPETITOR
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => onEdit(a)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
+                >
+                  Edit
+                </button>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                {oemInfo && (
+                  <div>
+                    <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                      OEM:{" "}
+                    </span>
+                    <span className="font-bold">{oemInfo}</span>
+                  </div>
+                )}
+                {modelInfo && (
+                  <div>
+                    <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                      Model:{" "}
+                    </span>
+                    <span className="font-bold">{modelInfo}</span>
+                  </div>
+                )}
+                {a.department && (
+                  <div>
+                    <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                      Dept:{" "}
+                    </span>
+                    <span className="font-bold">{a.department}</span>
+                  </div>
+                )}
+                {a.installation_date && (
+                  <div>
+                    <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
+                      Installed:{" "}
+                    </span>
+                    <span className="font-bold">{a.installation_date}</span>
+                  </div>
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-              {oemInfo && (
-                <div>
-                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                    OEM:{" "}
-                  </span>
-                  <span className="font-bold">{oemInfo}</span>
-                </div>
-              )}
-              {modelInfo && (
-                <div>
-                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                    Model:{" "}
-                  </span>
-                  <span className="font-bold">{modelInfo}</span>
-                </div>
-              )}
-              {a.department && (
-                <div>
-                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                    Dept:{" "}
-                  </span>
-                  <span className="font-bold">{a.department}</span>
-                </div>
-              )}
-              {a.installation_date && (
-                <div>
-                  <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                    Installed:{" "}
-                  </span>
-                  <span className="font-bold">{a.installation_date}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })
+      )}
     </div>
   );
 }
@@ -506,6 +525,25 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editOppWinProb, setEditOppWinProb] = useState("");
   const [editOppValue, setEditOppValue] = useState("");
 
+  // Products list (lazy-loaded for asset form)
+  const [products, setProducts] = useState([]);
+
+  // Create Asset state
+  const [showCreateAsset, setShowCreateAsset] = useState(false);
+  const [newAssetIsCompetitor, setNewAssetIsCompetitor] = useState(false);
+  const [newAssetProductId, setNewAssetProductId] = useState("");
+  const [newAssetCompetitorName, setNewAssetCompetitorName] = useState("");
+  const [newAssetInstallDate, setNewAssetInstallDate] = useState("");
+  const [newAssetDepartment, setNewAssetDepartment] = useState("");
+
+  // Edit Asset state
+  const [editingAsset, setEditingAsset] = useState(null);
+  const [editAssetIsCompetitor, setEditAssetIsCompetitor] = useState(false);
+  const [editAssetProductId, setEditAssetProductId] = useState("");
+  const [editAssetCompetitorName, setEditAssetCompetitorName] = useState("");
+  const [editAssetInstallDate, setEditAssetInstallDate] = useState("");
+  const [editAssetDepartment, setEditAssetDepartment] = useState("");
+
   const chipBarRef = useRef(null);
 
   const handleTabChange = useCallback((tabId) => {
@@ -550,6 +588,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           setLoading(false);
         }
       });
+
+    // If initialAccount didn't carry counts (user tapped before CustomerDirectory's
+    // getAccountCounts resolved), fire the same batch endpoint in parallel.
+    // It resolves faster than getAccount because it's a single GROUP BY vs
+    // get_account_with_counts running separate COUNT queries.
+    if (initialAccount?.stakeholder_count == null) {
+      getAccountCounts([accountId])
+        .then((countMap) => {
+          if (!isMountedRef.current) return;
+          const c = countMap[accountId] || {};
+          setAccount((prev) => (prev ? { ...prev, ...c } : prev));
+        })
+        .catch(() => {});
+    }
 
     listStakeholders(accountId)
       .then((data) => { setStakeholders(data); setTabCache(accountId, 'stakeholders', data); })
@@ -812,6 +864,73 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
   };
 
+  const loadProductsList = async () => {
+    if (products.length === 0) {
+      try {
+        const data = await listProducts({ page_size: 100 });
+        setProducts(data.items || []);
+      } catch {}
+    }
+  };
+
+  const openCreateAsset = async () => {
+    setNewAssetIsCompetitor(false);
+    setNewAssetProductId("");
+    setNewAssetCompetitorName("");
+    setNewAssetInstallDate("");
+    setNewAssetDepartment("");
+    setShowCreateAsset(true);
+    await loadProductsList();
+  };
+
+  const handleCreateAsset = async () => {
+    if (!newAssetIsCompetitor && !newAssetProductId) throw new Error("Product is required");
+    const payload = {
+      is_competitor_equipment: newAssetIsCompetitor,
+      installation_date: newAssetInstallDate || null,
+      department: newAssetDepartment.trim() || null,
+    };
+    if (newAssetIsCompetitor) {
+      payload.competitor_product_name = newAssetCompetitorName.trim() || null;
+    } else {
+      payload.product_id = newAssetProductId;
+    }
+    await createInstalledAsset(accountId, payload);
+    listInstalledAssets(accountId)
+      .then((data) => { setInstalled(data); setTabCache(accountId, "installed", data); })
+      .catch(() => {});
+  };
+
+  const openEditAsset = async (a) => {
+    setEditingAsset(a);
+    setEditAssetIsCompetitor(a.is_competitor_equipment);
+    setEditAssetProductId(a.product?.id || "");
+    setEditAssetCompetitorName(a.competitor_product_name || "");
+    setEditAssetInstallDate(a.installation_date || "");
+    setEditAssetDepartment(a.department || "");
+    await loadProductsList();
+  };
+
+  const handleUpdateAsset = async () => {
+    if (!editAssetIsCompetitor && !editAssetProductId) throw new Error("Product is required");
+    const payload = {
+      is_competitor_equipment: editAssetIsCompetitor,
+      installation_date: editAssetInstallDate || null,
+      department: editAssetDepartment.trim() || null,
+    };
+    if (editAssetIsCompetitor) {
+      payload.competitor_product_name = editAssetCompetitorName.trim() || null;
+      payload.product_id = null;
+    } else {
+      payload.product_id = editAssetProductId;
+      payload.competitor_product_name = null;
+    }
+    await updateInstalledAsset(editingAsset.id, payload);
+    listInstalledAssets(accountId)
+      .then((data) => { setInstalled(data); setTabCache(accountId, "installed", data); })
+      .catch(() => {});
+  };
+
   const labelClass =
     "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
   const inputClass =
@@ -930,7 +1049,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {activeTab === "installed" && (
         installedLoading
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
-          : <InstalledBaseTab assets={installed} />
+          : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />
       )}
 
       </div>{/* end scrollable content */}
@@ -1052,9 +1171,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             className={inputClass}
           >
             <option value="">Select sentiment</option>
-            <option value="POSITIVE">Positive</option>
+            <option value="PROMOTER">Promoter</option>
             <option value="NEUTRAL">Neutral</option>
-            <option value="NEGATIVE">Negative</option>
+            <option value="DETRACTOR">Detractor</option>
           </select>
         </div>
       </FormModal>
@@ -1126,9 +1245,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             className={inputClass}
           >
             <option value="">Select sentiment</option>
-            <option value="POSITIVE">Positive</option>
+            <option value="PROMOTER">Promoter</option>
             <option value="NEUTRAL">Neutral</option>
-            <option value="NEGATIVE">Negative</option>
+            <option value="DETRACTOR">Detractor</option>
           </select>
         </div>
       </FormModal>
@@ -1463,6 +1582,149 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             onChange={(e) => setEditOppValue(e.target.value)}
             className={inputClass}
             placeholder="e.g. 25.50"
+          />
+        </div>
+      </FormModal>
+
+      {/* Create Asset Modal */}
+      <FormModal
+        isOpen={showCreateAsset}
+        onClose={() => setShowCreateAsset(false)}
+        title="New Installed Asset"
+        onSubmit={handleCreateAsset}
+        submitLabel="Create"
+      >
+        <div>
+          <label className={labelClass}>Equipment Type</label>
+          <div className="flex items-center gap-3 py-2">
+            <input
+              type="checkbox"
+              id="newAssetIsCompetitor"
+              checked={newAssetIsCompetitor}
+              onChange={(e) => setNewAssetIsCompetitor(e.target.checked)}
+              className="w-4 h-4 rounded accent-blue-600"
+            />
+            <label htmlFor="newAssetIsCompetitor" className="text-sm font-bold text-gray-700">
+              Competitor Equipment
+            </label>
+          </div>
+        </div>
+        {newAssetIsCompetitor ? (
+          <div>
+            <label className={labelClass}>Competitor Product Name</label>
+            <input
+              type="text"
+              value={newAssetCompetitorName}
+              onChange={(e) => setNewAssetCompetitorName(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Siemens SOMATOM"
+            />
+          </div>
+        ) : (
+          <div>
+            <label className={labelClass}>Product *</label>
+            <select
+              value={newAssetProductId}
+              onChange={(e) => setNewAssetProductId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select product</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.model_number ? ` — ${p.model_number}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className={labelClass}>Department</label>
+          <input
+            type="text"
+            value={newAssetDepartment}
+            onChange={(e) => setNewAssetDepartment(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Radiology"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Installation Date</label>
+          <input
+            type="date"
+            value={newAssetInstallDate}
+            onChange={(e) => setNewAssetInstallDate(e.target.value)}
+            className={inputClass}
+          />
+        </div>
+      </FormModal>
+
+      {/* Edit Asset Modal */}
+      <FormModal
+        isOpen={editingAsset !== null}
+        onClose={() => setEditingAsset(null)}
+        title="Edit Installed Asset"
+        onSubmit={handleUpdateAsset}
+      >
+        <div>
+          <label className={labelClass}>Equipment Type</label>
+          <div className="flex items-center gap-3 py-2">
+            <input
+              type="checkbox"
+              id="editAssetIsCompetitor"
+              checked={editAssetIsCompetitor}
+              onChange={(e) => setEditAssetIsCompetitor(e.target.checked)}
+              className="w-4 h-4 rounded accent-blue-600"
+            />
+            <label htmlFor="editAssetIsCompetitor" className="text-sm font-bold text-gray-700">
+              Competitor Equipment
+            </label>
+          </div>
+        </div>
+        {editAssetIsCompetitor ? (
+          <div>
+            <label className={labelClass}>Competitor Product Name</label>
+            <input
+              type="text"
+              value={editAssetCompetitorName}
+              onChange={(e) => setEditAssetCompetitorName(e.target.value)}
+              className={inputClass}
+              placeholder="e.g. Siemens SOMATOM"
+            />
+          </div>
+        ) : (
+          <div>
+            <label className={labelClass}>Product *</label>
+            <select
+              value={editAssetProductId}
+              onChange={(e) => setEditAssetProductId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select product</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}{p.model_number ? ` — ${p.model_number}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className={labelClass}>Department</label>
+          <input
+            type="text"
+            value={editAssetDepartment}
+            onChange={(e) => setEditAssetDepartment(e.target.value)}
+            className={inputClass}
+            placeholder="e.g. Radiology"
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Installation Date</label>
+          <input
+            type="date"
+            value={editAssetInstallDate}
+            onChange={(e) => setEditAssetInstallDate(e.target.value)}
+            className={inputClass}
           />
         </div>
       </FormModal>

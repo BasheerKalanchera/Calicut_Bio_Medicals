@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -37,6 +37,28 @@ class ProjectRepository(BaseRepository[Project]):
                 noload(Project.documents),
             )
         )
+
+    def list_all(
+        self,
+        search: str | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Project], int]:
+        stmt = (
+            select(Project)
+            .options(
+                noload(Project.opportunities),
+                noload(Project.activities),
+                noload(Project.documents),
+            )
+            .order_by(Project.name)
+        )
+        if search:
+            stmt = stmt.where(Project.name.ilike(f"%{search}%"))
+
+        total = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        results = list(self.db.scalars(stmt.offset(offset).limit(limit)).unique().all())
+        return results, total
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0

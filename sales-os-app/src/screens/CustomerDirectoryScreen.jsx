@@ -110,9 +110,13 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
       .then((data) => {
         if (!isMountedRef.current) return;
         const items = data.items;
-        setAccounts(items);
-        setTotal(data.total);
-        if (!isBackgroundRefresh) setLoading(false);
+        // On background refresh, do NOT update state yet — we hold until counts arrive
+        // so the accounts list never briefly loses its count columns mid-session.
+        if (!isBackgroundRefresh) {
+          setAccounts(items);
+          setTotal(data.total);
+          setLoading(false);
+        }
 
         const ids = items.map((a) => a.id);
         if (ids.length === 0) {
@@ -124,10 +128,16 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
             if (!isMountedRef.current) return;
             const merged = items.map((a) => ({ ...a, ...(counts[a.id] || {}) }));
             setAccounts(merged);
+            setTotal(data.total);
             setCache(cacheKey, { items: merged, total: data.total });
           })
           .catch(() => {
-            setCache(cacheKey, { items, total: data.total });
+            // On foreground, cache without counts so at least the list renders.
+            // On background, leave the cache untouched — it still has the previous
+            // merged items with counts, which is better than overwriting with count-less items.
+            if (!isBackgroundRefresh) {
+              setCache(cacheKey, { items, total: data.total });
+            }
           });
       })
       .catch((err) => {
