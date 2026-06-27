@@ -4,6 +4,24 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class ProductCreate(BaseModel):
+    name: str
+    sbu_id: uuid.UUID
+    oem_name: str | None = None
+    model_number: str | None = None
+    category_name: str | None = None
+    description: str | None = None
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    sbu_id: uuid.UUID | None = None
+    oem_name: str | None = None
+    model_number: str | None = None
+    category_name: str | None = None
+    description: str | None = None
+
+
 class SBUNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
