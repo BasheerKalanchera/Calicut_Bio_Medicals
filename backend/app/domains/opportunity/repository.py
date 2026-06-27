@@ -18,6 +18,10 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             .where(Opportunity.account_id == account_id)
             .options(
                 noload(Opportunity.account),
+                noload(Opportunity.project),
+                noload(Opportunity.lead_source),
+                noload(Opportunity.loss_reason),
+                noload(Opportunity.hold_reason),
                 noload(Opportunity.opportunity_stakeholders),
                 noload(Opportunity.splits),
                 noload(Opportunity.items),

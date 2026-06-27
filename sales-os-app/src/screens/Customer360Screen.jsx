@@ -30,6 +30,28 @@ const TABS = [
   { id: "installed", label: "Installed Base" },
 ];
 
+// ---------------------------------------------------------------------------
+// Module-level SWR cache for tab data — keyed by accountId, persists across
+// Customer360Screen mounts so revisiting a customer shows all tabs instantly.
+// ---------------------------------------------------------------------------
+const TAB_CACHE_TTL_MS = 30_000;
+const tabDataCache = new Map();
+
+function getTabCached(accountId, tab) {
+  const key = `${accountId}:${tab}`;
+  const entry = tabDataCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > TAB_CACHE_TTL_MS) {
+    tabDataCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setTabCache(accountId, tab, data) {
+  tabDataCache.set(`${accountId}:${tab}`, { data, fetchedAt: Date.now() });
+}
+
 function PayerBadge({ behavior }) {
   if (!behavior) return null;
   const styles = {
@@ -503,11 +525,22 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const loadAccount = useCallback(() => {
     if (!initialAccount) setLoading(true);
-    setStakeholdersLoading(true);
-    setProjectsLoading(true);
-    setOpportunitiesLoading(true);
-    setInstalledLoading(true);
     setError(null);
+
+    const cachedStakeholders  = getTabCached(accountId, 'stakeholders');
+    const cachedProjects       = getTabCached(accountId, 'projects');
+    const cachedOpportunities  = getTabCached(accountId, 'opportunities');
+    const cachedInstalled      = getTabCached(accountId, 'installed');
+
+    if (cachedStakeholders)  setStakeholders(cachedStakeholders);
+    if (cachedProjects)      setProjects(cachedProjects);
+    if (cachedOpportunities) setOpportunities(cachedOpportunities);
+    if (cachedInstalled)     setInstalled(cachedInstalled);
+
+    setStakeholdersLoading(!cachedStakeholders);
+    setProjectsLoading(!cachedProjects);
+    setOpportunitiesLoading(!cachedOpportunities);
+    setInstalledLoading(!cachedInstalled);
 
     getAccount(accountId)
       .then((data) => { setAccount(data); setLoading(false); })
@@ -519,16 +552,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       });
 
     listStakeholders(accountId)
-      .then(setStakeholders).catch(() => {}).finally(() => setStakeholdersLoading(false));
+      .then((data) => { setStakeholders(data); setTabCache(accountId, 'stakeholders', data); })
+      .catch(() => {}).finally(() => setStakeholdersLoading(false));
 
     listProjects(accountId)
-      .then(setProjects).catch(() => {}).finally(() => setProjectsLoading(false));
+      .then((data) => { setProjects(data); setTabCache(accountId, 'projects', data); })
+      .catch(() => {}).finally(() => setProjectsLoading(false));
 
     listOpportunities(accountId)
-      .then(setOpportunities).catch(() => {}).finally(() => setOpportunitiesLoading(false));
+      .then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); })
+      .catch(() => {}).finally(() => setOpportunitiesLoading(false));
 
     listInstalledAssets(accountId)
-      .then(setInstalled).catch(() => {}).finally(() => setInstalledLoading(false));
+      .then((data) => { setInstalled(data); setTabCache(accountId, 'installed', data); })
+      .catch(() => {}).finally(() => setInstalledLoading(false));
   }, [accountId, initialAccount]);
 
   useEffect(() => {
@@ -616,7 +653,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newStakeholderNps !== "") payload.nps_score = Number(newStakeholderNps);
     if (newStakeholderSentiment) payload.sentiment = newStakeholderSentiment;
     await createStakeholder(accountId, payload);
-    listStakeholders(accountId).then(setStakeholders).catch(() => {});
+    listStakeholders(accountId).then((data) => { setStakeholders(data); setTabCache(accountId, 'stakeholders', data); }).catch(() => {});
     getAccount(accountId).then(setAccount).catch(() => {});
   };
 
@@ -639,7 +676,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (editStakeholderNps !== "") payload.nps_score = Number(editStakeholderNps);
     if (editStakeholderSentiment) payload.sentiment = editStakeholderSentiment;
     await updateStakeholder(editingStakeholder.id, payload);
-    listStakeholders(accountId).then(setStakeholders).catch(() => {});
+    listStakeholders(accountId).then((data) => { setStakeholders(data); setTabCache(accountId, 'stakeholders', data); }).catch(() => {});
   };
 
   const loadProjectMasterData = async () => {
@@ -682,7 +719,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     };
     if (newProjectBidDate) payload.bid_submission_date = newProjectBidDate;
     await createProject(accountId, payload);
-    listProjects(accountId).then(setProjects).catch(() => {});
+    listProjects(accountId).then((data) => { setProjects(data); setTabCache(accountId, 'projects', data); }).catch(() => {});
     getAccount(accountId).then(setAccount).catch(() => {});
   };
 
@@ -704,7 +741,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     };
     if (editProjectBidDate) payload.bid_submission_date = editProjectBidDate;
     await updateProject(editingProject.id, payload);
-    listProjects(accountId).then(setProjects).catch(() => {});
+    listProjects(accountId).then((data) => { setProjects(data); setTabCache(accountId, 'projects', data); }).catch(() => {});
   };
 
   const openCreateOpp = async () => {
@@ -740,7 +777,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newOppProjectId) payload.project_id = newOppProjectId;
     if (newOppValue !== "") payload.indicative_value = Number(newOppValue);
     await createOpportunity(accountId, payload);
-    listOpportunities(accountId).then(setOpportunities).catch(() => {});
+    listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
   };
 
   const openEditOpp = async (o) => {
@@ -772,7 +809,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (editOppProjectId) payload.project_id = editOppProjectId;
     payload.indicative_value = editOppValue !== "" ? Number(editOppValue) : null;
     await updateOpportunity(editingOpp.id, payload);
-    listOpportunities(accountId).then(setOpportunities).catch(() => {});
+    listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
   };
 
   const labelClass =
@@ -781,7 +818,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
 
   return (
-    <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+      {/* Fixed: back button + account name + stats + chip tabs — does not scroll */}
+      <div className="px-4 pt-4 bg-gray-50">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <button
@@ -865,7 +904,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           style={{ background: "linear-gradient(to left, #f9fafb, transparent)" }}
         />
       </div>
+      </div>{/* end fixed header */}
 
+      {/* Scrollable tab content */}
+      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
       {/* Tab content */}
       {activeTab === "overview" && (
         <OverviewTab account={account} onEdit={openEditAccount} />
@@ -890,6 +932,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div>
           : <InstalledBaseTab assets={installed} />
       )}
+
+      </div>{/* end scrollable content */}
 
       {/* Edit Account Modal */}
       <FormModal

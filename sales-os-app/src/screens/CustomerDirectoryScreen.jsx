@@ -146,7 +146,9 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div ref={listContainerRef} className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50 animate-in fade-in duration-200">
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+      {/* Fixed: title + search bar — does not scroll */}
+      <div className="px-4 pt-4 bg-gray-50">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -193,7 +195,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
           )}
         </div>
       </div>
+      </div>{/* end fixed header */}
 
+      {/* Scrollable list content */}
+      <div ref={listContainerRef} className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
       {/* Error state */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold mb-4 flex items-center justify-between">
@@ -301,6 +306,8 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
           )}
         </>
       )}
+
+      </div>{/* end scrollable content */}
 
       <FormModal
         isOpen={showCreateModal}
