@@ -30,7 +30,7 @@ function setCache(key, data) {
   accountListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-export default function CustomerDirectoryScreen({ onSelectAccount }) {
+export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef }) {
   const [accounts, setAccounts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -61,6 +61,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
       } catch {}
     }
   };
+  if (openCreateRef) openCreateRef.current = openCreateModal;
 
   const listContainerRef = useRef(null);
 
@@ -159,23 +160,6 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
       {/* Fixed: title + search bar — does not scroll */}
       <div className="px-4 pt-4 bg-gray-50">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">
-            Sales Execution
-          </h3>
-          <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">
-            Customer Directory
-          </h2>
-        </div>
-        <button
-          onClick={openCreateModal}
-          className="px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm"
-        >
-          + Add Customer
-        </button>
-      </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -243,7 +227,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    {account.name.charAt(0)}
+                    {account.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">
@@ -275,9 +259,9 @@ export default function CustomerDirectoryScreen({ onSelectAccount }) {
                   </div>
                 </div>
                 <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
-                  <span className="text-gray-400 group-hover:text-blue-600 transition-colors">
-                    &rarr;
-                  </span>
+                  <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </div>
               </div>
             ))}

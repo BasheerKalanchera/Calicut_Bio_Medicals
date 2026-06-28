@@ -25,6 +25,11 @@ export default function LoginScreen() {
     <div className="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
+          <img
+            src="/Cabio%20logo.jpeg"
+            alt="Cabio Logo"
+            className="h-16 object-contain mx-auto mb-4"
+          />
           <h1 className="text-2xl font-black text-gray-800 tracking-tight">
             Cabio Sales OS
           </h1>

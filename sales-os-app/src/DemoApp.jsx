@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import FormModal from "./components/FormModal";
 import CustomerDirectoryScreen from "./screens/CustomerDirectoryScreen";
 import Customer360Screen from "./screens/Customer360Screen";
 import ProductCatalogScreen from "./screens/ProductCatalogScreen";
 import ProjectDirectoryScreen from "./screens/ProjectDirectoryScreen";
+import { listAccounts, createOpportunity } from "./services/accounts";
+import { listStages, listStatuses, listUsers } from "./services/masterData";
 
 const NAV_SECTIONS = [
   {
@@ -27,6 +30,23 @@ export default function DemoApp() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [accountSubTab, setAccountSubTab] = useState("customers");
+  const [projectDetailMode, setProjectDetailMode] = useState(false);
+  const customerCreateRef = useRef(null);
+  const projectCreateRef = useRef(null);
+
+  // Quick Lead modal state
+  const [showQuickLead, setShowQuickLead] = useState(false);
+  const [leadAccounts, setLeadAccounts] = useState([]);
+  const [leadStages, setLeadStages] = useState([]);
+  const [leadStatuses, setLeadStatuses] = useState([]);
+  const [leadUsers, setLeadUsers] = useState([]);
+  const [leadAccountId, setLeadAccountId] = useState("");
+  const [leadName, setLeadName] = useState("");
+  const [leadStageId, setLeadStageId] = useState("");
+  const [leadStatusId, setLeadStatusId] = useState("");
+  const [leadOwnerId, setLeadOwnerId] = useState("");
+  const [leadWinProb, setLeadWinProb] = useState("");
+  const [leadValue, setLeadValue] = useState("");
 
   function handleSelectAccount(account) {
     setSelectedAccount(account);
@@ -42,6 +62,37 @@ export default function DemoApp() {
     setView(viewId);
     setSelectedAccount(null);
     setIsSidebarOpen(false);
+    setProjectDetailMode(false);
+  }
+
+  async function openQuickLead() {
+    setLeadAccountId(""); setLeadName(""); setLeadStageId("");
+    setLeadStatusId(""); setLeadOwnerId(""); setLeadWinProb(""); setLeadValue("");
+    setShowQuickLead(true);
+    await Promise.all([
+      leadAccounts.length === 0 && listAccounts({ page_size: 100 }).then((d) => setLeadAccounts(d.items || [])).catch(() => {}),
+      leadStages.length === 0 && listStages().then(setLeadStages).catch(() => {}),
+      leadStatuses.length === 0 && listStatuses().then(setLeadStatuses).catch(() => {}),
+      leadUsers.length === 0 && listUsers().then(setLeadUsers).catch(() => {}),
+    ]);
+  }
+
+  async function handleCreateLead() {
+    if (!leadAccountId) throw new Error("Account is required");
+    if (!leadName.trim()) throw new Error("Opportunity name is required");
+    if (!leadStageId) throw new Error("Stage is required");
+    if (!leadStatusId) throw new Error("Status is required");
+    if (!leadOwnerId) throw new Error("Owner is required");
+    if (leadWinProb === "") throw new Error("Win probability is required");
+    const payload = {
+      name: leadName.trim(),
+      stage_id: leadStageId,
+      status_id: leadStatusId,
+      owner_id: leadOwnerId,
+      win_probability: Number(leadWinProb),
+    };
+    if (leadValue !== "") payload.indicative_value = Number(leadValue);
+    await createOpportunity(leadAccountId, payload);
   }
 
   return (
@@ -114,14 +165,14 @@ export default function DemoApp() {
           {/* Prototype link */}
           <section className="pt-4 border-t border-gray-100">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">
-              DEVELOPMENT
+              COMING SOON
             </h3>
             <a
               href="/prototype"
               className="w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm text-gray-500 hover:bg-gray-50 transition-all"
             >
-              <span className="text-lg">🧪</span>
-              Prototype (Mock Data)
+              <span className="text-lg">🚀</span>
+              Sprint 2 Preview
             </a>
           </section>
         </div>
@@ -174,7 +225,7 @@ export default function DemoApp() {
 
         <button
           onClick={signOut}
-          className="text-gray-400 hover:text-red-500 text-xs font-black uppercase tracking-widest transition-colors px-3 py-2 rounded-xl hover:bg-red-50"
+          className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 text-xs font-black uppercase tracking-widest transition-colors px-3 py-2 rounded-xl"
         >
           Sign Out
         </button>
@@ -185,32 +236,57 @@ export default function DemoApp() {
         <ErrorBoundary>
           {/* Account Management — always mounted, sub-tabbed */}
           <div className={`flex-1 overflow-hidden flex flex-col ${view === "customers" ? "" : "hidden"}`}>
-            {/* Sub-tab bar */}
-            <div className="flex px-4 pt-2 bg-white border-b border-gray-100 shrink-0">
-              {[
-                { id: "customers", label: "Customers" },
-                { id: "projects", label: "All Projects" },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setAccountSubTab(tab.id)}
-                  className={`px-4 py-2.5 text-xs font-black uppercase tracking-wider border-b-2 transition-all -mb-px ${
-                    accountSubTab === tab.id
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            {/* Section header + tab bar — hidden when inside a project detail */}
+            {!projectDetailMode && (
+              <>
+                <div className="px-4 py-3 bg-white border-b border-gray-100 flex items-center justify-between shrink-0">
+                  <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Account Management</h2>
+                  <button
+                    onClick={openQuickLead}
+                    className="px-4 py-2 rounded-xl text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 transition-all uppercase tracking-wider shadow-sm"
+                  >
+                    + Lead
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-100 shrink-0">
+                  <div className="flex gap-2 flex-1">
+                    {[
+                      { id: "customers", label: "Customers" },
+                      { id: "projects", label: "Projects" },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => { setAccountSubTab(tab.id); setProjectDetailMode(false); }}
+                        className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
+                          accountSubTab === tab.id
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() =>
+                      accountSubTab === "customers"
+                        ? customerCreateRef.current?.()
+                        : projectCreateRef.current?.()
+                    }
+                    className="px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm shrink-0"
+                  >
+                    + Add
+                  </button>
+                </div>
+              </>
+            )}
             {/* Customer Directory — always mounted */}
             <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "customers" ? "" : "hidden"}`}>
-              <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
+              <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} openCreateRef={customerCreateRef} />
             </div>
             {/* Project Directory — always mounted */}
             <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "projects" ? "" : "hidden"}`}>
-              <ProjectDirectoryScreen />
+              <ProjectDirectoryScreen onDetailModeChange={setProjectDetailMode} openCreateRef={projectCreateRef} />
             </div>
           </div>
 
@@ -227,6 +303,56 @@ export default function DemoApp() {
           </div>
         </ErrorBoundary>
       </div>
+
+      {/* Quick Lead modal */}
+      <FormModal
+        isOpen={showQuickLead}
+        onClose={() => setShowQuickLead(false)}
+        title="New Lead"
+        onSubmit={handleCreateLead}
+        submitLabel="Create Lead"
+      >
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Account *</label>
+          <select value={leadAccountId} onChange={(e) => setLeadAccountId(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+            <option value="">Select account</option>
+            {leadAccounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Opportunity Name *</label>
+          <input type="text" value={leadName} onChange={(e) => setLeadName(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="e.g. Ultrasound Upgrade — ICU" autoFocus />
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Stage *</label>
+          <select value={leadStageId} onChange={(e) => { const s = leadStages.find((x) => x.id === e.target.value); setLeadStageId(e.target.value); if (s) setLeadWinProb(String(s.default_win_probability)); }} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+            <option value="">Select stage</option>
+            {leadStages.map((s) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Status *</label>
+          <select value={leadStatusId} onChange={(e) => setLeadStatusId(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+            <option value="">Select status</option>
+            {leadStatuses.map((s) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Owner *</label>
+          <select value={leadOwnerId} onChange={(e) => setLeadOwnerId(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+            <option value="">Select owner</option>
+            {leadUsers.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Win Probability % *</label>
+          <input type="number" min="0" max="100" value={leadWinProb} onChange={(e) => setLeadWinProb(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="0 – 100" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Indicative Value (Lakhs)</label>
+          <input type="number" step="any" min="0" value={leadValue} onChange={(e) => setLeadValue(e.target.value)} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium" placeholder="e.g. 25.50" />
+        </div>
+      </FormModal>
     </div>
   );
 }

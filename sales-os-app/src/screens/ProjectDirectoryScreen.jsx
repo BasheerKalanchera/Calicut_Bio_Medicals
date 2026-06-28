@@ -26,7 +26,63 @@ function setCache(key, data) {
   projectListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-export default function ProjectDirectoryScreen() {
+function ProjectDetailView({ project: p, onBack, onEdit }) {
+  const fields = [
+    { label: "Account", value: p.account?.name },
+    { label: "Status", value: p.status?.status_name },
+    { label: "Owner", value: p.owner?.display_name },
+    { label: "Bid Submission Date", value: p.bid_submission_date || "—" },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+      {/* Fixed header */}
+      <div className="px-4 pt-4 bg-gray-50">
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={onBack}
+            className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0"
+            aria-label="Back"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight truncate">{p.name}</h2>
+          </div>
+          <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200 shrink-0">
+            {p.status?.status_name}
+          </span>
+          <button
+            onClick={onEdit}
+            className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+            Project Details
+          </h4>
+          <div className="space-y-4">
+            {fields.map((f) => (
+              <div key={f.label}>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{f.label}</div>
+                <div className="font-bold text-gray-800">{f.value || "—"}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef }) {
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -34,6 +90,8 @@ export default function ProjectDirectoryScreen() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
+
+  const [selectedProject, setSelectedProject] = useState(null);
 
 
   // Master data (lazy-loaded)
@@ -131,6 +189,7 @@ export default function ProjectDirectoryScreen() {
     setShowCreateProject(true);
     await loadMasterData();
   };
+  if (openCreateRef) openCreateRef.current = openCreateProject;
 
   const handleCreateProject = async () => {
     if (!newProjectAccountId) throw new Error("Account is required");
@@ -168,6 +227,8 @@ export default function ProjectDirectoryScreen() {
     await updateProject(editingProject.id, payload);
     projectListCache.clear();
     fetchProjects({ background: true });
+    setSelectedProject(null);
+    onDetailModeChange?.(false);
   };
 
   const totalPages = Math.ceil(total / pageSize) || 1;
@@ -175,21 +236,56 @@ export default function ProjectDirectoryScreen() {
   const labelClass = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
   const inputClass = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
 
+  if (selectedProject) {
+    return (
+      <>
+        <ProjectDetailView
+          project={selectedProject}
+          onBack={() => { setSelectedProject(null); onDetailModeChange?.(false); }}
+          onEdit={() => openEditProject(selectedProject)}
+        />
+        <FormModal
+          isOpen={editingProject !== null}
+          onClose={() => setEditingProject(null)}
+          title="Edit Project"
+          onSubmit={handleUpdateProject}
+        >
+          {editingProject && (
+            <div className="px-3 py-2 bg-blue-50 rounded-xl text-xs font-bold text-blue-700 mb-1">
+              {editingProject.account?.name}
+            </div>
+          )}
+          <div>
+            <label className={labelClass}>Name *</label>
+            <input type="text" value={editProjectName} onChange={(e) => setEditProjectName(e.target.value)} className={inputClass} autoFocus />
+          </div>
+          <div>
+            <label className={labelClass}>Status</label>
+            <select value={editProjectStatusId} onChange={(e) => setEditProjectStatusId(e.target.value)} className={inputClass}>
+              <option value="">Select status</option>
+              {projectStatuses.map((s) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Owner</label>
+            <select value={editProjectOwnerId} onChange={(e) => setEditProjectOwnerId(e.target.value)} className={inputClass}>
+              <option value="">Select owner</option>
+              {users.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Bid Submission Date</label>
+            <input type="date" value={editProjectBidDate} onChange={(e) => setEditProjectBidDate(e.target.value)} className={inputClass} />
+          </div>
+        </FormModal>
+      </>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
       {/* Fixed header */}
       <div className="px-4 pt-4 bg-gray-50">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">
-            All Projects
-          </h2>
-          <button
-            onClick={openCreateProject}
-            className="px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm"
-          >
-            + Add Project
-          </button>
-        </div>
 
         <div className="flex gap-3 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex-1 relative">
@@ -240,40 +336,33 @@ export default function ProjectDirectoryScreen() {
               {projects.map((p) => (
                 <div
                   key={p.id}
-                  className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"
+                  onClick={() => { setSelectedProject(p); onDetailModeChange?.(true); }}
+                  className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
                 >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div>
-                      <div className="font-bold text-gray-800 text-base">{p.name}</div>
-                      <div className="text-xs font-bold text-blue-600 mt-0.5">{p.account.name}</div>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black text-base shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-gray-800 text-sm group-hover:text-blue-900 transition-colors">{p.name}</div>
+                        <div className="text-sm font-bold text-blue-600 mt-0.5">{p.account.name}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
-                        {p.status.status_name}
-                      </span>
-                      <button
-                        onClick={() => openEditProject(p)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
-                      >
-                        Edit
-                      </button>
+                    <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors shrink-0">
+                      <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
+                      {p.status.status_name}
+                    </span>
                     <div>
-                      <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                        Owner:{" "}
-                      </span>
+                      <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Owner: </span>
                       <span className="font-bold">{p.owner.display_name}</span>
                     </div>
-                    {p.bid_submission_date && (
-                      <div>
-                        <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">
-                          Bid Date:{" "}
-                        </span>
-                        <span className="font-bold">{p.bid_submission_date}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
@@ -379,64 +468,6 @@ export default function ProjectDirectoryScreen() {
         </div>
       </FormModal>
 
-      {/* Edit Project Modal */}
-      <FormModal
-        isOpen={editingProject !== null}
-        onClose={() => setEditingProject(null)}
-        title="Edit Project"
-        onSubmit={handleUpdateProject}
-      >
-        {editingProject && (
-          <div className="px-3 py-2 bg-blue-50 rounded-xl text-xs font-bold text-blue-700 mb-1">
-            {editingProject.account?.name}
-          </div>
-        )}
-        <div>
-          <label className={labelClass}>Name *</label>
-          <input
-            type="text"
-            value={editProjectName}
-            onChange={(e) => setEditProjectName(e.target.value)}
-            className={inputClass}
-            autoFocus
-          />
-        </div>
-        <div>
-          <label className={labelClass}>Status</label>
-          <select
-            value={editProjectStatusId}
-            onChange={(e) => setEditProjectStatusId(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Select status</option>
-            {projectStatuses.map((s) => (
-              <option key={s.id} value={s.id}>{s.status_name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Owner</label>
-          <select
-            value={editProjectOwnerId}
-            onChange={(e) => setEditProjectOwnerId(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Select owner</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.display_name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Bid Submission Date</label>
-          <input
-            type="date"
-            value={editProjectBidDate}
-            onChange={(e) => setEditProjectBidDate(e.target.value)}
-            className={inputClass}
-          />
-        </div>
-      </FormModal>
     </div>
   );
 }

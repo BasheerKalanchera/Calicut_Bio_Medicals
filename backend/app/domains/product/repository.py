@@ -26,10 +26,13 @@ class ProductRepository(BaseRepository[Product]):
         if active_only:
             f.append(Product.is_active == True)  # noqa: E712
         if search:
+            from app.domains.reference.models import SBU
+            sbu_match = select(SBU.id).where(SBU.name.ilike(f"%{search}%")).scalar_subquery()
             f.append(
                 or_(
                     Product.name.ilike(f"%{search}%"),
                     Product.oem_name.ilike(f"%{search}%"),
+                    Product.sbu_id.in_(sbu_match),
                 )
             )
         if sbu_id:

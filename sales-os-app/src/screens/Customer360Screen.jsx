@@ -545,6 +545,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editAssetDepartment, setEditAssetDepartment] = useState("");
 
   const chipBarRef = useRef(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const handleTabChange = useCallback((tabId) => {
     setActiveTab(tabId);
