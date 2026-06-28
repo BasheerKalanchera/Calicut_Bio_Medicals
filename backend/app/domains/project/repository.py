@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -54,7 +54,14 @@ class ProjectRepository(BaseRepository[Project]):
             .order_by(Project.name)
         )
         if search:
-            stmt = stmt.where(Project.name.ilike(f"%{search}%"))
+            stmt = stmt.where(
+                or_(
+                    Project.name.ilike(f"%{search}%"),
+                    Project.account_id.in_(
+                        select(Account.id).where(Account.name.ilike(f"%{search}%"))
+                    ),
+                )
+            )
 
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         results = list(self.db.scalars(stmt.offset(offset).limit(limit)).unique().all())

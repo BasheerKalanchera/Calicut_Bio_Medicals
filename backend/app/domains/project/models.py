@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import UUID, Date, ForeignKey, String
+from sqlalchemy import UUID, Date, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -9,6 +9,9 @@ from app.db.base import AuditMixin, Base
 
 class Project(AuditMixin, Base):
     __tablename__ = "project"
+    __table_args__ = (
+        Index("idx_project_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id: Mapped[uuid.UUID] = mapped_column(
@@ -29,6 +32,6 @@ class Project(AuditMixin, Base):
     )
     status: Mapped["ProjectStatus"] = relationship(back_populates="projects", lazy="joined")
 
-    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="project", lazy="selectin")
-    activities: Mapped[list["Activity"]] = relationship(back_populates="project", lazy="selectin")
-    documents: Mapped[list["Document"]] = relationship(back_populates="project", lazy="selectin")
+    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="project", lazy="select")
+    activities: Mapped[list["Activity"]] = relationship(back_populates="project", lazy="select")
+    documents: Mapped[list["Document"]] = relationship(back_populates="project", lazy="select")

@@ -35,6 +35,7 @@ export default function ProjectDirectoryScreen() {
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
+
   // Master data (lazy-loaded)
   const [accounts, setAccounts] = useState([]);
   const [projectStatuses, setProjectStatuses] = useState([]);
@@ -192,10 +193,10 @@ export default function ProjectDirectoryScreen() {
 
         <div className="flex gap-3 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
           <div className="flex-1 relative">
-            <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            <span className="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
             <input
               type="text"
-              placeholder="Search projects..."
+              placeholder="Search by project or hospital..."
               className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -280,7 +281,7 @@ export default function ProjectDirectoryScreen() {
 
             {projects.length === 0 && (
               <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-                {search ? "No projects match your search." : "No projects found."}
+                {search ? `No projects or hospitals matching "${search}".` : "No projects found."}
               </div>
             )}
 
