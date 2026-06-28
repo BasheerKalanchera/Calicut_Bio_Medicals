@@ -10,6 +10,8 @@ from app.domains.account.workspace_schemas import WorkspaceOpportunity
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
     OpportunityCreate,
+    OpportunityItemCreate,
+    OpportunityItemResponse,
     OpportunityResponse,
     OpportunityUpdate,
 )
@@ -59,3 +61,33 @@ async def update_opportunity(
         opportunity_id, body, updated_by=current_user.id
     )
     return APIResponse(data=OpportunityResponse.model_validate(opportunity))
+
+
+@router.get("/opportunities/{opportunity_id}/items")
+async def list_opportunity_items(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[OpportunityItemResponse]]:
+    items = service.list_items(opportunity_id)
+    return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
+
+
+@router.post("/opportunities/{opportunity_id}/items", status_code=201)
+async def add_opportunity_item(
+    opportunity_id: uuid.UUID,
+    body: OpportunityItemCreate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[OpportunityItemResponse]:
+    item = service.add_item(opportunity_id, body, created_by=current_user.id)
+    return APIResponse(data=OpportunityItemResponse.model_validate(item))
+
+
+@router.delete("/opportunity-items/{item_id}", status_code=204)
+async def delete_opportunity_item(
+    item_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> None:
+    service.delete_item(item_id)

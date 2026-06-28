@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
-from app.domains.opportunity.models import Opportunity
+from app.domains.opportunity.models import Opportunity, OpportunityItem
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
@@ -55,3 +55,24 @@ class OpportunityRepository(BaseRepository[Opportunity]):
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
+
+    # ------------------------------------------------------------------
+    # Opportunity items
+    # ------------------------------------------------------------------
+
+    def list_items(self, opportunity_id: uuid.UUID) -> list[OpportunityItem]:
+        stmt = select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+        return list(self.db.scalars(stmt).unique().all())
+
+    def get_item(self, item_id: uuid.UUID) -> "OpportunityItem | None":
+        return self.db.get(OpportunityItem, item_id)
+
+    def add_item(self, item: OpportunityItem) -> OpportunityItem:
+        self.db.add(item)
+        self.db.flush()
+        self.db.refresh(item)
+        return item
+
+    def delete_item(self, item: OpportunityItem) -> None:
+        self.db.delete(item)
+        self.db.flush()

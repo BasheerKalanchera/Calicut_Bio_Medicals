@@ -1,9 +1,9 @@
 import uuid
 
 from app.core.exceptions import NotFoundError
-from app.domains.opportunity.models import Opportunity
+from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.opportunity.repository import OpportunityRepository
-from app.domains.opportunity.schemas import OpportunityCreate, OpportunityUpdate
+from app.domains.opportunity.schemas import OpportunityCreate, OpportunityItemCreate, OpportunityUpdate
 
 
 class OpportunityService:
@@ -35,11 +35,15 @@ class OpportunityService:
             status_id=data.status_id,
             win_probability=data.win_probability,
             project_id=data.project_id,
+            lead_source_id=data.lead_source_id,
             indicative_value=data.indicative_value,
             created_by=created_by,
             updated_by=created_by,
         )
-        return self.repository.create(opportunity)
+        opp = self.repository.create(opportunity)
+        for item_data in data.items:
+            self._create_item(opp.id, item_data, created_by=created_by)
+        return opp
 
     def update_opportunity(
         self,
@@ -58,3 +62,43 @@ class OpportunityService:
 
         opportunity.updated_by = updated_by
         return self.repository.update(opportunity)
+
+    # ------------------------------------------------------------------
+    # Opportunity items
+    # ------------------------------------------------------------------
+
+    def list_items(self, opportunity_id: uuid.UUID) -> list[OpportunityItem]:
+        return self.repository.list_items(opportunity_id)
+
+    def add_item(
+        self,
+        opportunity_id: uuid.UUID,
+        data: OpportunityItemCreate,
+        *,
+        created_by: uuid.UUID,
+    ) -> OpportunityItem:
+        return self._create_item(opportunity_id, data, created_by=created_by)
+
+    def delete_item(self, item_id: uuid.UUID) -> None:
+        item = self.repository.get_item(item_id)
+        if not item:
+            raise NotFoundError(f"Opportunity item {item_id} not found")
+        self.repository.delete_item(item)
+
+    def _create_item(
+        self,
+        opportunity_id: uuid.UUID,
+        data: OpportunityItemCreate,
+        *,
+        created_by: uuid.UUID,
+    ) -> OpportunityItem:
+        item = OpportunityItem(
+            opportunity_id=opportunity_id,
+            product_id=data.product_id,
+            quantity=data.quantity,
+            unit_price_lakhs=data.unit_price_lakhs,
+            discount_lakhs=data.discount_lakhs,
+            created_by=created_by,
+            updated_by=created_by,
+        )
+        return self.repository.add_item(item)

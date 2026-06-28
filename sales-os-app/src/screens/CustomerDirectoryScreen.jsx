@@ -223,14 +223,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
               <div
                 key={account.id}
                 onClick={() => onSelectAccount(account)}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                className="bg-white py-3 px-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-10 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center font-black text-sm shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
                     {account.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">
+                    <div className="font-bold text-gray-800 text-sm group-hover:text-blue-900 transition-colors">
                       {account.name}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">

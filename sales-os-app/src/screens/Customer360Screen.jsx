@@ -12,6 +12,9 @@ import {
   listOpportunities,
   createOpportunity,
   updateOpportunity,
+  listOpportunityItems,
+  addOpportunityItem,
+  deleteOpportunityItem,
   listInstalledAssets,
   createInstalledAsset,
   updateInstalledAsset,
@@ -19,11 +22,13 @@ import {
 import {
   listZones,
   listProjectStatuses,
+  listLeadSources,
   listStages,
   listStatuses,
   listUsers,
 } from "../services/masterData";
 import { listProducts } from "../services/products";
+import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 
 const TABS = [
@@ -447,6 +452,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }) {
 }
 
 export default function Customer360Screen({ accountId, initialAccount = null, onBack }) {
+  const { userProfile } = useAuth();
   const [account, setAccount] = useState(initialAccount);
   const [stakeholders, setStakeholders] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -505,25 +511,43 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editProjectOwnerId, setEditProjectOwnerId] = useState("");
   const [editProjectBidDate, setEditProjectBidDate] = useState("");
 
+  // Shared opportunity master data
+  const [leadSources, setLeadSources] = useState([]);
+
   // Create Opportunity state
   const [showCreateOpp, setShowCreateOpp] = useState(false);
+  const [showNewOppItemsModal, setShowNewOppItemsModal] = useState(false);
   const [newOppName, setNewOppName] = useState("");
   const [newOppProjectId, setNewOppProjectId] = useState("");
   const [newOppStageId, setNewOppStageId] = useState("");
   const [newOppStatusId, setNewOppStatusId] = useState("");
+  const [newOppLeadSourceId, setNewOppLeadSourceId] = useState("");
   const [newOppOwnerId, setNewOppOwnerId] = useState("");
   const [newOppWinProb, setNewOppWinProb] = useState("");
   const [newOppValue, setNewOppValue] = useState("");
+  const [newOppItems, setNewOppItems] = useState([]);
+  const [newOppItemProdId, setNewOppItemProdId] = useState("");
+  const [newOppItemQty, setNewOppItemQty] = useState("1");
+  const [newOppItemPrice, setNewOppItemPrice] = useState("");
+  const [newOppItemDisc, setNewOppItemDisc] = useState("0");
 
   // Edit Opportunity state
   const [editingOpp, setEditingOpp] = useState(null);
+  const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
   const [editOppName, setEditOppName] = useState("");
   const [editOppProjectId, setEditOppProjectId] = useState("");
   const [editOppStageId, setEditOppStageId] = useState("");
   const [editOppStatusId, setEditOppStatusId] = useState("");
+  const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
   const [editOppOwnerId, setEditOppOwnerId] = useState("");
   const [editOppWinProb, setEditOppWinProb] = useState("");
   const [editOppValue, setEditOppValue] = useState("");
+  const [editOppItems, setEditOppItems] = useState([]);
+  const [editOppOriginalItemIds, setEditOppOriginalItemIds] = useState([]);
+  const [editOppItemProdId, setEditOppItemProdId] = useState("");
+  const [editOppItemQty, setEditOppItemQty] = useState("1");
+  const [editOppItemPrice, setEditOppItemPrice] = useState("");
+  const [editOppItemDisc, setEditOppItemDisc] = useState("0");
 
   // Products list (lazy-loaded for asset form)
   const [products, setProducts] = useState([]);
@@ -745,14 +769,35 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     await Promise.all(loads);
   };
 
+  useEffect(() => {
+    if (newOppItems.length > 0) {
+      const total = newOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
+      setNewOppValue(total.toFixed(2));
+    } else {
+      setNewOppValue("");
+    }
+  }, [newOppItems]);
+
+  useEffect(() => {
+    if (editOppItems.length > 0) {
+      const total = editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
+      setEditOppValue(total.toFixed(2));
+    }
+    // no reset when empty — preserves original value while items are loading, and lets user edit manually after removing all products
+  }, [editOppItems]);
+
   const loadOpportunityMasterData = async () => {
     const loads = [];
     if (stages.length === 0)
       loads.push(listStages().then(setStages).catch(() => {}));
     if (oppStatuses.length === 0)
       loads.push(listStatuses().then(setOppStatuses).catch(() => {}));
+    if (leadSources.length === 0)
+      loads.push(listLeadSources().then(setLeadSources).catch(() => {}));
     if (users.length === 0)
       loads.push(listUsers().then(setUsers).catch(() => {}));
+    if (products.length === 0)
+      loads.push(listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setProducts(d.items || [])).catch(() => {}));
     await Promise.all(loads);
   };
 
@@ -806,9 +851,12 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setNewOppProjectId("");
     setNewOppStageId("");
     setNewOppStatusId("");
+    setNewOppLeadSourceId("");
     setNewOppOwnerId("");
     setNewOppWinProb("");
     setNewOppValue("");
+    setNewOppItems([]);
+    setNewOppItemProdId(""); setNewOppItemQty("1"); setNewOppItemPrice(""); setNewOppItemDisc("0");
     setShowCreateOpp(true);
     await loadOpportunityMasterData();
   };
@@ -832,7 +880,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       win_probability: Number(newOppWinProb),
     };
     if (newOppProjectId) payload.project_id = newOppProjectId;
+    if (newOppLeadSourceId) payload.lead_source_id = newOppLeadSourceId;
     if (newOppValue !== "") payload.indicative_value = Number(newOppValue);
+    if (newOppItems.length > 0) payload.items = newOppItems.map((i) => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      unit_price_lakhs: i.unit_price_lakhs,
+      discount_lakhs: i.discount_lakhs,
+    }));
     await createOpportunity(accountId, payload);
     listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
   };
@@ -843,10 +898,28 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOppProjectId(o.project_id || "");
     setEditOppStageId(o.stage?.id || "");
     setEditOppStatusId(o.status?.id || "");
+    setEditOppLeadSourceId(o.lead_source_id || "");
     setEditOppOwnerId(o.owner?.id || "");
     setEditOppWinProb(o.win_probability != null ? String(o.win_probability) : "");
     setEditOppValue(o.indicative_value != null ? String(o.indicative_value) : "");
-    await loadOpportunityMasterData();
+    setEditOppItems([]);
+    setEditOppOriginalItemIds([]);
+    setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
+    await Promise.all([
+      loadOpportunityMasterData(),
+      listOpportunityItems(o.id).then((items) => {
+        const mapped = items.map((i) => ({
+          id: i.id,
+          product_id: i.product_id,
+          product_name: i.product?.name || "",
+          quantity: i.quantity,
+          unit_price_lakhs: Number(i.unit_price_lakhs),
+          discount_lakhs: Number(i.discount_lakhs),
+        }));
+        setEditOppItems(mapped);
+        setEditOppOriginalItemIds(mapped.map((i) => i.id));
+      }).catch(() => {}),
+    ]);
   };
 
   const handleUpdateOpp = async () => {
@@ -864,15 +937,28 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       win_probability: editOppWinProb !== "" ? Number(editOppWinProb) : undefined,
     };
     if (editOppProjectId) payload.project_id = editOppProjectId;
+    payload.lead_source_id = editOppLeadSourceId || null;
     payload.indicative_value = editOppValue !== "" ? Number(editOppValue) : null;
     await updateOpportunity(editingOpp.id, payload);
+    const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
+    const toDelete = editOppOriginalItemIds.filter((id) => !currentItemIds.includes(id));
+    const toAdd = editOppItems.filter((i) => !i.id);
+    await Promise.all([
+      ...toDelete.map((id) => deleteOpportunityItem(id).catch(() => {})),
+      ...toAdd.map((i) => addOpportunityItem(editingOpp.id, {
+        product_id: i.product_id,
+        quantity: i.quantity,
+        unit_price_lakhs: i.unit_price_lakhs,
+        discount_lakhs: i.discount_lakhs,
+      }).catch(() => {})),
+    ]);
     listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
   };
 
   const loadProductsList = async () => {
     if (products.length === 0) {
       try {
-        const data = await listProducts({ page_size: 100 });
+        const data = await listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id });
         setProducts(data.items || []);
       } catch {}
     }
@@ -1409,37 +1495,48 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             ))}
           </select>
         </div>
-        <div>
-          <label className={labelClass}>Stage *</label>
-          <select
-            value={newOppStageId}
-            onChange={(e) => {
-              const selected = stages.find((s) => s.id === e.target.value);
-              setNewOppStageId(e.target.value);
-              if (selected) setNewOppWinProb(String(selected.default_win_probability));
-            }}
-            className={inputClass}
-          >
-            <option value="">Select stage</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.stage_name}
-              </option>
-            ))}
-          </select>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className={labelClass}>Stage *</label>
+            <select
+              value={newOppStageId}
+              onChange={(e) => {
+                const selected = stages.find((s) => s.id === e.target.value);
+                setNewOppStageId(e.target.value);
+                if (selected) setNewOppWinProb(String(selected.default_win_probability));
+              }}
+              className={inputClass}
+            >
+              <option value="">Select stage</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>{s.stage_name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Status *</label>
+            <select
+              value={newOppStatusId}
+              onChange={(e) => setNewOppStatusId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select status</option>
+              {oppStatuses.map((s) => (
+                <option key={s.id} value={s.id}>{s.status_name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
-          <label className={labelClass}>Status *</label>
+          <label className={labelClass}>Lead Source</label>
           <select
-            value={newOppStatusId}
-            onChange={(e) => setNewOppStatusId(e.target.value)}
+            value={newOppLeadSourceId}
+            onChange={(e) => setNewOppLeadSourceId(e.target.value)}
             className={inputClass}
           >
-            <option value="">Select status</option>
-            {oppStatuses.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.status_name}
-              </option>
+            <option value="">Select source</option>
+            {leadSources.map((ls) => (
+              <option key={ls.id} value={ls.id}>{ls.name}</option>
             ))}
           </select>
         </div>
@@ -1471,16 +1568,111 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           />
         </div>
         <div>
-          <label className={labelClass}>Indicative Value (Lakhs)</label>
+          <label className={labelClass}>
+            Indicative Value (Lakhs)
+            {newOppItems.length > 0 && <span className="ml-1 text-blue-400 font-normal normal-case tracking-normal">(auto)</span>}
+          </label>
           <input
             type="number"
             step="any"
             min="0"
             value={newOppValue}
             onChange={(e) => setNewOppValue(e.target.value)}
-            className={inputClass}
+            readOnly={newOppItems.length > 0}
+            className={newOppItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inputClass}
             placeholder="e.g. 25.50"
           />
+        </div>
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
+            <button type="button" onClick={() => setShowNewOppItemsModal(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">
+              {newOppItems.length > 0 ? `Edit (${newOppItems.length})` : "+ Add Products"}
+            </button>
+          </div>
+          {newOppItems.length > 0 ? (
+            <div className="space-y-1">
+              {newOppItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs">
+                  <div className="flex-1 font-bold truncate">{item.product_name}</div>
+                  <div className="text-gray-400 shrink-0">{item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}</div>
+                </div>
+              ))}
+              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+                Total: ₹{newOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 italic">No products added</div>
+          )}
+        </div>
+      </FormModal>
+
+      {/* New Opportunity — Products secondary modal */}
+      <FormModal
+        isOpen={showNewOppItemsModal}
+        onClose={() => setShowNewOppItemsModal(false)}
+        title="Products"
+        onSubmit={async () => {}}
+        submitLabel="Done"
+      >
+        {newOppItems.length > 0 && (
+          <div className="space-y-2">
+            {newOppItems.map((item, i) => (
+              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold truncate">{item.product_name}</div>
+                  <button type="button" onClick={() => setNewOppItems(newOppItems.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Qty</div>
+                    <input type="number" min="1" value={item.quantity} onChange={(e) => setNewOppItems(newOppItems.map((it, j) => j === i ? { ...it, quantity: Number(e.target.value) } : it))} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Price (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.unit_price_lakhs} onChange={(e) => setNewOppItems(newOppItems.map((it, j) => j === i ? { ...it, unit_price_lakhs: Number(e.target.value) } : it))} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Disc (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.discount_lakhs} onChange={(e) => setNewOppItems(newOppItems.map((it, j) => j === i ? { ...it, discount_lakhs: Number(e.target.value) } : it))} className={inputClass} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+              Total: ₹{newOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+            </div>
+          </div>
+        )}
+        <div className="border-t border-gray-100 pt-3 space-y-2">
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Add Product</div>
+          <select value={newOppItemProdId} onChange={(e) => setNewOppItemProdId(e.target.value)} className={inputClass}>
+            <option value="">Select product</option>
+            {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <div className="w-20">
+              <label className={labelClass}>Qty</label>
+              <input type="number" min="1" value={newOppItemQty} onChange={(e) => setNewOppItemQty(e.target.value)} className={inputClass} placeholder="e.g. 2" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Price (₹L)</label>
+              <input type="number" min="0" step="any" value={newOppItemPrice} onChange={(e) => setNewOppItemPrice(e.target.value)} className={inputClass} placeholder="e.g. 12.5" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Disc (₹L)</label>
+              <input type="number" min="0" step="any" value={newOppItemDisc} onChange={(e) => setNewOppItemDisc(e.target.value)} className={inputClass} placeholder="0" />
+            </div>
+          </div>
+          <button type="button" onClick={() => {
+            if (!newOppItemProdId || !newOppItemQty || !newOppItemPrice) return;
+            const prod = products.find((p) => p.id === newOppItemProdId);
+            setNewOppItems([...newOppItems, { product_id: newOppItemProdId, product_name: prod?.name || "", quantity: Number(newOppItemQty), unit_price_lakhs: Number(newOppItemPrice), discount_lakhs: Number(newOppItemDisc || 0) }]);
+            setNewOppItemProdId(""); setNewOppItemQty("1"); setNewOppItemPrice(""); setNewOppItemDisc("0");
+          }} className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+            + Add Product
+          </button>
         </div>
       </FormModal>
 
@@ -1516,37 +1708,48 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             ))}
           </select>
         </div>
-        <div>
-          <label className={labelClass}>Stage</label>
-          <select
-            value={editOppStageId}
-            onChange={(e) => {
-              const selected = stages.find((s) => s.id === e.target.value);
-              setEditOppStageId(e.target.value);
-              if (selected) setEditOppWinProb(String(selected.default_win_probability));
-            }}
-            className={inputClass}
-          >
-            <option value="">Select stage</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.stage_name}
-              </option>
-            ))}
-          </select>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className={labelClass}>Stage</label>
+            <select
+              value={editOppStageId}
+              onChange={(e) => {
+                const selected = stages.find((s) => s.id === e.target.value);
+                setEditOppStageId(e.target.value);
+                if (selected) setEditOppWinProb(String(selected.default_win_probability));
+              }}
+              className={inputClass}
+            >
+              <option value="">Select stage</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>{s.stage_name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Status</label>
+            <select
+              value={editOppStatusId}
+              onChange={(e) => setEditOppStatusId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Select status</option>
+              {oppStatuses.map((s) => (
+                <option key={s.id} value={s.id}>{s.status_name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
-          <label className={labelClass}>Status</label>
+          <label className={labelClass}>Lead Source</label>
           <select
-            value={editOppStatusId}
-            onChange={(e) => setEditOppStatusId(e.target.value)}
+            value={editOppLeadSourceId}
+            onChange={(e) => setEditOppLeadSourceId(e.target.value)}
             className={inputClass}
           >
-            <option value="">Select status</option>
-            {oppStatuses.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.status_name}
-              </option>
+            <option value="">Select source</option>
+            {leadSources.map((ls) => (
+              <option key={ls.id} value={ls.id}>{ls.name}</option>
             ))}
           </select>
         </div>
@@ -1578,16 +1781,111 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           />
         </div>
         <div>
-          <label className={labelClass}>Indicative Value (Lakhs)</label>
+          <label className={labelClass}>
+            Indicative Value (Lakhs)
+            {editOppItems.length > 0 && <span className="ml-1 text-blue-400 font-normal normal-case tracking-normal">(auto)</span>}
+          </label>
           <input
             type="number"
             step="any"
             min="0"
             value={editOppValue}
             onChange={(e) => setEditOppValue(e.target.value)}
-            className={inputClass}
+            readOnly={editOppItems.length > 0}
+            className={editOppItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inputClass}
             placeholder="e.g. 25.50"
           />
+        </div>
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
+            <button type="button" onClick={() => setShowEditOppItemsModal(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">
+              {editOppItems.length > 0 ? `Edit (${editOppItems.length})` : "+ Add Products"}
+            </button>
+          </div>
+          {editOppItems.length > 0 ? (
+            <div className="space-y-1">
+              {editOppItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs">
+                  <div className="flex-1 font-bold truncate">{item.product_name}</div>
+                  <div className="text-gray-400 shrink-0">{item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}</div>
+                </div>
+              ))}
+              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+                Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 italic">No products added</div>
+          )}
+        </div>
+      </FormModal>
+
+      {/* Edit Opportunity — Products secondary modal */}
+      <FormModal
+        isOpen={showEditOppItemsModal}
+        onClose={() => setShowEditOppItemsModal(false)}
+        title="Products"
+        onSubmit={async () => {}}
+        submitLabel="Done"
+      >
+        {editOppItems.length > 0 && (
+          <div className="space-y-2">
+            {editOppItems.map((item, i) => (
+              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold truncate">{item.product_name}</div>
+                  <button type="button" onClick={() => setEditOppItems(editOppItems.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Qty</div>
+                    <input type="number" min="1" value={item.quantity} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, quantity: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Price (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.unit_price_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, unit_price_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Disc (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.discount_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, discount_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+              Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+            </div>
+          </div>
+        )}
+        <div className="border-t border-gray-100 pt-3 space-y-2">
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Add Product</div>
+          <select value={editOppItemProdId} onChange={(e) => setEditOppItemProdId(e.target.value)} className={inputClass}>
+            <option value="">Select product</option>
+            {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <div className="w-20">
+              <label className={labelClass}>Qty</label>
+              <input type="number" min="1" value={editOppItemQty} onChange={(e) => setEditOppItemQty(e.target.value)} className={inputClass} placeholder="e.g. 2" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Price (₹L)</label>
+              <input type="number" min="0" step="any" value={editOppItemPrice} onChange={(e) => setEditOppItemPrice(e.target.value)} className={inputClass} placeholder="e.g. 12.5" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Disc (₹L)</label>
+              <input type="number" min="0" step="any" value={editOppItemDisc} onChange={(e) => setEditOppItemDisc(e.target.value)} className={inputClass} placeholder="0" />
+            </div>
+          </div>
+          <button type="button" onClick={() => {
+            if (!editOppItemProdId || !editOppItemQty || !editOppItemPrice) return;
+            const prod = products.find((p) => p.id === editOppItemProdId);
+            setEditOppItems([...editOppItems, { product_id: editOppItemProdId, product_name: prod?.name || "", quantity: Number(editOppItemQty), unit_price_lakhs: Number(editOppItemPrice), discount_lakhs: Number(editOppItemDisc || 0) }]);
+            setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
+          }} className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+            + Add Product
+          </button>
         </div>
       </FormModal>
 

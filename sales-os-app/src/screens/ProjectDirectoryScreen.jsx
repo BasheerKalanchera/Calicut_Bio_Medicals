@@ -1,7 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { listAllProjects } from "../services/projects";
-import { listAccounts, createProject, updateProject } from "../services/accounts";
-import { listProjectStatuses, listUsers } from "../services/masterData";
+import { listAccounts, createProject, updateProject, listOpportunities, updateOpportunity, createOpportunity, listOpportunityItems, addOpportunityItem, deleteOpportunityItem } from "../services/accounts";
+import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources } from "../services/masterData";
+import { listProducts } from "../services/products";
+import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
@@ -26,7 +28,154 @@ function setCache(key, data) {
   projectListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-function ProjectDetailView({ project: p, onBack, onEdit }) {
+function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef }) {
+  const { userProfile } = useAuth();
+  const [opps, setOpps] = useState([]);
+  const [oppsLoading, setOppsLoading] = useState(true);
+
+  const [editingOpp, setEditingOpp] = useState(null);
+  const [editOppName, setEditOppName] = useState("");
+  const [editOppStageId, setEditOppStageId] = useState("");
+  const [editOppStatusId, setEditOppStatusId] = useState("");
+  const [editOppOwnerId, setEditOppOwnerId] = useState("");
+  const [editOppWinProb, setEditOppWinProb] = useState("");
+  const [editOppValue, setEditOppValue] = useState("");
+  const [oppStages, setOppStages] = useState([]);
+  const [oppStatuses, setOppStatuses] = useState([]);
+  const [oppUsers, setOppUsers] = useState([]);
+
+  const [oppProducts, setOppProducts] = useState([]);
+  const [editOppItems, setEditOppItems] = useState([]);
+  const [editOppOriginalItemIds, setEditOppOriginalItemIds] = useState([]);
+  const [editOppItemProdId, setEditOppItemProdId] = useState("");
+  const [editOppItemQty, setEditOppItemQty] = useState("1");
+  const [editOppItemPrice, setEditOppItemPrice] = useState("");
+  const [editOppItemDisc, setEditOppItemDisc] = useState("0");
+  const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
+  const [leadSources, setLeadSources] = useState([]);
+  const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
+
+  const [showAddOpp, setShowAddOpp] = useState(false);
+  const [addOppName, setAddOppName] = useState("");
+  const [addOppStageId, setAddOppStageId] = useState("");
+  const [addOppStatusId, setAddOppStatusId] = useState("");
+  const [addOppOwnerId, setAddOppOwnerId] = useState("");
+  const [addOppWinProb, setAddOppWinProb] = useState("");
+  const [addOppValue, setAddOppValue] = useState("");
+
+  const loadOpps = () => {
+    setOppsLoading(true);
+    listOpportunities(p.account.id)
+      .then((all) => setOpps(all.filter((o) => o.project_id === p.id)))
+      .catch(() => setOpps([]))
+      .finally(() => setOppsLoading(false));
+  };
+
+  useEffect(() => { loadOpps(); }, [p.id, p.account.id]);
+
+  if (refreshOppsRef) refreshOppsRef.current = loadOpps;
+
+  useEffect(() => {
+    if (editOppItems.length > 0) {
+      const total = editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
+      setEditOppValue(total.toFixed(2));
+    }
+  }, [editOppItems]);
+
+  async function openEditOpp(opp) {
+    setEditingOpp(opp);
+    setEditOppName(opp.name || "");
+    setEditOppStageId(opp.stage?.id || "");
+    setEditOppStatusId(opp.status?.id || "");
+    setEditOppOwnerId(opp.owner?.id || "");
+    setEditOppWinProb(String(opp.win_probability ?? ""));
+    setEditOppValue(opp.indicative_value != null ? String(opp.indicative_value) : "");
+    setEditOppItems([]); setEditOppOriginalItemIds([]);
+    setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
+    setEditOppLeadSourceId(opp.lead_source_id || "");
+    await Promise.all([
+      oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
+      oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
+      oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
+      oppProducts.length === 0 && listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setOppProducts(d.items || [])).catch(() => {}),
+      leadSources.length === 0 && listLeadSources().then(setLeadSources).catch(() => {}),
+      listOpportunityItems(opp.id).then((items) => {
+        const mapped = items.map((i) => ({
+          id: i.id,
+          product_id: i.product_id,
+          product_name: i.product?.name || "",
+          quantity: i.quantity,
+          unit_price_lakhs: Number(i.unit_price_lakhs),
+          discount_lakhs: Number(i.discount_lakhs),
+        }));
+        setEditOppItems(mapped);
+        setEditOppOriginalItemIds(mapped.map((i) => i.id));
+      }).catch(() => {}),
+    ]);
+  }
+
+  async function handleUpdateOpp() {
+    if (!editOppName.trim()) throw new Error("Opportunity name is required");
+    const payload = {
+      name: editOppName.trim(),
+      stage_id: editOppStageId || undefined,
+      status_id: editOppStatusId || undefined,
+      owner_id: editOppOwnerId || undefined,
+      win_probability: editOppWinProb !== "" ? Number(editOppWinProb) : undefined,
+    };
+    if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
+    payload.lead_source_id = editOppLeadSourceId || null;
+    await updateOpportunity(editingOpp.id, payload);
+    const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
+    const toDelete = editOppOriginalItemIds.filter((id) => !currentItemIds.includes(id));
+    const toAdd = editOppItems.filter((i) => !i.id);
+    await Promise.all([
+      ...toDelete.map((id) => deleteOpportunityItem(id).catch(() => {})),
+      ...toAdd.map((i) => addOpportunityItem(editingOpp.id, {
+        product_id: i.product_id,
+        quantity: i.quantity,
+        unit_price_lakhs: i.unit_price_lakhs,
+        discount_lakhs: i.discount_lakhs,
+      }).catch(() => {})),
+    ]);
+    const all = await listOpportunities(p.account.id);
+    setOpps(all.filter((o) => o.project_id === p.id));
+    setEditingOpp(null);
+  }
+
+  async function openAddOpp() {
+    setAddOppName(p.name);
+    setAddOppStageId(""); setAddOppStatusId(""); setAddOppOwnerId("");
+    setAddOppWinProb(""); setAddOppValue("");
+    setShowAddOpp(true);
+    await Promise.all([
+      oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
+      oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
+      oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
+    ]);
+  }
+
+  async function handleCreateOpp() {
+    if (!addOppName.trim()) throw new Error("Opportunity name is required");
+    if (!addOppStageId) throw new Error("Stage is required");
+    if (!addOppStatusId) throw new Error("Status is required");
+    if (!addOppOwnerId) throw new Error("Owner is required");
+    if (addOppWinProb === "") throw new Error("Win probability is required");
+    const payload = {
+      name: addOppName.trim(),
+      stage_id: addOppStageId,
+      status_id: addOppStatusId,
+      owner_id: addOppOwnerId,
+      win_probability: Number(addOppWinProb),
+      project_id: p.id,
+    };
+    if (addOppValue !== "") payload.indicative_value = Number(addOppValue);
+    await createOpportunity(p.account.id, payload);
+    const all = await listOpportunities(p.account.id);
+    setOpps(all.filter((o) => o.project_id === p.id));
+    setShowAddOpp(false);
+  }
+
   const fields = [
     { label: "Account", value: p.account?.name },
     { label: "Status", value: p.status?.status_name },
@@ -34,55 +183,244 @@ function ProjectDetailView({ project: p, onBack, onEdit }) {
     { label: "Bid Submission Date", value: p.bid_submission_date || "—" },
   ];
 
+  const labelClass = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
+  const inputClass = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
-      {/* Fixed header */}
-      <div className="px-4 pt-4 bg-gray-50">
-        <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0"
-            aria-label="Back"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight truncate">{p.name}</h2>
+    <>
+      <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+        {/* Fixed header */}
+        <div className="px-4 pt-4 bg-gray-50">
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={onBack}
+              className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0"
+              aria-label="Back"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight truncate">{p.name}</h2>
+            </div>
+            <button
+              onClick={onEdit}
+              className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
+            >
+              Edit
+            </button>
           </div>
-          <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200 shrink-0">
-            {p.status?.status_name}
-          </span>
-          <button
-            onClick={onEdit}
-            className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
-          >
-            Edit
-          </button>
+        </div>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4 space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+              Project Details
+            </h4>
+            <div className="space-y-4">
+              {fields.map((f) => (
+                <div key={f.label}>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{f.label}</div>
+                  <div className="font-bold text-gray-800">{f.value || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Opportunities */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+              Opportunities
+            </h4>
+            {oppsLoading ? (
+              <div className="text-center py-4 text-gray-400 font-bold text-sm animate-pulse">Loading...</div>
+            ) : opps.length === 0 ? (
+              <div className="text-center py-4 text-gray-400 italic text-sm">No opportunities linked to this project.</div>
+            ) : (
+              <div className="space-y-3">
+                {opps.map((opp) => (
+                  <div key={opp.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl">
+                    <div className="min-w-0">
+                      <div className="font-bold text-gray-800 text-sm truncate">{opp.name}</div>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-black border bg-emerald-50 text-emerald-700 border-emerald-200">
+                          {opp.stage?.stage_name}
+                        </span>
+                        <span className="text-[10px] font-bold text-gray-400">{opp.win_probability}% win</span>
+                        {opp.indicative_value != null && (
+                          <span className="text-[10px] font-bold text-gray-400">₹{opp.indicative_value}L</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => openEditOpp(opp)}
+                      className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-            Project Details
-          </h4>
-          <div className="space-y-4">
-            {fields.map((f) => (
-              <div key={f.label}>
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{f.label}</div>
-                <div className="font-bold text-gray-800">{f.value || "—"}</div>
+
+      {/* Edit Opportunity Modal */}
+      <FormModal
+        isOpen={editingOpp !== null}
+        onClose={() => setEditingOpp(null)}
+        title="Edit Opportunity"
+        onSubmit={handleUpdateOpp}
+      >
+        {editingOpp && (
+          <div className="px-3 py-2 bg-blue-50 rounded-xl text-xs font-bold text-blue-700 mb-1">
+            {p.name}
+          </div>
+        )}
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input type="text" value={editOppName} onChange={(e) => setEditOppName(e.target.value)} className={inputClass} autoFocus />
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className={labelClass}>Stage</label>
+            <select value={editOppStageId} onChange={(e) => { const s = oppStages.find((x) => x.id === e.target.value); setEditOppStageId(e.target.value); if (s) setEditOppWinProb(String(s.default_win_probability)); }} className={inputClass}>
+              <option value="">Select stage</option>
+              {oppStages.map((s) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Status</label>
+            <select value={editOppStatusId} onChange={(e) => setEditOppStatusId(e.target.value)} className={inputClass}>
+              <option value="">Select status</option>
+              {oppStatuses.map((s) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Lead Source</label>
+          <select value={editOppLeadSourceId} onChange={(e) => setEditOppLeadSourceId(e.target.value)} className={inputClass}>
+            <option value="">Select source</option>
+            {leadSources.map((ls) => <option key={ls.id} value={ls.id}>{ls.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Owner</label>
+          <select value={editOppOwnerId} onChange={(e) => setEditOppOwnerId(e.target.value)} className={inputClass}>
+            <option value="">Select owner</option>
+            {oppUsers.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Win Probability %</label>
+          <input type="number" min="0" max="100" value={editOppWinProb} onChange={(e) => setEditOppWinProb(e.target.value)} className={inputClass} placeholder="0 – 100" />
+        </div>
+        <div>
+          <label className={labelClass}>
+            Indicative Value (Lakhs)
+            {editOppItems.length > 0 && <span className="ml-1 text-blue-400 font-normal normal-case tracking-normal">(auto)</span>}
+          </label>
+          <input type="number" step="any" min="0" value={editOppValue} onChange={(e) => setEditOppValue(e.target.value)} readOnly={editOppItems.length > 0} className={editOppItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inputClass} placeholder="e.g. 25.50" />
+        </div>
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
+            <button type="button" onClick={() => setShowEditOppItemsModal(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">
+              {editOppItems.length > 0 ? `Edit (${editOppItems.length})` : "+ Add Products"}
+            </button>
+          </div>
+          {editOppItems.length > 0 ? (
+            <div className="space-y-1">
+              {editOppItems.map((item, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs">
+                  <div className="flex-1 font-bold truncate">{item.product_name}</div>
+                  <div className="text-gray-400 shrink-0">{item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}</div>
+                </div>
+              ))}
+              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+                Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 italic">No products added</div>
+          )}
+        </div>
+      </FormModal>
+
+      {/* Edit Opportunity — Products secondary modal */}
+      <FormModal
+        isOpen={showEditOppItemsModal}
+        onClose={() => setShowEditOppItemsModal(false)}
+        title="Products"
+        onSubmit={async () => {}}
+        submitLabel="Done"
+      >
+        {editOppItems.length > 0 && (
+          <div className="space-y-2">
+            {editOppItems.map((item, i) => (
+              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold truncate">{item.product_name}</div>
+                  <button type="button" onClick={() => setEditOppItems(editOppItems.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Qty</div>
+                    <input type="number" min="1" value={item.quantity} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, quantity: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Price (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.unit_price_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, unit_price_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                  <div className="w-20">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Disc (₹L)</div>
+                    <input type="number" min="0" step="any" value={item.discount_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, discount_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
+                  </div>
+                </div>
               </div>
             ))}
+            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
+              Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+            </div>
           </div>
+        )}
+        <div className="border-t border-gray-100 pt-3 space-y-2">
+          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Add Product</div>
+          <select value={editOppItemProdId} onChange={(e) => setEditOppItemProdId(e.target.value)} className={inputClass}>
+            <option value="">Select product</option>
+            {oppProducts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <div className="flex gap-2">
+            <div className="w-20">
+              <label className={labelClass}>Qty</label>
+              <input type="number" min="1" value={editOppItemQty} onChange={(e) => setEditOppItemQty(e.target.value)} className={inputClass} placeholder="e.g. 2" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Price (₹L)</label>
+              <input type="number" min="0" step="any" value={editOppItemPrice} onChange={(e) => setEditOppItemPrice(e.target.value)} className={inputClass} placeholder="e.g. 12.5" />
+            </div>
+            <div className="w-20">
+              <label className={labelClass}>Disc (₹L)</label>
+              <input type="number" min="0" step="any" value={editOppItemDisc} onChange={(e) => setEditOppItemDisc(e.target.value)} className={inputClass} placeholder="0" />
+            </div>
+          </div>
+          <button type="button" onClick={() => {
+            if (!editOppItemProdId || !editOppItemQty || !editOppItemPrice) return;
+            const prod = oppProducts.find((p) => p.id === editOppItemProdId);
+            setEditOppItems([...editOppItems, { product_id: editOppItemProdId, product_name: prod?.name || "", quantity: Number(editOppItemQty), unit_price_lakhs: Number(editOppItemPrice), discount_lakhs: Number(editOppItemDisc || 0) }]);
+            setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
+          }} className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+            + Add Product
+          </button>
         </div>
-      </div>
-    </div>
+      </FormModal>
+    </>
   );
 }
 
-export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef }) {
+export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef, refreshOppsRef }) {
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -243,6 +581,7 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
           project={selectedProject}
           onBack={() => { setSelectedProject(null); onDetailModeChange?.(false); }}
           onEdit={() => openEditProject(selectedProject)}
+          refreshOppsRef={refreshOppsRef}
         />
         <FormModal
           isOpen={editingProject !== null}
@@ -337,31 +676,31 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
                 <div
                   key={p.id}
                   onClick={() => { setSelectedProject(p); onDetailModeChange?.(true); }}
-                  className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                  className="bg-white py-3 px-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
                 >
-                  <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-black text-base shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-bold text-gray-800 text-sm group-hover:text-blue-900 transition-colors">{p.name}</div>
-                        <div className="text-sm font-bold text-blue-600 mt-0.5">{p.account.name}</div>
-                      </div>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-10 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center font-black text-sm shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0 self-center">
+                      {p.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors shrink-0">
-                      <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">
-                      {p.status.status_name}
-                    </span>
-                    <div>
-                      <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Owner: </span>
-                      <span className="font-bold">{p.owner.display_name}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-gray-800 text-sm group-hover:text-blue-900 transition-colors truncate">{p.name}</div>
+                      <div className="flex items-center justify-between gap-3 mt-0.5">
+                        <div className="text-sm font-bold text-gray-400 truncate">{p.account.name}</div>
+                        <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors shrink-0">
+                          <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                        <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">
+                          {p.status.status_name}
+                        </span>
+                        <div>
+                          <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Owner: </span>
+                          <span className="font-bold text-xs">{p.owner.display_name}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

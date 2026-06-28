@@ -120,6 +120,7 @@ class WorkspaceOpportunity(BaseModel):
     id: uuid.UUID
     name: str
     project_id: uuid.UUID | None
+    lead_source_id: uuid.UUID | None
     sbu_id: uuid.UUID
     win_probability: Decimal
     indicative_value: Decimal | None

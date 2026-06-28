@@ -92,3 +92,17 @@ export async function updateOpportunity(opportunityId, data) {
   const response = await api.put(`/opportunities/${opportunityId}`, data);
   return response.data.data;
 }
+
+export async function listOpportunityItems(opportunityId) {
+  const response = await api.get(`/opportunities/${opportunityId}/items`);
+  return response.data.data;
+}
+
+export async function addOpportunityItem(opportunityId, data) {
+  const response = await api.post(`/opportunities/${opportunityId}/items`, data);
+  return response.data.data;
+}
+
+export async function deleteOpportunityItem(itemId) {
+  await api.delete(`/opportunity-items/${itemId}`);
+}

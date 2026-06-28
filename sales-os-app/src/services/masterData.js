@@ -25,6 +25,11 @@ export async function listStatuses() {
   return response.data.data;
 }
 
+export async function listLeadSources() {
+  const response = await api.get("/master-data/lead-sources");
+  return response.data.data;
+}
+
 export async function listUsers() {
   const response = await api.get("/users?page_size=100");
   return response.data.data.items;
