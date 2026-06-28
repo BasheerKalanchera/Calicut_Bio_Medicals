@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, noload
+from sqlalchemy.orm import Session, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account, Stakeholder
@@ -170,6 +170,10 @@ class AccountRepository(BaseRepository[Account]):
             select(Account)
             .where(Account.id == account_id)
             .options(
+                selectinload(Account.stakeholders),
+                selectinload(Account.projects),
+                selectinload(Account.opportunities),
+                selectinload(Account.installed_assets),
                 noload(Account.activities),
                 noload(Account.documents),
                 noload(Account.coverage_plan_entries),

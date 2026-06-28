@@ -24,7 +24,7 @@ class TargetPlan(AuditMixin, Base):
         back_populates="target_plans", foreign_keys=[user_id], lazy="joined"
     )
     sbu: Mapped["SBU"] = relationship(back_populates="target_plans", lazy="joined")
-    coverage_plans: Mapped[list["CoveragePlan"]] = relationship(back_populates="target_plan", lazy="selectin")
+    coverage_plans: Mapped[list["CoveragePlan"]] = relationship(back_populates="target_plan", lazy="select")
 
 
 class CoveragePlan(AuditMixin, Base):
@@ -45,7 +45,7 @@ class CoveragePlan(AuditMixin, Base):
         back_populates="coverage_plans", foreign_keys=[user_id], lazy="joined"
     )
     target_plan: Mapped["TargetPlan"] = relationship(back_populates="coverage_plans", lazy="joined")
-    entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="coverage_plan", lazy="selectin")
+    entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="coverage_plan", lazy="select")
 
 
 class CoveragePlanEntry(AuditMixin, Base):

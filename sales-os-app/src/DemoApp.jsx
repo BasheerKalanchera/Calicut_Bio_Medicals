@@ -221,7 +221,10 @@ export default function DemoApp() {
               onBack={handleBack360}
             />
           )}
-          {view === "catalog" && <ProductCatalogScreen />}
+          {/* Product Catalog — always mounted, hidden when not active */}
+          <div className={`flex-1 overflow-hidden flex flex-col ${view === "catalog" ? "" : "hidden"}`}>
+            <ProductCatalogScreen />
+          </div>
         </ErrorBoundary>
       </div>
     </div>

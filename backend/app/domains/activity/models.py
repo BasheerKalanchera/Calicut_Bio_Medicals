@@ -34,7 +34,7 @@ class Activity(CreatedAtMixin, Base):
         back_populates="activities", foreign_keys=[user_id], lazy="joined"
     )
 
-    reminders: Mapped[list["Reminder"]] = relationship(back_populates="activity", lazy="selectin")
+    reminders: Mapped[list["Reminder"]] = relationship(back_populates="activity", lazy="select")
 
 
 class Reminder(AuditMixin, Base):

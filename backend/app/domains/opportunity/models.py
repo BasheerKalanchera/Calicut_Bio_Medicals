@@ -84,12 +84,12 @@ class Opportunity(AuditMixin, Base):
     hold_reason: Mapped["HoldReason | None"] = relationship(back_populates="opportunities", lazy="joined")
 
     opportunity_stakeholders: Mapped[list["OpportunityStakeholder"]] = relationship(
-        back_populates="opportunity", lazy="selectin"
+        back_populates="opportunity", lazy="select"
     )
-    splits: Mapped[list["Split"]] = relationship(back_populates="opportunity", lazy="selectin")
-    items: Mapped[list["OpportunityItem"]] = relationship(back_populates="opportunity", lazy="selectin")
-    activities: Mapped[list["Activity"]] = relationship(back_populates="opportunity", lazy="selectin")
-    documents: Mapped[list["Document"]] = relationship(back_populates="opportunity", lazy="selectin")
+    splits: Mapped[list["Split"]] = relationship(back_populates="opportunity", lazy="select")
+    items: Mapped[list["OpportunityItem"]] = relationship(back_populates="opportunity", lazy="select")
+    activities: Mapped[list["Activity"]] = relationship(back_populates="opportunity", lazy="select")
+    documents: Mapped[list["Document"]] = relationship(back_populates="opportunity", lazy="select")
 
 
 class OpportunityStakeholder(AuditMixin, Base):

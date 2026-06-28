@@ -29,16 +29,16 @@ class Account(AuditMixin, Base):
     parent_account: Mapped["Account | None"] = relationship(
         back_populates="child_accounts", remote_side="Account.id", lazy="joined"
     )
-    child_accounts: Mapped[list["Account"]] = relationship(back_populates="parent_account", lazy="selectin")
+    child_accounts: Mapped[list["Account"]] = relationship(back_populates="parent_account", lazy="select")
     zone: Mapped["Zone"] = relationship(back_populates="accounts", lazy="joined")
 
-    stakeholders: Mapped[list["Stakeholder"]] = relationship(back_populates="account", lazy="selectin")
-    projects: Mapped[list["Project"]] = relationship(back_populates="account", lazy="selectin")
-    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="account", lazy="selectin")
-    activities: Mapped[list["Activity"]] = relationship(back_populates="account", lazy="selectin")
-    installed_assets: Mapped[list["InstalledAsset"]] = relationship(back_populates="account", lazy="selectin")
-    documents: Mapped[list["Document"]] = relationship(back_populates="account", lazy="selectin")
-    coverage_plan_entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="account", lazy="selectin")
+    stakeholders: Mapped[list["Stakeholder"]] = relationship(back_populates="account", lazy="select")
+    projects: Mapped[list["Project"]] = relationship(back_populates="account", lazy="select")
+    opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="account", lazy="select")
+    activities: Mapped[list["Activity"]] = relationship(back_populates="account", lazy="select")
+    installed_assets: Mapped[list["InstalledAsset"]] = relationship(back_populates="account", lazy="select")
+    documents: Mapped[list["Document"]] = relationship(back_populates="account", lazy="select")
+    coverage_plan_entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="account", lazy="select")
 
 
 class Stakeholder(AuditMixin, Base):
@@ -60,5 +60,5 @@ class Stakeholder(AuditMixin, Base):
 
     account: Mapped["Account"] = relationship(back_populates="stakeholders", lazy="joined")
     opportunity_stakeholders: Mapped[list["OpportunityStakeholder"]] = relationship(
-        back_populates="stakeholder", lazy="selectin"
+        back_populates="stakeholder", lazy="select"
     )
