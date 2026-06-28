@@ -33,6 +33,7 @@ export default function DemoApp() {
   const [accountSubTab, setAccountSubTab] = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
   const customerCreateRef = useRef(null);
+  const customerAccountUpdateRef = useRef(null);
   const projectCreateRef = useRef(null);
   const projectOppsRefreshRef = useRef(null);
 
@@ -339,7 +340,7 @@ export default function DemoApp() {
             )}
             {/* Customer Directory — always mounted */}
             <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "customers" ? "" : "hidden"}`}>
-              <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} openCreateRef={customerCreateRef} />
+              <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} openCreateRef={customerCreateRef} accountUpdateRef={customerAccountUpdateRef} />
             </div>
             {/* Project Directory — always mounted */}
             <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "projects" ? "" : "hidden"}`}>
@@ -352,6 +353,7 @@ export default function DemoApp() {
               accountId={selectedAccount.id}
               initialAccount={selectedAccount}
               onBack={handleBack360}
+              onAccountUpdate={(a) => customerAccountUpdateRef.current?.(a)}
             />
           )}
           {/* Product Catalog — always mounted, hidden when not active */}

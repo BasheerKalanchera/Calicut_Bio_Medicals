@@ -45,6 +45,7 @@ const TABS = [
 // ---------------------------------------------------------------------------
 const TAB_CACHE_TTL_MS = 30_000;
 const tabDataCache = new Map();
+const accountDataCache = new Map();
 
 function getTabCached(accountId, tab) {
   const key = `${accountId}:${tab}`;
@@ -59,6 +60,20 @@ function getTabCached(accountId, tab) {
 
 function setTabCache(accountId, tab, data) {
   tabDataCache.set(`${accountId}:${tab}`, { data, fetchedAt: Date.now() });
+}
+
+function getCachedAccount(accountId) {
+  const entry = accountDataCache.get(accountId);
+  if (!entry) return null;
+  if (Date.now() - entry.fetchedAt > TAB_CACHE_TTL_MS) {
+    accountDataCache.delete(accountId);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedAccount(accountId, data) {
+  accountDataCache.set(accountId, { data, fetchedAt: Date.now() });
 }
 
 function PayerBadge({ behavior }) {
@@ -451,9 +466,9 @@ function InstalledBaseTab({ assets, onAdd, onEdit }) {
   );
 }
 
-export default function Customer360Screen({ accountId, initialAccount = null, onBack }) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate }) {
   const { userProfile } = useAuth();
-  const [account, setAccount] = useState(initialAccount);
+  const [account, setAccount] = useState(() => getCachedAccount(accountId) || initialAccount);
   const [stakeholders, setStakeholders] = useState([]);
   const [projects, setProjects] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
@@ -610,7 +625,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setInstalledLoading(!cachedInstalled);
 
     getAccount(accountId)
-      .then((data) => { setAccount(data); setLoading(false); })
+      .then((data) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); setLoading(false); })
       .catch((err) => {
         if (!initialAccount) {
           setError(err.message || "Failed to load account");
@@ -712,7 +727,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const payload = { name: editAccountName.trim(), zone_id: editAccountZoneId };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId, payload);
-    getAccount(accountId).then(setAccount).catch(() => {});
+    getAccount(accountId).then((data) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); }).catch(() => {});
   };
 
   const openCreateStakeholder = () => {
@@ -735,7 +750,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newStakeholderSentiment) payload.sentiment = newStakeholderSentiment;
     await createStakeholder(accountId, payload);
     listStakeholders(accountId).then((data) => { setStakeholders(data); setTabCache(accountId, 'stakeholders', data); }).catch(() => {});
-    getAccount(accountId).then(setAccount).catch(() => {});
+    getAccount(accountId).then((data) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); }).catch(() => {});
   };
 
   const openEditStakeholder = (s) => {
@@ -822,7 +837,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newProjectBidDate) payload.bid_submission_date = newProjectBidDate;
     await createProject(accountId, payload);
     listProjects(accountId).then((data) => { setProjects(data); setTabCache(accountId, 'projects', data); }).catch(() => {});
-    getAccount(accountId).then(setAccount).catch(() => {});
+    getAccount(accountId).then((data) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); }).catch(() => {});
   };
 
   const openEditProject = async (p) => {
@@ -890,6 +905,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     }));
     await createOpportunity(accountId, payload);
     listOpportunities(accountId).then((data) => { setOpportunities(data); setTabCache(accountId, 'opportunities', data); }).catch(() => {});
+    getAccount(accountId).then((data) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); }).catch(() => {});
   };
 
   const openEditOpp = async (o) => {

@@ -30,7 +30,7 @@ function setCache(key, data) {
   accountListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef }) {
+export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef, accountUpdateRef }) {
   const [accounts, setAccounts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -62,6 +62,18 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     }
   };
   if (openCreateRef) openCreateRef.current = openCreateModal;
+
+  if (accountUpdateRef) accountUpdateRef.current = (updatedAccount) => {
+    setAccounts((prev) => prev.map((a) => a.id === updatedAccount.id ? { ...a, ...updatedAccount } : a));
+    const params = { page, page_size: pageSize };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (zoneFilter) params.zone_id = zoneFilter;
+    const cacheKey = getCacheKey(params);
+    const cached = getCached(cacheKey);
+    if (cached) {
+      accountListCache.set(cacheKey, { ...cached, items: cached.items.map((a) => a.id === updatedAccount.id ? { ...a, ...updatedAccount } : a) });
+    }
+  };
 
   const listContainerRef = useRef(null);
 
