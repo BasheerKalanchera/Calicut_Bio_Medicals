@@ -327,7 +327,6 @@ export default function ProductCatalogScreen() {
 
   const [search, setSearch] = useState("");
   const [sbuFilter, setSbuFilter] = useState("");
-  const [brandFilter, setBrandFilter] = useState("");
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
@@ -335,7 +334,6 @@ export default function ProductCatalogScreen() {
   const [modal, setModal] = useState(null); // null | { mode: "create" } | { mode: "edit", product }
 
   const debouncedSearch = useDebouncedValue(search);
-  const debouncedBrand = useDebouncedValue(brandFilter);
 
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -347,7 +345,6 @@ export default function ProductCatalogScreen() {
     const filters = {};
     if (debouncedSearch) filters.search = debouncedSearch;
     if (sbuFilter) filters.sbu_id = sbuFilter;
-    if (debouncedBrand) filters.brand = debouncedBrand;
 
     const cacheKey = getCacheKey({ ...filters, page, page_size: pageSize });
     const cached = getCached(cacheKey);
@@ -395,7 +392,7 @@ export default function ProductCatalogScreen() {
           setLoading(false);
         }
       });
-  }, [debouncedSearch, sbuFilter, debouncedBrand, page]);
+  }, [debouncedSearch, sbuFilter, page]);
 
   useEffect(() => {
     fetchProducts();
@@ -459,50 +456,20 @@ export default function ProductCatalogScreen() {
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex-1 relative">
               <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search by product or brand..."
                 className="w-full pl-9 pr-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 autoComplete="off"
               />
               {search && (
                 <button
-                  onClick={() => {
-                    setSearch("");
-                    setPage(1);
-                  }}
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
-                >
-                  &times;
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Filter by brand..."
-                className="w-full sm:w-44 px-4 py-2 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
-                value={brandFilter}
-                onChange={(e) => {
-                  setBrandFilter(e.target.value);
-                  setPage(1);
-                }}
-                autoComplete="off"
-              />
-              {brandFilter && (
-                <button
-                  onClick={() => {
-                    setBrandFilter("");
-                    setPage(1);
-                  }}
+                  onClick={() => { setSearch(""); setPage(1); }}
                   className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 font-bold text-xs"
                 >
                   &times;
@@ -602,9 +569,7 @@ export default function ProductCatalogScreen() {
 
               {products.length === 0 && (
                 <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">
-                  {search || brandFilter
-                    ? "No products match your filters."
-                    : "No products found."}
+                  {search ? `No products or brands matching "${search}".` : "No products found."}
                 </div>
               )}
 

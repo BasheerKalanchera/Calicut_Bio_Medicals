@@ -24,7 +24,6 @@ def _get_service(
 async def list_products(
     search: str | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
-    brand: str | None = Query(None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     include_count: bool = Query(default=True),
@@ -37,7 +36,6 @@ async def list_products(
         limit=page_size,
         search=search,
         sbu_id=sbu_id,
-        brand=brand,
         include_count=include_count,
     )
     total_pages = (total + page_size - 1) // page_size if include_count else 0
@@ -57,11 +55,10 @@ async def list_products(
 async def count_products(
     search: str | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
-    brand: str | None = Query(None),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProductService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[int]:
-    return APIResponse(data=service.count_products(search=search, sbu_id=sbu_id, brand=brand))
+    return APIResponse(data=service.count_products(search=search, sbu_id=sbu_id))
 
 
 @router.post("", status_code=201)

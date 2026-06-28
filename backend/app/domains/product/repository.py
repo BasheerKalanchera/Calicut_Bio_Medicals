@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -20,18 +20,20 @@ class ProductRepository(BaseRepository[Product]):
         *,
         search: str | None,
         sbu_id: uuid.UUID | None,
-        brand: str | None,
         active_only: bool,
     ) -> list:
         f = []
         if active_only:
             f.append(Product.is_active == True)  # noqa: E712
         if search:
-            f.append(Product.name.ilike(f"%{search}%"))
+            f.append(
+                or_(
+                    Product.name.ilike(f"%{search}%"),
+                    Product.oem_name.ilike(f"%{search}%"),
+                )
+            )
         if sbu_id:
             f.append(Product.sbu_id == sbu_id)
-        if brand:
-            f.append(Product.oem_name.ilike(f"%{brand}%"))
         return f
 
     def count_products(
@@ -39,10 +41,9 @@ class ProductRepository(BaseRepository[Product]):
         *,
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
-        brand: str | None = None,
         active_only: bool = True,
     ) -> int:
-        filters = self._filters(search=search, sbu_id=sbu_id, brand=brand, active_only=active_only)
+        filters = self._filters(search=search, sbu_id=sbu_id, active_only=active_only)
         return self.db.scalar(select(func.count(Product.id)).where(*filters)) or 0
 
     def list_products(
@@ -52,13 +53,12 @@ class ProductRepository(BaseRepository[Product]):
         limit: int = 50,
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
-        brand: str | None = None,
         active_only: bool = True,
         include_count: bool = True,
     ) -> tuple[list[Product], int]:
-        filters = self._filters(search=search, sbu_id=sbu_id, brand=brand, active_only=active_only)
+        filters = self._filters(search=search, sbu_id=sbu_id, active_only=active_only)
 
-        total = self.count_products(search=search, sbu_id=sbu_id, brand=brand, active_only=active_only) if include_count else 0
+        total = self.count_products(search=search, sbu_id=sbu_id, active_only=active_only) if include_count else 0
 
         stmt = (
             select(Product)

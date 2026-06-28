@@ -23,7 +23,6 @@ class ProductService:
         limit: int = 50,
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
-        brand: str | None = None,
         include_count: bool = True,
     ) -> tuple[list[Product], int]:
         return self.repository.list_products(
@@ -31,7 +30,6 @@ class ProductService:
             limit=limit,
             search=search,
             sbu_id=sbu_id,
-            brand=brand,
             include_count=include_count,
         )
 
@@ -40,9 +38,8 @@ class ProductService:
         *,
         search: str | None = None,
         sbu_id: uuid.UUID | None = None,
-        brand: str | None = None,
     ) -> int:
-        return self.repository.count_products(search=search, sbu_id=sbu_id, brand=brand)
+        return self.repository.count_products(search=search, sbu_id=sbu_id)
 
     def create_product(self, data: ProductCreate, *, created_by: uuid.UUID) -> Product:
         if not self.repository.sbu_exists(data.sbu_id):
