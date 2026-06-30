@@ -2,7 +2,7 @@
 
 This document serves as the formal Architecture Decision Register for the Cabio Sales OS project, compiled from the PRD, GEMINI.md mandates, Traceability Matrix, Phase 0B prototype evolution, and Architecture Consistency Review dispositions.
 
-**Last Updated:** June 27, 2026 — ADR-029 and ADR-030 added (frontend performance architecture decisions from Customer Directory and Customer 360 implementation).
+**Last Updated:** June 30, 2026 — ADR-031 through ADR-034 added (frontend stack migration to MUI + React Query + TypeScript; mobile deployment strategy).
 
 ---
 
@@ -204,7 +204,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 
 ### ADR-010: Mobile-First Responsive State Navigation
 *   **Decision:** Utilize dynamic UI components that switch from horizontal tabs to vertical dropdowns based on viewport width.
-*   **Status:** Accepted (Prototype Commit 4d76806)
+*   **Status:** Accepted (Prototype Commit 4d76806) — **Superseded by ADR-031** for implementation mechanism. The mobile-first principle and tab/dropdown responsive behaviour remain in force; the Tailwind breakpoint mandate is replaced by MUI's responsive system.
 *   **Rationale:** Sales Executives primarily interact with the system on mobile devices while in the field. Dropdowns prevent horizontal scrolling in deep-nested views.
 *   **Impact:** Strict CSS/Tailwind breakpoint rules for component rendering.
 *   **Affected Modules:** UI Framework, Global Navigation.
@@ -266,6 +266,49 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 * **Impact:** In `DemoApp.jsx`, list/directory screens are wrapped in a div that is always rendered but toggled between `""` and `"hidden"` class. Detail screens (`Customer360Screen`) continue to conditionally mount/unmount — they receive full `initialData` from the parent on mount, so remount cost is negligible. This pattern must be applied to all future list → detail navigation pairs in the application.
 * **Affected Modules:** `DemoApp.jsx`, all future list screens (Coverage Plans, Opportunities pipeline, Target Plans). Does not affect modal dialogs or overlays.
 
+### ADR-031: Frontend UI Framework — Material UI
+
+* **Decision:** Migrate from Tailwind CSS to Material UI (MUI) as the sole frontend UI framework. All existing screens are rewritten using MUI components. All future screens are built in MUI from the start. A hybrid approach (Tailwind base + selective MUI) is explicitly rejected.
+* **Status:** Accepted (June 30, 2026) — Supersedes the Tailwind implementation mandate in ADR-010.
+* **Rationale:** Three factors drove this decision:
+  * **Required components:** MUI provides four components critical for Phase 1 that would otherwise require custom implementation — `Autocomplete` (type-to-search dropdowns for accounts, products, users), `DatePicker` (demo scheduling, follow-up dates, expected close dates), `Drawer` (slide-in navigation with built-in focus trap, ARIA attributes, scroll lock), and `BottomNavigation` (permanent bottom tab bar for thumb-zone mobile navigation).
+  * **Migration cost timing:** With 3 more parts remaining in Phase 1, migrating on the current ~5-screen codebase costs approximately 12–15 days. Deferring until after Parts 2–4 makes the migration 3–4× larger. The migration window is now.
+  * **Hybrid rejection:** A Tailwind-base + selective MUI approach was evaluated and rejected. Two coexisting styling systems create visual inconsistency and developer context-switching that compounds with every new screen added.
+* **Impact:**
+  * All existing Tailwind `className`-based JSX replaced with MUI component equivalents (`Box`, `Stack`, `TextField`, `Button`, `Dialog`, `Tabs`, `Autocomplete`, `Drawer`, `BottomNavigation`, etc.).
+  * A single MUI theme file is defined at application root, configured to preserve the current design language: primary blue (`#2563eb`), `borderRadius: 12`, card shadow conventions.
+  * `ThemeProvider` wraps the application root.
+  * `Frontend-Implementation-Standards.md` requires full revision after migration is complete.
+  * Tailwind and its Vite plugin are removed from `package.json` and `vite.config.js` after migration.
+* **Affected Modules:** All frontend screens and components. `DemoApp.jsx` navigation shell. `Frontend-Implementation-Standards.md`.
+
+### ADR-032: Frontend Data Fetching — TanStack React Query
+
+* **Decision:** Adopt TanStack React Query (`@tanstack/react-query`) as the data fetching and server-state caching layer. All module-level SWR cache implementations and `useEffect` + `useState` fetch patterns are replaced with `useQuery` and `useMutation` hooks.
+* **Status:** Accepted (June 30, 2026)
+* **Rationale:** Manual SWR cache code has accumulated ~150 lines across two screens (`CustomerDirectoryScreen`, `Customer360Screen`) and already replicates React Query's core behaviours: stale-while-revalidate, background refresh, mount guards, and cache invalidation. This accumulation will continue with every new screen added. React Query provides these patterns out of the box, plus automatic retry on network failure, request deduplication, and configurable `staleTime` — all directly valuable for a mobile PWA used on hospital networks with variable connectivity. The parallel count pattern (ADR-029) and the always-mounted navigation pattern (ADR-030) both integrate cleanly with React Query's cache model.
+* **Impact:**
+  * Install `@tanstack/react-query`. Wrap application root in `QueryClientProvider`.
+  * All module-level cache `Map` objects (`accountListCache`, `tabDataCache`, `accountDataCache`) are deleted.
+  * All `useEffect` fetch logic with manual loading/error state is replaced with `useQuery`.
+  * All create/update operations replace manual async handlers with `useMutation` + `queryClient.invalidateQueries`.
+  * API service functions (`services/*.ts`) remain unchanged — they become the `queryFn` callables.
+  * The ADR-029 parallel count pattern is implemented as a dependent `useQuery` that fires after the list query resolves, preserving the same parallel execution behaviour.
+* **Affected Modules:** `CustomerDirectoryScreen`, `Customer360Screen`, `ProjectDirectoryScreen`, `ProductCatalogScreen`, `DemoApp.jsx`. All future screens.
+
+### ADR-033: Frontend Type Safety — TypeScript and openapi-typescript
+
+* **Decision:** Migrate the frontend codebase from JavaScript (`.jsx`/`.js`) to TypeScript (`.tsx`/`.ts`). Adopt `openapi-typescript` to auto-generate TypeScript types from the FastAPI OpenAPI specification, establishing end-to-end type coverage from backend Pydantic models to React components.
+* **Status:** Accepted (June 30, 2026)
+* **Rationale:** The domain model contains complex interrelated entities (Account, Opportunity, OpportunityItem, InstalledAsset, Stakeholder, Project, CoveragePlan, TargetPlan) passed between services, screens, and modals without type contracts. Without TypeScript, a backend field rename or nullability change is a silent runtime bug. Pydantic enforces types at the API boundary at runtime; TypeScript enforces types within the frontend at compile time. `openapi-typescript` closes the gap between the two: types are generated directly from FastAPI's `/openapi.json`, so any Pydantic model change immediately surfaces as a frontend compile error. The codebase is currently small enough that migration is manageable before Parts 2–4 add significant new surface area.
+* **Impact:**
+  * All `.jsx` files renamed to `.tsx`; all `.js` files renamed to `.ts`.
+  * `tsconfig.json` added to `sales-os-app/`.
+  * `openapi-typescript` installed as a dev dependency. A `generate:types` script added to `package.json` that fetches `/openapi.json` from the running backend and outputs to `src/types/api.ts`.
+  * All API service functions annotated with return types derived from generated API types.
+  * All component props, state variables, and hook return values typed explicitly.
+* **Affected Modules:** All frontend source files. Build pipeline (`tsconfig.json`, `package.json` scripts).
+
 ### ADR-028: Opportunity Stage and Status Decoupling Model
 * **Decision:** Formally adopt the decoupled architecture (Option B) where Won and Lost are operational statuses, not pipeline stages. Stages and Statuses will be implemented as reference/master data entities rather than hardcoded enums.
 * **Status:** Accepted (Approved June 20, 2026 via Architecture Specification)
@@ -275,3 +318,27 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * `Opportunity` entity uses `stage_id` and `status_id` foreign keys.
   * Stalled background job required for 180-day inactivity detection.
 * **Affected Modules:** Opportunity Pipeline, Forecasting, Reporting, Business Rules Engine.
+
+---
+
+## 7. Deployment Architecture
+
+### ADR-034: Mobile Deployment Strategy — PWA Phase 1, Capacitor iOS Phase 2
+
+* **Decision:** Phase 1: Deploy as a Progressive Web App (PWA). Phase 2: Wrap the existing React application in Capacitor for iOS distribution via TestFlight when push notifications become a business requirement. Android remains PWA permanently unless App Store presence is explicitly required.
+* **Status:** Accepted (June 30, 2026)
+* **Rationale:**
+  * **PWA for Phase 1:** A PWA eliminates all app store overhead while delivering a near-native experience. On Android, Chrome provides a native "Install App" banner and PWA capabilities are first-class (push notifications, unrestricted storage, background sync). The single React + FastAPI + Supabase codebase serves desktop browsers, Android home screen, and iOS home screen without modification.
+  * **Capacitor for iOS (Phase 2):** iOS Safari imposes hard limits on PWA capability that cannot be mitigated in application code: push notifications require iOS 16.4+ and prior home screen installation; storage is capped at ~50MB; background sync is unavailable. For a sales team operating in hospitals with variable connectivity and requiring follow-up reminders, these are real ceilings. Capacitor wraps the existing React application in a native iOS shell, resolving all limitations, while leaving the React codebase, FastAPI backend, and Supabase Auth completely unchanged. Distribution via TestFlight (not the public App Store) allows direct team distribution with no per-build review cycle after initial submission.
+  * **Android stays PWA:** Android PWA support is native-quality and has none of the iOS limitations. Capacitor for Android is not built unless Play Store presence becomes a business requirement, at which point it can be added with minimal incremental effort since the Capacitor build infrastructure already exists for iOS.
+* **Known iOS PWA Constraints (Phase 1):** The client must be informed of these upfront:
+  * Install flow is manual (Share → Add to Home Screen); an in-app step-by-step guidance banner must be shown to iOS users on first visit.
+  * Push notifications are unavailable below iOS 16.4 and require home screen installation.
+  * PWA storage is capped at ~50MB (sufficient for app shell only; data requires connectivity).
+  * No background sync; all data operations require the app to be in the foreground.
+* **Impact:**
+  * Phase 1: `vite-plugin-pwa` added to the Vite build for manifest generation, service worker (Workbox), and precaching of static assets. PWA manifest configured with `display: standalone`, theme colour, and icons at 192×192 and 512×512.
+  * Phase 1: iOS install guidance banner component built to detect iOS (`navigator.userAgent`) and non-standalone mode (`navigator.standalone === false`), shown on first visit.
+  * Phase 2 (iOS): Capacitor CLI and `@capacitor/ios` installed when push notification requirement is confirmed. `@capacitor/push-notifications` plugin integrated. Apple Developer Program membership ($99/year) and Mac build machine (or CI service) required.
+  * No backend changes required at either phase. The same FastAPI REST APIs serve all deployment targets.
+* **Affected Modules:** Frontend build pipeline (`vite.config.ts`, `package.json`). iOS native shell (Phase 2). CI/CD pipeline (Phase 2 Mac build step).
