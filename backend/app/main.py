@@ -19,6 +19,7 @@ from app.core.logging import logger, setup_logging
 from app.db.session import warm_pool
 from app.domains.account import router as account_router
 from app.domains.account import stakeholder_router
+from app.domains.activity import router as activity_router
 from app.domains.asset import router as asset_router
 from app.domains.opportunity import router as opportunity_router
 from app.domains.product import router as product_router
@@ -137,6 +138,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(asset_router.router, prefix="/api/v1")
     application.include_router(project_router.router, prefix="/api/v1")
     application.include_router(opportunity_router.router, prefix="/api/v1")
+    application.include_router(activity_router.router, prefix="/api/v1")
     application.include_router(product_router.router, prefix="/api/v1")
 
 
