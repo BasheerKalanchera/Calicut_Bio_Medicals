@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import FormModal from "./FormModal";
 import { logActivity } from "../services/activities";
+import { listAccounts } from "../services/accounts";
 import { listUsers } from "../services/masterData";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  accountId: string;
+  accountId?: string;
   opportunityId?: string;
   currentUserId?: string;
   onCreated?: () => void;
@@ -38,6 +39,8 @@ export default function LogActivityModal({
 }: Props) {
   const queryClient = useQueryClient();
   const [users, setUsers]               = useState<any[]>([]);
+  const [accounts, setAccounts]         = useState<any[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState(accountId ?? "");
   const [activityType, setActivityType] = useState("CALL");
   const [activityDate, setActivityDate] = useState(nowLocal());
   const [notes, setNotes]               = useState("");
@@ -49,23 +52,32 @@ export default function LogActivityModal({
     setActivityDate(nowLocal());
     setNotes("");
     setUserId(currentUserId ?? "");
+    setSelectedAccountId(accountId ?? "");
     if (users.length === 0) {
       listUsers().then((d: any) => setUsers(Array.isArray(d) ? d : [])).catch(() => {});
     }
+    if (!accountId && accounts.length === 0) {
+      listAccounts({ page_size: 100 } as any)
+        .then((d: any) => setAccounts(d.items ?? []))
+        .catch(() => {});
+    }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const resolvedAccountId = accountId ?? selectedAccountId;
+
   async function handleSubmit() {
+    if (!resolvedAccountId) throw new Error("Account is required");
     if (!activityType) throw new Error("Activity type is required");
     if (!activityDate) throw new Error("Date is required");
     await logActivity({
-      account_id: accountId,
+      account_id: resolvedAccountId,
       opportunity_id: opportunityId,
       user_id: userId || undefined,
       activity_type: activityType,
       activity_date: new Date(activityDate).toISOString(),
       notes: notes.trim() || undefined,
     });
-    queryClient.invalidateQueries({ queryKey: ["activities", "account", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["activities", "account", resolvedAccountId] });
     if (opportunityId) {
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
     }
@@ -77,6 +89,17 @@ export default function LogActivityModal({
 
   return (
     <FormModal isOpen={isOpen} onClose={onClose} title="Log Activity" onSubmit={handleSubmit} submitLabel="Log">
+      {!accountId && (
+        <div>
+          <label className={lbl}>Account *</label>
+          <select value={selectedAccountId} onChange={(e) => setSelectedAccountId(e.target.value)} className={cls}>
+            <option value="">Select account</option>
+            {accounts.map((a: any) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
       <div>
         <label className={lbl}>Type *</label>
         <select value={activityType} onChange={(e) => setActivityType(e.target.value)} className={cls}>

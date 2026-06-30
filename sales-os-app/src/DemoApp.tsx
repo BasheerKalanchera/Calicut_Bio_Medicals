@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import QuickLeadModal from "./components/QuickLeadModal";
+import LogActivityModal from "./components/LogActivityModal";
 import CustomerDirectoryScreen from "./screens/CustomerDirectoryScreen";
 import Customer360Screen from "./screens/Customer360Screen";
 import ProductCatalogScreen from "./screens/ProductCatalogScreen";
@@ -35,6 +36,7 @@ export default function DemoApp() {
   const [accountSubTab, setAccountSubTab]       = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
   const [showQuickLead, setShowQuickLead]       = useState(false);
+  const [showLogActivity, setShowLogActivity]   = useState(false);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const customerAccountUpdateRef = useRef<((a: unknown) => void) | null>(null);
@@ -184,6 +186,12 @@ export default function DemoApp() {
               + Lead
             </button>
             <button
+              onClick={() => setShowLogActivity(true)}
+              className="px-3 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm"
+            >
+              + Log
+            </button>
+            <button
               onClick={signOut}
               className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-black uppercase transition-colors px-2.5 py-2 rounded-xl"
             >
@@ -293,6 +301,17 @@ export default function DemoApp() {
         onClose={() => setShowQuickLead(false)}
         onCreated={() => { projectOppsRefreshRef.current?.(); }}
         sbuId={(userProfile as any)?.sbu?.id}
+      />
+      <LogActivityModal
+        isOpen={showLogActivity}
+        onClose={() => setShowLogActivity(false)}
+        accountId={
+          view === "customer360" ? selectedAccount?.id :
+          view === "opportunityDetail" ? selectedOpportunity?.account.id :
+          undefined
+        }
+        opportunityId={view === "opportunityDetail" ? selectedOpportunity?.id : undefined}
+        currentUserId={(userProfile as any)?.id}
       />
     </div>
   );
