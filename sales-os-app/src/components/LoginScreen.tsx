@@ -1,87 +1,100 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { Box, Paper, TextField, Button, Alert, Typography } from "@mui/material";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       await signIn(email, password);
     } catch (err) {
-      setError(err.message || "Login failed");
+      const castErr = err as { message?: string };
+      setError(castErr.message ?? "Login failed");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <img
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #1e3a8a 0%, #312e81 100%)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 2,
+      }}
+    >
+      <Paper
+        elevation={8}
+        sx={{ p: "2rem", width: "100%", maxWidth: "28rem", borderRadius: "1.5rem" }}
+      >
+        <Box sx={{ textAlign: "center", mb: "2rem" }}>
+          <Box
+            component="img"
             src="/Cabio%20logo.jpeg"
             alt="Cabio Logo"
-            className="h-16 object-contain mx-auto mb-4"
+            sx={{ height: 64, objectFit: "contain", mx: "auto", mb: 2, display: "block" }}
           />
-          <h1 className="text-2xl font-black text-gray-800 tracking-tight">
+          {/* font-size/weight/tracking match Tailwind text-2xl font-black tracking-tight */}
+          <Typography sx={{ fontSize: "1.5rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", lineHeight: "2rem" }}>
             Cabio Sales OS
-          </h1>
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">
+          </Typography>
+          {/* text-xs font-bold uppercase tracking-widest text-gray-400 */}
+          <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", lineHeight: "1rem", mt: "0.25rem" }}>
             Calicut Bio Medicals
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 font-medium text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="you@calicutbio.com"
-              required
-            />
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <TextField
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@calicutbio.com"
+            required
+            fullWidth
+            size="small"
+          />
 
-          <div>
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 block">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-200 p-3 rounded-xl bg-gray-50 font-medium text-sm outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+          <TextField
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+            size="small"
+          />
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-xl text-xs font-bold">
+            <Alert severity="error" sx={{ py: 0.5 }}>
               {error}
-            </div>
+            </Alert>
           )}
 
-          <button
+          <Button
             type="submit"
+            variant="contained"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+            fullWidth
+            size="large"
+            sx={{ fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", mt: "0.25rem" }}
           >
             {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-      </div>
-    </div>
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
   );
 }
