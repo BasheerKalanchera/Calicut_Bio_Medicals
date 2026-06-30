@@ -41,6 +41,28 @@ class ActivityRepository(BaseRepository[Activity]):
             select(func.count(Activity.id)).where(Activity.account_id == account_id)
         ) or 0
 
+    def list_by_opportunity(
+        self,
+        opportunity_id: uuid.UUID,
+        *,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Activity]:
+        stmt = (
+            select(Activity)
+            .where(Activity.opportunity_id == opportunity_id)
+            .options(noload(Activity.reminders))
+            .order_by(Activity.activity_date.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).unique().all())
+
+    def count_by_opportunity(self, opportunity_id: uuid.UUID) -> int:
+        return self.db.scalar(
+            select(func.count(Activity.id)).where(Activity.opportunity_id == opportunity_id)
+        ) or 0
+
 
 class ReminderRepository(BaseRepository[Reminder]):
     def __init__(self, db: Session):

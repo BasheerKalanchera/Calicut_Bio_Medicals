@@ -1738,6 +1738,46 @@ export interface OpportunityItemResponse {
   product: { id: string; name: string };
 }
 
+export type ActivityType = "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+
+export interface ActivityUser {
+  id: string;
+  display_name: string;
+}
+
+export interface ActivityResponse {
+  id: string;
+  account_id: string;
+  opportunity_id: string | null;
+  project_id: string | null;
+  user_id: string;
+  activity_type: ActivityType;
+  activity_date: string;
+  notes: string | null;
+  created_at: string;
+  user: ActivityUser;
+}
+
+export interface ActivityPage {
+  items: ActivityResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface ReminderResponse {
+  id: string;
+  activity_id: string;
+  assigned_to_user_id: string;
+  due_date: string;
+  reminder_text: string;
+  is_completed: boolean;
+  created_at: string;
+  updated_at: string;
+  assigned_to_user: ActivityUser;
+}
+
 export type $defs = Record<string, never>;
 export interface operations {
     health_check_api_v1_health_get: {

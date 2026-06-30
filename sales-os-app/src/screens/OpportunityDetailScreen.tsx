@@ -6,6 +6,8 @@ import {
   listOpportunityStakeholders,
 } from "../services/opportunities";
 import type { PipelineOpportunity } from "../types/api";
+import ActivityTimeline from "../components/ActivityTimeline";
+import LogActivityModal from "../components/LogActivityModal";
 
 interface Props {
   opportunity: PipelineOpportunity;
@@ -196,11 +198,6 @@ function StakeholdersTab({ opportunityId }: { opportunityId: string }) {
   );
 }
 
-function ActivityTab() {
-  return (
-    <EmptyPlaceholder message="Activity timeline coming in Phase D." />
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Shared placeholders
@@ -225,7 +222,8 @@ function EmptyPlaceholder({ message }: { message: string }) {
 // Screen
 // ---------------------------------------------------------------------------
 export default function OpportunityDetailScreen({ opportunity: opp, onBack }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [activeTab, setActiveTab]       = useState<TabId>("overview");
+  const [showLogActivity, setShowLogActivity] = useState(false);
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
@@ -272,8 +270,23 @@ export default function OpportunityDetailScreen({ opportunity: opp, onBack }: Pr
         {activeTab === "products"     && <ProductsTab opportunityId={opp.id} />}
         {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} />}
-        {activeTab === "activity"     && <ActivityTab />}
+        {activeTab === "activity"     && (
+          <div className="p-4">
+            <ActivityTimeline
+              opportunityId={opp.id}
+              accountId={opp.account.id}
+              onLogActivity={() => setShowLogActivity(true)}
+            />
+          </div>
+        )}
       </div>
+
+      <LogActivityModal
+        isOpen={showLogActivity}
+        onClose={() => setShowLogActivity(false)}
+        accountId={opp.account.id}
+        opportunityId={opp.id}
+      />
     </div>
   );
 }

@@ -53,6 +53,26 @@ async def list_activities(
     )
 
 
+@router.get("/opportunities/{opportunity_id}/activities")
+async def list_opportunity_activities(
+    opportunity_id: uuid.UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+) -> APIResponse[PaginatedResponse[ActivityResponse]]:
+    items, total = service.list_by_opportunity(opportunity_id, page=page, page_size=page_size)
+    return APIResponse(
+        data=PaginatedResponse(
+            items=[ActivityResponse.model_validate(a) for a in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=math.ceil(total / page_size) if total else 0,
+        )
+    )
+
+
 @router.post("/activities", status_code=201)
 async def log_activity(
     body: ActivityCreate,
