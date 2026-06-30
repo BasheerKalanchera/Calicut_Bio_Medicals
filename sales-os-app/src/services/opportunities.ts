@@ -69,3 +69,18 @@ export async function listOpportunityStakeholders(
   const response = await api.get(`/opportunities/${opportunityId}/stakeholders`);
   return response.data.data;
 }
+
+export async function addOpportunityStakeholder(
+  opportunityId: string,
+  data: { stakeholder_id: string; influence_level?: string | null; decision_role?: string | null; notes?: string | null },
+): Promise<StakeholderLinkResponse> {
+  const response = await api.post(`/opportunities/${opportunityId}/stakeholders`, data);
+  return response.data.data;
+}
+
+export async function removeOpportunityStakeholder(
+  opportunityId: string,
+  stakeholderId: string,
+): Promise<void> {
+  await api.delete(`/opportunities/${opportunityId}/stakeholders/${stakeholderId}`);
+}
