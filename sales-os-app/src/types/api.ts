@@ -1664,6 +1664,80 @@ export interface components {
     headers: never;
     pathItems: never;
 }
+// ---------------------------------------------------------------------------
+// Phase A — Pipeline types (hand-written, not auto-generated)
+// ---------------------------------------------------------------------------
+
+export interface PipelineStageNested {
+  id: string;
+  stage_code: string;
+  stage_name: string;
+  display_order: number;
+  default_win_probability: string;
+}
+
+export interface PipelineStatusNested {
+  id: string;
+  status_code: string;
+  status_name: string;
+  is_terminal: boolean;
+}
+
+export interface PipelineOwnerNested {
+  id: string;
+  display_name: string;
+}
+
+export interface PipelineOpportunity {
+  id: string;
+  name: string;
+  win_probability: string;
+  indicative_value: string | null;
+  expected_closure_date: string | null;
+  demo_start_date: string | null;
+  demo_end_date: string | null;
+  po_number: string | null;
+  created_at: string;
+  updated_at: string;
+  account: { id: string; name: string };
+  stage: PipelineStageNested;
+  status: PipelineStatusNested;
+  owner: PipelineOwnerNested;
+  sbu: { id: string; name: string };
+}
+
+export interface PipelinePage {
+  items: PipelineOpportunity[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface SplitResponse {
+  user_id: string;
+  split_percentage: string;
+  user: { id: string; display_name: string };
+}
+
+export interface StakeholderLinkResponse {
+  stakeholder_id: string;
+  influence_level: string | null;
+  decision_role: string | null;
+  notes: string | null;
+  stakeholder: { id: string; name: string };
+}
+
+export interface OpportunityItemResponse {
+  id: string;
+  product_id: string;
+  quantity: number;
+  unit_price_lakhs: string;
+  discount_lakhs: string;
+  extended_value_lakhs: string;
+  product: { id: string; name: string };
+}
+
 export type $defs = Record<string, never>;
 export interface operations {
     health_check_api_v1_health_get: {

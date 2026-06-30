@@ -165,6 +165,16 @@ async def delete_opportunity_item(
 # Splits
 # ------------------------------------------------------------------
 
+@router.get("/opportunities/{opportunity_id}/splits")
+async def list_splits(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[SplitResponse]]:
+    splits = service.list_splits(opportunity_id)
+    return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
+
+
 @router.put("/opportunities/{opportunity_id}/splits")
 async def replace_splits(
     opportunity_id: uuid.UUID,
@@ -179,6 +189,16 @@ async def replace_splits(
 # ------------------------------------------------------------------
 # Stakeholders on opportunity
 # ------------------------------------------------------------------
+
+@router.get("/opportunities/{opportunity_id}/stakeholders")
+async def list_opportunity_stakeholders(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[StakeholderLinkResponse]]:
+    links = service.list_stakeholders(opportunity_id)
+    return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])
+
 
 @router.put("/opportunities/{opportunity_id}/stakeholders")
 async def replace_opportunity_stakeholders(

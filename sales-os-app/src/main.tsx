@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import theme from "./theme";
 import "./index.css";
 import App from "./App.jsx";
-import DemoApp from "./DemoApp.jsx";
+import DemoApp from "./DemoApp";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginScreen from "./components/LoginScreen";
 

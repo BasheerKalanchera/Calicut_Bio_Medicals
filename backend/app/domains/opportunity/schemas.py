@@ -109,6 +109,13 @@ class SplitsBulkUpdate(BaseModel):
 # Opportunity stakeholders
 # ------------------------------------------------------------------
 
+class StakeholderNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 class StakeholderLinkCreate(BaseModel):
     stakeholder_id: uuid.UUID
     influence_level: str | None = Field(None, pattern="^(HIGH|MEDIUM|LOW)$")
@@ -123,6 +130,7 @@ class StakeholderLinkResponse(BaseModel):
     influence_level: str | None
     decision_role: str | None
     notes: str | None
+    stakeholder: StakeholderNested
 
 
 class StakeholdersBulkUpdate(BaseModel):

@@ -262,6 +262,9 @@ class OpportunityService:
     # Splits
     # ------------------------------------------------------------------
 
+    def list_splits(self, opportunity_id: uuid.UUID) -> list[Split]:
+        return self.repository.list_splits(opportunity_id)
+
     def replace_splits(
         self,
         opportunity_id: uuid.UUID,
@@ -294,6 +297,9 @@ class OpportunityService:
     # ------------------------------------------------------------------
     # Stakeholders
     # ------------------------------------------------------------------
+
+    def list_stakeholders(self, opportunity_id: uuid.UUID) -> list[OpportunityStakeholder]:
+        return self.repository.list_opportunity_stakeholders(opportunity_id)
 
     def replace_stakeholders(
         self,
