@@ -1,19 +1,26 @@
+import math
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
-from app.api.schemas import APIResponse
+from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
 from app.domains.account.workspace_schemas import WorkspaceOpportunity
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
+    ItemsBulkUpdate,
     OpportunityCreate,
     OpportunityItemCreate,
     OpportunityItemResponse,
     OpportunityResponse,
     OpportunityUpdate,
+    PipelineOpportunity,
+    SplitResponse,
+    SplitsBulkUpdate,
+    StakeholderLinkResponse,
+    StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
 from app.domains.organization.models import UserProfile
@@ -27,6 +34,44 @@ def _get_service(
     return OpportunityService(repository=OpportunityRepository(db))
 
 
+# ------------------------------------------------------------------
+# Pipeline (serves both Kanban and List views)
+# ------------------------------------------------------------------
+
+@router.get("/opportunities/pipeline")
+async def list_pipeline(
+    account_id: uuid.UUID | None = Query(None),
+    stage_id: uuid.UUID | None = Query(None),
+    status_id: uuid.UUID | None = Query(None),
+    owner_id: uuid.UUID | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[PaginatedResponse[PipelineOpportunity]]:
+    items, total = service.list_pipeline(
+        account_id=account_id,
+        stage_id=stage_id,
+        status_id=status_id,
+        owner_id=owner_id,
+        page=page,
+        page_size=page_size,
+    )
+    return APIResponse(
+        data=PaginatedResponse(
+            items=[PipelineOpportunity.model_validate(o) for o in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=math.ceil(total / page_size) if total else 0,
+        )
+    )
+
+
+# ------------------------------------------------------------------
+# Account-scoped list (Customer 360 opportunities tab)
+# ------------------------------------------------------------------
+
 @router.get("/accounts/{account_id}/opportunities")
 async def list_opportunities(
     account_id: uuid.UUID,
@@ -36,6 +81,10 @@ async def list_opportunities(
     opportunities = service.list_by_account(account_id)
     return APIResponse(data=[WorkspaceOpportunity.model_validate(o) for o in opportunities])
 
+
+# ------------------------------------------------------------------
+# Create
+# ------------------------------------------------------------------
 
 @router.post("/accounts/{account_id}/opportunities", status_code=201)
 async def create_opportunity(
@@ -50,7 +99,11 @@ async def create_opportunity(
     return APIResponse(data=OpportunityResponse.model_validate(opportunity))
 
 
-@router.put("/opportunities/{opportunity_id}")
+# ------------------------------------------------------------------
+# Update (PATCH — only provided fields are changed)
+# ------------------------------------------------------------------
+
+@router.patch("/opportunities/{opportunity_id}")
 async def update_opportunity(
     opportunity_id: uuid.UUID,
     body: OpportunityUpdate,
@@ -63,6 +116,10 @@ async def update_opportunity(
     return APIResponse(data=OpportunityResponse.model_validate(opportunity))
 
 
+# ------------------------------------------------------------------
+# Items
+# ------------------------------------------------------------------
+
 @router.get("/opportunities/{opportunity_id}/items")
 async def list_opportunity_items(
     opportunity_id: uuid.UUID,
@@ -70,6 +127,17 @@ async def list_opportunity_items(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[list[OpportunityItemResponse]]:
     items = service.list_items(opportunity_id)
+    return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
+
+
+@router.put("/opportunities/{opportunity_id}/items")
+async def replace_opportunity_items(
+    opportunity_id: uuid.UUID,
+    body: ItemsBulkUpdate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[OpportunityItemResponse]]:
+    items = service.replace_items(opportunity_id, body, updated_by=current_user.id)
     return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
 
 
@@ -91,3 +159,33 @@ async def delete_opportunity_item(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> None:
     service.delete_item(item_id)
+
+
+# ------------------------------------------------------------------
+# Splits
+# ------------------------------------------------------------------
+
+@router.put("/opportunities/{opportunity_id}/splits")
+async def replace_splits(
+    opportunity_id: uuid.UUID,
+    body: SplitsBulkUpdate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[SplitResponse]]:
+    splits = service.replace_splits(opportunity_id, body, updated_by=current_user.id)
+    return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
+
+
+# ------------------------------------------------------------------
+# Stakeholders on opportunity
+# ------------------------------------------------------------------
+
+@router.put("/opportunities/{opportunity_id}/stakeholders")
+async def replace_opportunity_stakeholders(
+    opportunity_id: uuid.UUID,
+    body: StakeholdersBulkUpdate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[StakeholderLinkResponse]]:
+    links = service.replace_stakeholders(opportunity_id, body, updated_by=current_user.id)
+    return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])

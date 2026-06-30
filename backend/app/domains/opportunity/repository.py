@@ -1,16 +1,100 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
-from app.domains.opportunity.models import Opportunity, OpportunityItem
+from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
+from app.domains.reference.models import LossReason, OpportunityStage, OpportunityStatus
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
     def __init__(self, db: Session):
         super().__init__(Opportunity, db)
+
+    # ------------------------------------------------------------------
+    # Reference data lookups (cached in SQLAlchemy identity map)
+    # ------------------------------------------------------------------
+
+    def get_stage(self, stage_id: uuid.UUID) -> OpportunityStage | None:
+        return self.db.get(OpportunityStage, stage_id)
+
+    def get_status(self, status_id: uuid.UUID) -> OpportunityStatus | None:
+        return self.db.get(OpportunityStatus, status_id)
+
+    def get_loss_reason(self, loss_reason_id: uuid.UUID) -> LossReason | None:
+        return self.db.get(LossReason, loss_reason_id)
+
+    # ------------------------------------------------------------------
+    # Account existence check
+    # ------------------------------------------------------------------
+
+    def account_exists(self, account_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
+
+    # ------------------------------------------------------------------
+    # Pipeline list (serves both Kanban and List views)
+    # ------------------------------------------------------------------
+
+    def list_pipeline(
+        self,
+        *,
+        account_id: uuid.UUID | None = None,
+        stage_id: uuid.UUID | None = None,
+        status_id: uuid.UUID | None = None,
+        owner_id: uuid.UUID | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Opportunity]:
+        stmt = (
+            select(Opportunity)
+            .options(
+                # noload the lazy="select" (heavy) relationships
+                noload(Opportunity.opportunity_stakeholders),
+                noload(Opportunity.splits),
+                noload(Opportunity.items),
+                noload(Opportunity.activities),
+                noload(Opportunity.documents),
+                # noload joined relationships not needed for pipeline cards
+                noload(Opportunity.lead_source),
+                noload(Opportunity.loss_reason),
+                noload(Opportunity.hold_reason),
+            )
+        )
+        if account_id:
+            stmt = stmt.where(Opportunity.account_id == account_id)
+        if stage_id:
+            stmt = stmt.where(Opportunity.stage_id == stage_id)
+        if status_id:
+            stmt = stmt.where(Opportunity.status_id == status_id)
+        if owner_id:
+            stmt = stmt.where(Opportunity.owner_id == owner_id)
+        stmt = stmt.order_by(Opportunity.created_at.desc()).offset(offset).limit(limit)
+        return list(self.db.scalars(stmt).unique().all())
+
+    def count_pipeline(
+        self,
+        *,
+        account_id: uuid.UUID | None = None,
+        stage_id: uuid.UUID | None = None,
+        status_id: uuid.UUID | None = None,
+        owner_id: uuid.UUID | None = None,
+    ) -> int:
+        stmt = select(func.count(Opportunity.id))
+        if account_id:
+            stmt = stmt.where(Opportunity.account_id == account_id)
+        if stage_id:
+            stmt = stmt.where(Opportunity.stage_id == stage_id)
+        if status_id:
+            stmt = stmt.where(Opportunity.status_id == status_id)
+        if owner_id:
+            stmt = stmt.where(Opportunity.owner_id == owner_id)
+        return self.db.scalar(stmt) or 0
+
+    # ------------------------------------------------------------------
+    # Account-scoped list (Customer 360 tab)
+    # ------------------------------------------------------------------
 
     def list_by_account(self, account_id: uuid.UUID) -> list[Opportunity]:
         stmt = (
@@ -31,6 +115,10 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             .order_by(Opportunity.name)
         )
         return list(self.db.scalars(stmt).unique().all())
+
+    # ------------------------------------------------------------------
+    # Write path
+    # ------------------------------------------------------------------
 
     def get_for_update(self, opportunity_id: uuid.UUID) -> "Opportunity | None":
         return self.db.scalar(
@@ -53,16 +141,24 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             )
         )
 
-    def account_exists(self, account_id: uuid.UUID) -> bool:
-        return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
+    # ------------------------------------------------------------------
+    # Items
+    # ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # Opportunity items
-    # ------------------------------------------------------------------
+    def has_items(self, opportunity_id: uuid.UUID) -> bool:
+        count = self.db.scalar(
+            select(func.count(OpportunityItem.id)).where(
+                OpportunityItem.opportunity_id == opportunity_id
+            )
+        )
+        return (count or 0) > 0
 
     def list_items(self, opportunity_id: uuid.UUID) -> list[OpportunityItem]:
-        stmt = select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
-        return list(self.db.scalars(stmt).unique().all())
+        return list(
+            self.db.scalars(
+                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+            ).unique().all()
+        )
 
     def get_item(self, item_id: uuid.UUID) -> "OpportunityItem | None":
         return self.db.get(OpportunityItem, item_id)
@@ -76,3 +172,78 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def delete_item(self, item: OpportunityItem) -> None:
         self.db.delete(item)
         self.db.flush()
+
+    def replace_items(
+        self, opportunity_id: uuid.UUID, new_items: list[OpportunityItem]
+    ) -> list[OpportunityItem]:
+        self.db.execute(
+            delete(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+        )
+        for item in new_items:
+            self.db.add(item)
+        self.db.flush()
+        # Re-query so product relationship (lazy="joined") is loaded for the response
+        return list(
+            self.db.scalars(
+                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+            ).unique().all()
+        )
+
+    # ------------------------------------------------------------------
+    # Splits
+    # ------------------------------------------------------------------
+
+    def list_splits(self, opportunity_id: uuid.UUID) -> list[Split]:
+        return list(
+            self.db.scalars(
+                select(Split).where(Split.opportunity_id == opportunity_id)
+            ).all()
+        )
+
+    def replace_splits(
+        self, opportunity_id: uuid.UUID, new_splits: list[Split]
+    ) -> list[Split]:
+        self.db.execute(delete(Split).where(Split.opportunity_id == opportunity_id))
+        for split in new_splits:
+            self.db.add(split)
+        self.db.flush()
+        # Re-query so user relationship (lazy="joined") is loaded for the response
+        return list(
+            self.db.scalars(
+                select(Split).where(Split.opportunity_id == opportunity_id)
+            ).all()
+        )
+
+    # ------------------------------------------------------------------
+    # Stakeholders
+    # ------------------------------------------------------------------
+
+    def list_opportunity_stakeholders(
+        self, opportunity_id: uuid.UUID
+    ) -> list[OpportunityStakeholder]:
+        return list(
+            self.db.scalars(
+                select(OpportunityStakeholder).where(
+                    OpportunityStakeholder.opportunity_id == opportunity_id
+                )
+            ).all()
+        )
+
+    def replace_stakeholders(
+        self, opportunity_id: uuid.UUID, new_links: list[OpportunityStakeholder]
+    ) -> list[OpportunityStakeholder]:
+        self.db.execute(
+            delete(OpportunityStakeholder).where(
+                OpportunityStakeholder.opportunity_id == opportunity_id
+            )
+        )
+        for link in new_links:
+            self.db.add(link)
+        self.db.flush()
+        return list(
+            self.db.scalars(
+                select(OpportunityStakeholder).where(
+                    OpportunityStakeholder.opportunity_id == opportunity_id
+                )
+            ).all()
+        )
