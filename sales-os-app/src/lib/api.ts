@@ -1,6 +1,14 @@
 import axios from "axios";
 import { supabase } from "./supabase";
 
+export class ApiError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1",
   headers: { "Content-Type": "application/json" },
@@ -26,10 +34,10 @@ api.interceptors.response.use(
       error.response?.data?.message ||
       error.message ||
       "Something went wrong";
-    const enriched = new Error(
-      typeof detail === "string" ? detail : JSON.stringify(detail)
+    const enriched = new ApiError(
+      typeof detail === "string" ? detail : JSON.stringify(detail),
+      error.response?.status
     );
-    enriched.status = error.response?.status;
     return Promise.reject(enriched);
   }
 );
