@@ -559,7 +559,7 @@ export default function ProductCatalogScreen() {
                         {product.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800 text-lg group-hover:text-blue-900 transition-colors">
+                        <div className="font-bold text-gray-800 text-sm group-hover:text-blue-900 transition-colors">
                           {product.name}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">
