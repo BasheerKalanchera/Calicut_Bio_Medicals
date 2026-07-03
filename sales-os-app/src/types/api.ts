@@ -281,6 +281,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/opportunities/pipeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Pipeline */
+        get: operations["list_pipeline_api_v1_opportunities_pipeline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts/{account_id}/opportunities": {
         parameters: {
             query?: never;
@@ -307,13 +324,13 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Update Opportunity */
-        put: operations["update_opportunity_api_v1_opportunities__opportunity_id__put"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update Opportunity */
+        patch: operations["update_opportunity_api_v1_opportunities__opportunity_id__patch"];
         trace?: never;
     };
     "/api/v1/opportunities/{opportunity_id}/items": {
@@ -325,7 +342,8 @@ export interface paths {
         };
         /** List Opportunity Items */
         get: operations["list_opportunity_items_api_v1_opportunities__opportunity_id__items_get"];
-        put?: never;
+        /** Replace Opportunity Items */
+        put: operations["replace_opportunity_items_api_v1_opportunities__opportunity_id__items_put"];
         /** Add Opportunity Item */
         post: operations["add_opportunity_item_api_v1_opportunities__opportunity_id__items_post"];
         delete?: never;
@@ -349,6 +367,128 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunities/{opportunity_id}/splits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Splits */
+        get: operations["list_splits_api_v1_opportunities__opportunity_id__splits_get"];
+        /** Replace Splits */
+        put: operations["replace_splits_api_v1_opportunities__opportunity_id__splits_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunities/{opportunity_id}/stakeholders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunity Stakeholders */
+        get: operations["list_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_get"];
+        /** Replace Opportunity Stakeholders */
+        put: operations["replace_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Activities */
+        get: operations["list_activities_api_v1_accounts__account_id__activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunities/{opportunity_id}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunity Activities */
+        get: operations["list_opportunity_activities_api_v1_opportunities__opportunity_id__activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log Activity */
+        post: operations["log_activity_api_v1_activities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reminders */
+        get: operations["list_reminders_api_v1_reminders_get"];
+        put?: never;
+        /** Create Reminder */
+        post: operations["create_reminder_api_v1_reminders_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reminders/{reminder_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Reminder */
+        patch: operations["patch_reminder_api_v1_reminders__reminder_id__patch"];
         trace?: never;
     };
     "/api/v1/products": {
@@ -436,6 +576,20 @@ export interface components {
             message: string;
             data: components["schemas"]["AccountResponse"];
         };
+        /** APIResponse[ActivityResponse] */
+        APIResponse_ActivityResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ActivityResponse"];
+        };
         /** APIResponse[InstalledAssetResponse] */
         APIResponse_InstalledAssetResponse_: {
             /**
@@ -492,6 +646,34 @@ export interface components {
             message: string;
             data: components["schemas"]["PaginatedResponse_AccountListResponse_"];
         };
+        /** APIResponse[PaginatedResponse[ActivityResponse]] */
+        APIResponse_PaginatedResponse_ActivityResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PaginatedResponse_ActivityResponse_"];
+        };
+        /** APIResponse[PaginatedResponse[PipelineOpportunity]] */
+        APIResponse_PaginatedResponse_PipelineOpportunity__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PaginatedResponse_PipelineOpportunity_"];
+        };
         /** APIResponse[PaginatedResponse[ProductListResponse]] */
         APIResponse_PaginatedResponse_ProductListResponse__: {
             /**
@@ -505,6 +687,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["PaginatedResponse_ProductListResponse_"];
+        };
+        /** APIResponse[PaginatedResponse[ReminderResponse]] */
+        APIResponse_PaginatedResponse_ReminderResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PaginatedResponse_ReminderResponse_"];
         };
         /** APIResponse[PaginatedResponse[UserListResponse]] */
         APIResponse_PaginatedResponse_UserListResponse__: {
@@ -561,6 +757,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ProjectResponse"];
+        };
+        /** APIResponse[ReminderResponse] */
+        APIResponse_ReminderResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ReminderResponse"];
         };
         /** APIResponse[StakeholderResponse] */
         APIResponse_StakeholderResponse_: {
@@ -665,6 +875,36 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["OpportunityItemResponse"][];
+        };
+        /** APIResponse[list[SplitResponse]] */
+        APIResponse_list_SplitResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["SplitResponse"][];
+        };
+        /** APIResponse[list[StakeholderLinkResponse]] */
+        APIResponse_list_StakeholderLinkResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["StakeholderLinkResponse"][];
         };
         /** APIResponse[list[StakeholderResponse]] */
         APIResponse_list_StakeholderResponse__: {
@@ -860,6 +1100,94 @@ export interface components {
             zone_id?: string | null;
             payer_behavior?: components["schemas"]["PayerBehavior"] | null;
         };
+        /** ActivityContextNested */
+        ActivityContextNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Activity Type */
+            activity_type: string;
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            account: components["schemas"]["AccountNested"];
+            opportunity: components["schemas"]["OpportunityNested"] | null;
+        };
+        /** ActivityCreate */
+        ActivityCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Opportunity Id */
+            opportunity_id?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** User Id */
+            user_id?: string | null;
+            /**
+             * Activity Type
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            /** Notes */
+            notes?: string | null;
+            /** Next Action Text */
+            next_action_text?: string | null;
+            /** Next Action Due Date */
+            next_action_due_date?: string | null;
+            /** Next Action Owner Id */
+            next_action_owner_id?: string | null;
+        };
+        /** ActivityResponse */
+        ActivityResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Opportunity Id */
+            opportunity_id: string | null;
+            /** Project Id */
+            project_id: string | null;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Activity Type */
+            activity_type: string;
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            /** Notes */
+            notes: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            user: components["schemas"]["UserNested"];
+            /** Next Action Reminder Id */
+            next_action_reminder_id?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -944,6 +1272,11 @@ export interface components {
             /** Department */
             department?: string | null;
         };
+        /** ItemsBulkUpdate */
+        ItemsBulkUpdate: {
+            /** Items */
+            items: components["schemas"]["OpportunityItemCreate"][];
+        };
         /**
          * MasterDataEntity
          * @enum {string}
@@ -976,6 +1309,14 @@ export interface components {
             lead_source_id?: string | null;
             /** Indicative Value */
             indicative_value?: number | string | null;
+            /** Expected Closure Date */
+            expected_closure_date?: string | null;
+            /** Demo Start Date */
+            demo_start_date?: string | null;
+            /** Demo End Date */
+            demo_end_date?: string | null;
+            /** Po Number */
+            po_number?: string | null;
             /**
              * Items
              * @default []
@@ -1021,6 +1362,16 @@ export interface components {
             extended_value_lakhs: string;
             product: components["schemas"]["app__domains__opportunity__schemas__ProductNested"];
         };
+        /** OpportunityNested */
+        OpportunityNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
         /** OpportunityResponse */
         OpportunityResponse: {
             /**
@@ -1063,6 +1414,24 @@ export interface components {
             lead_source_id: string | null;
             /** Indicative Value */
             indicative_value: string | null;
+            /** Expected Closure Date */
+            expected_closure_date: string | null;
+            /** Demo Start Date */
+            demo_start_date: string | null;
+            /** Demo End Date */
+            demo_end_date: string | null;
+            /** Po Number */
+            po_number: string | null;
+            /** Loss Reason Id */
+            loss_reason_id: string | null;
+            /** Loss Notes */
+            loss_notes: string | null;
+            /** Competitor Name */
+            competitor_name: string | null;
+            /** Hold Reason Id */
+            hold_reason_id: string | null;
+            /** Reactivation Date */
+            reactivation_date: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1117,6 +1486,24 @@ export interface components {
             lead_source_id?: string | null;
             /** Indicative Value */
             indicative_value?: number | string | null;
+            /** Expected Closure Date */
+            expected_closure_date?: string | null;
+            /** Demo Start Date */
+            demo_start_date?: string | null;
+            /** Demo End Date */
+            demo_end_date?: string | null;
+            /** Po Number */
+            po_number?: string | null;
+            /** Loss Reason Id */
+            loss_reason_id?: string | null;
+            /** Loss Notes */
+            loss_notes?: string | null;
+            /** Competitor Name */
+            competitor_name?: string | null;
+            /** Hold Reason Id */
+            hold_reason_id?: string | null;
+            /** Reactivation Date */
+            reactivation_date?: string | null;
         };
         /** OwnerNested */
         OwnerNested: {
@@ -1141,10 +1528,49 @@ export interface components {
             /** Total Pages */
             total_pages: number;
         };
+        /** PaginatedResponse[ActivityResponse] */
+        PaginatedResponse_ActivityResponse_: {
+            /** Items */
+            items: components["schemas"]["ActivityResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+        };
+        /** PaginatedResponse[PipelineOpportunity] */
+        PaginatedResponse_PipelineOpportunity_: {
+            /** Items */
+            items: components["schemas"]["PipelineOpportunity"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+        };
         /** PaginatedResponse[ProductListResponse] */
         PaginatedResponse_ProductListResponse_: {
             /** Items */
             items: components["schemas"]["ProductListResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+        };
+        /** PaginatedResponse[ReminderResponse] */
+        PaginatedResponse_ReminderResponse_: {
+            /** Items */
+            items: components["schemas"]["ReminderResponse"][];
             /** Total */
             total: number;
             /** Page */
@@ -1185,6 +1611,46 @@ export interface components {
          * @enum {string}
          */
         PayerBehavior: "GOOD" | "AVERAGE" | "PROBLEMATIC" | "UNKNOWN";
+        /**
+         * PipelineOpportunity
+         * @description Full nested response used by GET /opportunities/pipeline (Kanban + List views).
+         */
+        PipelineOpportunity: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Win Probability */
+            win_probability: string;
+            /** Indicative Value */
+            indicative_value: string | null;
+            /** Expected Closure Date */
+            expected_closure_date: string | null;
+            /** Demo Start Date */
+            demo_start_date: string | null;
+            /** Demo End Date */
+            demo_end_date: string | null;
+            /** Po Number */
+            po_number: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            account: components["schemas"]["AccountNested"];
+            stage: components["schemas"]["StageNested"];
+            status: components["schemas"]["StatusNested"];
+            owner: components["schemas"]["OwnerNested"];
+            sbu: components["schemas"]["SBUNested"];
+        };
         /** ProductCreate */
         ProductCreate: {
             /** Name */
@@ -1355,6 +1821,70 @@ export interface components {
             /** Bid Submission Date */
             bid_submission_date?: string | null;
         };
+        /** ReminderCreate */
+        ReminderCreate: {
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activity_id: string;
+            /**
+             * Assigned To User Id
+             * Format: uuid
+             */
+            assigned_to_user_id: string;
+            /**
+             * Due Date
+             * Format: date-time
+             */
+            due_date: string;
+            /** Reminder Text */
+            reminder_text: string;
+        };
+        /** ReminderResponse */
+        ReminderResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activity_id: string;
+            /**
+             * Assigned To User Id
+             * Format: uuid
+             */
+            assigned_to_user_id: string;
+            /**
+             * Due Date
+             * Format: date-time
+             */
+            due_date: string;
+            /** Reminder Text */
+            reminder_text: string;
+            /** Is Completed */
+            is_completed: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            assigned_to_user: components["schemas"]["UserNested"];
+            activity: components["schemas"]["ActivityContextNested"];
+        };
+        /** ReminderUpdate */
+        ReminderUpdate: {
+            /** Is Completed */
+            is_completed: boolean;
+        };
         /** SBUNested */
         SBUNested: {
             /**
@@ -1364,6 +1894,53 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** SplitCreate */
+        SplitCreate: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Split Percentage */
+            split_percentage: number | string;
+        };
+        /** SplitResponse */
+        SplitResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Split Percentage */
+            split_percentage: string;
+            user: components["schemas"]["OwnerNested"];
+        };
+        /** SplitsBulkUpdate */
+        SplitsBulkUpdate: {
+            /** Splits */
+            splits: components["schemas"]["SplitCreate"][];
+        };
+        /** StageNested */
+        StageNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Stage Code */
+            stage_code: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Display Order */
+            display_order: number;
+            /** Default Win Probability */
+            default_win_probability: string;
         };
         /** StakeholderCreate */
         StakeholderCreate: {
@@ -1379,6 +1956,45 @@ export interface components {
             nps_score?: number | null;
             /** Sentiment */
             sentiment?: string | null;
+        };
+        /** StakeholderLinkCreate */
+        StakeholderLinkCreate: {
+            /**
+             * Stakeholder Id
+             * Format: uuid
+             */
+            stakeholder_id: string;
+            /** Influence Level */
+            influence_level?: string | null;
+            /** Decision Role */
+            decision_role?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** StakeholderLinkResponse */
+        StakeholderLinkResponse: {
+            /**
+             * Stakeholder Id
+             * Format: uuid
+             */
+            stakeholder_id: string;
+            /** Influence Level */
+            influence_level: string | null;
+            /** Decision Role */
+            decision_role: string | null;
+            /** Notes */
+            notes: string | null;
+            stakeholder: components["schemas"]["StakeholderNested"];
+        };
+        /** StakeholderNested */
+        StakeholderNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** StakeholderResponse */
         StakeholderResponse: {
@@ -1430,6 +2046,25 @@ export interface components {
             /** Sentiment */
             sentiment?: string | null;
         };
+        /** StakeholdersBulkUpdate */
+        StakeholdersBulkUpdate: {
+            /** Stakeholders */
+            stakeholders: components["schemas"]["StakeholderLinkCreate"][];
+        };
+        /** StatusNested */
+        StatusNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status Code */
+            status_code: string;
+            /** Status Name */
+            status_name: string;
+            /** Is Terminal */
+            is_terminal: boolean;
+        };
         /** UserListResponse */
         UserListResponse: {
             /**
@@ -1467,6 +2102,16 @@ export interface components {
             role_name: string;
             sbu: components["schemas"]["SBUNested"];
             zone: components["schemas"]["ZoneNested"] | null;
+        };
+        /** UserNested */
+        UserNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -1756,6 +2401,7 @@ export interface ActivityResponse {
   notes: string | null;
   created_at: string;
   user: ActivityUser;
+  next_action_reminder_id: string | null;
 }
 
 export interface ActivityPage {
@@ -1764,6 +2410,17 @@ export interface ActivityPage {
   page: number;
   page_size: number;
   total_pages: number;
+}
+
+// BR-ACT-04: nested Activity context on a Reminder, resolved via the
+// Activity it's linked to (ADR-023 — Reminders carry no direct FK to
+// Account/Opportunity, only to Activity).
+export interface ActivityContext {
+  id: string;
+  activity_type: ActivityType;
+  activity_date: string;
+  account: { id: string; name: string };
+  opportunity: { id: string; name: string } | null;
 }
 
 export interface ReminderResponse {
@@ -1776,6 +2433,7 @@ export interface ReminderResponse {
   created_at: string;
   updated_at: string;
   assigned_to_user: ActivityUser;
+  activity: ActivityContext;
 }
 
 export type $defs = Record<string, never>;
@@ -2482,6 +3140,44 @@ export interface operations {
             };
         };
     };
+    list_pipeline_api_v1_opportunities_pipeline_get: {
+        parameters: {
+            query?: {
+                account_id?: string | null;
+                stage_id?: string | null;
+                status_id?: string | null;
+                owner_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_PipelineOpportunity__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_opportunities_api_v1_accounts__account_id__opportunities_get: {
         parameters: {
             query?: never;
@@ -2552,7 +3248,7 @@ export interface operations {
             };
         };
     };
-    update_opportunity_api_v1_opportunities__opportunity_id__put: {
+    update_opportunity_api_v1_opportunities__opportunity_id__patch: {
         parameters: {
             query?: never;
             header?: {
@@ -2601,6 +3297,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_OpportunityItemResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_opportunity_items_api_v1_opportunities__opportunity_id__items_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemsBulkUpdate"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -2678,6 +3411,360 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_splits_api_v1_opportunities__opportunity_id__splits_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_SplitResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_splits_api_v1_opportunities__opportunity_id__splits_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitsBulkUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_SplitResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_StakeholderLinkResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replace_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StakeholdersBulkUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_StakeholderLinkResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_activities_api_v1_accounts__account_id__activities_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ActivityResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_opportunity_activities_api_v1_opportunities__opportunity_id__activities_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ActivityResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    log_activity_api_v1_activities_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ActivityResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reminders_api_v1_reminders_get: {
+        parameters: {
+            query?: {
+                include_completed?: boolean;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ReminderResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_reminder_api_v1_reminders_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ReminderResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_reminder_api_v1_reminders__reminder_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                reminder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ReminderResponse_"];
+                };
             };
             /** @description Validation Error */
             422: {

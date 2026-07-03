@@ -22,7 +22,10 @@ router = APIRouter(tags=["Activities & Reminders"])
 
 
 def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:  # noqa: B008
-    return ActivityService(repository=ActivityRepository(db))
+    return ActivityService(
+        repository=ActivityRepository(db),
+        reminder_repository=ReminderRepository(db),
+    )
 
 
 def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # noqa: B008
@@ -79,8 +82,10 @@ async def log_activity(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ActivityService = Depends(_get_activity_service),  # noqa: B008
 ) -> APIResponse[ActivityResponse]:
-    activity = service.log_activity(body, created_by=current_user.id)
-    return APIResponse(data=ActivityResponse.model_validate(activity))
+    activity, reminder = service.log_activity(body, created_by=current_user.id)
+    response = ActivityResponse.model_validate(activity)
+    response.next_action_reminder_id = reminder.id if reminder else None
+    return APIResponse(data=response)
 
 
 # ------------------------------------------------------------------

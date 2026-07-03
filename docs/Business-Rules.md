@@ -215,6 +215,31 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 * **Purpose:** Ensures every Activity record is always directly traceable to a customer Account. Database-level NOT NULL enforcement provides a safety net independent of application validation logic and API layer behaviour.
 
+### BR-ACT-04: Mandatory Next Action Capture (PRD §4.3)
+* **Rule:** Every logged Activity must capture a Next Action (free text),
+  a Due Date, and an Owner, EXCEPT when `activity_type == MANAGER_NOTE`.
+  The interaction cannot be saved without these fields for any other
+  activity_type.
+* **Implementation:** Enforced at the Pydantic schema layer via a
+  conditional validator (`ActivityCreate.next_action_text` /
+  `.next_action_due_date` are required unless `activity_type` is
+  `MANAGER_NOTE`) and realized as a Reminder record auto-created in the
+  same transaction as the Activity it belongs to (see ADR-023 — Reminders
+  are Activity-linked, not a separate user-initiated entity in this flow).
+  No Reminder is created when the exemption applies.
+* **Owner default:** If no explicit owner is provided, the Next Action Owner
+  defaults to the Activity's `user_id` (the person the interaction is
+  logged against).
+* **Scope / exemption:** Applies to all activity_type values EXCEPT
+  MANAGER_NOTE. A Manager Note is internal manager-to-rep guidance
+  (BR-ACT-02), not a customer interaction — it carries no follow-up
+  commitment to an account, so mandatory next-action capture does not
+  apply to it.
+* **Purpose:** Ensures every genuine customer interaction produces a
+  trackable, assigned follow-up, closing the loop between activity logging
+  and the Reminders/Tasks system (§7.2 of `docs/API-Catalog.md`), without
+  forcing meaningless due dates onto internal notes.
+
 ---
 
 # 7. Audit & History Rules

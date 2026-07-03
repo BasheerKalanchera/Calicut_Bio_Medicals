@@ -7,8 +7,9 @@ from app.domains.activity.schemas import ActivityCreate, ReminderCreate, Reminde
 
 
 class ActivityService:
-    def __init__(self, repository: ActivityRepository):
+    def __init__(self, repository: ActivityRepository, reminder_repository: ReminderRepository):
         self.repository = repository
+        self.reminder_repository = reminder_repository
 
     def list_by_account(
         self,
@@ -43,7 +44,7 @@ class ActivityService:
         data: ActivityCreate,
         *,
         created_by: uuid.UUID,
-    ) -> Activity:
+    ) -> tuple[Activity, Reminder | None]:
         # BR-ACT-01: account must exist
         if not self.repository.account_exists(data.account_id):
             raise NotFoundError(f"Account {data.account_id} not found")
@@ -61,7 +62,25 @@ class ActivityService:
             notes=data.notes,
             created_by=created_by,
         )
-        return self.repository.create(activity)
+        activity = self.repository.create(activity)
+
+        # BR-ACT-04: next-action fields are absent only for MANAGER_NOTE
+        # (schema validator enforces this) - no Reminder for those.
+        reminder = None
+        if data.next_action_text and data.next_action_due_date:
+            resolved_owner = data.next_action_owner_id or activity.user_id
+            reminder = Reminder(
+                activity_id=activity.id,
+                assigned_to_user_id=resolved_owner,
+                due_date=data.next_action_due_date,
+                reminder_text=data.next_action_text,
+                is_completed=False,
+                created_by=created_by,
+                updated_by=created_by,
+            )
+            reminder = self.reminder_repository.create(reminder)
+
+        return activity, reminder
 
 
 class ReminderService:

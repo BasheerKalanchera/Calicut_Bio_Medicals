@@ -9,6 +9,10 @@ export interface LogActivityPayload {
   activity_type: string;
   activity_date: string;
   notes?: string;
+  // BR-ACT-04: required unless activity_type is MANAGER_NOTE.
+  next_action_text?: string;
+  next_action_due_date?: string;
+  next_action_owner_id?: string;
 }
 
 export async function listActivitiesByAccount(

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # Approved activity types (BR-ACT-02 adds MANAGER_NOTE)
 ActivityType = Literal["VISIT", "CALL", "EMAIL", "MEETING", "NOTE", "MANAGER_NOTE"]
@@ -19,6 +19,20 @@ class UserNested(BaseModel):
     display_name: str
 
 
+class AccountNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class OpportunityNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 # ------------------------------------------------------------------
 # Activity
 # ------------------------------------------------------------------
@@ -31,6 +45,20 @@ class ActivityCreate(BaseModel):
     activity_type: ActivityType
     activity_date: datetime
     notes: str | None = None
+    # BR-ACT-04: mandatory for every activity_type except MANAGER_NOTE
+    # (internal manager-to-rep guidance carries no follow-up commitment).
+    next_action_text: str | None = Field(default=None, min_length=1)
+    next_action_due_date: datetime | None = None
+    next_action_owner_id: uuid.UUID | None = None  # defaults to Activity.user_id
+
+    @model_validator(mode="after")
+    def _require_next_action_unless_manager_note(self) -> "ActivityCreate":
+        if self.activity_type != "MANAGER_NOTE":
+            if not self.next_action_text:
+                raise ValueError("Next Action is required to log this activity.")
+            if not self.next_action_due_date:
+                raise ValueError("Next Action Due Date is required to log this activity.")
+        return self
 
 
 class ActivityResponse(BaseModel):
@@ -46,6 +74,7 @@ class ActivityResponse(BaseModel):
     notes: str | None
     created_at: datetime
     user: UserNested
+    next_action_reminder_id: uuid.UUID | None = None
 
 
 # ------------------------------------------------------------------
@@ -63,6 +92,16 @@ class ReminderUpdate(BaseModel):
     is_completed: bool
 
 
+class ActivityContextNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    activity_type: str
+    activity_date: datetime
+    account: AccountNested
+    opportunity: OpportunityNested | None
+
+
 class ReminderResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -75,3 +114,4 @@ class ReminderResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     assigned_to_user: UserNested
+    activity: ActivityContextNested

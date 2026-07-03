@@ -115,11 +115,12 @@
 ## 7. Activities & Tasks API
 
 ### 7.1 Activities
-**Purpose:** Immutable interaction logs.
+**Purpose:** Immutable interaction logs. Every Activity mandatorily captures a linked Next Action (BR-ACT-04), except `MANAGER_NOTE`, which is exempt (internal manager-to-rep guidance, not a customer interaction). `POST /activities` atomically creates the Activity and its follow-up Reminder in one request/transaction.
 - **Endpoints:**
   - `GET /accounts/{id}/activities`
-  - `POST /activities`
-- **Justification:** Required for Phase 1. `PATCH` and `DELETE` explicitly omitted to enforce BR-ACT-01 (Activity Immutability).
+  - `GET /opportunities/{id}/activities`
+  - `POST /activities` (request body includes `next_action_text`, `next_action_due_date`, optional `next_action_owner_id` — required unless `activity_type` is `MANAGER_NOTE` — BR-ACT-04)
+- **Justification:** Required for Phase 1. `PATCH` and `DELETE` explicitly omitted to enforce BR-ACT-01 (Activity Immutability). Mandatory next-action fields enforce BR-ACT-04 (PRD §4.3) at the API boundary.
 
 ### 7.2 Reminders (Tasks)
 **Purpose:** Follow-ups derived from activities.

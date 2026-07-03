@@ -9,6 +9,7 @@ import ProductCatalogScreen from "./screens/ProductCatalogScreen";
 import ProjectDirectoryScreen from "./screens/ProjectDirectoryScreen";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
+import NextActionsScreen from "./screens/NextActionsScreen";
 import type { PipelineOpportunity } from "./types/api";
 
 const NAV_SECTIONS = [
@@ -17,6 +18,7 @@ const NAV_SECTIONS = [
     items: [
       { id: "customers",     label: "Account Management", icon: "🏥" },
       { id: "opportunities", label: "Pipeline",           icon: "📈" },
+      { id: "nextActions",   label: "Next Actions",       icon: "✅" },
     ],
   },
   {
@@ -292,6 +294,14 @@ export default function DemoApp() {
           {/* Product Catalog — always mounted, hidden when not active */}
           <div className={`flex-1 overflow-hidden flex flex-col ${view === "catalog" ? "" : "hidden"}`}>
             <ProductCatalogScreen />
+          </div>
+
+          {/* Next Actions — always mounted, hidden when not active */}
+          <div className={`flex-1 overflow-hidden flex flex-col ${view === "nextActions" ? "" : "hidden"}`}>
+            <div className="px-4 py-3 bg-white border-b border-gray-100 shrink-0">
+              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Next Actions</h2>
+            </div>
+            <NextActionsScreen />
           </div>
         </ErrorBoundary>
       </div>
