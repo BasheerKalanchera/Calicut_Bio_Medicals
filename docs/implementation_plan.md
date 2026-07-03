@@ -80,7 +80,11 @@ During this period, we will generate and freeze all Week 1 design artifacts requ
 * **Goal:** Implement Opportunity Pipeline and Activity tracking.
 * **Tasks:**
   * Create tables/APIs for Opportunities, Contributor Splits, Activities, and Reminders.
-  * Develop Frontend Kanban Pipeline board with stage transition drag-and-drop.
+  * Develop Frontend Kanban Pipeline board. **Decision (2026-07-03):** ships
+    click-based for Milestone 1 — stage changes via the Opportunity Detail
+    panel's Stage field, not drag-and-drop on the board. Drag-and-drop is
+    deferred; revisit after Milestone 1 (post July 27 go-live) if still
+    desired.
   * Implement Opportunity Detail panel and form wizards (lead wizard split routing).
   * Enforce Stage Exit validations and shared split logic (sum = 100%).
   * Implement Activity Logging timeline and Next Actions panel.

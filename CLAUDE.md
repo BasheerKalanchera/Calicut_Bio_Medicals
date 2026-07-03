@@ -11,6 +11,9 @@
 - Zones: North Kerala, South Kerala, Central Kerala
 - Fiscal year: Indian FY April–March; period format YYYY-Qn
 - Currency: all financial values in INR Lakhs, NUMERIC(15,2)
+- **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not local/disposable —
+  never write test data through the live API without checking first. `Activity` rows are
+  immutable (no DELETE endpoint), so test writes there are permanent.
 
 ## Authoritative References
 These documents are the source of truth. Consult the relevant one before writing
@@ -23,3 +26,7 @@ code or changing structure. On any conflict, the document wins over this file.
   and state transitions. Both backend and frontend must honor these.
 - Decisions & schema: ADRs in `docs/ADR.md`; `Physical-Schema.sql` is authoritative
   for all DB object names. Consult before any structural change.
+
+## Session handoff
+- Keep `.claude/active_progress.md` current: the task in progress, what's done, the next step.
+- Update it as work advances, not only at session end.

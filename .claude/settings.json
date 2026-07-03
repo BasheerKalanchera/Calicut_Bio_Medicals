@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "cat .claude/active_progress.md 2>/dev/null" }
+        ]
+      }
+    ]
+  }
+}
