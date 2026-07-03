@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-no-tailwind.js",
+    "lint:tailwind-guard": "node scripts/check-no-tailwind.js",
     "preview": "vite preview",
     "generate:types": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o src/types/api.ts"
   },

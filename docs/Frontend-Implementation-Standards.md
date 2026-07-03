@@ -7,7 +7,7 @@
 > ## Standard, as of 2026-07-03
 > **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all new files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032).
 >
-> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Twelve screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
+> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Thirteen screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
 >
 > This revision reconciles the doc with ADR-031/032/033 (accepted 2026-06-30, never reflected here until now — see the dated reconciliation note on ADR-031 in `docs/ADR.md`). Sections below that describe the pre-migration Tailwind/manual-fetch pattern are marked **Superseded**; they are kept only so pending files in §9 can be recognized for what they are.
 
@@ -278,6 +278,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `NextActionsScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `ActivityTimeline.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `main.tsx` | `src/` | Tailwind (pending) | N/A (app entry, no fetching) | ✓ |
 
 **Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
 
@@ -297,7 +298,9 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 2 migrated · 12 pending · 1 explicitly out of scope.
+**Totals:** 2 migrated · 13 pending · 1 explicitly out of scope.
+
+*(Note: `main.tsx` was found and added to this table on 2026-07-03 after the automated guard — see `sales-os-app/scripts/check-no-tailwind.js` — caught it missing from an earlier version of this table. It was in the original full-codebase inventory but wasn't carried into this section. Left as a record that the tooling, not manual review, is what catches this now.)*
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 
