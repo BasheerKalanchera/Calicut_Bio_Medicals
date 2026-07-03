@@ -1,6 +1,15 @@
-# Cabio Sales OS - Frontend Implementation Standards v1.0
+# Cabio Sales OS - Frontend Implementation Standards v2.0
 
-**Based on:** Architecture Freeze v1.0, ADR-029, ADR-030, Customer Directory / Customer 360 implementation (June 2026)
+**Based on:** Architecture Freeze v1.0, ADR-029, ADR-030, ADR-031, ADR-032, ADR-033, Customer Directory / Customer 360 implementation (June 2026), MUI + React Query + TypeScript migration reconciliation (July 3, 2026).
+
+---
+
+> ## Standard, as of 2026-07-03
+> **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all new files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032).
+>
+> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Twelve screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
+>
+> This revision reconciles the doc with ADR-031/032/033 (accepted 2026-06-30, never reflected here until now — see the dated reconciliation note on ADR-031 in `docs/ADR.md`). Sections below that describe the pre-migration Tailwind/manual-fetch pattern are marked **Superseded**; they are kept only so pending files in §9 can be recognized for what they are.
 
 ---
 
@@ -25,14 +34,14 @@ Covers all React/Vite frontend code under the `sales-os-app/` directory. Does no
 
 ### 2.1 Always-Mounted Pattern for List Screens (ADR-030)
 
-List screens that are the parent in a list → detail navigation pair **must stay mounted** in the DOM. They are hidden via a Tailwind `hidden` class, not unmounted with `&&`.
+List screens that are the parent in a list → detail navigation pair **must stay mounted** in the DOM. They are hidden via an MUI `sx` display toggle, not unmounted with `&&`.
 
-**Required pattern — `DemoApp.jsx`:**
-```jsx
-{/* CustomerDirectory stays mounted — CSS hidden, never unmounted */}
-<div className={`flex-1 overflow-hidden flex flex-col ${view === "customers" ? "" : "hidden"}`}>
+**Required pattern — `DemoApp.tsx`:**
+```tsx
+{/* CustomerDirectory stays mounted — CSS hidden via sx display, never unmounted */}
+<Box sx={{ flex: 1, overflow: "hidden", display: view === "customers" ? "flex" : "none", flexDirection: "column" }}>
   <CustomerDirectoryScreen onSelectAccount={handleSelectAccount} />
-</div>
+</Box>
 
 {/* Detail screen mounts fresh on navigation, receives initialData */}
 {view === "customer360" && selectedAccount && (
@@ -44,178 +53,115 @@ List screens that are the parent in a list → detail navigation pair **must sta
 )}
 ```
 
-**Rationale:** Unmounting the list screen on navigation destroys scroll position, filter state, and in-flight data. Remounting triggers a full data refetch (even with SWR cache, a cache hit still re-renders the entire list). The always-mounted pattern matches how iOS UINavigationController and Android back stack work — the parent stays in memory while the child is on screen.
+**Rationale:** Unmounting the list screen on navigation destroys scroll position, filter state, and in-flight data. Remounting triggers a full data refetch (even with a React Query cache hit, a remount still re-renders the entire list). The always-mounted pattern matches how iOS UINavigationController and Android back stack work — the parent stays in memory while the child is on screen.
 
 **Rules:**
 - Every list screen (Customer Directory, Coverage Plans, Opportunity Pipeline, Target Plans, etc.) must use this pattern.
 - Detail screens (`Customer360Screen`, future detail screens) continue to conditionally mount/unmount. They receive `initialData` from the parent on mount so remount cost is negligible.
 - Never use `key={selectedAccount?.id}` on a list screen to force remount — this defeats the purpose.
+- **Superseded:** `DemoApp.jsx` no longer exists — the shell is `DemoApp.tsx`. The Tailwind `className` toggle shown in v1.0 (`` `${view === "x" ? "" : "hidden"}` ``) is prohibited in new code; `DemoApp.tsx` itself still uses it today and is tracked as pending in §9.
 
 ---
 
-## 3. Data Fetching Architecture
+## 3. Data Fetching Architecture (React Query — ADR-032)
 
-### 3.1 Optimistic Initial Render via `initialData` Prop
+### 3.1 `useQuery` Per Resource — Required Pattern
 
-Detail screens must render immediately using data passed from the parent list. The full detail fetch fires in the background to fill in missing fields.
+Every independently-loaded piece of data on a screen gets its own `useQuery` call. Each call carries its own `data`/`isLoading`/`isError` — this replaces the v1.0 manual per-resource loading-flag pattern automatically; React Query does it natively, nothing to hand-roll.
 
-**Required pattern — detail screen:**
-```jsx
-export default function SomeDetailScreen({ entityId, initialEntity = null, onBack }) {
-  const [entity, setEntity] = useState(initialEntity);
-  const [loading, setLoading] = useState(!initialEntity); // false when initialData provided
-
-  const load = useCallback(() => {
-    if (!initialEntity) setLoading(true);
-
-    getEntity(entityId)
-      .then((data) => { setEntity(data); setLoading(false); })
-      .catch((err) => {
-        if (!initialEntity) {
-          setError(err.message || "Failed to load");
-          setLoading(false);
-        }
-        // If initialData was provided, silently swallow the background fetch error.
-        // User already sees data — don't flash an error screen.
-      });
-  }, [entityId, initialEntity]);
+**Required pattern — `OpportunityDetailScreen.tsx`:**
+```tsx
+function ProductsTab({ opportunityId }: { opportunityId: string }) {
+  const { data: items, isLoading } = useQuery({
+    queryKey: ["opp-items", opportunityId],
+    queryFn: () => listOpportunityItems(opportunityId),
+  });
+  // ...
+}
 ```
 
 **Rules:**
-- `useState(initialData)` — initialise state from the prop, not from `null`.
-- `useState(!initialData)` — loading starts `false` when initial data is present.
-- The background `getEntity` fetch always fires — it fills in fields the list row doesn't carry (e.g. full detail, counts from the detail endpoint).
-- Never block render on the background fetch completing.
+- `queryKey` is an array: a string tag plus every parameter the query depends on (e.g. `["opp-items", opportunityId]`). Two queries with different keys are cached independently.
+- Independent `useQuery` calls on the same screen fire in parallel automatically — this is the point of Guiding Principle 3. There is no manual orchestration to write; do not wrap multiple `useQuery` calls in `Promise.all` or chain them, unless one query's `queryFn` genuinely needs another query's result (use `enabled: !!parentData` for that case only).
+- Never reach for `useEffect` + `useState` + manual fetch for anything a `useQuery` call already covers.
 
-### 3.2 Parallel Fetch at Mount — Never Chain
+### 3.2 `useMutation` + `invalidateQueries` — Required Pattern for Writes
 
-When a detail screen needs N pieces of data and none of them depend on each other, fire all N fetches simultaneously at mount. Never chain `.then(() => fetch2(...))`.
+**Required pattern — inline handler (`OpportunityDetailScreen.tsx`):**
+```tsx
+const queryClient = useQueryClient();
+// ...
+await updateOpportunityItems(opportunityId, payload);
+await queryClient.invalidateQueries({ queryKey: ["opp-items", opportunityId] });
+```
 
-**Required pattern — `Customer360Screen` mount:**
-```js
-const loadAll = useCallback(() => {
-  // All 5 fire simultaneously — no await, no .then chaining between them
-  getAccount(accountId).then(setAccount).catch(...).finally(() => setLoading(false));
-  listStakeholders(accountId).then(setStakeholders).catch(() => {}).finally(() => setStakeholdersLoading(false));
-  listProjects(accountId).then(setProjects).catch(() => {}).finally(() => setProjectsLoading(false));
-  listOpportunities(accountId).then(setOpportunities).catch(() => {}).finally(() => setOpportunitiesLoading(false));
-  listInstalledAssets(accountId).then(setInstalled).catch(() => {}).finally(() => setInstalledLoading(false));
-}, [accountId]);
+**Required pattern — `useMutation` (`NextActionsScreen.tsx`):**
+```tsx
+const completeMutation = useMutation({
+  mutationFn: (id: string) => patchReminder(id, true),
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["reminders"] }),
+});
 ```
 
 **Rules:**
-- Chaining is only allowed when there is a genuine data dependency (e.g. you need the account ID from the first call to construct the URL for the second). This is rare.
-- Never use `Promise.all([...]).then(([a, b]) => ...)` as a convenience wrapper — it holds back all rendering until the slowest fetch resolves. Use individual `.then()` handlers so each piece of data renders as it arrives.
-- Do not `await` fetches inside a `useEffect` — always use `.then()` chains to avoid blocking the render cycle.
+- After any create/update/delete, invalidate every `queryKey` whose data the mutation could have changed. This replaces the v1.0 `entityListCache.clear()` call.
+- Prefer `useMutation` when the write is triggered directly from a form/button. A plain `async` handler with `await ...; await queryClient.invalidateQueries(...)` is acceptable for inline tab-edit flows (see `OpportunityDetailScreen.tsx`) — both are current, real patterns in this codebase.
 
-### 3.3 Per-Resource Loading Flags
+### 3.3 Fast Back-Navigation for Always-Mounted Lists
 
-Each independently loaded data section has its own loading flag. Never use a single shared `isLoading` flag for a screen that has multiple independent data sections.
+ADR-030 requires list screens to stay mounted so back-navigation is instant. React Query's cache (§4.1) already serves this: a `useQuery` call with the same `queryKey` returns cached data synchronously on re-render if within `staleTime` (30 s, configured once in `main.tsx`), with a silent background refetch. This replaces the v1.0 hand-rolled module-level `Map` cache (§4.1) entirely — **do not add a new one.**
 
-**Required pattern:**
+If a future detail screen needs to seed a query from data the parent list already has (avoiding a loading flash on first navigate), use `useQuery`'s `initialData` option. **No screen in this codebase does this yet** — when one does, replace this paragraph with the verified pattern from that file rather than an invented example.
+
+### 3.4 Per-Resource Loading Flags — Superseded
+
+The v1.0 pattern below (one manual `useState(true)` per data section) is superseded. Every `useQuery` call already returns its own `isLoading` — do not add a parallel manual flag.
+
 ```jsx
+// Superseded — do not write new code like this.
 const [stakeholdersLoading, setStakeholdersLoading] = useState(true);
-const [projectsLoading, setProjectsLoading] = useState(true);
-const [opportunitiesLoading, setOpportunitiesLoading] = useState(true);
-const [installedLoading, setInstalledLoading] = useState(true);
-
-// In JSX — each section renders independently
-{activeTab === "stakeholders" && (
-  stakeholdersLoading ? <LoadingDiv /> : <StakeholdersTab ... />
-)}
+listStakeholders(accountId).then(setStakeholders).catch(() => {}).finally(() => setStakeholdersLoading(false));
 ```
-
-**Rules:**
-- One `useState(true)` per data section, set to `false` in `.finally()` of its own fetch.
-- A section that has loaded data renders it immediately even if other sections are still loading.
-- The header / overview section of a detail screen uses `useState(!initialData)` — it does not share a flag with the tab sections.
 
 ---
 
-## 4. Caching Architecture
+## 4. Caching Architecture (React Query — ADR-032)
 
-### 4.1 Stale-While-Revalidate (SWR) Cache for List Screens
+### 4.1 QueryClient Cache — Supersedes Manual SWR Cache
 
-List screens that are always-mounted (§2.1) must also implement a module-level SWR cache so that back-navigation shows data instantly on the same render frame — before any network response returns.
+The v1.0 hand-rolled module-level SWR `Map` cache (shown below) is **prohibited in new code**. `QueryClientProvider` (configured once in `main.tsx`: `staleTime: 30_000`, `retry: 1`) is now the single cache layer for all list and detail data. Do not add a second cache on top of it.
 
-**Required pattern:**
 ```js
-// Module-level — persists across component mounts
+// Superseded — do not write new code like this. QueryClientProvider replaces this entirely.
 const CACHE_TTL_MS = 30_000;
-const entityListCache = new Map(); // cacheKey → { items, total, fetchedAt }
-
-function getCached(key) {
-  const entry = entityListCache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.fetchedAt > CACHE_TTL_MS) { entityListCache.delete(key); return null; }
-  return entry;
-}
-
-function setCache(key, data) {
-  entityListCache.set(key, { ...data, fetchedAt: Date.now() });
-}
-
-// In fetchList():
-const cached = getCached(cacheKey);
-if (cached && !isBackgroundRefresh) {
-  setItems(cached.items);
-  setTotal(cached.total);
-  setLoading(false);
-  fetchList({ background: true }); // silent background refresh
-  return;
-}
+const entityListCache = new Map();
 ```
-
-**Rules:**
-- Cache key = `JSON.stringify(params)` — captures all active filters and pagination.
-- TTL = 30 seconds. Data older than 30 s is refetched in the foreground.
-- On cache hit, serve data synchronously then kick off a silent background refresh.
-- Call `entityListCache.clear()` immediately after a create/update/delete mutation so the next fetch is authoritative.
-- The cache stores the merged result including lazy-loaded counts (§4.2) — counts must not be lost on background refresh.
 
 ### 4.2 Lazy Batch Aggregate Counts (ADR-029)
 
-Aggregate counts (stakeholder count, project count, etc.) are expensive to include in the list query at scale. They must be fetched lazily via a dedicated batch endpoint after the list renders.
+The backend contract (§5) is unchanged — aggregate counts are still fetched via a dedicated batch endpoint after the list renders. The frontend implementation becomes a second, dependent `useQuery`:
 
-**Required pattern — frontend:**
-```js
-listEntities(params)
-  .then((data) => {
-    const items = data.items;
-    setItems(items);           // list renders immediately — no counts yet
-    setLoading(false);
-
-    const ids = items.map((e) => e.id);
-    if (ids.length === 0) { setCache(cacheKey, { items, total: data.total }); return; }
-
-    getEntityCounts(ids)       // fires lazily after list is visible
-      .then((counts) => {
-        const merged = items.map((e) => ({ ...e, ...(counts[e.id] || {}) }));
-        setItems(merged);      // counts populate in the background
-        setCache(cacheKey, { items: merged, total: data.total });
-      })
-      .catch(() => {
-        setCache(cacheKey, { items, total: data.total }); // counts missing — still cache the list
-      });
-  });
+```tsx
+const { data: items } = useQuery({ queryKey: ["accounts", params], queryFn: () => listAccounts(params) });
+const ids = items?.map((a) => a.id) ?? [];
+const { data: counts } = useQuery({
+  queryKey: ["account-counts", ids],
+  queryFn: () => getAccountCounts(ids),
+  enabled: ids.length > 0,
+});
 ```
 
-**Required pattern — backend (§5.1 cross-reference):**
-- One dedicated `GET /entities/counts?ids=...` endpoint.
-- Endpoint declared before `GET /{entity_id}` in the router to avoid route collision.
-- Endpoint runs one `GROUP BY entity_id` query per child table — never correlated scalar subqueries.
-- Returns `{ [entityId: string]: { child1_count, child2_count, ... } }`.
+**No screen in this codebase implements this yet** — the three directory screens that use the counts pattern today (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`) are all pre-migration (§9). Verify this example against the real implementation the first time one of them migrates, and update it here.
 
-**Rules:**
+**Rules (unchanged from v1.0):**
 - The list screen never waits for counts before rendering. Counts show as `—` or `0` while loading and populate in the background.
-- The detail screen receives counts via `initialData` prop (which by the time the user taps is already merged). On detail load, the `getEntity` background fetch returns counts from the detail endpoint — these replace the `—` placeholders.
 - This pattern scales to 500+ accounts because the batch endpoint's cost is O(1 scan × N child tables) regardless of page size.
 
 ---
 
 ## 5. Backend Endpoint Contract for Lazy Counts
 
-This section defines what the frontend expects from any batch counts endpoint. Backend engineers must satisfy this contract.
+This section defines what the frontend expects from any batch counts endpoint. Backend engineers must satisfy this contract. Unaffected by the MUI/React Query/TypeScript migration.
 
 | Property | Requirement |
 |---|---|
@@ -231,42 +177,44 @@ This section defines what the frontend expects from any batch counts endpoint. B
 
 ## 6. Component Patterns
 
-### 6.1 isMountedRef Guard
+### 6.1 `isMountedRef` Guard — Superseded by React Query
 
-Every screen that fires async fetches must guard all state setters with an `isMountedRef` to prevent state updates on unmounted components.
+The v1.0 guard below is unnecessary for any fetch done via `useQuery`/`useMutation` — React Query already discards results from unmounted components internally. Only relevant if a screen still has a raw `useEffect` + manual fetch outside React Query, which should not occur in new code.
 
 ```jsx
+// Superseded for React Query fetches — kept for historical reference only.
 const isMountedRef = useRef(true);
 useEffect(() => {
   isMountedRef.current = true;
   return () => { isMountedRef.current = false; };
 }, []);
-
-// In fetch callbacks:
-.then((data) => {
-  if (!isMountedRef.current) return;
-  setState(data);
-})
 ```
-
-**Note:** React 18 Strict Mode double-invokes effects. The cleanup `() => { isMountedRef.current = false; }` runs between the two invocations, leaving `isMountedRef.current = false` during the second mount. The fix is to set `isMountedRef.current = true` inside the effect body (not just the cleanup), which resets it on both invocations. The pattern above already handles this correctly.
 
 ### 6.2 Form Modals
 
-- Enter key in form modals must not submit the form. Add `onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}` to each text input or handle it at the form element level.
-- Modal `onSubmit` must throw to signal failure — `FormModal` catches the error and displays it.
+- Enter key in form modals must not submit the form. Add `onKeyDown` handling at the `<form>` element (see `FormModal.tsx`), not per-input.
+- Modal `onSubmit` must throw to signal failure — `FormModal` catches the error and displays it via MUI `Alert`.
 - Clear all form state fields before opening the modal (not after closing) so re-opening shows a blank form.
 
 ### 6.3 Optimistic Error Handling in Tab Sections
 
-Tab fetches must never surface an error to the user. If a tab fetch fails, the tab renders empty (no data) rather than an error message. The overview/header section is the only place where a hard error state (with Retry button) is appropriate, and only when `initialData` was not provided.
+Tab fetches must never surface an error to the user. If a tab's `useQuery` fails, the tab renders empty (no data) rather than an error message. The overview/header section is the only place where a hard error state (with Retry button) is appropriate, and only when `initialData` was not provided.
 
-```js
-listChildEntities(id)
-  .then(setEntities)
-  .catch(() => {})           // swallow silently — tab shows empty state
-  .finally(() => setLoading(false));
+### 6.4 MUI Styling — Reference Pattern (ADR-031)
+
+`LoginScreen.tsx` and `FormModal.tsx` are the only two files in the codebase that are fully MUI-compliant — zero Tailwind. Use them as source of truth for "what correct looks like," not any Tailwind-styled screen you may come across (check §9 first).
+
+```tsx
+<Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+  <TextField label="Email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth size="small" />
+  <Button type="submit" variant="contained" fullWidth size="large">Sign In</Button>
+</Box>
 ```
+
+**Rules:**
+- Style via the `sx` prop, not `className`. `className` should not appear anywhere in new component code.
+- Reuse the theme (`src/theme/index.ts`) for brand color/radius rather than hardcoding hex values inline where the theme already defines them.
+- Dialogs use MUI `Dialog` / `DialogTitle` / `DialogContent` / `DialogActions` (see `FormModal.tsx`) — do not hand-roll a modal with a Tailwind `fixed inset-0` overlay.
 
 ---
 
@@ -276,16 +224,16 @@ listChildEntities(id)
 
 All backend calls live in `sales-os-app/src/services/`. No direct `api.get(...)` calls inside components or screens.
 
-- One file per domain: `accounts.js`, `masterData.js`, etc.
-- Each function is a named export, async, returns `response.data.data` (the inner `data` field from `APIResponse`).
-- No error handling inside service functions — errors propagate to the caller.
+- One file per domain: `accounts.ts`, `masterData.ts`, etc. — `.ts`, not `.js` (ADR-033).
+- Each function is a named export, async, returns `response.data.data` (the inner `data` field from `APIResponse`), typed against `src/types/api.ts` (generated via `npm run generate:types`).
+- No error handling inside service functions — errors propagate to the caller (a `useQuery`/`useMutation` `queryFn`/`mutationFn`, or a caught `await` in a handler).
 
 ### 7.2 Counts Endpoint Service Function Pattern
 
-```js
-export async function getEntityCounts(ids) {
+```ts
+export async function getEntityCounts(ids: string[]): Promise<Record<string, { child_count: number }>> {
   const response = await api.get("/entities/counts", { params: { ids: ids.join(",") } });
-  return response.data.data; // { [entityId]: { child_count, ... } }
+  return response.data.data;
 }
 ```
 
@@ -295,15 +243,68 @@ export async function getEntityCounts(ids) {
 
 Use this checklist when implementing any new list screen + detail screen pair:
 
-- [ ] List screen uses always-mounted CSS hidden pattern in `DemoApp.jsx` (§2.1)
-- [ ] List screen has module-level SWR cache with 30 s TTL (§4.1)
+- [ ] File is `.tsx`/`.ts`, not `.jsx`/`.js` (ADR-033)
+- [ ] No `className` prop used anywhere in the file — styling is via MUI `sx` (§6.4, ADR-031)
+- [ ] List screen uses always-mounted `sx` display-toggle pattern in `DemoApp.tsx` (§2.1)
+- [ ] All data fetching via `useQuery`; all writes via `useMutation` or `await` + `invalidateQueries` — no manual `.then()` fetch chains, no module-level cache (§3, §4.1, ADR-032)
 - [ ] List screen passes full entity object (not just ID) to `onSelectEntity` callback
-- [ ] List screen fires lazy batch counts fetch after list renders; merges into state and cache (§4.2)
-- [ ] Detail screen accepts `initialData` prop; state initialised from it (§3.1)
-- [ ] Detail screen loading flag initialised as `!initialData` (§3.1)
-- [ ] Detail screen fires all fetches simultaneously at mount — no chaining (§3.2)
-- [ ] Detail screen has one loading flag per independent data section (§3.3)
+- [ ] List screen fires lazy batch counts fetch as a dependent `useQuery` after the list renders (§4.2)
+- [ ] Detail screen accepts `initialData` prop; state initialised from it (§3.3)
 - [ ] Backend has a `GET /entities/counts` endpoint satisfying the contract in §5 (ADR-029)
-- [ ] `isMountedRef` guard on all async state setters (§6.1)
 - [ ] Tab fetch errors swallowed silently — empty state, not error screen (§6.3)
 - [ ] Form modals clear state on open, not on close (§6.2)
+
+---
+
+## 9. Migration Tracking
+
+Authoritative, per-file status for the MUI + React Query + TypeScript migration (ADR-031/032/033). Update this table in the same commit that migrates a file. Do not mark a file "Migrated" until it has zero `className` usages, all data fetching is via React Query, and it is `.tsx`/`.ts`.
+
+**These are not violations.** The banner above says Tailwind is prohibited *in new code* — every file listed below predates ADR-031/032/033 reconciliation (2026-07-03) and is grandfathered until converted. Converting a file off this list *is* the migration; a file sitting on this list is expected, tracked debt, not a rule someone broke. If banner and table ever seem to disagree, this paragraph governs: new/edited code follows the banner, files named here are pending by design until their row is deleted.
+
+**Fully migrated (source of truth for new code):**
+
+| File | Path |
+|---|---|
+| `LoginScreen.tsx` | `src/components/LoginScreen.tsx` |
+| `FormModal.tsx` | `src/components/FormModal.tsx` |
+
+**Pending — TypeScript + React Query done, styling still Tailwind:**
+
+| File | Path | Styling | Data Fetching | TypeScript |
+|---|---|---|---|---|
+| `OpportunityDetailScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `OpportunityPipelineScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `NextActionsScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `ActivityTimeline.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
+
+**Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
+
+| File | Path | Styling | Data Fetching | TypeScript |
+|---|---|---|---|---|
+| `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | manual `.then()` (pending) | ✓ |
+| `DemoApp.tsx` | `src/` | Tailwind (pending) | N/A (shell, local state) | ✓ |
+| `QuickLeadModal.tsx` | `src/components/` | Tailwind (pending) | manual `.then()` (pending) | ✓ |
+| `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
+| `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
+| `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
+| `ErrorBoundary.jsx` | `src/components/` | Tailwind (pending) | N/A (no fetching) | `.jsx` (pending) |
+
+**Out of scope — do not migrate:**
+
+| File | Path | Reason |
+|---|---|---|
+| `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
+
+**Totals:** 2 migrated · 12 pending · 1 explicitly out of scope.
+
+### Post-migration cleanup (do this when the table above reaches 0 pending)
+
+The "Superseded" code blocks left inline in §2.1, §3.4, §4.1, and §6.1 exist only so a pending file's old pattern is still recognizable during the migration. They are traceability aids with a deliberate expiry, not permanent documentation — once every file above is migrated:
+- Delete every block and paragraph marked **Superseded** in this document (§2.1's `DemoApp.jsx` note, §3.4, §4.1's `Map` cache block, §6.1's `isMountedRef` block).
+- Delete this Migration Tracking section (§9) entirely, or collapse it to a single line recording the migration's completion date.
+- Bump the doc to v3.0 and drop the "Based on" line's migration-reconciliation mention — at that point MUI/React Query/TypeScript are just the standard, not a standard being migrated to.
+- Remove the top banner's grandfathering language, since there will be nothing left to grandfather.
+
+Leaving superseded content in place past this point is how the doc drifts back into the exact staleness this reconciliation was fixing — a doc with dead alternatives in it is noise a future session has to read past, not signal.

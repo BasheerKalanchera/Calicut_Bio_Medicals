@@ -2,7 +2,7 @@
 
 This document serves as the formal Architecture Decision Register for the Cabio Sales OS project, compiled from the PRD, GEMINI.md mandates, Traceability Matrix, Phase 0B prototype evolution, and Architecture Consistency Review dispositions.
 
-**Last Updated:** June 30, 2026 — ADR-031 through ADR-034 added (frontend stack migration to MUI + React Query + TypeScript; mobile deployment strategy).
+**Last Updated:** July 3, 2026 — ADR-031 reconciliation note added (`Frontend-Implementation-Standards.md` and `CLAUDE.md` had drifted from the MUI/React Query/TypeScript decisions since June 30; see the note under ADR-031). Previous update: June 30, 2026 — ADR-031 through ADR-034 added (frontend stack migration to MUI + React Query + TypeScript; mobile deployment strategy).
 
 ---
 
@@ -281,6 +281,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * `Frontend-Implementation-Standards.md` requires full revision after migration is complete.
   * Tailwind and its Vite plugin are removed from `package.json` and `vite.config.js` after migration.
 * **Affected Modules:** All frontend screens and components. `DemoApp.jsx` navigation shell. `Frontend-Implementation-Standards.md`.
+* **Reconciliation Note (2026-07-03):** This ADR's own Impact section required `Frontend-Implementation-Standards.md` to be revised after migration completion; that revision did not happen when it should have. Between June 30 and July 3, six further screens/components were built or extended (`Customer360Screen.tsx`, `OpportunityPipelineScreen.tsx`, `OpportunityDetailScreen.tsx`, `NextActionsScreen.tsx`, `LogActivityModal.tsx`, `ActivityTimeline.tsx`) without the MUI conversion this ADR mandates, alongside three pre-existing screens (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`) and `ErrorBoundary.jsx` that were never touched — `LoginScreen.tsx` and `FormModal.tsx` remain the only fully MUI-compliant files in the app. `CLAUDE.md`'s Architecture section independently drifted in parallel, restating "React + Vite + Tailwind" as the stack after this ADR was accepted, which reinforced the drift in every session that read it since. Both documents were reconciled on 2026-07-03: `CLAUDE.md` now points at this ADR instead of restating the stack inline, and `Frontend-Implementation-Standards.md` (bumped to v2.0) documents MUI + React Query + TypeScript as the standard, with an explicit per-file Migration Tracking table (§9) for the twelve files still pending conversion and one file (`App.jsx`, prototype-only) explicitly marked out of scope. This ADR's original decision — hybrid Tailwind+MUI approach rejected — was **re-affirmed, not revisited**, during reconciliation; full MUI conversion remains the target for every in-scope file. Screen-body migration proceeds incrementally; `Frontend-Implementation-Standards.md` §9 is the authoritative status, not this note.
 
 ### ADR-032: Frontend Data Fetching — TanStack React Query
 
