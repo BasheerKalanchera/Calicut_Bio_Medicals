@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# Pre-commit guard: MUI-only enforcement (ADR-031).
+# Runs `npm run lint` (ESLint + the Tailwind className guard —
+# see sales-os-app/scripts/check-no-tailwind.js) and blocks the commit on failure.
+#
+# Tracked in .githooks/ (not .git/hooks/) so it travels with the repo.
+# One-time activation per clone: git config core.hooksPath .githooks
+# See README.md "Dev setup" for details.
+
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
+
+# Skip if this commit doesn't touch the frontend — avoids blocking backend-only
+# commits on sales-os-app/node_modules not being installed.
+if ! git diff --cached --name-only --diff-filter=ACM | grep -q '^sales-os-app/'; then
+  exit 0
+fi
+
+cd "$REPO_ROOT/sales-os-app" || exit 1
+npm run lint
+exit $?

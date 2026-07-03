@@ -45,6 +45,20 @@ npm run dev
 Backend API docs: `http://localhost:8000/api/v1/docs`  
 Frontend: `http://localhost:5173`
 
+### Dev Setup — One-Time Hook Activation
+
+This repo ships a tracked pre-commit hook (`.githooks/pre-commit`) that runs the
+frontend's `npm run lint` (ESLint + the Tailwind-className guard — see
+`docs/Frontend-Implementation-Standards.md` §9 and ADR-031) and blocks the commit
+on failure. Git doesn't read `.githooks/` automatically — point it there once per
+clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook skips itself on commits that don't touch `sales-os-app/`.
+
 ## Key Documentation
 
 | Document | Purpose |
