@@ -1,5 +1,12 @@
 # Cabio Sales OS — Project Rules
 
+## Product
+
+- This is a Sales OS, not a CRM — see PRD for the full definition.
+- Pipeline model: Target → Coverage → Opportunity → Revenue (see PRD and ADR-013).
+- Stage/Status decoupling: Won/Lost are statuses, not pipeline stages — preserve this modeling invariant (see ADR-028).
+- Design is formalized in ADRs, business rules, and a documented schema — consult these before any structural change.
+
 ## Architecture
 
 - **Stack:** PostgreSQL 16 (Supabase) · FastAPI · React + Vite + Tailwind
