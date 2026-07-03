@@ -42,11 +42,11 @@ interface Props {
 
 const TABS = [
   { id: "overview",      label: "Overview" },
+  { id: "activity",      label: "Activity" },
   { id: "stakeholders",  label: "Stakeholders" },
   { id: "projects",      label: "Projects" },
   { id: "opportunities", label: "Opportunities" },
   { id: "installed",     label: "Installed Base" },
-  { id: "activity",      label: "Activity" },
 ];
 
 // ---------------------------------------------------------------------------
