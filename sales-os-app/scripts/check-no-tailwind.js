@@ -19,7 +19,6 @@ const GRANDFATHERED = new Set([
   "components/ActivityTimeline.tsx",
   "components/ErrorBoundary.jsx",
   "DemoApp.tsx",
-  "main.tsx",
   // Out of scope permanently — prototype only, never migrated. See §9.
   "App.jsx",
 ]);

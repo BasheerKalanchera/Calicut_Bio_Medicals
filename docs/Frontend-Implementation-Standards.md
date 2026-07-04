@@ -268,6 +268,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|
 | `LoginScreen.tsx` | `src/components/LoginScreen.tsx` |
 | `FormModal.tsx` | `src/components/FormModal.tsx` |
+| `main.tsx` | `src/main.tsx` |
 
 **Pending — TypeScript + React Query done, styling still Tailwind:**
 
@@ -278,7 +279,6 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `NextActionsScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `ActivityTimeline.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
-| `main.tsx` | `src/` | Tailwind (pending) | N/A (app entry, no fetching) | ✓ |
 
 **Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
 
@@ -298,9 +298,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 2 migrated · 13 pending · 1 explicitly out of scope.
-
-*(Note: `main.tsx` was found and added to this table on 2026-07-03 after the automated guard — see `sales-os-app/scripts/check-no-tailwind.js` — caught it missing from an earlier version of this table. It was in the original full-codebase inventory but wasn't carried into this section. Left as a record that the tooling, not manual review, is what catches this now.)*
+**Totals:** 3 migrated · 12 pending · 1 explicitly out of scope.
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 
