@@ -274,6 +274,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `FormModal.tsx` | `src/components/FormModal.tsx` |
 | `main.tsx` | `src/main.tsx` |
 | `ActivityTimeline.tsx` | `src/components/ActivityTimeline.tsx` |
+| `NextActionsScreen.tsx` | `src/screens/NextActionsScreen.tsx` |
 
 **Pending — TypeScript + React Query done, styling still Tailwind:**
 
@@ -281,8 +282,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|---|---|
 | `OpportunityDetailScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `OpportunityPipelineScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
-| `NextActionsScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
-| `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
+| `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | manual `.then()` (mislabeled — see §9 note) | ✓ |
 
 **Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
 
@@ -302,7 +302,9 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 4 migrated · 11 pending · 1 explicitly out of scope.
+**Totals:** 5 migrated · 10 pending · 1 explicitly out of scope.
+
+*(Note: `LogActivityModal.tsx`'s Data Fetching column was corrected on 2026-07-04 — the file actually uses manual `.then()` for `listUsers`/`listAccounts`, not React Query as previously listed. Discovered while scoping its migration.)*
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 

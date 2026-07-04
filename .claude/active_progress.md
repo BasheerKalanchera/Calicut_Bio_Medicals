@@ -35,6 +35,26 @@ decide ordering at session start (do NOT default to investigation order).
 - `statusColors.ts` — create as one pass after Tailwind migration; consolidates
   ~11 files; resolve emerald-50-vs-100 (and any other weight inconsistencies) at
   that time from complete view.
+- **Type the shared frontend service functions properly.** `listUsers`
+  (services/masterData.ts) and `listAccounts` (services/accounts.ts) — and
+  likely their siblings — return `Promise<unknown>` instead of a typed shape,
+  forcing callers to use `any[]` or local inline types. Root-cause fix: give
+  these functions proper return types (e.g. `{ id: string; display_name: string }[]`).
+  Cascades — these services are consumed by Customer360Screen.tsx,
+  CustomerDirectoryScreen.jsx, QuickLeadModal.tsx, and LogActivityModal.tsx
+  (grep `listUsers`/`listAccounts` before starting to get the full caller list).
+  When done, remove the local stopgap types added during migration (currently
+  in LogActivityModal.tsx, marked with a "fix at service layer" comment; check
+  other migrated files for the same). Deferred because it's a shared-service-layer
+  change, not part of any single file's migration. Post-migration, medium priority.
+- **Delete `sales_os_prototype_demo_ready.jsx`** (repo root, 290 lines, from
+  initial commit April 14). Orphaned prototype: not imported by any file in
+  sales-os-app/src (grep confirmed zero references), not part of the Vite build,
+  not listed in §9. It is dead code, not a migration target — do NOT add it to §9.
+  Action: re-confirm zero imports (`grep -rn "sales_os_prototype_demo_ready"
+  sales-os-app/ src/`), then `git rm` it. Safe because nothing references it and
+  it's not in the build — deletion cannot affect the running app. Post-demo, low
+  priority.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
