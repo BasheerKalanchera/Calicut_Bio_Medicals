@@ -276,13 +276,13 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `ActivityTimeline.tsx` | `src/components/ActivityTimeline.tsx` |
 | `NextActionsScreen.tsx` | `src/screens/NextActionsScreen.tsx` |
 | `LogActivityModal.tsx` | `src/components/LogActivityModal.tsx` |
+| `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
 
 **Pending — TypeScript + React Query done, styling still Tailwind:**
 
 | File | Path | Styling | Data Fetching | TypeScript |
 |---|---|---|---|---|
 | `OpportunityDetailScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
-| `OpportunityPipelineScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 
 **Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
 
@@ -302,7 +302,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 6 migrated · 9 pending · 1 explicitly out of scope.
+**Totals:** 7 migrated · 8 pending · 1 explicitly out of scope.
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 

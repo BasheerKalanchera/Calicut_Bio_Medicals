@@ -9,7 +9,6 @@
 const GRANDFATHERED = new Set([
   "screens/Customer360Screen.tsx",
   "screens/OpportunityDetailScreen.tsx",
-  "screens/OpportunityPipelineScreen.tsx",
   "screens/CustomerDirectoryScreen.jsx",
   "screens/ProductCatalogScreen.jsx",
   "screens/ProjectDirectoryScreen.jsx",
