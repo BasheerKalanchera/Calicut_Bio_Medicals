@@ -31,6 +31,11 @@ allowlist in the same commit (else the guard keeps permitting Tailwind there).
 First file: pick by July 13 demo importance + small-first to set the pattern —
 decide ordering at session start (do NOT default to investigation order).
 
+## Deferred
+- `statusColors.ts` — create as one pass after Tailwind migration; consolidates
+  ~11 files; resolve emerald-50-vs-100 (and any other weight inconsistencies) at
+  that time from complete view.
+
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
 - Enforcement is now live: pre-commit hook blocks new Tailwind automatically.

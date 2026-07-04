@@ -216,6 +216,10 @@ Tab fetches must never surface an error to the user. If a tab's `useQuery` fails
 - Reuse the theme (`src/theme/index.ts`) for brand color/radius rather than hardcoding hex values inline where the theme already defines them.
 - Dialogs use MUI `Dialog` / `DialogTitle` / `DialogContent` / `DialogActions` (see `FormModal.tsx`) — do not hand-roll a modal with a Tailwind `fixed inset-0` overlay.
 
+### 6.5 Status Colors (target — pending, see §9 migration)
+
+Semantic status colors (success/warning/error/etc.) will be defined once in `src/theme/statusColors.ts` and imported, never hardcoded per file. The app's established hex values are authoritative, not MUI palette defaults. Until the migration completes, screens carry inline hex; the shared module is created as a single post-migration pass.
+
 ---
 
 ## 7. Service Layer (Frontend)
@@ -269,6 +273,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `LoginScreen.tsx` | `src/components/LoginScreen.tsx` |
 | `FormModal.tsx` | `src/components/FormModal.tsx` |
 | `main.tsx` | `src/main.tsx` |
+| `ActivityTimeline.tsx` | `src/components/ActivityTimeline.tsx` |
 
 **Pending — TypeScript + React Query done, styling still Tailwind:**
 
@@ -278,7 +283,6 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `OpportunityPipelineScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `NextActionsScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
 | `LogActivityModal.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
-| `ActivityTimeline.tsx` | `src/components/` | Tailwind (pending) | React Query ✓ | ✓ |
 
 **Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
 
@@ -298,7 +302,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 3 migrated · 12 pending · 1 explicitly out of scope.
+**Totals:** 4 migrated · 11 pending · 1 explicitly out of scope.
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 
