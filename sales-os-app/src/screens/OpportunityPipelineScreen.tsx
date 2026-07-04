@@ -199,7 +199,7 @@ function ListRow({
           </Box>
         </Box>
       </Box>
-      <Box data-part="deal-chevron-box" sx={{ bgcolor: "#f9fafb", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
+      <Box data-part="deal-chevron-box" sx={{ bgcolor: "background.default", p: 1, borderRadius: "0.75rem", flexShrink: 0, ml: 1, transition: "background-color 0.15s" }}>
         <ChevronRightIcon data-part="deal-chevron-icon" sx={{ fontSize: 18, color: "#9ca3af", transition: "color 0.15s" }} />
       </Box>
     </Box>
@@ -287,7 +287,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
                 endAdornment: searchQuery ? (
                   <InputAdornment position="end">
                     <IconButton size="small" edge="end" onClick={() => setSearchQuery("")}>
-                      <Box component="span" sx={{ fontWeight: 900, fontSize: "0.875rem", color: "#9ca3af" }}>×</Box>
+                      <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#9ca3af" }}>×</Box>
                     </IconButton>
                   </InputAdornment>
                 ) : undefined,
@@ -323,7 +323,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
                   sx={{
                     px: 1.5, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
                     border: "none", color: "#9ca3af", bgcolor: "#fff",
-                    "&:hover": { bgcolor: "#f9fafb" },
+                    "&:hover": { bgcolor: "background.default" },
                     "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
                     "&.Mui-selected:hover": { bgcolor: "primary.main" },
                   }}

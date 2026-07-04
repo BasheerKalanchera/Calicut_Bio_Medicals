@@ -140,7 +140,7 @@ export default function NextActionsScreen() {
             sx={{
               px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               border: "none", color: "#9ca3af", bgcolor: "#fff",
-              "&:hover": { bgcolor: "#f9fafb" },
+              "&:hover": { bgcolor: "background.default" },
               "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
               "&.Mui-selected:hover": { bgcolor: "primary.main" },
             }}
@@ -153,7 +153,7 @@ export default function NextActionsScreen() {
             sx={{
               px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
               border: "none", color: "#9ca3af", bgcolor: "#fff",
-              "&:hover": { bgcolor: "#f9fafb" },
+              "&:hover": { bgcolor: "background.default" },
               "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
               "&.Mui-selected:hover": { bgcolor: "primary.main" },
             }}

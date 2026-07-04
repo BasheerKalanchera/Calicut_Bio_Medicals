@@ -46,7 +46,7 @@ export default function LoginScreen() {
             sx={{ height: 64, objectFit: "contain", mx: "auto", mb: 2, display: "block" }}
           />
           {/* font-size/weight/tracking match Tailwind text-2xl font-black tracking-tight */}
-          <Typography sx={{ fontSize: "1.5rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", lineHeight: "2rem" }}>
+          <Typography component="h1" sx={{ fontSize: "1.5rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", lineHeight: "2rem" }}>
             Cabio Sales OS
           </Typography>
           {/* text-xs font-bold uppercase tracking-widest text-gray-400 */}
@@ -72,6 +72,7 @@ export default function LoginScreen() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
             required
             fullWidth
             size="small"
@@ -89,7 +90,7 @@ export default function LoginScreen() {
             disabled={loading}
             fullWidth
             size="large"
-            sx={{ fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", mt: "0.25rem" }}
+            sx={{ fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase" }}
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>

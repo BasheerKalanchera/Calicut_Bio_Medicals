@@ -220,6 +220,53 @@ Tab fetches must never surface an error to the user. If a tab's `useQuery` fails
 
 Semantic status colors (success/warning/error/etc.) will be defined once in `src/theme/statusColors.ts` and imported, never hardcoded per file. The app's established hex values are authoritative, not MUI palette defaults. Until the migration completes, screens carry inline hex; the shared module is created as a single post-migration pass.
 
+### 6.6 MUI Gotchas & Reusable Patterns (found during migration)
+
+Things that behave differently from a native element or from older MUI docs/examples, discovered while migrating screens. Check this list before writing a new `TextField`, button-based card, scrollable pill/tab bar, or layout component. Items tied to a specific library version are marked — re-verify them after any MUI/React/TS upgrade.
+
+1. **A `select` field defaulting to an empty value must show its placeholder text, not render blank.** MUI hides the selected text whenever the value is `""`, even if a matching `MenuItem value=""` exists with visible text (e.g. "All Owners", "Select account") — unlike a native `<select>`, which always shows it. Required fix for every such field: add `slotProps={{ select: { displayEmpty: true } }}`.
+   - If the field's `MenuItem value=""` text already explains the field on its own (e.g. "Select account", "Me (default)"), **don't also give it a `label`** — a label plus `displayEmpty` overlap, because the label only auto-shrinks (moves out of the way, onto the border) when there's a value or focus, and `displayEmpty` shows text without either. Pick one: no label (placeholder text stands alone, as done in `OpportunityPipelineScreen.tsx`'s Owner filter and `LogActivityModal.tsx`'s Account/Assigned To/Next Action Owner fields), or keep the label and force it to sit shrunk regardless of value via `slotProps={{ inputLabel: { shrink: true } }}` alongside `displayEmpty`.
+2. **A button containing several stacked lines of text needs `alignItems: "stretch"`.** MUI's button components (`Button`, `ButtonBase`) default to centering their contents horizontally. If you stack multiple full-width rows inside one (like a card built from a button), every row will shrink to its own width and center itself unless you override this.
+3. **Scrolling the active pill/tab into view in a horizontally-scrolling bar is not automatic — copy the existing recipe.** `Customer360Screen.tsx`'s `handleTabChange` has a working version: give the scroll container a ref, tag each pill with a `data-*` attribute, look it up, compute its centered scroll position from `offsetLeft`/`offsetWidth`, and call `container.scrollTo(...)` inside a short `setTimeout`. Reuse this exact approach rather than writing new scroll logic per screen.
+4. **Don't use MUI's `Stack` component.** It causes a TypeScript compile error in this project's specific combination of library versions (MUI 9.1.2 / React 19.2.5 / TS 6.0.3) — not a mistake in how it's used, just broken here. Use `Box` with flex `sx` properties instead, which is what every migrated file already does. *(Version-bound — recheck on upgrade.)*
+5. **`InputLabelProps` no longer exists in this MUI version.** Older examples use it to control a field's label (e.g. keeping a datetime field's label shrunk). Use `slotProps={{ inputLabel: {...} }}` instead. *(Version-bound.)*
+6. **Disabled contained-primary overrides need the `ownerState` function form.** This MUI version dropped the combined `containedPrimary` class key from `MuiButton` `styleOverrides`, so a theme-level rule for "disabled + contained + primary" (see `src/theme/index.ts`) has to be written as a function reading `ownerState.variant`/`ownerState.color`, not a static `containedPrimary` key. *(Version-bound.)*
+
+### 6.7 Theme is the source of truth for visual defaults
+
+`src/theme/index.ts` is the single authoritative source for app-wide visual
+defaults — input styling, button states, border radius, palette. Do not set
+these per-component when the theme defines them; add or change them in the theme
+so every screen inherits consistently.
+
+- App-wide conventions (e.g. the `#f9fafb` input fill, disabled-button color)
+  are theme defaults, never per-field props.
+- Setting a visual default per-component is how conventions get applied to some
+  screens and missed on others. If it should be true everywhere, it goes in the theme.
+
+### 6.8 Migration fidelity — what to match, what to let go
+
+When migrating a screen from Tailwind to MUI, fidelity means equivalent
+**meaning, usability, accessibility, and app-wide conventions** — not
+pixel-identical replication of the Tailwind version.
+
+**Keep MUI's native version** (do not restore the Tailwind equivalent):
+- Ripple on click (not `scale-[0.98]`)
+- Focus via border-thicken (not a glow ring)
+- `elevation` shadows (not exact `shadow-2xl` replication)
+- `Alert` with its built-in icon (not a plain colored div)
+- Neutral button shadow (not a colored glow)
+
+**Restore the Tailwind behavior** only when it carried something MUI's default drops:
+- Semantic HTML — real heading tags (`component="h1"`), etc.
+- Usability — placeholders, readable disabled/loading states
+- Accessibility
+- Established app-wide conventions (the `#f9fafb` input fill)
+
+**Tiebreaker:** match states the user actively watches (loading, error, focus).
+Don't chase one-time decorations. When a gap fits none of these rules, flag it
+for human review rather than guessing.
+
 ---
 
 ## 7. Service Layer (Frontend)

@@ -26,30 +26,28 @@ function formatDate(iso: string) {
   });
 }
 
-function ActivityItem({ activity, isLast }: { activity: ActivityResponse; isLast: boolean }) {
+function ActivityItem({ activity }: { activity: ActivityResponse }) {
   const cfg = TYPE_CONFIG[activity.activity_type] ?? TYPE_CONFIG.NOTE;
   return (
-    <Box sx={{ display: "flex", gap: "0.75rem" }}>
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-        <Box
-          sx={{
-            width: 32,
-            height: 32,
-            borderRadius: "0.75rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "0.875rem",
-            bgcolor: cfg.bg,
-            color: cfg.color,
-          }}
-        >
-          {cfg.icon}
-        </Box>
-        {!isLast && <Box sx={{ width: "1px", flex: 1, bgcolor: "#f3f4f6", my: 0.5 }} />}
+    <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2, display: "flex", gap: "0.75rem" }}>
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "0.75rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "0.875rem",
+          bgcolor: cfg.bg,
+          color: cfg.color,
+          flexShrink: 0,
+        }}
+      >
+        {cfg.icon}
       </Box>
 
-      <Box sx={{ flex: 1, minWidth: 0, pb: isLast ? 0 : 2 }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 0.25 }}>
           <Box
             component="span"
@@ -79,8 +77,7 @@ function ActivityItem({ activity, isLast }: { activity: ActivityResponse; isLast
             sx={{
               fontSize: "0.75rem",
               color: "#374151",
-              bgcolor: "#fff",
-              border: "1px solid #f3f4f6",
+              bgcolor: "background.default",
               borderRadius: "0.75rem",
               px: 1.5,
               py: 1,
@@ -168,9 +165,9 @@ export default function ActivityTimeline({ accountId, opportunityId, onLogActivi
           No activities logged yet.
         </Box>
       ) : (
-        <Box sx={{ pt: 0.5 }}>
-          {activities.map((a, i) => (
-            <ActivityItem key={a.id} activity={a} isLast={i === activities.length - 1} />
+        <Box sx={{ pt: 0.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {activities.map((a) => (
+            <ActivityItem key={a.id} activity={a} />
           ))}
           {(data?.total ?? 0) > activities.length && (
             <Box sx={{ textAlign: "center", fontSize: "10px", color: "#9ca3af", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", pt: 1 }}>

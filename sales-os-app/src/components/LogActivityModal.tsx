@@ -132,7 +132,7 @@ export default function LogActivityModal({
 
   return (
     <FormModal isOpen={isOpen} onClose={onClose} title="Log Activity" onSubmit={handleSubmit} submitLabel="Log">
-      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+      <Box sx={{ display: "flex", gap: 1 }}>
         <Button
           type="button"
           onClick={() => setActiveTab("details")}
@@ -173,11 +173,11 @@ export default function LogActivityModal({
             {!accountId && (
               <TextField
                 select
-                label="Account *"
                 value={selectedAccountId}
                 onChange={(e) => setSelectedAccountId(e.target.value)}
                 fullWidth
                 size="small"
+                slotProps={{ select: { displayEmpty: true } }}
               >
                 <MenuItem value="">Select account</MenuItem>
                 {accounts.map((a) => (
@@ -212,11 +212,11 @@ export default function LogActivityModal({
             />
             <TextField
               select
-              label="Assigned To"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               fullWidth
               size="small"
+              slotProps={{ select: { displayEmpty: true } }}
             >
               <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (
@@ -268,11 +268,11 @@ export default function LogActivityModal({
             />
             <TextField
               select
-              label="Next Action Owner"
               value={nextActionOwnerId}
               onChange={(e) => setNextActionOwnerId(e.target.value)}
               fullWidth
               size="small"
+              slotProps={{ select: { displayEmpty: true } }}
             >
               <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (

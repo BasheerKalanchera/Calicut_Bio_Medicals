@@ -55,6 +55,33 @@ decide ordering at session start (do NOT default to investigation order).
   sales-os-app/ src/`), then `git rm` it. Safe because nothing references it and
   it's not in the build — deletion cannot affect the running app. Post-demo, low
   priority.
+- **Fix `check-no-tailwind.js` to match Tailwind utility shape, not bare
+  `className=`.** The guard currently flags any `className=` at all, including
+  non-Tailwind uses (e.g. a plain hook name like `className="deal-avatar"` used
+  only as a CSS selector target, with zero Tailwind classes in it). Root-cause
+  fix: match against actual Tailwind utility patterns (e.g. `bg-`, `text-`,
+  `flex`, `p-`/`px-`/`py-`, `rounded`, etc.) instead of the bare attribute name.
+  Current workaround — using `data-*` attributes instead of `className` for
+  CSS-selector hooks (see OpportunityPipelineScreen.tsx's ListRow hover pattern)
+  — is a local stopgap only, adopted because it was blocking a commit, not the
+  long-term answer. Post-migration, low priority (guard still functions
+  correctly for its actual job, just over-flags this one edge case).
+- **Reminders "Completed" tab shows pending items too — backend bug, not a
+  migration regression.** `NextActionsScreen.tsx` calls `listReminders(includeCompleted)`
+  unchanged from its pre-migration behavior; the bug is in
+  `backend/app/domains/activity/repository.py` (`list_for_user` /
+  `count_for_user`, lines ~74-104). `include_completed` is additive, not a
+  filter: `include_completed=False` correctly filters to `is_completed==False`
+  (Pending tab works), but `include_completed=True` applies no filter at all
+  and returns pending + completed together — there's no way today to request
+  "only completed." Same bug affects any completed-count. Needs a product/
+  architecture decision on the fix shape before touching it (discussed three
+  options: change `include_completed`'s semantics to mean "only completed";
+  replace it with an explicit `status: pending|completed|all` filter; or
+  filter client-side off an always-`include_completed=true` fetch, which
+  changes pagination behavior). Live shared Supabase dev DB — verify carefully
+  once a direction is picked. Not blocking the frontend migration; unrelated
+  to it.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.

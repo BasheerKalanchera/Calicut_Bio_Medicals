@@ -1,5 +1,6 @@
 import { useState, useEffect, type ReactNode, type FormEvent } from "react";
 import {
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -52,7 +53,8 @@ export default function FormModal({
       open={isOpen}
       onClose={() => { if (!submitting) onClose(); }}
       fullWidth
-      maxWidth="sm"
+      maxWidth={false}
+      slotProps={{ paper: { sx: { maxWidth: "28rem" } } }}
     >
       <form
         onSubmit={handleSubmit}
@@ -63,17 +65,19 @@ export default function FormModal({
           }
         }}
       >
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle component="h3">{title}</DialogTitle>
         <DialogContent>
           {error && (
             <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
               {error}
             </Alert>
           )}
-          {children}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {children}
+          </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} disabled={submitting}>
+          <Button onClick={onClose} disabled={submitting} color="inherit">
             Cancel
           </Button>
           <Button type="submit" variant="contained" disabled={submitting}>
