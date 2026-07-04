@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Box, Button, MenuItem, TextField } from "@mui/material";
 import FormModal from "./FormModal";
 import { logActivity } from "../services/activities";
 import { listAccounts } from "../services/accounts";
 import { listUsers } from "../services/masterData";
+import type { ActivityType } from "../types/api";
 
 interface Props {
   isOpen: boolean;
@@ -14,7 +16,7 @@ interface Props {
   onCreated?: () => void;
 }
 
-const ACTIVITY_TYPES = [
+const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "VISIT",        label: "🏥 Visit" },
   { value: "CALL",         label: "📞 Call" },
   { value: "EMAIL",        label: "✉️ Email" },
@@ -22,6 +24,12 @@ const ACTIVITY_TYPES = [
   { value: "NOTE",         label: "📝 Note" },
   { value: "MANAGER_NOTE", label: "📋 Manager Note" },
 ];
+
+// Local stopgap types — listUsers/listAccounts return Promise<unknown> today.
+// TODO(fix-at-service-layer): give these functions real return types; see
+// active_progress.md deferred list. Remove these once fixed.
+interface UserOption { id: string; display_name: string }
+interface AccountOption { id: string; name: string }
 
 function nowLocal() {
   const d = new Date();
@@ -45,10 +53,8 @@ export default function LogActivityModal({
   onCreated,
 }: Props) {
   const queryClient = useQueryClient();
-  const [users, setUsers]               = useState<any[]>([]);
-  const [accounts, setAccounts]         = useState<any[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState(accountId ?? "");
-  const [activityType, setActivityType] = useState("CALL");
+  const [activityType, setActivityType] = useState<ActivityType>("CALL");
   const [activityDate, setActivityDate] = useState(nowLocal());
   const [notes, setNotes]               = useState("");
   const [userId, setUserId]             = useState(currentUserId ?? "");
@@ -58,6 +64,24 @@ export default function LogActivityModal({
   const [activeTab, setActiveTab] = useState<"details" | "nextAction">("details");
 
   const isManagerNote = activityType === "MANAGER_NOTE";
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "all"],
+    enabled: isOpen,
+    queryFn: async () => {
+      const d = await listUsers();
+      return Array.isArray(d) ? (d as UserOption[]) : [];
+    },
+  });
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ["accounts", "picker"],
+    enabled: isOpen && !accountId,
+    queryFn: async () => {
+      const d = await listAccounts({ page_size: 100 });
+      return (d as { items?: AccountOption[] }).items ?? [];
+    },
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -70,14 +94,6 @@ export default function LogActivityModal({
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId(currentUserId ?? "");
     setActiveTab("details");
-    if (users.length === 0) {
-      listUsers().then((d: any) => setUsers(Array.isArray(d) ? d : [])).catch(() => {});
-    }
-    if (!accountId && accounts.length === 0) {
-      listAccounts({ page_size: 100 } as any)
-        .then((d: any) => setAccounts(d.items ?? []))
-        .catch(() => {});
-    }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resolvedAccountId = accountId ?? selectedAccountId;
@@ -114,123 +130,158 @@ export default function LogActivityModal({
     onCreated?.();
   }
 
-  const cls = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
-  const lbl = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
-
-  const tabBtn = (active: boolean) =>
-    `px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
-      active ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-    }`;
-
   return (
     <FormModal isOpen={isOpen} onClose={onClose} title="Log Activity" onSubmit={handleSubmit} submitLabel="Log">
-      <div className="flex gap-2 -mt-1 mb-1">
-        <button type="button" onClick={() => setActiveTab("details")} className={tabBtn(activeTab === "details")}>
+      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+        <Button
+          type="button"
+          onClick={() => setActiveTab("details")}
+          disableRipple
+          sx={{
+            px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+            borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
+            borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
+            bgcolor: activeTab === "details" ? "primary.main" : "transparent",
+            color: activeTab === "details" ? "#fff" : "#9ca3af",
+            "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "#f3f4f6", color: activeTab === "details" ? "#fff" : "#4b5563" },
+          }}
+        >
           Details
-        </button>
+        </Button>
         {!isManagerNote && (
-          <button type="button" onClick={() => setActiveTab("nextAction")} className={tabBtn(activeTab === "nextAction")}>
+          <Button
+            type="button"
+            onClick={() => setActiveTab("nextAction")}
+            disableRipple
+            sx={{
+              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
+              borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
+              bgcolor: activeTab === "nextAction" ? "primary.main" : "transparent",
+              color: activeTab === "nextAction" ? "#fff" : "#9ca3af",
+              "&:hover": { bgcolor: activeTab === "nextAction" ? "primary.main" : "#f3f4f6", color: activeTab === "nextAction" ? "#fff" : "#4b5563" },
+            }}
+          >
             Next Action *
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
 
-      {activeTab === "details" && (
-        <>
-          {!accountId && (
-            <div>
-              <label className={lbl}>Account *</label>
-              <select value={selectedAccountId} onChange={(e) => setSelectedAccountId(e.target.value)} className={cls}>
-                <option value="">Select account</option>
-                {accounts.map((a: any) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
+      <Box sx={{ minHeight: "23rem" }}>
+        {activeTab === "details" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {!accountId && (
+              <TextField
+                select
+                label="Account *"
+                value={selectedAccountId}
+                onChange={(e) => setSelectedAccountId(e.target.value)}
+                fullWidth
+                size="small"
+              >
+                <MenuItem value="">Select account</MenuItem>
+                {accounts.map((a) => (
+                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
                 ))}
-              </select>
-            </div>
-          )}
-          <div>
-            <label className={lbl}>Type *</label>
-            <select
+              </TextField>
+            )}
+            <TextField
+              select
+              label="Type *"
               value={activityType}
               onChange={(e) => {
-                setActivityType(e.target.value);
-                if (e.target.value === "MANAGER_NOTE") setActiveTab("details");
+                const value = e.target.value as ActivityType;
+                setActivityType(value);
+                if (value === "MANAGER_NOTE") setActiveTab("details");
               }}
-              className={cls}
+              fullWidth
+              size="small"
             >
               {ACTIVITY_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
               ))}
-            </select>
-          </div>
-          <div>
-            <label className={lbl}>Date & Time *</label>
-            <input
+            </TextField>
+            <TextField
+              label="Date & Time *"
               type="datetime-local"
               value={activityDate}
               onChange={(e) => setActivityDate(e.target.value)}
-              className={cls}
+              fullWidth
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
             />
-          </div>
-          <div>
-            <label className={lbl}>Assigned To</label>
-            <select value={userId} onChange={(e) => setUserId(e.target.value)} className={cls}>
-              <option value="">Me (default)</option>
+            <TextField
+              select
+              label="Assigned To"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.display_name}</option>
+                <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
               ))}
-            </select>
-          </div>
-          {opportunityId && (
-            <div className="px-3 py-2 bg-blue-50 rounded-xl text-[10px] font-black text-blue-600 uppercase tracking-wider">
-              Linked to this opportunity
-            </div>
-          )}
-          <div>
-            <label className={lbl}>Notes</label>
-            <textarea
+            </TextField>
+            {opportunityId && (
+              <Box
+                sx={{
+                  px: 1.5, py: 1, borderRadius: "0.75rem", fontSize: "10px", fontWeight: 900,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                  bgcolor: "#eff6ff", color: "primary.main",
+                }}
+              >
+                Linked to this opportunity
+              </Box>
+            )}
+            <TextField
+              label="Notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              multiline
               rows={3}
-              className={`${cls} resize-none`}
+              fullWidth
+              size="small"
               placeholder="What happened? Key discussion points, next steps…"
             />
-          </div>
-        </>
-      )}
+          </Box>
+        )}
 
-      {activeTab === "nextAction" && !isManagerNote && (
-        <>
-          <div>
-            <label className={lbl}>Next Action *</label>
-            <input
-              type="text"
+        {activeTab === "nextAction" && !isManagerNote && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Next Action *"
               value={nextActionText}
               onChange={(e) => setNextActionText(e.target.value)}
-              className={cls}
+              fullWidth
+              size="small"
               placeholder="e.g. Call to confirm demo date"
             />
-          </div>
-          <div>
-            <label className={lbl}>Next Action Due Date *</label>
-            <input
+            <TextField
+              label="Next Action Due Date *"
               type="datetime-local"
               value={nextActionDueDate}
               onChange={(e) => setNextActionDueDate(e.target.value)}
-              className={cls}
+              fullWidth
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
             />
-          </div>
-          <div>
-            <label className={lbl}>Next Action Owner</label>
-            <select value={nextActionOwnerId} onChange={(e) => setNextActionOwnerId(e.target.value)} className={cls}>
-              <option value="">Me (default)</option>
+            <TextField
+              select
+              label="Next Action Owner"
+              value={nextActionOwnerId}
+              onChange={(e) => setNextActionOwnerId(e.target.value)}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (
-                <option key={u.id} value={u.id}>{u.display_name}</option>
+                <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
               ))}
-            </select>
-          </div>
-        </>
-      )}
+            </TextField>
+          </Box>
+        )}
+      </Box>
     </FormModal>
   );
 }

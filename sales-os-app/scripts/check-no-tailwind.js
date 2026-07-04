@@ -14,7 +14,6 @@ const GRANDFATHERED = new Set([
   "screens/ProductCatalogScreen.jsx",
   "screens/ProjectDirectoryScreen.jsx",
   "components/QuickLeadModal.tsx",
-  "components/LogActivityModal.tsx",
   "components/ErrorBoundary.jsx",
   "DemoApp.tsx",
   // Out of scope permanently — prototype only, never migrated. See §9.
