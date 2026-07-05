@@ -346,7 +346,7 @@ Commit A/B split surfaced that these were asserting more than they checked):
 
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
-| `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` | ✓ |
+| `Customer360Screen.tsx` | `src/screens/` | ✓ | Pending — manual `.then()` | ✓ |
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |

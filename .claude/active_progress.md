@@ -24,6 +24,88 @@ this pushes past "10 of 16" being the last file with the styling+fetch+jsx
 triple-conversion still ahead). **Not yet committed — awaiting Basheer's
 manual E2E per the established ritual**, same as every prior file.
 
+**`Customer360Screen.tsx` — Commit A (styling only) done, split from Commit B
+(React Query) per Basheer's explicit instruction** (same split as
+`OpportunityDetailScreen.tsx`: styling and data-fetching are different risk
+profiles, don't bundle them). This is the largest file migrated so far —
+1001 lines, 204 `className` usages, bigger than `OpportunityDetailScreen.tsx`
+was. Full detail:
+- All 5 tab components (Overview/Stakeholders/Projects/Opportunities/
+  Installed Base), the 3 badge components (`PayerBadge`/`SentimentBadge`/
+  `NpsIndicator`), the header (back button converted from a hand-rolled
+  chevron SVG to `IconButton`+`ArrowBackIcon` per §6.6 item 7 — this file
+  was the one screen still using the anti-pattern that item warns against),
+  count strip, and tab chip bar (reused the scroll-to-active-pill recipe
+  verbatim — this file is actually where that recipe originated) all
+  converted to MUI/sx.
+- All 8 `FormModal` bodies converted from native `label`+`input`/`select`
+  pairs to MUI `TextField`/`MenuItem`, matching the established
+  `QuickLeadModal.tsx` convention (label+`displayEmpty`+`shrink` for every
+  select). The two Products sub-modals (New/Edit Opp item management)
+  mirror `QuickLeadModal.tsx`'s Products modal structure closely.
+- **Two real bugs fixed as part of the conversion itself (not deferred,
+  not a fetch change — same category of fix folded into
+  `OpportunityDetailScreen.tsx`'s Commit A previously):**
+  - The Add-Product row's `price` field defaulted to `""` while `qty`/`disc`
+    defaulted to non-empty strings — the same floating-label inconsistency
+    bug already fixed twice before (`QuickLeadModal.tsx`,
+    `OpportunityDetailScreen.tsx`). Fixed identically: `newOItemPrice`/
+    `editOItemPrice` now default `"0"`, and the previously-silent
+    `if (!prodId || !qty || !price) return;` no-op guard is now
+    `Number(...) <= 0` checks with an inline `Alert`.
+  - Doing this required lifting a new `newOItemError`/`editOItemError`
+    state pair to the parent component — the shared `OppItemAddRow` helper
+    is defined *inside* the screen's render body (a fresh function identity
+    every render), so giving it its own internal `useState` would have
+    caused React to remount it (and silently drop the error) on every
+    keystroke in any sibling field. Lifting the error state avoids that;
+    confirmed by diffing the pre-migration file that this is the only
+    other net-new state beyond the two price defaults.
+- **Deliberately did NOT adopt `QuickLeadModal.tsx`'s later 7.5rem-widened
+  Qty/Price/Disc convention** — kept this file's original uniform `w-20`
+  (5rem) widths on all three fields, matching its own pre-migration
+  behavior. Same judgment call already made once on
+  `OpportunityDetailScreen.tsx`'s identical fields; flagging again here
+  in case Basheer wants the widening applied everywhere as a real
+  app-wide rule rather than left per-file.
+- Confirmed via `diff` against the pre-migration file (`git show HEAD:...`)
+  that the ~400-line state/handler block is otherwise byte-identical aside
+  from the two intentional additions above — no data-fetching, `any`
+  typing, or module-level cache (`tabDataCache`/`accountDataCache`) touched;
+  that's Commit B's scope.
+- Guard-green (`npm run lint`, `npx tsc --noEmit` both clean). `check-no-tailwind.js`
+  flagged the file as clean (expected — zero `className` now), but it stays
+  in `GRANDFATHERED` and §9's pending table since React Query is still
+  Pending; only the Styling column in §9 was updated to ✓ for this row.
+- **Full property-diff audit run against the pre-migration file** (git
+  history, per-section comparison tables, evidence not summary — badges,
+  all 5 tabs, header, count strip, chip bar, loading/error states, all 8
+  modals). Zero gaps in the tab components/badges/count-strip/chip-bar
+  (exact hex/spacing match throughout). Four things surfaced, three fixed
+  immediately per Basheer's call (still Commit A, not deferred):
+  - Root wrapper had silently dropped `animate-in fade-in duration-200`
+    (a mount fade-in) — restored via `animation: "fadeIn 200ms"` +
+    a local `@keyframes fadeIn` (opacity 0→1).
+  - Title `leading-tight` was approximated as `lineHeight: 1.2`; Tailwind's
+    actual value is `1.25` — corrected.
+  - The top-level error banner's Retry button had lost its filled-pill
+    styling (`bg-red-100 hover:bg-red-200`) when it moved into `Alert`'s
+    `action` slot — restored the explicit red-pill `sx` instead of relying
+    on `color="error"` text-button default.
+  - **Banked, not fixed**: input text size/weight (`text-sm font-medium`,
+    14px/500) isn't explicitly matched on any `TextField` in this file —
+    but this is a **pre-existing, cross-file gap**, not new here
+    (`QuickLeadModal.tsx`/`OpportunityDetailScreen.tsx` have the same
+    theoretical gap, never flagged either). Explicitly deferred to a future
+    holistic pass across all migrated modal-heavy files rather than
+    fixed per-file here, per Basheer's direction — fixing it in isolation
+    for just this file would create yet another cross-file inconsistency.
+  - Re-verified guard-green (`npm run lint`, `npx tsc --noEmit`) after all
+    three fixes.
+- **Not yet committed — awaiting Basheer's manual E2E**, then Commit B
+  (React Query conversion + deleting the module-level SWR cache) starts
+  fresh in a later session.
+
 `OpportunityDetailScreen.tsx` is now **fully migrated and committed** — 9 of
 16 tracked files done, §9 and `check-no-tailwind.js` both reflect this
 accurately. Two commits:
@@ -379,6 +461,21 @@ during these remaining migrations — §6.6/§6.8 are living documents, not fixe
 at today's content.
 
 ## Deferred
+- **Input text size/weight on migrated `TextField`s.** Every pre-migration
+  Tailwind file used a shared `inp` constant with `text-sm font-medium`
+  (14px/500) on every text input. No migrated file's `TextField`s carry an
+  explicit override for this — they render at MUI's default input
+  typography (~1rem/400) instead. Confirmed present in at least
+  `QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx`, and
+  `Customer360Screen.tsx` (surfaced during the latter's property-diff audit,
+  2026-07-05) — a cross-file gap, not specific to any one screen. Basheer's
+  call: fix once, holistically, rather than patching per-file as each is
+  touched (would create yet more cross-file inconsistency in the interim).
+  Root-cause fix belongs in the theme (`src/theme/index.ts`'s
+  `MuiOutlinedInput`/`MuiInputBase` override, e.g. `fontSize: "0.875rem"`,
+  matching how the `#f9fafb` input fill was already centralized there per
+  §6.7) rather than per-`TextField` `sx`. Grep `size="small"` across
+  migrated files to get the full affected-field list before starting.
 - `statusColors.ts` — create as one pass after Tailwind migration; consolidates
   ~11 files; resolve emerald-50-vs-100 (and any other weight inconsistencies) at
   that time from complete view.

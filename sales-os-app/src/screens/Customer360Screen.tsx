@@ -1,5 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckIcon from "@mui/icons-material/Check";
+import {
   getAccount,
   getAccountCounts,
   updateAccount,
@@ -49,6 +62,8 @@ const TABS = [
   { id: "installed",     label: "Installed Base" },
 ];
 
+const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+
 // ---------------------------------------------------------------------------
 // Module-level SWR cache for tab data — keyed by accountId, persists across
 // Customer360Screen mounts so revisiting a customer shows all tabs instantly.
@@ -91,33 +106,56 @@ function setCachedAccount(accountId: string, data: any) {
 // ---------------------------------------------------------------------------
 function PayerBadge({ behavior }: { behavior?: string | null }) {
   if (!behavior) return null;
-  const styles: Record<string, string> = {
-    GOOD:        "bg-emerald-50 text-emerald-700 border-emerald-200",
-    PROBLEMATIC: "bg-red-50 text-red-700 border-red-200",
-    UNKNOWN:     "bg-gray-50 text-gray-600 border-gray-200",
+  const styles: Record<string, { bg: string; color: string; border: string }> = {
+    GOOD:        { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
+    PROBLEMATIC: { bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
+    UNKNOWN:     { bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" },
   };
+  const s = styles[behavior] ?? styles.UNKNOWN;
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border ${styles[behavior] ?? styles.UNKNOWN}`}>
+    <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid", borderColor: s.border, bgcolor: s.bg, color: s.color }}>
       {behavior}
-    </span>
+    </Box>
   );
 }
 
 function SentimentBadge({ sentiment }: { sentiment?: string | null }) {
   if (!sentiment) return null;
-  const config: Record<string, { label: string; cls: string }> = {
-    PROMOTER:  { label: "Promoter",  cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-    NEUTRAL:   { label: "Neutral",   cls: "bg-amber-50 text-amber-700 border-amber-200" },
-    DETRACTOR: { label: "Detractor", cls: "bg-red-50 text-red-700 border-red-200" },
+  const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
+    PROMOTER:  { label: "Promoter",  bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
+    NEUTRAL:   { label: "Neutral",   bg: "#fffbeb", color: "#b45309", border: "#fde68a" },
+    DETRACTOR: { label: "Detractor", bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
   };
-  const { label, cls } = config[sentiment] ?? { label: sentiment, cls: "bg-gray-50 text-gray-600 border-gray-200" };
-  return <span className={`px-2 py-0.5 rounded-md text-[10px] font-black border ${cls}`}>{label}</span>;
+  const c = config[sentiment] ?? { label: sentiment, bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" };
+  return (
+    <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid", borderColor: c.border, bgcolor: c.bg, color: c.color }}>
+      {c.label}
+    </Box>
+  );
 }
 
 function NpsIndicator({ score }: { score?: number | null }) {
-  if (score == null) return <span className="text-gray-300 text-xs">—</span>;
-  const color = score >= 50 ? "text-emerald-600" : score >= 0 ? "text-amber-600" : "text-red-600";
-  return <span className={`font-black text-lg ${color}`}>{score}</span>;
+  if (score == null) return <Box component="span" sx={{ color: "#d1d5db", fontSize: "0.75rem" }}>—</Box>;
+  const color = score >= 50 ? "#059669" : score >= 0 ? "#d97706" : "#dc2626";
+  return <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", color }}>{score}</Box>;
+}
+
+function LoadingRow({ label = "Loading..." }: { label?: string }) {
+  return (
+    <Box sx={{ textAlign: "center", py: 6 }}>
+      <Box
+        sx={{
+          color: "#9ca3af",
+          fontWeight: 700,
+          fontSize: "0.875rem",
+          animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+          "@keyframes pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } },
+        }}
+      >
+        {label}
+      </Box>
+    </Box>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -130,170 +168,243 @@ function OverviewTab({ account, onEdit }: { account: any; onEdit: () => void }) 
     { label: "Payer Behavior",  value: <PayerBadge behavior={account.payer_behavior} /> },
   ];
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Account Details</h4>
-          <button onClick={onEdit} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+            Account Details
+          </Typography>
+          <Button
+            onClick={onEdit}
+            sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          >
             Edit
-          </button>
-        </div>
-        <div className="space-y-4">
+          </Button>
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {fields.map((f) => (
-            <div key={f.label}>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">{f.label}</div>
-              <div className="font-bold text-gray-800">{f.value || "—"}</div>
-            </div>
+            <Box key={f.label}>
+              <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+                {f.label}
+              </Typography>
+              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{f.value || "—"}</Box>
+            </Box>
           ))}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
 function StakeholdersTab({ stakeholders, onAdd, onEdit }: { stakeholders: any[]; onAdd: () => void; onEdit: (s: any) => void }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Stakeholders ({stakeholders.length})</h4>
-        <button onClick={onAdd} className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider">+ Add</button>
-      </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Stakeholders ({stakeholders.length})
+        </Typography>
+        <Button
+          onClick={onAdd}
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+        >
+          + Add
+        </Button>
+      </Box>
       {stakeholders.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">No stakeholders found for this account.</div>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          No stakeholders found for this account.
+        </Box>
       ) : (
         stakeholders.map((s) => (
-          <div key={s.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm">
+          <Box key={s.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, bgcolor: "#f5f3ff", color: "#7c3aed", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: "0.875rem", boxShadow: SHADOW_SM }}>
                 {s.name.charAt(0)}
-              </div>
-              <div>
-                <div className="font-bold text-gray-800">{s.name}</div>
-                {s.designation && <div className="text-xs text-gray-500 mt-0.5">{s.designation}</div>}
-                <div className="flex items-center gap-2 mt-1"><SentimentBadge sentiment={s.sentiment} /></div>
+              </Box>
+              <Box>
+                <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{s.name}</Box>
+                {s.designation && <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.25 }}>{s.designation}</Box>}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}><SentimentBadge sentiment={s.sentiment} /></Box>
                 {(s.email || s.phone) && (
-                  <div className="flex items-center gap-3 mt-1">
-                    {s.email && <span className="text-[10px] text-gray-400">{s.email}</span>}
-                    {s.phone && <span className="text-[10px] text-gray-400">{s.phone}</span>}
-                  </div>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 0.5 }}>
+                    {s.email && <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{s.email}</Box>}
+                    {s.phone && <Box component="span" sx={{ fontSize: "10px", color: "#9ca3af" }}>{s.phone}</Box>}
+                  </Box>
                 )}
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">NPS</div>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ textAlign: "center" }}>
+                <Typography sx={{ fontSize: "9px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>NPS</Typography>
                 <NpsIndicator score={s.nps_score} />
-              </div>
-              <button onClick={() => onEdit(s)} className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider">Edit</button>
-            </div>
-          </div>
+              </Box>
+              <Button
+                onClick={() => onEdit(s)}
+                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+              >
+                Edit
+              </Button>
+            </Box>
+          </Box>
         ))
       )}
-    </div>
+    </Box>
   );
 }
 
 function ProjectsTab({ projects, onAdd, onEdit }: { projects: any[]; onAdd: () => void; onEdit: (p: any) => void }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Projects ({projects.length})</h4>
-        <button onClick={onAdd} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">+ Add</button>
-      </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Projects ({projects.length})
+        </Typography>
+        <Button
+          onClick={onAdd}
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+        >
+          + Add
+        </Button>
+      </Box>
       {projects.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">No projects found for this account.</div>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          No projects found for this account.
+        </Box>
       ) : (
         projects.map((p) => (
-          <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-bold text-gray-800">{p.name}</div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">{p.status.status_name}</span>
-                <button onClick={() => onEdit(p)} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">Edit</button>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-              <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Owner: </span><span className="font-bold">{p.owner.display_name}</span></div>
-              {p.bid_submission_date && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Bid Date: </span><span className="font-bold">{p.bid_submission_date}</span></div>}
-            </div>
-          </div>
+          <Box key={p.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{p.name}</Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                  {p.status.status_name}
+                </Box>
+                <Button
+                  onClick={() => onEdit(p)}
+                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                >
+                  Edit
+                </Button>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
+              <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.owner.display_name}</Box></Box>
+              {p.bid_submission_date && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Bid Date: </Box><Box component="span" sx={{ fontWeight: 700 }}>{p.bid_submission_date}</Box></Box>}
+            </Box>
+          </Box>
         ))
       )}
-    </div>
+    </Box>
   );
 }
 
 function OpportunitiesTab({ opportunities, onAdd, onEdit }: { opportunities: any[]; onAdd: () => void; onEdit: (o: any) => void }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Opportunities ({opportunities.length})</h4>
-        <button onClick={onAdd} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider">+ Add</button>
-      </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Opportunities ({opportunities.length})
+        </Typography>
+        <Button
+          onClick={onAdd}
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+        >
+          + Add
+        </Button>
+      </Box>
       {opportunities.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">No opportunities found for this account.</div>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          No opportunities found for this account.
+        </Box>
       ) : (
         opportunities.map((o) => (
-          <div key={o.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-bold text-gray-800">{o.name}</div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-amber-50 text-amber-700 border-amber-200">{o.stage.stage_name}</span>
-                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black border bg-blue-50 text-blue-700 border-blue-200">{o.status.status_name}</span>
-                <button onClick={() => onEdit(o)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider">Edit</button>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-              <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Owner: </span><span className="font-bold">{o.owner.display_name}</span></div>
-              <div>
-                <span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Win %: </span>
-                <span className={`font-black ${Number(o.win_probability) >= 70 ? "text-emerald-600" : Number(o.win_probability) >= 40 ? "text-amber-600" : "text-red-600"}`}>
+          <Box key={o.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6" }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{o.name}</Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fde68a", bgcolor: "#fffbeb", color: "#b45309" }}>
+                  {o.stage.stage_name}
+                </Box>
+                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                  {o.status.status_name}
+                </Box>
+                <Button
+                  onClick={() => onEdit(o)}
+                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+                >
+                  Edit
+                </Button>
+              </Box>
+            </Box>
+            <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
+              <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Owner: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.owner.display_name}</Box></Box>
+              <Box>
+                <Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Win %: </Box>
+                <Box component="span" sx={{ fontWeight: 900, color: Number(o.win_probability) >= 70 ? "#059669" : Number(o.win_probability) >= 40 ? "#d97706" : "#dc2626" }}>
                   {o.win_probability}%
-                </span>
-              </div>
-              {o.indicative_value && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Value: </span><span className="font-bold">{o.indicative_value}L</span></div>}
-            </div>
-          </div>
+                </Box>
+              </Box>
+              {o.indicative_value && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Value: </Box><Box component="span" sx={{ fontWeight: 700 }}>{o.indicative_value}L</Box></Box>}
+            </Box>
+          </Box>
         ))
       )}
-    </div>
+    </Box>
   );
 }
 
 function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () => void; onEdit: (a: any) => void }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Installed Base ({assets.length})</h4>
-        <button onClick={onAdd} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">+ Add</button>
-      </div>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Installed Base ({assets.length})
+        </Typography>
+        <Button
+          onClick={onAdd}
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+        >
+          + Add
+        </Button>
+      </Box>
       {assets.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-3xl border-2 border-dashed border-gray-100 italic text-gray-400">No installed assets found for this account.</div>
+        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+          No installed assets found for this account.
+        </Box>
       ) : (
         assets.map((a) => {
           const productName = a.is_competitor_equipment ? a.competitor_product_name || "Unknown Competitor" : a.product?.name || "Unknown Product";
           const modelInfo   = !a.is_competitor_equipment && a.product?.model_number ? a.product.model_number : null;
           const oemInfo     = !a.is_competitor_equipment && a.product?.oem_name ? a.product.oem_name : null;
           return (
-            <div key={a.id} className={`bg-white p-4 rounded-2xl shadow-sm border ${a.is_competitor_equipment ? "border-red-200" : "border-gray-100"}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="font-bold text-gray-800">{productName}</div>
-                  {a.is_competitor_equipment && <span className="px-2 py-0.5 rounded-md text-[10px] font-black border bg-red-50 text-red-600 border-red-200">COMPETITOR</span>}
-                </div>
-                <button onClick={() => onEdit(a)} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">Edit</button>
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                {oemInfo  && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">OEM: </span><span className="font-bold">{oemInfo}</span></div>}
-                {modelInfo && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Model: </span><span className="font-bold">{modelInfo}</span></div>}
-                {a.department && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Dept: </span><span className="font-bold">{a.department}</span></div>}
-                {a.installation_date && <div><span className="font-black text-gray-400 uppercase tracking-wider text-[10px]">Installed: </span><span className="font-bold">{a.installation_date}</span></div>}
-              </div>
-            </div>
+            <Box key={a.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid", borderColor: a.is_competitor_equipment ? "#fecaca" : "#f3f4f6" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{productName}</Box>
+                  {a.is_competitor_equipment && (
+                    <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                      COMPETITOR
+                    </Box>
+                  )}
+                </Box>
+                <Button
+                  onClick={() => onEdit(a)}
+                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                >
+                  Edit
+                </Button>
+              </Box>
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
+                {oemInfo  && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>OEM: </Box><Box component="span" sx={{ fontWeight: 700 }}>{oemInfo}</Box></Box>}
+                {modelInfo && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Model: </Box><Box component="span" sx={{ fontWeight: 700 }}>{modelInfo}</Box></Box>}
+                {a.department && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Dept: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.department}</Box></Box>}
+                {a.installation_date && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Installed: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.installation_date}</Box></Box>}
+              </Box>
+            </Box>
           );
         })
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -375,8 +486,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOItems, setNewOItems]                         = useState<any[]>([]);
   const [newOItemProdId, setNewOItemProdId]               = useState("");
   const [newOItemQty, setNewOItemQty]                     = useState("1");
-  const [newOItemPrice, setNewOItemPrice]                 = useState("");
+  const [newOItemPrice, setNewOItemPrice]                 = useState("0");
   const [newOItemDisc, setNewOItemDisc]                   = useState("0");
+  const [newOItemError, setNewOItemError]                 = useState<string | null>(null);
   const [editingOpp, setEditingOpp]                       = useState<any | null>(null);
   const [showEditOppItems, setShowEditOppItems]           = useState(false);
   const [editOName, setEditOName]                         = useState("");
@@ -391,8 +503,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editOOriginalItemIds, setEditOOriginalItemIds]   = useState<string[]>([]);
   const [editOItemProdId, setEditOItemProdId]             = useState("");
   const [editOItemQty, setEditOItemQty]                   = useState("1");
-  const [editOItemPrice, setEditOItemPrice]               = useState("");
+  const [editOItemPrice, setEditOItemPrice]               = useState("0");
   const [editOItemDisc, setEditOItemDisc]                 = useState("0");
+  const [editOItemError, setEditOItemError]               = useState<string | null>(null);
 
   // Installed assets
   const [showCreateAsset, setShowCreateAsset]             = useState(false);
@@ -486,22 +599,36 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // --- Loading / error states ---
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50">
-        <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading Customer 360...</div></div>
-      </div>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "#f9fafb" }}>
+        <LoadingRow label="Loading Customer 360..." />
+      </Box>
     );
   }
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto min-h-0 p-4 bg-gray-50">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-xl text-xs font-black transition-all uppercase tracking-wider">&larr; Back</button>
-        </div>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={loadAccount} className="ml-4 shrink-0 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider transition-all">Retry</button>
-        </div>
-      </div>
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "#f9fafb" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+          <Button
+            onClick={onBack}
+            sx={{ bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" }, color: "#4b5563", px: 1.5, py: 0.75, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+          >
+            ← Back
+          </Button>
+        </Box>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              onClick={loadAccount}
+              sx={{ bgcolor: "#fee2e2", "&:hover": { bgcolor: "#fecaca" }, color: "#b91c1c", px: 1.5, py: 0.5, borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
+              Retry
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      </Box>
     );
   }
 
@@ -618,7 +745,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const openCreateOpp = async () => {
     setNewOName(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
-    setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice(""); setNewOItemDisc("0");
+    setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice("0"); setNewOItemDisc("0"); setNewOItemError(null);
     setShowCreateOpp(true);
     await loadOppMD();
   };
@@ -651,7 +778,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOWinProb(o.win_probability != null ? String(o.win_probability) : "");
     setEditOValue(o.indicative_value != null ? String(o.indicative_value) : "");
     setEditOItems([]); setEditOOriginalItemIds([]);
-    setEditOItemProdId(""); setEditOItemQty("1"); setEditOItemPrice(""); setEditOItemDisc("0");
+    setEditOItemProdId(""); setEditOItemQty("1"); setEditOItemPrice("0"); setEditOItemDisc("0"); setEditOItemError(null);
     await Promise.all([
       loadOppMD(),
       listOpportunityItems(o.id).then((items: any) => {
@@ -718,275 +845,464 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     listInstalledAssets(accountId as any).then((d: any) => { setInstalled(d); setTabCache(accountId, "installed", d); }).catch(() => {});
   };
 
-  // Shared style constants
-  const lbl = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
-  const inp = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
-
   // Helper: render the add-product sub-form row
-  const OppItemAddRow = ({ prodId, setProdId, qty, setQty, price, setPrice, disc, setDisc, items, setItems }: any) => (
-    <div className="border-t border-gray-100 pt-3 space-y-2">
-      <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Add Product</div>
-      <select value={prodId} onChange={(e) => setProdId(e.target.value)} className={inp}><option value="">Select product</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-      <div className="flex gap-2">
-        {([["Qty", qty, setQty, "1"], ["Price (₹L)", price, setPrice, "0", "any"], ["Disc (₹L)", disc, setDisc, "0", "any"]] as any[]).map(([label, val, setVal, min, step]: any) => (
-          <div key={label} className="w-20"><label className={lbl}>{label}</label><input type="number" value={val} min={min} step={step} onChange={(e) => setVal(e.target.value)} className={inp} /></div>
-        ))}
-      </div>
-      <button type="button" onClick={() => {
-        if (!prodId || !qty || !price) return;
-        const prod: any = products.find((p: any) => p.id === prodId);
-        setItems([...items, { product_id: prodId, product_name: prod?.name || "", quantity: Number(qty), unit_price_lakhs: Number(price), discount_lakhs: Number(disc || 0) }]);
-        setProdId(""); setQty("1"); setPrice(""); setDisc("0");
-      }} className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">+ Add Product</button>
-    </div>
+  const OppItemAddRow = ({ prodId, setProdId, qty, setQty, price, setPrice, disc, setDisc, items, setItems, error, setError }: any) => (
+    <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+        Add Product
+      </Typography>
+      <TextField
+        select
+        value={prodId}
+        onChange={(e: any) => { setProdId(e.target.value); setError(null); }}
+        fullWidth
+        size="small"
+        slotProps={{ select: { displayEmpty: true } }}
+      >
+        <MenuItem value="">Select product</MenuItem>
+        {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+      </TextField>
+      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+        <TextField label="Qty" type="number" size="small" value={qty} onChange={(e: any) => { setQty(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
+        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
+        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
+      </Box>
+      {error && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{error}</Alert>}
+      <Button
+        type="button"
+        fullWidth
+        onClick={() => {
+          if (!prodId) { setError("Select a product"); return; }
+          if (Number(qty) <= 0) { setError("Quantity must be greater than 0"); return; }
+          if (Number(price) <= 0) { setError("Price must be greater than 0"); return; }
+          setError(null);
+          const prod: any = products.find((p: any) => p.id === prodId);
+          setItems([...items, { product_id: prodId, product_name: prod?.name || "", quantity: Number(qty), unit_price_lakhs: Number(price), discount_lakhs: Number(disc || 0) }]);
+          setProdId(""); setQty("1"); setPrice("0"); setDisc("0");
+        }}
+        sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+      >
+        + Add Product
+      </Button>
+    </Box>
   );
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 animate-in fade-in duration-200">
+    <Box
+      sx={{
+        flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb",
+        animation: "fadeIn 200ms",
+        "@keyframes fadeIn": { from: { opacity: 0 }, to: { opacity: 1 } },
+      }}
+    >
       {/* Fixed header */}
-      <div className="px-4 pt-4 bg-gray-50">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={onBack} className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0" aria-label="Back">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight">{account.name}</h2>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {account.zone && <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-black border bg-teal-50 text-teal-700 border-teal-200">{account.zone.name}</span>}
+      <Box sx={{ px: 2, pt: 2, bgcolor: "#f9fafb" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "#4b5563", flexShrink: 0, "&:hover": { bgcolor: "#e5e7eb" } }}>
+            <ArrowBackIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", letterSpacing: "-0.025em", lineHeight: 1.25 }}>
+              {account.name}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5, flexWrap: "wrap" }}>
+              {account.zone && (
+                <Box component="span" sx={{ px: 1.25, py: 0.25, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #99f6e4", bgcolor: "#f0fdfa", color: "#0f766e" }}>
+                  {account.zone.name}
+                </Box>
+              )}
               <PayerBadge behavior={account.payer_behavior} />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Count strip */}
-        <div className="flex items-center justify-around bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 mb-4">
-          <div className="text-center"><div className="text-xl font-black text-violet-600">{account.stakeholder_count ?? "—"}</div><div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Stakeholders</div></div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div className="text-center"><div className="text-xl font-black text-blue-600">{account.project_count ?? "—"}</div><div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Projects</div></div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div className="text-center"><div className="text-xl font-black text-emerald-600">{account.opportunity_count ?? "—"}</div><div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Opportunities</div></div>
-        </div>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", px: 2, py: 1.5, mb: 2 }}>
+          <Box sx={{ textAlign: "center" }}>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#7c3aed" }}>{account.stakeholder_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Stakeholders</Box>
+          </Box>
+          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "primary.main" }}>{account.project_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Projects</Box>
+          </Box>
+          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>{account.opportunity_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Opportunities</Box>
+          </Box>
+        </Box>
 
         {/* Tab chip bar */}
-        <div className="relative mb-4">
-          <div ref={chipBarRef} className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", paddingRight: "50vw" }}>
+        <Box sx={{ position: "relative", mb: 2 }}>
+          <Box
+            ref={chipBarRef}
+            sx={{
+              display: "flex", gap: 1, overflowX: "auto", pb: 0.5,
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+              pr: "50vw",
+            }}
+          >
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
-                <button key={tab.id} data-tab={tab.id} onClick={() => handleTabChange(tab.id)}
-                  className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border focus:outline-none active:scale-95 ${isActive ? "bg-blue-600 text-white border-blue-600 shadow-sm" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"}`}>
-                  {isActive && <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                <Button
+                  key={tab.id}
+                  data-tab={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  sx={{
+                    flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
+                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                    transition: "all 0.2s", border: "1px solid", textTransform: "none",
+                    ...(isActive
+                      ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
+                      : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                  }}
+                >
+                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
-          </div>
-          <div className="absolute right-0 top-0 h-full w-10 pointer-events-none" style={{ background: "linear-gradient(to left, #f9fafb, transparent)" }} />
-        </div>
-      </div>
+          </Box>
+          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
+        </Box>
+      </Box>
 
       {/* Scrollable tab content */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
         {activeTab === "overview"      && <OverviewTab account={account} onEdit={openEditAccount} />}
-        {activeTab === "stakeholders"  && (stakeholdersLoading  ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div> : <StakeholdersTab  stakeholders={stakeholders}   onAdd={openCreateStakeholder}  onEdit={openEditStakeholder} />)}
-        {activeTab === "projects"      && (projectsLoading       ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div> : <ProjectsTab      projects={projects}           onAdd={openCreateProject}      onEdit={openEditProject} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading  ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp}          onEdit={openEditOpp} />)}
-        {activeTab === "installed"     && (installedLoading      ? <div className="text-center py-12"><div className="text-gray-400 font-bold text-sm animate-pulse">Loading...</div></div> : <InstalledBaseTab assets={installed}           onAdd={openCreateAsset}        onEdit={openEditAsset} />)}
+        {activeTab === "stakeholders"  && (stakeholdersLoading  ? <LoadingRow /> : <StakeholdersTab  stakeholders={stakeholders}   onAdd={openCreateStakeholder}  onEdit={openEditStakeholder} />)}
+        {activeTab === "projects"      && (projectsLoading       ? <LoadingRow /> : <ProjectsTab      projects={projects}           onAdd={openCreateProject}      onEdit={openEditProject} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading  ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp}          onEdit={openEditOpp} />)}
+        {activeTab === "installed"     && (installedLoading      ? <LoadingRow /> : <InstalledBaseTab assets={installed}           onAdd={openCreateAsset}        onEdit={openEditAsset} />)}
         {activeTab === "activity"      && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} />
         )}
-      </div>
+      </Box>
 
       {/* ---- Modals ---- */}
 
       {/* Edit Account */}
       <FormModal isOpen={showEditAccount} onClose={() => setShowEditAccount(false)} title="Edit Customer" onSubmit={handleUpdateAccount}>
-        <div><label className={lbl}>Name *</label><input type="text" value={editAccountName} onChange={(e) => setEditAccountName(e.target.value)} className={inp} autoFocus /></div>
-        <div><label className={lbl}>Zone *</label>
-          <select value={editAccountZoneId} onChange={(e) => setEditAccountZoneId(e.target.value)} className={inp}>
-            <option value="">Select zone</option>
-            {zones.map((z: any) => <option key={z.id} value={z.id}>{z.name}</option>)}
-          </select>
-        </div>
-        <div><label className={lbl}>Payer Behavior</label>
-          <select value={editAccountPayer} onChange={(e) => setEditAccountPayer(e.target.value)} className={inp}>
-            <option value="">Select behavior</option>
-            <option value="GOOD">Good</option><option value="AVERAGE">Average</option>
-            <option value="PROBLEMATIC">Problematic</option><option value="UNKNOWN">Unknown</option>
-          </select>
-        </div>
+        <TextField label="Name *" value={editAccountName} onChange={(e) => setEditAccountName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField
+          select label="Zone *" value={editAccountZoneId} onChange={(e) => setEditAccountZoneId(e.target.value)}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select zone</MenuItem>
+          {zones.map((z: any) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+        </TextField>
+        <TextField
+          select label="Payer Behavior" value={editAccountPayer} onChange={(e) => setEditAccountPayer(e.target.value)}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select behavior</MenuItem>
+          <MenuItem value="GOOD">Good</MenuItem>
+          <MenuItem value="AVERAGE">Average</MenuItem>
+          <MenuItem value="PROBLEMATIC">Problematic</MenuItem>
+          <MenuItem value="UNKNOWN">Unknown</MenuItem>
+        </TextField>
       </FormModal>
 
       {/* Create Stakeholder */}
       <FormModal isOpen={showCreateStakeholder} onClose={() => setShowCreateStakeholder(false)} title="New Stakeholder" onSubmit={handleCreateStakeholder} submitLabel="Create">
-        <div><label className={lbl}>Name *</label><input type="text" value={newSName} onChange={(e) => setNewSName(e.target.value)} className={inp} placeholder="Enter stakeholder name" autoFocus /></div>
-        <div><label className={lbl}>Designation</label><input type="text" value={newSDesignation} onChange={(e) => setNewSDesignation(e.target.value)} className={inp} placeholder="e.g. Chief Radiologist" /></div>
-        <div><label className={lbl}>Email</label><input type="email" value={newSEmail} onChange={(e) => setNewSEmail(e.target.value)} className={inp} placeholder="e.g. doctor@hospital.com" /></div>
-        <div><label className={lbl}>Phone</label><input type="tel" value={newSPhone} onChange={(e) => setNewSPhone(e.target.value)} className={inp} placeholder="e.g. +91-9876543210" /></div>
-        <div><label className={lbl}>NPS Score</label><input type="number" min="-100" max="100" value={newSNps} onChange={(e) => setNewSNps(e.target.value)} className={inp} placeholder="-100 to 100" /></div>
-        <div><label className={lbl}>Sentiment</label>
-          <select value={newSSentiment} onChange={(e) => setNewSSentiment(e.target.value)} className={inp}>
-            <option value="">Select sentiment</option><option value="PROMOTER">Promoter</option><option value="NEUTRAL">Neutral</option><option value="DETRACTOR">Detractor</option>
-          </select>
-        </div>
+        <TextField label="Name *" value={newSName} onChange={(e) => setNewSName(e.target.value)} placeholder="Enter stakeholder name" autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField label="Designation" value={newSDesignation} onChange={(e) => setNewSDesignation(e.target.value)} placeholder="e.g. Chief Radiologist" fullWidth size="small" />
+        <TextField label="Email" type="email" value={newSEmail} onChange={(e) => setNewSEmail(e.target.value)} placeholder="e.g. doctor@hospital.com" fullWidth size="small" />
+        <TextField label="Phone" type="tel" value={newSPhone} onChange={(e) => setNewSPhone(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
+        <TextField label="NPS Score" type="number" value={newSNps} onChange={(e) => setNewSNps(e.target.value)} placeholder="-100 to 100" fullWidth size="small" slotProps={{ htmlInput: { min: -100, max: 100 } }} />
+        <TextField
+          select label="Sentiment" value={newSSentiment} onChange={(e) => setNewSSentiment(e.target.value)}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select sentiment</MenuItem>
+          <MenuItem value="PROMOTER">Promoter</MenuItem>
+          <MenuItem value="NEUTRAL">Neutral</MenuItem>
+          <MenuItem value="DETRACTOR">Detractor</MenuItem>
+        </TextField>
       </FormModal>
 
       {/* Edit Stakeholder */}
       <FormModal isOpen={editingStakeholder !== null} onClose={() => setEditingStakeholder(null)} title="Edit Stakeholder" onSubmit={handleUpdateStakeholder}>
-        <div><label className={lbl}>Name *</label><input type="text" value={editSName} onChange={(e) => setEditSName(e.target.value)} className={inp} autoFocus /></div>
-        <div><label className={lbl}>Designation</label><input type="text" value={editSDesignation} onChange={(e) => setEditSDesignation(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Email</label><input type="email" value={editSEmail} onChange={(e) => setEditSEmail(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Phone</label><input type="tel" value={editSPhone} onChange={(e) => setEditSPhone(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>NPS Score</label><input type="number" min="-100" max="100" value={editSNps} onChange={(e) => setEditSNps(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Sentiment</label>
-          <select value={editSSentiment} onChange={(e) => setEditSSentiment(e.target.value)} className={inp}>
-            <option value="">Select sentiment</option><option value="PROMOTER">Promoter</option><option value="NEUTRAL">Neutral</option><option value="DETRACTOR">Detractor</option>
-          </select>
-        </div>
+        <TextField label="Name *" value={editSName} onChange={(e) => setEditSName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField label="Designation" value={editSDesignation} onChange={(e) => setEditSDesignation(e.target.value)} fullWidth size="small" />
+        <TextField label="Email" type="email" value={editSEmail} onChange={(e) => setEditSEmail(e.target.value)} fullWidth size="small" />
+        <TextField label="Phone" type="tel" value={editSPhone} onChange={(e) => setEditSPhone(e.target.value)} fullWidth size="small" />
+        <TextField label="NPS Score" type="number" value={editSNps} onChange={(e) => setEditSNps(e.target.value)} fullWidth size="small" slotProps={{ htmlInput: { min: -100, max: 100 } }} />
+        <TextField
+          select label="Sentiment" value={editSSentiment} onChange={(e) => setEditSSentiment(e.target.value)}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select sentiment</MenuItem>
+          <MenuItem value="PROMOTER">Promoter</MenuItem>
+          <MenuItem value="NEUTRAL">Neutral</MenuItem>
+          <MenuItem value="DETRACTOR">Detractor</MenuItem>
+        </TextField>
       </FormModal>
 
       {/* Create Project */}
       <FormModal isOpen={showCreateProject} onClose={() => setShowCreateProject(false)} title="New Project" onSubmit={handleCreateProject} submitLabel="Create">
-        <div><label className={lbl}>Name *</label><input type="text" value={newPName} onChange={(e) => setNewPName(e.target.value)} className={inp} placeholder="Enter project name" autoFocus /></div>
-        <div><label className={lbl}>Status *</label><select value={newPStatusId} onChange={(e) => setNewPStatusId(e.target.value)} className={inp}><option value="">Select status</option>{projectStatuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}</select></div>
-        <div><label className={lbl}>Owner *</label><select value={newPOwnerId} onChange={(e) => setNewPOwnerId(e.target.value)} className={inp}><option value="">Select owner</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.display_name}</option>)}</select></div>
-        <div><label className={lbl}>Bid Submission Date</label><input type="date" value={newPBidDate} onChange={(e) => setNewPBidDate(e.target.value)} className={inp} /></div>
+        <TextField label="Name *" value={newPName} onChange={(e) => setNewPName(e.target.value)} placeholder="Enter project name" autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField select label="Status *" value={newPStatusId} onChange={(e) => setNewPStatusId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select status</MenuItem>
+          {projectStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+        </TextField>
+        <TextField select label="Owner *" value={newPOwnerId} onChange={(e) => setNewPOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select owner</MenuItem>
+          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField label="Bid Submission Date" type="date" value={newPBidDate} onChange={(e) => setNewPBidDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
       </FormModal>
 
       {/* Edit Project */}
       <FormModal isOpen={editingProject !== null} onClose={() => setEditingProject(null)} title="Edit Project" onSubmit={handleUpdateProject}>
-        <div><label className={lbl}>Name *</label><input type="text" value={editPName} onChange={(e) => setEditPName(e.target.value)} className={inp} autoFocus /></div>
-        <div><label className={lbl}>Status</label><select value={editPStatusId} onChange={(e) => setEditPStatusId(e.target.value)} className={inp}><option value="">Select status</option>{projectStatuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}</select></div>
-        <div><label className={lbl}>Owner</label><select value={editPOwnerId} onChange={(e) => setEditPOwnerId(e.target.value)} className={inp}><option value="">Select owner</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.display_name}</option>)}</select></div>
-        <div><label className={lbl}>Bid Submission Date</label><input type="date" value={editPBidDate} onChange={(e) => setEditPBidDate(e.target.value)} className={inp} /></div>
+        <TextField label="Name *" value={editPName} onChange={(e) => setEditPName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField select label="Status" value={editPStatusId} onChange={(e) => setEditPStatusId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select status</MenuItem>
+          {projectStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+        </TextField>
+        <TextField select label="Owner" value={editPOwnerId} onChange={(e) => setEditPOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select owner</MenuItem>
+          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField label="Bid Submission Date" type="date" value={editPBidDate} onChange={(e) => setEditPBidDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
       </FormModal>
 
       {/* Create Opportunity */}
       <FormModal isOpen={showCreateOpp} onClose={() => setShowCreateOpp(false)} title="New Opportunity" onSubmit={handleCreateOpp} submitLabel="Create">
-        <div><label className={lbl}>Name *</label><input type="text" value={newOName} onChange={(e) => setNewOName(e.target.value)} className={inp} placeholder="Enter opportunity name" autoFocus /></div>
-        <div><label className={lbl}>Project</label><select value={newOProjectId} onChange={(e) => setNewOProjectId(e.target.value)} className={inp}><option value="">None</option>{projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-        <div className="flex gap-3">
-          <div className="flex-1"><label className={lbl}>Stage *</label>
-            <select value={newOStageId} onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setNewOStageId(e.target.value); if (s) setNewOWinProb(String(s.default_win_probability)); }} className={inp}>
-              <option value="">Select stage</option>{stages.map((s: any) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
-            </select>
-          </div>
-          <div className="flex-1"><label className={lbl}>Status *</label><select value={newOStatusId} onChange={(e) => setNewOStatusId(e.target.value)} className={inp}><option value="">Select status</option>{oppStatuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}</select></div>
-        </div>
-        <div><label className={lbl}>Lead Source</label><select value={newOLeadSourceId} onChange={(e) => setNewOLeadSourceId(e.target.value)} className={inp}><option value="">Select source</option>{leadSources.map((ls: any) => <option key={ls.id} value={ls.id}>{ls.name}</option>)}</select></div>
-        <div><label className={lbl}>Owner *</label><select value={newOOwnerId} onChange={(e) => setNewOOwnerId(e.target.value)} className={inp}><option value="">Select owner</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.display_name}</option>)}</select></div>
-        <div><label className={lbl}>Win Probability % *</label><input type="number" min="0" max="100" value={newOWinProb} onChange={(e) => setNewOWinProb(e.target.value)} className={inp} placeholder="0 – 100" /></div>
-        <div><label className={lbl}>Indicative Value (Lakhs){newOItems.length > 0 && <span className="ml-1 text-blue-400 font-normal normal-case tracking-normal">(auto)</span>}</label>
-          <input type="number" step="any" min="0" value={newOValue} onChange={(e) => setNewOValue(e.target.value)} readOnly={newOItems.length > 0} className={newOItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inp} placeholder="e.g. 25.50" />
-        </div>
-        <div className="border-t border-gray-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
-            <button type="button" onClick={() => setShowNewOppItems(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">{newOItems.length > 0 ? `Edit (${newOItems.length})` : "+ Add Products"}</button>
-          </div>
+        <TextField label="Name *" value={newOName} onChange={(e) => setNewOName(e.target.value)} placeholder="Enter opportunity name" autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField select label="Project" value={newOProjectId} onChange={(e) => setNewOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">None</MenuItem>
+          {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+        </TextField>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <TextField
+            select label="Stage *" value={newOStageId}
+            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setNewOStageId(e.target.value); if (s) setNewOWinProb(String(s.default_win_probability)); }}
+            fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select stage</MenuItem>
+            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+          </TextField>
+          <TextField select label="Status *" value={newOStatusId} onChange={(e) => setNewOStatusId(e.target.value)} fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">Select status</MenuItem>
+            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+          </TextField>
+        </Box>
+        <TextField select label="Lead Source" value={newOLeadSourceId} onChange={(e) => setNewOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select source</MenuItem>
+          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
+        </TextField>
+        <TextField select label="Owner *" value={newOOwnerId} onChange={(e) => setNewOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select owner</MenuItem>
+          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField label="Win Probability % *" type="number" value={newOWinProb} onChange={(e) => setNewOWinProb(e.target.value)} placeholder="Enter Win Probability %" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
+        <TextField
+          label={`Indicative Value (Lakhs)${newOItems.length > 0 ? " (auto)" : ""}`}
+          type="number" value={newOValue} onChange={(e) => setNewOValue(e.target.value)}
+          disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
+          fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
+            <Button
+              type="button"
+              onClick={() => setShowNewOppItems(true)}
+              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+            >
+              {newOItems.length > 0 ? `Edit (${newOItems.length})` : "+ Add Products"}
+            </Button>
+          </Box>
           {newOItems.length > 0 ? (
-            <div className="space-y-1">
-              {newOItems.map((i: any, idx: number) => (<div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs"><div className="flex-1 font-bold truncate">{i.product_name}</div><div className="text-gray-400 shrink-0">{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</div></div>))}
-              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L</div>
-            </div>
-          ) : <div className="text-xs text-gray-400 italic">No products added</div>}
-        </div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+              {newOItems.map((i: any, idx: number) => (
+                <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
+                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.product_name}</Typography>
+                  <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</Typography>
+                </Box>
+              ))}
+              <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
+                Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+              </Typography>
+            </Box>
+          ) : <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic" }}>No products added</Typography>}
+        </Box>
       </FormModal>
 
       <FormModal isOpen={showNewOppItems} onClose={() => setShowNewOppItems(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
         {newOItems.length > 0 && (
-          <div className="space-y-2">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {newOItems.map((item: any, i: number) => (
-              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
-                <div className="flex items-center justify-between"><div className="font-bold truncate">{item.product_name}</div><button type="button" onClick={() => setNewOItems(newOItems.filter((_: any, j: number) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button></div>
-                <div className="flex gap-2">
+              <Box key={i} sx={{ px: 1.5, py: 1, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</Typography>
+                  <IconButton type="button" size="small" onClick={() => setNewOItems(newOItems.filter((_: any, j: number) => j !== i))} sx={{ ml: 1 }}>
+                    <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#f87171", "&:hover": { color: "#dc2626" } }}>×</Box>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
                   {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <div key={key} className="w-20"><div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">{key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}</div>
-                      <input type="number" min="0" step="any" value={item[key]} onChange={(e) => setNewOItems(newOItems.map((it: any, j: number) => j === i ? { ...it, [key]: Number(e.target.value) } : it))} className={inp} />
-                    </div>
+                    <TextField
+                      key={key}
+                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
+                      type="number" size="small" value={item[key]}
+                      onChange={(e) => setNewOItems(newOItems.map((it: any, j: number) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
+                      slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
+                      sx={{ width: "5rem" }}
+                    />
                   ))}
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L</div>
-          </div>
+            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
+              Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+            </Typography>
+          </Box>
         )}
-        <OppItemAddRow prodId={newOItemProdId} setProdId={setNewOItemProdId} qty={newOItemQty} setQty={setNewOItemQty} price={newOItemPrice} setPrice={setNewOItemPrice} disc={newOItemDisc} setDisc={setNewOItemDisc} items={newOItems} setItems={setNewOItems} />
+        <OppItemAddRow prodId={newOItemProdId} setProdId={setNewOItemProdId} qty={newOItemQty} setQty={setNewOItemQty} price={newOItemPrice} setPrice={setNewOItemPrice} disc={newOItemDisc} setDisc={setNewOItemDisc} items={newOItems} setItems={setNewOItems} error={newOItemError} setError={setNewOItemError} />
       </FormModal>
 
       {/* Edit Opportunity */}
       <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
-        <div><label className={lbl}>Name *</label><input type="text" value={editOName} onChange={(e) => setEditOName(e.target.value)} className={inp} autoFocus /></div>
-        <div><label className={lbl}>Project</label><select value={editOProjectId} onChange={(e) => setEditOProjectId(e.target.value)} className={inp}><option value="">None</option>{projects.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-        <div className="flex gap-3">
-          <div className="flex-1"><label className={lbl}>Stage</label>
-            <select value={editOStageId} onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditOStageId(e.target.value); if (s) setEditOWinProb(String(s.default_win_probability)); }} className={inp}>
-              <option value="">Select stage</option>{stages.map((s: any) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
-            </select>
-          </div>
-          <div className="flex-1"><label className={lbl}>Status</label><select value={editOStatusId} onChange={(e) => setEditOStatusId(e.target.value)} className={inp}><option value="">Select status</option>{oppStatuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}</select></div>
-        </div>
-        <div><label className={lbl}>Lead Source</label><select value={editOLeadSourceId} onChange={(e) => setEditOLeadSourceId(e.target.value)} className={inp}><option value="">Select source</option>{leadSources.map((ls: any) => <option key={ls.id} value={ls.id}>{ls.name}</option>)}</select></div>
-        <div><label className={lbl}>Owner</label><select value={editOOwnerId} onChange={(e) => setEditOOwnerId(e.target.value)} className={inp}><option value="">Select owner</option>{users.map((u: any) => <option key={u.id} value={u.id}>{u.display_name}</option>)}</select></div>
-        <div><label className={lbl}>Win Probability %</label><input type="number" min="0" max="100" value={editOWinProb} onChange={(e) => setEditOWinProb(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Indicative Value (Lakhs){editOItems.length > 0 && <span className="ml-1 text-blue-400 font-normal normal-case tracking-normal">(auto)</span>}</label>
-          <input type="number" step="any" min="0" value={editOValue} onChange={(e) => setEditOValue(e.target.value)} readOnly={editOItems.length > 0} className={editOItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inp} />
-        </div>
-        <div className="border-t border-gray-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
-            <button type="button" onClick={() => setShowEditOppItems(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">{editOItems.length > 0 ? `Edit (${editOItems.length})` : "+ Add Products"}</button>
-          </div>
+        <TextField label="Name *" value={editOName} onChange={(e) => setEditOName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField select label="Project" value={editOProjectId} onChange={(e) => setEditOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">None</MenuItem>
+          {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+        </TextField>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <TextField
+            select label="Stage" value={editOStageId}
+            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditOStageId(e.target.value); if (s) setEditOWinProb(String(s.default_win_probability)); }}
+            fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select stage</MenuItem>
+            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+          </TextField>
+          <TextField select label="Status" value={editOStatusId} onChange={(e) => setEditOStatusId(e.target.value)} fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">Select status</MenuItem>
+            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+          </TextField>
+        </Box>
+        <TextField select label="Lead Source" value={editOLeadSourceId} onChange={(e) => setEditOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select source</MenuItem>
+          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
+        </TextField>
+        <TextField select label="Owner" value={editOOwnerId} onChange={(e) => setEditOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">Select owner</MenuItem>
+          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField label="Win Probability %" type="number" value={editOWinProb} onChange={(e) => setEditOWinProb(e.target.value)} fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
+        <TextField
+          label={`Indicative Value (Lakhs)${editOItems.length > 0 ? " (auto)" : ""}`}
+          type="number" value={editOValue} onChange={(e) => setEditOValue(e.target.value)}
+          disabled={editOItems.length > 0}
+          fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
+            <Button
+              type="button"
+              onClick={() => setShowEditOppItems(true)}
+              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+            >
+              {editOItems.length > 0 ? `Edit (${editOItems.length})` : "+ Add Products"}
+            </Button>
+          </Box>
           {editOItems.length > 0 ? (
-            <div className="space-y-1">
-              {editOItems.map((i: any, idx: number) => (<div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs"><div className="flex-1 font-bold truncate">{i.product_name}</div><div className="text-gray-400 shrink-0">{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</div></div>))}
-              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L</div>
-            </div>
-          ) : <div className="text-xs text-gray-400 italic">No products added</div>}
-        </div>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+              {editOItems.map((i: any, idx: number) => (
+                <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
+                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.product_name}</Typography>
+                  <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</Typography>
+                </Box>
+              ))}
+              <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
+                Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+              </Typography>
+            </Box>
+          ) : <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic" }}>No products added</Typography>}
+        </Box>
       </FormModal>
 
       <FormModal isOpen={showEditOppItems} onClose={() => setShowEditOppItems(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
         {editOItems.length > 0 && (
-          <div className="space-y-2">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {editOItems.map((item: any, i: number) => (
-              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
-                <div className="flex items-center justify-between"><div className="font-bold truncate">{item.product_name}</div><button type="button" onClick={() => setEditOItems(editOItems.filter((_: any, j: number) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button></div>
-                <div className="flex gap-2">
+              <Box key={i} sx={{ px: 1.5, py: 1, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</Typography>
+                  <IconButton type="button" size="small" onClick={() => setEditOItems(editOItems.filter((_: any, j: number) => j !== i))} sx={{ ml: 1 }}>
+                    <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#f87171", "&:hover": { color: "#dc2626" } }}>×</Box>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
                   {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <div key={key} className="w-20"><div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">{key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}</div>
-                      <input type="number" min="0" step="any" value={item[key]} onChange={(e) => { const { id: _id, ...rest } = item; setEditOItems(editOItems.map((it: any, j: number) => j === i ? { ...rest, [key]: Number(e.target.value) } : it)); }} className={inp} />
-                    </div>
+                    <TextField
+                      key={key}
+                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
+                      type="number" size="small" value={item[key]}
+                      onChange={(e) => { const { id: _id, ...rest } = item; setEditOItems(editOItems.map((it: any, j: number) => j === i ? { ...rest, [key]: Number(e.target.value) } : it)); }}
+                      slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
+                      sx={{ width: "5rem" }}
+                    />
                   ))}
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L</div>
-          </div>
+            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
+              Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
+            </Typography>
+          </Box>
         )}
-        <OppItemAddRow prodId={editOItemProdId} setProdId={setEditOItemProdId} qty={editOItemQty} setQty={setEditOItemQty} price={editOItemPrice} setPrice={setEditOItemPrice} disc={editOItemDisc} setDisc={setEditOItemDisc} items={editOItems} setItems={setEditOItems} />
+        <OppItemAddRow prodId={editOItemProdId} setProdId={setEditOItemProdId} qty={editOItemQty} setQty={setEditOItemQty} price={editOItemPrice} setPrice={setEditOItemPrice} disc={editOItemDisc} setDisc={setEditOItemDisc} items={editOItems} setItems={setEditOItems} error={editOItemError} setError={setEditOItemError} />
       </FormModal>
 
       {/* Create Asset */}
       <FormModal isOpen={showCreateAsset} onClose={() => setShowCreateAsset(false)} title="New Installed Asset" onSubmit={handleCreateAsset} submitLabel="Create">
-        <div><label className={lbl}>Equipment Type</label><div className="flex items-center gap-3 py-2"><input type="checkbox" id="newAIsCompetitor" checked={newAIsCompetitor} onChange={(e) => setNewAIsCompetitor(e.target.checked)} className="w-4 h-4 rounded accent-blue-600" /><label htmlFor="newAIsCompetitor" className="text-sm font-bold text-gray-700">Competitor Equipment</label></div></div>
-        {newAIsCompetitor
-          ? <div><label className={lbl}>Competitor Product Name</label><input type="text" value={newACompetitorName} onChange={(e) => setNewACompetitorName(e.target.value)} className={inp} placeholder="e.g. Siemens SOMATOM" /></div>
-          : <div><label className={lbl}>Product *</label><select value={newAProductId} onChange={(e) => setNewAProductId(e.target.value)} className={inp}><option value="">Select product</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</option>)}</select></div>
-        }
-        <div><label className={lbl}>Department</label><input type="text" value={newADepartment} onChange={(e) => setNewADepartment(e.target.value)} className={inp} placeholder="e.g. Radiology" /></div>
-        <div><label className={lbl}>Installation Date</label><input type="date" value={newAInstallDate} onChange={(e) => setNewAInstallDate(e.target.value)} className={inp} /></div>
+        <Box>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
+          <FormControlLabel
+            control={<Checkbox color="primary" checked={newAIsCompetitor} onChange={(e) => setNewAIsCompetitor(e.target.checked)} />}
+            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Competitor Equipment</Typography>}
+          />
+        </Box>
+        {newAIsCompetitor ? (
+          <TextField label="Competitor Product Name" value={newACompetitorName} onChange={(e) => setNewACompetitorName(e.target.value)} placeholder="e.g. Siemens SOMATOM" fullWidth size="small" />
+        ) : (
+          <TextField select label="Product *" value={newAProductId} onChange={(e) => setNewAProductId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">Select product</MenuItem>
+            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</MenuItem>)}
+          </TextField>
+        )}
+        <TextField label="Department" value={newADepartment} onChange={(e) => setNewADepartment(e.target.value)} placeholder="e.g. Radiology" fullWidth size="small" />
+        <TextField label="Installation Date" type="date" value={newAInstallDate} onChange={(e) => setNewAInstallDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
       </FormModal>
 
       {/* Edit Asset */}
       <FormModal isOpen={editingAsset !== null} onClose={() => setEditingAsset(null)} title="Edit Installed Asset" onSubmit={handleUpdateAsset}>
-        <div><label className={lbl}>Equipment Type</label><div className="flex items-center gap-3 py-2"><input type="checkbox" id="editAIsCompetitor" checked={editAIsCompetitor} onChange={(e) => setEditAIsCompetitor(e.target.checked)} className="w-4 h-4 rounded accent-blue-600" /><label htmlFor="editAIsCompetitor" className="text-sm font-bold text-gray-700">Competitor Equipment</label></div></div>
-        {editAIsCompetitor
-          ? <div><label className={lbl}>Competitor Product Name</label><input type="text" value={editACompetitorName} onChange={(e) => setEditACompetitorName(e.target.value)} className={inp} /></div>
-          : <div><label className={lbl}>Product *</label><select value={editAProductId} onChange={(e) => setEditAProductId(e.target.value)} className={inp}><option value="">Select product</option>{products.map((p: any) => <option key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</option>)}</select></div>
-        }
-        <div><label className={lbl}>Department</label><input type="text" value={editADepartment} onChange={(e) => setEditADepartment(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Installation Date</label><input type="date" value={editAInstallDate} onChange={(e) => setEditAInstallDate(e.target.value)} className={inp} /></div>
+        <Box>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>Equipment Type</Typography>
+          <FormControlLabel
+            control={<Checkbox color="primary" checked={editAIsCompetitor} onChange={(e) => setEditAIsCompetitor(e.target.checked)} />}
+            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Competitor Equipment</Typography>}
+          />
+        </Box>
+        {editAIsCompetitor ? (
+          <TextField label="Competitor Product Name" value={editACompetitorName} onChange={(e) => setEditACompetitorName(e.target.value)} fullWidth size="small" />
+        ) : (
+          <TextField select label="Product *" value={editAProductId} onChange={(e) => setEditAProductId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">Select product</MenuItem>
+            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</MenuItem>)}
+          </TextField>
+        )}
+        <TextField label="Department" value={editADepartment} onChange={(e) => setEditADepartment(e.target.value)} fullWidth size="small" />
+        <TextField label="Installation Date" type="date" value={editAInstallDate} onChange={(e) => setEditAInstallDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
       </FormModal>
 
       {/* Log Activity */}
@@ -996,6 +1312,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         accountId={accountId}
         currentUserId={(userProfile as any)?.id}
       />
-    </div>
+    </Box>
   );
 }
