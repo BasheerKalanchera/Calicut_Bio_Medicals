@@ -101,7 +101,15 @@ migrated, verified E2E, and ready to commit — see below.
     correctness).
   Guard-green (`npm run lint`, `npx tsc --noEmit`) confirmed clean. §9 table
   and `check-no-tailwind.js` GRANDFATHERED list both updated in the same
-  commit as the migration.
+  commit as the migration. Committed as `fe68a91`.
+- Ran a dedicated, whole-project `npx tsc --noEmit` pass (confirmed
+  `tsconfig.json`'s `include: ["src"]` covers everything, not scoped to any
+  one file) — zero errors. Closes out the retroactive-type-check concern for
+  all 8 migrated files (`main.tsx`, `ActivityTimeline.tsx`,
+  `NextActionsScreen.tsx`, `LogActivityModal.tsx`,
+  `OpportunityPipelineScreen.tsx`, `LoginScreen.tsx`, `FormModal.tsx`,
+  `QuickLeadModal.tsx`) as a confirmed, explicit run — not just incidental
+  coverage from other work.
 - All work committed; working tree clean as of session end.
 
 ## Next step
@@ -236,21 +244,6 @@ at today's content.
   Larger and riskier than the item above; sequence after it, and after the
   MUI migration backlog (or at least after the specific files it touches have
   migrated, to avoid mixing Tailwind and MUI changes in the same commit).
-- **Retroactively run `npx tsc --noEmit` against the 7 already-migrated
-  screens.** `tsc --noEmit` was only added to the per-file ritual starting
-  with the 8th file (`QuickLeadModal.tsx`) — discovered while migrating it
-  that `npm run lint`'s `eslint .` half never parses `.tsx` files at all (no
-  `.ts`/`.tsx` glob and no `typescript-eslint` package in this project's
-  ESLint config), so none of `main.tsx`, `ActivityTimeline.tsx`,
-  `NextActionsScreen.tsx`, `LogActivityModal.tsx`,
-  `OpportunityPipelineScreen.tsx`, `LoginScreen.tsx`, or `FormModal.tsx` has
-  ever actually been type-checked by anything in this project's tooling.
-  Status: every `tsc --noEmit` run during the `QuickLeadModal.tsx` migration
-  was whole-project (not scoped to one file) and came back clean, which
-  incidentally covers these 7 files too — but per Basheer, treat this as
-  unconfirmed until a dedicated run + explicit update to this file happens
-  once QuickLeadModal.tsx's own work is fully wrapped up. Do not close this
-  item out on the basis of the incidental runs alone.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
