@@ -4,13 +4,14 @@ _Session: 2026-07-03 → 2026-07-05 (continued)_
 ## Current task
 MUI migration (ADR-031, MUI-only — non-negotiable, hybrid rejected). Actively
 migrating screens off Tailwind, one file at a time. `QuickLeadModal.tsx`
-(`fe68a91`) confirmed landed from the prior session. Now working
-`OpportunityDetailScreen.tsx`, split into two commits per Basheer's explicit
-direction: **Commit A (styling only, Tailwind→MUI) is done, guard-green, and
-staged — pending Basheer's E2E pass before commit.** Commit B (ADR-032
-compliance — 6 manual `.then()` chains → `useQuery`) has not been started and
-may be deferred past July 10 if it doesn't land clean; it is a data-layer
-refactor with its own risk profile, not to be rushed into the freeze.
+(`fe68a91`) confirmed landed from the prior session.
+`OpportunityDetailScreen.tsx`'s Commit A (styling) plus a stakeholder-linking
+bug fix (discovered during Commit A's E2E) landed together as `3619295`, per
+Basheer's decision to combine rather than split hunks across one file.
+**Commit B (ADR-032 compliance — all 6 manual `.then()` chains → `useQuery`,
+plus local stopgap types for the master-data lookups) is now done, guard-green,
+and staged — pending Basheer's E2E pass before commit.** §9/`check-no-tailwind.js`
+already updated to reflect the file as fully migrated (9 of 16 tracked files).
 
 ## Done this session
 - Discovered MUI migration had silently stalled: only LoginScreen.tsx and
@@ -164,19 +165,80 @@ refactor with its own risk profile, not to be rushed into the freeze.
     appears identically on all four 360/detail screens (Customer, Product,
     Opportunity, Project) — banked the shared `BackButton` extraction (see
     Deferred) rather than building it inside this commit.
-  - **Not yet done:** Basheer's manual E2E pass on Commit A, then the commit
+- Basheer's E2E of Commit A surfaced two real issues, both fixed before commit:
+  - **Products tab Add/Edit rows had the same floating-label/validation bug
+    already fixed once in `QuickLeadModal.tsx`** — `addPrice` defaulted to
+    `""` while `addQty`/`addDisc` defaulted to non-empty strings (inconsistent
+    label float), and the add-guard silently no-opped instead of erroring.
+    Fixed identically to the earlier precedent: `addPrice` default `"0"`,
+    validation tightened to `Number(...) <= 0` with inline `Alert`, button
+    `disabled` prop dropped, Price/Disc widened to `7.5rem` with
+    `justifyContent: "space-between"` on both the Add row and the per-item
+    edit row. Folded into Commit A (styling/consistency, not a fetch change).
+  - **Stakeholder linking returned "Method Not Allowed" on every attempt.**
+    Traced to `addOpportunityStakeholder`/`removeOpportunityStakeholder`
+    calling `POST`/`DELETE` routes that were never implemented backend-side —
+    confirmed via `git log`/`git show` that these were introduced as explicit
+    stubs in an earlier commit ("backend endpoints pending") predating this
+    session entirely, not something broken by the migration. First attempted
+    a frontend-only workaround (bulk-replace via the existing `PUT` endpoint)
+    but Basheer correctly pushed back: the bulk endpoint deletes and
+    reinserts every stakeholder link on the opportunity on every call,
+    silently stamping a fresh `created_at`/`created_by` onto every
+    already-linked stakeholder each time one is added or removed — real
+    audit-trail corruption, not just an inferior UX. Reverted the workaround
+    and built the actual missing single-item endpoints instead, mirroring the
+    existing `OpportunityItem` add/delete pattern in the same router:
+    `repository.py` (`get_stakeholder_link`, `add_stakeholder`,
+    `delete_stakeholder`), `service.py` (`add_stakeholder` raises
+    `ConflictError` on duplicate link, `remove_stakeholder` raises
+    `NotFoundError` if not linked), `router.py` (`POST`/`DELETE
+    /opportunities/{id}/stakeholders[/{stakeholder_id}]`), plus 5 new unit
+    tests in `test_opportunity_service.py` (all passing, confirmed against
+    the pre-existing 33-test baseline). The pre-existing bulk-replace `PUT`
+    endpoint was left alone per Basheer's explicit call — confirmed it has no
+    other caller anywhere in the frontend, before or after this fix.
+  - Both fixes landed in the same commit as Commit A (`3619295`) — Basheer's
+    call to combine rather than stage hunks separately, since Commit B (the
+    fetch-layer conversion) was still separately staged and unaffected.
+- **Commit B done** — converted all 6 manual `.then()` chains to `useQuery`,
+  gated by `enabled` on whatever state used to trigger each fetch (so
+  behavior is unchanged, just cached/parallelized instead of hand-rolled):
+  `ProductsTab`'s product picker (`enabled: editing`), `SplitsTab`'s user
+  picker (`enabled: editing`), `StakeholdersTab`'s account-stakeholder picker
+  (`enabled: showAdd`), and the screen-level stage/status/user loads for the
+  Edit Opportunity modal (`enabled: showEditOpp`, `staleTime: Infinity` —
+  matching the existing convention in `OpportunityPipelineScreen.tsx` for the
+  same master data, and sharing its cache key so both screens hit one cache
+  entry). Added local stopgap types (`StageOption`/`StatusOption`/
+  `UserOption`/`ProductOption`/`StakeholderOption`) replacing `any[]` for
+  these lookups specifically — surfaced one real latent type bug in the
+  process: `StageOption.default_win_probability` has to be `string`, not
+  `number` (`QuickLeadModal.tsx`'s copy of this same stopgap type declared it
+  as `number`, untested against this constraint), because
+  `handleUpdateOpp` feeds it directly into a `PipelineStageNested`-shaped
+  object where the field is `string` — `tsc` caught the mismatch immediately
+  once `stages` had a real type instead of `any[]`. Left `editItems`/
+  `editSplits` (transient edit-buffer state) and a handful of pre-existing
+  `as any` ID casts untyped — out of scope for this pass. `npm run lint` and
+  `npx tsc --noEmit` both clean; zero remaining `.then(` in the file
+  (confirmed by grep). Updated §9 (moved the file to the fully-migrated
+  table, 9 of 16 now done) and removed it from `check-no-tailwind.js`'s
+  `GRANDFATHERED` list in the same pass, since both Styling and React Query
+  are now genuinely done, not just claimed.
+  - **Not yet done:** Basheer's manual E2E pass on Commit B, then the commit
     itself.
 
 ## Next step
-1. Basheer E2E's Commit A (styling) on screen; fix anything the property-diff
-   missed before committing.
-2. Commit A once green.
-3. Decide whether to attempt Commit B (6 `.then()`→`useQuery` conversions)
-   before July 10, or defer it — per Basheer's explicit instruction, do not
-   rush a data-layer refactor into the freeze just to close out the tracker.
-4. Resume the same per-file ritual on the remaining files (now corrected: end
-   with an honest §9 update, not just "mark done" — verify each column's claim
-   before checking it).
+1. Basheer E2E's Commit B (React Query conversion) on screen — the Products/
+   Splits/Stakeholders picker dropdowns and the Edit Opportunity modal's
+   Stage/Status/Owner dropdowns are the surfaces that actually changed
+   fetch timing; check they still populate correctly on first open of each
+   edit/add panel, not just that they look the same.
+2. Commit B once green.
+3. Resume the same per-file ritual on the remaining 6 pending files (now
+   corrected: end with an honest §9 update, not just "mark done" — verify
+   each column's claim before checking it).
 
 **Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
@@ -332,6 +394,33 @@ at today's content.
   listed "React Query ✓"; grep for `: any`/`any[]` in any file listed
   "TypeScript ✓". Post-demo, not blocking — but a second occurrence of the
   same drift is a signal this shouldn't wait too long.
+- **Inline "+ New Stakeholder" shortcut from the Opportunity Stakeholders tab.**
+  Today `OpportunityDetailScreen.tsx`'s "Link Stakeholder" form only lists
+  existing account-level `Stakeholder` records (via `listStakeholders(accountId)`)
+  — there's no way to create a brand-new one without leaving the opportunity,
+  going to `Customer360Screen.tsx` to create it there, then coming back to link
+  it. Real friction for early-stage deals on thin/new accounts, where you meet a
+  stakeholder mid-sales-cycle before the account has a full roster.
+  **Not a data-model gap** — a `Stakeholder` is always account-scoped
+  (`account_id` FK on the table), so however it gets created, it's immediately
+  available for every other opportunity on that account too; no "propagate
+  opportunity-level stakeholder up to account-level" mechanism is needed, one
+  doesn't exist to build. Purely a UX shortcut: add an inline create option to
+  the "Link Stakeholder" form, reusing the existing account-level
+  `create_stakeholder` service/endpoint (`stakeholder_service.py`,
+  `POST /accounts/{account_id}/stakeholders` in `stakeholder_router.py`) rather
+  than building new backend capability.
+  **Don't build a second create form — one already exists and should be reused
+  as-is.** `Customer360Screen.tsx`'s "New Stakeholder" `FormModal`
+  (`showCreateStakeholder`/`openCreateStakeholder`/`handleCreateStakeholder`,
+  lines 329/551/556, rendered at line 821) already has the exact field set
+  needed: Name*, Designation, Email, Phone, NPS Score, Sentiment, submitting
+  via `createStakeholder(accountId, payload)`. When this gets built, the
+  opportunity-side flow is: create the `Stakeholder` via that same field set
+  and service call, then immediately `addOpportunityStakeholder` (or the
+  update endpoint) to link it with the opportunity-specific Influence
+  Level/Decision Role/Notes — two calls, not a new schema or a redesigned
+  form. Basheer's call: hold as deferred, not scoped for this session's work.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
@@ -348,10 +437,11 @@ at today's content.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-`OpportunityDetailScreen.tsx` Commit A (Tailwind→MUI styling only) + its
-`docs/Frontend-Implementation-Standards.md` §9 correction are staged and
-guard-green (`npm run lint`, `npx tsc --noEmit`, `check-no-tailwind.js` all
-clean) but **not yet E2E'd by Basheer and not yet committed**. Commit B (the
-6 `.then()`→`useQuery` conversions, ADR-032 compliance) has not been started.
-`check-no-tailwind.js`'s `GRANDFATHERED` list intentionally still lists this
-file — do not remove it until Commit B lands.
+`OpportunityDetailScreen.tsx` Commit B (all 6 `.then()`→`useQuery`
+conversions + master-data stopgap types) + the `docs/Frontend-Implementation-Standards.md`
+§9 update (file moved to fully-migrated) + `check-no-tailwind.js`'s
+`GRANDFATHERED`-list removal are staged and guard-green (`npm run lint`,
+`npx tsc --noEmit` both clean, zero remaining `.then(` confirmed by grep) but
+**not yet E2E'd by Basheer and not yet committed**. Commit A (styling) plus
+the stakeholder-linking bug fix (backend `POST`/`DELETE` endpoints +
+frontend rewire) already landed as `3619295`.

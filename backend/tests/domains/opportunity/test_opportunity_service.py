@@ -26,6 +26,7 @@ from app.domains.opportunity.schemas import (
     SplitCreate,
     SplitsBulkUpdate,
     StakeholderLinkCreate,
+    StakeholderLinkUpdate,
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
@@ -645,3 +646,36 @@ class TestRemoveStakeholder:
         service.remove_stakeholder(OPP_ID, uuid.uuid4())
 
         repo.delete_stakeholder.assert_called_once_with(link)
+
+
+# ===========================================================================
+# update_stakeholder
+# ===========================================================================
+
+class TestUpdateStakeholder:
+    def test_raises_not_found_when_not_linked(self):
+        repo = _make_repo()
+        repo.get_stakeholder_link.return_value = None
+        service = OpportunityService(repository=repo)
+
+        with pytest.raises(NotFoundError, match="not linked"):
+            service.update_stakeholder(
+                OPP_ID, uuid.uuid4(), StakeholderLinkUpdate(), updated_by=USER_ID
+            )
+
+    def test_updates_only_provided_fields(self):
+        repo = _make_repo()
+        link = MagicMock(influence_level="LOW", decision_role="Old Role", notes="Old notes")
+        repo.get_stakeholder_link.return_value = link
+        service = OpportunityService(repository=repo)
+
+        service.update_stakeholder(
+            OPP_ID, uuid.uuid4(),
+            StakeholderLinkUpdate(decision_role="New Role"),
+            updated_by=USER_ID,
+        )
+
+        assert link.decision_role == "New Role"
+        assert link.influence_level == "LOW"  # untouched — not in the update payload
+        assert link.updated_by == USER_ID
+        repo.update_stakeholder_link.assert_called_once_with(link)

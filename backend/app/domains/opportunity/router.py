@@ -21,6 +21,7 @@ from app.domains.opportunity.schemas import (
     SplitsBulkUpdate,
     StakeholderLinkCreate,
     StakeholderLinkResponse,
+    StakeholderLinkUpdate,
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
@@ -231,3 +232,15 @@ async def remove_opportunity_stakeholder(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> None:
     service.remove_stakeholder(opportunity_id, stakeholder_id)
+
+
+@router.patch("/opportunities/{opportunity_id}/stakeholders/{stakeholder_id}")
+async def update_opportunity_stakeholder(
+    opportunity_id: uuid.UUID,
+    stakeholder_id: uuid.UUID,
+    body: StakeholderLinkUpdate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[StakeholderLinkResponse]:
+    link = service.update_stakeholder(opportunity_id, stakeholder_id, body, updated_by=current_user.id)
+    return APIResponse(data=StakeholderLinkResponse.model_validate(link))

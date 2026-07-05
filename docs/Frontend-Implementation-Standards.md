@@ -326,6 +326,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `LogActivityModal.tsx` | `src/components/LogActivityModal.tsx` |
 | `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
 | `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
+| `OpportunityDetailScreen.tsx` | `src/screens/OpportunityDetailScreen.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -343,7 +344,6 @@ Commit A/B split surfaced that these were asserting more than they checked):
 
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
-| `OpportunityDetailScreen.tsx` | `src/screens/` | ✓ | Pending — 6 manual `.then()` chains remain (stages/statuses/users/products/stakeholders master-data lookups) | Compiles ✓ — verified `any[]`-typed throughout, not type-safe |
 | `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` | ✓ |
 | `DemoApp.tsx` | `src/` | Tailwind (pending) | N/A (shell, local state) | ✓ |
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
@@ -357,9 +357,15 @@ Commit A/B split surfaced that these were asserting more than they checked):
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 8 fully migrated · 7 pending (one of which, `OpportunityDetailScreen.tsx`, has Styling ✓ with
-React Query still outstanding — it stays off the "fully migrated" table above until that lands) · 1
-explicitly out of scope.
+**Totals:** 9 fully migrated · 6 pending · 1 explicitly out of scope.
+
+`OpportunityDetailScreen.tsx` moved to the fully-migrated table above once its React Query commit
+landed (all 6 manual `.then()` chains converted to `useQuery`, gated by `enabled` on the state that
+used to trigger each fetch — `editing`/`showAdd`/`showEditOpp` — so behavior is unchanged, just
+cached and parallelized). Its master-data lookups (stages/statuses/users/products/stakeholders) got
+local stopgap types (`StageOption`/`StatusOption`/`UserOption`/`ProductOption`/`StakeholderOption`)
+in place of `any[]`; the transient edit-buffer state (`editItems`/`editSplits`) and a few pre-existing
+`as any` ID casts remain untyped — not a claim of "no `any` anywhere in the file."
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 

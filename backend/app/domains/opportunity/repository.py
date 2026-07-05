@@ -262,3 +262,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def delete_stakeholder(self, link: OpportunityStakeholder) -> None:
         self.db.delete(link)
         self.db.flush()
+
+    def update_stakeholder_link(self, link: OpportunityStakeholder) -> OpportunityStakeholder:
+        self.db.flush()
+        self.db.refresh(link)
+        return link

@@ -11,6 +11,7 @@ from app.domains.opportunity.schemas import (
     OpportunityUpdate,
     SplitsBulkUpdate,
     StakeholderLinkCreate,
+    StakeholderLinkUpdate,
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
@@ -358,6 +359,25 @@ class OpportunityService:
                 f"Stakeholder {stakeholder_id} is not linked to opportunity {opportunity_id}"
             )
         self.repository.delete_stakeholder(link)
+
+    def update_stakeholder(
+        self,
+        opportunity_id: uuid.UUID,
+        stakeholder_id: uuid.UUID,
+        data: StakeholderLinkUpdate,
+        *,
+        updated_by: uuid.UUID,
+    ) -> OpportunityStakeholder:
+        link = self.repository.get_stakeholder_link(opportunity_id, stakeholder_id)
+        if not link:
+            raise NotFoundError(
+                f"Stakeholder {stakeholder_id} is not linked to opportunity {opportunity_id}"
+            )
+        updates = data.model_dump(exclude_unset=True)
+        for field, value in updates.items():
+            setattr(link, field, value)
+        link.updated_by = updated_by
+        return self.repository.update_stakeholder_link(link)
 
     # ------------------------------------------------------------------
     # Internal helpers

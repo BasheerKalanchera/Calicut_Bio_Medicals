@@ -20,11 +20,12 @@ import {
   replaceOpportunitySplits,
   addOpportunityStakeholder,
   removeOpportunityStakeholder,
+  updateOpportunityStakeholder,
 } from "../services/opportunities";
 import { listStakeholders } from "../services/accounts";
 import { listStages, listStatuses, listUsers } from "../services/masterData";
 import { listProducts } from "../services/products";
-import type { PipelineOpportunity } from "../types/api";
+import type { PipelineOpportunity, PipelinePage } from "../types/api";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
@@ -44,6 +45,15 @@ const TABS = [
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
+
+// Local stopgap types — these services return Promise<unknown> today.
+// TODO(fix-at-service-layer): give these functions real return types; see
+// active_progress.md deferred list. Remove these once fixed.
+interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: string }
+interface StatusOption { id: string; status_code: string; status_name: string; is_terminal?: boolean }
+interface UserOption { id: string; display_name: string }
+interface ProductOption { id: string; name: string }
+interface StakeholderOption { id: string; name: string; designation?: string | null }
 
 // ---------------------------------------------------------------------------
 // Shared presentational helpers
@@ -165,7 +175,15 @@ function OverviewTab({ opp, onEdit }: { opp: PipelineOpportunity; onEdit: () => 
 // ---------------------------------------------------------------------------
 // Products tab
 // ---------------------------------------------------------------------------
-function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: string }) {
+function ProductsTab({
+  opportunityId,
+  sbuId,
+  onIndicativeValueChange,
+}: {
+  opportunityId: string;
+  sbuId: string;
+  onIndicativeValueChange: (value: string | null) => void;
+}) {
   const queryClient = useQueryClient();
   const { data: items, isLoading } = useQuery({
     queryKey: ["opp-items", opportunityId],
@@ -174,7 +192,6 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
 
   const [editing, setEditing]     = useState(false);
   const [editItems, setEditItems] = useState<any[]>([]);
-  const [products, setProducts]   = useState<any[]>([]);
   const [addProdId, setAddProdId] = useState("");
   const [addQty, setAddQty]       = useState("1");
   const [addPrice, setAddPrice]   = useState("0");
@@ -183,7 +200,16 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
   const [saveError, setSaveError] = useState<string | null>(null);
   const [addItemError, setAddItemError] = useState<string | null>(null);
 
-  const openEdit = async () => {
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", "picker", sbuId],
+    enabled:  editing,
+    queryFn:  async () => {
+      const d = await listProducts({ page_size: 100, sbu_id: sbuId as any } as any);
+      return (d as { items?: ProductOption[] }).items ?? [];
+    },
+  });
+
+  const openEdit = () => {
     setEditItems(
       (items ?? []).map((i) => ({
         product_id:        i.product_id,
@@ -195,11 +221,6 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
     );
     setSaveError(null);
     setEditing(true);
-    if (products.length === 0) {
-      listProducts({ page_size: 100, sbu_id: sbuId as any } as any)
-        .then((d: any) => setProducts(d.items || []))
-        .catch(() => {});
-    }
   };
 
   const addItem = () => {
@@ -207,7 +228,7 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
     if (Number(addQty) <= 0) { setAddItemError("Quantity must be greater than 0"); return; }
     if (Number(addPrice) <= 0) { setAddItemError("Price must be greater than 0"); return; }
     setAddItemError(null);
-    const prod = products.find((p: any) => p.id === addProdId);
+    const prod = products.find((p) => p.id === addProdId);
     setEditItems([...editItems, {
       product_id: addProdId, product_name: prod?.name || "",
       quantity: Number(addQty), unit_price_lakhs: Number(addPrice), discount_lakhs: Number(addDisc || 0),
@@ -226,6 +247,13 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
         })),
       );
       await queryClient.invalidateQueries({ queryKey: ["opp-items", opportunityId] });
+      // BR-FIN-03 (dual-mode valuation): once items exist, the calculated
+      // total becomes the authoritative value — same auto-sync rule already
+      // implemented in QuickLeadModal.tsx's create flow.
+      const total = editItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
+      const newValue = editItems.length > 0 ? total.toFixed(2) : null;
+      await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
+      onIndicativeValueChange(newValue);
       setEditing(false);
     } catch (e: any) {
       setSaveError(e.message || "Failed to save products");
@@ -322,7 +350,7 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
             slotProps={{ select: { displayEmpty: true } }}
           >
             <MenuItem value="">Select product</MenuItem>
-            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+            {products.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
           </TextField>
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
             <TextField label="Qty" type="number" size="small" value={addQty} onChange={(e) => { setAddQty(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "5rem" }} />
@@ -401,13 +429,21 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
 
   const [editing, setEditing]       = useState(false);
   const [editSplits, setEditSplits] = useState<any[]>([]);
-  const [users, setUsers]           = useState<any[]>([]);
   const [addUserId, setAddUserId]   = useState("");
   const [addPct, setAddPct]         = useState("");
   const [saving, setSaving]         = useState(false);
   const [saveError, setSaveError]   = useState<string | null>(null);
 
-  const openEdit = async () => {
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "all"],
+    enabled:  editing,
+    queryFn:  async () => {
+      const d = await listUsers();
+      return Array.isArray(d) ? (d as UserOption[]) : [];
+    },
+  });
+
+  const openEdit = () => {
     setEditSplits(
       (splits ?? []).map((s) => ({
         user_id:          s.user_id,
@@ -417,15 +453,12 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
     );
     setSaveError(null);
     setEditing(true);
-    if (users.length === 0) {
-      listUsers().then((d: any) => setUsers(d)).catch(() => {});
-    }
   };
 
   const addSplit = () => {
     if (!addUserId || !addPct) return;
     if (editSplits.find((s) => s.user_id === addUserId)) return;
-    const user = users.find((u: any) => u.id === addUserId);
+    const user = users.find((u) => u.id === addUserId);
     setEditSplits([...editSplits, { user_id: addUserId, display_name: user?.display_name || "", split_percentage: Number(addPct) }]);
     setAddUserId(""); setAddPct("");
   };
@@ -520,7 +553,7 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
             slotProps={{ select: { displayEmpty: true } }}
           >
             <MenuItem value="">Select user</MenuItem>
-            {users.filter((u: any) => !editSplits.find((s) => s.user_id === u.id)).map((u: any) => (
+            {users.filter((u) => !editSplits.find((s) => s.user_id === u.id)).map((u) => (
               <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
             ))}
           </TextField>
@@ -592,7 +625,6 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   });
 
   const [showAdd, setShowAdd]                         = useState(false);
-  const [accountStakeholders, setAccountStakeholders] = useState<any[]>([]);
   const [addStakeholderId, setAddStakeholderId]       = useState("");
   const [addInfluence, setAddInfluence]               = useState("");
   const [addRole, setAddRole]                         = useState("");
@@ -600,13 +632,26 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   const [linking, setLinking]                         = useState(false);
   const [linkError, setLinkError]                     = useState<string | null>(null);
 
-  const openAdd = async () => {
+  const [editingId, setEditingId]                     = useState<string | null>(null);
+  const [editInfluence, setEditInfluence]             = useState("");
+  const [editRole, setEditRole]                       = useState("");
+  const [editNotes, setEditNotes]                     = useState("");
+  const [editSaving, setEditSaving]                   = useState(false);
+  const [editError, setEditError]                     = useState<string | null>(null);
+
+  const { data: accountStakeholders = [] } = useQuery({
+    queryKey: ["stakeholders", "byAccount", accountId],
+    enabled:  showAdd,
+    queryFn:  async () => {
+      const d = await listStakeholders(accountId as any);
+      return Array.isArray(d) ? (d as StakeholderOption[]) : [];
+    },
+  });
+
+  const openAdd = () => {
     setAddStakeholderId(""); setAddInfluence(""); setAddRole(""); setAddNotes("");
     setLinkError(null);
     setShowAdd(true);
-    if (accountStakeholders.length === 0) {
-      listStakeholders(accountId as any).then((d: any) => setAccountStakeholders(d)).catch(() => {});
-    }
   };
 
   const handleLink = async () => {
@@ -635,10 +680,36 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
     } catch {}
   };
 
+  const openEditLink = (lnk: { stakeholder_id: string; influence_level: string | null; decision_role: string | null; notes: string | null }) => {
+    setEditingId(lnk.stakeholder_id);
+    setEditInfluence(lnk.influence_level ?? "");
+    setEditRole(lnk.decision_role ?? "");
+    setEditNotes(lnk.notes ?? "");
+    setEditError(null);
+  };
+
+  const handleUpdateLink = async () => {
+    if (!editingId) return;
+    setEditSaving(true); setEditError(null);
+    try {
+      await updateOpportunityStakeholder(opportunityId, editingId, {
+        influence_level: editInfluence || null,
+        decision_role:   editRole.trim() || null,
+        notes:           editNotes.trim() || null,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["opp-stakeholders", opportunityId] });
+      setEditingId(null);
+    } catch (e: any) {
+      setEditError(e.message || "Failed to update stakeholder");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   if (isLoading) return <LoadingPlaceholder />;
 
   const linkedIds  = new Set((links ?? []).map((l) => l.stakeholder_id));
-  const available  = accountStakeholders.filter((s: any) => !linkedIds.has(s.id));
+  const available  = accountStakeholders.filter((s) => !linkedIds.has(s.id));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -659,33 +730,101 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
 
       {links?.map((lnk) => (
         <Box key={lnk.stakeholder_id} sx={{ bgcolor: "#fff", borderRadius: "1rem", px: 1.5, py: 1.25, border: "1px solid #f3f4f6" }}>
-          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-            <Box sx={{ minWidth: 0 }}>
+          {editingId === lnk.stakeholder_id ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{lnk.stakeholder.name}</Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25, fontSize: "10px", color: "#6b7280" }}>
-                {lnk.influence_level && (
-                  <Box
-                    component="span"
-                    sx={{
-                      fontWeight: 900, textTransform: "uppercase",
-                      color: lnk.influence_level === "HIGH" ? "#ef4444" : lnk.influence_level === "MEDIUM" ? "#f59e0b" : "#9ca3af",
-                    }}
-                  >
-                    {lnk.influence_level}
-                  </Box>
-                )}
-                {lnk.decision_role && <Box component="span">{lnk.decision_role}</Box>}
+              {editError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{editError}</Alert>}
+              <TextField
+                select
+                label="Influence Level"
+                value={editInfluence}
+                onChange={(e) => setEditInfluence(e.target.value)}
+                fullWidth
+                size="small"
+                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              >
+                <MenuItem value="">None</MenuItem>
+                <MenuItem value="HIGH">High</MenuItem>
+                <MenuItem value="MEDIUM">Medium</MenuItem>
+                <MenuItem value="LOW">Low</MenuItem>
+              </TextField>
+              <TextField
+                label="Decision Role"
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value)}
+                placeholder="e.g. Approver"
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <TextField
+                label="Notes"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                placeholder="Optional"
+                fullWidth
+                size="small"
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <Box sx={{ display: "flex", gap: 1, pt: 0.5 }}>
+                <Button
+                  onClick={() => setEditingId(null)}
+                  fullWidth
+                  disableRipple
+                  sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleUpdateLink}
+                  disabled={editSaving}
+                  variant="contained"
+                  fullWidth
+                  disableRipple
+                  sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+                >
+                  {editSaving ? "Saving…" : "Save"}
+                </Button>
               </Box>
-              {lnk.notes && <Typography sx={{ fontSize: "10px", color: "#9ca3af", fontStyle: "italic", mt: 0.25 }}>{lnk.notes}</Typography>}
             </Box>
-            <IconButton
-              size="small"
-              onClick={() => handleUnlink(lnk.stakeholder_id)}
-              sx={{ color: "#f87171", "&:hover": { color: "#dc2626" }, mt: 0.25 }}
-            >
-              <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
-            </IconButton>
-          </Box>
+          ) : (
+            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{lnk.stakeholder.name}</Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25, fontSize: "10px", color: "#6b7280" }}>
+                  {lnk.influence_level && (
+                    <Box
+                      component="span"
+                      sx={{
+                        fontWeight: 900, textTransform: "uppercase",
+                        color: lnk.influence_level === "HIGH" ? "#ef4444" : lnk.influence_level === "MEDIUM" ? "#f59e0b" : "#9ca3af",
+                      }}
+                    >
+                      {lnk.influence_level}
+                    </Box>
+                  )}
+                  {lnk.decision_role && <Box component="span">{lnk.decision_role}</Box>}
+                </Box>
+                {lnk.notes && <Typography sx={{ fontSize: "10px", color: "#9ca3af", fontStyle: "italic", mt: 0.25 }}>{lnk.notes}</Typography>}
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                <Button
+                  onClick={() => openEditLink(lnk)}
+                  disableRipple
+                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+                >
+                  Edit
+                </Button>
+                <IconButton
+                  size="small"
+                  onClick={() => handleUnlink(lnk.stakeholder_id)}
+                  sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}
+                >
+                  <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                </IconButton>
+              </Box>
+            </Box>
+          )}
         </Box>
       ))}
 
@@ -704,7 +843,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
             slotProps={{ select: { displayEmpty: true } }}
           >
             <MenuItem value="">Select stakeholder</MenuItem>
-            {available.map((s: any) => (
+            {available.map((s) => (
               <MenuItem key={s.id} value={s.id}>{s.name}{s.designation ? ` — ${s.designation}` : ""}</MenuItem>
             ))}
           </TextField>
@@ -774,6 +913,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
 // ---------------------------------------------------------------------------
 export default function OpportunityDetailScreen({ opportunity: initialOpp, onBack }: Props) {
   const { userProfile }                           = useAuth();
+  const queryClient                               = useQueryClient();
   const [opp, setOpp]                             = useState<PipelineOpportunity>(initialOpp);
   const [activeTab, setActiveTab]                 = useState<TabId>("overview");
   const [showLogActivity, setShowLogActivity]     = useState(false);
@@ -781,9 +921,6 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
 
   // Overview edit state
   const [showEditOpp, setShowEditOpp]             = useState(false);
-  const [stages, setStages]                       = useState<any[]>([]);
-  const [oppStatuses, setOppStatuses]             = useState<any[]>([]);
-  const [users, setUsers]                         = useState<any[]>([]);
   const [editName, setEditName]                   = useState("");
   const [editStageId, setEditStageId]             = useState("");
   const [editStatusId, setEditStatusId]           = useState("");
@@ -808,7 +945,51 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     }, 50);
   }, []);
 
-  const openEditOpp = async () => {
+  const { data: stages = [] } = useQuery({
+    queryKey: ["stages"],
+    enabled:  showEditOpp,
+    queryFn:  async () => (await listStages()) as StageOption[],
+    staleTime: Infinity,
+  });
+
+  const { data: oppStatuses = [] } = useQuery({
+    queryKey: ["statuses"],
+    enabled:  showEditOpp,
+    queryFn:  async () => (await listStatuses()) as StatusOption[],
+    staleTime: Infinity,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "all"],
+    enabled:  showEditOpp,
+    queryFn:  async () => {
+      const d = await listUsers();
+      return Array.isArray(d) ? (d as UserOption[]) : [];
+    },
+    staleTime: Infinity,
+  });
+
+  // BR-FIN-03: once items exist, Indicative Value is calculated, not manual —
+  // shares ProductsTab's query key/cache, so visiting Products first costs nothing extra.
+  const { data: oppItems } = useQuery({
+    queryKey: ["opp-items", opp.id],
+    enabled:  showEditOpp,
+    queryFn:  () => listOpportunityItems(opp.id),
+  });
+  const hasItems = (oppItems?.length ?? 0) > 0;
+
+  // Patches local state and the always-mounted Pipeline screen's cache directly —
+  // we already have the new values in hand, so there's no need to invalidate and
+  // wait on a redundant refetch just to keep the two in sync.
+  const applyOppPatch = (patch: Partial<PipelineOpportunity>) => {
+    setOpp((prev) => ({ ...prev, ...patch }));
+    queryClient.setQueriesData<PipelinePage>({ queryKey: ["pipeline"] }, (page) => {
+      if (!page) return page;
+      return { ...page, items: page.items.map((item) => item.id === opp.id ? { ...item, ...patch } : item) };
+    });
+  };
+
+  const openEditOpp = () => {
     setEditName(opp.name);
     setEditStageId(opp.stage.id);
     setEditStatusId(opp.status.id);
@@ -819,11 +1000,6 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     setEditDemoStart(opp.demo_start_date ?? "");
     setEditPoNumber(opp.po_number ?? "");
     setShowEditOpp(true);
-    const loads: Promise<any>[] = [];
-    if (stages.length === 0)      loads.push(listStages().then((d: any) => setStages(d)).catch(() => {}));
-    if (oppStatuses.length === 0) loads.push(listStatuses().then((d: any) => setOppStatuses(d)).catch(() => {}));
-    if (users.length === 0)       loads.push(listUsers().then((d: any) => setUsers(d)).catch(() => {}));
-    await Promise.all(loads);
   };
 
   const handleUpdateOpp = async () => {
@@ -839,22 +1015,22 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       demo_start_date:       editDemoStart   || null,
       po_number:             editPoNumber.trim() || null,
     });
-    // Reconstruct nested objects from loaded master data so header + strip re-render immediately
-    const newStage  = stages.find((s: any) => s.id === editStageId);
-    const newStatus = oppStatuses.find((s: any) => s.id === editStatusId);
-    const newOwner  = users.find((u: any) => u.id === editOwnerId);
-    setOpp((prev) => ({
-      ...prev,
+    // Reconstruct nested objects from loaded master data so header + strip +
+    // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
+    const newStage  = stages.find((s) => s.id === editStageId);
+    const newStatus = oppStatuses.find((s) => s.id === editStatusId);
+    const newOwner  = users.find((u) => u.id === editOwnerId);
+    applyOppPatch({
       name:                  editName.trim(),
-      win_probability:       editWinProb !== "" ? editWinProb : prev.win_probability,
+      win_probability:       editWinProb !== "" ? editWinProb : opp.win_probability,
       indicative_value:      editValue   !== "" ? editValue   : null,
       expected_closure_date: editClosureDate || null,
       demo_start_date:       editDemoStart   || null,
       po_number:             editPoNumber.trim() || null,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
-      ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? prev.status.is_terminal } }),
+      ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
-    }));
+    });
   };
 
   return (
@@ -950,7 +1126,13 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       {/* Tab content */}
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2 }}>
         {activeTab === "overview"     && <OverviewTab opp={opp} onEdit={openEditOpp} />}
-        {activeTab === "products"     && <ProductsTab opportunityId={opp.id} sbuId={opp.sbu.id} />}
+        {activeTab === "products"     && (
+          <ProductsTab
+            opportunityId={opp.id}
+            sbuId={opp.sbu.id}
+            onIndicativeValueChange={(v) => applyOppPatch({ indicative_value: v })}
+          />
+        )}
         {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} accountId={opp.account.id} />}
         {activeTab === "activity"     && (
@@ -966,14 +1148,14 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
             select
             label="Stage"
             value={editStageId}
-            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditStageId(e.target.value); if (s) setEditWinProb(String(s.default_win_probability)); }}
+            onChange={(e) => { const s = stages.find((x) => x.id === e.target.value); setEditStageId(e.target.value); if (s) setEditWinProb(String(s.default_win_probability)); }}
             fullWidth
             size="small"
             sx={{ flex: 1 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           >
             <MenuItem value="">Select stage</MenuItem>
-            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+            {stages.map((s) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
           </TextField>
           <TextField
             select
@@ -986,7 +1168,7 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           >
             <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+            {oppStatuses.map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
           </TextField>
         </Box>
         <TextField
@@ -999,10 +1181,20 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
           <MenuItem value="">Select owner</MenuItem>
-          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+          {users.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
         </TextField>
         <TextField label="Win Probability %" type="number" value={editWinProb} onChange={(e) => setEditWinProb(e.target.value)} placeholder="0–100" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        <TextField label="Indicative Value (₹ Lakhs)" type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder="e.g. 25.50" fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }} />
+        <TextField
+          label={`Indicative Value (₹ Lakhs)${hasItems ? " (auto)" : ""}`}
+          type="number"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          disabled={hasItems}
+          placeholder="e.g. 25.50"
+          fullWidth
+          size="small"
+          slotProps={{ htmlInput: { min: 0, step: "any" } }}
+        />
         <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />

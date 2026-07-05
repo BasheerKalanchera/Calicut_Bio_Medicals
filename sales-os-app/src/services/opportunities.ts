@@ -84,3 +84,12 @@ export async function removeOpportunityStakeholder(
 ): Promise<void> {
   await api.delete(`/opportunities/${opportunityId}/stakeholders/${stakeholderId}`);
 }
+
+export async function updateOpportunityStakeholder(
+  opportunityId: string,
+  stakeholderId: string,
+  data: { influence_level?: string | null; decision_role?: string | null; notes?: string | null },
+): Promise<StakeholderLinkResponse> {
+  const response = await api.patch(`/opportunities/${opportunityId}/stakeholders/${stakeholderId}`, data);
+  return response.data.data;
+}

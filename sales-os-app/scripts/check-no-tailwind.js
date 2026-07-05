@@ -8,7 +8,6 @@
 // same commit — otherwise this guard silently stops protecting that file.
 const GRANDFATHERED = new Set([
   "screens/Customer360Screen.tsx",
-  "screens/OpportunityDetailScreen.tsx",
   "screens/CustomerDirectoryScreen.jsx",
   "screens/ProductCatalogScreen.jsx",
   "screens/ProjectDirectoryScreen.jsx",

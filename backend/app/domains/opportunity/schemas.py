@@ -123,6 +123,12 @@ class StakeholderLinkCreate(BaseModel):
     notes: str | None = None
 
 
+class StakeholderLinkUpdate(BaseModel):
+    influence_level: str | None = Field(None, pattern="^(HIGH|MEDIUM|LOW)$")
+    decision_role: str | None = Field(None, max_length=100)
+    notes: str | None = None
+
+
 class StakeholderLinkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
