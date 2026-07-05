@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Backdrop, Box, Button, IconButton, Typography } from "@mui/material";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import QuickLeadModal from "./components/QuickLeadModal";
@@ -28,6 +29,8 @@ const NAV_SECTIONS = [
     ],
   },
 ];
+
+const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
@@ -74,197 +77,263 @@ export default function DemoApp() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 overflow-hidden relative">
+    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
       {/* Sidebar overlay */}
       {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[200] transition-opacity duration-300"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        <Backdrop open sx={{ zIndex: 200 }} onClick={() => setIsSidebarOpen(false)} />
       )}
 
       {/* Sidebar drawer */}
-      <div
-        className={`fixed top-0 left-0 min-[896px]:left-[calc((100vw-56rem)/2)] h-full w-[280px] z-[210] overflow-hidden transition-shadow duration-300 ease-in-out ${
-          isSidebarOpen ? "shadow-2xl pointer-events-auto" : "shadow-none pointer-events-none"
-        }`}
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          "@media (min-width:896px)": { left: "calc((100vw - 56rem) / 2)" },
+          height: "100%",
+          width: 280,
+          zIndex: 210,
+          overflow: "hidden",
+          transition: "box-shadow 300ms ease-in-out",
+          boxShadow: isSidebarOpen ? "0 25px 50px -12px rgba(0,0,0,0.25)" : "none",
+          pointerEvents: isSidebarOpen ? "auto" : "none",
+        }}
       >
-        <div
-          className={`w-full h-full bg-white transform transition-transform duration-300 ease-in-out ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } flex flex-col`}
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            bgcolor: "#fff",
+            transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 300ms ease-in-out",
+            display: "flex",
+            flexDirection: "column",
+          }}
         >
           {/* Sidebar header */}
-          <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-blue-900 text-white shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-lg">
-                <img src="/Cabio%20logo.jpeg" alt="Logo" className="w-full h-full object-contain" />
-              </div>
-              <h2 className="font-extrabold text-lg tracking-tight">Sales OS</h2>
-            </div>
-            <button onClick={() => setIsSidebarOpen(false)} className="text-white/70 hover:text-white transition-colors">
-              <span className="text-2xl">&times;</span>
-            </button>
-          </div>
+          <Box sx={{ p: 2.5, borderBottom: "1px solid #f3f4f6", display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "#1e3a8a", color: "#fff", flexShrink: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ width: 40, height: 40, bgcolor: "#fff", borderRadius: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", p: 0.75, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)" }}>
+                <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </Box>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.125rem", letterSpacing: "-0.025em" }}>Sales OS</Typography>
+            </Box>
+            <IconButton onClick={() => setIsSidebarOpen(false)} sx={{ color: "rgba(255,255,255,0.7)", "&:hover": { color: "#fff" } }}>
+              <Box component="span" sx={{ fontSize: "1.5rem", lineHeight: 1 }}>&times;</Box>
+            </IconButton>
+          </Box>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0">
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2, display: "flex", flexDirection: "column", gap: 3, minHeight: 0 }}>
             {NAV_SECTIONS.map((section) => (
-              <section key={section.title}>
-                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-2">
+              <Box component="section" key={section.title}>
+                <Typography component="h3" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 1, px: 1 }}>
                   {section.title}
-                </h3>
-                <div className="space-y-0.5">
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
                   {section.items.map((item) => {
                     const isActive =
                       view === item.id ||
                       (item.id === "customers"     && view === "customer360") ||
                       (item.id === "opportunities" && view === "opportunityDetail");
                     return (
-                      <button
+                      <Button
                         key={item.id}
                         onClick={() => navigate(item.id)}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all ${
-                          isActive
-                            ? "bg-blue-50 text-blue-700 shadow-sm"
-                            : "text-gray-500 hover:bg-gray-50"
-                        }`}
+                        sx={{
+                          width: "100%",
+                          justifyContent: "flex-start",
+                          gap: 1.5,
+                          px: 1.75,
+                          py: 1,
+                          fontWeight: 700,
+                          fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                          textTransform: "none",
+                          transition: "all 0.15s",
+                          ...(isActive
+                            ? { bgcolor: "#eff6ff", color: "#1d4ed8", boxShadow: SHADOW_SM }
+                            : { color: "#6b7280", "&:hover": { bgcolor: "#f9fafb" } }),
+                        }}
                       >
-                        <span className="text-lg">{item.icon}</span>
+                        <Box component="span" sx={{ fontSize: "1.125rem" }}>{item.icon}</Box>
                         {item.label}
-                      </button>
+                      </Button>
                     );
                   })}
-                </div>
-              </section>
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
 
           {/* Profile footer */}
           {userProfile && (
-            <div className="p-4 border-t border-gray-100 shrink-0 bg-white">
-              <div className="p-3 bg-gradient-to-br from-blue-900 to-indigo-900 rounded-xl text-white shadow-lg">
-                <div className="text-[9px] font-black opacity-60 uppercase mb-0.5">Logged in as</div>
-                <div className="font-bold flex items-center gap-2 mb-0.5 text-xs sm:text-sm">
-                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            <Box sx={{ p: 2, borderTop: "1px solid #f3f4f6", flexShrink: 0, bgcolor: "#fff" }}>
+              <Box sx={{ p: 1.5, background: "linear-gradient(135deg, #1e3a8a, #312e81)", borderRadius: "0.75rem", color: "#fff", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)" }}>
+                <Box sx={{ fontSize: "9px", fontWeight: 900, opacity: 0.6, textTransform: "uppercase", mb: 0.25 }}>Logged in as</Box>
+                <Box sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1, mb: 0.25, fontSize: { xs: "0.75rem", sm: "0.875rem" } }}>
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      bgcolor: "#4ade80",
+                      borderRadius: "50%",
+                      animation: "demoAppPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                      "@keyframes demoAppPulse": {
+                        "0%, 100%": { opacity: 1 },
+                        "50%": { opacity: 0.5 },
+                      },
+                    }}
+                  />
                   {(userProfile as any).display_name}
-                </div>
-                <div className="text-[9px] opacity-85 leading-normal border-t border-white/10 pt-1 mt-1">
-                  <div>
+                </Box>
+                <Box sx={{ fontSize: "9px", opacity: 0.85, lineHeight: "normal", borderTop: "1px solid rgba(255,255,255,0.1)", pt: 0.5, mt: 0.5 }}>
+                  <Box>
                     {(userProfile as any).role_name}
                     {(userProfile as any).zone ? ` • ${(userProfile as any).zone.name}` : ""}
-                  </div>
-                  <div className="font-bold text-blue-200 uppercase tracking-wider text-[7px] mt-0.5 bg-white/10 px-1 py-0.5 rounded w-fit">
+                  </Box>
+                  <Box sx={{ fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7px", mt: 0.25, bgcolor: "rgba(255,255,255,0.1)", px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
                     SBU: {(userProfile as any).sbu?.name}
-                  </div>
-                </div>
-              </div>
-            </div>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Top header */}
-      <div className="bg-white shadow-sm border-b border-gray-100 z-[100]">
-        <div className="max-w-4xl mx-auto w-full px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button
+      <Box sx={{ bgcolor: "#fff", boxShadow: SHADOW_SM, borderBottom: "1px solid #f3f4f6", zIndex: 100 }}>
+        <Box sx={{ maxWidth: "56rem", mx: "auto", width: "100%", px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <IconButton
               onClick={() => setIsSidebarOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors shadow-sm"
+              sx={{ width: 40, height: 40, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
             >
-              <span className="text-xl">☰</span>
-            </button>
-            <div className="flex items-center gap-3">
-              <img src="/Cabio%20logo.jpeg" alt="Logo" className="h-10 object-contain" />
-              <h1 className="text-lg font-black text-gray-800 tracking-tight hidden sm:block">Sales OS</h1>
-            </div>
-          </div>
+              <Box component="span" sx={{ fontSize: "1.25rem" }}>☰</Box>
+            </IconButton>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ height: 40, objectFit: "contain" }} />
+              <Typography component="h1" sx={{ fontSize: "1.125rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", display: { xs: "none", sm: "block" } }}>
+                Sales OS
+              </Typography>
+            </Box>
+          </Box>
 
-          <div className="flex items-center gap-2">
-            <button
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              variant="contained"
               onClick={() => setShowQuickLead(true)}
-              className="px-3 py-2 rounded-xl text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 transition-all uppercase tracking-wider shadow-sm"
+              sx={{ px: 1.5, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
             >
               + Lead
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => setShowLogActivity(true)}
-              className="px-3 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm"
+              sx={{ px: 1.5, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em" }}
             >
               + Log
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={signOut}
-              className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-600 font-black uppercase transition-colors px-2.5 py-2 rounded-xl"
+              sx={{
+                bgcolor: "#f3f4f6",
+                color: "#4b5563",
+                "&:hover": { bgcolor: "#fef2f2", color: "#dc2626" },
+                fontWeight: 900,
+                px: 1.25,
+                py: 1,
+                minWidth: 0,
+              }}
             >
-              <span className="hidden sm:inline text-xs tracking-widest">Sign Out</span>
-              <svg className="sm:hidden w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <Box component="span" sx={{ display: { xs: "none", sm: "inline" }, fontSize: "0.75rem", letterSpacing: "0.1em", textTransform: "uppercase" }}>Sign Out</Box>
+              <Box
+                component="svg"
+                sx={{ display: { xs: "block", sm: "none" }, width: 16, height: 16 }}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
       {/* Main content */}
-      <div className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
+      <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: "56rem", mx: "auto", width: "100%" }}>
         <ErrorBoundary>
           {/* Account Management — always mounted, sub-tabbed */}
-          <div className={`flex-1 overflow-hidden flex flex-col ${view === "customers" ? "" : "hidden"}`}>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "customers" ? "flex" : "none", flexDirection: "column" }}>
             {!projectDetailMode && (
               <>
-                <div className="px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-                  <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Account Management</h2>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-white border-b border-gray-100 shrink-0">
-                  <div className="flex gap-2 flex-1">
+                <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+                  <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                    Account Management
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 2, py: 1, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+                  <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
                     {[
                       { id: "customers", label: "Customers" },
                       { id: "projects",  label: "Projects" },
                     ].map((tab) => (
-                      <button
+                      <Button
                         key={tab.id}
                         onClick={() => { setAccountSubTab(tab.id); setProjectDetailMode(false); }}
-                        className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${
-                          accountSubTab === tab.id
-                            ? "bg-blue-600 text-white"
-                            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                        }`}
+                        sx={{
+                          px: 2,
+                          py: 1,
+                          fontSize: "0.75rem",
+                          fontWeight: 900,
+                          letterSpacing: "0.05em",
+                          borderRadius: "0.5rem",
+                          ...(accountSubTab === tab.id
+                            ? { bgcolor: "primary.main", color: "#fff", "&:hover": { bgcolor: "primary.main" } }
+                            : { color: "#9ca3af", "&:hover": { color: "#4b5563", bgcolor: "#f3f4f6" } }),
+                        }}
                       >
                         {tab.label}
-                      </button>
+                      </Button>
                     ))}
-                  </div>
-                  <button
+                  </Box>
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={() =>
                       accountSubTab === "customers"
                         ? customerCreateRef.current?.()
                         : projectCreateRef.current?.()
                     }
-                    className="px-4 py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider shadow-sm shrink-0"
+                    sx={{ px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", flexShrink: 0 }}
                   >
                     + Add
-                  </button>
-                </div>
+                  </Button>
+                </Box>
               </>
             )}
-            <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "customers" ? "" : "hidden"}`}>
+            <Box sx={{ flex: 1, overflow: "hidden", display: accountSubTab === "customers" ? "flex" : "none", flexDirection: "column" }}>
               <CustomerDirectoryScreen
                 onSelectAccount={handleSelectAccount}
                 openCreateRef={customerCreateRef}
                 accountUpdateRef={customerAccountUpdateRef}
               />
-            </div>
-            <div className={`flex-1 overflow-hidden flex flex-col ${accountSubTab === "projects" ? "" : "hidden"}`}>
+            </Box>
+            <Box sx={{ flex: 1, overflow: "hidden", display: accountSubTab === "projects" ? "flex" : "none", flexDirection: "column" }}>
               <ProjectDirectoryScreen
                 onDetailModeChange={setProjectDetailMode}
                 openCreateRef={projectCreateRef}
                 refreshOppsRef={projectOppsRefreshRef}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
 
           {view === "customer360" && selectedAccount && (
             <Customer360Screen
@@ -276,12 +345,14 @@ export default function DemoApp() {
           )}
 
           {/* Opportunity Pipeline */}
-          <div className={`flex-1 overflow-hidden flex flex-col ${view === "opportunities" ? "" : "hidden"}`}>
-            <div className="px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Pipeline</h2>
-            </div>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunities" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Pipeline
+              </Typography>
+            </Box>
             <OpportunityPipelineScreen onSelectOpportunity={handleSelectOpportunity} />
-          </div>
+          </Box>
 
           {/* Opportunity Detail — push navigation */}
           {view === "opportunityDetail" && selectedOpportunity && (
@@ -292,19 +363,21 @@ export default function DemoApp() {
           )}
 
           {/* Product Catalog — always mounted, hidden when not active */}
-          <div className={`flex-1 overflow-hidden flex flex-col ${view === "catalog" ? "" : "hidden"}`}>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "catalog" ? "flex" : "none", flexDirection: "column" }}>
             <ProductCatalogScreen />
-          </div>
+          </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}
-          <div className={`flex-1 overflow-hidden flex flex-col ${view === "nextActions" ? "" : "hidden"}`}>
-            <div className="px-4 py-3 bg-white border-b border-gray-100 shrink-0">
-              <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">Next Actions</h2>
-            </div>
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "nextActions" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Next Actions
+              </Typography>
+            </Box>
             <NextActionsScreen />
-          </div>
+          </Box>
         </ErrorBoundary>
-      </div>
+      </Box>
 
       <QuickLeadModal
         isOpen={showQuickLead}
@@ -323,6 +396,6 @@ export default function DemoApp() {
         opportunityId={view === "opportunityDetail" ? selectedOpportunity?.id : undefined}
         currentUserId={(userProfile as any)?.id}
       />
-    </div>
+    </Box>
   );
 }

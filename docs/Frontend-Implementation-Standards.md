@@ -232,6 +232,7 @@ Things that behave differently from a native element or from older MUI docs/exam
 5. **`InputLabelProps` no longer exists in this MUI version.** Older examples use it to control a field's label (e.g. keeping a datetime field's label shrunk). Use `slotProps={{ inputLabel: {...} }}` instead. *(Version-bound.)*
 6. **Disabled contained-primary overrides need the `ownerState` function form.** This MUI version dropped the combined `containedPrimary` class key from `MuiButton` `styleOverrides`, so a theme-level rule for "disabled + contained + primary" (see `src/theme/index.ts`) has to be written as a function reading `ownerState.variant`/`ownerState.color`, not a static `containedPrimary` key. *(Version-bound.)*
 7. **Circular back button: `IconButton` + `ArrowBackIcon` (not a chevron).** `ArrowBackIcon` is the platform-standard back affordance and reads correctly on mobile without a label; a chevron reads as collapse/previous, not navigate-back. Currently inlined in `OpportunityDetailScreen.tsx` (`sx={{ width: 40, height: 40, color: "#4b5563", "&:hover": { bgcolor: "#e5e7eb" } }}`, icon `sx={{ fontSize: 20 }}`) — but this identical control appears on all four 360/detail screens (Customer, Product, Opportunity, Project), which per §6.7's logic makes it an app-wide convention, not a per-file style choice. Extracting it into a shared `BackButton` component is banked (see `active_progress.md` Deferred section) rather than built now — inline it identically until then; do not re-derive the styling per file once it exists.
+8. **Tailwind responsive prefixes (`sm:hidden`, `hidden sm:block`) become `sx`'s breakpoint-object syntax**, e.g. `sx={{ display: { xs: "none", sm: "block" } }}` — not a media-query string. First needed in `DemoApp.tsx` (Sign Out label/icon swap, the "Sales OS" header title). For a one-off custom breakpoint that isn't one of MUI's standard values (e.g. the 896px width `DemoApp.tsx`'s sidebar centers under, matching the app shell's `max-w-4xl`/56rem), fall back to a literal `"@media (min-width:896px)": { ... }` key inside `sx` instead of `theme.breakpoints`.
 
 ### 6.7 Theme is the source of truth for visual defaults
 
@@ -327,6 +328,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
 | `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
 | `OpportunityDetailScreen.tsx` | `src/screens/OpportunityDetailScreen.tsx` |
+| `DemoApp.tsx` | `src/DemoApp.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -345,7 +347,6 @@ Commit A/B split surfaced that these were asserting more than they checked):
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
 | `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` | ✓ |
-| `DemoApp.tsx` | `src/` | Tailwind (pending) | N/A (shell, local state) | ✓ |
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
@@ -357,7 +358,7 @@ Commit A/B split surfaced that these were asserting more than they checked):
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 9 fully migrated · 6 pending · 1 explicitly out of scope.
+**Totals:** 10 fully migrated · 5 pending · 1 explicitly out of scope.
 
 `OpportunityDetailScreen.tsx` moved to the fully-migrated table above once its React Query commit
 landed (all 6 manual `.then()` chains converted to `useQuery`, gated by `enabled` on the state that

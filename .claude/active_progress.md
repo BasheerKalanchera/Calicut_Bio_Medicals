@@ -6,6 +6,24 @@ MUI migration (ADR-031, MUI-only — non-negotiable, hybrid rejected). Actively
 migrating screens off Tailwind, one file at a time. `QuickLeadModal.tsx`
 (`fe68a91`) confirmed landed from the prior session.
 
+**Correction to this file's own prior note:** the "Files in flight" section
+below (as of the last session-end write) claimed `check-no-tailwind.js`'s
+Tailwind-shape-matching fix was still uncommitted. It was not — `git log`
+confirms it landed as `11dc051` ("chore: fix Tailwind guard false positives +
+update session handoff notes"), same commit that wrote that stale note. No
+action needed; working tree was actually clean at this session's start.
+
+**`DemoApp.tsx` converted to MUI (styling-only — per §9 it was already
+`.tsx`/TypeScript ✓, and React Query is N/A since this file has no data
+fetching of its own).** Full detail below. Guard-green (`npm run lint`,
+`npx tsc --noEmit` both clean; `check-no-tailwind.js` confirms zero
+`className` in the file with no stale-grandfather warning). §9 and
+`check-no-tailwind.js`'s GRANDFATHERED list both updated — file moved to the
+fully-migrated table (10 of 16 tracked files now done — see note below on why
+this pushes past "10 of 16" being the last file with the styling+fetch+jsx
+triple-conversion still ahead). **Not yet committed — awaiting Basheer's
+manual E2E per the established ritual**, same as every prior file.
+
 `OpportunityDetailScreen.tsx` is now **fully migrated and committed** — 9 of
 16 tracked files done, §9 and `check-no-tailwind.js` both reflect this
 accurately. Two commits:
@@ -545,11 +563,39 @@ at today's content.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-`OpportunityDetailScreen.tsx` itself is fully committed and clean — nothing
-outstanding on it. The only uncommitted change in the working tree right now
-is `sales-os-app/scripts/check-no-tailwind.js` (the Tailwind-shape-matching
-fix — code complete, verified with probe files, guard-green, just never
-actually committed due to the `4f41e0e` mixup described above). This plus
-this file (`active_progress.md`) are the only two modified files as of
-session end — **first action of the next session: commit these two**, then
-move on to picking the next §9 file.
+Uncommitted as of this point in the session:
+- `sales-os-app/src/DemoApp.tsx` — full Tailwind→MUI conversion (styling
+  only; no logic/state/handler changes — verified via `diff` against the
+  pre-migration file that the state/handlers block is byte-identical aside
+  from the new `@mui/material` import and one added `SHADOW_SM` constant).
+  Sidebar overlay uses MUI `Backdrop`, reusing the theme's existing
+  `MuiBackdrop` override (no new styling needed there). Sidebar drawer stays
+  a custom `Box` (not MUI `Drawer`) since its responsive centering under the
+  896px-wide app shell doesn't fit `Drawer`'s edge-anchored model. The four
+  always-mounted view containers (Account Management, Pipeline, Catalog,
+  Next Actions) now use the exact `Box sx={{ display: view === "x" ? "flex"
+  : "none" }}` pattern that Frontend-Implementation-Standards §2.1 already
+  cites from this file — that example is now actually true of the code, not
+  aspirational. `+ Lead` (emerald) has no theme equivalent and isn't reused
+  anywhere else, so it stays one-off hardcoded hex; `+ Log`/`+ Add`/active-tab
+  states reuse `primary.main` (Tailwind blue-600 matches the theme's primary
+  exactly). First file needing responsive breakpoints — added as a new §6.6
+  item 8 (`sx={{ display: { xs, sm } }}` object syntax; literal
+  `"@media (min-width:896px)"` for the one custom non-standard breakpoint).
+- `docs/Frontend-Implementation-Standards.md` — `DemoApp.tsx` moved to the
+  fully-migrated table in §9, totals updated (10 fully migrated · 5 pending),
+  new §6.6 item 8 added.
+- `sales-os-app/scripts/check-no-tailwind.js` — `DemoApp.tsx` removed from
+  `GRANDFATHERED`.
+- This file (`active_progress.md`).
+
+**Not committed yet — awaiting Basheer's manual E2E** before this lands,
+per the established per-file ritual. Next session (or later this session):
+if E2E passes clean, commit as one styling-only commit; if it surfaces real
+bugs (as the last two files did), fold fixes in first per Basheer's usual
+call, then commit. After that, move to the next §9 file — `Customer360Screen.tsx`,
+`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`, and `ErrorBoundary.jsx` remain (5 pending, most
+needing the full styling + React Query + `.jsx`→`.tsx` conversion, not
+styling-only like `DemoApp.tsx` and `OpportunityDetailScreen.tsx`'s Commit A
+were).
