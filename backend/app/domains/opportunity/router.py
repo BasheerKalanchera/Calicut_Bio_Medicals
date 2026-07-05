@@ -203,6 +203,12 @@ async def list_opportunity_stakeholders(
 
 
 @router.put("/opportunities/{opportunity_id}/stakeholders")
+# Do not wire a new frontend caller to this endpoint: it deletes and
+# reinserts every link on every call, stamping a fresh created_at/created_by
+# on already-linked stakeholders each time — audit-trail corruption for any
+# partial-update use case. Use the single-item POST/PATCH/DELETE endpoints
+# below instead; this bulk endpoint has no current caller (see repository.py
+# replace_stakeholders).
 async def replace_opportunity_stakeholders(
     opportunity_id: uuid.UUID,
     body: StakeholdersBulkUpdate,

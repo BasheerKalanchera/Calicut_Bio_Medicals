@@ -232,6 +232,11 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def replace_stakeholders(
         self, opportunity_id: uuid.UUID, new_links: list[OpportunityStakeholder]
     ) -> list[OpportunityStakeholder]:
+        # Deletes and reinserts every link, so every already-linked stakeholder
+        # gets a fresh created_at/created_by on every call — corrupts the audit
+        # trail if used for a partial update (add/remove/edit one link). No
+        # current caller; use add_stakeholder/delete_stakeholder/
+        # update_stakeholder_link for single-item operations instead.
         self.db.execute(
             delete(OpportunityStakeholder).where(
                 OpportunityStakeholder.opportunity_id == opportunity_id
