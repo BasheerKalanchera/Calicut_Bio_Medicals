@@ -1,13 +1,12 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-07-03 → 2026-07-04 (continued)_
+_Session: 2026-07-03 → 2026-07-05 (continued)_
 
 ## Current task
 MUI migration (ADR-031, MUI-only — non-negotiable, hybrid rejected). Actively
-migrating screens off Tailwind, one file at a time. As of this session: **7 of
-16 tracked files migrated** (§9 in Frontend-Implementation-Standards.md — 7
-migrated · 8 pending · 1 out of scope). A full property-by-property fidelity
-audit of all 7 already-migrated files was just completed and fixed (see below);
-migration is un-frozen and resuming on the remaining 8.
+migrating screens off Tailwind, one file at a time. As of this session: **8 of
+16 tracked files migrated** (§9 in Frontend-Implementation-Standards.md — 8
+migrated · 7 pending · 1 out of scope). `QuickLeadModal.tsx` is the latest file
+migrated, verified E2E, and ready to commit — see below.
 
 ## Done this session
 - Discovered MUI migration had silently stalled: only LoginScreen.tsx and
@@ -61,10 +60,52 @@ migration is un-frozen and resuming on the remaining 8.
   "Completed" tab shows pending items too) — confirmed unrelated to the
   frontend migration (frontend code calling the endpoint is byte-for-byte
   unchanged); not fixed this session, needs a product decision first.
+- Migrated `QuickLeadModal.tsx` to MUI — data fetching (6 manual `.then()`
+  calls → `useQuery`, incl. a dependent project-by-account query replacing a
+  hand-rolled `projectsLoading` flag), full Tailwind→MUI styling conversion,
+  local stopgap option types added (services still return `Promise<unknown>`).
+  Property-diffed against the pre-migration file (full table, not summary);
+  one real gap found and fixed (nested item-row mini-fields had lost their
+  `bg-white`-vs-container contrast — restored via a per-field
+  `MuiOutlinedInput-root` override); two decorative gaps accepted per §6.8
+  (Project-select loading hint and Indicative Value's "(auto)" hint lost
+  their sub-emphasis styling but kept the underlying signal).
+  Follow-up fixes requested after E2E, all applied and re-verified:
+  - Win Probability / Indicative Value floating-label animations made
+    consistent (a stray forced `inputLabel.shrink` on Indicative Value was
+    blocking its natural float); placeholders changed to "Enter Win
+    Probability %" / "Enter Indicative Value (Lakhs)".
+  - Add-Product row (Qty/Price/Disc): forced consistent label-floating on
+    all three (Price defaulted to `""` while Qty/Disc defaulted to non-empty
+    strings, so only Price rendered unfloated at rest); widened Price/Disc to
+    `7.5rem` (50% wider than Qty); `justifyContent:"space-between"` added to
+    spread the row across the modal width (was left-packed); same width +
+    justify treatment applied to the item-edit-row's mini-fields for
+    consistency between the two rows.
+  - `itemPrice` default changed from `""` (introduced by the migration) back
+    to `"0"`, restoring the pre-migration Tailwind source's actual default —
+    this was a fidelity slip in the first migration pass, not a new ask.
+  - "+ Add Product" validation tightened (`!itemQty`/`!itemPrice` empty-string
+    checks were rendered meaningless once both default to non-empty values)
+    to `Number(...) <= 0`, and failures now show a specific inline `Alert`
+    instead of the original's silent no-op `return`.
+  - Name field given `mt: 1.5` — its floating label (immediate, via
+    `autoFocus`) was clipping into the dialog title's bottom edge; fixed
+    locally in this file only, not in the shared `FormModal.tsx`.
+  - A reported "Project picker is dead" bug turned out to be expected
+    behavior (field is intentionally disabled until an Account is picked,
+    to gate the dependent project fetch) — confirmed false alarm after
+    hard-refresh ruled out stale-HMR as a cause; the `disabled` condition was
+    simplified from `!accountId || projectsLoading` to `!accountId` along the
+    way regardless (removes a reactive-fetch-tied flag for no loss of
+    correctness).
+  Guard-green (`npm run lint`, `npx tsc --noEmit`) confirmed clean. §9 table
+  and `check-no-tailwind.js` GRANDFATHERED list both updated in the same
+  commit as the migration.
 - All work committed; working tree clean as of session end.
 
 ## Next step
-Resume forward migration on the remaining 8 pending files (§9). Order them by
+Resume forward migration on the remaining 7 pending files (§9). Order them by
 demo importance — decide explicitly at next session start, not by investigation
 order (same principle as before).
 
@@ -72,9 +113,22 @@ order (same principle as before).
 convert → property-diff (against pre-migration git history, full comparison
 table, evidence not summary) → triage (categorize each gap using §6.8's rules:
 fix-theme / fix-per-file / verify-first / do-not-fix) → verify on screen
-(manual E2E, Basheer's pass) → guard-green (`npm run lint` clean) → remove from
-§9's pending table AND the `check-no-tailwind.js` GRANDFATHERED list in the
-same commit → commit.
+(manual E2E, Basheer's pass) → guard-green (`npm run lint` clean, `npx tsc
+--noEmit` clean) → remove from §9's pending table AND the
+`check-no-tailwind.js` GRANDFATHERED list in the same commit → commit.
+
+`npx tsc --noEmit` is a deliberate addition, not a duplicate of `npm run lint`:
+checked `sales-os-app/eslint.config.js` — it only has a `files:
+['**/*.{js,jsx}']` block (no `.ts`/`.tsx` glob) and there is no
+`typescript-eslint`/`@typescript-eslint/parser` package in `devDependencies`
+at all, so `eslint .` silently skips every `.tsx` file in the repo. The
+Tailwind guard (`check-no-tailwind.js`) does read `.tsx` contents but only via
+regex for `className`/Tailwind utility patterns — no type awareness. `npm run
+build` is plain `vite build`, no `tsc` step either. Net effect: **no
+automated step has ever type-checked a `.tsx` file in this project** —
+confirmed by running `npm run lint` clean on a file with real, uncaught type
+surface (7 new local interfaces + several `useQuery` hooks). `tsc --noEmit`
+fills that gap; it does not overlap with what lint checks.
 
 Update Frontend-Implementation-Standards.md as new gotchas/patterns surface
 during these remaining migrations — §6.6/§6.8 are living documents, not fixed
@@ -131,6 +185,72 @@ at today's content.
   changes pagination behavior). Live shared Supabase dev DB — verify carefully
   once a direction is picked. Not blocking the frontend migration; unrelated
   to it.
+- **Add Activity logging to Project Details screen.** Not on
+  `ProjectDirectoryScreen`'s list view, not on `CustomerDirectoryScreen` either
+  — only the Project Details (360-equivalent) view, mirroring the exact
+  pattern already used on `Customer360Screen.tsx` (`ActivityTimeline` at line
+  796 + scoped `LogActivityModal` at line 993, `showLogActivity` state at line
+  319) and `OpportunityDetailScreen.tsx` (line 759 / 796 / 596 respectively).
+  Backend already supports this — `project_id` is already a first-class
+  optional field on `ActivityCreate`/the activity response schema
+  (`backend/app/domains/activity/schemas.py:43,70`) and on the frontend's
+  `LogActivityPayload` (`services/activities.ts:7`) — nothing currently uses
+  it. Three things needed: (1) a `projectId` prop + project-picker/scoping in
+  `LogActivityModal.tsx`, alongside its existing `accountId`/`opportunityId`
+  handling; (2) a `listActivitiesByProject` service function (only
+  `listActivitiesByAccount`/`listActivitiesByOpportunity` exist today); (3)
+  an `ActivityTimeline` + "Log Activity" trigger + locally-scoped
+  `LogActivityModal` instance added inside `ProjectDirectoryScreen.jsx`'s
+  detail mode (`onDetailModeChange`), matching the two existing screens.
+  Note: `ProjectDirectoryScreen.jsx` is one of the 8 pending §9 migration
+  files (still Tailwind/`.jsx`) — decide at build time whether to add this
+  before or after its MUI migration, to avoid touching the same file twice
+  under two different standards.
+- **Consolidate +LOG / +LEAD into context-sensitive global buttons (defer,
+  separate from the item above — do not bundle).** Today there are 3
+  independent `LogActivityModal` mounts (global unscoped fallback in
+  `DemoApp.tsx:315`; account-scoped in `Customer360Screen.tsx:993`;
+  opportunity+account-scoped in `OpportunityDetailScreen.tsx:796`) plus
+  `QuickLeadModal` mounted only globally (`DemoApp.tsx:309`). Basheer's
+  proposal: make the header's `+ Log`/`+ Lead` buttons context-sensitive so a
+  single global instance of each modal auto-populates Account/Project/
+  Opportunity from whatever detail screen is currently in view, instead of
+  replicating the button + modal instance on every detail screen (Project
+  Details, per the item above, would otherwise become a 4th copy).
+  **Why worth doing eventually:** this exact duplication pattern is what let
+  a real defect (manual `.then()` vs `useQuery`) go unnoticed on
+  `LogActivityModal.tsx` until this migration's fidelity audit caught it —
+  fewer independent copies of the same modal means fewer places for behavior
+  to drift.
+  **Why not now:** it's a cross-cutting architecture change, not a
+  feature add — requires lifting the modal instances out of
+  `Customer360Screen.tsx`/`OpportunityDetailScreen.tsx` up into `DemoApp.tsx`,
+  giving `DemoApp` a unified "selected entity" context across all detail
+  screens (it currently tracks `selectedAccount`/`selectedOpportunity` but
+  has no equivalent `selectedProject` state), and rerouting each screen's
+  "Log Activity" trigger (currently `ActivityTimeline`'s `onLogActivity`
+  callback toggling local state) to bubble up via a ref/callback instead.
+  Touches at least `DemoApp.tsx`, `Customer360Screen.tsx`,
+  `OpportunityDetailScreen.tsx`, `QuickLeadModal.tsx`, `LogActivityModal.tsx`
+  — possibly ADR-worthy since it changes a pattern repeated in 3 places.
+  Larger and riskier than the item above; sequence after it, and after the
+  MUI migration backlog (or at least after the specific files it touches have
+  migrated, to avoid mixing Tailwind and MUI changes in the same commit).
+- **Retroactively run `npx tsc --noEmit` against the 7 already-migrated
+  screens.** `tsc --noEmit` was only added to the per-file ritual starting
+  with the 8th file (`QuickLeadModal.tsx`) — discovered while migrating it
+  that `npm run lint`'s `eslint .` half never parses `.tsx` files at all (no
+  `.ts`/`.tsx` glob and no `typescript-eslint` package in this project's
+  ESLint config), so none of `main.tsx`, `ActivityTimeline.tsx`,
+  `NextActionsScreen.tsx`, `LogActivityModal.tsx`,
+  `OpportunityPipelineScreen.tsx`, `LoginScreen.tsx`, or `FormModal.tsx` has
+  ever actually been type-checked by anything in this project's tooling.
+  Status: every `tsc --noEmit` run during the `QuickLeadModal.tsx` migration
+  was whole-project (not scoped to one file) and came back clean, which
+  incidentally covers these 7 files too — but per Basheer, treat this as
+  unconfirmed until a dedicated run + explicit update to this file happens
+  once QuickLeadModal.tsx's own work is fully wrapped up. Do not close this
+  item out on the basis of the incidental runs alone.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
@@ -147,7 +267,6 @@ at today's content.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-None — working tree clean (`git status` confirmed at session close). All work
-this session is committed: `d25bea8`, `dc543fa`, `bb28f23` (infra/enforcement),
-`8ec95a4`, `5eef75a`, `219ff99`, `c1796d6`, `8a3ed70` (5 screen migrations),
-`a7cbb02` (fidelity audit + fixes across all 7 migrated files).
+`QuickLeadModal.tsx` migration + its §9/`check-no-tailwind.js` tracker updates
+are staged and verified (guard-green, E2E'd by Basheer) but not yet committed
+as of this point in the session — commit is the next action.

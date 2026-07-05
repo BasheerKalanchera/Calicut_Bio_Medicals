@@ -7,7 +7,7 @@
 > ## Standard, as of 2026-07-03
 > **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all new files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032).
 >
-> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Thirteen screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
+> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Seven screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
 >
 > This revision reconciles the doc with ADR-031/032/033 (accepted 2026-06-30, never reflected here until now — see the dated reconciliation note on ADR-031 in `docs/ADR.md`). Sections below that describe the pre-migration Tailwind/manual-fetch pattern are marked **Superseded**; they are kept only so pending files in §9 can be recognized for what they are.
 
@@ -324,6 +324,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `NextActionsScreen.tsx` | `src/screens/NextActionsScreen.tsx` |
 | `LogActivityModal.tsx` | `src/components/LogActivityModal.tsx` |
 | `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
+| `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
 
 **Pending — TypeScript + React Query done, styling still Tailwind:**
 
@@ -337,7 +338,6 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|---|---|
 | `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | manual `.then()` (pending) | ✓ |
 | `DemoApp.tsx` | `src/` | Tailwind (pending) | N/A (shell, local state) | ✓ |
-| `QuickLeadModal.tsx` | `src/components/` | Tailwind (pending) | manual `.then()` (pending) | ✓ |
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
 | `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
@@ -349,7 +349,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 7 migrated · 8 pending · 1 explicitly out of scope.
+**Totals:** 8 migrated · 7 pending · 1 explicitly out of scope.
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 
