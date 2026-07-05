@@ -1,6 +1,17 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Alert,
+  Box,
+  Button,
+  IconButton,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckIcon from "@mui/icons-material/Check";
+import {
   listOpportunityItems,
   listOpportunitySplits,
   listOpportunityStakeholders,
@@ -34,58 +45,78 @@ const TABS = [
 
 type TabId = typeof TABS[number]["id"];
 
-// Shared style constants — used by tab components and FormModal fields
-const lbl = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
-const inp = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
-
 // ---------------------------------------------------------------------------
 // Shared presentational helpers
 // ---------------------------------------------------------------------------
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div>
-      <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-0.5">{label}</div>
-      <div className="text-xs font-medium text-gray-800">{value ?? "—"}</div>
-    </div>
+    <Box>
+      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: "0.75rem", fontWeight: 500, color: "#1f2937" }}>
+        {value ?? "—"}
+      </Typography>
+    </Box>
   );
 }
 
 function StageBadge({ name }: { name: string }) {
   return (
-    <span className="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-wider">
+    <Box
+      component="span"
+      sx={{
+        px: 1, py: 0.5, borderRadius: "0.5rem", bgcolor: "#eff6ff", color: "#1d4ed8",
+        fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+      }}
+    >
       {name}
-    </span>
+    </Box>
   );
 }
 
 function StatusBadge({ code, name }: { code: string; name: string }) {
-  const colours: Record<string, string> = {
-    ACTIVE:  "bg-emerald-50 text-emerald-700",
-    ON_HOLD: "bg-amber-50 text-amber-700",
-    STALLED: "bg-gray-100 text-gray-500",
-    WON:     "bg-blue-50 text-blue-700",
-    LOST:    "bg-red-50 text-red-600",
+  const colours: Record<string, { bg: string; color: string }> = {
+    ACTIVE:  { bg: "#ecfdf5", color: "#047857" },
+    ON_HOLD: { bg: "#fffbeb", color: "#b45309" },
+    STALLED: { bg: "#f3f4f6", color: "#6b7280" },
+    WON:     { bg: "#eff6ff", color: "#1d4ed8" },
+    LOST:    { bg: "#fef2f2", color: "#dc2626" },
   };
+  const c = colours[code] ?? colours.STALLED;
   return (
-    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${colours[code] ?? "bg-gray-100 text-gray-500"}`}>
+    <Box
+      component="span"
+      sx={{
+        px: 1, py: 0.5, borderRadius: "0.5rem", bgcolor: c.bg, color: c.color,
+        fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+      }}
+    >
       {name}
-    </span>
+    </Box>
   );
 }
 
 function LoadingPlaceholder() {
   return (
-    <div className="py-12 flex items-center justify-center text-xs text-gray-300 font-black uppercase tracking-widest animate-pulse">
+    <Box
+      sx={{
+        py: 6, display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "0.75rem", color: "#d1d5db", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em",
+        animation: "opp-detail-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "@keyframes opp-detail-pulse": { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.5 } },
+      }}
+    >
       Loading…
-    </div>
+    </Box>
   );
 }
 
 function EmptyPlaceholder({ message }: { message: string }) {
   return (
-    <div className="py-12 flex items-center justify-center text-xs text-gray-400 text-center px-8">
+    <Box sx={{ py: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "#9ca3af", textAlign: "center", px: 4 }}>
       {message}
-    </div>
+    </Box>
   );
 }
 
@@ -94,31 +125,40 @@ function EmptyPlaceholder({ message }: { message: string }) {
 // ---------------------------------------------------------------------------
 function OverviewTab({ opp, onEdit }: { opp: PipelineOpportunity; onEdit: () => void }) {
   return (
-    <div className="space-y-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Opportunity Details</h4>
-          <button
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+            Opportunity Details
+          </Typography>
+          <Button
             onClick={onEdit}
-            className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider"
+            disableRipple
+            sx={{
+              px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
+              textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff",
+              "&:hover": { bgcolor: "#dbeafe" },
+            }}
           >
             Edit
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+          </Button>
+        </Box>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
           <Field label="Expected Closure" value={opp.expected_closure_date ?? null} />
           <Field label="Demo Start"       value={opp.demo_start_date ?? null} />
           <Field label="PO Number"        value={opp.po_number ?? null} />
           <Field label="SBU"              value={opp.sbu.name} />
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-50">
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Created</div>
-          <div className="text-xs text-gray-500">
+        </Box>
+        <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f9fafb" }}>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
+            Created
+          </Typography>
+          <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>
             {new Date(opp.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -137,10 +177,11 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
   const [products, setProducts]   = useState<any[]>([]);
   const [addProdId, setAddProdId] = useState("");
   const [addQty, setAddQty]       = useState("1");
-  const [addPrice, setAddPrice]   = useState("");
+  const [addPrice, setAddPrice]   = useState("0");
   const [addDisc, setAddDisc]     = useState("0");
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [addItemError, setAddItemError] = useState<string | null>(null);
 
   const openEdit = async () => {
     setEditItems(
@@ -155,20 +196,23 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
     setSaveError(null);
     setEditing(true);
     if (products.length === 0) {
-      listProducts({ page_size: 100, sbu_id: sbuId } as any)
+      listProducts({ page_size: 100, sbu_id: sbuId as any } as any)
         .then((d: any) => setProducts(d.items || []))
         .catch(() => {});
     }
   };
 
   const addItem = () => {
-    if (!addProdId || !addPrice) return;
+    if (!addProdId) { setAddItemError("Select a product"); return; }
+    if (Number(addQty) <= 0) { setAddItemError("Quantity must be greater than 0"); return; }
+    if (Number(addPrice) <= 0) { setAddItemError("Price must be greater than 0"); return; }
+    setAddItemError(null);
     const prod = products.find((p: any) => p.id === addProdId);
     setEditItems([...editItems, {
       product_id: addProdId, product_name: prod?.name || "",
       quantity: Number(addQty), unit_price_lakhs: Number(addPrice), discount_lakhs: Number(addDisc || 0),
     }]);
-    setAddProdId(""); setAddQty("1"); setAddPrice(""); setAddDisc("0");
+    setAddProdId(""); setAddQty("1"); setAddPrice("0"); setAddDisc("0");
   };
 
   const saveItems = async () => {
@@ -195,112 +239,153 @@ function ProductsTab({ opportunityId, sbuId }: { opportunityId: string; sbuId: s
   if (editing) {
     const total = editItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Products</h4>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setEditing(false)} className="px-3 py-1.5 rounded-xl text-xs font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all uppercase tracking-wider">Cancel</button>
-            <button onClick={saveItems} disabled={saving} className="px-3 py-1.5 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider disabled:opacity-50">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+            Products
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              onClick={() => setEditing(false)}
+              disableRipple
+              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveItems}
+              disabled={saving}
+              variant="contained"
+              disableRipple
+              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
               {saving ? "Saving…" : "Save"}
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Box>
 
-        {saveError && <div className="text-xs text-red-600 font-bold bg-red-50 px-3 py-2 rounded-xl">{saveError}</div>}
+        {saveError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{saveError}</Alert>}
 
         {editItems.length > 0 ? (
-          <div className="space-y-2">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {editItems.map((item, i) => (
-              <div key={i} className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold text-xs text-gray-800 truncate">{item.product_name}</div>
-                  <button
+              <Box key={i} sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.product_name}
+                  </Typography>
+                  <IconButton
+                    size="small"
                     onClick={() => setEditItems(editItems.filter((_, j) => j !== i))}
-                    className="text-red-400 hover:text-red-600 font-black ml-2 shrink-0 text-lg leading-none"
-                  >×</button>
-                </div>
-                <div className="flex gap-2">
+                    sx={{ color: "#f87171", "&:hover": { color: "#dc2626" }, ml: 1 }}
+                  >
+                    <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                  </IconButton>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
                   {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <div key={key} className="w-20">
-                      <div className={lbl}>{key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}</div>
-                      <input
-                        type="number" min="0" step="any" value={item[key]}
-                        onChange={(e) => setEditItems(editItems.map((it, j) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
-                        className={inp}
-                      />
-                    </div>
+                    <TextField
+                      key={key}
+                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
+                      type="number"
+                      size="small"
+                      value={item[key]}
+                      onChange={(e) => setEditItems(editItems.map((it, j) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
+                      slotProps={{ htmlInput: { min: 0, step: "any" } }}
+                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
+                    />
                   ))}
-                </div>
-              </div>
+                </Box>
+              </Box>
             ))}
-            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider">
+            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               Total: ₹{total.toFixed(2)}L
-            </div>
-          </div>
+            </Typography>
+          </Box>
         ) : (
-          <div className="text-xs text-gray-400 italic text-center py-4">No products — add one below</div>
+          <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic", textAlign: "center", py: 2 }}>
+            No products — add one below
+          </Typography>
         )}
 
         {/* Add product row */}
-        <div className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
-          <div className={lbl}>Add Product</div>
-          <select value={addProdId} onChange={(e) => setAddProdId(e.target.value)} className={inp}>
-            <option value="">Select product</option>
-            {products.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <div className="flex gap-2">
-            {([["Qty", addQty, setAddQty], ["Price ₹L", addPrice, setAddPrice], ["Disc ₹L", addDisc, setAddDisc]] as any[]).map(([label, val, setVal]: any) => (
-              <div key={label} className="w-20">
-                <div className={lbl}>{label}</div>
-                <input type="number" min="0" step="any" value={val} onChange={(e) => setVal(e.target.value)} className={inp} />
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={addItem} disabled={!addProdId || !addPrice}
-            className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider disabled:opacity-40"
+        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Add Product
+          </Typography>
+          <TextField
+            select
+            value={addProdId}
+            onChange={(e) => { setAddProdId(e.target.value); setAddItemError(null); }}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true } }}
+          >
+            <MenuItem value="">Select product</MenuItem>
+            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+          </TextField>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+            <TextField label="Qty" type="number" size="small" value={addQty} onChange={(e) => { setAddQty(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "5rem" }} />
+            <TextField label="Price ₹L" type="number" size="small" value={addPrice} onChange={(e) => { setAddPrice(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
+            <TextField label="Disc ₹L" type="number" size="small" value={addDisc} onChange={(e) => { setAddDisc(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
+          </Box>
+          {addItemError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{addItemError}</Alert>}
+          <Button
+            onClick={addItem}
+            fullWidth
+            disableRipple
+            sx={{
+              py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" },
+            }}
           >
             + Add Product
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
     );
   }
 
   // View mode
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Products ({items?.length ?? 0})</h4>
-        <button onClick={openEdit} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Products ({items?.length ?? 0})
+        </Typography>
+        <Button
+          onClick={openEdit}
+          disableRipple
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+        >
           {items?.length ? "Edit" : "+ Add"}
-        </button>
-      </div>
+        </Button>
+      </Box>
       {!items?.length ? (
         <EmptyPlaceholder message="No products added to this opportunity." />
       ) : (
         <>
           {items.map((item) => (
-            <div key={item.id} className="bg-gray-50 rounded-2xl p-3 space-y-0.5">
-              <div className="font-bold text-xs text-gray-800">{item.product.name}</div>
-              <div className="flex items-center gap-3 text-[10px] text-gray-500">
-                <span>Qty: {item.quantity}</span>
-                <span>₹{parseFloat(item.unit_price_lakhs).toFixed(2)}L each</span>
+            <Box key={item.id} sx={{ bgcolor: "background.default", borderRadius: "1rem", p: 1.5, display: "flex", flexDirection: "column", gap: 0.25 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{item.product.name}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "10px", color: "#6b7280" }}>
+                <Box component="span">Qty: {item.quantity}</Box>
+                <Box component="span">₹{parseFloat(item.unit_price_lakhs).toFixed(2)}L each</Box>
                 {parseFloat(item.discount_lakhs) > 0 && (
-                  <span className="text-red-500">−₹{parseFloat(item.discount_lakhs).toFixed(2)}L disc</span>
+                  <Box component="span" sx={{ color: "#ef4444" }}>−₹{parseFloat(item.discount_lakhs).toFixed(2)}L disc</Box>
                 )}
-              </div>
-              <div className="text-[10px] font-black text-emerald-600">
+              </Box>
+              <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#059669" }}>
                 ₹{parseFloat(item.extended_value_lakhs).toFixed(2)}L
-              </div>
-            </div>
+              </Typography>
+            </Box>
           ))}
-          <div className="text-right text-xs font-black text-gray-700 pt-2 border-t border-gray-100">
+          <Typography sx={{ textAlign: "right", fontSize: "0.75rem", fontWeight: 900, color: "#374151", pt: 1, borderTop: "1px solid #f3f4f6" }}>
             Total: ₹{items.reduce((s, i) => s + parseFloat(i.extended_value_lakhs), 0).toFixed(2)}L
-          </div>
+          </Typography>
         </>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -371,81 +456,128 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
   if (editing) {
     const total = editSplits.reduce((s, sp) => s + sp.split_percentage, 0);
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Splits</h4>
-            <span className={`text-[10px] font-black ${Math.abs(total - 100) < 0.01 ? "text-emerald-600" : "text-amber-500"}`}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+              Splits
+            </Typography>
+            <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: Math.abs(total - 100) < 0.01 ? "#059669" : "#f59e0b" }}>
               {total.toFixed(0)}%
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => { setEditing(false); setSaveError(null); }} className="px-3 py-1.5 rounded-xl text-xs font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all uppercase tracking-wider">Cancel</button>
-            <button onClick={saveSplits} disabled={saving} className="px-3 py-1.5 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition-all uppercase tracking-wider disabled:opacity-50">
+            </Box>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Button
+              onClick={() => { setEditing(false); setSaveError(null); }}
+              disableRipple
+              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveSplits}
+              disabled={saving}
+              variant="contained"
+              disableRipple
+              sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
               {saving ? "Saving…" : "Save"}
-            </button>
-          </div>
-        </div>
+            </Button>
+          </Box>
+        </Box>
 
-        {saveError && <div className="text-xs text-red-600 font-bold bg-red-50 px-3 py-2 rounded-xl">{saveError}</div>}
+        {saveError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{saveError}</Alert>}
 
         {editSplits.map((s, i) => (
-          <div key={s.user_id} className="flex items-center gap-3 bg-white px-3 py-2.5 rounded-2xl border border-gray-100">
-            <div className="flex-1 text-xs font-bold text-gray-800">{s.display_name}</div>
-            <input
-              type="number" min="0" max="100" step="any" value={s.split_percentage}
+          <Box key={s.user_id} sx={{ display: "flex", alignItems: "center", gap: 1.5, bgcolor: "#fff", px: 1.5, py: 1.25, borderRadius: "1rem", border: "1px solid #f3f4f6" }}>
+            <Typography sx={{ flex: 1, fontSize: "0.75rem", fontWeight: 700, color: "#1f2937" }}>{s.display_name}</Typography>
+            <TextField
+              type="number"
+              size="small"
+              value={s.split_percentage}
               onChange={(e) => setEditSplits(editSplits.map((sp, j) => j === i ? { ...sp, split_percentage: Number(e.target.value) } : sp))}
-              className="w-16 px-2 py-1 bg-gray-50 border border-gray-200 rounded-lg text-xs font-black text-blue-600 outline-none text-right"
+              slotProps={{ htmlInput: { min: 0, max: 100, step: "any", style: { textAlign: "right" } } }}
+              sx={{ width: "4rem", "& input": { color: "primary.main", fontWeight: 900, fontSize: "0.75rem" } }}
             />
-            <span className="text-xs text-gray-400">%</span>
-            <button onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 font-black text-lg leading-none">×</button>
-          </div>
+            <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af" }}>%</Typography>
+            <IconButton size="small" onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))} sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}>
+              <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+            </IconButton>
+          </Box>
         ))}
 
         {/* Add contributor row */}
-        <div className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
-          <div className={lbl}>Add Contributor</div>
-          <select value={addUserId} onChange={(e) => setAddUserId(e.target.value)} className={inp}>
-            <option value="">Select user</option>
+        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Add Contributor
+          </Typography>
+          <TextField
+            select
+            value={addUserId}
+            onChange={(e) => setAddUserId(e.target.value)}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true } }}
+          >
+            <MenuItem value="">Select user</MenuItem>
             {users.filter((u: any) => !editSplits.find((s) => s.user_id === u.id)).map((u: any) => (
-              <option key={u.id} value={u.id}>{u.display_name}</option>
+              <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
             ))}
-          </select>
-          <div>
-            <label className={lbl}>Split %</label>
-            <input type="number" min="0" max="100" step="any" value={addPct} onChange={(e) => setAddPct(e.target.value)} className={inp} placeholder="e.g. 50" />
-          </div>
-          <button
-            onClick={addSplit} disabled={!addUserId || !addPct}
-            className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider disabled:opacity-40"
+          </TextField>
+          <TextField
+            label="Split %"
+            type="number"
+            size="small"
+            value={addPct}
+            onChange={(e) => setAddPct(e.target.value)}
+            placeholder="e.g. 50"
+            fullWidth
+            slotProps={{ htmlInput: { min: 0, max: 100, step: "any" }, inputLabel: { shrink: true } }}
+          />
+          <Button
+            onClick={addSplit}
+            disabled={!addUserId || !addPct}
+            fullWidth
+            disableRipple
+            sx={{
+              py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" },
+              "&.Mui-disabled": { opacity: 0.4, color: "primary.main", bgcolor: "#eff6ff" },
+            }}
           >
             + Add Contributor
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
     );
   }
 
   // View mode
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Splits ({splits?.length ?? 0})</h4>
-        <button onClick={openEdit} className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Splits ({splits?.length ?? 0})
+        </Typography>
+        <Button
+          onClick={openEdit}
+          disableRipple
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+        >
           {splits?.length ? "Edit" : "+ Add"}
-        </button>
-      </div>
+        </Button>
+      </Box>
       {!splits?.length ? (
         <EmptyPlaceholder message="No contributor splits defined." />
       ) : (
         splits.map((s) => (
-          <div key={s.user_id} className="flex items-center justify-between bg-gray-50 rounded-2xl px-3 py-2.5">
-            <span className="text-xs font-bold text-gray-800">{s.user.display_name}</span>
-            <span className="text-xs font-black text-blue-600">{parseFloat(s.split_percentage).toFixed(0)}%</span>
-          </div>
+          <Box key={s.user_id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "background.default", borderRadius: "1rem", px: 1.5, py: 1.25 }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#1f2937" }}>{s.user.display_name}</Typography>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 900, color: "primary.main" }}>{parseFloat(s.split_percentage).toFixed(0)}%</Typography>
+          </Box>
         ))
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -509,80 +641,131 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   const available  = accountStakeholders.filter((s: any) => !linkedIds.has(s.id));
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Stakeholders ({(links ?? []).length})</h4>
-        <button onClick={openAdd} className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider">
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Stakeholders ({(links ?? []).length})
+        </Typography>
+        <Button
+          onClick={openAdd}
+          disableRipple
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
+        >
           + Link
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {!links?.length && !showAdd && <EmptyPlaceholder message="No stakeholders linked to this opportunity." />}
 
       {links?.map((lnk) => (
-        <div key={lnk.stakeholder_id} className="bg-white rounded-2xl px-3 py-2.5 border border-gray-100">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <div className="font-bold text-xs text-gray-800">{lnk.stakeholder.name}</div>
-              <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-500">
+        <Box key={lnk.stakeholder_id} sx={{ bgcolor: "#fff", borderRadius: "1rem", px: 1.5, py: 1.25, border: "1px solid #f3f4f6" }}>
+          <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{lnk.stakeholder.name}</Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25, fontSize: "10px", color: "#6b7280" }}>
                 {lnk.influence_level && (
-                  <span className={`font-black uppercase ${
-                    lnk.influence_level === "HIGH" ? "text-red-500" :
-                    lnk.influence_level === "MEDIUM" ? "text-amber-500" : "text-gray-400"
-                  }`}>{lnk.influence_level}</span>
+                  <Box
+                    component="span"
+                    sx={{
+                      fontWeight: 900, textTransform: "uppercase",
+                      color: lnk.influence_level === "HIGH" ? "#ef4444" : lnk.influence_level === "MEDIUM" ? "#f59e0b" : "#9ca3af",
+                    }}
+                  >
+                    {lnk.influence_level}
+                  </Box>
                 )}
-                {lnk.decision_role && <span>{lnk.decision_role}</span>}
-              </div>
-              {lnk.notes && <div className="text-[10px] text-gray-400 italic mt-0.5">{lnk.notes}</div>}
-            </div>
-            <button
+                {lnk.decision_role && <Box component="span">{lnk.decision_role}</Box>}
+              </Box>
+              {lnk.notes && <Typography sx={{ fontSize: "10px", color: "#9ca3af", fontStyle: "italic", mt: 0.25 }}>{lnk.notes}</Typography>}
+            </Box>
+            <IconButton
+              size="small"
               onClick={() => handleUnlink(lnk.stakeholder_id)}
-              className="text-red-400 hover:text-red-600 font-black shrink-0 text-lg leading-none px-1 mt-0.5"
-            >×</button>
-          </div>
-        </div>
+              sx={{ color: "#f87171", "&:hover": { color: "#dc2626" }, mt: 0.25 }}
+            >
+              <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+            </IconButton>
+          </Box>
+        </Box>
       ))}
 
       {showAdd && (
-        <div className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
-          <div className={lbl}>Link Stakeholder</div>
-          {linkError && <div className="text-xs text-red-600 font-bold bg-red-50 px-3 py-2 rounded-xl">{linkError}</div>}
-          <select value={addStakeholderId} onChange={(e) => setAddStakeholderId(e.target.value)} className={inp}>
-            <option value="">Select stakeholder</option>
+        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Link Stakeholder
+          </Typography>
+          {linkError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{linkError}</Alert>}
+          <TextField
+            select
+            value={addStakeholderId}
+            onChange={(e) => setAddStakeholderId(e.target.value)}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true } }}
+          >
+            <MenuItem value="">Select stakeholder</MenuItem>
             {available.map((s: any) => (
-              <option key={s.id} value={s.id}>{s.name}{s.designation ? ` — ${s.designation}` : ""}</option>
+              <MenuItem key={s.id} value={s.id}>{s.name}{s.designation ? ` — ${s.designation}` : ""}</MenuItem>
             ))}
-          </select>
-          <div>
-            <label className={lbl}>Influence Level</label>
-            <select value={addInfluence} onChange={(e) => setAddInfluence(e.target.value)} className={inp}>
-              <option value="">None</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
-          </div>
-          <div>
-            <label className={lbl}>Decision Role</label>
-            <input type="text" value={addRole} onChange={(e) => setAddRole(e.target.value)} className={inp} placeholder="e.g. Approver" />
-          </div>
-          <div>
-            <label className={lbl}>Notes</label>
-            <input type="text" value={addNotes} onChange={(e) => setAddNotes(e.target.value)} className={inp} placeholder="Optional" />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button
+          </TextField>
+          <TextField
+            select
+            label="Influence Level"
+            value={addInfluence}
+            onChange={(e) => setAddInfluence(e.target.value)}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">None</MenuItem>
+            <MenuItem value="HIGH">High</MenuItem>
+            <MenuItem value="MEDIUM">Medium</MenuItem>
+            <MenuItem value="LOW">Low</MenuItem>
+          </TextField>
+          <TextField
+            label="Decision Role"
+            value={addRole}
+            onChange={(e) => setAddRole(e.target.value)}
+            placeholder="e.g. Approver"
+            fullWidth
+            size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <TextField
+            label="Notes"
+            value={addNotes}
+            onChange={(e) => setAddNotes(e.target.value)}
+            placeholder="Optional"
+            fullWidth
+            size="small"
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <Box sx={{ display: "flex", gap: 1, pt: 0.5 }}>
+            <Button
               onClick={() => { setShowAdd(false); setLinkError(null); }}
-              className="flex-1 py-2 rounded-xl text-xs font-black text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all uppercase tracking-wider"
-            >Cancel</button>
-            <button
-              onClick={handleLink} disabled={!addStakeholderId || linking}
-              className="flex-1 py-2 rounded-xl text-xs font-black text-violet-600 bg-violet-50 hover:bg-violet-100 transition-all uppercase tracking-wider disabled:opacity-40"
-            >{linking ? "Linking…" : "Link"}</button>
-          </div>
-        </div>
+              fullWidth
+              disableRipple
+              sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4b5563", bgcolor: "#f3f4f6", "&:hover": { bgcolor: "#e5e7eb" } }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleLink}
+              disabled={!addStakeholderId || linking}
+              fullWidth
+              disableRipple
+              sx={{
+                py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" },
+                "&.Mui-disabled": { opacity: 0.4, color: "#7c3aed", bgcolor: "#f5f3ff" },
+              }}
+            >
+              {linking ? "Linking…" : "Link"}
+            </Button>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
 
@@ -675,82 +858,97 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   };
 
   return (
-    <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
+    <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
       {/* Header */}
-      <div className="px-4 pt-4 bg-gray-50 shrink-0">
-        <div className="flex items-center gap-3 mb-3">
-          <button
-            onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 rounded-full text-gray-600 hover:bg-gray-200 transition-all shrink-0"
-            aria-label="Back"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-extrabold text-xl text-gray-800 tracking-tight leading-tight truncate">{opp.name}</h2>
-            <div className="text-xs font-medium text-gray-500 mt-0.5 truncate">{opp.account.name}</div>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+      <Box sx={{ px: 2, pt: 2, bgcolor: "background.default", flexShrink: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+          <IconButton onClick={onBack} aria-label="Back" sx={{ width: 40, height: 40, color: "#4b5563", flexShrink: 0, "&:hover": { bgcolor: "#e5e7eb" } }}>
+            <ArrowBackIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", letterSpacing: "-0.025em", lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {opp.name}
+            </Typography>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 500, color: "#6b7280", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {opp.account.name}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               <StageBadge name={opp.stage.stage_name} />
               <StatusBadge code={opp.status.status_code} name={opp.status.status_name} />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Stats strip */}
-        <div className="flex items-center justify-around bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 mb-4">
-          <div className="text-center">
-            <div className={`text-xl font-black ${
-              parseFloat(opp.win_probability) >= 70 ? "text-emerald-600" :
-              parseFloat(opp.win_probability) >= 40 ? "text-amber-500" : "text-red-500"
-            }`}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", px: 2, py: 1.5, mb: 2 }}>
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{
+              fontSize: "1.25rem", fontWeight: 900,
+              color: parseFloat(opp.win_probability) >= 70 ? "#059669" : parseFloat(opp.win_probability) >= 40 ? "#f59e0b" : "#ef4444",
+            }}>
               {parseFloat(opp.win_probability).toFixed(0)}%
-            </div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Win Prob</div>
-          </div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div className="text-center">
-            <div className="text-xl font-black text-emerald-600">
+            </Typography>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Win Prob</Typography>
+          </Box>
+          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>
               {opp.indicative_value ? `₹${parseFloat(opp.indicative_value).toFixed(1)}L` : "—"}
-            </div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Value</div>
-          </div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div className="text-center">
-            <div className="text-sm font-black text-gray-700 truncate max-w-[80px]">{opp.owner.display_name}</div>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mt-0.5">Owner</div>
-          </div>
-        </div>
+            </Typography>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Value</Typography>
+          </Box>
+          <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
+          <Box sx={{ textAlign: "center" }}>
+            <Typography sx={{ fontSize: "0.875rem", fontWeight: 900, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80px" }}>
+              {opp.owner.display_name}
+            </Typography>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Owner</Typography>
+          </Box>
+        </Box>
 
         {/* Tab chip bar */}
-        <div className="relative mb-4">
-          <div ref={chipBarRef} className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: "none", paddingRight: "50vw" }}>
+        <Box sx={{ position: "relative", mb: 2 }}>
+          <Box
+            ref={chipBarRef}
+            sx={{
+              display: "flex", gap: 1, overflowX: "auto", pb: 0.5, pr: "50vw",
+              "&::-webkit-scrollbar": { display: "none" }, scrollbarWidth: "none",
+            }}
+          >
             {TABS.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
-                <button
+                <Button
                   key={tab.id}
                   data-tab={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border focus:outline-none active:scale-95 ${
-                    isActive
-                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
-                  }`}
+                  disableRipple
+                  sx={{
+                    flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
+                    borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                    bgcolor: isActive ? "primary.main" : "#fff",
+                    color: isActive ? "#fff" : "#4b5563",
+                    border: isActive ? "none" : "1px solid #e5e7eb",
+                    boxShadow: isActive ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
+                    "&:hover": {
+                      borderColor: isActive ? "transparent" : "#93c5fd",
+                      color: isActive ? "#fff" : "primary.main",
+                      bgcolor: isActive ? "primary.main" : "#fff",
+                    },
+                  }}
                 >
-                  {isActive && (
-                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                  )}
+                  {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
-          </div>
-          <div className="absolute right-0 top-0 h-full w-10 pointer-events-none" style={{ background: "linear-gradient(to left, #f9fafb, transparent)" }} />
-        </div>
-      </div>
+          </Box>
+          <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
+        </Box>
+      </Box>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2 }}>
         {activeTab === "overview"     && <OverviewTab opp={opp} onEdit={openEditOpp} />}
         {activeTab === "products"     && <ProductsTab opportunityId={opp.id} sbuId={opp.sbu.id} />}
         {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
@@ -758,39 +956,56 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
         {activeTab === "activity"     && (
           <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} />
         )}
-      </div>
+      </Box>
 
       {/* Edit Opportunity modal */}
       <FormModal isOpen={showEditOpp} onClose={() => setShowEditOpp(false)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
-        <div><label className={lbl}>Name *</label><input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className={inp} autoFocus /></div>
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className={lbl}>Stage</label>
-            <select value={editStageId} onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditStageId(e.target.value); if (s) setEditWinProb(String(s.default_win_probability)); }} className={inp}>
-              <option value="">Select stage</option>
-              {stages.map((s: any) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className={lbl}>Status</label>
-            <select value={editStatusId} onChange={(e) => setEditStatusId(e.target.value)} className={inp}>
-              <option value="">Select status</option>
-              {oppStatuses.map((s: any) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
-            </select>
-          </div>
-        </div>
-        <div>
-          <label className={lbl}>Owner</label>
-          <select value={editOwnerId} onChange={(e) => setEditOwnerId(e.target.value)} className={inp}>
-            <option value="">Select owner</option>
-            {users.map((u: any) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
-          </select>
-        </div>
-        <div><label className={lbl}>Win Probability %</label><input type="number" min="0" max="100" value={editWinProb} onChange={(e) => setEditWinProb(e.target.value)} className={inp} placeholder="0–100" /></div>
-        <div><label className={lbl}>Indicative Value (₹ Lakhs)</label><input type="number" step="any" min="0" value={editValue} onChange={(e) => setEditValue(e.target.value)} className={inp} placeholder="e.g. 25.50" /></div>
-        <div><label className={lbl}>Expected Closure Date</label><input type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>Demo Start Date</label><input type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} className={inp} /></div>
-        <div><label className={lbl}>PO Number</label><input type="text" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} className={inp} placeholder="e.g. PO-2024-001" /></div>
+        <TextField label="Name *" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <TextField
+            select
+            label="Stage"
+            value={editStageId}
+            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditStageId(e.target.value); if (s) setEditWinProb(String(s.default_win_probability)); }}
+            fullWidth
+            size="small"
+            sx={{ flex: 1 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select stage</MenuItem>
+            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+          </TextField>
+          <TextField
+            select
+            label="Status"
+            value={editStatusId}
+            onChange={(e) => setEditStatusId(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ flex: 1 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select status</MenuItem>
+            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+          </TextField>
+        </Box>
+        <TextField
+          select
+          label="Owner"
+          value={editOwnerId}
+          onChange={(e) => setEditOwnerId(e.target.value)}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select owner</MenuItem>
+          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField label="Win Probability %" type="number" value={editWinProb} onChange={(e) => setEditWinProb(e.target.value)} placeholder="0–100" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
+        <TextField label="Indicative Value (₹ Lakhs)" type="number" value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder="e.g. 25.50" fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }} />
+        <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
       </FormModal>
 
       <LogActivityModal
@@ -800,6 +1015,6 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
         opportunityId={opp.id}
         currentUserId={(userProfile as any)?.id}
       />
-    </div>
+    </Box>
   );
 }

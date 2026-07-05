@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import BusinessRuleViolation, ConflictError, NotFoundError
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
@@ -564,3 +564,84 @@ class TestReplaceStakeholders:
         assert links[0].stakeholder_id == stakeholder_id
         assert links[0].influence_level == "HIGH"
         assert links[0].decision_role == "Procurement Head"
+
+
+# ===========================================================================
+# add_stakeholder
+# ===========================================================================
+
+class TestAddStakeholder:
+    def test_raises_not_found_for_missing_opportunity(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = None
+        service = OpportunityService(repository=repo)
+
+        with pytest.raises(NotFoundError, match="Opportunity"):
+            service.add_stakeholder(
+                OPP_ID,
+                StakeholderLinkCreate(stakeholder_id=uuid.uuid4()),
+                created_by=USER_ID,
+            )
+
+    def test_raises_conflict_when_already_linked(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        stakeholder_id = uuid.uuid4()
+        repo.get_stakeholder_link.return_value = MagicMock()
+        service = OpportunityService(repository=repo)
+
+        with pytest.raises(ConflictError, match="already linked"):
+            service.add_stakeholder(
+                OPP_ID,
+                StakeholderLinkCreate(stakeholder_id=stakeholder_id),
+                created_by=USER_ID,
+            )
+
+    def test_adds_stakeholder_with_correct_fields(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        repo.get_stakeholder_link.return_value = None
+        stakeholder_id = uuid.uuid4()
+        service = OpportunityService(repository=repo)
+
+        service.add_stakeholder(
+            OPP_ID,
+            StakeholderLinkCreate(
+                stakeholder_id=stakeholder_id,
+                influence_level="MEDIUM",
+                decision_role="Champion",
+                notes="Supportive",
+            ),
+            created_by=USER_ID,
+        )
+
+        link = repo.add_stakeholder.call_args[0][0]
+        assert link.opportunity_id == OPP_ID
+        assert link.stakeholder_id == stakeholder_id
+        assert link.influence_level == "MEDIUM"
+        assert link.decision_role == "Champion"
+        assert link.created_by == USER_ID
+
+
+# ===========================================================================
+# remove_stakeholder
+# ===========================================================================
+
+class TestRemoveStakeholder:
+    def test_raises_not_found_when_not_linked(self):
+        repo = _make_repo()
+        repo.get_stakeholder_link.return_value = None
+        service = OpportunityService(repository=repo)
+
+        with pytest.raises(NotFoundError, match="not linked"):
+            service.remove_stakeholder(OPP_ID, uuid.uuid4())
+
+    def test_deletes_the_link(self):
+        repo = _make_repo()
+        link = MagicMock()
+        repo.get_stakeholder_link.return_value = link
+        service = OpportunityService(repository=repo)
+
+        service.remove_stakeholder(OPP_ID, uuid.uuid4())
+
+        repo.delete_stakeholder.assert_called_once_with(link)

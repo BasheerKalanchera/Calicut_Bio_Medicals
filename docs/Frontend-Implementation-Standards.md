@@ -231,6 +231,7 @@ Things that behave differently from a native element or from older MUI docs/exam
 4. **Don't use MUI's `Stack` component.** It causes a TypeScript compile error in this project's specific combination of library versions (MUI 9.1.2 / React 19.2.5 / TS 6.0.3) — not a mistake in how it's used, just broken here. Use `Box` with flex `sx` properties instead, which is what every migrated file already does. *(Version-bound — recheck on upgrade.)*
 5. **`InputLabelProps` no longer exists in this MUI version.** Older examples use it to control a field's label (e.g. keeping a datetime field's label shrunk). Use `slotProps={{ inputLabel: {...} }}` instead. *(Version-bound.)*
 6. **Disabled contained-primary overrides need the `ownerState` function form.** This MUI version dropped the combined `containedPrimary` class key from `MuiButton` `styleOverrides`, so a theme-level rule for "disabled + contained + primary" (see `src/theme/index.ts`) has to be written as a function reading `ownerState.variant`/`ownerState.color`, not a static `containedPrimary` key. *(Version-bound.)*
+7. **Circular back button: `IconButton` + `ArrowBackIcon` (not a chevron).** `ArrowBackIcon` is the platform-standard back affordance and reads correctly on mobile without a label; a chevron reads as collapse/previous, not navigate-back. Currently inlined in `OpportunityDetailScreen.tsx` (`sx={{ width: 40, height: 40, color: "#4b5563", "&:hover": { bgcolor: "#e5e7eb" } }}`, icon `sx={{ fontSize: 20 }}`) — but this identical control appears on all four 360/detail screens (Customer, Product, Opportunity, Project), which per §6.7's logic makes it an app-wide convention, not a per-file style choice. Extracting it into a shared `BackButton` component is banked (see `active_progress.md` Deferred section) rather than built now — inline it identically until then; do not re-derive the styling per file once it exists.
 
 ### 6.7 Theme is the source of truth for visual defaults
 
@@ -326,21 +327,28 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
 | `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
 
-**Pending — TypeScript + React Query done, styling still Tailwind:**
+**Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
+Commit A/B split surfaced that these were asserting more than they checked):
+- **Styling ✓** — zero Tailwind `className` in the file. Mechanically checked by `check-no-tailwind.js`.
+- **React Query ✓** — zero manual `.then()` fetch chains; all data fetching via `useQuery`/`useMutation`.
+  Self-reported today, not mechanically checked (see the enforcement-gap note in the Deferred section
+  of `active_progress.md` — a grep-for-`.then(` guard is banked, not built).
+  A row is not marked ✓ here until that's actually true — a file can be Styling ✓ while this column
+  is still Pending.
+- **TypeScript ✓** — file is `.tsx`/`.ts` and compiles under `tsc --noEmit`. Does **not** certify the
+  absence of `any` — a file can be TypeScript ✓ and still be `any[]`-typed throughout. Called out
+  explicitly per-row only when verified during that file's migration; unverified rows keep the bare ✓.
 
-| File | Path | Styling | Data Fetching | TypeScript |
+**Pending:**
+
+| File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
-| `OpportunityDetailScreen.tsx` | `src/screens/` | Tailwind (pending) | React Query ✓ | ✓ |
-
-**Pending — not started (Tailwind + manual fetch, some still `.jsx`):**
-
-| File | Path | Styling | Data Fetching | TypeScript |
-|---|---|---|---|---|
-| `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | manual `.then()` (pending) | ✓ |
+| `OpportunityDetailScreen.tsx` | `src/screens/` | ✓ | Pending — 6 manual `.then()` chains remain (stages/statuses/users/products/stakeholders master-data lookups) | Compiles ✓ — verified `any[]`-typed throughout, not type-safe |
+| `Customer360Screen.tsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` | ✓ |
 | `DemoApp.tsx` | `src/` | Tailwind (pending) | N/A (shell, local state) | ✓ |
-| `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
-| `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
-| `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | manual `.then()` + SWR cache (pending) | `.jsx` (pending) |
+| `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
+| `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
+| `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ErrorBoundary.jsx` | `src/components/` | Tailwind (pending) | N/A (no fetching) | `.jsx` (pending) |
 
 **Out of scope — do not migrate:**
@@ -349,7 +357,9 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 8 migrated · 7 pending · 1 explicitly out of scope.
+**Totals:** 8 fully migrated · 7 pending (one of which, `OpportunityDetailScreen.tsx`, has Styling ✓ with
+React Query still outstanding — it stays off the "fully migrated" table above until that lands) · 1
+explicitly out of scope.
 
 ### Post-migration cleanup (do this when the table above reaches 0 pending)
 

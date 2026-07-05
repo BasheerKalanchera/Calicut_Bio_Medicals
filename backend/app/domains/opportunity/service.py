@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import BusinessRuleViolation, ConflictError, NotFoundError
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
@@ -10,6 +10,7 @@ from app.domains.opportunity.schemas import (
     OpportunityItemCreate,
     OpportunityUpdate,
     SplitsBulkUpdate,
+    StakeholderLinkCreate,
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
@@ -324,6 +325,39 @@ class OpportunityService:
             for link in data.stakeholders
         ]
         return self.repository.replace_stakeholders(opportunity_id, new_links)
+
+    def add_stakeholder(
+        self,
+        opportunity_id: uuid.UUID,
+        data: StakeholderLinkCreate,
+        *,
+        created_by: uuid.UUID,
+    ) -> OpportunityStakeholder:
+        if not self.repository.get_for_update(opportunity_id):
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        if self.repository.get_stakeholder_link(opportunity_id, data.stakeholder_id):
+            raise ConflictError(
+                f"Stakeholder {data.stakeholder_id} is already linked to opportunity {opportunity_id}"
+            )
+
+        link = OpportunityStakeholder(
+            opportunity_id=opportunity_id,
+            stakeholder_id=data.stakeholder_id,
+            influence_level=data.influence_level,
+            decision_role=data.decision_role,
+            notes=data.notes,
+            created_by=created_by,
+            updated_by=created_by,
+        )
+        return self.repository.add_stakeholder(link)
+
+    def remove_stakeholder(self, opportunity_id: uuid.UUID, stakeholder_id: uuid.UUID) -> None:
+        link = self.repository.get_stakeholder_link(opportunity_id, stakeholder_id)
+        if not link:
+            raise NotFoundError(
+                f"Stakeholder {stakeholder_id} is not linked to opportunity {opportunity_id}"
+            )
+        self.repository.delete_stakeholder(link)
 
     # ------------------------------------------------------------------
     # Internal helpers

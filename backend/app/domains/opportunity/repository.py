@@ -247,3 +247,18 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 )
             ).all()
         )
+
+    def get_stakeholder_link(
+        self, opportunity_id: uuid.UUID, stakeholder_id: uuid.UUID
+    ) -> "OpportunityStakeholder | None":
+        return self.db.get(OpportunityStakeholder, (opportunity_id, stakeholder_id))
+
+    def add_stakeholder(self, link: OpportunityStakeholder) -> OpportunityStakeholder:
+        self.db.add(link)
+        self.db.flush()
+        self.db.refresh(link)
+        return link
+
+    def delete_stakeholder(self, link: OpportunityStakeholder) -> None:
+        self.db.delete(link)
+        self.db.flush()

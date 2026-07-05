@@ -19,6 +19,7 @@ from app.domains.opportunity.schemas import (
     PipelineOpportunity,
     SplitResponse,
     SplitsBulkUpdate,
+    StakeholderLinkCreate,
     StakeholderLinkResponse,
     StakeholdersBulkUpdate,
 )
@@ -209,3 +210,24 @@ async def replace_opportunity_stakeholders(
 ) -> APIResponse[list[StakeholderLinkResponse]]:
     links = service.replace_stakeholders(opportunity_id, body, updated_by=current_user.id)
     return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])
+
+
+@router.post("/opportunities/{opportunity_id}/stakeholders", status_code=201)
+async def add_opportunity_stakeholder(
+    opportunity_id: uuid.UUID,
+    body: StakeholderLinkCreate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[StakeholderLinkResponse]:
+    link = service.add_stakeholder(opportunity_id, body, created_by=current_user.id)
+    return APIResponse(data=StakeholderLinkResponse.model_validate(link))
+
+
+@router.delete("/opportunities/{opportunity_id}/stakeholders/{stakeholder_id}", status_code=204)
+async def remove_opportunity_stakeholder(
+    opportunity_id: uuid.UUID,
+    stakeholder_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> None:
+    service.remove_stakeholder(opportunity_id, stakeholder_id)

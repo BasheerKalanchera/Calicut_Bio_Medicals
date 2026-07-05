@@ -3,10 +3,14 @@ _Session: 2026-07-03 → 2026-07-05 (continued)_
 
 ## Current task
 MUI migration (ADR-031, MUI-only — non-negotiable, hybrid rejected). Actively
-migrating screens off Tailwind, one file at a time. As of this session: **8 of
-16 tracked files migrated** (§9 in Frontend-Implementation-Standards.md — 8
-migrated · 7 pending · 1 out of scope). `QuickLeadModal.tsx` is the latest file
-migrated, verified E2E, and ready to commit — see below.
+migrating screens off Tailwind, one file at a time. `QuickLeadModal.tsx`
+(`fe68a91`) confirmed landed from the prior session. Now working
+`OpportunityDetailScreen.tsx`, split into two commits per Basheer's explicit
+direction: **Commit A (styling only, Tailwind→MUI) is done, guard-green, and
+staged — pending Basheer's E2E pass before commit.** Commit B (ADR-032
+compliance — 6 manual `.then()` chains → `useQuery`) has not been started and
+may be deferred past July 10 if it doesn't land clean; it is a data-layer
+refactor with its own risk profile, not to be rushed into the freeze.
 
 ## Done this session
 - Discovered MUI migration had silently stalled: only LoginScreen.tsx and
@@ -111,19 +115,78 @@ migrated, verified E2E, and ready to commit — see below.
   `QuickLeadModal.tsx`) as a confirmed, explicit run — not just incidental
   coverage from other work.
 - All work committed; working tree clean as of session end.
+- Picked `OpportunityDetailScreen.tsx` as the next file (Basheer chose the
+  smallest-lift option of the three offered; July 10 freeze / July 13 demo
+  timeline confirmed still holding, not reassessed further).
+- Audited the file before touching it — found §9's "React Query ✓" mark false:
+  6 manual `.then()` chains remain (`ProductsTab`/`SplitsTab`/`StakeholdersTab`
+  on-demand master-data lookups, plus screen-level stage/status/user loads in
+  `openEditOpp`) — same defect class as `LogActivityModal.tsx`'s earlier miss.
+  Also flagged "TypeScript ✓" as certifying only "compiles," not "no `any`" —
+  the file is `any[]`-typed throughout.
+- Basheer's correction: split into **Commit A (styling only)** and **Commit B
+  (ADR-032 fetch conversion)** — two different risk profiles, one verification
+  pass can't certify both; explicitly instructed not to bundle them.
+- **Commit A done** — full Tailwind→MUI conversion of all 4 tab sub-components
+  (Overview/Products/Splits/Stakeholders), the back button, the tab chip bar
+  (reused the exact scroll-to-active-pill recipe from
+  `OpportunityPipelineScreen.tsx`, per §6.6 item 3), and both modals (Edit
+  Opportunity fields, `LogActivityModal` unchanged). Deliberately left every
+  data-fetching call, `any` typing, and `as any` cast untouched — Commit B's
+  scope only.
+  - Preempted the known "autofocus label clips into dialog title" gotcha
+    (first hit in `QuickLeadModal.tsx`) by giving the Name field `mt: 1.5` up
+    front instead of waiting for E2E to catch it again.
+  - Kept the Qty/Price/Disc mini-field widths equal (matching the original
+    Tailwind `w-20` on all three) rather than adopting `QuickLeadModal.tsx`'s
+    later 7.5rem-widened convention — that widening was a specific ask for
+    that file, not yet an established app-wide rule. Flag for Basheer: request
+    the same widening here explicitly if he wants cross-file consistency.
+  - Preserved this file's own pre-migration `StatusBadge` shades (`-50`/`-700`)
+    rather than aligning to `OpportunityPipelineScreen.tsx`'s different
+    (`-100`/`-700`) shades for the same statuses — that cross-file
+    inconsistency is explicitly banked for the `statusColors.ts` consolidation
+    pass, not something to resolve silently per-file mid-migration.
+  - `npm run lint` and `npx tsc --noEmit` both clean; `check-no-tailwind.js`
+    confirms zero `className` usage in the file.
+  - Corrected §9 rather than marking it fully done: added a column legend
+    (defining what Styling/React Query/TypeScript ✓ each actually certify),
+    merged the two pending tables into one, and gave
+    `OpportunityDetailScreen.tsx` its own honest row — Styling ✓, React Query
+    still Pending (6-chain detail spelled out), TypeScript "Compiles ✓ —
+    verified `any[]`-typed, not type-safe." Row stays off the "fully migrated"
+    table; `check-no-tailwind.js`'s `GRANDFATHERED` list stays untouched until
+    Commit B lands (confirmed via the script's own comment — entries mirror
+    §9's pending rows, and this file is still pending).
+  - Added Frontend-Implementation-Standards.md §6.6 item 7: back button is
+    `IconButton` + `ArrowBackIcon` (not a chevron — chevron reads as
+    collapse/previous, not navigate-back). Noted it's inlined here today but
+    appears identically on all four 360/detail screens (Customer, Product,
+    Opportunity, Project) — banked the shared `BackButton` extraction (see
+    Deferred) rather than building it inside this commit.
+  - **Not yet done:** Basheer's manual E2E pass on Commit A, then the commit
+    itself.
 
 ## Next step
-Resume forward migration on the remaining 7 pending files (§9). Order them by
-demo importance — decide explicitly at next session start, not by investigation
-order (same principle as before).
+1. Basheer E2E's Commit A (styling) on screen; fix anything the property-diff
+   missed before committing.
+2. Commit A once green.
+3. Decide whether to attempt Commit B (6 `.then()`→`useQuery` conversions)
+   before July 10, or defer it — per Basheer's explicit instruction, do not
+   rush a data-layer refactor into the freeze just to close out the tracker.
+4. Resume the same per-file ritual on the remaining files (now corrected: end
+   with an honest §9 update, not just "mark done" — verify each column's claim
+   before checking it).
 
-**New per-file ritual, mandatory for every remaining migration:**
+**Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
 table, evidence not summary) → triage (categorize each gap using §6.8's rules:
 fix-theme / fix-per-file / verify-first / do-not-fix) → verify on screen
 (manual E2E, Basheer's pass) → guard-green (`npm run lint` clean, `npx tsc
---noEmit` clean) → remove from §9's pending table AND the
-`check-no-tailwind.js` GRANDFATHERED list in the same commit → commit.
+--noEmit` clean) → update §9 honestly (per-column, not a blanket "done") and
+the `check-no-tailwind.js` GRANDFATHERED list to match, in the same commit →
+commit. If a file's data-fetching and styling are genuinely separable risk
+profiles (as here), split into two commits rather than bundling.
 
 `npx tsc --noEmit` is a deliberate addition, not a duplicate of `npm run lint`:
 checked `sales-os-app/eslint.config.js` — it only has a `files:
@@ -244,6 +307,31 @@ at today's content.
   Larger and riskier than the item above; sequence after it, and after the
   MUI migration backlog (or at least after the specific files it touches have
   migrated, to avoid mixing Tailwind and MUI changes in the same commit).
+- **Extract a shared `BackButton` component.** The circular `IconButton` +
+  `ArrowBackIcon` back control (Frontend-Implementation-Standards §6.6 item 7)
+  is now inlined in `OpportunityDetailScreen.tsx` and will be needed unchanged
+  in `Customer360Screen.tsx`, `ProductCatalogScreen.jsx`, and
+  `ProjectDirectoryScreen.jsx` when they migrate — four screens sharing one
+  control is an app-wide convention (§6.7 logic), not a per-file style choice.
+  Banked rather than built now because extraction was more than trivial to
+  fold into Commit A without expanding its scope. Do it either as its own
+  small refactor, or folded into the second of these four screens to migrate
+  (so there's a second real caller to design the props against, not just one).
+- **§6.7 enforcement gap.** §6.7 mandates the theme (e.g. `#f9fafb` input
+  fill) as the single source of truth for visual defaults, but nothing
+  mechanically checks for hardcoded hex drifting back into per-component `sx`
+  props. A pre-commit guard grepping screen/component files for hardcoded
+  background hex (same shape as `check-no-tailwind.js`) would catch this
+  mechanically instead of relying on the next fidelity audit to notice.
+  Post-demo, not blocking.
+- **§9 enforcement gap.** §9's Styling/React Query/TypeScript checkmarks are
+  self-reported and have already drifted silently twice this migration
+  (`LogActivityModal.tsx`, now `OpportunityDetailScreen.tsx` — both mislabeled
+  "React Query ✓" while still using manual `.then()`). No mechanical surface
+  keeps these honest today. Candidate guards: grep for `.then(` in any file
+  listed "React Query ✓"; grep for `: any`/`any[]` in any file listed
+  "TypeScript ✓". Post-demo, not blocking — but a second occurrence of the
+  same drift is a signal this shouldn't wait too long.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
@@ -260,6 +348,10 @@ at today's content.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-`QuickLeadModal.tsx` migration + its §9/`check-no-tailwind.js` tracker updates
-are staged and verified (guard-green, E2E'd by Basheer) but not yet committed
-as of this point in the session — commit is the next action.
+`OpportunityDetailScreen.tsx` Commit A (Tailwind→MUI styling only) + its
+`docs/Frontend-Implementation-Standards.md` §9 correction are staged and
+guard-green (`npm run lint`, `npx tsc --noEmit`, `check-no-tailwind.js` all
+clean) but **not yet E2E'd by Basheer and not yet committed**. Commit B (the
+6 `.then()`→`useQuery` conversions, ADR-032 compliance) has not been started.
+`check-no-tailwind.js`'s `GRANDFATHERED` list intentionally still lists this
+file — do not remove it until Commit B lands.
