@@ -5,13 +5,33 @@ _Session: 2026-07-03 → 2026-07-05 (continued)_
 MUI migration (ADR-031, MUI-only — non-negotiable, hybrid rejected). Actively
 migrating screens off Tailwind, one file at a time. `QuickLeadModal.tsx`
 (`fe68a91`) confirmed landed from the prior session.
-`OpportunityDetailScreen.tsx`'s Commit A (styling) plus a stakeholder-linking
-bug fix (discovered during Commit A's E2E) landed together as `3619295`, per
-Basheer's decision to combine rather than split hunks across one file.
-**Commit B (ADR-032 compliance — all 6 manual `.then()` chains → `useQuery`,
-plus local stopgap types for the master-data lookups) is now done, guard-green,
-and staged — pending Basheer's E2E pass before commit.** §9/`check-no-tailwind.js`
-already updated to reflect the file as fully migrated (9 of 16 tracked files).
+
+`OpportunityDetailScreen.tsx` is now **fully migrated and committed** — 9 of
+16 tracked files done, §9 and `check-no-tailwind.js` both reflect this
+accurately. Two commits:
+- `3619295` — Commit A (styling only) + a stakeholder-linking bug fix
+  (discovered during Commit A's E2E), combined per Basheer's call rather than
+  split across hunks in one file.
+- `01cead0` — Commit B (ADR-032: all 6 manual `.then()` chains → `useQuery`)
+  **plus three more things E2E surfaced and Basheer asked to fold in before
+  committing**: BR-FIN-03 indicative-value auto-sync, a pipeline-cache-patch
+  fix (`applyOppPatch`), and a full stakeholder-link-editing feature
+  (backend PATCH endpoint + frontend inline edit form). All Basheer-verified
+  on screen before this commit landed. Full detail below.
+
+Two small cleanup items (from the "which deferred items are ready now"
+triage) were also picked up:
+- `sales_os_prototype_demo_ready.jsx` deleted — committed as `6d7b9f7`
+  ("chore: remove orphaned prototype file"). Note: this replaces an earlier
+  commit, `4f41e0e` — its message wrongly claimed to also include the
+  `check-no-tailwind.js` fix below (it didn't; `git show --stat` proved only
+  the 290-line deletion was in the tree). Corrected via
+  `git commit --amend` + `git push --force-with-lease` (both already pushed
+  to `origin/main` — Basheer explicitly approved the force-push after being
+  told the risk).
+- `check-no-tailwind.js`'s Tailwind-shape-matching fix — code complete and
+  verified (see Deferred), **committed separately** since it was wrongly
+  bundled into `4f41e0e`'s message the first time.
 
 ## Done this session
 - Discovered MUI migration had silently stalled: only LoginScreen.tsx and
@@ -226,19 +246,92 @@ already updated to reflect the file as fully migrated (9 of 16 tracked files).
   table, 9 of 16 now done) and removed it from `check-no-tailwind.js`'s
   `GRANDFATHERED` list in the same pass, since both Styling and React Query
   are now genuinely done, not just claimed.
-  - **Not yet done:** Basheer's manual E2E pass on Commit B, then the commit
-    itself.
+- Basheer's E2E of Commit B surfaced three more real gaps — none were
+  migration regressions, all pre-existing, and all fixed/built before the
+  commit landed:
+  - **Products tab add/edit lost sync between the Value stat and the
+    opportunity's `indicative_value`.** Investigated BR-FIN-03 (dual-mode
+    valuation, ADR-026): when items exist, the calculated items-total is
+    supposed to be authoritative — documented in the ADR/Business-Rules doc
+    but never actually implemented anywhere, frontend or backend (confirmed
+    by reading every opportunity schema/service method — no computed-value
+    field exists; `OpportunityPipelineScreen.tsx`'s cards have the identical
+    gap). Basheer's call: match the approach already shipped in
+    `QuickLeadModal.tsx`'s create flow — auto-sync, not a separate
+    read-only computed field. `ProductsTab.saveItems()` now also calls
+    `patchOpportunity` with the items total (or `null` when the list is
+    emptied) right after `replaceOpportunityItems` succeeds, and the Edit
+    Opportunity modal's Indicative Value field now disables itself and
+    labels `(auto)` once items exist (a screen-level `hasItems` check reuses
+    `ProductsTab`'s own `["opp-items", ...]` cache — zero extra network
+    cost).
+  - **Saved changes appeared to vanish after navigating to the Pipeline
+    Kanban/list and back into the same opportunity.** Root cause: the DB
+    write was fine — `OpportunityPipelineScreen.tsx` is always-mounted
+    (ADR-030) with its own `["pipeline", ownerFilter]` query
+    (`staleTime: 30_000`, `main.tsx`), and nothing ever invalidated it after
+    an opportunity edit, so re-selecting a card fed the freshly-remounted
+    detail screen stale data from before the edit. Fixed with an
+    `applyOppPatch` helper (Basheer's explicit direction: patch the cache
+    directly with values already known locally via
+    `queryClient.setQueriesData`, not invalidate-and-refetch — avoids a
+    redundant round trip since the new values are already in hand). Both
+    `handleUpdateOpp` and the indicative-value sync above now go through
+    this one helper.
+  - **No way to edit a stakeholder link's Influence Level/Decision
+    Role/Notes after linking.** Confirmed via `git show 9df1f1b` (the
+    original commit that built this tab): it only ever had add/remove, never
+    edit — a pre-existing gap, not a migration regression.
+    `ProductsTab`/`SplitsTab` both support full edit-then-save; Stakeholders
+    was the odd one out. Built as its own small feature, mirroring the
+    add/remove pattern already shipped this session: `StakeholderLinkUpdate`
+    schema, `repository.update_stakeholder_link`,
+    `service.update_stakeholder` (404 if not linked, PATCH semantics —
+    `exclude_unset=True`), `PATCH /opportunities/{id}/stakeholders/{stakeholder_id}`,
+    2 new unit tests (35/35 passing). Frontend: each linked-stakeholder card
+    now has an "Edit" button (fixed to match the established
+    `bgcolor: "#eff6ff"` Edit-button styling used elsewhere in this file,
+    after Basheer caught it rendering with no background the first pass)
+    that turns that one card into an inline form reusing the same
+    Influence Level/Decision Role/Notes fields as "Link Stakeholder."
+    Noted for later, not built now: an inline "+ New Stakeholder" shortcut
+    so a brand-new stakeholder met mid-deal doesn't require detouring to
+    Customer 360 first — logged in Deferred, reusing
+    `Customer360Screen.tsx`'s existing "New Stakeholder" `FormModal`
+    (lines 329/551/556/821) rather than building a second create form.
+  - All of the above, plus the original `.then()`→`useQuery` conversion,
+    landed together as `01cead0` — guard-green (`tsc`/lint clean, 35/35
+    backend tests passing) and Basheer-verified on screen before committing.
+- Picked up 2 items from a "which deferred backlog items are safe to do
+  before the freeze" triage (full reasoning: tooling/backend-only items with
+  no dependency on the remaining 6 files are safe now; anything touching a
+  still-Tailwind file, or wanting the full post-migration picture
+  — `statusColors.ts`, the `BackButton` extraction — has to wait):
+  - `check-no-tailwind.js` fixed to match actual Tailwind utility shape
+    (dash-prefixes + bare keywords, optional variant prefixes) instead of
+    the bare `className=` attribute — verified with throwaway probe files
+    (not committed): real Tailwind still fails the guard, a plain
+    CSS-selector hook (`className="deal-avatar"`) no longer false-positives.
+    **Not actually committed yet** — see Current task / Files in flight for
+    the `4f41e0e` mixup.
+  - `sales_os_prototype_demo_ready.jsx` deleted after Basheer reviewed it
+    first (asked what it actually did before agreeing — it was the repo's
+    very first commit's 290-line minimal Kanban sketch, 2026-04-14,
+    superseded early by `App.jsx`, confirmed zero references anywhere and
+    confirmed `App.jsx` never imported it). Committed as `6d7b9f7` after
+    correcting the `4f41e0e` mixup (see Current task).
 
 ## Next step
-1. Basheer E2E's Commit B (React Query conversion) on screen — the Products/
-   Splits/Stakeholders picker dropdowns and the Edit Opportunity modal's
-   Stage/Status/Owner dropdowns are the surfaces that actually changed
-   fetch timing; check they still populate correctly on first open of each
-   edit/add panel, not just that they look the same.
-2. Commit B once green.
-3. Resume the same per-file ritual on the remaining 6 pending files (now
-   corrected: end with an honest §9 update, not just "mark done" — verify
-   each column's claim before checking it).
+1. Commit the `check-no-tailwind.js` fix on its own (see Files in flight) —
+   it is not actually committed despite `4f41e0e`'s original message.
+2. Start the next session on the remaining 6 pending §9 files. Before
+   picking one, revisit the July 10/13 timeline explicitly (see Notes /
+   decisions) — `OpportunityDetailScreen.tsx` was picked as the
+   *smallest-lift* remaining file and still took a full session once E2E
+   surfaced real bugs; the other 6 include full conversions (styling +
+   fetch + `.jsx`→`.tsx`), not styling-only.
+3. Resume the same per-file ritual (below) on whichever file is picked —
+   end with an honest §9 update per column, not a blanket "done."
 
 **Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
@@ -283,25 +376,33 @@ at today's content.
   in LogActivityModal.tsx, marked with a "fix at service layer" comment; check
   other migrated files for the same). Deferred because it's a shared-service-layer
   change, not part of any single file's migration. Post-migration, medium priority.
-- **Delete `sales_os_prototype_demo_ready.jsx`** (repo root, 290 lines, from
-  initial commit April 14). Orphaned prototype: not imported by any file in
-  sales-os-app/src (grep confirmed zero references), not part of the Vite build,
-  not listed in §9. It is dead code, not a migration target — do NOT add it to §9.
-  Action: re-confirm zero imports (`grep -rn "sales_os_prototype_demo_ready"
-  sales-os-app/ src/`), then `git rm` it. Safe because nothing references it and
-  it's not in the build — deletion cannot affect the running app. Post-demo, low
-  priority.
-- **Fix `check-no-tailwind.js` to match Tailwind utility shape, not bare
-  `className=`.** The guard currently flags any `className=` at all, including
-  non-Tailwind uses (e.g. a plain hook name like `className="deal-avatar"` used
-  only as a CSS selector target, with zero Tailwind classes in it). Root-cause
-  fix: match against actual Tailwind utility patterns (e.g. `bg-`, `text-`,
-  `flex`, `p-`/`px-`/`py-`, `rounded`, etc.) instead of the bare attribute name.
-  Current workaround — using `data-*` attributes instead of `className` for
-  CSS-selector hooks (see OpportunityPipelineScreen.tsx's ListRow hover pattern)
-  — is a local stopgap only, adopted because it was blocking a commit, not the
-  long-term answer. Post-migration, low priority (guard still functions
-  correctly for its actual job, just over-flags this one edge case).
+- ~~Delete `sales_os_prototype_demo_ready.jsx`~~ **Done, committed**
+  (`6d7b9f7`, 2026-07-05, ahead of schedule). Basheer reviewed the file
+  himself first (asked what it actually did) before agreeing to delete —
+  the very first commit's minimal Kanban sketch, 2026-04-14, 290 lines,
+  superseded early by `App.jsx` and never touched again; confirmed `App.jsx`
+  never imported it, zero references anywhere in the repo. Note: this
+  replaced an earlier commit `4f41e0e` whose message wrongly also claimed
+  the `check-no-tailwind.js` fix below — corrected via amend +
+  `push --force-with-lease` (Basheer approved the force-push explicitly
+  after being told it rewrites already-pushed history on `main`).
+- ~~Fix `check-no-tailwind.js` to match Tailwind utility shape, not bare
+  `className=`.~~ **Code done, verified — NOT yet committed** (2026-07-05,
+  ahead of schedule — one of the "ready now, not blocked by remaining
+  migration" items). Guard now only flags `className` values containing an
+  actual Tailwind utility token (dash-prefix list — `bg-`/`text-`/`px-`/
+  `rounded-`/etc. — plus bare keywords like `flex`/`hidden`/`uppercase`,
+  both with optional `hover:`/`focus:`/etc. variant prefixes), not the bare
+  attribute name. Verified with throwaway probe files (not committed): a
+  real Tailwind className still fails the guard (exit 1); a plain
+  CSS-selector hook (`className="deal-avatar"`) no longer does (exit 0).
+  `OpportunityPipelineScreen.tsx`'s `ListRow` still uses the `data-part`
+  workaround it adopted before this fix existed — left as-is (works
+  correctly, changing it now is an unforced, unrequested touch to an
+  already-shipped file); safe to revert to plain `className` next time that
+  file is touched for an unrelated reason, not urgent enough to justify its
+  own diff. **First session action: commit this on its own** — see Files in
+  flight.
 - **Reminders "Completed" tab shows pending items too — backend bug, not a
   migration regression.** `NextActionsScreen.tsx` calls `listReminders(includeCompleted)`
   unchanged from its pre-migration behavior; the bug is in
@@ -429,19 +530,26 @@ at today's content.
   commit gate working) — they get DELETED as each file migrates, not before.
 - Timing: original plan was "finish whatever is migrated AND re-verified by
   July 10; freeze rest, demo July 13 on clean mix of migrated + untouched
-  screens, resume after." **Not reassessed since** — a significant chunk of
-  this session went to the fidelity audit rather than new-file migration.
-  Worth explicitly revisiting whether July 10/13 still holds before the next
-  session commits to an ordering.
+  screens, resume after." **Still not reassessed, and now has a harder data
+  point against it:** `OpportunityDetailScreen.tsx` was explicitly chosen as
+  the *smallest-lift* remaining file (React Query already done per its old
+  §9 row — turned out to be false, but styling-only was still the intended
+  scope) and still consumed an entire session once E2E started surfacing
+  real, pre-existing bugs (stakeholder linking fully broken, BR-FIN-03 never
+  implemented, a stale-cache bug, a missing edit feature). The remaining 6
+  files are *not* styling-only — most need styling + React Query conversion
+  + `.jsx`→`.tsx` all at once. **First thing the next session should do is
+  get an explicit answer from Basheer on whether July 10/13 still holds**,
+  not just start converting the next file on the list.
 - Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-`OpportunityDetailScreen.tsx` Commit B (all 6 `.then()`→`useQuery`
-conversions + master-data stopgap types) + the `docs/Frontend-Implementation-Standards.md`
-§9 update (file moved to fully-migrated) + `check-no-tailwind.js`'s
-`GRANDFATHERED`-list removal are staged and guard-green (`npm run lint`,
-`npx tsc --noEmit` both clean, zero remaining `.then(` confirmed by grep) but
-**not yet E2E'd by Basheer and not yet committed**. Commit A (styling) plus
-the stakeholder-linking bug fix (backend `POST`/`DELETE` endpoints +
-frontend rewire) already landed as `3619295`.
+`OpportunityDetailScreen.tsx` itself is fully committed and clean — nothing
+outstanding on it. The only uncommitted change in the working tree right now
+is `sales-os-app/scripts/check-no-tailwind.js` (the Tailwind-shape-matching
+fix — code complete, verified with probe files, guard-green, just never
+actually committed due to the `4f41e0e` mixup described above). This plus
+this file (`active_progress.md`) are the only two modified files as of
+session end — **first action of the next session: commit these two**, then
+move on to picking the next §9 file.
