@@ -7,7 +7,6 @@
 // (App.jsx). When a file is migrated, remove it from BOTH this list and §9 in the
 // same commit — otherwise this guard silently stops protecting that file.
 const GRANDFATHERED = new Set([
-  "screens/Customer360Screen.tsx",
   "screens/CustomerDirectoryScreen.jsx",
   "screens/ProductCatalogScreen.jsx",
   "screens/ProjectDirectoryScreen.jsx",

@@ -329,6 +329,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
 | `OpportunityDetailScreen.tsx` | `src/screens/OpportunityDetailScreen.tsx` |
 | `DemoApp.tsx` | `src/DemoApp.tsx` |
+| `Customer360Screen.tsx` | `src/screens/Customer360Screen.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -346,7 +347,6 @@ Commit A/B split surfaced that these were asserting more than they checked):
 
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
-| `Customer360Screen.tsx` | `src/screens/` | ✓ | Pending — manual `.then()` | ✓ |
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
