@@ -7,6 +7,7 @@ from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.activity.models import Activity, Reminder
 from app.domains.opportunity.models import Opportunity
+from app.domains.project.models import Project
 
 
 class ActivityRepository(BaseRepository[Activity]):
@@ -18,6 +19,9 @@ class ActivityRepository(BaseRepository[Activity]):
 
     def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Opportunity.id == opportunity_id)) or 0) > 0
+
+    def project_exists(self, project_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Project.id == project_id)) or 0) > 0
 
     def list_by_account(
         self,
@@ -74,6 +78,33 @@ class ActivityRepository(BaseRepository[Activity]):
     def count_by_opportunity(self, opportunity_id: uuid.UUID) -> int:
         return self.db.scalar(
             select(func.count(Activity.id)).where(Activity.opportunity_id == opportunity_id)
+        ) or 0
+
+    def list_by_project(
+        self,
+        project_id: uuid.UUID,
+        *,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Activity]:
+        stmt = (
+            select(Activity)
+            .where(Activity.project_id == project_id)
+            .options(
+                noload(Activity.reminders),
+                noload(Activity.account),
+                noload(Activity.project),
+                noload(Activity.opportunity),
+            )
+            .order_by(Activity.activity_date.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).unique().all())
+
+    def count_by_project(self, project_id: uuid.UUID) -> int:
+        return self.db.scalar(
+            select(func.count(Activity.id)).where(Activity.project_id == project_id)
         ) or 0
 
 

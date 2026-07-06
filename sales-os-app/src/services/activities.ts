@@ -37,6 +37,17 @@ export async function listActivitiesByOpportunity(
   return r.data.data;
 }
 
+export async function listActivitiesByProject(
+  projectId: string,
+  page = 1,
+  pageSize = 50,
+): Promise<ActivityPage> {
+  const r = await api.get(`/projects/${projectId}/activities`, {
+    params: { page, page_size: pageSize },
+  });
+  return r.data.data;
+}
+
 export async function logActivity(
   payload: LogActivityPayload,
 ): Promise<ActivityResponse> {

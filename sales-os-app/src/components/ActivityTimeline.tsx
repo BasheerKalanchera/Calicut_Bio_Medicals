@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button } from "@mui/material";
-import { listActivitiesByAccount, listActivitiesByOpportunity } from "../services/activities";
+import { listActivitiesByAccount, listActivitiesByOpportunity, listActivitiesByProject } from "../services/activities";
 import type { ActivityResponse, ActivityType } from "../types/api";
 
 interface Props {
   accountId?: string;
   opportunityId?: string;
+  projectId?: string;
   onLogActivity?: () => void;
   // Account-scoped callers can pass the account's own activity_count (already fetched
   // alongside its other counts, no extra request) instead of relying on this
@@ -110,11 +111,13 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
   );
 }
 
-export default function ActivityTimeline({ accountId, opportunityId, onLogActivity, totalCount, selfFetch = true }: Props) {
+export default function ActivityTimeline({ accountId, opportunityId, projectId, onLogActivity, totalCount, selfFetch = true }: Props) {
   const queryClient = useQueryClient();
 
   const queryKey = opportunityId
     ? ["activities", "opportunity", opportunityId]
+    : projectId
+    ? ["activities", "project", projectId]
     : ["activities", "account", accountId];
 
   const { data, isLoading, refetch } = useQuery({
@@ -122,8 +125,10 @@ export default function ActivityTimeline({ accountId, opportunityId, onLogActivi
     queryFn: () =>
       opportunityId
         ? listActivitiesByOpportunity(opportunityId!)
+        : projectId
+        ? listActivitiesByProject(projectId!)
         : listActivitiesByAccount(accountId!),
-    enabled: selfFetch && !!(opportunityId || accountId),
+    enabled: selfFetch && !!(opportunityId || projectId || accountId),
     staleTime: 5 * 60 * 1000,
   });
 

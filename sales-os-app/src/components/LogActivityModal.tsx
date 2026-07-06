@@ -12,6 +12,8 @@ interface Props {
   onClose: () => void;
   accountId?: string;
   opportunityId?: string;
+  projectId?: string;
+  projectName?: string;
   currentUserId?: string;
   onCreated?: () => void;
 }
@@ -49,6 +51,8 @@ export default function LogActivityModal({
   onClose,
   accountId,
   opportunityId,
+  projectId,
+  projectName,
   currentUserId,
   onCreated,
 }: Props) {
@@ -112,6 +116,7 @@ export default function LogActivityModal({
     await logActivity({
       account_id: resolvedAccountId,
       opportunity_id: opportunityId,
+      project_id: projectId,
       user_id: userId || undefined,
       activity_type: activityType,
       activity_date: new Date(activityDate).toISOString(),
@@ -125,6 +130,9 @@ export default function LogActivityModal({
     queryClient.invalidateQueries({ queryKey: ["activities", "account", resolvedAccountId] });
     if (opportunityId) {
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
+    }
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "project", projectId] });
     }
     queryClient.invalidateQueries({ queryKey: ["reminders"] });
     onCreated?.();
@@ -232,6 +240,17 @@ export default function LogActivityModal({
                 }}
               >
                 Linked to this opportunity
+              </Box>
+            )}
+            {projectId && (
+              <Box
+                sx={{
+                  px: 1.5, py: 1, borderRadius: "0.75rem", fontSize: "10px", fontWeight: 900,
+                  textTransform: "uppercase", letterSpacing: "0.05em",
+                  bgcolor: "#eff6ff", color: "primary.main",
+                }}
+              >
+                {projectName ? `Project: ${projectName}` : "Linked to this project"}
               </Box>
             )}
             <TextField

@@ -44,6 +44,20 @@ class ActivityService:
         total = self.repository.count_by_opportunity(opportunity_id)
         return items, total
 
+    def list_by_project(
+        self,
+        project_id: uuid.UUID,
+        *,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[Activity], int]:
+        if not self.repository.project_exists(project_id):
+            raise NotFoundError(f"Project {project_id} not found")
+        offset = (page - 1) * page_size
+        items = self.repository.list_by_project(project_id, offset=offset, limit=page_size)
+        total = self.repository.count_by_project(project_id)
+        return items, total
+
     def log_activity(
         self,
         data: ActivityCreate,

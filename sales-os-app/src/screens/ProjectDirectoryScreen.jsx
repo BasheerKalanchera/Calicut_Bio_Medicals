@@ -11,6 +11,7 @@ import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSourc
 import { listProducts } from "../services/products";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
+import ActivityTimeline from "../components/ActivityTimeline";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 const CACHE_TTL_MS = 30_000;
@@ -34,7 +35,7 @@ function setCache(key, data) {
   projectListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef }) {
+function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLogActivityRef }) {
   const { userProfile } = useAuth();
   const [opps, setOpps] = useState([]);
   const [oppsLoading, setOppsLoading] = useState(true);
@@ -270,6 +271,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef }) {
               </div>
             )}
           </div>
+
+          {/* Activity */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <ActivityTimeline projectId={p.id} onLogActivity={() => openLogActivityRef?.current?.()} />
+          </div>
         </div>
       </div>
 
@@ -426,7 +432,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef }) {
   );
 }
 
-export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef, refreshOppsRef }) {
+export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef, refreshOppsRef, onSelectProject, openLogActivityRef, resetDetailRef }) {
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -535,6 +541,16 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
   };
   if (openCreateRef) openCreateRef.current = openCreateProject;
 
+  // Called by DemoApp.tsx's navigate() when leaving this screen via the sidebar —
+  // this screen stays mounted (hidden via CSS) rather than unmounting like
+  // Customer360Screen/OpportunityDetailScreen, so its own detail-mode state
+  // doesn't reset for free and needs this explicit nudge from the parent.
+  if (resetDetailRef) resetDetailRef.current = () => {
+    setSelectedProject(null);
+    setEditingProject(null);
+    onSelectProject?.(null);
+  };
+
   const handleCreateProject = async () => {
     if (!newProjectAccountId) throw new Error("Account is required");
     if (!newProjectName.trim()) throw new Error("Project name is required");
@@ -572,6 +588,7 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
     projectListCache.clear();
     fetchProjects({ background: true });
     setSelectedProject(null);
+    onSelectProject?.(null);
     onDetailModeChange?.(false);
   };
 
@@ -585,9 +602,10 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
       <>
         <ProjectDetailView
           project={selectedProject}
-          onBack={() => { setSelectedProject(null); onDetailModeChange?.(false); }}
+          onBack={() => { setSelectedProject(null); onSelectProject?.(null); onDetailModeChange?.(false); }}
           onEdit={() => openEditProject(selectedProject)}
           refreshOppsRef={refreshOppsRef}
+          openLogActivityRef={openLogActivityRef}
         />
         <FormModal
           isOpen={editingProject !== null}
@@ -681,7 +699,7 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
               {projects.map((p) => (
                 <div
                   key={p.id}
-                  onClick={() => { setSelectedProject(p); onDetailModeChange?.(true); }}
+                  onClick={() => { setSelectedProject(p); onSelectProject?.(p); onDetailModeChange?.(true); }}
                   className="bg-white py-3 px-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
                 >
                   <div className="flex gap-3">

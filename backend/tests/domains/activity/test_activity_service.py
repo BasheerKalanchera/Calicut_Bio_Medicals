@@ -3,6 +3,7 @@ Unit tests for ActivityService and ReminderService.
 
 Repository is fully mocked — no DB required. Tests cover:
   - ActivityService.list_by_account: NotFoundError on missing account, pagination
+  - ActivityService.list_by_project: NotFoundError on missing project, pagination
   - ActivityService.log_activity: BR-ACT-01 (account exists), opportunity validation,
     user_id defaults to created_by when omitted
   - ReminderService.list_for_user: include_completed filter, pagination
@@ -45,8 +46,11 @@ def _make_activity_repo() -> MagicMock:
     repo = MagicMock(spec=ActivityRepository)
     repo.account_exists.return_value = True
     repo.opportunity_exists.return_value = True
+    repo.project_exists.return_value = True
     repo.list_by_account.return_value = []
     repo.count_by_account.return_value = 0
+    repo.list_by_project.return_value = []
+    repo.count_by_project.return_value = 0
     return repo
 
 
@@ -130,6 +134,48 @@ class TestListByAccount:
         svc.list_by_account(ACCOUNT_ID, page=1, page_size=10)
 
         repo.list_by_account.assert_called_once_with(ACCOUNT_ID, offset=0, limit=10)
+
+
+# ---------------------------------------------------------------------------
+# ActivityService.list_by_project
+# ---------------------------------------------------------------------------
+
+class TestListByProject:
+    def test_raises_not_found_when_project_missing(self):
+        repo = _make_activity_repo()
+        repo.project_exists.return_value = False
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        with pytest.raises(NotFoundError):
+            svc.list_by_project(PROJECT_ID, page=1, page_size=50)
+
+    def test_returns_items_and_total(self):
+        repo = _make_activity_repo()
+        activities = [_make_activity(project_id=PROJECT_ID), _make_activity(id=uuid.uuid4(), project_id=PROJECT_ID)]
+        repo.list_by_project.return_value = activities
+        repo.count_by_project.return_value = 2
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        items, total = svc.list_by_project(PROJECT_ID, page=1, page_size=50)
+
+        assert items == activities
+        assert total == 2
+
+    def test_calculates_offset_from_page(self):
+        repo = _make_activity_repo()
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        svc.list_by_project(PROJECT_ID, page=3, page_size=20)
+
+        repo.list_by_project.assert_called_once_with(PROJECT_ID, offset=40, limit=20)
+
+    def test_page_1_has_zero_offset(self):
+        repo = _make_activity_repo()
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        svc.list_by_project(PROJECT_ID, page=1, page_size=10)
+
+        repo.list_by_project.assert_called_once_with(PROJECT_ID, offset=0, limit=10)
 
 
 # ---------------------------------------------------------------------------

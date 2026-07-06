@@ -2,18 +2,31 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Reminders "Completed" tab bug fix is IMPLEMENTED and guard-green
-(pytest/ruff clean on `backend/app/domains/activity/repository.py`),
-NOT YET COMMITTED.** `ReminderRepository.list_for_user`/`count_for_user`
-had `include_completed` as additive (True = no filter = pending+completed
-mixed) instead of exclusive. Fixed to `Reminder.is_completed ==
-include_completed` in both methods — now a real True/False split, matching
-the existing binary Pending/Completed toggle in `NextActionsScreen.tsx`
-exactly. No frontend/service/router changes needed (param name and contract
-unchanged). Basheer explicitly chose this minimal fix over two bigger
-alternatives discussed: renaming the param, and a larger redesign (show all
-reminders + a search/filter bar by account name/reminder text/overdue) —
-the redesign remains a possible future direction, not adopted now.
+**Reminders "Completed" tab bug fix landed as `39ff781`** (committed since
+last update — `include_completed` is now a real True/False filter, see
+"Done in prior sessions" table below).
+
+**Activity logging on Project Details is IMPLEMENTED and guard-green
+(pytest 267/268 — only pre-existing unrelated failure; ruff clean; `npx tsc
+--noEmit` clean; `npm run lint` clean), NOT YET COMMITTED.** 9 files, backend
++ frontend. Full detail in "Files in flight" below. Needs Basheer's live E2E
+on the shared dev DB before commit (new `GET /projects/{id}/activities`
+endpoint + a new UI path that writes real `Activity`/`Reminder` rows, which
+are immutable — verify carefully).
+
+**Design decision made during this work, worth remembering:** rather than
+adding a third independent `LogActivityModal` mount inside
+`ProjectDirectoryScreen.jsx` (which would have deepened the exact
+already-flagged "+LOG/+LEAD duplication" deferred item), Basheer chose to
+extend `DemoApp.tsx`'s existing header `+Log` button — already
+context-sensitive for Customer360/OpportunityDetail — to also cover Project
+Detail. This required lifting `selectedProject` state up into `DemoApp.tsx`
+(new `onSelectProject` callback + `openLogActivityRef`, mirroring the
+`onDetailModeChange`/`refreshOppsRef` idiom already used in this exact file)
+instead of adding local modal state to `ProjectDirectoryScreen.jsx`. This is
+a partial step toward the "Consolidate +LOG/+LEAD" deferred item below —
+Customer360Screen.tsx and OpportunityDetailScreen.tsx still have their own
+separate modal mounts, untouched.
 
 **Next up after this is committed:** reconfirm the July 10/13 freeze/demo
 timeline before starting the 4 remaining §9 migration files, then resume the
@@ -45,6 +58,8 @@ per-file ritual. See "Next step" and "Notes / decisions" below.
 | Backend concurrency fix (48 `async def` → `def`)      | `2bb41b4`   | Fixed the real root cause of Activity-tab/general screen-load slowness — see "Backend concurrency fix" below |
 | `Customer360Screen.tsx` graduation                    | `a0ef2e4`   | §9 fully-migrated table + `check-no-tailwind.js` GRANDFATHERED removal              |
 | `OpportunityDetailScreen.tsx` BR-OP port + 4-tab prefetch | `2f7e074` | BR-OP-02/03/05 status gates, Overview display, Reactivation Overdue badge, always-mounted Products/Splits/Stakeholders/Activity prefetch |
+| `OpportunityPipelineScreen.tsx` Reactivation Overdue badge | `349a41e` | Last piece of the BR-OP status-gate rollout (all 3 opportunity-facing screens now done) |
+| `ReminderRepository.list_for_user`/`count_for_user` fix    | `39ff781` | `include_completed` changed from additive to exclusive filter — Next Actions "Completed" tab no longer shows pending rows too |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -231,31 +246,20 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   would need a new join if that's the intent). Frontend would replace
   `NextActionsScreen.tsx`'s `ToggleButtonGroup` with a search field + status
   filter. Not started.
-- **Add Activity logging to Project Details screen.** Only the Project
-  Details (360-equivalent) view, mirroring the pattern on `Customer360Screen.tsx`
-  and `OpportunityDetailScreen.tsx`. Backend already supports it (`project_id`
-  is a first-class field on `ActivityCreate` already, nothing currently uses
-  it). Needs: (1) `projectId` prop on `LogActivityModal.tsx`; (2) a
-  `listActivitiesByProject` service function; (3) `ActivityTimeline` +
-  trigger + scoped modal inside `ProjectDirectoryScreen.jsx`'s detail mode.
-  `ProjectDirectoryScreen.jsx` is one of the 5 pending §9 migration files —
-  decide at build time whether to add this before or after its MUI migration.
-- **Consolidate +LOG / +LEAD into context-sensitive global buttons (defer,
-  do not bundle with the item above).** Today 3 independent `LogActivityModal`
-  mounts (`DemoApp.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`)
-  plus `QuickLeadModal` mounted globally. Basheer's proposal: single global
-  instance per modal, context-sensitive to whatever detail screen is in view.
-  **Why worth doing eventually:** duplication is exactly what let a real
-  defect (manual `.then()` vs `useQuery`) go unnoticed until a fidelity audit
-  caught it — fewer copies means fewer places for behavior to drift. This is
-  the same underlying concern Basheer raised about consolidating Opportunity
-  editing into `OpportunityDetailScreen.tsx` only (discussed 2026-07-06,
-  redirected as out of scope for now — "don't go into another rabbit hole").
-  **Why not now:** cross-cutting architecture change — requires lifting
-  modal instances into `DemoApp.tsx`, giving it a unified "selected entity"
-  context (no `selectedProject` state exists yet), rerouting each screen's
-  "Log Activity" trigger to bubble up via ref/callback. Touches at least 5
-  files, possibly ADR-worthy. Sequence after the MUI migration backlog.
+- **Consolidate +LOG / +LEAD into context-sensitive global buttons — now
+  PARTIALLY DONE, not fully.** Was: 3 independent `LogActivityModal` mounts
+  (`DemoApp.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`).
+  During the Project Details activity-logging build (2026-07-06, see "Files
+  in flight"), Project Detail was wired into `DemoApp.tsx`'s existing header
+  `+Log` button instead of adding a 4th independent mount — `DemoApp.tsx` now
+  has `selectedProject` state + `onSelectProject`/`openLogActivityRef`
+  plumbing, proving the "lift state into DemoApp" approach works in practice.
+  **Still remaining:** `Customer360Screen.tsx` and `OpportunityDetailScreen.tsx`
+  still each have their own separate `LogActivityModal` mount, untouched —
+  retrofitting those two onto the same header-button pattern is the rest of
+  this item. Same rationale as before (duplication is what let the
+  `.then()`-vs-`useQuery` defect go unnoticed). Sequence after the MUI
+  migration backlog, or opportunistically if either file is touched again.
 - **Extract a shared `BackButton` component.** The circular `IconButton` +
   `ArrowBackIcon` control (§6.6 item 7) is inlined in `OpportunityDetailScreen.tsx`
   and will be needed unchanged in `Customer360Screen.tsx`, `ProductCatalogScreen.jsx`,
@@ -309,11 +313,62 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**1 file, implemented and guard-green (pytest/ruff clean), NOT YET COMMITTED:**
+**9 files, implemented and guard-green (pytest 267/268 — pre-existing unrelated
+failure only; ruff clean; `tsc --noEmit` clean; `npm run lint` clean),
+NOT YET COMMITTED — Activity logging on Project Details:**
 
-- `backend/app/domains/activity/repository.py` — `ReminderRepository.list_for_user`/
-  `count_for_user`: `include_completed` filter fixed from additive to exclusive
-  (`Reminder.is_completed == include_completed`). See "Current task" above.
+Backend — new project-scoped read path (POST already accepted `project_id`;
+there was no GET-by-project endpoint at all):
+- `backend/app/domains/activity/repository.py` — `ActivityRepository.project_exists`,
+  `list_by_project`, `count_by_project`, mirroring the opportunity-scoped methods.
+- `backend/app/domains/activity/service.py` — `ActivityService.list_by_project`
+  (`NotFoundError` if project missing, same shape as `list_by_opportunity`).
+- `backend/app/domains/activity/router.py` — `GET /projects/{project_id}/activities`.
+- `backend/tests/domains/activity/test_activity_service.py` — `TestListByProject`,
+  mirroring `TestListByAccount` (not-found, items/total, offset calc ×2).
+
+Frontend:
+- `sales-os-app/src/services/activities.ts` — `listActivitiesByProject`.
+- `sales-os-app/src/components/LogActivityModal.tsx` — new `projectId?: string`
+  prop, threaded into the `logActivity` payload (field already existed, unused)
+  and into cache invalidation; new `projectName?: string` prop rendering a
+  "Project: {name}" chip (mirrors the existing "Linked to this opportunity"
+  chip, but shows the actual name — added so it's unambiguous which project
+  an activity logged via the header `+Log` button lands on, not just that
+  some project is linked). The opportunity chip itself is NOT retrofitted to
+  show its name — Basheer's call: do that as part of the full context-sensitive
+  `+Log` consolidation (see deferred item), not bundled in here.
+- `sales-os-app/src/components/ActivityTimeline.tsx` — new `projectId?: string`
+  prop, third branch alongside the existing account/opportunity queryKey/queryFn.
+- `sales-os-app/src/screens/ProjectDirectoryScreen.jsx` — `ProjectDetailView` gets
+  a new "Activity" card (`<ActivityTimeline projectId={p.id} .../>`, same visual
+  pattern as the existing Opportunities card); reports the selected project up
+  via a new `onSelectProject` prop instead of keeping it purely local; new
+  `openLogActivityRef` prop wired to the Activity card's `+Log` trigger; new
+  `resetDetailRef` prop (see stale-state fix below).
+  **Deliberately no local modal or `showLogActivity` state added here** — see
+  the header-consolidation design decision in "Current task" above.
+- `sales-os-app/src/DemoApp.tsx` — new `selectedProject` state (mirrors
+  `selectedAccount`/`selectedOpportunity`, widened to also carry `name` for the
+  chip above), `onSelectProject` handler passed to `ProjectDirectoryScreen`,
+  `openLogActivityRef` (mirrors `refreshOppsRef`), and a third branch in the
+  header `LogActivityModal`'s `accountId`/`projectId`/`projectName`
+  resolution, gated on `projectDetailMode`.
+
+**Stale-detail-view bug found and fixed in the same pass (2026-07-06,
+confirmed by Basheer, pre-existing — not caused by this session's work):**
+`ProjectDirectoryScreen.jsx` stays mounted-but-hidden (CSS `display: none`)
+rather than unmounting like `Customer360Screen`/`OpportunityDetailScreen` (each
+their own conditionally-rendered `view`), so navigating away via the sidebar
+and back re-showed the previously-open project's detail view with the
+Customers/Projects sub-tab header stacked on top of it — `DemoApp.tsx`'s
+`navigate()` reset its own `projectDetailMode`/`selectedProject` copies but had
+no channel to reset the child's local state. Fixed with the same
+parent-invokes-child-ref idiom already used for `openCreateRef`: new
+`projectResetRef` in `DemoApp.tsx`, called from `navigate()`; `ProjectDirectoryScreen.jsx`
+assigns a `resetDetailRef` handler that clears `selectedProject`/`editingProject`
+and calls `onSelectProject?.(null)`. ~10 lines across the 2 files already
+being touched.
 
 **After that commit lands:** resume the per-file migration ritual for the 4 remaining §9 files —
 `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,

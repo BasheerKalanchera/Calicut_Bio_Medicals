@@ -38,6 +38,7 @@ export default function DemoApp() {
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
   const [selectedOpportunity, setSelectedOpportunity] = useState<PipelineOpportunity | null>(null);
+  const [selectedProject, setSelectedProject]   = useState<{ id: string; name: string; account: { id: string; name: string } } | null>(null);
   const [accountSubTab, setAccountSubTab]       = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
   const [showQuickLead, setShowQuickLead]       = useState(false);
@@ -47,6 +48,9 @@ export default function DemoApp() {
   const customerAccountUpdateRef = useRef<((a: unknown) => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
   const projectOppsRefreshRef    = useRef<(() => void) | null>(null);
+  const projectResetRef          = useRef<(() => void) | null>(null);
+  const openLogActivityRef       = useRef<(() => void) | null>(null);
+  openLogActivityRef.current = () => setShowLogActivity(true);
 
   function handleSelectAccount(account: { id: string; name: string }) {
     setSelectedAccount(account);
@@ -72,8 +76,10 @@ export default function DemoApp() {
     setView(viewId);
     setSelectedAccount(null);
     setSelectedOpportunity(null);
+    setSelectedProject(null);
     setIsSidebarOpen(false);
     setProjectDetailMode(false);
+    projectResetRef.current?.();
   }
 
   return (
@@ -331,6 +337,9 @@ export default function DemoApp() {
                 onDetailModeChange={setProjectDetailMode}
                 openCreateRef={projectCreateRef}
                 refreshOppsRef={projectOppsRefreshRef}
+                onSelectProject={setSelectedProject}
+                openLogActivityRef={openLogActivityRef}
+                resetDetailRef={projectResetRef}
               />
             </Box>
           </Box>
@@ -391,9 +400,12 @@ export default function DemoApp() {
         accountId={
           view === "customer360" ? selectedAccount?.id :
           view === "opportunityDetail" ? selectedOpportunity?.account.id :
+          projectDetailMode ? selectedProject?.account.id :
           undefined
         }
         opportunityId={view === "opportunityDetail" ? selectedOpportunity?.id : undefined}
+        projectId={projectDetailMode ? selectedProject?.id : undefined}
+        projectName={projectDetailMode ? selectedProject?.name : undefined}
         currentUserId={(userProfile as any)?.id}
       />
     </Box>
