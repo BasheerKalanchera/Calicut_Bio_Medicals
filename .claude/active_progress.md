@@ -2,16 +2,22 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**`OpportunityPipelineScreen.tsx` Reactivation Overdue badge is IMPLEMENTED
-and guard-green (tsc/lint clean), NOT YET COMMITTED.** Added to both the
-Kanban `DealCard` and List `ListRow`, reusing the already-built
-`utils/opportunityStatus.ts`'s `isReactivationOverdue` helper — no new
-logic, just wired in (11 lines, one file). This is the **last item in the
-BR-OP status-gate rollout** — Customer360Screen.tsx (`1bc4678`),
-OpportunityDetailScreen.tsx (`2f7e074`), and now Pipeline are all done.
+**Reminders "Completed" tab bug fix is IMPLEMENTED and guard-green
+(pytest/ruff clean on `backend/app/domains/activity/repository.py`),
+NOT YET COMMITTED.** `ReminderRepository.list_for_user`/`count_for_user`
+had `include_completed` as additive (True = no filter = pending+completed
+mixed) instead of exclusive. Fixed to `Reminder.is_completed ==
+include_completed` in both methods — now a real True/False split, matching
+the existing binary Pending/Completed toggle in `NextActionsScreen.tsx`
+exactly. No frontend/service/router changes needed (param name and contract
+unchanged). Basheer explicitly chose this minimal fix over two bigger
+alternatives discussed: renaming the param, and a larger redesign (show all
+reminders + a search/filter bar by account name/reminder text/overdue) —
+the redesign remains a possible future direction, not adopted now.
 
-`OpportunityDetailScreen.tsx` BR-OP-02/03/05 port + 4-tab prefetch landed as
-`2f7e074`.
+**Next up after this is committed:** reconfirm the July 10/13 freeze/demo
+timeline before starting the 4 remaining §9 migration files, then resume the
+per-file ritual. See "Next step" and "Notes / decisions" below.
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
@@ -119,19 +125,14 @@ ref (seed once per `editingOpp.id`, reset the guard on close) — confirmed
 present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 
 ## Next step
-1. Basheer commits the current `OpportunityDetailScreen.tsx` + `types/api.ts`
-   work (see "Current task" above).
-2. **`OpportunityPipelineScreen.tsx` Reactivation Overdue badge** — the one
-   remaining piece of the BR-OP status-gate rollout. Small, low-risk.
-3. Resume the per-file migration ritual (below) for the remaining screens —
+1. Reconfirm the July 10/13 freeze/demo timeline with Basheer before starting
+   the 4 fully-untouched files (`CustomerDirectoryScreen.jsx`,
+   `ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`,
+   `ErrorBoundary.jsx`) — bigger lift than anything done so far (styling +
+   fetch + `.jsx`→`.tsx` all at once, no precedent file has been this file
+   type yet).
+2. Resume the per-file migration ritual (below) for those remaining screens —
    end with an honest §9 update per column, not a blanket "done."
-4. The July 10/13 freeze/demo timeline question (see Notes / decisions)
-   still hasn't been explicitly reconfirmed with Basheer since it was first
-   flagged — worth raising before starting the 4 fully-untouched files
-   (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-   `ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`), since those are a
-   bigger lift than anything done so far (styling + fetch + `.jsx`→`.tsx`
-   all at once, no precedent file has been this file type yet).
 
 **Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
@@ -216,16 +217,20 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   CustomerDirectoryScreen.jsx, QuickLeadModal.tsx, LogActivityModal.tsx.
   Deferred because it's a shared-service-layer change, not part of any
   single file's migration. Post-migration, medium priority.
-- **Reminders "Completed" tab shows pending items too — backend bug, not a
-  migration regression.** Bug in `backend/app/domains/activity/repository.py`
-  (`list_for_user`/`count_for_user`, lines ~74-104). `include_completed` is
-  additive, not a filter: `False` correctly filters to pending-only, but
-  `True` applies no filter at all and returns pending+completed together —
-  no way today to request "only completed." Needs a product/architecture
-  decision on fix shape (three options discussed: change `include_completed`'s
-  semantics; replace with explicit `status: pending|completed|all`; filter
-  client-side). Live shared Supabase dev DB — verify carefully once a
-  direction is picked. Not blocking, unrelated to the frontend migration.
+- **Next Actions screen: show everything + search/filter bar (by account/hospital
+  name, reminder text, overdue, completed), replacing the Pending/Completed
+  toggle.** Raised by Basheer 2026-07-06 as an alternative to the include_completed
+  bug fix; not adopted now (see "Current task" — minimal fix chosen instead).
+  Would need: backend query params on `/reminders` (`search`, `status:
+  pending|completed|overdue|all`) built server-side to preserve pagination
+  (reminders never get deleted — BR-ACT-04 mandates one per Activity, so the
+  dataset grows indefinitely); `Reminder`/`Activity` already joins `Account`
+  (`lazy="joined"`), so hospital-name search is cheap. Open question never
+  resolved: what "name" should match — reminder_text, opportunity name, or a
+  stakeholder/contact name (no such field exists on Reminder/Activity today —
+  would need a new join if that's the intent). Frontend would replace
+  `NextActionsScreen.tsx`'s `ToggleButtonGroup` with a search field + status
+  filter. Not started.
 - **Add Activity logging to Project Details screen.** Only the Project
   Details (360-equivalent) view, mirroring the pattern on `Customer360Screen.tsx`
   and `OpportunityDetailScreen.tsx`. Backend already supports it (`project_id`
@@ -304,18 +309,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**1 file, implemented and guard-green (tsc/lint clean), NOT YET COMMITTED:**
+**1 file, implemented and guard-green (pytest/ruff clean), NOT YET COMMITTED:**
 
-- `sales-os-app/src/screens/OpportunityPipelineScreen.tsx` — "Reactivation
-  Overdue" badge added to Kanban `DealCard` and List `ListRow` (11 lines),
-  reusing `utils/opportunityStatus.ts`'s `isReactivationOverdue`. Last piece
-  of the BR-OP status-gate rollout across all 3 opportunity-facing screens.
+- `backend/app/domains/activity/repository.py` — `ReminderRepository.list_for_user`/
+  `count_for_user`: `include_completed` filter fixed from additive to exclusive
+  (`Reminder.is_completed == include_completed`). See "Current task" above.
 
-**After that commit lands:** resume the per-file migration ritual for the 4
-remaining §9 files — `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+**After that commit lands:** resume the per-file migration ritual for the 4 remaining §9 files —
+`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
 `ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`. Three need the full
 triple-conversion (styling + React Query + `.jsx`→`.tsx`); `ErrorBoundary.jsx`
 is styling + `.jsx`→`.tsx` only, per §9's own row ("N/A, no fetching") —
-confirm this holds once actually touched. Also worth raising the July 10/13
-freeze/demo timeline question again before starting these (see Notes /
-decisions) — bigger lift than anything done so far.
+confirm this holds once actually touched. Raise the July 10/13 freeze/demo
+timeline question again before starting these (see Notes / decisions) —
+bigger lift than anything done so far.

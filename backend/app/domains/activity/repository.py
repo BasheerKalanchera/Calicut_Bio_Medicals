@@ -95,12 +95,11 @@ class ReminderRepository(BaseRepository[Reminder]):
         stmt = (
             select(Reminder)
             .where(Reminder.assigned_to_user_id == user_id)
+            .where(Reminder.is_completed == include_completed)
             .order_by(Reminder.due_date.asc())
             .offset(offset)
             .limit(limit)
         )
-        if not include_completed:
-            stmt = stmt.where(Reminder.is_completed == False)  # noqa: E712
         return list(self.db.scalars(stmt).all())
 
     def count_for_user(
@@ -110,8 +109,7 @@ class ReminderRepository(BaseRepository[Reminder]):
         include_completed: bool = False,
     ) -> int:
         stmt = select(func.count(Reminder.id)).where(
-            Reminder.assigned_to_user_id == user_id
+            Reminder.assigned_to_user_id == user_id,
+            Reminder.is_completed == include_completed,
         )
-        if not include_completed:
-            stmt = stmt.where(Reminder.is_completed == False)  # noqa: E712
         return self.db.scalar(stmt) or 0
