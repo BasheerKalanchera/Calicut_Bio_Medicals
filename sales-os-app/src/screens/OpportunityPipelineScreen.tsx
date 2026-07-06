@@ -14,6 +14,7 @@ import {
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listPipeline } from "../services/opportunities";
 import { listStages, listUsers } from "../services/masterData";
+import { isReactivationOverdue } from "../utils/opportunityStatus";
 import type { PipelineOpportunity } from "../types/api";
 
 interface Props {
@@ -100,6 +101,11 @@ function DealCard({
           </Box>
         )}
       </Box>
+      {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
+        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "9px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+          Reactivation Overdue
+        </Box>
+      )}
       <Box sx={{ fontSize: "9px", color: "#9ca3af", fontWeight: 500 }}>
         {opp.owner.display_name}
       </Box>
@@ -190,6 +196,11 @@ function ListRow({
               {opp.stage.stage_name}
             </Box>
             <StatusBadge code={opp.status.status_code} />
+            {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
+              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                Reactivation Overdue
+              </Box>
+            )}
             {opp.indicative_value && (
               <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: "#059669" }}>
                 ₹{parseFloat(opp.indicative_value).toFixed(1)}L

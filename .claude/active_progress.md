@@ -2,20 +2,16 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**`OpportunityDetailScreen.tsx` BR-OP-02/03/05 port + 4-tab prefetch is
-IMPLEMENTED and guard-green (tsc/lint clean), NOT YET COMMITTED.** Basheer is
-committing this one manually — the drafted commit message was handed to him
-in conversation (not stored here verbatim; regenerate from the diff if
-needed for a future session). Files: `sales-os-app/src/types/api.ts`,
-`sales-os-app/src/screens/OpportunityDetailScreen.tsx`. See "Files in
-flight" below for the full description.
+**`OpportunityPipelineScreen.tsx` Reactivation Overdue badge is IMPLEMENTED
+and guard-green (tsc/lint clean), NOT YET COMMITTED.** Added to both the
+Kanban `DealCard` and List `ListRow`, reusing the already-built
+`utils/opportunityStatus.ts`'s `isReactivationOverdue` helper — no new
+logic, just wired in (11 lines, one file). This is the **last item in the
+BR-OP status-gate rollout** — Customer360Screen.tsx (`1bc4678`),
+OpportunityDetailScreen.tsx (`2f7e074`), and now Pipeline are all done.
 
-**Next action once that commit lands:** `OpportunityPipelineScreen.tsx` —
-add the "Reactivation Overdue" badge to the Kanban `DealCard` and List
-`ListRow`, reusing the already-built `utils/opportunityStatus.ts`'s
-`isReactivationOverdue` helper (no new logic, just wire it in). This is the
-last item in the BR-OP status-gate rollout (Customer360Screen.tsx and
-OpportunityDetailScreen.tsx are both done).
+`OpportunityDetailScreen.tsx` BR-OP-02/03/05 port + 4-tab prefetch landed as
+`2f7e074`.
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
@@ -42,6 +38,7 @@ OpportunityDetailScreen.tsx are both done).
 | `Customer360Screen.tsx` Commit B                      | `1bc4678`   | React Query (ADR-032) + BR-OP-02/03/05 status-gated fields + activity_count field + Round 1 activity query optimization (account-scoped only — see Deferred) |
 | Backend concurrency fix (48 `async def` → `def`)      | `2bb41b4`   | Fixed the real root cause of Activity-tab/general screen-load slowness — see "Backend concurrency fix" below |
 | `Customer360Screen.tsx` graduation                    | `a0ef2e4`   | §9 fully-migrated table + `check-no-tailwind.js` GRANDFATHERED removal              |
+| `OpportunityDetailScreen.tsx` BR-OP port + 4-tab prefetch | `2f7e074` | BR-OP-02/03/05 status gates, Overview display, Reactivation Overdue badge, always-mounted Products/Splits/Stakeholders/Activity prefetch |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -307,28 +304,18 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**2 files, implemented and guard-green (tsc/lint clean), NOT YET COMMITTED —
-Basheer is committing this one manually (drafted message handed to him in
-conversation, not stored here):**
+**1 file, implemented and guard-green (tsc/lint clean), NOT YET COMMITTED:**
 
-- `sales-os-app/src/types/api.ts` — added `hold_reason_id`, `reactivation_date`,
-  `loss_reason_id`, `competitor_name` to the `PipelineOpportunity` interface
-  (`po_number` already existed).
-- `sales-os-app/src/screens/OpportunityDetailScreen.tsx` — BR-OP-02/03/05
-  status-gated fields ported from Customer360Screen.tsx (validation +
-  payload wiring + `applyOppPatch`); Overview tab now shows Hold Reason +
-  Reactivation Date / Loss Reason + Competitor Name directly (no need to
-  open Edit to see them); "Reactivation Overdue" badge next to the status
-  badge; 4-tab always-mounted prefetch (Products/Splits/Stakeholders/
-  Activity) replacing the previous all-lazy-on-click behavior.
+- `sales-os-app/src/screens/OpportunityPipelineScreen.tsx` — "Reactivation
+  Overdue" badge added to Kanban `DealCard` and List `ListRow` (11 lines),
+  reusing `utils/opportunityStatus.ts`'s `isReactivationOverdue`. Last piece
+  of the BR-OP status-gate rollout across all 3 opportunity-facing screens.
 
-**After that commit lands:**
-1. **`OpportunityPipelineScreen.tsx` badge** — add "Reactivation Overdue" to
-   the Kanban `DealCard` and List `ListRow`, using the already-built
-   `utils/opportunityStatus.ts`'s `isReactivationOverdue` — no new logic.
-2. Resume the per-file migration ritual for the 4 remaining §9 files —
-   `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-   `ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`. Three need the full
-   triple-conversion (styling + React Query + `.jsx`→`.tsx`); `ErrorBoundary.jsx`
-   is styling + `.jsx`→`.tsx` only, per §9's own row ("N/A, no fetching") —
-   confirm this holds once actually touched.
+**After that commit lands:** resume the per-file migration ritual for the 4
+remaining §9 files — `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`. Three need the full
+triple-conversion (styling + React Query + `.jsx`→`.tsx`); `ErrorBoundary.jsx`
+is styling + `.jsx`→`.tsx` only, per §9's own row ("N/A, no fetching") —
+confirm this holds once actually touched. Also worth raising the July 10/13
+freeze/demo timeline question again before starting these (see Notes /
+decisions) — bigger lift than anything done so far.
