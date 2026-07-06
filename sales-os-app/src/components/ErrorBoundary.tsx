@@ -1,12 +1,24 @@
-import { Component } from "react";
+import { Component, type ReactNode } from "react";
+import { Box, Typography, Button } from "@mui/material";
 
-export default class ErrorBoundary extends Component {
-  constructor(props) {
+const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
@@ -14,25 +26,26 @@ export default class ErrorBoundary extends Component {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl font-black">
+      <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", p: 4, bgcolor: "background.default" }}>
+        <Box sx={{ bgcolor: "#fff", borderRadius: "1.5rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 4, maxWidth: "28rem", width: "100%", textAlign: "center" }}>
+          <Box sx={{ width: 64, height: 64, bgcolor: "#fef2f2", color: "#ef4444", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "center", mx: "auto", mb: 2, fontSize: "1.5rem", fontWeight: 900 }}>
             !
-          </div>
-          <h2 className="font-extrabold text-xl text-gray-800 mb-2">
+          </Box>
+          <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#1f2937", mb: 1 }}>
             Something went wrong
-          </h2>
-          <p className="text-sm text-gray-500 mb-6">
+          </Typography>
+          <Typography sx={{ fontSize: "0.875rem", color: "#6b7280", mb: 3 }}>
             {this.state.error?.message || "An unexpected error occurred."}
-          </p>
-          <button
+          </Typography>
+          <Button
+            variant="contained"
             onClick={() => this.setState({ hasError: false, error: null })}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98]"
+            sx={{ px: 3, py: 1.25, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em" }}
           >
             Try Again
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
     );
   }
 }

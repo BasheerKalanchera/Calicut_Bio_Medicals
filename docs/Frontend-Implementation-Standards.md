@@ -330,6 +330,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `OpportunityDetailScreen.tsx` | `src/screens/OpportunityDetailScreen.tsx` |
 | `DemoApp.tsx` | `src/DemoApp.tsx` |
 | `Customer360Screen.tsx` | `src/screens/Customer360Screen.tsx` |
+| `ErrorBoundary.tsx` | `src/components/ErrorBoundary.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -350,7 +351,6 @@ Commit A/B split surfaced that these were asserting more than they checked):
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
-| `ErrorBoundary.jsx` | `src/components/` | Tailwind (pending) | N/A (no fetching) | `.jsx` (pending) |
 
 **Out of scope — do not migrate:**
 
