@@ -23,9 +23,11 @@ import {
   updateOpportunityStakeholder,
 } from "../services/opportunities";
 import { listStakeholders } from "../services/accounts";
-import { listStages, listStatuses, listUsers } from "../services/masterData";
+import { listActivitiesByOpportunity } from "../services/activities";
+import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
 import type { PipelineOpportunity, PipelinePage } from "../types/api";
+import { isReactivationOverdue } from "../utils/opportunityStatus";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
@@ -53,6 +55,8 @@ interface StageOption { id: string; stage_name: string; stage_code: string; disp
 interface StatusOption { id: string; status_code: string; status_name: string; is_terminal?: boolean }
 interface UserOption { id: string; display_name: string }
 interface ProductOption { id: string; name: string }
+interface HoldReasonOption { id: string; reason_name: string }
+interface LossReasonOption { id: string; reason_name: string; reason_code: string }
 interface StakeholderOption { id: string; name: string; designation?: string | null }
 
 // ---------------------------------------------------------------------------
@@ -133,7 +137,14 @@ function EmptyPlaceholder({ message }: { message: string }) {
 // ---------------------------------------------------------------------------
 // Overview tab
 // ---------------------------------------------------------------------------
-function OverviewTab({ opp, onEdit }: { opp: PipelineOpportunity; onEdit: () => void }) {
+function OverviewTab({
+  opp, onEdit, holdReasonName, lossReasonName,
+}: {
+  opp: PipelineOpportunity;
+  onEdit: () => void;
+  holdReasonName?: string;
+  lossReasonName?: string;
+}) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2.5 }}>
@@ -159,6 +170,18 @@ function OverviewTab({ opp, onEdit }: { opp: PipelineOpportunity; onEdit: () => 
           <Field label="PO Number"        value={opp.po_number ?? null} />
           <Field label="SBU"              value={opp.sbu.name} />
         </Box>
+        {opp.status.status_code === "ON_HOLD" && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+            <Field label="Hold Reason"       value={holdReasonName ?? null} />
+            <Field label="Reactivation Date" value={opp.reactivation_date ?? null} />
+          </Box>
+        )}
+        {opp.status.status_code === "LOST" && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Field label="Loss Reason"      value={lossReasonName ?? null} />
+            <Field label="Competitor Name"  value={opp.competitor_name ?? null} />
+          </Box>
+        )}
         <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f9fafb" }}>
           <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
             Created
@@ -188,6 +211,7 @@ function ProductsTab({
   const { data: items, isLoading } = useQuery({
     queryKey: ["opp-items", opportunityId],
     queryFn:  () => listOpportunityItems(opportunityId),
+    staleTime: 5 * 60 * 1000,
   });
 
   const [editing, setEditing]     = useState(false);
@@ -425,6 +449,7 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
   const { data: splits, isLoading } = useQuery({
     queryKey: ["opp-splits", opportunityId],
     queryFn:  () => listOpportunitySplits(opportunityId),
+    staleTime: 5 * 60 * 1000,
   });
 
   const [editing, setEditing]       = useState(false);
@@ -622,6 +647,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   const { data: links, isLoading } = useQuery({
     queryKey: ["opp-stakeholders", opportunityId],
     queryFn:  () => listOpportunityStakeholders(opportunityId),
+    staleTime: 5 * 60 * 1000,
   });
 
   const [showAdd, setShowAdd]                         = useState(false);
@@ -930,6 +956,14 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   const [editClosureDate, setEditClosureDate]     = useState("");
   const [editDemoStart, setEditDemoStart]         = useState("");
   const [editPoNumber, setEditPoNumber]           = useState("");
+  // Status-gated fields (BR-OP-02/03/05) — same pattern as Customer360Screen.tsx.
+  // Hold/Loss fields are only sent when the effective status is ON_HOLD/LOST (see
+  // handleUpdateOpp), so editing an opportunity without touching its status never
+  // overwrites a previously-set hold/loss reason with an unrelated blank field.
+  const [editHoldReasonId, setEditHoldReasonId]   = useState("");
+  const [editReactivationDate, setEditReactivationDate] = useState("");
+  const [editLossReasonId, setEditLossReasonId]   = useState("");
+  const [editCompetitorName, setEditCompetitorName] = useState("");
 
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
@@ -969,14 +1003,58 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     staleTime: Infinity,
   });
 
-  // BR-FIN-03: once items exist, Indicative Value is calculated, not manual —
-  // shares ProductsTab's query key/cache, so visiting Products first costs nothing extra.
+  // Needed on the Edit Opportunity modal (BR-OP-03/05 status gates) AND on the
+  // Overview tab's read-only display whenever the opportunity is currently in
+  // that status (to resolve hold_reason_id/loss_reason_id to a display name).
+  const { data: holdReasons = [] } = useQuery({
+    queryKey: ["holdReasons"],
+    enabled:  showEditOpp || opp.status.status_code === "ON_HOLD",
+    queryFn:  async () => (await listHoldReasons()) as HoldReasonOption[],
+    staleTime: Infinity,
+  });
+
+  const { data: lossReasons = [] } = useQuery({
+    queryKey: ["lossReasons"],
+    enabled:  showEditOpp || opp.status.status_code === "LOST",
+    queryFn:  async () => (await listLossReasons()) as LossReasonOption[],
+    staleTime: Infinity,
+  });
+
+  // Always-mounted prefetch queries for Products/Splits/Stakeholders/Activity — same
+  // query keys each tab component already owns internally (ProductsTab/SplitsTab/
+  // StakeholdersTab/ActivityTimeline), so by the time the user clicks a tab, its data
+  // is already in cache instead of only starting to fetch on that click. staleTime
+  // matches each tab's own query so a click shortly after mount doesn't trigger a
+  // silent background refetch. This is the same pattern already used for the four
+  // list tabs on Customer360Screen.tsx (ADR-032, Commit B).
+  //
+  // BR-FIN-03: this query doubles as the Indicative-Value-is-calculated-once-items-
+  // exist source (hasItems below) — was previously gated to showEditOpp only for that
+  // purpose; now always-mounted, which only makes hasItems more consistently correct.
   const { data: oppItems } = useQuery({
     queryKey: ["opp-items", opp.id],
-    enabled:  showEditOpp,
     queryFn:  () => listOpportunityItems(opp.id),
+    staleTime: 5 * 60 * 1000,
   });
   const hasItems = (oppItems?.length ?? 0) > 0;
+
+  useQuery({
+    queryKey: ["opp-splits", opp.id],
+    queryFn:  () => listOpportunitySplits(opp.id),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useQuery({
+    queryKey: ["opp-stakeholders", opp.id],
+    queryFn:  () => listOpportunityStakeholders(opp.id),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useQuery({
+    queryKey: ["activities", "opportunity", opp.id],
+    queryFn:  () => listActivitiesByOpportunity(opp.id),
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Patches local state and the always-mounted Pipeline screen's cache directly —
   // we already have the new values in hand, so there's no need to invalidate and
@@ -999,12 +1077,35 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     setEditClosureDate(opp.expected_closure_date ?? "");
     setEditDemoStart(opp.demo_start_date ?? "");
     setEditPoNumber(opp.po_number ?? "");
+    setEditHoldReasonId(opp.hold_reason_id ?? "");
+    setEditReactivationDate(opp.reactivation_date ?? "");
+    setEditLossReasonId(opp.loss_reason_id ?? "");
+    setEditCompetitorName(opp.competitor_name ?? "");
     setShowEditOpp(true);
   };
 
   const handleUpdateOpp = async () => {
     if (!editName.trim()) throw new Error("Name is required");
-    await patchOpportunity(opp.id, {
+    // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
+    // while the selected status is On Hold/Lost, since the form has no way to know
+    // whether they were already satisfied by a previous save (see field declarations).
+    const newStatus = oppStatuses.find((s) => s.id === editStatusId);
+    const selectedLossReason = lossReasons.find((r) => r.id === editLossReasonId);
+    if (newStatus?.status_code === "ON_HOLD") {
+      if (!editHoldReasonId) throw new Error("Hold Reason is required to put an opportunity On-Hold");
+      if (!editReactivationDate) throw new Error("Reactivation Date is required to put an opportunity On-Hold");
+      if (editReactivationDate <= new Date().toISOString().slice(0, 10)) throw new Error("Reactivation Date must be a future date");
+    }
+    if (newStatus?.status_code === "LOST") {
+      if (!editLossReasonId) throw new Error("Loss Reason is required to mark an opportunity as Lost");
+      if (selectedLossReason?.reason_code === "COMPETITOR_WON" && !editCompetitorName.trim()) {
+        throw new Error("Competitor Name is required when Loss Reason is 'Competitor Won'");
+      }
+    }
+    if (newStatus?.status_code === "WON" && !editPoNumber.trim()) {
+      throw new Error("PO Number is required to mark an opportunity as Won");
+    }
+    const payload: Record<string, unknown> = {
       name:                  editName.trim(),
       stage_id:              editStageId  || undefined,
       status_id:             editStatusId || undefined,
@@ -1014,11 +1115,19 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       expected_closure_date: editClosureDate || null,
       demo_start_date:       editDemoStart   || null,
       po_number:             editPoNumber.trim() || null,
-    });
+    };
+    if (newStatus?.status_code === "ON_HOLD") {
+      payload.hold_reason_id = editHoldReasonId;
+      payload.reactivation_date = editReactivationDate;
+    }
+    if (newStatus?.status_code === "LOST") {
+      payload.loss_reason_id = editLossReasonId;
+      if (editCompetitorName.trim()) payload.competitor_name = editCompetitorName.trim();
+    }
+    await patchOpportunity(opp.id, payload);
     // Reconstruct nested objects from loaded master data so header + strip +
     // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
     const newStage  = stages.find((s) => s.id === editStageId);
-    const newStatus = oppStatuses.find((s) => s.id === editStatusId);
     const newOwner  = users.find((u) => u.id === editOwnerId);
     applyOppPatch({
       name:                  editName.trim(),
@@ -1027,11 +1136,18 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       expected_closure_date: editClosureDate || null,
       demo_start_date:       editDemoStart   || null,
       po_number:             editPoNumber.trim() || null,
+      hold_reason_id:        newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
+      reactivation_date:     newStatus?.status_code === "ON_HOLD" ? editReactivationDate : opp.reactivation_date,
+      loss_reason_id:        newStatus?.status_code === "LOST" ? editLossReasonId : opp.loss_reason_id,
+      competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
     });
   };
+
+  const editStatusCode = oppStatuses.find((s) => s.id === editStatusId)?.status_code;
+  const editLossReasonCode = lossReasons.find((r) => r.id === editLossReasonId)?.reason_code;
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
@@ -1051,6 +1167,11 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               <StageBadge name={opp.stage.stage_name} />
               <StatusBadge code={opp.status.status_code} name={opp.status.status_name} />
+              {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
+                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                  Reactivation Overdue
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>
@@ -1125,7 +1246,14 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
 
       {/* Tab content */}
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2 }}>
-        {activeTab === "overview"     && <OverviewTab opp={opp} onEdit={openEditOpp} />}
+        {activeTab === "overview"     && (
+          <OverviewTab
+            opp={opp}
+            onEdit={openEditOpp}
+            holdReasonName={holdReasons.find((r) => r.id === opp.hold_reason_id)?.reason_name}
+            lossReasonName={lossReasons.find((r) => r.id === opp.loss_reason_id)?.reason_name}
+          />
+        )}
         {activeTab === "products"     && (
           <ProductsTab
             opportunityId={opp.id}
@@ -1136,7 +1264,7 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
         {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} accountId={opp.account.id} />}
         {activeTab === "activity"     && (
-          <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} />
+          <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} />
         )}
       </Box>
 
@@ -1198,6 +1326,35 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
         <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {editStatusCode === "ON_HOLD" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+            <TextField
+              select label="Hold Reason *" value={editHoldReasonId} onChange={(e) => setEditHoldReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {holdReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            <TextField
+              label="Reactivation Date *" type="date" value={editReactivationDate} onChange={(e) => setEditReactivationDate(e.target.value)}
+              fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+        )}
+        {editStatusCode === "LOST" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <TextField
+              select label="Loss Reason *" value={editLossReasonId} onChange={(e) => setEditLossReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {lossReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            {editLossReasonCode === "COMPETITOR_WON" && (
+              <TextField label="Competitor Name *" value={editCompetitorName} onChange={(e) => setEditCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
+            )}
+          </Box>
+        )}
       </FormModal>
 
       <LogActivityModal

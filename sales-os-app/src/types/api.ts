@@ -2342,6 +2342,10 @@ export interface PipelineOpportunity {
   demo_start_date: string | null;
   demo_end_date: string | null;
   po_number: string | null;
+  hold_reason_id: string | null;
+  reactivation_date: string | null;
+  loss_reason_id: string | null;
+  competitor_name: string | null;
   created_at: string;
   updated_at: string;
   account: { id: string; name: string };
