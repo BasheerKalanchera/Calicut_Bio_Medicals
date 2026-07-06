@@ -21,7 +21,7 @@ def _get_service(
 
 
 @router.get("")
-async def list_products(
+def list_products(
     search: str | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
     page: int = Query(default=1, ge=1),
@@ -52,7 +52,7 @@ async def list_products(
 
 
 @router.get("/count")
-async def count_products(
+def count_products(
     search: str | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -62,7 +62,7 @@ async def count_products(
 
 
 @router.post("", status_code=201)
-async def create_product(
+def create_product(
     body: ProductCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProductService = Depends(_get_service),  # noqa: B008
@@ -72,7 +72,7 @@ async def create_product(
 
 
 @router.get("/{product_id}")
-async def get_product(
+def get_product(
     product_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProductService = Depends(_get_service),  # noqa: B008
@@ -82,7 +82,7 @@ async def get_product(
 
 
 @router.put("/{product_id}")
-async def update_product(
+def update_product(
     product_id: uuid.UUID,
     body: ProductUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

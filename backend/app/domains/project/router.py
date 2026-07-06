@@ -26,7 +26,7 @@ def _get_service(
 
 
 @router.get("/projects")
-async def list_all_projects(
+def list_all_projects(
     search: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
@@ -48,7 +48,7 @@ async def list_all_projects(
 
 
 @router.get("/accounts/{account_id}/projects")
-async def list_projects(
+def list_projects(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProjectService = Depends(_get_service),  # noqa: B008
@@ -58,7 +58,7 @@ async def list_projects(
 
 
 @router.post("/accounts/{account_id}/projects", status_code=201)
-async def create_project(
+def create_project(
     account_id: uuid.UUID,
     body: ProjectCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -71,7 +71,7 @@ async def create_project(
 
 
 @router.put("/projects/{project_id}")
-async def update_project(
+def update_project(
     project_id: uuid.UUID,
     body: ProjectUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

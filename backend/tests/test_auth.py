@@ -78,8 +78,7 @@ class TestExtractUserId:
 
 
 class TestGetCurrentUser:
-    @pytest.mark.asyncio
-    async def test_valid_authentication(self):
+    def test_valid_authentication(self):
         from app.api.dependencies import get_current_user
 
         mock_user = MagicMock()
@@ -90,41 +89,36 @@ class TestGetCurrentUser:
         mock_db.get.return_value = mock_user
 
         token = _create_token()
-        result = await get_current_user(authorization=f"Bearer {token}", db=mock_db)
+        result = get_current_user(authorization=f"Bearer {token}", db=mock_db)
 
         assert result is mock_user
         mock_db.get.assert_called_once()
 
-    @pytest.mark.asyncio
-    async def test_missing_header_raises(self):
+    def test_missing_header_raises(self):
         from app.api.dependencies import get_current_user
 
         with pytest.raises(AuthenticationError, match="Authorization header required"):
-            await get_current_user(authorization=None, db=MagicMock())
+            get_current_user(authorization=None, db=MagicMock())
 
-    @pytest.mark.asyncio
-    async def test_empty_header_raises(self):
+    def test_empty_header_raises(self):
         from app.api.dependencies import get_current_user
 
         with pytest.raises(AuthenticationError, match="Authorization header required"):
-            await get_current_user(authorization="", db=MagicMock())
+            get_current_user(authorization="", db=MagicMock())
 
-    @pytest.mark.asyncio
-    async def test_wrong_scheme_raises(self):
+    def test_wrong_scheme_raises(self):
         from app.api.dependencies import get_current_user
 
         with pytest.raises(AuthenticationError, match="Invalid authentication scheme"):
-            await get_current_user(authorization="Basic abc123", db=MagicMock())
+            get_current_user(authorization="Basic abc123", db=MagicMock())
 
-    @pytest.mark.asyncio
-    async def test_bearer_without_token_raises(self):
+    def test_bearer_without_token_raises(self):
         from app.api.dependencies import get_current_user
 
         with pytest.raises(AuthenticationError, match="Invalid authentication scheme"):
-            await get_current_user(authorization="Bearer", db=MagicMock())
+            get_current_user(authorization="Bearer", db=MagicMock())
 
-    @pytest.mark.asyncio
-    async def test_user_not_found_raises(self):
+    def test_user_not_found_raises(self):
         from app.api.dependencies import get_current_user
 
         mock_db = MagicMock()
@@ -132,10 +126,9 @@ class TestGetCurrentUser:
 
         token = _create_token()
         with pytest.raises(UserNotFoundError, match="not found"):
-            await get_current_user(authorization=f"Bearer {token}", db=mock_db)
+            get_current_user(authorization=f"Bearer {token}", db=mock_db)
 
-    @pytest.mark.asyncio
-    async def test_inactive_user_raises(self):
+    def test_inactive_user_raises(self):
         from app.api.dependencies import get_current_user
 
         mock_user = MagicMock()
@@ -145,14 +138,13 @@ class TestGetCurrentUser:
 
         token = _create_token()
         with pytest.raises(UserNotFoundError, match="inactive"):
-            await get_current_user(authorization=f"Bearer {token}", db=mock_db)
+            get_current_user(authorization=f"Bearer {token}", db=mock_db)
 
-    @pytest.mark.asyncio
-    async def test_invalid_token_raises(self):
+    def test_invalid_token_raises(self):
         from app.api.dependencies import get_current_user
 
         with pytest.raises(InvalidTokenError):
-            await get_current_user(authorization="Bearer garbage.token.here", db=MagicMock())
+            get_current_user(authorization="Bearer garbage.token.here", db=MagicMock())
 
 
 class TestExceptionHierarchy:

@@ -7,7 +7,7 @@ from app.db.session import get_db, set_rls_context
 from app.domains.organization.models import UserProfile
 
 
-async def get_current_user(
+def get_current_user(
     authorization: str | None = Header(None),
     db: Session = Depends(get_db),  # noqa: B008
 ) -> UserProfile:

@@ -9,7 +9,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.get("/me")
-async def get_me(
+def get_me(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
 ) -> APIResponse[UserMeResponse]:
     return APIResponse(

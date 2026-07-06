@@ -36,7 +36,7 @@ def _get_workspace_service(
 
 
 @router.get("")
-async def list_accounts(
+def list_accounts(
     search: str | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),  # noqa: B008
     page: int = Query(default=1, ge=1),
@@ -65,7 +65,7 @@ async def list_accounts(
 
 
 @router.get("/counts")
-async def get_account_counts(
+def get_account_counts(
     ids: str = Query(..., description="Comma-separated account UUIDs"),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: AccountService = Depends(_get_service),  # noqa: B008
@@ -76,7 +76,7 @@ async def get_account_counts(
 
 
 @router.get("/{account_id}")
-async def get_account(
+def get_account(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: AccountService = Depends(_get_service),  # noqa: B008
@@ -94,7 +94,7 @@ async def get_account(
 
 
 @router.post("", status_code=201)
-async def create_account(
+def create_account(
     body: AccountCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: AccountService = Depends(_get_service),  # noqa: B008
@@ -106,7 +106,7 @@ async def create_account(
 
 
 @router.put("/{account_id}")
-async def update_account(
+def update_account(
     account_id: uuid.UUID,
     body: AccountUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -117,7 +117,7 @@ async def update_account(
 
 
 @router.get("/{account_id}/workspace")
-async def get_workspace(
+def get_workspace(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: WorkspaceService = Depends(_get_workspace_service),  # noqa: B008

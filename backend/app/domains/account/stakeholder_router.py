@@ -25,7 +25,7 @@ def _get_service(
 
 
 @router.get("/accounts/{account_id}/stakeholders")
-async def list_stakeholders(
+def list_stakeholders(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: StakeholderService = Depends(_get_service),  # noqa: B008
@@ -37,7 +37,7 @@ async def list_stakeholders(
 
 
 @router.post("/accounts/{account_id}/stakeholders", status_code=201)
-async def create_stakeholder(
+def create_stakeholder(
     account_id: uuid.UUID,
     body: StakeholderCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -50,7 +50,7 @@ async def create_stakeholder(
 
 
 @router.put("/stakeholders/{stakeholder_id}")
-async def update_stakeholder(
+def update_stakeholder(
     stakeholder_id: uuid.UUID,
     body: StakeholderUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

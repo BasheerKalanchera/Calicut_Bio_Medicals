@@ -41,7 +41,7 @@ def _get_service(
 # ------------------------------------------------------------------
 
 @router.get("/opportunities/pipeline")
-async def list_pipeline(
+def list_pipeline(
     account_id: uuid.UUID | None = Query(None),
     stage_id: uuid.UUID | None = Query(None),
     status_id: uuid.UUID | None = Query(None),
@@ -75,7 +75,7 @@ async def list_pipeline(
 # ------------------------------------------------------------------
 
 @router.get("/accounts/{account_id}/opportunities")
-async def list_opportunities(
+def list_opportunities(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
@@ -89,7 +89,7 @@ async def list_opportunities(
 # ------------------------------------------------------------------
 
 @router.post("/accounts/{account_id}/opportunities", status_code=201)
-async def create_opportunity(
+def create_opportunity(
     account_id: uuid.UUID,
     body: OpportunityCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -106,7 +106,7 @@ async def create_opportunity(
 # ------------------------------------------------------------------
 
 @router.patch("/opportunities/{opportunity_id}")
-async def update_opportunity(
+def update_opportunity(
     opportunity_id: uuid.UUID,
     body: OpportunityUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -123,7 +123,7 @@ async def update_opportunity(
 # ------------------------------------------------------------------
 
 @router.get("/opportunities/{opportunity_id}/items")
-async def list_opportunity_items(
+def list_opportunity_items(
     opportunity_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
@@ -133,7 +133,7 @@ async def list_opportunity_items(
 
 
 @router.put("/opportunities/{opportunity_id}/items")
-async def replace_opportunity_items(
+def replace_opportunity_items(
     opportunity_id: uuid.UUID,
     body: ItemsBulkUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -144,7 +144,7 @@ async def replace_opportunity_items(
 
 
 @router.post("/opportunities/{opportunity_id}/items", status_code=201)
-async def add_opportunity_item(
+def add_opportunity_item(
     opportunity_id: uuid.UUID,
     body: OpportunityItemCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -155,7 +155,7 @@ async def add_opportunity_item(
 
 
 @router.delete("/opportunity-items/{item_id}", status_code=204)
-async def delete_opportunity_item(
+def delete_opportunity_item(
     item_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
@@ -168,7 +168,7 @@ async def delete_opportunity_item(
 # ------------------------------------------------------------------
 
 @router.get("/opportunities/{opportunity_id}/splits")
-async def list_splits(
+def list_splits(
     opportunity_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
@@ -178,7 +178,7 @@ async def list_splits(
 
 
 @router.put("/opportunities/{opportunity_id}/splits")
-async def replace_splits(
+def replace_splits(
     opportunity_id: uuid.UUID,
     body: SplitsBulkUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -193,7 +193,7 @@ async def replace_splits(
 # ------------------------------------------------------------------
 
 @router.get("/opportunities/{opportunity_id}/stakeholders")
-async def list_opportunity_stakeholders(
+def list_opportunity_stakeholders(
     opportunity_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
@@ -209,7 +209,7 @@ async def list_opportunity_stakeholders(
 # partial-update use case. Use the single-item POST/PATCH/DELETE endpoints
 # below instead; this bulk endpoint has no current caller (see repository.py
 # replace_stakeholders).
-async def replace_opportunity_stakeholders(
+def replace_opportunity_stakeholders(
     opportunity_id: uuid.UUID,
     body: StakeholdersBulkUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -220,7 +220,7 @@ async def replace_opportunity_stakeholders(
 
 
 @router.post("/opportunities/{opportunity_id}/stakeholders", status_code=201)
-async def add_opportunity_stakeholder(
+def add_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     body: StakeholderLinkCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -231,7 +231,7 @@ async def add_opportunity_stakeholder(
 
 
 @router.delete("/opportunities/{opportunity_id}/stakeholders/{stakeholder_id}", status_code=204)
-async def remove_opportunity_stakeholder(
+def remove_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     stakeholder_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -241,7 +241,7 @@ async def remove_opportunity_stakeholder(
 
 
 @router.patch("/opportunities/{opportunity_id}/stakeholders/{stakeholder_id}")
-async def update_opportunity_stakeholder(
+def update_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     stakeholder_id: uuid.UUID,
     body: StakeholderLinkUpdate,

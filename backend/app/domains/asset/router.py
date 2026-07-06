@@ -20,7 +20,7 @@ def _get_service(db: Session = Depends(get_db)) -> InstalledAssetService:  # noq
 
 
 @router.get("/accounts/{account_id}/installed-assets")
-async def list_installed_assets(
+def list_installed_assets(
     account_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: InstalledAssetService = Depends(_get_service),  # noqa: B008
@@ -30,7 +30,7 @@ async def list_installed_assets(
 
 
 @router.post("/accounts/{account_id}/installed-assets", status_code=201)
-async def create_installed_asset(
+def create_installed_asset(
     account_id: uuid.UUID,
     body: InstalledAssetCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -41,7 +41,7 @@ async def create_installed_asset(
 
 
 @router.put("/installed-assets/{asset_id}")
-async def update_installed_asset(
+def update_installed_asset(
     asset_id: uuid.UUID,
     body: InstalledAssetUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

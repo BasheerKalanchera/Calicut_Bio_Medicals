@@ -69,7 +69,7 @@ def _fetch_entities(entity_name: MasterDataEntity, db: Session) -> list[Any]:
 
 
 @router.get("/master-data/{entity_name}")
-async def list_master_data(
+def list_master_data(
     entity_name: MasterDataEntity,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
@@ -89,7 +89,7 @@ def _get_user_service(
 
 
 @router.get("/users")
-async def list_users(
+def list_users(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

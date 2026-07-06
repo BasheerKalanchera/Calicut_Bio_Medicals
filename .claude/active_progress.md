@@ -3,12 +3,51 @@ _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
 **Backend-wide concurrency fix for the Activity tab slowness (and every
-other screen): convert all 48 `async def` signatures that block on sync I/O
-to plain `def`.** `Customer360Screen.tsx` Commit B (React Query, ADR-032)
-landed this session as its own commit (see ledger below — hash to be
+other screen) is IMPLEMENTED and guard-green, NOT YET COMMITTED — awaiting
+Basheer's retest.** All 48 `async def` signatures that blocked on sync I/O
+are now plain `def`. `Customer360Screen.tsx` Commit B (React Query, ADR-032)
+landed earlier this session as its own commit (see ledger below — hash to be
 recorded in the next trim pass, per this file's established convention).
 Its two tracking-doc updates were deliberately **held back, not
 committed** — see "Held back" immediately below.
+
+### Async→def conversion — DONE, awaiting retest confirmation
+The true count was **48 across 11 files**, not 47+1 as first estimated —
+the first pass missed `domains/account/stakeholder_router.py` (3 handlers)
+and the top-level `app/api/routers/` files (`auth.py`'s `get_me`,
+`master_data.py`'s 2 handlers, `health.py`'s 2 handlers — the latter two do
+no DB I/O at all, converted anyway for uniformity, zero behavior change).
+Full list: `api/dependencies.py` (1), `api/routers/auth.py` (1),
+`api/routers/master_data.py` (2), `api/routers/health.py` (2),
+`domains/account/router.py` (6), `domains/account/stakeholder_router.py`
+(3), `domains/activity/router.py` (6), `domains/opportunity/router.py`
+(15), `domains/project/router.py` (4), `domains/asset/router.py` (3),
+`domains/product/router.py` (5). Verified via `grep -c '^async def'` before
+and after — 48 converted, only `main.py`'s legitimate `async def lifespan`
+remains in the whole `app/` tree.
+
+**One real regression found and fixed during guard-green:**
+`tests/test_auth.py::TestGetCurrentUser` directly `await`ed
+`get_current_user` in all 8 of its tests (bypassing FastAPI's DI). Only
+`test_valid_authentication` (the one success-path test) actually broke —
+`TypeError: object MagicMock can't be used in 'await' expression`, since the
+function now returns a plain value, not a coroutine. The other 7 tests
+happened to still pass because they raise before the `await` ever matters —
+those were silently-wrong-but-passing, not evidence the change was safe.
+Fixed: removed `@pytest.mark.asyncio`/`async`/`await` from all 8 tests to
+match the new sync signature (only file in the repo using
+`pytest.mark.asyncio` — confirmed via repo-wide grep before editing).
+Reran full suite after: 263 passed, 1 failed (the pre-existing unrelated
+`test_product_service.py` failure — see Deferred), same as before this
+change. `python -c "import app.main"` also confirmed the app still imports
+and starts cleanly.
+
+**Next action: Basheer restarts the backend and retests the Activity tab**
+(and ideally general screen-load feel) to confirm requests now run in
+parallel instead of queuing. If confirmed: commit this as its own dedicated
+commit (separate from the frontend bucket), then land the "held back"
+tracking-doc commit above. If not confirmed: reopen investigation — don't
+guess a third variant blind, get a fresh trace first.
 
 ### Held back (working tree only, not committed)
 - `docs/Frontend-Implementation-Standards.md` — adds `Customer360Screen.tsx`
@@ -26,7 +65,7 @@ which is permissive, not broken). **Commit these two together, in their own
 small commit, once the Activity tab issue is actually resolved and
 reverified — not bundled into any other commit before that.**
 
-### Activity tab performance — investigation history and next step
+### Activity tab performance — investigation history (for context)
 Symptom: clicking the Activity tab on `Customer360Screen.tsx` loads visibly
 slower than the other four tabs. Two rounds of fixes already landed (in the
 Commit B commit above) — **neither resolved it, confirmed by Basheer's
@@ -47,44 +86,19 @@ retest 2026-07-06:**
    pattern used by the other four tabs. Also **not confirmed to resolve the
    symptom** — Basheer retested 2026-07-06: "still slow."
 
-**Root cause now suspected: a backend-wide concurrency bug, not anything
-specific to Activity.** Verified by reading the code, not guessed:
-`backend/app/db/session.py` uses plain sync SQLAlchemy (`create_engine`/
-`sessionmaker`, no `asyncpg`), yet **every one of the 47 route handlers**
-across all 6 domain routers is declared `async def`, and there is **zero**
-`await` anywhere in `backend/app/domains/`. An `async def` handler that
-calls blocking sync I/O runs directly on Uvicorn's single event-loop thread,
-so concurrent requests serialize instead of overlapping. Customer360Screen
+**Root cause (see "Async→def conversion" above for the actual fix applied):**
+a backend-wide concurrency bug, not anything specific to Activity. Verified
+by reading the code, not guessed: `backend/app/db/session.py` uses plain
+sync SQLAlchemy (`create_engine`/`sessionmaker`, no `asyncpg`), yet every
+route handler in the app was declared `async def` with zero `await`
+anywhere in `backend/app/domains/`. An `async def` handler that calls
+blocking sync I/O runs directly on Uvicorn's single event-loop thread, so
+concurrent requests serialize instead of overlapping. Customer360Screen
 fires ~12 requests on mount; whichever lands last in that queue looks slow
 regardless of its own query cost — explaining why rounds 1 and 2 couldn't
-fix it alone. `app/api/dependencies.py::get_current_user` (line 10, a
-dependency on every authenticated endpoint) has the identical bug — a
-blocking `db.get(...)` call inside an `async def` — and would need to
-convert too, or the auth check alone keeps serializing every request
-regardless of the route handler. Capacity checked: `DB_POOL_SIZE=10` +
+fix it alone. Capacity checked before converting: `DB_POOL_SIZE=10` +
 `DB_MAX_OVERFLOW=20` = 30 sync connections vs. FastAPI's default 40-thread
 threadpool — safe headroom for this screen's ~12 concurrent requests.
-
-**Agreed plan (Basheer's call, 2026-07-06 — go straight to the full fix
-rather than a scoped test first):** convert all 48 `async def` signatures
-that block on sync I/O to plain `def`, in one pass:
-1. `app/api/dependencies.py::get_current_user` (line 10) — shared by every
-   authenticated endpoint; has a blocking `db.get(...)` call.
-2. All 47 route handlers across the 6 domain routers — `account/router.py`,
-   `activity/router.py`, `opportunity/router.py`, `project/router.py`,
-   `product/router.py`, `asset/router.py`. Confirmed safe to convert: no
-   streaming responses, websockets, or background tasks anywhere in any of
-   them that would need real `async`; `main.py`/`middleware/
-   correlation_id.py`'s legitimate `await` usage (lifespan/ASGI protocol) is
-   untouched.
-
-**Next action: make all 48 edits, run the full pytest suite + guard-green
-(tsc/lint), then get Basheer's retest/trace result** confirming the
-Activity tab (and ideally other screens' initial-load time) now loads in
-parallel rather than queuing. Once confirmed: commit this as its own
-dedicated commit (separate from the frontend bucket and from the
-"held back" tracking-doc commit above, which still waits on this
-resolving before it lands).
 
 ### Commit B — query-key design (implemented; kept here as reference)
 
@@ -456,8 +470,14 @@ at today's content.
 
 ## Files in flight
 **`Customer360Screen.tsx` Commit B bucket committed this session (hash to be
-recorded in the next trim pass). Only 2 files remain uncommitted, deliberately
-held back:**
+recorded in the next trim pass). The 48-signature async→def conversion is
+IMPLEMENTED and guard-green in the working tree, NOT YET COMMITTED — see
+"Async→def conversion" under "Current task" at the top for the full file
+list (11 files: `api/dependencies.py`, `api/routers/{auth,master_data,
+health}.py`, `domains/{account,account/stakeholder_router,activity,
+opportunity,project,asset,product}.py`) plus `tests/test_auth.py` (fixed
+to match the new sync signature). Only 2 other files remain uncommitted,
+deliberately held back:**
 
 - `docs/Frontend-Implementation-Standards.md` — §9 graduation for
   Customer360Screen.tsx
@@ -469,9 +489,9 @@ see "Current task" at the top. Commit them together, in their own small
 commit, once that's resolved and reverified. Do not bundle them into any
 other commit in the meantime.
 
-**First action of next session: run the full 48-signature async→def
-conversion** (see "Current task" at the top), guard-green, get Basheer's
-retest result, then commit it as its own dedicated commit.
+**First action of next session: get Basheer's retest result for the
+async→def conversion** (see "Current task" at the top), then commit it as
+its own dedicated commit if confirmed.
 
 **After that lands**, per Basheer's explicit sequencing (separate commits,
 not bundled):

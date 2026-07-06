@@ -37,7 +37,7 @@ def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # 
 # ------------------------------------------------------------------
 
 @router.get("/accounts/{account_id}/activities")
-async def list_activities(
+def list_activities(
     account_id: uuid.UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
@@ -57,7 +57,7 @@ async def list_activities(
 
 
 @router.get("/opportunities/{opportunity_id}/activities")
-async def list_opportunity_activities(
+def list_opportunity_activities(
     opportunity_id: uuid.UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
@@ -77,7 +77,7 @@ async def list_opportunity_activities(
 
 
 @router.post("/activities", status_code=201)
-async def log_activity(
+def log_activity(
     body: ActivityCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ActivityService = Depends(_get_activity_service),  # noqa: B008
@@ -93,7 +93,7 @@ async def log_activity(
 # ------------------------------------------------------------------
 
 @router.get("/reminders")
-async def list_reminders(
+def list_reminders(
     include_completed: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
@@ -118,7 +118,7 @@ async def list_reminders(
 
 
 @router.post("/reminders", status_code=201)
-async def create_reminder(
+def create_reminder(
     body: ReminderCreate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ReminderService = Depends(_get_reminder_service),  # noqa: B008
@@ -128,7 +128,7 @@ async def create_reminder(
 
 
 @router.patch("/reminders/{reminder_id}")
-async def patch_reminder(
+def patch_reminder(
     reminder_id: uuid.UUID,
     body: ReminderUpdate,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008

@@ -14,12 +14,12 @@ class VersionResponse(APIResponse[dict]):
 
 
 @router.get("/health")
-async def health_check() -> HealthResponse:
+def health_check() -> HealthResponse:
     return HealthResponse(data={"status": "healthy"})
 
 
 @router.get("/version")
-async def version() -> VersionResponse:
+def version() -> VersionResponse:
     from app.core.config import settings
 
     return VersionResponse(
