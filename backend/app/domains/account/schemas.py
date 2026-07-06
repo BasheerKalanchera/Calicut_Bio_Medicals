@@ -67,6 +67,7 @@ class AccountDetailResponse(AccountResponse):
     project_count: int
     opportunity_count: int
     asset_count: int
+    activity_count: int
 
 
 class AccountCountsEntry(BaseModel):

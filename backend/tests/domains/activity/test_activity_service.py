@@ -99,16 +99,20 @@ class TestListByAccount:
             svc.list_by_account(ACCOUNT_ID, page=1, page_size=50)
 
     def test_returns_items_and_total(self):
+        # total is offset + len(items) — a lower bound, not a real COUNT (see
+        # list_by_account's comment). The authoritative total is
+        # AccountDetailResponse.activity_count, computed alongside the account's
+        # other counts in account/repository.py's get_account_with_counts.
         repo = _make_activity_repo()
         activities = [_make_activity(), _make_activity(id=uuid.uuid4())]
         repo.list_by_account.return_value = activities
-        repo.count_by_account.return_value = 2
         svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
 
         items, total = svc.list_by_account(ACCOUNT_ID, page=1, page_size=50)
 
         assert items == activities
         assert total == 2
+        repo.count_by_account.assert_not_called()
 
     def test_calculates_offset_from_page(self):
         repo = _make_activity_repo()

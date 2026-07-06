@@ -124,6 +124,11 @@ class WorkspaceOpportunity(BaseModel):
     sbu_id: uuid.UUID
     win_probability: Decimal
     indicative_value: Decimal | None
+    po_number: str | None
+    hold_reason_id: uuid.UUID | None
+    reactivation_date: date | None
+    loss_reason_id: uuid.UUID | None
+    competitor_name: str | None
     stage: OpportunityStageNested
     status: OpportunityStatusNested
     owner: OwnerNested

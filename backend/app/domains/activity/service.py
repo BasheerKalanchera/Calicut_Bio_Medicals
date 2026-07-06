@@ -22,7 +22,12 @@ class ActivityService:
             raise NotFoundError(f"Account {account_id} not found")
         offset = (page - 1) * page_size
         items = self.repository.list_by_account(account_id, offset=offset, limit=page_size)
-        total = self.repository.count_by_account(account_id)
+        # No separate COUNT round-trip here (unlike list_by_opportunity below) — the
+        # authoritative total now comes for free from AccountDetailResponse.activity_count
+        # (account/repository.py's get_account_with_counts), computed alongside the
+        # account's other counts in one query. This total is a lower bound only, used
+        # by callers that don't have the account response on hand.
+        total = offset + len(items)
         return items, total
 
     def list_by_opportunity(

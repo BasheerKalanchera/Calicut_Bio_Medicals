@@ -88,6 +88,7 @@ async def get_account(
         "project_count": counts.project_count,
         "opportunity_count": counts.opportunity_count,
         "asset_count": counts.asset_count,
+        "activity_count": counts.activity_count,
     })
     return APIResponse(data=AccountDetailResponse(**base))
 

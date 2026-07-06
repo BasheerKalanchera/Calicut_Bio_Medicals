@@ -7,16 +7,34 @@ interface Props {
   accountId?: string;
   opportunityId?: string;
   onLogActivity?: () => void;
+  // Account-scoped callers can pass the account's own activity_count (already fetched
+  // alongside its other counts, no extra request) instead of relying on this
+  // component's own query for the total — see Customer360Screen.tsx. Opportunity-scoped
+  // callers have no such prefetched count and fall back to the query's own total.
+  totalCount?: number;
+  // When false, this component doesn't run its own fetch for this query — it only
+  // reactively reads whatever's already in the shared React Query cache (still
+  // reflects a live fetch in progress elsewhere, via the query's shared fetchStatus).
+  // Customer360Screen.tsx already runs this exact query at its own always-mounted
+  // top level (needed so its fetch starts at screen mount, same as the other four
+  // tabs, since this component itself only mounts once the Activity tab is clicked).
+  // Having a second, independently-mounting observer here was causing a fresh
+  // network request on every tab click instead of reusing that cached data —
+  // confirmed empirically (Opportunities/Stakeholders never refetch on tab revisit,
+  // Activity always did, even seconds after the parent's fetch had already resolved).
+  // Defaults to true so opportunity-scoped callers (OpportunityDetailScreen.tsx),
+  // which have no such parent-level query, keep fetching exactly as before.
+  selfFetch?: boolean;
 }
 
 // bg/color pairs match the original Tailwind shade names, e.g. VISIT: violet-50 / violet-700
 const TYPE_CONFIG: Record<ActivityType, { icon: string; label: string; bg: string; color: string }> = {
-  VISIT:        { icon: "🏥", label: "Visit",        bg: "#f5f3ff", color: "#6d28d9" },
-  CALL:         { icon: "📞", label: "Call",          bg: "#eff6ff", color: "#1d4ed8" },
-  EMAIL:        { icon: "✉️",  label: "Email",         bg: "#f0f9ff", color: "#0369a1" },
-  MEETING:      { icon: "🤝", label: "Meeting",       bg: "#ecfdf5", color: "#047857" },
-  NOTE:         { icon: "📝", label: "Note",          bg: "#fffbeb", color: "#b45309" },
-  MANAGER_NOTE: { icon: "📋", label: "Manager Note",  bg: "#f3f4f6", color: "#4b5563" },
+  VISIT: { icon: "🏥", label: "Visit", bg: "#f5f3ff", color: "#6d28d9" },
+  CALL: { icon: "📞", label: "Call", bg: "#eff6ff", color: "#1d4ed8" },
+  EMAIL: { icon: "✉️", label: "Email", bg: "#f0f9ff", color: "#0369a1" },
+  MEETING: { icon: "🤝", label: "Meeting", bg: "#ecfdf5", color: "#047857" },
+  NOTE: { icon: "📝", label: "Note", bg: "#fffbeb", color: "#b45309" },
+  MANAGER_NOTE: { icon: "📋", label: "Manager Note", bg: "#f3f4f6", color: "#4b5563" },
 };
 
 function formatDate(iso: string) {
@@ -92,7 +110,7 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
   );
 }
 
-export default function ActivityTimeline({ accountId, opportunityId, onLogActivity }: Props) {
+export default function ActivityTimeline({ accountId, opportunityId, onLogActivity, totalCount, selfFetch = true }: Props) {
   const queryClient = useQueryClient();
 
   const queryKey = opportunityId
@@ -105,10 +123,12 @@ export default function ActivityTimeline({ accountId, opportunityId, onLogActivi
       opportunityId
         ? listActivitiesByOpportunity(opportunityId!)
         : listActivitiesByAccount(accountId!),
-    enabled: !!(opportunityId || accountId),
+    enabled: selfFetch && !!(opportunityId || accountId),
+    staleTime: 5 * 60 * 1000,
   });
 
   const activities = data?.items ?? [];
+  const total = totalCount ?? data?.total;
 
   function handleLogActivity() {
     onLogActivity?.();
@@ -118,7 +138,7 @@ export default function ActivityTimeline({ accountId, opportunityId, onLogActivi
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
         <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
-          Activity ({data?.total ?? "…"})
+          Activity ({total ?? "…"})
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Button
@@ -169,9 +189,9 @@ export default function ActivityTimeline({ accountId, opportunityId, onLogActivi
           {activities.map((a) => (
             <ActivityItem key={a.id} activity={a} />
           ))}
-          {(data?.total ?? 0) > activities.length && (
+          {(total ?? 0) > activities.length && (
             <Box sx={{ textAlign: "center", fontSize: "10px", color: "#9ca3af", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", pt: 1 }}>
-              Showing {activities.length} of {data?.total}
+              Showing {activities.length} of {total}
             </Box>
           )}
         </Box>

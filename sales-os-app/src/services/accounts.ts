@@ -93,7 +93,8 @@ export async function createOpportunity(accountId: number, data: Record<string, 
 }
 
 export async function updateOpportunity(opportunityId: number, data: Record<string, unknown>): Promise<unknown> {
-  const response = await api.put(`/opportunities/${opportunityId}`, data);
+  // Backend only exposes PATCH here (partial update) — see opportunity/router.py.
+  const response = await api.patch(`/opportunities/${opportunityId}`, data);
   return response.data.data;
 }
 

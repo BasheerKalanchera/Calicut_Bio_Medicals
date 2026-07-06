@@ -228,6 +228,10 @@ class PipelineOpportunity(BaseModel):
     demo_start_date: date | None
     demo_end_date: date | None
     po_number: str | None
+    loss_reason_id: uuid.UUID | None
+    competitor_name: str | None
+    hold_reason_id: uuid.UUID | None
+    reactivation_date: date | None
     created_at: datetime
     updated_at: datetime
     account: AccountNested

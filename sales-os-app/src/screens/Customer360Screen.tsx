@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Box,
@@ -25,13 +26,13 @@ import {
   listOpportunities,
   createOpportunity,
   updateOpportunity,
-  listOpportunityItems,
   addOpportunityItem,
   deleteOpportunityItem,
   listInstalledAssets,
   createInstalledAsset,
   updateInstalledAsset,
 } from "../services/accounts";
+import { listOpportunityItems } from "../services/opportunities";
 import {
   listZones,
   listProjectStatuses,
@@ -39,8 +40,12 @@ import {
   listStages,
   listStatuses,
   listUsers,
+  listLossReasons,
+  listHoldReasons,
 } from "../services/masterData";
 import { listProducts } from "../services/products";
+import { listActivitiesByAccount } from "../services/activities";
+import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
@@ -54,52 +59,15 @@ interface Props {
 }
 
 const TABS = [
-  { id: "overview",      label: "Overview" },
-  { id: "activity",      label: "Activity" },
-  { id: "stakeholders",  label: "Stakeholders" },
-  { id: "projects",      label: "Projects" },
+  { id: "overview", label: "Overview" },
+  { id: "activity", label: "Activity" },
+  { id: "stakeholders", label: "Stakeholders" },
+  { id: "projects", label: "Projects" },
   { id: "opportunities", label: "Opportunities" },
-  { id: "installed",     label: "Installed Base" },
+  { id: "installed", label: "Installed Base" },
 ];
 
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
-
-// ---------------------------------------------------------------------------
-// Module-level SWR cache for tab data — keyed by accountId, persists across
-// Customer360Screen mounts so revisiting a customer shows all tabs instantly.
-// ---------------------------------------------------------------------------
-const TAB_CACHE_TTL_MS = 30_000;
-const tabDataCache = new Map<string, { data: any; fetchedAt: number }>();
-const accountDataCache = new Map<string, { data: any; fetchedAt: number }>();
-
-function getTabCached(accountId: string, tab: string): any | null {
-  const key = `${accountId}:${tab}`;
-  const entry = tabDataCache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.fetchedAt > TAB_CACHE_TTL_MS) {
-    tabDataCache.delete(key);
-    return null;
-  }
-  return entry.data;
-}
-
-function setTabCache(accountId: string, tab: string, data: any) {
-  tabDataCache.set(`${accountId}:${tab}`, { data, fetchedAt: Date.now() });
-}
-
-function getCachedAccount(accountId: string): any | null {
-  const entry = accountDataCache.get(accountId);
-  if (!entry) return null;
-  if (Date.now() - entry.fetchedAt > TAB_CACHE_TTL_MS) {
-    accountDataCache.delete(accountId);
-    return null;
-  }
-  return entry.data;
-}
-
-function setCachedAccount(accountId: string, data: any) {
-  accountDataCache.set(accountId, { data, fetchedAt: Date.now() });
-}
 
 // ---------------------------------------------------------------------------
 // Small presentational components
@@ -107,9 +75,9 @@ function setCachedAccount(accountId: string, data: any) {
 function PayerBadge({ behavior }: { behavior?: string | null }) {
   if (!behavior) return null;
   const styles: Record<string, { bg: string; color: string; border: string }> = {
-    GOOD:        { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
+    GOOD: { bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
     PROBLEMATIC: { bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
-    UNKNOWN:     { bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" },
+    UNKNOWN: { bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" },
   };
   const s = styles[behavior] ?? styles.UNKNOWN;
   return (
@@ -122,8 +90,8 @@ function PayerBadge({ behavior }: { behavior?: string | null }) {
 function SentimentBadge({ sentiment }: { sentiment?: string | null }) {
   if (!sentiment) return null;
   const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
-    PROMOTER:  { label: "Promoter",  bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-    NEUTRAL:   { label: "Neutral",   bg: "#fffbeb", color: "#b45309", border: "#fde68a" },
+    PROMOTER: { label: "Promoter", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
+    NEUTRAL: { label: "Neutral", bg: "#fffbeb", color: "#b45309", border: "#fde68a" },
     DETRACTOR: { label: "Detractor", bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" },
   };
   const c = config[sentiment] ?? { label: sentiment, bg: "#f9fafb", color: "#4b5563", border: "#e5e7eb" };
@@ -163,9 +131,9 @@ function LoadingRow({ label = "Loading..." }: { label?: string }) {
 // ---------------------------------------------------------------------------
 function OverviewTab({ account, onEdit }: { account: any; onEdit: () => void }) {
   const fields = [
-    { label: "Account Name",    value: account.name },
-    { label: "Zone",            value: account.zone?.name || "—" },
-    { label: "Payer Behavior",  value: <PayerBadge behavior={account.payer_behavior} /> },
+    { label: "Account Name", value: account.name },
+    { label: "Zone", value: account.zone?.name || "—" },
+    { label: "Payer Behavior", value: <PayerBadge behavior={account.payer_behavior} /> },
   ];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -328,6 +296,11 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit }: { opportunities: any
                 <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
                   {o.status.status_name}
                 </Box>
+                {isReactivationOverdue(o.status?.status_code, o.reactivation_date) && (
+                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
+                    Reactivation Overdue
+                  </Box>
+                )}
                 <Button
                   onClick={() => onEdit(o)}
                   sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
@@ -374,8 +347,8 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
       ) : (
         assets.map((a) => {
           const productName = a.is_competitor_equipment ? a.competitor_product_name || "Unknown Competitor" : a.product?.name || "Unknown Product";
-          const modelInfo   = !a.is_competitor_equipment && a.product?.model_number ? a.product.model_number : null;
-          const oemInfo     = !a.is_competitor_equipment && a.product?.oem_name ? a.product.oem_name : null;
+          const modelInfo = !a.is_competitor_equipment && a.product?.model_number ? a.product.model_number : null;
+          const oemInfo = !a.is_competitor_equipment && a.product?.oem_name ? a.product.oem_name : null;
           return (
             <Box key={a.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid", borderColor: a.is_competitor_equipment ? "#fecaca" : "#f3f4f6" }}>
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
@@ -395,7 +368,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
                 </Button>
               </Box>
               <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
-                {oemInfo  && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>OEM: </Box><Box component="span" sx={{ fontWeight: 700 }}>{oemInfo}</Box></Box>}
+                {oemInfo && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>OEM: </Box><Box component="span" sx={{ fontWeight: 700 }}>{oemInfo}</Box></Box>}
                 {modelInfo && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Model: </Box><Box component="span" sx={{ fontWeight: 700 }}>{modelInfo}</Box></Box>}
                 {a.department && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Dept: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.department}</Box></Box>}
                 {a.installation_date && <Box><Box component="span" sx={{ fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "10px" }}>Installed: </Box><Box component="span" sx={{ fontWeight: 700 }}>{a.installation_date}</Box></Box>}
@@ -413,120 +386,258 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate }: Props) {
   const { userProfile } = useAuth();
-  const [account, setAccount]                             = useState<any>(() => getCachedAccount(accountId) || initialAccount);
-  const [stakeholders, setStakeholders]                   = useState<any[]>([]);
-  const [projects, setProjects]                           = useState<any[]>([]);
-  const [opportunities, setOpportunities]                 = useState<any[]>([]);
-  const [installed, setInstalled]                         = useState<any[]>([]);
-  const [loading, setLoading]                             = useState(!initialAccount);
-  const [stakeholdersLoading, setStakeholdersLoading]     = useState(true);
-  const [projectsLoading, setProjectsLoading]             = useState(true);
-  const [opportunitiesLoading, setOpportunitiesLoading]   = useState(true);
-  const [installedLoading, setInstalledLoading]           = useState(true);
-  const [error, setError]                                 = useState<string | null>(null);
-  const [activeTab, setActiveTab]                         = useState("overview");
+  const queryClient = useQueryClient();
+
+  const {
+    data: account,
+    isLoading: loading,
+    isError: hasAccountError,
+    error: accountError,
+    refetch: refetchAccount,
+  } = useQuery({
+    queryKey: ["account", accountId],
+    queryFn: () => getAccount(accountId as any) as Promise<any>,
+    initialData: initialAccount ?? undefined,
+  });
+
+  const { data: accountCounts } = useQuery({
+    queryKey: ["account-counts", accountId],
+    queryFn: async () => {
+      const countMap: any = await getAccountCounts([accountId] as any);
+      return countMap[accountId] || {};
+    },
+    enabled: initialAccount?.stakeholder_count == null,
+  });
+  // accountCounts is only a stopgap while `account` still lacks count fields (e.g.
+  // initialAccount came from a summary list view) — once the account query itself
+  // resolves with real counts, its fields take precedence over the stopgap.
+  const mergedAccount = account ? { ...accountCounts, ...account } : account;
+
+  useEffect(() => {
+    if (account) onAccountUpdate?.(account);
+  }, [account]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { data: stakeholders = [], isLoading: stakeholdersLoading } = useQuery({
+    queryKey: ["stakeholders", "byAccount", accountId],
+    queryFn: () => listStakeholders(accountId as any) as Promise<any[]>,
+  });
+
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects", "byAccount", accountId],
+    queryFn: () => listProjects(accountId as any) as Promise<any[]>,
+  });
+
+  const { data: opportunities = [], isLoading: opportunitiesLoading } = useQuery({
+    queryKey: ["opportunities", "byAccount", accountId],
+    queryFn: () => listOpportunities(accountId as any) as Promise<any[]>,
+  });
+
+  const { data: installed = [], isLoading: installedLoading } = useQuery({
+    queryKey: ["installed-assets", "byAccount", accountId],
+    queryFn: () => listInstalledAssets(accountId as any) as Promise<any[]>,
+  });
+
+  // Owns the activities fetch — ActivityTimeline is rendered with selfFetch={false}
+  // below, so it never fetches on its own; it only reads this query's cached result.
+  // Unlike the 4 tabs above, ActivityTimeline is conditionally mounted (only when
+  // activeTab === "activity"), so without a query living here (always-mounted,
+  // same as the others), its data wouldn't start fetching until the user actually
+  // clicked the tab.
+  useQuery({
+    queryKey: ["activities", "account", accountId],
+    queryFn: () => listActivitiesByAccount(accountId as any),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Activity tab
-  const [showLogActivity, setShowLogActivity]             = useState(false);
+  const [showLogActivity, setShowLogActivity] = useState(false);
 
   // Edit Account
-  const [showEditAccount, setShowEditAccount]             = useState(false);
-  const [zones, setZones]                                 = useState<any[]>([]);
-  const [editAccountName, setEditAccountName]             = useState("");
-  const [editAccountZoneId, setEditAccountZoneId]         = useState("");
-  const [editAccountPayer, setEditAccountPayer]           = useState("");
+  const [showEditAccount, setShowEditAccount] = useState(false);
+  const [editAccountName, setEditAccountName] = useState("");
+  const [editAccountZoneId, setEditAccountZoneId] = useState("");
+  const [editAccountPayer, setEditAccountPayer] = useState("");
 
   // Stakeholders
   const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
-  const [newSName, setNewSName]                           = useState("");
-  const [newSDesignation, setNewSDesignation]             = useState("");
-  const [newSEmail, setNewSEmail]                         = useState("");
-  const [newSPhone, setNewSPhone]                         = useState("");
-  const [newSNps, setNewSNps]                             = useState("");
-  const [newSSentiment, setNewSSentiment]                 = useState("");
-  const [editingStakeholder, setEditingStakeholder]       = useState<any | null>(null);
-  const [editSName, setEditSName]                         = useState("");
-  const [editSDesignation, setEditSDesignation]           = useState("");
-  const [editSEmail, setEditSEmail]                       = useState("");
-  const [editSPhone, setEditSPhone]                       = useState("");
-  const [editSNps, setEditSNps]                           = useState("");
-  const [editSSentiment, setEditSSentiment]               = useState("");
-
-  // Master data (lazy-loaded for modal dropdowns)
-  const [projectStatuses, setProjectStatuses]             = useState<any[]>([]);
-  const [stages, setStages]                               = useState<any[]>([]);
-  const [oppStatuses, setOppStatuses]                     = useState<any[]>([]);
-  const [leadSources, setLeadSources]                     = useState<any[]>([]);
-  const [users, setUsers]                                 = useState<any[]>([]);
-  const [products, setProducts]                           = useState<any[]>([]);
+  const [newSName, setNewSName] = useState("");
+  const [newSDesignation, setNewSDesignation] = useState("");
+  const [newSEmail, setNewSEmail] = useState("");
+  const [newSPhone, setNewSPhone] = useState("");
+  const [newSNps, setNewSNps] = useState("");
+  const [newSSentiment, setNewSSentiment] = useState("");
+  const [editingStakeholder, setEditingStakeholder] = useState<any | null>(null);
+  const [editSName, setEditSName] = useState("");
+  const [editSDesignation, setEditSDesignation] = useState("");
+  const [editSEmail, setEditSEmail] = useState("");
+  const [editSPhone, setEditSPhone] = useState("");
+  const [editSNps, setEditSNps] = useState("");
+  const [editSSentiment, setEditSSentiment] = useState("");
 
   // Projects
-  const [showCreateProject, setShowCreateProject]         = useState(false);
-  const [newPName, setNewPName]                           = useState("");
-  const [newPStatusId, setNewPStatusId]                   = useState("");
-  const [newPOwnerId, setNewPOwnerId]                     = useState("");
-  const [newPBidDate, setNewPBidDate]                     = useState("");
-  const [editingProject, setEditingProject]               = useState<any | null>(null);
-  const [editPName, setEditPName]                         = useState("");
-  const [editPStatusId, setEditPStatusId]                 = useState("");
-  const [editPOwnerId, setEditPOwnerId]                   = useState("");
-  const [editPBidDate, setEditPBidDate]                   = useState("");
+  const [showCreateProject, setShowCreateProject] = useState(false);
+  const [newPName, setNewPName] = useState("");
+  const [newPStatusId, setNewPStatusId] = useState("");
+  const [newPOwnerId, setNewPOwnerId] = useState("");
+  const [newPBidDate, setNewPBidDate] = useState("");
+  const [editingProject, setEditingProject] = useState<any | null>(null);
+  const [editPName, setEditPName] = useState("");
+  const [editPStatusId, setEditPStatusId] = useState("");
+  const [editPOwnerId, setEditPOwnerId] = useState("");
+  const [editPBidDate, setEditPBidDate] = useState("");
 
   // Opportunities
-  const [showCreateOpp, setShowCreateOpp]                 = useState(false);
-  const [showNewOppItems, setShowNewOppItems]             = useState(false);
-  const [newOName, setNewOName]                           = useState("");
-  const [newOProjectId, setNewOProjectId]                 = useState("");
-  const [newOStageId, setNewOStageId]                     = useState("");
-  const [newOStatusId, setNewOStatusId]                   = useState("");
-  const [newOLeadSourceId, setNewOLeadSourceId]           = useState("");
-  const [newOOwnerId, setNewOOwnerId]                     = useState("");
-  const [newOWinProb, setNewOWinProb]                     = useState("");
-  const [newOValue, setNewOValue]                         = useState("");
-  const [newOItems, setNewOItems]                         = useState<any[]>([]);
-  const [newOItemProdId, setNewOItemProdId]               = useState("");
-  const [newOItemQty, setNewOItemQty]                     = useState("1");
-  const [newOItemPrice, setNewOItemPrice]                 = useState("0");
-  const [newOItemDisc, setNewOItemDisc]                   = useState("0");
-  const [newOItemError, setNewOItemError]                 = useState<string | null>(null);
-  const [editingOpp, setEditingOpp]                       = useState<any | null>(null);
-  const [showEditOppItems, setShowEditOppItems]           = useState(false);
-  const [editOName, setEditOName]                         = useState("");
-  const [editOProjectId, setEditOProjectId]               = useState("");
-  const [editOStageId, setEditOStageId]                   = useState("");
-  const [editOStatusId, setEditOStatusId]                 = useState("");
-  const [editOLeadSourceId, setEditOLeadSourceId]         = useState("");
-  const [editOOwnerId, setEditOOwnerId]                   = useState("");
-  const [editOWinProb, setEditOWinProb]                   = useState("");
-  const [editOValue, setEditOValue]                       = useState("");
-  const [editOItems, setEditOItems]                       = useState<any[]>([]);
-  const [editOOriginalItemIds, setEditOOriginalItemIds]   = useState<string[]>([]);
-  const [editOItemProdId, setEditOItemProdId]             = useState("");
-  const [editOItemQty, setEditOItemQty]                   = useState("1");
-  const [editOItemPrice, setEditOItemPrice]               = useState("0");
-  const [editOItemDisc, setEditOItemDisc]                 = useState("0");
-  const [editOItemError, setEditOItemError]               = useState<string | null>(null);
+  const [showCreateOpp, setShowCreateOpp] = useState(false);
+  const [showNewOppItems, setShowNewOppItems] = useState(false);
+  const [newOName, setNewOName] = useState("");
+  const [newOProjectId, setNewOProjectId] = useState("");
+  const [newOStageId, setNewOStageId] = useState("");
+  const [newOStatusId, setNewOStatusId] = useState("");
+  const [newOLeadSourceId, setNewOLeadSourceId] = useState("");
+  const [newOOwnerId, setNewOOwnerId] = useState("");
+  const [newOWinProb, setNewOWinProb] = useState("");
+  const [newOValue, setNewOValue] = useState("");
+  const [newOItems, setNewOItems] = useState<any[]>([]);
+  const [newOItemProdId, setNewOItemProdId] = useState("");
+  const [newOItemQty, setNewOItemQty] = useState("1");
+  const [newOItemPrice, setNewOItemPrice] = useState("0");
+  const [newOItemDisc, setNewOItemDisc] = useState("0");
+  const [newOItemError, setNewOItemError] = useState<string | null>(null);
+  const [editingOpp, setEditingOpp] = useState<any | null>(null);
+  const [showEditOppItems, setShowEditOppItems] = useState(false);
+  const [editOName, setEditOName] = useState("");
+  const [editOProjectId, setEditOProjectId] = useState("");
+  const [editOStageId, setEditOStageId] = useState("");
+  const [editOStatusId, setEditOStatusId] = useState("");
+  const [editOLeadSourceId, setEditOLeadSourceId] = useState("");
+  const [editOOwnerId, setEditOOwnerId] = useState("");
+  const [editOWinProb, setEditOWinProb] = useState("");
+  const [editOValue, setEditOValue] = useState("");
+  const [editOItems, setEditOItems] = useState<any[]>([]);
+  const [editOOriginalItemIds, setEditOOriginalItemIds] = useState<string[]>([]);
+  const [editOItemProdId, setEditOItemProdId] = useState("");
+  const [editOItemQty, setEditOItemQty] = useState("1");
+  const [editOItemPrice, setEditOItemPrice] = useState("0");
+  const [editOItemDisc, setEditOItemDisc] = useState("0");
+  const [editOItemError, setEditOItemError] = useState<string | null>(null);
+  // Status-gated fields (BR-OP-02/03/05). Prefilled from o.* in openEditOpp — the
+  // by-account opportunities list response now includes them (WorkspaceOpportunity).
+  // Hold/Loss fields are still only sent when the effective status is ON_HOLD/LOST
+  // (see handleUpdateOpp), so editing an opportunity without touching its status
+  // never overwrites a previously-set hold/loss reason with an unrelated blank field.
+  const [editOPoNumber, setEditOPoNumber] = useState("");
+  const [editOHoldReasonId, setEditOHoldReasonId] = useState("");
+  const [editOReactivationDate, setEditOReactivationDate] = useState("");
+  const [editOLossReasonId, setEditOLossReasonId] = useState("");
+  const [editOCompetitorName, setEditOCompetitorName] = useState("");
 
   // Installed assets
-  const [showCreateAsset, setShowCreateAsset]             = useState(false);
-  const [newAIsCompetitor, setNewAIsCompetitor]           = useState(false);
-  const [newAProductId, setNewAProductId]                 = useState("");
-  const [newACompetitorName, setNewACompetitorName]       = useState("");
-  const [newAInstallDate, setNewAInstallDate]             = useState("");
-  const [newADepartment, setNewADepartment]               = useState("");
-  const [editingAsset, setEditingAsset]                   = useState<any | null>(null);
-  const [editAIsCompetitor, setEditAIsCompetitor]         = useState(false);
-  const [editAProductId, setEditAProductId]               = useState("");
-  const [editACompetitorName, setEditACompetitorName]     = useState("");
-  const [editAInstallDate, setEditAInstallDate]           = useState("");
-  const [editADepartment, setEditADepartment]             = useState("");
+  const [showCreateAsset, setShowCreateAsset] = useState(false);
+  const [newAIsCompetitor, setNewAIsCompetitor] = useState(false);
+  const [newAProductId, setNewAProductId] = useState("");
+  const [newACompetitorName, setNewACompetitorName] = useState("");
+  const [newAInstallDate, setNewAInstallDate] = useState("");
+  const [newADepartment, setNewADepartment] = useState("");
+  const [editingAsset, setEditingAsset] = useState<any | null>(null);
+  const [editAIsCompetitor, setEditAIsCompetitor] = useState(false);
+  const [editAProductId, setEditAProductId] = useState("");
+  const [editACompetitorName, setEditACompetitorName] = useState("");
+  const [editAInstallDate, setEditAInstallDate] = useState("");
+  const [editADepartment, setEditADepartment] = useState("");
 
-  const chipBarRef   = useRef<HTMLDivElement>(null);
-  const isMountedRef = useRef(true);
+  // Master data (fetched on demand — enabled only while the modal that needs it is open)
+  const { data: zones = [] } = useQuery({
+    queryKey: ["zones"],
+    queryFn: async () => { const d: any = await listZones(); return d.items || d; },
+    enabled: showEditAccount,
+    staleTime: Infinity,
+  });
+
+  const { data: projectStatuses = [] } = useQuery({
+    queryKey: ["project-statuses"],
+    queryFn: () => listProjectStatuses() as Promise<any[]>,
+    enabled: showCreateProject || editingProject !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: stages = [] } = useQuery({
+    queryKey: ["stages"],
+    queryFn: () => listStages() as Promise<any[]>,
+    enabled: showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: oppStatuses = [] } = useQuery({
+    queryKey: ["statuses"],
+    queryFn: () => listStatuses() as Promise<any[]>,
+    enabled: showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: leadSources = [] } = useQuery({
+    queryKey: ["leadSources"],
+    queryFn: () => listLeadSources() as Promise<any[]>,
+    enabled: showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  // Only needed on the Edit Opportunity modal (BR-OP-03/05 status gates) — Create
+  // Opportunity can't set these fields at all (OpportunityCreate has no such fields).
+  const { data: lossReasons = [] } = useQuery({
+    queryKey: ["lossReasons"],
+    queryFn: () => listLossReasons() as Promise<any[]>,
+    enabled: editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: holdReasons = [] } = useQuery({
+    queryKey: ["holdReasons"],
+    queryFn: () => listHoldReasons() as Promise<any[]>,
+    enabled: editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ["users", "all"],
+    queryFn: () => listUsers() as Promise<any[]>,
+    enabled: showCreateProject || editingProject !== null || showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", "picker", (userProfile as any)?.sbu?.id],
+    queryFn: async () => {
+      const d: any = await listProducts({ page_size: 100, sbu_id: (userProfile as any)?.sbu?.id } as any);
+      return d.items || [];
+    },
+    enabled: showCreateOpp || editingOpp !== null || showCreateAsset || editingAsset !== null,
+  });
+
+  // Edit Opportunity's item list is an editable draft buffer, not a direct render of
+  // query data. listOpportunityItems is only fetched on-demand (enabled: editingOpp
+  // !== null), so it isn't available the instant the modal opens — it arrives
+  // asynchronously. Seed the draft once per editingOpp.id via a ref guard, not a plain
+  // [oppItemsData]-keyed effect: otherwise a background refetch (React Query's default
+  // refetchOnWindowFocus) while the modal is open would silently clobber unsaved edits.
+  const { data: oppItemsData } = useQuery({
+    queryKey: ["opp-items", editingOpp?.id],
+    queryFn: () => listOpportunityItems(editingOpp!.id),
+    enabled: editingOpp !== null,
+  });
+  const seededOppIdRef = useRef<string | null>(null);
   useEffect(() => {
-    isMountedRef.current = true;
-    return () => { isMountedRef.current = false; };
-  }, []);
+    if (editingOpp === null) { seededOppIdRef.current = null; return; }
+    if (oppItemsData === undefined) return;
+    if (seededOppIdRef.current === editingOpp.id) return;
+    seededOppIdRef.current = editingOpp.id;
+    const mapped = oppItemsData.map((i: any) => ({ id: i.id, product_id: i.product_id, product_name: i.product?.name || "", quantity: i.quantity, unit_price_lakhs: Number(i.unit_price_lakhs), discount_lakhs: Number(i.discount_lakhs) }));
+    setEditOItems(mapped);
+    setEditOOriginalItemIds(mapped.map((i: any) => i.id));
+  }, [editingOpp, oppItemsData]);
+
+  const chipBarRef = useRef<HTMLDivElement>(null);
 
   const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId);
@@ -555,47 +666,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     }
   }, [editOItems]);
 
-  const loadAccount = useCallback(() => {
-    if (!initialAccount) setLoading(true);
-    setError(null);
-
-    const cachedStakeholders  = getTabCached(accountId, "stakeholders");
-    const cachedProjects       = getTabCached(accountId, "projects");
-    const cachedOpportunities  = getTabCached(accountId, "opportunities");
-    const cachedInstalled      = getTabCached(accountId, "installed");
-
-    if (cachedStakeholders)  setStakeholders(cachedStakeholders);
-    if (cachedProjects)      setProjects(cachedProjects);
-    if (cachedOpportunities) setOpportunities(cachedOpportunities);
-    if (cachedInstalled)     setInstalled(cachedInstalled);
-
-    setStakeholdersLoading(!cachedStakeholders);
-    setProjectsLoading(!cachedProjects);
-    setOpportunitiesLoading(!cachedOpportunities);
-    setInstalledLoading(!cachedInstalled);
-
-    getAccount(accountId as any)
-      .then((data: any) => { setAccount(data); setCachedAccount(accountId, data); onAccountUpdate?.(data); setLoading(false); })
-      .catch((err: any) => { if (!initialAccount) { setError(err.message || "Failed to load account"); setLoading(false); } });
-
-    if (initialAccount?.stakeholder_count == null) {
-      getAccountCounts([accountId] as any)
-        .then((countMap: any) => {
-          if (!isMountedRef.current) return;
-          const c = countMap[accountId] || {};
-          setAccount((prev: any) => (prev ? { ...prev, ...c } : prev));
-        })
-        .catch(() => {});
-    }
-
-    listStakeholders(accountId as any).then((d: any) => { setStakeholders(d); setTabCache(accountId, "stakeholders", d); }).catch(() => {}).finally(() => setStakeholdersLoading(false));
-    listProjects(accountId as any).then((d: any) => { setProjects(d); setTabCache(accountId, "projects", d); }).catch(() => {}).finally(() => setProjectsLoading(false));
-    listOpportunities(accountId as any).then((d: any) => { setOpportunities(d); setTabCache(accountId, "opportunities", d); }).catch(() => {}).finally(() => setOpportunitiesLoading(false));
-    listInstalledAssets(accountId as any).then((d: any) => { setInstalled(d); setTabCache(accountId, "installed", d); }).catch(() => {}).finally(() => setInstalledLoading(false));
-  }, [accountId, initialAccount]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { loadAccount(); }, [loadAccount]);
-
   // --- Loading / error states ---
   if (loading) {
     return (
@@ -604,7 +674,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       </Box>
     );
   }
-  if (error) {
+  if (hasAccountError && !account) {
     return (
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, p: 2, bgcolor: "#f9fafb" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
@@ -619,50 +689,26 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           severity="error"
           action={
             <Button
-              onClick={loadAccount}
+              onClick={() => refetchAccount()}
               sx={{ bgcolor: "#fee2e2", "&:hover": { bgcolor: "#fecaca" }, color: "#b91c1c", px: 1.5, py: 0.5, borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em" }}
             >
               Retry
             </Button>
           }
         >
-          {error}
+          {(accountError as any)?.message || "Failed to load account"}
         </Alert>
       </Box>
     );
   }
 
   // --- Modal helpers ---
-  const loadProjectMD = async () => {
-    const loads: Promise<any>[] = [];
-    if (projectStatuses.length === 0) loads.push(listProjectStatuses().then((d: any) => setProjectStatuses(d)).catch(() => {}));
-    if (users.length === 0) loads.push(listUsers().then((d: any) => setUsers(d)).catch(() => {}));
-    await Promise.all(loads);
-  };
-
-  const loadOppMD = async () => {
-    const loads: Promise<any>[] = [];
-    if (stages.length === 0) loads.push(listStages().then((d: any) => setStages(d)).catch(() => {}));
-    if (oppStatuses.length === 0) loads.push(listStatuses().then((d: any) => setOppStatuses(d)).catch(() => {}));
-    if (leadSources.length === 0) loads.push(listLeadSources().then((d: any) => setLeadSources(d)).catch(() => {}));
-    if (users.length === 0) loads.push(listUsers().then((d: any) => setUsers(d)).catch(() => {}));
-    if (products.length === 0) loads.push(listProducts({ page_size: 100, sbu_id: (userProfile as any)?.sbu?.id } as any).then((d: any) => setProducts(d.items || [])).catch(() => {}));
-    await Promise.all(loads);
-  };
-
-  const loadProductsMD = async () => {
-    if (products.length === 0) {
-      await listProducts({ page_size: 100, sbu_id: (userProfile as any)?.sbu?.id } as any).then((d: any) => setProducts(d.items || [])).catch(() => {});
-    }
-  };
-
   // Edit account
-  const openEditAccount = async () => {
+  const openEditAccount = () => {
     setEditAccountName(account.name || "");
     setEditAccountZoneId(account.zone?.id || "");
     setEditAccountPayer(account.payer_behavior || "");
     setShowEditAccount(true);
-    if (zones.length === 0) { try { const d: any = await listZones(); setZones(d.items || d); } catch {} }
   };
 
   const handleUpdateAccount = async () => {
@@ -671,7 +717,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const payload: any = { name: editAccountName.trim(), zone_id: editAccountZoneId };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId as any, payload);
-    getAccount(accountId as any).then((d: any) => { setAccount(d); setCachedAccount(accountId, d); onAccountUpdate?.(d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
   };
 
   // Stakeholder
@@ -689,8 +735,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newSNps !== "") payload.nps_score = Number(newSNps);
     if (newSSentiment) payload.sentiment = newSSentiment;
     await createStakeholder(accountId as any, payload);
-    listStakeholders(accountId as any).then((d: any) => { setStakeholders(d); setTabCache(accountId, "stakeholders", d); }).catch(() => {});
-    getAccount(accountId as any).then((d: any) => { setAccount(d); setCachedAccount(accountId, d); onAccountUpdate?.(d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["stakeholders", "byAccount", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
   };
 
   const openEditStakeholder = (s: any) => {
@@ -706,14 +752,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (editSNps !== "") payload.nps_score = Number(editSNps);
     if (editSSentiment) payload.sentiment = editSSentiment;
     await updateStakeholder(editingStakeholder.id, payload);
-    listStakeholders(accountId as any).then((d: any) => { setStakeholders(d); setTabCache(accountId, "stakeholders", d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["stakeholders", "byAccount", accountId] });
   };
 
   // Projects
-  const openCreateProject = async () => {
+  const openCreateProject = () => {
     setNewPName(""); setNewPStatusId(""); setNewPOwnerId(""); setNewPBidDate("");
     setShowCreateProject(true);
-    await loadProjectMD();
   };
 
   const handleCreateProject = async () => {
@@ -723,14 +768,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const payload: any = { name: newPName.trim(), owner_id: newPOwnerId, status_id: newPStatusId };
     if (newPBidDate) payload.bid_submission_date = newPBidDate;
     await createProject(accountId as any, payload);
-    listProjects(accountId as any).then((d: any) => { setProjects(d); setTabCache(accountId, "projects", d); }).catch(() => {});
-    getAccount(accountId as any).then((d: any) => { setAccount(d); setCachedAccount(accountId, d); onAccountUpdate?.(d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["projects", "byAccount", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
   };
 
-  const openEditProject = async (p: any) => {
+  const openEditProject = (p: any) => {
     setEditingProject(p); setEditPName(p.name || ""); setEditPStatusId(p.status?.id || "");
     setEditPOwnerId(p.owner?.id || ""); setEditPBidDate(p.bid_submission_date || "");
-    await loadProjectMD();
   };
 
   const handleUpdateProject = async () => {
@@ -738,16 +782,15 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const payload: any = { name: editPName.trim(), owner_id: editPOwnerId || undefined, status_id: editPStatusId || undefined };
     if (editPBidDate) payload.bid_submission_date = editPBidDate;
     await updateProject(editingProject.id, payload);
-    listProjects(accountId as any).then((d: any) => { setProjects(d); setTabCache(accountId, "projects", d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["projects", "byAccount", accountId] });
   };
 
   // Opportunities
-  const openCreateOpp = async () => {
+  const openCreateOpp = () => {
     setNewOName(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice("0"); setNewOItemDisc("0"); setNewOItemError(null);
     setShowCreateOpp(true);
-    await loadOppMD();
   };
 
   const handleCreateOpp = async () => {
@@ -757,7 +800,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (!newOStatusId) throw new Error("Status is required");
     if (newOWinProb === "") throw new Error("Win probability is required");
     const _stage = stages.find((s: any) => s.id === newOStageId);
-    const _qual  = stages.find((s: any) => s.stage_code === "QUALIFIED");
+    const _qual = stages.find((s: any) => s.stage_code === "QUALIFIED");
     if (_stage && _qual && _stage.display_order >= _qual.display_order && newOValue === "") {
       throw new Error("Indicative value is required for Qualified stage and above");
     }
@@ -767,11 +810,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newOValue !== "") payload.indicative_value = Number(newOValue);
     if (newOItems.length > 0) payload.items = newOItems.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }));
     await createOpportunity(accountId as any, payload);
-    listOpportunities(accountId as any).then((d: any) => { setOpportunities(d); setTabCache(accountId, "opportunities", d); }).catch(() => {});
-    getAccount(accountId as any).then((d: any) => { setAccount(d); setCachedAccount(accountId, d); onAccountUpdate?.(d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
   };
 
-  const openEditOpp = async (o: any) => {
+  const openEditOpp = (o: any) => {
     setEditingOpp(o); setEditOName(o.name || ""); setEditOProjectId(o.project_id || "");
     setEditOStageId(o.stage?.id || ""); setEditOStatusId(o.status?.id || "");
     setEditOLeadSourceId(o.lead_source_id || ""); setEditOOwnerId(o.owner?.id || "");
@@ -779,13 +822,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOValue(o.indicative_value != null ? String(o.indicative_value) : "");
     setEditOItems([]); setEditOOriginalItemIds([]);
     setEditOItemProdId(""); setEditOItemQty("1"); setEditOItemPrice("0"); setEditOItemDisc("0"); setEditOItemError(null);
-    await Promise.all([
-      loadOppMD(),
-      listOpportunityItems(o.id).then((items: any) => {
-        const mapped = items.map((i: any) => ({ id: i.id, product_id: i.product_id, product_name: i.product?.name || "", quantity: i.quantity, unit_price_lakhs: Number(i.unit_price_lakhs), discount_lakhs: Number(i.discount_lakhs) }));
-        setEditOItems(mapped); setEditOOriginalItemIds(mapped.map((i: any) => i.id));
-      }).catch(() => {}),
-    ]);
+    setEditOPoNumber(o.po_number || ""); setEditOHoldReasonId(o.hold_reason_id || "");
+    setEditOReactivationDate(o.reactivation_date || ""); setEditOLossReasonId(o.loss_reason_id || "");
+    setEditOCompetitorName(o.competitor_name || "");
   };
 
   const handleUpdateOpp = async () => {
@@ -795,6 +834,25 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (_editStage && _qualStage && _editStage.display_order >= _qualStage.display_order && editOValue === "") {
       throw new Error("Indicative value is required for Qualified stage and above");
     }
+    // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
+    // while the selected status is On Hold/Lost, since the form has no way to know
+    // whether they were already satisfied by a previous save (see field declarations).
+    const _newStatus = oppStatuses.find((s: any) => s.id === editOStatusId);
+    const _selectedLossReason = lossReasons.find((r: any) => r.id === editOLossReasonId);
+    if (_newStatus?.status_code === "ON_HOLD") {
+      if (!editOHoldReasonId) throw new Error("Hold Reason is required to put an opportunity On-Hold");
+      if (!editOReactivationDate) throw new Error("Reactivation Date is required to put an opportunity On-Hold");
+      if (editOReactivationDate <= new Date().toISOString().slice(0, 10)) throw new Error("Reactivation Date must be a future date");
+    }
+    if (_newStatus?.status_code === "LOST") {
+      if (!editOLossReasonId) throw new Error("Loss Reason is required to mark an opportunity as Lost");
+      if (_selectedLossReason?.reason_code === "COMPETITOR_WON" && !editOCompetitorName.trim()) {
+        throw new Error("Competitor Name is required when Loss Reason is 'Competitor Won'");
+      }
+    }
+    if (_newStatus?.status_code === "WON" && !editOPoNumber.trim()) {
+      throw new Error("PO Number is required to mark an opportunity as Won");
+    }
     const payload: any = {
       name: editOName.trim(), owner_id: editOOwnerId || undefined,
       stage_id: editOStageId || undefined, status_id: editOStatusId || undefined,
@@ -803,22 +861,31 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       indicative_value: editOValue !== "" ? Number(editOValue) : null,
     };
     if (editOProjectId) payload.project_id = editOProjectId;
+    payload.po_number = editOPoNumber.trim() || null;
+    if (_newStatus?.status_code === "ON_HOLD") {
+      payload.hold_reason_id = editOHoldReasonId;
+      payload.reactivation_date = editOReactivationDate;
+    }
+    if (_newStatus?.status_code === "LOST") {
+      payload.loss_reason_id = editOLossReasonId;
+      if (editOCompetitorName.trim()) payload.competitor_name = editOCompetitorName.trim();
+    }
     await updateOpportunity(editingOpp.id, payload);
     const currentIds = editOItems.filter((i: any) => i.id).map((i: any) => i.id);
-    const toDelete   = editOOriginalItemIds.filter((id) => !currentIds.includes(id));
-    const toAdd      = editOItems.filter((i: any) => !i.id);
+    const toDelete = editOOriginalItemIds.filter((id) => !currentIds.includes(id));
+    const toAdd = editOItems.filter((i: any) => !i.id);
     await Promise.all([
-      ...toDelete.map((id) => deleteOpportunityItem(id as any).catch(() => {})),
-      ...toAdd.map((i: any) => addOpportunityItem(editingOpp.id, { product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }).catch(() => {})),
+      ...toDelete.map((id) => deleteOpportunityItem(id as any).catch(() => { })),
+      ...toAdd.map((i: any) => addOpportunityItem(editingOpp.id, { product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }).catch(() => { })),
     ]);
-    listOpportunities(accountId as any).then((d: any) => { setOpportunities(d); setTabCache(accountId, "opportunities", d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["opp-items", editingOpp.id] });
   };
 
   // Installed assets
-  const openCreateAsset = async () => {
+  const openCreateAsset = () => {
     setNewAIsCompetitor(false); setNewAProductId(""); setNewACompetitorName(""); setNewAInstallDate(""); setNewADepartment("");
     setShowCreateAsset(true);
-    await loadProductsMD();
   };
 
   const handleCreateAsset = async () => {
@@ -826,14 +893,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const payload: any = { is_competitor_equipment: newAIsCompetitor, installation_date: newAInstallDate || null, department: newADepartment.trim() || null };
     if (newAIsCompetitor) { payload.competitor_product_name = newACompetitorName.trim() || null; } else { payload.product_id = newAProductId; }
     await createInstalledAsset(accountId as any, payload);
-    listInstalledAssets(accountId as any).then((d: any) => { setInstalled(d); setTabCache(accountId, "installed", d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["installed-assets", "byAccount", accountId] });
   };
 
-  const openEditAsset = async (a: any) => {
+  const openEditAsset = (a: any) => {
     setEditingAsset(a); setEditAIsCompetitor(a.is_competitor_equipment);
     setEditAProductId(a.product?.id || ""); setEditACompetitorName(a.competitor_product_name || "");
     setEditAInstallDate(a.installation_date || ""); setEditADepartment(a.department || "");
-    await loadProductsMD();
   };
 
   const handleUpdateAsset = async () => {
@@ -842,7 +908,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (editAIsCompetitor) { payload.competitor_product_name = editACompetitorName.trim() || null; payload.product_id = null; }
     else { payload.product_id = editAProductId; payload.competitor_product_name = null; }
     await updateInstalledAsset(editingAsset.id, payload);
-    listInstalledAssets(accountId as any).then((d: any) => { setInstalled(d); setTabCache(accountId, "installed", d); }).catch(() => {});
+    queryClient.invalidateQueries({ queryKey: ["installed-assets", "byAccount", accountId] });
   };
 
   // Helper: render the add-product sub-form row
@@ -864,8 +930,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       </TextField>
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
         <TextField label="Qty" type="number" size="small" value={qty} onChange={(e: any) => { setQty(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
-        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
-        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
+        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
+        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
       </Box>
       {error && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{error}</Alert>}
       <Button
@@ -886,6 +952,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       </Button>
     </Box>
   );
+
+  const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
+  const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
 
   return (
     <Box
@@ -919,17 +988,17 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {/* Count strip */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-around", bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", px: 2, py: 1.5, mb: 2 }}>
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#7c3aed" }}>{account.stakeholder_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#7c3aed" }}>{mergedAccount.stakeholder_count ?? "—"}</Box>
             <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Stakeholders</Box>
           </Box>
           <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "primary.main" }}>{account.project_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "primary.main" }}>{mergedAccount.project_count ?? "—"}</Box>
             <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Projects</Box>
           </Box>
           <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>{account.opportunity_count ?? "—"}</Box>
+            <Box sx={{ fontSize: "1.25rem", fontWeight: 900, color: "#059669" }}>{mergedAccount.opportunity_count ?? "—"}</Box>
             <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Opportunities</Box>
           </Box>
         </Box>
@@ -973,13 +1042,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
       {/* Scrollable tab content */}
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
-        {activeTab === "overview"      && <OverviewTab account={account} onEdit={openEditAccount} />}
-        {activeTab === "stakeholders"  && (stakeholdersLoading  ? <LoadingRow /> : <StakeholdersTab  stakeholders={stakeholders}   onAdd={openCreateStakeholder}  onEdit={openEditStakeholder} />)}
-        {activeTab === "projects"      && (projectsLoading       ? <LoadingRow /> : <ProjectsTab      projects={projects}           onAdd={openCreateProject}      onEdit={openEditProject} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading  ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp}          onEdit={openEditOpp} />)}
-        {activeTab === "installed"     && (installedLoading      ? <LoadingRow /> : <InstalledBaseTab assets={installed}           onAdd={openCreateAsset}        onEdit={openEditAsset} />)}
-        {activeTab === "activity"      && (
-          <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} />
+        {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} />}
+        {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} />)}
+        {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />)}
+        {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
+        {activeTab === "activity" && (
+          <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} />
         )}
       </Box>
 
@@ -1134,7 +1203,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         </Box>
       </FormModal>
 
-      <FormModal isOpen={showNewOppItems} onClose={() => setShowNewOppItems(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
+      <FormModal isOpen={showNewOppItems} onClose={() => setShowNewOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
         {newOItems.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {newOItems.map((item: any, i: number) => (
@@ -1153,7 +1222,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
                       type="number" size="small" value={item[key]}
                       onChange={(e) => setNewOItems(newOItems.map((it: any, j: number) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
                       slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-                      sx={{ width: "5rem" }}
+                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
                     />
                   ))}
                 </Box>
@@ -1203,6 +1272,36 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           disabled={editOItems.length > 0}
           fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
+        <TextField label="PO Number" value={editOPoNumber} onChange={(e) => setEditOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {editOStatusCode === "ON_HOLD" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+            <TextField
+              select label="Hold Reason *" value={editOHoldReasonId} onChange={(e) => setEditOHoldReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {holdReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            <TextField
+              label="Reactivation Date *" type="date" value={editOReactivationDate} onChange={(e) => setEditOReactivationDate(e.target.value)}
+              fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+        )}
+        {editOStatusCode === "LOST" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <TextField
+              select label="Loss Reason *" value={editOLossReasonId} onChange={(e) => setEditOLossReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {lossReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            {editOLossReasonCode === "COMPETITOR_WON" && (
+              <TextField label="Competitor Name *" value={editOCompetitorName} onChange={(e) => setEditOCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
+            )}
+          </Box>
+        )}
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
@@ -1230,7 +1329,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         </Box>
       </FormModal>
 
-      <FormModal isOpen={showEditOppItems} onClose={() => setShowEditOppItems(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
+      <FormModal isOpen={showEditOppItems} onClose={() => setShowEditOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
         {editOItems.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {editOItems.map((item: any, i: number) => (
@@ -1249,7 +1348,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
                       type="number" size="small" value={item[key]}
                       onChange={(e) => { const { id: _id, ...rest } = item; setEditOItems(editOItems.map((it: any, j: number) => j === i ? { ...rest, [key]: Number(e.target.value) } : it)); }}
                       slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-                      sx={{ width: "5rem" }}
+                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
                     />
                   ))}
                 </Box>
@@ -1277,7 +1376,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         ) : (
           <TextField select label="Product *" value={newAProductId} onChange={(e) => setNewAProductId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">Select product</MenuItem>
-            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</MenuItem>)}
+            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
           </TextField>
         )}
         <TextField label="Department" value={newADepartment} onChange={(e) => setNewADepartment(e.target.value)} placeholder="e.g. Radiology" fullWidth size="small" />
@@ -1298,7 +1397,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         ) : (
           <TextField select label="Product *" value={editAProductId} onChange={(e) => setEditAProductId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">Select product</MenuItem>
-            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}{p.model_number ? ` — ${p.model_number}` : ""}</MenuItem>)}
+            {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
           </TextField>
         )}
         <TextField label="Department" value={editADepartment} onChange={(e) => setEditADepartment(e.target.value)} fullWidth size="small" />

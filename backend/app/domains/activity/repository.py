@@ -29,7 +29,15 @@ class ActivityRepository(BaseRepository[Activity]):
         stmt = (
             select(Activity)
             .where(Activity.account_id == account_id)
-            .options(noload(Activity.reminders))
+            .options(
+                noload(Activity.reminders),
+                # account/project/opportunity are lazy="joined" by default on the model,
+                # but ActivityResponse only needs their scalar _id columns, not the nested
+                # objects — noload so this query only joins what it actually uses (user).
+                noload(Activity.account),
+                noload(Activity.project),
+                noload(Activity.opportunity),
+            )
             .order_by(Activity.activity_date.desc())
             .offset(offset)
             .limit(limit)
@@ -51,7 +59,12 @@ class ActivityRepository(BaseRepository[Activity]):
         stmt = (
             select(Activity)
             .where(Activity.opportunity_id == opportunity_id)
-            .options(noload(Activity.reminders))
+            .options(
+                noload(Activity.reminders),
+                noload(Activity.account),
+                noload(Activity.project),
+                noload(Activity.opportunity),
+            )
             .order_by(Activity.activity_date.desc())
             .offset(offset)
             .limit(limit)

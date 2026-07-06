@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account, Stakeholder
+from app.domains.activity.models import Activity
 from app.domains.asset.models import InstalledAsset
 from app.domains.opportunity.models import Opportunity
 from app.domains.project.models import Project
@@ -92,12 +93,16 @@ class AccountRepository(BaseRepository[Account]):
         asset_count = (
             select(func.count()).select_from(InstalledAsset).where(InstalledAsset.account_id == account_id).scalar_subquery()
         )
+        activity_count = (
+            select(func.count()).select_from(Activity).where(Activity.account_id == account_id).scalar_subquery()
+        )
         counts = self.db.execute(
             select(
                 stakeholder_count.label("stakeholder_count"),
                 project_count.label("project_count"),
                 opportunity_count.label("opportunity_count"),
                 asset_count.label("asset_count"),
+                activity_count.label("activity_count"),
             )
         ).first()
         return account, counts
