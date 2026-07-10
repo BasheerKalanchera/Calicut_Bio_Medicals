@@ -2,41 +2,36 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Reminders "Completed" tab bug fix landed as `39ff781`** (committed since
-last update — `include_completed` is now a real True/False filter, see
-"Done in prior sessions" table below).
+**Priority decision (2026-07-10): Milestone 1 gap-closure work from the
+Prototype/Production Parity Audit comes first, ahead of resuming the §9 MUI
+migration backlog.** The demo checkpoint moved from July 13 to July 20,
+which is what freed up room to do this instead of migration work — not an
+abandonment of §9, just a sequencing call. See "Prototype/Production Parity
+Audit" write-up below and `docs/Prototype-Production-Parity-Audit.md` §6
+("Gaps to finish — Milestone 1") for the actual scope: Associated Project
+link, Lead Source display, Demo end date, Reminder click-through, Catalog
+role gate (GM+Admin), Parent Customer display, `CustomerType`
+(institution-nature), Product Catalog collateral links.
 
-**Activity logging on Project Details is IMPLEMENTED and guard-green
-(pytest 267/268 — only pre-existing unrelated failure; ruff clean; `npx tsc
---noEmit` clean; `npm run lint` clean), NOT YET COMMITTED.** 9 files, backend
-+ frontend. Full detail in "Files in flight" below. Needs Basheer's live E2E
-on the shared dev DB before commit (new `GET /projects/{id}/activities`
-endpoint + a new UI path that writes real `Activity`/`Reminder` rows, which
-are immutable — verify carefully).
+**Prior work status:** working tree was clean as of `6075c80` plus
+`581c28d`/`71dc5a0` (ErrorBoundary.jsx MUI migration — see updated §9 count
+below). Activity logging on Project Details (+ the +LOG header-consolidation
+step + a stale-detail-view bugfix) is committed — confirmed working by
+Basheer's live E2E. See "Done in prior sessions" table and the write-ups
+below it for full detail.
 
-**Design decision made during this work, worth remembering:** rather than
-adding a third independent `LogActivityModal` mount inside
-`ProjectDirectoryScreen.jsx` (which would have deepened the exact
-already-flagged "+LOG/+LEAD duplication" deferred item), Basheer chose to
-extend `DemoApp.tsx`'s existing header `+Log` button — already
-context-sensitive for Customer360/OpportunityDetail — to also cover Project
-Detail. This required lifting `selectedProject` state up into `DemoApp.tsx`
-(new `onSelectProject` callback + `openLogActivityRef`, mirroring the
-`onDetailModeChange`/`refreshOppsRef` idiom already used in this exact file)
-instead of adding local modal state to `ProjectDirectoryScreen.jsx`. This is
-a partial step toward the "Consolidate +LOG/+LEAD" deferred item below —
-Customer360Screen.tsx and OpportunityDetailScreen.tsx still have their own
-separate modal mounts, untouched.
-
-**Next up after this is committed:** reconfirm the July 10/13 freeze/demo
-timeline before starting the 4 remaining §9 migration files, then resume the
-per-file ritual. See "Next step" and "Notes / decisions" below.
+**§9 migration backlog is paused, not abandoned** — resume the 3 remaining
+files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`) after Milestone 1 gaps are closed. See "Next
+step" below.
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
-(ledger rows are commits, not files; migrated §9 file count is 11 of 16 as of
-`a0ef2e4` — 4 files remain fully untouched: `CustomerDirectoryScreen.jsx`,
-`ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`.)
+(ledger rows are commits, not files; §9 status as of `71dc5a0`: 12 fully
+migrated, 3 pending — `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx` — and 1 permanently out of scope, `App.jsx`
+itself, the prototype, never migrating. 12 + 3 + 1 = 16 tracked total; only
+the 3 pending files are actual remaining work.)
 
 | File / change                                       | Commit(s)   | What                                                                                 |
 | ---------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
@@ -60,6 +55,8 @@ per-file ritual. See "Next step" and "Notes / decisions" below.
 | `OpportunityDetailScreen.tsx` BR-OP port + 4-tab prefetch | `2f7e074` | BR-OP-02/03/05 status gates, Overview display, Reactivation Overdue badge, always-mounted Products/Splits/Stakeholders/Activity prefetch |
 | `OpportunityPipelineScreen.tsx` Reactivation Overdue badge | `349a41e` | Last piece of the BR-OP status-gate rollout (all 3 opportunity-facing screens now done) |
 | `ReminderRepository.list_for_user`/`count_for_user` fix    | `39ff781` | `include_completed` changed from additive to exclusive filter — Next Actions "Completed" tab no longer shows pending rows too |
+| Activity logging on Project Details                    | `6075c80` | New `list_by_project` backend path + Activity card on `ProjectDirectoryScreen.jsx`; see write-up below |
+| `ErrorBoundary.jsx` rename + migration                 | `581c28d`, `71dc5a0` | `.jsx`→`.tsx` rename, then MUI migration; styling + type-conversion only, no data-fetching (per §9's own "N/A" row) — §9 now 12 migrated, 3 pending |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -84,10 +81,43 @@ After the backend fix landed, Basheer noted `OpportunityDetailScreen.tsx`'s
 Activity tab still felt slow. Confirmed (his testing) that **all four tabs**
 on that screen (Products/Splits/Stakeholders/Activity) load lazily on click
 — this screen never got Customer360Screen's Commit B always-mounted-prefetch
-treatment. Fixed as part of the current uncommitted work: added always-
-mounted prefetch queries for all four (reusing each tab's existing query
-key), matching `staleTime` on both ends so a click shortly after mount reads
-cache instead of silently re-fetching. See "Current task" above.
+treatment. Fixed and committed as `2f7e074`: added always-mounted prefetch
+queries for all four (reusing each tab's existing query key), matching
+`staleTime` on both ends so a click shortly after mount reads cache instead
+of silently re-fetching.
+
+### Activity logging on Project Details (`6075c80`) — design decisions worth remembering
+Backend had `project_id` on `ActivityCreate` (write side) but no read path at
+all — added `ActivityRepository.project_exists`/`list_by_project`/`count_by_project`,
+`ActivityService.list_by_project`, and `GET /projects/{project_id}/activities`,
+mirroring the opportunity-scoped pattern exactly.
+
+**Why the frontend went through `DemoApp.tsx`'s header button instead of a
+local modal:** the obvious approach was a third independent `LogActivityModal`
+mount inside `ProjectDirectoryScreen.jsx` (`Customer360Screen.tsx` and
+`OpportunityDetailScreen.tsx` each already have their own). Basheer chose
+instead to extend `DemoApp.tsx`'s header `+Log` button — already
+context-sensitive for Customer360/OpportunityDetail — to also cover Project
+Detail, avoiding a third copy of the duplication already flagged in the
+"Consolidate +LOG/+LEAD" deferred item below. Required lifting `selectedProject`
+state into `DemoApp.tsx` (`onSelectProject` callback + `openLogActivityRef`,
+mirroring the `onDetailModeChange`/`refreshOppsRef` idiom already used in this
+file) instead of adding local modal state to `ProjectDirectoryScreen.jsx`.
+`LogActivityModal.tsx` also gained a `projectName`-aware "Project: {name}"
+chip so it's unambiguous which project an activity lands on when logged via
+the header button (opportunity chip intentionally left generic — Basheer's
+call, retrofit it when the full +LOG consolidation happens, not bundled here).
+
+**Stale-detail-view bug found and fixed in the same pass** (pre-existing, not
+caused by this work): `ProjectDirectoryScreen.jsx` stays mounted-but-hidden
+(CSS `display: none`) rather than unmounting like `Customer360Screen`/
+`OpportunityDetailScreen` (each their own conditionally-rendered `view`), so
+navigating away via the sidebar and back re-showed the previously-open
+project's detail view with the Customers/Projects sub-tab header stacked on
+top of it. Fixed with the same parent-invokes-child-ref idiom as `openCreateRef`:
+new `projectResetRef` in `DemoApp.tsx` called from `navigate()`;
+`ProjectDirectoryScreen.jsx`'s `resetDetailRef` handler clears
+`selectedProject`/`editingProject` and calls `onSelectProject?.(null)`.
 
 Two decisions from this history had reasoning that lived only in this log,
 not in any commit message or ADR — both now fixed at the source instead of
@@ -100,6 +130,76 @@ just narrated here:
 - BR-FIN-03 auto-sync (not a computed field) and the patch-not-invalidate
   cache strategy are both already spelled out in `01cead0`'s commit message
   — verified present, nothing further needed.
+
+### Prototype/Production Parity Audit (2026-07-10) — new, not yet acted on
+
+Produced `docs/Prototype-Production-Parity-Audit.md` — a systematic
+comparison of the old prototype (`sales-os-app/src/App.jsx`, 8,740 lines)
+against every production screen, then verified against `ADR.md`,
+`Business-Rules.md`, `Enterprise-Data-Model.md`, `API-Catalog.md`,
+`physical-data-model.md`, `Cabio Sales OS – Phase 1 - PRD.md`, and the live
+backend — not a naive diff. Went through three revisions in one session
+(v1 raw diff → v2 architecture-verified → v3 re-scoped after the demo date
+moved), each documented in the file's own §7 changelog so the corrections
+are auditable rather than just asserted.
+
+**Headline corrections from the verification pass, worth remembering so they
+don't get re-litigated:**
+- Project On-Hold workflow and the Marketing Campaign field both looked like
+  gaps in a raw prototype diff but are **not** — `ON_HOLD` isn't a defined
+  `ProjectStatus` anywhere in the architecture, and Campaign is explicitly
+  named as a future-phase item in `Enterprise-Data-Model.md §10`.
+- The claim "no per-stage pipeline validation exists" was wrong — 5 of
+  `BR-OP-01`'s 6 stage gates are already enforced server-side in
+  `backend/app/domains/opportunity/validators.py`. Only Demo→Clinical-Eval
+  and half of Order→Delivery are genuinely missing (confirmed via the
+  validator's own code comments admitting the deferral).
+- **New compliance gaps found independent of the prototype**, by checking
+  `Business-Rules.md` directly: `BR-OP-06` Stalled Opportunity Detection
+  (180-day auto-stall) is 0% implemented, no scheduled job exists anywhere.
+  Demo Outcome, Handover Information, and Delivery Date/Installation Site
+  are all formally mandated `BR-OP-01` gate fields with zero schema support.
+- **RBAC reality check:** there is no role-gating pattern anywhere in
+  production (frontend or backend) to reuse for the Catalog fix — verified
+  false a claim to the contrary. `role` table + 4 seeded roles exist, but
+  `get_current_user()` only authenticates, never authorizes. The bigger,
+  approved-but-unbuilt initiative for this is `docs/Phase-2E-Security-Architecture.md`
+  (full PostgreSQL RLS) — its own `set_rls_context()` hook is currently a
+  literal no-op in `db/session.py`. Confirmed that's a separate, multi-day
+  project; the Catalog role check is small, standalone service-layer work
+  that doesn't need to wait for it.
+- **PRD cross-check surfaced a real drop between the PRD and the formalized
+  data model**, not a deliberate Phase 1 simplification: `Cabio Sales OS –
+  Phase 1 - PRD.md` §1.1/§1.2/§1.3/§B.2.6 define `CustomerType`,
+  `CustomerClass`, `CustomerTier`, `CustomerStatus`, and an address block for
+  Account — none of it exists in `Enterprise-Data-Model.md`,
+  `Physical-Schema.sql`, or the live `Account` model. The PRD also defines
+  `CustomerType` two contradictory ways (hierarchy-level vs.
+  institution-nature) — resolved by using `account.parent_account_id`
+  (already live, structurally one-to-many, but no children-listing read path
+  exists yet) for hierarchy, and reserving `CustomerType` for institution
+  nature per the PRD §B.2.6 enum.
+
+**Decisions made this session (recorded in the audit doc, not repeated in
+full here):**
+- Catalog Add/Edit restricted to General Manager + Admin roles — not yet
+  built.
+- `CustomerType` (institution-nature): approved to build, per PRD §B.2.6.
+  `CustomerClass`/`CustomerStatus` remain undecided, explicitly parked.
+- Quick Lead inline account creation: **not** built for Phase 1 — reps
+  create the account via Account Management first. Simplicity call, not a
+  BR-ACT-01/03 requirement (that justification was floated during review and
+  didn't hold up on inspection).
+- Stakeholder delete: removed from scope entirely — was a straight
+  prototype-diff finding never backed by a Business Rule or ADR; its absence
+  actually matches a deliberate no-DELETE pattern used elsewhere in
+  `API-Catalog.md` (Installed Assets, Reminders, Target Plans).
+- Demo checkpoint confirmed moved to **July 20** (from July 13) — this is
+  what freed the "Current task" priority call above.
+
+Full detail, tables, and the complete Milestone 1 / Milestone 2 scope split
+are in `docs/Prototype-Production-Parity-Audit.md` — treat it as the
+authoritative reference, don't re-derive it here.
 
 ## Reference: Customer360Screen.tsx Commit B query-key design
 
@@ -140,14 +240,20 @@ ref (seed once per `editingOpp.id`, reset the guard on close) — confirmed
 present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 
 ## Next step
-1. Reconfirm the July 10/13 freeze/demo timeline with Basheer before starting
-   the 4 fully-untouched files (`CustomerDirectoryScreen.jsx`,
-   `ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`,
-   `ErrorBoundary.jsx`) — bigger lift than anything done so far (styling +
-   fetch + `.jsx`→`.tsx` all at once, no precedent file has been this file
-   type yet).
-2. Resume the per-file migration ritual (below) for those remaining screens —
-   end with an honest §9 update per column, not a blanket "done."
+**Milestone 1 gap-closure first (2026-07-10 priority decision)** — work the
+list in `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
+Milestone 1"): Associated Project link, Lead Source display, Demo end date,
+Reminder click-through, Catalog role gate (GM+Admin), Parent Customer
+display, `CustomerType` (institution-nature), Product Catalog collateral
+links. No fixed order committed yet — pick starting point next session.
+
+**§9 MUI migration backlog resumes after Milestone 1** — 3 files remain
+(`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`), all still needing the full triple-conversion
+(styling + fetch + `.jsx`→`.tsx`) — bigger lift than `ErrorBoundary.jsx` was,
+no precedent file has been this file type yet. Resume the per-file
+migration ritual (below) when picked back up — end with an honest §9 update
+per column, not a blanket "done."
 
 **Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
@@ -249,8 +355,9 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - **Consolidate +LOG / +LEAD into context-sensitive global buttons — now
   PARTIALLY DONE, not fully.** Was: 3 independent `LogActivityModal` mounts
   (`DemoApp.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`).
-  During the Project Details activity-logging build (2026-07-06, see "Files
-  in flight"), Project Detail was wired into `DemoApp.tsx`'s existing header
+  During the Project Details activity-logging build (`6075c80`, 2026-07-06,
+  see write-up under "Done in prior sessions"), Project Detail was wired
+  into `DemoApp.tsx`'s existing header
   `+Log` button instead of adding a 4th independent mount — `DemoApp.tsx` now
   has `selectedProject` state + `onSelectProject`/`openLogActivityRef`
   plumbing, proving the "lift state into DemoApp" approach works in practice.
@@ -295,15 +402,16 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   commit gate working) — they get DELETED as each file migrates, not before.
 - Timing: original plan was "finish whatever is migrated AND re-verified by
   July 10; freeze rest, demo July 13 on clean mix of migrated + untouched
-  screens, resume after." **Reconfirmed 2026-07-06: still holds.** Basheer's
-  call: proceed as fast as possible; scope may need to be cut on the remaining
-  4 files if time runs short.
-- **Demo-blocking bug found and fixed 2026-07-06:** the July 13 demo will
-  change opportunity status from `OpportunityDetailScreen.tsx` (confirmed
+  screens, resume after." Superseded 2026-07-10: **demo checkpoint moved to
+  July 20.** The extra runway is why Milestone 1 gap-closure work (see
+  "Current task"/"Next step") was prioritized ahead of resuming the §9
+  migration backlog rather than the other way around.
+- **Demo-blocking bug found and fixed 2026-07-06:** the (then-)July 13 demo
+  would have changed opportunity status from `OpportunityDetailScreen.tsx` (confirmed
   with Basheer), which had zero UI for the BR-OP-02/03/05 status-gated
   fields the backend validator already enforces — any such status change
-  would have failed with no way to fix it in the form. Fixed as part of the
-  current uncommitted work (see "Current task").
+  would have failed with no way to fix it in the form. Fixed and committed
+  as `2f7e074`.
 - Confirmed by design, not a bug (2026-07-06): changing a LOST opportunity's
   status back to Active correctly fails ("Cannot change the status of a LOST
   opportunity") — per `Business-Rules.md:114-122`, WON/LOST are terminal;
@@ -313,68 +421,16 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**9 files, implemented and guard-green (pytest 267/268 — pre-existing unrelated
-failure only; ruff clean; `tsc --noEmit` clean; `npm run lint` clean),
-NOT YET COMMITTED — Activity logging on Project Details:**
+**Two uncommitted files, both pending commit as of 2026-07-10:**
+- `docs/Prototype-Production-Parity-Audit.md` — new file, the parity audit
+  (v3, see write-up above). Ready to commit.
+- `.claude/active_progress.md` — this file, updated to reflect the
+  ErrorBoundary migration, the demo date move, this session's audit work,
+  and the Milestone 1 priority decision. Ready to commit.
 
-Backend — new project-scoped read path (POST already accepted `project_id`;
-there was no GET-by-project endpoint at all):
-- `backend/app/domains/activity/repository.py` — `ActivityRepository.project_exists`,
-  `list_by_project`, `count_by_project`, mirroring the opportunity-scoped methods.
-- `backend/app/domains/activity/service.py` — `ActivityService.list_by_project`
-  (`NotFoundError` if project missing, same shape as `list_by_opportunity`).
-- `backend/app/domains/activity/router.py` — `GET /projects/{project_id}/activities`.
-- `backend/tests/domains/activity/test_activity_service.py` — `TestListByProject`,
-  mirroring `TestListByAccount` (not-found, items/total, offset calc ×2).
-
-Frontend:
-- `sales-os-app/src/services/activities.ts` — `listActivitiesByProject`.
-- `sales-os-app/src/components/LogActivityModal.tsx` — new `projectId?: string`
-  prop, threaded into the `logActivity` payload (field already existed, unused)
-  and into cache invalidation; new `projectName?: string` prop rendering a
-  "Project: {name}" chip (mirrors the existing "Linked to this opportunity"
-  chip, but shows the actual name — added so it's unambiguous which project
-  an activity logged via the header `+Log` button lands on, not just that
-  some project is linked). The opportunity chip itself is NOT retrofitted to
-  show its name — Basheer's call: do that as part of the full context-sensitive
-  `+Log` consolidation (see deferred item), not bundled in here.
-- `sales-os-app/src/components/ActivityTimeline.tsx` — new `projectId?: string`
-  prop, third branch alongside the existing account/opportunity queryKey/queryFn.
-- `sales-os-app/src/screens/ProjectDirectoryScreen.jsx` — `ProjectDetailView` gets
-  a new "Activity" card (`<ActivityTimeline projectId={p.id} .../>`, same visual
-  pattern as the existing Opportunities card); reports the selected project up
-  via a new `onSelectProject` prop instead of keeping it purely local; new
-  `openLogActivityRef` prop wired to the Activity card's `+Log` trigger; new
-  `resetDetailRef` prop (see stale-state fix below).
-  **Deliberately no local modal or `showLogActivity` state added here** — see
-  the header-consolidation design decision in "Current task" above.
-- `sales-os-app/src/DemoApp.tsx` — new `selectedProject` state (mirrors
-  `selectedAccount`/`selectedOpportunity`, widened to also carry `name` for the
-  chip above), `onSelectProject` handler passed to `ProjectDirectoryScreen`,
-  `openLogActivityRef` (mirrors `refreshOppsRef`), and a third branch in the
-  header `LogActivityModal`'s `accountId`/`projectId`/`projectName`
-  resolution, gated on `projectDetailMode`.
-
-**Stale-detail-view bug found and fixed in the same pass (2026-07-06,
-confirmed by Basheer, pre-existing — not caused by this session's work):**
-`ProjectDirectoryScreen.jsx` stays mounted-but-hidden (CSS `display: none`)
-rather than unmounting like `Customer360Screen`/`OpportunityDetailScreen` (each
-their own conditionally-rendered `view`), so navigating away via the sidebar
-and back re-showed the previously-open project's detail view with the
-Customers/Projects sub-tab header stacked on top of it — `DemoApp.tsx`'s
-`navigate()` reset its own `projectDetailMode`/`selectedProject` copies but had
-no channel to reset the child's local state. Fixed with the same
-parent-invokes-child-ref idiom already used for `openCreateRef`: new
-`projectResetRef` in `DemoApp.tsx`, called from `navigate()`; `ProjectDirectoryScreen.jsx`
-assigns a `resetDetailRef` handler that clears `selectedProject`/`editingProject`
-and calls `onSelectProject?.(null)`. ~10 lines across the 2 files already
-being touched.
-
-**After that commit lands:** resume the per-file migration ritual for the 4 remaining §9 files —
-`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-`ProjectDirectoryScreen.jsx`, `ErrorBoundary.jsx`. Three need the full
-triple-conversion (styling + React Query + `.jsx`→`.tsx`); `ErrorBoundary.jsx`
-is styling + `.jsx`→`.tsx` only, per §9's own row ("N/A, no fetching") —
-confirm this holds once actually touched. Raise the July 10/13 freeze/demo
-timeline question again before starting these (see Notes / decisions) —
-bigger lift than anything done so far.
+No code changes in flight — the Milestone 1 gap-closure work itself hasn't
+started yet. Next session: pick a starting item from
+`docs/Prototype-Production-Parity-Audit.md` §6 and begin the build. The §9
+migration backlog (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`) stays paused until Milestone 1 is closed out —
+see "Next step" above.

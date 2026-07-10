@@ -7,7 +7,7 @@
 > ## Standard, as of 2026-07-03
 > **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all new files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032).
 >
-> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Seven screens/components still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
+> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Three screens still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
 >
 > This revision reconciles the doc with ADR-031/032/033 (accepted 2026-06-30, never reflected here until now — see the dated reconciliation note on ADR-031 in `docs/ADR.md`). Sections below that describe the pre-migration Tailwind/manual-fetch pattern are marked **Superseded**; they are kept only so pending files in §9 can be recognized for what they are.
 
@@ -358,7 +358,7 @@ Commit A/B split surfaced that these were asserting more than they checked):
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 10 fully migrated · 5 pending · 1 explicitly out of scope.
+**Totals:** 12 fully migrated · 3 pending · 1 explicitly out of scope.
 
 `OpportunityDetailScreen.tsx` moved to the fully-migrated table above once its React Query commit
 landed (all 6 manual `.then()` chains converted to `useQuery`, gated by `enabled` on the state that
