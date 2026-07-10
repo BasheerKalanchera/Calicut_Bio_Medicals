@@ -25,6 +25,9 @@ class AccountService:
             raise NotFoundError(f"Account {account_id} not found")
         return account, counts
 
+    def list_children(self, account_id: uuid.UUID) -> list[Account]:
+        return self.repository.list_children(account_id)
+
     def list_accounts(
         self,
         *,

@@ -142,6 +142,7 @@ class TestGetAccount:
         counts.opportunity_count = 0
         counts.asset_count = 0
         mock_db.execute.return_value.first.return_value = counts
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
 
         _setup_overrides(mock_db)
         try:
@@ -155,6 +156,32 @@ class TestGetAccount:
         assert body["data"]["id"] == str(TEST_ACCOUNT_ID)
         assert body["data"]["name"] == "Test Hospital"
         assert body["data"]["zone"]["name"] == "South Zone"
+        assert body["data"]["child_accounts"] == []
+
+    def test_returns_child_accounts(self, client: TestClient) -> None:
+        account = _mock_account()
+        child = _mock_account(id=uuid.uuid4(), name="Child Hospital", parent_account_id=TEST_ACCOUNT_ID)
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = account
+        counts = MagicMock()
+        counts.stakeholder_count = 0
+        counts.project_count = 0
+        counts.opportunity_count = 0
+        counts.asset_count = 0
+        mock_db.execute.return_value.first.return_value = counts
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [child]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/accounts/{TEST_ACCOUNT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["data"]["child_accounts"] == [
+            {"id": str(child.id), "name": "Child Hospital"}
+        ]
 
     def test_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()

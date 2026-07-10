@@ -37,6 +37,18 @@ class ZoneNested(BaseModel):
     name: str
 
 
+class AccountRef(BaseModel):
+    """Minimal account reference for parent/child links — deliberately not
+    self-nesting (no parent_account field) to avoid the self-referential FK
+    triggering an extra lazy-load query beyond SQLAlchemy's default one-level
+    eager join depth."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 class AccountListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -46,6 +58,7 @@ class AccountListResponse(BaseModel):
     zone_id: uuid.UUID
     payer_behavior: str | None
     zone: ZoneNested
+    parent_account: AccountRef | None = None
 
 
 class AccountResponse(BaseModel):
@@ -59,7 +72,7 @@ class AccountResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     zone: ZoneNested
-    parent_account: AccountListResponse | None
+    parent_account: AccountRef | None
 
 
 class AccountDetailResponse(AccountResponse):
@@ -68,6 +81,7 @@ class AccountDetailResponse(AccountResponse):
     opportunity_count: int
     asset_count: int
     activity_count: int
+    child_accounts: list[AccountRef] = []
 
 
 class AccountCountsEntry(BaseModel):

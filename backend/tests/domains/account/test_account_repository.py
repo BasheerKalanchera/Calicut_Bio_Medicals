@@ -78,6 +78,27 @@ class TestAccountRepositoryListAccounts:
         mock_db.scalars.assert_called_once()
 
 
+class TestAccountRepositoryListChildren:
+    def test_returns_children(self):
+        child = _make_account(name="Child Hospital")
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [child]
+
+        repo = AccountRepository(mock_db)
+        results = repo.list_children(uuid.uuid4())
+
+        assert results == [child]
+
+    def test_returns_empty_when_no_children(self):
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        repo = AccountRepository(mock_db)
+        results = repo.list_children(uuid.uuid4())
+
+        assert results == []
+
+
 class TestAccountRepositoryCreate:
     def test_creates_and_flushes(self):
         account = _make_account()

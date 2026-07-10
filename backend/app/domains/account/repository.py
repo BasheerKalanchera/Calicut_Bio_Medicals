@@ -57,6 +57,24 @@ class AccountRepository(BaseRepository[Account]):
         )
         return results, total or 0
 
+    def list_children(self, account_id: uuid.UUID) -> list[Account]:
+        stmt = (
+            select(Account)
+            .where(Account.parent_account_id == account_id)
+            .options(
+                noload(Account.stakeholders),
+                noload(Account.projects),
+                noload(Account.opportunities),
+                noload(Account.activities),
+                noload(Account.installed_assets),
+                noload(Account.documents),
+                noload(Account.coverage_plan_entries),
+                noload(Account.child_accounts),
+            )
+            .order_by(Account.name)
+        )
+        return list(self.db.scalars(stmt).unique().all())
+
     def exists_by_name(self, name: str, *, exclude_id: uuid.UUID | None = None) -> bool:
         stmt = select(func.count()).where(func.lower(Account.name) == func.lower(name))
         if exclude_id:

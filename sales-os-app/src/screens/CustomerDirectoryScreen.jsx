@@ -257,6 +257,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                           {account.zone.name}
                         </span>
                       )}
+                      {account.parent_account && (
+                        <>
+                          <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-indigo-50 text-indigo-700 border-indigo-200">
+                            Parent: {account.parent_account.name}
+                          </span>
+                        </>
+                      )}
                       {account.payer_behavior && (
                         <>
                           <span className="w-1 h-1 bg-gray-300 rounded-full" />

@@ -56,6 +56,7 @@ interface Props {
   initialAccount?: any;
   onBack: () => void;
   onAccountUpdate?: (account: any) => void;
+  onSelectAccount?: (account: { id: string; name: string }) => void;
 }
 
 const TABS = [
@@ -129,12 +130,35 @@ function LoadingRow({ label = "Loading..." }: { label?: string }) {
 // ---------------------------------------------------------------------------
 // Tab components
 // ---------------------------------------------------------------------------
-function OverviewTab({ account, onEdit }: { account: any; onEdit: () => void }) {
+function OverviewTab({
+  account,
+  onEdit,
+  onSelectAccount,
+}: {
+  account: any;
+  onEdit: () => void;
+  onSelectAccount?: (account: { id: string; name: string }) => void;
+}) {
   const fields = [
     { label: "Account Name", value: account.name },
     { label: "Zone", value: account.zone?.name || "—" },
     { label: "Payer Behavior", value: <PayerBadge behavior={account.payer_behavior} /> },
+    {
+      label: "Parent Customer",
+      value: account.parent_account ? (
+        <Box
+          component="span"
+          onClick={() => onSelectAccount?.(account.parent_account)}
+          sx={{ color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+        >
+          {account.parent_account.name}
+        </Box>
+      ) : (
+        "—"
+      ),
+    },
   ];
+  const childAccounts: { id: string; name: string }[] = account.child_accounts || [];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
@@ -160,6 +184,35 @@ function OverviewTab({ account, onEdit }: { account: any; onEdit: () => void }) 
           ))}
         </Box>
       </Box>
+      {childAccounts.length > 0 && (
+        <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", p: 2.5 }}>
+          <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 2 }}>
+            Child Accounts ({childAccounts.length})
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            {childAccounts.map((c) => (
+              <Box
+                key={c.id}
+                component="span"
+                onClick={() => onSelectAccount?.(c)}
+                sx={{
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: "0.75rem",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "primary.main",
+                  bgcolor: "#eff6ff",
+                  cursor: "pointer",
+                  "&:hover": { bgcolor: "#dbeafe" },
+                }}
+              >
+                {c.name}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
@@ -384,7 +437,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
@@ -1042,7 +1095,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
       {/* Scrollable tab content */}
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
-        {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} />}
+        {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />)}
         {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />)}

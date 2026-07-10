@@ -25,6 +25,83 @@ files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
 `ProjectDirectoryScreen.jsx`) after Milestone 1 gaps are closed. See "Next
 step" below.
 
+**Next immediate task after Parent Customer display ships — ahead of the
+rest of Milestone 1's gap list: fix `sales-os-app/src/types/api.ts`
+generation debt.** Discovered mid-session (2026-07-10) while regenerating
+types for the Parent Customer backend change. `api.ts` (marked "auto-generated
+... do not make direct changes to this file" in its own header) has not had a
+real `npm run generate:types` run since `3bab93f` (2026-07-03). Since then,
+two commits hand-patched fields directly into the file's hand-written
+"Phase A — Pipeline types (hand-written, not auto-generated)" tail block
+instead of regenerating (`2f7e074`, 2026-07-06 — 4 fields hand-added to
+`PipelineOpportunity`), and two real backend endpoints shipped with zero
+corresponding frontend types ever generated for them:
+- Opportunity stakeholder `POST`/`PATCH`/`DELETE` (added `3619295`, 2026-07-05)
+- `GET /projects/{project_id}/activities` (added `6075c80`, 2026-07-06)
+
+No external actor, no silent code rot — a prior Claude Code session took a
+"hand-edit the generated file" shortcut twice without flagging it as debt,
+and real backend surface fell out of sync as a result. Full commit-by-commit
+timeline was worked out in this session's conversation, not re-derived here.
+
+**What "fix" means, concretely:**
+1. Run a genuine `npm run generate:types` against the live backend.
+2. The tool overwrites the whole file, including the hand-written Pipeline
+   block — before accepting the output, confirm whether the backend now
+   formally exposes `PipelineOpportunity` as a real schema (this session's
+   regen attempt showed `components["schemas"]["PipelineOpportunity"]`
+   appearing, suggesting the hand-written duplicate may now be redundant)
+   and decide whether to delete it or keep it.
+3. Verify every screen/component importing from the hand-written block
+   (`PipelineOpportunity`, `ActivityResponse`, etc. as bare top-level
+   exports — not the same TS symbols as `components["schemas"][...]`) still
+   resolves after the regen; a naive full-file swap breaks those imports if
+   the hand-written exports disappear.
+4. Quick repo-wide grep for other files carrying an "auto-generated, do not
+   edit by hand" header, to confirm this exact anti-pattern wasn't repeated
+   elsewhere — cheap, ~30 seconds, raised but not yet done this session.
+5. Commit as its own standalone cleanup commit, separate from feature work.
+
+**Parent Customer display (read-side) — implemented and committed
+2026-07-10, manual browser verification still pending (Basheer's explicit
+call — committed ahead of that pass, not blocked on it).** Backend
+(`AccountRef` type, `list_children()` read path on `GET /accounts/{id}`) +
+frontend (`Customer360Screen.tsx` Overview tab — clickable Parent Customer
+field + Child Accounts chips; `CustomerDirectoryScreen.jsx` — "Parent: X"
+directory-card badge) all built and passing `pytest`/`tsc --noEmit`/
+`npm run lint` — but none of that proves it actually works on screen; this
+project has already had automated-green mask a real bug once (§9's
+`.then()`-vs-React-Query mislabeling). Verification steps (seed a parent/
+child pair via `PUT /accounts/{id}` in Swagger since there's no UI to do it
+yet, then check both screens) were handed to Basheer at end of session —
+still outstanding whenever he picks this back up.
+
+**Gap found during handoff, before it can be called done: no way to set a
+parent on an account through the app itself.** Basheer's call (2026-07-10):
+*"Without ability to add a parent to an account, this feature is not
+complete."* Today the only way to set `parent_account_id` is a raw API call
+— `PUT /accounts/{id}` already accepts it, no backend gap, but there's no
+UI path anywhere. This was a known, deliberate scope cut going into this
+session (audit's Milestone-1 wording was "display," not "editing" — see
+`docs/Prototype-Production-Parity-Audit.md` §1, filed there as "Class/
+Specialty/Type/Parent editing," never assigned to a milestone), but on
+review it makes Parent Customer display feel incomplete as a shippable
+feature rather than a nice-to-have. **Treat as the next piece of this
+feature, before/alongside the api.ts fix above:**
+1. **Edit Account modal** (`Customer360Screen.tsx`) — add a "Parent
+   Customer" field with a searchable account lookup, wired to the existing
+   `PUT /accounts/{id}` (`AccountUpdate.parent_account_id`, already
+   supported, no backend change).
+2. **New Customer modal** (`CustomerDirectoryScreen.jsx`) — same lookup,
+   wired to `POST /accounts` (`AccountCreate.parent_account_id`, already
+   supported).
+3. **Cycle guard check before exposing either UI:** `service.py`'s
+   `_validate_references` only blocks *direct* self-parenting
+   (`parent_account_id == account_id`). Unconfirmed whether anything blocks
+   a deeper cycle (A→B→A via B's parent pointing back to A) — needs
+   checking and, if missing, a backend fix before the lookup UI can safely
+   let a user pick any account as parent.
+
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
 (ledger rows are commits, not files; §9 status as of `71dc5a0`: 12 fully
@@ -276,6 +353,31 @@ Update Frontend-Implementation-Standards.md as new gotchas/patterns surface
 during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred
+- **Parent/Child account navigation — `initialData` instant-paint optimization.**
+  Surfaced during Milestone 1 "Parent Customer display" planning (2026-07-10, see
+  `docs/Prototype-Production-Parity-Audit.md` §6). The simple wiring (built first,
+  per Basheer's call) types `Customer360Screen.tsx`'s `account.parent_account` and
+  `account.child_accounts` as a minimal `AccountRef {id, name}` — clicking a parent
+  or child link swaps `accountId` in place and re-queries, but with no `initialData`
+  seeded, so it shows a brief loading state instead of the instant paint the
+  Directory list gets from its already-fetched row data.
+  **Why it's cheap, if picked up later:** `account.zone` is a separate,
+  non-self-referential relationship — always eager-joined regardless of nesting —
+  so `parent_account.zone` is already in memory once `parent_account` loads; no
+  extra query needed to expose it. For `child_accounts`, the `list_children()`
+  repository query would just need `joinedload(Account.zone)` added to its
+  options — one wider `SELECT`, not an extra round trip. Still 2 queries total for
+  the whole account-detail endpoint, same as today.
+  **What it'd take:** (1) backend — use `AccountListResponse` (zone, payer_behavior,
+  parent_account_id) instead of the minimal `AccountRef` for `parent_account`/
+  `child_accounts`, safe one level deep (no self-referential recursion risk since
+  neither field nests a further `parent_account`); (2) frontend — `DemoApp.tsx`'s
+  `selectedAccount` state (currently typed `{id, name}` only) needs widening to
+  carry the richer object through `handleSelectAccount`, so it flows into
+  `Customer360Screen`'s `initialAccount` prop → `useQuery`'s `initialData` the same
+  way Directory-list navigation already works. Real cost is a slightly heavier
+  payload on every account-detail fetch — negligible, and zero for the majority of
+  accounts with no parent/children.
 - **NPS field range enforcement + product dropdown label consistency (two-fix commit).**
   Surfaced during `Customer360Screen.tsx` Commit B E2E verification (2026-07-06).
   (1) NPS Score on Stakeholders has no range constraint today — free-number input.
@@ -421,16 +523,41 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**Two uncommitted files, both pending commit as of 2026-07-10:**
-- `docs/Prototype-Production-Parity-Audit.md` — new file, the parity audit
-  (v3, see write-up above). Ready to commit.
-- `.claude/active_progress.md` — this file, updated to reflect the
-  ErrorBoundary migration, the demo date move, this session's audit work,
-  and the Milestone 1 priority decision. Ready to commit.
+**Parent Customer display (read-side) — committed 2026-07-10 (see git log
+for the commit — Basheer's explicit call to commit ahead of manual
+verification, not blocked on it). Working tree clean as of that commit.**
+- `backend/app/domains/account/{schemas,repository,service,router}.py` —
+  `AccountRef` type, `list_children()` read path.
+- `backend/tests/domains/account/{test_account_repository,test_account_service,test_account_router}.py`
+  — new tests for the above, all passing (`pytest`: 271 passed, 1
+  pre-existing unrelated failure — see Deferred).
+- `sales-os-app/src/types/api.ts` — hand-patched (not a full regen — see
+  the api.ts generation-debt item above for why) with just the 3
+  corresponding Account fields.
+- `sales-os-app/src/screens/Customer360Screen.tsx` — Overview tab Parent
+  Customer field + Child Accounts chips, `onSelectAccount` prop threaded
+  through.
+- `sales-os-app/src/DemoApp.tsx` — passes existing `handleSelectAccount` into
+  `Customer360Screen` as `onSelectAccount`.
+- `sales-os-app/src/screens/CustomerDirectoryScreen.jsx` — "Parent: X"
+  directory-card badge (Tailwind, one-off exception to ADR-031 per Basheer's
+  call this session — file is still pending its own §9 migration).
 
-No code changes in flight — the Milestone 1 gap-closure work itself hasn't
-started yet. Next session: pick a starting item from
-`docs/Prototype-Production-Parity-Audit.md` §6 and begin the build. The §9
-migration backlog (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`tsc --noEmit` and `npm run lint` both clean at commit time. Next session,
+in order:
+1. **Still outstanding, not skipped:** Basheer runs manual browser
+   verification (steps given in conversation — seed a parent/child pair via
+   Swagger, check Directory badge + Customer 360 Parent/Child display +
+   navigation both directions + regression on unrelated accounts). If this
+   surfaces a bug, fix it as a follow-up commit, not by amending.
+2. Fix the `api.ts` generation debt (see item above — flagged ahead of the
+   rest of Milestone 1).
+3. Build the Parent Customer *editing* gap (see item above) — without it,
+   Basheer's read on this feature is that it's not complete, even though
+   display was the only thing originally scoped for Milestone 1.
+
+§9 migration backlog (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
 `ProjectDirectoryScreen.jsx`) stays paused until Milestone 1 is closed out —
-see "Next step" above.
+see "Next step" above. Remaining Milestone 1 items (Associated Project link,
+Lead Source display, Demo end date, Reminder click-through, Catalog role
+gate, `CustomerType`, Product Catalog collateral links) are still untouched.

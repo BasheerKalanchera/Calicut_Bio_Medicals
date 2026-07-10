@@ -74,6 +74,20 @@ class TestListAccounts:
         assert total == 0
 
 
+class TestListChildren:
+    def test_delegates_to_repository(self):
+        child = _make_account(name="Child Hospital")
+        repo = _make_repo()
+        repo.list_children.return_value = [child]
+
+        service = AccountService(repository=repo)
+        account_id = uuid.uuid4()
+        results = service.list_children(account_id)
+
+        repo.list_children.assert_called_once_with(account_id)
+        assert results == [child]
+
+
 class TestCreateAccount:
     def test_creates_account(self):
         repo = _make_repo()

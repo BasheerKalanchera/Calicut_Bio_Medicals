@@ -350,6 +350,7 @@ export default function DemoApp() {
               initialAccount={selectedAccount as any}
               onBack={handleBack360}
               onAccountUpdate={(a: unknown) => customerAccountUpdateRef.current?.(a)}
+              onSelectAccount={handleSelectAccount}
             />
           )}
 

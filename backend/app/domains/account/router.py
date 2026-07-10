@@ -12,6 +12,7 @@ from app.domains.account.schemas import (
     AccountCreate,
     AccountDetailResponse,
     AccountListResponse,
+    AccountRef,
     AccountResponse,
     AccountUpdate,
 )
@@ -82,6 +83,7 @@ def get_account(
     service: AccountService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[AccountDetailResponse]:
     account, counts = service.get_account_with_counts(account_id)
+    children = service.list_children(account_id)
     base = AccountResponse.model_validate(account).model_dump()
     base.update({
         "stakeholder_count": counts.stakeholder_count,
@@ -89,6 +91,7 @@ def get_account(
         "opportunity_count": counts.opportunity_count,
         "asset_count": counts.asset_count,
         "activity_count": counts.activity_count,
+        "child_accounts": [AccountRef.model_validate(c) for c in children],
     })
     return APIResponse(data=AccountDetailResponse(**base))
 

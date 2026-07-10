@@ -1019,7 +1019,7 @@ export interface components {
              */
             updated_at: string;
             zone: components["schemas"]["ZoneNested"];
-            parent_account: components["schemas"]["AccountListResponse"] | null;
+            parent_account: components["schemas"]["AccountRef"] | null;
             /** Stakeholder Count */
             stakeholder_count: number;
             /** Project Count */
@@ -1028,6 +1028,11 @@ export interface components {
             opportunity_count: number;
             /** Asset Count */
             asset_count: number;
+            /**
+             * Child Accounts
+             * @default []
+             */
+            child_accounts: components["schemas"]["AccountRef"][];
         };
         /** AccountListResponse */
         AccountListResponse: {
@@ -1048,9 +1053,26 @@ export interface components {
             /** Payer Behavior */
             payer_behavior: string | null;
             zone: components["schemas"]["ZoneNested"];
+            parent_account?: components["schemas"]["AccountRef"] | null;
         };
         /** AccountNested */
         AccountNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * AccountRef
+         * @description Minimal account reference for parent/child links — deliberately not
+         *     self-nesting (no parent_account field) to avoid the self-referential FK
+         *     triggering an extra lazy-load query beyond SQLAlchemy's default one-level
+         *     eager join depth.
+         */
+        AccountRef: {
             /**
              * Id
              * Format: uuid
@@ -1088,7 +1110,7 @@ export interface components {
              */
             updated_at: string;
             zone: components["schemas"]["ZoneNested"];
-            parent_account: components["schemas"]["AccountListResponse"] | null;
+            parent_account: components["schemas"]["AccountRef"] | null;
         };
         /** AccountUpdate */
         AccountUpdate: {
