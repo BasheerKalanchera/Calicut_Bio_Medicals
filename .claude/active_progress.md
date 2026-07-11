@@ -2,24 +2,27 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**`CustomerType` (institution-nature) — backend AND frontend both built,
-`tsc`/`lint`/`build`/`pytest` all clean, migration applied to the live
-shared dev DB, `api.ts` regenerated to match. NOT YET COMMITTED and NOT
-YET MANUALLY VERIFIED on screen** — see "Files in flight" below for the
-exact file list. Next: Basheer's manual browser pass (New Customer +
-Edit Customer selects, Overview tab display, Directory badge), then
-commit (as ≥2 separate commits — see "Files in flight" for the split).
+**`CustomerType` (institution-nature) is DONE, verified, and committed
+(`70cf978`, 2026-07-11).** Basheer's manual browser pass confirmed: New
+Customer modal select, Edit Customer modal select (change + clear-back-
+to-blank), Overview tab display, Directory badge, regression on accounts
+with no `customer_type` set — all working. `31bafa8` (unrelated stray
+`ProductService` test fix) landed just before it as its own commit.
 
-Scope decision (2026-07-11, Basheer): build exactly `CustomerType` as
-decided in the audit — no master table, fixed enum only (see `ADR-036`,
-added this session) — and explicitly not `CustomerClass`/`CustomerStatus`/
-Medical Specialty/address block, all of which remain undecided/parked.
-
-Also landed this session, all committed (`87fde5a`, `95e118a`, `bb671bc`,
-`1a6e633`): Parent Customer display + editing (Milestone 1 item, closed),
-the `api.ts` generation-debt cleanup, and doc fixes (`managing_sbu_id`/
-`zone_id` drift in `Enterprise-Data-Model.md`/`Physical-Schema.sql`, plus
-new `ADR-035`). Full detail in "Done in prior sessions" below.
+**Open question surfaced during review, NOT YET RESOLVED — check before
+assuming the 8-value enum is complete:** Basheer's real example — Aster DM
+is the parent of Aster MIMS Calicut and Aster Medicity Kochi. Structurally
+"is this a parent" is already answered by `parent_account_id` (no
+`CustomerType` needed for that). The open question is narrower: **is Aster
+DM itself, as an institution, a functioning hospital (fits an existing
+value, e.g. Multispeciality Hospital) — or a pure corporate/holding entity
+with no clinical operations of its own (fits none of the 8 values well;
+"Other" would be a lossy fallback)?** If the latter is true for Aster DM
+or similar real accounts, the enum has a real gap and needs a 9th value
+(something like "Corporate Group / Holding Entity") — a small follow-up
+migration (`0006`), not a big change, but a real one. Basheer's own words:
+"I need to check" — action is on him to check the real data; revisit this
+before treating the 8-value list as final/closed.
 
 **Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
 work from the Prototype/Production Parity Audit comes first, ahead of
@@ -27,10 +30,32 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. Remaining after `CustomerType`:
-Associated Project link, Lead Source display, Demo end date, Reminder
-click-through, Catalog role gate (GM+Admin), Product Catalog collateral
-links. No fixed order committed yet for those.
+Milestone 1") for the full scope. Remaining, untouched: Associated Project
+link, Lead Source display, Demo end date, Reminder click-through, Catalog
+role gate (GM+Admin), Product Catalog collateral links.
+
+**Mapped all 6 remaining items to screens/files 2026-07-11 (research agent,
+verified against actual code, not just the audit doc's summary) — see
+"Milestone 1 remaining items — screen mapping" write-up below for full
+detail. Recommended grouping/order, supersedes the earlier flat list:**
+1. **Opportunity Detail trio** (Associated Project link + Lead Source
+   display + Demo end date) — one cohesive pass, not three separate
+   touches. All three live or die on the same `PipelineOpportunity` schema
+   (`OpportunityDetailScreen.tsx` never fetches its own data — `DemoApp.tsx`
+   just hands it whatever pipeline-list object was already loaded).
+   Demo end date needs zero backend change (field already in the schema,
+   pure frontend wiring); Project and Lead Source both need the same kind
+   of schema addition (id + nested object) to that same response shape.
+   One backend schema touch, one frontend touch of the same Overview tab +
+   Edit form.
+2. **Reminder click-through** — small-medium, but resolve the
+   opportunity-side design gap first (see write-up below) before building
+   the naive version.
+3. **Catalog role gate** — medium, standalone (no shared logic with #4
+   despite touching the same screen file).
+4. **Product Catalog collateral links** — medium, standalone, biggest of
+   the four since there's zero Document API surface today (only the ORM
+   model exists — no schemas.py/service.py/router.py at all).
 
 **§9 migration backlog is paused, not abandoned** — resume the 3 remaining
 files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -72,6 +97,9 @@ the 3 pending files are actual remaining work.)
 | Parent Customer display (read-side)                    | `87fde5a`   | `AccountRef` type + `list_children()` read path; Customer360Screen Overview tab + CustomerDirectoryScreen "Parent: X" badge; see write-up below |
 | Parent Customer editing + 2 bugfixes                    | `95e118a`   | Edit Account/New Customer parent lookups, backend cycle guard, cache-invalidation + `initialDataUpdatedAt` fixes; see write-up below |
 | `api.ts` regeneration + `ActivityType` backend fix       | `bb671bc`   | Closed out the generation-debt item below; see write-up below |
+| Docs fix (`managing_sbu_id`/`zone_id` drift) + `ADR-035` | `1a6e633`   | `Enterprise-Data-Model.md`/`Physical-Schema.sql` corrected; new ADR formalizing Account-is-SBU-agnostic (previously only in an archived memo) |
+| Stray-test fix, unrelated to any feature                | `31bafa8`   | `ProductService.list_products` test called a `brand` kwarg the method never had — fixed the test, did not build brand filtering |
+| `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer — see "Current task" for one open follow-up question this surfaced |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -339,6 +367,54 @@ all clean. Manual smoke test (Basheer, 2026-07-11) of the most-affected
 screens — Opportunity Pipeline, Opportunity Detail (Splits/Stakeholders/
 Items tabs), Activity timelines, Next Actions — confirmed normal.
 
+### Milestone 1 remaining items — screen mapping (2026-07-11, research only)
+
+Ran a research agent against the actual code (not just the audit doc's
+summary — this session already found a few "documented state" vs. "real
+code" mismatches, so worth double-checking) to map all 6 remaining items to
+files, before picking what to build next.
+
+| Item | Screen(s) | Backend touch |
+| --- | --- | --- |
+| Associated Project link | `OpportunityDetailScreen.tsx` | `PipelineOpportunity` schema — add `project_id` + nested `Project` (column/relationship already exist on the ORM model, just missing from this response shape) |
+| Lead Source display | `OpportunityDetailScreen.tsx` | `PipelineOpportunity` schema — add `lead_source_id` + nested `LeadSource` (`validators.py` already hard-requires it to advance Lead→Qualified — the write path is enforced, the screen just has no field to satisfy it) |
+| Demo end date | `OpportunityDetailScreen.tsx` | none — `demo_end_date` already in `PipelineOpportunity`/`OpportunityCreate`/`OpportunityUpdate`; only `demo_start_date` is actually wired into the Overview display and Edit form today |
+| Reminder click-through | `NextActionsScreen.tsx` + `DemoApp.tsx` | mostly none — see gap below |
+| Catalog role gate (GM+Admin) | `ProductCatalogScreen.jsx` | new `require_role()`-style FastAPI dependency — confirmed zero role-checking logic exists anywhere in the backend today (`get_current_user` only authenticates) |
+| Product Catalog collateral links | `ProductCatalogScreen.jsx` | new Document `schemas.py`/`service.py`/`router.py` — `backend/app/domains/document/` today has only `models.py` (the ORM model + `Product.documents` relationship exist per ADR-025, zero API surface) |
+
+**Key discovery driving the grouping recommendation above:**
+`OpportunityDetailScreen.tsx` never fetches its own data — `DemoApp.tsx`'s
+`handleSelectOpportunity` just hands it whatever `PipelineOpportunity`
+object was already sitting in the pipeline list. So Associated Project,
+Lead Source, and Demo End Date all depend on that one schema and that one
+screen's Overview tab/Edit form — doing them as one pass is a real
+efficiency, not just "same file, do together" convenience.
+
+**Reminder click-through's real design gap, found by the agent, not in
+the original audit:** the account-side of this (`handleSelectAccount`)
+is safe — a Reminder's nested account is `{id, name}`, exactly the
+minimal shape `Customer360Screen.tsx` already expects as a seed, and
+that screen already has the `initialDataUpdatedAt` fix from this session
+to correctly refetch the rest. The opportunity-side is not safe:
+`handleSelectOpportunity` expects a full `PipelineOpportunity` (stage,
+status, owner, sbu, account...), but `ReminderResponse.activity.opportunity`
+is only `OpportunityNested` (`{id, name}` — see `activity/schemas.py`).
+Wiring the click-through naively would open `OpportunityDetailScreen.tsx`
+mostly blank, because that screen has no fallback fetch of its own — it's
+the same "minimal object treated as complete" bug class as the Parent/Child
+account issue fixed earlier this session (`95e118a`), just not yet fixed
+for Opportunities. Needs a decision before building: either give
+`OpportunityDetailScreen.tsx` a real fetch-on-mount (bigger, more durable
+fix — arguably the right one, matching how the account screen now works),
+or fatten the reminder's nested opportunity payload to match
+`PipelineOpportunity` (cheaper, but only patches this one entry point).
+
+**Catalog role gate + collateral links share a file, not logic** — treat
+as two separate efforts even though both touch `ProductCatalogScreen.jsx`;
+one's an authorization wrapper on existing buttons, the other's a net-new
+Documents tab on a screen with no tab structure today.
+
 ## Reference: Customer360Screen.tsx Commit B query-key design
 
 **Query keys — deliberately reusing existing keys from other files so
@@ -594,24 +670,12 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
 - Live shared Supabase DB caution applies when touching real data.
 
-## Files in flight
-**Uncommitted as of 2026-07-11, mid-`CustomerType` build — two unrelated
-batches mixed in the working tree, will need splitting into separate
-commits (not one, since they're unrelated changes):**
+### `CustomerType` (institution-nature) — full write-up (`70cf978`)
 
-**Batch 1 — docs (complete, ready to commit on its own):**
-- `docs/ADR.md` — `ADR-035` (Account is SBU-agnostic, formalizing a decision
-  that previously only lived in an archived memo) + `ADR-036` (Customer Type
-  modeled as a fixed enum, not a master entity — paired against `ADR-020`'s
-  opposite call on `LeadSource`).
-- `docs/Enterprise-Data-Model.md` — Account entity's `customer_type`
-  attribute now cross-references `ADR-036`.
-
-**Batch 2 — `CustomerType` backend + one unrelated test fix (complete,
-migration already applied live, ready to commit on its own):**
-- `backend/alembic/versions/0005_add_account_customer_type.py` (new) —
-  nullable `customer_type` column + `ck_account_customer_type` CHECK
-  constraint (8-value enum, PRD §B.2.6). **Applied to the live shared dev DB
+**Backend:**
+- `backend/alembic/versions/0005_add_account_customer_type.py` — nullable
+  `customer_type` column + `ck_account_customer_type` CHECK constraint
+  (8-value enum, PRD §B.2.6). **Applied to the live shared dev DB
   2026-07-11** — verified via `information_schema`/`pg_constraint` queries
   (read-only), not just "migration file exists." `alembic current` → `0005
   (head)`.
@@ -630,19 +694,8 @@ migration already applied live, ready to commit on its own):**
   `customer_type`, which broke `AccountResponse`/`AccountListResponse`
   Pydantic validation in 4 unrelated pre-existing tests once the field
   existed on the model).
-- `backend/tests/domains/product/test_product_service.py` — unrelated,
-  opportunistic fix: `test_delegates_to_repository` was pre-existing broken
-  (called a `brand` kwarg `ProductService.list_products` never had). Fixed
-  the test to match the real signature, per Basheer's explicit call not to
-  build real brand filtering now — that gets its own test when/if it's ever
-  actually implemented. Full backend suite is now 280 passed, 0 failed (was
-  "N passed, 1 known failure" all session until this fix).
 
-`pytest` (280 passed).
-
-**Batch 3 — `CustomerType` frontend + api.ts regen (complete, ready to
-commit — likely bundled with Batch 2 as one backend+frontend feature
-commit, Basheer's call at commit time):**
+**Frontend:**
 - `sales-os-app/src/screens/Customer360Screen.tsx` — new `formatEnumLabel()`
   helper (`"MULTISPECIALITY_HOSPITAL"` → `"Multispeciality Hospital"`,
   generic underscore-split + title-case, works for all 8 values with no
@@ -671,10 +724,18 @@ commit, Basheer's call at commit time):**
   Activity/Pipeline types from the `bb671bc` cleanup which are genuinely
   imported and checked.
 
-`tsc --noEmit`/`npm run lint`/`npm run build` all clean. `pytest` still 280
-passed after the regen (unaffected, backend-only test suite).
+`tsc --noEmit`/`npm run lint`/`npm run build`/`pytest` (280 passed) all
+clean. Manually verified by Basheer (2026-07-11): New Customer select, Edit
+Customer select (change + clear-to-blank), Overview tab display, Directory
+badge, regression on accounts with no `customer_type` set — all confirmed
+working.
 
-**Next, in order:** (1) Basheer's manual browser verification — New
-Customer modal's Customer Type select, Edit Customer modal's Customer Type
-select (including clearing it back to blank), Overview tab display, Directory
-card badge, regression check on accounts with no `customer_type` set. (2) Commit.
+**Open follow-up, not yet resolved — see "Current task" for full detail:**
+whether the 8-value enum needs a 9th value for pure corporate/holding
+accounts (e.g. Aster DM) that have no clinical nature of their own,
+distinct from the hierarchy question (already answered by
+`parent_account_id`, no field needed for that part). Basheer is checking
+the real data before any further change.
+
+## Files in flight
+**None — working tree clean as of `70cf978` (2026-07-11).**
