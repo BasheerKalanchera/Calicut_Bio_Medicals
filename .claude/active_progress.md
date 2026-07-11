@@ -62,6 +62,38 @@ timeline was worked out in this session's conversation, not re-derived here.
    elsewhere — cheap, ~30 seconds, raised but not yet done this session.
 5. Commit as its own standalone cleanup commit, separate from feature work.
 
+**Field-by-field diff done (2026-07-11), before touching anything — pulled the
+live OpenAPI schema in-process via `TestClient` (no server needed, read-only)
+and compared every hand-written type against its backend equivalent:**
+- Safe to alias to `components["schemas"][...]` (exact match or additive-only
+  diff): `PipelineOpportunity` (+ nested `stage`/`status`/`owner`/`account`/`sbu`),
+  `StakeholderLinkResponse`, `OpportunityItemResponse`, `SplitResponse` (backend
+  now also returns an `id` field the hand-written type never had — additive),
+  `ReminderResponse` (its nested `activity` object is named `ActivityContextNested`
+  backend-side vs. `ActivityContext` frontend-side — alias under the existing
+  frontend name so nothing importing it breaks).
+- **Not aliasing `ActivityResponse`/`ActivityType`/`ActivityUser` — real fidelity
+  loss, not a generator quirk.** The hand-written `ActivityType` is a strict
+  6-value union (`"VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" |
+  "MANAGER_NOTE"`); the backend's own `ActivityResponse.activity_type` is typed
+  `str` (`backend/app/domains/activity/schemas.py:72`), and `ActivityContextNested.activity_type`
+  the same (`schemas.py:99`) — both should be the `ActivityType` alias already
+  defined at the top of that file (line 8) and already used correctly by
+  `ActivityCreate` (line 45). Aliasing the frontend type now would silently
+  widen it from "only these 6 values" to "any string." Leaving these three
+  hand-written until the backend fix below lands.
+- `PipelinePage`/`ActivityPage` have no 1:1 generated schema name (they come out
+  as `PaginatedResponse_PipelineOpportunity_`/`PaginatedResponse_ActivityResponse_`)
+  — cosmetic naming decision, not a risk, decide wording during the edit.
+
+**Queued next, after the `api.ts` fix above (small, standalone backend
+commit):** fix `backend/app/domains/activity/schemas.py` lines 72 and 99 —
+change `activity_type: str` to `activity_type: ActivityType` on both
+`ActivityResponse` and `ActivityContextNested`, matching `ActivityCreate`'s
+existing usage. Confirmed via `pytest` scope check not yet done — run the
+suite after the change. Once landed, `ActivityResponse` becomes safe to alias
+in `api.ts` too (see diff above).
+
 **Parent Customer display (read-side) — implemented and committed
 2026-07-10, manual browser verification still pending (Basheer's explicit
 call — committed ahead of that pass, not blocked on it).** Backend
@@ -101,6 +133,24 @@ feature, before/alongside the api.ts fix above:**
    a deeper cycle (A→B→A via B's parent pointing back to A) — needs
    checking and, if missing, a backend fix before the lookup UI can safely
    let a user pick any account as parent.
+
+**Status (2026-07-11): all 3 sub-items implemented, uncommitted.** Backend
+cycle guard (`AccountService._creates_cycle` + `AccountRepository.get_parent_id`,
+`backend/app/domains/account/service.py`/`repository.py`) walks the full
+ancestor chain, not just the direct case — 4 new tests added (2 repository,
+2 service), full suite green except the pre-existing unrelated
+`test_product_service.py` failure. `Customer360Screen.tsx`'s Edit Customer
+modal got a "Parent Customer" MUI `Autocomplete` (debounced search via
+`listAccounts`, excludes self + direct children client-side, backend
+cycle guard as the backstop for deeper cycles). `CustomerDirectoryScreen.jsx`'s
+New Customer modal got a matching bespoke search/select field, kept
+Tailwind-only per this file's existing exception boundary — no MUI import
+added to a pre-§9-migration file. `tsc --noEmit`/`npm run lint` both clean.
+**Deliberately not committed yet — Basheer's call (2026-07-11):** he does
+manual browser verification himself first (this now covers both the
+2026-07-10 display work and this editing work together, since neither has
+had a live pass yet), then the `api.ts` generation-debt fix happens, then
+everything commits together. See "Next step"/"Files in flight" below.
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
@@ -353,6 +403,11 @@ Update Frontend-Implementation-Standards.md as new gotchas/patterns surface
 during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred
+- **Parent-account cycle guard — recursive-CTE optimization, not needed yet.**
+  `AccountService._creates_cycle` (`backend/app/domains/account/service.py`)
+  walks the ancestor chain with one DB round-trip per level; full reasoning
+  and the CTE alternative are in that function's own docstring, not repeated
+  here. Revisit only if a future milestone introduces deeper hierarchies.
 - **Parent/Child account navigation — `initialData` instant-paint optimization.**
   Surfaced during Milestone 1 "Parent Customer display" planning (2026-07-10, see
   `docs/Prototype-Production-Parity-Audit.md` §6). The simple wiring (built first,

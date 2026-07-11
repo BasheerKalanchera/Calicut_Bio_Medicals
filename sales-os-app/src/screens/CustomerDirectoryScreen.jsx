@@ -5,6 +5,7 @@
    migrates (§9) — do not hand-fix individually, the rewrite removes the
    pattern that causes these. */
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
 import { listZones } from "../services/masterData";
 import FormModal from "../components/FormModal";
@@ -37,6 +38,7 @@ function setCache(key, data) {
 }
 
 export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef, accountUpdateRef }) {
+  const queryClient = useQueryClient();
   const [accounts, setAccounts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -52,13 +54,34 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   const [formName, setFormName] = useState("");
   const [formZoneId, setFormZoneId] = useState("");
   const [formPayerBehavior, setFormPayerBehavior] = useState("");
+  const [formParentAccount, setFormParentAccount] = useState(null); // {id, name} | null
+  const [parentSearch, setParentSearch] = useState("");
+  const [parentOptions, setParentOptions] = useState([]);
 
   const debouncedSearch = useDebouncedValue(search);
+  const debouncedParentSearch = useDebouncedValue(parentSearch);
+
+  useEffect(() => {
+    if (!showCreateModal || formParentAccount || !debouncedParentSearch.trim()) {
+      setParentOptions([]);
+      return;
+    }
+    let cancelled = false;
+    listAccounts({ search: debouncedParentSearch, page_size: 8 })
+      .then((data) => {
+        if (!cancelled) setParentOptions(data.items || []);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [debouncedParentSearch, showCreateModal, formParentAccount]);
 
   const openCreateModal = async () => {
     setFormName("");
     setFormZoneId("");
     setFormPayerBehavior("");
+    setFormParentAccount(null);
+    setParentSearch("");
+    setParentOptions([]);
     setShowCreateModal(true);
     if (zones.length === 0) {
       try {
@@ -88,10 +111,18 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     if (!formZoneId) throw new Error("Zone is required");
     const payload = { name: formName.trim(), zone_id: formZoneId };
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
+    if (formParentAccount) payload.parent_account_id = formParentAccount.id;
     await createAccount(payload);
     accountListCache.clear();
     fetchAccounts({ background: true });
     listContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // Customer 360's account query cache is keyed by ["account", id] (React
+    // Query) — a brand-new child doesn't exist in it yet, but the parent's
+    // entry does, and its child_accounts list is now stale (see
+    // Customer360Screen.tsx's handleUpdateAccount for the matching fix).
+    if (formParentAccount) {
+      queryClient.invalidateQueries({ queryKey: ["account", formParentAccount.id] });
+    }
   };
 
   const isMountedRef = useRef(true);
@@ -365,6 +396,51 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
               </option>
             ))}
           </select>
+        </div>
+        <div className="relative">
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+            Parent Customer
+          </label>
+          {formParentAccount ? (
+            <div className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium flex items-center justify-between">
+              <span>{formParentAccount.name}</span>
+              <button
+                type="button"
+                onClick={() => setFormParentAccount(null)}
+                className="text-gray-400 hover:text-gray-600 font-bold text-xs ml-2"
+              >
+                &times;
+              </button>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={parentSearch}
+                onChange={(e) => setParentSearch(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+                placeholder="Search customers..."
+                autoComplete="off"
+              />
+              {parentOptions.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-md max-h-48 overflow-y-auto">
+                  {parentOptions.map((a) => (
+                    <div
+                      key={a.id}
+                      onClick={() => {
+                        setFormParentAccount(a);
+                        setParentSearch("");
+                        setParentOptions([]);
+                      }}
+                      className="px-3 py-2 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                    >
+                      {a.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
         <div>
           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">

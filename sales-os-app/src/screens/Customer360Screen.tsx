@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -16,6 +17,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import {
   getAccount,
   getAccountCounts,
+  listAccounts,
   updateAccount,
   listStakeholders,
   createStakeholder,
@@ -47,6 +49,7 @@ import { listProducts } from "../services/products";
 import { listActivitiesByAccount } from "../services/activities";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { useAuth } from "../contexts/AuthContext";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
@@ -451,6 +454,15 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     queryKey: ["account", accountId],
     queryFn: () => getAccount(accountId as any) as Promise<any>,
     initialData: initialAccount ?? undefined,
+    // initialAccount is often just a name/id summary (Directory row, or a
+    // parent/child AccountRef) missing child_accounts/parent_account/counts.
+    // Without this, React Query treats that seed as freshly-fetched "now" and,
+    // under main.tsx's global 30s staleTime, never kicks off the correcting
+    // background fetch until some unrelated trigger (window refocus, a fresh
+    // mount) happens to fire — which can be never on a screen the user just
+    // leaves open. Backdating the timestamp makes it stale immediately, so a
+    // background refetch starts right on mount while still painting instantly.
+    initialDataUpdatedAt: initialAccount ? 0 : undefined,
   });
 
   const { data: accountCounts } = useQuery({
@@ -512,6 +524,23 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editAccountName, setEditAccountName] = useState("");
   const [editAccountZoneId, setEditAccountZoneId] = useState("");
   const [editAccountPayer, setEditAccountPayer] = useState("");
+  const [editAccountParent, setEditAccountParent] = useState<{ id: string; name: string } | null>(null);
+  const [parentSearchInput, setParentSearchInput] = useState("");
+  const debouncedParentSearch = useDebouncedValue(parentSearchInput);
+
+  const childAccountIds: string[] = (mergedAccount?.child_accounts || []).map((c: any) => c.id);
+
+  const { data: parentOptions = [], isFetching: parentOptionsLoading } = useQuery({
+    queryKey: ["accounts", "picker", "parent", debouncedParentSearch],
+    enabled: showEditAccount,
+    queryFn: async () => {
+      const d = await listAccounts({ search: debouncedParentSearch || undefined, page_size: 20 });
+      return (d as { items?: { id: string; name: string }[] }).items ?? [];
+    },
+  });
+  const parentAccountChoices = parentOptions.filter(
+    (a) => a.id !== accountId && !childAccountIds.includes(a.id)
+  );
 
   // Stakeholders
   const [showCreateStakeholder, setShowCreateStakeholder] = useState(false);
@@ -761,16 +790,34 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditAccountName(account.name || "");
     setEditAccountZoneId(account.zone?.id || "");
     setEditAccountPayer(account.payer_behavior || "");
+    setEditAccountParent(account.parent_account || null);
+    setParentSearchInput("");
     setShowEditAccount(true);
   };
 
   const handleUpdateAccount = async () => {
     if (!editAccountName.trim()) throw new Error("Customer name is required");
     if (!editAccountZoneId) throw new Error("Zone is required");
-    const payload: any = { name: editAccountName.trim(), zone_id: editAccountZoneId };
+    const previousParentId = account.parent_account?.id || null;
+    const newParentId = editAccountParent?.id || null;
+    const payload: any = {
+      name: editAccountName.trim(),
+      zone_id: editAccountZoneId,
+      parent_account_id: newParentId,
+    };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     await updateAccount(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
+    // The parent's own child_accounts list is a computed field on ITS query
+    // cache entry, not this account's — invalidate both sides of a reparent
+    // (old and new parent) so a page already viewing either one picks it up
+    // instead of serving up to 30s (main.tsx's global staleTime) of stale data.
+    if (previousParentId && previousParentId !== newParentId) {
+      queryClient.invalidateQueries({ queryKey: ["account", previousParentId] });
+    }
+    if (newParentId && newParentId !== previousParentId) {
+      queryClient.invalidateQueries({ queryKey: ["account", newParentId] });
+    }
   };
 
   // Stakeholder
@@ -1117,6 +1164,17 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <MenuItem value="">Select zone</MenuItem>
           {zones.map((z: any) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
         </TextField>
+        <Autocomplete
+          options={parentAccountChoices}
+          getOptionLabel={(o: any) => o.name}
+          isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
+          value={editAccountParent}
+          loading={parentOptionsLoading}
+          onChange={(_e, newValue) => setEditAccountParent(newValue)}
+          onInputChange={(_e, newInputValue) => setParentSearchInput(newInputValue)}
+          renderInput={(params) => <TextField {...params} label="Parent Customer" size="small" />}
+          fullWidth
+        />
         <TextField
           select label="Payer Behavior" value={editAccountPayer} onChange={(e) => setEditAccountPayer(e.target.value)}
           fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}

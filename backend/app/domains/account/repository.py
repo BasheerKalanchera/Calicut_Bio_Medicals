@@ -209,3 +209,6 @@ class AccountRepository(BaseRepository[Account]):
 
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(func.count()).where(Account.id == account_id)) or 0) > 0
+
+    def get_parent_id(self, account_id: uuid.UUID) -> uuid.UUID | None:
+        return self.db.scalar(select(Account.parent_account_id).where(Account.id == account_id))

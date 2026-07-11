@@ -158,3 +158,20 @@ class TestAccountRepositoryAccountExists:
 
         repo = AccountRepository(mock_db)
         assert repo.account_exists(uuid.uuid4()) is False
+
+
+class TestAccountRepositoryGetParentId:
+    def test_returns_parent_id_when_set(self):
+        parent_id = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = parent_id
+
+        repo = AccountRepository(mock_db)
+        assert repo.get_parent_id(uuid.uuid4()) == parent_id
+
+    def test_returns_none_when_no_parent(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = None
+
+        repo = AccountRepository(mock_db)
+        assert repo.get_parent_id(uuid.uuid4()) is None

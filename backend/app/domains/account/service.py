@@ -58,6 +58,39 @@ class AccountService:
                 raise ValidationError("Account cannot be its own parent")
             if not self.repository.account_exists(parent_account_id):
                 raise ValidationError(f"Parent account {parent_account_id} does not exist")
+            if account_id is not None and self._creates_cycle(
+                account_id=account_id, parent_account_id=parent_account_id
+            ):
+                raise ValidationError(
+                    "Setting this parent would create a circular reference"
+                )
+
+    def _creates_cycle(
+        self, *, account_id: uuid.UUID, parent_account_id: uuid.UUID
+    ) -> bool:
+        """Walk the ancestor chain from parent_account_id looking for account_id.
+
+        Only meaningful on update (a brand-new account can't already be
+        anyone's ancestor), so callers only invoke this when account_id is set.
+
+        One DB round-trip per ancestor level (O(depth)) — fine today since this
+        app's account hierarchy is at most 1-2 levels deep (hospital group ->
+        branch) and this only runs on save, not on any read path. If a future
+        milestone introduces deeper hierarchies and this loop becomes a real
+        cost, replace it with a single `WITH RECURSIVE ancestors AS (...)` CTE
+        that returns the whole chain in one round-trip, instead of adding that
+        complexity now for a cost that doesn't exist yet.
+        """
+        visited: set[uuid.UUID] = set()
+        current_id: uuid.UUID | None = parent_account_id
+        while current_id is not None:
+            if current_id == account_id:
+                return True
+            if current_id in visited:
+                break  # pre-existing cycle in the data; stop rather than loop forever
+            visited.add(current_id)
+            current_id = self.repository.get_parent_id(current_id)
+        return False
 
     def create_account(
         self,

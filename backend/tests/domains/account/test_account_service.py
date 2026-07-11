@@ -253,3 +253,36 @@ class TestUpdateAccount:
     def test_rejects_invalid_payer_behavior_on_update(self):
         with pytest.raises(PydanticValidationError):
             AccountUpdate.model_validate({"payer_behavior": "RANDOM_VALUE"})
+
+    def test_rejects_deeper_cycle(self):
+        account_id = uuid.uuid4()
+        b_id = uuid.uuid4()
+        c_id = uuid.uuid4()
+        account = _make_account(id=account_id)
+        repo = _make_repo()
+        repo.get_for_update.return_value = account
+        # Proposed parent B's own ancestor chain is B -> C -> account_id,
+        # i.e. reparenting under B would loop back to the account itself.
+        repo.get_parent_id.side_effect = lambda aid: {b_id: c_id, c_id: account_id}.get(aid)
+
+        service = AccountService(repository=repo)
+        data = AccountUpdate.model_validate({"parent_account_id": str(b_id)})
+
+        with pytest.raises(ValidationError, match="circular reference"):
+            service.update_account(account_id, data, updated_by=TEST_USER_ID)
+
+    def test_accepts_legitimate_reparent(self):
+        account_id = uuid.uuid4()
+        new_parent_id = uuid.uuid4()
+        unrelated_ancestor_id = uuid.uuid4()
+        account = _make_account(id=account_id)
+        repo = _make_repo()
+        repo.get_for_update.return_value = account
+        # new_parent_id's ancestor chain never loops back to account_id.
+        repo.get_parent_id.side_effect = lambda aid: {new_parent_id: unrelated_ancestor_id}.get(aid)
+
+        service = AccountService(repository=repo)
+        data = AccountUpdate.model_validate({"parent_account_id": str(new_parent_id)})
+        result = service.update_account(account_id, data, updated_by=TEST_USER_ID)
+
+        assert result.parent_account_id == new_parent_id
