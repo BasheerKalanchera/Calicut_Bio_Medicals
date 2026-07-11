@@ -398,11 +398,30 @@ export interface paths {
         get: operations["list_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_get"];
         /** Replace Opportunity Stakeholders */
         put: operations["replace_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_put"];
-        post?: never;
+        /** Add Opportunity Stakeholder */
+        post: operations["add_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunities/{opportunity_id}/stakeholders/{stakeholder_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Opportunity Stakeholder */
+        delete: operations["remove_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders__stakeholder_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Opportunity Stakeholder */
+        patch: operations["update_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders__stakeholder_id__patch"];
         trace?: never;
     };
     "/api/v1/accounts/{account_id}/activities": {
@@ -431,6 +450,23 @@ export interface paths {
         };
         /** List Opportunity Activities */
         get: operations["list_opportunity_activities_api_v1_opportunities__opportunity_id__activities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Project Activities */
+        get: operations["list_project_activities_api_v1_projects__project_id__activities_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -772,6 +808,20 @@ export interface components {
             message: string;
             data: components["schemas"]["ReminderResponse"];
         };
+        /** APIResponse[StakeholderLinkResponse] */
+        APIResponse_StakeholderLinkResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["StakeholderLinkResponse"];
+        };
         /** APIResponse[StakeholderResponse] */
         APIResponse_StakeholderResponse_: {
             /**
@@ -1028,6 +1078,8 @@ export interface components {
             opportunity_count: number;
             /** Asset Count */
             asset_count: number;
+            /** Activity Count */
+            activity_count: number;
             /**
              * Child Accounts
              * @default []
@@ -1129,8 +1181,11 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Activity Type */
-            activity_type: string;
+            /**
+             * Activity Type
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
             /**
              * Activity Date
              * Format: date-time
@@ -1192,8 +1247,11 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
-            /** Activity Type */
-            activity_type: string;
+            /**
+             * Activity Type
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
             /**
              * Activity Date
              * Format: date-time
@@ -1657,6 +1715,14 @@ export interface components {
             demo_end_date: string | null;
             /** Po Number */
             po_number: string | null;
+            /** Loss Reason Id */
+            loss_reason_id: string | null;
+            /** Competitor Name */
+            competitor_name: string | null;
+            /** Hold Reason Id */
+            hold_reason_id: string | null;
+            /** Reactivation Date */
+            reactivation_date: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2008,6 +2074,15 @@ export interface components {
             notes: string | null;
             stakeholder: components["schemas"]["StakeholderNested"];
         };
+        /** StakeholderLinkUpdate */
+        StakeholderLinkUpdate: {
+            /** Influence Level */
+            influence_level?: string | null;
+            /** Decision Role */
+            decision_role?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** StakeholderNested */
         StakeholderNested: {
             /**
@@ -2224,6 +2299,16 @@ export interface components {
             win_probability: string;
             /** Indicative Value */
             indicative_value: string | null;
+            /** Po Number */
+            po_number: string | null;
+            /** Hold Reason Id */
+            hold_reason_id: string | null;
+            /** Reactivation Date */
+            reactivation_date: string | null;
+            /** Loss Reason Id */
+            loss_reason_id: string | null;
+            /** Competitor Name */
+            competitor_name: string | null;
             stage: components["schemas"]["OpportunityStageNested"];
             status: components["schemas"]["OpportunityStatusNested"];
             owner: components["schemas"]["OwnerNested"];
@@ -2331,137 +2416,6 @@ export interface components {
     headers: never;
     pathItems: never;
 }
-// ---------------------------------------------------------------------------
-// Phase A — Pipeline types (hand-written, not auto-generated)
-// ---------------------------------------------------------------------------
-
-export interface PipelineStageNested {
-  id: string;
-  stage_code: string;
-  stage_name: string;
-  display_order: number;
-  default_win_probability: string;
-}
-
-export interface PipelineStatusNested {
-  id: string;
-  status_code: string;
-  status_name: string;
-  is_terminal: boolean;
-}
-
-export interface PipelineOwnerNested {
-  id: string;
-  display_name: string;
-}
-
-export interface PipelineOpportunity {
-  id: string;
-  name: string;
-  win_probability: string;
-  indicative_value: string | null;
-  expected_closure_date: string | null;
-  demo_start_date: string | null;
-  demo_end_date: string | null;
-  po_number: string | null;
-  hold_reason_id: string | null;
-  reactivation_date: string | null;
-  loss_reason_id: string | null;
-  competitor_name: string | null;
-  created_at: string;
-  updated_at: string;
-  account: { id: string; name: string };
-  stage: PipelineStageNested;
-  status: PipelineStatusNested;
-  owner: PipelineOwnerNested;
-  sbu: { id: string; name: string };
-}
-
-export interface PipelinePage {
-  items: PipelineOpportunity[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-export interface SplitResponse {
-  user_id: string;
-  split_percentage: string;
-  user: { id: string; display_name: string };
-}
-
-export interface StakeholderLinkResponse {
-  stakeholder_id: string;
-  influence_level: string | null;
-  decision_role: string | null;
-  notes: string | null;
-  stakeholder: { id: string; name: string };
-}
-
-export interface OpportunityItemResponse {
-  id: string;
-  product_id: string;
-  quantity: number;
-  unit_price_lakhs: string;
-  discount_lakhs: string;
-  extended_value_lakhs: string;
-  product: { id: string; name: string };
-}
-
-export type ActivityType = "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
-
-export interface ActivityUser {
-  id: string;
-  display_name: string;
-}
-
-export interface ActivityResponse {
-  id: string;
-  account_id: string;
-  opportunity_id: string | null;
-  project_id: string | null;
-  user_id: string;
-  activity_type: ActivityType;
-  activity_date: string;
-  notes: string | null;
-  created_at: string;
-  user: ActivityUser;
-  next_action_reminder_id: string | null;
-}
-
-export interface ActivityPage {
-  items: ActivityResponse[];
-  total: number;
-  page: number;
-  page_size: number;
-  total_pages: number;
-}
-
-// BR-ACT-04: nested Activity context on a Reminder, resolved via the
-// Activity it's linked to (ADR-023 — Reminders carry no direct FK to
-// Account/Opportunity, only to Activity).
-export interface ActivityContext {
-  id: string;
-  activity_type: ActivityType;
-  activity_date: string;
-  account: { id: string; name: string };
-  opportunity: { id: string; name: string } | null;
-}
-
-export interface ReminderResponse {
-  id: string;
-  activity_id: string;
-  assigned_to_user_id: string;
-  due_date: string;
-  reminder_text: string;
-  is_completed: boolean;
-  created_at: string;
-  updated_at: string;
-  assigned_to_user: ActivityUser;
-  activity: ActivityContext;
-}
-
 export type $defs = Record<string, never>;
 export interface operations {
     health_check_api_v1_health_get: {
@@ -3589,6 +3543,113 @@ export interface operations {
             };
         };
     };
+    add_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StakeholderLinkCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_StakeholderLinkResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders__stakeholder_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+                stakeholder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders__stakeholder_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+                stakeholder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StakeholderLinkUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_StakeholderLinkResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activities_api_v1_accounts__account_id__activities_get: {
         parameters: {
             query?: {
@@ -3636,6 +3697,42 @@ export interface operations {
             };
             path: {
                 opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ActivityResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_project_activities_api_v1_projects__project_id__activities_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                project_id: string;
             };
             cookie?: never;
         };
@@ -3980,3 +4077,21 @@ export interface operations {
         };
     };
 }
+// ---------------------------------------------------------------------------
+// Hand-written aliases (kept minimal — only names other files actually
+// import). See .claude/active_progress.md for the reasoning behind each one;
+// regenerating this file wipes everything below this line, so any future
+// regen must re-add it, not hand-patch fields into the generated part above.
+// ---------------------------------------------------------------------------
+
+export type PipelineOpportunity = components["schemas"]["PipelineOpportunity"];
+export type PipelinePage = components["schemas"]["PaginatedResponse_PipelineOpportunity_"];
+export type SplitResponse = components["schemas"]["SplitResponse"];
+export type StakeholderLinkResponse = components["schemas"]["StakeholderLinkResponse"];
+export type OpportunityItemResponse = components["schemas"]["OpportunityItemResponse"];
+export type ReminderResponse = components["schemas"]["ReminderResponse"];
+export type ActivityResponse = components["schemas"]["ActivityResponse"];
+export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResponse_"];
+// Derived from ActivityResponse's own field instead of hand-listing the 6
+// values again, so this can never drift from the backend's enum.
+export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];

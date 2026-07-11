@@ -69,7 +69,7 @@ class ActivityResponse(BaseModel):
     opportunity_id: uuid.UUID | None
     project_id: uuid.UUID | None
     user_id: uuid.UUID
-    activity_type: str
+    activity_type: ActivityType
     activity_date: datetime
     notes: str | None
     created_at: datetime
@@ -96,7 +96,7 @@ class ActivityContextNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    activity_type: str
+    activity_type: ActivityType
     activity_date: datetime
     account: AccountNested
     opportunity: OpportunityNested | None
