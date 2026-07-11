@@ -13,6 +13,12 @@ class Account(AuditMixin, Base):
             "payer_behavior IN ('GOOD', 'AVERAGE', 'PROBLEMATIC', 'UNKNOWN')",
             name="ck_account_payer_behavior",
         ),
+        CheckConstraint(
+            "customer_type IN ('MULTISPECIALITY_HOSPITAL', 'SPECIALTY_HOSPITAL', "
+            "'DIAGNOSTIC_CENTER', 'CLINIC', 'DEALER', 'MEDICAL_COLLEGE_HOSPITAL', "
+            "'GOVERNMENT_HOSPITAL', 'OTHER')",
+            name="ck_account_customer_type",
+        ),
         Index("idx_account_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
     )
 
@@ -25,6 +31,7 @@ class Account(AuditMixin, Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    customer_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     parent_account: Mapped["Account | None"] = relationship(
         back_populates="child_accounts", remote_side="Account.id", lazy="joined"

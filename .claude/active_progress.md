@@ -2,13 +2,24 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Milestone 1's Parent Customer item (display + editing) and the `api.ts`
-generation-debt cleanup are both DONE and committed as of 2026-07-11
-(`87fde5a`, `95e118a`, `bb671bc`) — working tree clean.** Full detail in
-"Done in prior sessions" below (ledger rows + write-ups). Manual browser
-verification for both display and editing passed (Basheer, 2026-07-11):
-adding a parent, viewing parent, viewing children, clicking parent, clicking
-children all confirmed working.
+**`CustomerType` (institution-nature) — backend AND frontend both built,
+`tsc`/`lint`/`build`/`pytest` all clean, migration applied to the live
+shared dev DB, `api.ts` regenerated to match. NOT YET COMMITTED and NOT
+YET MANUALLY VERIFIED on screen** — see "Files in flight" below for the
+exact file list. Next: Basheer's manual browser pass (New Customer +
+Edit Customer selects, Overview tab display, Directory badge), then
+commit (as ≥2 separate commits — see "Files in flight" for the split).
+
+Scope decision (2026-07-11, Basheer): build exactly `CustomerType` as
+decided in the audit — no master table, fixed enum only (see `ADR-036`,
+added this session) — and explicitly not `CustomerClass`/`CustomerStatus`/
+Medical Specialty/address block, all of which remain undecided/parked.
+
+Also landed this session, all committed (`87fde5a`, `95e118a`, `bb671bc`,
+`1a6e633`): Parent Customer display + editing (Milestone 1 item, closed),
+the `api.ts` generation-debt cleanup, and doc fixes (`managing_sbu_id`/
+`zone_id` drift in `Enterprise-Data-Model.md`/`Physical-Schema.sql`, plus
+new `ADR-035`). Full detail in "Done in prior sessions" below.
 
 **Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
 work from the Prototype/Production Parity Audit comes first, ahead of
@@ -16,11 +27,10 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. Remaining, untouched: Associated Project
-link, Lead Source display, Demo end date, Reminder click-through, Catalog
-role gate (GM+Admin), `CustomerType` (institution-nature), Product Catalog
-collateral links. No fixed order committed yet — pick starting point next
-session.
+Milestone 1") for the full scope. Remaining after `CustomerType`:
+Associated Project link, Lead Source display, Demo end date, Reminder
+click-through, Catalog role gate (GM+Admin), Product Catalog collateral
+links. No fixed order committed yet for those.
 
 **§9 migration backlog is paused, not abandoned** — resume the 3 remaining
 files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -551,13 +561,13 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   Reuse `Customer360Screen.tsx`'s existing "New Stakeholder" `FormModal` field
   set/service call, then `addOpportunityStakeholder` to link it. Basheer's
   call: hold as deferred.
-- **Pre-existing broken test: `test_product_service.py::TestListProducts::test_delegates_to_repository`.**
-  Fails with `TypeError: ProductService.list_products() got an unexpected
-  keyword argument 'brand'` — no `brand` parameter exists on that method.
-  Confirmed pre-existing and unrelated to any of this session's work
-  (reproduced identically on `main` via `git stash` before changes).
-  Whoever next touches `ProductService.list_products` should decide whether
-  to add real `brand` filtering or delete the stale test expectation.
+- **`brand` filtering on `ProductService.list_products` — not implemented.**
+  (Was: a pre-existing broken test — `test_delegates_to_repository` called
+  a `brand` kwarg the method never had, `TypeError` on every run. Fixed
+  2026-07-11 by correcting the test to match the real signature, not by
+  adding the feature.) If real brand filtering is ever needed, add it to
+  `ProductService.list_products`/`ProductRepository.list_products` and add
+  a genuine test for it then — not before.
 
 ## Notes / decisions
 - MUI-only decided, non-negotiable. §9 is the authoritative migration tracker.
@@ -585,8 +595,86 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**None — working tree clean as of `bb671bc` (2026-07-11).** Parent Customer
-display + editing (`87fde5a`, `95e118a`) and the `api.ts` generation-debt +
-`ActivityType` backend fix (`bb671bc`) are all committed and verified — see
-"Done in prior sessions" write-ups above. Next up is picking a starting
-point from the remaining Milestone 1 gap list, per "Next step" above.
+**Uncommitted as of 2026-07-11, mid-`CustomerType` build — two unrelated
+batches mixed in the working tree, will need splitting into separate
+commits (not one, since they're unrelated changes):**
+
+**Batch 1 — docs (complete, ready to commit on its own):**
+- `docs/ADR.md` — `ADR-035` (Account is SBU-agnostic, formalizing a decision
+  that previously only lived in an archived memo) + `ADR-036` (Customer Type
+  modeled as a fixed enum, not a master entity — paired against `ADR-020`'s
+  opposite call on `LeadSource`).
+- `docs/Enterprise-Data-Model.md` — Account entity's `customer_type`
+  attribute now cross-references `ADR-036`.
+
+**Batch 2 — `CustomerType` backend + one unrelated test fix (complete,
+migration already applied live, ready to commit on its own):**
+- `backend/alembic/versions/0005_add_account_customer_type.py` (new) —
+  nullable `customer_type` column + `ck_account_customer_type` CHECK
+  constraint (8-value enum, PRD §B.2.6). **Applied to the live shared dev DB
+  2026-07-11** — verified via `information_schema`/`pg_constraint` queries
+  (read-only), not just "migration file exists." `alembic current` → `0005
+  (head)`.
+- `backend/app/domains/account/models.py` — `Account.customer_type` column +
+  matching `CheckConstraint` in `__table_args__`.
+- `backend/app/domains/account/schemas.py` — new `CustomerType` `StrEnum`;
+  `customer_type` added to `AccountBase` (→ `AccountCreate`), `AccountUpdate`,
+  `AccountListResponse`, `AccountResponse` (`AccountDetailResponse` inherits
+  it for free).
+- `backend/app/domains/account/service.py` — `create_account`'s `Account(...)`
+  constructor now passes `customer_type` (`update_account` already handles
+  new fields generically, no change needed there).
+- `backend/tests/domains/account/{test_account_service,test_account_router}.py`
+  — 4 new tests (valid/invalid `customer_type` on create + update) + fixed
+  `test_account_router.py`'s `_mock_account` helper (was missing
+  `customer_type`, which broke `AccountResponse`/`AccountListResponse`
+  Pydantic validation in 4 unrelated pre-existing tests once the field
+  existed on the model).
+- `backend/tests/domains/product/test_product_service.py` — unrelated,
+  opportunistic fix: `test_delegates_to_repository` was pre-existing broken
+  (called a `brand` kwarg `ProductService.list_products` never had). Fixed
+  the test to match the real signature, per Basheer's explicit call not to
+  build real brand filtering now — that gets its own test when/if it's ever
+  actually implemented. Full backend suite is now 280 passed, 0 failed (was
+  "N passed, 1 known failure" all session until this fix).
+
+`pytest` (280 passed).
+
+**Batch 3 — `CustomerType` frontend + api.ts regen (complete, ready to
+commit — likely bundled with Batch 2 as one backend+frontend feature
+commit, Basheer's call at commit time):**
+- `sales-os-app/src/screens/Customer360Screen.tsx` — new `formatEnumLabel()`
+  helper (`"MULTISPECIALITY_HOSPITAL"` → `"Multispeciality Hospital"`,
+  generic underscore-split + title-case, works for all 8 values with no
+  special-casing); "Customer Type" hardcoded `<MenuItem>` select in Edit
+  Customer modal (same pattern as Payer Behavior — no master-data fetch,
+  per `ADR-036`); "Customer Type" row added to the Overview tab's `fields`
+  array, rendered via `formatEnumLabel`. `handleUpdateAccount` always sends
+  `customer_type` (even `null`) so it can be cleared, same convention as
+  `parent_account_id`.
+- `sales-os-app/src/screens/CustomerDirectoryScreen.jsx` — same
+  `formatEnumLabel()` helper (duplicated, not shared — this file is plain
+  JS/Tailwind, `Customer360Screen.tsx` is TSX/MUI, no shared util module for
+  this one function yet); "Customer Type" hardcoded `<select>` in New
+  Customer modal; amber directory-card badge (`bg-amber-50`/`text-amber-700`)
+  matching the existing Zone/Parent/Payer Behavior badge row exactly.
+- `sales-os-app/src/types/api.ts` — regenerated again (same
+  dump-OpenAPI-in-process, no-server-needed approach as the earlier
+  `bb671bc` cleanup) to pick up `customer_type` on the Account schemas; the
+  hand-written alias tail (wiped by every regen) was re-appended unchanged.
+  Note: `services/accounts.ts`'s `listAccounts`/`getAccount` still return
+  `Promise<unknown>` (pre-existing deferred item — "type the shared frontend
+  service functions properly") — neither screen's use of `account.customer_type`
+  is actually type-checked against the regenerated schema as a result; the
+  regen was still worth doing to keep `api.ts` itself accurate, just noting
+  it wasn't required for `tsc --noEmit` to pass this time, unlike the
+  Activity/Pipeline types from the `bb671bc` cleanup which are genuinely
+  imported and checked.
+
+`tsc --noEmit`/`npm run lint`/`npm run build` all clean. `pytest` still 280
+passed after the regen (unaffected, backend-only test suite).
+
+**Next, in order:** (1) Basheer's manual browser verification — New
+Customer modal's Customer Type select, Edit Customer modal's Customer Type
+select (including clearing it back to blank), Overview tab display, Directory
+card badge, regression check on accounts with no `customer_type` set. (2) Commit.

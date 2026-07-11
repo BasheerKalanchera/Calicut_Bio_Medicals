@@ -143,6 +143,18 @@ class TestCreateAccount:
         with pytest.raises(PydanticValidationError):
             AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, payer_behavior="RANDOM_VALUE")
 
+    def test_accepts_valid_customer_type(self):
+        repo = _make_repo()
+        service = AccountService(repository=repo)
+
+        data = AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, customer_type="DIAGNOSTIC_CENTER")
+        result = service.create_account(data, created_by=TEST_USER_ID)
+        assert result.customer_type == "DIAGNOSTIC_CENTER"
+
+    def test_rejects_invalid_customer_type(self):
+        with pytest.raises(PydanticValidationError):
+            AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, customer_type="RANDOM_VALUE")
+
 
 class TestUpdateAccount:
     def test_updates_name(self):
@@ -253,6 +265,21 @@ class TestUpdateAccount:
     def test_rejects_invalid_payer_behavior_on_update(self):
         with pytest.raises(PydanticValidationError):
             AccountUpdate.model_validate({"payer_behavior": "RANDOM_VALUE"})
+
+    def test_updates_customer_type(self):
+        account = _make_account(customer_type=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = account
+
+        service = AccountService(repository=repo)
+        data = AccountUpdate.model_validate({"customer_type": "CLINIC"})
+        result = service.update_account(account.id, data, updated_by=TEST_USER_ID)
+
+        assert result.customer_type == "CLINIC"
+
+    def test_rejects_invalid_customer_type_on_update(self):
+        with pytest.raises(PydanticValidationError):
+            AccountUpdate.model_validate({"customer_type": "RANDOM_VALUE"})
 
     def test_rejects_deeper_cycle(self):
         account_id = uuid.uuid4()

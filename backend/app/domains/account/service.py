@@ -116,6 +116,7 @@ class AccountService:
             parent_account_id=data.parent_account_id,
             zone_id=zone_id,
             payer_behavior=data.payer_behavior,
+            customer_type=data.customer_type,
             created_by=created_by,
             updated_by=created_by,
         )

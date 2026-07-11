@@ -37,6 +37,15 @@ function setCache(key, data) {
   accountListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
+// "MULTISPECIALITY_HOSPITAL" -> "Multispeciality Hospital"
+function formatEnumLabel(value) {
+  if (!value) return "";
+  return value
+    .split("_")
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef, accountUpdateRef }) {
   const queryClient = useQueryClient();
   const [accounts, setAccounts] = useState([]);
@@ -54,6 +63,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   const [formName, setFormName] = useState("");
   const [formZoneId, setFormZoneId] = useState("");
   const [formPayerBehavior, setFormPayerBehavior] = useState("");
+  const [formCustomerType, setFormCustomerType] = useState("");
   const [formParentAccount, setFormParentAccount] = useState(null); // {id, name} | null
   const [parentSearch, setParentSearch] = useState("");
   const [parentOptions, setParentOptions] = useState([]);
@@ -79,6 +89,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     setFormName("");
     setFormZoneId("");
     setFormPayerBehavior("");
+    setFormCustomerType("");
     setFormParentAccount(null);
     setParentSearch("");
     setParentOptions([]);
@@ -111,6 +122,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     if (!formZoneId) throw new Error("Zone is required");
     const payload = { name: formName.trim(), zone_id: formZoneId };
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
+    if (formCustomerType) payload.customer_type = formCustomerType;
     if (formParentAccount) payload.parent_account_id = formParentAccount.id;
     await createAccount(payload);
     accountListCache.clear();
@@ -312,6 +324,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                           </span>
                         </>
                       )}
+                      {account.customer_type && (
+                        <>
+                          <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black tracking-normal normal-case border bg-amber-50 text-amber-700 border-amber-200">
+                            {formatEnumLabel(account.customer_type)}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -456,6 +476,26 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
             <option value="AVERAGE">Average</option>
             <option value="PROBLEMATIC">Problematic</option>
             <option value="UNKNOWN">Unknown</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+            Customer Type
+          </label>
+          <select
+            value={formCustomerType}
+            onChange={(e) => setFormCustomerType(e.target.value)}
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+          >
+            <option value="">Select type</option>
+            <option value="MULTISPECIALITY_HOSPITAL">Multispeciality Hospital</option>
+            <option value="SPECIALTY_HOSPITAL">Specialty Hospital</option>
+            <option value="DIAGNOSTIC_CENTER">Diagnostic Center</option>
+            <option value="CLINIC">Clinic</option>
+            <option value="DEALER">Dealer</option>
+            <option value="MEDICAL_COLLEGE_HOSPITAL">Medical College Hospital</option>
+            <option value="GOVERNMENT_HOSPITAL">Government Hospital</option>
+            <option value="OTHER">Other</option>
           </select>
         </div>
       </FormModal>

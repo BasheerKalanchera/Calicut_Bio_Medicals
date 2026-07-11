@@ -153,6 +153,14 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * Initial seed values: `COVERAGE_PLAN`, `REFERRAL`, `EXISTING_CUSTOMER`, `TENDER`, `OEM_REFERRAL`, `WEBSITE`, `COLD_CALL`, `WALK_IN`, `OTHER`.
 * **Affected Modules:** Opportunity Pipeline, Coverage Planning, Reporting, Lead Source Analytics.
 
+### ADR-036: Customer Type as Fixed Enum, Not a Master Entity
+
+* **Decision:** Model `Account.customer_type` (institution nature — Multispeciality Hospital, Specialty Hospital, Diagnostic Center, Clinic, Dealer, Medical College Hospital, Government Hospital, Other) as a fixed, code-defined enum with a DB `CHECK` constraint, not a separate master/reference table.
+* **Status:** Accepted (2026-07-11)
+* **Rationale:** `Cabio Sales OS – Phase 1 - PRD.md` §B.2.6 defines a closed, specific 8-value list for institution nature, with no indication it should be admin-manageable — contrast with §6.8 ("Organization Structure Management"), which explicitly lists SBU, Zone, PIN Code mapping, and Teams as entities needing admin CRUD, and does not include Customer Type. Unlike `LeadSource` (ADR-020 above), whose values are expected to grow as new marketing/referral channels emerge without a code deploy, Customer Type is a fixed classification scheme that would only change following a deliberate product/business-rule decision — at which point a migration is the right tool anyway. Matches the existing `PayerBehavior` pattern (Good/Average/Problematic/Unknown) already used on the same entity.
+* **Impact:** `Account.customer_type` is a nullable `VARCHAR(50)` with a `CHECK` constraint enumerating the 8 values (migration `0005`), backed by a Python `StrEnum` (`app/domains/account/schemas.py`). Frontend renders it as a hardcoded dropdown, same as Payer Behavior — no master-data list endpoint, no admin CRUD screen. If this ever needs to become admin-configurable, that's a new decision requiring its own ADR revision, not an assumption to build around now.
+* **Affected Modules:** Account Management, Customer Directory, Customer 360.
+
 ### ADR-021: OpportunityStakeholder Junction Entity
 
 * **Decision:** Add an OpportunityStakeholder junction entity linking Opportunities to Stakeholders, with influence-level and role attributes at the Opportunity level.

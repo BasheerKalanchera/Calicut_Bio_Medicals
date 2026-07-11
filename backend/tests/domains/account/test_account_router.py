@@ -37,6 +37,7 @@ def _mock_account(**overrides) -> MagicMock:
         "parent_account_id": None,
         "zone_id": TEST_ZONE_ID,
         "payer_behavior": "GOOD",
+        "customer_type": None,
         "created_at": now,
         "updated_at": now,
         "zone": _mock_zone(),

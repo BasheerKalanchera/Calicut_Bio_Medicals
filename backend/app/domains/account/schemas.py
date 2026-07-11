@@ -12,11 +12,25 @@ class PayerBehavior(StrEnum):
     UNKNOWN = "UNKNOWN"
 
 
+class CustomerType(StrEnum):
+    """Institution nature — Cabio Sales OS Phase 1 PRD SS B.2.6."""
+
+    MULTISPECIALITY_HOSPITAL = "MULTISPECIALITY_HOSPITAL"
+    SPECIALTY_HOSPITAL = "SPECIALTY_HOSPITAL"
+    DIAGNOSTIC_CENTER = "DIAGNOSTIC_CENTER"
+    CLINIC = "CLINIC"
+    DEALER = "DEALER"
+    MEDICAL_COLLEGE_HOSPITAL = "MEDICAL_COLLEGE_HOSPITAL"
+    GOVERNMENT_HOSPITAL = "GOVERNMENT_HOSPITAL"
+    OTHER = "OTHER"
+
+
 class AccountBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     parent_account_id: uuid.UUID | None = None
     zone_id: uuid.UUID
     payer_behavior: PayerBehavior | None = None
+    customer_type: CustomerType | None = None
 
 
 class AccountCreate(AccountBase):
@@ -28,6 +42,7 @@ class AccountUpdate(BaseModel):
     parent_account_id: uuid.UUID | None = None
     zone_id: uuid.UUID | None = None
     payer_behavior: PayerBehavior | None = None
+    customer_type: CustomerType | None = None
 
 
 class ZoneNested(BaseModel):
@@ -57,6 +72,7 @@ class AccountListResponse(BaseModel):
     parent_account_id: uuid.UUID | None
     zone_id: uuid.UUID
     payer_behavior: str | None
+    customer_type: str | None
     zone: ZoneNested
     parent_account: AccountRef | None = None
 
@@ -69,6 +85,7 @@ class AccountResponse(BaseModel):
     parent_account_id: uuid.UUID | None
     zone_id: uuid.UUID
     payer_behavior: str | None
+    customer_type: str | None
     created_at: datetime
     updated_at: datetime
     zone: ZoneNested

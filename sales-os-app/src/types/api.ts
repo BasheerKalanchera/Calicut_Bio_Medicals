@@ -1039,6 +1039,7 @@ export interface components {
              */
             zone_id: string;
             payer_behavior?: components["schemas"]["PayerBehavior"] | null;
+            customer_type?: components["schemas"]["CustomerType"] | null;
         };
         /** AccountDetailResponse */
         AccountDetailResponse: {
@@ -1058,6 +1059,8 @@ export interface components {
             zone_id: string;
             /** Payer Behavior */
             payer_behavior: string | null;
+            /** Customer Type */
+            customer_type: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1104,6 +1107,8 @@ export interface components {
             zone_id: string;
             /** Payer Behavior */
             payer_behavior: string | null;
+            /** Customer Type */
+            customer_type: string | null;
             zone: components["schemas"]["ZoneNested"];
             parent_account?: components["schemas"]["AccountRef"] | null;
         };
@@ -1151,6 +1156,8 @@ export interface components {
             zone_id: string;
             /** Payer Behavior */
             payer_behavior: string | null;
+            /** Customer Type */
+            customer_type: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1173,6 +1180,7 @@ export interface components {
             /** Zone Id */
             zone_id?: string | null;
             payer_behavior?: components["schemas"]["PayerBehavior"] | null;
+            customer_type?: components["schemas"]["CustomerType"] | null;
         };
         /** ActivityContextNested */
         ActivityContextNested: {
@@ -1268,6 +1276,12 @@ export interface components {
             /** Next Action Reminder Id */
             next_action_reminder_id?: string | null;
         };
+        /**
+         * CustomerType
+         * @description Institution nature — Cabio Sales OS Phase 1 PRD SS B.2.6.
+         * @enum {string}
+         */
+        CustomerType: "MULTISPECIALITY_HOSPITAL" | "SPECIALTY_HOSPITAL" | "DIAGNOSTIC_CENTER" | "CLINIC" | "DEALER" | "MEDICAL_COLLEGE_HOSPITAL" | "GOVERNMENT_HOSPITAL" | "OTHER";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */

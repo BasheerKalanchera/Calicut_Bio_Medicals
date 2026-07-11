@@ -91,6 +91,15 @@ function PayerBadge({ behavior }: { behavior?: string | null }) {
   );
 }
 
+// "MULTISPECIALITY_HOSPITAL" -> "Multispeciality Hospital"
+function formatEnumLabel(value?: string | null): string {
+  if (!value) return "";
+  return value
+    .split("_")
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function SentimentBadge({ sentiment }: { sentiment?: string | null }) {
   if (!sentiment) return null;
   const config: Record<string, { label: string; bg: string; color: string; border: string }> = {
@@ -146,6 +155,7 @@ function OverviewTab({
     { label: "Account Name", value: account.name },
     { label: "Zone", value: account.zone?.name || "—" },
     { label: "Payer Behavior", value: <PayerBadge behavior={account.payer_behavior} /> },
+    { label: "Customer Type", value: formatEnumLabel(account.customer_type) || "—" },
     {
       label: "Parent Customer",
       value: account.parent_account ? (
@@ -524,6 +534,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editAccountName, setEditAccountName] = useState("");
   const [editAccountZoneId, setEditAccountZoneId] = useState("");
   const [editAccountPayer, setEditAccountPayer] = useState("");
+  const [editAccountCustomerType, setEditAccountCustomerType] = useState("");
   const [editAccountParent, setEditAccountParent] = useState<{ id: string; name: string } | null>(null);
   const [parentSearchInput, setParentSearchInput] = useState("");
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
@@ -790,6 +801,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditAccountName(account.name || "");
     setEditAccountZoneId(account.zone?.id || "");
     setEditAccountPayer(account.payer_behavior || "");
+    setEditAccountCustomerType(account.customer_type || "");
     setEditAccountParent(account.parent_account || null);
     setParentSearchInput("");
     setShowEditAccount(true);
@@ -806,6 +818,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       parent_account_id: newParentId,
     };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
+    payload.customer_type = editAccountCustomerType || null;
     await updateAccount(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
     // The parent's own child_accounts list is a computed field on ITS query
@@ -1184,6 +1197,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <MenuItem value="AVERAGE">Average</MenuItem>
           <MenuItem value="PROBLEMATIC">Problematic</MenuItem>
           <MenuItem value="UNKNOWN">Unknown</MenuItem>
+        </TextField>
+        <TextField
+          select label="Customer Type" value={editAccountCustomerType} onChange={(e) => setEditAccountCustomerType(e.target.value)}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select type</MenuItem>
+          <MenuItem value="MULTISPECIALITY_HOSPITAL">Multispeciality Hospital</MenuItem>
+          <MenuItem value="SPECIALTY_HOSPITAL">Specialty Hospital</MenuItem>
+          <MenuItem value="DIAGNOSTIC_CENTER">Diagnostic Center</MenuItem>
+          <MenuItem value="CLINIC">Clinic</MenuItem>
+          <MenuItem value="DEALER">Dealer</MenuItem>
+          <MenuItem value="MEDICAL_COLLEGE_HOSPITAL">Medical College Hospital</MenuItem>
+          <MenuItem value="GOVERNMENT_HOSPITAL">Government Hospital</MenuItem>
+          <MenuItem value="OTHER">Other</MenuItem>
         </TextField>
       </FormModal>
 
