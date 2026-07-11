@@ -146,12 +146,15 @@ CREATE TABLE product (
     updated_by UUID REFERENCES user_profile(id)
 );
 
+-- managing_sbu_id was dropped and zone_id added (NOT NULL) in migration 0001
+-- (2026-06-26) — this table definition was never updated to match until now.
 CREATE TABLE account (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     parent_account_id UUID REFERENCES account(id),
-    managing_sbu_id UUID REFERENCES sbu(id),
+    zone_id UUID NOT NULL REFERENCES zone(id),
     name VARCHAR(255) NOT NULL,
     payer_behavior VARCHAR(50) CHECK (payer_behavior IN ('GOOD', 'AVERAGE', 'PROBLEMATIC', 'UNKNOWN')),
+    customer_type VARCHAR(50) CHECK (customer_type IN ('MULTISPECIALITY_HOSPITAL', 'SPECIALTY_HOSPITAL', 'DIAGNOSTIC_CENTER', 'CLINIC', 'DEALER', 'MEDICAL_COLLEGE_HOSPITAL', 'GOVERNMENT_HOSPITAL', 'OTHER')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     created_by UUID REFERENCES user_profile(id),

@@ -89,6 +89,14 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * Zone is **not** used for target allocation. Zone is used for reporting and security scoping only.
 * **Affected Modules:** Product Catalog, Target Planning, Coverage Planning, Security Model, Reporting, User Management.
 
+### ADR-035: Account Is SBU-Agnostic — SBU Scoping Lives on Opportunity
+
+* **Decision:** Remove any direct SBU affiliation from the Account entity. Accounts are global and zone-assigned only; SBU scoping is captured explicitly on the Opportunity entity (`sbu_id`, NOT NULL), stamped at creation from the creating user's current SBU and never auto-updated afterward.
+* **Status:** Accepted (implemented in migration `0001`, 2026-06-26 — supersedes an earlier `Account.managing_sbu_id` design)
+* **Rationale:** A hospital/institution (Account) commonly has activity across multiple SBUs simultaneously (e.g., both Imaging and Critical Care) — a single "owning SBU" per Account doesn't reflect that and would force artificial reclassification. The PRD itself never defines an SBU attribute on the Customer/Account entity (§B.2.6) — SBU association belongs to the User (§6.8, "Primary SBU") and the Product (§2.6), not the Account. Deriving Opportunity's SBU from the owner at query time was also rejected: if a rep changes SBU, that must not retroactively reclassify their historical opportunities, so `sbu_id` is stamped once at creation and is immutable except via explicit manager/admin override.
+* **Impact:** `Account.managing_sbu_id` dropped; `Account.zone_id` added (NOT NULL FK → Zone — geographic/reporting scope only, not access control). `Opportunity.sbu_id` added (NOT NULL FK → SBU). Any query that previously scoped Accounts by SBU must be rewritten — Accounts are globally visible; SBU-based visibility applies to Opportunities/Targets beneath them, not to the Account itself. This decision was originally captured only in `docs/ARCHIVE/account_entity_restructuring_summary.md` (an implementation memo, not a numbered ADR); this entry formalizes it as the authoritative record.
+* **Affected Modules:** Account Management, Opportunity Pipeline, Reporting, Security Model.
+
 ### ADR-019: Planning Calendar Model — Period Format and Fiscal Year
 
 * **Decision:** Standardize the planning period format as `YYYY-Qn`. Define the fiscal year as the Indian Fiscal Year (April–March).

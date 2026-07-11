@@ -2,155 +2,30 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Priority decision (2026-07-10): Milestone 1 gap-closure work from the
-Prototype/Production Parity Audit comes first, ahead of resuming the §9 MUI
-migration backlog.** The demo checkpoint moved from July 13 to July 20,
-which is what freed up room to do this instead of migration work — not an
-abandonment of §9, just a sequencing call. See "Prototype/Production Parity
-Audit" write-up below and `docs/Prototype-Production-Parity-Audit.md` §6
-("Gaps to finish — Milestone 1") for the actual scope: Associated Project
-link, Lead Source display, Demo end date, Reminder click-through, Catalog
-role gate (GM+Admin), Parent Customer display, `CustomerType`
-(institution-nature), Product Catalog collateral links.
+**Milestone 1's Parent Customer item (display + editing) and the `api.ts`
+generation-debt cleanup are both DONE and committed as of 2026-07-11
+(`87fde5a`, `95e118a`, `bb671bc`) — working tree clean.** Full detail in
+"Done in prior sessions" below (ledger rows + write-ups). Manual browser
+verification for both display and editing passed (Basheer, 2026-07-11):
+adding a parent, viewing parent, viewing children, clicking parent, clicking
+children all confirmed working.
 
-**Prior work status:** working tree was clean as of `6075c80` plus
-`581c28d`/`71dc5a0` (ErrorBoundary.jsx MUI migration — see updated §9 count
-below). Activity logging on Project Details (+ the +LOG header-consolidation
-step + a stale-detail-view bugfix) is committed — confirmed working by
-Basheer's live E2E. See "Done in prior sessions" table and the write-ups
-below it for full detail.
+**Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
+work from the Prototype/Production Parity Audit comes first, ahead of
+resuming the §9 MUI migration backlog.** The demo checkpoint moved from
+July 13 to July 20, which is what freed up room to do this instead of
+migration work — not an abandonment of §9, just a sequencing call. See
+`docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
+Milestone 1") for the full scope. Remaining, untouched: Associated Project
+link, Lead Source display, Demo end date, Reminder click-through, Catalog
+role gate (GM+Admin), `CustomerType` (institution-nature), Product Catalog
+collateral links. No fixed order committed yet — pick starting point next
+session.
 
 **§9 migration backlog is paused, not abandoned** — resume the 3 remaining
 files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
 `ProjectDirectoryScreen.jsx`) after Milestone 1 gaps are closed. See "Next
 step" below.
-
-**Next immediate task after Parent Customer display ships — ahead of the
-rest of Milestone 1's gap list: fix `sales-os-app/src/types/api.ts`
-generation debt.** Discovered mid-session (2026-07-10) while regenerating
-types for the Parent Customer backend change. `api.ts` (marked "auto-generated
-... do not make direct changes to this file" in its own header) has not had a
-real `npm run generate:types` run since `3bab93f` (2026-07-03). Since then,
-two commits hand-patched fields directly into the file's hand-written
-"Phase A — Pipeline types (hand-written, not auto-generated)" tail block
-instead of regenerating (`2f7e074`, 2026-07-06 — 4 fields hand-added to
-`PipelineOpportunity`), and two real backend endpoints shipped with zero
-corresponding frontend types ever generated for them:
-- Opportunity stakeholder `POST`/`PATCH`/`DELETE` (added `3619295`, 2026-07-05)
-- `GET /projects/{project_id}/activities` (added `6075c80`, 2026-07-06)
-
-No external actor, no silent code rot — a prior Claude Code session took a
-"hand-edit the generated file" shortcut twice without flagging it as debt,
-and real backend surface fell out of sync as a result. Full commit-by-commit
-timeline was worked out in this session's conversation, not re-derived here.
-
-**What "fix" means, concretely:**
-1. Run a genuine `npm run generate:types` against the live backend.
-2. The tool overwrites the whole file, including the hand-written Pipeline
-   block — before accepting the output, confirm whether the backend now
-   formally exposes `PipelineOpportunity` as a real schema (this session's
-   regen attempt showed `components["schemas"]["PipelineOpportunity"]`
-   appearing, suggesting the hand-written duplicate may now be redundant)
-   and decide whether to delete it or keep it.
-3. Verify every screen/component importing from the hand-written block
-   (`PipelineOpportunity`, `ActivityResponse`, etc. as bare top-level
-   exports — not the same TS symbols as `components["schemas"][...]`) still
-   resolves after the regen; a naive full-file swap breaks those imports if
-   the hand-written exports disappear.
-4. Quick repo-wide grep for other files carrying an "auto-generated, do not
-   edit by hand" header, to confirm this exact anti-pattern wasn't repeated
-   elsewhere — cheap, ~30 seconds, raised but not yet done this session.
-5. Commit as its own standalone cleanup commit, separate from feature work.
-
-**Field-by-field diff done (2026-07-11), before touching anything — pulled the
-live OpenAPI schema in-process via `TestClient` (no server needed, read-only)
-and compared every hand-written type against its backend equivalent:**
-- Safe to alias to `components["schemas"][...]` (exact match or additive-only
-  diff): `PipelineOpportunity` (+ nested `stage`/`status`/`owner`/`account`/`sbu`),
-  `StakeholderLinkResponse`, `OpportunityItemResponse`, `SplitResponse` (backend
-  now also returns an `id` field the hand-written type never had — additive),
-  `ReminderResponse` (its nested `activity` object is named `ActivityContextNested`
-  backend-side vs. `ActivityContext` frontend-side — alias under the existing
-  frontend name so nothing importing it breaks).
-- **Not aliasing `ActivityResponse`/`ActivityType`/`ActivityUser` — real fidelity
-  loss, not a generator quirk.** The hand-written `ActivityType` is a strict
-  6-value union (`"VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" |
-  "MANAGER_NOTE"`); the backend's own `ActivityResponse.activity_type` is typed
-  `str` (`backend/app/domains/activity/schemas.py:72`), and `ActivityContextNested.activity_type`
-  the same (`schemas.py:99`) — both should be the `ActivityType` alias already
-  defined at the top of that file (line 8) and already used correctly by
-  `ActivityCreate` (line 45). Aliasing the frontend type now would silently
-  widen it from "only these 6 values" to "any string." Leaving these three
-  hand-written until the backend fix below lands.
-- `PipelinePage`/`ActivityPage` have no 1:1 generated schema name (they come out
-  as `PaginatedResponse_PipelineOpportunity_`/`PaginatedResponse_ActivityResponse_`)
-  — cosmetic naming decision, not a risk, decide wording during the edit.
-
-**Queued next, after the `api.ts` fix above (small, standalone backend
-commit):** fix `backend/app/domains/activity/schemas.py` lines 72 and 99 —
-change `activity_type: str` to `activity_type: ActivityType` on both
-`ActivityResponse` and `ActivityContextNested`, matching `ActivityCreate`'s
-existing usage. Confirmed via `pytest` scope check not yet done — run the
-suite after the change. Once landed, `ActivityResponse` becomes safe to alias
-in `api.ts` too (see diff above).
-
-**Parent Customer display (read-side) — implemented and committed
-2026-07-10, manual browser verification still pending (Basheer's explicit
-call — committed ahead of that pass, not blocked on it).** Backend
-(`AccountRef` type, `list_children()` read path on `GET /accounts/{id}`) +
-frontend (`Customer360Screen.tsx` Overview tab — clickable Parent Customer
-field + Child Accounts chips; `CustomerDirectoryScreen.jsx` — "Parent: X"
-directory-card badge) all built and passing `pytest`/`tsc --noEmit`/
-`npm run lint` — but none of that proves it actually works on screen; this
-project has already had automated-green mask a real bug once (§9's
-`.then()`-vs-React-Query mislabeling). Verification steps (seed a parent/
-child pair via `PUT /accounts/{id}` in Swagger since there's no UI to do it
-yet, then check both screens) were handed to Basheer at end of session —
-still outstanding whenever he picks this back up.
-
-**Gap found during handoff, before it can be called done: no way to set a
-parent on an account through the app itself.** Basheer's call (2026-07-10):
-*"Without ability to add a parent to an account, this feature is not
-complete."* Today the only way to set `parent_account_id` is a raw API call
-— `PUT /accounts/{id}` already accepts it, no backend gap, but there's no
-UI path anywhere. This was a known, deliberate scope cut going into this
-session (audit's Milestone-1 wording was "display," not "editing" — see
-`docs/Prototype-Production-Parity-Audit.md` §1, filed there as "Class/
-Specialty/Type/Parent editing," never assigned to a milestone), but on
-review it makes Parent Customer display feel incomplete as a shippable
-feature rather than a nice-to-have. **Treat as the next piece of this
-feature, before/alongside the api.ts fix above:**
-1. **Edit Account modal** (`Customer360Screen.tsx`) — add a "Parent
-   Customer" field with a searchable account lookup, wired to the existing
-   `PUT /accounts/{id}` (`AccountUpdate.parent_account_id`, already
-   supported, no backend change).
-2. **New Customer modal** (`CustomerDirectoryScreen.jsx`) — same lookup,
-   wired to `POST /accounts` (`AccountCreate.parent_account_id`, already
-   supported).
-3. **Cycle guard check before exposing either UI:** `service.py`'s
-   `_validate_references` only blocks *direct* self-parenting
-   (`parent_account_id == account_id`). Unconfirmed whether anything blocks
-   a deeper cycle (A→B→A via B's parent pointing back to A) — needs
-   checking and, if missing, a backend fix before the lookup UI can safely
-   let a user pick any account as parent.
-
-**Status (2026-07-11): all 3 sub-items implemented, uncommitted.** Backend
-cycle guard (`AccountService._creates_cycle` + `AccountRepository.get_parent_id`,
-`backend/app/domains/account/service.py`/`repository.py`) walks the full
-ancestor chain, not just the direct case — 4 new tests added (2 repository,
-2 service), full suite green except the pre-existing unrelated
-`test_product_service.py` failure. `Customer360Screen.tsx`'s Edit Customer
-modal got a "Parent Customer" MUI `Autocomplete` (debounced search via
-`listAccounts`, excludes self + direct children client-side, backend
-cycle guard as the backstop for deeper cycles). `CustomerDirectoryScreen.jsx`'s
-New Customer modal got a matching bespoke search/select field, kept
-Tailwind-only per this file's existing exception boundary — no MUI import
-added to a pre-§9-migration file. `tsc --noEmit`/`npm run lint` both clean.
-**Deliberately not committed yet — Basheer's call (2026-07-11):** he does
-manual browser verification himself first (this now covers both the
-2026-07-10 display work and this editing work together, since neither has
-had a live pass yet), then the `api.ts` generation-debt fix happens, then
-everything commits together. See "Next step"/"Files in flight" below.
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
@@ -184,6 +59,9 @@ the 3 pending files are actual remaining work.)
 | `ReminderRepository.list_for_user`/`count_for_user` fix    | `39ff781` | `include_completed` changed from additive to exclusive filter — Next Actions "Completed" tab no longer shows pending rows too |
 | Activity logging on Project Details                    | `6075c80` | New `list_by_project` backend path + Activity card on `ProjectDirectoryScreen.jsx`; see write-up below |
 | `ErrorBoundary.jsx` rename + migration                 | `581c28d`, `71dc5a0` | `.jsx`→`.tsx` rename, then MUI migration; styling + type-conversion only, no data-fetching (per §9's own "N/A" row) — §9 now 12 migrated, 3 pending |
+| Parent Customer display (read-side)                    | `87fde5a`   | `AccountRef` type + `list_children()` read path; Customer360Screen Overview tab + CustomerDirectoryScreen "Parent: X" badge; see write-up below |
+| Parent Customer editing + 2 bugfixes                    | `95e118a`   | Edit Account/New Customer parent lookups, backend cycle guard, cache-invalidation + `initialDataUpdatedAt` fixes; see write-up below |
+| `api.ts` regeneration + `ActivityType` backend fix       | `bb671bc`   | Closed out the generation-debt item below; see write-up below |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -328,6 +206,129 @@ Full detail, tables, and the complete Milestone 1 / Milestone 2 scope split
 are in `docs/Prototype-Production-Parity-Audit.md` — treat it as the
 authoritative reference, don't re-derive it here.
 
+### Parent Customer display + editing (`87fde5a`, `95e118a`) — full write-up
+
+**Display (`87fde5a`, 2026-07-10):** backend `AccountRef` type + `list_children()`
+read path on `GET /accounts/{id}`; frontend `Customer360Screen.tsx` Overview
+tab (clickable Parent Customer field + Child Accounts chips) and
+`CustomerDirectoryScreen.jsx` ("Parent: X" directory-card badge, Tailwind
+one-off exception to ADR-031 — file still pending its own §9 migration).
+
+**Editing (`95e118a`, 2026-07-11):** built because Basheer's review of the
+display-only feature concluded *"without ability to add a parent to an
+account, this feature is not complete"* — display was the only thing
+originally scoped for Milestone 1, editing was a deliberate scope cut that
+didn't hold up once the display was actually live.
+- **Backend cycle guard:** `service.py`'s `_validate_references` previously
+  only blocked *direct* self-parenting. Added `AccountService._creates_cycle`
+  + `AccountRepository.get_parent_id`, which walks the full ancestor chain
+  from a proposed parent looking for the account itself — catches deeper
+  cycles (A→B→C→A), not just the direct case. 4 new tests (2 repository, 2
+  service). Cost/complexity tradeoff (one DB round-trip per ancestor level)
+  is documented in the function's own docstring, not repeated here — only
+  revisit if a future milestone introduces deeper hierarchies than today's
+  1-2 levels.
+- **Frontend:** `Customer360Screen.tsx`'s Edit Customer modal got a "Parent
+  Customer" MUI `Autocomplete` (debounced search via `listAccounts`,
+  excludes self + direct children client-side, backend cycle guard as the
+  backstop for deeper cycles). `CustomerDirectoryScreen.jsx`'s New Customer
+  modal got a matching bespoke Tailwind search/select (no MUI import — same
+  file-boundary exception as the badge above).
+
+**Two real bugs found and fixed during manual verification of this and the
+display work together** (neither had had a live pass until this session):
+1. **Cache invalidation.** Setting a parent only invalidated the edited
+   account's own React Query cache entry (`["account", accountId]`), never
+   the parent's — so a parent's Child Accounts list could stay stale on any
+   screen already open or revisited within the 30s global `staleTime`
+   (`main.tsx`). Fixed in both `Customer360Screen.tsx`'s `handleUpdateAccount`
+   (invalidates both old and new parent on a reparent) and
+   `CustomerDirectoryScreen.jsx`'s `handleCreateAccount` (invalidates the
+   new parent) — the latter needed importing `useQueryClient` into a
+   Tailwind-only file, which is fine; that boundary is about UI components,
+   not data-cache hooks.
+2. **`initialDataUpdatedAt` — the real root cause, found after the cache fix
+   alone didn't resolve it ("children not showing for a very long time").**
+   `Customer360Screen.tsx`'s account query seeds from a name/id-only summary
+   (a Directory row, or a parent/child link) via `initialData`, but never
+   set `initialDataUpdatedAt`. React Query treats unstamped `initialData` as
+   fetched "just now," so under the 30s global `staleTime` the query is
+   considered fresh at mount and never kicks off the correcting background
+   fetch — and nothing else was forcing one either (no polling; only window
+   refocus or a fresh mount would trigger a staleness re-check). On a screen
+   the user just leaves open, the incomplete snapshot could persist
+   indefinitely. Fixed by backdating `initialDataUpdatedAt: initialAccount ?
+   0 : undefined` — forces immediate staleness so a background refetch
+   starts right on mount, while still painting instantly from the seed data.
+   Verified against the live DB directly (backend `list_children()`/
+   `GET /accounts/{id}` both confirmed correct via `TestClient`, read-only,
+   before concluding the bug was frontend-only) — root-caused, not guessed.
+
+Basheer's manual verification pass (2026-07-11) confirmed: adding a parent,
+viewing parent, viewing children, clicking parent, clicking children all
+working.
+
+### `api.ts` generation debt + `ActivityType` backend fix (`bb671bc`) — full write-up
+
+**The debt:** `api.ts` (header: "auto-generated ... do not make direct
+changes to this file") hadn't had a real `npm run generate:types` run since
+`3bab93f` (2026-07-03). Two commits since then hand-patched fields directly
+into the file's "Phase A — Pipeline types (hand-written, not auto-generated)"
+tail block instead of regenerating (`2f7e074`, 2026-07-06 — 4 fields
+hand-added to `PipelineOpportunity`), and two real backend endpoints shipped
+with zero corresponding frontend types ever generated: opportunity
+stakeholder `POST`/`PATCH`/`DELETE` (`3619295`, 2026-07-05) and
+`GET /projects/{project_id}/activities` (`6075c80`, 2026-07-06). No external
+actor — a prior session took a "hand-edit the generated file" shortcut
+twice without flagging it as debt.
+
+**The fix:** regenerated against the live backend's OpenAPI spec (pulled
+in-process via `TestClient`, no server needed — safe, read-only). Diffed
+every hand-written type field-by-field against its backend equivalent
+before touching anything:
+- Aliased to `components["schemas"][...]` (exact match or additive-only
+  diff, safe): `PipelineOpportunity` (+ nested `stage`/`status`/`owner`/
+  `account`/`sbu`), `StakeholderLinkResponse`, `OpportunityItemResponse`,
+  `SplitResponse` (backend now also returns an `id` field the hand-written
+  type never had — additive), `ReminderResponse` (nested `activity` object
+  renamed `ActivityContextNested` backend-side, aliased under the existing
+  `ReminderResponse` name so nothing importing it breaks).
+- `ActivityResponse`/`ActivityType`/`ActivityContextNested.activity_type`
+  initially could NOT be safely aliased — the backend's own schema typed
+  `activity_type` as plain `str` instead of the 6-value enum
+  `ActivityCreate` already used correctly. Fixed at the source instead of
+  leaving the frontend override in place: checked the live DB first for any
+  value outside the 6-value enum (tightening a *response* schema means
+  Pydantic validates on the way out too — a stray value would 500 on
+  `GET .../activities`), confirmed clean (only `MEETING`/`CALL`/`EMAIL` in
+  use), then fixed `backend/app/domains/activity/schemas.py` lines 72 and 99
+  (`ActivityResponse.activity_type` and `ActivityContextNested.activity_type`,
+  both `str` → `ActivityType`) and regenerated again. `ActivityResponse` and
+  `ActivityPage` are now aliases too; `ActivityType` itself is derived via
+  `components["schemas"]["ActivityResponse"]["activity_type"]` rather than
+  hand-listed, so it can't drift from the backend enum again.
+- `ActivityPage` needed its own hand-written wrapper even after the backend
+  fix — aliasing it to the generated `PaginatedResponse_ActivityResponse_`
+  wrapper would nest the *backend's* `ActivityResponse` inside, not
+  necessarily the same TS symbol as the top-level exported alias, so it's
+  written by hand as `{ items: ActivityResponse[]; total; page; page_size;
+  total_pages }` referencing the local alias explicitly. `tsc --noEmit`
+  caught this the first time it was tried and aliased directly — proof the
+  whole-project typecheck after a regen is load-bearing, not a formality.
+- `PipelinePage` aliases cleanly to `PaginatedResponse_PipelineOpportunity_`
+  (no such ActivityResponse-style trap there, since `PipelineOpportunity` is
+  itself already a clean alias).
+
+**Result: `api.ts`'s hand-written tail is now genuinely minimal** — every
+exported name still needed by other files (grep-verified against actual
+imports, not kept "just in case") is a one-line alias, nothing has a
+hand-typed body. Repo-wide grep confirmed no other file carries the same
+"auto-generated, do not edit" anti-pattern. `tsc --noEmit`/`npm run lint`/
+`npm run build` and `pytest` (275 passed, 1 pre-existing unrelated failure)
+all clean. Manual smoke test (Basheer, 2026-07-11) of the most-affected
+screens — Opportunity Pipeline, Opportunity Detail (Splits/Stakeholders/
+Items tabs), Activity timelines, Next Actions — confirmed normal.
+
 ## Reference: Customer360Screen.tsx Commit B query-key design
 
 **Query keys — deliberately reusing existing keys from other files so
@@ -368,11 +369,13 @@ present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 
 ## Next step
 **Milestone 1 gap-closure first (2026-07-10 priority decision)** — work the
-list in `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1"): Associated Project link, Lead Source display, Demo end date,
-Reminder click-through, Catalog role gate (GM+Admin), Parent Customer
-display, `CustomerType` (institution-nature), Product Catalog collateral
-links. No fixed order committed yet — pick starting point next session.
+remaining list in `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to
+finish — Milestone 1"). Parent Customer display + editing is now DONE
+(`87fde5a`, `95e118a` — see write-up above); still open: Associated Project
+link, Lead Source display, Demo end date, Reminder click-through, Catalog
+role gate (GM+Admin), `CustomerType` (institution-nature), Product Catalog
+collateral links. No fixed order committed yet — pick starting point next
+session.
 
 **§9 MUI migration backlog resumes after Milestone 1** — 3 files remain
 (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -408,14 +411,18 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   walks the ancestor chain with one DB round-trip per level; full reasoning
   and the CTE alternative are in that function's own docstring, not repeated
   here. Revisit only if a future milestone introduces deeper hierarchies.
-- **Parent/Child account navigation — `initialData` instant-paint optimization.**
+- **Parent/Child account navigation — richer `initialData` instant-paint.**
   Surfaced during Milestone 1 "Parent Customer display" planning (2026-07-10, see
-  `docs/Prototype-Production-Parity-Audit.md` §6). The simple wiring (built first,
-  per Basheer's call) types `Customer360Screen.tsx`'s `account.parent_account` and
-  `account.child_accounts` as a minimal `AccountRef {id, name}` — clicking a parent
-  or child link swaps `accountId` in place and re-queries, but with no `initialData`
-  seeded, so it shows a brief loading state instead of the instant paint the
-  Directory list gets from its already-fetched row data.
+  `docs/Prototype-Production-Parity-Audit.md` §6). `Customer360Screen.tsx`'s
+  `account.parent_account`/`account.child_accounts` are typed as a minimal
+  `AccountRef {id, name}` — clicking a parent or child link still paints
+  instantly from that (and, since the `initialDataUpdatedAt` fix landed
+  2026-07-11, now reliably kicks off an immediate background refetch too —
+  see write-up above), but the *initial* paint only has a name, no
+  zone/payer_behavior/counts, unlike Directory-list navigation which has
+  all of that from its already-fetched row data. This item is about
+  closing that specific gap, not about the refetch-never-firing bug, which
+  is already fixed.
   **Why it's cheap, if picked up later:** `account.zone` is a separate,
   non-self-referential relationship — always eager-joined regardless of nesting —
   so `parent_account.zone` is already in memory once `parent_account` loads; no
@@ -578,41 +585,8 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 - Live shared Supabase DB caution applies when touching real data.
 
 ## Files in flight
-**Parent Customer display (read-side) — committed 2026-07-10 (see git log
-for the commit — Basheer's explicit call to commit ahead of manual
-verification, not blocked on it). Working tree clean as of that commit.**
-- `backend/app/domains/account/{schemas,repository,service,router}.py` —
-  `AccountRef` type, `list_children()` read path.
-- `backend/tests/domains/account/{test_account_repository,test_account_service,test_account_router}.py`
-  — new tests for the above, all passing (`pytest`: 271 passed, 1
-  pre-existing unrelated failure — see Deferred).
-- `sales-os-app/src/types/api.ts` — hand-patched (not a full regen — see
-  the api.ts generation-debt item above for why) with just the 3
-  corresponding Account fields.
-- `sales-os-app/src/screens/Customer360Screen.tsx` — Overview tab Parent
-  Customer field + Child Accounts chips, `onSelectAccount` prop threaded
-  through.
-- `sales-os-app/src/DemoApp.tsx` — passes existing `handleSelectAccount` into
-  `Customer360Screen` as `onSelectAccount`.
-- `sales-os-app/src/screens/CustomerDirectoryScreen.jsx` — "Parent: X"
-  directory-card badge (Tailwind, one-off exception to ADR-031 per Basheer's
-  call this session — file is still pending its own §9 migration).
-
-`tsc --noEmit` and `npm run lint` both clean at commit time. Next session,
-in order:
-1. **Still outstanding, not skipped:** Basheer runs manual browser
-   verification (steps given in conversation — seed a parent/child pair via
-   Swagger, check Directory badge + Customer 360 Parent/Child display +
-   navigation both directions + regression on unrelated accounts). If this
-   surfaces a bug, fix it as a follow-up commit, not by amending.
-2. Fix the `api.ts` generation debt (see item above — flagged ahead of the
-   rest of Milestone 1).
-3. Build the Parent Customer *editing* gap (see item above) — without it,
-   Basheer's read on this feature is that it's not complete, even though
-   display was the only thing originally scoped for Milestone 1.
-
-§9 migration backlog (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-`ProjectDirectoryScreen.jsx`) stays paused until Milestone 1 is closed out —
-see "Next step" above. Remaining Milestone 1 items (Associated Project link,
-Lead Source display, Demo end date, Reminder click-through, Catalog role
-gate, `CustomerType`, Product Catalog collateral links) are still untouched.
+**None — working tree clean as of `bb671bc` (2026-07-11).** Parent Customer
+display + editing (`87fde5a`, `95e118a`) and the `api.ts` generation-debt +
+`ActivityType` backend fix (`bb671bc`) are all committed and verified — see
+"Done in prior sessions" write-ups above. Next up is picking a starting
+point from the remaining Milestone 1 gap list, per "Next step" above.

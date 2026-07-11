@@ -181,9 +181,9 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 
 * **Account**
   * *Description:* Central entity for all sales activity.
-  * *Relationships:* Parent Account (Many:1), Stakeholders (1:Many), Projects (1:Many), Activities (1:Many), Installed Assets (1:Many), Managing SBU (Many:1).
-  * *Key Attributes:* `managing_sbu_id` (FK → SBU, nullable).
-  * *Security Note:* While Accounts are globally visible, `managing_sbu_id` explicitly designates the SBU holding edit rights, fulfilling ADR-009 "SBU Scoped (Edit)" without relying on audit metadata such as `created_by`.
+  * *Relationships:* Parent Account (Many:1, self-referencing hierarchy), Zone (Many:1), Stakeholders (1:Many), Projects (1:Many), Activities (1:Many), Installed Assets (1:Many).
+  * *Key Attributes:* `zone_id` (FK → Zone, required), `payer_behavior` (enum, nullable), `customer_type` (enum, nullable — institution nature, PRD §B.2.6), `parent_account_id` (FK → Account, nullable).
+  * *Security Note:* `managing_sbu_id` — the field this note previously described — was dropped and replaced by `zone_id` in migration `0001` (2026-06-26); this section was never updated to match until now. ADR-009's SBU-level RLS isolation is not implemented via any column on Account: `set_rls_context()` (`backend/app/db/session.py`) is currently a no-op pending Phase 2E (see `docs/Phase-2E-Security-Architecture.md`). Today, Accounts are globally readable/writable by any authenticated user; `zone_id` is informational/reporting scoping, not enforced access control.
 
 * **Stakeholder**
   * *Description:* Holds individual NPS and Decision roles. Sentiment tracked at stakeholder level, not account level.
