@@ -58,12 +58,15 @@ class TestListProducts:
         repo.list_products.return_value = ([], 0)
 
         service = ProductService(repository=repo)
+        # No `brand` filter — ProductService.list_products() has no such
+        # parameter today. Add one alongside a real test when brand
+        # filtering is actually implemented.
         _results, total = service.list_products(
-            offset=0, limit=10, search="sono", sbu_id=None, brand="SonoScape"
+            offset=0, limit=10, search="sono", sbu_id=None
         )
 
         repo.list_products.assert_called_once_with(
-            offset=0, limit=10, search="sono", sbu_id=None, brand="SonoScape"
+            offset=0, limit=10, search="sono", sbu_id=None, include_count=True
         )
         assert total == 0
 
