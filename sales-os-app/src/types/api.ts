@@ -581,6 +581,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/products/{product_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Product Documents */
+        get: operations["list_product_documents_api_v1_products__product_id__documents_get"];
+        put?: never;
+        /** Create Product Document */
+        post: operations["create_product_document_api_v1_products__product_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Document */
+        delete: operations["delete_document_api_v1_documents__document_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -626,6 +661,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ActivityResponse"];
+        };
+        /** APIResponse[DocumentResponse] */
+        APIResponse_DocumentResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["DocumentResponse"];
         };
         /** APIResponse[InstalledAssetResponse] */
         APIResponse_InstalledAssetResponse_: {
@@ -925,6 +974,21 @@ export interface components {
             message: string;
             /** Data */
             data: unknown[];
+        };
+        /** APIResponse[list[DocumentResponse]] */
+        APIResponse_list_DocumentResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["DocumentResponse"][];
         };
         /** APIResponse[list[OpportunityItemResponse]] */
         APIResponse_list_OpportunityItemResponse__: {
@@ -1297,6 +1361,34 @@ export interface components {
          * @enum {string}
          */
         CustomerType: "MULTISPECIALITY_HOSPITAL" | "SPECIALTY_HOSPITAL" | "DIAGNOSTIC_CENTER" | "CLINIC" | "DEALER" | "MEDICAL_COLLEGE_HOSPITAL" | "GOVERNMENT_HOSPITAL" | "OTHER";
+        /** DocumentCreate */
+        DocumentCreate: {
+            /** File Name */
+            file_name: string;
+            /** File Type */
+            file_type: string;
+            /** Storage Path */
+            storage_path: string;
+        };
+        /** DocumentResponse */
+        DocumentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** File Name */
+            file_name: string;
+            /** File Type */
+            file_type: string;
+            /** Storage Path */
+            storage_path: string;
+            /**
+             * Uploaded At
+             * Format: date-time
+             */
+            uploaded_at: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -4148,6 +4240,107 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["APIResponse_ProductResponse_"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_product_documents_api_v1_products__product_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_DocumentResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_product_document_api_v1_products__product_id__documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DocumentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_DocumentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_document_api_v1_documents__document_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

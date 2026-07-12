@@ -6,6 +6,7 @@
    pattern that causes these. */
 import { useEffect, useState, useCallback, useRef } from "react";
 import { listProducts, countProducts, getProduct, createProduct, updateProduct } from "../services/products";
+import { listProductDocuments, createProductDocument, deleteDocument } from "../services/documents";
 import { listSbus } from "../services/masterData";
 
 
@@ -41,6 +42,15 @@ const EMPTY_FORM = {
   category_name: "",
   description: "",
 };
+
+const DOCUMENT_TYPES = [
+  { value: "BROCHURE", label: "Brochure", icon: "📄" },
+  { value: "VIDEO", label: "Video", icon: "🎬" },
+  { value: "IMAGE", label: "Image", icon: "🖼️" },
+  { value: "OTHER", label: "Other", icon: "🔗" },
+];
+
+const EMPTY_LINK_FORM = { file_name: "", file_type: "BROCHURE", storage_path: "" };
 
 function ProductFormModal({ mode, initial, onClose, onSaved }) {
   const [sbus, setSbus] = useState([]);
@@ -222,6 +232,194 @@ function ProductFormModal({ mode, initial, onClose, onSaved }) {
   );
 }
 
+function CollateralLinksCard({ productId }) {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddLink, setShowAddLink] = useState(false);
+  const [form, setForm] = useState(EMPTY_LINK_FORM);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const fetchDocuments = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    listProductDocuments(productId)
+      .then(setDocuments)
+      .catch((err) => setError(err.message || "Failed to load collateral links"))
+      .finally(() => setLoading(false));
+  }, [productId]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  function set(field, value) {
+    setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function handleAddLink(e) {
+    e.preventDefault();
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const created = await createProductDocument(productId, {
+        file_name: form.file_name.trim(),
+        file_type: form.file_type,
+        storage_path: form.storage_path.trim(),
+      });
+      setDocuments((docs) => [created, ...docs]);
+      setForm(EMPTY_LINK_FORM);
+      setShowAddLink(false);
+    } catch (err) {
+      setSaveError(err.response?.data?.detail || err.message || "Failed to add link");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(documentId) {
+    setDeletingId(documentId);
+    try {
+      await deleteDocument(documentId);
+      setDocuments((docs) => docs.filter((d) => d.id !== documentId));
+    } catch (err) {
+      setError(err.message || "Failed to delete link");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const isValid = form.file_name.trim() && form.storage_path.trim();
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mt-4">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+          Collateral Links
+        </h4>
+        <button
+          onClick={() => setShowAddLink((v) => !v)}
+          className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
+        >
+          {showAddLink ? "Cancel" : "+ Add Link"}
+        </button>
+      </div>
+
+      {showAddLink && (
+        <form onSubmit={handleAddLink} className="space-y-3 mb-4 p-4 bg-gray-50 rounded-xl">
+          {saveError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl text-xs font-bold">
+              {saveError}
+            </div>
+          )}
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+              Label <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={form.file_name}
+              onChange={(e) => set("file_name", e.target.value)}
+              placeholder="e.g. Product Brochure 2026"
+              className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+              autoFocus
+              autoComplete="off"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+              Type
+            </label>
+            <select
+              value={form.file_type}
+              onChange={(e) => set("file_type", e.target.value)}
+              className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+            >
+              {DOCUMENT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">
+              URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={form.storage_path}
+              onChange={(e) => set("storage_path", e.target.value)}
+              placeholder="https://..."
+              className="w-full px-4 py-2.5 bg-white rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200"
+              autoComplete="off"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={saving || !isValid}
+            className="w-full py-2.5 rounded-xl text-sm font-black uppercase tracking-wider bg-blue-600 hover:bg-blue-700 text-white transition-all disabled:opacity-40"
+          >
+            {saving ? "Adding..." : "Add Link"}
+          </button>
+        </form>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-xl text-xs font-bold mb-3">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <div className="text-center py-4 text-gray-400 font-bold text-sm animate-pulse">
+          Loading links...
+        </div>
+      )}
+
+      {!loading && documents.length === 0 && (
+        <div className="text-center py-4 text-sm italic text-gray-400">
+          No collateral links yet.
+        </div>
+      )}
+
+      {!loading && documents.length > 0 && (
+        <div className="space-y-2">
+          {documents.map((doc) => {
+            const typeInfo = DOCUMENT_TYPES.find((t) => t.value === doc.file_type) || DOCUMENT_TYPES[3];
+            return (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between gap-3 px-3 py-2.5 bg-gray-50 rounded-xl"
+              >
+                <a
+                  href={doc.storage_path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 min-w-0 flex-1 group"
+                >
+                  <span className="shrink-0">{typeInfo.icon}</span>
+                  <span className="font-bold text-sm text-gray-800 group-hover:text-blue-600 transition-colors truncate">
+                    {doc.file_name}
+                  </span>
+                </a>
+                <button
+                  onClick={() => handleDelete(doc.id)}
+                  disabled={deletingId === doc.id}
+                  className="shrink-0 text-gray-400 hover:text-red-600 font-bold text-lg leading-none disabled:opacity-40"
+                  aria-label="Remove link"
+                >
+                  &times;
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProductDetail({ productId, onBack, onEdit }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -335,6 +533,8 @@ function ProductDetail({ productId, onBack, onEdit }) {
             ))}
           </div>
         </div>
+
+        <CollateralLinksCard productId={productId} />
       </div>
     </div>
   );

@@ -2,12 +2,15 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Reminder click-through is DONE, verified by Basheer, not yet committed —
-commit pending (see bottom of this file for the drafted message).** Closes
-item 2 of the Milestone 1 gap-closure list; remaining: Catalog role gate
-(GM+Admin), Product Catalog collateral links — no fixed order between those
-two, pick a starting point next session. Full write-up below ("Reminder
-click-through — full write-up").
+**Product Catalog collateral links is DONE, verified by Basheer, not yet
+committed — commit pending (see bottom of this file for the drafted
+message).** Closes item 4 (last of the 4) of the Milestone 1 gap-closure
+list; **only Catalog role gate (GM+Admin) remains.** Full write-up below
+("Product Catalog collateral links — full write-up").
+
+**Reminder click-through is DONE and COMMITTED (`ac6d008`, 2026-07-12).**
+Closed item 2 of the Milestone 1 gap-closure list — see ledger below for
+full write-up.
 
 **Opportunity Detail trio (Associated Project link + Lead Source display/edit
 + Demo End Date display/edit) is DONE and COMMITTED (`b662751`, 2026-07-12).**
@@ -26,9 +29,10 @@ pure corporate/holding entity with no clinical operations of its own (fits
 none of the 8 values well; "Other" would be a lossy fallback)?** If the
 latter is true for Aster DM or similar real accounts, the enum has a real
 gap and needs a 9th value (something like "Corporate Group / Holding
-Entity") — a small follow-up migration (`0006`), not a big change, but a
-real one. Basheer's own words: "I need to check" — action is on him to
-check the real data; revisit this before treating the 8-value list as
+Entity") — a small follow-up migration (**`0007`** — `0006` is now taken,
+see "Product Catalog collateral links" write-up below), not a big change,
+but a real one. Basheer's own words: "I need to check" — action is on him
+to check the real data; revisit this before treating the 8-value list as
 final/closed.
 
 **Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
@@ -37,23 +41,22 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. Remaining, untouched: Reminder
-click-through, Catalog role gate (GM+Admin), Product Catalog collateral
-links.
+Milestone 1") for the full scope. Remaining, untouched: Catalog role gate
+(GM+Admin) — the only item left.
 
-**Mapped all 6 (now 2 remaining) items to screens/files 2026-07-11
+**Mapped all 6 (now 1 remaining) items to screens/files 2026-07-11
 (research agent, verified against actual code, not just the audit doc's
 summary) — see "Milestone 1 remaining items — screen mapping" write-up
 below for full detail. Recommended order, supersedes the earlier flat
 list:**
 1. ~~Opportunity Detail trio~~ — DONE, `b662751`.
-2. ~~Reminder click-through~~ — DONE, verified, commit pending (see "Reminder
-   click-through — full write-up" below).
-3. **Catalog role gate** — medium, standalone (no shared logic with #4
-   despite touching the same screen file).
-4. **Product Catalog collateral links** — medium, standalone, biggest of
-   the four since there's zero Document API surface today (only the ORM
-   model exists — no schemas.py/service.py/router.py at all).
+2. ~~Reminder click-through~~ — DONE, `ac6d008`.
+3. **Catalog role gate** — medium, standalone. Only item left.
+4. ~~Product Catalog collateral links~~ — DONE, verified, commit pending
+   (see write-up below). Scope decided 2026-07-12: URL-only labeled links
+   (matches original prototype UX), not real Supabase Storage file upload
+   — no storage credentials existed for the real-upload path; see write-up
+   for the full decision.
 
 **§9 migration backlog is paused, not abandoned** — resume the 3 remaining
 files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -99,7 +102,8 @@ the 3 pending files are actual remaining work.)
 | Stray-test fix, unrelated to any feature                | `31bafa8`   | `ProductService.list_products` test called a `brand` kwarg the method never had — fixed the test, did not build brand filtering |
 | `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer — see "Current task" for one open follow-up question this surfaced |
 | Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
-| Reminder click-through                                   | *pending*   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
+| Reminder click-through                                   | `ac6d008`   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
+| Product Catalog collateral links                         | *pending*   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -454,14 +458,14 @@ ref (seed once per `editingOpp.id`, reset the guard on close) — confirmed
 present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 
 ## Next step
-**Milestone 1 gap-closure first (2026-07-10 priority decision)** — work the
-remaining list in `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to
-finish — Milestone 1"). Done so far: Parent Customer display + editing
-(`87fde5a`, `95e118a`), `CustomerType` (`70cf978`), Opportunity Detail trio
-(`b662751`), Reminder click-through (verified, commit pending — see
-write-up above). Still open: Catalog role gate (GM+Admin), Product Catalog
-collateral links. No fixed order committed yet between those two — pick
-starting point next session.
+**Milestone 1 gap-closure — one item left.** Work the remaining list in
+`docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
+Milestone 1"). Done so far: Parent Customer display + editing (`87fde5a`,
+`95e118a`), `CustomerType` (`70cf978`), Opportunity Detail trio (`b662751`),
+Reminder click-through (`ac6d008`), Product Catalog collateral links
+(verified, commit pending — see write-up above). **Still open: Catalog
+role gate (GM+Admin)** — the only remaining item, no dependency on
+anything else.
 
 **§9 MUI migration backlog resumes after Milestone 1** — 3 files remain
 (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -804,7 +808,7 @@ Source/Associated Project unchanged after that. Fixed and folded into the
 same commit rather than a separate follow-up, since it landed before the
 commit was made. No other issues found.
 
-### Reminder click-through — full write-up (pending commit)
+### Reminder click-through — full write-up (`ac6d008`)
 
 Second item of the Milestone 1 gap-closure list. Closes the design gap
 identified while mapping this item (2026-07-11): a Reminder's nested
@@ -907,14 +911,110 @@ account→Back and Pipeline→opportunity→Back (unchanged), and multi-hop
 parent/child navigation inside Customer360 still returns to the Directory
 on Back (not stuck on the last-viewed account).
 
+### Product Catalog collateral links — full write-up (pending commit)
+
+Fourth and last item of the Milestone 1 gap-closure list. `Product.documents`
+already rode on the generic `Document` entity (ADR-025) at the model layer,
+but zero API surface existed (no schemas/service/router) and zero file-
+upload infrastructure existed anywhere in the backend (no storage SDK
+dependency, no multipart-upload endpoint precedent, and critically no
+`SUPABASE_SERVICE_ROLE_KEY` or storage bucket configured in `backend/.env`
+— only the anon key, JWT-auth only).
+
+**Scope decision (`AskUserQuestion` before coding, 2026-07-12): URL-only
+labeled links, not a real Supabase Storage file upload.** The *original
+prototype* this was diffed against actually did the simpler thing —
+"Array of labeled URLs (brochures/videos/clinical images), clickable" — not
+binary uploads. Real uploads would have required Basheer to first
+provision a Supabase Storage bucket and hand over a service-role key
+(live-infra action outside this session), plus a new dependency and the
+backend's first-ever multipart endpoint. Basheer chose the URL-only path.
+Forward-compatible by construction: `storage_path` is just a `VARCHAR(500)`
+— today it holds a pasted external URL, but nothing about the column
+changes if real uploads get built later; only a new upload endpoint would
+need to write a Supabase Storage path into that same column instead.
+
+**Architecture question raised and settled before coding:** why a new
+`document/` domain rather than folding this into the existing `product/`
+domain? Answered by contrasting with `OpportunityItem`/`Split`/
+`StakeholderLink` (single-parent sub-resources, correctly living inside
+`opportunity/`'s own files) against `Document` (four nullable FKs —
+account/project/opportunity/product — explicitly a shared, cross-cutting
+entity per ADR-025, whose model already lives in its own
+`document/models.py`, not inside any one parent's `models.py`). Keeping it
+in its own domain means Account/Project/Opportunity document support,
+if built later, is just new methods on the same `DocumentService`/
+`DocumentRepository` (`list_by_account`, etc.), not duplicated logic
+scattered across four domain folders.
+
+**Backend:**
+- `alembic/versions/0006_document_file_size_nullable.py` — `document
+  .file_size_bytes` NOT NULL → nullable (URL-only links have no real byte
+  size to record). **Applied to the live shared dev DB 2026-07-12** —
+  verified via `information_schema.columns` (read-only). `alembic current`
+  → `0006 (head)`. `docs/Physical-Schema.sql` updated to match (kept
+  authoritative, per project rule).
+- `document/models.py` — `file_size_bytes` column updated to match.
+- New `document/schemas.py` — `DocumentCreate` (`file_name`, `file_type`,
+  `storage_path`), `DocumentResponse`. `file_type` deliberately left an
+  unconstrained free-form string (frontend offers a fixed Brochure/Video/
+  Image/Other select for icon purposes only) rather than a DB CHECK
+  constraint, so real uploads could later populate it with actual MIME
+  types without a schema change.
+- New `document/repository.py` — `DocumentRepository` (`product_exists`,
+  `list_by_product`; create/delete inherited from `BaseRepository`).
+- New `document/service.py` — `DocumentService` (`list_by_product`,
+  `create_document`, `delete_document`), all 404 via `NotFoundError` when
+  the product doesn't exist.
+- New `document/router.py` — `GET`/`POST /products/{product_id}/documents`,
+  `DELETE /documents/{document_id}`. Nested under `/products` rather than
+  the generic `/documents?product_id=...` shape `docs/API-Catalog.md` §8.1
+  originally sketched, to stay consistent with how every other sub-resource
+  in this codebase is routed (items/splits/stakeholders all nest under
+  their parent) — account/project/opportunity-scoped document endpoints
+  aren't built yet, so a fully generic top-level endpoint would be
+  unused generality today.
+- `app/main.py` — registered `document_router`.
+- New `tests/domains/document/test_document_router.py` — 9 tests: 401
+  unauthenticated + 404 product/document-not-found + success cases for
+  list/create/delete. One create-test needed the same `mock_db.add.
+  side_effect` back-fill trick already established in
+  `test_account_router.py` (`id`/`uploaded_at` are DB/ORM-populated at
+  flush time, which a `MagicMock` session never actually does).
+
+**Frontend:**
+- New `services/documents.ts` — `listProductDocuments`, `createProductDocument`,
+  `deleteDocument`.
+- `types/api.ts` regenerated (same in-process approach as prior sessions;
+  193 pure additions, 0 deletions).
+- `ProductCatalogScreen.jsx` — new `CollateralLinksCard` component, rendered
+  inside `ProductDetail`'s scrollable body below the existing "Product
+  Details" card. Plain Tailwind, matching this file's own current style
+  (one of the 3 files still pending its §9 MUI migration) — same one-off
+  exception precedent as `CustomerDirectoryScreen.jsx`'s badges before its
+  own migration. Lists links (type icon + label, clickable → opens URL in
+  a new tab, × to delete), an "+ Add Link" toggle revealing an inline form
+  (label, type select, URL) — no modal, since this is a small addition to
+  an existing scrollable card, not a new screen.
+
+`pytest` (297 passed = 288 + 9 new), `tsc --noEmit`/`npm run lint`/`npm run
+build` all clean.
+
+**Manually verified by Basheer:** add a link (all 4 types), click a link's
+label (opens in new tab), delete a link, regression-checked Add/Edit
+Product still works unaffected. No issues found.
+
 ## Files in flight
-**Reminder click-through — implemented and verified, commit pending.**
-- `backend/app/domains/opportunity/repository.py` — `get_for_detail` added
-- `backend/app/domains/opportunity/service.py` — `get_opportunity` added
-- `backend/app/domains/opportunity/router.py` — `GET /opportunities/{id}` added
-- `backend/tests/domains/opportunity/test_opportunity_router.py` — `TestGetOpportunity` added
-- `sales-os-app/src/services/opportunities.ts` — `getOpportunity` added
+**Product Catalog collateral links — implemented and verified, commit pending.**
+- `backend/alembic/versions/0006_document_file_size_nullable.py` — new, applied to live DB
+- `backend/app/domains/document/models.py` — `file_size_bytes` now nullable
+- `backend/app/domains/document/schemas.py` — new
+- `backend/app/domains/document/repository.py` — new
+- `backend/app/domains/document/service.py` — new
+- `backend/app/domains/document/router.py` — new
+- `backend/app/main.py` — `document_router` registered
+- `backend/tests/domains/document/test_document_router.py` — new
+- `docs/Physical-Schema.sql` — `document.file_size_bytes` nullable, kept in sync
+- `sales-os-app/src/services/documents.ts` — new
 - `sales-os-app/src/types/api.ts` — regenerated
-- `sales-os-app/src/screens/OpportunityDetailScreen.tsx` — fetch-on-mount + loading gate
-- `sales-os-app/src/DemoApp.tsx` — wiring + return-view back-nav fix
-- `sales-os-app/src/screens/NextActionsScreen.tsx` — clickable reminder rows
+- `sales-os-app/src/screens/ProductCatalogScreen.jsx` — `CollateralLinksCard` added

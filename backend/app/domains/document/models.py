@@ -19,7 +19,9 @@ class Document(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    file_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Nullable: URL-only collateral links (Product Catalog) have no real file
+    # to size. Real uploads, if built later, would still populate this.
+    file_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
     account_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("account.id"), nullable=True, index=True

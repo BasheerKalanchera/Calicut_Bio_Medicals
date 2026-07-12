@@ -319,7 +319,7 @@ CREATE TABLE document (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     file_name VARCHAR(255) NOT NULL,
     file_type VARCHAR(100) NOT NULL,
-    file_size_bytes INTEGER NOT NULL,
+    file_size_bytes INTEGER, -- nullable: URL-only collateral links have no real file (migration 0006)
     storage_path VARCHAR(500) NOT NULL,
     account_id UUID REFERENCES account(id),
     project_id UUID REFERENCES project(id),
