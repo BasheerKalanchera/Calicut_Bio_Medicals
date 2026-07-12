@@ -2,95 +2,34 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
+**Reminder click-through is DONE, verified by Basheer, not yet committed —
+commit pending (see bottom of this file for the drafted message).** Closes
+item 2 of the Milestone 1 gap-closure list; remaining: Catalog role gate
+(GM+Admin), Product Catalog collateral links — no fixed order between those
+two, pick a starting point next session. Full write-up below ("Reminder
+click-through — full write-up").
+
 **Opportunity Detail trio (Associated Project link + Lead Source display/edit
-+ Demo End Date display/edit) is IMPLEMENTED, all automated checks green,
-Basheer's manual pass done, one UI tweak applied from his feedback — READY
-TO COMMIT, not yet committed (2026-07-12).** First item of the Milestone 1
-gap-closure list (see "Milestone 1 remaining items" below). Full write-up
-moves under "Done in prior sessions" once committed; scope decisions made
-this session, both via `AskUserQuestion`:
-- **Associated Project: plain text display, no click-through.** Basheer's
-  call — click-through deferred as a post-demo follow-up if a customer asks
-  for it; building it now would have required new cross-screen navigation
-  plumbing (`onSelectProject` prop + handler in `DemoApp.tsx`) that doesn't
-  exist today for Opportunity Detail.
-- **Lead Source: display AND editable**, not display-only. Reason: today
-  Lead Source can only be set once, at Opportunity creation via
-  `QuickLeadModal` — if missed, there was no way to backfill it, which
-  silently blocks the Lead→Qualified stage gate (`validators.py`). Confirmed
-  via code read that `validate_stage_transition` only runs when a PATCH
-  includes `stage_id` (`service.py:182`, `if "stage_id" in updates:`), so
-  adding a second write-entry-point for `lead_source_id` (this edit form)
-  has zero interaction with that gate's logic when Lead Source is edited
-  alone (no stage change in the same request).
-- Demo End Date: straightforward, mirrors `demo_start_date` exactly.
++ Demo End Date display/edit) is DONE and COMMITTED (`b662751`, 2026-07-12).**
+Basheer's manual browser pass found one issue (Overview tab field order),
+fixed and folded into the same commit — see ledger below for full write-up.
+This closes item 1 of the Milestone 1 gap-closure list.
 
-**What changed:**
-- Backend `PipelineOpportunity` schema (`schemas.py`) gained `project:
-  ProjectNested | None` and `lead_source: LeadSourceNested | None` (new
-  minimal `{id, name}` nested types, same shape as `AccountNested`/
-  `SBUNested`). `demo_end_date` was already on this schema, just never
-  read by the frontend.
-- `repository.py`'s `list_pipeline` had `noload(Opportunity.lead_source)`
-  explicitly blanking that relationship out on every pipeline fetch — removed.
-  (`project` needed no repository change; already rides the ORM's default
-  `lazy="joined"`, was never noloaded.)
-- New `backend/tests/domains/opportunity/test_opportunity_router.py` — this
-  domain had **zero** router-level test coverage before (`list_pipeline`/
-  `PipelineOpportunity` had never been tested at any layer). Added 4 tests
-  covering the exact risk this change introduces: null-safety when
-  project/lead_source are unset, correct serialization when set, and
-  `demo_end_date` passthrough. 284 passed (280 + 4 new), full suite clean.
-- `sales-os-app/src/types/api.ts` regenerated (same in-process
-  TestClient→OpenAPI-dump approach as `bb671bc`); hand-written alias tail
-  re-appended unchanged (confirmed via diff: 22 pure additions, 0 deletions).
-- `OpportunityDetailScreen.tsx`: Overview tab grid gained Demo End / Lead
-  Source / Associated Project fields (plain `Field` rows, `opp.project?.name`
-  read directly, no separate fetch needed for display). Edit modal gained a
-  Demo End Date `TextField` (mirrors `demo_start_date`'s 4 wiring points:
-  state, populate-on-open, PATCH payload, `applyOppPatch`) and a Lead Source
-  `Select` dropdown backed by a new `["leadSources"]` query (mirrors
-  `QuickLeadModal.tsx`'s pattern) — sends `null` when cleared, same
-  clear-to-blank convention as `CustomerType`/`parent_account_id`. Project is
-  **not** in the edit form — display-only per the scope decision above.
-- `tsc --noEmit`, `npm run lint`, `npm run build` all clean.
-
-**Basheer's manual browser pass (2026-07-12) — one layout tweak requested,
-applied:** Overview tab grid reordered so Demo Start/Demo End sit together
-on the first row, Expected Closure moved to the second row (next to PO
-Number); SBU/Lead Source/Associated Project unchanged after that. No other
-issues found. Commit message drafted; commit itself not yet run — pending
-Basheer's go-ahead on the actual `git commit` step.
-
-**Older open question, still unresolved — check before assuming the
-`CustomerType` 8-value enum is complete:** Basheer's real example — Aster DM
-is the parent of Aster MIMS Calicut and Aster Medicity Kochi. Structurally
-"is this a parent" is already answered by `parent_account_id` (no
-`CustomerType` needed for that). The open question is narrower: **is Aster
-DM itself, as an institution, a functioning hospital (fits an existing
-value, e.g. Multispeciality Hospital) — or a pure corporate/holding entity
-with no clinical operations of its own (fits none of the 8 values well;
-"Other" would be a lossy fallback)?** If the latter is true for Aster DM
-or similar real accounts, the enum has a real gap and needs a 9th value
-(something like "Corporate Group / Holding Entity") — a small follow-up
-migration (`0006`), not a big change, but a real one. Basheer's own words:
-"I need to check" — action is on him to check the real data; revisit this
-before treating the 8-value list as final/closed.
-
-**Open question surfaced during review, NOT YET RESOLVED — check before
-assuming the 8-value enum is complete:** Basheer's real example — Aster DM
-is the parent of Aster MIMS Calicut and Aster Medicity Kochi. Structurally
-"is this a parent" is already answered by `parent_account_id` (no
-`CustomerType` needed for that). The open question is narrower: **is Aster
-DM itself, as an institution, a functioning hospital (fits an existing
-value, e.g. Multispeciality Hospital) — or a pure corporate/holding entity
-with no clinical operations of its own (fits none of the 8 values well;
-"Other" would be a lossy fallback)?** If the latter is true for Aster DM
-or similar real accounts, the enum has a real gap and needs a 9th value
-(something like "Corporate Group / Holding Entity") — a small follow-up
-migration (`0006`), not a big change, but a real one. Basheer's own words:
-"I need to check" — action is on him to check the real data; revisit this
-before treating the 8-value list as final/closed.
+**Open question surfaced during `CustomerType` review, NOT YET RESOLVED —
+check before assuming the 8-value enum is complete:** Basheer's real
+example — Aster DM is the parent of Aster MIMS Calicut and Aster Medicity
+Kochi. Structurally "is this a parent" is already answered by
+`parent_account_id` (no `CustomerType` needed for that). The open question
+is narrower: **is Aster DM itself, as an institution, a functioning
+hospital (fits an existing value, e.g. Multispeciality Hospital) — or a
+pure corporate/holding entity with no clinical operations of its own (fits
+none of the 8 values well; "Other" would be a lossy fallback)?** If the
+latter is true for Aster DM or similar real accounts, the enum has a real
+gap and needs a 9th value (something like "Corporate Group / Holding
+Entity") — a small follow-up migration (`0006`), not a big change, but a
+real one. Basheer's own words: "I need to check" — action is on him to
+check the real data; revisit this before treating the 8-value list as
+final/closed.
 
 **Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
 work from the Prototype/Production Parity Audit comes first, ahead of
@@ -98,27 +37,18 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. Remaining, untouched: Associated Project
-link, Lead Source display, Demo end date, Reminder click-through, Catalog
-role gate (GM+Admin), Product Catalog collateral links.
+Milestone 1") for the full scope. Remaining, untouched: Reminder
+click-through, Catalog role gate (GM+Admin), Product Catalog collateral
+links.
 
-**Mapped all 6 remaining items to screens/files 2026-07-11 (research agent,
-verified against actual code, not just the audit doc's summary) — see
-"Milestone 1 remaining items — screen mapping" write-up below for full
-detail. Recommended grouping/order, supersedes the earlier flat list:**
-1. **Opportunity Detail trio** (Associated Project link + Lead Source
-   display + Demo end date) — one cohesive pass, not three separate
-   touches. All three live or die on the same `PipelineOpportunity` schema
-   (`OpportunityDetailScreen.tsx` never fetches its own data — `DemoApp.tsx`
-   just hands it whatever pipeline-list object was already loaded).
-   Demo end date needs zero backend change (field already in the schema,
-   pure frontend wiring); Project and Lead Source both need the same kind
-   of schema addition (id + nested object) to that same response shape.
-   One backend schema touch, one frontend touch of the same Overview tab +
-   Edit form.
-2. **Reminder click-through** — small-medium, but resolve the
-   opportunity-side design gap first (see write-up below) before building
-   the naive version.
+**Mapped all 6 (now 2 remaining) items to screens/files 2026-07-11
+(research agent, verified against actual code, not just the audit doc's
+summary) — see "Milestone 1 remaining items — screen mapping" write-up
+below for full detail. Recommended order, supersedes the earlier flat
+list:**
+1. ~~Opportunity Detail trio~~ — DONE, `b662751`.
+2. ~~Reminder click-through~~ — DONE, verified, commit pending (see "Reminder
+   click-through — full write-up" below).
 3. **Catalog role gate** — medium, standalone (no shared logic with #4
    despite touching the same screen file).
 4. **Product Catalog collateral links** — medium, standalone, biggest of
@@ -168,6 +98,8 @@ the 3 pending files are actual remaining work.)
 | Docs fix (`managing_sbu_id`/`zone_id` drift) + `ADR-035` | `1a6e633`   | `Enterprise-Data-Model.md`/`Physical-Schema.sql` corrected; new ADR formalizing Account-is-SBU-agnostic (previously only in an archived memo) |
 | Stray-test fix, unrelated to any feature                | `31bafa8`   | `ProductService.list_products` test called a `brand` kwarg the method never had — fixed the test, did not build brand filtering |
 | `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer — see "Current task" for one open follow-up question this surfaced |
+| Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
+| Reminder click-through                                   | *pending*   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -524,12 +456,12 @@ present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 ## Next step
 **Milestone 1 gap-closure first (2026-07-10 priority decision)** — work the
 remaining list in `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to
-finish — Milestone 1"). Parent Customer display + editing is now DONE
-(`87fde5a`, `95e118a` — see write-up above); still open: Associated Project
-link, Lead Source display, Demo end date, Reminder click-through, Catalog
-role gate (GM+Admin), `CustomerType` (institution-nature), Product Catalog
-collateral links. No fixed order committed yet — pick starting point next
-session.
+finish — Milestone 1"). Done so far: Parent Customer display + editing
+(`87fde5a`, `95e118a`), `CustomerType` (`70cf978`), Opportunity Detail trio
+(`b662751`), Reminder click-through (verified, commit pending — see
+write-up above). Still open: Catalog role gate (GM+Admin), Product Catalog
+collateral links. No fixed order committed yet between those two — pick
+starting point next session.
 
 **§9 MUI migration backlog resumes after Milestone 1** — 3 files remain
 (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -805,11 +737,184 @@ distinct from the hierarchy question (already answered by
 `parent_account_id`, no field needed for that part). Basheer is checking
 the real data before any further change.
 
+### Opportunity Detail trio (Project link / Lead Source / Demo End Date) — full write-up (`b662751`)
+
+First item of the Milestone 1 gap-closure list. Three fields bundled into
+one pass because all three live or die on the same `PipelineOpportunity`
+schema and the same screen — `OpportunityDetailScreen.tsx` never fetches
+its own data, `DemoApp.tsx` just hands it whatever pipeline-list object was
+already loaded (see "Milestone 1 remaining items — screen mapping" above).
+
+**Scope decisions, both made via `AskUserQuestion` before coding:**
+- **Associated Project: plain text display, no click-through.** Basheer's
+  call — click-through deferred as a post-demo follow-up if a customer asks
+  for it; building it now would have required new cross-screen navigation
+  plumbing (`onSelectProject` prop + handler in `DemoApp.tsx`) that doesn't
+  exist today for Opportunity Detail (Project Detail today only renders
+  inline inside `ProjectDirectoryScreen`, no standalone route).
+- **Lead Source: display AND editable**, not display-only. Reason: today
+  Lead Source can only be set once, at Opportunity creation via
+  `QuickLeadModal` — if missed, there was no way to backfill it, which
+  silently blocks the Lead→Qualified stage gate (`validators.py`). Confirmed
+  via code read that `validate_stage_transition` only runs when a PATCH
+  includes `stage_id` (`service.py:182`, `if "stage_id" in updates:`), so
+  adding a second write-entry-point for `lead_source_id` (this edit form)
+  has zero interaction with that gate's logic when Lead Source is edited
+  alone (no stage change in the same request).
+- Demo End Date: straightforward, mirrors `demo_start_date` exactly — the
+  field already existed on the backend schema, nothing had ever read it.
+
+**Backend:**
+- `schemas.py` — `PipelineOpportunity` gained `project: ProjectNested |
+  None` and `lead_source: LeadSourceNested | None` (new minimal `{id,
+  name}` nested types, same shape as `AccountNested`/`SBUNested`).
+- `repository.py`'s `list_pipeline` had `noload(Opportunity.lead_source)`
+  explicitly blanking that relationship out on every pipeline fetch —
+  removed. (`project` needed no repository change; already rides the ORM's
+  default `lazy="joined"`, was never noloaded.)
+- New `backend/tests/domains/opportunity/test_opportunity_router.py` — this
+  domain had **zero** router-level test coverage before (`list_pipeline`/
+  `PipelineOpportunity` had never been tested at any layer). Added 4 tests
+  covering the exact risk this change introduces: null-safety when
+  project/lead_source are unset, correct serialization when set, and
+  `demo_end_date` passthrough.
+
+**Frontend:**
+- `sales-os-app/src/types/api.ts` regenerated (same in-process
+  TestClient→OpenAPI-dump approach as `bb671bc`); hand-written alias tail
+  re-appended unchanged (confirmed via diff: 22 pure additions, 0
+  deletions).
+- `OpportunityDetailScreen.tsx` — Overview tab grid gained Demo End / Lead
+  Source / Associated Project fields (plain `Field` rows, `opp.project?.name`
+  read directly, no separate fetch needed for display). Edit modal gained a
+  Demo End Date `TextField` (mirrors `demo_start_date`'s 4 wiring points:
+  state, populate-on-open, PATCH payload, `applyOppPatch`) and a Lead Source
+  `Select` dropdown backed by a new `["leadSources"]` query (mirrors
+  `QuickLeadModal.tsx`'s pattern) — sends `null` when cleared, same
+  clear-to-blank convention as `CustomerType`/`parent_account_id`. Project
+  is **not** in the edit form — display-only per the scope decision above.
+
+`tsc --noEmit`/`npm run lint`/`npm run build`/`pytest` (284 passed = 280 +
+4 new) all clean.
+
+**Manually verified by Basheer (2026-07-12):** one issue found — Overview
+tab field order — Demo Start/Demo End moved onto the same first row,
+Expected Closure moved to the second row (next to PO Number); SBU/Lead
+Source/Associated Project unchanged after that. Fixed and folded into the
+same commit rather than a separate follow-up, since it landed before the
+commit was made. No other issues found.
+
+### Reminder click-through — full write-up (pending commit)
+
+Second item of the Milestone 1 gap-closure list. Closes the design gap
+identified while mapping this item (2026-07-11): a Reminder's nested
+opportunity is only `OpportunityNested` (`{id, name}`), but
+`OpportunityDetailScreen.tsx` never fetched its own data — `DemoApp.tsx`
+just handed it whatever full `PipelineOpportunity` object the Pipeline
+screen already had loaded. Wiring the click-through naively would have
+opened the screen mostly blank.
+
+**Design decision (`AskUserQuestion` before coding): give
+`OpportunityDetailScreen.tsx` a real fetch-on-mount**, mirroring
+Customer360Screen's parent/child account click-through pattern
+(`useQuery` + `initialData` + `initialDataUpdatedAt: 0`) rather than the
+cheaper alternative (fattening the reminder's nested opportunity payload to
+match `PipelineOpportunity`, which would only have patched this one entry
+point). Basheer confirmed this explicitly rather than leaving it to
+inference.
+
+**One deliberate deviation from the Customer360 precedent, flagged and
+confirmed with Basheer before building:** Customer360Screen's render was
+already null-safe throughout (written that way originally for the
+Directory-row-seed case), so it could paint instantly from a partial
+account and fill in fields as they arrived. `OpportunityDetailScreen.tsx`
+accesses `opp.stage`/`opp.status`/`opp.owner`/`opp.account`/`opp.sbu`
+unconditionally in ~10 places — retrofitting null-safety through all of
+them was judged not worth it, especially since the new endpoint returns
+the entire opportunity in one response (no staggered field-by-field
+arrival to justify the extra surface area). Used a **loading-spinner gate**
+instead: if any of those five required fields aren't loaded yet, render the
+screen's existing `LoadingPlaceholder` instead of the full detail body.
+Only affects the new Reminder entry point (a few hundred ms); Pipeline
+navigation is unaffected since its seed is already a complete object.
+
+**Backend:**
+- `opportunity/repository.py` — new `get_for_detail(opportunity_id)`,
+  single-row fetch with the exact same eager-load/noload profile as
+  `list_pipeline` (feeds the same `PipelineOpportunity` schema).
+- `opportunity/service.py` — new `get_opportunity(id)`, raises
+  `NotFoundError` if missing (same pattern as `account/service.py`).
+- `opportunity/router.py` — new `GET /opportunities/{opportunity_id}` →
+  `APIResponse[PipelineOpportunity]`.
+- `test_opportunity_router.py` — new `TestGetOpportunity` class: 401
+  unauthenticated, 404 not found, 200 full shape, null-safety for
+  project/lead_source. 288 passed (284 + 4 new).
+
+**Frontend:**
+- `services/opportunities.ts` — new `getOpportunity(id)`.
+- `types/api.ts` regenerated (same in-process TestClient→OpenAPI-dump
+  approach as prior sessions); hand-written alias tail re-appended
+  unchanged (49 additions, 1 deletion — the new path's generated types).
+- `OpportunityDetailScreen.tsx` — `opp` changed from `useState(initialOpp)`
+  to a `useQuery` (`initialData`/`initialDataUpdatedAt: 0`, same comment
+  as Customer360's account query); new `opportunityId`/`initialOpportunity`
+  (any-typed seed, same convention as Customer360's `initialAccount?: any`)
+  /`onOpportunityUpdate` props replacing the old `opportunity` prop;
+  always-mounted prefetch query keys switched from `opp.id` to the
+  `opportunityId` prop (always defined, unlike `opp` during the loading
+  gap); `applyOppPatch` switched from `setOpp` to
+  `queryClient.setQueryData`; `openEditOpp`/`handleUpdateOpp` each gained an
+  `if (!opp) return;` guard (closures don't inherit the render-body gate's
+  TS narrowing); loading gate added right before the final render.
+- `DemoApp.tsx` — `selectedOpportunity` widened to accept
+  `PipelineOpportunity | { id; name }`; `handleSelectOpportunity` now takes
+  either shape (Pipeline and the new Reminder click-through share it, same
+  as `handleSelectAccount` already does); `OpportunityDetailScreen` now
+  gets `opportunityId`/`initialOpportunity`/`onOpportunityUpdate` (the last
+  one keeps `selectedOpportunity` upgraded to the full object once loaded,
+  so the header `+Log` button's `accountId` keeps working regardless of
+  entry point); `NextActionsScreen` wired with
+  `onSelectAccount`/`onSelectOpportunity`.
+- `NextActionsScreen.tsx` — `ReminderRow` gained the same two props;
+  account name and (if present) opportunity name are now independently
+  clickable, styled identically to Customer360's parent/child links
+  (`color: primary.main`, pointer cursor, underline on hover).
+
+`tsc --noEmit`/`npm run lint`/`npm run build` all clean.
+
+**Back-navigation bug found during Basheer's manual verification, fixed in
+the same pass:** `handleBack360`/`handleBackToOpportunities` in
+`DemoApp.tsx` hardcoded their return view (`"customers"`/`"opportunities"`)
+— a fine assumption when the Directory/Pipeline were each screen's only
+entry point, but wrong now that Next Actions is a second entry point for
+both. Fixed with two new `accountReturnView`/`opportunityReturnView` state
+variables, captured at the moment of entry and consumed by the two Back
+handlers. `handleSelectAccount`'s capture is guarded with
+`if (view !== "customer360")` — Customer360Screen also calls it internally
+for parent/child account links, and without the guard, re-navigating
+between accounts inside that screen would overwrite the return view with
+`"customer360"` itself, turning Back into a no-op (a regression from
+today's "Back always returns to the Directory" behavior for that
+multi-hop case). `handleSelectOpportunity` needed no such guard —
+`OpportunityDetailScreen.tsx` has no internal opportunity-to-opportunity
+navigation of its own.
+
+**Manually verified by Basheer:** reminder → account click-through, and
+reminder → opportunity click-through (with the brief loading spinner),
+both confirmed working; the back-navigation bug above was the only issue
+found, confirmed fixed after the patch; regression-checked Directory→
+account→Back and Pipeline→opportunity→Back (unchanged), and multi-hop
+parent/child navigation inside Customer360 still returns to the Directory
+on Back (not stuck on the last-viewed account).
+
 ## Files in flight
-**Opportunity Detail trio, uncommitted, waiting on Basheer's manual browser
-pass (2026-07-12) — see "Current task" for full detail:**
-- `backend/app/domains/opportunity/schemas.py` — modified
-- `backend/app/domains/opportunity/repository.py` — modified
-- `backend/tests/domains/opportunity/test_opportunity_router.py` — new
+**Reminder click-through — implemented and verified, commit pending.**
+- `backend/app/domains/opportunity/repository.py` — `get_for_detail` added
+- `backend/app/domains/opportunity/service.py` — `get_opportunity` added
+- `backend/app/domains/opportunity/router.py` — `GET /opportunities/{id}` added
+- `backend/tests/domains/opportunity/test_opportunity_router.py` — `TestGetOpportunity` added
+- `sales-os-app/src/services/opportunities.ts` — `getOpportunity` added
 - `sales-os-app/src/types/api.ts` — regenerated
-- `sales-os-app/src/screens/OpportunityDetailScreen.tsx` — modified
+- `sales-os-app/src/screens/OpportunityDetailScreen.tsx` — fetch-on-mount + loading gate
+- `sales-os-app/src/DemoApp.tsx` — wiring + return-view back-nav fix
+- `sales-os-app/src/screens/NextActionsScreen.tsx` — clickable reminder rows

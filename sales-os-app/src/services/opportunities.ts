@@ -29,6 +29,11 @@ export async function listPipeline(params: PipelineParams = {}): Promise<Pipelin
   return response.data.data;
 }
 
+export async function getOpportunity(opportunityId: string): Promise<PipelineOpportunity> {
+  const response = await api.get(`/opportunities/${opportunityId}`);
+  return response.data.data;
+}
+
 export async function patchOpportunity(
   opportunityId: string,
   data: Record<string, unknown>,

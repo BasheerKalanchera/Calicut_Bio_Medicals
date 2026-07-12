@@ -135,3 +135,59 @@ class TestListPipeline:
         assert response.status_code == 200
         item = response.json()["data"]["items"][0]
         assert item["demo_end_date"] == "2026-08-01"
+
+
+class TestGetOpportunity:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/opportunities/{OPP_ID}")
+        assert response.status_code == 401
+
+    def test_not_found_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = None
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/opportunities/{OPP_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404
+
+    def test_found_serializes_full_shape(self, client: TestClient) -> None:
+        project_id = uuid.uuid4()
+        lead_source_id = uuid.uuid4()
+        opp = _mock_opportunity(
+            project=_mock_nested(id=project_id, name="Radiology Upgrade"),
+            lead_source=_mock_nested(id=lead_source_id, name="Referral"),
+        )
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = opp
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/opportunities/{OPP_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"]
+        assert item["id"] == str(OPP_ID)
+        assert item["project"] == {"id": str(project_id), "name": "Radiology Upgrade"}
+        assert item["lead_source"] == {"id": str(lead_source_id), "name": "Referral"}
+
+    def test_project_and_lead_source_null_when_unset(self, client: TestClient) -> None:
+        opp = _mock_opportunity()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = opp
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/opportunities/{OPP_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"]
+        assert item["project"] is None
+        assert item["lead_source"] is None

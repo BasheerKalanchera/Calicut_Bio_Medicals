@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -12,6 +12,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckIcon from "@mui/icons-material/Check";
 import {
+  getOpportunity,
   listOpportunityItems,
   listOpportunitySplits,
   listOpportunityStakeholders,
@@ -34,8 +35,13 @@ import FormModal from "../components/FormModal";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
-  opportunity: PipelineOpportunity;
+  opportunityId: string;
+  // Often just an {id, name} reference (e.g. Reminder click-through) rather
+  // than a full PipelineOpportunity (e.g. Pipeline navigation) — same
+  // any-typed seed convention as Customer360Screen's initialAccount.
+  initialOpportunity?: any;
   onBack: () => void;
+  onOpportunityUpdate?: (opp: PipelineOpportunity) => void;
 }
 
 const TABS = [
@@ -941,10 +947,26 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function OpportunityDetailScreen({ opportunity: initialOpp, onBack }: Props) {
+export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate }: Props) {
   const { userProfile }                           = useAuth();
   const queryClient                               = useQueryClient();
-  const [opp, setOpp]                             = useState<PipelineOpportunity>(initialOpp);
+
+  const { data: opp } = useQuery({
+    queryKey: ["opportunity", opportunityId],
+    queryFn: () => getOpportunity(opportunityId),
+    initialData: initialOpportunity ?? undefined,
+    // initialOpportunity is often just an {id, name} reference (Reminder
+    // click-through), missing stage/status/owner/account/sbu. Without this,
+    // React Query treats that seed as freshly-fetched "now" and, under
+    // main.tsx's global 30s staleTime, never kicks off the correcting
+    // background fetch — same reasoning as Customer360Screen's account query.
+    initialDataUpdatedAt: initialOpportunity ? 0 : undefined,
+  });
+
+  useEffect(() => {
+    if (opp) onOpportunityUpdate?.(opp);
+  }, [opp]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [activeTab, setActiveTab]                 = useState<TabId>("overview");
   const [showLogActivity, setShowLogActivity]     = useState(false);
   const chipBarRef = useRef<HTMLDivElement>(null);
@@ -1014,14 +1036,14 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   // that status (to resolve hold_reason_id/loss_reason_id to a display name).
   const { data: holdReasons = [] } = useQuery({
     queryKey: ["holdReasons"],
-    enabled:  showEditOpp || opp.status.status_code === "ON_HOLD",
+    enabled:  showEditOpp || opp?.status?.status_code === "ON_HOLD",
     queryFn:  async () => (await listHoldReasons()) as HoldReasonOption[],
     staleTime: Infinity,
   });
 
   const { data: lossReasons = [] } = useQuery({
     queryKey: ["lossReasons"],
-    enabled:  showEditOpp || opp.status.status_code === "LOST",
+    enabled:  showEditOpp || opp?.status?.status_code === "LOST",
     queryFn:  async () => (await listLossReasons()) as LossReasonOption[],
     staleTime: Infinity,
   });
@@ -1045,42 +1067,44 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   // exist source (hasItems below) — was previously gated to showEditOpp only for that
   // purpose; now always-mounted, which only makes hasItems more consistently correct.
   const { data: oppItems } = useQuery({
-    queryKey: ["opp-items", opp.id],
-    queryFn:  () => listOpportunityItems(opp.id),
+    queryKey: ["opp-items", opportunityId],
+    queryFn:  () => listOpportunityItems(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
   const hasItems = (oppItems?.length ?? 0) > 0;
 
   useQuery({
-    queryKey: ["opp-splits", opp.id],
-    queryFn:  () => listOpportunitySplits(opp.id),
+    queryKey: ["opp-splits", opportunityId],
+    queryFn:  () => listOpportunitySplits(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
 
   useQuery({
-    queryKey: ["opp-stakeholders", opp.id],
-    queryFn:  () => listOpportunityStakeholders(opp.id),
+    queryKey: ["opp-stakeholders", opportunityId],
+    queryFn:  () => listOpportunityStakeholders(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
 
   useQuery({
-    queryKey: ["activities", "opportunity", opp.id],
-    queryFn:  () => listActivitiesByOpportunity(opp.id),
+    queryKey: ["activities", "opportunity", opportunityId],
+    queryFn:  () => listActivitiesByOpportunity(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
 
-  // Patches local state and the always-mounted Pipeline screen's cache directly —
-  // we already have the new values in hand, so there's no need to invalidate and
-  // wait on a redundant refetch just to keep the two in sync.
+  // Patches the opportunity query's cache and the always-mounted Pipeline
+  // screen's cache directly — we already have the new values in hand, so
+  // there's no need to invalidate and wait on a redundant refetch just to
+  // keep the two in sync.
   const applyOppPatch = (patch: Partial<PipelineOpportunity>) => {
-    setOpp((prev) => ({ ...prev, ...patch }));
+    queryClient.setQueryData<PipelineOpportunity>(["opportunity", opportunityId], (prev) => prev ? { ...prev, ...patch } : prev);
     queryClient.setQueriesData<PipelinePage>({ queryKey: ["pipeline"] }, (page) => {
       if (!page) return page;
-      return { ...page, items: page.items.map((item) => item.id === opp.id ? { ...item, ...patch } : item) };
+      return { ...page, items: page.items.map((item) => item.id === opportunityId ? { ...item, ...patch } : item) };
     });
   };
 
   const openEditOpp = () => {
+    if (!opp) return; // only reachable once the detail body (gated below) has rendered
     setEditName(opp.name);
     setEditStageId(opp.stage.id);
     setEditStatusId(opp.status.id);
@@ -1100,6 +1124,7 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   };
 
   const handleUpdateOpp = async () => {
+    if (!opp) return; // only reachable once the detail body (gated below) has rendered
     if (!editName.trim()) throw new Error("Name is required");
     // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
     // while the selected status is On Hold/Lost, since the form has no way to know
@@ -1141,7 +1166,7 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       payload.loss_reason_id = editLossReasonId;
       if (editCompetitorName.trim()) payload.competitor_name = editCompetitorName.trim();
     }
-    await patchOpportunity(opp.id, payload);
+    await patchOpportunity(opportunityId, payload);
     // Reconstruct nested objects from loaded master data so header + strip +
     // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
     const newStage       = stages.find((s) => s.id === editStageId);
@@ -1168,6 +1193,19 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
 
   const editStatusCode = oppStatuses.find((s) => s.id === editStatusId)?.status_code;
   const editLossReasonCode = lossReasons.find((r) => r.id === editLossReasonId)?.reason_code;
+
+  // initialOpportunity can be just an {id, name} reference (Reminder
+  // click-through) — every render below assumes the full PipelineOpportunity
+  // shape, so gate on the required nested fields until the real fetch
+  // resolves. Pipeline navigation already hands over a complete object, so
+  // this never shows for that entry point.
+  if (!opp || !opp.stage || !opp.status || !opp.owner || !opp.account || !opp.sbu) {
+    return (
+      <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
+        <LoadingPlaceholder />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>

@@ -92,6 +92,28 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         return self.db.scalar(stmt) or 0
 
     # ------------------------------------------------------------------
+    # Single-opportunity detail (opens Opportunity Detail from any entry
+    # point that only has an id — e.g. Reminder click-through)
+    # ------------------------------------------------------------------
+
+    def get_for_detail(self, opportunity_id: uuid.UUID) -> "Opportunity | None":
+        return self.db.scalar(
+            select(Opportunity)
+            .where(Opportunity.id == opportunity_id)
+            .options(
+                # Same eager-load profile as list_pipeline — this feeds the
+                # same PipelineOpportunity schema.
+                noload(Opportunity.opportunity_stakeholders),
+                noload(Opportunity.splits),
+                noload(Opportunity.items),
+                noload(Opportunity.activities),
+                noload(Opportunity.documents),
+                noload(Opportunity.loss_reason),
+                noload(Opportunity.hold_reason),
+            )
+        )
+
+    # ------------------------------------------------------------------
     # Account-scoped list (Customer 360 tab)
     # ------------------------------------------------------------------
 

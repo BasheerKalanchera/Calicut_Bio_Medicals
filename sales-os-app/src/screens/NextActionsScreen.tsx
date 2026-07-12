@@ -28,10 +28,14 @@ function ReminderRow({
   reminder,
   onComplete,
   isCompleting,
+  onSelectAccount,
+  onSelectOpportunity,
 }: {
   reminder: ReminderResponse;
   onComplete: (id: string) => void;
   isCompleting: boolean;
+  onSelectAccount?: (account: { id: string; name: string }) => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
 }) {
   const overdue = isOverdue(reminder);
   const icon = ACTIVITY_TYPE_ICONS[reminder.activity.activity_type] ?? "📝";
@@ -91,11 +95,23 @@ function ReminderRow({
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "11px", color: "#6b7280", fontWeight: 500 }}>
         <span>{icon}</span>
-        <span>{reminder.activity.account.name}</span>
+        <Box
+          component="span"
+          onClick={() => onSelectAccount?.(reminder.activity.account)}
+          sx={{ color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+        >
+          {reminder.activity.account.name}
+        </Box>
         {reminder.activity.opportunity && (
           <>
             <Box component="span" sx={{ color: "#d1d5db" }}>•</Box>
-            <span>{reminder.activity.opportunity.name}</span>
+            <Box
+              component="span"
+              onClick={() => onSelectOpportunity?.(reminder.activity.opportunity!)}
+              sx={{ color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+            >
+              {reminder.activity.opportunity.name}
+            </Box>
           </>
         )}
       </Box>
@@ -107,7 +123,13 @@ function ReminderRow({
   );
 }
 
-export default function NextActionsScreen() {
+export default function NextActionsScreen({
+  onSelectAccount,
+  onSelectOpportunity,
+}: {
+  onSelectAccount?: (account: { id: string; name: string }) => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
+}) {
   const queryClient = useQueryClient();
   const [includeCompleted, setIncludeCompleted] = useState(false);
 
@@ -198,6 +220,8 @@ export default function NextActionsScreen() {
                 reminder={r}
                 onComplete={(id) => completeMutation.mutate(id)}
                 isCompleting={completeMutation.isPending && completeMutation.variables === r.id}
+                onSelectAccount={onSelectAccount}
+                onSelectOpportunity={onSelectOpportunity}
               />
             ))}
           </Box>

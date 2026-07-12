@@ -102,6 +102,21 @@ def create_opportunity(
 
 
 # ------------------------------------------------------------------
+# Get single opportunity (opens Opportunity Detail from an entry point
+# that only has an id — e.g. Reminder click-through)
+# ------------------------------------------------------------------
+
+@router.get("/opportunities/{opportunity_id}")
+def get_opportunity(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[PipelineOpportunity]:
+    opportunity = service.get_opportunity(opportunity_id)
+    return APIResponse(data=PipelineOpportunity.model_validate(opportunity))
+
+
+# ------------------------------------------------------------------
 # Update (PATCH — only provided fields are changed)
 # ------------------------------------------------------------------
 

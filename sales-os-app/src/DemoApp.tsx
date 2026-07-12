@@ -37,7 +37,14 @@ export default function DemoApp() {
   const [view, setView]                         = useState("customers");
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<PipelineOpportunity | null>(null);
+  // Where to return to on Back — Customer360/OpportunityDetail now have more than
+  // one entry point (Directory/Pipeline, or Next Actions via Reminder click-through).
+  const [accountReturnView, setAccountReturnView]         = useState("customers");
+  const [opportunityReturnView, setOpportunityReturnView] = useState("opportunities");
+  // Often just an {id, name} reference (Reminder click-through) rather than a
+  // full PipelineOpportunity (Pipeline navigation) — OpportunityDetailScreen
+  // fetches the rest itself and reports back via onOpportunityUpdate.
+  const [selectedOpportunity, setSelectedOpportunity] = useState<PipelineOpportunity | { id: string; name: string } | null>(null);
   const [selectedProject, setSelectedProject]   = useState<{ id: string; name: string; account: { id: string; name: string } } | null>(null);
   const [accountSubTab, setAccountSubTab]       = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
@@ -53,23 +60,28 @@ export default function DemoApp() {
   openLogActivityRef.current = () => setShowLogActivity(true);
 
   function handleSelectAccount(account: { id: string; name: string }) {
+    // Only capture the return view when entering from elsewhere — Customer360Screen
+    // also calls this internally for parent/child account links, and in that case
+    // view is already "customer360", so capturing it would make Back a no-op.
+    if (view !== "customer360") setAccountReturnView(view);
     setSelectedAccount(account);
     setView("customer360");
   }
 
   function handleBack360() {
     setSelectedAccount(null);
-    setView("customers");
+    setView(accountReturnView);
   }
 
-  function handleSelectOpportunity(opp: PipelineOpportunity) {
+  function handleSelectOpportunity(opp: PipelineOpportunity | { id: string; name: string }) {
+    setOpportunityReturnView(view);
     setSelectedOpportunity(opp);
     setView("opportunityDetail");
   }
 
   function handleBackToOpportunities() {
     setSelectedOpportunity(null);
-    setView("opportunities");
+    setView(opportunityReturnView);
   }
 
   function navigate(viewId: string) {
@@ -367,8 +379,10 @@ export default function DemoApp() {
           {/* Opportunity Detail — push navigation */}
           {view === "opportunityDetail" && selectedOpportunity && (
             <OpportunityDetailScreen
-              opportunity={selectedOpportunity}
+              opportunityId={selectedOpportunity.id}
+              initialOpportunity={selectedOpportunity}
               onBack={handleBackToOpportunities}
+              onOpportunityUpdate={setSelectedOpportunity}
             />
           )}
 
@@ -384,7 +398,7 @@ export default function DemoApp() {
                 Next Actions
               </Typography>
             </Box>
-            <NextActionsScreen />
+            <NextActionsScreen onSelectAccount={handleSelectAccount} onSelectOpportunity={handleSelectOpportunity} />
           </Box>
         </ErrorBoundary>
       </Box>
@@ -400,7 +414,7 @@ export default function DemoApp() {
         onClose={() => setShowLogActivity(false)}
         accountId={
           view === "customer360" ? selectedAccount?.id :
-          view === "opportunityDetail" ? selectedOpportunity?.account.id :
+          view === "opportunityDetail" ? (selectedOpportunity as PipelineOpportunity | null)?.account?.id :
           projectDetailMode ? selectedProject?.account.id :
           undefined
         }

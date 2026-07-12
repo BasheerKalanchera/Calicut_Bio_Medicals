@@ -56,6 +56,12 @@ class OpportunityService:
         self._require_account(account_id)
         return self.repository.list_by_account(account_id)
 
+    def get_opportunity(self, opportunity_id: uuid.UUID) -> Opportunity:
+        opportunity = self.repository.get_for_detail(opportunity_id)
+        if opportunity is None:
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        return opportunity
+
     # ------------------------------------------------------------------
     # Create
     # ------------------------------------------------------------------

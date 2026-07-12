@@ -323,7 +323,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Get Opportunity */
+        get: operations["get_opportunity_api_v1_opportunities__opportunity_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -765,6 +766,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["PaginatedResponse_WorkspaceProjectWithAccount_"];
+        };
+        /** APIResponse[PipelineOpportunity] */
+        APIResponse_PipelineOpportunity_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PipelineOpportunity"];
         };
         /** APIResponse[ProductResponse] */
         APIResponse_ProductResponse_: {
@@ -3251,6 +3266,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_OpportunityResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_opportunity_api_v1_opportunities__opportunity_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PipelineOpportunity_"];
                 };
             };
             /** @description Validation Error */
