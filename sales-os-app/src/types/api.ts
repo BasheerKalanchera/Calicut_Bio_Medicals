@@ -1371,6 +1371,16 @@ export interface components {
             /** Items */
             items: components["schemas"]["OpportunityItemCreate"][];
         };
+        /** LeadSourceNested */
+        LeadSourceNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
         /**
          * MasterDataEntity
          * @enum {string}
@@ -1752,6 +1762,8 @@ export interface components {
             status: components["schemas"]["StatusNested"];
             owner: components["schemas"]["OwnerNested"];
             sbu: components["schemas"]["SBUNested"];
+            project: components["schemas"]["ProjectNested"] | null;
+            lead_source: components["schemas"]["LeadSourceNested"] | null;
         };
         /** ProductCreate */
         ProductCreate: {
@@ -1862,6 +1874,16 @@ export interface components {
             status_id: string;
             /** Bid Submission Date */
             bid_submission_date?: string | null;
+        };
+        /** ProjectNested */
+        ProjectNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** ProjectResponse */
         ProjectResponse: {

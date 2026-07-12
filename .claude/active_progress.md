@@ -2,12 +2,80 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**`CustomerType` (institution-nature) is DONE, verified, and committed
-(`70cf978`, 2026-07-11).** Basheer's manual browser pass confirmed: New
-Customer modal select, Edit Customer modal select (change + clear-back-
-to-blank), Overview tab display, Directory badge, regression on accounts
-with no `customer_type` set — all working. `31bafa8` (unrelated stray
-`ProductService` test fix) landed just before it as its own commit.
+**Opportunity Detail trio (Associated Project link + Lead Source display/edit
++ Demo End Date display/edit) is IMPLEMENTED, all automated checks green,
+Basheer's manual pass done, one UI tweak applied from his feedback — READY
+TO COMMIT, not yet committed (2026-07-12).** First item of the Milestone 1
+gap-closure list (see "Milestone 1 remaining items" below). Full write-up
+moves under "Done in prior sessions" once committed; scope decisions made
+this session, both via `AskUserQuestion`:
+- **Associated Project: plain text display, no click-through.** Basheer's
+  call — click-through deferred as a post-demo follow-up if a customer asks
+  for it; building it now would have required new cross-screen navigation
+  plumbing (`onSelectProject` prop + handler in `DemoApp.tsx`) that doesn't
+  exist today for Opportunity Detail.
+- **Lead Source: display AND editable**, not display-only. Reason: today
+  Lead Source can only be set once, at Opportunity creation via
+  `QuickLeadModal` — if missed, there was no way to backfill it, which
+  silently blocks the Lead→Qualified stage gate (`validators.py`). Confirmed
+  via code read that `validate_stage_transition` only runs when a PATCH
+  includes `stage_id` (`service.py:182`, `if "stage_id" in updates:`), so
+  adding a second write-entry-point for `lead_source_id` (this edit form)
+  has zero interaction with that gate's logic when Lead Source is edited
+  alone (no stage change in the same request).
+- Demo End Date: straightforward, mirrors `demo_start_date` exactly.
+
+**What changed:**
+- Backend `PipelineOpportunity` schema (`schemas.py`) gained `project:
+  ProjectNested | None` and `lead_source: LeadSourceNested | None` (new
+  minimal `{id, name}` nested types, same shape as `AccountNested`/
+  `SBUNested`). `demo_end_date` was already on this schema, just never
+  read by the frontend.
+- `repository.py`'s `list_pipeline` had `noload(Opportunity.lead_source)`
+  explicitly blanking that relationship out on every pipeline fetch — removed.
+  (`project` needed no repository change; already rides the ORM's default
+  `lazy="joined"`, was never noloaded.)
+- New `backend/tests/domains/opportunity/test_opportunity_router.py` — this
+  domain had **zero** router-level test coverage before (`list_pipeline`/
+  `PipelineOpportunity` had never been tested at any layer). Added 4 tests
+  covering the exact risk this change introduces: null-safety when
+  project/lead_source are unset, correct serialization when set, and
+  `demo_end_date` passthrough. 284 passed (280 + 4 new), full suite clean.
+- `sales-os-app/src/types/api.ts` regenerated (same in-process
+  TestClient→OpenAPI-dump approach as `bb671bc`); hand-written alias tail
+  re-appended unchanged (confirmed via diff: 22 pure additions, 0 deletions).
+- `OpportunityDetailScreen.tsx`: Overview tab grid gained Demo End / Lead
+  Source / Associated Project fields (plain `Field` rows, `opp.project?.name`
+  read directly, no separate fetch needed for display). Edit modal gained a
+  Demo End Date `TextField` (mirrors `demo_start_date`'s 4 wiring points:
+  state, populate-on-open, PATCH payload, `applyOppPatch`) and a Lead Source
+  `Select` dropdown backed by a new `["leadSources"]` query (mirrors
+  `QuickLeadModal.tsx`'s pattern) — sends `null` when cleared, same
+  clear-to-blank convention as `CustomerType`/`parent_account_id`. Project is
+  **not** in the edit form — display-only per the scope decision above.
+- `tsc --noEmit`, `npm run lint`, `npm run build` all clean.
+
+**Basheer's manual browser pass (2026-07-12) — one layout tweak requested,
+applied:** Overview tab grid reordered so Demo Start/Demo End sit together
+on the first row, Expected Closure moved to the second row (next to PO
+Number); SBU/Lead Source/Associated Project unchanged after that. No other
+issues found. Commit message drafted; commit itself not yet run — pending
+Basheer's go-ahead on the actual `git commit` step.
+
+**Older open question, still unresolved — check before assuming the
+`CustomerType` 8-value enum is complete:** Basheer's real example — Aster DM
+is the parent of Aster MIMS Calicut and Aster Medicity Kochi. Structurally
+"is this a parent" is already answered by `parent_account_id` (no
+`CustomerType` needed for that). The open question is narrower: **is Aster
+DM itself, as an institution, a functioning hospital (fits an existing
+value, e.g. Multispeciality Hospital) — or a pure corporate/holding entity
+with no clinical operations of its own (fits none of the 8 values well;
+"Other" would be a lossy fallback)?** If the latter is true for Aster DM
+or similar real accounts, the enum has a real gap and needs a 9th value
+(something like "Corporate Group / Holding Entity") — a small follow-up
+migration (`0006`), not a big change, but a real one. Basheer's own words:
+"I need to check" — action is on him to check the real data; revisit this
+before treating the 8-value list as final/closed.
 
 **Open question surfaced during review, NOT YET RESOLVED — check before
 assuming the 8-value enum is complete:** Basheer's real example — Aster DM
@@ -738,4 +806,10 @@ distinct from the hierarchy question (already answered by
 the real data before any further change.
 
 ## Files in flight
-**None — working tree clean as of `70cf978` (2026-07-11).**
+**Opportunity Detail trio, uncommitted, waiting on Basheer's manual browser
+pass (2026-07-12) — see "Current task" for full detail:**
+- `backend/app/domains/opportunity/schemas.py` — modified
+- `backend/app/domains/opportunity/repository.py` — modified
+- `backend/tests/domains/opportunity/test_opportunity_router.py` — new
+- `sales-os-app/src/types/api.ts` — regenerated
+- `sales-os-app/src/screens/OpportunityDetailScreen.tsx` — modified

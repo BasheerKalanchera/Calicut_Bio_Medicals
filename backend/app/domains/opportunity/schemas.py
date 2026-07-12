@@ -56,6 +56,20 @@ class AccountNested(BaseModel):
     name: str
 
 
+class ProjectNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class LeadSourceNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 # ------------------------------------------------------------------
 # Opportunity items
 # ------------------------------------------------------------------
@@ -239,3 +253,5 @@ class PipelineOpportunity(BaseModel):
     status: StatusNested
     owner: OwnerNested
     sbu: SBUNested
+    project: ProjectNested | None
+    lead_source: LeadSourceNested | None

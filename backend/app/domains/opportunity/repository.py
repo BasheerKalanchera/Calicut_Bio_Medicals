@@ -57,7 +57,6 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 noload(Opportunity.activities),
                 noload(Opportunity.documents),
                 # noload joined relationships not needed for pipeline cards
-                noload(Opportunity.lead_source),
                 noload(Opportunity.loss_reason),
                 noload(Opportunity.hold_reason),
             )

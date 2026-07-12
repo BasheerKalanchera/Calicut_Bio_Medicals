@@ -24,7 +24,7 @@ import {
 } from "../services/opportunities";
 import { listStakeholders } from "../services/accounts";
 import { listActivitiesByOpportunity } from "../services/activities";
-import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons } from "../services/masterData";
+import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
 import { listProducts } from "../services/products";
 import type { PipelineOpportunity, PipelinePage } from "../types/api";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
@@ -57,6 +57,7 @@ interface UserOption { id: string; display_name: string }
 interface ProductOption { id: string; name: string }
 interface HoldReasonOption { id: string; reason_name: string }
 interface LossReasonOption { id: string; reason_name: string; reason_code: string }
+interface LeadSourceOption { id: string; name: string }
 interface StakeholderOption { id: string; name: string; designation?: string | null }
 
 // ---------------------------------------------------------------------------
@@ -165,10 +166,13 @@ function OverviewTab({
           </Button>
         </Box>
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-          <Field label="Expected Closure" value={opp.expected_closure_date ?? null} />
-          <Field label="Demo Start"       value={opp.demo_start_date ?? null} />
-          <Field label="PO Number"        value={opp.po_number ?? null} />
-          <Field label="SBU"              value={opp.sbu.name} />
+          <Field label="Demo Start"          value={opp.demo_start_date ?? null} />
+          <Field label="Demo End"            value={opp.demo_end_date ?? null} />
+          <Field label="Expected Closure"    value={opp.expected_closure_date ?? null} />
+          <Field label="PO Number"           value={opp.po_number ?? null} />
+          <Field label="SBU"                 value={opp.sbu.name} />
+          <Field label="Lead Source"         value={opp.lead_source?.name ?? null} />
+          <Field label="Associated Project"  value={opp.project?.name ?? null} />
         </Box>
         {opp.status.status_code === "ON_HOLD" && (
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
@@ -955,6 +959,8 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
   const [editValue, setEditValue]                 = useState("");
   const [editClosureDate, setEditClosureDate]     = useState("");
   const [editDemoStart, setEditDemoStart]         = useState("");
+  const [editDemoEnd, setEditDemoEnd]             = useState("");
+  const [editLeadSourceId, setEditLeadSourceId]   = useState("");
   const [editPoNumber, setEditPoNumber]           = useState("");
   // Status-gated fields (BR-OP-02/03/05) — same pattern as Customer360Screen.tsx.
   // Hold/Loss fields are only sent when the effective status is ON_HOLD/LOST (see
@@ -1020,6 +1026,13 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     staleTime: Infinity,
   });
 
+  const { data: leadSources = [] } = useQuery({
+    queryKey: ["leadSources"],
+    enabled:  showEditOpp,
+    queryFn:  async () => (await listLeadSources()) as LeadSourceOption[],
+    staleTime: Infinity,
+  });
+
   // Always-mounted prefetch queries for Products/Splits/Stakeholders/Activity — same
   // query keys each tab component already owns internally (ProductsTab/SplitsTab/
   // StakeholdersTab/ActivityTimeline), so by the time the user clicks a tab, its data
@@ -1076,6 +1089,8 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     setEditValue(opp.indicative_value ? String(parseFloat(opp.indicative_value)) : "");
     setEditClosureDate(opp.expected_closure_date ?? "");
     setEditDemoStart(opp.demo_start_date ?? "");
+    setEditDemoEnd(opp.demo_end_date ?? "");
+    setEditLeadSourceId(opp.lead_source?.id ?? "");
     setEditPoNumber(opp.po_number ?? "");
     setEditHoldReasonId(opp.hold_reason_id ?? "");
     setEditReactivationDate(opp.reactivation_date ?? "");
@@ -1114,6 +1129,8 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
       indicative_value:      editValue   !== "" ? Number(editValue)   : null,
       expected_closure_date: editClosureDate || null,
       demo_start_date:       editDemoStart   || null,
+      demo_end_date:         editDemoEnd     || null,
+      lead_source_id:        editLeadSourceId || null,
       po_number:             editPoNumber.trim() || null,
     };
     if (newStatus?.status_code === "ON_HOLD") {
@@ -1127,14 +1144,17 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
     await patchOpportunity(opp.id, payload);
     // Reconstruct nested objects from loaded master data so header + strip +
     // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
-    const newStage  = stages.find((s) => s.id === editStageId);
-    const newOwner  = users.find((u) => u.id === editOwnerId);
+    const newStage       = stages.find((s) => s.id === editStageId);
+    const newOwner       = users.find((u) => u.id === editOwnerId);
+    const newLeadSource  = leadSources.find((ls) => ls.id === editLeadSourceId);
     applyOppPatch({
       name:                  editName.trim(),
       win_probability:       editWinProb !== "" ? editWinProb : opp.win_probability,
       indicative_value:      editValue   !== "" ? editValue   : null,
       expected_closure_date: editClosureDate || null,
       demo_start_date:       editDemoStart   || null,
+      demo_end_date:         editDemoEnd     || null,
+      lead_source:           editLeadSourceId ? (newLeadSource ?? opp.lead_source) : null,
       po_number:             editPoNumber.trim() || null,
       hold_reason_id:        newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
       reactivation_date:     newStatus?.status_code === "ON_HOLD" ? editReactivationDate : opp.reactivation_date,
@@ -1325,6 +1345,19 @@ export default function OpportunityDetailScreen({ opportunity: initialOpp, onBac
         />
         <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        <TextField
+          select
+          label="Lead Source"
+          value={editLeadSourceId}
+          onChange={(e) => setEditLeadSourceId(e.target.value)}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select source</MenuItem>
+          {leadSources.map((ls) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
+        </TextField>
         <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
         {editStatusCode === "ON_HOLD" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
