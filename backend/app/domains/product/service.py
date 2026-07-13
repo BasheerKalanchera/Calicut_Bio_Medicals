@@ -1,9 +1,11 @@
 import uuid
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError
 from app.domains.product.models import Product
 from app.domains.product.repository import ProductRepository
 from app.domains.product.schemas import ProductCreate, ProductUpdate
+
+_CATALOG_WRITE_ROLES = {"General Manager", "Admin"}
 
 
 class ProductService:
@@ -41,7 +43,9 @@ class ProductService:
     ) -> int:
         return self.repository.count_products(search=search, sbu_id=sbu_id)
 
-    def create_product(self, data: ProductCreate, *, created_by: uuid.UUID) -> Product:
+    def create_product(self, data: ProductCreate, *, created_by: uuid.UUID, role_name: str) -> Product:
+        if role_name not in _CATALOG_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can add products")
         if not self.repository.sbu_exists(data.sbu_id):
             raise NotFoundError(f"SBU {data.sbu_id} not found")
         product = Product(
@@ -56,7 +60,11 @@ class ProductService:
         )
         return self.repository.create(product)
 
-    def update_product(self, product_id: uuid.UUID, data: ProductUpdate, *, updated_by: uuid.UUID) -> Product:
+    def update_product(
+        self, product_id: uuid.UUID, data: ProductUpdate, *, updated_by: uuid.UUID, role_name: str
+    ) -> Product:
+        if role_name not in _CATALOG_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can edit products")
         product = self.repository.get_by_id(product_id)
         if not product:
             raise NotFoundError(f"Product {product_id} not found")

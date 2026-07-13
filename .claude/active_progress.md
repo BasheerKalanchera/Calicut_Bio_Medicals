@@ -2,11 +2,41 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Product Catalog collateral links is DONE, verified by Basheer, not yet
-committed — commit pending (see bottom of this file for the drafted
-message).** Closes item 4 (last of the 4) of the Milestone 1 gap-closure
-list; **only Catalog role gate (GM+Admin) remains.** Full write-up below
-("Product Catalog collateral links — full write-up").
+**Catalog role gate (GM+Admin) is IMPLEMENTED, tests green, MANUALLY
+VERIFIED by Basheer across all 4 roles (2026-07-13) — NOT YET COMMITTED.**
+This closes the last item of the Milestone 1 gap-closure list; all 6 items
+are now done. Backend: `ProductService.create_product`/`update_product`
+now take a required `role_name` kwarg and raise `AuthorizationError` (403)
+first-thing if not in `{"General Manager", "Admin"}`; router passes
+`current_user.role.role_name` through. Frontend: `ProductCatalogScreen.jsx`
+hides the `+ Add` button and the Product Detail `Edit` button unless
+`userProfile.role_name` is GM/Admin (via `useAuth()` — first client-side use
+of `role_name`, which `/auth/me` already returned). Collateral links
+(documents) intentionally left ungated — the audit decision only named
+Product Add/Edit. Full backend test suite: 311 passed. Basheer tested
+both the UI (button visibility per role) and the API directly (`curl`
+403/201) across all 4 roles — all behaved as expected. **Next step:
+commit.**
+
+**Test accounts created in the live shared dev DB for this verification
+(2026-07-13), reusable for future role-gated feature testing:**
+`manager@cabio-demo.com` (Sales Manager), `gm@cabio-demo.com` (General
+Manager), `admin@cabio-demo.com` (Admin) — each a real Supabase Auth user
+with a matching `user_profile` row (`display_name` prefixed `Test -`).
+Sales Executive was tested via Basheer's own login (`role_id` was already
+Sales Executive; only `display_name` was changed, cosmetically, to
+`TEST - Sales Executive` — not yet reverted to `Basheer K`, harmless but
+worth reverting when convenient). Demo user **Amit R**
+(`dddddddd-dddd-dddd-dddd-010000000002`, owns 2 seeded projects + linked
+opportunities) was briefly repurposed as a test row during this process
+and has been **fully restored** to original seed values (`Seed-Data-Demo.sql`
+lines 44-55) — confirmed by query, no lasting damage. Decision: Amit R does
+not need real login credentials — nobody logs in as him, he's owner-only
+reference data, which is normal.
+
+**Product Catalog collateral links is DONE and COMMITTED (`ab67209`,
+2026-07-12).** Closed item 4 of the Milestone 1 gap-closure list. Full
+write-up below ("Product Catalog collateral links — full write-up").
 
 **Reminder click-through is DONE and COMMITTED (`ac6d008`, 2026-07-12).**
 Closed item 2 of the Milestone 1 gap-closure list — see ledger below for
@@ -18,22 +48,14 @@ Basheer's manual browser pass found one issue (Overview tab field order),
 fixed and folded into the same commit — see ledger below for full write-up.
 This closes item 1 of the Milestone 1 gap-closure list.
 
-**Open question surfaced during `CustomerType` review, NOT YET RESOLVED —
-check before assuming the 8-value enum is complete:** Basheer's real
-example — Aster DM is the parent of Aster MIMS Calicut and Aster Medicity
-Kochi. Structurally "is this a parent" is already answered by
-`parent_account_id` (no `CustomerType` needed for that). The open question
-is narrower: **is Aster DM itself, as an institution, a functioning
-hospital (fits an existing value, e.g. Multispeciality Hospital) — or a
-pure corporate/holding entity with no clinical operations of its own (fits
-none of the 8 values well; "Other" would be a lossy fallback)?** If the
-latter is true for Aster DM or similar real accounts, the enum has a real
-gap and needs a 9th value (something like "Corporate Group / Holding
-Entity") — a small follow-up migration (**`0007`** — `0006` is now taken,
-see "Product Catalog collateral links" write-up below), not a big change,
-but a real one. Basheer's own words: "I need to check" — action is on him
-to check the real data; revisit this before treating the 8-value list as
-final/closed.
+**Open question surfaced during `CustomerType` review — RESOLVED/DEFERRED
+(2026-07-13): no 9th enum value for now.** Basheer's real example — Aster
+DM is the parent of Aster MIMS Calicut and Aster Medicity Kochi, and may be
+a pure corporate/holding entity with no clinical operations of its own
+(fits none of the 8 values well). Decision: leave the 8-value enum as-is;
+add a "Corporate Group / Holding Entity" value (migration `0007` — `0006`
+is now taken) only in Milestone 2, and only if a real customer need
+confirms it. Not a blocker for Milestone 1.
 
 **Priority decision (2026-07-10, still in force): Milestone 1 gap-closure
 work from the Prototype/Production Parity Audit comes first, ahead of
@@ -41,8 +63,9 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. Remaining, untouched: Catalog role gate
-(GM+Admin) — the only item left.
+Milestone 1") for the full scope. All 6 items now done (Catalog role gate
+was the last, see "Current task" above) — Milestone 1 gap-closure is
+complete pending the final commit.
 
 **Mapped all 6 (now 1 remaining) items to screens/files 2026-07-11
 (research agent, verified against actual code, not just the audit doc's
@@ -103,7 +126,7 @@ the 3 pending files are actual remaining work.)
 | `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer — see "Current task" for one open follow-up question this surfaced |
 | Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
 | Reminder click-through                                   | `ac6d008`   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
-| Product Catalog collateral links                         | *pending*   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
+| Product Catalog collateral links                         | `ab67209`   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
@@ -463,9 +486,8 @@ present in `Customer360Screen.tsx` (lines ~629-638) exactly as designed.
 Milestone 1"). Done so far: Parent Customer display + editing (`87fde5a`,
 `95e118a`), `CustomerType` (`70cf978`), Opportunity Detail trio (`b662751`),
 Reminder click-through (`ac6d008`), Product Catalog collateral links
-(verified, commit pending — see write-up above). **Still open: Catalog
-role gate (GM+Admin)** — the only remaining item, no dependency on
-anything else.
+(`ab67209`). **Still open: Catalog role gate (GM+Admin)** — the only
+remaining item, no dependency on anything else. Not yet started.
 
 **§9 MUI migration backlog resumes after Milestone 1** — 3 files remain
 (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -911,7 +933,7 @@ account→Back and Pipeline→opportunity→Back (unchanged), and multi-hop
 parent/child navigation inside Customer360 still returns to the Directory
 on Back (not stuck on the last-viewed account).
 
-### Product Catalog collateral links — full write-up (pending commit)
+### Product Catalog collateral links — full write-up (`ab67209`)
 
 Fourth and last item of the Milestone 1 gap-closure list. `Product.documents`
 already rode on the generic `Document` entity (ADR-025) at the model layer,
@@ -1005,16 +1027,4 @@ label (opens in new tab), delete a link, regression-checked Add/Edit
 Product still works unaffected. No issues found.
 
 ## Files in flight
-**Product Catalog collateral links — implemented and verified, commit pending.**
-- `backend/alembic/versions/0006_document_file_size_nullable.py` — new, applied to live DB
-- `backend/app/domains/document/models.py` — `file_size_bytes` now nullable
-- `backend/app/domains/document/schemas.py` — new
-- `backend/app/domains/document/repository.py` — new
-- `backend/app/domains/document/service.py` — new
-- `backend/app/domains/document/router.py` — new
-- `backend/app/main.py` — `document_router` registered
-- `backend/tests/domains/document/test_document_router.py` — new
-- `docs/Physical-Schema.sql` — `document.file_size_bytes` nullable, kept in sync
-- `sales-os-app/src/services/documents.ts` — new
-- `sales-os-app/src/types/api.ts` — regenerated
-- `sales-os-app/src/screens/ProductCatalogScreen.jsx` — `CollateralLinksCard` added
+**None — working tree clean as of `ab67209` (2026-07-12).**

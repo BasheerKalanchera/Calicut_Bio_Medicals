@@ -15,10 +15,13 @@ TEST_PRODUCT_ID = uuid.UUID("cccccccc-cccc-cccc-cccc-cccccccccccc")
 TEST_SBU_ID = uuid.UUID("22222222-2222-2222-2222-222222222222")
 
 
-def _mock_user() -> MagicMock:
+def _mock_user(role_name: str = "Admin") -> MagicMock:
     user = MagicMock(spec=UserProfile)
     user.id = TEST_USER_ID
     user.is_active = True
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
     return user
 
 
@@ -51,8 +54,8 @@ def _mock_product(**overrides) -> MagicMock:
     return obj
 
 
-def _setup_overrides(mock_db: MagicMock) -> None:
-    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+def _setup_overrides(mock_db: MagicMock, role_name: str = "Admin") -> None:
+    app.dependency_overrides[get_current_user] = lambda: _mock_user(role_name)
     app.dependency_overrides[get_db] = lambda: mock_db
 
 
@@ -179,3 +182,59 @@ class TestGetProduct:
             _teardown_overrides()
 
         assert response.status_code == 404
+
+
+class TestCreateProduct:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+        assert response.status_code == 401
+
+    def test_sales_executive_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+    def test_sales_manager_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Manager")
+        try:
+            response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+
+class TestUpdateProduct:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.put(f"/api/v1/products/{TEST_PRODUCT_ID}", json={"name": "X"})
+        assert response.status_code == 401
+
+    def test_sales_executive_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.put(f"/api/v1/products/{TEST_PRODUCT_ID}", json={"name": "X"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+    def test_sales_manager_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Manager")
+        try:
+            response = client.put(f"/api/v1/products/{TEST_PRODUCT_ID}", json={"name": "X"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403

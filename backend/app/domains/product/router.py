@@ -67,7 +67,7 @@ def create_product(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProductService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[ProductResponse]:
-    product = service.create_product(body, created_by=current_user.id)
+    product = service.create_product(body, created_by=current_user.id, role_name=current_user.role.role_name)
     return APIResponse(data=ProductResponse.model_validate(product))
 
 
@@ -88,5 +88,7 @@ def update_product(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ProductService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[ProductResponse]:
-    product = service.update_product(product_id, body, updated_by=current_user.id)
+    product = service.update_product(
+        product_id, body, updated_by=current_user.id, role_name=current_user.role.role_name
+    )
     return APIResponse(data=ProductResponse.model_validate(product))

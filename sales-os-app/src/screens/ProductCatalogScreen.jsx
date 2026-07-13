@@ -8,10 +8,13 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { listProducts, countProducts, getProduct, createProduct, updateProduct } from "../services/products";
 import { listProductDocuments, createProductDocument, deleteDocument } from "../services/documents";
 import { listSbus } from "../services/masterData";
+import { useAuth } from "../contexts/AuthContext";
 
 
 
 import useDebouncedValue from "../hooks/useDebouncedValue";
+
+const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
 
 const CACHE_TTL_MS = 30_000;
 const productListCache = new Map();
@@ -420,7 +423,7 @@ function CollateralLinksCard({ productId }) {
   );
 }
 
-function ProductDetail({ productId, onBack, onEdit }) {
+function ProductDetail({ productId, onBack, onEdit, canEdit }) {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -507,12 +510,14 @@ function ProductDetail({ productId, onBack, onEdit }) {
               {product.sbu.name}
             </span>
           )}
-          <button
-            onClick={() => onEdit(product)}
-            className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
-          >
-            Edit
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => onEdit(product)}
+              className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
+            >
+              Edit
+            </button>
+          )}
         </div>
       </div>
 
@@ -541,6 +546,9 @@ function ProductDetail({ productId, onBack, onEdit }) {
 }
 
 export default function ProductCatalogScreen() {
+  const { userProfile } = useAuth();
+  const canEdit = CATALOG_WRITE_ROLES.has(userProfile?.role_name);
+
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -646,6 +654,7 @@ export default function ProductCatalogScreen() {
           productId={selectedProductId}
           onBack={() => setSelectedProductId(null)}
           onEdit={(product) => setModal({ mode: "edit", product })}
+          canEdit={canEdit}
         />
         {modal?.mode === "edit" && (
           <ProductFormModal
@@ -668,12 +677,14 @@ export default function ProductCatalogScreen() {
             <h2 className="font-extrabold text-2xl text-gray-800 tracking-tight">
               Product Catalog
             </h2>
-            <button
-              onClick={() => setModal({ mode: "create" })}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0"
-            >
-              + Add
-            </button>
+            {canEdit && (
+              <button
+                onClick={() => setModal({ mode: "create" })}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shrink-0"
+              >
+                + Add
+              </button>
+            )}
           </div>
 
           <div className="flex gap-3 mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">

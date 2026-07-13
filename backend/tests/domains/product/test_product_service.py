@@ -3,9 +3,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import AuthorizationError, NotFoundError
 from app.domains.product.models import Product
 from app.domains.product.repository import ProductRepository
+from app.domains.product.schemas import ProductCreate, ProductUpdate
 from app.domains.product.service import ProductService
 
 
@@ -80,3 +81,64 @@ class TestListProducts:
 
         assert total == 1
         assert results[0] is product
+
+
+class TestCreateProduct:
+    def _data(self, **overrides) -> ProductCreate:
+        defaults = {"name": "SonoScape S50", "sbu_id": uuid.uuid4()}
+        defaults.update(overrides)
+        return ProductCreate(**defaults)
+
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allowed_roles_can_create(self, role_name):
+        product = _make_product()
+        repo = _make_repo()
+        repo.sbu_exists.return_value = True
+        repo.create.return_value = product
+
+        service = ProductService(repository=repo)
+        result = service.create_product(self._data(), created_by=uuid.uuid4(), role_name=role_name)
+
+        assert result is product
+        repo.create.assert_called_once()
+
+    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Manager"])
+    def test_disallowed_roles_raise_authorization_error(self, role_name):
+        repo = _make_repo()
+
+        service = ProductService(repository=repo)
+        with pytest.raises(AuthorizationError):
+            service.create_product(self._data(), created_by=uuid.uuid4(), role_name=role_name)
+
+        repo.sbu_exists.assert_not_called()
+        repo.create.assert_not_called()
+
+
+class TestUpdateProduct:
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allowed_roles_can_update(self, role_name):
+        product = _make_product()
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.update.return_value = product
+
+        service = ProductService(repository=repo)
+        result = service.update_product(
+            product.id, ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name=role_name
+        )
+
+        assert result is product
+        repo.update.assert_called_once()
+
+    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Manager"])
+    def test_disallowed_roles_raise_authorization_error(self, role_name):
+        repo = _make_repo()
+
+        service = ProductService(repository=repo)
+        with pytest.raises(AuthorizationError):
+            service.update_product(
+                uuid.uuid4(), ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name=role_name
+            )
+
+        repo.get_by_id.assert_not_called()
+        repo.update.assert_not_called()
