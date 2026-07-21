@@ -22,6 +22,7 @@ def decode_jwt(token: str) -> dict:
             signing_key.key,
             algorithms=["ES256"],
             audience="authenticated",
+            leeway=30,
         )
     except (jwt.PyJWTError, jwt.exceptions.PyJWKClientError) as e:
         raise InvalidTokenError(str(e)) from e

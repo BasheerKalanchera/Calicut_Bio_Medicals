@@ -2,21 +2,100 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Catalog role gate (GM+Admin) is IMPLEMENTED, tests green, MANUALLY
-VERIFIED by Basheer across all 4 roles (2026-07-13) — NOT YET COMMITTED.**
-This closes the last item of the Milestone 1 gap-closure list; all 6 items
-are now done. Backend: `ProductService.create_product`/`update_product`
-now take a required `role_name` kwarg and raise `AuthorizationError` (403)
-first-thing if not in `{"General Manager", "Admin"}`; router passes
-`current_user.role.role_name` through. Frontend: `ProductCatalogScreen.jsx`
-hides the `+ Add` button and the Product Detail `Edit` button unless
-`userProfile.role_name` is GM/Admin (via `useAuth()` — first client-side use
-of `role_name`, which `/auth/me` already returned). Collateral links
-(documents) intentionally left ungated — the audit decision only named
-Product Add/Edit. Full backend test suite: 311 passed. Basheer tested
-both the UI (button visibility per role) and the API directly (`curl`
-403/201) across all 4 roles — all behaved as expected. **Next step:
-commit.**
+**Session 2026-07-21 — demo-day full regression pass ahead of the 7:15pm
+showcase (demo moved up from July 20).** Ran automated checks first
+(`pytest` 311 passed, `tsc --noEmit`/`eslint`/`npm run build` all clean) —
+no build problem, no regression from recent commits. Then found a real bug
+during live login testing: first attempt with any of the 4 role accounts
+(`sales@cabio-demo.com`/`manager@cabio-demo.com`/`gm@cabio-demo.com`/
+`admin@cabio-demo.com`) silently bounced back to the login screen; retry
+with the same credentials worked every time.
+
+**Root cause:** `sales-os-app/src/lib/api.ts`'s axios response interceptor
+treated *any* 401 — including one on `/auth/me`, the profile-bootstrap call
+fired immediately after `signInWithPassword()` succeeds — as grounds to
+`supabase.auth.signOut()` + hard-redirect to `/`. Trigger, tied to Basheer
+restarting the Supabase project earlier in the session:
+`backend/app/core/security.py`'s `_get_jwk_client()` lazily fetches
+Supabase's JWKS on the first token verification after backend startup (no
+pre-warm, unlike the DB pool via `warm_pool()`); that fetch raced Supabase's
+Auth service still coming back up post-restart, failed, `decode_jwt` wrapped
+it as `InvalidTokenError` → 401, and the interceptor's blanket handling
+turned one transient hiccup into a hard bounce indistinguishable from wrong
+credentials. Confirmed via git log this is old, latent code (auth files
+untouched since `a7cbb02`, well before Milestone 1) — not a regression from
+recent work, and not something prior regression passes were structured to
+catch (Basheer's own login typically resumes a persisted session rather
+than exercising a cold sign-in).
+
+**Fix applied 2026-07-21, verified clean (`tsc`/`eslint`/`build`), NOT YET
+COMMITTED:**
+- `sales-os-app/src/contexts/AuthContext.tsx` — `signIn()` now captures
+  `data.session` from `signInWithPassword`'s return value and calls
+  `setSession(data.session)` immediately, instead of relying solely on the
+  async `onAuthStateChange` listener to update state later.
+- `sales-os-app/src/lib/api.ts` — response interceptor no longer forces
+  `signOut()` + hard reload when the 401 is specifically from `/auth/me`
+  (`AuthContext` already degrades gracefully there via
+  `.catch(() => setUserProfile(null))`); still forces logout for 401s on
+  any other, already-authenticated endpoint — correct behavior for a truly
+  expired/invalid session.
+
+**PENDING — Tier 2 forced repro, deliberately deferred until after
+tonight's demo** (Basheer's call: don't want to touch `backend/.env` and
+restart the backend twice a few hours before presenting). Do this
+post-demo to get hard proof rather than an absence-of-evidence result:
+1. Temporarily point `SUPABASE_URL` in `backend/.env` to an unreachable
+   value (breaks only JWT/JWKS verification, not the DB connection —
+   separate setting from `DATABASE_URL`).
+2. Restart the backend — this also clears `_get_jwk_client()`'s
+   `lru_cache`, guaranteeing a fresh failed lookup on the next login.
+3. Attempt login — should reliably reproduce a genuine 401 from
+   `/auth/me`, same failure as tonight's restart scenario.
+   - **Expected before this fix:** bounces back to the login screen.
+   - **Expected after this fix:** login completes and sticks, no bounce.
+4. Revert `SUPABASE_URL`, restart the backend again, and do one final
+   clean login to confirm everything's back to normal.
+
+**Also still pending:** commit the two-file fix (currently uncommitted
+working-tree changes) once Tier 2 confirms it, and finish the rest of the
+full regression pass (`docs/Regression-Test-Plan.md` Part A, prioritized —
+was in progress when the login bug interrupted it).
+
+---
+
+**Session 2026-07-14 wound down after deployment planning — no code
+changed today, only docs.** Milestone 1 gap-closure remains fully complete
+(`42fa050`, all 6 items done, see ledger below). Today's session was pure
+planning for what comes after the July 20 demo: rolling the app out to a
+small pilot group of star sales reps while Milestone 2 development
+continues. Produced and **committed** `docs/Deployment-Topology.md`
+(`ffaa669`, alongside the already-drafted `Demo-Showcase-Flow-July-20.md`
+and `Regression-Test-Plan.md`) — see that file for the full discussion and
+decision, not duplicated here. Also reverted Basheer's own
+`display_name` back to `Basheer K` in Supabase (was `TEST - Sales
+Executive` from role-gate testing, 2026-07-13) — confirmed done.
+
+**Decision: 3-tier environment topology (Dev/UAT/Prod).** Current shared
+Supabase project stays Dev as-is; two new Supabase projects needed for UAT
+and Prod. Frontend + backend both host on Render (Static Site + Web
+Service Starter) — Vercel's free tier was ruled out, its ToS prohibits
+commercial use. Total estimated cost **~$59/month** (Supabase Pro org
+$45/mo + 2× Render backend $14/mo + free static frontend hosting). Full
+cost breakdown, topology diagram, and promotion flow are in
+`docs/Deployment-Topology.md` — do not re-derive this, read that file.
+
+**Next step, whenever work resumes:** nothing has been executed yet — no
+new Supabase/Render accounts exist. The open-items checklist is in
+`docs/Deployment-Topology.md` ("Open Items"): upgrade Supabase org to Pro,
+create UAT + Prod Supabase projects, create Render services, wire
+per-environment secrets, then land RLS (Phase 2E) and prove it out on UAT
+before Prod goes live. Until that infra work starts, the still-open
+engineering choice from the 2026-07-13 session stands unresolved: resume
+the §9 MUI migration backlog (3 files) vs. pull from the Milestone 2
+deferred list — see the priority discussion in the 2026-07-13 write-up
+below. Recommend deciding this first thing next session, before touching
+either the infra checklist or new feature code.
 
 **Test accounts created in the live shared dev DB for this verification
 (2026-07-13), reusable for future role-gated feature testing:**
@@ -25,8 +104,8 @@ Manager), `admin@cabio-demo.com` (Admin) — each a real Supabase Auth user
 with a matching `user_profile` row (`display_name` prefixed `Test -`).
 Sales Executive was tested via Basheer's own login (`role_id` was already
 Sales Executive; only `display_name` was changed, cosmetically, to
-`TEST - Sales Executive` — not yet reverted to `Basheer K`, harmless but
-worth reverting when convenient). Demo user **Amit R**
+`TEST - Sales Executive`, and has since been **reverted back to
+`Basheer K`** in Supabase, 2026-07-13 — confirmed). Demo user **Amit R**
 (`dddddddd-dddd-dddd-dddd-010000000002`, owns 2 seeded projects + linked
 opportunities) was briefly repurposed as a test row during this process
 and has been **fully restored** to original seed values (`Seed-Data-Demo.sql`
@@ -63,9 +142,9 @@ resuming the §9 MUI migration backlog.** The demo checkpoint moved from
 July 13 to July 20, which is what freed up room to do this instead of
 migration work — not an abandonment of §9, just a sequencing call. See
 `docs/Prototype-Production-Parity-Audit.md` §6 ("Gaps to finish —
-Milestone 1") for the full scope. All 6 items now done (Catalog role gate
-was the last, see "Current task" above) — Milestone 1 gap-closure is
-complete pending the final commit.
+Milestone 1") for the full scope. All 6 items now done and committed
+(Catalog role gate was the last, `42fa050`, see "Current task" above) —
+Milestone 1 gap-closure is fully complete.
 
 **Mapped all 6 (now 1 remaining) items to screens/files 2026-07-11
 (research agent, verified against actual code, not just the audit doc's
@@ -74,12 +153,11 @@ below for full detail. Recommended order, supersedes the earlier flat
 list:**
 1. ~~Opportunity Detail trio~~ — DONE, `b662751`.
 2. ~~Reminder click-through~~ — DONE, `ac6d008`.
-3. **Catalog role gate** — medium, standalone. Only item left.
-4. ~~Product Catalog collateral links~~ — DONE, verified, commit pending
-   (see write-up below). Scope decided 2026-07-12: URL-only labeled links
-   (matches original prototype UX), not real Supabase Storage file upload
-   — no storage credentials existed for the real-upload path; see write-up
-   for the full decision.
+3. ~~Catalog role gate~~ — DONE, `42fa050`. All 6 items now closed.
+4. ~~Product Catalog collateral links~~ — DONE, `ab67209`. Scope decided
+   2026-07-12: URL-only labeled links (matches original prototype UX), not
+   real Supabase Storage file upload — no storage credentials existed for
+   the real-upload path; see write-up for the full decision.
 
 **§9 migration backlog is paused, not abandoned** — resume the 3 remaining
 files (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
@@ -127,6 +205,8 @@ the 3 pending files are actual remaining work.)
 | Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
 | Reminder click-through                                   | `ac6d008`   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
 | Product Catalog collateral links                         | `ab67209`   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
+| Catalog role gate (GM+Admin)                              | `42fa050`   | `ProductService.create_product`/`update_product` require `role_name` kwarg, 403 unless GM/Admin; `ProductCatalogScreen.jsx` hides Add/Edit for other roles. Closes Milestone 1 gap-closure (all 6 items done). Manually verified by Basheer across all 4 roles (UI + direct `curl`) |
+| Demo/rollout planning docs                                | `ffaa669`   | `Demo-Showcase-Flow-July-20.md` (8-act presenter script), `Regression-Test-Plan.md`, `Deployment-Topology.md` (Dev/UAT/Prod decision — see write-up below) |
 
 ### Backend concurrency fix (`2bb41b4`) — why the Activity tab was actually slow
 Two earlier fix attempts (Round 1: activity endpoint query optimization;
