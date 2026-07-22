@@ -45,6 +45,14 @@ export default function DemoApp() {
   // full PipelineOpportunity (Pipeline navigation) — OpportunityDetailScreen
   // fetches the rest itself and reports back via onOpportunityUpdate.
   const [selectedOpportunity, setSelectedOpportunity] = useState<PipelineOpportunity | { id: string; name: string } | null>(null);
+  // Set by the Customer 360 stakeholder bridge list, so OpportunityDetailScreen
+  // can open straight on the tab the user actually came here for, instead of
+  // always defaulting to Overview.
+  const [selectedOpportunityInitialTab, setSelectedOpportunityInitialTab] = useState<string | undefined>(undefined);
+  // Which Customer 360 tab to reopen on when Back returns there from
+  // Opportunity Detail (e.g. the stakeholder bridge list) — reset to
+  // undefined (defaults to Overview) on any fresh account open.
+  const [customer360InitialTab, setCustomer360InitialTab] = useState<string | undefined>(undefined);
   const [selectedProject, setSelectedProject]   = useState<{ id: string; name: string; account: { id: string; name: string } } | null>(null);
   const [accountSubTab, setAccountSubTab]       = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
@@ -64,6 +72,9 @@ export default function DemoApp() {
     // also calls this internally for parent/child account links, and in that case
     // view is already "customer360", so capturing it would make Back a no-op.
     if (view !== "customer360") setAccountReturnView(view);
+    // Any fresh account open (including a parent/child link to a different
+    // account) should start on Overview, not whatever tab a prior visit left.
+    setCustomer360InitialTab(undefined);
     setSelectedAccount(account);
     setView("customer360");
   }
@@ -73,9 +84,14 @@ export default function DemoApp() {
     setView(accountReturnView);
   }
 
-  function handleSelectOpportunity(opp: PipelineOpportunity | { id: string; name: string }) {
+  function handleSelectOpportunity(opp: PipelineOpportunity | { id: string; name: string }, initialTab?: string) {
     setOpportunityReturnView(view);
+    // Same value doubles as "which Customer 360 tab to reopen on Back" —
+    // in this flow (the stakeholder bridge list) both screens' relevant
+    // tab happens to share the id "stakeholders".
+    if (view === "customer360" && initialTab) setCustomer360InitialTab(initialTab);
     setSelectedOpportunity(opp);
+    setSelectedOpportunityInitialTab(initialTab);
     setView("opportunityDetail");
   }
 
@@ -363,6 +379,8 @@ export default function DemoApp() {
               onBack={handleBack360}
               onAccountUpdate={(a: unknown) => customerAccountUpdateRef.current?.(a)}
               onSelectAccount={handleSelectAccount}
+              onSelectOpportunity={handleSelectOpportunity}
+              initialTab={customer360InitialTab}
             />
           )}
 
@@ -383,6 +401,7 @@ export default function DemoApp() {
               initialOpportunity={selectedOpportunity}
               onBack={handleBackToOpportunities}
               onOpportunityUpdate={setSelectedOpportunity}
+              initialTab={selectedOpportunityInitialTab as any}
             />
           )}
 

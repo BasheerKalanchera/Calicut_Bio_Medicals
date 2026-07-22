@@ -2,6 +2,280 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
+**Status as of 2026-07-22, session paused here — READ THIS FIRST NEXT
+SESSION:** Item 1 (Stakeholder ↔ Opportunity linkage)'s core 11-step plan is
+built and working (backend: 321 tests passing; frontend: `tsc`/`eslint`/
+`build` all clean) — see "Item 1 — IMPLEMENTATION PLAN" below. Two
+follow-up gaps found during Basheer's manual E2E were also fixed and
+verified working: (1) Back-navigation from Opportunity Detail now correctly
+reopens Customer 360 on the Stakeholders tab, not Overview. (2) Customer
+360's return-tab fix itself is confirmed working.
+
+**⚑ STILL BROKEN — start here next session:** the mobile tab-chip
+scroll-into-view fix for `OpportunityDetailScreen.tsx` (landing on the
+Stakeholders tab via `initialTab` should auto-scroll the horizontally-
+scrolling chip bar so the highlighted chip is visible on a narrow viewport)
+has been attempted **twice** and Basheer confirmed **both attempts failed**
+on real retest — see "Mobile tab-chip scroll-into-view — two failed
+attempts" write-up below for exactly what was tried and ruled out, so the
+next session doesn't repeat the same guesses. **Process note for next
+session: both attempts were static-code fixes never actually verified in a
+running browser** (violates this project's own frontend-testing rule) —
+next session should start the dev server and drive the actual repro in a
+real browser (mobile viewport) before proposing a third fix, not reason
+from source code alone again.
+
+Item 2 (Opportunity access restriction) is on hold —
+`docs/Opportunity-Access-Hierarchy-Proposal.md` (business-language version)
+sent for Cabio leadership review of the 4-tier hierarchy; do not implement
+until that comes back confirmed. Items 3/4 still need scoping.
+
+### Item 1 — IMPLEMENTATION PLAN (finalized 2026-07-22, nothing built yet)
+
+Full design context is in the "Stakeholder ↔ Opportunity linkage" write-up
+just below this box — read that first if the *why* behind any step here is
+unclear. This box is the step-by-step tracker; check items off as they land
+and update the "next action" line above as steps complete.
+
+**Two corrections made during planning that supersede parts of the original
+write-up below — do not re-derive, the reasoning is settled:**
+1. **Counts field: `GROUP BY` batch endpoint, not a correlated subquery.**
+   The original design (line ~77 below, "correlated-subquery count column")
+   conflicts with `docs/Frontend-Implementation-Standards.md` §5, which bans
+   correlated subqueries/ORM lazy-loads for list counts and mandates a
+   separate `GET .../counts?ids=...` batch endpoint using `GROUP BY` — the
+   same pattern already used by `fetch_counts_for_accounts`
+   (`account/repository.py:128-163`). Per CLAUDE.md, the standards doc wins
+   on conflict. Superseded below.
+2. **Bridge list = a modal, not a new screen.** This app has no
+   React Navigation / stack navigator — `DemoApp.tsx` uses a hand-rolled
+   `view` state machine, and "list opens on top of current screen" is
+   already an established idiom via the `FormModal` overlay (used today for
+   Add/Edit Stakeholder in `Customer360Screen.tsx`). The bridge list reuses
+   that idiom instead of adding a new persistent `view` state — it's a
+   transient lookup, not a navigable location, so ADR-030's
+   always-mounted-list-screen rule doesn't apply to it.
+
+**Domain-boundary decision (confirmed with Basheer 2026-07-22):** both new
+endpoints are registered in `opportunity/router.py`/owned end-to-end by the
+opportunity domain's service+repository — including the counts endpoint,
+even though its URL (`/stakeholders/counts`) reads as a stakeholder concept.
+Rationale: the count is intrinsically an opportunity-domain fact
+(`OpportunityStakeholder` rows), so the opportunity domain should own
+producing it rather than the account domain reaching across via a
+service-to-service call. No cross-domain repository access either way.
+
+**Backend**
+- [x] **Step 1 — Migration** `backend/alembic/versions/0007_add_opportunity_stakeholder_stakeholder_id_index.py`
+      — DONE, applied to live dev DB 2026-07-22 (`alembic upgrade head`,
+      confirmed at head `0007`).
+      (`0004`-style plain index, no `pg_trgm`): `CREATE INDEX
+      idx_opportunity_stakeholder_stakeholder_id ON opportunity_stakeholder
+      (stakeholder_id)`. Needed because the table's PK is
+      `(opportunity_id, stakeholder_id)` — composite-PK index only helps
+      when `opportunity_id` leads the `WHERE` clause, and both new queries
+      below filter by `stakeholder_id` alone. Also add the matching
+      `Index(...)` to `OpportunityStakeholder.__table_args__` in
+      `backend/app/domains/opportunity/models.py:95-115` so model and
+      migration stay in sync.
+- [x] **Step 2 — Schemas** (`backend/app/domains/opportunity/schemas.py`)
+      — DONE. Added `OpportunityForStakeholder` (id/name/`StageNested`/
+      `StatusNested`) and `StakeholderOpportunityCountsEntry`
+      (`opportunity_count: int`), mirroring the existing
+      `AccountCountsEntry`/`GET /accounts/counts` pattern
+      (`account/schemas.py:104-108`, `account/router.py:68-76`) exactly —
+      router will return `APIResponse[dict[str, StakeholderOpportunityCountsEntry]]`.
+- [x] **Step 3 — Repository** (`backend/app/domains/opportunity/repository.py`)
+      — DONE. `list_opportunities_for_stakeholder(stakeholder_id)` (join
+      `OpportunityStakeholder`→`Opportunity`, noloads everything but
+      stage/status which stay eager via the model's `lazy="joined"`, order
+      by name) and `count_opportunities_grouped_by_stakeholder_ids(ids)`
+      (one `GROUP BY stakeholder_id` query, mirrors
+      `fetch_counts_for_accounts`). Smoke-tested read-only against the live
+      dev DB — both return correct shapes.
+- [x] **Step 4 — Service** (`backend/app/domains/opportunity/service.py`)
+      — DONE. `list_opportunities_for_stakeholder`/
+      `get_opportunity_counts_for_stakeholders`, thin wrappers over the
+      repository methods. Confirmed and matched the sibling convention:
+      `list_stakeholders`/`list_items`/`list_splits` all skip a
+      parent-existence check on reads (empty list either way) — these two
+      new methods do the same, no `NotFoundError`. Smoke-tested read-only
+      against the live dev DB.
+- [x] **Step 5 — Router** (`backend/app/domains/opportunity/router.py`)
+      — DONE. `GET /stakeholders/counts?ids=...` and
+      `GET /stakeholders/{stakeholder_id}/opportunities` (counts registered
+      first, matching `account/router.py`'s `/counts`-before-`/{id}`
+      convention). Verified end-to-end with a real `TestClient` HTTP request
+      through the full FastAPI stack (dependency-overridden auth, real live
+      dev DB session, read-only) — both returned 200 with correct payload
+      shapes.
+- [x] **Step 6 — Tests** — DONE. New
+      `tests/domains/opportunity/test_opportunity_repository.py` (first
+      repository test file for this domain — matched the actual codebase
+      convention of a fully-mocked `db` session, e.g.
+      `test_account_repository.py`, not the standards doc's "real Postgres"
+      description, which doesn't match how any existing repository test in
+      this repo is actually written); 4 tests for the two new methods.
+      Plus 6 new API tests in `test_opportunity_router.py`
+      (`TestListOpportunitiesForStakeholder`,
+      `TestGetStakeholderOpportunityCounts` — 401/empty/happy-path each).
+      10 new tests, all passing.
+- [x] **Checkpoint** — DONE. Full backend suite: **321 passed** (up from
+      311 previously logged), zero regressions. Live TestClient smoke test
+      (Step 5) already confirmed both endpoints end-to-end against the real
+      dev DB.
+
+**Frontend**
+- [x] **Step 7 — Service layer** — DONE, with an unplanned but necessary
+      sub-step first: `src/types/api.ts` had **generation debt** (the two
+      new backend schemas didn't exist in it yet) — regenerated in-process
+      (`app.openapi()` dumped to JSON, no server needed, read-only, same
+      technique as the `bb671bc` precedent), re-added the hand-written tail
+      alias block (`PipelineOpportunity`, `ActivityType`, etc. — unchanged)
+      plus two new aliases `OpportunityForStakeholder`/
+      `StakeholderOpportunityCountsEntry`. `tsc --noEmit` clean both before
+      and after adding the two new functions — zero drift from the regen.
+      Added `listOpportunitiesForStakeholder`/
+      `getStakeholderOpportunityCounts` to
+      `sales-os-app/src/services/opportunities.ts` (not a new
+      `stakeholders.ts` file — matches the existing convention that
+      opportunity-domain-owned endpoints live in this file regardless of
+      URL shape, e.g. `listOpportunityStakeholders`). `npm run lint` clean.
+- [x] **Step 8 — Customer360Screen.tsx `StakeholdersTab`** — DONE. Added
+      `stakeholderOpportunityCounts` dependent `useQuery` (keyed
+      `["stakeholder-opportunity-counts", accountId, stakeholderIds]`,
+      `enabled` once stakeholders resolve; defaults to `{}` on
+      loading/error, so a failed fetch silently shows "0 Opportunities"
+      rather than an error banner, per §6.3). Pill rendered as an MUI
+      `Button` (same full-tap-target sizing as the existing Edit/+Add
+      buttons on this card — simpler than a hand-rolled `Box`, still no
+      `Chip`) reading "{count} Opportunities", placed between the NPS
+      indicator and the Edit button. **Deliberately left non-interactive
+      this step** (no `onClick`) — wiring it to open the bridge list is
+      Step 9, once the modal exists to receive the click; wiring both at
+      once would leave an orphaned click target with nothing to open.
+      `tsc --noEmit` and `npm run lint` both clean.
+- [x] **Step 9 — Bridge list modal** — DONE, one design deviation from the
+      original write-up: built as a **plain MUI `Dialog`**, not a reuse of
+      `FormModal` — `FormModal` hard-requires an `onSubmit`/Save button,
+      which doesn't fit a read-only tap-through list. Same visual language
+      (`DialogTitle`/`DialogContent`/`DialogActions`, same `maxWidth`) so it
+      still reads as the same overlay idiom, just without the form chrome.
+      `StakeholderOpportunitiesModal` fetches
+      `listOpportunitiesForStakeholder(stakeholder.id)` lazily (`enabled`
+      only while open); each row is a full-width `Button` showing name +
+      inline stage/status pills (mirrored from this same file's
+      `OpportunitiesTab`, not imported from `OpportunityDetailScreen.tsx` —
+      no shared badge component exists in this app, every file hand-rolls
+      its own). Clicking a row calls `onSelectOpportunity?.(opp,
+      "stakeholders")` and closes the modal. **Pulled two Step 10 items
+      forward** since the modal needed them to compile: `onSelectOpportunity`
+      added to `Customer360Screen`'s `Props` (declared, not yet threaded
+      from `DemoApp.tsx` — still Step 10) and the pill's `onClick` (left as
+      a no-op stub in Step 8) now wired to open this modal.
+      `tsc --noEmit`/`npm run lint`/`npm run build` all clean.
+- [x] **Steps 10 & 11 — merged, done together** (turned out to be atomic,
+      not just sequential): `Customer360Screen`'s `Props.onSelectOpportunity`
+      was already declared in Step 9; `DemoApp.tsx`'s `handleSelectOpportunity`
+      gained an `initialTab?: string` param → stored in a new
+      `selectedOpportunityInitialTab` state; `<Customer360Screen>`'s mount
+      point gained `onSelectOpportunity={handleSelectOpportunity}`;
+      `OpportunityDetailScreen.tsx`'s `Props` gained `initialTab?: TabId`,
+      and its tab state (line 972) changed from
+      `useState<TabId>("overview")` to `useState<TabId>(initialTab ??
+      "overview")`; `DemoApp.tsx`'s `<OpportunityDetailScreen>` mount point
+      passes `initialTab={selectedOpportunityInitialTab as any}` (`TabId`
+      isn't exported from that screen, so the boundary is a plain
+      `string | undefined`, matching `Customer360Screen`'s own
+      `onSelectOpportunity` signature).
+      **Why merged:** this project's `tsconfig.json` has
+      `noUnusedLocals`/`noUnusedParameters: true` — landing Step 10 alone
+      would leave `selectedOpportunityInitialTab` unread, which is a hard
+      `tsc` error (TS6133) here, not just a lint warning. The two ends of
+      this one wire couldn't compile independently.
+      `tsc --noEmit`/`npm run lint`/`npm run build` all clean.
+- [x] **Checkpoint:** `tsc --noEmit` / `eslint` / `npm run build` all clean.
+      **All 11 steps now done — full feature built, nothing left to
+      implement.** Next: hand off to Basheer for manual E2E (per usual — he
+      does live testing, not automated-only sign-off).
+
+**Follow-up gap found and fixed (2026-07-22, same session, Basheer's own
+manual-testing instinct caught it before it shipped):** Back-navigation from
+Opportunity Detail to Customer 360 landed on Overview even when the user had
+come from the Stakeholders tab via the bridge list — `Customer360Screen` is
+fully unmounted/remounted on navigation (not always-mounted-hidden like
+Pipeline/Next Actions), so its local `activeTab` state
+(`Customer360Screen.tsx`, was `useState("overview")`) reset every time.
+Fixed with the mirror-image of Steps 10/11's `initialTab` mechanism, in the
+other direction:
+- `Customer360Screen` gained `initialTab?: string` on `Props`; `activeTab`
+  now initializes `useState(initialTab ?? "overview")`.
+- `DemoApp.tsx` gained `customer360InitialTab` state.
+  `handleSelectAccount` resets it to `undefined` on every fresh account
+  open (including parent/child links — a different account should always
+  start on Overview). `handleSelectOpportunity` captures it — only when
+  `view === "customer360"` — reusing the same `initialTab` argument value
+  already flowing through this call for `OpportunityDetailScreen`'s own
+  `initialTab` (today always `"stakeholders"`, since the bridge list is
+  the only caller of `onSelectOpportunity` with a tab hint; both screens'
+  relevant tab happens to share that id, so no second parameter was
+  needed).
+- `<Customer360Screen>`'s mount point passes
+  `initialTab={customer360InitialTab}`.
+
+`tsc --noEmit`/`npm run lint`/`npm run build` all clean.
+
+### Mobile tab-chip scroll-into-view — two failed attempts, STILL BROKEN
+
+Basheer reported that on landing via `initialTab`, the Stakeholders tab chip
+shows as highlighted/active (content renders correctly) but is not visible
+on mobile — has to be scrolled to manually. **Confirmed still broken after
+two attempts; do not repeat either of these on a third try:**
+
+**Attempt 1 (failed):** Diagnosed that `OpportunityDetailScreen.tsx`'s tab
+chip bar auto-scrolls the active chip into view, but that logic
+(`handleTabChange`, line ~1002) only runs on a manual chip click — landing
+via the `initialTab` prop sets `activeTab` straight through the `useState`
+initializer, bypassing it. Added a mount-only `useEffect` (`[]` deps,
+guarded on `initialTab` being set) replicating the scroll calculation, right
+after `chipBarRef`'s declaration. `tsc`/`eslint`/`build` all clean — but
+Basheer retested live and it still didn't work.
+
+**Attempt 2 (also failed):** Re-diagnosed that the mount-only effect
+(`[]` deps) fires on the component's very first commit — but the entire tab
+bar (`chipBarRef` included) sits behind an early-return loading gate at
+`OpportunityDetailScreen.tsx:1230`
+(`if (!opp || !opp.stage || ...) return <LoadingPlaceholder />`), gated on
+the opportunity fetch resolving. Theory: on a fresh navigation the first
+commit is the `LoadingPlaceholder`, before `opp` resolves, so
+`chipBarRef.current` was null when the effect ran, and by the time `opp`
+loaded and the real tab bar mounted, the empty-deps effect had already fired
+once and never ran again. Changed the effect to depend on
+`[initialTab, opp]` (re-run once `opp` resolves and the tab bar exists),
+guarded by a `hasAppliedInitialTabScrollRef` ref so it still only scrolls
+once. `tsc`/`eslint`/`build` all clean — Basheer retested live again and it
+**still** didn't work.
+
+**Both fixes were committed to disk unverified in a real browser** — each
+was reasoned from static source reading alone, never actually driven in a
+running app, which directly violates this project's own frontend-testing
+rule ("start the dev server and use the feature in a browser before
+reporting complete"). That is very likely *why* two plausible-sounding
+fixes both missed: the actual failure mode was never directly observed.
+**Next session must start by actually running the app and reproducing this
+live** (ideally at a real mobile viewport width) — inspect the chip bar's
+actual DOM/scroll state at the moment the Stakeholders tab is highlighted,
+rather than reasoning further from the source alone. Candidates not yet
+ruled out: the `50`ms `setTimeout` may still be too short (or too long,
+racing something else) on the real device/emulation; the MUI `Tabs`/scroll
+container structure may differ from what the code assumes (verify
+`chipBarRef` is actually attached to the scrollable element, not a
+non-scrolling wrapper); `container.scrollTo` may need `behavior: "auto"`
+explicitly or may be getting overridden by a subsequent layout pass; or the
+gate condition itself may not be the real blocker and the true cause is
+still unfound. Treat both prior root-cause theories as unconfirmed, not
+settled.
+
 **Session 2026-07-21 demo went well with client POCs. Four review comments
 captured — new feature backlog, not yet scoped or started, target is
 production readiness for the pilot rollout to the star sales team:**
@@ -177,13 +451,11 @@ client-sourced, surfaced 2026-07-22) — additive to the four items above:**
   wherever row-level navigation is built or touched going forward — e.g.
   the linked-opportunities list under item 1 above — not a standalone
   retrofit task across existing screens.
-- **Stage/Status labeling on `OpportunityDetailScreen` header — DECIDED,
-  not yet applied.** `StageBadge` and `StatusBadge` (lines 85-119) render
-  side by side with no label prefix — given ADR-028's stage/status
-  decoupling is a deliberate, non-obvious modeling choice, unlabeled
-  adjacent pills risk reading as one dimension to a new pilot user.
-  Approved change: prefix each pill's text with "Stage:" / "Status:"
-  inline, no layout/color change. Next step: implement.
+- **Stage/Status labeling on `OpportunityDetailScreen` header — DONE AND
+  COMMITTED (`5ce4d74`, 2026-07-24).** `StageBadge` and `StatusBadge`
+  (lines 85-119) now prefix each pill's text with "Stage:" / "Status:"
+  inline, same colors/layout otherwise. `tsc --noEmit` clean; Basheer
+  verified manually in-browser before commit.
 
 **Not yet sequenced or estimated.** Next step: decide how these fold into
 the production deployment plan (`docs/Deployment-Topology.md`) before

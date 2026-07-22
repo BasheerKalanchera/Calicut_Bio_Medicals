@@ -5,6 +5,8 @@ import type {
   SplitResponse,
   StakeholderLinkResponse,
   OpportunityItemResponse,
+  OpportunityForStakeholder,
+  StakeholderOpportunityCountsEntry,
 } from "../types/api";
 
 export interface PipelineParams {
@@ -96,5 +98,19 @@ export async function updateOpportunityStakeholder(
   data: { influence_level?: string | null; decision_role?: string | null; notes?: string | null },
 ): Promise<StakeholderLinkResponse> {
   const response = await api.patch(`/opportunities/${opportunityId}/stakeholders/${stakeholderId}`, data);
+  return response.data.data;
+}
+
+export async function listOpportunitiesForStakeholder(
+  stakeholderId: string,
+): Promise<OpportunityForStakeholder[]> {
+  const response = await api.get(`/stakeholders/${stakeholderId}/opportunities`);
+  return response.data.data;
+}
+
+export async function getStakeholderOpportunityCounts(
+  stakeholderIds: string[],
+): Promise<Record<string, StakeholderOpportunityCountsEntry>> {
+  const response = await api.get("/stakeholders/counts", { params: { ids: stakeholderIds.join(",") } });
   return response.data.data;
 }

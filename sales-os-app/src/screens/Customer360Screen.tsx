@@ -6,6 +6,10 @@ import {
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   IconButton,
   MenuItem,
@@ -34,7 +38,11 @@ import {
   createInstalledAsset,
   updateInstalledAsset,
 } from "../services/accounts";
-import { listOpportunityItems } from "../services/opportunities";
+import {
+  listOpportunityItems,
+  getStakeholderOpportunityCounts,
+  listOpportunitiesForStakeholder,
+} from "../services/opportunities";
 import {
   listZones,
   listProjectStatuses,
@@ -60,6 +68,11 @@ interface Props {
   onBack: () => void;
   onAccountUpdate?: (account: any) => void;
   onSelectAccount?: (account: { id: string; name: string }) => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
+  // Set when re-mounting after Back from Opportunity Detail (e.g. the
+  // stakeholder bridge list), so this screen reopens on the tab the user
+  // actually came from instead of always defaulting to Overview.
+  initialTab?: string;
 }
 
 const TABS = [
@@ -230,7 +243,19 @@ function OverviewTab({
   );
 }
 
-function StakeholdersTab({ stakeholders, onAdd, onEdit }: { stakeholders: any[]; onAdd: () => void; onEdit: (s: any) => void }) {
+function StakeholdersTab({
+  stakeholders,
+  opportunityCounts,
+  onAdd,
+  onEdit,
+  onViewOpportunities,
+}: {
+  stakeholders: any[];
+  opportunityCounts: Record<string, { opportunity_count: number }>;
+  onAdd: () => void;
+  onEdit: (s: any) => void;
+  onViewOpportunities: (s: any) => void;
+}) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
@@ -273,6 +298,12 @@ function StakeholdersTab({ stakeholders, onAdd, onEdit }: { stakeholders: any[];
                 <NpsIndicator score={s.nps_score} />
               </Box>
               <Button
+                onClick={() => onViewOpportunities(s)}
+                sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+              >
+                {opportunityCounts[s.id]?.opportunity_count ?? 0} Opportunities
+              </Button>
+              <Button
                 onClick={() => onEdit(s)}
                 sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#7c3aed", bgcolor: "#f5f3ff", "&:hover": { bgcolor: "#ede9fe" } }}
               >
@@ -283,6 +314,87 @@ function StakeholdersTab({ stakeholders, onAdd, onEdit }: { stakeholders: any[];
         ))
       )}
     </Box>
+  );
+}
+
+// Bridge list — opened from a stakeholder card's "N Opportunities" pill.
+// A plain read-only Dialog rather than FormModal: FormModal's Save/Cancel
+// form chrome doesn't fit a list you tap through, not submit.
+function StakeholderOpportunitiesModal({
+  stakeholder,
+  onClose,
+  onSelectOpportunity,
+}: {
+  stakeholder: { id: string; name: string } | null;
+  onClose: () => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
+}) {
+  const { data: opportunities = [], isLoading } = useQuery({
+    queryKey: ["stakeholder-opportunities", stakeholder?.id],
+    queryFn: () => listOpportunitiesForStakeholder(stakeholder!.id),
+    enabled: stakeholder !== null,
+  });
+
+  return (
+    <Dialog
+      open={stakeholder !== null}
+      onClose={onClose}
+      fullWidth
+      maxWidth={false}
+      slotProps={{ paper: { sx: { maxWidth: "28rem" } } }}
+    >
+      <DialogTitle component="h3">{stakeholder ? `${stakeholder.name} — Opportunities` : ""}</DialogTitle>
+      <DialogContent>
+        {isLoading ? (
+          <LoadingRow />
+        ) : opportunities.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: 6, fontStyle: "italic", color: "#9ca3af" }}>
+            No linked opportunities.
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {opportunities.map((o) => (
+              <Button
+                key={o.id}
+                fullWidth
+                onClick={() => {
+                  onSelectOpportunity?.({ id: o.id, name: o.name }, "stakeholders");
+                  onClose();
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  textAlign: "left",
+                  textTransform: "none",
+                  color: "inherit",
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: "0.75rem",
+                  bgcolor: "#fff",
+                  border: "1px solid #f3f4f6",
+                  boxShadow: SHADOW_SM,
+                  "&:hover": { bgcolor: "#f9fafb" },
+                }}
+              >
+                <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{o.name}</Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fde68a", bgcolor: "#fffbeb", color: "#b45309" }}>
+                    {o.stage.stage_name}
+                  </Box>
+                  <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #bfdbfe", bgcolor: "#eff6ff", color: "#1d4ed8" }}>
+                    {o.status.status_name}
+                  </Box>
+                </Box>
+              </Button>
+            ))}
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="inherit">Close</Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -450,7 +562,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount, onSelectOpportunity, initialTab }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
@@ -497,6 +609,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     queryFn: () => listStakeholders(accountId as any) as Promise<any[]>,
   });
 
+  const stakeholderIds = stakeholders.map((s: any) => s.id);
+  const { data: stakeholderOpportunityCounts = {} } = useQuery({
+    queryKey: ["stakeholder-opportunity-counts", accountId, stakeholderIds],
+    queryFn: () => getStakeholderOpportunityCounts(stakeholderIds),
+    enabled: stakeholderIds.length > 0,
+  });
+
   const { data: projects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ["projects", "byAccount", accountId],
     queryFn: () => listProjects(accountId as any) as Promise<any[]>,
@@ -524,7 +643,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     staleTime: 5 * 60 * 1000,
   });
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(initialTab ?? "overview");
 
   // Activity tab
   const [showLogActivity, setShowLogActivity] = useState(false);
@@ -562,6 +681,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newSNps, setNewSNps] = useState("");
   const [newSSentiment, setNewSSentiment] = useState("");
   const [editingStakeholder, setEditingStakeholder] = useState<any | null>(null);
+  const [viewingStakeholderOpportunities, setViewingStakeholderOpportunities] = useState<{ id: string; name: string } | null>(null);
   const [editSName, setEditSName] = useState("");
   const [editSDesignation, setEditSDesignation] = useState("");
   const [editSEmail, setEditSEmail] = useState("");
@@ -1156,7 +1276,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* Scrollable tab content */}
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
         {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
-        {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} />)}
+        {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />)}
         {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
@@ -1548,6 +1668,12 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         onClose={() => setShowLogActivity(false)}
         accountId={accountId}
         currentUserId={(userProfile as any)?.id}
+      />
+
+      <StakeholderOpportunitiesModal
+        stakeholder={viewingStakeholderOpportunities}
+        onClose={() => setViewingStakeholderOpportunities(null)}
+        onSelectOpportunity={onSelectOpportunity}
       />
     </Box>
   );

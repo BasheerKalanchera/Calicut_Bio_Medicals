@@ -293,3 +293,47 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         self.db.flush()
         self.db.refresh(link)
         return link
+
+    # ------------------------------------------------------------------
+    # Stakeholder -> opportunities (reverse linkage, Customer 360 bridge list)
+    # ------------------------------------------------------------------
+
+    def list_opportunities_for_stakeholder(self, stakeholder_id: uuid.UUID) -> list[Opportunity]:
+        stmt = (
+            select(Opportunity)
+            .join(OpportunityStakeholder, OpportunityStakeholder.opportunity_id == Opportunity.id)
+            .where(OpportunityStakeholder.stakeholder_id == stakeholder_id)
+            .options(
+                # stage/status stay eager (lazy="joined" on the model) — needed
+                # by OpportunityForStakeholder. Everything else this response
+                # doesn't use gets noloaded, same profile as list_by_account.
+                noload(Opportunity.account),
+                noload(Opportunity.sbu),
+                noload(Opportunity.project),
+                noload(Opportunity.owner),
+                noload(Opportunity.lead_source),
+                noload(Opportunity.loss_reason),
+                noload(Opportunity.hold_reason),
+                noload(Opportunity.opportunity_stakeholders),
+                noload(Opportunity.splits),
+                noload(Opportunity.items),
+                noload(Opportunity.activities),
+                noload(Opportunity.documents),
+            )
+            .order_by(Opportunity.name)
+        )
+        return list(self.db.scalars(stmt).unique().all())
+
+    def count_opportunities_grouped_by_stakeholder_ids(
+        self, stakeholder_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, int]:
+        if not stakeholder_ids:
+            return {}
+        return {
+            r.stakeholder_id: r.cnt
+            for r in self.db.execute(
+                select(OpportunityStakeholder.stakeholder_id, func.count().label("cnt"))
+                .where(OpportunityStakeholder.stakeholder_id.in_(stakeholder_ids))
+                .group_by(OpportunityStakeholder.stakeholder_id)
+            ).all()
+        }

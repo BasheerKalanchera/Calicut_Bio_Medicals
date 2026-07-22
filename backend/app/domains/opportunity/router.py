@@ -12,6 +12,7 @@ from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
     ItemsBulkUpdate,
     OpportunityCreate,
+    OpportunityForStakeholder,
     OpportunityItemCreate,
     OpportunityItemResponse,
     OpportunityResponse,
@@ -22,6 +23,7 @@ from app.domains.opportunity.schemas import (
     StakeholderLinkCreate,
     StakeholderLinkResponse,
     StakeholderLinkUpdate,
+    StakeholderOpportunityCountsEntry,
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
@@ -265,3 +267,33 @@ def update_opportunity_stakeholder(
 ) -> APIResponse[StakeholderLinkResponse]:
     link = service.update_stakeholder(opportunity_id, stakeholder_id, body, updated_by=current_user.id)
     return APIResponse(data=StakeholderLinkResponse.model_validate(link))
+
+
+# ------------------------------------------------------------------
+# Stakeholder -> opportunities (reverse linkage, Customer 360 bridge list)
+# ------------------------------------------------------------------
+
+@router.get("/stakeholders/counts")
+def get_stakeholder_opportunity_counts(
+    ids: str = Query(..., description="Comma-separated stakeholder UUIDs"),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[dict[str, StakeholderOpportunityCountsEntry]]:
+    stakeholder_ids = [uuid.UUID(i.strip()) for i in ids.split(",") if i.strip()]
+    counts = service.get_opportunity_counts_for_stakeholders(stakeholder_ids)
+    return APIResponse(
+        data={
+            str(sid): StakeholderOpportunityCountsEntry(opportunity_count=counts.get(sid, 0))
+            for sid in stakeholder_ids
+        }
+    )
+
+
+@router.get("/stakeholders/{stakeholder_id}/opportunities")
+def list_opportunities_for_stakeholder(
+    stakeholder_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[OpportunityForStakeholder]]:
+    opportunities = service.list_opportunities_for_stakeholder(stakeholder_id)
+    return APIResponse(data=[OpportunityForStakeholder.model_validate(o) for o in opportunities])

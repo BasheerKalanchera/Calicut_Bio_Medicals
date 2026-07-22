@@ -158,6 +158,23 @@ class StakeholdersBulkUpdate(BaseModel):
 
 
 # ------------------------------------------------------------------
+# Stakeholder -> opportunities (reverse linkage)
+# ------------------------------------------------------------------
+
+class OpportunityForStakeholder(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    stage: StageNested
+    status: StatusNested
+
+
+class StakeholderOpportunityCountsEntry(BaseModel):
+    opportunity_count: int
+
+
+# ------------------------------------------------------------------
 # Create / Update
 # ------------------------------------------------------------------
 

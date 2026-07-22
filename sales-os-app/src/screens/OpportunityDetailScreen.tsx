@@ -42,6 +42,10 @@ interface Props {
   initialOpportunity?: any;
   onBack: () => void;
   onOpportunityUpdate?: (opp: PipelineOpportunity) => void;
+  // Set by entry points that know which tab the user actually wants (e.g.
+  // Customer 360's stakeholder bridge list) so navigation doesn't always
+  // land on Overview first.
+  initialTab?: TabId;
 }
 
 const TABS = [
@@ -949,7 +953,7 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate }: Props) {
+export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate, initialTab }: Props) {
   const { userProfile }                           = useAuth();
   const queryClient                               = useQueryClient();
 
@@ -969,9 +973,34 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     if (opp) onOpportunityUpdate?.(opp);
   }, [opp]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [activeTab, setActiveTab]                 = useState<TabId>("overview");
+  const [activeTab, setActiveTab]                 = useState<TabId>(initialTab ?? "overview");
   const [showLogActivity, setShowLogActivity]     = useState(false);
   const chipBarRef = useRef<HTMLDivElement>(null);
+
+  // Landing directly on a non-Overview tab (e.g. via the Customer 360
+  // stakeholder bridge list) sets activeTab through the useState initializer
+  // above, which skips handleTabChange's scroll-into-view — so on a narrow/
+  // mobile viewport the highlighted chip can sit off-screen in the
+  // horizontally-scrolling tab bar. The chip bar itself only exists once the
+  // early-return loading gate below clears (opp fully resolved), so this
+  // can't just run once on mount — it has to wait for opp, then fire once
+  // (the appliedRef guard), not on every later opp refetch/update.
+  const hasAppliedInitialTabScrollRef = useRef(false);
+  useEffect(() => {
+    if (!initialTab || !opp || hasAppliedInitialTabScrollRef.current) return;
+    hasAppliedInitialTabScrollRef.current = true;
+    const timer = setTimeout(() => {
+      const container = chipBarRef.current;
+      if (container) {
+        const chip = container.querySelector(`[data-tab="${initialTab}"]`) as HTMLElement | null;
+        if (chip) {
+          const scrollLeft = chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
+          container.scrollTo({ left: scrollLeft });
+        }
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [initialTab, opp]);
 
   // Overview edit state
   const [showEditOpp, setShowEditOpp]             = useState(false);

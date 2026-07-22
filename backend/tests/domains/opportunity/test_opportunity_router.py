@@ -191,3 +191,74 @@ class TestGetOpportunity:
         item = response.json()["data"]
         assert item["project"] is None
         assert item["lead_source"] is None
+
+
+class TestListOpportunitiesForStakeholder:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/stakeholders/{uuid.uuid4()}/opportunities")
+        assert response.status_code == 401
+
+    def test_returns_empty_list_when_no_links(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/stakeholders/{uuid.uuid4()}/opportunities")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == []
+
+    def test_serializes_linked_opportunity(self, client: TestClient) -> None:
+        opp = _mock_opportunity()
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [opp]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/stakeholders/{uuid.uuid4()}/opportunities")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"][0]
+        assert item["id"] == str(OPP_ID)
+        assert item["stage"]["stage_code"] == "LEAD"
+        assert item["status"]["status_code"] == "ACTIVE"
+
+
+class TestGetStakeholderOpportunityCounts:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/stakeholders/counts?ids={uuid.uuid4()}")
+        assert response.status_code == 401
+
+    def test_returns_zero_for_stakeholder_with_no_links(self, client: TestClient) -> None:
+        stakeholder_id = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/stakeholders/counts?ids={stakeholder_id}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {str(stakeholder_id): {"opportunity_count": 0}}
+
+    def test_returns_count_for_linked_stakeholder(self, client: TestClient) -> None:
+        stakeholder_id = uuid.uuid4()
+        row = _mock_nested(stakeholder_id=stakeholder_id, cnt=3)
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = [row]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/stakeholders/counts?ids={stakeholder_id}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {str(stakeholder_id): {"opportunity_count": 3}}

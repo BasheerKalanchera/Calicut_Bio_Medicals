@@ -99,6 +99,7 @@ class OpportunityStakeholder(AuditMixin, Base):
             "influence_level IN ('HIGH', 'MEDIUM', 'LOW')",
             name="ck_opportunity_stakeholder_influence_level",
         ),
+        Index("idx_opportunity_stakeholder_stakeholder_id", "stakeholder_id"),
     )
 
     opportunity_id: Mapped[uuid.UUID] = mapped_column(

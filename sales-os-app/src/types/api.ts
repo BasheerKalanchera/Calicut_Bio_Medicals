@@ -425,6 +425,40 @@ export interface paths {
         patch: operations["update_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders__stakeholder_id__patch"];
         trace?: never;
     };
+    "/api/v1/stakeholders/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Stakeholder Opportunity Counts */
+        get: operations["get_stakeholder_opportunity_counts_api_v1_stakeholders_counts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stakeholders/{stakeholder_id}/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunities For Stakeholder */
+        get: operations["list_opportunities_for_stakeholder_api_v1_stakeholders__stakeholder_id__opportunities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts/{account_id}/activities": {
         parameters: {
             query?: never;
@@ -945,6 +979,23 @@ export interface components {
                 [key: string]: components["schemas"]["AccountCountsEntry"];
             };
         };
+        /** APIResponse[dict[str, StakeholderOpportunityCountsEntry]] */
+        APIResponse_dict_str__StakeholderOpportunityCountsEntry__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: {
+                [key: string]: components["schemas"]["StakeholderOpportunityCountsEntry"];
+            };
+        };
         /** APIResponse[int] */
         APIResponse_int_: {
             /**
@@ -989,6 +1040,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["DocumentResponse"][];
+        };
+        /** APIResponse[list[OpportunityForStakeholder]] */
+        APIResponse_list_OpportunityForStakeholder__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["OpportunityForStakeholder"][];
         };
         /** APIResponse[list[OpportunityItemResponse]] */
         APIResponse_list_OpportunityItemResponse__: {
@@ -1533,6 +1599,18 @@ export interface components {
              * @default []
              */
             items: components["schemas"]["OpportunityItemCreate"][];
+        };
+        /** OpportunityForStakeholder */
+        OpportunityForStakeholder: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            stage: components["schemas"]["StageNested"];
+            status: components["schemas"]["StatusNested"];
         };
         /** OpportunityItemCreate */
         OpportunityItemCreate: {
@@ -2235,6 +2313,11 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** StakeholderOpportunityCountsEntry */
+        StakeholderOpportunityCountsEntry: {
+            /** Opportunity Count */
+            opportunity_count: number;
         };
         /** StakeholderResponse */
         StakeholderResponse: {
@@ -3826,6 +3909,73 @@ export interface operations {
             };
         };
     };
+    get_stakeholder_opportunity_counts_api_v1_stakeholders_counts_get: {
+        parameters: {
+            query: {
+                /** @description Comma-separated stakeholder UUIDs */
+                ids: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_dict_str__StakeholderOpportunityCountsEntry__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_opportunities_for_stakeholder_api_v1_stakeholders__stakeholder_id__opportunities_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                stakeholder_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_OpportunityForStakeholder__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_activities_api_v1_accounts__account_id__activities_get: {
         parameters: {
             query?: {
@@ -4372,3 +4522,5 @@ export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResp
 // Derived from ActivityResponse's own field instead of hand-listing the 6
 // values again, so this can never drift from the backend's enum.
 export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
+export type OpportunityForStakeholder = components["schemas"]["OpportunityForStakeholder"];
+export type StakeholderOpportunityCountsEntry = components["schemas"]["StakeholderOpportunityCountsEntry"];

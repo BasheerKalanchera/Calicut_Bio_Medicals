@@ -386,6 +386,18 @@ class OpportunityService:
         return self.repository.update_stakeholder_link(link)
 
     # ------------------------------------------------------------------
+    # Stakeholder -> opportunities (reverse linkage, Customer 360 bridge list)
+    # ------------------------------------------------------------------
+
+    def list_opportunities_for_stakeholder(self, stakeholder_id: uuid.UUID) -> list[Opportunity]:
+        return self.repository.list_opportunities_for_stakeholder(stakeholder_id)
+
+    def get_opportunity_counts_for_stakeholders(
+        self, stakeholder_ids: list[uuid.UUID]
+    ) -> dict[uuid.UUID, int]:
+        return self.repository.count_opportunities_grouped_by_stakeholder_ids(stakeholder_ids)
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
