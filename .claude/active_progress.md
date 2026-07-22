@@ -2,65 +2,301 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
-**Session 2026-07-21 — demo-day full regression pass ahead of the 7:15pm
-showcase (demo moved up from July 20).** Ran automated checks first
-(`pytest` 311 passed, `tsc --noEmit`/`eslint`/`npm run build` all clean) —
-no build problem, no regression from recent commits. Then found a real bug
-during live login testing: first attempt with any of the 4 role accounts
-(`sales@cabio-demo.com`/`manager@cabio-demo.com`/`gm@cabio-demo.com`/
-`admin@cabio-demo.com`) silently bounced back to the login screen; retry
-with the same credentials worked every time.
+**Session 2026-07-21 demo went well with client POCs. Four review comments
+captured — new feature backlog, not yet scoped or started, target is
+production readiness for the pilot rollout to the star sales team:**
+1. **Stakeholder ↔ Opportunity linkage visibility on Customer 360.**
+   (Corrected 2026-07-22 after tracing the actual data model — see below;
+   original framing as "need a notes field on Account" was wrong.) Notes
+   entered when linking a stakeholder to an opportunity already exist —
+   `OpportunityStakeholder.notes` (`backend/app/domains/opportunity/models.py:95-115`,
+   alongside `influence_level`/`decision_role`), editable today via
+   `OpportunityDetailScreen.tsx`'s own Stakeholders tab
+   (`StakeholdersTab`, line 655). They're just invisible from the Account
+   side — Customer 360's `StakeholdersTab` (`Customer360Screen.tsx:233`)
+   only renders the bare `Stakeholder` record (name/designation/email/
+   phone/sentiment/NPS) with no knowledge of `OpportunityStakeholder`.
+   **Design decision (Basheer, 2026-07-22): do not bubble/duplicate the
+   notes text onto the Account-level view** — that strips provenance
+   (which opportunity a note came from). Instead, Customer 360's
+   Stakeholders tab should show, per stakeholder, the list of linked
+   Opportunities; clicking through navigates into the existing
+   `OpportunityDetailScreen` for full context (notes, influence, role) —
+   reuses that screen instead of duplicating its content, and doubles as
+   the content for the Stakeholder "View" action from the UI-walkthrough
+   discussion below.
 
-**Root cause:** `sales-os-app/src/lib/api.ts`'s axios response interceptor
-treated *any* 401 — including one on `/auth/me`, the profile-bootstrap call
-fired immediately after `signInWithPassword()` succeeds — as grounds to
-`supabase.auth.signOut()` + hard-redirect to `/`. Trigger, tied to Basheer
-restarting the Supabase project earlier in the session:
-`backend/app/core/security.py`'s `_get_jwk_client()` lazily fetches
-Supabase's JWKS on the first token verification after backend startup (no
-pre-warm, unlike the DB pool via `warm_pool()`); that fetch raced Supabase's
-Auth service still coming back up post-restart, failed, `decode_jwt` wrapped
-it as `InvalidTokenError` → 401, and the interceptor's blanket handling
-turned one transient hiccup into a hard bounce indistinguishable from wrong
-credentials. Confirmed via git log this is old, latent code (auth files
-untouched since `a7cbb02`, well before Milestone 1) — not a regression from
-recent work, and not something prior regression passes were structured to
-catch (Basheer's own login typically resumes a persisted session rather
-than exercising a cold sign-in).
+   **Screen design DECIDED (Basheer, 2026-07-22) — bridge-screen pattern,
+   not an inline list:** each stakeholder card on Customer 360 gets a
+   single pill reading **"N Opportunities"** (no other change to the
+   card) — deliberately not the full inline list of opportunity
+   name+stage originally sketched, to avoid a stakeholder linked to many
+   opportunities blowing out the tab's scroll height. Tapping the pill
+   opens a **bridge list screen** of that stakeholder's linked
+   opportunities; tapping an opportunity there navigates into
+   `OpportunityDetailScreen`. Pill must be a full tap-target component
+   (`ListItemButton`-style, per the mobile-tap-targets standard above),
+   not a small inline link.
 
-**Fix applied 2026-07-21, verified clean (`tsc`/`eslint`/`build`), NOT YET
-COMMITTED:**
-- `sales-os-app/src/contexts/AuthContext.tsx` — `signIn()` now captures
-  `data.session` from `signInWithPassword`'s return value and calls
-  `setSession(data.session)` immediately, instead of relying solely on the
-  async `onAuthStateChange` listener to update state later.
-- `sales-os-app/src/lib/api.ts` — response interceptor no longer forces
-  `signOut()` + hard reload when the 401 is specifically from `/auth/me`
-  (`AuthContext` already degrades gracefully there via
-  `.catch(() => setUserProfile(null))`); still forces logout for 401s on
-  any other, already-authenticated endpoint — correct behavior for a truly
-  expired/invalid session.
+   **Required companion fix, or this is one tap too roundabout:**
+   `OpportunityDetailScreen` currently hardcodes `activeTab` to
+   `useState<TabId>("overview")` (line 970) with no way to open on a
+   different starting tab — so today, arriving from anywhere (Pipeline,
+   Reminder click-through, or this new bridge flow) always lands on
+   Overview first, and the stakeholder notes live on the Stakeholders tab,
+   costing a 3rd manual tap just to reach them. Fix: add an optional
+   `initialTab` prop; the bridge-list click passes
+   `initialTab="stakeholders"` so tapping an opportunity there drops the
+   user directly onto the Stakeholders tab with the notes already visible.
+   With this fix the full path is Customer 360 Stakeholders tab → tap "N
+   Opportunities" pill → bridge list → tap an opportunity → notes visible
+   immediately (2 taps from the stakeholder card, not 3).
 
-**PENDING — Tier 2 forced repro, deliberately deferred until after
-tonight's demo** (Basheer's call: don't want to touch `backend/.env` and
-restart the backend twice a few hours before presenting). Do this
-post-demo to get hard proof rather than an absence-of-evidence result:
-1. Temporarily point `SUPABASE_URL` in `backend/.env` to an unreachable
-   value (breaks only JWT/JWKS verification, not the DB connection —
-   separate setting from `DATABASE_URL`).
-2. Restart the backend — this also clears `_get_jwk_client()`'s
-   `lru_cache`, guaranteeing a fresh failed lookup on the next login.
-3. Attempt login — should reliably reproduce a genuine 401 from
-   `/auth/me`, same failure as tonight's restart scenario.
-   - **Expected before this fix:** bounces back to the login screen.
-   - **Expected after this fix:** login completes and sticks, no bounce.
-4. Revert `SUPABASE_URL`, restart the backend again, and do one final
-   clean login to confirm everything's back to normal.
+   **Backend gap — two distinct pieces, not one:**
+   1. *The bridge-list itself.* No endpoint exists for stakeholder →
+      opportunities (only the reverse, `GET /opportunities/{id}/stakeholders`,
+      `opportunity/router.py:27`). Needs a new
+      `GET /stakeholders/{id}/opportunities`, querying `OpportunityStakeholder`
+      by `stakeholder_id` and returning each linked opportunity's
+      id/name/stage/status. Cheap — `Stakeholder.opportunity_stakeholders`
+      is already a mapped relationship (`account/models.py:69`).
+   2. *The "N" count on the pill.* Needs to be present for every stakeholder
+      in the Customer 360 list up front (not fetched per-stakeholder on
+      demand, which would be N+1 requests on every screen load). Checked
+      `stakeholder_repository.py:14-28` (`list_by_account`, the query
+      powering that whole tab) — it explicitly `noload(Stakeholder.opportunity_stakeholders)`
+      today, i.e. deliberately never touches that relationship. Needs a
+      correlated-subquery count column added to that query, surfaced as a
+      new `opportunity_count` field on `StakeholderResponse`.
 
-**Also still pending:** commit the two-file fix (currently uncommitted
-working-tree changes) once Tier 2 confirms it, and finish the rest of the
-full regression pass (`docs/Regression-Test-Plan.md` Part A, prioritized —
-was in progress when the login bug interrupted it).
+   **Latency check (2026-07-23, Basheer asked before freezing the
+   design):** the stakeholders query is **not actually lazy/per-tab** —
+   `Customer360Screen.tsx:495-498` has no `enabled` gate, so it fires on
+   every Customer 360 mount regardless of starting tab (same
+   prefetch-all-four-tabs-at-mount pattern documented in
+   `ActivityTimeline.tsx`'s comments). Checked `docs/Physical-Schema.sql:233-244`:
+   `opportunity_stakeholder`'s only index is its composite PK
+   `(opportunity_id, stakeholder_id)` — no dedicated index on
+   `stakeholder_id` alone, so the count subquery wouldn't get an indexed
+   lookup as written. Not a real concern at this data volume (a handful of
+   stakeholders/opportunities per account, low absolute row count
+   system-wide) — but since this is a new query direction on that table,
+   add `CREATE INDEX idx_opportunity_stakeholder_stakeholder_id ON
+   opportunity_stakeholder (stakeholder_id)` in the same migration as
+   cheap insurance, not because a problem was measured.
+
+   Not yet implemented — design is settled, nothing built yet.
+2. **Opportunity access restriction — design decided 2026-07-23, NOT YET
+   IMPLEMENTED, needs client discussion first (see flag below).** Restrict
+   Opportunity visibility to the owning sales person and their manager
+   only. Ties into the still-open "land RLS (Phase 2E)" item from the
+   2026-07-14 deployment-topology write-up below —
+   `docs/Phase-2E-Security-Architecture.md` (status: Approved, but its own
+   implementation checklist is 100% unbuilt — RLS isn't enabled on any
+   table yet) already names "Owner-scoped data access" and "Manager
+   visibility" as core RLS responsibilities, with illustrative policy SQL.
+
+   **The gap traced (2026-07-22/23):** the approved design's manager
+   visibility is **SBU-wide** (any Sales Manager in Imaging sees all
+   Imaging opportunities), per `docs/Enterprise-Data-Model.md:341-342`'s
+   documented security classification ("Opportunities: User Scoped
+   (Owner/Split) / **SBU Scoped (Manager)**"). That's because
+   `UserProfile` (`backend/app/domains/organization/models.py:20-26`) has
+   only `sbu_id`/`role_id` — no `manager_id`/`reports_to`, and the role
+   table (`docs/Seed-Data.sql:88-93`) is flat (Sales Executive, Sales
+   Manager, General Manager, Admin), no hierarchy. Confirmed with Basheer:
+   today there's exactly one Sales Manager per SBU, so SBU-wide and
+   reporting-line visibility currently produce identical results — the
+   gap is only latent, not live.
+
+   **Decision (Basheer, 2026-07-23):** Cabio is likely to add a hierarchy
+   level within the next year (SBU Manager → multiple Sales Managers →
+   their own sales staff), at which point SBU-wide manager visibility
+   would over-expose data across manager boundaries. Build the reporting-
+   line data model **now**, before Phase 2E's RLS is implemented/shipped
+   (i.e. before any live rollout depends on the flat-SBU behavior) —
+   retrofitting a security-boundary policy after real users depend on it
+   is materially riskier than deciding the shape now, and analysis showed
+   the cost of doing it now is low: add `manager_id UUID NULL REFERENCES
+   user_profile(id)` (self-referencing, additive, no risk to existing
+   rows) and design the "manager visibility" RLS policy as a
+   reporting-chain walk (recursive CTE) instead of the flat SBU-equality
+   check currently sketched in Phase-2E — a strict superset of today's
+   behavior (identical results while there's 1 manager/SBU), so no
+   regression now, no second live RLS rollout needed if/when the
+   hierarchy lands. Everything above the RLS layer (service, repository,
+   frontend, the one existing role gate on Product Catalog writes) is
+   unaffected either way — Phase 2E's own layering already insulates the
+   rest of the app from this change.
+
+   **⚑ FLAG — discuss with client before implementing:** two inputs this
+   needs that only Cabio can supply — (1) confirm the ~1-year hierarchy
+   timeline is real enough to justify building `manager_id` ahead of need,
+   and (2) get the actual reporting-line data (who reports to whom) plus
+   clarify whether the future top tier is a new "SBU Manager" role
+   distinct from today's "Sales Manager," or a renaming/promotion of the
+   existing role — affects the role table, not just `user_profile`. Also
+   requires amending two documents currently marked settled:
+   `Enterprise-Data-Model.md`'s security classification (§341-342) and
+   `Phase-2E-Security-Architecture.md` (status: Approved, decisions
+   "final") — worth running through the same Architecture Freeze /
+   Consistency Review rigor as other settled-doc changes, not a silent
+   patch. Not yet implemented.
+3. **Product training material links.** Add ability to link per-product
+   training material (hosted on an intranet elsewhere) into the Product
+   Catalog. Likely extends the existing Product Catalog collateral-links
+   pattern (`ab67209`, URL-only, 2026-07-12) rather than needing a new
+   mechanism.
+4. **Project ID field.** Add a Project ID (in addition to Project Name)
+   for Projects under a Customer.
+
+**UI-walkthrough findings (Basheer's own review during the demo, not
+client-sourced, surfaced 2026-07-22) — additive to the four items above:**
+- **View/Edit split on Customer 360 tabs.** Stakeholders/Projects/
+  Opportunities/Installed-Base tabs (`Customer360Screen.tsx`) each only
+  have an `onEdit` affordance — clicking a row opens straight into an
+  editable `FormModal`, no read-only path. For Opportunities, route to the
+  existing `OpportunityDetailScreen.tsx` instead of building a new view.
+  Stakeholder rows already render every field they have, so no new screen
+  needed there — see item 1 above for what the Stakeholder view still
+  needs to add (linked-opportunities list). Projects/Installed-Base not
+  yet checked for parity. Matters more once Opportunity access is
+  role-restricted (item 2) — View/Edit need to be separately gateable.
+- **Mobile tap targets — UI standard DECIDED (Basheer, 2026-07-22), not yet
+  applied anywhere.** A mouse pointer is a precise single pixel with a
+  hover state that confirms the target before commit; a fingertip is an
+  8-10mm contact area with no preview and it occludes the target while
+  tapping — so small/tightly-packed inline text links are genuinely more
+  error-prone on touch, not just a style preference (basis: Apple HIG
+  44x44pt / Material 48x48dp minimum tap targets). Resolution is **not**
+  a desktop-vs-mobile branch — one component serves both: use a full-row
+  tappable element (MUI `ListItemButton`, or equivalent generous padding)
+  for anything that navigates, rather than a small inline link. Costs
+  nothing on desktop (mouse users get a bigger, easier click target too)
+  and fixes the mobile mis-tap problem outright. Standard to apply
+  wherever row-level navigation is built or touched going forward — e.g.
+  the linked-opportunities list under item 1 above — not a standalone
+  retrofit task across existing screens.
+- **Stage/Status labeling on `OpportunityDetailScreen` header — DECIDED,
+  not yet applied.** `StageBadge` and `StatusBadge` (lines 85-119) render
+  side by side with no label prefix — given ADR-028's stage/status
+  decoupling is a deliberate, non-obvious modeling choice, unlabeled
+  adjacent pills risk reading as one dimension to a new pilot user.
+  Approved change: prefix each pill's text with "Stage:" / "Status:"
+  inline, no layout/color change. Next step: implement.
+
+**Not yet sequenced or estimated.** Next step: decide how these fold into
+the production deployment plan (`docs/Deployment-Topology.md`) before
+pilot rollout begins.
+
+---
+
+**Session 2026-07-21 — demo-day login loop, RESOLVED after three rounds of
+misdiagnosis, fix committed same day (`428e3a7`).** Started during a full
+regression pass ahead of the 7:15pm
+showcase (demo moved up from July 20; automated checks were clean first —
+`pytest` 311 passed, `tsc --noEmit`/`eslint`/`npm run build` all clean, no
+regression from recent commits). Original symptom: first login attempt with
+any of the 4 role accounts silently bounced back to the login screen; retry
+with the same credentials worked every time. Full arc below so the dead
+ends aren't re-litigated next time something in this area misbehaves.
+
+**Round 1 fix (real bug, not sufficient on its own):**
+`sales-os-app/src/lib/api.ts`'s axios response interceptor treated *any*
+401 — including `/auth/me`, the profile-bootstrap call fired immediately
+after `signInWithPassword()` — as grounds to `supabase.auth.signOut()` +
+hard-redirect to `/`. Excluded `/auth/me` from that trigger and had
+`sales-os-app/src/contexts/AuthContext.tsx`'s `signIn()` capture
+`data.session` directly instead of relying solely on the async
+`onAuthStateChange` listener. This shipped, but the loop kept recurring
+intermittently afterward under different conditions (multi-endpoint 401
+bursts well into an already-authenticated session, not just on first
+login) — proof this wasn't the whole story.
+
+**Two rival theories investigated and REJECTED, with evidence, not just
+argument:**
+1. *"Backend forces ES256 but Supabase issues HS256/RS256"* — disproven by
+   querying the live project's JWKS endpoint directly
+   (`https://drwtvgesygbsglzpnomi.supabase.co/auth/v1/.well-known/jwks.json`):
+   confirmed ES256, one key. Also confirmed via `git log` that ES256/JWKS
+   was a deliberate migration (`fd87a3c`, "Complete end-to-end
+   authentication runtime validation"), not an oversight. Applying the
+   suggested HS256 patch would have broken login entirely, not fixed it.
+2. *"Frontend race — session not yet in localStorage when the dashboard's
+   first API calls fire"* — disproven by real backend console logs: 401
+   bursts occurred deep into an already-authenticated session (repeated
+   product-detail views, an SBU filter toggle, a reminders-tab toggle —
+   minutes past login), and within a single burst some concurrent requests
+   401'd while sibling requests fired in the same instant returned 200. A
+   single "session was null at snapshot time" cause can't produce a mixed
+   per-request outcome; that pattern is decided independently per request,
+   not by one shared client-side timing gap.
+   (Missing DB user-profile seeding was also floated and ruled out —
+   confirmed seeded — before this point.)
+
+**Round 2 fix (real, general gap — kept, but not the load-bearing fix):**
+`api.ts`'s response interceptor upgraded from "any 401 → hard signOut" to
+"attempt `supabase.auth.refreshSession()` once (de-duped across concurrent
+401s via a shared `refreshPromise`), retry the original request, only
+`signOut()` if the refresh itself fails." This is a real, standalone
+improvement — ordinary token expiry (roughly hourly, expected behavior
+with or without any bug) was previously forcing a hard logout instead of a
+silent refresh. Reduced visible failures (3 of the next 4 logins recovered
+silently) but didn't eliminate them — the 4th surfaced a visible error.
+
+**ROOT CAUSE, found via that 4th failure's actual on-screen error text:**
+`"The token is not yet valid (iat)"` — PyJWT's `ImmatureSignatureError`.
+Verified directly against the installed PyJWT 2.13.0 source
+(`site-packages/jwt/api_jwt.py`): `verify_iat` defaults to `True`, and
+`backend/app/core/security.py`'s `decode_jwt()` never passed a `leeway`, so
+*any* disagreement between the backend host's system clock and Supabase's
+server clock (a few seconds is enough — plausible on an unmanaged Windows
+dev laptop, W32Time syncs only every 7 days by default) caused freshly
+issued/refreshed tokens to be rejected as "issued in the future." This one
+mechanism retroactively explains the entire incident, no other cause
+needed: the original first-login-then-retry-works pattern (every login
+mints a fresh `iat`), the mid-session interleaved 401/200 bursts (every
+token *refresh* also mints a fresh `iat`, re-opening the same narrow
+rejection window — explains the mixed-outcome bursts too), and the 4th
+login's failure.
+
+Considered whether this morning's Supabase archive/restore (1 week
+inactivity → unpause) was the trigger — assessed as unlikely. This code,
+and its missing `leeway`, has been unchanged since the June 24 ES256
+migration (`fd87a3c`); the more likely explanation is that today's testing
+style (repeated fresh cold logins across all 4 demo accounts, for the
+regression pass) was simply the first time this dormant defect got
+exercised — day-to-day usage normally resumes a persisted session rather
+than doing a cold sign-in, so it had nothing to trip over before.
+
+**Fix applied 2026-07-21, verified clean (`tsc --noEmit`, `npm run lint`,
+`python -m pytest tests/test_auth.py` — 18 passed, including the
+hour-scale expired/invalid-token boundary tests, unaffected by a 30s
+leeway), retested live — no more iat error. COMMITTED same day (`428e3a7`,
+"fix: resolve intermittent login loop (session race, 401 handling, JWT
+clock skew)"):**
+- `backend/app/core/security.py` — added `leeway=30` to the `jwt.decode()`
+  call. **This is the load-bearing fix** — covers `iat`/`nbf`/`exp`
+  uniformly (same PyJWT parameter validates all three).
+- `sales-os-app/src/lib/api.ts` — Round 2 fix above; kept, addresses a
+  genuinely separate concern (transient/expected 401 resilience) from the
+  clock-skew bug.
+- `sales-os-app/src/contexts/AuthContext.tsx` — Round 1's `setSession`
+  capture. **Not confirmed to have been load-bearing for any observed
+  symptom** — applied before the iat mechanism was understood. Explicit
+  decision (Basheer, 2026-07-21): keep it anyway as low-risk defensive
+  hardening (removes a soft dependency on the async listener to reflect an
+  action just directly awaited), not because it's proven to have fixed
+  anything real. Flagging this here so it isn't mistaken for confirmed-
+  necessary in a future audit.
+
+Superseded/no longer needed: the previously-planned "Tier 2 forced repro"
+(deliberately break `SUPABASE_URL`, restart backend, confirm reproduction)
+— moot now that the real root cause was found and fixed via actual live
+reproduction instead.
+
+**Still pending:** resume the interrupted `docs/Regression-Test-Plan.md`
+Part A pass (was mid-pass when the login-loop bug was found).
 
 ---
 
