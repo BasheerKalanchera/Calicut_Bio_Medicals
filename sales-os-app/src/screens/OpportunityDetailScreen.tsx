@@ -91,6 +91,7 @@ function StageBadge({ name }: { name: string }) {
         fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
       }}
     >
+      <Box component="span" sx={{ opacity: 0.65, fontWeight: 700, mr: 0.5 }}>Stage:</Box>
       {name}
     </Box>
   );
@@ -113,6 +114,7 @@ function StatusBadge({ code, name }: { code: string; name: string }) {
         fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
       }}
     >
+      <Box component="span" sx={{ opacity: 0.65, fontWeight: 700, mr: 0.5 }}>Status:</Box>
       {name}
     </Box>
   );
