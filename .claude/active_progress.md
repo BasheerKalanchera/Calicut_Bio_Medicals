@@ -400,12 +400,45 @@ production readiness for the pilot rollout to the star sales team:**
    sketch this box used to describe — read the technical-design doc
    instead, don't re-derive from this history.
 
-   Document is out for review before freeze (as of 2026-07-24). Next step
-   once frozen: scope/estimate the Phase 2E build as its own standalone
-   estimate (schema migration, RLS context propagation, restricted DB
-   role + policies, testing strategy, the doc fixes, ADR-009 rewrite) —
-   don't let it get silently absorbed into Milestone 2 or the pilot
-   rollout timeline unscoped.
+   Document is out for review before freeze. **Reviewed 2026-07-25**
+   (second-opinion pass, findings verified against the actual codebase
+   before acting on them) — two real gaps found and resolved same day,
+   doc updated in place (now §5/§6, Decisions Log rows 9-11):
+   1. **Level 4 (Area Manager):** `user_profile.zone_id` exists but
+      `Phase-2E-Security-Architecture.md` explicitly defers wiring
+      `app.current_zone_id` into `set_rls_context()` — needed now.
+      Confirmed with Basheer: zone_id is the right mechanism, no new
+      geography concept needed.
+   2. **Level 5 (Sales Manager/team):** no `manager_id`/`team_id`/
+      `reports_to_id` exists anywhere — SBU/Zone are categories every
+      user already has an attribute for, but "team" is a personal
+      reporting relationship with no existing column. Decision
+      (Basheer, 2026-07-25): build all 6 tiers now with real staff
+      assigned to whichever tier matches their actual current role, not
+      placeholder tiers — so this needs to be functionally real, not
+      deferred. New `user_profile.manager_id` (nullable, self-
+      referencing FK) added to the design; RLS rule = direct reports
+      only (flat, one level down), recursive org-chart traversal
+      explicitly deferred.
+   **Same-day follow-up correction (2026-07-25):** §5's zone check was
+   first drafted joining through the opportunity *owner's* `zone_id` —
+   wrong, since `user_profile.zone_id` is nullable and drifts on staff
+   reassignment. Corrected to join through the **account's** `zone_id`
+   (`NOT NULL`, the customer's fixed location, already the
+   authoritative geography fact elsewhere in the schema) — avoids the
+   same instability class §8 already fixed for SBU. Also expanded §6 to
+   spell out (for Basheer's own clarity, now captured in the doc so it
+   isn't re-litigated) why Levels 5/6 need no independent SBU/Zone
+   check at all: SBU containment is already guaranteed by the
+   creation-time `sbu_id` stamp (a rep can't own a deal outside her own
+   SBU), and Zone was never part of either tier's rule to begin with —
+   it's an Area Manager-only concept.
+   Not yet implemented — doc updated, no code/migration written yet.
+   Next step once frozen: scope/estimate the Phase 2E build as its own
+   standalone estimate (schema migration incl. `manager_id`, RLS context
+   propagation incl. `zone_id`, restricted DB role + policies, testing
+   strategy, the doc fixes, ADR-009 rewrite) — don't let it get silently
+   absorbed into Milestone 2 or the pilot rollout timeline unscoped.
 3. **Product training material links.** Add ability to link per-product
    training material (hosted on an intranet elsewhere) into the Product
    Catalog. Likely extends the existing Product Catalog collateral-links
@@ -583,12 +616,32 @@ $45/mo + 2× Render backend $14/mo + free static frontend hosting). Full
 cost breakdown, topology diagram, and promotion flow are in
 `docs/Deployment-Topology.md` — do not re-derive this, read that file.
 
+**Revision (2026-07-25) — two-phase rollout, Pro spend deferred.** Superseded
+the plan above: rather than upgrading to Supabase Pro and creating all 3
+projects up front, **Dev and UAT run on the free tier** (2 projects fit the
+free cap) while RLS (Phase 2E) is built and proven out with the Cabio Star
+Sales team on UAT. **The Pro upgrade and Prod project creation are deferred
+until after UAT sign-off.** Auto-pause (free tier's 7-day-inactivity pause)
+was raised and ruled out — the Star Sales team will use UAT daily once
+testing starts, so the idle threshold is never reached. Cost is now
+staged: **~$7/month now** (Render Starter backend for UAT only; Supabase
+Dev+UAT both free), **+~$52/month later** when Prod is created (Supabase Pro
+org + compute + Render Prod backend), same ~$59/month grand total as
+before — this only changes *when* the spend starts. Drafted as a separate
+`docs/Deployment-Topology-Revised.md` first for side-by-side comparison,
+confirmed correct by Basheer, then applied to `docs/Deployment-Topology.md`
+in place and the draft file deleted. Full phased cost table, updated Open
+Items checklist (Phase A now / Phase B once UAT signs off), and topology
+table are in `docs/Deployment-Topology.md` — do not re-derive, read that
+file.
+
 **Next step, whenever work resumes:** nothing has been executed yet — no
-new Supabase/Render accounts exist. The open-items checklist is in
-`docs/Deployment-Topology.md` ("Open Items"): upgrade Supabase org to Pro,
-create UAT + Prod Supabase projects, create Render services, wire
-per-environment secrets, then land RLS (Phase 2E) and prove it out on UAT
-before Prod goes live. Until that infra work starts, the still-open
+new Supabase/Render accounts exist. Phase A open items (`docs/Deployment-Topology.md`
+"Open Items"): create the UAT Supabase project (free tier), create Render
+services for UAT only, wire UAT's per-environment secrets, then land RLS
+(Phase 2E) and prove it out on UAT with the Cabio Star Sales team. Phase B
+(Pro upgrade, Prod project, Prod Render services) waits until UAT signs
+off — don't start it early. Until infra work starts, the still-open
 engineering choice from the 2026-07-13 session stands unresolved: resume
 the §9 MUI migration backlog (3 files) vs. pull from the Milestone 2
 deferred list — see the priority discussion in the 2026-07-13 write-up
