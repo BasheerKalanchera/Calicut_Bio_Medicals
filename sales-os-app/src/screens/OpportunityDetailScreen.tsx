@@ -981,13 +981,17 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // stakeholder bridge list) sets activeTab through the useState initializer
   // above, which skips handleTabChange's scroll-into-view — so on a narrow/
   // mobile viewport the highlighted chip can sit off-screen in the
-  // horizontally-scrolling tab bar. The chip bar itself only exists once the
-  // early-return loading gate below clears (opp fully resolved), so this
-  // can't just run once on mount — it has to wait for opp, then fire once
-  // (the appliedRef guard), not on every later opp refetch/update.
+  // horizontally-scrolling tab bar. The bridge list only hands over a bare
+  // {id, name} stub as initialOpportunity, so `opp` is already truthy (via
+  // useQuery's initialData) on the very first render, well before the real
+  // fetch resolves stage/status/owner/account/sbu — matching the early-return
+  // loading gate's condition here (not just `!opp`) is required, otherwise
+  // this effect fires on that stub while the chip bar is still behind
+  // <LoadingPlaceholder /> (chipBarRef null), burns its one-shot guard, and
+  // never gets to retry once the chip bar actually mounts.
   const hasAppliedInitialTabScrollRef = useRef(false);
   useEffect(() => {
-    if (!initialTab || !opp || hasAppliedInitialTabScrollRef.current) return;
+    if (!initialTab || !opp || !opp.stage || !opp.status || !opp.owner || !opp.account || !opp.sbu || hasAppliedInitialTabScrollRef.current) return;
     hasAppliedInitialTabScrollRef.current = true;
     const timer = setTimeout(() => {
       const container = chipBarRef.current;

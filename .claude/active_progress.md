@@ -11,19 +11,10 @@ verified working: (1) Back-navigation from Opportunity Detail now correctly
 reopens Customer 360 on the Stakeholders tab, not Overview. (2) Customer
 360's return-tab fix itself is confirmed working.
 
-**⚑ STILL BROKEN — start here next session:** the mobile tab-chip
-scroll-into-view fix for `OpportunityDetailScreen.tsx` (landing on the
-Stakeholders tab via `initialTab` should auto-scroll the horizontally-
-scrolling chip bar so the highlighted chip is visible on a narrow viewport)
-has been attempted **twice** and Basheer confirmed **both attempts failed**
-on real retest — see "Mobile tab-chip scroll-into-view — two failed
-attempts" write-up below for exactly what was tried and ruled out, so the
-next session doesn't repeat the same guesses. **Process note for next
-session: both attempts were static-code fixes never actually verified in a
-running browser** (violates this project's own frontend-testing rule) —
-next session should start the dev server and drive the actual repro in a
-real browser (mobile viewport) before proposing a third fix, not reason
-from source code alone again.
+**✅ FIXED (2026-07-23), verified live by Basheer on mobile viewport:** the
+mobile tab-chip scroll-into-view bug for `OpportunityDetailScreen.tsx` — see
+"Mobile tab-chip scroll-into-view — RESOLVED" write-up below for the actual
+root cause (neither of the first two attempts' theories) and the fix.
 
 Item 2 (Opportunity access restriction) is on hold —
 `docs/Opportunity-Access-Hierarchy-Proposal.md` (business-language version)
@@ -225,12 +216,43 @@ other direction:
 
 `tsc --noEmit`/`npm run lint`/`npm run build` all clean.
 
-### Mobile tab-chip scroll-into-view — two failed attempts, STILL BROKEN
+### Mobile tab-chip scroll-into-view — RESOLVED 2026-07-23
+
+**Real root cause, found by tracing the actual data flow (not the running app —
+Basheer does live/manual verification himself; this was found from code, then
+confirmed by his retest), different from both prior theories:** the bridge
+list (`Customer360Screen.tsx:361`) hands `OpportunityDetailScreen` only a bare
+`{id, name}` stub as `initialOpportunity`. `useQuery`'s `initialData` seeds
+`opp` with that stub, so `opp` is already truthy on the very first render —
+long before `stage`/`status`/`owner`/`account`/`sbu` resolve. The scroll
+effect's guard (line ~990) only checked `!opp`, not that it was the *fully
+loaded* object, so it fired on that first render, immediately set its
+one-shot `hasAppliedInitialTabScrollRef` flag, and found `chipBarRef.current`
+null — because the chip bar was still hidden behind the `!opp.stage || ...`
+early-return `<LoadingPlaceholder />` gate at that point. By the time the
+background refetch resolved the full opportunity and the real chip bar
+mounted, the guard was already permanently consumed, so the effect could
+never retry. This explains why the tab *highlight* always worked (driven
+synchronously by the `useState` initializer, unrelated to this effect) while
+the *scroll* never fired — and why Attempt 2's fix (adding `opp` to the deps
+array) didn't help: it re-ran the effect at the right time, but the stale
+guard blocked it before it could act.
+
+**Fix:** `OpportunityDetailScreen.tsx`'s scroll effect guard now checks the
+same fully-loaded condition the render gate already uses
+(`!opp.stage || !opp.status || !opp.owner || !opp.account || !opp.sbu`), so
+it can't fire prematurely on the partial stub. `tsc --noEmit`/`npm run lint`
+clean; Basheer retested live on a mobile viewport — confirmed scrolling into
+view correctly. Not yet committed.
+
+### Mobile tab-chip scroll-into-view — two failed attempts (history, superseded above)
 
 Basheer reported that on landing via `initialTab`, the Stakeholders tab chip
 shows as highlighted/active (content renders correctly) but is not visible
-on mobile — has to be scrolled to manually. **Confirmed still broken after
-two attempts; do not repeat either of these on a third try:**
+on mobile — has to be scrolled to manually. **Both attempts below were
+confirmed broken on real retest at the time; kept only as history of what
+was tried and ruled out — see "RESOLVED" write-up above for the actual fix,
+do not repeat either of these:**
 
 **Attempt 1 (failed):** Diagnosed that `OpportunityDetailScreen.tsx`'s tab
 chip bar auto-scrolls the active chip into view, but that logic
@@ -360,62 +382,30 @@ production readiness for the pilot rollout to the star sales team:**
    cheap insurance, not because a problem was measured.
 
    Not yet implemented — design is settled, nothing built yet.
-2. **Opportunity access restriction — design decided 2026-07-23, NOT YET
-   IMPLEMENTED, needs client discussion first (see flag below).** Restrict
-   Opportunity visibility to the owning sales person and their manager
-   only. Ties into the still-open "land RLS (Phase 2E)" item from the
-   2026-07-14 deployment-topology write-up below —
-   `docs/Phase-2E-Security-Architecture.md` (status: Approved, but its own
-   implementation checklist is 100% unbuilt — RLS isn't enabled on any
-   table yet) already names "Owner-scoped data access" and "Manager
-   visibility" as core RLS responsibilities, with illustrative policy SQL.
+2. **Opportunity access restriction — reporting structure APPROVED by Cabio
+   leadership 2026-07-23; full technical design settled 2026-07-24, NOT YET
+   IMPLEMENTED.** Shaping up to be its own phase (Phase 2E, now scoped
+   rather than a stub), not a Milestone 1/2 line item — see
+   **`docs/Opportunity-Access-Hierarchy-Technical-Design.md`** for the
+   complete design: the 6-tier hierarchy (Admin/GM/SBU Manager/Area
+   Manager/Sales Manager/Sales Staff, only 4 populated today), the
+   already-built `opportunity.sbu_id` stamp (ADR-035), SBU-transfer
+   handling (frozen `sbu_id` + manual ownership handoff), the
+   Project-per-SBU-Opportunity creation flow, why enforcement must be
+   PostgreSQL RLS and not per-screen filtering, the stale-doc fixes needed
+   (`Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009),
+   current RLS build status (0%), and go-live sequencing (RLS must land
+   and prove out on UAT before Prod, per `Deployment-Topology.md`).
+   **Superseded/no longer accurate:** the flat "owner + SBU-wide manager"
+   sketch this box used to describe — read the technical-design doc
+   instead, don't re-derive from this history.
 
-   **The gap traced (2026-07-22/23):** the approved design's manager
-   visibility is **SBU-wide** (any Sales Manager in Imaging sees all
-   Imaging opportunities), per `docs/Enterprise-Data-Model.md:341-342`'s
-   documented security classification ("Opportunities: User Scoped
-   (Owner/Split) / **SBU Scoped (Manager)**"). That's because
-   `UserProfile` (`backend/app/domains/organization/models.py:20-26`) has
-   only `sbu_id`/`role_id` — no `manager_id`/`reports_to`, and the role
-   table (`docs/Seed-Data.sql:88-93`) is flat (Sales Executive, Sales
-   Manager, General Manager, Admin), no hierarchy. Confirmed with Basheer:
-   today there's exactly one Sales Manager per SBU, so SBU-wide and
-   reporting-line visibility currently produce identical results — the
-   gap is only latent, not live.
-
-   **Decision (Basheer, 2026-07-23):** Cabio is likely to add a hierarchy
-   level within the next year (SBU Manager → multiple Sales Managers →
-   their own sales staff), at which point SBU-wide manager visibility
-   would over-expose data across manager boundaries. Build the reporting-
-   line data model **now**, before Phase 2E's RLS is implemented/shipped
-   (i.e. before any live rollout depends on the flat-SBU behavior) —
-   retrofitting a security-boundary policy after real users depend on it
-   is materially riskier than deciding the shape now, and analysis showed
-   the cost of doing it now is low: add `manager_id UUID NULL REFERENCES
-   user_profile(id)` (self-referencing, additive, no risk to existing
-   rows) and design the "manager visibility" RLS policy as a
-   reporting-chain walk (recursive CTE) instead of the flat SBU-equality
-   check currently sketched in Phase-2E — a strict superset of today's
-   behavior (identical results while there's 1 manager/SBU), so no
-   regression now, no second live RLS rollout needed if/when the
-   hierarchy lands. Everything above the RLS layer (service, repository,
-   frontend, the one existing role gate on Product Catalog writes) is
-   unaffected either way — Phase 2E's own layering already insulates the
-   rest of the app from this change.
-
-   **⚑ FLAG — discuss with client before implementing:** two inputs this
-   needs that only Cabio can supply — (1) confirm the ~1-year hierarchy
-   timeline is real enough to justify building `manager_id` ahead of need,
-   and (2) get the actual reporting-line data (who reports to whom) plus
-   clarify whether the future top tier is a new "SBU Manager" role
-   distinct from today's "Sales Manager," or a renaming/promotion of the
-   existing role — affects the role table, not just `user_profile`. Also
-   requires amending two documents currently marked settled:
-   `Enterprise-Data-Model.md`'s security classification (§341-342) and
-   `Phase-2E-Security-Architecture.md` (status: Approved, decisions
-   "final") — worth running through the same Architecture Freeze /
-   Consistency Review rigor as other settled-doc changes, not a silent
-   patch. Not yet implemented.
+   Document is out for review before freeze (as of 2026-07-24). Next step
+   once frozen: scope/estimate the Phase 2E build as its own standalone
+   estimate (schema migration, RLS context propagation, restricted DB
+   role + policies, testing strategy, the doc fixes, ADR-009 rewrite) —
+   don't let it get silently absorbed into Milestone 2 or the pilot
+   rollout timeline unscoped.
 3. **Product training material links.** Add ability to link per-product
    training material (hosted on an intranet elsewhere) into the Product
    Catalog. Likely extends the existing Product Catalog collateral-links
