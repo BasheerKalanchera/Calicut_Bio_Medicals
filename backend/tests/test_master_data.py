@@ -1,5 +1,6 @@
 import uuid
 from decimal import Decimal
+from typing import ClassVar
 from unittest.mock import MagicMock
 
 from fastapi.testclient import TestClient
@@ -12,15 +13,18 @@ from app.main import app
 TEST_USER_ID = uuid.UUID("11111111-1111-1111-1111-111111111111")
 
 
-def _mock_user() -> MagicMock:
+def _mock_user(role_name: str = "Admin") -> MagicMock:
     user = MagicMock(spec=UserProfile)
     user.id = TEST_USER_ID
     user.is_active = True
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
     return user
 
 
-def _setup_overrides(mock_db: MagicMock) -> None:
-    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+def _setup_overrides(mock_db: MagicMock, role_name: str = "Admin") -> None:
+    app.dependency_overrides[get_current_user] = lambda: _mock_user(role_name)
     app.dependency_overrides[get_db] = lambda: mock_db
 
 
@@ -102,6 +106,8 @@ class TestUsersEndpoint:
         user_record.sbu_id = uuid.uuid4()
         user_record.zone_id = uuid.uuid4()
         user_record.role_id = uuid.uuid4()
+        user_record.role.role_name = "Sales Staff"
+        user_record.manager_id = None
         user_record.is_active = True
 
         mock_db = MagicMock()
@@ -139,3 +145,68 @@ class TestUsersEndpoint:
         body = response.json()
         assert body["data"]["page"] == 2
         assert body["data"]["page_size"] == 10
+
+
+class TestCreateUser:
+    _BODY: ClassVar[dict] = {
+        "id": str(uuid.uuid4()),
+        "display_name": "New Rep",
+        "sbu_id": str(uuid.uuid4()),
+        "role_id": str(uuid.uuid4()),
+    }
+
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.post("/api/v1/users", json=self._BODY)
+        assert response.status_code == 401
+
+    def test_sales_staff_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.post("/api/v1/users", json=self._BODY)
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+    def test_sbu_manager_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="SBU Manager")
+        try:
+            response = client.post("/api/v1/users", json=self._BODY)
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+
+class TestUpdateUser:
+    _USER_ID = uuid.uuid4()
+
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.patch(f"/api/v1/users/{self._USER_ID}", json={"display_name": "X"})
+        assert response.status_code == 401
+
+    def test_sales_staff_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.patch(f"/api/v1/users/{self._USER_ID}", json={"display_name": "X"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+
+    def test_sbu_manager_forbidden(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+
+        _setup_overrides(mock_db, role_name="SBU Manager")
+        try:
+            response = client.patch(f"/api/v1/users/{self._USER_ID}", json={"display_name": "X"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403

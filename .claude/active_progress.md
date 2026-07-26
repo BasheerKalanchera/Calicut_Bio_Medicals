@@ -2,6 +2,155 @@
 _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 
 ## Current task — STOP HERE FIRST
+
+**Phase 2E task checklist (see `docs/Phase-2E-Build-Estimate.md` §6 for the
+original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
+2026-07-26, so numbering below reflects actual build order, not the doc):**
+1. [x] Migration: `manager_id`, role rename/new tiers, `cabio_app` role+grants — DONE
+2. [x] User Directory screen: create + update `user_profile` (Admin/GM gated) — DONE, awaiting Basheer's manual E2E
+3. [ ] Assign real staff to Area Manager / Sales Manager tiers (via the Task 1a screen, not raw SQL)
+4. [ ] 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id` SQL helper functions
+5. [ ] RLS policies: `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder` (clean join-back bucket)
+6. [ ] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc)
+7. [ ] RLS policy: `product` (flat SBU check)
+8. [ ] Local verification loop (side `psql` session, all 6 roles × every table above, before any cutover)
+9. [ ] Cutover to `cabio_app` on dev, live retest all roles
+10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md`, `CLAUDE.md` zone list
+    *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
+
+**Status as of 2026-07-26: Phase 2E RLS build started.** Working off
+`docs/Phase-2E-Build-Estimate.md`'s 9-task list (tracked as harness Tasks
+1-9; Task 10, the fast-follow "Edit User" screen, is separate/non-blocking,
+not tracked). **Task 1 DONE, applied to the live dev DB, verified:**
+new migration `backend/alembic/versions/0008_phase2e_manager_id_role_rename_cabio_app.py` —
+`user_profile.manager_id` (nullable, self-ref FK, indexed) added; `role`
+table renamed (`Sales Executive`→`Sales Staff`, `Sales Manager`→`SBU
+Manager`) + 2 new rows inserted (`Area Manager`, new-meaning `Sales
+Manager`) — all 6 tiers now present; `cabio_app` Postgres role + grants
+created (inert — RLS not enabled anywhere yet, app's own `DATABASE_URL`
+unchanged, so this is invisible to the running app for now). `UserProfile`
+model updated to match (`manager_id` column, no ORM relationship added —
+nothing yet needs to traverse it in Python). Password sourced via a new
+`CABIO_APP_DB_PASSWORD` setting in `app/core/config.py` (`backend/.env`),
+matching the existing `DATABASE_URL`/`SUPABASE_ANON_KEY` pattern — not a
+raw `os.environ` read (first draft used that; corrected before running,
+since `pydantic-settings` doesn't propagate `.env` values into the process
+environment). Verified live via direct query: `alembic current` = `0008`,
+role table has all 6 correct rows, `manager_id` column exists, `cabio_app`
+role exists in `pg_roles`.
+
+**Task 1a inserted ahead of Task 2 (Basheer's call, 2026-07-26): User
+Directory screen (create + update `user_profile`, Admin/GM-gated), so Task
+2's staff assignment happens through a real UI instead of raw SQL.**
+Scope explicitly excludes Delete (no need surfaced) and full self-service
+Create (new person still needs a Supabase Auth account made via the
+dashboard first, same as today — admin pastes the resulting UUID into this
+screen rather than hand-writing the `INSERT`). Full self-contained
+Supabase-Admin-API signup explicitly deferred until Cabio staff take
+autonomous ownership of onboarding — not needed while Basheer is the one
+doing this a handful of times a year.
+
+**Task 1a — backend DONE:**
+- `organization/schemas.py` — `UserCreate`, `UserUpdate`, extended
+  `UserListResponse` (+`role_name`, +`manager_id`).
+- `organization/repository.py` — `sbu_exists`/`role_exists`/`zone_exists`.
+- `organization/service.py` — `create_user`/`update_user`, gated to
+  `{"Admin", "General Manager"}` (same pattern as the Product Catalog
+  write-gate); existence checks on `sbu_id`/`role_id`/`zone_id`/
+  `manager_id`; self-manager guard.
+- `api/routers/master_data.py` — new `"roles"` master-data entity (needed
+  its own fetch branch — `Role` has no `is_active` column, unlike
+  `SBU`/`Zone`, so it can't reuse the generic filtered fetch); new
+  `POST /users`, `PATCH /users/{user_id}`.
+- Tests: 15 new service tests (`tests/domains/organization/test_organization_service.py`)
+  + 6 new router auth-gate tests (`tests/test_master_data.py`) — matches
+  this codebase's convention of full logic coverage at the service layer,
+  401/403-only coverage at the router layer (mirrors
+  `test_product_service.py`/`test_product_router.py` exactly). One
+  pre-existing test (`test_returns_paginated_users`) needed its mock
+  updated for the two new required response fields.
+- Verified: **342 passed** (up from 321), `ruff check` clean on every
+  touched file (one mutable-class-attribute lint issue was mine, fixed;
+  16 pre-existing findings elsewhere untouched).
+
+**Task 1a — frontend DONE:**
+- `types/api.ts` regenerated in-process (`app.openapi()` dumped to JSON,
+  no server needed — same technique as the `bb671bc` precedent), hand-written
+  tail alias block re-added (wiped by regen, as documented in the file's
+  own comment) plus 3 new aliases (`UserListResponse`, `UserCreate`,
+  `UserUpdate`). Note: `RoleResponse`/`SBUResponse`/`ZoneResponse` don't
+  appear in the generated schema at all, before or after — the
+  `/master-data/{entity}` endpoint's return type is the untyped
+  `APIResponse[list]`, so `listRoles()` stays `Promise<unknown>` like the
+  existing `listSbus`/`listZones`, consistent with pre-existing behavior,
+  not a regression.
+- `services/masterData.ts` — added `listRoles`/`createUser`/`updateUser`,
+  typed `listUsers`'s return (was `unknown`, now `UserListResponse[]`).
+  Extended this file rather than creating a new `services/users.ts` —
+  `/users` already lived here pre-existing, matching the established
+  "domain-owner file groups all its endpoints regardless of URL shape"
+  convention (same reasoning as `opportunities.ts` owning
+  `/stakeholders/...` routes).
+- New `screens/UserDirectoryScreen.tsx` — `List`/`ListItemButton` of users
+  (name, SBU, zone, "reports to X", role chip), full-row tap target per
+  the documented mobile-tap-target standard; "Add User" + row-click both
+  open the same `FormModal`-based form (id field only shown in create
+  mode); dropdowns for SBU/Role/Zone/Manager sourced from master-data
+  queries; manager dropdown excludes the user being edited (self-manager
+  guard, client-side mirror of the backend's).
+- `DemoApp.tsx` — new nav item under "ADMINISTRATION", filtered out unless
+  `userProfile.role_name` is Admin/GM (`ADMIN_ROLES` set, same two roles
+  as the backend gate); new always-mounted-hidden view, same pattern as
+  Product Catalog.
+- Verified: `tsc --noEmit` / `npm run lint` (eslint + no-Tailwind guard) /
+  `npm run build` all clean. **Not yet verified live in a browser** —
+  per this project's own testing rule, that's Basheer's manual pass, not
+  mine; flagging explicitly rather than claiming UI verification I didn't
+  do. To exercise Create for real, a throwaway Supabase Auth user needs to
+  exist first (dashboard-created) to get a UUID to paste in.
+
+**Next step:** Basheer's manual E2E on the User Directory screen (paused
+here, 2026-07-26, to do this live testing himself before continuing). Test
+plan handed off:
+1. Start backend (`uvicorn app.main:app --reload --port 8000` from
+   `backend/`) and frontend (`npm run dev` from `sales-os-app/`).
+2. Log in as `admin@cabio-demo.com` or `gm@cabio-demo.com` — confirm
+   "User Directory" appears under Administration in the sidebar.
+3. Open it, confirm the 5 existing users list correctly (SBU/zone/role
+   chip per row).
+4. Click a row (Edit) — change role and/or set a manager, save, confirm
+   the row updates and "reports to X" appears if a manager was set.
+   Confirm the person being edited doesn't appear in their own manager
+   dropdown (self-manager guard).
+5. Create — conflict case: "Add User" with an **existing** user's UUID
+   pasted in, rest filled normally — should fail (expect a generic error
+   message, not the specific "already exists" text; that's a pre-existing
+   app-wide FormModal/error-handling gap, not new).
+6. Create — success case: make a throwaway Supabase Auth user via the
+   Supabase dashboard first (Authentication → Users), copy its UUID, use
+   it in "Add User" — confirm the new person appears in the list. Note:
+   deleting that throwaway Supabase user afterward won't remove the
+   `user_profile` row created here — no cascade exists between the two
+   systems.
+7. Log out, log in as Basheer K (Sales Staff) or the SBU Manager test
+   account — confirm "User Directory" is gone from the sidebar entirely
+   (role-gate check).
+
+Then Task 2 (assign real staff to Area Manager / Sales Manager tiers, now done
+through this screen instead of raw SQL) or Task 3 (4-var
+`set_rls_context()` + `cabio_app_uid()`/`cabio_app_sbu_id()`/
+`cabio_app_role_id()`/`cabio_app_zone_id()` SQL helper functions, per
+`Phase-2E-Security-Architecture.md` + Technical Design §5) — either can go
+next, Task 3 doesn't depend on Task 2. Task 5 (conditional/two-hop RLS
+policies on `activity`/`document`/`reminder`) remains the highest-risk item
+in the whole build — see `Phase-2E-Build-Estimate.md` §2 for why, and §5's
+discipline (verify every policy via a side `psql` session with `SET ROLE
+cabio_app`, all 6 tiers, before ever touching the app's own `DATABASE_URL`
+in Task 8).
+
+---
+
+## Prior current-task entry (superseded by the above, kept for history)
 **Status as of 2026-07-22, session paused here — READ THIS FIRST NEXT
 SESSION:** Item 1 (Stakeholder ↔ Opportunity linkage)'s core 11-step plan is
 built and working (backend: 321 tests passing; frontend: `tsc`/`eslint`/

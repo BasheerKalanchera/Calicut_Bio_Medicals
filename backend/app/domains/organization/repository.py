@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -22,3 +24,18 @@ class UserRepository(BaseRepository[UserProfile]):
             self.db.scalars(stmt.offset(offset).limit(limit)).all()
         )
         return results, total or 0
+
+    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
+        from app.domains.reference.models import SBU
+
+        return self.db.get(SBU, sbu_id) is not None
+
+    def role_exists(self, role_id: uuid.UUID) -> bool:
+        from app.domains.reference.models import Role
+
+        return self.db.get(Role, role_id) is not None
+
+    def zone_exists(self, zone_id: uuid.UUID) -> bool:
+        from app.domains.reference.models import Zone
+
+        return self.db.get(Zone, zone_id) is not None

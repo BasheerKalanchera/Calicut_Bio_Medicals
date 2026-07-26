@@ -82,11 +82,29 @@ export interface paths {
         /** List Users */
         get: operations["list_users_api_v1_users_get"];
         put?: never;
-        post?: never;
+        /** Create User */
+        post: operations["create_user_api_v1_users_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update User */
+        patch: operations["update_user_api_v1_users__user_id__patch"];
         trace?: never;
     };
     "/api/v1/accounts": {
@@ -934,6 +952,20 @@ export interface components {
             message: string;
             data: components["schemas"]["StakeholderResponse"];
         };
+        /** APIResponse[UserListResponse] */
+        APIResponse_UserListResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["UserListResponse"];
+        };
         /** APIResponse[UserMeResponse] */
         APIResponse_UserMeResponse_: {
             /**
@@ -1558,7 +1590,7 @@ export interface components {
          * MasterDataEntity
          * @enum {string}
          */
-        MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "sbus" | "zones";
+        MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "sbus" | "zones" | "roles";
         /** OpportunityCreate */
         OpportunityCreate: {
             /** Name */
@@ -2388,6 +2420,30 @@ export interface components {
             /** Is Terminal */
             is_terminal: boolean;
         };
+        /** UserCreate */
+        UserCreate: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /**
+             * Role Id
+             * Format: uuid
+             */
+            role_id: string;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Manager Id */
+            manager_id?: string | null;
+        };
         /** UserListResponse */
         UserListResponse: {
             /**
@@ -2409,6 +2465,10 @@ export interface components {
              * Format: uuid
              */
             role_id: string;
+            /** Role Name */
+            role_name: string;
+            /** Manager Id */
+            manager_id: string | null;
         };
         /** UserMeResponse */
         UserMeResponse: {
@@ -2435,6 +2495,19 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** UserUpdate */
+        UserUpdate: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Sbu Id */
+            sbu_id?: string | null;
+            /** Role Id */
+            role_id?: string | null;
+            /** Zone Id */
+            zone_id?: string | null;
+            /** Manager Id */
+            manager_id?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -2769,6 +2842,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_PaginatedResponse_UserListResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_user_api_v1_users_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UserListResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_v1_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UserListResponse_"];
                 };
             };
             /** @description Validation Error */
@@ -4524,3 +4669,6 @@ export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResp
 export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
 export type OpportunityForStakeholder = components["schemas"]["OpportunityForStakeholder"];
 export type StakeholderOpportunityCountsEntry = components["schemas"]["StakeholderOpportunityCountsEntry"];
+export type UserListResponse = components["schemas"]["UserListResponse"];
+export type UserCreate = components["schemas"]["UserCreate"];
+export type UserUpdate = components["schemas"]["UserUpdate"];

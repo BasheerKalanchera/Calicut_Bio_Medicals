@@ -24,6 +24,9 @@ class UserProfile(AuditMixin, Base):
     sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
     zone_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("zone.id"), nullable=True)
     role_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("role.id"), nullable=False)
+    manager_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 

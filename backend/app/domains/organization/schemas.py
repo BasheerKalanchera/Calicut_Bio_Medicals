@@ -36,3 +36,22 @@ class UserListResponse(BaseModel):
     sbu_id: uuid.UUID
     zone_id: uuid.UUID | None
     role_id: uuid.UUID
+    role_name: str
+    manager_id: uuid.UUID | None
+
+
+class UserCreate(BaseModel):
+    id: uuid.UUID
+    display_name: str
+    sbu_id: uuid.UUID
+    role_id: uuid.UUID
+    zone_id: uuid.UUID | None = None
+    manager_id: uuid.UUID | None = None
+
+
+class UserUpdate(BaseModel):
+    display_name: str | None = None
+    sbu_id: uuid.UUID | None = None
+    role_id: uuid.UUID | None = None
+    zone_id: uuid.UUID | None = None
+    manager_id: uuid.UUID | None = None

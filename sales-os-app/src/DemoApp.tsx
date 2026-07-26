@@ -11,7 +11,10 @@ import ProjectDirectoryScreen from "./screens/ProjectDirectoryScreen";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
+import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import type { PipelineOpportunity } from "./types/api";
+
+const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
 
 const NAV_SECTIONS = [
   {
@@ -26,6 +29,7 @@ const NAV_SECTIONS = [
     title: "ADMINISTRATION",
     items: [
       { id: "catalog", label: "Product Catalog", icon: "📦" },
+      { id: "users",   label: "User Directory",  icon: "👥", adminOnly: true },
     ],
   },
 ];
@@ -165,7 +169,9 @@ export default function DemoApp() {
                   {section.title}
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-                  {section.items.map((item) => {
+                  {section.items
+                    .filter((item) => !item.adminOnly || ADMIN_ROLES.has(userProfile?.role_name))
+                    .map((item) => {
                     const isActive =
                       view === item.id ||
                       (item.id === "customers"     && view === "customer360") ||
@@ -408,6 +414,11 @@ export default function DemoApp() {
           {/* Product Catalog — always mounted, hidden when not active */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "catalog" ? "flex" : "none", flexDirection: "column" }}>
             <ProductCatalogScreen />
+          </Box>
+
+          {/* User Directory — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "users" ? "flex" : "none", flexDirection: "column" }}>
+            <UserDirectoryScreen />
           </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}
