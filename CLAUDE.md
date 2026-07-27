@@ -31,3 +31,12 @@ code or changing structure. On any conflict, the document wins over this file.
 ## Session handoff
 - Keep `.claude/active_progress.md` current: the task in progress, what's done, the next step.
 - Update it as work advances, not only at session end.
+- **Size discipline:** keep this file under ~1000 lines. Check its line count whenever you're
+  about to add a substantial entry (a finished feature write-up, a resolved investigation). If
+  it's already over budget, or your addition would push it over, archive fully-resolved sections
+  (superseded "current task" entries, shipped-feature write-ups already covered by a commit hash,
+  investigation narratives for closed bugs) into `docs/Progress-Archive-<year>-<month>.md` first —
+  don't wait to be asked, and don't let it grow past the limit before acting. Only current/pending
+  work belongs in the live file: the active task, open backlog, and standing decisions still in
+  force. Standing rules that belong to a specific domain (frontend conventions, backend patterns)
+  belong in that domain's standards doc, not here, even if first written down during a session.

@@ -344,6 +344,13 @@ Commit A/B split surfaced that these were asserting more than they checked):
   absence of `any` — a file can be TypeScript ✓ and still be `any[]`-typed throughout. Called out
   explicitly per-row only when verified during that file's migration; unverified rows keep the bare ✓.
 
+**Enforcement is live, not aspirational:** a pre-commit hook (`check-no-tailwind.js`) mechanically
+blocks any new Tailwind `className` from being committed — MUI-only is enforced automatically, not
+just documented. 14 `eslint-disable` suppressions currently keep lint green while pending files still
+use patterns the linter would otherwise flag; they are load-bearing (removing one before its file
+migrates breaks the commit gate) and get deleted one at a time, in the same commit as each file's own
+migration — never removed early "to clean up."
+
 **Pending:**
 
 | File | Path | Styling | React Query | TypeScript |
