@@ -7,16 +7,93 @@ _Session: 2026-07-03 → 2026-07-06+ (continued across multiple days)_
 original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
 2026-07-26, so numbering below reflects actual build order, not the doc):**
 1. [x] Migration: `manager_id`, role rename/new tiers, `cabio_app` role+grants — DONE
-2. [x] User Directory screen: create + update `user_profile` (Admin/GM gated) — DONE, awaiting Basheer's manual E2E
-3. [ ] Assign real staff to Area Manager / Sales Manager tiers (via the Task 1a screen, not raw SQL)
-4. [ ] 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id` SQL helper functions
+2. [x] User Directory screen: create + update `user_profile` (Admin/GM gated) — DONE, Basheer's manual E2E passed 2026-07-27 (see note below)
+3. [ ] **PARKED, not blocking** — Assign real staff to Area Manager / Sales Manager tiers (via the Task 1a screen, not raw SQL). Per `Phase-2E-Build-Estimate.md` (line 151/157), this was always scoped as "Basheer's call on names/reporting lines, not build work," and the plan's own RLS verification step (Item 8) explicitly says Area Manager/Sales Manager testing happens via *reassigning an existing test account*, not real staff — so nothing in Tasks 4-9 depends on this. Test accounts already stood up (2026-07-27, see note below) fully cover Task 7/8's verification needs. **Do this before UAT rollout** (once real names/reporting lines are confirmed with Cabio leadership), not before continuing the RLS build.
+4. [x] 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id` SQL helper functions — DONE, applied to live dev DB 2026-07-27 (see note below), real bug found + fixed before it could hit Tasks 5-7
 5. [ ] RLS policies: `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder` (clean join-back bucket)
 6. [ ] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc)
 7. [ ] RLS policy: `product` (flat SBU check)
 8. [ ] Local verification loop (side `psql` session, all 6 roles × every table above, before any cutover)
 9. [ ] Cutover to `cabio_app` on dev, live retest all roles
-10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md`, `CLAUDE.md` zone list
+10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md` (now also needs its exact `cabio_app_*()` SQL snippet corrected, see Task 4 note below — not just the zone_id addendum already tracked), `CLAUDE.md` zone list
     *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
+
+**2026-07-27 — Task 4 done: migration `0009_cabio_app_rls_helper_functions.py`
++ `set_rls_context()` rewrite, applied to live dev DB (`alembic current` =
+`0009`, head). `db/session.py`'s `set_rls_context()` now takes the full
+`UserProfile` (signature change per the architecture doc) and issues 4 `SET
+LOCAL` statements — `app.current_user_id`/`sbu_id`/`role_id` always,
+`app.current_zone_id` only when `user.zone_id is not None` (nullable
+column). `api/dependencies.py`'s `get_current_user()` call site updated to
+match (`set_rls_context(db, user)`, was `(db, user.id)`). New
+`tests/test_session.py` (3 tests: all-4-set, zone-set, zone-skipped-when-
+None). Full suite **345 passed** (up from 342), `ruff check` clean.
+
+Real bug found and fixed before it could reach Tasks 5-7, via direct
+reproduction against the live dev DB rather than trusting
+`Phase-2E-Security-Architecture.md`'s exact snippet as written:
+`current_setting(name, true)` returns `NULL` only the very first time a
+custom session variable is ever referenced in a given backend connection —
+but once a `SET LOCAL` on that variable has committed even once, PostgreSQL
+resets it to `''` (empty string), not `NULL`, for the rest of that pooled
+connection's life. `user_id`/`sbu_id`/`role_id` are safe in practice since
+`set_rls_context()` unconditionally re-sets all three on every request
+before any query runs — but `zone_id` is deliberately skipped for no-zone
+users, so on a connection pool shared across requests, a no-zone user's
+request reusing a connection a zoned user's request just committed on would
+read back `''` and crash the `::uuid` cast. Fixed by wrapping all 4
+functions' `current_setting()` call in `NULLIF(..., '')`, applied uniformly
+(not just to zone) since any of the 4 could in principle be read outside
+the normal request-start ordering (e.g. Task 8's manual `psql` verification
+loop, switching test context between roles without a full disconnect).
+Re-verified live post-fix: `SET LOCAL` + commit + read-with-no-new-SET on
+the same pooled connection now correctly returns `NULL`, not a crash.
+**`Phase-2E-Security-Architecture.md`'s "RLS Helper Functions" section still
+shows the un-guarded snippet — needs correcting as part of Task 10, this is
+a second, separate reason beyond the already-tracked zone_id addendum.**
+
+**2026-07-27 — Basheer's manual E2E on the User Directory screen, all 7
+original test-plan steps passed.** Confirmed live: nav item shows for
+Admin/GM, users list correctly (SBU/zone/role chip), edit works including
+"reports to X" display, self-manager guard (a user can't be set as their own
+manager), create success (fresh Supabase Auth UUID, done twice), create
+conflict case (an already-used UUID fails as expected), and the role-gate
+check (logged in as a non-Admin/GM account, confirmed "User Directory" is
+fully absent from the sidebar). **Task 1a is now fully verified, nothing
+outstanding.** Also stood up the 6-tier hierarchy end-to-end with real logins
+(all via the Supabase Dashboard for the Auth side, then this screen for the
+`user_profile` side — no raw SQL used for any of it except the one email
+rename below, which the screen has no field for):
+- `manager@cabio-demo.com` **renamed to `sbumanager@cabio-demo.com`**
+  (dashboard had no direct email-edit field, so done via SQL Editor:
+  `UPDATE auth.users SET email = ...` + matching
+  `UPDATE auth.identities SET identity_data = jsonb_set(...)` to keep the
+  provider identity in sync — same UUID preserved throughout, so the
+  existing `user_profile` row needed no changes). `display_name` also
+  updated in-app to `Test - SBU Manager` to match.
+- Two new Supabase Auth users created (dashboard "Add user" + this screen's
+  "Add User" for the `user_profile` row): `areamanager@cabio-demo.com`
+  (`Test - Area Manager`) and `salesmanager@cabio-demo.com`
+  (`Test - Sales Manager`). Note for next time: the Area Manager account
+  came back from Supabase already `confirmed_at`-populated even without
+  ticking "Auto Confirm User" at creation — this project's Supabase
+  instance doesn't appear to require the checkbox to avoid the stuck-
+  unconfirmed state originally expected; if a future account *does* come
+  back unconfirmed, the fix is `UPDATE auth.users SET email_confirmed_at =
+  now() WHERE email = '...'` via SQL Editor.
+
+**Resulting reporting chain (all "Test -" accounts except Amit R/Basheer K,
+who are real):** `Test - General Manager` → `Test - SBU Manager` (Critical
+Care/North Kerala) → `Test - Area Manager` (Imaging/North Kerala) →
+`Test - Sales Manager` (Imaging/North Kerala) → `Basheer K` (Sales Staff,
+Imaging/North Kerala). `Amit R` (Sales Staff, Critical Care/South Kerala) has
+no manager set. **Deliberate cross-SBU edge case in this chain:** the Area
+Manager (Imaging) reports to the SBU Manager (Critical Care) — different
+SBUs across a manager link, on purpose, to prove Task 8's verification loop
+that SBU/Zone-level RLS scoping (Levels 3/4) stays keyed to `sbu_id`/`zone_id`
+directly and isn't accidentally widened by the `manager_id` chain crossing
+SBU lines. Keep this test topology intact through Task 8 rather than
+"tidying" it into same-SBU reporting lines — the cross-SBU link is the point.
 
 **Status as of 2026-07-26: Phase 2E RLS build started.** Working off
 `docs/Phase-2E-Build-Estimate.md`'s 9-task list (tracked as harness Tasks

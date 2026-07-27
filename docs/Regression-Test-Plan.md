@@ -19,8 +19,10 @@ check it before filing anything as a bug.
 **Test accounts** (live shared dev DB):
 | Role | Login |
 |---|---|
-| Sales Executive | Your own login (`display_name` currently shows "TEST - Sales Executive" — cosmetic only, revert whenever convenient) |
-| Sales Manager | `manager@cabio-demo.com` |
+| Sales Staff | Your own login (`Basheer K`) |
+| Sales Manager | `salesmanager@cabio-demo.com` |
+| Area Manager | `areamanager@cabio-demo.com` |
+| SBU Manager | `sbumanager@cabio-demo.com` (was `manager@cabio-demo.com`, renamed 2026-07-27 for clarity after the Phase 2E tier expansion) |
 | General Manager | `gm@cabio-demo.com` |
 | Admin | `admin@cabio-demo.com` |
 

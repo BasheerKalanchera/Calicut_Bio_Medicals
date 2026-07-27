@@ -27,5 +27,5 @@ def get_current_user(
     if not user.is_active:
         raise UserNotFoundError("User account is inactive")
 
-    set_rls_context(db, user.id)
+    set_rls_context(db, user)
     return user

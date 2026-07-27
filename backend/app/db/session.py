@@ -1,4 +1,3 @@
-import uuid
 from collections.abc import Generator
 
 from sqlalchemy import create_engine, text
@@ -6,6 +5,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import app.db.registry  # noqa: F401
 from app.core.config import settings
+from app.domains.organization.models import UserProfile
 
 engine = create_engine(
     settings.DATABASE_URL.get_secret_value(),
@@ -45,6 +45,9 @@ def warm_pool() -> None:
         pass  # Non-fatal — server still starts, first request will pay the cost
 
 
-def set_rls_context(db: Session, user_id: uuid.UUID) -> None:
-    # Phase 2E will implement: db.execute(text("SET LOCAL app.current_user_id = :id"), {"id": str(user_id)})
-    pass
+def set_rls_context(db: Session, user: UserProfile) -> None:
+    db.execute(text("SET LOCAL app.current_user_id = :uid"), {"uid": str(user.id)})
+    db.execute(text("SET LOCAL app.current_sbu_id = :sid"), {"sid": str(user.sbu_id)})
+    db.execute(text("SET LOCAL app.current_role_id = :rid"), {"rid": str(user.role_id)})
+    if user.zone_id is not None:
+        db.execute(text("SET LOCAL app.current_zone_id = :zid"), {"zid": str(user.zone_id)})
