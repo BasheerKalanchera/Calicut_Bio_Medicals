@@ -12,11 +12,85 @@ original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
 4. [x] 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id` SQL helper functions — DONE, applied to live dev DB 2026-07-27 (see note below), real bug found + fixed before it could hit Tasks 5-7
 5. [x] RLS policies: `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder` (clean join-back bucket) — DONE, applied to live dev DB 2026-07-27 (see note below)
 6. [x] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc) — DONE, applied to live dev DB 2026-07-27 (see note below), scope grew mid-build to also widen `opportunity`'s own policy (participant visibility)
-7. [ ] RLS policy: `product` (flat SBU check)
-8. [ ] Local verification loop (side `psql` session, all 6 roles × every table above, before any cutover)
+7. [x] RLS policy: `product` (flat SBU check) — DONE, applied to live dev DB 2026-07-27 (see note below)
+8. [x] Local verification loop (all 6 tiers × every table above) — DONE 2026-07-27 (see note below), 56/56 checks passed
 9. [ ] Cutover to `cabio_app` on dev, live retest all roles
 10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md` (now also needs its exact `cabio_app_*()` SQL snippet corrected, see Task 4 note below — not just the zone_id addendum already tracked), `CLAUDE.md` zone list
     *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
+
+**2026-07-27 — Task 8 done: local RLS verification loop, 56/56 checks
+passed (7 test identities × 8 policy-protected tables).** Resolved the
+connectivity blocker flagged under Task 5 without needing `SET ROLE`: since
+`cabio_app` is a `LOGIN` role with its own password (created in 0008), a
+direct connection works through Supabase's Supavisor pooler using a
+tenant-qualified username, `cabio_app.<project-ref>` (same pattern the
+existing `DATABASE_URL`'s `postgres.<project-ref>` already uses) — confirmed
+the pooler's `no tenant identifier provided` error only ever meant "wrong
+username shape," not "no such role" or "can't connect at all." Verified
+first with zero RLS context set: `cabio_app` saw 0 products, proving
+enforcement is real, not merely present.
+
+**Method, not a manual `psql` transcript:** wrote a one-off verification
+script (scratchpad, not committed to the repo) that (1) pulls ground-truth
+rows for every RLS-protected table via the app's own `postgres`-role
+connection (bypasses RLS, table owner), (2) computes each of the 7 test
+identities' expected visible-row set **independently in Python**, mirroring
+`Opportunity-Access-Hierarchy-Technical-Design.md`'s stated business rules
+line-by-line rather than re-executing the same SQL the policies use (a
+same-SQL comparison would only prove the migration applied, not that the
+*intended* rule is what got encoded), (3) opens one transaction per identity
+against the direct `cabio_app` connection, issues the same 4 `SET LOCAL`
+statements `set_rls_context()` uses, queries each table, and rolls back
+(read-only, no state left behind), (4) diffs expected vs actual per table,
+flagging both directions — rows wrongly hidden (under-permissive, a
+usability bug) and rows wrongly shown (over-permissive, the actual security
+failure mode RLS exists to prevent).
+
+**Result: 56/56 checks matched exactly** across `opportunity`, `split`,
+`opportunity_item`, `opportunity_stakeholder`, `activity`, `document`,
+`reminder`, `product`, for Admin, General Manager, SBU Manager, Area
+Manager, Sales Manager, and both Sales Staff test accounts (Basheer K,
+Amit R) — confirms 0010/0011/0012 encode the intended 6-tier rules, not
+just *some* consistent rule. Per-tier visible-opportunity counts were
+clearly differentiated (21/21/0/12/16/18/5), ruling out an RLS-not-applied
+false pass.
+
+**One honest test-data gap, not a policy gap, flagged rather than glossed
+over:** all 21 test opportunities are `Imaging` SBU (confirmed via direct
+query) — there is no `Critical Care` opportunity today, so `SBU Manager`'s
+(Critical Care) `sbu_id = cabio_app_sbu_id()` branch was only proven to
+correctly *exclude* (0 result), never proven to positively match a same-SBU
+row. The identical clause **is** positively proven elsewhere in this same
+run -- `product` spans both SBUs (8 Imaging + 19 Critical Care = 27 total)
+and Area Manager/Sales Manager (both Imaging) get non-zero opportunity
+counts via the same equality check -- so this is a coverage gap in today's
+seed data, not evidence the mechanism is untested. Also explicitly confirmed
+the deliberate cross-SBU edge case from the Task 1a note holds: SBU Manager
+(Critical Care) sees 0 opportunities despite the Area Manager (Imaging)
+being a direct report -- the manager_id chain crossing SBU lines does not
+leak into SBU-level visibility, since that branch never references
+manager_id at all.
+
+**2026-07-27 — Task 7 done: migration `0012_rls_product.py`, applied to live
+dev DB (`alembic current` = `0012`, head).** Simplest RLS migration in the
+build so far: `product` has no `owner_id`/`zone_id`/`manager_id`, just a
+non-nullable, already-indexed `sbu_id` — every non-Admin/GM tier collapses to
+the same check, so it's one flat two-branch policy
+(`product_sbu_visibility`), not a per-tier one. Reuses `cabio_app_role_name()`/
+`cabio_app_sbu_id()` from 0009/0010 — no new helper functions needed. Real
+behavior change this enforces (per `Phase-2E-Build-Estimate.md` §1c):
+`GET /products` today takes `sbu_id` as an optional, client-supplied filter
+with nothing stopping a client from omitting it or passing the other SBU's
+id — RLS makes this enforced and unforgeable instead of advisory. Inert on
+the running app until the `cabio_app` cutover (Task 9), same as 0008-0011.
+
+Verified via direct metadata query (same approach as Tasks 5/6, full 6-tier
+behavioral matrix still deferred to Task 8): `rowsecurity = true` on
+`product`, `product_sbu_visibility` policy present with the exact expected
+`USING` clause (confirmed via `pg_policies.qual`), app's own connection
+(table owner) still sees all 27 products unchanged. **345 passed**
+(unchanged — no Python code touched), `ruff check` clean on the new
+migration file.
 
 **2026-07-27 — Task 6 done: migration `0011_rls_activity_document_reminder.py`,
 applied to live dev DB (`alembic current` = `0011`, head).** Started as "just"
