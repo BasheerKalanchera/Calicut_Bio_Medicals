@@ -287,6 +287,7 @@ export default function LogActivityModal({
             />
             <TextField
               select
+              label="Assign Next Action To"
               value={nextActionOwnerId}
               onChange={(e) => setNextActionOwnerId(e.target.value)}
               fullWidth

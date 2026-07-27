@@ -11,12 +11,86 @@ original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
 3. [ ] **PARKED, not blocking** — Assign real staff to Area Manager / Sales Manager tiers (via the Task 1a screen, not raw SQL). Per `Phase-2E-Build-Estimate.md` (line 151/157), this was always scoped as "Basheer's call on names/reporting lines, not build work," and the plan's own RLS verification step (Item 8) explicitly says Area Manager/Sales Manager testing happens via *reassigning an existing test account*, not real staff — so nothing in Tasks 4-9 depends on this. Test accounts already stood up (2026-07-27, see note below) fully cover Task 7/8's verification needs. **Do this before UAT rollout** (once real names/reporting lines are confirmed with Cabio leadership), not before continuing the RLS build.
 4. [x] 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id` SQL helper functions — DONE, applied to live dev DB 2026-07-27 (see note below), real bug found + fixed before it could hit Tasks 5-7
 5. [x] RLS policies: `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder` (clean join-back bucket) — DONE, applied to live dev DB 2026-07-27 (see note below)
-6. [ ] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc)
+6. [x] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc) — DONE, applied to live dev DB 2026-07-27 (see note below), scope grew mid-build to also widen `opportunity`'s own policy (participant visibility)
 7. [ ] RLS policy: `product` (flat SBU check)
 8. [ ] Local verification loop (side `psql` session, all 6 roles × every table above, before any cutover)
 9. [ ] Cutover to `cabio_app` on dev, live retest all roles
 10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md` (now also needs its exact `cabio_app_*()` SQL snippet corrected, see Task 4 note below — not just the zone_id addendum already tracked), `CLAUDE.md` zone list
     *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
+
+**2026-07-27 — Task 6 done: migration `0011_rls_activity_document_reminder.py`,
+applied to live dev DB (`alembic current` = `0011`, head).** Started as "just"
+the `activity`/`document`/`reminder` conditional policies, but a design
+discussion with Basheer surfaced a real product-behavior gap first, so scope
+grew to include a widening of Task 5's `opportunity` policy too:
+
+- **Corrected assumption from the Build Estimate doc:** `document` actually
+  has 4 nullable context columns, not 3 — `product_id` too (Product Catalog
+  collateral links), missed in `Phase-2E-Build-Estimate.md` §1b's original
+  description. **Confirmed with Basheer:** product-only documents (no
+  opportunity) stay universally visible regardless of SBU, same as
+  account/project-only rows — reps need to be able to answer a customer's
+  question about the *other* SBU's equipment from its collateral.
+- **Real gap found by working through the design, not by inspecting code:**
+  `activity.user_id` / `reminder.assigned_to_user_id` are NOT constrained to
+  the opportunity's owner — confirmed live in `LogActivityModal.tsx`'s "Next
+  Action" owner dropdown, which lists every user in the system with no
+  team/SBU restriction (`activity/service.py`'s `resolved_owner =
+  data.next_action_owner_id or activity.user_id` backs this). A naive
+  "gated purely by the parent opportunity's visibility" policy would have
+  silently broken the Next Actions screen for anyone handed a follow-up on a
+  deal they don't otherwise have tier-based visibility into.
+- **Basheer's follow-up insight, which reshaped the fix:** merely exposing
+  the one assigned reminder row wouldn't be useful — the assignee needs the
+  *whole deal's* context (history, documents, stakeholders) to actually help.
+  Since every child table already inherits from "can you see the parent
+  opportunity," the correct fix is one addition at the opportunity level, not
+  four separate carve-outs. Basheer also called out the same logic applies
+  to Split participants (someone given a commission % on a deal should also
+  get permanent visibility into it) — a case this session hadn't yet
+  considered. **Confirmed: both carve-outs are permanent** (not conditioned
+  on `reminder.is_completed` or a specific split %) — once genuinely tied to
+  a deal, that access doesn't expire.
+- **Real technical wrinkle this created, resolved via SECURITY DEFINER
+  functions (a new pattern for this project):** having `opportunity`'s policy
+  query `split`/`reminder`+`activity` directly would create a circular RLS
+  dependency once those tables also have policies referencing back to
+  `opportunity` (which this same migration adds) — evaluating "can user X
+  see opportunity O" would recurse into re-evaluating the same question with
+  no base case. Fixed with two new SECURITY DEFINER helper functions,
+  `cabio_app_has_split(opportunity_id)` and
+  `cabio_app_assigned_reminder(opportunity_id)` — each answers one narrow
+  boolean fact by reading the raw table directly (owned by the migration's
+  own role, RLS-exempt by default, same reasoning as why `postgres` bypasses
+  RLS generally), never re-entering `opportunity`'s own policy. `SET
+  search_path = public` on both, standard SECURITY DEFINER hardening.
+- `opportunity_tier_visibility` widened via `ALTER POLICY ... USING (...)`
+  (not dropped/recreated) — all 5 of Task 5's branches unchanged, plus two
+  new un-gated branches (`cabio_app_has_split(id)`,
+  `cabio_app_assigned_reminder(id)`), consistent with how `owner_id = me` was
+  already left un-gated: none of these three branches can ever grant more
+  than "a deal you're personally tied to."
+- `activity`/`document` policy (identical shape, one line each):
+  `opportunity_id IS NULL OR opportunity_id IN (SELECT id FROM opportunity)`.
+- `reminder` policy: `activity_id IN (SELECT id FROM activity)` — needed no
+  separate assignee logic of its own; the opportunity-level widening already
+  covers it via the ordinary join-back chain, one fix at the top rather than
+  one per table (Technical Design doc §11's own stated principle).
+- Also fixed in the same session: `LogActivityModal.tsx`'s "Next Action"
+  owner dropdown had no `label` prop — Basheer noticed it while discussing
+  the above and correctly guessed that's *why* he'd never noticed the
+  reassignment feature existed. Added `label="Assign Next Action To"`.
+
+Verified same as Task 5 (metadata query, not yet the full 6-tier behavioral
+matrix — still Task 8): `rowsecurity = true` on all 3 tables, all 4 policies
+present (`activity_tier_visibility`, `document_tier_visibility`,
+`reminder_via_activity`, plus `opportunity_tier_visibility` confirmed via
+`pg_get_expr` to actually contain both new branches — not just present under
+the same name), both new functions show `prosecdef = true` in `pg_proc`
+(confirms SECURITY DEFINER took effect), app's own connection (table owner)
+sees unchanged row counts across all 4 tables. `345 passed` (unchanged —
+migration touches no Python code), `ruff check` clean on the new migration
+file, frontend `npm run lint` clean after the label fix.
 
 **2026-07-27 — Task 5 done: migration `0010_rls_opportunity_children.py`, applied
 to live dev DB (`alembic current` = `0010`, head).** Enables RLS + one policy
