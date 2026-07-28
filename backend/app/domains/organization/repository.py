@@ -1,10 +1,24 @@
 import uuid
+from collections.abc import Callable
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
 from app.domains.organization.models import UserProfile
+
+# Mirrors opportunity_tier_visibility's OR-chain (alembic/versions/0010_rls_opportunity_children.py)
+# applied to user_profile rows instead of opportunity rows. Admin/General Manager are unrestricted
+# (not listed here). Sales Manager's manager_id check is deliberately one level deep, not a
+# recursive org-chart walk -- same "flat" scope Opportunity's own Level 5 rule uses, per
+# Opportunity-Access-Hierarchy-Technical-Design.md SS6. Every tier also always sees itself, applied
+# unconditionally below.
+_UNRESTRICTED_ROLES = {"Admin", "General Manager"}
+_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
+    "SBU Manager": lambda u: UserProfile.sbu_id == u.sbu_id,
+    "Area Manager": lambda u: and_(UserProfile.sbu_id == u.sbu_id, UserProfile.zone_id == u.zone_id),
+    "Sales Manager": lambda u: UserProfile.manager_id == u.id,
+}
 
 
 class UserRepository(BaseRepository[UserProfile]):
@@ -13,10 +27,30 @@ class UserRepository(BaseRepository[UserProfile]):
 
     def list_active(
         self,
+        current_user: UserProfile,
         offset: int = 0,
         limit: int = 50,
     ) -> tuple[list[UserProfile], int]:
         stmt = select(UserProfile).where(UserProfile.is_active == True)  # noqa: E712
+
+        role_name = current_user.role.role_name
+        if role_name not in _UNRESTRICTED_ROLES:
+            from app.domains.reference.models import Role
+
+            self_row = UserProfile.id == current_user.id
+            scope_builder = _SCOPE_BUILDERS.get(role_name)
+            visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
+
+            # Admin/General Manager carry an sbu_id/zone_id only to satisfy the NOT NULL
+            # columns -- they're an unrestricted overlay tier, not members of any operational
+            # SBU/zone/team, so they must never surface as a match under another tier's scoped
+            # branch just because their placeholder values happen to coincide (e.g. an SBU
+            # Manager whose SBU happens to match an Admin's on-paper sbu_id).
+            not_unrestricted = UserProfile.role_id.not_in(
+                select(Role.id).where(Role.role_name.in_(_UNRESTRICTED_ROLES))
+            )
+            stmt = stmt.where(and_(not_unrestricted, visible))
+
         total = self.db.scalar(
             select(func.count()).select_from(stmt.subquery())
         )

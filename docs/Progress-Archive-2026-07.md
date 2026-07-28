@@ -1428,3 +1428,51 @@ build` all clean.
 label (opens in new tab), delete a link, regression-checked Add/Edit
 Product still works unaffected. No issues found.
 
+---
+
+## Commit ledger — "Done in prior sessions" (moved from active_progress.md 2026-07-28)
+
+(ledger rows are commits, not files; §9 status as of `71dc5a0`: 12 fully
+migrated, 3 pending — `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx` — and 1 permanently out of scope, `App.jsx`
+itself, the prototype, never migrating. 12 + 3 + 1 = 16 tracked total; only
+the 3 pending files are actual remaining work.)
+
+| File / change                                       | Commit(s)   | What                                                                                 |
+| ---------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| Docs reconciliation + Tailwind pre-commit guard      | `d25bea8`, `dc543fa`, `bb28f23` | CLAUDE.md/Frontend-Standards reconciled to ADR-031; `.githooks/pre-commit` activated |
+| `main.tsx`                                           | `8ec95a4`   | MUI migration                                                                        |
+| `ActivityTimeline.tsx`                               | `5eef75a`   | MUI migration (redesigned as cards)                                                  |
+| `NextActionsScreen.tsx`                              | `219ff99`   | MUI migration                                                                        |
+| `LogActivityModal.tsx`                               | `c1796d6`   | MUI migration + `.then()`→`useQuery` fix                                             |
+| `OpportunityPipelineScreen.tsx`                      | `8a3ed70`   | MUI migration                                                                        |
+| Fidelity audit fixes (theme + first 7 files)         | `a7cbb02`   | Theme-level + per-file corrections; wrote up §6.6/§6.7/§6.8                          |
+| `QuickLeadModal.tsx`                                 | `fe68a91`   | MUI migration + React Query                                                          |
+| `OpportunityDetailScreen.tsx` Commit A                | `3619295`   | Styling + missing stakeholder-link POST/DELETE endpoints                             |
+| `OpportunityDetailScreen.tsx` Commit B                | `01cead0`   | React Query + BR-FIN-03 auto-sync + `applyOppPatch` + stakeholder-edit feature       |
+| `check-no-tailwind.js` shape-matching fix            | `11dc051`   | Guard matches real Tailwind utility shape, not bare `className=`                     |
+| `sales_os_prototype_demo_ready.jsx` deletion         | `6d7b9f7`   | Removed orphaned prototype file                                                      |
+| `DemoApp.tsx`                                        | `d107c5b`   | MUI migration                                                                        |
+| `Customer360Screen.tsx` Commit A                     | `fd57a32`   | Styling-only MUI migration                                                           |
+| `Customer360Screen.tsx` Commit B                      | `1bc4678`   | React Query (ADR-032) + BR-OP-02/03/05 status-gated fields + activity_count field + Round 1 activity query optimization (account-scoped only — see Deferred) |
+| Backend concurrency fix (48 `async def` → `def`)      | `2bb41b4`   | Fixed the real root cause of Activity-tab/general screen-load slowness — see "Backend concurrency fix" below |
+| `Customer360Screen.tsx` graduation                    | `a0ef2e4`   | §9 fully-migrated table + `check-no-tailwind.js` GRANDFATHERED removal              |
+| `OpportunityDetailScreen.tsx` BR-OP port + 4-tab prefetch | `2f7e074` | BR-OP-02/03/05 status gates, Overview display, Reactivation Overdue badge, always-mounted Products/Splits/Stakeholders/Activity prefetch |
+| `OpportunityPipelineScreen.tsx` Reactivation Overdue badge | `349a41e` | Last piece of the BR-OP status-gate rollout (all 3 opportunity-facing screens now done) |
+| `ReminderRepository.list_for_user`/`count_for_user` fix    | `39ff781` | `include_completed` changed from additive to exclusive filter — Next Actions "Completed" tab no longer shows pending rows too |
+| Activity logging on Project Details                    | `6075c80` | New `list_by_project` backend path + Activity card on `ProjectDirectoryScreen.jsx`; see write-up below |
+| `ErrorBoundary.jsx` rename + migration                 | `581c28d`, `71dc5a0` | `.jsx`→`.tsx` rename, then MUI migration; styling + type-conversion only, no data-fetching (per §9's own "N/A" row) — §9 now 12 migrated, 3 pending |
+| Parent Customer display (read-side)                    | `87fde5a`   | `AccountRef` type + `list_children()` read path; Customer360Screen Overview tab + CustomerDirectoryScreen "Parent: X" badge; see write-up below |
+| Parent Customer editing + 2 bugfixes                    | `95e118a`   | Edit Account/New Customer parent lookups, backend cycle guard, cache-invalidation + `initialDataUpdatedAt` fixes; see write-up below |
+| `api.ts` regeneration + `ActivityType` backend fix       | `bb671bc`   | Closed out the generation-debt item below; see write-up below |
+| Docs fix (`managing_sbu_id`/`zone_id` drift) + `ADR-035` | `1a6e633`   | `Enterprise-Data-Model.md`/`Physical-Schema.sql` corrected; new ADR formalizing Account-is-SBU-agnostic (previously only in an archived memo) |
+| Stray-test fix, unrelated to any feature                | `31bafa8`   | `ProductService.list_products` test called a `brand` kwarg the method never had — fixed the test, did not build brand filtering |
+| `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer |
+| Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
+| Reminder click-through                                   | `ac6d008`   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
+| Product Catalog collateral links                         | `ab67209`   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
+| Catalog role gate (GM+Admin)                              | `42fa050`   | `ProductService.create_product`/`update_product` require `role_name` kwarg, 403 unless GM/Admin; `ProductCatalogScreen.jsx` hides Add/Edit for other roles. Closes Milestone 1 gap-closure (all 6 items done). Manually verified by Basheer across all 4 roles (UI + direct `curl`) |
+| Demo/rollout planning docs                                | `ffaa669`   | `Demo-Showcase-Flow-July-20.md` (8-act presenter script), `Regression-Test-Plan.md`, `Deployment-Topology.md` (Dev/UAT/Prod decision — see write-up below) |
+
+Full write-ups for the rows above (backend concurrency fix, Parent Customer display+editing, `api.ts` generation debt, Milestone 1 screen mapping, the Prototype/Production Parity Audit) are earlier in this file.
+

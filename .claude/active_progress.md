@@ -14,9 +14,257 @@ original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
 6. [x] RLS policies: `activity`, `document`, `reminder` (conditional/two-hop — highest-risk item, see §2 of the estimate doc) — DONE, applied to live dev DB 2026-07-27 (see note below), scope grew mid-build to also widen `opportunity`'s own policy (participant visibility)
 7. [x] RLS policy: `product` (flat SBU check) — DONE, applied to live dev DB 2026-07-27 (see note below)
 8. [x] Local verification loop (all 6 tiers × every table above) — DONE 2026-07-27 (see note below), 56/56 checks passed
-9. [ ] Cutover to `cabio_app` on dev, live retest all roles
+9. [~] Cutover to `cabio_app` on dev — DONE, connection split + swap live 2026-07-27 (see note below); automated read-path retest passed, **write-path retest (create/update Opportunity, log Activity, etc.) across roles still needs Basheer's manual E2E pass** before this is fully closed out
 10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md` (now also needs its exact `cabio_app_*()` SQL snippet corrected, see Task 4 note below — not just the zone_id addendum already tracked), `CLAUDE.md` zone list
     *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
+
+**2026-07-27 — Task 9 in progress: `cabio_app` cutover live on dev.** Before
+flipping `backend/.env`, found a real gap the architecture doc had
+anticipated but the codebase never implemented: `alembic/env.py` and
+`app/db/session.py` both read the same single `settings.DATABASE_URL` —
+swapping it wholesale would've made every future `alembic upgrade` run as
+`cabio_app`, which has no `CREATE`/`ALTER` grants, breaking migrations
+permanently. Fixed by splitting the connection:
+- `app/core/config.py` — new required `ADMIN_DATABASE_URL: SecretStr`.
+- `backend/.env` — `ADMIN_DATABASE_URL` now holds the former `DATABASE_URL`
+  value (table-owner/postgres connection); `DATABASE_URL` itself repointed
+  to `cabio_app` (tenant-qualified username `cabio_app.<project-ref>`
+  through the Supavisor pooler, password percent-encoded via
+  `urllib.parse.quote` since it contains literal `!`/`@`).
+- `alembic/env.py` — now builds `sqlalchemy.url` from `ADMIN_DATABASE_URL`,
+  not `DATABASE_URL`, so migrations keep running with DDL privileges,
+  fully decoupled from the app's own connection going forward.
+- `tests/conftest.py` — added a matching `ADMIN_DATABASE_URL` default
+  (pydantic requires it to instantiate `Settings()` at all, even though
+  no test actually uses it — tests never touch alembic). Confirmed
+  `tests/conftest.py` already pins `DATABASE_URL` to a separate
+  `localhost:54322` default regardless of `backend/.env`'s real value, so
+  the pytest suite was never at risk from this cutover either way.
+
+Verified post-swap: `alembic current` still resolves via `ADMIN_DATABASE_URL`
+(unaffected, still `0012`/head); `app.db.session.engine` now connects as
+`cabio_app` (confirmed via `SELECT current_user`); **345 passed**, `ruff
+check` clean on all 3 touched files.
+
+**Automated read-path retest, through the real app code path (not a bespoke
+script)** — re-ran Task 8's exact 7-identity × 8-table matrix through
+`SessionLocal` + `set_rls_context()` (the actual production call path,
+pooled connections, same as every real request), not raw psycopg2. All
+counts matched Task 8's numbers exactly (opportunity: 21/21/0/12/16/18/5;
+product: 27/27/19/8/8/8/19; same parity across the other 6 tables) —
+confirms the cutover's actual connection-pooling behavior reproduces the
+already-proven policy logic, not just that the policies exist. (Checked
+for a live no-zone user to re-exercise Task 4's `NULLIF` pooling fix under
+real RLS too — none exist in current data, every `user_profile` row has a
+`zone_id`; that fix stays covered by `tests/test_session.py` alone, not
+re-proven here — not a gap introduced by this cutover, just an
+opportunistic check that turned out inconclusive.)
+
+**Deliberately not yet done, held for Basheer's manual E2E pass (same
+division of labor as the User Directory screen):** write-path retest
+(create/update Opportunity, log Activity, etc.) across all 6 tiers. Task 8
+and this session's read-path check only ever exercised `SELECT` — these
+policies have no `FOR SELECT` clause and no separate `WITH CHECK`, so
+`INSERT`/`UPDATE` are gated by the identical `USING` expression, untested
+until now. This is the first time that side of the policies gets exercised
+at all, `Activity` rows are immutable (`CLAUDE.md` safety note — no DELETE
+endpoint, so a bad test write is permanent), and this is the live shared
+dev DB — real risk, not automated blindly.
+
+**Test plan handed off in `docs/Phase-2E-Task9-Write-Retest-Plan.md`**
+(scratch doc, Basheer will delete once retest is done) — baseline
+one-write-per-tier sanity checks, 4 targeted edge cases (cross-SBU Next
+Action reassignment, Split to someone outside the reporting chain, a
+product-only Document's cross-SBU visibility, reminder completion by the
+assignee not the owner), and one expected-to-fail check (a Sales Staff
+account genuinely can't reach an out-of-visibility Opportunity to edit it).
+**Config/env changes (`config.py`, `alembic/env.py`, `tests/conftest.py`,
+`backend/.env`) deliberately left uncommitted until the retest results are
+in**, per Basheer's call — a finding could still fold a fix into the same
+change before it's committed.
+
+**Automated write-retest suite — designed, paused mid-build, not started.**
+Basheer asked to automate the baseline+edge-case checks above rather than run
+them by hand forever. Design settled before work paused: `TestClient`
+in-process (not a real `uvicorn` server, not browser automation) with
+SQLAlchemy's `join_transaction_mode="create_savepoint"` (confirmed supported,
+installed version 2.0.51) so `get_db` hands back a session bound to one
+externally-controlled transaction — every real code path runs (router →
+`get_current_user` → real JWT verification → service → `set_rls_context` →
+live RLS) but nothing survives a forced rollback, even if the app's own
+`get_db` calls `commit()`. Browser/live-server automation was explicitly
+rejected for the write-path suite: neither can be rolled back from outside
+the process, and `Activity` rows are immutable, so a bad automated write
+there would be permanent. Real Supabase-issued JWTs are required either way —
+`decode_jwt()` verifies against Supabase's JWKS (ES256), can't be self-signed.
+**Blocked on:** where the suite should read each test account's real
+password from (env var vs `.env.test`, unclear if shared or per-account) —
+asked, never answered, since Basheer redirected to the `/users` fix instead.
+Planned file list once resumed: `backend/tests/rls/__init__.py`,
+`conftest.py` (the transactional fixture + a `login()` helper caching one
+token per test account), `test_write_retest.py` (the 5 baseline rows + 4
+edge cases + 1 expected-fail from `Phase-2E-Task9-Write-Retest-Plan.md`,
+looking up real opportunity IDs rather than hardcoding them).
+
+**Next step:** waiting on Basheer's manual write-path retest results, **plus**
+Basheer creating 3 new Supabase Auth accounts for the hierarchy build-out below
+(both open, independent of each other).
+
+**2026-07-28 — Amit R opportunity cleanup + Critical Care/Imaging hierarchy
+build-out planned, first 3 junk rows deleted.** Amit R's opportunities were
+invisible to Test - SBU Manager (Critical Care) because all 5 were stamped
+`sbu_id = Imaging` (frozen-attribution, ADR-035 — set from creator Basheer K,
+doesn't follow ownership reassignment) — not a bug. 3 were childless test
+junk ("Test opportunity 3", "New opportunity", "one more") — deleted after
+the usual precondition check, Amit R now owns exactly 2. The other 2 ("New
+USG m/c", "Mims calicut") stay untouched: immutable `Activity`/`Reminder`
+rows tied to Task 9 edge cases 1/2 (see the Amit R cross-visibility entry
+below), and Imaging-only line items (SonoScape E2/HD-550) — reassigning
+owner or `sbu_id` would either hit Activity immutability or create a
+Critical-Care-opportunity-selling-Imaging-products inconsistency. Basheer's
+"reassign to Basheer K to clean up" idea was rejected: would create a
+self-split (Basheer as both owner and 50% split-holder) and destroy the
+Task 9 evidence already banked. Also clarified for Basheer (not explicitly
+signed off, just offered and unopposed): this historical cross-owner data
+remains fully reproducible under live RLS today — the writer always had
+legitimate visibility at the time each write happened; only a party who
+could never see the opportunity at all is blocked now, which isn't this case.
+
+**Hierarchy build-out — plan confirmed with Basheer, blocked on new accounts.**
+Critical Care gets its own chain: new Area Manager → new Sales Manager →
+Amit R, under the existing Test - SBU Manager. Imaging gets its own new SBU
+Manager: Test - Area Manager/Test - Sales Manager stay put (still governing
+Basheer K), just get a new Imaging-specific manager, replacing today's
+cross-SBU wiring (Test - Area Manager currently reports to the Critical Care
+SBU Manager). **Blocked:** `user_profile.id` must match a real Supabase Auth
+UUID, and `backend/.env` only has the anon key — 3 new accounts need Basheer
+to either create them via the Supabase dashboard and hand over the UUIDs, or
+provide a
+service-role key. Once accounts exist, wiring `sbu_id`/`zone_id`/`manager_id`
+is a normal `/users` API operation, same path the User Directory screen uses.
+
+**2026-07-28 — `/users` endpoint now respects the same visibility hierarchy as
+Opportunity; a reported "RLS violation" during manual testing turned out to be
+a real but unrelated frontend bug, now fixed.** Owner dropdown in
+`OpportunityPipelineScreen.tsx` was showing every active user regardless of
+caller. Fixed by threading `current_user` through
+`master_data.py:list_users` → `UserService.list_active_users` →
+`UserRepository.list_active`, which now applies the same tier logic as
+`opportunity_tier_visibility` (`0010_rls_opportunity_children.py`): Admin/GM
+unrestricted, SBU Manager → own `sbu_id`, Area Manager → own `sbu_id` +
+`zone_id`, Sales Manager → direct reports only via `manager_id` (one level,
+matching Opportunity's own deliberately-flat rule, not recursive), everyone
+always includes self. No frontend change needed — `listUsers()` just renders
+whatever the endpoint returns. Tests: new `test_organization_repository.py`
+(asserts the compiled WHERE clause per role tier), plus service/router
+coverage; 355/355 passing.
+
+**Basheer then reported what looked like a live security failure**: dropdown
+stuck showing only one user across every role, and a Sales Manager test
+account appearing to view *and edit* an Area Manager's opportunity, reassigning
+it to himself. Investigated directly against the live DB before assuming the
+new filter was at fault:
+- Simulated the exact scenario through the real `cabio_app` connection with
+  the Sales Manager's actual RLS session context, in a rolled-back
+  transaction: the opportunity was invisible (`SELECT` → none) and the
+  reassignment `UPDATE` affected 0 rows. **RLS enforcement itself was never
+  broken.**
+- Checked the opportunity's live `updated_at`/`updated_by` history — still
+  correctly Test - Area Manager throughout. No unauthorized write ever
+  persisted.
+- Root cause: `sales-os-app/src/main.tsx` creates one `QueryClient` for the
+  whole app session, and `AuthContext.tsx`'s `signOut()`/`signIn()` never
+  cleared it — so switching test accounts left every screen showing
+  leftover cached data from whichever identity loaded it first, including
+  the Owner dropdown and the pipeline list. What looked like a Sales Manager
+  editing someone else's deal was stale cache from an earlier, legitimately
+  authorized view.
+- Fix: `queryClient.clear()` added to `AuthContext.signOut()` only (checked:
+  `signIn()` is never reachable without a prior `signOut()` or a full page
+  reload in this app's current control flow, so clearing there too would be
+  redundant — dropped per Basheer's call).
+
+**Separate, smaller leak found during manual verification and fixed**: Test -
+SBU Manager (Critical Care) saw Test - Admin and Test - General Manager in
+their scoped dropdown, because those two accounts' `sbu_id`/`zone_id` are
+non-null placeholders (schema requires a value; the value itself is
+meaningless for an unrestricted role) that happened to coincide with a real
+SBU. Fixed in `UserRepository.list_active` by excluding any target row whose
+own role is Admin/GM from every scoped branch, regardless of what
+`sbu_id`/`zone_id`/`manager_id` happens to be stamped on it — not by giving
+Admin/GM a fake "Corporate" SBU (would leak into every other SBU-scoped
+picker/report and only holds if every future Admin/GM account remembers the
+convention) and not by making `sbu_id` nullable yet (see `## Deferred` for
+why that's real, separate, multi-file work).
+
+**2026-07-28 — Amit R cross-visibility question, investigated and closed: not
+a bug.** Basheer reported seeing opportunities owned by Amit R while logged in
+as `sales@cabio-demo.com` (Sales Staff) and asked whether that was expected.
+Verified directly against the live DB using the app's real code path
+(`set_rls_context()` + the actual `cabio_app` connection, not a synthetic
+script): of Amit R's 5 owned opportunities, Basheer sees exactly **2** —
+"New USG m/c" (Basheer has a 50% Split + an incomplete assigned Next Action
+reminder on it) and "Mims calicut" (a completed assigned reminder). The other
+3 are correctly hidden. This is the Task 6 permanent split/reminder carve-out
+(`0011_rls_activity_document_reminder.py`) working as designed, not scoped to
+the current write-retest — both ties are pre-existing data from 2026-07-05.
+Basheer confirmed these are exactly the two he's seeing. **Doubles as a live
+confirmation of Task 9 retest edge cases 1/2** (cross-owner reminder
+assignment, split visibility) — can be checked off without re-running them
+fresh when the write-retest results are written up.
+
+**2026-07-28 — Junk-opportunity cleanup for Basheer K: investigated, decided,
+and executed.** 16 opportunities were owned by Basheer K (`user_profile.id
+3339381f-10e0-43b0-a507-b1e1bdabf0ce`); several looked like leftover manual-test
+data by name (`Test opportunity`, `Test opportunity 2`, `test Opp 3`, `usg`,
+`usg m/c`, `USG 2`, `new lead`, etc.) rather than real pipeline data.
+
+Two real constraints found, relevant to any cleanup approach chosen:
+- **No DELETE endpoint exists for Opportunity anywhere in the app** (only
+  `opportunity-items` and the stakeholder-link endpoints have one) — hard
+  delete has never been a supported operation for this entity, consistent
+  with Activity's own immutability-by-design.
+- **Every child FK into `opportunity` (`activity`, `document`, `split`,
+  `opportunity_item`, `opportunity_stakeholder`) is `NO ACTION`, no cascade**
+  — confirmed via `information_schema`. A raw-SQL delete on any opportunity
+  with children needs its children deleted first; 3 of the 16 have real
+  `Activity` rows (1, 3, and 1 respectively), which would mean deleting
+  Activity rows via raw SQL — directly contradicts the immutable-Activity
+  invariant this project has otherwise enforced everywhere.
+
+Full per-opportunity child-row counts (id, name, created_at, activity/split/
+item/stakeholder/document counts) were pulled and shown to Basheer inline
+this session but not saved to a file — re-run the same query against
+`ADMIN_DATABASE_URL` if needed again:
+```sql
+SELECT o.id, o.name, o.created_at,
+  (SELECT count(*) FROM activity a WHERE a.opportunity_id = o.id) AS n_activity,
+  (SELECT count(*) FROM split s WHERE s.opportunity_id = o.id) AS n_split,
+  (SELECT count(*) FROM opportunity_item oi WHERE oi.opportunity_id = o.id) AS n_item,
+  (SELECT count(*) FROM opportunity_stakeholder os WHERE os.opportunity_id = o.id) AS n_stakeholder,
+  (SELECT count(*) FROM document d WHERE d.opportunity_id = o.id) AS n_document
+FROM opportunity o WHERE o.owner_id = '3339381f-10e0-43b0-a507-b1e1bdabf0ce'
+ORDER BY o.created_at;
+```
+6 of the 16 had zero children at all (clean hard-delete candidates): MRI Deal,
+Patient Monitor Upgrade, New Cath Lab Equipment, Test opportunity, Test
+opportunity 2, New. Of those 6, 2 (MRI Deal → project "MRI Suite Upgrade";
+New Cath Lab Equipment → project "New Cath Lab Installation") turned out to be
+linked via `opportunity.project_id` to real-sounding projects despite having
+no Activity logged yet — Basheer chose to exclude those 2 pending further
+review, rather than treat "zero children" alone as sufficient for deletion.
+
+**Decision: option (b) narrowed to the 4 zero-child, no-project opportunities.**
+Hard-deleted via raw SQL against `ADMIN_DATABASE_URL` (no DELETE endpoint
+exists for Opportunity in the app, consistent with the constraint noted
+above): `Patient Monitor Upgrade`, `Test opportunity`, `Test opportunity 2`,
+`New`. Immediately before the `DELETE`, re-verified each row's owner,
+`project_id IS NULL`, and zero children in the same script, then committed in
+one transaction. Post-delete check confirmed Basheer K now owns exactly 12
+opportunities: the 2 project-linked ones (still untouched, still childless)
+and the 10 that already had `opportunity_item`/`activity`/`opportunity_stakeholder`
+rows (also untouched). **Closed — no further action needed** unless Basheer
+later decides on the 2 project-linked ones or the 10 with children.
 
 **2026-07-27 — Task 8 done: local RLS verification loop, 56/56 checks
 passed (7 test identities × 8 policy-protected tables).** Resolved the
@@ -427,50 +675,13 @@ Full narrative for everything before 2026-07-26 (the login-loop bug saga, the mo
 
 ## Done in prior sessions (committed — see git log/commit messages for full detail)
 
-(ledger rows are commits, not files; §9 status as of `71dc5a0`: 12 fully
-migrated, 3 pending — `CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-`ProjectDirectoryScreen.jsx` — and 1 permanently out of scope, `App.jsx`
-itself, the prototype, never migrating. 12 + 3 + 1 = 16 tracked total; only
-the 3 pending files are actual remaining work.)
-
-| File / change                                       | Commit(s)   | What                                                                                 |
-| ---------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------ |
-| Docs reconciliation + Tailwind pre-commit guard      | `d25bea8`, `dc543fa`, `bb28f23` | CLAUDE.md/Frontend-Standards reconciled to ADR-031; `.githooks/pre-commit` activated |
-| `main.tsx`                                           | `8ec95a4`   | MUI migration                                                                        |
-| `ActivityTimeline.tsx`                               | `5eef75a`   | MUI migration (redesigned as cards)                                                  |
-| `NextActionsScreen.tsx`                              | `219ff99`   | MUI migration                                                                        |
-| `LogActivityModal.tsx`                               | `c1796d6`   | MUI migration + `.then()`→`useQuery` fix                                             |
-| `OpportunityPipelineScreen.tsx`                      | `8a3ed70`   | MUI migration                                                                        |
-| Fidelity audit fixes (theme + first 7 files)         | `a7cbb02`   | Theme-level + per-file corrections; wrote up §6.6/§6.7/§6.8                          |
-| `QuickLeadModal.tsx`                                 | `fe68a91`   | MUI migration + React Query                                                          |
-| `OpportunityDetailScreen.tsx` Commit A                | `3619295`   | Styling + missing stakeholder-link POST/DELETE endpoints                             |
-| `OpportunityDetailScreen.tsx` Commit B                | `01cead0`   | React Query + BR-FIN-03 auto-sync + `applyOppPatch` + stakeholder-edit feature       |
-| `check-no-tailwind.js` shape-matching fix            | `11dc051`   | Guard matches real Tailwind utility shape, not bare `className=`                     |
-| `sales_os_prototype_demo_ready.jsx` deletion         | `6d7b9f7`   | Removed orphaned prototype file                                                      |
-| `DemoApp.tsx`                                        | `d107c5b`   | MUI migration                                                                        |
-| `Customer360Screen.tsx` Commit A                     | `fd57a32`   | Styling-only MUI migration                                                           |
-| `Customer360Screen.tsx` Commit B                      | `1bc4678`   | React Query (ADR-032) + BR-OP-02/03/05 status-gated fields + activity_count field + Round 1 activity query optimization (account-scoped only — see Deferred) |
-| Backend concurrency fix (48 `async def` → `def`)      | `2bb41b4`   | Fixed the real root cause of Activity-tab/general screen-load slowness — see "Backend concurrency fix" below |
-| `Customer360Screen.tsx` graduation                    | `a0ef2e4`   | §9 fully-migrated table + `check-no-tailwind.js` GRANDFATHERED removal              |
-| `OpportunityDetailScreen.tsx` BR-OP port + 4-tab prefetch | `2f7e074` | BR-OP-02/03/05 status gates, Overview display, Reactivation Overdue badge, always-mounted Products/Splits/Stakeholders/Activity prefetch |
-| `OpportunityPipelineScreen.tsx` Reactivation Overdue badge | `349a41e` | Last piece of the BR-OP status-gate rollout (all 3 opportunity-facing screens now done) |
-| `ReminderRepository.list_for_user`/`count_for_user` fix    | `39ff781` | `include_completed` changed from additive to exclusive filter — Next Actions "Completed" tab no longer shows pending rows too |
-| Activity logging on Project Details                    | `6075c80` | New `list_by_project` backend path + Activity card on `ProjectDirectoryScreen.jsx`; see write-up below |
-| `ErrorBoundary.jsx` rename + migration                 | `581c28d`, `71dc5a0` | `.jsx`→`.tsx` rename, then MUI migration; styling + type-conversion only, no data-fetching (per §9's own "N/A" row) — §9 now 12 migrated, 3 pending |
-| Parent Customer display (read-side)                    | `87fde5a`   | `AccountRef` type + `list_children()` read path; Customer360Screen Overview tab + CustomerDirectoryScreen "Parent: X" badge; see write-up below |
-| Parent Customer editing + 2 bugfixes                    | `95e118a`   | Edit Account/New Customer parent lookups, backend cycle guard, cache-invalidation + `initialDataUpdatedAt` fixes; see write-up below |
-| `api.ts` regeneration + `ActivityType` backend fix       | `bb671bc`   | Closed out the generation-debt item below; see write-up below |
-| Docs fix (`managing_sbu_id`/`zone_id` drift) + `ADR-035` | `1a6e633`   | `Enterprise-Data-Model.md`/`Physical-Schema.sql` corrected; new ADR formalizing Account-is-SBU-agnostic (previously only in an archived memo) |
-| Stray-test fix, unrelated to any feature                | `31bafa8`   | `ProductService.list_products` test called a `brand` kwarg the method never had — fixed the test, did not build brand filtering |
-| `CustomerType` (institution-nature)                      | `70cf978`   | Migration `0005` + model/schema/service/tests + `Customer360Screen.tsx`/`CustomerDirectoryScreen.jsx` UI + `ADR-036`; see write-up below. Manually verified by Basheer — see "Current task" for one open follow-up question this surfaced |
-| Opportunity Detail trio (Project/Lead Source/Demo End)   | `b662751`   | `PipelineOpportunity` schema + `list_pipeline` noload fix + new `test_opportunity_router.py` + `OpportunityDetailScreen.tsx` Overview/Edit; see write-up below. Manually verified by Basheer, one layout tweak folded in |
-| Reminder click-through                                   | `ac6d008`   | New `GET /opportunities/{id}` + `OpportunityDetailScreen.tsx` fetch-on-mount + `NextActionsScreen.tsx`/`DemoApp.tsx` wiring + return-view back-nav fix; see write-up below. Manually verified by Basheer, one back-navigation bug found and fixed |
-| Product Catalog collateral links                         | `ab67209`   | New `document` domain (schemas/repository/service/router) + migration `0006` (`file_size_bytes` nullable, applied to live DB) + `ProductCatalogScreen.jsx` Collateral Links card; see write-up below. Manually verified by Basheer |
-| Catalog role gate (GM+Admin)                              | `42fa050`   | `ProductService.create_product`/`update_product` require `role_name` kwarg, 403 unless GM/Admin; `ProductCatalogScreen.jsx` hides Add/Edit for other roles. Closes Milestone 1 gap-closure (all 6 items done). Manually verified by Basheer across all 4 roles (UI + direct `curl`) |
-| Demo/rollout planning docs                                | `ffaa669`   | `Demo-Showcase-Flow-July-20.md` (8-act presenter script), `Regression-Test-Plan.md`, `Deployment-Topology.md` (Dev/UAT/Prod decision — see write-up below) |
-
-
-Full write-ups for the rows above (backend concurrency fix, Parent Customer display+editing, `api.ts` generation debt, Milestone 1 screen mapping, the Prototype/Production Parity Audit) are in `docs/Progress-Archive-2026-07.md`.
+Full commit ledger (Docs reconciliation through Demo/rollout planning docs,
+~30 rows) moved to `docs/Progress-Archive-2026-07.md` on 2026-07-28 to keep
+this file focused on current/pending work — all shipped, nothing open. §9
+MUI migration status as of `71dc5a0`: 12 fully migrated, 3 pending
+(`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
+`ProjectDirectoryScreen.jsx`), tracked below under "Next step," not in the
+archived ledger.
 
 ## Reference: Customer360Screen.tsx Commit B query-key design
 
@@ -547,6 +758,61 @@ Update Frontend-Implementation-Standards.md as new gotchas/patterns surface
 during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred
+- **Reminder ("Next Action") completion doesn't require logging what was
+  done to close it out — proposed `BR-ACT-05`, mirrors `BR-ACT-04`.**
+  Surfaced 2026-07-28. Confirmed in code: `ReminderService.patch_reminder`
+  only flips `is_completed`; `Reminder` has no notes field and no link to a
+  closing Activity. `BR-ACT-04` enforces the other half of this loop
+  (Activity → mandatory Next Action, atomic) — this closes it symmetrically.
+  Proposed shape: `Reminder` gains a nullable `closing_activity_id` FK
+  (mirrors the existing `activity_id`, which points to the *creating*
+  activity); `PATCH /reminders/{id}` accepts a full Activity payload
+  alongside `is_completed=True`, created atomically — the reverse of what
+  `BR-ACT-04` does today. Keep "what happened" in `Activity` (single source
+  of truth) rather than a separate `completion_notes` field on `Reminder`.
+  **Open product decision, Basheer's call, not resolved yet:** hard
+  requirement (can't mark complete without logging an activity, matching
+  `BR-ACT-04`'s own strictness) vs. soft prompt (nudge, allow skipping for
+  trivial completions) — real UX tradeoff, every completion becomes a small
+  form instead of a checkbox click either way it leans stricter than today.
+- **Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
+  Admin/General Manager.** Surfaced 2026-07-28 while fixing the `/users`
+  endpoint's visibility filter (see dated entry above) — Admin/GM are an
+  unrestricted overlay tier, not members of any SBU/zone, but `sbu_id` is
+  `NOT NULL` today so their rows carry a meaningless placeholder value that
+  can coincidentally leak into another tier's scoped view. Fixed for now
+  with a contained role-based exclusion in `UserRepository.list_active`; the
+  conceptually-correct fix is nullable columns, but that's real multi-file
+  work, not a quick follow-up:
+  1. Migration: `ALTER TABLE user_profile ALTER COLUMN sbu_id DROP NOT NULL`,
+     backfill existing Admin/GM rows to `NULL`.
+  2. `UserProfile` model: `sbu_id: Mapped[uuid.UUID | None]`,
+     `sbu: Mapped[SBU | None]`.
+  3. `set_rls_context()` (`app/db/session.py`): add the same
+     `if user.sbu_id is not None:` guard `zone_id` already has. Lower risk
+     than it first looked — confirmed `cabio_app_sbu_id()`
+     (`0009_cabio_app_rls_helper_functions.py`) already does
+     `NULLIF(current_setting(..., true), '')::uuid`, so a never-set or
+     reset-to-empty session var already resolves to a clean SQL `NULL`
+     rather than erroring; this exact problem was already solved once for
+     `zone_id` and applied uniformly to all 4 identity functions.
+  4. **Open product decision, not just plumbing:** `opportunity` router
+     stamps `sbu_id=current_user.sbu_id` unconditionally on create, and
+     `opportunity.sbu_id` is `NOT NULL` — if Admin/GM has no `sbu_id`, either
+     they shouldn't create opportunities directly (business-rule gate), or
+     the create form needs an explicit SBU picker when the creator has none.
+     Needs Basheer's call before implementing.
+  5. Audit every other unconditional read of `.sbu_id`/`.sbu` — `UserCreate`/
+     `UserUpdate`/`UserListResponse` schemas, User Directory screen
+     rendering, target/coverage plan creation.
+  6. Data migration runs against the live shared dev DB — same care as any
+     other live write.
+  7. Folds into the already-pending Task 10 doc-fix pass
+     (`Physical-Schema.sql` etc.) rather than creating new doc debt.
+  8. Dedicated manual verification pass logging in as Admin/GM post-change,
+     same spirit as Task 8/9's role-by-role checks — confirm nothing breaks
+     now that their session carries a genuinely absent `sbu_id` for the
+     first time ever.
 - **Add an index on `account.zone_id`.** Surfaced during Task 5's migration
   review (2026-07-27). The Area Manager branch of the new `opportunity` RLS
   policy (`0010_rls_opportunity_children.py`) filters `account` by `zone_id`

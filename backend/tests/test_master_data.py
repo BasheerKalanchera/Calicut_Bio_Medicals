@@ -146,6 +146,22 @@ class TestUsersEndpoint:
         assert body["data"]["page"] == 2
         assert body["data"]["page_size"] == 10
 
+    def test_non_admin_caller_still_reaches_endpoint(self, client: TestClient) -> None:
+        # Filtering itself is verified at the repository level (test_organization_repository.py) --
+        # this just confirms current_user now flows through service -> repository without breaking
+        # the request for a restricted-visibility role.
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.all.return_value = []
+
+        _setup_overrides(mock_db, role_name="Sales Manager")
+        try:
+            response = client.get("/api/v1/users")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+
 
 class TestCreateUser:
     _BODY: ClassVar[dict] = {

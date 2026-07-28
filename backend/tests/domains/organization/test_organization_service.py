@@ -37,6 +37,19 @@ def _make_user(**overrides) -> MagicMock:
     return obj
 
 
+class TestListActiveUsers:
+    def test_forwards_current_user_and_pagination_to_repository(self):
+        caller = _make_user()
+        repo = _make_repo()
+        repo.list_active.return_value = ([caller], 1)
+
+        service = UserService(repository=repo)
+        result = service.list_active_users(caller, offset=10, limit=25)
+
+        assert result == ([caller], 1)
+        repo.list_active.assert_called_once_with(caller, offset=10, limit=25)
+
+
 class TestCreateUser:
     def _data(self, **overrides) -> UserCreate:
         defaults = {

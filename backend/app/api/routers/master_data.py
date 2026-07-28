@@ -121,7 +121,7 @@ def list_users(
     service: UserService = Depends(_get_user_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[UserListResponse]]:
     offset = (page - 1) * page_size
-    users, total = service.list_active_users(offset=offset, limit=page_size)
+    users, total = service.list_active_users(current_user, offset=offset, limit=page_size)
     total_pages = (total + page_size - 1) // page_size
 
     return APIResponse(

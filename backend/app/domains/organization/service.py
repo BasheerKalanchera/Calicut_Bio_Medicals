@@ -14,10 +14,11 @@ class UserService:
 
     def list_active_users(
         self,
+        current_user: UserProfile,
         offset: int = 0,
         limit: int = 50,
     ) -> tuple[list[UserProfile], int]:
-        return self.repository.list_active(offset=offset, limit=limit)
+        return self.repository.list_active(current_user, offset=offset, limit=limit)
 
     def create_user(self, data: UserCreate, *, role_name: str) -> UserProfile:
         if role_name not in _USER_WRITE_ROLES:
