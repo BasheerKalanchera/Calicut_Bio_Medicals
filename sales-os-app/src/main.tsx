@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Box, CircularProgress, ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import theme from "./theme";
 import "./index.css";
 import App from "./App.jsx";
@@ -42,27 +44,29 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* Prototype — original mock-data app, no auth required */}
-              <Route path="/prototype" element={<App />} />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Prototype — original mock-data app, no auth required */}
+                <Route path="/prototype" element={<App />} />
 
-              {/* Demo — production app with live APIs, auth required */}
-              <Route
-                path="/demo"
-                element={
-                  <AuthGate>
-                    <DemoApp />
-                  </AuthGate>
-                }
-              />
+                {/* Demo — production app with live APIs, auth required */}
+                <Route
+                  path="/demo"
+                  element={
+                    <AuthGate>
+                      <DemoApp />
+                    </AuthGate>
+                  }
+                />
 
-              {/* Default — redirect to demo */}
-              <Route path="*" element={<Navigate to="/demo" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </AuthProvider>
+                {/* Default — redirect to demo */}
+                <Route path="*" element={<Navigate to="/demo" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
+        </LocalizationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>

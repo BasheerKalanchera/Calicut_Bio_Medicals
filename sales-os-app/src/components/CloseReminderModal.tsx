@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
@@ -167,14 +165,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
                 <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
               ))}
             </TextField>
-            <TextField
+            <DateTimePicker
               label="Date & Time *"
-              type="datetime-local"
-              value={activityDate}
-              onChange={(e) => setActivityDate(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ inputLabel: { shrink: true } }}
+              value={activityDate ? dayjs(activityDate) : null}
+              onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
             />
             <TextField
               label="What was done? *"
@@ -202,22 +197,12 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
               size="small"
               placeholder="e.g. Send the quote they asked for"
             />
-            {/* Pilot use of @mui/x-date-pickers (already a dependency, not
-                previously wired up anywhere) — the native datetime-local
-                input's browser-controlled popup needs a click-away to
-                confirm a selection, with no way to change that from React.
-                DateTimePicker's popper has an explicit OK/Cancel action bar
-                instead. Scoped to just this field per Basheer's call;
-                lift LocalizationProvider to the app root if this expands
-                to other fields later. */}
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                label="Due Date"
-                value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
-                onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
-                slotProps={{ textField: { fullWidth: true, size: "small" } }}
-              />
-            </LocalizationProvider>
+            <DateTimePicker
+              label="Due Date"
+              value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
+              onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
+            />
             <TextField
               select
               label="Assign To"

@@ -2297,3 +2297,87 @@ creating 3 new Supabase Auth accounts and handing over their UUIDs, or
 providing a service-role key. Plan confirmed, nothing else pending on it.
 
 ---
+
+## BR-ACT-05 — mandatory closing activity on reminder completion (2026-07-30), COMPLETE
+
+Committed `51c2931`. Completing a Next Action now requires documenting what
+was actually done to close it out (Activity Type, Date, Notes) — enforced
+at the API/schema layer, mirroring BR-ACT-04's own strictness in reverse
+(Activity -> mandatory Next Action becomes Next Action completion ->
+mandatory Activity).
+
+**Data model:** `reminder` gains nullable `closing_activity_id` (migration
+`0013`), distinct from the existing `activity_id` (the *creating* activity,
+BR-ACT-04). `Reminder` model needed explicit `foreign_keys=` on both
+relationships once it had two FKs to `activity`. Applied to the live dev DB,
+verified directly via `ADMIN_DATABASE_URL` (column, index, and FK constraint
+all confirmed present).
+
+**Backend:** `ReminderUpdate` gains a conditional validator
+(`activity_type`/`activity_date`/`notes` required when `is_completed=True`;
+`MANAGER_NOTE` rejected as a closing type — internal guidance, not a
+customer interaction). `ReminderService.patch_reminder` atomically creates
+the closing Activity, inheriting account/opportunity/project from the
+reminder's own creating activity, and links it via `closing_activity_id`,
+gated on a new `ActivityRepository` dependency mirroring `ActivityService`'s
+own constructor shape. `ReminderResponse`/`ActivityContextNested` gained
+fields to expose it (`notes` was missing from the latter). New migration
+bumped the `test_persistence.py` relationship-count canary 88 -> 89.
+
+**Optional follow-up:** closing a reminder can also spawn a new one, for
+when the interaction surfaces a fresh task (e.g. customer asks for a quote
+while confirming a demo date). Reuses BR-ACT-04's own mechanism rather than
+inventing a new one — extracted `_maybe_create_next_action_reminder()` out
+of `ActivityService.log_activity`'s inline block, shared by both
+`log_activity` and `ReminderService.patch_reminder`. `ReminderUpdate` gains
+optional `next_action_text`/`next_action_due_date`/`next_action_owner_id`;
+a validator rejects one-without-the-other but neither is required. Attached
+to the *closing* Activity, not the original one, since it's a fresh
+commitment made now. No migration needed — reuses the existing
+`reminder`/`activity` shape.
+
+**Frontend:** new `CloseReminderModal.tsx` with a Details/Follow-up tabbed
+layout, matching `LogActivityModal`'s own Details/Next Action tabs exactly
+(same tab-button styling) — Basheer's explicit UI call over an
+initially-built checkbox-that-expands-fields version. Follow-up fields
+reuse `LogActivityModal`'s exact `["users", "assignable"]` / `scope=all`
+picker (BR-ACT-06). Since the follow-up is optional (unlike
+`LogActivityModal`'s own mandatory Next Action tab), "did the user actually
+want one" is derived from whether the Follow-up tab's fields are filled in
+(`hasFollowUp`), not from which tab is active when Complete is clicked —
+both fields start genuinely blank (no "tomorrow" default) so an untouched
+tab reads as "no follow-up." Follow-up tab label shows a "•" when filled in.
+`NextActionsScreen.tsx`'s "Mark to complete" opens the modal instead of
+completing directly (`patchReminder()` replaced with `completeReminder()`).
+`ReminderRow.tsx`'s `onComplete` now passes the full reminder (was just the
+id) and shows a "Closed via X on Y: notes" line once `closing_activity` is
+set — shared component, so the Opportunity Detail Next Actions tab gets
+this for free.
+
+**Regression found and fixed during manual E2E:** the closing Activity is a
+real Activity row, so it belongs in the Activity tab automatically, but
+nothing invalidated that tab's React Query cache — same shape as the
+earlier Task 9 Pipeline-cache bug. `CloseReminderModal.tsx` invalidates
+`["activities", "account", ...]` and, when opportunity-linked,
+`["activities", "opportunity", ...]`, mirroring `LogActivityModal`'s own
+self-contained invalidation.
+
+**Two small UI fixes found during re-test:** "Assign To" (and
+`LogActivityModal`'s identical "Assign Next Action To") had a label/value
+overlap from a missing `inputLabel: { shrink: true }` — every other
+`select`+`label`+`displayEmpty` combo in the codebase already sets this,
+fixed in both places. Native `datetime-local` picker needs a click-away to
+confirm a selection (browser-controlled popup, nothing fixable from
+React/CSS) — swapped to `@mui/x-date-pickers`' `DateTimePicker` for the
+Follow-up tab's Due Date field, first real usage of that package (`dayjs`
+too) despite both being dependencies already. Its popper has an explicit
+OK/Cancel action bar, solving the click-away friction directly. Initially
+scoped to just that one field with `LocalizationProvider` wrapped locally —
+see the follow-up entry below for the app-wide analysis and rollout to the
+rest of the `datetime-local` fields.
+
+383/383 backend tests passing, ruff clean, `tsc --noEmit`/`npm run lint`
+clean throughout. `Business-Rules.md` gained `BR-ACT-05`; resolved entry
+removed from `Backlog.md`.
+
+---

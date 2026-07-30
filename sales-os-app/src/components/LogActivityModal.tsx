@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, MenuItem, TextField } from "@mui/material";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import { logActivity } from "../services/activities";
 import { listAccounts } from "../services/accounts";
@@ -209,14 +211,11 @@ export default function LogActivityModal({
                 <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
               ))}
             </TextField>
-            <TextField
+            <DateTimePicker
               label="Date & Time *"
-              type="datetime-local"
-              value={activityDate}
-              onChange={(e) => setActivityDate(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ inputLabel: { shrink: true } }}
+              value={activityDate ? dayjs(activityDate) : null}
+              onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
             />
             <TextField
               select
@@ -276,14 +275,11 @@ export default function LogActivityModal({
               size="small"
               placeholder="e.g. Call to confirm demo date"
             />
-            <TextField
+            <DateTimePicker
               label="Next Action Due Date *"
-              type="datetime-local"
-              value={nextActionDueDate}
-              onChange={(e) => setNextActionDueDate(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ inputLabel: { shrink: true } }}
+              value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
+              onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
+              slotProps={{ textField: { fullWidth: true, size: "small" } }}
             />
             <TextField
               select
