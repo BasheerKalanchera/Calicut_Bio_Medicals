@@ -9,7 +9,7 @@
 - Stack: PostgreSQL 16 (Supabase) · FastAPI · React + Vite + TypeScript
 - UI framework: Material UI (MUI) is the sole styling/component framework (ADR-031). Tailwind is being removed — do not add Tailwind classes to any component. Legacy Tailwind screens are mid-migration; see docs/Frontend-Implementation-Standards.md for the tracking list.
 - SBUs: Imaging, Critical Care (also RLS security boundaries)
-- Zones: North Kerala, South Kerala, Central Kerala
+- Zones: North Kerala, South Kerala, Central Kerala, Bangalore
 - Fiscal year: Indian FY April–March; period format YYYY-Qn
 - Currency: all financial values in INR Lakhs, NUMERIC(15,2)
 - **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not local/disposable —

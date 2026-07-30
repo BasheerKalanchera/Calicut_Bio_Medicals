@@ -18,32 +18,34 @@ original 10-item source list; Task 1a was inserted ahead of Task 2 mid-build,
    2026-07-30); full detail (read-path + Basheer's manual write-path retest,
    both regressions found/fixed, ADR-037/BR-FIN-06/BR-ACT-06/BR-ACT-07)
    archived in `docs/Progress-Archive-2026-07.md`.
-10. [ ] Doc fixes: `Physical-Schema.sql`, `Backend-Implementation-Standards.md`, ADR-009, `Phase-2E-Security-Architecture.md` (now also needs its exact `cabio_app_*()` SQL snippet corrected, see Task 4 note below — not just the zone_id addendum already tracked), `CLAUDE.md` zone list
+10. [x] Doc fixes — DONE 2026-07-30: `Physical-Schema.sql` (`manager_id`
+    column + new §10 RLS object-name summary), `Backend-Implementation-Standards.md`
+    (§12 config fields, §9 RLS Context Propagation rewritten from prospective
+    to descriptive), `ADR-009` (rewritten — wrong role name, wrong 2-tier
+    model, wrong JWT-claims mechanism all corrected to match the actual
+    6-tier + participant-carve-out build), `Phase-2E-Security-Architecture.md`
+    (all 7 `cabio_app_*()` functions + `NULLIF` guard, not just 3; Deferred
+    Decisions/Implementation Checklist/Testing Strategy sections brought
+    current), `CLAUDE.md` zone list (added Bangalore). Two more found along
+    the way and also fixed: `backend/.env.example` (was missing
+    `ADMIN_DATABASE_URL` entirely — a new dev following it would hit a
+    startup crash, `Settings()` has no default for that field; added, plus
+    `CABIO_APP_DB_PASSWORD` with a comment that it's a one-time migration-0008
+    bootstrap value); `Enterprise-Data-Model.md:186`'s Account security note
+    (corrected the `set_rls_context()` no-op claim — it's live since
+    2026-07-27 — while keeping its "Accounts are globally readable" conclusion,
+    which is still true: `account` was never given `ENABLE ROW LEVEL SECURITY`
+    in any Phase 2E migration, unlike its 8 sibling tables).
     *(fast-follow, not blocking, not numbered above: Admin/GM "Edit User" screen upgrade to full Supabase-Admin-API self-service signup — deferred until Cabio staff take autonomous ownership of onboarding)*
 
-**2026-07-30 — 3 UI gaps from the Task 9 retest, fixed (uncommitted, this
-session):** mobile Owner-field truncation on Opportunity Detail (wraps
-instead of ellipsis-cutting long names), a new read-only "Next Actions" tab
-on Opportunity Detail (opportunity-scoped reminder list, backed by a new
-`GET /opportunities/{id}/reminders`, relies on existing RLS join-back for
-visibility — no new authorization logic), and "Logged by" now shown on every
-reminder (`ActivityContextNested` gained `user`, data was already
-eager-loaded). Deliberately **not** wired with a "mark complete" action from
-the new tab — unlike the standalone Next Actions screen, this list isn't
-scoped to "reminders assigned to me," and reminder completion has no DB-level
-`WITH CHECK` restricting it to the assignee, so exposing it here would be a
-real (undocumented) authorization change, not a UI convenience. Extracted the
-inline `ReminderRow` (was in `NextActionsScreen.tsx`) into shared
-`components/ReminderRow.tsx`. Backend: 365/365 passed, ruff clean.
-Frontend: `tsc --noEmit` / `npm run lint` clean. `types/api.ts` regenerated
-against local backend; hand-written alias block re-appended (regeneration
-wipes it — see the comment at the top of that block). Basheer's manual
-E2E pass still pending before commit.
+**Phase 2E build is now fully complete and documented (Tasks 1-10).** The 3
+UI gaps from the Task 9 retest (mobile Owner truncation, Next Actions tab,
+"Logged by" on reminders — see `docs/Progress-Archive-2026-07.md` for detail
+if needed) were committed `e124d94` before this session.
 
-**Next session starts here:** confirm this session's commit landed, then
-either Task 10 (doc fixes above), the still-open hierarchy build-out
-(blocked on Basheer creating 3 new Supabase Auth accounts — see
-`docs/Progress-Archive-2026-07.md`'s Task 9 write-up), or BR-ACT-05 (require
-logging what was done to close out a reminder — see `docs/Backlog.md`,
-open product decision: hard requirement vs. soft prompt). All three
-independent, any can go first.
+**Next session starts here — two independent threads, either can go first:**
+- Hierarchy build-out (Critical Care/Imaging manager chains) — blocked on
+  Basheer creating 3 new Supabase Auth accounts; see
+  `docs/Progress-Archive-2026-07.md`'s Task 9 write-up.
+- BR-ACT-05 (require logging what was done to close out a reminder) — open
+  product decision, hard requirement vs. soft prompt; see `docs/Backlog.md`.

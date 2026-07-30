@@ -884,15 +884,15 @@ async def create_opportunity(
 
 ### RLS Context Propagation
 
-The architecture is RLS First (AI Delivery Model Section 4). Authenticated user identity must reach PostgreSQL so that Row Level Security policies can evaluate the current user context. This is an infrastructure-level concern — repositories and services must remain completely unaware of RLS implementation details.
+The architecture is RLS First (AI Delivery Model Section 4). Authenticated user identity reaches PostgreSQL so that Row Level Security policies can evaluate the current user context. This is an infrastructure-level concern — repositories and services remain completely unaware of RLS implementation details; RLS is invisible to them by design.
 
-**Architectural requirements:**
+**Architectural requirements (implemented, Phase 2E, live since 2026-07-27):**
 
-1. After successful JWT authentication, the database session must carry the authenticated user's identity so that PostgreSQL RLS policies can evaluate it.
-2. Context propagation must be implemented within the database/session infrastructure layer (`app/db/`), not in repositories or services.
-3. RLS context setup must occur automatically during request processing — no manual setup calls in business logic.
-4. Repository queries must return only the rows that RLS policies permit, without any repository-level filtering for security purposes.
-5. The mechanism must be transparent: removing or disabling it should not require changes to any repository, service, or router code.
+1. After successful JWT authentication, the database session carries the authenticated user's identity so that PostgreSQL RLS policies can evaluate it.
+2. Context propagation is implemented within the database/session infrastructure layer (`app/db/session.py`'s `set_rls_context()`), not in repositories or services.
+3. RLS context setup occurs automatically during request processing — `get_current_user()` (`app/api/dependencies.py`) calls `set_rls_context(db, user)` immediately after resolving the authenticated `UserProfile`, before any repository or service code runs. No manual setup calls anywhere in business logic.
+4. Repository queries return only the rows RLS policies permit, without any repository-level filtering for security purposes — confirmed by Task 8/9's role-by-role verification (see `docs/Phase-2E-Security-Architecture.md`).
+5. The mechanism is transparent: repository and service code is identical whether RLS is enabled or not.
 
 **Architecture flow:**
 
@@ -903,19 +903,21 @@ Client Request
 JWT Validation (core/security.py)
     |
     v
-User Profile Resolution (get_current_user)
+User Profile Resolution (get_current_user, app/api/dependencies.py)
     |
     v
-Database Session Context Setup (db/session.py)
+set_rls_context(db, user) (db/session.py) — SET LOCAL app.current_user_id /
+    current_sbu_id / current_role_id / current_zone_id (the last conditional,
+    only when the user has a zone)
     |
     v
-PostgreSQL RLS Policy Evaluation (automatic, per-query)
+PostgreSQL RLS Policy Evaluation (automatic, per-query, as cabio_app)
     |
     v
 Repository Queries (return only permitted rows)
 ```
 
-**Phase 2E** will define the exact technical mechanism for context propagation. Until then, the session infrastructure must be designed with an extension point where RLS context setup can be injected without modifying existing repository or service code.
+**Mechanism:** the app connects as `cabio_app`, a dedicated non-superuser Postgres role (`DATABASE_URL`, since Task 9's cutover — see §12's `ADMIN_DATABASE_URL` note for the migration-vs-runtime connection split). RLS policies read the 4 session GUCs above via `cabio_app_uid()` / `cabio_app_sbu_id()` / `cabio_app_role_id()` / `cabio_app_zone_id()` / `cabio_app_role_name()`, plus two `SECURITY DEFINER` carve-out functions (`cabio_app_has_split()`, `cabio_app_assigned_reminder()`) for split-participant and assigned-reminder visibility that would otherwise create a circular RLS dependency. Full policy SQL, rationale, and the complete tier model (6 role tiers + 2 participant carve-outs): `docs/Phase-2E-Security-Architecture.md`.
 
 ---
 
@@ -1072,9 +1074,11 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
 
     DATABASE_URL: SecretStr
+    ADMIN_DATABASE_URL: SecretStr
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: SecretStr
-    SUPABASE_JWT_SECRET: SecretStr
+    SUPABASE_JWT_SECRET: SecretStr | None = None
+    CABIO_APP_DB_PASSWORD: SecretStr | None = None
 
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
@@ -1088,6 +1092,8 @@ settings = Settings()
 
 - `SecretStr` prevents secrets from appearing in logs, tracebacks, or `.model_dump()` output. Access the raw value with `.get_secret_value()` (e.g., `settings.DATABASE_URL.get_secret_value()`).
 - `Literal` on `APP_ENV` and `LOG_LEVEL` provides startup-time validation — invalid values fail fast with a clear Pydantic error.
+- **`DATABASE_URL` vs `ADMIN_DATABASE_URL` (Phase 2E, since the `cabio_app` cutover):** `DATABASE_URL` is the application runtime connection — points at the `cabio_app` role, which RLS actually applies to. `ADMIN_DATABASE_URL` is the table-owner (`postgres`) connection, used exclusively by `alembic/env.py` for DDL, since `cabio_app` has no `CREATE`/`ALTER` grants. Application code must never read `ADMIN_DATABASE_URL`; migrations must never read `DATABASE_URL`. See §9 (RLS Context Propagation) and `docs/Phase-2E-Security-Architecture.md`.
+- `CABIO_APP_DB_PASSWORD` is only ever read by migration `0008` (to bootstrap the `cabio_app` role's login password) — optional because no other code path needs it.
 
 ### Secrets Handling
 

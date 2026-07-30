@@ -83,6 +83,9 @@ CREATE TABLE hold_reason (
 -- ==========================================
 
 -- Assumes auth.users is managed by Supabase.
+-- role tiers (role.role_name), current as of migration 0008: Sales Staff,
+-- Sales Manager, Area Manager, SBU Manager, Admin, General Manager. See
+-- docs/Seed-Data.sql for the actual rows.
 CREATE TABLE user_profile (
     id UUID PRIMARY KEY, -- FK intended for auth.users.id
     sbu_id UUID NOT NULL REFERENCES sbu(id),
@@ -97,6 +100,12 @@ CREATE TABLE user_profile (
 -- Circular references for standard metadata applied post-creation
 ALTER TABLE user_profile ADD COLUMN created_by UUID REFERENCES user_profile(id);
 ALTER TABLE user_profile ADD COLUMN updated_by UUID REFERENCES user_profile(id);
+
+-- manager_id: self-referencing, nullable, added migration 0008 (Phase 2E
+-- Task 1). Backs the Sales Manager RLS tier's "direct reports" rule (see
+-- section 10 below) — everyone whose manager_id = the caller.
+ALTER TABLE user_profile ADD COLUMN manager_id UUID REFERENCES user_profile(id);
+CREATE INDEX idx_user_profile_manager_id ON user_profile (manager_id);
 
 -- ==========================================
 -- 4. PLANNING DOMAIN
@@ -435,3 +444,56 @@ CREATE INDEX idx_reminder_assigned_to_user_id ON reminder (assigned_to_user_id);
 CREATE INDEX idx_installed_asset_account_id ON installed_asset (account_id);
 CREATE INDEX idx_document_account_id ON document (account_id);
 CREATE INDEX idx_document_opportunity_id ON document (opportunity_id);
+
+-- ==========================================
+-- 10. ROW LEVEL SECURITY (cabio_app)
+-- ==========================================
+-- Phase 2E, migrations 0008-0012, live on dev since 2026-07-27. Full policy
+-- SQL and rationale: docs/Phase-2E-Security-Architecture.md. This section is
+-- an object-name summary only, per this file's role as the authority for DB
+-- object names (CLAUDE.md), not a duplicate of the policy prose.
+
+-- Application role. The app connects as cabio_app, not the table-owner
+-- postgres role (which Postgres exempts from RLS by default). A separate
+-- ADMIN_DATABASE_URL (table-owner connection) is used for Alembic DDL only —
+-- cabio_app has no CREATE/ALTER grants. See Backend-Implementation-Standards.md.
+CREATE ROLE cabio_app WITH LOGIN PASSWORD '...' NOINHERIT;
+GRANT USAGE ON SCHEMA public TO cabio_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO cabio_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cabio_app;
+
+-- Identity functions — read the 4 session variables SET LOCAL by
+-- set_rls_context() (app/db/session.py) on every request.
+--   cabio_app_uid()        -> app.current_user_id
+--   cabio_app_sbu_id()     -> app.current_sbu_id
+--   cabio_app_role_id()    -> app.current_role_id
+--   cabio_app_zone_id()    -> app.current_zone_id (conditional — only set
+--                              when the user has a zone)
+--   cabio_app_role_name()  -> role.role_name for the caller's role_id
+
+-- Participant carve-out functions — SECURITY DEFINER, bypass RLS on the
+-- tables they read (split; reminder+activity) to avoid a circular RLS
+-- dependency with opportunity's own policy.
+--   cabio_app_has_split(opportunity_id)
+--   cabio_app_assigned_reminder(opportunity_id)
+
+-- RLS enabled on:
+ALTER TABLE opportunity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE split ENABLE ROW LEVEL SECURITY;
+ALTER TABLE opportunity_item ENABLE ROW LEVEL SECURITY;
+ALTER TABLE opportunity_stakeholder ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity ENABLE ROW LEVEL SECURITY;
+ALTER TABLE document ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reminder ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product ENABLE ROW LEVEL SECURITY;
+
+-- Policy names (all USING-only, no separate WITH CHECK — governs SELECT/
+-- INSERT/UPDATE/DELETE alike):
+--   opportunity_tier_visibility          ON opportunity
+--   split_via_opportunity                ON split
+--   opportunity_item_via_opportunity     ON opportunity_item
+--   opportunity_stakeholder_via_opportunity ON opportunity_stakeholder
+--   activity_tier_visibility              ON activity
+--   document_tier_visibility              ON document
+--   reminder_via_activity                ON reminder
+--   product_sbu_visibility               ON product
