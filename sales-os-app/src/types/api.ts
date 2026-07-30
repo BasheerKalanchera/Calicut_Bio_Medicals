@@ -563,6 +563,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/opportunities/{opportunity_id}/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunity Reminders */
+        get: operations["list_opportunity_reminders_api_v1_opportunities__opportunity_id__reminders_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reminders/{reminder_id}": {
         parameters: {
             query?: never;
@@ -1378,6 +1395,7 @@ export interface components {
             activity_date: string;
             account: components["schemas"]["AccountNested"];
             opportunity: components["schemas"]["OpportunityNested"] | null;
+            user: components["schemas"]["UserNested"];
         };
         /** ActivityCreate */
         ActivityCreate: {
@@ -2826,6 +2844,7 @@ export interface operations {
             query?: {
                 page?: number;
                 page_size?: number;
+                scope?: string;
             };
             header?: {
                 authorization?: string | null;
@@ -4334,6 +4353,43 @@ export interface operations {
             };
         };
     };
+    list_opportunity_reminders_api_v1_opportunities__opportunity_id__reminders_get: {
+        parameters: {
+            query?: {
+                include_completed?: boolean;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ReminderResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     patch_reminder_api_v1_reminders__reminder_id__patch: {
         parameters: {
             query?: never;
@@ -4649,6 +4705,7 @@ export interface operations {
         };
     };
 }
+
 // ---------------------------------------------------------------------------
 // Hand-written aliases (kept minimal — only names other files actually
 // import). See .claude/active_progress.md for the reasoning behind each one;

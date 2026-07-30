@@ -64,6 +64,16 @@ export async function listReminders(
   return r.data.data.items;
 }
 
+export async function listOpportunityReminders(
+  opportunityId: string,
+  includeCompleted = false,
+): Promise<ReminderResponse[]> {
+  const r = await api.get(`/opportunities/${opportunityId}/reminders`, {
+    params: { include_completed: includeCompleted, page_size: 50 },
+  });
+  return r.data.data.items;
+}
+
 export async function createReminder(payload: {
   activity_id: string;
   assigned_to_user_id: string;

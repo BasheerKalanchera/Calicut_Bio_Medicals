@@ -100,6 +100,7 @@ class ActivityContextNested(BaseModel):
     activity_date: datetime
     account: AccountNested
     opportunity: OpportunityNested | None
+    user: UserNested
 
 
 class ReminderResponse(BaseModel):

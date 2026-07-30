@@ -255,18 +255,3 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `ProductService.list_products`/`ProductRepository.list_products` and add
   a genuine test for it then — not before.
 - Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
-- **Opportunity 360 detail screen, mobile layout: Owner field doesn't display
-  the full name properly** (e.g. "Test - Area Manager" appears truncated/cut
-  off). Surfaced 2026-07-30 during Task 9's manual retest. Needs a look at
-  whatever component renders the owner chip/box on that screen in mobile
-  breakpoint — likely a width/overflow fix.
-- **Opportunity Detail screen has no "Next Actions" tab.** Surfaced 2026-07-30.
-  Pending next actions for a given opportunity can currently only be seen by
-  going to the separate Next Actions screen and finding it there. Data's
-  already available (`Reminder` → `Activity.opportunity_id`), so this would be
-  a filtered read, not new capability.
-- **Next Actions screen doesn't show who logged the Activity that created the
-  reminder** — only the next-action text and the assignee/owner. Surfaced
-  2026-07-30. More relevant now that cross-tier/cross-SBU reassignment is
-  confirmed working (BR-ACT-06) — useful context when logger and assignee
-  differ.

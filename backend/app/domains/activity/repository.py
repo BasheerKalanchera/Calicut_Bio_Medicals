@@ -115,6 +115,9 @@ class ReminderRepository(BaseRepository[Reminder]):
     def activity_exists(self, activity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Activity.id == activity_id)) or 0) > 0
 
+    def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Opportunity.id == opportunity_id)) or 0) > 0
+
     def list_for_user(
         self,
         user_id: uuid.UUID,
@@ -142,5 +145,38 @@ class ReminderRepository(BaseRepository[Reminder]):
         stmt = select(func.count(Reminder.id)).where(
             Reminder.assigned_to_user_id == user_id,
             Reminder.is_completed == include_completed,
+        )
+        return self.db.scalar(stmt) or 0
+
+    def list_by_opportunity(
+        self,
+        opportunity_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Reminder]:
+        stmt = (
+            select(Reminder)
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.opportunity_id == opportunity_id)
+            .where(Reminder.is_completed == include_completed)
+            .order_by(Reminder.due_date.asc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def count_by_opportunity(
+        self,
+        opportunity_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+    ) -> int:
+        stmt = (
+            select(func.count(Reminder.id))
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.opportunity_id == opportunity_id)
+            .where(Reminder.is_completed == include_completed)
         )
         return self.db.scalar(stmt) or 0

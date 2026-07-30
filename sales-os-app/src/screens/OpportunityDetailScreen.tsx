@@ -7,6 +7,8 @@ import {
   IconButton,
   MenuItem,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -24,7 +26,7 @@ import {
   updateOpportunityStakeholder,
 } from "../services/opportunities";
 import { listStakeholders } from "../services/accounts";
-import { listActivitiesByOpportunity } from "../services/activities";
+import { listActivitiesByOpportunity, listOpportunityReminders } from "../services/activities";
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
 import { listProducts } from "../services/products";
 import type { PipelineOpportunity, PipelinePage } from "../types/api";
@@ -32,6 +34,7 @@ import { isReactivationOverdue } from "../utils/opportunityStatus";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
+import ReminderRow from "../components/ReminderRow";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
@@ -51,6 +54,7 @@ interface Props {
 const TABS = [
   { id: "overview",      label: "Overview" },
   { id: "activity",      label: "Activity" },
+  { id: "next-actions",  label: "Next Actions" },
   { id: "products",      label: "Products" },
   { id: "splits",        label: "Splits" },
   { id: "stakeholders",  label: "Stakeholders" },
@@ -207,6 +211,73 @@ function OverviewTab({
           </Typography>
         </Box>
       </Box>
+    </Box>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Next Actions tab — read-only: completing a reminder here would let anyone
+// with visibility into this opportunity (not just the assignee) close out
+// someone else's follow-up, since (unlike the standalone Next Actions
+// screen) this list isn't scoped to "reminders assigned to me". Add a
+// complete action only if a real need for it shows up.
+// ---------------------------------------------------------------------------
+function NextActionsTab({ opportunityId }: { opportunityId: string }) {
+  const [includeCompleted, setIncludeCompleted] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["opp-reminders", opportunityId, includeCompleted],
+    queryFn:  () => listOpportunityReminders(opportunityId, includeCompleted),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const reminders = data ?? [];
+
+  if (isLoading) return <LoadingPlaceholder />;
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      <ToggleButtonGroup
+        value={includeCompleted}
+        exclusive
+        onChange={(_, value) => { if (value !== null) setIncludeCompleted(value); }}
+        sx={{ width: "fit-content", border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden" }}
+      >
+        <ToggleButton
+          value={false}
+          disableRipple
+          sx={{
+            px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+            border: "none", color: "#9ca3af", bgcolor: "#fff",
+            "&:hover": { bgcolor: "background.default" },
+            "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+            "&.Mui-selected:hover": { bgcolor: "primary.main" },
+          }}
+        >
+          Pending
+        </ToggleButton>
+        <ToggleButton
+          value={true}
+          disableRipple
+          sx={{
+            px: 2, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+            border: "none", color: "#9ca3af", bgcolor: "#fff",
+            "&:hover": { bgcolor: "background.default" },
+            "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+            "&.Mui-selected:hover": { bgcolor: "primary.main" },
+          }}
+        >
+          Completed
+        </ToggleButton>
+      </ToggleButtonGroup>
+
+      {reminders.length === 0 ? (
+        <EmptyPlaceholder message={includeCompleted ? "No completed next actions yet." : "No pending next actions for this opportunity."} />
+      ) : (
+        reminders.map((r) => (
+          <ReminderRow key={r.id} reminder={r} hideOpportunity />
+        ))
+      )}
     </Box>
   );
 }
@@ -1126,6 +1197,12 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     staleTime: 5 * 60 * 1000,
   });
 
+  useQuery({
+    queryKey: ["opp-reminders", opportunityId, false],
+    queryFn:  () => listOpportunityReminders(opportunityId, false),
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Patches the opportunity query's cache and the always-mounted Pipeline
   // screen's cache directly — we already have the new values in hand, so
   // there's no need to invalidate and wait on a redundant refetch just to
@@ -1289,7 +1366,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </Box>
           <Box sx={{ width: "1px", height: 32, bgcolor: "#f3f4f6" }} />
           <Box sx={{ textAlign: "center" }}>
-            <Typography sx={{ fontSize: "0.875rem", fontWeight: 900, color: "#374151", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80px" }}>
+            <Typography sx={{ fontSize: "0.875rem", fontWeight: 900, color: "#374151", lineHeight: 1.2, wordBreak: "break-word", maxWidth: "90px" }}>
               {opp.owner.display_name}
             </Typography>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.25 }}>Owner</Typography>
@@ -1359,6 +1436,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         {activeTab === "activity"     && (
           <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} />
         )}
+        {activeTab === "next-actions" && <NextActionsTab opportunityId={opp.id} />}
       </Box>
 
       {/* Edit Opportunity modal */}

@@ -7,12 +7,14 @@ Repository is fully mocked — no DB required. Tests cover:
   - ActivityService.log_activity: BR-ACT-01 (account exists), opportunity validation,
     user_id defaults to created_by when omitted
   - ReminderService.list_for_user: include_completed filter, pagination
+  - ReminderService.list_for_opportunity: NotFoundError on missing opportunity,
+    include_completed filter, pagination
   - ReminderService.create_reminder: NotFoundError on missing activity
   - ReminderService.patch_reminder: NotFoundError on missing reminder, is_completed toggle
 """
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 import pydantic
@@ -35,7 +37,7 @@ USER_ID = uuid.uuid4()
 ACTOR_ID = uuid.uuid4()
 ACTIVITY_ID = uuid.uuid4()
 REMINDER_ID = uuid.uuid4()
-NOW = datetime(2026, 6, 30, 9, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 6, 30, 9, 0, 0, tzinfo=UTC)
 
 
 # ---------------------------------------------------------------------------
@@ -57,8 +59,11 @@ def _make_activity_repo() -> MagicMock:
 def _make_reminder_repo() -> MagicMock:
     repo = MagicMock(spec=ReminderRepository)
     repo.activity_exists.return_value = True
+    repo.opportunity_exists.return_value = True
     repo.list_for_user.return_value = []
     repo.count_for_user.return_value = 0
+    repo.list_by_opportunity.return_value = []
+    repo.count_by_opportunity.return_value = 0
     return repo
 
 
@@ -66,12 +71,12 @@ def _make_activity(**overrides) -> Activity:
     a = MagicMock(spec=Activity)
     a.id = overrides.get("id", ACTIVITY_ID)
     a.account_id = overrides.get("account_id", ACCOUNT_ID)
-    a.opportunity_id = overrides.get("opportunity_id", None)
-    a.project_id = overrides.get("project_id", None)
+    a.opportunity_id = overrides.get("opportunity_id")
+    a.project_id = overrides.get("project_id")
     a.user_id = overrides.get("user_id", USER_ID)
     a.activity_type = overrides.get("activity_type", "VISIT")
     a.activity_date = overrides.get("activity_date", NOW)
-    a.notes = overrides.get("notes", None)
+    a.notes = overrides.get("notes")
     a.created_at = NOW
     return a
 
@@ -500,6 +505,64 @@ class TestListForUser:
 
         repo.list_for_user.assert_called_once_with(
             USER_ID, include_completed=False, offset=25, limit=25
+        )
+
+
+# ---------------------------------------------------------------------------
+# ReminderService.list_for_opportunity
+# ---------------------------------------------------------------------------
+
+class TestListForOpportunity:
+    def test_raises_not_found_when_opportunity_missing(self):
+        repo = _make_reminder_repo()
+        repo.opportunity_exists.return_value = False
+        svc = ReminderService(repository=repo)
+
+        with pytest.raises(NotFoundError):
+            svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
+
+    def test_returns_items_and_total(self):
+        repo = _make_reminder_repo()
+        reminders = [_make_reminder()]
+        repo.list_by_opportunity.return_value = reminders
+        repo.count_by_opportunity.return_value = 1
+        svc = ReminderService(repository=repo)
+
+        items, total = svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
+
+        assert items == reminders
+        assert total == 1
+
+    def test_include_completed_false_by_default(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo)
+
+        svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
+
+        repo.list_by_opportunity.assert_called_once_with(
+            OPP_ID, include_completed=False, offset=0, limit=50
+        )
+        repo.count_by_opportunity.assert_called_once_with(OPP_ID, include_completed=False)
+
+    def test_include_completed_true_forwarded(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo)
+
+        svc.list_for_opportunity(OPP_ID, include_completed=True, page=1, page_size=50)
+
+        repo.list_by_opportunity.assert_called_once_with(
+            OPP_ID, include_completed=True, offset=0, limit=50
+        )
+        repo.count_by_opportunity.assert_called_once_with(OPP_ID, include_completed=True)
+
+    def test_offset_calculated_from_page(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo)
+
+        svc.list_for_opportunity(OPP_ID, page=2, page_size=25)
+
+        repo.list_by_opportunity.assert_called_once_with(
+            OPP_ID, include_completed=False, offset=25, limit=25
         )
 
 

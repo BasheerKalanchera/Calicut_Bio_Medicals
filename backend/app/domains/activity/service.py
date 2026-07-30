@@ -124,6 +124,26 @@ class ReminderService:
         total = self.repository.count_for_user(user_id, include_completed=include_completed)
         return items, total
 
+    def list_for_opportunity(
+        self,
+        opportunity_id: uuid.UUID,
+        *,
+        include_completed: bool = False,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[Reminder], int]:
+        if not self.repository.opportunity_exists(opportunity_id):
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        offset = (page - 1) * page_size
+        items = self.repository.list_by_opportunity(
+            opportunity_id,
+            include_completed=include_completed,
+            offset=offset,
+            limit=page_size,
+        )
+        total = self.repository.count_by_opportunity(opportunity_id, include_completed=include_completed)
+        return items, total
+
     def create_reminder(
         self,
         data: ReminderCreate,

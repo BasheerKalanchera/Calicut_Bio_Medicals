@@ -1993,3 +1993,256 @@ cabio_app`, all 6 tiers, before ever touching the app's own `DATABASE_URL`
 in Task 8).
 
 ---
+
+## Phase 2E Task 9 — cabio_app cutover + write-path retest (2026-07-27 → 2026-07-30)
+
+Fully resolved and committed (`7d7155d`, 2026-07-30). Task 9 in the checklist
+at the top of `active_progress.md` is `[x]`; this section is the detailed
+write-up, moved here once the thread closed per the session-handoff rule.
+
+**2026-07-27 — `cabio_app` cutover live on dev.** Before flipping
+`backend/.env`, found a real gap the architecture doc had anticipated but the
+codebase never implemented: `alembic/env.py` and `app/db/session.py` both
+read the same single `settings.DATABASE_URL` — swapping it wholesale
+would've made every future `alembic upgrade` run as `cabio_app`, which has no
+`CREATE`/`ALTER` grants, breaking migrations permanently. Fixed by splitting
+the connection:
+- `app/core/config.py` — new required `ADMIN_DATABASE_URL: SecretStr`.
+- `backend/.env` — `ADMIN_DATABASE_URL` now holds the former `DATABASE_URL`
+  value (table-owner/postgres connection); `DATABASE_URL` itself repointed
+  to `cabio_app` (tenant-qualified username `cabio_app.<project-ref>`
+  through the Supavisor pooler, password percent-encoded via
+  `urllib.parse.quote` since it contains literal `!`/`@`).
+- `alembic/env.py` — now builds `sqlalchemy.url` from `ADMIN_DATABASE_URL`,
+  not `DATABASE_URL`, so migrations keep running with DDL privileges, fully
+  decoupled from the app's own connection going forward.
+- `tests/conftest.py` — added a matching `ADMIN_DATABASE_URL` default
+  (pydantic requires it to instantiate `Settings()` at all, even though no
+  test actually uses it — tests never touch alembic). Confirmed
+  `tests/conftest.py` already pins `DATABASE_URL` to a separate
+  `localhost:54322` default regardless of `backend/.env`'s real value, so the
+  pytest suite was never at risk from this cutover either way.
+
+Verified post-swap: `alembic current` still resolves via `ADMIN_DATABASE_URL`
+(unaffected, still `0012`/head); `app.db.session.engine` now connects as
+`cabio_app` (confirmed via `SELECT current_user`); 345 passed, `ruff check`
+clean on all 3 touched files.
+
+**Automated read-path retest, through the real app code path (not a bespoke
+script)** — re-ran Task 8's exact 7-identity × 8-table matrix through
+`SessionLocal` + `set_rls_context()` (the actual production call path,
+pooled connections, same as every real request), not raw psycopg2. All
+counts matched Task 8's numbers exactly (opportunity: 21/21/0/12/16/18/5;
+product: 27/27/19/8/8/8/19; same parity across the other 6 tables) —
+confirms the cutover's actual connection-pooling behavior reproduces the
+already-proven policy logic, not just that the policies exist.
+
+**2026-07-28 — Amit R opportunity cleanup.** Amit R's opportunities were
+invisible to Test - SBU Manager (Critical Care) because all 5 were stamped
+`sbu_id = Imaging` (frozen-attribution, ADR-035 — set from creator Basheer K,
+doesn't follow ownership reassignment) — not a bug. 3 were childless test
+junk ("Test opportunity 3", "New opportunity", "one more") — deleted after
+the usual precondition check, Amit R now owns exactly 2. The other 2 ("New
+USG m/c", "Mims calicut") stay untouched: immutable `Activity`/`Reminder`
+rows tied to Task 9 edge cases 1/2 (see below), and Imaging-only line items
+(SonoScape E2/HD-550) — reassigning owner or `sbu_id` would either hit
+Activity immutability or create a Critical-Care-opportunity-selling-Imaging-
+products inconsistency.
+
+**Hierarchy build-out plan confirmed with Basheer, still blocked on new
+accounts (open as of 2026-07-30).** Critical Care gets its own chain: new
+Area Manager → new Sales Manager → Amit R, under the existing Test - SBU
+Manager. Imaging gets its own new SBU Manager: Test - Area Manager/Test -
+Sales Manager stay put (still governing Basheer K), just get a new
+Imaging-specific manager, replacing today's cross-SBU wiring (Test - Area
+Manager currently reports to the Critical Care SBU Manager). **Blocked:**
+`user_profile.id` must match a real Supabase Auth UUID, and `backend/.env`
+only has the anon key — 3 new accounts need Basheer to either create them
+via the Supabase dashboard and hand over the UUIDs, or provide a
+service-role key. Once accounts exist, wiring `sbu_id`/`zone_id`/`manager_id`
+is a normal `/users` API operation, same path the User Directory screen
+uses.
+
+**2026-07-28 — Amit R cross-visibility question, investigated and closed:
+not a bug.** Basheer reported seeing opportunities owned by Amit R while
+logged in as `sales@cabio-demo.com` (Sales Staff) and asked whether that was
+expected. Verified directly against the live DB using the app's real code
+path: of Amit R's 5 owned opportunities, Basheer sees exactly 2 — "New USG
+m/c" (Basheer has a 50% Split + an incomplete assigned Next Action reminder
+on it) and "Mims calicut" (a completed assigned reminder). The other 3 are
+correctly hidden. This is the Task 6 permanent split/reminder carve-out
+(`0011_rls_activity_document_reminder.py`) working as designed — both ties
+are pre-existing data from 2026-07-05. Doubles as a live confirmation of
+Task 9 retest edge cases 1/2 (cross-owner reminder assignment, split
+visibility).
+
+**2026-07-30 — manual write-path retest (Basheer live, guided step-by-step
+against `docs/Phase-2E-Task9-Write-Retest-Plan.md`), all 5 baselines + 4 edge
+cases + expected-to-fail check, all 6 tiers — every check passed:**
+1. Basheer K (Sales Staff) — logged a new Activity on own opportunity. Pass.
+2. Test - Sales Manager — edited an existing owned opportunity (field edit,
+   not a new create). Pass.
+3. Test - Area Manager — logged an Activity + linked a Stakeholder on one of
+   their 9 currently-visible opportunities (not one they own — exercises the
+   combined SBU+zone branch). Pass. Note: Task 8's recorded count for this
+   tier was 12 (2026-07-27); now 9, explained by the 2026-07-28 Basheer K
+   opportunity cleanup (4 deleted, some in-zone) — data drift, not a bug.
+4. Test - SBU Manager (Critical Care) — created a brand-new opportunity
+   (`TEST - SBU Manager Baseline`, owner-at-creation branch, per the known
+   no-existing-Critical-Care-opportunity test-data gap). Pass.
+5. Admin/GM — logged in as GM (whose own `sbu_id` happens to be the
+   meaningless Critical Care placeholder), deliberately edited an Imaging
+   opportunity (different SBU from GM's own, to actually prove the
+   unrestricted branch rather than a same-SBU coincidence) by logging an
+   Activity and assigning the Next Action to Basheer K. Pass — verified the
+   reminder shows up on Basheer K's Next Actions screen.
+
+**Real bug found + fixed mid-retest, not RLS-related:** creating an
+opportunity via the global "+ Lead" button did not make it appear on the
+Pipeline screen until a hard browser refresh. Root cause: `DemoApp.tsx`'s
+`QuickLeadModal onCreated` handler only refreshed a Project-Detail-scoped
+ref (`projectOppsRefreshRef`), never invalidated the React Query key
+`OpportunityPipelineScreen.tsx` actually reads (`["pipeline", ownerFilter]`)
+— so the Pipeline list kept rendering its stale cache; a hard refresh
+"fixed" it only by wiping the whole cache. Fixed by adding `useQueryClient` +
+`queryClient.invalidateQueries({ queryKey: ["pipeline"] })` alongside the
+existing ref call.
+
+**Real regression found on Edge Case 1 (cross-SBU Next Action reassignment)
+— found, fixed, and documented permanently (ADR-037, BR-FIN-06, BR-ACT-06).**
+Logged in as Basheer K, the "Assign Next Action To" dropdown only ever
+showed himself — could not reassign to Amit R at all, breaking the exact
+workflow this edge case exists to test.
+
+**Root cause:** the 2026-07-28 `/users` visibility fix (`978c850`) correctly
+tier-scoped the endpoint for the Opportunity Owner reassignment dropdown, but
+`LogActivityModal.tsx`'s "Assign Next Action To" picker calls that same
+`listUsers()` → same endpoint. `_SCOPE_BUILDERS` in `organization/repository.py`
+has no entry for "Sales Staff", so it silently fell through to "self only" —
+a real loss of functionality Task 6 deliberately designed for (any user can
+be handed a follow-up regardless of tier; the permanent
+`cabio_app_assigned_reminder()` RLS carve-out grants visibility *after*
+assignment, not before). The same endpoint also fed
+`OpportunityDetailScreen.tsx`'s Splits "add participant" picker — also
+silently broken by the same fix.
+
+**Bigger question this surfaced, taken to Basheer before writing any code:**
+should the Splits picker be unrestricted like Next Action, or scoped?
+Basheer's call: Splits should stay within the caller's own SBU + zone —
+narrower than Next Action, since commission-sharing colleagues should
+realistically be co-located, unlike cross-SBU follow-up handoffs.
+
+**That collided with existing doc: `BR-FIN-01`/ADR-003 explicitly says
+splits "can cross SBUs."** Basheer clarified this was written for a
+now-obsolete case — one Opportunity carrying products/credit across multiple
+SBUs simultaneously — which ADR-004 (Projects) and ADR-035
+(`Opportunity.sbu_id` fixed, single-SBU) have since superseded; multi-SBU
+deals are now modeled as a Project containing separate per-SBU
+Opportunities, not one Opportunity with a cross-SBU split. Confirmed no
+validation exists preventing this today (purely a business-process change,
+not a code constraint), and ran a read-only impact check against the live
+dev DB before deciding enforcement level: only 2 `split` rows exist total,
+both on "New USG m/c" (the same opportunity already preserved as Task 9
+edge-case evidence), and that row *is* an existing cross-SBU/cross-zone
+split (Amit R, Critical Care, on an Imaging opportunity). Since
+`replace_splits` is a full-list replace (not an append), a naive hard check
+would have permanently frozen that opportunity's splits (any future edit
+re-validates the *entire* submitted list). Basheer chose to hard-enforce the
+SBU rule anyway, with existing participants grandfathered (only *newly
+added* participants are checked against the Opportunity's own `sbu_id`) —
+zone stays a soft, UI-picker-only restriction, not backend-enforced (no
+clean business meaning for hard-gating zone the same way, since
+`Account.zone_id` can differ from every participant's own zone
+simultaneously, as the live data confirmed).
+
+**Implementation (backend):**
+- `organization/repository.py` — `UserRepository.list_active()` gains a
+  3-way `scope` param (`"scoped"` default / `"sbu_zone"` / `"all"`) replacing
+  a boolean started with before realizing 2 modes weren't enough for 3
+  distinct pickers.
+- `organization/service.py` — `list_active_users()` passes `scope` through.
+- `api/routers/master_data.py` — `GET /users?scope=` (pattern
+  `^(scoped|sbu_zone|all)$`).
+- `opportunity/repository.py` — new `get_user_sbu_ids()`.
+- `opportunity/service.py` — `replace_splits()` now diffs incoming
+  participants against currently-persisted ones; only genuinely new
+  participants are checked against the opportunity's `sbu_id`
+  (`BusinessRuleViolation` on mismatch).
+- Tests: 2 new repository tests (`scope="all"`/`"sbu_zone"` compiled-SQL
+  checks), 1 service test updated, 3 new `replace_splits` tests (cross-SBU
+  new participant rejected, same-SBU passes, pre-existing cross-SBU
+  participant grandfathered through an otherwise-valid resave).
+
+**Implementation (frontend):** `masterData.ts`'s `listUsers()` gains a
+`scope` param. `LogActivityModal.tsx` (Next Action picker) → `scope: "all"`,
+new query key `["users", "assignable"]`. `OpportunityDetailScreen.tsx`'s
+Splits picker → `scope: "sbu_zone"`, new query key `["users", "sbu_zone"]`.
+Every other `listUsers()` caller stays on the default `scoped` behavior,
+unchanged — these previously all shared one `["users", "all"]` cache key
+despite needing different data post-fix, a real collision risk now resolved
+by giving the two changed consumers their own keys.
+
+**Docs updated permanently:** `docs/ADR.md` — new ADR-037 (Split Participant
+SBU Restriction, supersedes ADR-003's cross-SBU scope), ADR-003's own status
+line annotated to point to it. `docs/Business-Rules.md` — BR-FIN-01 amended
+(cross-SBU scope struck through, reasoning + pointer to BR-FIN-06 added);
+new BR-FIN-06 (Split Participant Eligibility — SBU hard rule + grandfathering
++ zone-is-UI-only caveat); new BR-ACT-06 (Next Action Assignee Eligibility —
+unrestricted, with the RLS-carve-out rationale).
+
+**Edge Case 1 retried — pass**, confirmed via direct read-only DB check
+(Amit R doesn't have a live login handy) rather than the UI: the new
+reminder exists, `assigned_to_user_id` = Amit R, logged by Basheer K.
+
+**Edge Case 2 — pass, both halves.** Test - Sales Manager added a 50% split
+to Test - Area Manager (not a direct report — reports the *other* direction
+in this hierarchy) via the now-`sbu_zone`-scoped picker (confirmed picker
+only offered Imaging/North Kerala colleagues, as designed). Write succeeded;
+logged in as Test - Area Manager afterward, the opportunity now appears in
+their own pipeline — the permanent `cabio_app_has_split()` carve-out
+confirmed live, not just Task 8's synthetic data.
+
+**Edge Case 3 — real architecture contradiction found, business rule added
+(BR-ACT-07), decision: no code change.** Basheer questioned the test itself:
+if Product Catalog is SBU-restricted, how would a cross-SBU user ever reach
+a product's documents to test this? Investigated: `DocumentService.list_by_product()`
+gates on `product_exists()` first, which queries the RLS-restricted
+`product` table (Task 7) — a cross-SBU user 404s before `document`'s own
+(technically permissive, `opportunity_id IS NULL`) policy is ever evaluated.
+There's also no UI path to a product's documents other than Product Catalog
+→ click into the product, itself correctly SBU-filtered. **Decision: drop
+the original Task 6 cross-SBU intent, keep the restriction** — Product
+Catalog's own SBU boundary (Task 7) takes precedence, nothing to fix in
+code. Documented in `Business-Rules.md` (new BR-ACT-07).
+
+**Edge Case 4 — pass.** No Amit R login exists (no Supabase Auth account for
+him, just a `user_profile` row from demo data) — substituted Test - Area
+Manager. Basheer K logged an Activity, assigned the Next Action to Test -
+Area Manager; logged in as Test - Area Manager, marked it complete
+successfully — confirms the assignee alone (not the logger or opportunity
+owner) can close out a reminder as of this test, though note this was never
+backed by a DB-level `WITH CHECK` restricted to the assignee — see the
+2026-07-30 Next Actions tab discussion in `active_progress.md` for why that
+matters going forward.
+
+**Expected-to-fail check — pass.** Logged in as Basheer K (Sales Staff),
+confirmed exactly 2 of Amit R's 5 opportunities are visible (the split-tied
+"New USG m/c" and the reminder-tied "Mims calicut" — both legitimate
+carve-outs) and the other 3 are correctly invisible. Proves both directions
+at once: RLS enforcement is real (3 genuinely hidden), not just permissive
+(2 correctly shown via the intended carve-outs).
+
+**Task 9 fully complete, committed `7d7155d` 2026-07-30.** 365/365 backend
+tests passing (as of the 2026-07-30 Next Actions work below), `ruff check`
+clean, `tsc --noEmit` clean, frontend lint clean.
+
+**Automated write-retest suite — designed, paused mid-build, never resumed
+(superseded by Basheer's manual retest above).** `TestClient` in-process with
+SQLAlchemy's `join_transaction_mode="create_savepoint"` so `get_db` hands
+back a session bound to one externally-controlled transaction — every real
+code path runs but nothing survives a forced rollback. Was blocked on where
+the suite should read each test account's real password from (env var vs
+`.env.test`) — never answered, moot once the manual retest covered the same
+ground.
+
+---
