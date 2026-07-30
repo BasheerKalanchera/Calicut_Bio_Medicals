@@ -90,6 +90,34 @@ class ReminderCreate(BaseModel):
 
 class ReminderUpdate(BaseModel):
     is_completed: bool
+    # BR-ACT-05: required when completing a reminder (is_completed=True) --
+    # mirrors BR-ACT-04's own strictness in the opposite direction (Activity
+    # -> mandatory Next Action, atomic). Not required when reopening
+    # (is_completed=False).
+    activity_type: ActivityType | None = None
+    activity_date: datetime | None = None
+    notes: str | None = Field(default=None, min_length=1)
+    # Optional follow-up discovered while closing this reminder -- same
+    # BR-ACT-04 mechanism (Activity -> optional Reminder), just optional
+    # here rather than mandatory: not every closure produces a new task.
+    next_action_text: str | None = Field(default=None, min_length=1)
+    next_action_due_date: datetime | None = None
+    next_action_owner_id: uuid.UUID | None = None  # defaults to whoever closed it
+
+    @model_validator(mode="after")
+    def _require_closing_activity_when_completing(self) -> "ReminderUpdate":
+        if self.is_completed:
+            if not self.activity_type:
+                raise ValueError("Activity type is required to close a Next Action.")
+            if self.activity_type == "MANAGER_NOTE":
+                raise ValueError("Manager Note is not a valid closing activity type.")
+            if not self.activity_date:
+                raise ValueError("Activity date is required to close a Next Action.")
+            if not self.notes:
+                raise ValueError("Notes describing what was done are required to close a Next Action.")
+        if bool(self.next_action_text) != bool(self.next_action_due_date):
+            raise ValueError("Next Action and Next Action Due Date must be provided together.")
+        return self
 
 
 class ActivityContextNested(BaseModel):
@@ -98,6 +126,7 @@ class ActivityContextNested(BaseModel):
     id: uuid.UUID
     activity_type: ActivityType
     activity_date: datetime
+    notes: str | None
     account: AccountNested
     opportunity: OpportunityNested | None
     user: UserNested
@@ -116,3 +145,6 @@ class ReminderResponse(BaseModel):
     updated_at: datetime
     assigned_to_user: UserNested
     activity: ActivityContextNested
+    # BR-ACT-05: the Activity created when this reminder was completed,
+    # documenting what was done. None until completed.
+    closing_activity: ActivityContextNested | None = None

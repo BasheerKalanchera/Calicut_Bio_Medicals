@@ -34,7 +34,9 @@ class Activity(CreatedAtMixin, Base):
         back_populates="activities", foreign_keys=[user_id], lazy="joined"
     )
 
-    reminders: Mapped[list["Reminder"]] = relationship(back_populates="activity", lazy="select")
+    reminders: Mapped[list["Reminder"]] = relationship(
+        back_populates="activity", foreign_keys="Reminder.activity_id", lazy="select"
+    )
 
 
 class Reminder(AuditMixin, Base):
@@ -50,8 +52,19 @@ class Reminder(AuditMixin, Base):
     due_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     reminder_text: Mapped[str] = mapped_column(Text, nullable=False)
     is_completed: Mapped[bool | None] = mapped_column(Boolean, server_default="false")
+    # BR-ACT-05: nullable pointer to the Activity created when this reminder
+    # is completed, documenting what was actually done to close it out.
+    # Distinct from activity_id above (the *creating* activity, BR-ACT-04).
+    closing_activity_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activity.id"), nullable=True, index=True
+    )
 
-    activity: Mapped["Activity"] = relationship(back_populates="reminders", lazy="joined")
+    activity: Mapped["Activity"] = relationship(
+        back_populates="reminders", foreign_keys=[activity_id], lazy="joined"
+    )
+    closing_activity: Mapped["Activity | None"] = relationship(
+        foreign_keys=[closing_activity_id], lazy="joined"
+    )
     assigned_to_user: Mapped["UserProfile"] = relationship(
         back_populates="assigned_reminders", foreign_keys=[assigned_to_user_id], lazy="joined"
     )

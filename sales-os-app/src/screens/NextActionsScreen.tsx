@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { listReminders, patchReminder } from "../services/activities";
+import { listReminders } from "../services/activities";
 import ReminderRow from "../components/ReminderRow";
+import CloseReminderModal from "../components/CloseReminderModal";
+import type { ReminderResponse } from "../types/api";
 
 export default function NextActionsScreen({
   onSelectAccount,
@@ -13,17 +15,11 @@ export default function NextActionsScreen({
 }) {
   const queryClient = useQueryClient();
   const [includeCompleted, setIncludeCompleted] = useState(false);
+  const [closingReminder, setClosingReminder] = useState<ReminderResponse | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["reminders", includeCompleted],
     queryFn: () => listReminders(includeCompleted),
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: (reminderId: string) => patchReminder(reminderId, true),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-    },
   });
 
   const reminders = data ?? [];
@@ -99,8 +95,7 @@ export default function NextActionsScreen({
               <ReminderRow
                 key={r.id}
                 reminder={r}
-                onComplete={(id) => completeMutation.mutate(id)}
-                isCompleting={completeMutation.isPending && completeMutation.variables === r.id}
+                onComplete={setClosingReminder}
                 onSelectAccount={onSelectAccount}
                 onSelectOpportunity={onSelectOpportunity}
               />
@@ -108,6 +103,16 @@ export default function NextActionsScreen({
           </Box>
         )}
       </Box>
+
+      <CloseReminderModal
+        isOpen={!!closingReminder}
+        onClose={() => setClosingReminder(null)}
+        reminder={closingReminder}
+        onCompleted={() => {
+          queryClient.invalidateQueries({ queryKey: ["reminders"] });
+          setClosingReminder(null);
+        }}
+      />
     </Box>
   );
 }

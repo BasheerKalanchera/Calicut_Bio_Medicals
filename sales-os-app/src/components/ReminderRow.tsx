@@ -24,14 +24,15 @@ export function isOverdue(reminder: ReminderResponse) {
 export default function ReminderRow({
   reminder,
   onComplete,
-  isCompleting,
   onSelectAccount,
   onSelectOpportunity,
   hideOpportunity,
 }: {
   reminder: ReminderResponse;
-  onComplete?: (id: string) => void;
-  isCompleting?: boolean;
+  // Signals "user wants to close this reminder" — the caller owns what
+  // happens next (BR-ACT-05 requires documenting what was done, so this
+  // opens a modal rather than completing directly; see NextActionsScreen).
+  onComplete?: (reminder: ReminderResponse) => void;
   onSelectAccount?: (account: { id: string; name: string }) => void;
   onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
   // Suppresses the opportunity chip when the row is already rendered inside
@@ -69,8 +70,7 @@ export default function ReminderRow({
         </Box>
         {!reminder.is_completed && onComplete && (
           <Button
-            onClick={() => onComplete(reminder.id)}
-            disabled={isCompleting}
+            onClick={() => onComplete(reminder)}
             disableRipple
             sx={{
               px: 1.5,
@@ -83,10 +83,9 @@ export default function ReminderRow({
               letterSpacing: "0.05em",
               flexShrink: 0,
               "&:hover": { bgcolor: "#d1fae5" },
-              "&.Mui-disabled": { opacity: 0.4, color: "#059669", bgcolor: "#ecfdf5" },
             }}
           >
-            {isCompleting ? "Completing…" : "Mark to complete"}
+            Mark to complete
           </Button>
         )}
       </Box>
@@ -125,6 +124,18 @@ export default function ReminderRow({
         <Box component="span" sx={{ color: "#e5e7eb" }}>•</Box>
         <Box component="span">Logged by: {reminder.activity.user.display_name}</Box>
       </Box>
+
+      {/* BR-ACT-05: what was done to close this out — same Activity record
+          that already appears in the Activity tab, surfaced here too since
+          it's the whole point of capturing it. */}
+      {reminder.closing_activity && (
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1, fontSize: "0.75rem", color: "#4b5563" }}>
+          <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
+            {ACTIVITY_TYPE_ICONS[reminder.closing_activity.activity_type] ?? "📝"} Closed via {reminder.closing_activity.activity_type.replace("_", " ").toLowerCase()} on {formatDate(reminder.closing_activity.activity_date)}
+          </Box>
+          {reminder.closing_activity.notes}
+        </Box>
+      )}
     </Box>
   );
 }

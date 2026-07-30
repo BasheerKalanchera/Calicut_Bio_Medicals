@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { ActivityPage, ActivityResponse, ReminderResponse } from "../types/api";
+import type { ActivityPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api";
 
 export interface LogActivityPayload {
   account_id: string;
@@ -84,10 +84,22 @@ export async function createReminder(payload: {
   return r.data.data;
 }
 
-export async function patchReminder(
+// BR-ACT-05: completing a reminder requires documenting what was done to
+// close it out (mirrors BR-ACT-04's own strictness in the opposite
+// direction). next_action_* fields are optional — a follow-up discovered
+// while closing this one, not a requirement (unlike BR-ACT-04's own next
+// action). Must be provided together if provided at all.
+export async function completeReminder(
   reminderId: string,
-  isCompleted: boolean,
+  payload: {
+    activity_type: ActivityType;
+    activity_date: string;
+    notes: string;
+    next_action_text?: string;
+    next_action_due_date?: string;
+    next_action_owner_id?: string;
+  },
 ): Promise<ReminderResponse> {
-  const r = await api.patch(`/reminders/${reminderId}`, { is_completed: isCompleted });
+  const r = await api.patch(`/reminders/${reminderId}`, { is_completed: true, ...payload });
   return r.data.data;
 }

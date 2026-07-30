@@ -1393,6 +1393,8 @@ export interface components {
              * Format: date-time
              */
             activity_date: string;
+            /** Notes */
+            notes: string | null;
             account: components["schemas"]["AccountNested"];
             opportunity: components["schemas"]["OpportunityNested"] | null;
             user: components["schemas"]["UserNested"];
@@ -2238,11 +2240,24 @@ export interface components {
             updated_at: string;
             assigned_to_user: components["schemas"]["UserNested"];
             activity: components["schemas"]["ActivityContextNested"];
+            closing_activity?: components["schemas"]["ActivityContextNested"] | null;
         };
         /** ReminderUpdate */
         ReminderUpdate: {
             /** Is Completed */
             is_completed: boolean;
+            /** Activity Type */
+            activity_type?: ("VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE") | null;
+            /** Activity Date */
+            activity_date?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Next Action Text */
+            next_action_text?: string | null;
+            /** Next Action Due Date */
+            next_action_due_date?: string | null;
+            /** Next Action Owner Id */
+            next_action_owner_id?: string | null;
         };
         /** SBUNested */
         SBUNested: {

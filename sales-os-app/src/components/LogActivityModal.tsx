@@ -292,7 +292,7 @@ export default function LogActivityModal({
               onChange={(e) => setNextActionOwnerId(e.target.value)}
               fullWidth
               size="small"
-              slotProps={{ select: { displayEmpty: true } }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             >
               <MenuItem value="">Me (default)</MenuItem>
               {users.map((u) => (

@@ -47,23 +47,6 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred / undecided items
 
-- **Reminder ("Next Action") completion doesn't require logging what was
-  done to close it out — proposed `BR-ACT-05`, mirrors `BR-ACT-04`.**
-  Surfaced 2026-07-28. Confirmed in code: `ReminderService.patch_reminder`
-  only flips `is_completed`; `Reminder` has no notes field and no link to a
-  closing Activity. `BR-ACT-04` enforces the other half of this loop
-  (Activity → mandatory Next Action, atomic) — this closes it symmetrically.
-  Proposed shape: `Reminder` gains a nullable `closing_activity_id` FK
-  (mirrors the existing `activity_id`, which points to the *creating*
-  activity); `PATCH /reminders/{id}` accepts a full Activity payload
-  alongside `is_completed=True`, created atomically — the reverse of what
-  `BR-ACT-04` does today. Keep "what happened" in `Activity` (single source
-  of truth) rather than a separate `completion_notes` field on `Reminder`.
-  **Open product decision, Basheer's call, not resolved yet:** hard
-  requirement (can't mark complete without logging an activity, matching
-  `BR-ACT-04`'s own strictness) vs. soft prompt (nudge, allow skipping for
-  trivial completions) — real UX tradeoff, every completion becomes a small
-  form instead of a checkbox click either way it leans stricter than today.
 - **Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
   Admin/General Manager.** Surfaced 2026-07-28 while fixing the `/users`
   endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —
@@ -96,8 +79,10 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      rendering, target/coverage plan creation.
   6. Data migration runs against the live shared dev DB — same care as any
      other live write.
-  7. Folds into the already-pending Task 10 doc-fix pass
-     (`Physical-Schema.sql` etc.) rather than creating new doc debt.
+  7. Touches the same doc surface as Phase 2E's Task 10 pass
+     (`Physical-Schema.sql` etc., completed 2026-07-30) — update those docs
+     again in the same commit as this migration rather than creating new
+     doc debt.
   8. Dedicated manual verification pass logging in as Admin/GM post-change,
      same spirit as Task 8/9's role-by-role checks — confirm nothing breaks
      now that their session carries a genuinely absent `sbu_id` for the

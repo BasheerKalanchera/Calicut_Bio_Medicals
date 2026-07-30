@@ -2246,3 +2246,54 @@ the suite should read each test account's real password from (env var vs
 ground.
 
 ---
+
+## Phase 2E — full build, Tasks 1-10 (2026-07-26 → 2026-07-30), COMPLETE
+
+All 10 tasks done and committed. Final checklist state, for reference:
+1. Migration: `manager_id`, role rename/new tiers, `cabio_app` role+grants.
+2. User Directory screen: create + update `user_profile` (Admin/GM gated).
+3. PARKED (not blocking, deliberately) — assigning real staff to Area
+   Manager/Sales Manager tiers is Basheer's call on names/reporting lines,
+   not build work; do before UAT rollout.
+4. 4-var `set_rls_context()` + `cabio_app_uid`/`sbu_id`/`role_id`/`zone_id`
+   SQL helper functions.
+5. RLS policies: `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder`.
+6. RLS policies: `activity`, `document`, `reminder`.
+7. RLS policy: `product`.
+8. Local verification loop, all 6 tiers × every table — 56/56 checks passed.
+9. Cutover to `cabio_app` on dev, committed `7d7155d` (2026-07-30) — full
+   detail in this file's own Task 9 section above.
+10. Doc fixes, committed `1795a57` (2026-07-30): `Physical-Schema.sql`
+    (`manager_id` column + new §10 RLS object-name summary),
+    `Backend-Implementation-Standards.md` (§12 config fields, §9 RLS Context
+    Propagation rewritten from prospective to descriptive), `ADR-009`
+    (rewritten — wrong role name "Sales Executives"/"Sales Staff", wrong
+    2-tier model vs. the actual 6-tier + participant-carve-out build, wrong
+    JWT-claims mechanism vs. the actual session-GUC mechanism, all
+    corrected), `Phase-2E-Security-Architecture.md` (all 7 `cabio_app_*()`
+    functions + the `NULLIF` pooled-connection guard, not just 3; Deferred
+    Decisions/Implementation Checklist/Testing Strategy sections brought
+    current), `CLAUDE.md` zone list (added Bangalore, `Seed-Data.sql` has 4
+    zones not 3). Two more found along the way and fixed in the same commit:
+    `backend/.env.example` (was missing `ADMIN_DATABASE_URL` entirely —
+    would crash `Settings()` on startup for any new dev following it) and
+    `Enterprise-Data-Model.md:186`'s Account security note (corrected the
+    `set_rls_context()` no-op claim — live since 2026-07-27 — while keeping
+    its "Accounts are globally readable" conclusion, still true: `account`
+    was never given `ENABLE ROW LEVEL SECURITY` in any Phase 2E migration).
+
+Also committed separately, `e124d94` (2026-07-30, before Task 10): the 3 UI
+gaps surfaced during Task 9's retest — mobile Owner-field truncation on
+Opportunity Detail, a new read-only "Next Actions" tab on Opportunity Detail
+(new `GET /opportunities/{id}/reminders`, relies on existing RLS join-back),
+and "Logged by" shown on every reminder (`ActivityContextNested` gained
+`user`). `ReminderRow` extracted from `NextActionsScreen.tsx` into a shared
+`components/ReminderRow.tsx` as part of this work.
+
+**Still open, not part of Phase 2E:** the Critical Care/Imaging manager
+hierarchy build-out (new Area Manager → Sales Manager → Amit R chain for
+Critical Care; new Imaging-specific SBU Manager) — blocked on Basheer
+creating 3 new Supabase Auth accounts and handing over their UUIDs, or
+providing a service-role key. Plan confirmed, nothing else pending on it.
+
+---

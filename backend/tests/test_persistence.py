@@ -73,7 +73,8 @@ def test_all_relationships_resolve():
 
     configure_mappers()
     rel_count = sum(len(m.relationships) for m in Base.registry.mappers)
-    assert rel_count == 88, f"Expected 88 relationships, found {rel_count}"
+    # 89, not 88: BR-ACT-05 added Reminder.closing_activity (0013_reminder_closing_activity.py).
+    assert rel_count == 89, f"Expected 89 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

@@ -246,6 +246,46 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   and the Reminders/Tasks system (§7.2 of `docs/API-Catalog.md`), without
   forcing meaningless due dates onto internal notes.
 
+### BR-ACT-05: Mandatory Closing Activity on Reminder Completion
+* **Rule:** A Reminder ("Next Action") cannot be marked complete without
+  documenting what was actually done to close it — an Activity Type, a Date,
+  and Notes describing what happened are all required. Reopening a Reminder
+  (marking it incomplete again) requires none of this.
+* **Implementation:** Enforced at the Pydantic schema layer via a conditional
+  validator (`ReminderUpdate`'s `activity_type`/`activity_date`/`notes` are
+  required whenever `is_completed=True`) and realized as a new Activity
+  record created atomically with the completion, in `ReminderService.patch_reminder`.
+  The new Activity inherits its `account_id`/`opportunity_id`/`project_id`
+  from the Reminder's own (creating) Activity — same customer/deal thread —
+  and is linked back via `Reminder.closing_activity_id` (distinct from
+  `Reminder.activity_id`, which points to the Activity that *created* the
+  Reminder, per BR-ACT-04). `MANAGER_NOTE` is not a valid closing Activity
+  Type (rejected by the same validator) — it represents internal
+  manager-to-rep guidance, not a customer interaction, so it can't describe
+  what closed a customer follow-up.
+* **Scope:** Mirrors BR-ACT-04 in the opposite direction — that rule requires
+  every logged Activity to produce a Next Action; this rule requires every
+  completed Next Action to produce a closing Activity. Together they close
+  the loop in both directions between Activities and Reminders.
+* **Optional follow-up:** `ReminderUpdate` also accepts optional
+  `next_action_text`/`next_action_due_date`/`next_action_owner_id`, for when
+  closing one task surfaces another (e.g. the customer asks for a quote
+  while you're calling to confirm the demo date). Unlike BR-ACT-04's own
+  next action, this is genuinely optional — not every closure produces a
+  new task, so nothing forces it. When provided, it reuses BR-ACT-04's exact
+  mechanism (an Activity may optionally carry a Reminder), attached to the
+  *closing* Activity rather than the original one, since it's a fresh
+  commitment made now. `next_action_text` and `next_action_due_date` must be
+  given together if given at all (validator-enforced); owner defaults to
+  whoever closed the reminder, same default BR-ACT-04 uses.
+* **Purpose:** A "done" checkbox with no record of what happened is not
+  useful for anyone reviewing the account/opportunity history later. The
+  closing Activity is a normal Activity record — it appears in the Activity
+  tab like any other logged interaction — and is additionally surfaced
+  directly on the completed Reminder itself (Next Actions screen and the
+  Opportunity Detail Next Actions tab), since duplicating the display costs
+  nothing (same underlying record) but saves navigating away to find it.
+
 ### BR-ACT-06: Next Action Assignee Eligibility
 * **Rule:** The Next Action Owner (BR-ACT-04) may be assigned to **any active user in the company**, regardless of SBU, zone, or reporting line — no eligibility restriction applies, unlike Split participants (BR-FIN-06) or Opportunity Owner reassignment.
 * **Rationale:** A rep may need to hand a specific follow-up to someone entirely outside their own visibility scope (e.g. a cross-SBU specialist). The assignee does not need pre-existing visibility into the Opportunity to be assigned — the permanent RLS carve-out (`cabio_app_assigned_reminder()`, see `Opportunity-Access-Hierarchy-Technical-Design.md` §11 / `0011_rls_activity_document_reminder.py`) grants them visibility into that Opportunity *after* assignment, not before. Restricting the picker would silently break this workflow (confirmed as a live regression 2026-07-30 — see `active_progress.md`, Task 9 write-retest).

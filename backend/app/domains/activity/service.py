@@ -1,9 +1,38 @@
 import uuid
+from datetime import datetime
 
 from app.core.exceptions import NotFoundError
 from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
+
+
+def _maybe_create_next_action_reminder(
+    reminder_repository: ReminderRepository,
+    *,
+    activity: Activity,
+    next_action_text: str | None,
+    next_action_due_date: datetime | None,
+    next_action_owner_id: uuid.UUID | None,
+    created_by: uuid.UUID,
+) -> Reminder | None:
+    # BR-ACT-04: shared by ActivityService.log_activity (mandatory unless
+    # MANAGER_NOTE) and ReminderService.patch_reminder (optional follow-up
+    # when closing a reminder, BR-ACT-05) -- same "given an Activity, maybe
+    # attach a Reminder" logic either way.
+    if not (next_action_text and next_action_due_date):
+        return None
+    resolved_owner = next_action_owner_id or activity.user_id
+    reminder = Reminder(
+        activity_id=activity.id,
+        assigned_to_user_id=resolved_owner,
+        due_date=next_action_due_date,
+        reminder_text=next_action_text,
+        is_completed=False,
+        created_by=created_by,
+        updated_by=created_by,
+    )
+    return reminder_repository.create(reminder)
 
 
 class ActivityService:
@@ -85,26 +114,22 @@ class ActivityService:
 
         # BR-ACT-04: next-action fields are absent only for MANAGER_NOTE
         # (schema validator enforces this) - no Reminder for those.
-        reminder = None
-        if data.next_action_text and data.next_action_due_date:
-            resolved_owner = data.next_action_owner_id or activity.user_id
-            reminder = Reminder(
-                activity_id=activity.id,
-                assigned_to_user_id=resolved_owner,
-                due_date=data.next_action_due_date,
-                reminder_text=data.next_action_text,
-                is_completed=False,
-                created_by=created_by,
-                updated_by=created_by,
-            )
-            reminder = self.reminder_repository.create(reminder)
+        reminder = _maybe_create_next_action_reminder(
+            self.reminder_repository,
+            activity=activity,
+            next_action_text=data.next_action_text,
+            next_action_due_date=data.next_action_due_date,
+            next_action_owner_id=data.next_action_owner_id,
+            created_by=created_by,
+        )
 
         return activity, reminder
 
 
 class ReminderService:
-    def __init__(self, repository: ReminderRepository):
+    def __init__(self, repository: ReminderRepository, activity_repository: ActivityRepository):
         self.repository = repository
+        self.activity_repository = activity_repository
 
     def list_for_user(
         self,
@@ -177,4 +202,44 @@ class ReminderService:
 
         reminder.is_completed = data.is_completed
         reminder.updated_by = updated_by
+
+        # BR-ACT-05: completing a reminder requires documenting what was done
+        # -- the schema validator guarantees activity_type/activity_date/notes
+        # are all present whenever is_completed=True. The closing Activity
+        # inherits its account/opportunity/project context from the
+        # reminder's own (creating) activity, since it's the same
+        # customer/deal thread; the loop mirrors BR-ACT-04 in reverse
+        # (Activity -> mandatory Reminder becomes Reminder completion ->
+        # mandatory Activity), both created atomically with the state change
+        # they accompany.
+        if data.is_completed:
+            original = reminder.activity
+            closing_activity = Activity(
+                account_id=original.account_id,
+                opportunity_id=original.opportunity_id,
+                project_id=original.project_id,
+                user_id=updated_by,
+                activity_type=data.activity_type,
+                activity_date=data.activity_date,
+                notes=data.notes,
+                created_by=updated_by,
+            )
+            closing_activity = self.activity_repository.create(closing_activity)
+            reminder.closing_activity_id = closing_activity.id
+
+            # Optional follow-up discovered while closing this one out --
+            # same BR-ACT-04 mechanism as any other Activity, just optional
+            # here rather than mandatory (not every closure needs a new
+            # task). Linked to the closing Activity, not the original one,
+            # since it's a fresh commitment made now, not part of the
+            # original interaction.
+            _maybe_create_next_action_reminder(
+                self.repository,
+                activity=closing_activity,
+                next_action_text=data.next_action_text,
+                next_action_due_date=data.next_action_due_date,
+                next_action_owner_id=data.next_action_owner_id,
+                created_by=updated_by,
+            )
+
         return self.repository.update(reminder)

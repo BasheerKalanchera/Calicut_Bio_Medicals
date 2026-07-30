@@ -29,7 +29,10 @@ def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:  # 
 
 
 def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # noqa: B008
-    return ReminderService(repository=ReminderRepository(db))
+    return ReminderService(
+        repository=ReminderRepository(db),
+        activity_repository=ActivityRepository(db),
+    )
 
 
 # ------------------------------------------------------------------

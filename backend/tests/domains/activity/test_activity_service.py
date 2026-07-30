@@ -10,7 +10,9 @@ Repository is fully mocked — no DB required. Tests cover:
   - ReminderService.list_for_opportunity: NotFoundError on missing opportunity,
     include_completed filter, pagination
   - ReminderService.create_reminder: NotFoundError on missing activity
-  - ReminderService.patch_reminder: NotFoundError on missing reminder, is_completed toggle
+  - ReminderService.patch_reminder: NotFoundError on missing reminder, is_completed
+    toggle, BR-ACT-05 closing-Activity creation on completion
+  - ReminderUpdate: BR-ACT-05 mandatory closing-activity fields when is_completed=True
 """
 
 import uuid
@@ -91,7 +93,16 @@ def _make_reminder(**overrides) -> Reminder:
     r.is_completed = overrides.get("is_completed", False)
     r.created_at = NOW
     r.updated_at = NOW
+    # The reminder's own (creating) activity -- patch_reminder reads this to
+    # inherit account/opportunity/project context for the closing Activity.
+    r.activity = overrides.get("activity", _make_activity())
     return r
+
+
+def _closing_data(**overrides) -> dict:
+    defaults = dict(is_completed=True, activity_type="CALL", activity_date=NOW, notes="Called the customer")
+    defaults.update(overrides)
+    return defaults
 
 
 # ---------------------------------------------------------------------------
@@ -468,7 +479,7 @@ class TestListForUser:
         reminders = [_make_reminder()]
         repo.list_for_user.return_value = reminders
         repo.count_for_user.return_value = 1
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         items, total = svc.list_for_user(USER_ID, page=1, page_size=50)
 
@@ -477,7 +488,7 @@ class TestListForUser:
 
     def test_include_completed_false_by_default(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_user(USER_ID, page=1, page_size=50)
 
@@ -488,7 +499,7 @@ class TestListForUser:
 
     def test_include_completed_true_forwarded(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_user(USER_ID, include_completed=True, page=1, page_size=50)
 
@@ -499,7 +510,7 @@ class TestListForUser:
 
     def test_offset_calculated_from_page(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_user(USER_ID, page=2, page_size=25)
 
@@ -516,7 +527,7 @@ class TestListForOpportunity:
     def test_raises_not_found_when_opportunity_missing(self):
         repo = _make_reminder_repo()
         repo.opportunity_exists.return_value = False
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         with pytest.raises(NotFoundError):
             svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
@@ -526,7 +537,7 @@ class TestListForOpportunity:
         reminders = [_make_reminder()]
         repo.list_by_opportunity.return_value = reminders
         repo.count_by_opportunity.return_value = 1
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         items, total = svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
 
@@ -535,7 +546,7 @@ class TestListForOpportunity:
 
     def test_include_completed_false_by_default(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_opportunity(OPP_ID, page=1, page_size=50)
 
@@ -546,7 +557,7 @@ class TestListForOpportunity:
 
     def test_include_completed_true_forwarded(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_opportunity(OPP_ID, include_completed=True, page=1, page_size=50)
 
@@ -557,7 +568,7 @@ class TestListForOpportunity:
 
     def test_offset_calculated_from_page(self):
         repo = _make_reminder_repo()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.list_for_opportunity(OPP_ID, page=2, page_size=25)
 
@@ -584,7 +595,7 @@ class TestCreateReminder:
     def test_raises_not_found_when_activity_missing(self):
         repo = _make_reminder_repo()
         repo.activity_exists.return_value = False
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         with pytest.raises(NotFoundError):
             svc.create_reminder(self._data(), created_by=ACTOR_ID)
@@ -592,7 +603,7 @@ class TestCreateReminder:
     def test_creates_reminder_with_is_completed_false(self):
         repo = _make_reminder_repo()
         repo.create.return_value = _make_reminder()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.create_reminder(self._data(), created_by=ACTOR_ID)
 
@@ -602,7 +613,7 @@ class TestCreateReminder:
     def test_created_by_and_updated_by_set(self):
         repo = _make_reminder_repo()
         repo.create.return_value = _make_reminder()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.create_reminder(self._data(), created_by=ACTOR_ID)
 
@@ -613,7 +624,7 @@ class TestCreateReminder:
     def test_all_fields_set_correctly(self):
         repo = _make_reminder_repo()
         repo.create.return_value = _make_reminder()
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.create_reminder(self._data(reminder_text="Call back tomorrow"), created_by=ACTOR_ID)
 
@@ -626,7 +637,7 @@ class TestCreateReminder:
         repo = _make_reminder_repo()
         reminder = _make_reminder()
         repo.create.return_value = reminder
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         result = svc.create_reminder(self._data(), created_by=ACTOR_ID)
 
@@ -641,19 +652,19 @@ class TestPatchReminder:
     def test_raises_not_found_when_reminder_missing(self):
         repo = _make_reminder_repo()
         repo.get_by_id.return_value = None
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         with pytest.raises(NotFoundError):
-            svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=True), updated_by=ACTOR_ID)
+            svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
 
     def test_sets_is_completed_true(self):
         repo = _make_reminder_repo()
         reminder = _make_reminder(is_completed=False)
         repo.get_by_id.return_value = reminder
         repo.update.return_value = reminder
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
-        svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=True), updated_by=ACTOR_ID)
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
 
         assert reminder.is_completed is True
 
@@ -662,7 +673,7 @@ class TestPatchReminder:
         reminder = _make_reminder(is_completed=True)
         repo.get_by_id.return_value = reminder
         repo.update.return_value = reminder
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
         svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=False), updated_by=ACTOR_ID)
 
@@ -673,9 +684,9 @@ class TestPatchReminder:
         reminder = _make_reminder()
         repo.get_by_id.return_value = reminder
         repo.update.return_value = reminder
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
-        svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=True), updated_by=ACTOR_ID)
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
 
         assert reminder.updated_by == ACTOR_ID
 
@@ -685,8 +696,202 @@ class TestPatchReminder:
         updated = _make_reminder(is_completed=True)
         repo.get_by_id.return_value = reminder
         repo.update.return_value = updated
-        svc = ReminderService(repository=repo)
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
 
-        result = svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=True), updated_by=ACTOR_ID)
+        result = svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
 
         assert result is updated
+
+    def test_completing_creates_closing_activity_with_inherited_context(self):
+        original = _make_activity(account_id=ACCOUNT_ID, opportunity_id=OPP_ID, project_id=PROJECT_ID)
+        reminder = _make_reminder(activity=original)
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(id=uuid.uuid4())
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
+
+        call_args = activity_repo.create.call_args[0][0]
+        assert call_args.account_id == ACCOUNT_ID
+        assert call_args.opportunity_id == OPP_ID
+        assert call_args.project_id == PROJECT_ID
+
+    def test_completing_closing_activity_uses_submitted_fields_and_updated_by_as_user(self):
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(id=uuid.uuid4())
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(
+            REMINDER_ID,
+            ReminderUpdate(is_completed=True, activity_type="VISIT", activity_date=NOW, notes="Visited the hospital"),
+            updated_by=ACTOR_ID,
+        )
+
+        call_args = activity_repo.create.call_args[0][0]
+        assert call_args.activity_type == "VISIT"
+        assert call_args.activity_date == NOW
+        assert call_args.notes == "Visited the hospital"
+        assert call_args.user_id == ACTOR_ID
+        assert call_args.created_by == ACTOR_ID
+
+    def test_completing_sets_reminder_closing_activity_id(self):
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        closing_activity = _make_activity(id=uuid.uuid4())
+        activity_repo.create.return_value = closing_activity
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
+
+        assert reminder.closing_activity_id == closing_activity.id
+
+    def test_reopening_does_not_create_closing_activity(self):
+        reminder = _make_reminder(is_completed=True)
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(is_completed=False), updated_by=ACTOR_ID)
+
+        activity_repo.create.assert_not_called()
+
+    def test_completing_without_follow_up_creates_no_new_reminder(self):
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(id=uuid.uuid4())
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
+
+        repo.create.assert_not_called()
+
+    def test_completing_with_follow_up_creates_new_reminder_linked_to_closing_activity(self):
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        closing_activity = _make_activity(id=uuid.uuid4(), user_id=ACTOR_ID)
+        activity_repo.create.return_value = closing_activity
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(
+            REMINDER_ID,
+            ReminderUpdate(**_closing_data(next_action_text="Send the quote", next_action_due_date=NOW)),
+            updated_by=ACTOR_ID,
+        )
+
+        call_args = repo.create.call_args[0][0]
+        assert call_args.activity_id == closing_activity.id
+        assert call_args.reminder_text == "Send the quote"
+        assert call_args.due_date == NOW
+        assert call_args.is_completed is False
+
+    def test_follow_up_owner_defaults_to_whoever_closed_it(self):
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        closing_activity = _make_activity(id=uuid.uuid4(), user_id=ACTOR_ID)
+        activity_repo.create.return_value = closing_activity
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(
+            REMINDER_ID,
+            ReminderUpdate(**_closing_data(next_action_text="Send the quote", next_action_due_date=NOW)),
+            updated_by=ACTOR_ID,
+        )
+
+        call_args = repo.create.call_args[0][0]
+        assert call_args.assigned_to_user_id == ACTOR_ID
+
+    def test_follow_up_owner_uses_explicit_owner_when_provided(self):
+        explicit_owner = uuid.uuid4()
+        reminder = _make_reminder()
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.return_value = reminder
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(id=uuid.uuid4(), user_id=ACTOR_ID)
+        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+
+        svc.patch_reminder(
+            REMINDER_ID,
+            ReminderUpdate(
+                **_closing_data(
+                    next_action_text="Send the quote",
+                    next_action_due_date=NOW,
+                    next_action_owner_id=explicit_owner,
+                )
+            ),
+            updated_by=ACTOR_ID,
+        )
+
+        call_args = repo.create.call_args[0][0]
+        assert call_args.assigned_to_user_id == explicit_owner
+
+
+# ---------------------------------------------------------------------------
+# ReminderUpdate — BR-ACT-05 mandatory closing-activity validation
+# ---------------------------------------------------------------------------
+
+class TestReminderUpdateValidation:
+    def test_completing_without_activity_type_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "activity_type": None})
+
+    def test_completing_without_activity_date_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "activity_date": None})
+
+    def test_completing_without_notes_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "notes": None})
+
+    def test_completing_with_manager_note_type_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "activity_type": "MANAGER_NOTE"})
+
+    def test_completing_with_all_fields_succeeds(self):
+        data = ReminderUpdate(**_closing_data())
+        assert data.is_completed is True
+        assert data.notes == "Called the customer"
+
+    def test_reopening_without_closing_fields_succeeds(self):
+        data = ReminderUpdate(is_completed=False)
+        assert data.is_completed is False
+        assert data.activity_type is None
+
+    def test_follow_up_text_without_due_date_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**_closing_data(next_action_text="Send the quote", next_action_due_date=None))
+
+    def test_follow_up_due_date_without_text_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**_closing_data(next_action_due_date=NOW, next_action_text=None))
+
+    def test_follow_up_omitted_entirely_succeeds(self):
+        data = ReminderUpdate(**_closing_data())
+        assert data.next_action_text is None
+        assert data.next_action_due_date is None
+
+    def test_follow_up_provided_together_succeeds(self):
+        data = ReminderUpdate(**_closing_data(next_action_text="Send the quote", next_action_due_date=NOW))
+        assert data.next_action_text == "Send the quote"
+        assert data.next_action_due_date == NOW
