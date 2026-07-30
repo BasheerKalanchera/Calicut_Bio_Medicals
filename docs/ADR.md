@@ -36,10 +36,17 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 
 ### ADR-003: Multi-SBU Contributor Splits (100% Rule)
 *   **Decision:** Opportunities support shared ownership across Strategic Business Units (SBUs) via a strict 100% split model.
-*   **Status:** Accepted (Implemented in Prototype App.jsx; updated by ACR — MA-07)
+*   **Status:** Accepted (Implemented in Prototype App.jsx; updated by ACR — MA-07). **Cross-SBU scope superseded by ADR-037 (2026-07-30)** — see that entry; the 100% allocation rule itself remains fully in force.
 *   **Rationale:** High-value hospital setups require cross-collaboration (e.g., Imaging + Critical Care). A unified Opportunity with split credit prevents "double-counting" in organizational rollups.
 *   **Impact:** Revenue rollups must calculate `Value × Split%`. SBU isolation logic must allow cross-SBU read access for shared deals. When no split is explicitly entered during Opportunity creation, the system automatically creates a 100% split assigned to the opportunity creator, ensuring the 100% allocation rule is always satisfied from the point of creation.
 *   **Affected Modules:** Opportunity Pipeline, Target Planning, Insights.
+
+### ADR-037: Split Participant SBU Restriction — Supersedes ADR-003's Cross-SBU Scope
+*   **Decision:** New split participants added to an Opportunity must belong to the same SBU as that Opportunity. This is enforced at the API layer (`OpportunityService.replace_splits`), not just discouraged in the UI. Participants already persisted on an Opportunity before this decision are grandfathered — not retroactively invalidated or removed — since only *newly-added* participants on a given save are checked (`replace_splits` re-submits the full list every time it's called, so without this exemption a single legacy cross-SBU row would block all future edits to that Opportunity's splits).
+*   **Status:** Accepted (2026-07-30, surfaced during Phase 2E Task 9's manual write-path retest)
+*   **Rationale:** ADR-003's original cross-SBU allowance existed for one Opportunity carrying products/credit across multiple SBUs simultaneously (e.g., one hospital deal with both Imaging and Critical Care equipment on it). That scenario is no longer modeled this way: ADR-004 established `Project` as the entity for consolidating multi-SBU pursuits, and ADR-035 fixed `Opportunity.sbu_id` as a single, immutable-at-creation value. A genuinely multi-SBU deal is now represented as a `Project` containing separate, per-SBU Opportunities rather than one Opportunity spanning SBUs with a cross-SBU split. The live dev DB's only existing split data (2 rows, one Opportunity) confirmed this is a low-volume change with no other data depending on the old allowance.
+*   **Impact:** `UserRepository.list_active` gains a `scope` parameter (`"scoped"` | `"sbu_zone"` | `"all"`) so the three different "pick a user" UI pickers (Opportunity Owner reassignment, Split participant, Next Action assignee) can each apply their own eligibility rule from one shared endpoint (`GET /users?scope=...`) instead of all sharing one behavior. See BR-FIN-06 (Split Participant Eligibility) and BR-ACT-06 (Next Action Assignee Eligibility) in `Business-Rules.md`. Zone is restricted only in the Split picker's UI suggestions (interim, not backend-enforced) — see BR-FIN-06 for why zone wasn't hardened the same way SBU was.
+*   **Affected Modules:** Opportunity Pipeline (Splits tab), Organization/User Directory (`/users` endpoint).
 
 ### ADR-004: Tender Consolidation within Projects
 *   **Decision:** Model tenders using the `Project` entity rather than introducing a separate `Tender` entity.

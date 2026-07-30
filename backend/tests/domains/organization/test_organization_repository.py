@@ -129,3 +129,36 @@ class TestListActive:
 
         assert results == [record]
         assert total == 3
+
+    def test_scope_all_ignores_role_entirely(self):
+        """Next Action assignee picker: any active user, regardless of tier."""
+        current_user = _make_current_user("Sales Staff")
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.all.return_value = []
+
+        repo = UserRepository(mock_db)
+        repo.list_active(current_user, scope="all")
+
+        sql = _compiled_where(mock_db)
+        assert "is_active" in sql
+        assert "sbu_id" not in sql
+        assert "zone_id" not in sql
+        assert "role_id" not in sql
+
+    def test_scope_sbu_zone_matches_caller_own_sbu_and_zone(self):
+        """Split participant picker (ADR-037): same SBU + zone as the caller, any tier."""
+        current_user = _make_current_user("Sales Staff")
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.all.return_value = []
+
+        repo = UserRepository(mock_db)
+        repo.list_active(current_user, scope="sbu_zone")
+
+        sql = _compiled_where(mock_db)
+        assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" in sql
+        assert f"user_profile.zone_id = '{current_user.zone_id.hex}'" in sql
+        assert f"user_profile.id = '{current_user.id.hex}'" in sql
+        assert "manager_id" not in sql
+        self._assert_excludes_unrestricted_roles(sql)

@@ -30,15 +30,40 @@ class UserRepository(BaseRepository[UserProfile]):
         current_user: UserProfile,
         offset: int = 0,
         limit: int = 50,
+        *,
+        scope: str = "scoped",
     ) -> tuple[list[UserProfile], int]:
         stmt = select(UserProfile).where(UserProfile.is_active == True)  # noqa: E712
 
-        role_name = current_user.role.role_name
-        if role_name not in _UNRESTRICTED_ROLES:
+        # Three pickers, three different eligibility rules:
+        #   "all"      -- Next Action assignee (Business-Rules.md BR-ACT-06): any active
+        #                  user, any SBU/zone. The permanent cabio_app_assigned_reminder()
+        #                  RLS carve-out grants visibility *after* assignment, so
+        #                  eligibility isn't gated here.
+        #   "sbu_zone" -- Split participant (BR-FIN-06): same SBU + zone as the caller
+        #                  (interim rule per ADR-037; revisit if a real cross-zone need
+        #                  surfaces).
+        #   "scoped"   -- Opportunity Owner (re)assignment: caller's own tier-visibility
+        #                  scope (the 2026-07-28 fix), unchanged.
+        if scope == "all":
+            pass
+        elif scope == "sbu_zone":
             from app.domains.reference.models import Role
 
             self_row = UserProfile.id == current_user.id
-            scope_builder = _SCOPE_BUILDERS.get(role_name)
+            same_sbu_zone = and_(
+                UserProfile.sbu_id == current_user.sbu_id,
+                UserProfile.zone_id == current_user.zone_id,
+            )
+            not_unrestricted = UserProfile.role_id.not_in(
+                select(Role.id).where(Role.role_name.in_(_UNRESTRICTED_ROLES))
+            )
+            stmt = stmt.where(and_(not_unrestricted, or_(same_sbu_zone, self_row)))
+        elif current_user.role.role_name not in _UNRESTRICTED_ROLES:
+            from app.domains.reference.models import Role
+
+            self_row = UserProfile.id == current_user.id
+            scope_builder = _SCOPE_BUILDERS.get(current_user.role.role_name)
             visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
 
             # Admin/General Manager carry an sbu_id/zone_id only to satisfy the NOT NULL

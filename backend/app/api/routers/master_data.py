@@ -117,11 +117,14 @@ def _to_user_list_response(user: UserProfile) -> UserListResponse:
 def list_users(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
+    scope: str = Query(default="scoped", pattern="^(scoped|sbu_zone|all)$"),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: UserService = Depends(_get_user_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[UserListResponse]]:
     offset = (page - 1) * page_size
-    users, total = service.list_active_users(current_user, offset=offset, limit=page_size)
+    users, total = service.list_active_users(
+        current_user, offset=offset, limit=page_size, scope=scope
+    )
     total_pages = (total + page_size - 1) // page_size
 
     return APIResponse(

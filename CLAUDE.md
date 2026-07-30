@@ -29,14 +29,20 @@ code or changing structure. On any conflict, the document wins over this file.
   for all DB object names. Consult before any structural change.
 
 ## Session handoff
-- Keep `.claude/active_progress.md` current: the task in progress, what's done, the next step.
-- Update it as work advances, not only at session end.
-- **Size discipline:** keep this file under ~1000 lines. Check its line count whenever you're
-  about to add a substantial entry (a finished feature write-up, a resolved investigation). If
-  it's already over budget, or your addition would push it over, archive fully-resolved sections
-  (superseded "current task" entries, shipped-feature write-ups already covered by a commit hash,
-  investigation narratives for closed bugs) into `docs/Progress-Archive-<year>-<month>.md` first —
-  don't wait to be asked, and don't let it grow past the limit before acting. Only current/pending
-  work belongs in the live file: the active task, open backlog, and standing decisions still in
-  force. Standing rules that belong to a specific domain (frontend conventions, backend patterns)
-  belong in that domain's standards doc, not here, even if first written down during a session.
+- `.claude/active_progress.md` is a live handover doc, not a log: the current task and
+  the immediate next step, nothing else. No narrative, no root-cause write-ups, no
+  standing decisions, no backlog — those have their own homes (below). Once a thread
+  resolves, its detail moves out; it doesn't linger here as history.
+- **Running commentary:** detailed write-ups (root causes, design debates, verification
+  results) are written directly to `docs/Progress-Archive-<year>-<month>.md` as the work
+  happens, not drafted in active_progress.md first. Roll to a new monthly file when the
+  month changes. Not loaded at session start; grep it for the detail behind a decision.
+  Exception: a thread actively in progress *this session* stays in active_progress.md
+  until it resolves — moving it mid-flight makes it harder to follow, not easier.
+- **Backlog:** deferred/parked ideas and undecided product questions live in
+  `docs/Backlog.md`, not active_progress.md.
+- **Standing decisions:** anything durable (a business rule, an architecture call, an
+  API shape, a convention) gets written directly into whichever authoritative doc
+  governs that domain (see "Authoritative References" above) — never parked in a
+  progress file, even temporarily.
+- Update active_progress.md as work advances, not only at session end.

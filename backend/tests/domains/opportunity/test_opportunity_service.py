@@ -11,7 +11,7 @@ Repository is fully mocked — no DB required.  Tests cover:
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -137,6 +137,10 @@ def _make_repo(**overrides) -> MagicMock:
     repo.replace_splits.return_value = []
     repo.replace_items.return_value = []
     repo.replace_stakeholders.return_value = []
+    repo.list_splits.return_value = []
+    # By default, assume any newly-referenced participant is in the opportunity's own
+    # SBU -- tests exercising the ADR-037 cross-SBU rejection override this explicitly.
+    repo.get_user_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
     for k, v in overrides.items():
         setattr(repo, k, v)
     return repo
@@ -466,6 +470,54 @@ class TestReplaceSplits:
         split: Split = repo.replace_splits.call_args[0][1][0]
         assert split.created_by == USER_ID
         assert split.updated_by == USER_ID
+
+    def test_new_participant_from_different_sbu_raises(self):
+        """ADR-037: cross-SBU splits on a single Opportunity are no longer supported."""
+        other_sbu = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        uid = uuid.uuid4()
+        repo.get_user_sbu_ids.side_effect = lambda ids: {uid: other_sbu}
+        service = OpportunityService(repository=repo)
+
+        data = SplitsBulkUpdate(splits=[SplitCreate(user_id=uid, split_percentage=Decimal("100"))])
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+
+        repo.replace_splits.assert_not_called()
+
+    def test_new_participant_from_same_sbu_passes(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        service = OpportunityService(repository=repo)
+
+        data = SplitsBulkUpdate(
+            splits=[SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100"))]
+        )
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        repo.replace_splits.assert_called_once()
+
+    def test_existing_cross_sbu_participant_is_grandfathered(self):
+        """A pre-existing cross-SBU split (e.g. legacy ADR-003 data) must not block
+        future edits to the same opportunity, since replace_splits re-submits the
+        full list on every save -- only newly-added participants are checked."""
+        legacy_user_id = uuid.uuid4()
+        other_sbu = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        repo.list_splits.return_value = [
+            MagicMock(spec=Split, user_id=legacy_user_id)
+        ]
+        # get_user_sbu_ids should never even be consulted for the legacy participant --
+        # if it were, this would resolve to other_sbu and fail the check.
+        repo.get_user_sbu_ids.side_effect = lambda ids: {legacy_user_id: other_sbu, **{i: SBU_ID for i in ids}}
+        service = OpportunityService(repository=repo)
+
+        data = SplitsBulkUpdate(splits=[
+            SplitCreate(user_id=legacy_user_id, split_percentage=Decimal("100")),
+        ])
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        repo.replace_splits.assert_called_once()
 
 
 # ===========================================================================

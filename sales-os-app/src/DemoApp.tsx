@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Backdrop, Box, Button, IconButton, Typography } from "@mui/material";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -38,6 +39,7 @@ const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [view, setView]                         = useState("customers");
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
@@ -436,7 +438,10 @@ export default function DemoApp() {
       <QuickLeadModal
         isOpen={showQuickLead}
         onClose={() => setShowQuickLead(false)}
-        onCreated={() => { projectOppsRefreshRef.current?.(); }}
+        onCreated={() => {
+          projectOppsRefreshRef.current?.();
+          queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+        }}
         sbuId={(userProfile as any)?.sbu?.id}
       />
       <LogActivityModal

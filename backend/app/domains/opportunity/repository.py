@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, noload
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
+from app.domains.organization.models import UserProfile
 from app.domains.reference.models import LossReason, OpportunityStage, OpportunityStatus
 
 
@@ -220,6 +221,14 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 select(Split).where(Split.opportunity_id == opportunity_id)
             ).all()
         )
+
+    def get_user_sbu_ids(self, user_ids: set[uuid.UUID]) -> dict[uuid.UUID, uuid.UUID]:
+        if not user_ids:
+            return {}
+        rows = self.db.execute(
+            select(UserProfile.id, UserProfile.sbu_id).where(UserProfile.id.in_(user_ids))
+        ).all()
+        return {row.id: row.sbu_id for row in rows}
 
     def replace_splits(
         self, opportunity_id: uuid.UUID, new_splits: list[Split]

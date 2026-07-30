@@ -111,7 +111,31 @@ const completeMutation = useMutation({
 
 ADR-030 requires list screens to stay mounted so back-navigation is instant. React Query's cache (§4.1) already serves this: a `useQuery` call with the same `queryKey` returns cached data synchronously on re-render if within `staleTime` (30 s, configured once in `main.tsx`), with a silent background refetch. This replaces the v1.0 hand-rolled module-level `Map` cache (§4.1) entirely — **do not add a new one.**
 
-If a future detail screen needs to seed a query from data the parent list already has (avoiding a loading flash on first navigate), use `useQuery`'s `initialData` option. **No screen in this codebase does this yet** — when one does, replace this paragraph with the verified pattern from that file rather than an invented example.
+If a future detail screen needs to seed a query from data the parent list already has (avoiding a loading flash on first navigate), use `useQuery`'s `initialData` option. **First implemented in `Customer360Screen.tsx`** (`initialAccount` prop → the account query's `initialData`) — Directory-list navigation seeds it from already-fetched row data; Parent/Child account links currently only have a minimal `{id, name}` to seed with (see the `Backlog.md` item on richer parent/child `initialData` if that gap is ever closed).
+
+The ref-guarded seeding subtlety this pattern needs when the seed data is a *draft buffer*, not a direct render of query data: `Customer360Screen.tsx`'s Edit Opportunity modal item list (`editOItems`) is seeded in a `useEffect` guarded by a ref (seed once per `editingOpp.id`, reset the guard on close) rather than seeded directly, since `listOpportunityItems` is only fetched on-demand (`enabled: editingOpp !== null`) and isn't available the instant the modal opens.
+
+**Query-key reuse across screens** (avoid duplicate fetches for the same data — same principle `OpportunityDetailScreen.tsx`'s Commit B applies to stages/statuses/users):
+
+| Data | `queryKey` | Shared with |
+|---|---|---|
+| Account | `["account", accountId]` | — (screen-local) |
+| Account counts | `["account-counts", accountId]` | — |
+| Stakeholders (tab) | `["stakeholders", "byAccount", accountId]` | `OpportunityDetailScreen.tsx`'s stakeholder-link picker |
+| Projects (tab) | `["projects", "byAccount", accountId]` | `QuickLeadModal.tsx`'s project picker |
+| Opportunities (tab) | `["opportunities", "byAccount", accountId]` | — |
+| Installed assets (tab) | `["installed-assets", "byAccount", accountId]` | — |
+| Zones | `["zones"]`, `staleTime: Infinity` | — |
+| Project statuses | `["project-statuses"]`, `staleTime: Infinity` | — |
+| Stages / Opp statuses / Lead sources | `["stages"]` / `["statuses"]` / `["leadSources"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx`, `OpportunityPipelineScreen.tsx`, `QuickLeadModal.tsx` |
+| Hold / Loss reasons | `["holdReasons"]` / `["lossReasons"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx` (both screens' Edit Opportunity modal + Overview display) |
+| Opportunity Owner picker (tier-scoped) | `["users", "all"]` | `QuickLeadModal.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`'s Edit Opportunity modal, `OpportunityPipelineScreen.tsx`'s owner filter |
+| Split participant picker (`scope=sbu_zone`, BR-FIN-06) | `["users", "sbu_zone"]` | `OpportunityDetailScreen.tsx`'s Splits tab |
+| Next Action assignee picker (`scope=all`, BR-ACT-06) | `["users", "assignable"]` | `LogActivityModal.tsx` |
+| Products | `["products", "picker", sbuId]` | `QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx` |
+| Opportunity items | `["opp-items", <opportunityId>]` | `OpportunityDetailScreen.tsx`'s Products tab, same opportunity |
+
+**Caution:** the three `users` keys above return different data depending on `scope` (see `GET /users?scope=` in `API-Catalog.md`) — never reuse one of these three keys for a picker with different eligibility needs than the one it was introduced for, even if it seems convenient. That exact collision (all pickers sharing one `["users", "all"]` key despite needing different scopes) was a real regression, fixed 2026-07-30.
 
 ### 3.4 Per-Resource Loading Flags — Superseded
 
@@ -231,7 +255,7 @@ Things that behave differently from a native element or from older MUI docs/exam
 4. **Don't use MUI's `Stack` component.** It causes a TypeScript compile error in this project's specific combination of library versions (MUI 9.1.2 / React 19.2.5 / TS 6.0.3) — not a mistake in how it's used, just broken here. Use `Box` with flex `sx` properties instead, which is what every migrated file already does. *(Version-bound — recheck on upgrade.)*
 5. **`InputLabelProps` no longer exists in this MUI version.** Older examples use it to control a field's label (e.g. keeping a datetime field's label shrunk). Use `slotProps={{ inputLabel: {...} }}` instead. *(Version-bound.)*
 6. **Disabled contained-primary overrides need the `ownerState` function form.** This MUI version dropped the combined `containedPrimary` class key from `MuiButton` `styleOverrides`, so a theme-level rule for "disabled + contained + primary" (see `src/theme/index.ts`) has to be written as a function reading `ownerState.variant`/`ownerState.color`, not a static `containedPrimary` key. *(Version-bound.)*
-7. **Circular back button: `IconButton` + `ArrowBackIcon` (not a chevron).** `ArrowBackIcon` is the platform-standard back affordance and reads correctly on mobile without a label; a chevron reads as collapse/previous, not navigate-back. Currently inlined in `OpportunityDetailScreen.tsx` (`sx={{ width: 40, height: 40, color: "#4b5563", "&:hover": { bgcolor: "#e5e7eb" } }}`, icon `sx={{ fontSize: 20 }}`) — but this identical control appears on all four 360/detail screens (Customer, Product, Opportunity, Project), which per §6.7's logic makes it an app-wide convention, not a per-file style choice. Extracting it into a shared `BackButton` component is banked (see `active_progress.md` Deferred section) rather than built now — inline it identically until then; do not re-derive the styling per file once it exists.
+7. **Circular back button: `IconButton` + `ArrowBackIcon` (not a chevron).** `ArrowBackIcon` is the platform-standard back affordance and reads correctly on mobile without a label; a chevron reads as collapse/previous, not navigate-back. Currently inlined in `OpportunityDetailScreen.tsx` (`sx={{ width: 40, height: 40, color: "#4b5563", "&:hover": { bgcolor: "#e5e7eb" } }}`, icon `sx={{ fontSize: 20 }}`) — but this identical control appears on all four 360/detail screens (Customer, Product, Opportunity, Project), which per §6.7's logic makes it an app-wide convention, not a per-file style choice. Extracting it into a shared `BackButton` component is banked (see `docs/Backlog.md`) rather than built now — inline it identically until then; do not re-derive the styling per file once it exists.
 8. **Tailwind responsive prefixes (`sm:hidden`, `hidden sm:block`) become `sx`'s breakpoint-object syntax**, e.g. `sx={{ display: { xs: "none", sm: "block" } }}` — not a media-query string. First needed in `DemoApp.tsx` (Sign Out label/icon swap, the "Sales OS" header title). For a one-off custom breakpoint that isn't one of MUI's standard values (e.g. the 896px width `DemoApp.tsx`'s sidebar centers under, matching the app shell's `max-w-4xl`/56rem), fall back to a literal `"@media (min-width:896px)": { ... }` key inside `sx` instead of `theme.breakpoints`.
 
 ### 6.7 Theme is the source of truth for visual defaults
@@ -336,8 +360,8 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 Commit A/B split surfaced that these were asserting more than they checked):
 - **Styling ✓** — zero Tailwind `className` in the file. Mechanically checked by `check-no-tailwind.js`.
 - **React Query ✓** — zero manual `.then()` fetch chains; all data fetching via `useQuery`/`useMutation`.
-  Self-reported today, not mechanically checked (see the enforcement-gap note in the Deferred section
-  of `active_progress.md` — a grep-for-`.then(` guard is banked, not built).
+  Self-reported today, not mechanically checked (see the enforcement-gap note in `docs/Backlog.md`
+  — a grep-for-`.then(` guard is banked, not built).
   A row is not marked ✓ here until that's actually true — a file can be Styling ✓ while this column
   is still Pending.
 - **TypeScript ✓** — file is `.tsx`/`.ts` and compiles under `tsc --noEmit`. Does **not** certify the

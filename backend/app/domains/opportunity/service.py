@@ -280,7 +280,8 @@ class OpportunityService:
         *,
         updated_by: uuid.UUID,
     ) -> list[Split]:
-        if not self.repository.get_for_update(opportunity_id):
+        opportunity = self.repository.get_for_update(opportunity_id)
+        if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
 
         if data.splits:
@@ -289,6 +290,24 @@ class OpportunityService:
                 raise BusinessRuleViolation(
                     f"Split percentages must sum to 100% (got {total}%)."
                 )
+
+        # ADR-037 (Business-Rules.md BR-FIN-06): cross-SBU splits on a single
+        # Opportunity are no longer supported -- multi-SBU deals are modeled via
+        # Project-linked, per-SBU Opportunities instead. Only newly-added
+        # participants are checked; participants already on the opportunity before
+        # this call are grandfathered, since replace_splits re-submits the full
+        # list on every save and a legacy cross-SBU row would otherwise block all
+        # future edits to that opportunity's splits, not just new additions.
+        existing_user_ids = {s.user_id for s in self.repository.list_splits(opportunity_id)}
+        new_user_ids = {s.user_id for s in data.splits} - existing_user_ids
+        if new_user_ids:
+            sbu_by_user = self.repository.get_user_sbu_ids(new_user_ids)
+            for user_id in new_user_ids:
+                if sbu_by_user.get(user_id) != opportunity.sbu_id:
+                    raise BusinessRuleViolation(
+                        f"User {user_id} is not in this Opportunity's SBU; "
+                        "split participants must belong to the same SBU as the Opportunity."
+                    )
 
         new_splits = [
             Split(

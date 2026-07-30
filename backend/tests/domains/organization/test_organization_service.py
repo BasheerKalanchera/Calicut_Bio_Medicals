@@ -47,7 +47,7 @@ class TestListActiveUsers:
         result = service.list_active_users(caller, offset=10, limit=25)
 
         assert result == ([caller], 1)
-        repo.list_active.assert_called_once_with(caller, offset=10, limit=25)
+        repo.list_active.assert_called_once_with(caller, offset=10, limit=25, scope="scoped")
 
 
 class TestCreateUser:

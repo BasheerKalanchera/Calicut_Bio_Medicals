@@ -1476,3 +1476,520 @@ the 3 pending files are actual remaining work.)
 
 Full write-ups for the rows above (backend concurrency fix, Parent Customer display+editing, `api.ts` generation debt, Milestone 1 screen mapping, the Prototype/Production Parity Audit) are earlier in this file.
 
+
+---
+
+## Basheer K junk-opportunity cleanup, Phase 2E Tasks 1a/4-8 (RLS build), User Directory E2E, /users cache-leak fix — archived 2026-07-30
+
+Fully resolved, superseded by the checklist at the top of `active_progress.md`; moved here as part of the active_progress.md/Backlog.md/CLAUDE.md session-handoff restructuring (2026-07-30). Task-9-specific entries (the cutover write-up, the Amit R cross-visibility findings that double as retest evidence) stay in active_progress.md until Task 9 itself closes — only the unrelated-to-Task-9 resolved narrative below was moved.
+
+**2026-07-28 — `/users` endpoint now respects the same visibility hierarchy as
+Opportunity; a reported "RLS violation" during manual testing turned out to be
+a real but unrelated frontend bug, now fixed.** Owner dropdown in
+`OpportunityPipelineScreen.tsx` was showing every active user regardless of
+caller. Fixed by threading `current_user` through
+`master_data.py:list_users` → `UserService.list_active_users` →
+`UserRepository.list_active`, which now applies the same tier logic as
+`opportunity_tier_visibility` (`0010_rls_opportunity_children.py`): Admin/GM
+unrestricted, SBU Manager → own `sbu_id`, Area Manager → own `sbu_id` +
+`zone_id`, Sales Manager → direct reports only via `manager_id` (one level,
+matching Opportunity's own deliberately-flat rule, not recursive), everyone
+always includes self. No frontend change needed — `listUsers()` just renders
+whatever the endpoint returns. Tests: new `test_organization_repository.py`
+(asserts the compiled WHERE clause per role tier), plus service/router
+coverage; 355/355 passing.
+
+**Basheer then reported what looked like a live security failure**: dropdown
+stuck showing only one user across every role, and a Sales Manager test
+account appearing to view *and edit* an Area Manager's opportunity, reassigning
+it to himself. Investigated directly against the live DB before assuming the
+new filter was at fault:
+- Simulated the exact scenario through the real `cabio_app` connection with
+  the Sales Manager's actual RLS session context, in a rolled-back
+  transaction: the opportunity was invisible (`SELECT` → none) and the
+  reassignment `UPDATE` affected 0 rows. **RLS enforcement itself was never
+  broken.**
+- Checked the opportunity's live `updated_at`/`updated_by` history — still
+  correctly Test - Area Manager throughout. No unauthorized write ever
+  persisted.
+- Root cause: `sales-os-app/src/main.tsx` creates one `QueryClient` for the
+  whole app session, and `AuthContext.tsx`'s `signOut()`/`signIn()` never
+  cleared it — so switching test accounts left every screen showing
+  leftover cached data from whichever identity loaded it first, including
+  the Owner dropdown and the pipeline list. What looked like a Sales Manager
+  editing someone else's deal was stale cache from an earlier, legitimately
+  authorized view.
+- Fix: `queryClient.clear()` added to `AuthContext.signOut()` only (checked:
+  `signIn()` is never reachable without a prior `signOut()` or a full page
+  reload in this app's current control flow, so clearing there too would be
+  redundant — dropped per Basheer's call).
+
+**Separate, smaller leak found during manual verification and fixed**: Test -
+SBU Manager (Critical Care) saw Test - Admin and Test - General Manager in
+their scoped dropdown, because those two accounts' `sbu_id`/`zone_id` are
+non-null placeholders (schema requires a value; the value itself is
+meaningless for an unrestricted role) that happened to coincide with a real
+SBU. Fixed in `UserRepository.list_active` by excluding any target row whose
+own role is Admin/GM from every scoped branch, regardless of what
+`sbu_id`/`zone_id`/`manager_id` happens to be stamped on it — not by giving
+Admin/GM a fake "Corporate" SBU (would leak into every other SBU-scoped
+picker/report and only holds if every future Admin/GM account remembers the
+convention) and not by making `sbu_id` nullable yet (see `docs/Backlog.md` for
+why that's real, separate, multi-file work).
+
+
+**2026-07-28 — Junk-opportunity cleanup for Basheer K: investigated, decided,
+and executed.** 16 opportunities were owned by Basheer K (`user_profile.id
+3339381f-10e0-43b0-a507-b1e1bdabf0ce`); several looked like leftover manual-test
+data by name (`Test opportunity`, `Test opportunity 2`, `test Opp 3`, `usg`,
+`usg m/c`, `USG 2`, `new lead`, etc.) rather than real pipeline data.
+
+Two real constraints found, relevant to any cleanup approach chosen:
+- **No DELETE endpoint exists for Opportunity anywhere in the app** (only
+  `opportunity-items` and the stakeholder-link endpoints have one) — hard
+  delete has never been a supported operation for this entity, consistent
+  with Activity's own immutability-by-design.
+- **Every child FK into `opportunity` (`activity`, `document`, `split`,
+  `opportunity_item`, `opportunity_stakeholder`) is `NO ACTION`, no cascade**
+  — confirmed via `information_schema`. A raw-SQL delete on any opportunity
+  with children needs its children deleted first; 3 of the 16 have real
+  `Activity` rows (1, 3, and 1 respectively), which would mean deleting
+  Activity rows via raw SQL — directly contradicts the immutable-Activity
+  invariant this project has otherwise enforced everywhere.
+
+Full per-opportunity child-row counts (id, name, created_at, activity/split/
+item/stakeholder/document counts) were pulled and shown to Basheer inline
+this session but not saved to a file — re-run the same query against
+`ADMIN_DATABASE_URL` if needed again:
+```sql
+SELECT o.id, o.name, o.created_at,
+  (SELECT count(*) FROM activity a WHERE a.opportunity_id = o.id) AS n_activity,
+  (SELECT count(*) FROM split s WHERE s.opportunity_id = o.id) AS n_split,
+  (SELECT count(*) FROM opportunity_item oi WHERE oi.opportunity_id = o.id) AS n_item,
+  (SELECT count(*) FROM opportunity_stakeholder os WHERE os.opportunity_id = o.id) AS n_stakeholder,
+  (SELECT count(*) FROM document d WHERE d.opportunity_id = o.id) AS n_document
+FROM opportunity o WHERE o.owner_id = '3339381f-10e0-43b0-a507-b1e1bdabf0ce'
+ORDER BY o.created_at;
+```
+6 of the 16 had zero children at all (clean hard-delete candidates): MRI Deal,
+Patient Monitor Upgrade, New Cath Lab Equipment, Test opportunity, Test
+opportunity 2, New. Of those 6, 2 (MRI Deal → project "MRI Suite Upgrade";
+New Cath Lab Equipment → project "New Cath Lab Installation") turned out to be
+linked via `opportunity.project_id` to real-sounding projects despite having
+no Activity logged yet — Basheer chose to exclude those 2 pending further
+review, rather than treat "zero children" alone as sufficient for deletion.
+
+**Decision: option (b) narrowed to the 4 zero-child, no-project opportunities.**
+Hard-deleted via raw SQL against `ADMIN_DATABASE_URL` (no DELETE endpoint
+exists for Opportunity in the app, consistent with the constraint noted
+above): `Patient Monitor Upgrade`, `Test opportunity`, `Test opportunity 2`,
+`New`. Immediately before the `DELETE`, re-verified each row's owner,
+`project_id IS NULL`, and zero children in the same script, then committed in
+one transaction. Post-delete check confirmed Basheer K now owns exactly 12
+opportunities: the 2 project-linked ones (still untouched, still childless)
+and the 10 that already had `opportunity_item`/`activity`/`opportunity_stakeholder`
+rows (also untouched). **Closed — no further action needed** unless Basheer
+later decides on the 2 project-linked ones or the 10 with children.
+
+**2026-07-27 — Task 8 done: local RLS verification loop, 56/56 checks
+passed (7 test identities × 8 policy-protected tables).** Resolved the
+connectivity blocker flagged under Task 5 without needing `SET ROLE`: since
+`cabio_app` is a `LOGIN` role with its own password (created in 0008), a
+direct connection works through Supabase's Supavisor pooler using a
+tenant-qualified username, `cabio_app.<project-ref>` (same pattern the
+existing `DATABASE_URL`'s `postgres.<project-ref>` already uses) — confirmed
+the pooler's `no tenant identifier provided` error only ever meant "wrong
+username shape," not "no such role" or "can't connect at all." Verified
+first with zero RLS context set: `cabio_app` saw 0 products, proving
+enforcement is real, not merely present.
+
+**Method, not a manual `psql` transcript:** wrote a one-off verification
+script (scratchpad, not committed to the repo) that (1) pulls ground-truth
+rows for every RLS-protected table via the app's own `postgres`-role
+connection (bypasses RLS, table owner), (2) computes each of the 7 test
+identities' expected visible-row set **independently in Python**, mirroring
+`Opportunity-Access-Hierarchy-Technical-Design.md`'s stated business rules
+line-by-line rather than re-executing the same SQL the policies use (a
+same-SQL comparison would only prove the migration applied, not that the
+*intended* rule is what got encoded), (3) opens one transaction per identity
+against the direct `cabio_app` connection, issues the same 4 `SET LOCAL`
+statements `set_rls_context()` uses, queries each table, and rolls back
+(read-only, no state left behind), (4) diffs expected vs actual per table,
+flagging both directions — rows wrongly hidden (under-permissive, a
+usability bug) and rows wrongly shown (over-permissive, the actual security
+failure mode RLS exists to prevent).
+
+**Result: 56/56 checks matched exactly** across `opportunity`, `split`,
+`opportunity_item`, `opportunity_stakeholder`, `activity`, `document`,
+`reminder`, `product`, for Admin, General Manager, SBU Manager, Area
+Manager, Sales Manager, and both Sales Staff test accounts (Basheer K,
+Amit R) — confirms 0010/0011/0012 encode the intended 6-tier rules, not
+just *some* consistent rule. Per-tier visible-opportunity counts were
+clearly differentiated (21/21/0/12/16/18/5), ruling out an RLS-not-applied
+false pass.
+
+**One honest test-data gap, not a policy gap, flagged rather than glossed
+over:** all 21 test opportunities are `Imaging` SBU (confirmed via direct
+query) — there is no `Critical Care` opportunity today, so `SBU Manager`'s
+(Critical Care) `sbu_id = cabio_app_sbu_id()` branch was only proven to
+correctly *exclude* (0 result), never proven to positively match a same-SBU
+row. The identical clause **is** positively proven elsewhere in this same
+run -- `product` spans both SBUs (8 Imaging + 19 Critical Care = 27 total)
+and Area Manager/Sales Manager (both Imaging) get non-zero opportunity
+counts via the same equality check -- so this is a coverage gap in today's
+seed data, not evidence the mechanism is untested. Also explicitly confirmed
+the deliberate cross-SBU edge case from the Task 1a note holds: SBU Manager
+(Critical Care) sees 0 opportunities despite the Area Manager (Imaging)
+being a direct report -- the manager_id chain crossing SBU lines does not
+leak into SBU-level visibility, since that branch never references
+manager_id at all.
+
+**2026-07-27 — Task 7 done: migration `0012_rls_product.py`, applied to live
+dev DB (`alembic current` = `0012`, head).** Simplest RLS migration in the
+build so far: `product` has no `owner_id`/`zone_id`/`manager_id`, just a
+non-nullable, already-indexed `sbu_id` — every non-Admin/GM tier collapses to
+the same check, so it's one flat two-branch policy
+(`product_sbu_visibility`), not a per-tier one. Reuses `cabio_app_role_name()`/
+`cabio_app_sbu_id()` from 0009/0010 — no new helper functions needed. Real
+behavior change this enforces (per `Phase-2E-Build-Estimate.md` §1c):
+`GET /products` today takes `sbu_id` as an optional, client-supplied filter
+with nothing stopping a client from omitting it or passing the other SBU's
+id — RLS makes this enforced and unforgeable instead of advisory. Inert on
+the running app until the `cabio_app` cutover (Task 9), same as 0008-0011.
+
+Verified via direct metadata query (same approach as Tasks 5/6, full 6-tier
+behavioral matrix still deferred to Task 8): `rowsecurity = true` on
+`product`, `product_sbu_visibility` policy present with the exact expected
+`USING` clause (confirmed via `pg_policies.qual`), app's own connection
+(table owner) still sees all 27 products unchanged. **345 passed**
+(unchanged — no Python code touched), `ruff check` clean on the new
+migration file.
+
+**2026-07-27 — Task 6 done: migration `0011_rls_activity_document_reminder.py`,
+applied to live dev DB (`alembic current` = `0011`, head).** Started as "just"
+the `activity`/`document`/`reminder` conditional policies, but a design
+discussion with Basheer surfaced a real product-behavior gap first, so scope
+grew to include a widening of Task 5's `opportunity` policy too:
+
+- **Corrected assumption from the Build Estimate doc:** `document` actually
+  has 4 nullable context columns, not 3 — `product_id` too (Product Catalog
+  collateral links), missed in `Phase-2E-Build-Estimate.md` §1b's original
+  description. **Confirmed with Basheer:** product-only documents (no
+  opportunity) stay universally visible regardless of SBU, same as
+  account/project-only rows — reps need to be able to answer a customer's
+  question about the *other* SBU's equipment from its collateral.
+- **Real gap found by working through the design, not by inspecting code:**
+  `activity.user_id` / `reminder.assigned_to_user_id` are NOT constrained to
+  the opportunity's owner — confirmed live in `LogActivityModal.tsx`'s "Next
+  Action" owner dropdown, which lists every user in the system with no
+  team/SBU restriction (`activity/service.py`'s `resolved_owner =
+  data.next_action_owner_id or activity.user_id` backs this). A naive
+  "gated purely by the parent opportunity's visibility" policy would have
+  silently broken the Next Actions screen for anyone handed a follow-up on a
+  deal they don't otherwise have tier-based visibility into.
+- **Basheer's follow-up insight, which reshaped the fix:** merely exposing
+  the one assigned reminder row wouldn't be useful — the assignee needs the
+  *whole deal's* context (history, documents, stakeholders) to actually help.
+  Since every child table already inherits from "can you see the parent
+  opportunity," the correct fix is one addition at the opportunity level, not
+  four separate carve-outs. Basheer also called out the same logic applies
+  to Split participants (someone given a commission % on a deal should also
+  get permanent visibility into it) — a case this session hadn't yet
+  considered. **Confirmed: both carve-outs are permanent** (not conditioned
+  on `reminder.is_completed` or a specific split %) — once genuinely tied to
+  a deal, that access doesn't expire.
+- **Real technical wrinkle this created, resolved via SECURITY DEFINER
+  functions (a new pattern for this project):** having `opportunity`'s policy
+  query `split`/`reminder`+`activity` directly would create a circular RLS
+  dependency once those tables also have policies referencing back to
+  `opportunity` (which this same migration adds) — evaluating "can user X
+  see opportunity O" would recurse into re-evaluating the same question with
+  no base case. Fixed with two new SECURITY DEFINER helper functions,
+  `cabio_app_has_split(opportunity_id)` and
+  `cabio_app_assigned_reminder(opportunity_id)` — each answers one narrow
+  boolean fact by reading the raw table directly (owned by the migration's
+  own role, RLS-exempt by default, same reasoning as why `postgres` bypasses
+  RLS generally), never re-entering `opportunity`'s own policy. `SET
+  search_path = public` on both, standard SECURITY DEFINER hardening.
+- `opportunity_tier_visibility` widened via `ALTER POLICY ... USING (...)`
+  (not dropped/recreated) — all 5 of Task 5's branches unchanged, plus two
+  new un-gated branches (`cabio_app_has_split(id)`,
+  `cabio_app_assigned_reminder(id)`), consistent with how `owner_id = me` was
+  already left un-gated: none of these three branches can ever grant more
+  than "a deal you're personally tied to."
+- `activity`/`document` policy (identical shape, one line each):
+  `opportunity_id IS NULL OR opportunity_id IN (SELECT id FROM opportunity)`.
+- `reminder` policy: `activity_id IN (SELECT id FROM activity)` — needed no
+  separate assignee logic of its own; the opportunity-level widening already
+  covers it via the ordinary join-back chain, one fix at the top rather than
+  one per table (Technical Design doc §11's own stated principle).
+- Also fixed in the same session: `LogActivityModal.tsx`'s "Next Action"
+  owner dropdown had no `label` prop — Basheer noticed it while discussing
+  the above and correctly guessed that's *why* he'd never noticed the
+  reassignment feature existed. Added `label="Assign Next Action To"`.
+
+Verified same as Task 5 (metadata query, not yet the full 6-tier behavioral
+matrix — still Task 8): `rowsecurity = true` on all 3 tables, all 4 policies
+present (`activity_tier_visibility`, `document_tier_visibility`,
+`reminder_via_activity`, plus `opportunity_tier_visibility` confirmed via
+`pg_get_expr` to actually contain both new branches — not just present under
+the same name), both new functions show `prosecdef = true` in `pg_proc`
+(confirms SECURITY DEFINER took effect), app's own connection (table owner)
+sees unchanged row counts across all 4 tables. `345 passed` (unchanged —
+migration touches no Python code), `ruff check` clean on the new migration
+file, frontend `npm run lint` clean after the label fix.
+
+**2026-07-27 — Task 5 done: migration `0010_rls_opportunity_children.py`, applied
+to live dev DB (`alembic current` = `0010`, head).** Enables RLS + one policy
+each on `opportunity`, `split`, `opportunity_item`, `opportunity_stakeholder`,
+plus a new helper function `cabio_app_role_name()` (resolves the caller's
+`role_id` to its `role_name`, mirroring 0009's 4 identity functions, reused
+across the 4 tier branches below). Encodes all 6 tiers from
+`Opportunity-Access-Hierarchy-Technical-Design.md` §1/§5/§6 as one combined
+`USING` clause on `opportunity` (Admin/GM unrestricted; SBU Manager →
+`sbu_id` match; Area Manager → SBU Manager's check **and** the opportunity's
+account is in-zone, joined via `account.zone_id` not the owner's, per §5's
+frozen-attribution reasoning; Sales Manager → owner reports directly to the
+caller via `user_profile.manager_id`, gated on role name per Basheer's
+2026-07-27 call, defense-in-depth against a future data-entry mistake; Sales
+Staff, and harmlessly every tier, → `owner_id = caller`, deliberately left
+un-gated since it never grants more than "your own rows," a no-op for every
+tier above). `split`/`opportunity_item`/`opportunity_stakeholder` each get a
+one-line join-back policy (`opportunity_id IN (SELECT id FROM opportunity)`)
+— Postgres re-applies `opportunity`'s own policy to that subquery
+automatically, so the tier logic lives in exactly one place.
+
+Verified via direct metadata query (not the full 6-tier behavioral matrix —
+that's Task 8, deliberately deferred until Task 6/7's policies also exist,
+per `Phase-2E-Build-Estimate.md` §5's discipline): all 4 tables show
+`rowsecurity = true`, all 4 policies exist under their expected names,
+`cabio_app_role_name()` exists, and the app's own connection (table owner,
+exempt from RLS by default) still sees all 21 opportunities — confirms this
+migration is inert on the running app, same as 0008/0009. `345 passed`
+(unchanged — this migration touches no Python code), `ruff check` clean on
+the new file.
+
+**Real finding, flagged for Task 8, not resolved now:** a smoke-test attempt
+to impersonate `cabio_app` hit two dead ends worth knowing about before that
+task starts — (1) `SET ROLE cabio_app` from the app's own connection fails
+with `permission denied`, so the current connecting role isn't a member of
+`cabio_app` (despite PG16's "creator is granted membership" behavior —
+worth checking why that didn't apply here, possibly a Supabase-managed-role
+quirk); (2) connecting directly as `cabio_app` by swapping just the username
+in `DATABASE_URL` fails against Supabase's Supavisor pooler with
+`FATAL: no tenant identifier provided` — the pooler requires the
+tenant-qualified username format (e.g. `cabio_app.<project-ref>`, mirroring
+whatever format the existing `postgres.<project-ref>`-style `DATABASE_URL`
+username already uses), not a bare role name. Task 8's verification loop
+needs one of these two resolved before it can actually impersonate roles.
+
+**2026-07-27 — Task 4 done: migration `0009_cabio_app_rls_helper_functions.py`
++ `set_rls_context()` rewrite, applied to live dev DB (`alembic current` =
+`0009`, head). `db/session.py`'s `set_rls_context()` now takes the full
+`UserProfile` (signature change per the architecture doc) and issues 4 `SET
+LOCAL` statements — `app.current_user_id`/`sbu_id`/`role_id` always,
+`app.current_zone_id` only when `user.zone_id is not None` (nullable
+column). `api/dependencies.py`'s `get_current_user()` call site updated to
+match (`set_rls_context(db, user)`, was `(db, user.id)`). New
+`tests/test_session.py` (3 tests: all-4-set, zone-set, zone-skipped-when-
+None). Full suite **345 passed** (up from 342), `ruff check` clean.
+
+Real bug found and fixed before it could reach Tasks 5-7, via direct
+reproduction against the live dev DB rather than trusting
+`Phase-2E-Security-Architecture.md`'s exact snippet as written:
+`current_setting(name, true)` returns `NULL` only the very first time a
+custom session variable is ever referenced in a given backend connection —
+but once a `SET LOCAL` on that variable has committed even once, PostgreSQL
+resets it to `''` (empty string), not `NULL`, for the rest of that pooled
+connection's life. `user_id`/`sbu_id`/`role_id` are safe in practice since
+`set_rls_context()` unconditionally re-sets all three on every request
+before any query runs — but `zone_id` is deliberately skipped for no-zone
+users, so on a connection pool shared across requests, a no-zone user's
+request reusing a connection a zoned user's request just committed on would
+read back `''` and crash the `::uuid` cast. Fixed by wrapping all 4
+functions' `current_setting()` call in `NULLIF(..., '')`, applied uniformly
+(not just to zone) since any of the 4 could in principle be read outside
+the normal request-start ordering (e.g. Task 8's manual `psql` verification
+loop, switching test context between roles without a full disconnect).
+Re-verified live post-fix: `SET LOCAL` + commit + read-with-no-new-SET on
+the same pooled connection now correctly returns `NULL`, not a crash.
+**COMMITTED (`9b07776`, "feat: wire real user identity into RLS session
+context (Phase 2E Task 4)").**
+**`Phase-2E-Security-Architecture.md`'s "RLS Helper Functions" section still
+shows the un-guarded snippet — needs correcting as part of Task 10, this is
+a second, separate reason beyond the already-tracked zone_id addendum.**
+
+**2026-07-27 — Basheer's manual E2E on the User Directory screen, all 7
+original test-plan steps passed.** Confirmed live: nav item shows for
+Admin/GM, users list correctly (SBU/zone/role chip), edit works including
+"reports to X" display, self-manager guard (a user can't be set as their own
+manager), create success (fresh Supabase Auth UUID, done twice), create
+conflict case (an already-used UUID fails as expected), and the role-gate
+check (logged in as a non-Admin/GM account, confirmed "User Directory" is
+fully absent from the sidebar). **Task 1a is now fully verified, nothing
+outstanding.** Also stood up the 6-tier hierarchy end-to-end with real logins
+(all via the Supabase Dashboard for the Auth side, then this screen for the
+`user_profile` side — no raw SQL used for any of it except the one email
+rename below, which the screen has no field for):
+- `manager@cabio-demo.com` **renamed to `sbumanager@cabio-demo.com`**
+  (dashboard had no direct email-edit field, so done via SQL Editor:
+  `UPDATE auth.users SET email = ...` + matching
+  `UPDATE auth.identities SET identity_data = jsonb_set(...)` to keep the
+  provider identity in sync — same UUID preserved throughout, so the
+  existing `user_profile` row needed no changes). `display_name` also
+  updated in-app to `Test - SBU Manager` to match.
+- Two new Supabase Auth users created (dashboard "Add user" + this screen's
+  "Add User" for the `user_profile` row): `areamanager@cabio-demo.com`
+  (`Test - Area Manager`) and `salesmanager@cabio-demo.com`
+  (`Test - Sales Manager`). Note for next time: the Area Manager account
+  came back from Supabase already `confirmed_at`-populated even without
+  ticking "Auto Confirm User" at creation — this project's Supabase
+  instance doesn't appear to require the checkbox to avoid the stuck-
+  unconfirmed state originally expected; if a future account *does* come
+  back unconfirmed, the fix is `UPDATE auth.users SET email_confirmed_at =
+  now() WHERE email = '...'` via SQL Editor.
+
+**Resulting reporting chain (all "Test -" accounts except Amit R/Basheer K,
+who are real):** `Test - General Manager` → `Test - SBU Manager` (Critical
+Care/North Kerala) → `Test - Area Manager` (Imaging/North Kerala) →
+`Test - Sales Manager` (Imaging/North Kerala) → `Basheer K` (Sales Staff,
+Imaging/North Kerala). `Amit R` (Sales Staff, Critical Care/South Kerala) has
+no manager set. **Deliberate cross-SBU edge case in this chain:** the Area
+Manager (Imaging) reports to the SBU Manager (Critical Care) — different
+SBUs across a manager link, on purpose, to prove Task 8's verification loop
+that SBU/Zone-level RLS scoping (Levels 3/4) stays keyed to `sbu_id`/`zone_id`
+directly and isn't accidentally widened by the `manager_id` chain crossing
+SBU lines. Keep this test topology intact through Task 8 rather than
+"tidying" it into same-SBU reporting lines — the cross-SBU link is the point.
+
+**Status as of 2026-07-26: Phase 2E RLS build started.** Working off
+`docs/Phase-2E-Build-Estimate.md`'s 9-task list (tracked as harness Tasks
+1-9; Task 10, the fast-follow "Edit User" screen, is separate/non-blocking,
+not tracked). **Task 1 DONE, applied to the live dev DB, verified:**
+new migration `backend/alembic/versions/0008_phase2e_manager_id_role_rename_cabio_app.py` —
+`user_profile.manager_id` (nullable, self-ref FK, indexed) added; `role`
+table renamed (`Sales Executive`→`Sales Staff`, `Sales Manager`→`SBU
+Manager`) + 2 new rows inserted (`Area Manager`, new-meaning `Sales
+Manager`) — all 6 tiers now present; `cabio_app` Postgres role + grants
+created (inert — RLS not enabled anywhere yet, app's own `DATABASE_URL`
+unchanged, so this is invisible to the running app for now). `UserProfile`
+model updated to match (`manager_id` column, no ORM relationship added —
+nothing yet needs to traverse it in Python). Password sourced via a new
+`CABIO_APP_DB_PASSWORD` setting in `app/core/config.py` (`backend/.env`),
+matching the existing `DATABASE_URL`/`SUPABASE_ANON_KEY` pattern — not a
+raw `os.environ` read (first draft used that; corrected before running,
+since `pydantic-settings` doesn't propagate `.env` values into the process
+environment). Verified live via direct query: `alembic current` = `0008`,
+role table has all 6 correct rows, `manager_id` column exists, `cabio_app`
+role exists in `pg_roles`.
+
+**Task 1a inserted ahead of Task 2 (Basheer's call, 2026-07-26): User
+Directory screen (create + update `user_profile`, Admin/GM-gated), so Task
+2's staff assignment happens through a real UI instead of raw SQL.**
+Scope explicitly excludes Delete (no need surfaced) and full self-service
+Create (new person still needs a Supabase Auth account made via the
+dashboard first, same as today — admin pastes the resulting UUID into this
+screen rather than hand-writing the `INSERT`). Full self-contained
+Supabase-Admin-API signup explicitly deferred until Cabio staff take
+autonomous ownership of onboarding — not needed while Basheer is the one
+doing this a handful of times a year.
+
+**Task 1a — backend DONE:**
+- `organization/schemas.py` — `UserCreate`, `UserUpdate`, extended
+  `UserListResponse` (+`role_name`, +`manager_id`).
+- `organization/repository.py` — `sbu_exists`/`role_exists`/`zone_exists`.
+- `organization/service.py` — `create_user`/`update_user`, gated to
+  `{"Admin", "General Manager"}` (same pattern as the Product Catalog
+  write-gate); existence checks on `sbu_id`/`role_id`/`zone_id`/
+  `manager_id`; self-manager guard.
+- `api/routers/master_data.py` — new `"roles"` master-data entity (needed
+  its own fetch branch — `Role` has no `is_active` column, unlike
+  `SBU`/`Zone`, so it can't reuse the generic filtered fetch); new
+  `POST /users`, `PATCH /users/{user_id}`.
+- Tests: 15 new service tests (`tests/domains/organization/test_organization_service.py`)
+  + 6 new router auth-gate tests (`tests/test_master_data.py`) — matches
+  this codebase's convention of full logic coverage at the service layer,
+  401/403-only coverage at the router layer (mirrors
+  `test_product_service.py`/`test_product_router.py` exactly). One
+  pre-existing test (`test_returns_paginated_users`) needed its mock
+  updated for the two new required response fields.
+- Verified: **342 passed** (up from 321), `ruff check` clean on every
+  touched file (one mutable-class-attribute lint issue was mine, fixed;
+  16 pre-existing findings elsewhere untouched).
+
+**Task 1a — frontend DONE:**
+- `types/api.ts` regenerated in-process (`app.openapi()` dumped to JSON,
+  no server needed — same technique as the `bb671bc` precedent), hand-written
+  tail alias block re-added (wiped by regen, as documented in the file's
+  own comment) plus 3 new aliases (`UserListResponse`, `UserCreate`,
+  `UserUpdate`). Note: `RoleResponse`/`SBUResponse`/`ZoneResponse` don't
+  appear in the generated schema at all, before or after — the
+  `/master-data/{entity}` endpoint's return type is the untyped
+  `APIResponse[list]`, so `listRoles()` stays `Promise<unknown>` like the
+  existing `listSbus`/`listZones`, consistent with pre-existing behavior,
+  not a regression.
+- `services/masterData.ts` — added `listRoles`/`createUser`/`updateUser`,
+  typed `listUsers`'s return (was `unknown`, now `UserListResponse[]`).
+  Extended this file rather than creating a new `services/users.ts` —
+  `/users` already lived here pre-existing, matching the established
+  "domain-owner file groups all its endpoints regardless of URL shape"
+  convention (same reasoning as `opportunities.ts` owning
+  `/stakeholders/...` routes).
+- New `screens/UserDirectoryScreen.tsx` — `List`/`ListItemButton` of users
+  (name, SBU, zone, "reports to X", role chip), full-row tap target per
+  the documented mobile-tap-target standard; "Add User" + row-click both
+  open the same `FormModal`-based form (id field only shown in create
+  mode); dropdowns for SBU/Role/Zone/Manager sourced from master-data
+  queries; manager dropdown excludes the user being edited (self-manager
+  guard, client-side mirror of the backend's).
+- `DemoApp.tsx` — new nav item under "ADMINISTRATION", filtered out unless
+  `userProfile.role_name` is Admin/GM (`ADMIN_ROLES` set, same two roles
+  as the backend gate); new always-mounted-hidden view, same pattern as
+  Product Catalog.
+- Verified: `tsc --noEmit` / `npm run lint` (eslint + no-Tailwind guard) /
+  `npm run build` all clean. **Not yet verified live in a browser** —
+  per this project's own testing rule, that's Basheer's manual pass, not
+  mine; flagging explicitly rather than claiming UI verification I didn't
+  do. To exercise Create for real, a throwaway Supabase Auth user needs to
+  exist first (dashboard-created) to get a UUID to paste in.
+
+**Next step:** Basheer's manual E2E on the User Directory screen (paused
+here, 2026-07-26, to do this live testing himself before continuing). Test
+plan handed off:
+1. Start backend (`uvicorn app.main:app --reload --port 8000` from
+   `backend/`) and frontend (`npm run dev` from `sales-os-app/`).
+2. Log in as `admin@cabio-demo.com` or `gm@cabio-demo.com` — confirm
+   "User Directory" appears under Administration in the sidebar.
+3. Open it, confirm the 5 existing users list correctly (SBU/zone/role
+   chip per row).
+4. Click a row (Edit) — change role and/or set a manager, save, confirm
+   the row updates and "reports to X" appears if a manager was set.
+   Confirm the person being edited doesn't appear in their own manager
+   dropdown (self-manager guard).
+5. Create — conflict case: "Add User" with an **existing** user's UUID
+   pasted in, rest filled normally — should fail (expect a generic error
+   message, not the specific "already exists" text; that's a pre-existing
+   app-wide FormModal/error-handling gap, not new).
+6. Create — success case: make a throwaway Supabase Auth user via the
+   Supabase dashboard first (Authentication → Users), copy its UUID, use
+   it in "Add User" — confirm the new person appears in the list. Note:
+   deleting that throwaway Supabase user afterward won't remove the
+   `user_profile` row created here — no cascade exists between the two
+   systems.
+7. Log out, log in as Basheer K (Sales Staff) or the SBU Manager test
+   account — confirm "User Directory" is gone from the sidebar entirely
+   (role-gate check).
+
+Then Task 2 (assign real staff to Area Manager / Sales Manager tiers, now done
+through this screen instead of raw SQL) or Task 3 (4-var
+`set_rls_context()` + `cabio_app_uid()`/`cabio_app_sbu_id()`/
+`cabio_app_role_id()`/`cabio_app_zone_id()` SQL helper functions, per
+`Phase-2E-Security-Architecture.md` + Technical Design §5) — either can go
+next, Task 3 doesn't depend on Task 2. Task 5 (conditional/two-hop RLS
+policies on `activity`/`document`/`reminder`) remains the highest-risk item
+in the whole build — see `Phase-2E-Build-Estimate.md` §2 for why, and §5's
+discipline (verify every policy via a side `psql` session with `SET ROLE
+cabio_app`, all 6 tiers, before ever touching the app's own `DATABASE_URL`
+in Task 8).
+
+---

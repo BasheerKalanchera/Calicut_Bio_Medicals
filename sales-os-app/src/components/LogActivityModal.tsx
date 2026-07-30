@@ -70,10 +70,10 @@ export default function LogActivityModal({
   const isManagerNote = activityType === "MANAGER_NOTE";
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users", "all"],
+    queryKey: ["users", "assignable"],
     enabled: isOpen,
     queryFn: async () => {
-      const d = await listUsers();
+      const d = await listUsers("all");
       return Array.isArray(d) ? (d as UserOption[]) : [];
     },
   });

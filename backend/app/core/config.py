@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
 
     DATABASE_URL: SecretStr
+    ADMIN_DATABASE_URL: SecretStr
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: SecretStr
     SUPABASE_JWT_SECRET: SecretStr | None = None

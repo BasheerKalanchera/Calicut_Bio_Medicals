@@ -140,10 +140,10 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 # 4b. Financial & Revenue Split Rules
 
-### BR-FIN-01: Contributor Split Validation (ADR-003)
+### BR-FIN-01: Contributor Split Validation (ADR-003, scope narrowed by ADR-037)
 *   **Rule:** Every Opportunity must have at least one assigned owner/contributor.
 *   **Constraint:** The sum of `split_percentage` across all contributors for a single Opportunity **MUST EQUAL EXACTLY 100.00%**.
-*   **Scope:** Splits can cross SBUs (e.g., Imaging 60%, Critical Care 40%) but the total remains 100%.
+*   **Scope (superseded 2026-07-30, ADR-037):** ~~Splits can cross SBUs (e.g., Imaging 60%, Critical Care 40%)~~ — no longer applies. A single Opportunity carrying products/credit across multiple SBUs is now handled via `Project`-linked, per-SBU Opportunities instead (ADR-004), not via a cross-SBU split on one Opportunity. New split participants must belong to the same SBU as the Opportunity — see BR-FIN-06. Pre-existing cross-SBU splits from before this change remain valid and visible (not retroactively removed), just not addable-to going forward.
 
 ### BR-FIN-02: Value Representation
 *   **Rule:** All financial fields (Opportunity Value, Quota, Target Revenue) are captured in **INR Lakhs**.
@@ -169,6 +169,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Constraint:** The auto-created default split must comply with BR-FIN-01 (100% rule).
 * **Logic:** The default split may be modified after creation, subject to BR-FIN-04 (Split Governance).
 * **Reference:** ADR-003 (Multi-SBU Contributor Splits).
+
+### BR-FIN-06: Split Participant Eligibility (ADR-037)
+* **Rule:** A user may only be *newly added* as a split participant on an Opportunity if their own `sbu_id` matches the Opportunity's `sbu_id`. Enforced at the API layer (`OpportunityService.replace_splits`) — any submission introducing a participant outside the Opportunity's SBU is rejected with a `BusinessRuleViolation`.
+* **Grandfathering:** `replace_splits` re-submits the full split list on every save (it is a full replace, not an append). Participants already persisted on the Opportunity before a given save are exempt from this check — only participants new to that specific save are validated against the SBU rule. This prevents a legacy cross-SBU split (see BR-FIN-01) from permanently blocking all future edits to that Opportunity's splits.
+* **Not yet enforced — zone.** The "add participant" picker in the UI additionally only *suggests* users in the caller's own SBU **and** zone (an interim, UI-level restriction, not a backend constraint) — a same-SBU, different-zone participant can still be entered if the picker is bypassed; only the SBU rule above is actually rejected server-side. Revisit if a genuine cross-zone, same-SBU split need surfaces.
+* **Reference:** ADR-037 (Split Participant SBU Restriction — Supersedes ADR-003's Cross-SBU Scope).
 
 ---
 
@@ -239,6 +245,17 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   trackable, assigned follow-up, closing the loop between activity logging
   and the Reminders/Tasks system (§7.2 of `docs/API-Catalog.md`), without
   forcing meaningless due dates onto internal notes.
+
+### BR-ACT-06: Next Action Assignee Eligibility
+* **Rule:** The Next Action Owner (BR-ACT-04) may be assigned to **any active user in the company**, regardless of SBU, zone, or reporting line — no eligibility restriction applies, unlike Split participants (BR-FIN-06) or Opportunity Owner reassignment.
+* **Rationale:** A rep may need to hand a specific follow-up to someone entirely outside their own visibility scope (e.g. a cross-SBU specialist). The assignee does not need pre-existing visibility into the Opportunity to be assigned — the permanent RLS carve-out (`cabio_app_assigned_reminder()`, see `Opportunity-Access-Hierarchy-Technical-Design.md` §11 / `0011_rls_activity_document_reminder.py`) grants them visibility into that Opportunity *after* assignment, not before. Restricting the picker would silently break this workflow (confirmed as a live regression 2026-07-30 — see `active_progress.md`, Task 9 write-retest).
+* **Implementation:** `GET /users?scope=all` bypasses all tier/SBU/zone filtering (`UserRepository.list_active`); used only by the Next Action assignee picker (`LogActivityModal.tsx`). Contrast with `scope=sbu_zone` (Split picker, BR-FIN-06) and the default `scope=scoped` (Opportunity Owner picker, tier-visibility-restricted).
+
+### BR-ACT-07: Document Visibility Follows Parent Context — No Cross-SBU Carve-Out
+* **Rule:** A Document's practical visibility is gated by whichever parent context it's linked to (Account, Project, Opportunity, or Product), each already independently RLS-scoped on its own terms. There is **no** universal cross-SBU visibility carve-out for product-only documents (a Document with `opportunity_id IS NULL`, linked only to a Product).
+* **Why this needed stating explicitly:** `document`'s own RLS policy (`0011_rls_activity_document_reminder.py`) technically allows a product-only document through unconditionally — but reaching it requires `GET /products/{product_id}/documents`, which gates on `product_exists(product_id)` first (`DocumentService.list_by_product`). That existence check queries the `product` table, which **is** SBU-restricted (`product_sbu_visibility`, BR/ADR from the `0012_rls_product.py` migration) — so a user outside the product's SBU gets a 404 before the document policy is ever evaluated. There is also no UI path to a product's documents other than Product Catalog → click into the product, and Product Catalog's own list is correctly SBU-filtered.
+* **History:** the RLS build (2026-07-27) originally assumed product-only documents should be reachable across SBUs, so reps could answer a customer's question about the *other* SBU's equipment from its collateral. Investigated live 2026-07-30 during the manual write-retest (Basheer asked "how would a Critical Care rep even navigate to an Imaging product's documents, given Product Catalog itself is SBU-restricted?") and confirmed this intent was never actually reachable through any real UI/API path. **Decision: drop the cross-SBU intent, keep Product Catalog's own SBU restriction** — the security boundary Task 7 deliberately added takes precedence, and no code change was made to "fix" the 404.
+* **Reference:** `0011_rls_activity_document_reminder.py` (document policy), `0012_rls_product.py` (product policy that this rule ultimately defers to).
 
 ---
 
