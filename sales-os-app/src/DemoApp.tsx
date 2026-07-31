@@ -117,7 +117,7 @@ export default function DemoApp() {
   }
 
   return (
-    <Box sx={{ height: "100vh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
+    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
       {/* Sidebar overlay */}
       {isSidebarOpen && (
         <Backdrop open sx={{ zIndex: 200 }} onClick={() => setIsSidebarOpen(false)} />

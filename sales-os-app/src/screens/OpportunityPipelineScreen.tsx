@@ -228,6 +228,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
 
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const pillBarRef = useRef<HTMLDivElement>(null);
+  const kanbanRowRef = useRef<HTMLDivElement>(null);
 
   const { data: pipeline, isLoading } = useQuery({
     queryKey: ["pipeline", ownerFilter],
@@ -266,7 +267,11 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
   function scrollToStage(stageCode: string) {
     setActiveStageCode(stageCode);
     const col = columnRefs.current.get(stageCode);
-    col?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    const kanbanRow = kanbanRowRef.current;
+    if (col && kanbanRow) {
+      const scrollLeft = col.offsetLeft - kanbanRow.offsetWidth / 2 + col.offsetWidth / 2;
+      kanbanRow.scrollTo({ left: scrollLeft, behavior: "smooth" });
+    }
     setTimeout(() => {
       const container = pillBarRef.current;
       if (container) {
@@ -423,6 +428,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
 
           {/* Horizontally-scrollable Kanban — 224px columns, pills scroll to selected */}
           <Box
+            ref={kanbanRowRef}
             sx={{
               flex: 1, overflowX: "auto", display: "flex", gap: 1.5, p: 2,
               "&::-webkit-scrollbar": { display: "none" }, scrollbarWidth: "none",

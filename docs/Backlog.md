@@ -47,6 +47,30 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred / undecided items
 
+- **Enforce same-SBU on `user_profile.manager_id` assignment — cross-SBU
+  visibility loophole.** Surfaced 2026-07-31 while explaining the Sales
+  Manager RLS tier post-demo. `UserService.create_user`/`update_user`
+  (`organization/service.py:25-67`) only validates that `manager_id` points
+  to an existing user — it never checks that the manager's `sbu_id` matches
+  the report's `sbu_id`. The Sales Manager RLS clause
+  (`0010_rls_opportunity_children.py` / `0011_rls_activity_document_reminder.py`)
+  is purely relational (`owner_id IN (people whose manager_id = caller)`)
+  with no SBU filter of its own — the design doc's reasoning that "SBU
+  containment is already guaranteed by construction"
+  (`Opportunity-Access-Hierarchy-Technical-Design.md` §6) only holds if
+  `manager_id` itself is always assigned within the same SBU, which nothing
+  in the schema or service layer enforces today. Since SBU is a hard RLS
+  security boundary (Imaging vs. Critical Care) everywhere else in the app,
+  an Admin/GM could — by mistake or otherwise — assign a Sales Staff
+  person's manager to a Sales Manager in the *other* SBU via the User
+  Directory screen, and that Sales Manager would then see the report's
+  opportunities across the boundary. **Fix:** add a same-SBU check in
+  `UserService.create_user`/`update_user` whenever `manager_id` is set
+  (compare `manager.sbu_id` to `data.sbu_id`/`user.sbu_id`), raising a
+  `ValidationError` on mismatch — same pattern as the existing "cannot be
+  own manager" guard (`service.py:55-56`). Application-layer only; no
+  RLS/schema change needed, since this is the one place `manager_id` gets
+  written.
 - **Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
   Admin/General Manager.** Surfaced 2026-07-28 while fixing the `/users`
   endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —

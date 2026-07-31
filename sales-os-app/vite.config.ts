@@ -16,24 +16,42 @@ export default defineConfig({
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
+        id: '/',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: '/Cabio logo.jpeg',
+            src: '/icon-192.png',
             sizes: '192x192',
-            type: 'image/jpeg'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: '/Cabio logo.jpeg',
+            src: '/icon-512.png',
             sizes: '512x512',
-            type: 'image/jpeg'
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
-      }
+      },
+      includeAssets: ['favicon.svg', 'icon-192.png', 'icon-512.png', 'icon-512-maskable.png']
     })
   ],
   server: {
     allowedHosts: true,
     host: true,
+    proxy: {
+      '/api': 'http://localhost:8000'
+    }
+  },
+  preview: {
+    allowedHosts: true,
     proxy: {
       '/api': 'http://localhost:8000'
     }

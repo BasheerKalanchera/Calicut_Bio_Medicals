@@ -2381,3 +2381,40 @@ clean throughout. `Business-Rules.md` gained `BR-ACT-05`; resolved entry
 removed from `Backlog.md`.
 
 ---
+
+## @mui/x-date-pickers rollout to all datetime-local fields (2026-07-30), COMPLETE
+
+Committed `4b06a96`. BR-ACT-05's own retest surfaced the native
+`type="datetime-local"` input's click-away friction on one field
+(`CloseReminderModal`'s Follow-up Due Date, fixed with `DateTimePicker` in
+that same commit). Before extending the fix further, audited the whole
+frontend: 24 `type="date"`/`type="datetime-local"` occurrences across 6
+files, but only 14 in the live app — `App.jsx`'s 10 are the `/prototype`
+route (original mock-data build, no auth, not reachable except by direct
+URL; every other route redirects to `/demo`). Of the live 14: 3 were
+`datetime-local` (`LogActivityModal.tsx` x2, `CloseReminderModal.tsx`'s
+remaining Details-tab field x1), 9 were date-only `type="date"`
+(`Customer360Screen.tsx` x5, `OpportunityDetailScreen.tsx` x4), and 2 were
+in `ProjectDirectoryScreen.jsx` — native Tailwind `<input>`, not MUI
+`TextField`, entangled with that file's own not-yet-done MUI migration (one
+of the 3 files left on that backlog).
+
+**Basheer's call: convert the `datetime-local` fields only.** The 9
+date-only fields and `ProjectDirectoryScreen.jsx`'s 2 stay as native inputs
+— `DatePicker` (the date-only sibling component) was scoped out entirely,
+deliberately, not an oversight.
+
+- `main.tsx`: `LocalizationProvider`/`AdapterDayjs` lifted to the app root
+  (wraps the whole render tree once), replacing `CloseReminderModal.tsx`'s
+  earlier field-local wrapper now that more than one field needed it —
+  flagged as the planned next step when that field was first built.
+- `CloseReminderModal.tsx`: Details tab's "Date & Time" converted to
+  `DateTimePicker`; local `LocalizationProvider` wrap removed.
+- `LogActivityModal.tsx`: both `datetime-local` fields ("Date & Time",
+  "Next Action Due Date") converted.
+- **Zero `type="datetime-local"` fields remain anywhere in the codebase**
+  (confirmed via full-repo grep, not just the files touched).
+
+`tsc --noEmit`/`npm run lint` clean throughout.
+
+---
