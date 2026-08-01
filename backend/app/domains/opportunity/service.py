@@ -75,6 +75,7 @@ class OpportunityService:
         sbu_id: uuid.UUID,
     ) -> Opportunity:
         self._require_account(account_id)
+        self._validate_item_sbus(sbu_id, {item.product_id for item in data.items})
 
         new_stage = self.repository.get_stage(data.stage_id)
         if not new_stage:
@@ -234,6 +235,10 @@ class OpportunityService:
         *,
         created_by: uuid.UUID,
     ) -> OpportunityItem:
+        opportunity = self.repository.get_for_update(opportunity_id)
+        if not opportunity:
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        self._validate_item_sbus(opportunity.sbu_id, {data.product_id})
         return self._create_item(opportunity_id, data, created_by=created_by)
 
     def delete_item(self, item_id: uuid.UUID) -> None:
@@ -249,8 +254,10 @@ class OpportunityService:
         *,
         updated_by: uuid.UUID,
     ) -> list[OpportunityItem]:
-        if not self.repository.get_for_update(opportunity_id):
+        opportunity = self.repository.get_for_update(opportunity_id)
+        if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        self._validate_item_sbus(opportunity.sbu_id, {item.product_id for item in data.items})
 
         new_items = [
             OpportunityItem(
@@ -423,6 +430,26 @@ class OpportunityService:
     def _require_account(self, account_id: uuid.UUID) -> None:
         if not self.repository.account_exists(account_id):
             raise NotFoundError(f"Account {account_id} not found")
+
+    def _validate_item_sbus(
+        self, opportunity_sbu_id: uuid.UUID, product_ids: set[uuid.UUID]
+    ) -> None:
+        # BR-OP-11: a Product can only be added to an Opportunity in its own
+        # SBU. Mirrors BR-FIN-06's split-participant SBU check (replace_splits,
+        # above) -- same reasoning, applied to catalog items instead of split
+        # participants. Unlike BR-FIN-06 there is no grandfathering concern
+        # here: items are validated on every add/replace, not just "newly
+        # added" ones, since (unlike splits) there's no legacy cross-SBU data
+        # this would need to tolerate.
+        if not product_ids:
+            return
+        sbu_by_product = self.repository.get_product_sbu_ids(product_ids)
+        for product_id in product_ids:
+            if sbu_by_product.get(product_id) != opportunity_sbu_id:
+                raise BusinessRuleViolation(
+                    f"Product {product_id} is not in this Opportunity's SBU; "
+                    "products must belong to the same SBU as the Opportunity."
+                )
 
     def _create_item(
         self,

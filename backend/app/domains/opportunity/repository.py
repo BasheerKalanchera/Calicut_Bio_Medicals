@@ -7,6 +7,7 @@ from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.organization.models import UserProfile
+from app.domains.product.models import Product
 from app.domains.reference.models import LossReason, OpportunityStage, OpportunityStatus
 
 
@@ -227,6 +228,14 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             return {}
         rows = self.db.execute(
             select(UserProfile.id, UserProfile.sbu_id).where(UserProfile.id.in_(user_ids))
+        ).all()
+        return {row.id: row.sbu_id for row in rows}
+
+    def get_product_sbu_ids(self, product_ids: set[uuid.UUID]) -> dict[uuid.UUID, uuid.UUID]:
+        if not product_ids:
+            return {}
+        rows = self.db.execute(
+            select(Product.id, Product.sbu_id).where(Product.id.in_(product_ids))
         ).all()
         return {row.id: row.sbu_id for row in rows}
 

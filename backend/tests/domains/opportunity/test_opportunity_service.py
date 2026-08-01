@@ -141,6 +141,9 @@ def _make_repo(**overrides) -> MagicMock:
     # By default, assume any newly-referenced participant is in the opportunity's own
     # SBU -- tests exercising the ADR-037 cross-SBU rejection override this explicitly.
     repo.get_user_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
+    # Same default for BR-OP-11 -- any referenced product is assumed to be in the
+    # opportunity's own SBU unless a test overrides this to exercise the rejection.
+    repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
     for k, v in overrides.items():
         setattr(repo, k, v)
     return repo

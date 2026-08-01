@@ -127,6 +127,20 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * Exceptions are permitted only for approved data migration or administrative import processes.
 * User-facing Opportunity creation workflows must not allow direct creation of Opportunities in WON, LOST, STALLED, or ON_HOLD status.
 
+### BR-OP-11: Opportunity Item Product SBU Eligibility (2026-08-01)
+* **Rule:** A Product may only be added as an Opportunity Item if its own `sbu_id` matches the Opportunity's `sbu_id`. Enforced at the API layer (`OpportunityService._validate_item_sbus`, checked on `create_opportunity`, `add_item`, and `replace_items`) — any submission referencing a product outside the Opportunity's SBU is rejected with a `BusinessRuleViolation`.
+* **No grandfathering:** Unlike BR-FIN-06's split-participant check, this validates every item on every save (not just newly-added ones) — there is no legacy cross-SBU item data this needs to tolerate.
+* **Reference:** Companion to "Product Catalog Rules" below — catalog *visibility* is company-wide, but adding a product to an Opportunity remains SBU-scoped.
+
+---
+
+# 3a. Product Catalog Rules
+
+### BR-CAT-01: Catalog Visibility Is Company-Wide (2026-08-01)
+* **Rule:** All authenticated users may view every Product in the catalog, regardless of their own SBU. The Product Catalog screen's SBU filter buttons (Imaging / Critical Care) are available to everyone, not just Admin/General Manager.
+* **Rationale:** Product records are reference data only (name, OEM, model number, category, description) — no pricing or customer-sensitive data — so there is no confidentiality reason to hide one SBU's catalog from another. Reps benefit from seeing the full company product line (cross-sell awareness, referring a lead to the other SBU) even though they can't transact against it directly — see BR-OP-11.
+* **Enforcement:** `product_read_all` RLS policy (migration `0014_product_rls_open_read`) — `SELECT` is unrestricted; `INSERT`/`UPDATE`/`DELETE` remain SBU-scoped to Admin/General Manager or the product's own SBU, unchanged from the original Phase 2E policy.
+
 ---
 
 # 4a. Project & Tender Rules
