@@ -33,8 +33,12 @@ class UserService:
             raise NotFoundError(f"Role {data.role_id} not found")
         if data.zone_id is not None and not self.repository.zone_exists(data.zone_id):
             raise NotFoundError(f"Zone {data.zone_id} not found")
-        if data.manager_id is not None and not self.repository.get_by_id(data.manager_id):
-            raise NotFoundError(f"Manager {data.manager_id} not found")
+        if data.manager_id is not None:
+            manager = self.repository.get_by_id(data.manager_id)
+            if not manager:
+                raise NotFoundError(f"Manager {data.manager_id} not found")
+            if manager.sbu_id != data.sbu_id:
+                raise ValidationError("Manager must belong to the same SBU as the user")
         user = UserProfile(
             id=data.id,
             display_name=data.display_name,
@@ -54,8 +58,15 @@ class UserService:
         if data.manager_id is not None:
             if data.manager_id == user_id:
                 raise ValidationError("A user cannot be their own manager")
-            if not self.repository.get_by_id(data.manager_id):
+            manager = self.repository.get_by_id(data.manager_id)
+            if not manager:
                 raise NotFoundError(f"Manager {data.manager_id} not found")
+            # Effective SBU: this same update may also change sbu_id (PATCH
+            # semantics) -- compare against the value the user will actually
+            # end up with, not necessarily their current one.
+            effective_sbu_id = data.sbu_id if data.sbu_id is not None else user.sbu_id
+            if manager.sbu_id != effective_sbu_id:
+                raise ValidationError("Manager must belong to the same SBU as the user")
         if data.sbu_id is not None and not self.repository.sbu_exists(data.sbu_id):
             raise NotFoundError(f"SBU {data.sbu_id} not found")
         if data.role_id is not None and not self.repository.role_exists(data.role_id):

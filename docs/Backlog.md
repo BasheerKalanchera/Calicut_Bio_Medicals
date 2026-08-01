@@ -47,30 +47,6 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred / undecided items
 
-- **Enforce same-SBU on `user_profile.manager_id` assignment — cross-SBU
-  visibility loophole.** Surfaced 2026-07-31 while explaining the Sales
-  Manager RLS tier post-demo. `UserService.create_user`/`update_user`
-  (`organization/service.py:25-67`) only validates that `manager_id` points
-  to an existing user — it never checks that the manager's `sbu_id` matches
-  the report's `sbu_id`. The Sales Manager RLS clause
-  (`0010_rls_opportunity_children.py` / `0011_rls_activity_document_reminder.py`)
-  is purely relational (`owner_id IN (people whose manager_id = caller)`)
-  with no SBU filter of its own — the design doc's reasoning that "SBU
-  containment is already guaranteed by construction"
-  (`Opportunity-Access-Hierarchy-Technical-Design.md` §6) only holds if
-  `manager_id` itself is always assigned within the same SBU, which nothing
-  in the schema or service layer enforces today. Since SBU is a hard RLS
-  security boundary (Imaging vs. Critical Care) everywhere else in the app,
-  an Admin/GM could — by mistake or otherwise — assign a Sales Staff
-  person's manager to a Sales Manager in the *other* SBU via the User
-  Directory screen, and that Sales Manager would then see the report's
-  opportunities across the boundary. **Fix:** add a same-SBU check in
-  `UserService.create_user`/`update_user` whenever `manager_id` is set
-  (compare `manager.sbu_id` to `data.sbu_id`/`user.sbu_id`), raising a
-  `ValidationError` on mismatch — same pattern as the existing "cannot be
-  own manager" guard (`service.py:55-56`). Application-layer only; no
-  RLS/schema change needed, since this is the one place `manager_id` gets
-  written.
 - **Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
   Admin/General Manager.** Surfaced 2026-07-28 while fixing the `/users`
   endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —
@@ -111,17 +87,6 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      same spirit as Task 8/9's role-by-role checks — confirm nothing breaks
      now that their session carries a genuinely absent `sbu_id` for the
      first time ever.
-- **Add an index on `account.zone_id`.** Surfaced during Task 5's migration
-  review (2026-07-27). The Area Manager branch of the `opportunity` RLS
-  policy (`0010_rls_opportunity_children.py`) filters `account` by `zone_id`
-  (`account_id IN (SELECT id FROM account WHERE zone_id = cabio_app_zone_id())`)
-  — `account/models.py` has no index on that column today (checked: no
-  `index=True`, no explicit `Index()` in `__table_args__`), so this is a
-  sequential scan on every Area Manager row-visibility check. Not urgent at
-  today's data volume (a few dozen accounts, imperceptible), but will slow
-  down as the account list grows. Cheap one-line migration
-  (`op.create_index(...)` on `account.zone_id`) whenever picked up — no
-  behavior change, index-only.
 - **Parent-account cycle guard — recursive-CTE optimization, not needed yet.**
   `AccountService._creates_cycle` (`backend/app/domains/account/service.py`)
   walks the ancestor chain with one DB round-trip per level; full reasoning
@@ -163,15 +128,6 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   (2) Opportunity item-picker renders `{p.name}` only; Installed Base dropdowns
   render `{p.name} — {p.model_number}`. One-line fix in `Customer360Screen.tsx`
   line ~928 (still present as of `1bc4678`).
-- **Add `whatsapp_number` field to Stakeholder (backend migration + frontend).** Requested
-  2026-07-06. Currently not in the DB schema or Pydantic schemas at all — needs a 3-layer
-  change: (1) Alembic migration adding `whatsapp_number VARCHAR(50) NULLABLE` column to
-  `stakeholder` table (follow pattern of `0002_add_stakeholder_contact_details.py`);
-  (2) `stakeholder_schemas.py` → add `whatsapp_number: str | None = Field(None, max_length=50)`
-  to `StakeholderCreate`, `StakeholderUpdate`, and `StakeholderResponse`; (3) frontend
-  `Customer360Screen.tsx` → add "WhatsApp Number" `TextField` to both New Stakeholder and
-  Edit Stakeholder modals. Also add to `OpportunityDetailScreen.tsx`'s stakeholder-edit
-  modal if that modal shows contact fields. Run `python -m pytest` after migration.
 - **`OpportunityDetailScreen.tsx` — convert Products/Splits/Stakeholders inline edit
   forms to `FormModal` (desktop UX fix).** Surfaced during E2E verification 2026-07-06.
   On desktop (1920px) the inline edit mode for Products, Splits, and Stakeholders tabs

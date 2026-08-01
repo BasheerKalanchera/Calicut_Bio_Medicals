@@ -204,6 +204,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ---
 
+# 5a. Organization & User Management Rules
+
+### BR-ORG-01: Manager Assignment SBU Eligibility (2026-08-01)
+* **Rule:** A user's `manager_id` may only point to a user in the *same* SBU. Enforced at the API layer (`UserService.create_user`/`update_user`) — any submission assigning a manager outside the user's own SBU is rejected with a `ValidationError`.
+* **Why:** SBU (Imaging vs. Critical Care) is a hard RLS security boundary everywhere else in the app. The Sales Manager RLS tier grants visibility over "opportunities owned by people whose `manager_id` = me" with no SBU filter of its own — that's safe only if `manager_id` itself is always assigned within the same SBU. Without this check, an Admin/GM could (by mistake or otherwise) assign a Sales Staff person's manager to a Sales Manager in the *other* SBU, letting that manager see opportunities across the boundary.
+* **PATCH semantics:** if an update changes `sbu_id` and `manager_id` in the same call, the check compares the manager's SBU against the *new* `sbu_id`, not the user's current one.
+* **Reference:** Companion to BR-FIN-06 (Split Participant SBU Eligibility) and BR-OP-11 (Opportunity Item SBU Eligibility) — same "same-SBU-or-reject" pattern applied to manager assignment.
+
+---
+
 # 6. Activity & Interaction Rules
 
 ### BR-ACT-01: Activity Account Requirement (ADR-006 — clarified June 20, 2026)

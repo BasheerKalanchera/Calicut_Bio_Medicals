@@ -126,6 +126,33 @@ class TestCreateUser:
 
         repo.create.assert_not_called()
 
+    def test_raises_validation_error_if_manager_in_different_sbu(self):
+        manager = _make_user(sbu_id=uuid.uuid4())
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: manager if uid == manager.id else None
+
+        service = UserService(repository=repo)
+        data = self._data(manager_id=manager.id, sbu_id=uuid.uuid4())
+        with pytest.raises(ValidationError, match="SBU"):
+            service.create_user(data, role_name="Admin")
+
+        repo.create.assert_not_called()
+
+    def test_allows_manager_in_same_sbu(self):
+        shared_sbu = uuid.uuid4()
+        manager = _make_user(sbu_id=shared_sbu)
+        new_user = _make_user()
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: manager if uid == manager.id else None
+        repo.create.return_value = new_user
+
+        service = UserService(repository=repo)
+        data = self._data(manager_id=manager.id, sbu_id=shared_sbu)
+        result = service.create_user(data, role_name="Admin")
+
+        assert result is new_user
+        repo.create.assert_called_once()
+
 
 class TestUpdateUser:
     @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
@@ -184,3 +211,35 @@ class TestUpdateUser:
             service.update_user(user.id, UserUpdate(manager_id=manager_id), role_name="Admin")
 
         repo.update.assert_not_called()
+
+    def test_raises_validation_error_if_manager_in_different_sbu(self):
+        user = _make_user(sbu_id=uuid.uuid4())
+        manager = _make_user(sbu_id=uuid.uuid4())
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: user if uid == user.id else (manager if uid == manager.id else None)
+
+        service = UserService(repository=repo)
+        with pytest.raises(ValidationError, match="SBU"):
+            service.update_user(user.id, UserUpdate(manager_id=manager.id), role_name="Admin")
+
+        repo.update.assert_not_called()
+
+    def test_manager_sbu_check_uses_effective_sbu_id_when_sbu_also_changing(self):
+        # PATCH semantics: this update changes sbu_id in the same call, so the
+        # manager's SBU should be compared against the *new* value, not the
+        # user's current one.
+        old_sbu = uuid.uuid4()
+        new_sbu = uuid.uuid4()
+        user = _make_user(sbu_id=old_sbu)
+        manager = _make_user(sbu_id=new_sbu)
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: user if uid == user.id else (manager if uid == manager.id else None)
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        result = service.update_user(
+            user.id, UserUpdate(manager_id=manager.id, sbu_id=new_sbu), role_name="Admin"
+        )
+
+        assert result is user
+        repo.update.assert_called_once()

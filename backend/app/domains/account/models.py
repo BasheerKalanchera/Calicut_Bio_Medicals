@@ -37,7 +37,7 @@ class Account(AuditMixin, Base):
         UUID(as_uuid=True), ForeignKey("account.id"), nullable=True
     )
     zone_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("zone.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("zone.id"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
