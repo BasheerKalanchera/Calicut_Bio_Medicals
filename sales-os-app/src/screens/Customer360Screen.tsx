@@ -69,6 +69,7 @@ interface Props {
   onAccountUpdate?: (account: any) => void;
   onSelectAccount?: (account: { id: string; name: string }) => void;
   onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
+  onSelectProject?: (project: { id: string; name: string }) => void;
   // Set when re-mounting after Back from Opportunity Detail (e.g. the
   // stakeholder bridge list), so this screen reopens on the tab the user
   // actually came from instead of always defaulting to Overview.
@@ -398,7 +399,7 @@ function StakeholderOpportunitiesModal({
   );
 }
 
-function ProjectsTab({ projects, onAdd, onEdit }: { projects: any[]; onAdd: () => void; onEdit: (p: any) => void }) {
+function ProjectsTab({ projects, onAdd, onEdit, onSelectProject }: { projects: any[]; onAdd: () => void; onEdit: (p: any) => void; onSelectProject?: (project: any) => void }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
@@ -418,7 +419,11 @@ function ProjectsTab({ projects, onAdd, onEdit }: { projects: any[]; onAdd: () =
         </Box>
       ) : (
         projects.map((p) => (
-          <Box key={p.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6" }}>
+          <Box
+            key={p.id}
+            onClick={() => onSelectProject?.(p)}
+            sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", cursor: onSelectProject ? "pointer" : "default", "&:hover": onSelectProject ? { borderColor: "#d1d5db" } : undefined }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
               <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{p.name}</Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -426,7 +431,7 @@ function ProjectsTab({ projects, onAdd, onEdit }: { projects: any[]; onAdd: () =
                   {p.status.status_name}
                 </Box>
                 <Button
-                  onClick={() => onEdit(p)}
+                  onClick={(e) => { e.stopPropagation(); onEdit(p); }}
                   sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
                 >
                   Edit
@@ -444,7 +449,7 @@ function ProjectsTab({ projects, onAdd, onEdit }: { projects: any[]; onAdd: () =
   );
 }
 
-function OpportunitiesTab({ opportunities, onAdd, onEdit }: { opportunities: any[]; onAdd: () => void; onEdit: (o: any) => void }) {
+function OpportunitiesTab({ opportunities, onAdd, onEdit, onSelectOpportunity }: { opportunities: any[]; onAdd: () => void; onEdit: (o: any) => void; onSelectOpportunity?: (opportunity: { id: string; name: string }) => void }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
@@ -464,7 +469,11 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit }: { opportunities: any
         </Box>
       ) : (
         opportunities.map((o) => (
-          <Box key={o.id} sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6" }}>
+          <Box
+            key={o.id}
+            onClick={() => onSelectOpportunity?.({ id: o.id, name: o.name })}
+            sx={{ bgcolor: "#fff", p: 2, borderRadius: "1rem", boxShadow: SHADOW_SM, border: "1px solid #f3f4f6", cursor: onSelectOpportunity ? "pointer" : "default", "&:hover": onSelectOpportunity ? { borderColor: "#d1d5db" } : undefined }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
               <Box sx={{ fontWeight: 700, color: "#1f2937" }}>{o.name}</Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -480,7 +489,7 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit }: { opportunities: any
                   </Box>
                 )}
                 <Button
-                  onClick={() => onEdit(o)}
+                  onClick={(e) => { e.stopPropagation(); onEdit(o); }}
                   sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
                 >
                   Edit
@@ -562,7 +571,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount, onSelectOpportunity, initialTab }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
 
@@ -1277,8 +1286,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 2, pb: 2 }}>
         {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
-        {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} />)}
+        {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} onSelectProject={(p: any) => onSelectProject?.({ ...p, account: { id: accountId, name: account?.name } })} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} onSelectOpportunity={onSelectOpportunity} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} />

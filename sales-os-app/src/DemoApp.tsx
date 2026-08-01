@@ -47,6 +47,10 @@ export default function DemoApp() {
   // one entry point (Directory/Pipeline, or Next Actions via Reminder click-through).
   const [accountReturnView, setAccountReturnView]         = useState("customers");
   const [opportunityReturnView, setOpportunityReturnView] = useState("opportunities");
+  // Only ever set to something other than "customers" when a project is opened
+  // from outside the Projects list itself (e.g. Customer 360's Projects tab) —
+  // consumed and reset back to "customers" on Back, see handleBackFromProjectDetail.
+  const [projectReturnView, setProjectReturnView]         = useState("customers");
   // Often just an {id, name} reference (Reminder click-through) rather than a
   // full PipelineOpportunity (Pipeline navigation) — OpportunityDetailScreen
   // fetches the rest itself and reports back via onOpportunityUpdate.
@@ -70,6 +74,7 @@ export default function DemoApp() {
   const projectCreateRef         = useRef<(() => void) | null>(null);
   const projectOppsRefreshRef    = useRef<(() => void) | null>(null);
   const projectResetRef          = useRef<(() => void) | null>(null);
+  const projectOpenRef           = useRef<((p: { id: string; name: string }) => void) | null>(null);
   const openLogActivityRef       = useRef<(() => void) | null>(null);
   openLogActivityRef.current = () => setShowLogActivity(true);
 
@@ -106,11 +111,35 @@ export default function DemoApp() {
     setView(opportunityReturnView);
   }
 
+  function handleSelectProject(project: { id: string; name: string }) {
+    // Project Detail isn't its own top-level view — it lives inside the
+    // Accounts view's Projects sub-tab — so opening one from elsewhere means
+    // switching there first, then telling that (always-mounted) screen which
+    // project to show via projectOpenRef.
+    if (view !== "customers") setProjectReturnView(view);
+    if (view === "customer360") setCustomer360InitialTab("projects");
+    setAccountSubTab("projects");
+    setView("customers");
+    projectOpenRef.current?.(project);
+  }
+
+  function handleBackFromProjectDetail() {
+    // Only redirect if this project was opened from outside the Projects
+    // list (projectReturnView was left at its "customers" default otherwise).
+    // Consumed once so a later direct open-from-list Back doesn't misfire.
+    if (projectReturnView !== "customers") {
+      const target = projectReturnView;
+      setProjectReturnView("customers");
+      setView(target);
+    }
+  }
+
   function navigate(viewId: string) {
     setView(viewId);
     setSelectedAccount(null);
     setSelectedOpportunity(null);
     setSelectedProject(null);
+    setProjectReturnView("customers");
     setIsSidebarOpen(false);
     setProjectDetailMode(false);
     projectResetRef.current?.();
@@ -376,6 +405,9 @@ export default function DemoApp() {
                 onSelectProject={setSelectedProject}
                 openLogActivityRef={openLogActivityRef}
                 resetDetailRef={projectResetRef}
+                onSelectOpportunity={handleSelectOpportunity}
+                openProjectRef={projectOpenRef}
+                onDetailBack={handleBackFromProjectDetail}
               />
             </Box>
           </Box>
@@ -388,6 +420,7 @@ export default function DemoApp() {
               onAccountUpdate={(a: unknown) => customerAccountUpdateRef.current?.(a)}
               onSelectAccount={handleSelectAccount}
               onSelectOpportunity={handleSelectOpportunity}
+              onSelectProject={handleSelectProject}
               initialTab={customer360InitialTab}
             />
           )}

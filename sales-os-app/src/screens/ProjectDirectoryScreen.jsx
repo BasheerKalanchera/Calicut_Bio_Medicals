@@ -35,7 +35,7 @@ function setCache(key, data) {
   projectListCache.set(key, { ...data, fetchedAt: Date.now() });
 }
 
-function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLogActivityRef }) {
+function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLogActivityRef, onSelectOpportunity }) {
   const { userProfile } = useAuth();
   const [opps, setOpps] = useState([]);
   const [oppsLoading, setOppsLoading] = useState(true);
@@ -247,7 +247,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
             ) : (
               <div className="space-y-3">
                 {opps.map((opp) => (
-                  <div key={opp.id} className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl">
+                  <div
+                    key={opp.id}
+                    onClick={() => onSelectOpportunity?.({ id: opp.id, name: opp.name })}
+                    className={`flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl${onSelectOpportunity ? " cursor-pointer hover:bg-gray-100" : ""}`}
+                  >
                     <div className="min-w-0">
                       <div className="font-bold text-gray-800 text-sm truncate">{opp.name}</div>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -261,7 +265,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
                       </div>
                     </div>
                     <button
-                      onClick={() => openEditOpp(opp)}
+                      onClick={(e) => { e.stopPropagation(); openEditOpp(opp); }}
                       className="px-3 py-1.5 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider shrink-0"
                     >
                       Edit
@@ -432,7 +436,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   );
 }
 
-export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef, refreshOppsRef, onSelectProject, openLogActivityRef, resetDetailRef }) {
+export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateRef, refreshOppsRef, onSelectProject, openLogActivityRef, resetDetailRef, onSelectOpportunity, openProjectRef, onDetailBack }) {
   const [projects, setProjects] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -551,6 +555,15 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
     onSelectProject?.(null);
   };
 
+  // Called by DemoApp.tsx to jump straight to a specific project's detail
+  // view from outside this screen (e.g. clicking a project card on Customer
+  // 360) — mirrors what clicking a project row already does internally.
+  if (openProjectRef) openProjectRef.current = (p) => {
+    setSelectedProject(p);
+    onSelectProject?.(p);
+    onDetailModeChange?.(true);
+  };
+
   const handleCreateProject = async () => {
     if (!newProjectAccountId) throw new Error("Account is required");
     if (!newProjectName.trim()) throw new Error("Project name is required");
@@ -602,10 +615,11 @@ export default function ProjectDirectoryScreen({ onDetailModeChange, openCreateR
       <>
         <ProjectDetailView
           project={selectedProject}
-          onBack={() => { setSelectedProject(null); onSelectProject?.(null); onDetailModeChange?.(false); }}
+          onBack={() => { setSelectedProject(null); onSelectProject?.(null); onDetailModeChange?.(false); onDetailBack?.(); }}
           onEdit={() => openEditProject(selectedProject)}
           refreshOppsRef={refreshOppsRef}
           openLogActivityRef={openLogActivityRef}
+          onSelectOpportunity={onSelectOpportunity}
         />
         <FormModal
           isOpen={editingProject !== null}
