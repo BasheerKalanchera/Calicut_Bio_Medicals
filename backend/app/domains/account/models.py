@@ -1,9 +1,19 @@
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, CheckConstraint, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
+
+if TYPE_CHECKING:
+    from app.domains.activity.models import Activity
+    from app.domains.asset.models import InstalledAsset
+    from app.domains.document.models import Document
+    from app.domains.opportunity.models import Opportunity, OpportunityStakeholder
+    from app.domains.planning.models import CoveragePlanEntry
+    from app.domains.project.models import Project
+    from app.domains.reference.models import Zone
 
 
 class Account(AuditMixin, Base):
@@ -62,6 +72,11 @@ class Stakeholder(AuditMixin, Base):
     designation: Mapped[str | None] = mapped_column(String(100), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Frontend (Customer360Screen.tsx) mirrors `phone` into this field whenever
+    # the stakeholder doesn't have a distinct WhatsApp number, so it's always
+    # populated when phone is -- NULL genuinely means no number on file at all,
+    # not "same as phone". See migration 0015.
+    whatsapp_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     nps_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
 

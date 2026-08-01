@@ -38,6 +38,7 @@ class StakeholderService:
             designation=data.designation,
             email=data.email,
             phone=data.phone,
+            whatsapp_number=data.whatsapp_number,
             nps_score=data.nps_score,
             sentiment=data.sentiment,
             created_by=created_by,

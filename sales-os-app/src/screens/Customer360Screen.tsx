@@ -687,6 +687,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newSDesignation, setNewSDesignation] = useState("");
   const [newSEmail, setNewSEmail] = useState("");
   const [newSPhone, setNewSPhone] = useState("");
+  const [newSHasDifferentWhatsapp, setNewSHasDifferentWhatsapp] = useState(false);
+  const [newSWhatsapp, setNewSWhatsapp] = useState("");
   const [newSNps, setNewSNps] = useState("");
   const [newSSentiment, setNewSSentiment] = useState("");
   const [editingStakeholder, setEditingStakeholder] = useState<any | null>(null);
@@ -695,6 +697,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editSDesignation, setEditSDesignation] = useState("");
   const [editSEmail, setEditSEmail] = useState("");
   const [editSPhone, setEditSPhone] = useState("");
+  const [editSHasDifferentWhatsapp, setEditSHasDifferentWhatsapp] = useState(false);
+  const [editSWhatsapp, setEditSWhatsapp] = useState("");
   const [editSNps, setEditSNps] = useState("");
   const [editSSentiment, setEditSSentiment] = useState("");
 
@@ -964,7 +968,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   // Stakeholder
   const openCreateStakeholder = () => {
-    setNewSName(""); setNewSDesignation(""); setNewSEmail(""); setNewSPhone(""); setNewSNps(""); setNewSSentiment("");
+    setNewSName(""); setNewSDesignation(""); setNewSEmail(""); setNewSPhone("");
+    setNewSHasDifferentWhatsapp(false); setNewSWhatsapp("");
+    setNewSNps(""); setNewSSentiment("");
     setShowCreateStakeholder(true);
   };
 
@@ -974,6 +980,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newSDesignation.trim()) payload.designation = newSDesignation.trim();
     if (newSEmail.trim()) payload.email = newSEmail.trim();
     if (newSPhone.trim()) payload.phone = newSPhone.trim();
+    // Unchecked means "same as phone" — mirror phone into whatsapp_number so any
+    // reader can use the field directly, rather than requiring a fallback rule.
+    if (newSHasDifferentWhatsapp) {
+      if (newSWhatsapp.trim()) payload.whatsapp_number = newSWhatsapp.trim();
+    } else if (newSPhone.trim()) {
+      payload.whatsapp_number = newSPhone.trim();
+    }
     if (newSNps !== "") payload.nps_score = Number(newSNps);
     if (newSSentiment) payload.sentiment = newSSentiment;
     await createStakeholder(accountId as any, payload);
@@ -985,12 +998,26 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditingStakeholder(s);
     setEditSName(s.name || ""); setEditSDesignation(s.designation || "");
     setEditSEmail(s.email || ""); setEditSPhone(s.phone || "");
+    // whatsapp_number is now always populated (mirrors phone when not explicitly
+    // different) — so "different" means the two values actually diverge, not
+    // merely that whatsapp_number is set.
+    const hasDifferentWhatsapp = !!s.whatsapp_number && s.whatsapp_number !== s.phone;
+    setEditSHasDifferentWhatsapp(hasDifferentWhatsapp);
+    setEditSWhatsapp(hasDifferentWhatsapp ? s.whatsapp_number : "");
     setEditSNps(s.nps_score != null ? String(s.nps_score) : ""); setEditSSentiment(s.sentiment || "");
   };
 
   const handleUpdateStakeholder = async () => {
     if (!editSName.trim()) throw new Error("Stakeholder name is required");
-    const payload: any = { name: editSName.trim(), designation: editSDesignation.trim() || null, email: editSEmail.trim() || null, phone: editSPhone.trim() || null };
+    const payload: any = {
+      name: editSName.trim(),
+      designation: editSDesignation.trim() || null,
+      email: editSEmail.trim() || null,
+      phone: editSPhone.trim() || null,
+      // Unchecked means "same as phone" — mirror phone (including any edit just
+      // made to it in this same save) so whatsapp_number auto-propagates.
+      whatsapp_number: editSHasDifferentWhatsapp ? (editSWhatsapp.trim() || null) : (editSPhone.trim() || null),
+    };
     if (editSNps !== "") payload.nps_score = Number(editSNps);
     if (editSSentiment) payload.sentiment = editSSentiment;
     await updateStakeholder(editingStakeholder.id, payload);
@@ -1349,6 +1376,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         <TextField label="Designation" value={newSDesignation} onChange={(e) => setNewSDesignation(e.target.value)} placeholder="e.g. Chief Radiologist" fullWidth size="small" />
         <TextField label="Email" type="email" value={newSEmail} onChange={(e) => setNewSEmail(e.target.value)} placeholder="e.g. doctor@hospital.com" fullWidth size="small" />
         <TextField label="Phone" type="tel" value={newSPhone} onChange={(e) => setNewSPhone(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
+        <FormControlLabel
+          control={<Checkbox checked={newSHasDifferentWhatsapp} onChange={(e) => { setNewSHasDifferentWhatsapp(e.target.checked); if (!e.target.checked) setNewSWhatsapp(""); }} size="small" />}
+          label="Different WhatsApp number?"
+          sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
+        />
+        {newSHasDifferentWhatsapp && (
+          <TextField label="WhatsApp Number" type="tel" value={newSWhatsapp} onChange={(e) => setNewSWhatsapp(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
+        )}
         <TextField label="NPS Score" type="number" value={newSNps} onChange={(e) => setNewSNps(e.target.value)} placeholder="-100 to 100" fullWidth size="small" slotProps={{ htmlInput: { min: -100, max: 100 } }} />
         <TextField
           select label="Sentiment" value={newSSentiment} onChange={(e) => setNewSSentiment(e.target.value)}
@@ -1367,6 +1402,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         <TextField label="Designation" value={editSDesignation} onChange={(e) => setEditSDesignation(e.target.value)} fullWidth size="small" />
         <TextField label="Email" type="email" value={editSEmail} onChange={(e) => setEditSEmail(e.target.value)} fullWidth size="small" />
         <TextField label="Phone" type="tel" value={editSPhone} onChange={(e) => setEditSPhone(e.target.value)} fullWidth size="small" />
+        <FormControlLabel
+          control={<Checkbox checked={editSHasDifferentWhatsapp} onChange={(e) => { setEditSHasDifferentWhatsapp(e.target.checked); if (!e.target.checked) setEditSWhatsapp(""); }} size="small" />}
+          label="Different WhatsApp number?"
+          sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
+        />
+        {editSHasDifferentWhatsapp && (
+          <TextField label="WhatsApp Number" type="tel" value={editSWhatsapp} onChange={(e) => setEditSWhatsapp(e.target.value)} placeholder="e.g. +91-9876543210" fullWidth size="small" />
+        )}
         <TextField label="NPS Score" type="number" value={editSNps} onChange={(e) => setEditSNps(e.target.value)} fullWidth size="small" slotProps={{ htmlInput: { min: -100, max: 100 } }} />
         <TextField
           select label="Sentiment" value={editSSentiment} onChange={(e) => setEditSSentiment(e.target.value)}

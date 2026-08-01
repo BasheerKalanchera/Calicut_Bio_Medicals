@@ -9,6 +9,7 @@ class StakeholderCreate(BaseModel):
     designation: str | None = Field(None, max_length=100)
     email: EmailStr | None = None
     phone: str | None = Field(None, max_length=50)
+    whatsapp_number: str | None = Field(None, max_length=50)
     nps_score: int | None = Field(None, ge=-100, le=100)
     sentiment: str | None = Field(None, max_length=50)
 
@@ -18,6 +19,7 @@ class StakeholderUpdate(BaseModel):
     designation: str | None = Field(None, max_length=100)
     email: EmailStr | None = None
     phone: str | None = Field(None, max_length=50)
+    whatsapp_number: str | None = Field(None, max_length=50)
     nps_score: int | None = Field(None, ge=-100, le=100)
     sentiment: str | None = Field(None, max_length=50)
 
@@ -31,6 +33,7 @@ class StakeholderResponse(BaseModel):
     designation: str | None
     email: str | None
     phone: str | None
+    whatsapp_number: str | None
     nps_score: int | None
     sentiment: str | None
     created_at: datetime

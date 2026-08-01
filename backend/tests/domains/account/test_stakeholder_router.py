@@ -31,6 +31,7 @@ def _mock_stakeholder(**overrides) -> MagicMock:
         "designation": None,
         "email": None,
         "phone": None,
+        "whatsapp_number": None,
         "nps_score": 50,
         "sentiment": "Positive",
         "created_at": now,
