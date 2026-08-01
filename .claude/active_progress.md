@@ -1,42 +1,19 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-01_
 
-## Since last session (done, committed & pushed — 2026-08-01)
-
-Bug fixes and one UX/business-rule change found/requested during and after
-the 2026-07-31 demo, all committed and pushed to `main`:
-- Next Actions tab on Opportunity 360 not refreshing after logging an
-  activity or completing a reminder (`507685f`).
-- Opportunity/Project cards on Account 360's tabs were Edit-only, no
-  click-through to full detail — now whole-card-clickable (`7ccc258`).
-- Product Catalog was silently RLS-blocked cross-SBU ("No products found"
-  for another SBU, not a real empty state) — opened catalog **read** access
-  to everyone; added a new backend guard (BR-OP-11) so a product can still
-  only be *added to an Opportunity* within its own SBU. Migration `0014`
-  applied to the live Dev Supabase project. (`1d4ce86`)
-- **User manual done — supersedes "Next" item 4 below, decision changed
-  from Google Doc to Markdown + in-app help.** `docs/UAT-User-Manual.md`
-  written, then reviewed against actual screen/tab/business-rule behavior
-  (stage list, tab lists, mandatory Next Action / closing-note rules, live
-  search) and corrected. Generalized into an in-app contextual Help system
-  (`HelpDrawer.tsx` + `helpContent.tsx`, `[?]` button keyed by current
-  screen) covering all 7 screens + Project 360. While writing Project 360's
-  help entry, found its Opportunities section had dead create-opportunity
-  code (`openAddOpp`/`handleCreateOpp`) never wired to a button — fixed
-  that too, so the docs describe real behavior.
-
-Root-cause detail for any of the above: `git log` those commits, or ask —
-not duplicated here.
-
 ## Current task — STOP HERE FIRST
 
-**2026-07-31 demo (done, partial):** hands-on PWA demo ran tonight over an
-ngrok tunnel to the Dev Supabase project — see
-`docs/PWA-Mobile-Install-Setup.md` for the full setup detail and
-`docs/Backlog.md` for a real gap found while explaining RLS post-demo
-(`manager_id` cross-SBU loophole, not yet fixed). Not fully complete — a
-second walkthrough is booked for **Monday** with the wider Cabio Star Sales
-team.
+**Since the 2026-07-31 demo, a batch of bug fixes and features landed and
+shipped** (Next Actions refresh bug, click-through nav on Account 360,
+Product Catalog opened company-wide, UAT manual + in-app Help system,
+Stakeholder WhatsApp number, `manager_id` cross-SBU loophole fixed) — full
+detail in `docs/Progress-Archive-2026-08.md`, not repeated here. All
+committed and pushed to `main`.
+
+**2026-07-31 demo:** hands-on PWA demo ran over an ngrok tunnel to the Dev
+Supabase project — see `docs/PWA-Mobile-Install-Setup.md` for setup detail.
+Not fully complete — a second walkthrough is booked for **Monday** with
+the wider Cabio Star Sales team.
 
 **Decided for Monday (2026-07-31, end of day):** stand up the **full UAT
 environment** per `docs/Deployment-Topology.md` — separate Supabase project
@@ -59,11 +36,7 @@ URL had to be re-shared). Effort estimate: ~half a day, ~$7/mo
    checklist in `docs/PWA-Mobile-Install-Setup.md` is the tested basis, but
    wait until the UAT URL is stable before writing it (no point documenting
    a Render URL that doesn't exist yet).
-4. ~~User manual~~ — **done, see "Since last session" above.** Ended up as
-   `docs/UAT-User-Manual.md` (Markdown, not Google Docs) plus an in-app
-   `[?]` Help system, not a standalone doc alone — video walkthroughs still
-   deferred until the app UI stabilizes (MUI migration, RLS fix pending),
-   per the 2026-08-01 decision.
+4. ~~User manual~~ — **done**, see `docs/Progress-Archive-2026-08.md`.
 
 ## Also still open (unrelated, carried over)
 
