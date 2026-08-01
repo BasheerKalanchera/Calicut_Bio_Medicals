@@ -88,21 +88,22 @@ threshold never triggers. The Pro upgrade becomes necessary only when Prod
 ## Topology
 
 ```
-                    ┌─────────────────────────────────────────────────────┐
-                    │                     GitHub repo                     │
-                    │            (single source, branch-based)            │
-                    └───────────────┬───────────────────┬─────────────────┘
-                       feature/*    │        main        │      release tag
-                       branches     │      (merged PRs)   │    (promote to prod)
-                                    ▼                     ▼
-        ┌───────────────┐   ┌───────────────┐    ┌───────────────┐
-        │      DEV      │   │      UAT      │    │     PROD      │
-        │  (your laptop)│   │   (hosted)    │    │   (hosted)    │
-        └───────────────┘   └───────────────┘    └───────────────┘
+GitHub repo (single source, three long-lived branches)
+
+  feature/*  ──PR──▶  main   (Dev, local — Milestone 2 integration, unchanged workflow)
+                         │
+                         │  merge when a batch is ready for real users
+                         ▼
+                        uat   (hosted — Render UAT service tracks this branch)
+                         │
+                         │  merge once Cabio Star Sales signs off
+                         ▼
+                        prod  (hosted — Render Prod service tracks this branch, Phase B)
 ```
 
 | | **Dev** | **UAT / bugfix** | **Prod** |
 |---|---|---|---|
+| Branch | `main` | `uat` | `prod` |
 | Who uses it | Basheer only | Basheer + Cabio Star Sales team (daily) | Pilot sales reps (real users) |
 | Frontend | `npm run dev` on `localhost:5173` | Render Static Site | Render Static Site |
 | Backend | `uvicorn` on `localhost:8000` | Render Web Service (Starter) | Render Web Service (Starter) |
@@ -112,9 +113,25 @@ threshold never triggers. The Pro upgrade becomes necessary only when Prod
 
 ### Promotion flow
 
-1. Milestone 2 feature work happens against **Dev** — unchanged from today's workflow.
-2. Merge to `main` → deploy triggers **UAT**: the new Alembic migration runs there first, followed by the regression pass and any manual verification (e.g. the 4-role Catalog gate test pattern).
-3. Once UAT is clean **and the Cabio Star Sales team has signed off**, upgrade the Supabase org to Pro, create the Prod project, and promote the same already-tested build and migration to **Prod**.
+**Branches**
+- `main` — Milestone 2 integration branch. Local Dev tracks this, same as today's workflow; feature branches merge here via PR.
+- `uat` — cut from `main` when UAT goes live (Phase A). Render's UAT service tracks this branch; nothing reaches UAT except what's merged here.
+- `prod` — cut from `uat` once UAT signs off (Phase B). Render's Prod service tracks this branch.
+
+**Feature promotion (planned batches)**
+1. Milestone 2 feature work happens on `main` — unchanged from today's workflow.
+2. When a batch is ready for real users, merge `main` → `uat`. The new Alembic migration(s) run there first, followed by the regression pass and any manual verification (e.g. the 4-role Catalog gate test pattern).
+3. Once UAT is clean **and the Cabio Star Sales team has signed off**, promote the *same tested commit* — `uat` → `prod`. Never re-fix or re-derive the build for Prod; it must be the exact code that already passed UAT.
+
+**Hotfix flow (bug reported by UAT or Prod users)**
+UAT is always the gate — a fix never reaches `prod` without first running on `uat`, even when the bug was found directly in `prod`.
+1. Branch `fix/*` off the branch where the bug lives (`uat`, or `prod` once it exists) — not off `main`, which may already contain unreleased Milestone 2 changes.
+2. Develop and sanity-check the fix locally against Dev.
+3. Merge `fix/*` → `uat`. Render redeploys UAT; verify the fix there, including the regression pass.
+4. If the bug was in `prod`, promote that same tested commit `uat` → `prod` once verified — not before.
+5. Cherry-pick the fix into `main` too, so Milestone 2 doesn't lose it or reintroduce the same bug at the next promotion.
+
+**Migration caveat:** Alembic migrations form a strict chain (`down_revision`). If a hotfix on `uat` adds a migration after `main` has already added its own newer ones, cherry-picking that migration file into `main` will likely produce two competing heads — reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than letting `alembic upgrade` fail on divergent heads.
 
 ---
 
@@ -122,6 +139,7 @@ threshold never triggers. The Pro upgrade becomes necessary only when Prod
 
 **Phase A — now:**
 - [ ] Create the UAT Supabase project (free tier)
+- [ ] Cut the `uat` branch from `main`; point Render's UAT service at `uat`, not `main`
 - [ ] Create Render account/services for UAT (backend + static frontend)
 - [ ] Per-environment secrets for UAT: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGINS`
 - [ ] Land RLS (Phase 2E — see `Phase-2E-Security-Architecture.md`) and prove it out on UAT with the Cabio Star Sales team
@@ -129,9 +147,10 @@ threshold never triggers. The Pro upgrade becomes necessary only when Prod
 **Phase B — once UAT signs off:**
 - [ ] Upgrade the Supabase org to the Pro plan
 - [ ] Create the Prod Supabase project
+- [ ] Cut the `prod` branch from `uat` at the sign-off commit; point Render's Prod service at `prod`, not `uat`
 - [ ] Create Render account/services for Prod (backend + static frontend)
 - [ ] Per-environment secrets for Prod
-- [ ] Decide and document the actual promotion mechanism (manual trigger vs. CI/CD on tag/merge)
+- [ ] Decide and document the actual promotion mechanism (manual trigger vs. CI/CD on tag/merge) — see "Promotion flow" above for the branch-level flow already decided; this item is about the trigger tooling only
 
 ---
 

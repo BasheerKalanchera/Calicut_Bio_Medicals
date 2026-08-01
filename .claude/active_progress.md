@@ -38,6 +38,11 @@ URL had to be re-shared). Effort estimate: ~half a day, ~$7/mo
    Activities/Next Actions, Products, Projects, Search — confirm exact
    screen list against `DemoApp.tsx` nav before drafting). No Google Docs
    tool access — draft content as Markdown for Basheer to paste in.
+   **Decided (2026-08-01): written manual first, video walkthroughs deferred
+   until the app is stable** — screens are still moving (MUI migration, RLS
+   fix pending), so video would need re-recording repeatedly; a doc is a
+   quick edit instead. Not blocked on UAT infra — can be drafted in
+   parallel with Phase A.
 
 ## Also still open (unrelated, carried over)
 
