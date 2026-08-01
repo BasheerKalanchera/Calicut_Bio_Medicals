@@ -137,6 +137,9 @@ export default function LogActivityModal({
       queryClient.invalidateQueries({ queryKey: ["activities", "project", projectId] });
     }
     queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    if (opportunityId) {
+      queryClient.invalidateQueries({ queryKey: ["opp-reminders", opportunityId] });
+    }
     onCreated?.();
   }
 

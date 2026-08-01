@@ -106,6 +106,10 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     if (reminder.activity.opportunity) {
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", reminder.activity.opportunity.id] });
     }
+    queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    if (reminder.activity.opportunity) {
+      queryClient.invalidateQueries({ queryKey: ["opp-reminders", reminder.activity.opportunity.id] });
+    }
     onCompleted?.();
   }
 
