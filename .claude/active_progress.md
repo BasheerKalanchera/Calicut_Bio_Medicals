@@ -1,5 +1,32 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-07-31_
+_Session: 2026-08-01_
+
+## Since last session (done, committed & pushed — 2026-08-01)
+
+Bug fixes and one UX/business-rule change found/requested during and after
+the 2026-07-31 demo, all committed and pushed to `main`:
+- Next Actions tab on Opportunity 360 not refreshing after logging an
+  activity or completing a reminder (`507685f`).
+- Opportunity/Project cards on Account 360's tabs were Edit-only, no
+  click-through to full detail — now whole-card-clickable (`7ccc258`).
+- Product Catalog was silently RLS-blocked cross-SBU ("No products found"
+  for another SBU, not a real empty state) — opened catalog **read** access
+  to everyone; added a new backend guard (BR-OP-11) so a product can still
+  only be *added to an Opportunity* within its own SBU. Migration `0014`
+  applied to the live Dev Supabase project. (`1d4ce86`)
+- **User manual done — supersedes "Next" item 4 below, decision changed
+  from Google Doc to Markdown + in-app help.** `docs/UAT-User-Manual.md`
+  written, then reviewed against actual screen/tab/business-rule behavior
+  (stage list, tab lists, mandatory Next Action / closing-note rules, live
+  search) and corrected. Generalized into an in-app contextual Help system
+  (`HelpDrawer.tsx` + `helpContent.tsx`, `[?]` button keyed by current
+  screen) covering all 7 screens + Project 360. While writing Project 360's
+  help entry, found its Opportunities section had dead create-opportunity
+  code (`openAddOpp`/`handleCreateOpp`) never wired to a button — fixed
+  that too, so the docs describe real behavior.
+
+Root-cause detail for any of the above: `git log` those commits, or ask —
+not duplicated here.
 
 ## Current task — STOP HERE FIRST
 
@@ -32,17 +59,11 @@ URL had to be re-shared). Effort estimate: ~half a day, ~$7/mo
    checklist in `docs/PWA-Mobile-Install-Setup.md` is the tested basis, but
    wait until the UAT URL is stable before writing it (no point documenting
    a Render URL that doesn't exist yet).
-4. User manual covering the current feature set, for the UAT team to use
-   self-service. **Decided (2026-07-31): Google Doc format, covers all
-   UAT-facing screens** (Pipeline, Customer 360, Opportunity Detail,
-   Activities/Next Actions, Products, Projects, Search — confirm exact
-   screen list against `DemoApp.tsx` nav before drafting). No Google Docs
-   tool access — draft content as Markdown for Basheer to paste in.
-   **Decided (2026-08-01): written manual first, video walkthroughs deferred
-   until the app is stable** — screens are still moving (MUI migration, RLS
-   fix pending), so video would need re-recording repeatedly; a doc is a
-   quick edit instead. Not blocked on UAT infra — can be drafted in
-   parallel with Phase A.
+4. ~~User manual~~ — **done, see "Since last session" above.** Ended up as
+   `docs/UAT-User-Manual.md` (Markdown, not Google Docs) plus an in-app
+   `[?]` Help system, not a standalone doc alone — video walkthroughs still
+   deferred until the app UI stabilizes (MUI migration, RLS fix pending),
+   per the 2026-08-01 decision.
 
 ## Also still open (unrelated, carried over)
 
