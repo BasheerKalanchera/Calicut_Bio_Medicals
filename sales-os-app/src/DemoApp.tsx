@@ -9,6 +9,8 @@ import CustomerDirectoryScreen from "./screens/CustomerDirectoryScreen";
 import Customer360Screen from "./screens/Customer360Screen";
 import ProductCatalogScreen from "./screens/ProductCatalogScreen";
 import ProjectDirectoryScreen from "./screens/ProjectDirectoryScreen";
+import HelpDrawer from "./components/HelpDrawer";
+import { HELP_CONTENT } from "./utils/helpContent";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
@@ -68,6 +70,9 @@ export default function DemoApp() {
   const [projectDetailMode, setProjectDetailMode] = useState(false);
   const [showQuickLead, setShowQuickLead]       = useState(false);
   const [showLogActivity, setShowLogActivity]   = useState(false);
+  // Spike (2026-08-01): Help button only wired up for Pipeline so far — see
+  // HelpDrawer.tsx and active_progress.md for the plan to generalize this.
+  const [showHelp, setShowHelp]                 = useState(false);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const customerAccountUpdateRef = useRef<((a: unknown) => void) | null>(null);
@@ -144,6 +149,10 @@ export default function DemoApp() {
     setProjectDetailMode(false);
     projectResetRef.current?.();
   }
+
+  // Project 360 is a sub-state of "customers" (Account Management), not its
+  // own top-level view -- distinguish it here so Help shows the right topic.
+  const helpViewId = view === "customers" && projectDetailMode ? "projectDetail" : view;
 
   return (
     <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
@@ -306,6 +315,15 @@ export default function DemoApp() {
             >
               + Log
             </Button>
+            {HELP_CONTENT[helpViewId] && (
+              <IconButton
+                onClick={() => setShowHelp(true)}
+                aria-label="Help"
+                sx={{ width: 40, height: 40, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
+              >
+                <Box component="span" sx={{ fontSize: "1rem", fontWeight: 900 }}>?</Box>
+              </IconButton>
+            )}
             <Button
               onClick={signOut}
               sx={{
@@ -491,6 +509,7 @@ export default function DemoApp() {
         projectName={projectDetailMode ? selectedProject?.name : undefined}
         currentUserId={(userProfile as any)?.id}
       />
+      <HelpDrawer isOpen={showHelp} onClose={() => setShowHelp(false)} viewId={helpViewId} />
     </Box>
   );
 }

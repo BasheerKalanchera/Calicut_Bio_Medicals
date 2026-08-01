@@ -237,9 +237,18 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
 
           {/* Opportunities */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-              Opportunities
-            </h4>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                Opportunities
+              </h4>
+              <button
+                type="button"
+                onClick={openAddOpp}
+                className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0"
+              >
+                + Add
+              </button>
+            </div>
             {oppsLoading ? (
               <div className="text-center py-4 text-gray-400 font-bold text-sm animate-pulse">Loading...</div>
             ) : opps.length === 0 ? (
@@ -362,6 +371,53 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           ) : (
             <div className="text-xs text-gray-400 italic">No products added</div>
           )}
+        </div>
+      </FormModal>
+
+      {/* Add Opportunity Modal */}
+      <FormModal
+        isOpen={showAddOpp}
+        onClose={() => setShowAddOpp(false)}
+        title="Add Opportunity"
+        onSubmit={handleCreateOpp}
+      >
+        <div className="px-3 py-2 bg-blue-50 rounded-xl text-xs font-bold text-blue-700 mb-1">
+          {p.name}
+        </div>
+        <div>
+          <label className={labelClass}>Name *</label>
+          <input type="text" value={addOppName} onChange={(e) => setAddOppName(e.target.value)} className={inputClass} autoFocus />
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className={labelClass}>Stage *</label>
+            <select value={addOppStageId} onChange={(e) => { const s = oppStages.find((x) => x.id === e.target.value); setAddOppStageId(e.target.value); if (s) setAddOppWinProb(String(s.default_win_probability)); }} className={inputClass}>
+              <option value="">Select stage</option>
+              {oppStages.map((s) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className={labelClass}>Status *</label>
+            <select value={addOppStatusId} onChange={(e) => setAddOppStatusId(e.target.value)} className={inputClass}>
+              <option value="">Select status</option>
+              {oppStatuses.map((s) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Owner *</label>
+          <select value={addOppOwnerId} onChange={(e) => setAddOppOwnerId(e.target.value)} className={inputClass}>
+            <option value="">Select owner</option>
+            {oppUsers.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Win Probability % *</label>
+          <input type="number" min="0" max="100" value={addOppWinProb} onChange={(e) => setAddOppWinProb(e.target.value)} className={inputClass} placeholder="0 – 100" />
+        </div>
+        <div>
+          <label className={labelClass}>Indicative Value (Lakhs)</label>
+          <input type="number" step="any" min="0" value={addOppValue} onChange={(e) => setAddOppValue(e.target.value)} className={inputClass} placeholder="e.g. 25.50" />
         </div>
       </FormModal>
 
