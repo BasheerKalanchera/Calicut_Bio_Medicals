@@ -9,7 +9,14 @@ from app.db.base import Base
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", settings.ADMIN_DATABASE_URL.get_secret_value())
+config.set_main_option(
+    "sqlalchemy.url",
+    # configparser treats `%` as its own interpolation escape, unrelated to
+    # URL-encoding — a password containing a percent-encoded character
+    # (e.g. `%40` for `@`) must have its `%` doubled or set_main_option
+    # misparses it as a `configparser` interpolation reference.
+    settings.ADMIN_DATABASE_URL.get_secret_value().replace("%", "%%"),
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
