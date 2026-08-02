@@ -50,7 +50,7 @@ prior employers — the same pattern, right-sized for this project's scale.
 | UAT | New Supabase project — migrations land here first, mirrors Prod config, realistic-but-fake data. **Free tier** (Dev + UAT = 2 projects, within the free cap). |
 | Prod | New Supabase project — pilot reps only, no ad-hoc writes, migrations only after UAT sign-off. **Created only once UAT signs off; requires the Pro upgrade at that point (3rd project exceeds the free cap).** |
 | Frontend hosting | **Render Static Sites** (free) for UAT and Prod |
-| Backend hosting | **Render Web Service, Starter tier** ($7/mo each) for UAT and Prod |
+| Backend hosting | UAT: **Render Web Service, Free tier** (actual — spins down after ~15 min idle; mitigated by an external keep-alive ping, see "Keep-alive" below). Prod: planned **Starter tier** ($7/mo), which does not spin down. |
 | Frontend hosting — rejected option | Vercel — Hobby tier's ToS explicitly prohibits commercial use ("personal or non-commercial use" only); Pro tier ($20/mo/seat) would have worked but is an unnecessary extra vendor once Render already hosts the backend |
 | Local Dev hosting | Stays local — `uvicorn`/`npm run dev` against the Dev Supabase project, no hosting needed |
 
@@ -63,9 +63,9 @@ prior employers — the same pattern, right-sized for this project's scale.
 | Component | Cost | Notes |
 |---|---|---|
 | Supabase — Dev + UAT | $0/mo | Free tier, 2 projects, within the free cap |
-| Render — backend × 1 (UAT, Starter) | $7/mo | 512 MB RAM / 0.5 CPU |
+| Render — backend × 1 (UAT, Free tier) | $0/mo | Spins down after ~15 min idle; mitigated via external keep-alive ping — see "Keep-alive" below |
 | Render — frontend × 1 (UAT, static) | $0/mo | Free tier, no commercial-use restriction |
-| **Phase A total** | **~$7/month** | |
+| **Phase A total** | **~$0/month** | |
 
 **Phase B (later — adding Prod, once UAT signs off):**
 
@@ -83,6 +83,17 @@ a week of inactivity. **Auto-pause is not a concern for UAT here** — the Cabio
 Star Sales team will use it daily once testing starts, so the 7-day-idle
 threshold never triggers. The Pro upgrade becomes necessary only when Prod
 (the 3rd project) is created.
+
+**Keep-alive (Render backend, UAT):** unlike Supabase's 7-day pause, Render's
+free-tier web service spins down after ~15 min of *any* idle time (not just
+daily-usage-scale gaps), and a cold start after spin-down costs ~30-50s on
+the next request — too disruptive during a live walkthrough or ad-hoc
+testing. Mitigated with a free external monitor (UptimeRobot) pinging the
+unauthenticated `GET /api/v1/health` endpoint on
+`https://calicut-bio-medicals.onrender.com` every 5 minutes — safely under
+the 15-min spin-down window. No repo code involved; this is third-party
+config only. Prod avoids this entirely by running on the Starter tier
+(doesn't spin down), so the keep-alive ping is a UAT-only, Phase-A concern.
 
 ---
 

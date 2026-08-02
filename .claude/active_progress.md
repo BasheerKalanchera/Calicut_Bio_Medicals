@@ -16,9 +16,17 @@ verified) — full step-by-step detail, bugs hit, and fixes applied are all in
 `openapi-typescript` peer conflict, `npm audit` findings, JS bundle size),
 not repeated here.
 
-**Immediate next step:** re-create the 6-person roster (+ Basheer) in the
-**new** UAT Supabase project's Auth — same names/emails/roles/SBU/zone as
-the 2026-07-31 Dev-project accounts (reconstructable from the live Dev DB's
+**Immediate next step:** set up the UptimeRobot keep-alive monitor (Basheer's
+side — third-party account) pinging `GET /api/v1/health` on
+`https://calicut-bio-medicals.onrender.com` every 5 min, per the new
+"Keep-alive" note in `docs/Deployment-Topology.md`. Render's free-tier
+backend was discovered to spin down after ~15 min idle (`docs/Deployment-Topology.md`
+line 53 previously said Starter tier — wrong, corrected 2026-08-02; UAT is
+actually on the free tier).
+
+**After that:** re-create the 6-person roster (+ Basheer) in the **new** UAT
+Supabase project's Auth — same names/emails/roles/SBU/zone as the
+2026-07-31 Dev-project accounts (reconstructable from the live Dev DB's
 `user_profile` rows if the roster table itself isn't at hand), but these are
 a fresh set of accounts since UAT is a separate Supabase project from Dev.
 This step also doubles as the first real end-to-end proof that the deployed
