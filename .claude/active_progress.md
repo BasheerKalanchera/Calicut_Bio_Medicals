@@ -23,10 +23,24 @@ proved fragile tonight (background processes got killed mid-demo, tunnel
 URL had to be re-shared). Effort estimate: ~half a day, ~$7/mo
 (`Deployment-Topology.md`'s cost table).
 
-**Next, in order (none started yet):**
-1. Work `Deployment-Topology.md`'s "Open Items — Phase A" checklist: create
-   the UAT Supabase project, Render account/services (backend Starter +
-   static frontend), per-environment secrets, run migrations there.
+**Next, in order — Step 1 (Phase A checklist) mostly done, see
+`Deployment-Topology.md`'s Open Items for full detail:**
+1. Work `Deployment-Topology.md`'s "Open Items — Phase A" checklist:
+   - [x] `uat` branch cut from `main`, pushed to origin (2026-08-02)
+   - [x] UAT Supabase project created — `cabio-sales-os-uat`, Mumbai
+     (2026-08-02). Dev project renamed to `cabio-sales-os-dev` for
+     consistency.
+   - [x] `backend/.env.uat` populated (local, gitignored) and UAT database
+     fully migrated (0001-0015) + seeded — 2026-08-02. Found and fixed:
+     `docs/Physical-Schema.sql` at `HEAD` is stale (see `docs/Backlog.md`
+     for the fix write-up); bootstrapped from the pre-0001 snapshot instead.
+     Also fixed a latent `%`-escaping bug in `alembic/env.py`
+     (**uncommitted** — ready, not yet asked to commit).
+   - [ ] Create Render account/services for UAT (backend Starter + static
+     frontend), pointed at `uat` branch — **next step**
+   - [ ] Paste the same secrets from `backend/.env.uat` into Render's
+     dashboard once that service exists
+   - [ ] Prove out RLS on UAT with the Cabio Star Sales team
 2. Re-create the 6-person roster (+ Basheer) in the **new** UAT Supabase
    project's Auth — same names/emails/roles/SBU/zone as tonight's Dev-project
    accounts (table is in this conversation's history / can be reconstructed

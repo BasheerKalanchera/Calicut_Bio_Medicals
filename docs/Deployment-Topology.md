@@ -30,10 +30,11 @@ does himself — runs against one shared Supabase project (`backend/.env`,
 flagged in `CLAUDE.md` as live and not disposable). That was fine while the
 only audience was Basheer. It stops being fine the moment real pilot reps
 depend on the data being there and correct, because Milestone 2 work
-(stalled-opportunity detection, delivery/handover fields, RLS itself) means
-**active schema migrations will keep happening at the same time pilot reps
-are using the app.** Without separation, every migration's first real test
-would be production, on top of real pipeline data.
+(stalled-opportunity detection, delivery/handover fields, RLS itself — the
+latter has since landed, see the Open Items update below) means **active
+schema migrations will keep happening at the same time pilot reps are using
+the app.** Without separation, every migration's first real test would be
+production, on top of real pipeline data.
 
 This mirrors Basheer's own enterprise background running dev/UAT/prod for
 prior employers — the same pattern, right-sized for this project's scale.
@@ -138,11 +139,13 @@ UAT is always the gate — a fix never reaches `prod` without first running on `
 ## Open Items (not yet done)
 
 **Phase A — now:**
-- [ ] Create the UAT Supabase project (free tier)
-- [ ] Cut the `uat` branch from `main`; point Render's UAT service at `uat`, not `main`
+- [x] Create the UAT Supabase project (free tier) — `cabio-sales-os-uat`, Mumbai (ap-south-1), created 2026-08-02
+- [x] Cut the `uat` branch from `main`; pushed to origin 2026-08-02 — still needs Render's UAT service pointed at it once that service exists
 - [ ] Create Render account/services for UAT (backend + static frontend)
-- [ ] Per-environment secrets for UAT: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_JWT_SECRET`, `CORS_ORIGINS`
-- [ ] Land RLS (Phase 2E — see `Phase-2E-Security-Architecture.md`) and prove it out on UAT with the Cabio Star Sales team
+- [x] Per-environment secrets for UAT, local (`backend/.env.uat`): `DATABASE_URL`, `ADMIN_DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CABIO_APP_DB_PASSWORD` — all set 2026-08-02. `SUPABASE_JWT_SECRET` deliberately omitted: unused by the backend (JWKS-based verification, see `security.py`), despite being listed in `.env.example`. Still needed: the same values pasted into Render's dashboard once the UAT backend service exists (this file only covers local migration runs).
+- [x] Run Alembic migrations against the new UAT DB, including creating the `cabio_app` role — done 2026-08-02. Non-trivial: `docs/Physical-Schema.sql` at `HEAD` turned out to be stale (missing migrations 0002/0003/0004/0007/0013-0015 — see `docs/Backlog.md`), so UAT was bootstrapped from the pre-migration-0001 snapshot (git commit `a09794d`) + `Seed-Data.sql`, then `alembic upgrade head` ran the full 0001-0015 chain for real, same as Dev's actual history. Verified against the live DB afterward (role, RLS, and recent columns all confirmed present), not just Alembic's own bookkeeping. Also fixed a latent bug in `alembic/env.py`: `configparser` chokes on a literal `%` in a percent-encoded password (e.g. `%40`) — `ADMIN_DATABASE_URL`'s `%` now gets escaped to `%%` before being handed to `config.set_main_option`., `CORS_ORIGINS`
+- [x] Land RLS (Phase 2E) — implemented and live on Dev since 2026-07-27, committed `7d7155d` (2026-07-30); see `Phase-2E-Security-Architecture.md`
+- [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team
 
 **Phase B — once UAT signs off:**
 - [ ] Upgrade the Supabase org to the Pro plan
@@ -156,7 +159,7 @@ UAT is always the gate — a fix never reaches `prod` without first running on `
 
 ## References
 
-- `Phase-2E-Security-Architecture.md` — RLS implementation, must land before Prod is real
+- `Phase-2E-Security-Architecture.md` — RLS implementation, landed on Dev 2026-07-27; must be proven out on UAT before Prod is real
 - `Prototype-Production-Parity-Audit.md` §6 — Milestone 1/2 scoping
 - `CLAUDE.md` — current Dev Supabase project is live/shared, not disposable
 - `.claude/active_progress.md` — session-to-session handoff status

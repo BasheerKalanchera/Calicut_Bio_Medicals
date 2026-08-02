@@ -220,3 +220,21 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `ProductService.list_products`/`ProductRepository.list_products` and add
   a genuine test for it then — not before.
 - Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
+- **`docs/Physical-Schema.sql` is stale and unreliable — needs a real fix, not
+  another hand-edit.** Surfaced 2026-08-02 while bootstrapping the UAT
+  database. Verified against every migration's actual DDL: it's missing
+  0002 (`stakeholder` contact fields), 0003/0004/0007 (indexes), and
+  0013–0015 (`reminder.closing_activity_id`, Product Catalog RLS split,
+  `stakeholder.whatsapp_number`) — not a clean "current through migration N"
+  cutoff, gaps are scattered through the whole history. It cannot be used as
+  an `alembic stamp <rev>` checkpoint for any revision. (The pre-migration-0001
+  snapshot, git commit `a09794d`, is still accurate and was used instead to
+  bootstrap UAT.) Root cause: hand-maintained in parallel with the real
+  source of truth — the Alembic migration chain — with nothing forcing the
+  two to stay in sync. Fix has two parts: (1) one-time regen via
+  `pg_dump --schema-only` against a fully-migrated database (UAT, once
+  built, or Dev) to get back to accurate; (2) a process change so it can't
+  silently drift again — e.g. regenerate it as a documented step at the end
+  of every migration PR, or automate it in CI — rather than trusting someone
+  to hand-edit it alongside each migration. Basheer's call on which process
+  fix.
