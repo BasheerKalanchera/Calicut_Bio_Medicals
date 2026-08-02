@@ -238,3 +238,27 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   of every migration PR, or automate it in CI — rather than trusting someone
   to hand-edit it alongside each migration. Basheer's call on which process
   fix.
+- **`sales-os-app` has a real `typescript`/`openapi-typescript` peer dependency
+  conflict.** Surfaced 2026-08-02 deploying the UAT frontend to Render, which
+  does a genuinely clean `npm install` — `package.json` declares
+  `typescript@^6.0.3`, but `openapi-typescript@7.13.0` (dev-only, used solely
+  by the `generate:types` script) peer-requires `typescript@^5.x`, so a clean
+  `npm install` fails with `ERESOLVE`. Not caught locally because Basheer's
+  local `node_modules` predates the `typescript` 6.x bump and was never
+  reinstalled from scratch. Worked around for UAT with
+  `npm install --legacy-peer-deps` in Render's Build Command — safe there
+  specifically because `openapi-typescript` never runs during `vite build`,
+  but the underlying mismatch is still real and will hit the same wall on
+  any other clean install (a new dev machine, CI, Prod's frontend build).
+  Real fix: either downgrade `typescript` to `^5.x` or wait for
+  `openapi-typescript` to support the `6.x` peer range — not decided yet.
+- **`npm audit` reports 9 vulnerabilities (1 low, 8 high)** in `sales-os-app`'s
+  dependency tree, surfaced during the same 2026-08-02 UAT frontend deploy.
+  Pre-existing, not introduced by that deploy. Needs a proper look (`npm
+  audit` for detail, then `npm audit fix` or manual upgrades) — not done
+  under Monday-deadline time pressure.
+- **`sales-os-app`'s production JS bundle is 1.58 MB**, over Vite's 500 kB
+  chunk-size warning threshold — flagged in the same 2026-08-02 UAT deploy
+  log. Performance item (code-splitting via dynamic `import()`), not a
+  correctness one. Candidate approach in the build's own warning: dynamic
+  imports or `build.rolldownOptions.output.codeSplitting`.
