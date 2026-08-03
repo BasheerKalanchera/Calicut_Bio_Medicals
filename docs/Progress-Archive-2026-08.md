@@ -85,3 +85,158 @@ Bug fixes and feature work found/requested during and after the
   (`926469d`)
 
 All of the above committed and pushed to `main`.
+
+---
+
+## 2026-08-03 — UAT keep-alive monitor + 6-person roster + RLS lockout bug
+
+**UptimeRobot keep-alive monitor set up and verified.** Free-plan HTTP
+monitor, `GET /api/v1/health` on `https://calicut-bio-medicals.onrender.com`,
+5-min interval, email alerting on. Mitigates Render free-tier's ~15-min idle
+spin-down only — not a general uptime guarantee, and (as the RLS bug below
+proved) doesn't by itself mean the site is usable.
+
+**6-person roster + Basheer re-created in UAT Supabase Auth,** reconstructed
+by reading the live Dev DB's `user_profile`/`auth.users` (read-only query,
+no writes to Dev) rather than from a written-down roster, which didn't
+exist. The 7 real (non-"Test -") Dev accounts, created 2026-06-24 through
+2026-07-31, matched exactly the "6-person roster + Basheer" framing in
+`active_progress.md`: Haroon Sidheeq (GM), Abdul Latheef P (Admin), Arun
+Adarsh / Fazal / Nishad K V / Shruthi (all Area Manager), Basheer K.
+
+Basheer's UAT identity deliberately diverges from Dev's, his own call:
+email domain `@cabio-UAT.com` (not `@cabio-demo.com`) for all 7 accounts
+distinguishing UAT from Dev at a glance; his own account promoted
+Sales Staff → **Admin** (so he can manage the UAT roster himself going
+forward without needing SQL); SBU changed Imaging → **Critical Care**, Zone
+North Kerala → **South Kerala**; manager left **blank** (Dev's value,
+`Test - Sales Manager`, doesn't exist in the fresh UAT roster and wasn't
+worth recreating just for this). The other 6 kept Dev's role/SBU/zone/
+manager-chain unchanged, reporting to Haroon Sidheeq.
+
+Mechanics: Basheer created the 7 Supabase Auth users himself via the UAT
+dashboard (Auto Confirm ticked, passwords his choice — a human, not Claude,
+handles real people's credentials); Claude then queried `auth.users` by
+email to get the resulting UUIDs (no manual UUID copy-paste needed) and
+wrote a single SQL script inserting all 7 `user_profile` rows in one pass
+via `ADMIN_DATABASE_URL`, ordering GM/Admin rows (no manager dependency)
+before the Area Manager rows that reference Haroon Sidheeq as manager —
+same bootstrap pattern `docs/Seed-Data-Demo.sql` itself uses for exactly
+this chicken-and-egg problem (no user_profile row exists yet, so the
+Admin-gated "Add User" UI screen has no one who can use it).
+
+**Bug found and fixed: UAT-wide RLS lockout.** First login attempt
+(`basheer@cabio-uat.com`) failed on the Account Management landing screen
+with `User <uuid> not found` — traced to `app/api/dependencies.py`'s
+`get_current_user`, the shared auth dependency every authenticated endpoint
+calls before any domain logic runs (explains why it surfaced on whatever
+screen happened to be first, not something specific to Account Management).
+`db.get(UserProfile, user_id)` returned `None` despite the row provably
+existing (confirmed via a direct `ADMIN_DATABASE_URL` query) — the
+signature of RLS silently filtering all rows for a non-bypass role, not a
+real "missing row."
+
+Root cause, confirmed by auditing every `public` table's
+`pg_class.relrowsecurity` + `pg_policies` count in UAT against Dev: **18
+tables** had RLS enabled with **zero policies** in UAT (`account`,
+`alembic_version`, `coverage_plan`, `coverage_plan_entry`, `hold_reason`,
+`installed_asset`, `lead_source`, `loss_reason`, `opportunity_stage`,
+`opportunity_status`, `project`, `project_status`, `role`, `sbu`,
+`stakeholder`, `target_plan`, `user_profile`, `zone`) — all RLS-disabled in
+Dev, none touched by any Alembic migration (the 0009-0012 Phase 2E
+migrations only ever targeted the 8 tables that actually got policies:
+`activity`, `document`, `opportunity`, `opportunity_item`,
+`opportunity_stakeholder`, `product`, `reminder`, `split`). RLS enabled +
+no policy = default-deny for any role without `BYPASSRLS` (`cabio_app`
+lacks it; `postgres`, used for direct admin queries, has it — which is why
+the lockout was invisible to every diagnostic query run as `postgres` and
+only showed up through the app's own `cabio_app` connection). Basheer
+identified the likely trigger himself: a Supabase dashboard prompt to
+"enable RLS for the whole database" during UAT project setup, which flips
+RLS on project-wide regardless of which tables have real policies behind
+them.
+
+Fix: `ALTER TABLE ... DISABLE ROW LEVEL SECURITY;` on exactly those 18
+tables, restoring UAT to Dev's proven-working configuration. No data
+changes, the 8 Phase-2E-covered tables untouched. Verified by re-querying
+`pg_class`/`pg_policies` for full parity with Dev, then a real login —
+`basheer@cabio-uat.com` now authenticates successfully with no error. This
+also stands as the first confirmed proof the deployed Render backend can
+reach the UAT database end-to-end through a real authenticated request, not
+just a direct DB connection.
+
+**Trap for Prod (Phase B) setup:** Supabase's "enable RLS for the whole
+database" project-setup prompt is a footgun for this app's RLS design,
+which deliberately scopes RLS to only 8 tables via Alembic migrations, not
+project-wide. When creating the Prod Supabase project, decline that prompt
+(or repeat this same 18-table audit-and-disable pass immediately after
+migrating) before assuming Prod is usable.
+
+**UAT populated with real accounts + full product catalog for tonight's
+orientation**, sourced from Dev rather than the stale `Seed-Data-Demo.sql`
+(dated June 29, predates Opportunity/Phase 2E — has no Opportunity seed
+data at all, and its Projects section references a `user_profile` UUID
+that doesn't even match its own User Profiles section, a pre-existing bug
+in the file). Dev's `account`/`product` tables have no `user_profile`
+dependency (`account`: `zone_id` only; `product`: `sbu_id` only), so this
+was a straightforward copy, not a remap.
+
+**Products:** all 26 real OEM entries (EDAN, Magnamed, SonoScape) copied
+as-is; excluded 1 junk row (`Sonoscape Test`).
+
+**Accounts:** 18 in Dev, narrowed to 11 with Basheer reviewing the
+borderline ones directly — the 5 obvious `Test *` rows and "New hospital in
+Areekode" excluded outright; "another hospital" (generic, lowercase)
+excluded; "aster medicity" (lowercase but a real Aster-group entry) kept.
+Also surfaced and fixed a **pre-existing Dev data quality issue** while
+reviewing parent-account links: `KIMS Hospital Trivandrum.parent_account_id`
+pointed at `Aster DM`, and `Al Shifa Hospital.parent_account_id` pointed at
+`KIMS Hospital Trivandrum` — both unrelated hospital groups, almost
+certainly accidental clicks while testing the parent/child account feature
+rather than real corporate relationships. Basheer confirmed both should be
+cleared; UAT's copies have `parent_account_id = NULL` for both, while
+`aster medicity` → `Aster DM` and `Aster MIMS Calicut` → `Aster DM` (both
+genuine) were preserved. **Not yet fixed in Dev itself** — same bad links
+still live there; worth a cleanup pass separately, not urgent since Dev has
+no real users depending on that hierarchy today.
+
+**Opportunities deliberately left unseeded — Basheer's call.** No seed data
+exists for Opportunities anywhere (confirmed above), and manual entry by
+the Cabio Star Sales team was already the plan independent of this gap —
+tonight's orientation doubles as that first live-entry session, which also
+naturally exercises RLS with real, varied ownership instead of synthetic
+data. Any account gaps the team hits can be entered live too, same as
+Opportunities.
+
+**New doc: `docs/PWA-UAT-MobileLaptop-Setup.md`,** written to replace the
+old ngrok-based `docs/PWA-Mobile-Install-Setup.md` for tonight — that doc's
+Phase 5 ("Install and verify on phone") was tied to a dev-machine ngrok
+tunnel with a rotating URL, the exact fragility that motivated standing up
+UAT in the first place. Confirmed the PWA build already deployed to UAT
+(commit `9c88b28`, merged into `uat`, live on Render) doesn't need any of
+that: `curl` checks against `https://cabio-sales-os-uat-frontend.onrender.com`
+confirmed the manifest, all 3 icons, and the service worker are all
+correctly served from the stable URL. New doc covers Laptop, Android
+(Chrome), and iPhone (Safari), each with install steps.
+
+Revised twice after Basheer clarified the actual distribution plan:
+Google Meet for the live session, URL + credentials sent via WhatsApp text,
+this document sent as a WhatsApp attachment. That made the in-app-browser
+problem (tapping a link inside WhatsApp opens its own webview, which is
+missing the Install/Add-to-Home-Screen option in both Chrome and Safari)
+the *expected* case, not a hypothetical — reworded both mobile sections
+from "if you received this via..." to definitive framing, and added a note
+on opening the document itself from inside WhatsApp. Also incorporated an
+external review's other 3 suggestions: bolded "Scroll down" in the iPhone
+steps (easy to miss, hidden below the fold in Safari's Share sheet), and
+added a stale-cache note ("swipe away and reopen" if the installed app
+looks outdated). Skipped the review's QR-code suggestion — doc is being
+shared as a link/attachment, not printed, so it wouldn't get used.
+
+**Converted to PDF for the actual WhatsApp send** — raw `.md` renders as
+literal `**`/`#` syntax when opened as a generic file on a phone. No
+pandoc/wkhtmltopdf/weasyprint available on the machine; used `mistune`
+(already installed) to render the markdown to styled HTML, then headless
+Chrome (`--print-to-pdf`) to produce `docs/PWA-UAT-MobileLaptop-Setup.pdf`.
+`.md` is the source of truth for future edits, the `.pdf` is what actually
+gets attached in WhatsApp.

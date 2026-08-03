@@ -94,6 +94,11 @@ unauthenticated `GET /api/v1/health` endpoint on
 the 15-min spin-down window. No repo code involved; this is third-party
 config only. Prod avoids this entirely by running on the Starter tier
 (doesn't spin down), so the keep-alive ping is a UAT-only, Phase-A concern.
+**Set up and verified 2026-08-03** (UptimeRobot free plan, monitor named
+`calicut-bio-medicals.onrender.com`, email alert contact enabled, "No
+delay, no repeat"). This mitigates the *idle spin-down* failure mode only —
+it is not a general uptime guarantee, and it does not by itself mean the
+UAT site is usable yet (no UAT Auth roster exists — see Open Items).
 
 ---
 
@@ -157,11 +162,24 @@ UAT is always the gate — a fix never reaches `prod` without first running on `
 - [x] Per-environment secrets for UAT, local (`backend/.env.uat`): `DATABASE_URL`, `ADMIN_DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CABIO_APP_DB_PASSWORD` — all set 2026-08-02. `SUPABASE_JWT_SECRET` deliberately omitted: unused by the backend (JWKS-based verification, see `security.py`), despite being listed in `.env.example`. Same values pasted into the Render backend service's environment 2026-08-02, including `CORS_ORIGINS` — initially a `localhost` placeholder, updated to `["https://cabio-sales-os-uat-frontend.onrender.com"]` once the frontend existed; verified via a preflight `OPTIONS` request returning the matching `access-control-allow-origin` header. Frontend's own env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL=https://calicut-bio-medicals.onrender.com/api/v1`) set the same day.
 - [x] Run Alembic migrations against the new UAT DB, including creating the `cabio_app` role — done 2026-08-02. Non-trivial: `docs/Physical-Schema.sql` at `HEAD` turned out to be stale (missing migrations 0002/0003/0004/0007/0013-0015 — see `docs/Backlog.md`), so UAT was bootstrapped from the pre-migration-0001 snapshot (git commit `a09794d`) + `Seed-Data.sql`, then `alembic upgrade head` ran the full 0001-0015 chain for real, same as Dev's actual history. Verified against the live DB afterward (role, RLS, and recent columns all confirmed present), not just Alembic's own bookkeeping. Also fixed a latent bug in `alembic/env.py`: `configparser` chokes on a literal `%` in a percent-encoded password (e.g. `%40`) — `ADMIN_DATABASE_URL`'s `%` now gets escaped to `%%` before being handed to `config.set_main_option`.
 - [x] Land RLS (Phase 2E) — implemented and live on Dev since 2026-07-27, committed `7d7155d` (2026-07-30); see `Phase-2E-Security-Architecture.md`
+- [x] Set up UptimeRobot keep-alive monitor for the UAT backend — done 2026-08-03, see "Keep-alive" note above
+- [x] Re-create the 6-person roster (+ Basheer) in the UAT Supabase project's Auth — done 2026-08-03; also uncovered and fixed a UAT-wide RLS lockout bug (18 tables had RLS enabled with no policies, blocking all `cabio_app` access), see `docs/Progress-Archive-2026-08.md`. Login now confirmed working — first real proof the Render backend reaches the UAT database end-to-end.
 - [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team
 
 **Phase B — once UAT signs off:**
 - [ ] Upgrade the Supabase org to the Pro plan
-- [ ] Create the Prod Supabase project
+- [ ] Create the Prod Supabase project — **decline Supabase's "enable RLS
+      for the whole database" setup prompt.** This app's RLS design
+      deliberately scopes RLS to 8 tables only (`activity`, `document`,
+      `opportunity`, `opportunity_item`, `opportunity_stakeholder`,
+      `product`, `reminder`, `split`), each with real Alembic-authored
+      policies; every other table is meant to stay RLS-disabled, matching
+      Dev. Accepting that prompt hit UAT on 2026-08-03 — flipped RLS on for
+      all 18 other tables with zero policies behind them, default-denying
+      the `cabio_app` role and locking out every login (see
+      `docs/Progress-Archive-2026-08.md`). If it happens again, the fix is
+      auditing `pg_class.relrowsecurity` + `pg_policies` count against Dev
+      for every `public` table and disabling RLS on any mismatch.
 - [ ] Cut the `prod` branch from `uat` at the sign-off commit; point Render's Prod service at `prod`, not `uat`
 - [ ] Create Render account/services for Prod (backend + static frontend)
 - [ ] Per-environment secrets for Prod
