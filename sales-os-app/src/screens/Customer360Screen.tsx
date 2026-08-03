@@ -1081,6 +1081,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     await createOpportunity(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
   };
 
   const openEditOpp = (o: any) => {
@@ -1149,6 +1150,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     ]);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
     queryClient.invalidateQueries({ queryKey: ["opp-items", editingOpp.id] });
+    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
   };
 
   // Installed assets

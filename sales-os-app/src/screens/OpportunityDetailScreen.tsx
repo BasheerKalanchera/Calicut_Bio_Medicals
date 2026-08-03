@@ -364,6 +364,7 @@ function ProductsTab({
       const total = editItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
       const newValue = editItems.length > 0 ? total.toFixed(2) : null;
       await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
+      queryClient.invalidateQueries({ queryKey: ["pipeline"] });
       onIndicativeValueChange(newValue);
       setEditing(false);
     } catch (e: any) {
@@ -1279,6 +1280,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       if (editCompetitorName.trim()) payload.competitor_name = editCompetitorName.trim();
     }
     await patchOpportunity(opportunityId, payload);
+    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Reconstruct nested objects from loaded master data so header + strip +
     // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
     const newStage       = stages.find((s) => s.id === editStageId);
