@@ -6,7 +6,7 @@
 - Stage/Status decoupling: Won/Lost are statuses, not pipeline stages — preserve this modeling invariant (see ADR-028).
 
 ## Architecture
-- Stack: PostgreSQL 16 (Supabase) · FastAPI · React + Vite + TypeScript
+- Stack: PostgreSQL 17 (Supabase) · FastAPI · React + Vite + TypeScript
 - UI framework: Material UI (MUI) is the sole styling/component framework (ADR-031). Tailwind is being removed — do not add Tailwind classes to any component. Legacy Tailwind screens are mid-migration; see docs/Frontend-Implementation-Standards.md for the tracking list.
 - SBUs: Imaging, Critical Care (also RLS security boundaries)
 - Zones: North Kerala, South Kerala, Central Kerala, Bangalore

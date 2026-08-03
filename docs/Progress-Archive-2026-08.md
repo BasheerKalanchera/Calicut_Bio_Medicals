@@ -240,3 +240,102 @@ pandoc/wkhtmltopdf/weasyprint available on the machine; used `mistune`
 Chrome (`--print-to-pdf`) to produce `docs/PWA-UAT-MobileLaptop-Setup.pdf`.
 `.md` is the source of truth for future edits, the `.pdf` is what actually
 gets attached in WhatsApp.
+
+---
+
+## 2026-08-03 — Pipeline screen stale-after-create bug, fixed and merged to UAT
+
+**Bug (found by Basheer during UAT smoke testing):** adding an Opportunity
+from an Account's Opportunity tab made it appear immediately in that tab,
+but not on the Pipeline screen — only a hard refresh (full page reload)
+made it show up there.
+
+**Root cause: a React Query cache-invalidation gap, not a missing
+auto-refresh feature.** The Pipeline screen reads `["pipeline",
+ownerFilter]` (`OpportunityPipelineScreen.tsx`), cached under `main.tsx`'s
+global 30s `staleTime`. That key was only ever invalidated by one call
+site — `QuickLeadModal`'s create flow, wired up in `DemoApp.tsx`. Every
+other opportunity create/update path never invalidated it, so Pipeline kept
+serving its stale cached list until something forced a full cache wipe
+(hard refresh) or the 30s staleTime happened to line up with a remount/
+refocus.
+
+**Confirmed missing at 4 sites**, all now fixed by adding
+`queryClient.invalidateQueries({ queryKey: ["pipeline"] })` (commit
+`7bdafae`):
+- `Customer360Screen.tsx` `handleCreateOpp` — the exact path Basheer hit
+- `Customer360Screen.tsx` `handleUpdateOpp`
+- `OpportunityDetailScreen.tsx` `handleUpdateOpp` (main edit form)
+- `OpportunityDetailScreen.tsx`'s item-save indicative-value auto-sync
+
+**A 5th site with the same root cause, `ProjectDirectoryScreen.jsx`'s
+create/update, was deferred rather than bundled in** — that file doesn't
+use React Query at all yet, so fixing it properly is a bigger lift; logged
+to `docs/Backlog.md` instead.
+
+**Verification, each of the 4 sites checked manually against Dev by
+Basheer** before merge: create from Account 360 (Basheer), then edit from
+Account 360, edit from the Opportunity Detail form, and an item-save
+indicative-value change (Basheer, all 3 confirmed) — Pipeline updated
+without a hard refresh in every case.
+
+**Branch process:** since Milestone 2 work hadn't started on `main` yet,
+`main` and `uat` had no unreleased divergence to protect against (the
+documented hotfix-off-`uat` flow in `Deployment-Topology.md` assumes
+`main` may be ahead with unreleased work) — so the fix was committed
+directly on `main`, verified, then fast-forward merged `main` → `uat`
+(`73c824d..7bdafae`) and pushed, letting Render redeploy UAT. That merge
+also carried the `alembic/env.py` `%`-escaping fix (`0996e3c`) into the
+`uat` branch's code for the first time — it had been applied to the UAT
+database by hand during the 2026-08-02 bootstrap but was never actually
+merged into `uat` until now. Re-verified live on UAT afterward (same
+create/edit checks) — no issues.
+
+---
+
+## 2026-08-03 — Physical-Schema.sql regenerated; Postgres 16→17 doc correction
+
+**`docs/Physical-Schema.sql` regenerated for real**, closing the Backlog
+item surfaced 2026-08-02 (missing migrations 0002/0003/0004/0007/0013-0015).
+No `pg_dump`/`psql` client existed anywhere on the machine, so used Docker
+(Docker Desktop wasn't running — started it, waited for the daemon) to run
+a version-matched `pg_dump --schema-only --no-owner --no-privileges
+--schema=public` against the **UAT** database's `ADMIN_DATABASE_URL`, not
+Dev — UAT was deliberately chosen since it was bootstrapped clean from
+`alembic upgrade head` just two days prior with no accumulated manual
+drift, unlike Dev which is routinely hand-poked for testing per
+`CLAUDE.md`'s Safety note.
+
+**Postgres version finding:** first `pg_dump` attempt used a `postgres:16`
+image and failed outright — `pg_dump: error: aborting because of server
+version mismatch: server version: 17.6; pg_dump version: 16.14` — revealing
+the live UAT database is actually **Postgres 17.6**, not 16 as `CLAUDE.md`
+stated. Re-ran with `postgres:17` successfully (2006 lines). Checked
+whether this meant Dev needed a version upgrade to match — queried Dev's
+`ADMIN_DATABASE_URL` directly (`SELECT version()`) and found **Dev is also
+already on 17.6**. So there was no actual environment mismatch to fix, just
+a stale doc — `CLAUDE.md`'s "PostgreSQL 16" line was corrected to "PostgreSQL
+17" (Basheer confirmed this was almost certainly leftover from the original
+planning-stage writeup, not a real drift).
+
+**Output verified before replacing the file:** confirmed all previously-missing
+objects are present (`stakeholder.whatsapp_number`, `reminder.closing_activity_id`
++ its index/FK, `alembic_version` table) and that RLS is `ENABLE`d with real
+policies on exactly the 8 Phase-2E tables (`activity`, `document`, `opportunity`,
+`opportunity_item`, `opportunity_stakeholder`, `product`, `reminder`, `split`)
+and nowhere else — confirming the 2026-08-03 RLS-lockout fix held.
+
+**File replaced, not merged by hand:** stripped the `\restrict`/`\unrestrict`
+lines `pg_dump` 17 now emits by default (psql-session replay safety
+scaffolding, not schema content — irrelevant for a reference-only doc) and
+prepended a new machine-generated header documenting the regen command and
+source, replacing the old "Architecture Freeze v1.0" hand-written header.
+
+**Root-cause (not just symptom) fix landed alongside:**
+`Backend-Implementation-Standards.md`'s "Migration workflow for future
+changes" (previously a 5-step chain ending at "Apply") had no step telling
+anyone to touch `Physical-Schema.sql` — which is exactly why 6 migrations'
+worth of real schema changes never made it into the file despite everyone
+following the documented process correctly. Added "Regenerate
+Physical-Schema.sql" as an explicit 6th step, with a short explanatory note,
+so this can't silently recur on migration 0016 onward.

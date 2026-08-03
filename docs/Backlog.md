@@ -220,24 +220,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `ProductService.list_products`/`ProductRepository.list_products` and add
   a genuine test for it then — not before.
 - Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
-- **`docs/Physical-Schema.sql` is stale and unreliable — needs a real fix, not
-  another hand-edit.** Surfaced 2026-08-02 while bootstrapping the UAT
-  database. Verified against every migration's actual DDL: it's missing
-  0002 (`stakeholder` contact fields), 0003/0004/0007 (indexes), and
-  0013–0015 (`reminder.closing_activity_id`, Product Catalog RLS split,
-  `stakeholder.whatsapp_number`) — not a clean "current through migration N"
-  cutoff, gaps are scattered through the whole history. It cannot be used as
-  an `alembic stamp <rev>` checkpoint for any revision. (The pre-migration-0001
-  snapshot, git commit `a09794d`, is still accurate and was used instead to
-  bootstrap UAT.) Root cause: hand-maintained in parallel with the real
-  source of truth — the Alembic migration chain — with nothing forcing the
-  two to stay in sync. Fix has two parts: (1) one-time regen via
-  `pg_dump --schema-only` against a fully-migrated database (UAT, once
-  built, or Dev) to get back to accurate; (2) a process change so it can't
-  silently drift again — e.g. regenerate it as a documented step at the end
-  of every migration PR, or automate it in CI — rather than trusting someone
-  to hand-edit it alongside each migration. Basheer's call on which process
-  fix.
+- ~~**`docs/Physical-Schema.sql` is stale and unreliable**~~ — **RESOLVED
+  2026-08-03.** Regenerated via `pg_dump --schema-only` (Docker, `postgres:17`
+  image matched to the live server's actual version — see finding below)
+  against the UAT database; confirmed all previously-missing objects are now
+  present. Process fix landed too: `Backend-Implementation-Standards.md`'s
+  migration workflow now has an explicit "Regenerate Physical-Schema.sql"
+  step, so this can't silently drift again. Full history in
+  `docs/Progress-Archive-2026-08.md`'s 2026-08-03 entry.
+  **Side finding:** both Dev and UAT are actually running **Postgres 17.6**,
+  not 16 as `CLAUDE.md` stated (corrected same day) — likely just stale from
+  the original planning-stage writeup, not an actual environment mismatch.
 - **`sales-os-app` has a real `typescript`/`openapi-typescript` peer dependency
   conflict.** Surfaced 2026-08-02 deploying the UAT frontend to Render, which
   does a genuinely clean `npm install` — `package.json` declares
@@ -262,3 +255,19 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   log. Performance item (code-splitting via dynamic `import()`), not a
   correctness one. Candidate approach in the build's own warning: dynamic
   imports or `build.rolldownOptions.output.codeSplitting`.
+- **`ProjectDirectoryScreen.jsx`'s opportunity create/update never refreshes
+  React Query caches at all** — surfaced 2026-08-03 while fixing the Pipeline
+  screen's stale-after-create bug (`7bdafae`, see
+  `docs/Progress-Archive-2026-08.md`). That fix added
+  `invalidateQueries(["pipeline"])` to every other create/update call site
+  (`Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`), but
+  `ProjectDirectoryScreen.tsx handleCreateOpp`/`handleUpdateOpp` (~lines 135,
+  180) don't use React Query at all — they refresh their own local `opps`
+  state via a direct `listOpportunities()` call and nothing else, so an
+  opportunity created/edited from a Project's detail view won't show up on
+  Pipeline *or* on that account's Customer 360 Opportunities tab
+  (`["opportunities", "byAccount", accountId]`) without a hard refresh.
+  Deferred rather than bundled into the Pipeline fix because it needs
+  `useQueryClient` wired into the file from scratch, not a one-line addition
+  — and this file is already on the pending MUI-migration list above, which
+  is a more natural place to fix it properly.

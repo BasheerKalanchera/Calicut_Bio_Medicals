@@ -408,10 +408,17 @@ This applies all migrations from scratch to build the local database. Alternativ
 **Migration workflow for future changes:**
 
 ```
-PDM Change → Model Update → alembic revision --autogenerate → Review → Apply
+PDM Change → Model Update → alembic revision --autogenerate → Review → Apply → Regenerate Physical-Schema.sql
 ```
 
 Never modify existing migrations. Never run `alembic downgrade` in production.
+
+The last step is not optional. `Physical-Schema.sql` is hand-maintained-in-appearance
+only — nothing keeps it in sync with the Alembic chain automatically, and skipping
+this step is exactly how it went stale across 6 migrations (see
+`docs/Progress-Archive-2026-08.md`, 2026-08-03 entry). Regenerate it via
+`pg_dump --schema-only` against any fully-migrated environment (regen instructions
+are in the file's own header) and commit it in the same PR as the migration.
 
 ---
 
