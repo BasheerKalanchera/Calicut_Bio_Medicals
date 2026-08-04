@@ -4,7 +4,8 @@ import { Alert, Box, Button, IconButton, MenuItem, TextField, Typography } from 
 import FormModal from "./FormModal";
 import { listAccounts, listProjects, createOpportunity } from "../services/accounts";
 import { listProducts } from "../services/products";
-import { listStages, listStatuses, listUsers, listLeadSources } from "../services/masterData";
+import { listStages, listStatuses, listUsers, listLeadSources, listSbus } from "../services/masterData";
+import { useAuth } from "../contexts/AuthContext";
 
 interface QuickLeadModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface StatusOption { id: string; status_name: string }
 interface UserOption { id: string; display_name: string }
 interface ProductOption { id: string; name: string }
 interface LeadSourceOption { id: string; name: string }
+interface SbuOption { id: string; name: string }
 
 interface LineItem {
   product_id: string;
@@ -33,15 +35,23 @@ interface LineItem {
 }
 
 export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: QuickLeadModalProps) {
+  const { userProfile } = useAuth();
+  // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU
+  // (the sbuId prop) and never sees the override field.
+  const isSbuOverrideRole = ["Admin", "General Manager"].includes((userProfile as any)?.role_name);
+
   const [accountId, setAccountId]       = useState("");
   const [projectId, setProjectId]       = useState("");
   const [name, setName]                 = useState("");
+  const [sbuOverrideId, setSbuOverrideId] = useState("");
   const [stageId, setStageId]           = useState("");
   const [statusId, setStatusId]         = useState("");
   const [ownerId, setOwnerId]           = useState("");
   const [winProb, setWinProb]           = useState("");
   const [value, setValue]               = useState("");
   const [leadSourceId, setLeadSourceId] = useState("");
+
+  const effectiveSbuId = (isSbuOverrideRole && sbuOverrideId) ? sbuOverrideId : sbuId;
 
   const [items, setItems]                   = useState<LineItem[]>([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
@@ -82,12 +92,18 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
   });
 
   const { data: products = [] } = useQuery({
-    queryKey: ["products", "picker", sbuId],
+    queryKey: ["products", "picker", effectiveSbuId],
     enabled: isOpen,
     queryFn: async () => {
-      const d = await listProducts({ page_size: 100, sbu_id: sbuId as any });
+      const d = await listProducts({ page_size: 100, sbu_id: effectiveSbuId as any });
       return (d as { items?: ProductOption[] }).items ?? [];
     },
+  });
+
+  const { data: sbus = [] } = useQuery({
+    queryKey: ["sbus"],
+    enabled: isOpen && isSbuOverrideRole,
+    queryFn: async () => (await listSbus()) as SbuOption[],
   });
 
   const { data: leadSources = [] } = useQuery({
@@ -117,7 +133,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
   useEffect(() => {
     if (!isOpen) return;
     setAccountId(""); setProjectId("");
-    setName(""); setStageId(""); setStatusId(""); setOwnerId("");
+    setName(""); setSbuOverrideId(""); setStageId(""); setStatusId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setItemProdId(""); setItemQty("1"); setItemPrice("0"); setItemDisc("0");
     setAddItemError(null);
@@ -126,6 +142,8 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   async function handleSubmit() {
     if (!name.trim()) throw new Error("Opportunity name is required");
+    // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
+    if (isSbuOverrideRole && !sbuOverrideId) throw new Error("SBU is required");
     if (!accountId) throw new Error("Account is required");
     if (!stageId) throw new Error("Stage is required");
     if (!statusId) throw new Error("Status is required");
@@ -143,6 +161,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
       owner_id: ownerId,
       win_probability: Number(winProb),
     };
+    if (isSbuOverrideRole && sbuOverrideId) payload.sbu_id = sbuOverrideId;
     if (value !== "") payload.indicative_value = Number(value);
     if (projectId) payload.project_id = projectId;
     if (leadSourceId) payload.lead_source_id = leadSourceId;
@@ -160,7 +179,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   return (
     <>
-      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create">
+      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal}>
         <TextField
           label="Name *"
           value={name}
@@ -171,6 +190,20 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
           size="small"
           sx={{ mt: 1.5 }}
         />
+        {isSbuOverrideRole && (
+          <TextField
+            select
+            label="SBU *"
+            value={sbuOverrideId}
+            onChange={(e) => setSbuOverrideId(e.target.value)}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select SBU</MenuItem>
+            {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </TextField>
+        )}
         <TextField
           select
           label="Account *"

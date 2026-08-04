@@ -271,9 +271,13 @@ export default function DemoApp() {
                     {(userProfile as any).role_name}
                     {(userProfile as any).zone ? ` • ${(userProfile as any).zone.name}` : ""}
                   </Box>
-                  <Box sx={{ fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7px", mt: 0.25, bgcolor: "rgba(255,255,255,0.1)", px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
-                    SBU: {(userProfile as any).sbu?.name}
-                  </Box>
+                  {/* BR-OP-12: Admin/GM's sbu_id is a meaningless NOT-NULL placeholder,
+                      not a real assignment -- don't display it as if it were one. */}
+                  {!ADMIN_ROLES.has((userProfile as any)?.role_name) && (
+                    <Box sx={{ fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7px", mt: 0.25, bgcolor: "rgba(255,255,255,0.1)", px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
+                      SBU: {(userProfile as any).sbu?.name}
+                    </Box>
+                  )}
                 </Box>
               </Box>
             </Box>

@@ -339,3 +339,69 @@ worth of real schema changes never made it into the file despite everyone
 following the documented process correctly. Added "Regenerate
 Physical-Schema.sql" as an explicit 6th step, with a short explanatory note,
 so this can't silently recur on migration 0016 onward.
+
+---
+
+## 2026-08-04 — BR-OP-12 (Admin/GM SBU override) and Add-Product focus-loss fix
+
+**BR-OP-12 implemented:** Admin/General Manager can now create an
+Opportunity in a different SBU than their own, and must always explicitly
+choose one via a required "SBU *" dropdown — never silently defaulted to
+their placeholder `sbu_id`. Backend: `OpportunityCreate.sbu_id` (gated to
+Admin/GM; `BusinessRuleViolation` if omitted by Admin/GM,
+`AuthorizationError` if a non-privileged role attempts an override,
+`NotFoundError` for a bogus SBU) → `OpportunityService.create_opportunity`
+(BR-OP-11 item-SBU check now validates against the chosen SBU, not the
+caller's own) → `router.py` passes `role_name` through. Frontend: the SBU
+dropdown on both create entry points — `Customer360Screen.tsx`'s "Add
+Opportunity" modal and the global "+ Lead" `QuickLeadModal.tsx` — each also
+re-filters its Products picker by the chosen SBU. Sidebar's "SBU: {name}"
+placeholder chip (`DemoApp.tsx`) hidden for Admin/GM for the same
+meaningless-placeholder reason. Rejected giving Admin/GM a real
+`SBU = "Corporate"` DB row instead — would leak into every other
+SBU-scoped picker/report (same objection as a 2026-07-28 finding). 9
+new/updated backend unit tests, 397/397 backend suite passing, `npx tsc
+--noEmit` and `npm run lint` both clean. Full rule text in
+`docs/Business-Rules.md`'s BR-OP-12. **Verified end-to-end by Basheer on
+Dev via both entry points, no issues.**
+
+**Unrelated fix bundled into the same session: "Add Product" sub-dialog
+losing input focus after every keystroke** (Qty/Price/Disc fields),
+reported by Basheer. Two independent bugs were stacked on top of each
+other here — both had to be fixed before either "New Opportunity" flow
+worked correctly:
+
+1. **MUI nested-dialog focus-trap conflict** (affected both flows equally).
+   `FormModal.tsx` wraps MUI `Dialog`; the "New/Edit Opportunity" outer
+   dialog stays open underneath the "Products" sub-dialog while adding a
+   line item, so two MUI `Dialog`s are open simultaneously, each installing
+   its own focus trap. Since they render into separate `body` portals
+   (siblings, not DOM descendants), the outer dialog's trap doesn't
+   recognize focus living in the inner one and yanks it back on every
+   re-render — MUI's own documented nested-modal caveat. Fixed with MUI's
+   documented remedy: `FormModal` gained an optional `disableEnforceFocus`
+   prop, passed by the *outer* dialog only while its nested Products
+   sub-dialog is open, in all 3 affected pairs: `Customer360Screen.tsx`'s
+   "New Opportunity"→Products and "Edit Opportunity"→Products, and
+   `QuickLeadModal.tsx`'s "New Opportunity"→Products.
+   (`OpportunityDetailScreen.tsx`'s item editing is inline, not a nested
+   dialog — unaffected.)
+
+2. **Component-identity remount, `Customer360Screen.tsx` only** — the
+   reason the `disableEnforceFocus` fix alone made `QuickLeadModal.tsx`'s
+   flow work but *not* `Customer360Screen.tsx`'s. `OppItemAddRow` (the
+   Add-Product row markup) was defined as a `const` arrow-function
+   component *inside* `Customer360Screen`'s render body, so React treated
+   it as a brand-new component type on every render of the parent —
+   reconciliation by type identity meant the previous `TextField`s were
+   unmounted and fresh ones mounted on every keystroke, dropping focus
+   regardless of any dialog-level fix. `QuickLeadModal.tsx` never had this
+   problem because its equivalent markup was always inline JSX, not
+   factored into its own component. Fixed by hoisting `OppItemAddRow` to
+   module scope (alongside the file's other tab components) and passing
+   `products` in as an explicit prop, since it's no longer reachable via
+   closure from module scope.
+
+`npx tsc --noEmit` and `npm run lint` clean after both fixes; no backend
+change, no new tests needed (pure UI fixes). **Verified by Basheer on Dev
+via both entry points ("+ Lead" and Customer 360's "+ Add"), no issues.**

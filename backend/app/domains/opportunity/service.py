@@ -1,7 +1,12 @@
 import uuid
 from decimal import Decimal
 
-from app.core.exceptions import BusinessRuleViolation, ConflictError, NotFoundError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+)
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
@@ -15,6 +20,9 @@ from app.domains.opportunity.schemas import (
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
+
+# BR-OP-12: only these roles may create an Opportunity outside their own SBU.
+_SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
 
 
 class OpportunityService:
@@ -73,9 +81,29 @@ class OpportunityService:
         *,
         created_by: uuid.UUID,
         sbu_id: uuid.UUID,
+        role_name: str | None = None,
     ) -> Opportunity:
         self._require_account(account_id)
-        self._validate_item_sbus(sbu_id, {item.product_id for item in data.items})
+
+        # BR-OP-12: caller's own SBU by default. Admin/General Manager have no
+        # meaningful "own" SBU (their profile's sbu_id is a placeholder), so they must
+        # always explicitly choose one -- never silently defaulted, even to a value that
+        # happens to match their own placeholder.
+        target_sbu_id = sbu_id
+        if role_name in _SBU_OVERRIDE_ROLES:
+            if data.sbu_id is None:
+                raise BusinessRuleViolation(
+                    "SBU is required to create an Opportunity as Admin or General Manager"
+                )
+            if not self.repository.sbu_exists(data.sbu_id):
+                raise NotFoundError(f"SBU {data.sbu_id} not found")
+            target_sbu_id = data.sbu_id
+        elif data.sbu_id is not None and data.sbu_id != sbu_id:
+            raise AuthorizationError(
+                "Only Admin and General Manager roles can create an Opportunity outside their own SBU"
+            )
+
+        self._validate_item_sbus(target_sbu_id, {item.product_id for item in data.items})
 
         new_stage = self.repository.get_stage(data.stage_id)
         if not new_stage:
@@ -112,7 +140,7 @@ class OpportunityService:
 
         opportunity = Opportunity(
             account_id=account_id,
-            sbu_id=sbu_id,
+            sbu_id=target_sbu_id,
             name=data.name,
             owner_id=data.owner_id,
             stage_id=data.stage_id,

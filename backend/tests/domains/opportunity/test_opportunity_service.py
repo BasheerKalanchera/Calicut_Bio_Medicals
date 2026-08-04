@@ -15,7 +15,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import BusinessRuleViolation, ConflictError, NotFoundError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+)
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
@@ -53,6 +58,7 @@ ACCOUNT_ID = uuid.uuid4()
 PRODUCT_ID = uuid.uuid4()
 USER_ID = uuid.uuid4()
 SBU_ID = uuid.uuid4()
+OTHER_SBU_ID = uuid.uuid4()
 OPP_ID = uuid.uuid4()
 LEAD_SOURCE_ID = uuid.uuid4()
 TOMORROW = date.today() + timedelta(days=1)
@@ -127,6 +133,7 @@ def _make_repo(**overrides) -> MagicMock:
     """
     repo = MagicMock(spec=OpportunityRepository)
     repo.account_exists.return_value = True
+    repo.sbu_exists.return_value = True
     repo.get_stage.return_value = _make_stage(10, "LEAD")
     repo.get_status.return_value = _make_status("ACTIVE")
     repo.get_loss_reason.return_value = _make_loss_reason("PRICE")
@@ -245,6 +252,137 @@ class TestCreateOpportunity:
         assert created_obj.created_by == USER_ID
         assert created_obj.updated_by == USER_ID
         assert created_obj.sbu_id == SBU_ID
+
+
+# ===========================================================================
+# create_opportunity — BR-OP-12 SBU override (Admin/General Manager only)
+# ===========================================================================
+
+class TestCreateOpportunitySbuOverride:
+    def test_admin_can_create_in_other_sbu(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=OTHER_SBU_ID)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Admin"
+        )
+
+        assert result.sbu_id == OTHER_SBU_ID
+
+    def test_general_manager_can_create_in_other_sbu(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=OTHER_SBU_ID)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="General Manager"
+        )
+
+        assert result.sbu_id == OTHER_SBU_ID
+
+    def test_admin_omitting_sbu_id_is_rejected(self):
+        """Admin/GM have no meaningful 'own' SBU -- must always explicitly choose,
+        never silently defaulted to their placeholder sbu_id."""
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data()  # sbu_id left unset (None)
+
+        with pytest.raises(BusinessRuleViolation, match="SBU is required"):
+            service.create_opportunity(
+                ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Admin"
+            )
+        repo.create.assert_not_called()
+
+    def test_general_manager_omitting_sbu_id_is_rejected(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data()  # sbu_id left unset (None)
+
+        with pytest.raises(BusinessRuleViolation, match="SBU is required"):
+            service.create_opportunity(
+                ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="General Manager"
+            )
+
+    def test_admin_explicitly_choosing_own_sbu_is_accepted(self):
+        """An explicit choice that happens to match the placeholder sbu_id is a real
+        choice, not a silent default -- must succeed, not be treated as 'missing'."""
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=SBU_ID)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Admin"
+        )
+
+        assert result.sbu_id == SBU_ID
+
+    def test_same_sbu_as_caller_is_not_treated_as_an_override(self):
+        """Setting sbu_id to the caller's own SBU is a no-op, not an override attempt —
+        no role check should trip even for a role with no override rights."""
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=SBU_ID)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Sales Staff"
+        )
+
+        assert result.sbu_id == SBU_ID
+
+    def test_non_privileged_role_rejected(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=OTHER_SBU_ID)
+
+        with pytest.raises(AuthorizationError, match="Admin and General Manager"):
+            service.create_opportunity(
+                ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Sales Staff"
+            )
+        repo.create.assert_not_called()
+
+    def test_missing_role_name_rejected(self):
+        """role_name defaults to None (router omitting it, or a caller that forgot to
+        pass it) — must fail closed, the same as any other non-privileged role."""
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=OTHER_SBU_ID)
+
+        with pytest.raises(AuthorizationError):
+            service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+    def test_nonexistent_sbu_rejected(self):
+        repo = _make_repo()
+        repo.sbu_exists.return_value = False
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(sbu_id=OTHER_SBU_ID)
+
+        with pytest.raises(NotFoundError, match="SBU"):
+            service.create_opportunity(
+                ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Admin"
+            )
+
+    def test_overridden_sbu_used_for_item_validation(self):
+        """BR-OP-11 companion: items must match the *overridden* SBU, not the caller's own."""
+        repo = _make_repo()
+        repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, OTHER_SBU_ID)
+        repo.get_stage.return_value = _make_stage(20, "QUALIFIED")
+        service = OpportunityService(repository=repo)
+        data = _make_create_data(
+            sbu_id=OTHER_SBU_ID,
+            stage_id=STAGE_QUALIFIED_ID,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        )
+
+        # Would raise BusinessRuleViolation if items were still checked against the
+        # caller's own SBU_ID instead of the overridden OTHER_SBU_ID.
+        result = service.create_opportunity(
+            ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID, role_name="Admin"
+        )
+
+        assert result.sbu_id == OTHER_SBU_ID
 
 
 # ===========================================================================

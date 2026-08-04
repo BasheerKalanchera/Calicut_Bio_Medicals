@@ -35,6 +35,11 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def account_exists(self, account_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Account.id == account_id)) or 0) > 0
 
+    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
+        from app.domains.reference.models import SBU
+
+        return self.db.get(SBU, sbu_id) is not None
+
     # ------------------------------------------------------------------
     # Pipeline list (serves both Kanban and List views)
     # ------------------------------------------------------------------

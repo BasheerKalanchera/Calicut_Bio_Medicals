@@ -132,6 +132,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **No grandfathering:** Unlike BR-FIN-06's split-participant check, this validates every item on every save (not just newly-added ones) — there is no legacy cross-SBU item data this needs to tolerate.
 * **Reference:** Companion to "Product Catalog Rules" below — catalog *visibility* is company-wide, but adding a product to an Opportunity remains SBU-scoped.
 
+### BR-OP-12: Opportunity Creation SBU Override — Admin/General Manager Only (2026-08-04)
+* **Rule:** Every Opportunity is created in the caller's own `sbu_id` by default — **except Admin and General Manager, who have no meaningful "own" SBU** (their `user_profile.sbu_id` is a placeholder required only by a `NOT NULL` column, not a real assignment) **and must always explicitly specify `sbu_id` on `OpportunityCreate`**, even if the value they choose happens to match their profile's placeholder. Every other role has no way to override this — the field is ignored (forced to their own `sbu_id`) even if present in the request.
+* **Constraint:** Enforced at the API layer (`OpportunityService.create_opportunity`) — a non-Admin/GM caller attempting an override is rejected with an `AuthorizationError`; an Admin/GM caller who omits `sbu_id` is rejected with a `BusinessRuleViolation` (never silently defaulted to their placeholder); an override/choice referencing a nonexistent SBU is rejected with a `NotFoundError`.
+* **Why:** Closes a gap between the RLS design and the application layer — `opportunity_tier_visibility` (ADR-009) already grants Admin/General Manager unrestricted read *and write* access across both SBUs at the database level, but the API never gave them a way to target a different SBU on create; every caller was silently forced into their own `sbu_id` regardless of role. Surfaced 2026-08-04 when a General Manager (whose own profile is scoped to one SBU) was unable to create an Opportunity in the other SBU during UAT.
+* **Interaction with BR-OP-11:** the overridden `sbu_id` — not the caller's own — is what Opportunity Items are validated against.
+* **Immutable after creation:** `sbu_id` is not on `OpportunityUpdate` — there is no way, for any role, to change an Opportunity's SBU once created. Confirmed with Basheer (2026-08-04): no business requirement for this, not an oversight.
+* **Reference:** Same "same-SBU-or-reject" pattern family as BR-ORG-01, BR-FIN-06, BR-OP-11 — this is the Admin/GM override case, not a new pattern.
+
 ---
 
 # 3a. Product Catalog Rules

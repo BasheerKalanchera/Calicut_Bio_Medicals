@@ -68,12 +68,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      reset-to-empty session var already resolves to a clean SQL `NULL`
      rather than erroring; this exact problem was already solved once for
      `zone_id` and applied uniformly to all 4 identity functions.
-  4. **Open product decision, not just plumbing:** `opportunity` router
+  4. ~~**Open product decision, not just plumbing:** `opportunity` router
      stamps `sbu_id=current_user.sbu_id` unconditionally on create, and
      `opportunity.sbu_id` is `NOT NULL` — if Admin/GM has no `sbu_id`, either
      they shouldn't create opportunities directly (business-rule gate), or
      the create form needs an explicit SBU picker when the creator has none.
-     Needs Basheer's call before implementing.
+     Needs Basheer's call before implementing.~~ — **RESOLVED 2026-08-04** as
+     BR-OP-12 (`docs/Business-Rules.md`): Admin/GM now get an explicit,
+     required SBU picker on both create forms and are never defaulted to
+     their own `sbu_id`. This code path is already forward-compatible with
+     `sbu_id` going nullable — no further change needed here when/if this
+     migration is picked up.
   5. Audit every other unconditional read of `.sbu_id`/`.sbu` — `UserCreate`/
      `UserUpdate`/`UserListResponse` schemas, User Directory screen
      rendering, target/coverage plan creation.
@@ -271,3 +276,107 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `useQueryClient` wired into the file from scratch, not a one-line addition
   — and this file is already on the pending MUI-migration list above, which
   is a more natural place to fix it properly.
+- **Opportunity create forms are missing stage-gate fields (Demo Date,
+  Expected Closure Date, PO Number) — BR-OP-00 direct-to-advanced-stage
+  creation fails.** Surfaced 2026-08-04, UAT orientation session (Cabio Star
+  Sales team): a rep tried to create an Opportunity from Customer 360
+  directly at Order stage and was rejected by the server for a missing Demo
+  Start Date — a field that isn't even on that form. Root cause: the app has
+  four independent opportunity create/edit forms that have drifted out of
+  field-parity — `Customer360Screen.tsx`'s create modal (`:1455-1516`) and
+  edit modal (`:1552-1642`), the global `QuickLeadModal.tsx`, and
+  `OpportunityDetailScreen.tsx`'s edit modal (`:1445-1502`). Only
+  `OpportunityDetailScreen.tsx` has the full field set (Demo Start/End Date,
+  Expected Closure Date, PO Number); the other three lack all three, so any
+  attempt to create/advance directly to Demo stage or beyond from those
+  entry points trips a `BusinessRuleViolation` from `validators.py:24-96`
+  (BR-OP-00/BR-OP-01) the user never sees coming — each form's client-side
+  validation (e.g. `Customer360Screen.tsx handleCreateOpp`) only checks
+  name/owner/stage/status/win-probability, none of the gate fields. Backend
+  already fully supports these fields (`OpportunityCreate`/`OpportunityUpdate`
+  schemas) — this is a frontend-only gap. Same failure class already flagged
+  once before for a different field: `docs/Prototype-Production-Parity-Audit.md:97-111`
+  called a missing Lead Source field "elevated, not cosmetic" for exactly
+  this reason (rejected API call on a field the screen never showed).
+  **Options, not yet decided:**
+  1. Add Demo Start/End Date + Expected Closure Date + PO Number to the
+     three incomplete forms, matching `OpportunityDetailScreen.tsx`.
+  2. Consolidate the 4 divergent create/edit forms into one shared
+     component — bigger lift, but this same duplication pattern already
+     caused a separate cache-invalidation bug (see the
+     `ProjectDirectoryScreen.jsx` item above and the "Consolidate +LOG /
+     +LEAD" item below).
+  3. Cap the Stage dropdown on the quick-create forms to Lead/Qualified/Demo,
+     forcing advancement past Demo through `OpportunityDetailScreen.tsx`'s
+     complete edit form instead — a sales-process decision, not just an
+     engineering one.
+  Basheer's call on which option before implementing.
+- **Split participant picker (Opportunity 360 → Splits tab) is scoped to
+  same-SBU-and-zone; cross-SBU is a hard rule, not a bug.** Surfaced
+  2026-08-04, UAT orientation session — team expected to be able to split a
+  deal with anyone regardless of SBU. Two distinct things bundled in that
+  report:
+  1. Cross-SBU splits are deliberately disallowed as of ADR-037 (2026-07-30,
+     supersedes ADR-003's cross-SBU model) — enforced server-side in
+     `OpportunityService.replace_splits` (BR-FIN-06). Not a bug; revisiting
+     it means arguing against a 5-day-old architecture decision, not fixing
+     one.
+  2. The same-*zone* restriction on top of that is UI-only, not backend-
+     enforced — `OpportunityDetailScreen.tsx:550-557` calls
+     `listUsers("sbu_zone")`, filtered in `organization/repository.py:50-61`
+     to same SBU **and** same zone. The code comment there already flags
+     this as interim: *"interim rule per ADR-037; revisit if a real
+     cross-zone need surfaces."* Loosening this to same-SBU-any-zone is a
+     safe, contained UI change (swap the picker's scope from `sbu_zone` to a
+     new `sbu`-only scope) — no backend change needed, since BR-FIN-06 itself
+     only checks SBU, not zone.
+  Needs Basheer to confirm which behavior the team actually wants before
+  implementing — (2) is a quick, safe fix; (1) is not on the table without a
+  fresh architecture decision.
+- ~~**Admin/General Manager can't create Opportunities outside their own home
+  SBU, despite RLS already granting them unrestricted cross-SBU access.**~~ —
+  **RESOLVED 2026-08-04.** Surfaced during the UAT orientation session —
+  Haroon Sidheeq (General Manager role) unable to enter opportunities in the
+  SBU other than his own. Root cause was `opportunity/router.py` hardcoding
+  `sbu_id=current_user.sbu_id` for every caller unconditionally, with no way
+  for any role to override it — contradicting the `opportunity_tier_visibility`
+  RLS policy (ADR-009), which already granted Admin/General Manager
+  unrestricted cross-SBU write access at the database level. Fixed as
+  **BR-OP-12** (`docs/Business-Rules.md`): `OpportunityCreate` gained an
+  optional `sbu_id` field, honored only for Admin/General Manager
+  (`OpportunityService.create_opportunity` — `AuthorizationError` for any
+  other role attempting an override, `NotFoundError` for a nonexistent SBU;
+  BR-OP-11's item-SBU check validates against the overridden SBU, not the
+  caller's own). Both opportunity-create entry points got a role-gated SBU
+  dropdown wired to it: `Customer360Screen.tsx`'s "Add Opportunity" modal and
+  the global "+ Lead" `QuickLeadModal.tsx` — the Products picker in each now
+  filters by the selected SBU too, not just the caller's own.
+  **Follow-up (2026-08-04, same day):** the SBU field was initially optional
+  with a "My own SBU" default — Basheer flagged that a default doesn't make
+  sense for a role with no meaningful "own" SBU, and that leaving it
+  untouched would silently create the Opportunity in the caller's
+  placeholder `sbu_id`. Tightened so Admin/GM must always explicitly choose
+  (no default, `"My own SBU"` removed from both pickers, label changed to
+  "SBU *"): backend rejects with `BusinessRuleViolation` if `role_name` is
+  Admin/GM and `sbu_id` is omitted; frontend blocks submission client-side
+  too. Also considered and rejected (again) giving Admin/GM a real
+  `SBU = "Corporate"` row instead of a placeholder — same objection as the
+  2026-07-28 finding in `docs/Progress-Archive-2026-07.md`: it would leak
+  into every other SBU-scoped picker/report (Product Catalog filters, User
+  Directory's SBU assignment dropdown, Target/Coverage Planning's SBU
+  dimension) and only holds if every future Admin/GM account remembers the
+  convention. The role-gated dropdown already avoids needing any sentinel
+  value. Also hid the "SBU: {name}" placeholder chip in the sidebar user
+  footer (`DemoApp.tsx`) for Admin/GM, same reasoning. 9 new/updated backend
+  unit tests total, 397/397 backend suite passing, `npx tsc --noEmit` and
+  `npm run lint` clean. Not yet manually verified on Dev/UAT by Basheer.
+  **Still separate/unresolved:** the "Make `user_profile.sbu_id` ... nullable"
+  item above — that's Admin/GM having *no* home SBU value at all in the DB
+  (vs. today's placeholder value that the app now knows to ignore). Point 4
+  of that item (the open product decision about opportunity creation) is
+  now effectively answered by this fix and needs no further work whenever
+  that migration is eventually picked up — the create-opportunity path
+  never relies on Admin/GM's own `sbu_id` being meaningful in the first
+  place. The sidebar/zone display (line 272 of `DemoApp.tsx`, same
+  meaningless-placeholder problem) was raised but deliberately left alone —
+  not asked for.

@@ -52,6 +52,7 @@ import {
   listUsers,
   listLossReasons,
   listHoldReasons,
+  listSbus,
 } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { listActivitiesByAccount } from "../services/activities";
@@ -513,6 +514,53 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit, onSelectOpportunity }:
   );
 }
 
+// Hoisted to module scope (was previously redefined inline on every Customer360Screen
+// render as a `const` component) -- that made it a new component *type* each render,
+// so React remounted its TextFields instead of reconciling them, dropping focus on
+// every keystroke.
+function OppItemAddRow({ products, prodId, setProdId, qty, setQty, price, setPrice, disc, setDisc, items, setItems, error, setError }: any) {
+  return (
+    <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
+      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+        Add Product
+      </Typography>
+      <TextField
+        select
+        value={prodId}
+        onChange={(e: any) => { setProdId(e.target.value); setError(null); }}
+        fullWidth
+        size="small"
+        slotProps={{ select: { displayEmpty: true } }}
+      >
+        <MenuItem value="">Select product</MenuItem>
+        {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+      </TextField>
+      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
+        <TextField label="Qty" type="number" size="small" value={qty} onChange={(e: any) => { setQty(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
+        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
+        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
+      </Box>
+      {error && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{error}</Alert>}
+      <Button
+        type="button"
+        fullWidth
+        onClick={() => {
+          if (!prodId) { setError("Select a product"); return; }
+          if (Number(qty) <= 0) { setError("Quantity must be greater than 0"); return; }
+          if (Number(price) <= 0) { setError("Price must be greater than 0"); return; }
+          setError(null);
+          const prod: any = products.find((p: any) => p.id === prodId);
+          setItems([...items, { product_id: prodId, product_name: prod?.name || "", quantity: Number(qty), unit_price_lakhs: Number(price), discount_lakhs: Number(disc || 0) }]);
+          setProdId(""); setQty("1"); setPrice("0"); setDisc("0");
+        }}
+        sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+      >
+        + Add Product
+      </Button>
+    </Box>
+  );
+}
+
 function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () => void; onEdit: (a: any) => void }) {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -574,6 +622,8 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
+  // BR-OP-12: only these roles may create an Opportunity outside their own SBU.
+  const isSbuOverrideRole = ["Admin", "General Manager"].includes((userProfile as any)?.role_name);
 
   const {
     data: account,
@@ -718,6 +768,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [showCreateOpp, setShowCreateOpp] = useState(false);
   const [showNewOppItems, setShowNewOppItems] = useState(false);
   const [newOName, setNewOName] = useState("");
+  // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU and
+  // never sees this field. "" means "use my own SBU" (the default for everyone).
+  const [newOSbuId, setNewOSbuId] = useState("");
   const [newOProjectId, setNewOProjectId] = useState("");
   const [newOStageId, setNewOStageId] = useState("");
   const [newOStatusId, setNewOStatusId] = useState("");
@@ -832,13 +885,24 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     staleTime: Infinity,
   });
 
+  // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
+  // which products are eligible (BR-OP-11 validates items against the opportunity's
+  // actual SBU, not the caller's own) — everywhere else it's just the caller's own SBU.
+  const productsSbuId = (showCreateOpp && isSbuOverrideRole && newOSbuId) ? newOSbuId : (userProfile as any)?.sbu?.id;
   const { data: products = [] } = useQuery({
-    queryKey: ["products", "picker", (userProfile as any)?.sbu?.id],
+    queryKey: ["products", "picker", productsSbuId],
     queryFn: async () => {
-      const d: any = await listProducts({ page_size: 100, sbu_id: (userProfile as any)?.sbu?.id } as any);
+      const d: any = await listProducts({ page_size: 100, sbu_id: productsSbuId } as any);
       return d.items || [];
     },
     enabled: showCreateOpp || editingOpp !== null || showCreateAsset || editingAsset !== null,
+  });
+
+  const { data: sbus = [] } = useQuery({
+    queryKey: ["sbus"],
+    queryFn: () => listSbus() as Promise<any[]>,
+    enabled: showCreateOpp && isSbuOverrideRole,
+    staleTime: Infinity,
   });
 
   // Edit Opportunity's item list is an editable draft buffer, not a direct render of
@@ -1056,7 +1120,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   // Opportunities
   const openCreateOpp = () => {
-    setNewOName(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
+    setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice("0"); setNewOItemDisc("0"); setNewOItemError(null);
     setShowCreateOpp(true);
@@ -1064,6 +1128,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const handleCreateOpp = async () => {
     if (!newOName.trim()) throw new Error("Opportunity name is required");
+    // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
+    if (isSbuOverrideRole && !newOSbuId) throw new Error("SBU is required");
     if (!newOOwnerId) throw new Error("Owner is required");
     if (!newOStageId) throw new Error("Stage is required");
     if (!newOStatusId) throw new Error("Status is required");
@@ -1074,6 +1140,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       throw new Error("Indicative value is required for Qualified stage and above");
     }
     const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: newOStatusId, win_probability: Number(newOWinProb) };
+    if (isSbuOverrideRole && newOSbuId) payload.sbu_id = newOSbuId;
     if (newOProjectId) payload.project_id = newOProjectId;
     if (newOLeadSourceId) payload.lead_source_id = newOLeadSourceId;
     if (newOValue !== "") payload.indicative_value = Number(newOValue);
@@ -1181,48 +1248,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     await updateInstalledAsset(editingAsset.id, payload);
     queryClient.invalidateQueries({ queryKey: ["installed-assets", "byAccount", accountId] });
   };
-
-  // Helper: render the add-product sub-form row
-  const OppItemAddRow = ({ prodId, setProdId, qty, setQty, price, setPrice, disc, setDisc, items, setItems, error, setError }: any) => (
-    <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
-        Add Product
-      </Typography>
-      <TextField
-        select
-        value={prodId}
-        onChange={(e: any) => { setProdId(e.target.value); setError(null); }}
-        fullWidth
-        size="small"
-        slotProps={{ select: { displayEmpty: true } }}
-      >
-        <MenuItem value="">Select product</MenuItem>
-        {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-      </TextField>
-      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-        <TextField label="Qty" type="number" size="small" value={qty} onChange={(e: any) => { setQty(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
-        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
-        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
-      </Box>
-      {error && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{error}</Alert>}
-      <Button
-        type="button"
-        fullWidth
-        onClick={() => {
-          if (!prodId) { setError("Select a product"); return; }
-          if (Number(qty) <= 0) { setError("Quantity must be greater than 0"); return; }
-          if (Number(price) <= 0) { setError("Price must be greater than 0"); return; }
-          setError(null);
-          const prod: any = products.find((p: any) => p.id === prodId);
-          setItems([...items, { product_id: prodId, product_name: prod?.name || "", quantity: Number(qty), unit_price_lakhs: Number(price), discount_lakhs: Number(disc || 0) }]);
-          setProdId(""); setQty("1"); setPrice("0"); setDisc("0");
-        }}
-        sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
-      >
-        + Add Product
-      </Button>
-    </Box>
-  );
 
   const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
   const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
@@ -1453,8 +1478,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       </FormModal>
 
       {/* Create Opportunity */}
-      <FormModal isOpen={showCreateOpp} onClose={() => setShowCreateOpp(false)} title="New Opportunity" onSubmit={handleCreateOpp} submitLabel="Create">
+      <FormModal isOpen={showCreateOpp} onClose={() => setShowCreateOpp(false)} title="New Opportunity" onSubmit={handleCreateOpp} submitLabel="Create" disableEnforceFocus={showNewOppItems}>
         <TextField label="Name *" value={newOName} onChange={(e) => setNewOName(e.target.value)} placeholder="Enter opportunity name" autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        {isSbuOverrideRole && (
+          <TextField select label="SBU *" value={newOSbuId} onChange={(e) => setNewOSbuId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">Select SBU</MenuItem>
+            {sbus.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </TextField>
+        )}
         <TextField select label="Project" value={newOProjectId} onChange={(e) => setNewOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">None</MenuItem>
           {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
@@ -1545,11 +1576,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             </Typography>
           </Box>
         )}
-        <OppItemAddRow prodId={newOItemProdId} setProdId={setNewOItemProdId} qty={newOItemQty} setQty={setNewOItemQty} price={newOItemPrice} setPrice={setNewOItemPrice} disc={newOItemDisc} setDisc={setNewOItemDisc} items={newOItems} setItems={setNewOItems} error={newOItemError} setError={setNewOItemError} />
+        <OppItemAddRow products={products} prodId={newOItemProdId} setProdId={setNewOItemProdId} qty={newOItemQty} setQty={setNewOItemQty} price={newOItemPrice} setPrice={setNewOItemPrice} disc={newOItemDisc} setDisc={setNewOItemDisc} items={newOItems} setItems={setNewOItems} error={newOItemError} setError={setNewOItemError} />
       </FormModal>
 
       {/* Edit Opportunity */}
-      <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
+      <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp} disableEnforceFocus={showEditOppItems}>
         <TextField label="Name *" value={editOName} onChange={(e) => setEditOName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
         <TextField select label="Project" value={editOProjectId} onChange={(e) => setEditOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">None</MenuItem>
@@ -1671,7 +1702,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             </Typography>
           </Box>
         )}
-        <OppItemAddRow prodId={editOItemProdId} setProdId={setEditOItemProdId} qty={editOItemQty} setQty={setEditOItemQty} price={editOItemPrice} setPrice={setEditOItemPrice} disc={editOItemDisc} setDisc={setEditOItemDisc} items={editOItems} setItems={setEditOItems} error={editOItemError} setError={setEditOItemError} />
+        <OppItemAddRow products={products} prodId={editOItemProdId} setProdId={setEditOItemProdId} qty={editOItemQty} setQty={setEditOItemQty} price={editOItemPrice} setPrice={setEditOItemPrice} disc={editOItemDisc} setDisc={setEditOItemDisc} items={editOItems} setItems={setEditOItems} error={editOItemError} setError={setEditOItemError} />
       </FormModal>
 
       {/* Create Asset */}

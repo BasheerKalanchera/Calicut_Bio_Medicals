@@ -16,6 +16,12 @@ interface FormModalProps {
   onSubmit: () => Promise<void>;
   submitLabel?: string;
   children: ReactNode;
+  // MUI nested-dialog caveat: when this FormModal stays open underneath a second,
+  // nested FormModal (e.g. an "Add Product" sub-dialog), its focus trap fights the
+  // inner dialog's for focus on every re-render -- kicking focus out of the inner
+  // dialog's inputs after each keystroke. Pass true while the nested dialog is open
+  // to stand this dialog's trap down; MUI's own documented fix for nested modals.
+  disableEnforceFocus?: boolean;
 }
 
 export default function FormModal({
@@ -25,6 +31,7 @@ export default function FormModal({
   onSubmit,
   submitLabel = "Save",
   children,
+  disableEnforceFocus,
 }: FormModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +61,7 @@ export default function FormModal({
       onClose={() => { if (!submitting) onClose(); }}
       fullWidth
       maxWidth={false}
+      disableEnforceFocus={disableEnforceFocus}
       slotProps={{ paper: { sx: { maxWidth: "28rem" } } }}
     >
       <form

@@ -183,6 +183,10 @@ class OpportunityCreate(BaseModel):
     owner_id: uuid.UUID
     stage_id: uuid.UUID
     status_id: uuid.UUID
+    # Admin/General Manager only (BR-OP-12) — everyone else is always created in their
+    # own SBU regardless of what this carries. Immutable after creation, like the rest
+    # of an Opportunity's SBU scoping.
+    sbu_id: uuid.UUID | None = None
     win_probability: Decimal = Field(..., ge=0, le=100)
     project_id: uuid.UUID | None = None
     lead_source_id: uuid.UUID | None = None

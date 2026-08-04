@@ -21,12 +21,41 @@ in `docs/Progress-Archive-2026-08.md`.
   corrected a stale `CLAUDE.md` line along the way (said Postgres 16; both
   Dev and UAT are actually on 17.6 — no real environment mismatch, just an
   outdated doc). Full writeup in the same archive file's 2026-08-03 entries.
-  Not yet committed — this is docs-only and inert to the running app, so
-  once committed on `main` it can merge to `uat` with no special
-  verification needed.
+  Committed on `main` (`1d2f090`), plus a Malayalam translation of the PWA
+  UAT setup doc (`a8a69e0`) — both docs-only, not yet merged to `uat`, no
+  special verification needed when they are.
+- **3 issues from the Cabio Star Sales team's UAT orientation session,
+  investigated 2026-08-04 and logged to `docs/Backlog.md`** (end of
+  "Deferred / undecided items"): (1) Customer 360's "Add Opportunity" form
+  is missing Demo Date/Expected Closure Date/PO Number, so creating directly
+  at an advanced stage trips a BR-OP-00 gate the form never surfaces —
+  3 fix options logged, awaiting Basheer's call; (2) Split picker's
+  same-zone restriction is UI-only and safe to loosen, but cross-SBU splits
+  are correctly blocked per ADR-037 (2026-07-30) — needs Basheer to confirm
+  which behavior the team actually wants; (3) **Admin/General Manager
+  (Haroon) couldn't create opportunities outside their home SBU — RESOLVED
+  2026-08-04**, see below.
 
-**Immediate next step:** continue triaging any further issues the Cabio Star
-Sales team hits during UAT smoke testing.
+**Just implemented and verified on Dev by Basheer, not yet committed:**
+- **Issue 3 fix (BR-OP-12, `docs/Business-Rules.md`): Admin/General Manager
+  can now create an Opportunity in a different SBU than their own, and must
+  always explicitly choose one** via a required "SBU *" dropdown on both
+  create entry points. Full detail in `docs/Progress-Archive-2026-08.md`'s
+  2026-08-04 entry.
+- **"Add Product" sub-dialog losing input focus after every keystroke** —
+  two stacked bugs, both fixed: (1) MUI nested-dialog focus-trap conflict
+  (`FormModal.tsx`'s new `disableEnforceFocus` prop), affecting all 3
+  Opportunity-create/edit→Products dialog pairs; (2) `Customer360Screen.tsx`
+  only — `OppItemAddRow` was defined inline inside the parent's render body,
+  causing a remount-on-every-keystroke independent of the dialog fix; fixed
+  by hoisting it to module scope. Full detail in the same archive entry.
+  **Confirmed working by Basheer on both entry points ("+ Lead" and
+  Customer 360's "+ Add").**
+
+**Immediate next step:** commit both fixes and merge to `uat`; then move to
+issue 1 or issue 2 from the UAT-orientation list (Basheer's call which).
+Otherwise continue triaging any further issues the Cabio Star Sales team
+hits during UAT smoke testing.
 
 **After that:** revisit the Critical Care/Imaging manager hierarchy
 build-out (see "Also still open" below) once UAT smoke testing wraps up.

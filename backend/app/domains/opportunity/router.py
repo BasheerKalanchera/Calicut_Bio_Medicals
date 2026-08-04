@@ -98,7 +98,11 @@ def create_opportunity(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[OpportunityResponse]:
     opportunity = service.create_opportunity(
-        account_id, body, created_by=current_user.id, sbu_id=current_user.sbu_id
+        account_id,
+        body,
+        created_by=current_user.id,
+        sbu_id=current_user.sbu_id,
+        role_name=current_user.role.role_name,
     )
     return APIResponse(data=OpportunityResponse.model_validate(opportunity))
 
