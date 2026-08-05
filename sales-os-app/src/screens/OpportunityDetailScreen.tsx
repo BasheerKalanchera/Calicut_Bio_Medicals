@@ -1307,6 +1307,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
 
   const editStatusCode = oppStatuses.find((s) => s.id === editStatusId)?.status_code;
   const editLossReasonCode = lossReasons.find((r) => r.id === editLossReasonId)?.reason_code;
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REORDER, ...), same value the picker below renders as the label.
+  const editLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
 
   // initialOpportunity can be just an {id, name} reference (Reminder
   // click-through) — every render below assumes the full PipelineOpportunity
@@ -1496,9 +1499,13 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           size="small"
           slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
-        <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        {editLeadSourceCode !== "REORDER" && (
+          <>
+            <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+          </>
+        )}
         <TextField
           select
           label="Lead Source"

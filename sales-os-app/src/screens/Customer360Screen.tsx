@@ -778,6 +778,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOOwnerId, setNewOOwnerId] = useState("");
   const [newOWinProb, setNewOWinProb] = useState("");
   const [newOValue, setNewOValue] = useState("");
+  const [newODemoStart, setNewODemoStart] = useState("");
+  const [newODemoEnd, setNewODemoEnd] = useState("");
+  const [newOClosureDate, setNewOClosureDate] = useState("");
+  const [newOPoNumber, setNewOPoNumber] = useState("");
   const [newOItems, setNewOItems] = useState<any[]>([]);
   const [newOItemProdId, setNewOItemProdId] = useState("");
   const [newOItemQty, setNewOItemQty] = useState("1");
@@ -1122,6 +1126,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const openCreateOpp = () => {
     setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
+    setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
     setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice("0"); setNewOItemDisc("0"); setNewOItemError(null);
     setShowCreateOpp(true);
   };
@@ -1144,6 +1149,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newOProjectId) payload.project_id = newOProjectId;
     if (newOLeadSourceId) payload.lead_source_id = newOLeadSourceId;
     if (newOValue !== "") payload.indicative_value = Number(newOValue);
+    if (newODemoStart) payload.demo_start_date = newODemoStart;
+    if (newODemoEnd) payload.demo_end_date = newODemoEnd;
+    if (newOClosureDate) payload.expected_closure_date = newOClosureDate;
+    if (newOPoNumber.trim()) payload.po_number = newOPoNumber.trim();
     if (newOItems.length > 0) payload.items = newOItems.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }));
     await createOpportunity(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
@@ -1251,6 +1260,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
   const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REORDER, ...), same value the picker renders as the label.
+  const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
 
   return (
     <Box
@@ -1519,6 +1531,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
           fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
+        {newOLeadSourceCode !== "REORDER" && (
+          <>
+            <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo Start Date" type="date" value={newODemoStart} onChange={(e) => setNewODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo End Date" type="date" value={newODemoEnd} onChange={(e) => setNewODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+          </>
+        )}
+        <TextField label="PO Number" value={newOPoNumber} onChange={(e) => setNewOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>

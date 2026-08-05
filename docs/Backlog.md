@@ -276,41 +276,25 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `useQueryClient` wired into the file from scratch, not a one-line addition
   — and this file is already on the pending MUI-migration list above, which
   is a more natural place to fix it properly.
-- **Opportunity create forms are missing stage-gate fields (Demo Date,
+- ~~**Opportunity create forms are missing stage-gate fields (Demo Date,
   Expected Closure Date, PO Number) — BR-OP-00 direct-to-advanced-stage
-  creation fails.** Surfaced 2026-08-04, UAT orientation session (Cabio Star
-  Sales team): a rep tried to create an Opportunity from Customer 360
-  directly at Order stage and was rejected by the server for a missing Demo
-  Start Date — a field that isn't even on that form. Root cause: the app has
-  four independent opportunity create/edit forms that have drifted out of
-  field-parity — `Customer360Screen.tsx`'s create modal (`:1455-1516`) and
-  edit modal (`:1552-1642`), the global `QuickLeadModal.tsx`, and
-  `OpportunityDetailScreen.tsx`'s edit modal (`:1445-1502`). Only
-  `OpportunityDetailScreen.tsx` has the full field set (Demo Start/End Date,
-  Expected Closure Date, PO Number); the other three lack all three, so any
-  attempt to create/advance directly to Demo stage or beyond from those
-  entry points trips a `BusinessRuleViolation` from `validators.py:24-96`
-  (BR-OP-00/BR-OP-01) the user never sees coming — each form's client-side
-  validation (e.g. `Customer360Screen.tsx handleCreateOpp`) only checks
-  name/owner/stage/status/win-probability, none of the gate fields. Backend
-  already fully supports these fields (`OpportunityCreate`/`OpportunityUpdate`
-  schemas) — this is a frontend-only gap. Same failure class already flagged
-  once before for a different field: `docs/Prototype-Production-Parity-Audit.md:97-111`
-  called a missing Lead Source field "elevated, not cosmetic" for exactly
-  this reason (rejected API call on a field the screen never showed).
-  **Options, not yet decided:**
-  1. Add Demo Start/End Date + Expected Closure Date + PO Number to the
-     three incomplete forms, matching `OpportunityDetailScreen.tsx`.
-  2. Consolidate the 4 divergent create/edit forms into one shared
-     component — bigger lift, but this same duplication pattern already
-     caused a separate cache-invalidation bug (see the
-     `ProjectDirectoryScreen.jsx` item above and the "Consolidate +LOG /
-     +LEAD" item below).
-  3. Cap the Stage dropdown on the quick-create forms to Lead/Qualified/Demo,
-     forcing advancement past Demo through `OpportunityDetailScreen.tsx`'s
-     complete edit form instead — a sales-process decision, not just an
-     engineering one.
-  Basheer's call on which option before implementing.
+  creation fails.**~~ — **SHIPPED 2026-08-05.** Surfaced 2026-08-04, UAT
+  orientation session — a rep creating an Opportunity directly at Order
+  stage hit a server rejection for a missing Demo Date, a field that
+  screen didn't even show. Turned into two decisions, both now shipped:
+  (1) all 4 opportunity create/edit entry points now collect Demo
+  Start/End Date, Expected Closure Date, and PO Number — the field-parity
+  gap is closed; (2) a new `Reorder` lead-source value relaxes the
+  Demo/Clinical Evaluation gates (`BR-OP-13`) for customers reordering the
+  exact same equipment (~40% of the pipeline, per Haroon), while Order
+  Value/Product Details stay required. Full decision record and
+  implementation summary in
+  `docs/Discussion-FastTrack-Opportunity-Creation.md`. **Still outstanding:**
+  `REORDER` seed row applied to Dev (2026-08-05); UAT still needs it once
+  this code ships there. Manual E2E verification hasn't been done yet.
+  **Opportunity cloning** (auto-fill a Reorder deal from the
+  customer's last order) was considered and deliberately kept separate —
+  logged here as a future item, not picked up yet.
 - **Split participant picker (Opportunity 360 → Splits tab) is scoped to
   same-SBU-and-zone; cross-SBU is a hard rule, not a bug.** Surfaced
   2026-08-04, UAT orientation session — team expected to be able to split a
@@ -330,9 +314,14 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      safe, contained UI change (swap the picker's scope from `sbu_zone` to a
      new `sbu`-only scope) — no backend change needed, since BR-FIN-06 itself
      only checks SBU, not zone.
-  Needs Basheer to confirm which behavior the team actually wants before
-  implementing — (2) is a quick, safe fix; (1) is not on the table without a
-  fresh architecture decision.
+  **Update 2026-08-05:** rather than deciding this unilaterally, Basheer wants
+  it checked with Cabio leadership and the sales team first — the team's
+  original ask was "split with anyone regardless of SBU," and (2) alone only
+  partially satisfies that. Wrote
+  `docs/Discussion-SplitParticipant-SBU-Scope.md`, laying out same-SBU-any-zone
+  (contained, no backend change) vs any-SBU-any-zone (requires reopening
+  ADR-037 and a security/RLS review) for that conversation. **Awaiting their
+  decision** — nothing to implement here until it lands.
 - ~~**Admin/General Manager can't create Opportunities outside their own home
   SBU, despite RLS already granting them unrestricted cross-SBU access.**~~ —
   **RESOLVED 2026-08-04.** Surfaced during the UAT orientation session —
@@ -380,3 +369,30 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   place. The sidebar/zone display (line 272 of `DemoApp.tsx`, same
   meaningless-placeholder problem) was raised but deliberately left alone —
   not asked for.
+- **Product lifecycle: trade-ins, refurbished inventory, and accessories —
+  not yet represented in the system.** Raised by Haroon Sidheeq (GM & Sales
+  Head), 2026-08-05, same conversation as Issues 1 and 2. Cabio offers
+  customers machine upgrades (buy back the old unit, sell a new one,
+  net the buyback value off the deal), refurbishes traded-in machines for
+  resale, and sells accessories — primarily in Critical Care today, may
+  extend to Imaging. None of the three are representable today: no way to
+  subtract a trade-in value from an Opportunity's value, no product
+  classification beyond free-text `category_name` (modality), and
+  `InstalledAsset` (the installed-base record driving Coverage planning)
+  has no status field to reflect a machine that's been traded in.
+  Full design (schema, business-rule amendments, picker UX) written up in
+  `docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md` —
+  **design drafted, not yet implemented.** Four items need a decision before
+  this converts to real work (see that doc's Section 7):
+  1. Whether split percentages apply to the post-trade-in net value or gross
+     — needs Haroon's confirmation.
+  2. **GST/invoicing treatment of trade-ins** — the design assumes the
+     buyback simply nets against the sale for pipeline purposes; unconfirmed
+     whether Indian tax law requires the sale and the buyback to be two
+     separate transactions rather than one netted Opportunity value. Needs
+     input from whoever handles Cabio's invoicing before implementation.
+  3. Whether `BR-OP-01`'s Reorder-style gate flexibility (see the Fast-Track
+     item above) should extend to accessory/refurbished sales too, or stay
+     deferred until volume justifies it.
+  4. `product_type`/`condition` value naming (`EQUIPMENT`/`ACCESSORY`,
+     `NEW`/`REFURBISHED`) — working names, revisitable.

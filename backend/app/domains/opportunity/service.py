@@ -113,11 +113,18 @@ class OpportunityService:
         if not new_status:
             raise NotFoundError(f"Status {data.status_id} not found")
 
+        lead_source_name: str | None = None
+        if data.lead_source_id:
+            lead_source = self.repository.get_lead_source(data.lead_source_id)
+            if lead_source:
+                lead_source_name = lead_source.name
+
         # BR-OP-00: gates apply even on creation at a non-Lead stage
         validate_stage_transition(
             new_stage_order=new_stage.display_order,
             current_stage_order=0,
             lead_source_id=data.lead_source_id,
+            lead_source_name=lead_source_name,
             indicative_value=data.indicative_value,
             demo_start_date=data.demo_start_date,
             expected_closure_date=data.expected_closure_date,
@@ -215,10 +222,17 @@ class OpportunityService:
 
         # BR-OP-00 / BR-OP-01: stage gate validation on advance
         if "stage_id" in updates:
+            lead_source_name: str | None = None
+            if opportunity.lead_source_id:
+                lead_source = self.repository.get_lead_source(opportunity.lead_source_id)
+                if lead_source:
+                    lead_source_name = lead_source.name
+
             validate_stage_transition(
                 new_stage_order=effective_stage.display_order,
                 current_stage_order=current_stage_order,
                 lead_source_id=opportunity.lead_source_id,
+                lead_source_name=lead_source_name,
                 indicative_value=opportunity.indicative_value,
                 demo_start_date=opportunity.demo_start_date,
                 expected_closure_date=opportunity.expected_closure_date,

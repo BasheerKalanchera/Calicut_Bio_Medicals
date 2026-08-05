@@ -35,7 +35,7 @@ from app.domains.opportunity.schemas import (
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
-from app.domains.reference.models import LossReason, OpportunityStage, OpportunityStatus
+from app.domains.reference.models import LeadSource, LossReason, OpportunityStage, OpportunityStatus
 
 # ---------------------------------------------------------------------------
 # Seed-data UUIDs from Seed-Data.sql
@@ -92,6 +92,13 @@ def _make_loss_reason(code: str = "PRICE") -> MagicMock:
     return r
 
 
+def _make_lead_source(name: str = "REFERRAL") -> MagicMock:
+    s = MagicMock(spec=LeadSource)
+    s.id = uuid.uuid4()
+    s.name = name
+    return s
+
+
 def _make_opportunity(**overrides) -> MagicMock:
     """
     Returns a MagicMock with all fields the service reads during validation.
@@ -137,6 +144,7 @@ def _make_repo(**overrides) -> MagicMock:
     repo.get_stage.return_value = _make_stage(10, "LEAD")
     repo.get_status.return_value = _make_status("ACTIVE")
     repo.get_loss_reason.return_value = _make_loss_reason("PRICE")
+    repo.get_lead_source.return_value = _make_lead_source("REFERRAL")
     repo.get_for_update.return_value = None         # tests override as needed
     repo.has_items.return_value = False
     repo.create.side_effect = lambda obj: obj
@@ -227,6 +235,41 @@ class TestCreateOpportunity:
             items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
         )
         with pytest.raises(BusinessRuleViolation, match="Lead Source"):
+            service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+    def test_create_at_demo_with_reorder_lead_source_skips_demo_date(self):
+        """BR-OP-13: creating directly at Demo with lead_source=REORDER doesn't need
+        a Demo Start Date -- a reorder deal never has a fresh demo."""
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_lead_source.return_value = _make_lead_source("REORDER")
+        service = OpportunityService(repository=repo)
+
+        data = _make_create_data(
+            stage_id=STAGE_DEMO_ID,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+            demo_start_date=None,
+            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        )
+        result = service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+        assert result.lead_source_id == LEAD_SOURCE_ID
+
+    def test_create_at_demo_without_reorder_still_requires_demo_date(self):
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_lead_source.return_value = _make_lead_source("REFERRAL")
+        service = OpportunityService(repository=repo)
+
+        data = _make_create_data(
+            stage_id=STAGE_DEMO_ID,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+            demo_start_date=None,
+            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        )
+        with pytest.raises(BusinessRuleViolation, match="Demo Start Date"):
             service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
 
     def test_create_with_initial_status_lost_without_loss_reason_raises(self):
@@ -442,6 +485,29 @@ class TestUpdateOpportunity:
                 OpportunityUpdate(stage_id=STAGE_QUALIFIED_ID),
                 updated_by=USER_ID,
             )
+
+    def test_reorder_skips_demo_date_gate_on_update(self):
+        """BR-OP-13: advancing to Demo with lead_source=REORDER doesn't need a
+        Demo Start Date on the opportunity."""
+        opp = _make_opportunity(lead_source_id=LEAD_SOURCE_ID, indicative_value=Decimal("10.00"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.side_effect = [
+            _make_stage(20, "QUALIFIED"),  # current stage lookup
+            _make_stage(30, "DEMO"),       # new stage lookup
+        ]
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.get_lead_source.return_value = _make_lead_source("REORDER")
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo)
+
+        result = service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(stage_id=STAGE_DEMO_ID),
+            updated_by=USER_ID,
+        )
+
+        assert result.stage_id == STAGE_DEMO_ID
 
     def test_terminal_status_blocks_update(self):
         """BR-OP-09: cannot change status of a Won opportunity."""

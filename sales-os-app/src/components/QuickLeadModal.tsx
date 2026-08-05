@@ -50,6 +50,10 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
   const [winProb, setWinProb]           = useState("");
   const [value, setValue]               = useState("");
   const [leadSourceId, setLeadSourceId] = useState("");
+  const [demoStart, setDemoStart]       = useState("");
+  const [demoEnd, setDemoEnd]           = useState("");
+  const [closureDate, setClosureDate]   = useState("");
+  const [poNumber, setPoNumber]         = useState("");
 
   const effectiveSbuId = (isSbuOverrideRole && sbuOverrideId) ? sbuOverrideId : sbuId;
 
@@ -138,6 +142,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
     setItemProdId(""); setItemQty("1"); setItemPrice("0"); setItemDisc("0");
     setAddItemError(null);
     setLeadSourceId("");
+    setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
   }, [isOpen]);
 
   async function handleSubmit() {
@@ -165,6 +170,10 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
     if (value !== "") payload.indicative_value = Number(value);
     if (projectId) payload.project_id = projectId;
     if (leadSourceId) payload.lead_source_id = leadSourceId;
+    if (demoStart) payload.demo_start_date = demoStart;
+    if (demoEnd) payload.demo_end_date = demoEnd;
+    if (closureDate) payload.expected_closure_date = closureDate;
+    if (poNumber.trim()) payload.po_number = poNumber.trim();
     if (items.length > 0) payload.items = items.map((i) => ({
       product_id: i.product_id,
       quantity: i.quantity,
@@ -176,6 +185,9 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
   }
 
   const itemsTotal = items.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REORDER, ...), same value the picker renders as the label.
+  const leadSourceCode = leadSources.find((ls) => ls.id === leadSourceId)?.name;
 
   return (
     <>
@@ -306,6 +318,14 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
           size="small"
           slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
+        {leadSourceCode !== "REORDER" && (
+          <>
+            <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo Start Date" type="date" value={demoStart} onChange={(e) => setDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo End Date" type="date" value={demoEnd} onChange={(e) => setDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+          </>
+        )}
+        <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>

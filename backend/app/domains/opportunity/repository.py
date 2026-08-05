@@ -8,7 +8,7 @@ from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
-from app.domains.reference.models import LossReason, OpportunityStage, OpportunityStatus
+from app.domains.reference.models import LeadSource, LossReason, OpportunityStage, OpportunityStatus
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
@@ -27,6 +27,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
 
     def get_loss_reason(self, loss_reason_id: uuid.UUID) -> LossReason | None:
         return self.db.get(LossReason, loss_reason_id)
+
+    def get_lead_source(self, lead_source_id: uuid.UUID) -> LeadSource | None:
+        return self.db.get(LeadSource, lead_source_id)
 
     # ------------------------------------------------------------------
     # Account existence check

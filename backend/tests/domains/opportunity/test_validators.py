@@ -158,6 +158,34 @@ class TestQualifiedToDemoGate:
             has_items=True,
         )
 
+    def test_reorder_skips_demo_start_date_requirement(self):
+        """BR-OP-13: a Reorder deal never has a fresh demo, so this gate doesn't apply."""
+        validate_stage_transition(
+            new_stage_order=DEMO,
+            current_stage_order=QUALIFIED,
+            lead_source_id=LEAD_SOURCE_ID,
+            lead_source_name="REORDER",
+            indicative_value=INDICATIVE_VALUE,
+            demo_start_date=None,
+            expected_closure_date=None,
+            po_number=None,
+            has_items=True,
+        )
+
+    def test_non_reorder_lead_source_still_requires_demo_start_date(self):
+        with pytest.raises(BusinessRuleViolation, match="Demo Start Date"):
+            validate_stage_transition(
+                new_stage_order=DEMO,
+                current_stage_order=QUALIFIED,
+                lead_source_id=LEAD_SOURCE_ID,
+                lead_source_name="EXISTING_CUSTOMER",
+                indicative_value=INDICATIVE_VALUE,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=True,
+            )
+
 
 class TestClinicalToNegotiationGate:
     def test_blocked_without_expected_closure_date(self):
@@ -178,6 +206,20 @@ class TestClinicalToNegotiationGate:
             new_stage_order=NEGOTIATION,
             current_stage_order=CLINICAL_EVAL,
             **_stage_ctx(po_number=None),
+        )
+
+    def test_reorder_skips_expected_closure_date_requirement(self):
+        """BR-OP-13: a Reorder deal never has a fresh negotiation, so this gate doesn't apply."""
+        validate_stage_transition(
+            new_stage_order=NEGOTIATION,
+            current_stage_order=CLINICAL_EVAL,
+            lead_source_id=LEAD_SOURCE_ID,
+            lead_source_name="REORDER",
+            indicative_value=INDICATIVE_VALUE,
+            demo_start_date=None,
+            expected_closure_date=None,
+            po_number=None,
+            has_items=True,
         )
 
 
@@ -204,6 +246,36 @@ class TestNegotiationToOrderGate:
             current_stage_order=NEGOTIATION,
             **_stage_ctx(po_number=None),
         )
+
+    def test_reorder_still_requires_order_value(self):
+        """BR-OP-13: Reorder only relaxes Demo/Closure -- Order Value stays required."""
+        with pytest.raises(BusinessRuleViolation, match="Order Value"):
+            validate_stage_transition(
+                new_stage_order=ORDER,
+                current_stage_order=NEGOTIATION,
+                lead_source_id=LEAD_SOURCE_ID,
+                lead_source_name="REORDER",
+                indicative_value=None,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=True,
+            )
+
+    def test_reorder_still_requires_items(self):
+        """BR-OP-13: Reorder only relaxes Demo/Closure -- Product Details stay required."""
+        with pytest.raises(BusinessRuleViolation, match="Product details"):
+            validate_stage_transition(
+                new_stage_order=ORDER,
+                current_stage_order=NEGOTIATION,
+                lead_source_id=LEAD_SOURCE_ID,
+                lead_source_name="REORDER",
+                indicative_value=INDICATIVE_VALUE,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=False,
+            )
 
 
 class TestOrderToDeliveryGate:

@@ -21,11 +21,15 @@ _ORDER_ORDER = 60
 _ORDER_DELIVERY = 70
 
 
+_REORDER_LEAD_SOURCE = "REORDER"
+
+
 def validate_stage_transition(
     *,
     new_stage_order: int,
     current_stage_order: int,
     lead_source_id: uuid.UUID | None,
+    lead_source_name: str | None = None,
     indicative_value: Decimal | None,
     demo_start_date: date | None,
     expected_closure_date: date | None,
@@ -42,6 +46,12 @@ def validate_stage_transition(
     """
     if new_stage_order <= current_stage_order:
         return
+
+    # BR-OP-13: a Reorder deal (customer buying the exact same equipment again,
+    # price pre-negotiated off a prior PO) never has a fresh demo or negotiation --
+    # those two gates don't apply. Order Value and Product Details (the Negotiation ->
+    # Order gate below) still do, unchanged.
+    is_reorder = lead_source_name == _REORDER_LEAD_SOURCE
 
     # Gate: Lead → Qualified
     if current_stage_order < _ORDER_QUALIFIED <= new_stage_order:
@@ -60,7 +70,7 @@ def validate_stage_transition(
 
     # Gate: Qualified → Demo
     if current_stage_order < _ORDER_DEMO <= new_stage_order:
-        if not demo_start_date:
+        if not is_reorder and not demo_start_date:
             raise BusinessRuleViolation(
                 "Demo Start Date is required to advance to Demo stage."
             )
@@ -71,7 +81,7 @@ def validate_stage_transition(
 
     # Gate: Clinical Evaluation → Negotiation
     if current_stage_order < _ORDER_NEGOTIATION <= new_stage_order:
-        if not expected_closure_date:
+        if not is_reorder and not expected_closure_date:
             raise BusinessRuleViolation(
                 "Expected Closure Date is required to advance to Negotiation stage."
             )

@@ -5,9 +5,10 @@
    migrates (§9) — do not hand-fix individually, the rewrite removes the
    pattern that causes these. */
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Box, MenuItem, TextField } from "@mui/material";
 import { listAllProjects } from "../services/projects";
 import { listAccounts, createProject, updateProject, listOpportunities, updateOpportunity, createOpportunity, listOpportunityItems, addOpportunityItem, deleteOpportunityItem } from "../services/accounts";
-import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources } from "../services/masterData";
+import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listHoldReasons, listLossReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
@@ -61,6 +62,13 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
   const [leadSources, setLeadSources] = useState([]);
   const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
+  const [holdReasons, setHoldReasons] = useState([]);
+  const [lossReasons, setLossReasons] = useState([]);
+  const [editOppPoNumber, setEditOppPoNumber] = useState("");
+  const [editOppHoldReasonId, setEditOppHoldReasonId] = useState("");
+  const [editOppReactivationDate, setEditOppReactivationDate] = useState("");
+  const [editOppLossReasonId, setEditOppLossReasonId] = useState("");
+  const [editOppCompetitorName, setEditOppCompetitorName] = useState("");
 
   const [showAddOpp, setShowAddOpp] = useState(false);
   const [addOppName, setAddOppName] = useState("");
@@ -69,6 +77,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   const [addOppOwnerId, setAddOppOwnerId] = useState("");
   const [addOppWinProb, setAddOppWinProb] = useState("");
   const [addOppValue, setAddOppValue] = useState("");
+  const [addOppLeadSourceId, setAddOppLeadSourceId] = useState("");
+  const [addOppDemoStart, setAddOppDemoStart] = useState("");
+  const [addOppDemoEnd, setAddOppDemoEnd] = useState("");
+  const [addOppClosureDate, setAddOppClosureDate] = useState("");
+  const [addOppPoNumber, setAddOppPoNumber] = useState("");
 
   const loadOpps = () => {
     setOppsLoading(true);
@@ -100,12 +113,19 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     setEditOppItems([]); setEditOppOriginalItemIds([]);
     setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
     setEditOppLeadSourceId(opp.lead_source_id || "");
+    setEditOppPoNumber(opp.po_number || "");
+    setEditOppHoldReasonId(opp.hold_reason_id || "");
+    setEditOppReactivationDate(opp.reactivation_date || "");
+    setEditOppLossReasonId(opp.loss_reason_id || "");
+    setEditOppCompetitorName(opp.competitor_name || "");
     await Promise.all([
       oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
       oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
       oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
       oppProducts.length === 0 && listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setOppProducts(d.items || [])).catch(() => {}),
       leadSources.length === 0 && listLeadSources().then(setLeadSources).catch(() => {}),
+      holdReasons.length === 0 && listHoldReasons().then(setHoldReasons).catch(() => {}),
+      lossReasons.length === 0 && listLossReasons().then(setLossReasons).catch(() => {}),
       listOpportunityItems(opp.id).then((items) => {
         const mapped = items.map((i) => ({
           id: i.id,
@@ -123,6 +143,24 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
 
   async function handleUpdateOpp() {
     if (!editOppName.trim()) throw new Error("Opportunity name is required");
+    // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
+    // while the selected status is On Hold/Lost/Won, same pattern as Customer360Screen.tsx.
+    const _newStatus = oppStatuses.find((s) => s.id === editOppStatusId);
+    const _selectedLossReason = lossReasons.find((r) => r.id === editOppLossReasonId);
+    if (_newStatus?.status_code === "ON_HOLD") {
+      if (!editOppHoldReasonId) throw new Error("Hold Reason is required to put an opportunity On-Hold");
+      if (!editOppReactivationDate) throw new Error("Reactivation Date is required to put an opportunity On-Hold");
+      if (editOppReactivationDate <= new Date().toISOString().slice(0, 10)) throw new Error("Reactivation Date must be a future date");
+    }
+    if (_newStatus?.status_code === "LOST") {
+      if (!editOppLossReasonId) throw new Error("Loss Reason is required to mark an opportunity as Lost");
+      if (_selectedLossReason?.reason_code === "COMPETITOR_WON" && !editOppCompetitorName.trim()) {
+        throw new Error("Competitor Name is required when Loss Reason is 'Competitor Won'");
+      }
+    }
+    if (_newStatus?.status_code === "WON" && !editOppPoNumber.trim()) {
+      throw new Error("PO Number is required to mark an opportunity as Won");
+    }
     const payload = {
       name: editOppName.trim(),
       stage_id: editOppStageId || undefined,
@@ -132,6 +170,15 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     };
     if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
     payload.lead_source_id = editOppLeadSourceId || null;
+    payload.po_number = editOppPoNumber.trim() || null;
+    if (_newStatus?.status_code === "ON_HOLD") {
+      payload.hold_reason_id = editOppHoldReasonId;
+      payload.reactivation_date = editOppReactivationDate;
+    }
+    if (_newStatus?.status_code === "LOST") {
+      payload.loss_reason_id = editOppLossReasonId;
+      if (editOppCompetitorName.trim()) payload.competitor_name = editOppCompetitorName.trim();
+    }
     await updateOpportunity(editingOpp.id, payload);
     const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
     const toDelete = editOppOriginalItemIds.filter((id) => !currentItemIds.includes(id));
@@ -154,11 +201,14 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     setAddOppName(p.name);
     setAddOppStageId(""); setAddOppStatusId(""); setAddOppOwnerId("");
     setAddOppWinProb(""); setAddOppValue("");
+    setAddOppLeadSourceId(""); setAddOppDemoStart(""); setAddOppDemoEnd("");
+    setAddOppClosureDate(""); setAddOppPoNumber("");
     setShowAddOpp(true);
     await Promise.all([
       oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
       oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
       oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
+      leadSources.length === 0 && listLeadSources().then(setLeadSources).catch(() => {}),
     ]);
   }
 
@@ -177,6 +227,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
       project_id: p.id,
     };
     if (addOppValue !== "") payload.indicative_value = Number(addOppValue);
+    if (addOppLeadSourceId) payload.lead_source_id = addOppLeadSourceId;
+    if (addOppDemoStart) payload.demo_start_date = addOppDemoStart;
+    if (addOppDemoEnd) payload.demo_end_date = addOppDemoEnd;
+    if (addOppClosureDate) payload.expected_closure_date = addOppClosureDate;
+    if (addOppPoNumber.trim()) payload.po_number = addOppPoNumber.trim();
     await createOpportunity(p.account.id, payload);
     const all = await listOpportunities(p.account.id);
     setOpps(all.filter((o) => o.project_id === p.id));
@@ -192,6 +247,8 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
 
   const labelClass = "block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1";
   const inputClass = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium";
+  const editOppStatusCode = oppStatuses.find((s) => s.id === editOppStatusId)?.status_code;
+  const editOppLossReasonCode = lossReasons.find((r) => r.id === editOppLossReasonId)?.reason_code;
 
   return (
     <>
@@ -349,6 +406,36 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           </label>
           <input type="number" step="any" min="0" value={editOppValue} onChange={(e) => setEditOppValue(e.target.value)} readOnly={editOppItems.length > 0} className={editOppItems.length > 0 ? "w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-500 cursor-not-allowed" : inputClass} placeholder="e.g. 25.50" />
         </div>
+        <TextField label="PO Number" value={editOppPoNumber} onChange={(e) => setEditOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {editOppStatusCode === "ON_HOLD" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
+            <TextField
+              select label="Hold Reason *" value={editOppHoldReasonId} onChange={(e) => setEditOppHoldReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {holdReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            <TextField
+              label="Reactivation Date *" type="date" value={editOppReactivationDate} onChange={(e) => setEditOppReactivationDate(e.target.value)}
+              fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Box>
+        )}
+        {editOppStatusCode === "LOST" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <TextField
+              select label="Loss Reason *" value={editOppLossReasonId} onChange={(e) => setEditOppLossReasonId(e.target.value)}
+              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select reason</MenuItem>
+              {lossReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+            </TextField>
+            {editOppLossReasonCode === "COMPETITOR_WON" && (
+              <TextField label="Competitor Name *" value={editOppCompetitorName} onChange={(e) => setEditOppCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
+            )}
+          </Box>
+        )}
         <div className="border-t border-gray-100 pt-3">
           <div className="flex items-center justify-between mb-2">
             <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
@@ -384,41 +471,94 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
         <div className="px-3 py-2 bg-blue-50 rounded-xl text-xs font-bold text-blue-700 mb-1">
           {p.name}
         </div>
-        <div>
-          <label className={labelClass}>Name *</label>
-          <input type="text" value={addOppName} onChange={(e) => setAddOppName(e.target.value)} className={inputClass} autoFocus />
-        </div>
+        <TextField
+          label="Name *"
+          value={addOppName}
+          onChange={(e) => setAddOppName(e.target.value)}
+          autoFocus
+          fullWidth
+          size="small"
+        />
         <div className="flex gap-3">
-          <div className="flex-1">
-            <label className={labelClass}>Stage *</label>
-            <select value={addOppStageId} onChange={(e) => { const s = oppStages.find((x) => x.id === e.target.value); setAddOppStageId(e.target.value); if (s) setAddOppWinProb(String(s.default_win_probability)); }} className={inputClass}>
-              <option value="">Select stage</option>
-              {oppStages.map((s) => <option key={s.id} value={s.id}>{s.stage_name}</option>)}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className={labelClass}>Status *</label>
-            <select value={addOppStatusId} onChange={(e) => setAddOppStatusId(e.target.value)} className={inputClass}>
-              <option value="">Select status</option>
-              {oppStatuses.map((s) => <option key={s.id} value={s.id}>{s.status_name}</option>)}
-            </select>
-          </div>
+          <TextField
+            select
+            label="Stage *"
+            value={addOppStageId}
+            onChange={(e) => { const s = oppStages.find((x) => x.id === e.target.value); setAddOppStageId(e.target.value); if (s) setAddOppWinProb(String(s.default_win_probability)); }}
+            fullWidth
+            size="small"
+            sx={{ flex: 1 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select stage</MenuItem>
+            {oppStages.map((s) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+          </TextField>
+          <TextField
+            select
+            label="Status *"
+            value={addOppStatusId}
+            onChange={(e) => setAddOppStatusId(e.target.value)}
+            fullWidth
+            size="small"
+            sx={{ flex: 1 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select status</MenuItem>
+            {oppStatuses.map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+          </TextField>
         </div>
-        <div>
-          <label className={labelClass}>Owner *</label>
-          <select value={addOppOwnerId} onChange={(e) => setAddOppOwnerId(e.target.value)} className={inputClass}>
-            <option value="">Select owner</option>
-            {oppUsers.map((u) => <option key={u.id} value={u.id}>{u.display_name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Win Probability % *</label>
-          <input type="number" min="0" max="100" value={addOppWinProb} onChange={(e) => setAddOppWinProb(e.target.value)} className={inputClass} placeholder="0 – 100" />
-        </div>
-        <div>
-          <label className={labelClass}>Indicative Value (Lakhs)</label>
-          <input type="number" step="any" min="0" value={addOppValue} onChange={(e) => setAddOppValue(e.target.value)} className={inputClass} placeholder="e.g. 25.50" />
-        </div>
+        <TextField
+          select
+          label="Lead Source"
+          value={addOppLeadSourceId}
+          onChange={(e) => setAddOppLeadSourceId(e.target.value)}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select source</MenuItem>
+          {leadSources.map((ls) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
+        </TextField>
+        <TextField
+          select
+          label="Owner *"
+          value={addOppOwnerId}
+          onChange={(e) => setAddOppOwnerId(e.target.value)}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select owner</MenuItem>
+          {oppUsers.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+        </TextField>
+        <TextField
+          label="Win Probability % *"
+          type="number"
+          value={addOppWinProb}
+          onChange={(e) => setAddOppWinProb(e.target.value)}
+          placeholder="0 – 100"
+          fullWidth
+          size="small"
+          slotProps={{ htmlInput: { min: 0, max: 100 } }}
+        />
+        <TextField
+          label="Indicative Value (Lakhs)"
+          type="number"
+          value={addOppValue}
+          onChange={(e) => setAddOppValue(e.target.value)}
+          placeholder="e.g. 25.50"
+          fullWidth
+          size="small"
+          slotProps={{ htmlInput: { min: 0, step: "any" } }}
+        />
+        {leadSources.find((ls) => ls.id === addOppLeadSourceId)?.name !== "REORDER" && (
+          <>
+            <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo Start Date" type="date" value={addOppDemoStart} onChange={(e) => setAddOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField label="Demo End Date" type="date" value={addOppDemoEnd} onChange={(e) => setAddOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+          </>
+        )}
+        <TextField label="PO Number" value={addOppPoNumber} onChange={(e) => setAddOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
       </FormModal>
 
       {/* Edit Opportunity — Products secondary modal */}
