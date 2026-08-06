@@ -264,21 +264,32 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
   const dealsByStage = (stageCode: string) =>
     filteredDeals.filter((d) => d.stage.stage_code === stageCode);
 
+  // getBoundingClientRect-based, not offsetLeft-based: offsetLeft is relative to
+  // the nearest *positioned* ancestor, not necessarily the scroll container, so it
+  // picks up unrelated ancestor margins (e.g. DemoApp's centered max-width layout on
+  // wide screens) and overshoots. getBoundingClientRect gives true viewport-relative
+  // geometry regardless of ancestor positioning.
+  function centerInScrollContainer(container: HTMLElement, target: HTMLElement) {
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetOffset = targetRect.left - containerRect.left;
+    const scrollLeft = container.scrollLeft + targetOffset - containerRect.width / 2 + targetRect.width / 2;
+    container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }
+
   function scrollToStage(stageCode: string) {
     setActiveStageCode(stageCode);
     const col = columnRefs.current.get(stageCode);
     const kanbanRow = kanbanRowRef.current;
     if (col && kanbanRow) {
-      const scrollLeft = col.offsetLeft - kanbanRow.offsetWidth / 2 + col.offsetWidth / 2;
-      kanbanRow.scrollTo({ left: scrollLeft, behavior: "smooth" });
+      centerInScrollContainer(kanbanRow, col);
     }
     setTimeout(() => {
       const container = pillBarRef.current;
       if (container) {
         const pill = container.querySelector(`[data-stage="${stageCode}"]`) as HTMLElement | null;
         if (pill) {
-          const scrollLeft = pill.offsetLeft - container.offsetWidth / 2 + pill.offsetWidth / 2;
-          container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+          centerInScrollContainer(container, pill);
         }
       }
     }, 50);
