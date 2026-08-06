@@ -1,14 +1,6 @@
 import { Box, Button } from "@mui/material";
+import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
 import type { ReminderResponse } from "../types/api";
-
-const ACTIVITY_TYPE_ICONS: Record<string, string> = {
-  VISIT: "🏥",
-  CALL: "📞",
-  EMAIL: "✉️",
-  MEETING: "🤝",
-  NOTE: "📝",
-  MANAGER_NOTE: "📋",
-};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -41,7 +33,7 @@ export default function ReminderRow({
   hideOpportunity?: boolean;
 }) {
   const overdue = isOverdue(reminder);
-  const icon = ACTIVITY_TYPE_ICONS[reminder.activity.activity_type] ?? "📝";
+  const icon = ACTIVITY_TYPE_CONFIG[reminder.activity.activity_type]?.icon ?? "📝";
 
   const badge = reminder.is_completed
     ? { bg: "#ecfdf5", color: "#047857", label: "Done" }
@@ -131,7 +123,7 @@ export default function ReminderRow({
       {reminder.closing_activity && (
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1, fontSize: "0.75rem", color: "#4b5563" }}>
           <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
-            {ACTIVITY_TYPE_ICONS[reminder.closing_activity.activity_type] ?? "📝"} Closed via {reminder.closing_activity.activity_type.replace("_", " ").toLowerCase()} on {formatDate(reminder.closing_activity.activity_date)}
+            {ACTIVITY_TYPE_CONFIG[reminder.closing_activity.activity_type]?.icon ?? "📝"} Closed via {reminder.closing_activity.activity_type.replace("_", " ").toLowerCase()} on {formatDate(reminder.closing_activity.activity_date)}
           </Box>
           {reminder.closing_activity.notes}
         </Box>

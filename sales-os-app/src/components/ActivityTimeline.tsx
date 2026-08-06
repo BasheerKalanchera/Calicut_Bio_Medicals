@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button } from "@mui/material";
 import { listActivitiesByAccount, listActivitiesByOpportunity, listActivitiesByProject } from "../services/activities";
-import type { ActivityResponse, ActivityType } from "../types/api";
+import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
+import type { ActivityResponse } from "../types/api";
 
 interface Props {
   accountId?: string;
@@ -28,16 +29,6 @@ interface Props {
   selfFetch?: boolean;
 }
 
-// bg/color pairs match the original Tailwind shade names, e.g. VISIT: violet-50 / violet-700
-const TYPE_CONFIG: Record<ActivityType, { icon: string; label: string; bg: string; color: string }> = {
-  VISIT: { icon: "🏥", label: "Visit", bg: "#f5f3ff", color: "#6d28d9" },
-  CALL: { icon: "📞", label: "Call", bg: "#eff6ff", color: "#1d4ed8" },
-  EMAIL: { icon: "✉️", label: "Email", bg: "#f0f9ff", color: "#0369a1" },
-  MEETING: { icon: "🤝", label: "Meeting", bg: "#ecfdf5", color: "#047857" },
-  NOTE: { icon: "📝", label: "Note", bg: "#fffbeb", color: "#b45309" },
-  MANAGER_NOTE: { icon: "📋", label: "Manager Note", bg: "#f3f4f6", color: "#4b5563" },
-};
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
     day: "numeric", month: "short", year: "numeric",
@@ -46,7 +37,7 @@ function formatDate(iso: string) {
 }
 
 function ActivityItem({ activity }: { activity: ActivityResponse }) {
-  const cfg = TYPE_CONFIG[activity.activity_type] ?? TYPE_CONFIG.NOTE;
+  const cfg = ACTIVITY_TYPE_CONFIG[activity.activity_type] ?? ACTIVITY_TYPE_CONFIG.NOTE;
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2, display: "flex", gap: "0.75rem" }}>
       <Box

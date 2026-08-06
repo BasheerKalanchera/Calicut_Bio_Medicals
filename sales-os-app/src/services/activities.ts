@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { ActivityPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api";
+import type { ActivityPage, ActivityReportPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api";
 
 export interface LogActivityPayload {
   account_id: string;
@@ -45,6 +45,24 @@ export async function listActivitiesByProject(
   const r = await api.get(`/projects/${projectId}/activities`, {
     params: { page, page_size: pageSize },
   });
+  return r.data.data;
+}
+
+export interface ActivityReportParams {
+  report_date: string; // YYYY-MM-DD
+  user_id?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export async function listActivityReport(params: ActivityReportParams): Promise<ActivityReportPage> {
+  const p: Record<string, string | number> = {
+    report_date: params.report_date,
+    page: params.page ?? 1,
+    page_size: params.page_size ?? 100,
+  };
+  if (params.user_id) p.user_id = params.user_id;
+  const r = await api.get("/activities", { params: p });
   return r.data.data;
 }
 

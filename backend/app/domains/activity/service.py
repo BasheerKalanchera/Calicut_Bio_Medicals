@@ -1,10 +1,17 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from app.core.exceptions import NotFoundError
 from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
+from app.domains.organization.models import UserProfile
+
+# Cabio operates in India; a "day" for the Daily Activity Report means the IST
+# calendar day, regardless of the DB session's own timezone (unconfigured --
+# see repository.py's list_by_date for why this isn't a DB-side DATE() truncation).
+_IST = ZoneInfo("Asia/Kolkata")
 
 
 def _maybe_create_next_action_reminder(
@@ -85,6 +92,24 @@ class ActivityService:
         offset = (page - 1) * page_size
         items = self.repository.list_by_project(project_id, offset=offset, limit=page_size)
         total = self.repository.count_by_project(project_id)
+        return items, total
+
+    def list_daily_report(
+        self,
+        current_user: UserProfile,
+        report_date: date,
+        *,
+        user_id: uuid.UUID | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> tuple[list[Activity], int]:
+        start = datetime(report_date.year, report_date.month, report_date.day, tzinfo=_IST)
+        end = start + timedelta(days=1)
+        offset = (page - 1) * page_size
+        items = self.repository.list_by_date(
+            current_user, start, end, user_id=user_id, offset=offset, limit=page_size
+        )
+        total = self.repository.count_by_date(current_user, start, end, user_id=user_id)
         return items, total
 
     def log_activity(

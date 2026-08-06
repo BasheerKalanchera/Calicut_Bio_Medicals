@@ -13,8 +13,8 @@ from app.domains.organization.models import UserProfile
 # recursive org-chart walk -- same "flat" scope Opportunity's own Level 5 rule uses, per
 # Opportunity-Access-Hierarchy-Technical-Design.md SS6. Every tier also always sees itself, applied
 # unconditionally below.
-_UNRESTRICTED_ROLES = {"Admin", "General Manager"}
-_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
+UNRESTRICTED_ROLES = {"Admin", "General Manager"}
+TEAM_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
     "SBU Manager": lambda u: UserProfile.sbu_id == u.sbu_id,
     "Area Manager": lambda u: and_(UserProfile.sbu_id == u.sbu_id, UserProfile.zone_id == u.zone_id),
     "Sales Manager": lambda u: UserProfile.manager_id == u.id,
@@ -56,14 +56,14 @@ class UserRepository(BaseRepository[UserProfile]):
                 UserProfile.zone_id == current_user.zone_id,
             )
             not_unrestricted = UserProfile.role_id.not_in(
-                select(Role.id).where(Role.role_name.in_(_UNRESTRICTED_ROLES))
+                select(Role.id).where(Role.role_name.in_(UNRESTRICTED_ROLES))
             )
             stmt = stmt.where(and_(not_unrestricted, or_(same_sbu_zone, self_row)))
-        elif current_user.role.role_name not in _UNRESTRICTED_ROLES:
+        elif current_user.role.role_name not in UNRESTRICTED_ROLES:
             from app.domains.reference.models import Role
 
             self_row = UserProfile.id == current_user.id
-            scope_builder = _SCOPE_BUILDERS.get(current_user.role.role_name)
+            scope_builder = TEAM_SCOPE_BUILDERS.get(current_user.role.role_name)
             visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
 
             # Admin/General Manager carry an sbu_id/zone_id only to satisfy the NOT NULL
@@ -72,7 +72,7 @@ class UserRepository(BaseRepository[UserProfile]):
             # branch just because their placeholder values happen to coincide (e.g. an SBU
             # Manager whose SBU happens to match an Admin's on-paper sbu_id).
             not_unrestricted = UserProfile.role_id.not_in(
-                select(Role.id).where(Role.role_name.in_(_UNRESTRICTED_ROLES))
+                select(Role.id).where(Role.role_name.in_(UNRESTRICTED_ROLES))
             )
             stmt = stmt.where(and_(not_unrestricted, visible))
 

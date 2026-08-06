@@ -14,6 +14,7 @@ import { HELP_CONTENT } from "./utils/helpContent";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
+import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import type { PipelineOpportunity } from "./types/api";
 
@@ -26,6 +27,7 @@ const NAV_SECTIONS = [
       { id: "customers",     label: "Account Management", icon: "🏥" },
       { id: "opportunities", label: "Pipeline",           icon: "📈" },
       { id: "nextActions",   label: "Next Actions",       icon: "✅" },
+      { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
     ],
   },
   {
@@ -486,6 +488,17 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <NextActionsScreen onSelectAccount={handleSelectAccount} onSelectOpportunity={handleSelectOpportunity} />
+          </Box>
+
+          {/* Daily Activity Report — always mounted, hidden when not active; scoped per
+              user's own tier (self/team/SBU/everyone), not admin-gated */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "dailyActivity" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Daily Activity Report
+              </Typography>
+            </Box>
+            <DailyActivityReportScreen onSelectAccount={handleSelectAccount} onSelectOpportunity={handleSelectOpportunity} />
           </Box>
         </ErrorBoundary>
       </Box>

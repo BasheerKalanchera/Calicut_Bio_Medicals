@@ -33,6 +33,13 @@ class OpportunityNested(BaseModel):
     name: str
 
 
+class ProjectNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
 # ------------------------------------------------------------------
 # Activity
 # ------------------------------------------------------------------
@@ -75,6 +82,19 @@ class ActivityResponse(BaseModel):
     created_at: datetime
     user: UserNested
     next_action_reminder_id: uuid.UUID | None = None
+
+
+class ActivityReportRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    activity_type: ActivityType
+    activity_date: datetime
+    notes: str | None
+    account: AccountNested
+    opportunity: OpportunityNested | None
+    project: ProjectNested | None
+    user: UserNested
 
 
 # ------------------------------------------------------------------

@@ -140,6 +140,10 @@ export default function LogActivityModal({
     if (opportunityId) {
       queryClient.invalidateQueries({ queryKey: ["opp-reminders", opportunityId] });
     }
+    // Partial key match -- invalidates every ["activityReport", date, userFilter]
+    // variant, not just today's, so the Daily Activity Report picks this up
+    // immediately regardless of which date/filter it's currently showing.
+    queryClient.invalidateQueries({ queryKey: ["activityReport"] });
     onCreated?.();
   }
 

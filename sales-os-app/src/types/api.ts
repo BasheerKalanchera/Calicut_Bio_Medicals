@@ -535,7 +535,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Daily Activity Report */
+        get: operations["list_daily_activity_report_api_v1_activities_get"];
         put?: never;
         /** Log Activity */
         post: operations["log_activity_api_v1_activities_post"];
@@ -800,6 +801,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["PaginatedResponse_AccountListResponse_"];
+        };
+        /** APIResponse[PaginatedResponse[ActivityReportRow]] */
+        APIResponse_PaginatedResponse_ActivityReportRow__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PaginatedResponse_ActivityReportRow_"];
         };
         /** APIResponse[PaginatedResponse[ActivityResponse]] */
         APIResponse_PaginatedResponse_ActivityResponse__: {
@@ -1431,6 +1446,30 @@ export interface components {
             /** Next Action Owner Id */
             next_action_owner_id?: string | null;
         };
+        /** ActivityReportRow */
+        ActivityReportRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Activity Type
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            /** Notes */
+            notes: string | null;
+            account: components["schemas"]["AccountNested"];
+            opportunity: components["schemas"]["OpportunityNested"] | null;
+            project: components["schemas"]["ProjectNested"] | null;
+            user: components["schemas"]["UserNested"];
+        };
         /** ActivityResponse */
         ActivityResponse: {
             /**
@@ -1630,6 +1669,8 @@ export interface components {
              * Format: uuid
              */
             status_id: string;
+            /** Sbu Id */
+            sbu_id?: string | null;
             /** Win Probability */
             win_probability: number | string;
             /** Project Id */
@@ -1860,6 +1901,19 @@ export interface components {
         PaginatedResponse_AccountListResponse_: {
             /** Items */
             items: components["schemas"]["AccountListResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+        };
+        /** PaginatedResponse[ActivityReportRow] */
+        PaginatedResponse_ActivityReportRow_: {
+            /** Items */
+            items: components["schemas"]["ActivityReportRow"][];
             /** Total */
             total: number;
             /** Page */
@@ -2326,6 +2380,8 @@ export interface components {
             email?: string | null;
             /** Phone */
             phone?: string | null;
+            /** Whatsapp Number */
+            whatsapp_number?: string | null;
             /** Nps Score */
             nps_score?: number | null;
             /** Sentiment */
@@ -2404,6 +2460,8 @@ export interface components {
             email: string | null;
             /** Phone */
             phone: string | null;
+            /** Whatsapp Number */
+            whatsapp_number: string | null;
             /** Nps Score */
             nps_score: number | null;
             /** Sentiment */
@@ -2429,6 +2487,8 @@ export interface components {
             email?: string | null;
             /** Phone */
             phone?: string | null;
+            /** Whatsapp Number */
+            whatsapp_number?: string | null;
             /** Nps Score */
             nps_score?: number | null;
             /** Sentiment */
@@ -4263,6 +4323,42 @@ export interface operations {
             };
         };
     };
+    list_daily_activity_report_api_v1_activities_get: {
+        parameters: {
+            query: {
+                report_date: string;
+                user_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_ActivityReportRow__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     log_activity_api_v1_activities_post: {
         parameters: {
             query?: never;
@@ -4739,6 +4835,8 @@ export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResp
 // Derived from ActivityResponse's own field instead of hand-listing the 6
 // values again, so this can never drift from the backend's enum.
 export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
+export type ActivityReportRow = components["schemas"]["ActivityReportRow"];
+export type ActivityReportPage = components["schemas"]["PaginatedResponse_ActivityReportRow_"];
 export type OpportunityForStakeholder = components["schemas"]["OpportunityForStakeholder"];
 export type StakeholderOpportunityCountsEntry = components["schemas"]["StakeholderOpportunityCountsEntry"];
 export type UserListResponse = components["schemas"]["UserListResponse"];

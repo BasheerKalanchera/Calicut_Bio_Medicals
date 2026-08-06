@@ -110,6 +110,9 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     if (reminder.activity.opportunity) {
       queryClient.invalidateQueries({ queryKey: ["opp-reminders", reminder.activity.opportunity.id] });
     }
+    // Same reasoning as above -- the closing Activity should show up in the
+    // Daily Activity Report immediately too, not just the Activity tab.
+    queryClient.invalidateQueries({ queryKey: ["activityReport"] });
     onCompleted?.();
   }
 

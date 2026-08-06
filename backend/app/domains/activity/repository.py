@@ -1,12 +1,15 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.activity.models import Activity, Reminder
 from app.domains.opportunity.models import Opportunity
+from app.domains.organization.models import UserProfile
+from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.project.models import Project
 
 
@@ -106,6 +109,56 @@ class ActivityRepository(BaseRepository[Activity]):
         return self.db.scalar(
             select(func.count(Activity.id)).where(Activity.project_id == project_id)
         ) or 0
+
+    def _apply_daily_report_scope(self, stmt, current_user: UserProfile, user_id: uuid.UUID | None):
+        # Mirrors UserRepository.list_active's tier scoping (organization/repository.py)
+        # applied to who *logged* the activity rather than to user_profile rows directly.
+        # Unrestricted roles see everything; every other tier sees its scope plus itself.
+        role_name = current_user.role.role_name
+        if role_name not in UNRESTRICTED_ROLES:
+            scope_builder = TEAM_SCOPE_BUILDERS.get(role_name)
+            self_row = Activity.user_id == current_user.id
+            visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
+            stmt = stmt.where(visible)
+        if user_id is not None:
+            stmt = stmt.where(Activity.user_id == user_id)
+        return stmt
+
+    def list_by_date(
+        self,
+        current_user: UserProfile,
+        start: datetime,
+        end: datetime,
+        *,
+        user_id: uuid.UUID | None = None,
+        offset: int = 0,
+        limit: int = 50,
+    ) -> list[Activity]:
+        stmt = (
+            select(Activity)
+            .join(UserProfile, Activity.user_id == UserProfile.id)
+            .where(Activity.activity_date >= start, Activity.activity_date < end)
+            .options(noload(Activity.reminders))
+        )
+        stmt = self._apply_daily_report_scope(stmt, current_user, user_id)
+        stmt = stmt.order_by(Activity.activity_date.desc()).offset(offset).limit(limit)
+        return list(self.db.scalars(stmt).unique().all())
+
+    def count_by_date(
+        self,
+        current_user: UserProfile,
+        start: datetime,
+        end: datetime,
+        *,
+        user_id: uuid.UUID | None = None,
+    ) -> int:
+        stmt = (
+            select(func.count(Activity.id))
+            .join(UserProfile, Activity.user_id == UserProfile.id)
+            .where(Activity.activity_date >= start, Activity.activity_date < end)
+        )
+        stmt = self._apply_daily_report_scope(stmt, current_user, user_id)
+        return self.db.scalar(stmt) or 0
 
 
 class ReminderRepository(BaseRepository[Reminder]):

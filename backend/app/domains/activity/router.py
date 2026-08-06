@@ -1,5 +1,6 @@
 import math
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -10,6 +11,7 @@ from app.db.session import get_db
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import (
     ActivityCreate,
+    ActivityReportRow,
     ActivityResponse,
     ReminderCreate,
     ReminderResponse,
@@ -91,6 +93,29 @@ def list_project_activities(
     return APIResponse(
         data=PaginatedResponse(
             items=[ActivityResponse.model_validate(a) for a in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+            total_pages=math.ceil(total / page_size) if total else 0,
+        )
+    )
+
+
+@router.get("/activities")
+def list_daily_activity_report(
+    report_date: date = Query(...),
+    user_id: uuid.UUID | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+) -> APIResponse[PaginatedResponse[ActivityReportRow]]:
+    items, total = service.list_daily_report(
+        current_user, report_date, user_id=user_id, page=page, page_size=page_size
+    )
+    return APIResponse(
+        data=PaginatedResponse(
+            items=[ActivityReportRow.model_validate(a) for a in items],
             total=total,
             page=page,
             page_size=page_size,

@@ -16,8 +16,9 @@ Repository is fully mocked — no DB required. Tests cover:
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 import pydantic
 import pytest
@@ -27,6 +28,7 @@ from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
 from app.domains.activity.service import ActivityService, ReminderService
+from app.domains.organization.models import UserProfile
 
 # ---------------------------------------------------------------------------
 # Shared test data
@@ -55,7 +57,21 @@ def _make_activity_repo() -> MagicMock:
     repo.count_by_account.return_value = 0
     repo.list_by_project.return_value = []
     repo.count_by_project.return_value = 0
+    repo.list_by_date.return_value = []
+    repo.count_by_date.return_value = 0
     return repo
+
+
+def _make_current_user(role_name: str = "Admin", **overrides) -> MagicMock:
+    defaults = {"id": ACTOR_ID, "sbu_id": uuid.uuid4(), "zone_id": uuid.uuid4(), "manager_id": None}
+    defaults.update(overrides)
+    user = MagicMock(spec=UserProfile)
+    for k, v in defaults.items():
+        setattr(user, k, v)
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
+    return user
 
 
 def _make_reminder_repo() -> MagicMock:
@@ -192,6 +208,62 @@ class TestListByProject:
         svc.list_by_project(PROJECT_ID, page=1, page_size=10)
 
         repo.list_by_project.assert_called_once_with(PROJECT_ID, offset=0, limit=10)
+
+
+# ---------------------------------------------------------------------------
+# ActivityService.list_daily_report
+# ---------------------------------------------------------------------------
+
+class TestListDailyReport:
+    def test_converts_report_date_to_ist_range(self):
+        repo = _make_activity_repo()
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        current_user = _make_current_user("Admin")
+
+        svc.list_daily_report(current_user, date(2026, 8, 6), page=1, page_size=50)
+
+        ist = ZoneInfo("Asia/Kolkata")
+        expected_start = datetime(2026, 8, 6, 0, 0, 0, tzinfo=ist)
+        expected_end = expected_start + timedelta(days=1)
+        repo.list_by_date.assert_called_once_with(
+            current_user, expected_start, expected_end, user_id=None, offset=0, limit=50
+        )
+        repo.count_by_date.assert_called_once_with(
+            current_user, expected_start, expected_end, user_id=None
+        )
+
+    def test_calculates_offset_from_page(self):
+        repo = _make_activity_repo()
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6), page=3, page_size=20)
+
+        _, kwargs = repo.list_by_date.call_args
+        assert kwargs["offset"] == 40
+        assert kwargs["limit"] == 20
+
+    def test_forwards_explicit_user_id_filter(self):
+        repo = _make_activity_repo()
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        target_user = uuid.uuid4()
+
+        svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6), user_id=target_user)
+
+        _, kwargs = repo.list_by_date.call_args
+        assert kwargs["user_id"] == target_user
+
+    def test_returns_items_and_real_count(self):
+        repo = _make_activity_repo()
+        activities = [_make_activity(), _make_activity(id=uuid.uuid4())]
+        repo.list_by_date.return_value = activities
+        repo.count_by_date.return_value = 2
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        items, total = svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6))
+
+        assert items == activities
+        assert total == 2
+        repo.count_by_date.assert_called_once()
 
 
 # ---------------------------------------------------------------------------
