@@ -278,50 +278,48 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   is a more natural place to fix it properly.
 - ~~**Opportunity create forms are missing stage-gate fields (Demo Date,
   Expected Closure Date, PO Number) — BR-OP-00 direct-to-advanced-stage
-  creation fails.**~~ — **SHIPPED 2026-08-05.** Surfaced 2026-08-04, UAT
-  orientation session — a rep creating an Opportunity directly at Order
-  stage hit a server rejection for a missing Demo Date, a field that
-  screen didn't even show. Turned into two decisions, both now shipped:
-  (1) all 4 opportunity create/edit entry points now collect Demo
-  Start/End Date, Expected Closure Date, and PO Number — the field-parity
-  gap is closed; (2) a new `Reorder` lead-source value relaxes the
-  Demo/Clinical Evaluation gates (`BR-OP-13`) for customers reordering the
-  exact same equipment (~40% of the pipeline, per Haroon), while Order
-  Value/Product Details stay required. Full decision record and
-  implementation summary in
-  `docs/Discussion-FastTrack-Opportunity-Creation.md`. **Still outstanding:**
-  `REORDER` seed row applied to Dev (2026-08-05); UAT still needs it once
-  this code ships there. Manual E2E verification hasn't been done yet.
-  **Opportunity cloning** (auto-fill a Reorder deal from the
+  creation fails.**~~ — **SHIPPED 2026-08-05, `main` commit `6a8e841`.**
+  Surfaced 2026-08-04, UAT orientation session — a rep creating an
+  Opportunity directly at Order stage hit a server rejection for a
+  missing Demo Date, a field that screen didn't even show. Turned into
+  two decisions, both now shipped: (1) all 4 opportunity create/edit
+  entry points brought to field parity — Demo Start/End Date, Expected
+  Closure Date, PO Number, and (found during Basheer's manual
+  verification) Hold/Lost/Won status-gated fields that Project Detail's
+  edit modal was missing entirely; (2) a new `REPEAT_ORDER` lead-source value
+  relaxes the Demo/Clinical Evaluation gates (`BR-OP-13`) for customers
+  repeat-ordering the exact same equipment (~40% of the pipeline, per Haroon),
+  while Order Value/Product Details stay required. Full decision record
+  and implementation summary in
+  `docs/Discussion-FastTrack-Opportunity-Creation.md`. **Still
+  outstanding:** not yet pushed to `uat`; `REPEAT_ORDER` seed row applied to
+  Dev only, needs the same on UAT once this ships there; verified working
+  on Dev by Basheer, UAT not yet checked.
+  **Opportunity cloning** (auto-fill a REPEAT_ORDER deal from the
   customer's last order) was considered and deliberately kept separate —
   logged here as a future item, not picked up yet.
-- **Split participant picker (Opportunity 360 → Splits tab) is scoped to
-  same-SBU-and-zone; cross-SBU is a hard rule, not a bug.** Surfaced
-  2026-08-04, UAT orientation session — team expected to be able to split a
-  deal with anyone regardless of SBU. Two distinct things bundled in that
-  report:
-  1. Cross-SBU splits are deliberately disallowed as of ADR-037 (2026-07-30,
-     supersedes ADR-003's cross-SBU model) — enforced server-side in
-     `OpportunityService.replace_splits` (BR-FIN-06). Not a bug; revisiting
-     it means arguing against a 5-day-old architecture decision, not fixing
-     one.
-  2. The same-*zone* restriction on top of that is UI-only, not backend-
-     enforced — `OpportunityDetailScreen.tsx:550-557` calls
-     `listUsers("sbu_zone")`, filtered in `organization/repository.py:50-61`
-     to same SBU **and** same zone. The code comment there already flags
-     this as interim: *"interim rule per ADR-037; revisit if a real
-     cross-zone need surfaces."* Loosening this to same-SBU-any-zone is a
-     safe, contained UI change (swap the picker's scope from `sbu_zone` to a
-     new `sbu`-only scope) — no backend change needed, since BR-FIN-06 itself
-     only checks SBU, not zone.
-  **Update 2026-08-05:** rather than deciding this unilaterally, Basheer wants
-  it checked with Cabio leadership and the sales team first — the team's
-  original ask was "split with anyone regardless of SBU," and (2) alone only
-  partially satisfies that. Wrote
-  `docs/Discussion-SplitParticipant-SBU-Scope.md`, laying out same-SBU-any-zone
-  (contained, no backend change) vs any-SBU-any-zone (requires reopening
-  ADR-037 and a security/RLS review) for that conversation. **Awaiting their
-  decision** — nothing to implement here until it lands.
+- **Split participant picker / cross-SBU contribution — DECIDED 2026-08-05,
+  ready to build.** Surfaced 2026-08-04, UAT orientation session — team
+  expected to be able to split a deal with anyone regardless of SBU. Turned
+  out to bundle three separate needs, each resolved on its own terms with
+  Haroon — full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
+  (v6):
+  1. **Split stays same-SBU, any-zone.** Cross-SBU splits remain
+     deliberately disallowed (ADR-037/`BR-FIN-06`) — not reopened. Fix:
+     swap the picker's `listUsers()` scope from `sbu_zone` to a same-SBU-
+     any-zone scope. No backend change.
+  2. **Referral credit** — new `referred_by_user_id` on Opportunity, any
+     SBU/zone (reuses the existing `scope="all"` picker), one-time, no
+     revenue/visibility impact.
+  3. **Relationship-support activity** — self-reported `Activity` logged
+     against the Account with a structured `opportunity_id` link,
+     `activity_type = RELATIONSHIP_SUPPORT`. Needs one new Postgres function
+     (`cabio_app_opportunity_in_account`, mirrors the existing
+     `cabio_app_has_split` pattern) and a small `activity_tier_visibility`
+     RLS amendment (`OR user_id = cabio_app_uid()`, so a cross-SBU
+     contributor can read back their own logged activity) — both confirmed
+     against the live policy source, not assumed.
+  **Nothing implemented yet** — this entry moves once picked up.
 - ~~**Admin/General Manager can't create Opportunities outside their own home
   SBU, despite RLS already granting them unrestricted cross-SBU access.**~~ —
   **RESOLVED 2026-08-04.** Surfaced during the UAT orientation session —
@@ -391,7 +389,7 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      whether Indian tax law requires the sale and the buyback to be two
      separate transactions rather than one netted Opportunity value. Needs
      input from whoever handles Cabio's invoicing before implementation.
-  3. Whether `BR-OP-01`'s Reorder-style gate flexibility (see the Fast-Track
+  3. Whether `BR-OP-01`'s REPEAT_ORDER-style gate flexibility (see the Fast-Track
      item above) should extend to accessory/refurbished sales too, or stay
      deferred until volume justifies it.
   4. `product_type`/`condition` value naming (`EQUIPMENT`/`ACCESSORY`,

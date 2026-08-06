@@ -3,39 +3,66 @@ _Session: 2026-08-05_
 
 ## Current task — STOP HERE FIRST
 
-**UAT smoke testing is underway with the Cabio Star Sales team.** Issue 3 is shipped
-and live on UAT. **Issue 1 is now implemented, uncommitted, pending two follow-ups
-below.** Issues 2 and the new product-lifecycle item are still discussion/design work
-awaiting leadership follow-through.
+**Issues 1 and 3 are shipped and verified on UAT by Basheer/Star Sales team.** A
+Kanban pill/column centering bug found during that UAT smoke test is also fixed and
+verified on UAT (below). **Issue 2 is fully decided, ready to build — next thing to
+pick up.** The new product-lifecycle item is still discussion/design work awaiting
+leadership follow-through.
 
-**Issue 1 — Fast-track opportunity creation (Reorder) — IMPLEMENTED 2026-08-05, not
-yet committed.** New `Reorder` lead-source value relaxes Demo Date/Expected Closure
-Date/Clinical Evaluation (`BR-OP-13`); Order Value/Product Details stay required.
-Backend (`validators.py`/`service.py`/`repository.py`), all 4 frontend
-create/edit entry points, `Business-Rules.md` (BR-OP-01 amendment + BR-OP-13), and
-`Seed-Data.sql` (new `REORDER` row) all done — full summary in
-`docs/Discussion-FastTrack-Opportunity-Creation.md`'s "Implemented" note. Backend
-suite (405 tests), `tsc --noEmit`, and lint (incl. Tailwind guard) all green.
-**Still outstanding:**
-1. Changes are **uncommitted** — no commit/push has been made this session.
-2. ~~`docs/Seed-Data.sql`'s new `REORDER` row hasn't been applied~~ — **applied to Dev
-   2026-08-05 (Basheer).** UAT still needs it, but only once this code actually ships
-   there — no rush before then.
-3. No manual E2E verification yet — Dev is now unblocked for Basheer's pass (feature
-   is usable end-to-end there); UAT verification follows once merged/deployed.
+**Issue 1 — Fast-track opportunity creation (REPEAT_ORDER) — DONE and on `uat`,
+commit `32c94ad` (merged 2026-08-06, fast-forward from `main`).** New `REPEAT_ORDER`
+lead-source value relaxes Demo Date/Expected Closure Date/Clinical Evaluation
+(`BR-OP-13`); Order Value/Product Details stay required. All 4 opportunity create/edit
+entry points brought to field parity (gate fields, Lead Source, and Hold/Lost/Won
+status-gated fields — the last of these was a pre-existing gap in Project Detail's edit
+modal, found and fixed during Basheer's manual verification, same root cause as the
+rest). Full summary in `docs/Discussion-FastTrack-Opportunity-Creation.md`'s
+"Implemented" note. Backend suite (405 tests), `tsc --noEmit`, lint (incl. Tailwind
+guard) all green.
+**2026-08-06 — renamed lead source `REORDER` → `REPEAT_ORDER`** (Star Sales team
+feedback, ahead of the UAT push). Pure rename — `lead_source` is a plain lookup table
+keyed by `id`, no CHECK/enum constraint, so this touched only the `name`/`description`
+data and every string-literal comparison, not the schema. Shipped in the same commit
+as Issue 1 (`32c94ad`) since it landed before that push to `uat`.
+**DB state — both environments now have the `REPEAT_ORDER` row:**
+- **Dev:** existing `REORDER` row renamed in place via `UPDATE`. Confirmed directly
+  against the DB (`id=66666666-...-600000000010`, `name='REPEAT_ORDER'`).
+- **UAT:** row inserted fresh (UAT never had the old `REORDER` row).
+**UAT smoke test passed (Basheer, Star Sales team, 2026-08-06)** — Issue 1 + the
+rename are fully proven out.
 
 Opportunity cloning was considered and deliberately deferred as a separate follow-on —
 logged to `docs/Backlog.md`, not part of this build.
 
-**Issue 2 — Split participant picker / cross-SBU contribution.** Consolidated with
-Haroon into `docs/Discussion-SplitParticipant-SBU-Scope.md` (now v5). **Confirmed:**
-splits stay same-SBU-any-zone (contained UI fix — swap the picker's `listUsers()` scope,
-no backend change); referral credit gets its own field (`referred_by_user_id`),
-decoupled from splits. **Still open** — relationship-support activity (Section 3.3): a
-self-reported Activity logged against the Account, optionally with a structured
-Opportunity link. Three technical gaps need closing before it's buildable — the
-RLS-gated `opportunity_exists()` write check, an account-scoped Opportunity picker, and
-a likely read-back gap in `activity_tier_visibility` (see paper Section 5).
+**2026-08-06 — Kanban pill/column centering fix, commit `ef9bc96` (on `main` and
+`uat`).** Found during the UAT smoke test above: clicking a stage pill on a laptop-
+width screen (≥896px) scrolled the wrong column into view — worse the wider the
+window, invisible on mobile. Root cause: `scrollToStage()` centered columns using
+`offsetLeft`, which is relative to the nearest *positioned* ancestor, not necessarily
+the scroll container — so it picked up `DemoApp`'s centered max-width layout margin
+and overshot. Introduced in `9c88b28` (2026-07-31) when `scrollIntoView()` — immune to
+this, since it isn't `offsetLeft`-based — was swapped for manual `scrollTo()` math to
+fix a *different* bug (`scrollIntoView` silently no-op'ing on mobile Chrome). Fixed by
+replacing the math with a shared `getBoundingClientRect()`-based helper (viewport-
+relative geometry, immune to ancestor positioning), used for both the column and pill-
+bar centering. Verified on Dev and UAT — laptop (all 6 stage pills) and mobile
+(`Mobile-Demo.html`) both center correctly now.
+
+**Issue 2 — Split participant picker / cross-SBU contribution — DECIDED 2026-08-05,
+ready to build.** Full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
+(v6). Three parts, all decided:
+1. Split stays same-SBU-any-zone — swap the picker's `listUsers()` scope from
+   `sbu_zone` to a same-SBU-any-zone scope. No backend change.
+2. Referral credit — new `referred_by_user_id` on Opportunity, any SBU/zone
+   (reuses the existing `scope="all"` picker), one-time, no revenue/visibility impact.
+3. Relationship-support activity — self-reported `Activity` logged against the
+   Account with a structured `opportunity_id` link (`activity_type =
+   RELATIONSHIP_SUPPORT`). Needs one new Postgres function
+   (`cabio_app_opportunity_in_account`, modeled on the existing `cabio_app_has_split`)
+   and a small `activity_tier_visibility` RLS amendment (`OR user_id =
+   cabio_app_uid()`) — both confirmed directly against `Physical-Schema.sql`, not
+   assumed.
+**This is the next thing to build.**
 
 **New — Product lifecycle: trade-ins, refurbished inventory, accessories.** Raised by
 Haroon in the same conversation. Full design drafted in
@@ -45,9 +72,9 @@ math over net (post-trade-in) value, GST/invoicing treatment of trade-ins (needs
 from whoever handles Cabio's invoicing), whether `BR-OP-01`'s gate flexibility should
 extend to accessory/refurbished sales too, and `product_type`/`condition` naming.
 
-**Immediate next step:** none of the three threads above is actionable right now —
-each is waiting on Basheer/Haroon/leadership to resolve its own open items. Pick back
-up once any one of them lands.
+**Immediate next step (tomorrow):** plan and implement Issue 2 — same
+explore-then-plan-then-build flow used for Issue 1. Product-lifecycle item stays
+parked until its four open questions are answered.
 
 **Immediately prior work (2026-08-05, earlier this session), resolved/shipped — full
 detail in `docs/Progress-Archive-2026-08.md`'s 2026-08-05 entry:**
