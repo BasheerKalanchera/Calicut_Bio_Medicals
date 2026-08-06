@@ -14,6 +14,10 @@ dependencies = [
     "structlog>=24.0.0",
     "PyJWT[crypto]>=2.8.0",
     "psycopg2-binary>=2.9.0",
+    # zoneinfo (used for the Daily Activity Report's IST date handling) relies on
+    # the OS's IANA tz database on Linux/Mac, but Windows doesn't ship one --
+    # without this, ZoneInfo("Asia/Kolkata") raises ZoneInfoNotFoundError on Windows.
+    "tzdata>=2024.1; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]
