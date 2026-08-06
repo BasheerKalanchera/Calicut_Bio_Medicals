@@ -94,3 +94,12 @@ then continue below.
 - If the installed app looks outdated or stuck after an update, fully close
   it (swipe it away from your recent-apps list) and reopen from the home
   screen icon — this clears a stale cached version.
+- **If that alone doesn't show the update:** the app needs one fresh visit
+  in your real browser to actually pick up the new version. Tap the
+  original WhatsApp link again — if it opens inside WhatsApp's own
+  in-app browser, tap **⋮**/**Share** and choose **Open in Chrome** /
+  **Open in Safari** (see the in-app-browser note above) rather than
+  viewing it inside WhatsApp. Once it loads there, close that browser tab
+  and reopen the app from your home screen icon as usual. Your login and
+  icon stay exactly the same — nothing to reinstall, this just refreshes
+  what's already there.

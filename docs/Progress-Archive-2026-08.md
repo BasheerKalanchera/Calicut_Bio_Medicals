@@ -405,3 +405,80 @@ worked correctly:
 `npx tsc --noEmit` and `npm run lint` clean after both fixes; no backend
 change, no new tests needed (pure UI fixes). **Verified by Basheer on Dev
 via both entry points ("+ Lead" and Customer 360's "+ Add"), no issues.**
+
+---
+
+## 2026-08-05 — BR-OP-12 merged to UAT; PWA stale-cache diagnosis; fast-track stage-gate discussion paper
+
+**Merge timing checked before pushing, not assumed safe.** Before merging
+`main` → `uat` (which triggers a Render redeploy that briefly disrupts
+anyone using UAT), queried the live UAT database read-only
+(`ADMIN_DATABASE_URL`, session set read-only) for signs of active use:
+`pg_stat_activity` for recent connections/commits, and `max(created_at)`/
+`max(updated_at)` across `opportunity`, `opportunity_item`, `activity`,
+`reminder`. Found real writes and live connections as recently as minutes
+before each check on 2026-08-04, so held off twice. Re-checked the morning
+of 2026-08-05: last write ~9.5 hours prior, all connections idle since —
+confirmed quiet, proceeded.
+
+**Merged and pushed:** `main` (`3c81e23`, containing BR-OP-12's Admin/GM
+SBU override and the Add-Product focus-loss fix) → `uat`, fast-forward
+`7bdafae..3c81e23`. Local `active_progress.md` edit was stashed before the
+branch switch (would have blocked `git checkout uat`) and popped back
+after returning to `main`.
+
+**Deploy verified directly, not assumed from a green push:** fetched the
+live UAT backend's `/api/v1/openapi.json` and confirmed `OpportunityCreate`
+already has the new `sbu_id` field; fetched the UAT frontend's `index.html`
+and `sw.js` and confirmed a fresh `last-modified` timestamp and new JS
+bundle hash matching the push time. Both redeployed correctly.
+
+**Bug found: Admin's SBU dropdown missing on the installed PWA (mobile),
+present on laptop.** Root cause was client-side caching, not a bad deploy —
+already partially anticipated by the existing "stale cache" note in
+`docs/PWA-UAT-MobileLaptop-Setup.md`, but that note alone wasn't enough
+here: logging out and back in doesn't force a re-fetch of the JS bundle,
+since it's purely an in-app session change. What actually worked: tapping
+the original WhatsApp install link forced a fresh navigation, which is
+what a service worker needs to detect and activate a new version (this
+app's Workbox config already uses `skipWaiting` + `clientsClaim`, so it
+activates immediately once it *does* see a new version — the missing piece
+was triggering that check at all). A further wrinkle specific to this
+distribution channel: tapping a link directly from WhatsApp opens
+WhatsApp's own in-app browser, not Chrome/Safari — a separate storage
+context from the one the installed home-screen icon actually runs on, so
+that step alone can silently fail to update anything if the user doesn't
+also explicitly choose "Open in Chrome"/"Open in Safari" first (already
+documented for the *install* flow, but not previously connected to the
+*update* flow).
+
+**Fix, doc-only:** added a new bullet to `docs/PWA-UAT-MobileLaptop-Setup.md`'s
+Notes (and its Malayalam translation) covering this fallback explicitly —
+close app → tap the original link → route through the real browser via
+Open in Chrome/Safari → close that tab → reopen from the home screen icon.
+Framed to reassure users this is a refresh, not a reinstall (same login,
+same icon). Drafted a WhatsApp broadcast message (English + Malayalam) for
+Basheer to send the Cabio Star Sales team so they pick up the update
+without hitting the same confusion. `.html`/`.pdf` renders of both setup
+docs are now stale relative to the `.md` source — not regenerated yet,
+flagged to Basheer, his call on whether that's needed.
+
+**Haroon Sidheeq (GM & Sales Head) raised a bigger question during Issue 1
+triage:** should reps be able to skip Demo Date/Expected Closure Date
+entirely for fast-tracked deals, not just get a form that lets them enter
+those fields when creating directly at Order stage? Analysis: creating
+directly at Order stage is already accepted architecture (ADR-015,
+BR-OP-00, already implemented in `create_opportunity`) — the only real
+open question is whether the two exit-criteria fields (BR-OP-01) should
+ever be waivable, and if so, under what control. Identified a specific,
+non-obvious risk: `validate_stage_transition` only re-checks a gate when
+*advancing past* its threshold, so a field left blank at creation is
+permanently blank — there's no later point in the record's lifecycle that
+asks for it again. Wrote `docs/Discussion-FastTrack-Opportunity-Creation.md`
+(plus a presentation-ready Artifact version) laying out three options —
+keep required (Option A, happening regardless as a form fix), make fully
+optional (Option B), or a scoped/audited override restricted to Admin/GM
+with a recorded reason (Option C, recommended, mirrors BR-OP-12's
+never-silent pattern) — for Basheer to take to Haroon and the Cabio
+leadership team. Not yet decided; see `docs/Backlog.md`'s Issue 1 entry
+for status.
