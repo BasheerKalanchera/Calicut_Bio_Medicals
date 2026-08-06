@@ -1261,7 +1261,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
   const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REORDER, ...), same value the picker renders as the label.
+  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
   const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
 
   return (
@@ -1531,7 +1531,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
           fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
-        {newOLeadSourceCode !== "REORDER" && (
+        {newOLeadSourceCode !== "REPEAT_ORDER" && (
           <>
             <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={newODemoStart} onChange={(e) => setNewODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />

@@ -551,7 +551,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           size="small"
           slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
-        {leadSources.find((ls) => ls.id === addOppLeadSourceId)?.name !== "REORDER" && (
+        {leadSources.find((ls) => ls.id === addOppLeadSourceId)?.name !== "REPEAT_ORDER" && (
           <>
             <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={addOppDemoStart} onChange={(e) => setAddOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />

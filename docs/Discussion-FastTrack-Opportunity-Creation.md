@@ -2,25 +2,25 @@
 
 **Prepared for:** Discussion with Haroon Sidheeq (General Manager & Sales Head) and the
 Cabio leadership team.
-**Prepared:** 2026-08-04. **Updated:** 2026-08-05 (v2 — added the Reorder fast-track
-option; v3 — renamed the trigger to a new, distinct "Reorder" lead source; v6 — decided.
+**Prepared:** 2026-08-04. **Updated:** 2026-08-05 (v2 — added the REPEAT_ORDER fast-track
+option; v3 — renamed the trigger to a new, distinct "REPEAT_ORDER" lead source; v6 — decided.
 All open questions resolved with Basheer; opportunity cloning (Section 6) confirmed as a
 deferred, separate follow-on, not bundled into this build; v7 — implemented).
 **Status:** IMPLEMENTED — 2026-08-05.
 
-**Implemented 2026-08-05:** Option A (missing gate fields) and Option D (`Reorder`
+**Implemented 2026-08-05:** Option A (missing gate fields) and Option D (`REPEAT_ORDER`
 fast-track) both shipped in the same pass. Backend: `Opportunity.lead_source` gate
 logic in `app/domains/opportunity/validators.py`/`service.py`/`repository.py`; new
-`REORDER` row added to `docs/Seed-Data.sql` (not yet applied to the live DB — Basheer
+`REPEAT_ORDER` row added to `docs/Seed-Data.sql` (not yet applied to the live DB — Basheer
 to run when ready); `BR-OP-01`/`BR-OP-13` recorded in `docs/Business-Rules.md`.
 Frontend: all 4 opportunity create/edit entry points
 (`OpportunityDetailScreen.tsx`, `Customer360Screen.tsx`, `QuickLeadModal.tsx`,
 `ProjectDirectoryScreen.jsx`) now collect Demo Start/End Date, Expected Closure Date,
-and PO Number, and hide the demo/closure fields when `Reorder` is selected.
+and PO Number, and hide the demo/closure fields when `REPEAT_ORDER` is selected.
 `ProjectDirectoryScreen.jsx`'s Add Opportunity modal fields were converted to MUI as
 part of this change (file overall remains pending full migration — see
 `Frontend-Implementation-Standards.md` §9). Backend suite (405 tests), `tsc --noEmit`,
-and lint (incl. the Tailwind guard) all green. `REORDER` seed row applied to the Dev
+and lint (incl. the Tailwind guard) all green. `REPEAT_ORDER` seed row applied to the Dev
 database 2026-08-05 (Basheer) — UAT still pending, once this code ships there. Manual
 E2E verification — Dev unblocked and ready, UAT to follow.
 
@@ -38,13 +38,13 @@ one already has (Demo Date, Expected Closure Date, PO Number). Add those fields 
 missing three so nothing throws a confusing error. This isn't really a "decision" — it's
 just closing a gap.
 
-**Fix 2 — the actual new thing being decided:** for a customer reordering the *exact
+**Fix 2 — the actual new thing being decided:** for a customer repeat-ordering the *exact
 same equipment* they already bought from us — price already agreed, no fresh demo, no
 negotiation — reps were still being forced to fill in Demo Date and Expected Closure
 Date, fields that genuinely don't apply to that kind of sale.
 
 **What's changing:** when a rep creates that kind of deal, they can now mark it as a
-"Reorder." Once marked:
+"REPEAT_ORDER." Once marked:
 - They **don't** have to fill in Demo Date, Expected Closure Date, or clinical
   evaluation details.
 - They **still** have to fill in the price and what's being sold — that part doesn't go
@@ -56,7 +56,7 @@ Date, fields that genuinely don't apply to that kind of sale.
 
 **Opportunity cloning** (auto-filling the new deal from the customer's last order) was
 considered for the same release and deliberately kept separate — it doesn't change
-anything about the decision above, it would only save re-typing. Ship Reorder first,
+anything about the decision above, it would only save re-typing. Ship REPEAT_ORDER first,
 build cloning later once there's real usage to learn from. See Section 6.
 
 Everything below this point is the reasoning and options analysis that led here —
@@ -86,7 +86,7 @@ settled and one genuinely open:
    "fast-tracked" deals?** — **This is the open question**, raised by Haroon.
 
 **Update 2026-08-05:** in discussion, Haroon quantified this: **roughly 40% of
-opportunities come from repeat customers reordering equipment**, where the price is
+opportunities come from repeat customers repeat-ordering equipment**, where the price is
 pre-negotiated off the customer's previous Purchase Order, and there is no fresh demo or
 negotiation — those stages of the pipeline genuinely don't happen for this deal type.
 This isn't the rare, occasional exception the original question anticipated; it's a
@@ -115,7 +115,7 @@ This isn't paperwork for its own sake. Two things depend on this data existing:
   independently verify each deal.
 
 Both of these are about *fresh-sale* deals, where a demo and negotiation genuinely
-happen. For the reorder share of the pipeline, these fields aren't being skipped despite
+happen. For the repeat order share of the pipeline, these fields aren't being skipped despite
 being relevant — they're not relevant to begin with, because the stage they describe
 doesn't occur for that deal type.
 
@@ -138,7 +138,7 @@ a specific, recognized deal type — carries real risk:
   something structured and already recorded, like lead source, rather than a free
   judgment call with no record of why.
 
-Reorder (Option D below) avoids all three: it isn't a judgment call, it's driven by a
+REPEAT_ORDER (Option D below) avoids all three: it isn't a judgment call, it's driven by a
 mandatory, already-reported field (`lead_source`), so it can't quietly expand to cover
 deals it wasn't meant for, and it's auditable for free through existing lead-source
 rollups.
@@ -160,21 +160,21 @@ Superseded by Option D.
 
 ### Option C — Scoped, explicit, recorded individual exception — DROPPED, 2026-08-05
 Would have added a deliberate, visible "skip this requirement" action restricted to a
-role like Admin/GM, requiring a typed reason. **Decided not needed** — the reorder
+role like Admin/GM, requiring a typed reason. **Decided not needed** — the repeat order
 volume (~40%) is fully covered by Option D, and the remaining true one-off case (a deal
 closed entirely outside the system and logged after the fact) wasn't judged common
 enough to justify building a separate override mechanism for. Revisit only if that case
 actually starts recurring in practice.
 
-### Option D — Reorder fast-track — DECIDED, 2026-08-05
+### Option D — REPEAT_ORDER fast-track — DECIDED, 2026-08-05
 
-`Opportunity.lead_source` gains a new value, **`Reorder`**, distinct from the existing
+`Opportunity.lead_source` gains a new value, **`REPEAT_ORDER`**, distinct from the existing
 `Existing Customer` value (which answers *how the lead reached us*, not whether *this
-deal* is a reorder — see the correction below). `Reorder` specifically means: **the
+deal* is a repeat order — see the correction below). `REPEAT_ORDER` specifically means: **the
 customer is buying the exact same equipment they already have from us** — not just any
 repeat purchase from an existing customer.
 
-When an Opportunity's `lead_source` is `Reorder`: Demo Date, Expected Closure Date, and
+When an Opportunity's `lead_source` is `REPEAT_ORDER`: Demo Date, Expected Closure Date, and
 Clinical Evaluation fields are **not required** to create or advance to Order. **Order
 Value and Product Details stay required** — sourced from the prior order rather than a
 fresh negotiation, but still entered.
@@ -185,43 +185,43 @@ an existing Imaging customer could still be a brand-new pitch for a Critical Car
 product line, correctly tagged `Existing Customer`, that still needs a full demo. Gating
 the skip on that value would have misfired on exactly that case, and risked silently
 changing gate behavior for Opportunities already tagged `Existing Customer` in the live
-database. `Reorder` is a new, separate value specifically for this narrower case.
+database. `REPEAT_ORDER` is a new, separate value specifically for this narrower case.
 
 **Decided, 2026-08-05:**
-- Single flag, no sub-classification (e.g. same-product vs. different-product reorder)
-  — one `Reorder` value is enough.
+- Single flag, no sub-classification (e.g. same-product vs. different-product repeat order)
+  — one `REPEAT_ORDER` value is enough.
 - Any rep can use it directly — no manager approval required.
 - `BR-OP-01`'s gate table gets amended directly to make this exception, rather than
   carried as a separate documented exception alongside an unchanged rule.
 
 ## 5. Comparison at a glance
 
-| | A: Fix forms only | B: Fully optional | C: Individual exception | D: Reorder fast-track |
+| | A: Fix forms only | B: Fully optional | C: Individual exception | D: REPEAT_ORDER fast-track |
 |---|---|---|---|---|
 | Solves "rejected with no warning" bug | Yes | Yes | Yes | Yes |
-| Lets reps enter an Order-stage deal in one sitting | Yes | Yes | Yes | Yes, for reorder deals |
-| Skips Demo Date / Closure Date entirely | No | Yes, always | Yes, when explicitly invoked | Yes, when `lead_source` = Reorder |
-| Fits the ~40% reorder volume | No | Yes, but uncontrolled | No — doesn't scale | Yes — purpose-built for it |
+| Lets reps enter an Order-stage deal in one sitting | Yes | Yes | Yes | Yes, for repeat order deals |
+| Skips Demo Date / Closure Date entirely | No | Yes, always | Yes, when explicitly invoked | Yes, when `lead_source` = REPEAT_ORDER |
+| Fits the ~40% repeat order volume | No | Yes, but uncontrolled | No — doesn't scale | Yes — purpose-built for it |
 | Status | Happening regardless | Not chosen | Dropped | **Decided — build this** |
 
 ## 6. Opportunity cloning — deferred, separate follow-on
 
-An idea raised alongside this: once a rep marks a deal as `Reorder`, could the system
+An idea raised alongside this: once a rep marks a deal as `REPEAT_ORDER`, could the system
 auto-fill Product Details and Order Value from the customer's last order, instead of the
 rep re-typing them? **Considered for this same release and deliberately kept
 separate:**
 
-- It doesn't change anything about the Reorder decision above — Order Value and Product
+- It doesn't change anything about the REPEAT_ORDER decision above — Order Value and Product
   Details stay required either way; cloning would only change *how* they get filled in
   (copied vs. typed), not *whether* they're needed.
 - It's real additional scope — a "pick a past order to copy from" flow, logic to copy
   the equipment list and price across, and a decision about whether a copied price gets
   flagged for review if it's since changed.
-- Reorder alone already fixes the actual problem (reps no longer get blocked). Shipping
+- REPEAT_ORDER alone already fixes the actual problem (reps no longer get blocked). Shipping
   it first, before designing cloning, means cloning gets designed around how reps
-  actually use Reorder rather than a guess.
-- Not blocked on "not enough Reorder history yet," as originally assumed — every repeat
-  customer already has *some* past order in the system to clone from, tagged `Reorder`
+  actually use REPEAT_ORDER rather than a guess.
+- Not blocked on "not enough REPEAT_ORDER history yet," as originally assumed — every repeat
+  customer already has *some* past order in the system to clone from, tagged `REPEAT_ORDER`
   or not. It's deferred by choice, not by a data dependency.
 
 Log to `docs/Backlog.md` as a forward-looking item once this paper's decisions land.
@@ -231,11 +231,11 @@ Log to `docs/Backlog.md` as a forward-looking item once this paper's decisions l
 All open questions from the original discussion are now settled:
 
 1. **`BR-OP-01` amended directly** (not carried as a separate documented exception).
-2. **No sub-classification** — a single `Reorder` value is enough.
+2. **No sub-classification** — a single `REPEAT_ORDER` value is enough.
 3. **Option C dropped** — no individual manager-override path; not needed.
 4. **Opportunity cloning deferred** — see Section 6; logged to `docs/Backlog.md`
    separately, not part of this build.
-5. **Naming** — `Reorder` confirmed as the value name.
+5. **Naming** — `REPEAT_ORDER` confirmed as the value name.
 
 ## 8. Reference
 
@@ -245,7 +245,7 @@ All open questions from the original discussion are now settled:
 - `docs/Business-Rules.md` — BR-OP-00 (Opportunity Creation Flexibility), BR-OP-01
   (Stage Transition Exit Criteria — the gate table this decision amends).
 - `backend/app/domains/reference/models.py`, `docs/Seed-Data.sql` — `LeadSource` master
-  data; this decision adds a new `Reorder` value alongside the existing `Referral`,
+  data; this decision adds a new `REPEAT_ORDER` value alongside the existing `Referral`,
   `Existing Customer`, `Tender`, `OEM Referral`, `Cold Call`, etc.
 - `docs/Backlog.md` — the related form-completion bug (Option A), and where Opportunity
   cloning (Section 6) is tracked as a separate future item.

@@ -186,7 +186,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   const itemsTotal = items.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REORDER, ...), same value the picker renders as the label.
+  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
   const leadSourceCode = leadSources.find((ls) => ls.id === leadSourceId)?.name;
 
   return (
@@ -318,7 +318,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
           size="small"
           slotProps={{ htmlInput: { min: 0, step: "any" } }}
         />
-        {leadSourceCode !== "REORDER" && (
+        {leadSourceCode !== "REPEAT_ORDER" && (
           <>
             <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={demoStart} onChange={(e) => setDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />

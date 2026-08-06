@@ -82,8 +82,8 @@ INSERT INTO lead_source (id, name, description) VALUES
 ('66666666-6666-6666-6666-600000000009', 'OTHER', 'Other'),
 -- BR-OP-13: customer reordering the exact same equipment, price pre-negotiated
 -- off a prior PO -- distinct from EXISTING_CUSTOMER, which only describes how
--- the lead was sourced, not whether this deal is a reorder.
-('66666666-6666-6666-6666-600000000010', 'REORDER', 'Reorder')
+-- the lead was sourced, not whether this deal is a repeat order.
+('66666666-6666-6666-6666-600000000010', 'REPEAT_ORDER', 'REPEAT_ORDER')
 ON CONFLICT (name) DO NOTHING;
 
 -- ==========================================

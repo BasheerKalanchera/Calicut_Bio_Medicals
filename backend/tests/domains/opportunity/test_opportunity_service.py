@@ -238,11 +238,11 @@ class TestCreateOpportunity:
             service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
 
     def test_create_at_demo_with_reorder_lead_source_skips_demo_date(self):
-        """BR-OP-13: creating directly at Demo with lead_source=REORDER doesn't need
-        a Demo Start Date -- a reorder deal never has a fresh demo."""
+        """BR-OP-13: creating directly at Demo with lead_source=REPEAT_ORDER doesn't need
+        a Demo Start Date -- a repeat order deal never has a fresh demo."""
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(30, "DEMO")
-        repo.get_lead_source.return_value = _make_lead_source("REORDER")
+        repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
         service = OpportunityService(repository=repo)
 
         data = _make_create_data(
@@ -487,7 +487,7 @@ class TestUpdateOpportunity:
             )
 
     def test_reorder_skips_demo_date_gate_on_update(self):
-        """BR-OP-13: advancing to Demo with lead_source=REORDER doesn't need a
+        """BR-OP-13: advancing to Demo with lead_source=REPEAT_ORDER doesn't need a
         Demo Start Date on the opportunity."""
         opp = _make_opportunity(lead_source_id=LEAD_SOURCE_ID, indicative_value=Decimal("10.00"))
         repo = _make_repo()
@@ -497,7 +497,7 @@ class TestUpdateOpportunity:
             _make_stage(30, "DEMO"),       # new stage lookup
         ]
         repo.get_status.return_value = _make_status("ACTIVE")
-        repo.get_lead_source.return_value = _make_lead_source("REORDER")
+        repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
         repo.has_items.return_value = True
         service = OpportunityService(repository=repo)
 

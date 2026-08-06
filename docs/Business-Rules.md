@@ -55,9 +55,9 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 | Transition | Mandatory Requirements |
 | :--- | :--- |
 | **Lead → Qualified** | 1. Product identified.<br>2. Budget Range defined.<br>3. Lead Source defined using values from the LeadSource master entity (see Appendix A). |
-| **Qualified → Demo** | 1. Demo Date defined (single date or date range) — not required when `lead_source` = Reorder (BR-OP-13). |
+| **Qualified → Demo** | 1. Demo Date defined (single date or date range) — not required when `lead_source` = REPEAT_ORDER (BR-OP-13). |
 | **Demo → Clinical Evaluation** | 1. Demo Outcome recorded.<br>2. Clinical contact identified (doctor or biomedical engineer).<br>3. Clinical evaluation start date defined. |
-| **Clinical Evaluation → Negotiation** | 1. Clinical Evaluation Outcome recorded.<br>2. Expected Closure Date defined — not required when `lead_source` = Reorder (BR-OP-13). |
+| **Clinical Evaluation → Negotiation** | 1. Clinical Evaluation Outcome recorded.<br>2. Expected Closure Date defined — not required when `lead_source` = REPEAT_ORDER (BR-OP-13). |
 | **Negotiation → Order** | 1. Order Value confirmed.<br>2. Product Details defined.<br>3. Shared Ownership Validation completed (if applicable).<br>4. Handover Information completed. |
 | **Order → Delivery & Installation** | 1. Purchase Order Number entered.<br>2. Delivery Date scheduled.<br>3. Installation Site confirmed. |
 
@@ -140,12 +140,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Immutable after creation:** `sbu_id` is not on `OpportunityUpdate` — there is no way, for any role, to change an Opportunity's SBU once created. Confirmed with Basheer (2026-08-04): no business requirement for this, not an oversight.
 * **Reference:** Same "same-SBU-or-reject" pattern family as BR-ORG-01, BR-FIN-06, BR-OP-11 — this is the Admin/GM override case, not a new pattern.
 
-### BR-OP-13: Reorder Fast-Track (2026-08-05)
-* **Rule:** An Opportunity where the customer is buying the exact same equipment they already have from Cabio — price pre-negotiated off a prior Purchase Order, no fresh demo or negotiation — is tagged with the `Reorder` `LeadSource` value. This is distinct from the existing `Existing Customer` value, which only describes how the lead reached Cabio (an existing relationship), not whether this specific deal is a reorder.
-* **Effect:** When `lead_source` = `Reorder`, the Qualified → Demo (Demo Date) and Clinical Evaluation → Negotiation (Expected Closure Date) gates in BR-OP-01 are not enforced — those pipeline stages genuinely don't occur for this deal type.
-* **Unaffected:** The Negotiation → Order gate (Order Value, Product Details) and the Order → Delivery gate (PO Number) are enforced exactly as for any other Opportunity — a Reorder deal still requires confirmed price and product details, sourced from the prior order rather than a fresh negotiation.
-* **Scope:** A single flag — no sub-classification of reorder types. Any role may set it; there is no manager-approval or override path for this exception (considered and deliberately not built — the volume this rule addresses, ~40% of the pipeline, was judged too high for a per-deal approval workflow).
-* **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`) — gated on the selected lead source's `name` equalling `REORDER`, looked up via `OpportunityRepository.get_lead_source`.
+### BR-OP-13: REPEAT_ORDER Fast-Track (2026-08-05)
+* **Rule:** An Opportunity where the customer is buying the exact same equipment they already have from Cabio — price pre-negotiated off a prior Purchase Order, no fresh demo or negotiation — is tagged with the `REPEAT_ORDER` `LeadSource` value. This is distinct from the existing `Existing Customer` value, which only describes how the lead reached Cabio (an existing relationship), not whether this specific deal is a repeat order.
+* **Effect:** When `lead_source` = `REPEAT_ORDER`, the Qualified → Demo (Demo Date) and Clinical Evaluation → Negotiation (Expected Closure Date) gates in BR-OP-01 are not enforced — those pipeline stages genuinely don't occur for this deal type.
+* **Unaffected:** The Negotiation → Order gate (Order Value, Product Details) and the Order → Delivery gate (PO Number) are enforced exactly as for any other Opportunity — a REPEAT_ORDER deal still requires confirmed price and product details, sourced from the prior order rather than a fresh negotiation.
+* **Scope:** A single flag — no sub-classification of repeat order types. Any role may set it; there is no manager-approval or override path for this exception (considered and deliberately not built — the volume this rule addresses, ~40% of the pipeline, was judged too high for a per-deal approval workflow).
+* **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`) — gated on the selected lead source's `name` equalling `REPEAT_ORDER`, looked up via `OpportunityRepository.get_lead_source`.
 * **Reference:** ADR-015 (Opportunity Creation at Any Sales Stage); `docs/Discussion-FastTrack-Opportunity-Creation.md` for the full options analysis and decision record.
 
 ---
