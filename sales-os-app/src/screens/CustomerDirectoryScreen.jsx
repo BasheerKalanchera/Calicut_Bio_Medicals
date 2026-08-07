@@ -6,6 +6,8 @@
    pattern that causes these. */
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button, Menu, MenuItem } from "@mui/material";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
 import { listZones } from "../services/masterData";
 import FormModal from "../components/FormModal";
@@ -55,6 +57,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
 
   const [search, setSearch] = useState("");
   const [zoneFilter, setZoneFilter] = useState("");
+  const [zoneMenuAnchorEl, setZoneMenuAnchorEl] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
@@ -85,6 +88,14 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     return () => { cancelled = true; };
   }, [debouncedParentSearch, showCreateModal, formParentAccount]);
 
+  const ensureZonesLoaded = async () => {
+    if (zones.length > 0) return;
+    try {
+      const data = await listZones();
+      setZones(data.items || data);
+    } catch {}
+  };
+
   const openCreateModal = async () => {
     setFormName("");
     setFormZoneId("");
@@ -94,14 +105,21 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     setParentSearch("");
     setParentOptions([]);
     setShowCreateModal(true);
-    if (zones.length === 0) {
-      try {
-        const data = await listZones();
-        setZones(data.items || data);
-      } catch {}
-    }
+    await ensureZonesLoaded();
   };
   if (openCreateRef) openCreateRef.current = openCreateModal;
+
+  const openZoneMenu = async (event) => {
+    setZoneMenuAnchorEl(event.currentTarget);
+    await ensureZonesLoaded();
+  };
+  const closeZoneMenu = () => setZoneMenuAnchorEl(null);
+  const selectZoneFilter = (zoneId) => {
+    setZoneFilter(zoneId);
+    setPage(1);
+    closeZoneMenu();
+  };
+  const activeZoneName = zones.find((z) => z.id === zoneFilter)?.name;
 
   if (accountUpdateRef) accountUpdateRef.current = (updatedAccount) => {
     setAccounts((prev) => prev.map((a) => a.id === updatedAccount.id ? { ...a, ...updatedAccount } : a));
@@ -249,6 +267,25 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
             </button>
           )}
         </div>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={openZoneMenu}
+          endIcon={<ArrowDropDownIcon />}
+          sx={{ borderRadius: 999, textTransform: "none", whiteSpace: "nowrap", flexShrink: 0 }}
+        >
+          {activeZoneName || "All Zones"}
+        </Button>
+        <Menu anchorEl={zoneMenuAnchorEl} open={Boolean(zoneMenuAnchorEl)} onClose={closeZoneMenu}>
+          <MenuItem selected={!zoneFilter} onClick={() => selectZoneFilter("")}>
+            All Zones
+          </MenuItem>
+          {zones.map((z) => (
+            <MenuItem key={z.id} selected={zoneFilter === z.id} onClick={() => selectZoneFilter(z.id)}>
+              {z.name}
+            </MenuItem>
+          ))}
+        </Menu>
       </div>
       </div>{/* end fixed header */}
 
