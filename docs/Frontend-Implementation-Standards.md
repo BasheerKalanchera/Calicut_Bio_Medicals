@@ -355,6 +355,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `DemoApp.tsx` | `src/DemoApp.tsx` |
 | `Customer360Screen.tsx` | `src/screens/Customer360Screen.tsx` |
 | `ErrorBoundary.tsx` | `src/components/ErrorBoundary.tsx` |
+| `ProductCatalogScreen.tsx` | `src/screens/ProductCatalogScreen.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -380,7 +381,6 @@ migration — never removed early "to clean up."
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
 | `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
-| `ProductCatalogScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 
 **Out of scope — do not migrate:**
@@ -389,7 +389,25 @@ migration — never removed early "to clean up."
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 12 fully migrated · 3 pending · 1 explicitly out of scope.
+**Totals:** 13 fully migrated · 2 pending · 1 explicitly out of scope.
+
+`ProductCatalogScreen.tsx` moved to the fully-migrated table above 2026-08-07 (prerequisite
+for the Product Lifecycle feature build, which needed to add a new field to this
+screen's create/edit form without adding more Tailwind). Full triple-conversion:
+Tailwind → MUI `sx`, the manual `.then()`/module-level `productListCache` `Map` → `useQuery`
+(list, count, single-product-detail, and product-documents all as independent parallel
+queries per §3.1) plus `useMutation` for collateral-link create/delete, `.jsx` → `.tsx`.
+The hand-rolled `ProductFormModal` was replaced with the shared `FormModal` component
+(matching `UserDirectoryScreen.tsx`'s precedent) rather than converted in place.
+`isMountedRef` (§6.1) and the `CACHE_TTL_MS`/`productListCache` module-level cache (§4.1)
+were both deleted outright, not ported — both are superseded by React Query's own
+cache/staleness handling. Added three new hand-written type aliases to `types/api.ts`
+(`ProductListResponse`, `ProductResponse`, `DocumentResponse`) since no prior screen had
+imported them. **Scope note:** this migration only closes the Styling/React
+Query/TypeScript columns tracked here — it did not restructure the screen's internal
+list↔detail navigation into the ADR-030 always-mounted pattern (§2.1), since that's a
+navigation-architecture change orthogonal to what this table tracks, not something this
+migration pass was scoped to touch.
 
 `OpportunityDetailScreen.tsx` moved to the fully-migrated table above once its React Query commit
 landed (all 6 manual `.then()` chains converted to `useQuery`, gated by `enabled` on the state that

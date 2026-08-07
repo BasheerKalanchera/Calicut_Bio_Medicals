@@ -8,7 +8,6 @@
 // same commit — otherwise this guard silently stops protecting that file.
 const GRANDFATHERED = new Set([
   "screens/CustomerDirectoryScreen.jsx",
-  "screens/ProductCatalogScreen.jsx",
   "screens/ProjectDirectoryScreen.jsx",
   // Out of scope permanently — prototype only, never migrated. See §9.
   "App.jsx",
