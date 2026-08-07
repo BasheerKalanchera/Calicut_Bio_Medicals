@@ -55,6 +55,7 @@ class ProductService:
             model_number=data.model_number,
             category_name=data.category_name,
             description=data.description,
+            product_type=data.product_type,
             created_by=created_by,
             updated_by=created_by,
         )

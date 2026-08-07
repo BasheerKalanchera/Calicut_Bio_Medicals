@@ -113,6 +113,28 @@ class TestCreateProduct:
         repo.sbu_exists.assert_not_called()
         repo.create.assert_not_called()
 
+    def test_defaults_product_type_to_new_equipment(self):
+        repo = _make_repo()
+        repo.sbu_exists.return_value = True
+        repo.create.side_effect = lambda product: product
+
+        service = ProductService(repository=repo)
+        result = service.create_product(self._data(), created_by=uuid.uuid4(), role_name="Admin")
+
+        assert result.product_type == "NEW_EQUIPMENT"
+
+    def test_passes_through_explicit_product_type(self):
+        repo = _make_repo()
+        repo.sbu_exists.return_value = True
+        repo.create.side_effect = lambda product: product
+
+        service = ProductService(repository=repo)
+        result = service.create_product(
+            self._data(product_type="REFURBISHED"), created_by=uuid.uuid4(), role_name="Admin"
+        )
+
+        assert result.product_type == "REFURBISHED"
+
 
 class TestUpdateProduct:
     @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])

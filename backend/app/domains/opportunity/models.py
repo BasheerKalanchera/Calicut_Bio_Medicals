@@ -142,8 +142,14 @@ class Split(AuditMixin, Base):
 class OpportunityItem(AuditMixin, Base):
     __tablename__ = "opportunity_item"
     __table_args__ = (
-        UniqueConstraint("opportunity_id", "product_id", name="opportunity_item_unique"),
+        # Widened from (opportunity_id, product_id) to include line_type so the same
+        # catalog product can appear as both a normal sale line and a Buyback credit
+        # line on one Opportunity (e.g. a refurbished machine sold outright to this
+        # customer while a different unit is bought back from them) -- see
+        # docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md §3.
+        UniqueConstraint("opportunity_id", "product_id", "line_type", name="opportunity_item_unique"),
         CheckConstraint("quantity > 0", name="ck_opportunity_item_quantity"),
+        CheckConstraint("line_type IN ('PRODUCT', 'BUYBACK')", name="ck_opportunity_item_line_type"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -159,6 +165,10 @@ class OpportunityItem(AuditMixin, Base):
     extended_value_lakhs: Mapped[Decimal] = mapped_column(
         Numeric(15, 2), Computed("quantity * unit_price_lakhs - discount_lakhs", persisted=True)
     )
+    # BR-FIN-03: Opportunity Value nets BUYBACK lines against PRODUCT lines. This sign
+    # handling happens where the value is summed (frontend today -- see the rule text),
+    # not in extended_value_lakhs itself, which stays a plain positive line value.
+    line_type: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PRODUCT")
 
     opportunity: Mapped["Opportunity"] = relationship(back_populates="items", lazy="joined")
     product: Mapped["Product"] = relationship(back_populates="opportunity_items", lazy="joined")

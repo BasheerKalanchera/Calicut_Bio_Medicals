@@ -3,6 +3,38 @@ _Session: 2026-08-05_
 
 ## Current task — STOP HERE FIRST
 
+**2026-08-07 — Product Lifecycle (trade-ins, refurbished inventory, accessories) —
+code-complete, not yet committed.** Full design in
+`docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md` (status: built).
+Two-part build:
+- **Part A — `ProductCatalogScreen.jsx` → `.tsx` MUI/React Query migration**
+  (prerequisite, needed to add `product_type` without adding more Tailwind).
+  `Frontend-Implementation-Standards.md` §9 and `check-no-tailwind.js` updated.
+- **Part B — the feature itself:** `Product.product_type` +
+  `OpportunityItem.line_type` columns, migration `0016` (applied to Dev, verified,
+  `Physical-Schema.sql` regenerated), `BR-CAT-02` (new) + `BR-FIN-03` (amended) in
+  `Business-Rules.md`, service-layer buyback validation, `OpportunityDetailScreen.tsx`'s
+  Products tab rebuilt with 3 add-modes (Add Product / Add Accessory / Buyback).
+
+**All automated checks green:** backend 435 tests passing (up from 428), backend lint
+clean; frontend `tsc --noEmit` clean, `npm run lint` (incl. `check-no-tailwind.js`)
+clean. **Not yet committed** — per standing instruction, commits only happen when
+explicitly asked. **Immediate next step:** Basheer's manual E2E pass (both parts), then
+commit — recommended as two separate commits (migration, then feature), matching
+`Backlog.md`'s "split when risk profiles are genuinely separable" guidance.
+
+**Side finding, not yet acted on:** regenerating `Physical-Schema.sql` from Dev (the
+only environment with migration `0016`) revealed Dev is missing `rls_auto_enable()` —
+an event trigger UAT has that auto-enables RLS on new tables, added out-of-band, not
+present in the Alembic migration chain. Flagged to Basheer; not part of this build,
+decision on whether/how to reconcile still open.
+
+Multi-Zone Assignment (`docs/Multi-Zone-Assignment-Technical-Design.md`) remains queued
+next after this — chosen to go second specifically because its core is an RLS/security
+policy rewrite (High risk), unlike this feature's purely additive schema.
+
+---
+
 **Issues 1 and 3 are shipped and verified on UAT by Basheer/Star Sales team.** A
 Kanban pill/column centering bug found during that UAT smoke test is also fixed and
 verified on UAT (below). **2026-08-07 — `main` pushed to `uat` (fast-forward,
@@ -123,8 +155,28 @@ math over net (post-trade-in) value, GST/invoicing treatment of trade-ins (needs
 from whoever handles Cabio's invoicing), whether `BR-OP-01`'s gate flexibility should
 extend to accessory/refurbished sales too, and `product_type`/`condition` naming.
 
-**Immediate next step:** plan and implement Issue 2 — same explore-then-plan-then-build
-flow used for Issue 1. Product-lifecycle item stays parked until its four open
+**2026-08-07 (later) — Multi-zone user assignment, decided and unblocked.**
+Trigger: Fazal (Area Manager, Imaging) needs to cover both North Kerala and
+Mangalore; `user_profile.zone_id` is single-valued today, so this can't be
+represented (stopgap in place: Fazal promoted to SBU Manager, a one-time
+trick, not repeatable). Full design in
+`docs/Multi-Zone-Assignment-Technical-Design.md`: new `user_zone` join table,
+Area Manager RLS branch rewritten from scalar equality to set-membership
+(flagged **High risk** — security policy rewrite, needs full six-tier manual
+re-verification), two backend scope-builder rewrites, Target/Coverage
+Planning gains `zone_id` (greenfield — neither has any implementation today).
+All three §8 decisions now resolved, including the last one (territory
+naming/reporting): Basheer's call was raw zone list, no named `territory`
+entity — Fazal's case is isolated and his targets are already set/reported
+per zone independently, not combined. One narrower question still open,
+inside §7 not §8: `target_plan.zone_id` — `NOT NULL` or nullable — needs an
+answer before the Target/Coverage Planning slice specifically starts.
+**Ready to plan/build**, not yet started.
+
+**Immediate next step:** two build-ready items are queued — Issue 2 (parts 2/3:
+referral credit, relationship-support activity) and Multi-zone user assignment.
+Ask Basheer which to plan first; use the same explore-then-plan-then-build flow
+for whichever is picked. Product-lifecycle item stays parked until its four open
 questions are answered.
 
 **Immediately prior work (2026-08-05, earlier this session), resolved/shipped — full

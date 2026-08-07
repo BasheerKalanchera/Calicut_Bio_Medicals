@@ -369,37 +369,6 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   place. The sidebar/zone display (line 272 of `DemoApp.tsx`, same
   meaningless-placeholder problem) was raised but deliberately left alone —
   not asked for.
-- **Product lifecycle: trade-ins, refurbished inventory, and accessories —
-  not yet represented in the system.** Raised by Haroon Sidheeq (GM & Sales
-  Head), 2026-08-05, same conversation as Issues 1 and 2. Cabio offers
-  customers machine upgrades (buy back the old unit, sell a new one,
-  net the buyback value off the deal), refurbishes traded-in machines for
-  resale, and sells accessories — primarily in Critical Care today, may
-  extend to Imaging. None of the three are representable today: no way to
-  subtract a trade-in value from an Opportunity's value, no product
-  classification beyond free-text `category_name` (modality), and
-  `InstalledAsset` (the installed-base record driving Coverage planning)
-  has no status field to reflect a machine that's been traded in.
-  Full design (schema, business-rule amendments, picker UX) written up in
-  `docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md` —
-  **design drafted, not yet implemented.** Four items need a decision before
-  this converts to real work (see that doc's Section 7):
-  1. Whether split percentages apply to the post-trade-in net value or gross
-     — needs Haroon's confirmation.
-  2. **GST/invoicing treatment of trade-ins** — the design assumes the
-     buyback simply nets against the sale for pipeline purposes; unconfirmed
-     whether Indian tax law requires the sale and the buyback to be two
-     separate transactions rather than one netted Opportunity value. Needs
-     input from whoever handles Cabio's invoicing before implementation.
-  3. Whether `BR-OP-01`'s REPEAT_ORDER-style gate flexibility (see the Fast-Track
-     item above) should extend to accessory/refurbished sales too, or stay
-     deferred until volume justifies it.
-  4. `product_type`/`condition` value naming (`EQUIPMENT`/`ACCESSORY`,
-     `NEW`/`REFURBISHED`) — working names, revisitable.
-  **Update 2026-08-06:** the buyback/GST question (item 2) came up again in
-  leadership discussion — still unresolved, no new input yet from whoever
-  handles Cabio's invoicing. Not stalled/forgotten, just still blocked on
-  that same open question.
 - **New product line onboarding (e.g., Cardiology) — not yet conceptualized.**
   Raised in leadership discussion, 2026-08-05. Cabio is considering adding
   entirely new departments/specialties beyond the current two SBUs (Imaging,
@@ -435,24 +404,25 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   entity throughout. No design work started; likely the largest-scope item
   of the four raised in this meeting, worth scoping carefully before
   committing to a data-model direction.
-- **Multi-zone user assignment — technical design drafted, blocked on a
-  leadership decision.** Raised 2026-08-07: Fazal (Area Manager, Imaging)
-  needs to cover both North Kerala and the new Mangalore zone, but
-  `user_profile.zone_id` is single-valued today — schema, RLS, and Python
-  scoping all assume exactly one zone per user. Full design in
-  `docs/Multi-Zone-Assignment-Technical-Design.md`: a new `user_zone` join
-  table, an RLS rewrite of the Area Manager tier's zone check, and two
-  backend scope-builder rewrites. Immediate stopgap in place (promoted Fazal
-  to SBU Manager, safe only because Imaging has no SBU Manager yet — a
-  one-time trick, not a repeatable fix). Resolves the same open question
-  already logged in `Opportunity-Access-Hierarchy-Proposal.md` decision item
-  #1 ("could a territory span more than one region"). Don't start building
-  until that's answered — see the design doc §8 for the specific calls
-  needed.
-  **Update 2026-08-07:** confirmed with Haroon — Fazal is evaluated against
-  **two independent zone quotas**, not one combined number split for
-  visibility. This pulls Target/Coverage Planning into scope too (design
-  doc §7): `target_plan`/`coverage_plan` need `zone_id` added and their
-  unique constraints widened. Turns out lower-risk than it sounds — neither
-  Target nor Coverage Planning has any backend/frontend implementation today
-  (schema-only), so this is new-build work, not a retrofit.
+- **Multi-zone user assignment — decided 2026-08-07, moved to
+  `active_progress.md` as the next build item.** All of design doc
+  `docs/Multi-Zone-Assignment-Technical-Design.md`'s §8 decisions are now
+  resolved (raw zone list, no named territory entity; open to all roles).
+  One narrower question remains open within §7 (Target/Coverage Planning's
+  `target_plan.zone_id` nullability) — see the design doc, not tracked here
+  since the core feature is unblocked.
+- **Pipeline screen zone filter — proposed 2026-08-07, ready to build, no
+  open questions.** Surfaced while discussing Multi-Zone Assignment:
+  `OpportunityPipelineScreen.tsx` has no way to narrow the Kanban/list view
+  to one zone, unlike `CustomerDirectoryScreen.jsx`'s existing zone-filter
+  pill (`8aff9cd`). Useful independent of Multi-Zone Assignment shipping —
+  SBU Manager/GM/Admin already see opportunities across multiple zones today
+  (existing RLS) with no way to filter down to one. Bigger lift than the
+  Account Directory version, though: `Opportunity` has no `zone_id` of its
+  own (one hop away via `account_id → account.zone_id`), and
+  `opportunity/repository.py`'s pipeline query only supports `owner_id`
+  filtering today — needs a new `zone_id` param threaded through repository
+  (join to `Account`) → service → router, plus a frontend `Select` next to
+  the existing Owner filter in `OpportunityPipelineScreen.tsx`, following the
+  same `listPipeline({ zone_id, ... })` / `listZones()` pattern already used
+  there for owners.

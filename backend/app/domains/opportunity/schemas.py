@@ -1,8 +1,14 @@
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class OpportunityItemLineType(StrEnum):
+    PRODUCT = "PRODUCT"
+    BUYBACK = "BUYBACK"
 
 
 # ------------------------------------------------------------------
@@ -21,6 +27,9 @@ class ProductNested(BaseModel):
 
     id: uuid.UUID
     name: str
+    # Drives the Buyback/Add-Accessory picker filters and the Refurbished chip on
+    # OpportunityItem rows (docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md).
+    product_type: str
 
 
 class StageNested(BaseModel):
@@ -79,6 +88,7 @@ class OpportunityItemCreate(BaseModel):
     quantity: int = Field(..., gt=0)
     unit_price_lakhs: Decimal = Field(..., ge=0)
     discount_lakhs: Decimal = Field(Decimal("0"), ge=0)
+    line_type: OpportunityItemLineType = OpportunityItemLineType.PRODUCT
 
 
 class OpportunityItemResponse(BaseModel):
@@ -90,6 +100,7 @@ class OpportunityItemResponse(BaseModel):
     unit_price_lakhs: Decimal
     discount_lakhs: Decimal
     extended_value_lakhs: Decimal
+    line_type: str
     product: ProductNested
 
 

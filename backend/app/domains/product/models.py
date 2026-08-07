@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import UUID, Boolean, ForeignKey, Index, String, Text
+from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -9,6 +9,10 @@ from app.db.base import AuditMixin, Base
 class Product(AuditMixin, Base):
     __tablename__ = "product"
     __table_args__ = (
+        CheckConstraint(
+            "product_type IN ('NEW_EQUIPMENT', 'REFURBISHED', 'ACCESSORY')",
+            name="ck_product_product_type",
+        ),
         Index("idx_product_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
     )
 
@@ -19,6 +23,9 @@ class Product(AuditMixin, Base):
     model_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     category_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # BR-CAT-02: only REFURBISHED products may be used as a Buyback line item
+    # on an Opportunity (docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md).
+    product_type: Mapped[str] = mapped_column(String(20), nullable=False, server_default="NEW_EQUIPMENT")
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 
     sbu: Mapped["SBU"] = relationship(back_populates="products", lazy="joined")

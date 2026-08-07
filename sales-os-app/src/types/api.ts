@@ -1721,7 +1721,14 @@ export interface components {
              * @default 0
              */
             discount_lakhs: number | string;
+            /** @default PRODUCT */
+            line_type: components["schemas"]["OpportunityItemLineType"];
         };
+        /**
+         * OpportunityItemLineType
+         * @enum {string}
+         */
+        OpportunityItemLineType: "PRODUCT" | "BUYBACK";
         /** OpportunityItemResponse */
         OpportunityItemResponse: {
             /**
@@ -1742,6 +1749,8 @@ export interface components {
             discount_lakhs: string;
             /** Extended Value Lakhs */
             extended_value_lakhs: string;
+            /** Line Type */
+            line_type: string;
             product: components["schemas"]["app__domains__opportunity__schemas__ProductNested"];
         };
         /** OpportunityNested */
@@ -2073,6 +2082,8 @@ export interface components {
             category_name?: string | null;
             /** Description */
             description?: string | null;
+            /** @default NEW_EQUIPMENT */
+            product_type: components["schemas"]["ProductType"];
         };
         /** ProductListResponse */
         ProductListResponse: {
@@ -2094,6 +2105,8 @@ export interface components {
             model_number: string | null;
             /** Category Name */
             category_name: string | null;
+            /** Product Type */
+            product_type: string;
             /** Is Active */
             is_active: boolean | null;
             sbu: components["schemas"]["SBUNested"];
@@ -2120,6 +2133,8 @@ export interface components {
             category_name: string | null;
             /** Description */
             description: string | null;
+            /** Product Type */
+            product_type: string;
             /** Is Active */
             is_active: boolean | null;
             /**
@@ -2134,6 +2149,11 @@ export interface components {
             updated_at: string;
             sbu: components["schemas"]["SBUNested"];
         };
+        /**
+         * ProductType
+         * @enum {string}
+         */
+        ProductType: "NEW_EQUIPMENT" | "REFURBISHED" | "ACCESSORY";
         /** ProductUpdate */
         ProductUpdate: {
             /** Name */
@@ -2148,6 +2168,7 @@ export interface components {
             category_name?: string | null;
             /** Description */
             description?: string | null;
+            product_type?: components["schemas"]["ProductType"] | null;
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -2800,6 +2821,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /** Product Type */
+            product_type: string;
         };
     };
     responses: never;
@@ -4842,3 +4865,6 @@ export type StakeholderOpportunityCountsEntry = components["schemas"]["Stakehold
 export type UserListResponse = components["schemas"]["UserListResponse"];
 export type UserCreate = components["schemas"]["UserCreate"];
 export type UserUpdate = components["schemas"]["UserUpdate"];
+export type ProductListResponse = components["schemas"]["ProductListResponse"];
+export type ProductResponse = components["schemas"]["ProductResponse"];
+export type DocumentResponse = components["schemas"]["DocumentResponse"];

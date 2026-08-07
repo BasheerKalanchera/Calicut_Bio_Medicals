@@ -42,6 +42,7 @@ def _mock_product(**overrides) -> MagicMock:
         "model_number": "S50",
         "category_name": "Ultrasound",
         "description": "Premium ultrasound system",
+        "product_type": "NEW_EQUIPMENT",
         "is_active": True,
         "created_at": now,
         "updated_at": now,

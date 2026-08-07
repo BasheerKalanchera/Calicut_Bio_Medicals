@@ -11,13 +11,13 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-03 from the UAT database (Postgres 17.6), after 6
--- migrations' worth of drift (stakeholder contact fields, several indexes,
--- reminder.closing_activity_id, the Product Catalog RLS split, and
--- stakeholder.whatsapp_number) was found missing from the previous
--- hand-maintained version. See docs/Progress-Archive-2026-08.md for the
--- full history and docs/Backend-Implementation-Standards.md's migration
--- workflow for the regen step now required on every future migration.
+-- Regenerated 2026-08-07 from the Dev database (Postgres 17.6), after
+-- migration 0016 (product.product_type, opportunity_item.line_type, and the
+-- widened opportunity_item_unique constraint — Product Lifecycle: Trade-Ins,
+-- Refurbished Inventory, Accessories build). See
+-- docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md and
+-- docs/Backend-Implementation-Standards.md's migration workflow for the
+-- regen step required on every migration.
 --
 -- Regenerate with (any fully-migrated environment, Dev or UAT, is equivalent
 -- since both run the same Alembic chain):
@@ -34,7 +34,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict pJLngytR2BGVcuYoMZ70S9iqh8en6G12lOy3bchDMmUD3rGZIaNkpTQwRuENcSs
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Debian 17.10-1.pgdg13+1)
@@ -141,39 +140,6 @@ CREATE FUNCTION public.cabio_app_uid() RETURNS uuid
 CREATE FUNCTION public.cabio_app_zone_id() RETURNS uuid
     LANGUAGE sql STABLE
     AS $$ SELECT NULLIF(current_setting('app.current_zone_id', true), '')::uuid $$;
-
-
---
--- Name: rls_auto_enable(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.rls_auto_enable() RETURNS event_trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'pg_catalog'
-    AS $$
-DECLARE
-  cmd record;
-BEGIN
-  FOR cmd IN
-    SELECT *
-    FROM pg_event_trigger_ddl_commands()
-    WHERE command_tag IN ('CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO')
-      AND object_type IN ('table','partitioned table')
-  LOOP
-     IF cmd.schema_name IS NOT NULL AND cmd.schema_name IN ('public') AND cmd.schema_name NOT IN ('pg_catalog','information_schema') AND cmd.schema_name NOT LIKE 'pg_toast%' AND cmd.schema_name NOT LIKE 'pg_temp%' THEN
-      BEGIN
-        EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
-        RAISE LOG 'rls_auto_enable: enabled RLS on %', cmd.object_identity;
-      EXCEPTION
-        WHEN OTHERS THEN
-          RAISE LOG 'rls_auto_enable: failed to enable RLS on %', cmd.object_identity;
-      END;
-     ELSE
-        RAISE LOG 'rls_auto_enable: skip % (either system schema or not in enforced list: %.)', cmd.object_identity, cmd.schema_name;
-     END IF;
-  END LOOP;
-END;
-$$;
 
 
 --
@@ -401,6 +367,8 @@ CREATE TABLE public.opportunity_item (
     updated_at timestamp with time zone DEFAULT now(),
     created_by uuid,
     updated_by uuid,
+    line_type character varying(20) DEFAULT 'PRODUCT'::character varying NOT NULL,
+    CONSTRAINT ck_opportunity_item_line_type CHECK (((line_type)::text = ANY ((ARRAY['PRODUCT'::character varying, 'BUYBACK'::character varying])::text[]))),
     CONSTRAINT opportunity_item_quantity_check CHECK ((quantity > 0))
 );
 
@@ -468,7 +436,9 @@ CREATE TABLE public.product (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     created_by uuid,
-    updated_by uuid
+    updated_by uuid,
+    product_type character varying(20) DEFAULT 'NEW_EQUIPMENT'::character varying NOT NULL,
+    CONSTRAINT ck_product_product_type CHECK (((product_type)::text = ANY ((ARRAY['NEW_EQUIPMENT'::character varying, 'REFURBISHED'::character varying, 'ACCESSORY'::character varying])::text[])))
 );
 
 
@@ -799,7 +769,7 @@ ALTER TABLE ONLY public.opportunity_item
 --
 
 ALTER TABLE ONLY public.opportunity_item
-    ADD CONSTRAINT opportunity_item_unique UNIQUE (opportunity_id, product_id);
+    ADD CONSTRAINT opportunity_item_unique UNIQUE (opportunity_id, product_id, line_type);
 
 
 --
@@ -2034,5 +2004,4 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pJLngytR2BGVcuYoMZ70S9iqh8en6G12lOy3bchDMmUD3rGZIaNkpTQwRuENcSs
 

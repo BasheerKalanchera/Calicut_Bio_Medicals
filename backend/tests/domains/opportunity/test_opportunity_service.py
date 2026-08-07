@@ -159,6 +159,9 @@ def _make_repo(**overrides) -> MagicMock:
     # Same default for BR-OP-11 -- any referenced product is assumed to be in the
     # opportunity's own SBU unless a test overrides this to exercise the rejection.
     repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
+    # Same default for BR-CAT-02 -- any product referenced by a Buyback line is
+    # assumed REFURBISHED unless a test overrides this to exercise the rejection.
+    repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
     for k, v in overrides.items():
         setattr(repo, k, v)
     return repo
@@ -773,6 +776,88 @@ class TestReplaceItems:
         assert new_items[0].product_id == PRODUCT_ID
         assert new_items[0].quantity == 2
         assert new_items[0].created_by == USER_ID
+
+    def test_line_type_defaults_to_product(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        service = OpportunityService(repository=repo)
+
+        data = ItemsBulkUpdate(items=[
+            OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00")),
+        ])
+        service.replace_items(OPP_ID, data, updated_by=USER_ID)
+
+        new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
+        assert new_items[0].line_type == "PRODUCT"
+
+    def test_buyback_line_constructed_for_refurbished_product(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
+        service = OpportunityService(repository=repo)
+
+        data = ItemsBulkUpdate(items=[
+            OpportunityItemCreate(
+                product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+            ),
+        ])
+        service.replace_items(OPP_ID, data, updated_by=USER_ID)
+
+        new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
+        assert new_items[0].line_type == "BUYBACK"
+
+    def test_buyback_line_rejected_for_non_refurbished_product(self):
+        # BR-CAT-02: a Buyback line's product must be catalogued REFURBISHED.
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "NEW_EQUIPMENT")
+        service = OpportunityService(repository=repo)
+
+        data = ItemsBulkUpdate(items=[
+            OpportunityItemCreate(
+                product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+            ),
+        ])
+
+        with pytest.raises(BusinessRuleViolation, match="REFURBISHED"):
+            service.replace_items(OPP_ID, data, updated_by=USER_ID)
+
+        repo.replace_items.assert_not_called()
+
+
+# ===========================================================================
+# add_item
+# ===========================================================================
+
+class TestAddItem:
+    def test_buyback_line_constructed_for_refurbished_product(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
+        repo.add_item.side_effect = lambda item: item
+        service = OpportunityService(repository=repo)
+
+        data = OpportunityItemCreate(
+            product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+        )
+        result = service.add_item(OPP_ID, data, created_by=USER_ID)
+
+        assert result.line_type == "BUYBACK"
+
+    def test_buyback_line_rejected_for_non_refurbished_product(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()
+        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "NEW_EQUIPMENT")
+        service = OpportunityService(repository=repo)
+
+        data = OpportunityItemCreate(
+            product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+        )
+
+        with pytest.raises(BusinessRuleViolation, match="REFURBISHED"):
+            service.add_item(OPP_ID, data, created_by=USER_ID)
+
+        repo.add_item.assert_not_called()
 
 
 # ===========================================================================

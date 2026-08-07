@@ -1,7 +1,14 @@
 import uuid
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
+
+
+class ProductType(StrEnum):
+    NEW_EQUIPMENT = "NEW_EQUIPMENT"
+    REFURBISHED = "REFURBISHED"
+    ACCESSORY = "ACCESSORY"
 
 
 class ProductCreate(BaseModel):
@@ -11,6 +18,7 @@ class ProductCreate(BaseModel):
     model_number: str | None = None
     category_name: str | None = None
     description: str | None = None
+    product_type: ProductType = ProductType.NEW_EQUIPMENT
 
 
 class ProductUpdate(BaseModel):
@@ -20,6 +28,7 @@ class ProductUpdate(BaseModel):
     model_number: str | None = None
     category_name: str | None = None
     description: str | None = None
+    product_type: ProductType | None = None
 
 
 class SBUNested(BaseModel):
@@ -38,6 +47,7 @@ class ProductListResponse(BaseModel):
     oem_name: str | None
     model_number: str | None
     category_name: str | None
+    product_type: str
     is_active: bool | None
     sbu: SBUNested
 
@@ -52,6 +62,7 @@ class ProductResponse(BaseModel):
     model_number: str | None
     category_name: str | None
     description: str | None
+    product_type: str
     is_active: bool | None
     created_at: datetime
     updated_at: datetime

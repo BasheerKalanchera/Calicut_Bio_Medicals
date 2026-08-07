@@ -1,12 +1,13 @@
 # Multi-Zone User Assignment — Technical Design
 
-**Status:** Draft — ready for review. Two of §8's three open decisions are now
-resolved (multi-zone opened to all roles; Split-picker question moot). One
-remains — territory naming/reporting (§8, item 3) — before implementation
+**Status:** All three §8 decisions resolved — core multi-zone assignment
+(§§3–6) ready to plan/build. §7's Target/Coverage Planning work still has one
+separate open question (`target_plan.zone_id` nullability) before that part
 starts.
 **Prepared:** 2026-08-07. **Updated:** 2026-08-07 — added §7 (Target & Coverage
 Planning quota scoping, confirmed with Haroon); resolved §5/§8 Split-picker
-question and §8 role-scope question.
+question, §8 role-scope question, and §8 territory-naming question (raw zone
+list, no named `territory` entity — see §8, item 3).
 
 ## 1. Context
 
@@ -259,9 +260,14 @@ Specific calls needed:
 2. ~~Split-picker "same zone" semantics~~ — **resolved, see §5**: moot once
    Issue 2 ships, since that removes the zone check from this picker
    entirely.
-3. Does a multi-zone Area Manager's territory need to be named/reported as a
-   unit (e.g., "Fazal's territory = North Kerala + Mangalore" surfaced
-   somewhere), or is the raw zone list sufficient?
+3. ~~Does a multi-zone Area Manager's territory need to be named/reported as
+   a unit~~ — **resolved 2026-08-07: raw zone list is sufficient, no named
+   `territory` entity.** Basheer's call: Fazal's case is isolated (one
+   person, two zones), and his targets are already set and reported per zone
+   independently, not as a combined figure — so there's no reporting need
+   the raw list doesn't already serve. Revisit only if a second multi-zone
+   case surfaces where leadership wants to reason about territories as
+   named, reusable units rather than "this person's list of zones."
 
 ## 9. Testing
 

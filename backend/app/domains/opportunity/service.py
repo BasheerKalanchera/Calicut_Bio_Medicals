@@ -13,6 +13,7 @@ from app.domains.opportunity.schemas import (
     ItemsBulkUpdate,
     OpportunityCreate,
     OpportunityItemCreate,
+    OpportunityItemLineType,
     OpportunityUpdate,
     SplitsBulkUpdate,
     StakeholderLinkCreate,
@@ -281,6 +282,7 @@ class OpportunityService:
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
         self._validate_item_sbus(opportunity.sbu_id, {data.product_id})
+        self._validate_buyback_products([data])
         return self._create_item(opportunity_id, data, created_by=created_by)
 
     def delete_item(self, item_id: uuid.UUID) -> None:
@@ -300,6 +302,7 @@ class OpportunityService:
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
         self._validate_item_sbus(opportunity.sbu_id, {item.product_id for item in data.items})
+        self._validate_buyback_products(data.items)
 
         new_items = [
             OpportunityItem(
@@ -308,6 +311,7 @@ class OpportunityService:
                 quantity=item.quantity,
                 unit_price_lakhs=item.unit_price_lakhs,
                 discount_lakhs=item.discount_lakhs,
+                line_type=item.line_type,
                 created_by=updated_by,
                 updated_by=updated_by,
             )
@@ -493,6 +497,24 @@ class OpportunityService:
                     "products must belong to the same SBU as the Opportunity."
                 )
 
+    def _validate_buyback_products(
+        self, items: list[OpportunityItemCreate]
+    ) -> None:
+        # BR-CAT-02: a Buyback line's product must already be catalogued as
+        # REFURBISHED (docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md).
+        buyback_product_ids = {
+            item.product_id for item in items if item.line_type == OpportunityItemLineType.BUYBACK
+        }
+        if not buyback_product_ids:
+            return
+        type_by_product = self.repository.get_product_types(buyback_product_ids)
+        for product_id in buyback_product_ids:
+            if type_by_product.get(product_id) != "REFURBISHED":
+                raise BusinessRuleViolation(
+                    f"Product {product_id} is not REFURBISHED; only REFURBISHED "
+                    "products can be added as a Buyback line item."
+                )
+
     def _create_item(
         self,
         opportunity_id: uuid.UUID,
@@ -506,6 +528,7 @@ class OpportunityService:
             quantity=data.quantity,
             unit_price_lakhs=data.unit_price_lakhs,
             discount_lakhs=data.discount_lakhs,
+            line_type=data.line_type,
             created_by=created_by,
             updated_by=created_by,
         )
