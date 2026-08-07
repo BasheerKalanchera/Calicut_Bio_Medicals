@@ -394,3 +394,42 @@ during these remaining migrations — §6.6/§6.8 are living documents.
      deferred until volume justifies it.
   4. `product_type`/`condition` value naming (`EQUIPMENT`/`ACCESSORY`,
      `NEW`/`REFURBISHED`) — working names, revisitable.
+  **Update 2026-08-06:** the buyback/GST question (item 2) came up again in
+  leadership discussion — still unresolved, no new input yet from whoever
+  handles Cabio's invoicing. Not stalled/forgotten, just still blocked on
+  that same open question.
+- **New product line onboarding (e.g., Cardiology) — not yet conceptualized.**
+  Raised in leadership discussion, 2026-08-05. Cabio is considering adding
+  entirely new departments/specialties beyond the current two SBUs (Imaging,
+  Critical Care). Open question not yet scoped: does a new line like
+  Cardiology become a third `SBU`, or a `category_name` within an existing
+  SBU's product catalog — the two have very different implications (RLS
+  tier scoping, target planning, zone/team assignment all key off `sbu_id`).
+  No design work started; needs scoping before it's actionable.
+- **Account Manager concept — relationship ownership distinct from
+  Opportunity ownership — not yet conceptualized.** Raised in leadership
+  discussion, 2026-08-05. Idea: a named Account Manager owns the overall
+  relationship with a customer (hospital), responsible for mining further
+  business there, as distinct from whoever owns a given Opportunity at that
+  account. Today `Account` has no owner concept at all — only Opportunities
+  have an `owner_id`. **Basheer's explicit call: this needs to be
+  conceptualized and presented to Haroon and Latheef Bhai before any
+  implementation work starts** — not a build item yet, don't design ahead of
+  that conversation.
+  **Update 2026-08-06:** this isn't starting from a blank page — the PRD
+  already specifies it. §6.3 "Account Manager Assignment" and §6.3A "Customer
+  Ownership Management" call for an optional "Primary Account Manager" per
+  customer account, explicitly noted to "coexist with product-category
+  ownership" (a separate, also-unbuilt PRD concept). Full analysis in
+  `docs/Discussion-Strategic-Growth-Topics-2026-08.md` §2 — worth bringing to
+  the Haroon/Latheef conversation as a starting point.
+- **New lines of business — geography expansion via joint venture partners —
+  not yet conceptualized.** Raised in leadership discussion, 2026-08-05.
+  Cabio is considering partnering with a third party to sell Cabio's
+  products in a new geography as a joint venture. Open question: how would
+  that kind of expansion be represented in the system — a new `Zone`, a
+  different `SBU`, a distinct owning entity/tenant, or something else
+  entirely — given the current model assumes Cabio is the single selling
+  entity throughout. No design work started; likely the largest-scope item
+  of the four raised in this meeting, worth scoping carefully before
+  committing to a data-model direction.

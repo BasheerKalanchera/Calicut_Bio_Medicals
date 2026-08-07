@@ -5,9 +5,22 @@ _Session: 2026-08-05_
 
 **Issues 1 and 3 are shipped and verified on UAT by Basheer/Star Sales team.** A
 Kanban pill/column centering bug found during that UAT smoke test is also fixed and
-verified on UAT (below). **Issue 2 is fully decided, ready to build — next thing to
-pick up.** The new product-lifecycle item is still discussion/design work awaiting
-leadership follow-through.
+verified on UAT (below). **2026-08-07 — `main` pushed to `uat` (fast-forward,
+`ef9bc96`→`7a3c8d7`), including the Daily Activity Report and the tzdata fix; both
+`origin/main` and `origin/uat` now at `7a3c8d7`.** Report confirmed visible and working
+on UAT by Basheer (a brief post-deploy PWA/cache lag resolved itself). Issue 2 is fully
+decided and is next up.
+
+**2026-08-07 — new zone `Mangalore` added to Dev and UAT `zone` tables** (plain
+lookup-table insert, same precedent as the `REPEAT_ORDER` rename — no schema/code
+change). Reference docs synced to match: `CLAUDE.md`'s zone list, `docs/Seed-Data.sql`
+(new row, id `...900000000005`), and a staleness note added to both
+`docs/Opportunity-Access-Hierarchy-Technical-Design.md` and
+`docs/Opportunity-Access-Hierarchy-Proposal.md` (both cited "4 zones" as supporting
+context; not rewritten, just flagged, since they're dated decision records). Confirmed
+first this wasn't the JV-partner-geography question flagged at the 2026-08-05
+leadership meeting — Basheer confirmed it's a plain direct-sales zone, same model as
+the existing 4.
 
 **Issue 1 — Fast-track opportunity creation (REPEAT_ORDER) — DONE and on `uat`,
 commit `32c94ad` (merged 2026-08-06, fast-forward from `main`).** New `REPEAT_ORDER`
@@ -48,6 +61,39 @@ relative geometry, immune to ancestor positioning), used for both the column and
 bar centering. Verified on Dev and UAT — laptop (all 6 stage pills) and mobile
 (`Mobile-Demo.html`) both center correctly now.
 
+**2026-08-06 — Daily Activity Report, commit `8fd7ff4` (on `main` only, not yet on
+`uat`).** New cross-team screen (`GET /activities`) so a manager can see who logged
+what activity on a given day without opening every account/opportunity individually —
+Haroon's ask, immediate need, no open product questions unlike Issue 2. Checked
+against the PRD first: no existing report matches this (closest is the aggregate
+"Rep/Team Activity Levels" dashboard metric, not a browsable log). Access scoped via
+the existing 6-tier role hierarchy (reused `organization/repository.py`'s
+`UNRESTRICTED_ROLES`/`TEAM_SCOPE_BUILDERS`, promoted from private to shared) rather
+than an Admin/GM-only allowlist — every role sees an appropriately-scoped slice (self,
+direct reports, SBU+zone, SBU, or everyone). Full design in
+`docs/Daily-Activity-Report-Technical-Design.md`. Backend 428 tests passing (23 new),
+`tsc --noEmit`/lint clean. Manually verified on Dev, including a live-refresh gap
+found during that verification: `LogActivityModal`/`CloseReminderModal` weren't
+invalidating the report's query, so new activity needed a hard refresh to appear —
+fixed, same commit. **Deliberately not pushed to `uat` yet** — Basheer wants to do
+that tomorrow morning, not tonight.
+**2026-08-06 (later) — tzdata Windows dependency fix, commit `7a3c8d7`.** Basheer hit
+`ZoneInfoNotFoundError: 'No time zone found with key Asia/Kolkata'` starting the
+backend locally — `zoneinfo` (added for this report's IST date handling) relies on
+the OS's IANA tz database, which Windows doesn't ship, unlike Linux/Mac. My own
+earlier verification missed this because it ran against an environment that happened
+to have `tzdata` already installed globally, not a clean project `.venv` — worth
+remembering: test dependency changes in a clean venv, not whatever's already on
+hand. Added `tzdata>=2024.1; sys_platform == 'win32'` to `pyproject.toml`'s
+dependencies — confirmed via `docs/Deployment-Topology.md` that this is a no-op on
+UAT/Prod (Render, Linux), which already has its own tz database. Backend now starts
+cleanly on Basheer's machine after `pip install -e ".[dev]"`.
+**Considered and deferred, not decided against:** a date-range view (vs. today's
+single-day-at-a-time). Backend's day range is already computed from a `[start, end)`
+window internally, so extending to a real range later is a small, contained change,
+not a rearchitecture — deferred until real usage shows Haroon actually wants it,
+rather than speculatively building it now.
+
 **Issue 2 — Split participant picker / cross-SBU contribution — DECIDED 2026-08-05,
 ready to build.** Full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
 (v6). Three parts, all decided:
@@ -72,9 +118,9 @@ math over net (post-trade-in) value, GST/invoicing treatment of trade-ins (needs
 from whoever handles Cabio's invoicing), whether `BR-OP-01`'s gate flexibility should
 extend to accessory/refurbished sales too, and `product_type`/`condition` naming.
 
-**Immediate next step (tomorrow):** plan and implement Issue 2 — same
-explore-then-plan-then-build flow used for Issue 1. Product-lifecycle item stays
-parked until its four open questions are answered.
+**Immediate next step:** plan and implement Issue 2 — same explore-then-plan-then-build
+flow used for Issue 1. Product-lifecycle item stays parked until its four open
+questions are answered.
 
 **Immediately prior work (2026-08-05, earlier this session), resolved/shipped — full
 detail in `docs/Progress-Archive-2026-08.md`'s 2026-08-05 entry:**

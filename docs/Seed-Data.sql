@@ -111,5 +111,6 @@ INSERT INTO zone (id, name, description) VALUES
 ('99999999-9999-9999-9999-900000000001', 'North Kerala', 'North Kerala Zone'),
 ('99999999-9999-9999-9999-900000000002', 'South Kerala', 'South Kerala Zone'),
 ('99999999-9999-9999-9999-900000000003', 'Central Kerala', 'Central Kerala Zone'),
-('99999999-9999-9999-9999-900000000004', 'Bangalore', 'Bangalore Zone')
+('99999999-9999-9999-9999-900000000004', 'Bangalore', 'Bangalore Zone'),
+('99999999-9999-9999-9999-900000000005', 'Mangalore', 'Mangalore Zone')
 ON CONFLICT (name) DO NOTHING;

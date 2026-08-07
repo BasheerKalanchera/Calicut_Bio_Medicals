@@ -78,6 +78,10 @@ Kerala, Central Kerala, **and Bangalore.**
 > Note: `CLAUDE.md`'s "Zones: North Kerala, South Kerala, Central Kerala" list is stale, missing
 > Bangalore. Small doc fix, unrelated to this design.
 
+> **2026-08-07 update:** a 5th zone, Mangalore, was added to Dev and UAT. The design point
+> above (Area = the `zone` table) is unaffected — this is just a note that the row count is
+> now stale too.
+
 Area Manager's region scope keys off `user_profile.zone_id` (already exists, nullable) — no new
 column needed. **Confirmed with Basheer (2026-07-25): `zone_id` is the right mechanism, no
 alternative geography concept required.** The column existing is not the same as it being

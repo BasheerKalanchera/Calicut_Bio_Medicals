@@ -37,6 +37,9 @@ confirm before it gets built.
 Central Kerala, Bangalore). We're not introducing a new geography — just
 using the regions already in the system.
 
+> **2026-08-07 update:** a 5th region, Mangalore, has since been added. Same
+> mechanism applies — no change to this proposal.
+
 ---
 
 ## 3. A Naming Note
@@ -91,9 +94,9 @@ effect as the team grows into the new structure.
 ## 7. Decisions Needed From Leadership
 
 1. **Does each Area Manager's territory line up exactly with one region**
-   (North Kerala, South Kerala, Central Kerala, Bangalore)? Or could a
-   territory span parts of more than one region, or be shared between more
-   than one Area Manager?
+   (North Kerala, South Kerala, Central Kerala, Bangalore, Mangalore)? Or
+   could a territory span parts of more than one region, or be shared
+   between more than one Area Manager?
 2. **Is "SBU Manager" the right title** for the renamed role, or would you
    prefer something else (e.g. "Divisional Manager," "Business Unit Head")?
 3. **Is the roughly one-year timeline** for growing into this structure
