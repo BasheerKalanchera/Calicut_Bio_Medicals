@@ -99,17 +99,21 @@ is co-ownership, so neither should be forced through the split mechanism.
 
 ## 3. The model — three ways contribution is recognized
 
-### 3.1 Split — same-SBU, any-zone — DECIDED
+### 3.1 Split — same-SBU, any-zone — DECIDED, SHIPPED 2026-08-07
 
 Drop only the zone filter. A user can be suggested as a split participant if they're in
 the same SBU as the opportunity, regardless of which zone they're in. Cross-SBU stays
 blocked, unchanged.
 
 Matches the backend rule (`BR-FIN-06`) exactly — the picker stops being narrower than
-what the server will actually accept. Zero backend, schema, or RLS change. Doesn't
-reopen ADR-037. Implementation: swap the Split picker's `listUsers()` call from
-`scope="sbu_zone"` to a same-SBU-any-zone scope (`organization/repository.py`,
-`master_data.py`).
+what the server will actually accept. No schema or RLS change. Doesn't reopen ADR-037.
+**Implementation, as actually built:** no existing scope did "same SBU, any zone"
+regardless of caller role, so `organization/repository.py`'s `scope="sbu_zone"` branch
+(same SBU + same zone) was renamed to `scope="sbu"` and had its zone condition dropped
+— a small backend change, not zero as originally scoped here, since the exemption
+turned out to need a distinct scope value rather than reusing one. `master_data.py`'s
+query-param pattern and the frontend (`masterData.ts`, `OpportunityDetailScreen.tsx`'s
+Splits tab) updated to match.
 
 ### 3.2 Referral credit — a one-time fact, decoupled from split — DECIDED
 

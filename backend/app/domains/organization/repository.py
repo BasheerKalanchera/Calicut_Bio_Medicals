@@ -36,29 +36,28 @@ class UserRepository(BaseRepository[UserProfile]):
         stmt = select(UserProfile).where(UserProfile.is_active == True)  # noqa: E712
 
         # Three pickers, three different eligibility rules:
-        #   "all"      -- Next Action assignee (Business-Rules.md BR-ACT-06): any active
-        #                  user, any SBU/zone. The permanent cabio_app_assigned_reminder()
-        #                  RLS carve-out grants visibility *after* assignment, so
-        #                  eligibility isn't gated here.
-        #   "sbu_zone" -- Split participant (BR-FIN-06): same SBU + zone as the caller
-        #                  (interim rule per ADR-037; revisit if a real cross-zone need
-        #                  surfaces).
-        #   "scoped"   -- Opportunity Owner (re)assignment: caller's own tier-visibility
-        #                  scope (the 2026-07-28 fix), unchanged.
+        #   "all" -- Next Action assignee (Business-Rules.md BR-ACT-06): any active
+        #            user, any SBU/zone. The permanent cabio_app_assigned_reminder()
+        #            RLS carve-out grants visibility *after* assignment, so
+        #            eligibility isn't gated here.
+        #   "sbu" -- Split participant (BR-FIN-06): same SBU as the caller, any zone.
+        #            Matches the server-side rule exactly (Issue 2 SS3.1,
+        #            Discussion-SplitParticipant-SBU-Scope.md) -- previously also
+        #            required matching zone, which was narrower than what
+        #            replace_splits actually accepts.
+        #   "scoped" -- Opportunity Owner (re)assignment: caller's own tier-visibility
+        #               scope (the 2026-07-28 fix), unchanged.
         if scope == "all":
             pass
-        elif scope == "sbu_zone":
+        elif scope == "sbu":
             from app.domains.reference.models import Role
 
             self_row = UserProfile.id == current_user.id
-            same_sbu_zone = and_(
-                UserProfile.sbu_id == current_user.sbu_id,
-                UserProfile.zone_id == current_user.zone_id,
-            )
+            same_sbu = UserProfile.sbu_id == current_user.sbu_id
             not_unrestricted = UserProfile.role_id.not_in(
                 select(Role.id).where(Role.role_name.in_(UNRESTRICTED_ROLES))
             )
-            stmt = stmt.where(and_(not_unrestricted, or_(same_sbu_zone, self_row)))
+            stmt = stmt.where(and_(not_unrestricted, or_(same_sbu, self_row)))
         elif current_user.role.role_name not in UNRESTRICTED_ROLES:
             from app.domains.reference.models import Role
 

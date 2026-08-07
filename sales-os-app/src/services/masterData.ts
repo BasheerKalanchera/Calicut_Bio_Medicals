@@ -31,7 +31,7 @@ export async function listLeadSources(): Promise<unknown> {
   return response.data.data;
 }
 
-export async function listUsers(scope: "scoped" | "sbu_zone" | "all" = "scoped"): Promise<UserListResponse[]> {
+export async function listUsers(scope: "scoped" | "sbu" | "all" = "scoped"): Promise<UserListResponse[]> {
   const response = await api.get(`/users?page_size=100&scope=${scope}`);
   return response.data.data.items;
 }

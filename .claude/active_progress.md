@@ -95,12 +95,17 @@ not a rearchitecture — deferred until real usage shows Haroon actually wants i
 rather than speculatively building it now.
 
 **Issue 2 — Split participant picker / cross-SBU contribution — DECIDED 2026-08-05,
-ready to build.** Full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
-(v6). Three parts, all decided:
-1. Split stays same-SBU-any-zone — swap the picker's `listUsers()` scope from
-   `sbu_zone` to a same-SBU-any-zone scope. No backend change.
+partially shipped.** Full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
+(v6). Three parts:
+1. **Split stays same-SBU-any-zone — SHIPPED 2026-08-07.** Picker's
+   `listUsers()` scope renamed `sbu_zone` → `sbu`, zone check dropped
+   (`organization/repository.py`, `master_data.py`, `masterData.ts`,
+   `OpportunityDetailScreen.tsx`'s Splits tab). Turned out to need a small
+   backend change (new scope name), not zero as originally scoped. Backend
+   tests updated and passing; `tsc --noEmit` clean. **Not yet committed.**
 2. Referral credit — new `referred_by_user_id` on Opportunity, any SBU/zone
    (reuses the existing `scope="all"` picker), one-time, no revenue/visibility impact.
+   **Still to build.**
 3. Relationship-support activity — self-reported `Activity` logged against the
    Account with a structured `opportunity_id` link (`activity_type =
    RELATIONSHIP_SUPPORT`). Needs one new Postgres function

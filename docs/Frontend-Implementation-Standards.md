@@ -130,7 +130,7 @@ The ref-guarded seeding subtlety this pattern needs when the seed data is a *dra
 | Stages / Opp statuses / Lead sources | `["stages"]` / `["statuses"]` / `["leadSources"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx`, `OpportunityPipelineScreen.tsx`, `QuickLeadModal.tsx` |
 | Hold / Loss reasons | `["holdReasons"]` / `["lossReasons"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx` (both screens' Edit Opportunity modal + Overview display) |
 | Opportunity Owner picker (tier-scoped) | `["users", "all"]` | `QuickLeadModal.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`'s Edit Opportunity modal, `OpportunityPipelineScreen.tsx`'s owner filter |
-| Split participant picker (`scope=sbu_zone`, BR-FIN-06) | `["users", "sbu_zone"]` | `OpportunityDetailScreen.tsx`'s Splits tab |
+| Split participant picker (`scope=sbu`, BR-FIN-06) | `["users", "sbu"]` | `OpportunityDetailScreen.tsx`'s Splits tab |
 | Next Action assignee picker (`scope=all`, BR-ACT-06) | `["users", "assignable"]` | `LogActivityModal.tsx` |
 | Products | `["products", "picker", sbuId]` | `QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx` |
 | Opportunity items | `["opp-items", <opportunityId>]` | `OpportunityDetailScreen.tsx`'s Products tab, same opportunity |

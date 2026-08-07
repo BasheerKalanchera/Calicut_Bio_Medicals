@@ -548,10 +548,10 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
   const [saveError, setSaveError]   = useState<string | null>(null);
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users", "sbu_zone"],
+    queryKey: ["users", "sbu"],
     enabled:  editing,
     queryFn:  async () => {
-      const d = await listUsers("sbu_zone");
+      const d = await listUsers("sbu");
       return Array.isArray(d) ? (d as UserOption[]) : [];
     },
   });

@@ -304,10 +304,12 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   out to bundle three separate needs, each resolved on its own terms with
   Haroon — full record in `docs/Discussion-SplitParticipant-SBU-Scope.md`
   (v6):
-  1. **Split stays same-SBU, any-zone.** Cross-SBU splits remain
-     deliberately disallowed (ADR-037/`BR-FIN-06`) — not reopened. Fix:
-     swap the picker's `listUsers()` scope from `sbu_zone` to a same-SBU-
-     any-zone scope. No backend change.
+  1. **Split stays same-SBU, any-zone — SHIPPED 2026-08-07.** Cross-SBU
+     splits remain deliberately disallowed (ADR-037/`BR-FIN-06`) — not
+     reopened. The picker's `listUsers()` scope was renamed from
+     `sbu_zone` to `sbu` and its zone check dropped (small backend change,
+     see `Discussion-SplitParticipant-SBU-Scope.md` SS3.1 for why "no
+     backend change" turned out not to hold).
   2. **Referral credit** — new `referred_by_user_id` on Opportunity, any
      SBU/zone (reuses the existing `scope="all"` picker), one-time, no
      revenue/visibility impact.
@@ -433,3 +435,24 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   entity throughout. No design work started; likely the largest-scope item
   of the four raised in this meeting, worth scoping carefully before
   committing to a data-model direction.
+- **Multi-zone user assignment — technical design drafted, blocked on a
+  leadership decision.** Raised 2026-08-07: Fazal (Area Manager, Imaging)
+  needs to cover both North Kerala and the new Mangalore zone, but
+  `user_profile.zone_id` is single-valued today — schema, RLS, and Python
+  scoping all assume exactly one zone per user. Full design in
+  `docs/Multi-Zone-Assignment-Technical-Design.md`: a new `user_zone` join
+  table, an RLS rewrite of the Area Manager tier's zone check, and two
+  backend scope-builder rewrites. Immediate stopgap in place (promoted Fazal
+  to SBU Manager, safe only because Imaging has no SBU Manager yet — a
+  one-time trick, not a repeatable fix). Resolves the same open question
+  already logged in `Opportunity-Access-Hierarchy-Proposal.md` decision item
+  #1 ("could a territory span more than one region"). Don't start building
+  until that's answered — see the design doc §8 for the specific calls
+  needed.
+  **Update 2026-08-07:** confirmed with Haroon — Fazal is evaluated against
+  **two independent zone quotas**, not one combined number split for
+  visibility. This pulls Target/Coverage Planning into scope too (design
+  doc §7): `target_plan`/`coverage_plan` need `zone_id` added and their
+  unique constraints widened. Turns out lower-risk than it sounds — neither
+  Target nor Coverage Planning has any backend/frontend implementation today
+  (schema-only), so this is new-build work, not a retrofit.
