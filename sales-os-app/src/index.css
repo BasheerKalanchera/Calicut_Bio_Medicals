@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+/* Tailwind v4 gates hover:/group-hover: behind @media (hover: hover) by default,
+   to avoid sticky-hover on touch devices. This app's dev/test machines report
+   (hover: none) even when driven by a mouse/trackpad (Windows touchscreen
+   laptops commonly do), which made every Tailwind hover utility inert while
+   MUI's ungated `&:hover` sx rules kept working -- the exact mismatch reported
+   comparing Account Management/Project Directory (Tailwind) against Pipeline/
+   Product Catalog (MUI). Redefining `hover` back to a plain :hover selector
+   restores parity with MUI and matches Tailwind v3's behavior. */
+@custom-variant hover (&:hover);

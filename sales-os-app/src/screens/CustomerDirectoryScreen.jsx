@@ -321,10 +321,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
               <div
                 key={account.id}
                 onClick={() => onSelectAccount(account)}
-                className="bg-white py-3 px-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                className="bg-white py-3 px-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-blue-400 hover:shadow-[0_4px_6px_rgba(0,0,0,0.07)] transition-all group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-10 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center font-black text-sm shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
+                  <div className="w-9 h-9 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
                     {account.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -373,7 +373,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
                   </div>
                 </div>
                 <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-blue-50 transition-colors">
-                  <svg className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="w-[18px] h-[18px] text-gray-400 group-hover:text-blue-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </div>
