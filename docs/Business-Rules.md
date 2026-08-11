@@ -159,9 +159,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ### BR-CAT-02: Product Classification (2026-08-07)
 * **Rule:** Every Product carries a `product_type` of `NEW_EQUIPMENT`, `REFURBISHED`, or `ACCESSORY` (default `NEW_EQUIPMENT`), independent of `category_name` (modality — CT, MRI, Ventilation, etc., unchanged).
-* **Rule:** A Product must have `product_type = REFURBISHED` to be selectable as a Buyback line item on an Opportunity (see BR-FIN-03). Cataloguing a product as `REFURBISHED` is a prerequisite step, done independently of any specific Opportunity — the Buyback picker never creates a catalog entry on the fly.
-* **Rationale:** Supports three real scenarios: outright sale of refurbished equipment (e.g. hospitals preferring a refurbished Thoracic/heart-lung machine over new), a Buyback credit line that nets against a new-equipment sale, and accessory sales — see `docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md`.
+* **Rationale:** Supports outright sale of refurbished equipment (e.g. hospitals preferring a refurbished Thoracic/heart-lung machine over new) and accessory sales as distinct catalog categories from new equipment — see `docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md`. (Buyback line items are governed separately — see BR-CAT-03.)
 * **Enforcement:** `ck_product_product_type` CHECK constraint (migration `0016`).
+
+### BR-CAT-03: Buyback Line Items Are Free-Text (2026-08-10)
+* **Rule:** A Buyback line item on an Opportunity carries a free-text `description` of the customer's traded-in machine and no catalog `product_id`. PRODUCT/ACCESSORY line items are unaffected — they still require a catalog `product_id` and carry no `description`.
+* **Rationale:** Nobody knows the exact make/model/condition of a customer's used machine before the deal happens, so requiring it to be pre-catalogued as a `REFURBISHED` Product (the prior rule) didn't fit how trade-ins actually occur — see `docs/Discussion-Buyback-Freetext-And-Intake-2026-08.md`.
+* **Enforcement:** `OpportunityItemCreate` schema `model_validator` (description required when `line_type = BUYBACK`, `product_id` required otherwise) plus the relaxed `ck_opportunity_item_product_id_or_buyback` CHECK constraint (migration `0017`) — DB-level enforcement only requires `product_id IS NOT NULL OR line_type = 'BUYBACK'`, not `description IS NOT NULL`, since that's a new-write-only rule.
+* **Out of scope:** a separate post-close trade-in intake tracking workflow (refurbish / parts / discard) is still under discussion, not yet planned or built. The one settled fact so far: an intake queue row would be created only when the deal reaches Won, not when the Buyback line is added.
 
 ---
 
@@ -190,7 +195,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Mode 1 — Indicative Value (no items present):** When no Opportunity Items exist, the `indicative_value` field (manually entered by the sales executive) serves as the working pipeline estimate.
 * **Mode 2 — Calculated Value (items present):** When one or more Opportunity Items exist, the system-calculated value becomes authoritative.
   * `Extended Value = Quantity × Unit Price – Discount`
-  * Every Opportunity Item carries a `line_type` of `PRODUCT` or `BUYBACK` (default `PRODUCT`; see BR-CAT-02).
+  * Every Opportunity Item carries a `line_type` of `PRODUCT` or `BUYBACK` (default `PRODUCT`; see BR-CAT-02). BUYBACK lines carry a free-text `description` instead of a catalog `product_id` (BR-CAT-03) — this does not change the formula below.
   * `Opportunity Value = Sum(Extended Value, line_type=PRODUCT) − Sum(Extended Value, line_type=BUYBACK)` **(amended 2026-08-07)** — a Buyback credit line nets against the gross product total rather than adding to it.
 * **Constraint:** When Opportunity Items exist, the calculated value cannot be manually overridden. `indicative_value` is retained in the record but is not used for pipeline or forecast calculations.
 * **Validation:** When items exist, Opportunity Value must equal the total value of all active Opportunity Items, netted per the formula above.

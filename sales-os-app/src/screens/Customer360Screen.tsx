@@ -62,6 +62,10 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
+import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
+import OpportunityItemsList from "../components/OpportunityItemsList";
+import type { DraftOpportunityItem } from "../types/opportunityItems";
+import { itemsTotal } from "../utils/opportunityItems";
 
 interface Props {
   accountId: string;
@@ -514,52 +518,6 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit, onSelectOpportunity }:
   );
 }
 
-// Hoisted to module scope (was previously redefined inline on every Customer360Screen
-// render as a `const` component) -- that made it a new component *type* each render,
-// so React remounted its TextFields instead of reconciling them, dropping focus on
-// every keystroke.
-function OppItemAddRow({ products, prodId, setProdId, qty, setQty, price, setPrice, disc, setDisc, items, setItems, error, setError }: any) {
-  return (
-    <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5, display: "flex", flexDirection: "column", gap: 1 }}>
-      <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
-        Add Product
-      </Typography>
-      <TextField
-        select
-        value={prodId}
-        onChange={(e: any) => { setProdId(e.target.value); setError(null); }}
-        fullWidth
-        size="small"
-        slotProps={{ select: { displayEmpty: true } }}
-      >
-        <MenuItem value="">Select product</MenuItem>
-        {products.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-      </TextField>
-      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-        <TextField label="Qty" type="number" size="small" value={qty} onChange={(e: any) => { setQty(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }} sx={{ width: "5rem" }} />
-        <TextField label="Price (₹L)" type="number" size="small" value={price} onChange={(e: any) => { setPrice(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
-        <TextField label="Disc (₹L)" type="number" size="small" value={disc} onChange={(e: any) => { setDisc(e.target.value); setError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }} sx={{ width: "7.5rem" }} />
-      </Box>
-      {error && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{error}</Alert>}
-      <Button
-        type="button"
-        fullWidth
-        onClick={() => {
-          if (!prodId) { setError("Select a product"); return; }
-          if (Number(qty) <= 0) { setError("Quantity must be greater than 0"); return; }
-          if (Number(price) <= 0) { setError("Price must be greater than 0"); return; }
-          setError(null);
-          const prod: any = products.find((p: any) => p.id === prodId);
-          setItems([...items, { product_id: prodId, product_name: prod?.name || "", quantity: Number(qty), unit_price_lakhs: Number(price), discount_lakhs: Number(disc || 0) }]);
-          setProdId(""); setQty("1"); setPrice("0"); setDisc("0");
-        }}
-        sx={{ py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
-      >
-        + Add Product
-      </Button>
-    </Box>
-  );
-}
 
 function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () => void; onEdit: (a: any) => void }) {
   return (
@@ -782,12 +740,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newODemoEnd, setNewODemoEnd] = useState("");
   const [newOClosureDate, setNewOClosureDate] = useState("");
   const [newOPoNumber, setNewOPoNumber] = useState("");
-  const [newOItems, setNewOItems] = useState<any[]>([]);
-  const [newOItemProdId, setNewOItemProdId] = useState("");
-  const [newOItemQty, setNewOItemQty] = useState("1");
-  const [newOItemPrice, setNewOItemPrice] = useState("0");
-  const [newOItemDisc, setNewOItemDisc] = useState("0");
-  const [newOItemError, setNewOItemError] = useState<string | null>(null);
+  const [newOItems, setNewOItems] = useState<DraftOpportunityItem[]>([]);
   const [editingOpp, setEditingOpp] = useState<any | null>(null);
   const [showEditOppItems, setShowEditOppItems] = useState(false);
   const [editOName, setEditOName] = useState("");
@@ -798,13 +751,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editOOwnerId, setEditOOwnerId] = useState("");
   const [editOWinProb, setEditOWinProb] = useState("");
   const [editOValue, setEditOValue] = useState("");
-  const [editOItems, setEditOItems] = useState<any[]>([]);
+  const [editOItems, setEditOItems] = useState<DraftOpportunityItem[]>([]);
   const [editOOriginalItemIds, setEditOOriginalItemIds] = useState<string[]>([]);
-  const [editOItemProdId, setEditOItemProdId] = useState("");
-  const [editOItemQty, setEditOItemQty] = useState("1");
-  const [editOItemPrice, setEditOItemPrice] = useState("0");
-  const [editOItemDisc, setEditOItemDisc] = useState("0");
-  const [editOItemError, setEditOItemError] = useState<string | null>(null);
   // Status-gated fields (BR-OP-02/03/05). Prefilled from o.* in openEditOpp — the
   // by-account opportunities list response now includes them (WorkspaceOpportunity).
   // Hold/Loss fields are still only sent when the effective status is ON_HOLD/LOST
@@ -926,7 +874,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (oppItemsData === undefined) return;
     if (seededOppIdRef.current === editingOpp.id) return;
     seededOppIdRef.current = editingOpp.id;
-    const mapped = oppItemsData.map((i: any) => ({ id: i.id, product_id: i.product_id, product_name: i.product?.name || "", quantity: i.quantity, unit_price_lakhs: Number(i.unit_price_lakhs), discount_lakhs: Number(i.discount_lakhs) }));
+    const mapped = oppItemsData.map((i: any) => ({
+      id: i.id, product_id: i.product_id, product_name: i.product?.name, product_type: i.product?.product_type,
+      description: i.description, line_type: i.line_type,
+      quantity: i.quantity, unit_price_lakhs: Number(i.unit_price_lakhs), discount_lakhs: Number(i.discount_lakhs),
+    }));
     setEditOItems(mapped);
     setEditOOriginalItemIds(mapped.map((i: any) => i.id));
   }, [editingOpp, oppItemsData]);
@@ -950,13 +902,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // Auto-calc opportunity value from items
   useEffect(() => {
     if (newOItems.length > 0) {
-      setNewOValue(newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2));
+      setNewOValue(itemsTotal(newOItems).toFixed(2));
     } else { setNewOValue(""); }
   }, [newOItems]);
 
   useEffect(() => {
     if (editOItems.length > 0) {
-      setEditOValue(editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2));
+      setEditOValue(itemsTotal(editOItems).toFixed(2));
     }
   }, [editOItems]);
 
@@ -1127,7 +1079,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
-    setNewOItemProdId(""); setNewOItemQty("1"); setNewOItemPrice("0"); setNewOItemDisc("0"); setNewOItemError(null);
     setShowCreateOpp(true);
   };
 
@@ -1153,7 +1104,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newODemoEnd) payload.demo_end_date = newODemoEnd;
     if (newOClosureDate) payload.expected_closure_date = newOClosureDate;
     if (newOPoNumber.trim()) payload.po_number = newOPoNumber.trim();
-    if (newOItems.length > 0) payload.items = newOItems.map((i: any) => ({ product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }));
+    if (newOItems.length > 0) payload.items = newOItems.map((i) => ({ product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }));
     await createOpportunity(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
@@ -1167,7 +1118,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOWinProb(o.win_probability != null ? String(o.win_probability) : "");
     setEditOValue(o.indicative_value != null ? String(o.indicative_value) : "");
     setEditOItems([]); setEditOOriginalItemIds([]);
-    setEditOItemProdId(""); setEditOItemQty("1"); setEditOItemPrice("0"); setEditOItemDisc("0"); setEditOItemError(null);
     setEditOPoNumber(o.po_number || ""); setEditOHoldReasonId(o.hold_reason_id || "");
     setEditOReactivationDate(o.reactivation_date || ""); setEditOLossReasonId(o.loss_reason_id || "");
     setEditOCompetitorName(o.competitor_name || "");
@@ -1222,7 +1172,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     const toAdd = editOItems.filter((i: any) => !i.id);
     await Promise.all([
       ...toDelete.map((id) => deleteOpportunityItem(id as any).catch(() => { })),
-      ...toAdd.map((i: any) => addOpportunityItem(editingOpp.id, { product_id: i.product_id, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs }).catch(() => { })),
+      ...toAdd.map((i: any) => addOpportunityItem(editingOpp.id, { product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }).catch(() => { })),
     ]);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
     queryClient.invalidateQueries({ queryKey: ["opp-items", editingOpp.id] });
@@ -1550,53 +1500,21 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
               {newOItems.length > 0 ? `Edit (${newOItems.length})` : "+ Add Products"}
             </Button>
           </Box>
-          {newOItems.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-              {newOItems.map((i: any, idx: number) => (
-                <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
-                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.product_name}</Typography>
-                  <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</Typography>
-                </Box>
-              ))}
-              <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-                Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-              </Typography>
-            </Box>
-          ) : <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic" }}>No products added</Typography>}
+          <OpportunityItemsList items={newOItems} variant="summary" />
         </Box>
       </FormModal>
 
       <FormModal isOpen={showNewOppItems} onClose={() => setShowNewOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
-        {newOItems.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {newOItems.map((item: any, i: number) => (
-              <Box key={i} sx={{ px: 1.5, py: 1, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</Typography>
-                  <IconButton type="button" size="small" onClick={() => setNewOItems(newOItems.filter((_: any, j: number) => j !== i))} sx={{ ml: 1 }}>
-                    <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#f87171", "&:hover": { color: "#dc2626" } }}>×</Box>
-                  </IconButton>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                  {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <TextField
-                      key={key}
-                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
-                      type="number" size="small" value={item[key]}
-                      onChange={(e) => setNewOItems(newOItems.map((it: any, j: number) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
-                      slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-              Total: ₹{newOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-            </Typography>
-          </Box>
-        )}
-        <OppItemAddRow products={products} prodId={newOItemProdId} setProdId={setNewOItemProdId} qty={newOItemQty} setQty={setNewOItemQty} price={newOItemPrice} setPrice={setNewOItemPrice} disc={newOItemDisc} setDisc={setNewOItemDisc} items={newOItems} setItems={setNewOItems} error={newOItemError} setError={setNewOItemError} />
+        <OpportunityItemsList
+          items={newOItems}
+          variant="editable"
+          emptyMessage="No products added"
+          onRemove={(i) => setNewOItems(newOItems.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setNewOItems(newOItems.map((it, j) => j === i ? { ...it, [field]: value } : it))}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <OpportunityItemAddRow products={products} onAdd={(item) => setNewOItems([...newOItems, item])} />
+        </Box>
       </FormModal>
 
       {/* Edit Opportunity */}
@@ -1676,53 +1594,28 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
               {editOItems.length > 0 ? `Edit (${editOItems.length})` : "+ Add Products"}
             </Button>
           </Box>
-          {editOItems.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-              {editOItems.map((i: any, idx: number) => (
-                <Box key={idx} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
-                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{i.product_name}</Typography>
-                  <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>{i.quantity}×₹{i.unit_price_lakhs}L{i.discount_lakhs > 0 ? ` −₹${i.discount_lakhs}L` : ""}</Typography>
-                </Box>
-              ))}
-              <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-                Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-              </Typography>
-            </Box>
-          ) : <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic" }}>No products added</Typography>}
+          <OpportunityItemsList items={editOItems} variant="summary" />
         </Box>
       </FormModal>
 
       <FormModal isOpen={showEditOppItems} onClose={() => setShowEditOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
-        {editOItems.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {editOItems.map((item: any, i: number) => (
-              <Box key={i} sx={{ px: 1.5, py: 1, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.product_name}</Typography>
-                  <IconButton type="button" size="small" onClick={() => setEditOItems(editOItems.filter((_: any, j: number) => j !== i))} sx={{ ml: 1 }}>
-                    <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#f87171", "&:hover": { color: "#dc2626" } }}>×</Box>
-                  </IconButton>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                  {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <TextField
-                      key={key}
-                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
-                      type="number" size="small" value={item[key]}
-                      onChange={(e) => { const { id: _id, ...rest } = item; setEditOItems(editOItems.map((it: any, j: number) => j === i ? { ...rest, [key]: Number(e.target.value) } : it)); }}
-                      slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-              Total: ₹{editOItems.reduce((s: number, i: any) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-            </Typography>
-          </Box>
-        )}
-        <OppItemAddRow products={products} prodId={editOItemProdId} setProdId={setEditOItemProdId} qty={editOItemQty} setQty={setEditOItemQty} price={editOItemPrice} setPrice={setEditOItemPrice} disc={editOItemDisc} setDisc={setEditOItemDisc} items={editOItems} setItems={setEditOItems} error={editOItemError} setError={setEditOItemError} />
+        <OpportunityItemsList
+          items={editOItems}
+          variant="editable"
+          emptyMessage="No products added"
+          onRemove={(i) => setEditOItems(editOItems.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setEditOItems(editOItems.map((it, j) => {
+            if (j !== i) return it;
+            // Dropping `id` forces handleUpdateOpp's diffing to treat an edited
+            // pre-existing row as delete-old + add-new (there's no single-item
+            // PATCH endpoint) -- same technique the pre-extraction code used.
+            const { id: _id, ...rest } = it;
+            return { ...rest, [field]: value };
+          }))}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <OpportunityItemAddRow products={products} onAdd={(item) => setEditOItems([...editOItems, item])} />
+        </Box>
       </FormModal>
 
       {/* Create Asset */}

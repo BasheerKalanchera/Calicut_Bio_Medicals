@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Box, Button, IconButton, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
+import OpportunityItemAddRow from "./OpportunityItemAddRow";
+import OpportunityItemsList from "./OpportunityItemsList";
 import { listAccounts, listProjects, createOpportunity } from "../services/accounts";
 import { listProducts } from "../services/products";
 import { listStages, listStatuses, listUsers, listLeadSources, listSbus } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
+import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
+import { itemsTotal } from "../utils/opportunityItems";
 
 interface QuickLeadModalProps {
   isOpen: boolean;
@@ -22,17 +26,8 @@ interface ProjectOption { id: string; name: string }
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: number }
 interface StatusOption { id: string; status_name: string }
 interface UserOption { id: string; display_name: string }
-interface ProductOption { id: string; name: string }
 interface LeadSourceOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
-
-interface LineItem {
-  product_id: string;
-  product_name: string;
-  quantity: number;
-  unit_price_lakhs: number;
-  discount_lakhs: number;
-}
 
 export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
@@ -57,13 +52,8 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   const effectiveSbuId = (isSbuOverrideRole && sbuOverrideId) ? sbuOverrideId : sbuId;
 
-  const [items, setItems]                   = useState<LineItem[]>([]);
+  const [items, setItems]                   = useState<DraftOpportunityItem[]>([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
-  const [itemProdId, setItemProdId]         = useState("");
-  const [itemQty, setItemQty]               = useState("1");
-  const [itemPrice, setItemPrice]           = useState("0");
-  const [itemDisc, setItemDisc]             = useState("0");
-  const [addItemError, setAddItemError]     = useState<string | null>(null);
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts", "picker"],
@@ -127,8 +117,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   useEffect(() => {
     if (items.length > 0) {
-      const total = items.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
-      setValue(total.toFixed(2));
+      setValue(itemsTotal(items).toFixed(2));
     } else {
       setValue("");
     }
@@ -139,8 +128,6 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
     setAccountId(""); setProjectId("");
     setName(""); setSbuOverrideId(""); setStageId(""); setStatusId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
-    setItemProdId(""); setItemQty("1"); setItemPrice("0"); setItemDisc("0");
-    setAddItemError(null);
     setLeadSourceId("");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
   }, [isOpen]);
@@ -176,15 +163,16 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
     if (poNumber.trim()) payload.po_number = poNumber.trim();
     if (items.length > 0) payload.items = items.map((i) => ({
       product_id: i.product_id,
+      description: i.description,
       quantity: i.quantity,
       unit_price_lakhs: i.unit_price_lakhs,
       discount_lakhs: i.discount_lakhs,
+      line_type: i.line_type,
     }));
     await createOpportunity(accountId as any, payload);
     onCreated?.();
   }
 
-  const itemsTotal = items.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
   const leadSourceCode = leadSources.find((ls) => ls.id === leadSourceId)?.name;
@@ -343,136 +331,21 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
               {items.length > 0 ? `Edit (${items.length})` : "+ Add Products"}
             </Button>
           </Box>
-          {items.length > 0 ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-              {items.map((item, i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem" }}>
-                  <Typography sx={{ flex: 1, fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.product_name}
-                  </Typography>
-                  <Typography sx={{ color: "#9ca3af", fontSize: "inherit", flexShrink: 0 }}>
-                    {item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}
-                  </Typography>
-                </Box>
-              ))}
-              <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-                Total: ₹{itemsTotal.toFixed(2)}L
-              </Typography>
-            </Box>
-          ) : (
-            <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic" }}>
-              No products added
-            </Typography>
-          )}
+          <OpportunityItemsList items={items} variant="summary" />
         </Box>
       </FormModal>
 
       {/* Products secondary modal */}
       <FormModal isOpen={showItemsModal} onClose={() => setShowItemsModal(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
-        {items.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {items.map((item, i) => (
-              <Box key={i} sx={{ px: 1.5, py: 1, bgcolor: "#f9fafb", borderRadius: "0.75rem", fontSize: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: "inherit", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.product_name}
-                  </Typography>
-                  <IconButton
-                    type="button"
-                    size="small"
-                    onClick={() => setItems(items.filter((_, j) => j !== i))}
-                    sx={{ ml: 1 }}
-                  >
-                    <Box component="span" sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#f87171", "&:hover": { color: "#dc2626" } }}>×</Box>
-                  </IconButton>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                  <TextField
-                    label="Qty" type="number" size="small" value={item.quantity}
-                    onChange={(e) => setItems(items.map((it, j) => j === i ? { ...it, quantity: Number(e.target.value) } : it))}
-                    slotProps={{ htmlInput: { min: 1 } }}
-                    sx={{ width: "5rem", "& .MuiOutlinedInput-root": { backgroundColor: "#fff" } }}
-                  />
-                  <TextField
-                    label="Price (₹L)" type="number" size="small" value={item.unit_price_lakhs}
-                    onChange={(e) => setItems(items.map((it, j) => j === i ? { ...it, unit_price_lakhs: Number(e.target.value) } : it))}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                    sx={{ width: "7.5rem", "& .MuiOutlinedInput-root": { backgroundColor: "#fff" } }}
-                  />
-                  <TextField
-                    label="Disc (₹L)" type="number" size="small" value={item.discount_lakhs}
-                    onChange={(e) => setItems(items.map((it, j) => j === i ? { ...it, discount_lakhs: Number(e.target.value) } : it))}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                    sx={{ width: "7.5rem", "& .MuiOutlinedInput-root": { backgroundColor: "#fff" } }}
-                  />
-                </Box>
-              </Box>
-            ))}
-            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", pr: 0.5 }}>
-              Total: ₹{itemsTotal.toFixed(2)}L
-            </Typography>
-          </Box>
-        )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem", display: "flex", flexDirection: "column", gap: 1 }}>
-          <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em", mb: 1 }}>
-            Add Product
-          </Typography>
-          <TextField
-            select
-            value={itemProdId}
-            onChange={(e) => { setItemProdId(e.target.value); setAddItemError(null); }}
-            fullWidth
-            size="small"
-            slotProps={{ select: { displayEmpty: true } }}
-          >
-            <MenuItem value="">Select product</MenuItem>
-            {products.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-          </TextField>
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: 1.5 }}>
-            <TextField
-              label="Qty" type="number" size="small" value={itemQty}
-              onChange={(e) => { setItemQty(e.target.value); setAddItemError(null); }}
-              slotProps={{ htmlInput: { min: 1 }, inputLabel: { shrink: true } }}
-              sx={{ width: "5rem" }}
-            />
-            <TextField
-              label="Price (₹L)" type="number" size="small" value={itemPrice}
-              onChange={(e) => { setItemPrice(e.target.value); setAddItemError(null); }}
-              slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-              sx={{ width: "7.5rem" }}
-            />
-            <TextField
-              label="Disc (₹L)" type="number" size="small" value={itemDisc}
-              onChange={(e) => { setItemDisc(e.target.value); setAddItemError(null); }}
-              slotProps={{ htmlInput: { min: 0, step: "any" }, inputLabel: { shrink: true } }}
-              sx={{ width: "7.5rem" }}
-            />
-          </Box>
-          {addItemError && (
-            <Alert severity="error" sx={{ fontSize: "0.75rem" }}>
-              {addItemError}
-            </Alert>
-          )}
-          <Button
-            type="button"
-            fullWidth
-            onClick={() => {
-              if (!itemProdId) { setAddItemError("Select a product"); return; }
-              if (Number(itemQty) <= 0) { setAddItemError("Quantity must be greater than 0"); return; }
-              if (Number(itemPrice) <= 0) { setAddItemError("Price must be greater than 0"); return; }
-              setAddItemError(null);
-              const prod = products.find((p) => p.id === itemProdId);
-              setItems([...items, { product_id: itemProdId, product_name: prod?.name || "", quantity: Number(itemQty), unit_price_lakhs: Number(itemPrice), discount_lakhs: Number(itemDisc || 0) }]);
-              setItemProdId(""); setItemQty("1"); setItemPrice("0"); setItemDisc("0");
-            }}
-            sx={{
-              py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
-              textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff",
-              "&:hover": { bgcolor: "#dbeafe" },
-            }}
-          >
-            + Add Product
-          </Button>
+        <OpportunityItemsList
+          items={items}
+          variant="editable"
+          emptyMessage="No products added"
+          onRemove={(i) => setItems(items.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setItems(items.map((it, j) => j === i ? { ...it, [field]: value } : it))}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <OpportunityItemAddRow products={products} onAdd={(item) => setItems([...items, item])} />
         </Box>
       </FormModal>
     </>

@@ -150,15 +150,23 @@ class OpportunityItem(AuditMixin, Base):
         UniqueConstraint("opportunity_id", "product_id", "line_type", name="opportunity_item_unique"),
         CheckConstraint("quantity > 0", name="ck_opportunity_item_quantity"),
         CheckConstraint("line_type IN ('PRODUCT', 'BUYBACK')", name="ck_opportunity_item_line_type"),
+        CheckConstraint(
+            "product_id IS NOT NULL OR line_type = 'BUYBACK'",
+            name="ck_opportunity_item_product_id_or_buyback",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     opportunity_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("opportunity.id"), nullable=False
     )
-    product_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("product.id"), nullable=False
+    product_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("product.id"), nullable=True
     )
+    # BUYBACK lines carry a free-text description of the customer's traded-in machine
+    # instead of a catalog product_id (BR-CAT-03) -- nobody knows the exact make/model/
+    # condition of a trade-in ahead of the deal.
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     discount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False, server_default="0")
@@ -171,4 +179,4 @@ class OpportunityItem(AuditMixin, Base):
     line_type: Mapped[str] = mapped_column(String(20), nullable=False, server_default="PRODUCT")
 
     opportunity: Mapped["Opportunity"] = relationship(back_populates="items", lazy="joined")
-    product: Mapped["Product"] = relationship(back_populates="opportunity_items", lazy="joined")
+    product: Mapped["Product | None"] = relationship(back_populates="opportunity_items", lazy="joined")

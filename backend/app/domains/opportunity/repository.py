@@ -247,14 +247,6 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         ).all()
         return {row.id: row.sbu_id for row in rows}
 
-    def get_product_types(self, product_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
-        if not product_ids:
-            return {}
-        rows = self.db.execute(
-            select(Product.id, Product.product_type).where(Product.id.in_(product_ids))
-        ).all()
-        return {row.id: row.product_type for row in rows}
-
     def replace_splits(
         self, opportunity_id: uuid.UUID, new_splits: list[Split]
     ) -> list[Split]:

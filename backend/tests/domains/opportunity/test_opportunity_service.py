@@ -14,6 +14,7 @@ from decimal import Decimal
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.exceptions import (
     AuthorizationError,
@@ -159,9 +160,6 @@ def _make_repo(**overrides) -> MagicMock:
     # Same default for BR-OP-11 -- any referenced product is assumed to be in the
     # opportunity's own SBU unless a test overrides this to exercise the rejection.
     repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
-    # Same default for BR-CAT-02 -- any product referenced by a Buyback line is
-    # assumed REFURBISHED unless a test overrides this to exercise the rejection.
-    repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
     for k, v in overrides.items():
         setattr(repo, k, v)
     return repo
@@ -790,39 +788,27 @@ class TestReplaceItems:
         new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
         assert new_items[0].line_type == "PRODUCT"
 
-    def test_buyback_line_constructed_for_refurbished_product(self):
+    def test_buyback_line_constructed_with_description(self):
+        # BR-CAT-03: a Buyback line carries a free-text description instead of a
+        # catalog product_id.
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
         service = OpportunityService(repository=repo)
 
         data = ItemsBulkUpdate(items=[
             OpportunityItemCreate(
-                product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+                description="GE LOGIQ P9 ultrasound, 2018, working condition",
+                quantity=1,
+                unit_price_lakhs=Decimal("5.00"),
+                line_type="BUYBACK",
             ),
         ])
         service.replace_items(OPP_ID, data, updated_by=USER_ID)
 
         new_items: list[OpportunityItem] = repo.replace_items.call_args[0][1]
         assert new_items[0].line_type == "BUYBACK"
-
-    def test_buyback_line_rejected_for_non_refurbished_product(self):
-        # BR-CAT-02: a Buyback line's product must be catalogued REFURBISHED.
-        repo = _make_repo()
-        repo.get_for_update.return_value = _make_opportunity()
-        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "NEW_EQUIPMENT")
-        service = OpportunityService(repository=repo)
-
-        data = ItemsBulkUpdate(items=[
-            OpportunityItemCreate(
-                product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
-            ),
-        ])
-
-        with pytest.raises(BusinessRuleViolation, match="REFURBISHED"):
-            service.replace_items(OPP_ID, data, updated_by=USER_ID)
-
-        repo.replace_items.assert_not_called()
+        assert new_items[0].product_id is None
+        assert new_items[0].description == "GE LOGIQ P9 ultrasound, 2018, working condition"
 
 
 # ===========================================================================
@@ -830,34 +816,41 @@ class TestReplaceItems:
 # ===========================================================================
 
 class TestAddItem:
-    def test_buyback_line_constructed_for_refurbished_product(self):
+    def test_buyback_line_constructed_with_description(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "REFURBISHED")
         repo.add_item.side_effect = lambda item: item
         service = OpportunityService(repository=repo)
 
         data = OpportunityItemCreate(
-            product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+            description="GE LOGIQ P9 ultrasound, 2018, working condition",
+            quantity=1,
+            unit_price_lakhs=Decimal("5.00"),
+            line_type="BUYBACK",
         )
         result = service.add_item(OPP_ID, data, created_by=USER_ID)
 
         assert result.line_type == "BUYBACK"
+        assert result.product_id is None
+        assert result.description == "GE LOGIQ P9 ultrasound, 2018, working condition"
 
-    def test_buyback_line_rejected_for_non_refurbished_product(self):
-        repo = _make_repo()
-        repo.get_for_update.return_value = _make_opportunity()
-        repo.get_product_types.side_effect = lambda ids: dict.fromkeys(ids, "NEW_EQUIPMENT")
-        service = OpportunityService(repository=repo)
 
-        data = OpportunityItemCreate(
-            product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
-        )
+# ===========================================================================
+# OpportunityItemCreate schema validation (BR-CAT-03)
+# ===========================================================================
 
-        with pytest.raises(BusinessRuleViolation, match="REFURBISHED"):
-            service.add_item(OPP_ID, data, created_by=USER_ID)
+class TestOpportunityItemCreateValidation:
+    def test_buyback_without_description_rejected(self):
+        with pytest.raises(ValidationError, match="description is required"):
+            OpportunityItemCreate(
+                quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="BUYBACK"
+            )
 
-        repo.add_item.assert_not_called()
+    def test_product_without_product_id_rejected(self):
+        with pytest.raises(ValidationError, match="product_id is required"):
+            OpportunityItemCreate(
+                quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="PRODUCT"
+            )
 
 
 # ===========================================================================

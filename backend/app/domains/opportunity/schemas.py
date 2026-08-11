@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class OpportunityItemLineType(StrEnum):
@@ -84,24 +84,39 @@ class LeadSourceNested(BaseModel):
 # ------------------------------------------------------------------
 
 class OpportunityItemCreate(BaseModel):
-    product_id: uuid.UUID
+    product_id: uuid.UUID | None = None
+    description: str | None = None
     quantity: int = Field(..., gt=0)
     unit_price_lakhs: Decimal = Field(..., ge=0)
     discount_lakhs: Decimal = Field(Decimal("0"), ge=0)
     line_type: OpportunityItemLineType = OpportunityItemLineType.PRODUCT
+
+    @model_validator(mode="after")
+    def _check_product_or_description(self) -> "OpportunityItemCreate":
+        # A Buyback line carries a free-text description of the traded-in machine
+        # instead of a catalog Product reference; PRODUCT/ACCESSORY lines still
+        # require a catalog product_id. Same shape as
+        # InstalledAssetCreate.check_product_required (asset/schemas.py).
+        if self.line_type == OpportunityItemLineType.BUYBACK:
+            if not self.description or not self.description.strip():
+                raise ValueError("A description is required for a Buyback line item.")
+        elif self.product_id is None:
+            raise ValueError("product_id is required for a Product line item.")
+        return self
 
 
 class OpportunityItemResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    product_id: uuid.UUID
+    product_id: uuid.UUID | None
+    description: str | None
     quantity: int
     unit_price_lakhs: Decimal
     discount_lakhs: Decimal
     extended_value_lakhs: Decimal
     line_type: str
-    product: ProductNested
+    product: ProductNested | None
 
 
 class ItemsBulkUpdate(BaseModel):

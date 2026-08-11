@@ -13,7 +13,6 @@ from app.domains.opportunity.schemas import (
     ItemsBulkUpdate,
     OpportunityCreate,
     OpportunityItemCreate,
-    OpportunityItemLineType,
     OpportunityUpdate,
     SplitsBulkUpdate,
     StakeholderLinkCreate,
@@ -104,7 +103,9 @@ class OpportunityService:
                 "Only Admin and General Manager roles can create an Opportunity outside their own SBU"
             )
 
-        self._validate_item_sbus(target_sbu_id, {item.product_id for item in data.items})
+        self._validate_item_sbus(
+            target_sbu_id, {item.product_id for item in data.items if item.product_id is not None}
+        )
 
         new_stage = self.repository.get_stage(data.stage_id)
         if not new_stage:
@@ -281,8 +282,9 @@ class OpportunityService:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
-        self._validate_item_sbus(opportunity.sbu_id, {data.product_id})
-        self._validate_buyback_products([data])
+        self._validate_item_sbus(
+            opportunity.sbu_id, {data.product_id} if data.product_id is not None else set()
+        )
         return self._create_item(opportunity_id, data, created_by=created_by)
 
     def delete_item(self, item_id: uuid.UUID) -> None:
@@ -301,13 +303,15 @@ class OpportunityService:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
-        self._validate_item_sbus(opportunity.sbu_id, {item.product_id for item in data.items})
-        self._validate_buyback_products(data.items)
+        self._validate_item_sbus(
+            opportunity.sbu_id, {item.product_id for item in data.items if item.product_id is not None}
+        )
 
         new_items = [
             OpportunityItem(
                 opportunity_id=opportunity_id,
                 product_id=item.product_id,
+                description=item.description,
                 quantity=item.quantity,
                 unit_price_lakhs=item.unit_price_lakhs,
                 discount_lakhs=item.discount_lakhs,
@@ -497,24 +501,6 @@ class OpportunityService:
                     "products must belong to the same SBU as the Opportunity."
                 )
 
-    def _validate_buyback_products(
-        self, items: list[OpportunityItemCreate]
-    ) -> None:
-        # BR-CAT-02: a Buyback line's product must already be catalogued as
-        # REFURBISHED (docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md).
-        buyback_product_ids = {
-            item.product_id for item in items if item.line_type == OpportunityItemLineType.BUYBACK
-        }
-        if not buyback_product_ids:
-            return
-        type_by_product = self.repository.get_product_types(buyback_product_ids)
-        for product_id in buyback_product_ids:
-            if type_by_product.get(product_id) != "REFURBISHED":
-                raise BusinessRuleViolation(
-                    f"Product {product_id} is not REFURBISHED; only REFURBISHED "
-                    "products can be added as a Buyback line item."
-                )
-
     def _create_item(
         self,
         opportunity_id: uuid.UUID,
@@ -525,6 +511,7 @@ class OpportunityService:
         item = OpportunityItem(
             opportunity_id=opportunity_id,
             product_id=data.product_id,
+            description=data.description,
             quantity=data.quantity,
             unit_price_lakhs=data.unit_price_lakhs,
             discount_lakhs=data.discount_lakhs,

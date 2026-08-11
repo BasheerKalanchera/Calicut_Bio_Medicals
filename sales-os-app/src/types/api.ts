@@ -1707,11 +1707,10 @@ export interface components {
         };
         /** OpportunityItemCreate */
         OpportunityItemCreate: {
-            /**
-             * Product Id
-             * Format: uuid
-             */
-            product_id: string;
+            /** Product Id */
+            product_id?: string | null;
+            /** Description */
+            description?: string | null;
             /** Quantity */
             quantity: number;
             /** Unit Price Lakhs */
@@ -1736,11 +1735,10 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /**
-             * Product Id
-             * Format: uuid
-             */
-            product_id: string;
+            /** Product Id */
+            product_id: string | null;
+            /** Description */
+            description: string | null;
             /** Quantity */
             quantity: number;
             /** Unit Price Lakhs */
@@ -1751,7 +1749,7 @@ export interface components {
             extended_value_lakhs: string;
             /** Line Type */
             line_type: string;
-            product: components["schemas"]["app__domains__opportunity__schemas__ProductNested"];
+            product: components["schemas"]["app__domains__opportunity__schemas__ProductNested"] | null;
         };
         /** OpportunityNested */
         OpportunityNested: {

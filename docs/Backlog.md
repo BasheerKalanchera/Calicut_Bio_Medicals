@@ -411,6 +411,34 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   One narrower question remains open within §7 (Target/Coverage Planning's
   `target_plan.zone_id` nullability) — see the design doc, not tracked here
   since the core feature is unblocked.
+- **Document/photo upload on Opportunity (e.g. a PO).** Cabio sales staff
+  feedback, 2026-08-11. Backend already supports this — `Document`
+  (`backend/app/domains/document/models.py`) is polymorphic and already
+  accepts `opportunity_id` (its `chk_document_context` CHECK constraint lists
+  `account_id`/`project_id`/`opportunity_id`/`product_id`, any one of which
+  satisfies it), so no schema/migration work is needed. This is a pure
+  frontend gap: `OpportunityDetailScreen.tsx` has no Documents tab/upload UI
+  at all (confirmed via grep — zero references). The only existing upload UI
+  in the app today is `ProductCatalogScreen.tsx`'s collateral-link
+  upload/delete flow (`useMutation`, `services/documents.ts`) — that's the
+  precedent to follow, not a new pattern to invent. Not scoped further than
+  that yet — would need its own small design pass (what metadata to capture,
+  file-type/size limits, whether it's its own tab or folded into an existing
+  one) before building.
+- **Activity Notes field silently blocks multi-line entry — root cause
+  found, not yet fixed.** Cabio sales staff feedback, 2026-08-11 ("notes
+  field is not allowed to go the next line"). Confirmed root cause:
+  `FormModal.tsx`'s `<form onKeyDown>` handler (lines ~67-74) calls
+  `e.preventDefault()` on `Enter` for **both** `INPUT` and `TEXTAREA` tags —
+  clearly meant to stop a plain `<input>` from accidentally submitting the
+  form on Enter, but a MUI `multiline` `TextField` renders as a `TEXTAREA`
+  under the hood, so this also blocks it from ever inserting a newline.
+  `LogActivityModal.tsx`'s Notes field (`multiline rows={3}`, lines ~262-271)
+  is rendered inside `FormModal` and hits this directly. Likely a one-line
+  fix (drop `TEXTAREA` from the tag check, since native `<textarea>` Enter
+  behavior is what's wanted, unlike `<input>`) — small enough that it may be
+  worth fixing directly rather than staying parked here; flagged to Basheer,
+  his call on timing.
 - **Pipeline screen zone filter — proposed 2026-08-07, ready to build, no
   open questions.** Surfaced while discussing Multi-Zone Assignment:
   `OpportunityPipelineScreen.tsx` has no way to narrow the Kanban/list view

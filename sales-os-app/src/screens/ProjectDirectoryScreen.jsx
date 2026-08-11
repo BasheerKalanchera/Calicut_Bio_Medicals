@@ -5,7 +5,7 @@
    migrates (§9) — do not hand-fix individually, the rewrite removes the
    pattern that causes these. */
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, Button, MenuItem, TextField } from "@mui/material";
 import { listAllProjects } from "../services/projects";
 import { listAccounts, createProject, updateProject, listOpportunities, updateOpportunity, createOpportunity, listOpportunityItems, addOpportunityItem, deleteOpportunityItem } from "../services/accounts";
 import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listHoldReasons, listLossReasons } from "../services/masterData";
@@ -13,6 +13,9 @@ import { listProducts } from "../services/products";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
+import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
+import OpportunityItemsList from "../components/OpportunityItemsList";
+import { itemsTotal } from "../utils/opportunityItems";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 const CACHE_TTL_MS = 30_000;
@@ -55,10 +58,6 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   const [oppProducts, setOppProducts] = useState([]);
   const [editOppItems, setEditOppItems] = useState([]);
   const [editOppOriginalItemIds, setEditOppOriginalItemIds] = useState([]);
-  const [editOppItemProdId, setEditOppItemProdId] = useState("");
-  const [editOppItemQty, setEditOppItemQty] = useState("1");
-  const [editOppItemPrice, setEditOppItemPrice] = useState("");
-  const [editOppItemDisc, setEditOppItemDisc] = useState("0");
   const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
   const [leadSources, setLeadSources] = useState([]);
   const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
@@ -82,6 +81,8 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   const [addOppDemoEnd, setAddOppDemoEnd] = useState("");
   const [addOppClosureDate, setAddOppClosureDate] = useState("");
   const [addOppPoNumber, setAddOppPoNumber] = useState("");
+  const [addOppItems, setAddOppItems] = useState([]);
+  const [showAddOppItemsModal, setShowAddOppItemsModal] = useState(false);
 
   const loadOpps = () => {
     setOppsLoading(true);
@@ -97,10 +98,17 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
 
   useEffect(() => {
     if (editOppItems.length > 0) {
-      const total = editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0);
-      setEditOppValue(total.toFixed(2));
+      setEditOppValue(itemsTotal(editOppItems).toFixed(2));
     }
   }, [editOppItems]);
+
+  useEffect(() => {
+    if (addOppItems.length > 0) {
+      setAddOppValue(itemsTotal(addOppItems).toFixed(2));
+    } else {
+      setAddOppValue("");
+    }
+  }, [addOppItems]);
 
   async function openEditOpp(opp) {
     setEditingOpp(opp);
@@ -111,7 +119,6 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     setEditOppWinProb(String(opp.win_probability ?? ""));
     setEditOppValue(opp.indicative_value != null ? String(opp.indicative_value) : "");
     setEditOppItems([]); setEditOppOriginalItemIds([]);
-    setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
     setEditOppLeadSourceId(opp.lead_source_id || "");
     setEditOppPoNumber(opp.po_number || "");
     setEditOppHoldReasonId(opp.hold_reason_id || "");
@@ -130,7 +137,10 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
         const mapped = items.map((i) => ({
           id: i.id,
           product_id: i.product_id,
-          product_name: i.product?.name || "",
+          product_name: i.product?.name,
+          product_type: i.product?.product_type,
+          description: i.description,
+          line_type: i.line_type,
           quantity: i.quantity,
           unit_price_lakhs: Number(i.unit_price_lakhs),
           discount_lakhs: Number(i.discount_lakhs),
@@ -187,9 +197,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
       ...toDelete.map((id) => deleteOpportunityItem(id).catch(() => {})),
       ...toAdd.map((i) => addOpportunityItem(editingOpp.id, {
         product_id: i.product_id,
+        description: i.description,
         quantity: i.quantity,
         unit_price_lakhs: i.unit_price_lakhs,
         discount_lakhs: i.discount_lakhs,
+        line_type: i.line_type,
       }).catch(() => {})),
     ]);
     const all = await listOpportunities(p.account.id);
@@ -200,7 +212,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   async function openAddOpp() {
     setAddOppName(p.name);
     setAddOppStageId(""); setAddOppStatusId(""); setAddOppOwnerId("");
-    setAddOppWinProb(""); setAddOppValue("");
+    setAddOppWinProb(""); setAddOppValue(""); setAddOppItems([]);
     setAddOppLeadSourceId(""); setAddOppDemoStart(""); setAddOppDemoEnd("");
     setAddOppClosureDate(""); setAddOppPoNumber("");
     setShowAddOpp(true);
@@ -208,6 +220,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
       oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
       oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
       oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
+      oppProducts.length === 0 && listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setOppProducts(d.items || [])).catch(() => {}),
       leadSources.length === 0 && listLeadSources().then(setLeadSources).catch(() => {}),
     ]);
   }
@@ -232,6 +245,14 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     if (addOppDemoEnd) payload.demo_end_date = addOppDemoEnd;
     if (addOppClosureDate) payload.expected_closure_date = addOppClosureDate;
     if (addOppPoNumber.trim()) payload.po_number = addOppPoNumber.trim();
+    if (addOppItems.length > 0) payload.items = addOppItems.map((i) => ({
+      product_id: i.product_id,
+      description: i.description,
+      quantity: i.quantity,
+      unit_price_lakhs: i.unit_price_lakhs,
+      discount_lakhs: i.discount_lakhs,
+      line_type: i.line_type,
+    }));
     await createOpportunity(p.account.id, payload);
     const all = await listOpportunities(p.account.id);
     setOpps(all.filter((o) => o.project_id === p.id));
@@ -436,29 +457,19 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
             )}
           </Box>
         )}
-        <div className="border-t border-gray-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Products</div>
-            <button type="button" onClick={() => setShowEditOppItemsModal(true)} className="px-3 py-1.5 rounded-xl text-xs font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all uppercase tracking-wider shrink-0">
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Box>
+            <Button
+              type="button"
+              onClick={() => setShowEditOppItemsModal(true)}
+              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+            >
               {editOppItems.length > 0 ? `Edit (${editOppItems.length})` : "+ Add Products"}
-            </button>
-          </div>
-          {editOppItems.length > 0 ? (
-            <div className="space-y-1">
-              {editOppItems.map((item, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl text-xs">
-                  <div className="flex-1 font-bold truncate">{item.product_name}</div>
-                  <div className="text-gray-400 shrink-0">{item.quantity}×₹{item.unit_price_lakhs}L{item.discount_lakhs > 0 ? ` −₹${item.discount_lakhs}L` : ""}</div>
-                </div>
-              ))}
-              <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
-                Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-400 italic">No products added</div>
-          )}
-        </div>
+            </Button>
+          </Box>
+          <OpportunityItemsList items={editOppItems} variant="summary" />
+        </Box>
       </FormModal>
 
       {/* Add Opportunity Modal */}
@@ -542,10 +553,11 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           slotProps={{ htmlInput: { min: 0, max: 100 } }}
         />
         <TextField
-          label="Indicative Value (Lakhs)"
+          label={`Indicative Value (Lakhs)${addOppItems.length > 0 ? " (auto)" : ""}`}
           type="number"
           value={addOppValue}
           onChange={(e) => setAddOppValue(e.target.value)}
+          disabled={addOppItems.length > 0}
           placeholder="e.g. 25.50"
           fullWidth
           size="small"
@@ -559,6 +571,39 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           </>
         )}
         <TextField label="PO Number" value={addOppPoNumber} onChange={(e) => setAddOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Box>
+            <Button
+              type="button"
+              onClick={() => setShowAddOppItemsModal(true)}
+              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
+            >
+              {addOppItems.length > 0 ? `Edit (${addOppItems.length})` : "+ Add Products"}
+            </Button>
+          </Box>
+          <OpportunityItemsList items={addOppItems} variant="summary" />
+        </Box>
+      </FormModal>
+
+      {/* Add Opportunity — Products secondary modal */}
+      <FormModal
+        isOpen={showAddOppItemsModal}
+        onClose={() => setShowAddOppItemsModal(false)}
+        title="Products"
+        onSubmit={async () => {}}
+        submitLabel="Done"
+      >
+        <OpportunityItemsList
+          items={addOppItems}
+          variant="editable"
+          emptyMessage="No products added"
+          onRemove={(i) => setAddOppItems(addOppItems.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setAddOppItems(addOppItems.map((it, j) => j === i ? { ...it, [field]: value } : it))}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <OpportunityItemAddRow products={oppProducts} onAdd={(item) => setAddOppItems([...addOppItems, item])} />
+        </Box>
       </FormModal>
 
       {/* Edit Opportunity — Products secondary modal */}
@@ -569,64 +614,23 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
         onSubmit={async () => {}}
         submitLabel="Done"
       >
-        {editOppItems.length > 0 && (
-          <div className="space-y-2">
-            {editOppItems.map((item, i) => (
-              <div key={i} className="px-3 py-2 bg-gray-50 rounded-xl text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-bold truncate">{item.product_name}</div>
-                  <button type="button" onClick={() => setEditOppItems(editOppItems.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-600 font-black shrink-0 ml-2">×</button>
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-20">
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Qty</div>
-                    <input type="number" min="1" value={item.quantity} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, quantity: Number(e.target.value) } : it)); }} className={inputClass} />
-                  </div>
-                  <div className="w-20">
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Price (₹L)</div>
-                    <input type="number" min="0" step="any" value={item.unit_price_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, unit_price_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
-                  </div>
-                  <div className="w-20">
-                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">Disc (₹L)</div>
-                    <input type="number" min="0" step="any" value={item.discount_lakhs} onChange={(e) => { const { id, ...rest } = item; setEditOppItems(editOppItems.map((it, j) => j === i ? { ...rest, discount_lakhs: Number(e.target.value) } : it)); }} className={inputClass} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            <div className="text-right text-[10px] font-black text-gray-500 uppercase tracking-wider pr-1">
-              Total: ₹{editOppItems.reduce((s, i) => s + i.quantity * i.unit_price_lakhs - i.discount_lakhs, 0).toFixed(2)}L
-            </div>
-          </div>
-        )}
-        <div className="border-t border-gray-100 pt-3 space-y-2">
-          <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Add Product</div>
-          <select value={editOppItemProdId} onChange={(e) => setEditOppItemProdId(e.target.value)} className={inputClass}>
-            <option value="">Select product</option>
-            {oppProducts.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <div className="flex gap-2">
-            <div className="w-20">
-              <label className={labelClass}>Qty</label>
-              <input type="number" min="1" value={editOppItemQty} onChange={(e) => setEditOppItemQty(e.target.value)} className={inputClass} placeholder="e.g. 2" />
-            </div>
-            <div className="w-20">
-              <label className={labelClass}>Price (₹L)</label>
-              <input type="number" min="0" step="any" value={editOppItemPrice} onChange={(e) => setEditOppItemPrice(e.target.value)} className={inputClass} placeholder="e.g. 12.5" />
-            </div>
-            <div className="w-20">
-              <label className={labelClass}>Disc (₹L)</label>
-              <input type="number" min="0" step="any" value={editOppItemDisc} onChange={(e) => setEditOppItemDisc(e.target.value)} className={inputClass} placeholder="0" />
-            </div>
-          </div>
-          <button type="button" onClick={() => {
-            if (!editOppItemProdId || !editOppItemQty || !editOppItemPrice) return;
-            const prod = oppProducts.find((p) => p.id === editOppItemProdId);
-            setEditOppItems([...editOppItems, { product_id: editOppItemProdId, product_name: prod?.name || "", quantity: Number(editOppItemQty), unit_price_lakhs: Number(editOppItemPrice), discount_lakhs: Number(editOppItemDisc || 0) }]);
-            setEditOppItemProdId(""); setEditOppItemQty("1"); setEditOppItemPrice(""); setEditOppItemDisc("0");
-          }} className="w-full py-2 rounded-xl text-xs font-black text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all uppercase tracking-wider">
-            + Add Product
-          </button>
-        </div>
+        <OpportunityItemsList
+          items={editOppItems}
+          variant="editable"
+          emptyMessage="No products added"
+          onRemove={(i) => setEditOppItems(editOppItems.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setEditOppItems(editOppItems.map((it, j) => {
+            if (j !== i) return it;
+            // Dropping `id` forces handleUpdateOpp's diffing to treat an edited
+            // pre-existing row as delete-old + add-new (there's no single-item
+            // PATCH endpoint) -- same technique the pre-extraction code used.
+            const { id, ...rest } = it;
+            return { ...rest, [field]: value };
+          }))}
+        />
+        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
+          <OpportunityItemAddRow products={oppProducts} onAdd={(item) => setEditOppItems([...editOppItems, item])} />
+        </Box>
       </FormModal>
     </>
   );

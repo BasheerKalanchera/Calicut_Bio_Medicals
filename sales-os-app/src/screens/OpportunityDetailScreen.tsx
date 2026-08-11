@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
-  Autocomplete,
   Box,
   Button,
   Chip,
@@ -32,11 +31,15 @@ import { listActivitiesByOpportunity, listOpportunityReminders } from "../servic
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
 import { listProducts } from "../services/products";
 import type { PipelineOpportunity, PipelinePage } from "../types/api";
+import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
+import { itemsTotal } from "../utils/opportunityItems";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
 import ReminderRow from "../components/ReminderRow";
+import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
+import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
 
 interface Props {
@@ -70,7 +73,6 @@ type TabId = typeof TABS[number]["id"];
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: string }
 interface StatusOption { id: string; status_code: string; status_name: string; is_terminal?: boolean }
 interface UserOption { id: string; display_name: string }
-interface ProductOption { id: string; name: string; category_name: string | null; product_type: string }
 interface HoldReasonOption { id: string; reason_name: string }
 interface LossReasonOption { id: string; reason_name: string; reason_code: string }
 interface LeadSourceOption { id: string; name: string }
@@ -304,15 +306,9 @@ function ProductsTab({
   });
 
   const [editing, setEditing]     = useState(false);
-  const [editItems, setEditItems] = useState<any[]>([]);
-  const [addMode, setAddMode]     = useState<"product" | "accessory" | "buyback">("product");
-  const [addProdId, setAddProdId] = useState("");
-  const [addQty, setAddQty]       = useState("1");
-  const [addPrice, setAddPrice]   = useState("0");
-  const [addDisc, setAddDisc]     = useState("0");
+  const [editItems, setEditItems] = useState<DraftOpportunityItem[]>([]);
   const [saving, setSaving]       = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [addItemError, setAddItemError] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery({
     queryKey: ["products", "picker", sbuId],
@@ -323,56 +319,22 @@ function ProductsTab({
     },
   });
 
-  // BR-CAT-02: "Add Product" sells New Equipment or Refurbished stock outright;
-  // "Add Accessory" and "Buyback" are pre-filtered by product_type so the picker
-  // never needs a chip to disambiguate within those two modes.
-  const productModeOptions = products.filter((p) => p.product_type !== "ACCESSORY");
-  const accessoryModeOptions = products.filter((p) => p.product_type === "ACCESSORY");
-  const buybackModeOptions = products.filter((p) => p.product_type === "REFURBISHED");
-  const modeOptions =
-    addMode === "product" ? productModeOptions : addMode === "accessory" ? accessoryModeOptions : buybackModeOptions;
-
-  const switchAddMode = (mode: typeof addMode) => {
-    setAddMode(mode);
-    setAddProdId("");
-    setAddItemError(null);
-  };
-
   const openEdit = () => {
     setEditItems(
       (items ?? []).map((i) => ({
         product_id:        i.product_id,
-        product_name:      i.product.name,
-        product_type:      i.product.product_type,
-        line_type:         i.line_type,
+        product_name:      i.product?.name,
+        product_type:      i.product?.product_type,
+        description:       i.description,
+        line_type:         i.line_type as "PRODUCT" | "BUYBACK",
         quantity:          i.quantity,
         unit_price_lakhs:  parseFloat(i.unit_price_lakhs),
         discount_lakhs:    parseFloat(i.discount_lakhs),
       })),
     );
     setSaveError(null);
-    setAddMode("product");
     setEditing(true);
   };
-
-  const addItem = () => {
-    if (!addProdId) { setAddItemError("Select a product"); return; }
-    if (Number(addQty) <= 0) { setAddItemError("Quantity must be greater than 0"); return; }
-    if (Number(addPrice) <= 0) { setAddItemError("Price must be greater than 0"); return; }
-    setAddItemError(null);
-    const prod = products.find((p) => p.id === addProdId);
-    setEditItems([...editItems, {
-      product_id: addProdId, product_name: prod?.name || "", product_type: prod?.product_type,
-      line_type: addMode === "buyback" ? "BUYBACK" : "PRODUCT",
-      quantity: Number(addQty), unit_price_lakhs: Number(addPrice), discount_lakhs: Number(addDisc || 0),
-    }]);
-    setAddProdId(""); setAddQty("1"); setAddPrice("0"); setAddDisc("0");
-  };
-
-  // BR-FIN-03: Buyback lines net against Product/Accessory lines rather than
-  // adding to them.
-  const signedValue = (i: { line_type?: string; quantity: number; unit_price_lakhs: number; discount_lakhs: number }) =>
-    (i.line_type === "BUYBACK" ? -1 : 1) * (i.quantity * i.unit_price_lakhs - i.discount_lakhs);
 
   const saveItems = async () => {
     setSaving(true); setSaveError(null);
@@ -380,7 +342,7 @@ function ProductsTab({
       await replaceOpportunityItems(
         opportunityId,
         editItems.map((i) => ({
-          product_id: i.product_id, quantity: i.quantity,
+          product_id: i.product_id, description: i.description, quantity: i.quantity,
           unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs,
           line_type: i.line_type,
         })),
@@ -389,7 +351,7 @@ function ProductsTab({
       // BR-FIN-03 (dual-mode valuation): once items exist, the calculated
       // total becomes the authoritative value — same auto-sync rule already
       // implemented in QuickLeadModal.tsx's create flow.
-      const total = editItems.reduce((s, i) => s + signedValue(i), 0);
+      const total = itemsTotal(editItems);
       const newValue = editItems.length > 0 ? total.toFixed(2) : null;
       await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
       queryClient.invalidateQueries({ queryKey: ["pipeline"] });
@@ -405,7 +367,6 @@ function ProductsTab({
   if (isLoading) return <LoadingPlaceholder />;
 
   if (editing) {
-    const total = editItems.reduce((s, i) => s + signedValue(i), 0);
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -434,119 +395,15 @@ function ProductsTab({
 
         {saveError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{saveError}</Alert>}
 
-        {editItems.length > 0 ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {editItems.map((item, i) => (
-              <Box key={i} sx={{ bgcolor: item.line_type === "BUYBACK" ? "#fef2f2" : "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, overflow: "hidden" }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {item.product_name}
-                    </Typography>
-                    {item.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
-                    {item.line_type === "BUYBACK" && <Chip label="Buyback" size="small" color="error" />}
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => setEditItems(editItems.filter((_, j) => j !== i))}
-                    sx={{ color: "#f87171", "&:hover": { color: "#dc2626" }, ml: 1 }}
-                  >
-                    <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
-                  </IconButton>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-                  {(["quantity", "unit_price_lakhs", "discount_lakhs"] as const).map((key) => (
-                    <TextField
-                      key={key}
-                      label={key === "quantity" ? "Qty" : key === "unit_price_lakhs" ? "Price ₹L" : "Disc ₹L"}
-                      type="number"
-                      size="small"
-                      value={item[key]}
-                      onChange={(e) => setEditItems(editItems.map((it, j) => j === i ? { ...it, [key]: Number(e.target.value) } : it))}
-                      slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                      sx={{ width: key === "quantity" ? "5rem" : "7.5rem" }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
-            <Typography sx={{ textAlign: "right", fontSize: "10px", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              Total: ₹{total.toFixed(2)}L
-            </Typography>
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af", fontStyle: "italic", textAlign: "center", py: 2 }}>
-            No products — add one below
-          </Typography>
-        )}
+        <OpportunityItemsList
+          items={editItems}
+          variant="editable"
+          emptyMessage="No products — add one below"
+          onRemove={(i) => setEditItems(editItems.filter((_, j) => j !== i))}
+          onUpdateField={(i, field, value) => setEditItems(editItems.map((it, j) => j === i ? { ...it, [field]: value } : it))}
+        />
 
-        {/* Add row — 3 modes: Add Product (New Equipment + Refurbished, sold outright),
-            Add Accessory, Buyback (Refurbished-only, subtracted — BR-CAT-02/BR-FIN-03) */}
-        <Box sx={{ bgcolor: "#fff", p: 1.5, borderRadius: "1rem", border: "1px solid #f3f4f6", display: "flex", flexDirection: "column", gap: 1 }}>
-          <ToggleButtonGroup
-            value={addMode}
-            exclusive
-            onChange={(_e, newMode) => { if (newMode) switchAddMode(newMode); }}
-            size="small"
-            fullWidth
-          >
-            <ToggleButton value="product" sx={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "none" }}>Add Product</ToggleButton>
-            <ToggleButton value="accessory" sx={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "none" }}>Add Accessory</ToggleButton>
-            <ToggleButton value="buyback" sx={{ fontSize: "0.7rem", fontWeight: 800, textTransform: "none" }}>Buyback</ToggleButton>
-          </ToggleButtonGroup>
-
-          {addMode === "product" ? (
-            <Autocomplete
-              options={modeOptions}
-              groupBy={(option) => option.category_name || "Other"}
-              getOptionLabel={(option) => option.name}
-              value={modeOptions.find((p) => p.id === addProdId) ?? null}
-              onChange={(_e, newValue) => { setAddProdId(newValue?.id ?? ""); setAddItemError(null); }}
-              renderOption={(optionProps, option) => (
-                <Box component="li" {...optionProps} key={option.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
-                  <span>{option.name}</span>
-                  {option.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
-                </Box>
-              )}
-              renderInput={(params) => <TextField {...params} size="small" placeholder="Select product" />}
-              size="small"
-            />
-          ) : (
-            <TextField
-              select
-              value={addProdId}
-              onChange={(e) => { setAddProdId(e.target.value); setAddItemError(null); }}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true } }}
-            >
-              <MenuItem value="">
-                {addMode === "accessory" ? "Select accessory" : "Select refurbished product to buy back"}
-              </MenuItem>
-              {modeOptions.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-            </TextField>
-          )}
-
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-            <TextField label="Qty" type="number" size="small" value={addQty} onChange={(e) => { setAddQty(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "5rem" }} />
-            <TextField label={addMode === "buyback" ? "Credit ₹L" : "Price ₹L"} type="number" size="small" value={addPrice} onChange={(e) => { setAddPrice(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
-            <TextField label="Disc ₹L" type="number" size="small" value={addDisc} onChange={(e) => { setAddDisc(e.target.value); setAddItemError(null); }} slotProps={{ htmlInput: { min: 0, step: "any" } }} sx={{ width: "7.5rem" }} />
-          </Box>
-          {addItemError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{addItemError}</Alert>}
-          <Button
-            onClick={addItem}
-            fullWidth
-            disableRipple
-            sx={{
-              py: 1, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-              color: addMode === "buyback" ? "#dc2626" : "primary.main",
-              bgcolor: addMode === "buyback" ? "#fef2f2" : "#eff6ff",
-              "&:hover": { bgcolor: addMode === "buyback" ? "#fee2e2" : "#dbeafe" },
-            }}
-          >
-            {addMode === "product" ? "+ Add Product" : addMode === "accessory" ? "+ Add Accessory" : "− Add Buyback"}
-          </Button>
-        </Box>
+        <OpportunityItemAddRow products={products} onAdd={(item) => setEditItems([...editItems, item])} />
       </Box>
     );
   }
@@ -573,8 +430,8 @@ function ProductsTab({
           {items.map((item) => (
             <Box key={item.id} sx={{ bgcolor: item.line_type === "BUYBACK" ? "#fef2f2" : "background.default", borderRadius: "1rem", p: 1.5, display: "flex", flexDirection: "column", gap: 0.25 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{item.product.name}</Typography>
-                {item.product.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
+                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{item.description || item.product?.name}</Typography>
+                {item.product?.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
                 {item.line_type === "BUYBACK" && <Chip label="Buyback" size="small" color="error" />}
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: "10px", color: "#6b7280" }}>

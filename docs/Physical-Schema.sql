@@ -11,11 +11,10 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-07 from the Dev database (Postgres 17.6), after
--- migration 0016 (product.product_type, opportunity_item.line_type, and the
--- widened opportunity_item_unique constraint — Product Lifecycle: Trade-Ins,
--- Refurbished Inventory, Accessories build). See
--- docs/Product-Lifecycle-TradeIns-Accessories-Technical-Design.md and
+-- Regenerated 2026-08-11 from the Dev database (Postgres 17.6), after
+-- migration 0017 (opportunity_item.description added, opportunity_item.product_id
+-- made nullable, ck_opportunity_item_product_id_or_buyback added — Buyback
+-- Free-Text build). See docs/Buyback-Freetext-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -34,6 +33,7 @@
 -- PostgreSQL database dump
 --
 
+\restrict 6cHq1oT1wy7HBaZ1XXmshPWYbbbeiR90c47bCJSOPjgmwC2F8MCch2VbyrBefGc
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Debian 17.10-1.pgdg13+1)
@@ -358,7 +358,7 @@ CREATE TABLE public.opportunity (
 CREATE TABLE public.opportunity_item (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     opportunity_id uuid NOT NULL,
-    product_id uuid NOT NULL,
+    product_id uuid,
     quantity integer NOT NULL,
     unit_price_lakhs numeric(15,2) NOT NULL,
     discount_lakhs numeric(15,2) DEFAULT 0 NOT NULL,
@@ -368,7 +368,9 @@ CREATE TABLE public.opportunity_item (
     created_by uuid,
     updated_by uuid,
     line_type character varying(20) DEFAULT 'PRODUCT'::character varying NOT NULL,
+    description text,
     CONSTRAINT ck_opportunity_item_line_type CHECK (((line_type)::text = ANY ((ARRAY['PRODUCT'::character varying, 'BUYBACK'::character varying])::text[]))),
+    CONSTRAINT ck_opportunity_item_product_id_or_buyback CHECK (((product_id IS NOT NULL) OR ((line_type)::text = 'BUYBACK'::text))),
     CONSTRAINT opportunity_item_quantity_check CHECK ((quantity > 0))
 );
 
@@ -2004,4 +2006,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
+\unrestrict 6cHq1oT1wy7HBaZ1XXmshPWYbbbeiR90c47bCJSOPjgmwC2F8MCch2VbyrBefGc
 
