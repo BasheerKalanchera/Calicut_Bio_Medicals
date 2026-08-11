@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Backdrop, Box, Button, IconButton, Typography } from "@mui/material";
+import { Backdrop, Box, Button, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import QuickLeadModal from "./components/QuickLeadModal";
@@ -75,6 +75,10 @@ export default function DemoApp() {
   // Spike (2026-08-01): Help button only wired up for Pipeline so far — see
   // HelpDrawer.tsx and active_progress.md for the plan to generalize this.
   const [showHelp, setShowHelp]                 = useState(false);
+  // Lifted out of OpportunityPipelineScreen so the Kanban/List toggle can sit
+  // in this header row next to the "Pipeline" title, freeing the filter row
+  // below for the Owner/Zone selects (narrow-viewport layout fix).
+  const [pipelineViewMode, setPipelineViewMode] = useState<"kanban" | "list">("kanban");
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const customerAccountUpdateRef = useRef<((a: unknown) => void) | null>(null);
@@ -451,12 +455,35 @@ export default function DemoApp() {
 
           {/* Opportunity Pipeline */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunities" ? "flex" : "none", flexDirection: "column" }}>
-            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1 }}>
               <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
                 Pipeline
               </Typography>
+              <ToggleButtonGroup
+                value={pipelineViewMode}
+                exclusive
+                onChange={(_, value) => { if (value !== null) setPipelineViewMode(value); }}
+                sx={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden", flexShrink: 0 }}
+              >
+                {(["kanban", "list"] as const).map((mode) => (
+                  <ToggleButton
+                    key={mode}
+                    value={mode}
+                    disableRipple
+                    sx={{
+                      px: 1.5, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+                      border: "none", color: "#9ca3af", bgcolor: "#fff",
+                      "&:hover": { bgcolor: "background.default" },
+                      "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
+                      "&.Mui-selected:hover": { bgcolor: "primary.main" },
+                    }}
+                  >
+                    {mode === "kanban" ? "⬛ Kanban" : "☰ List"}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
             </Box>
-            <OpportunityPipelineScreen onSelectOpportunity={handleSelectOpportunity} />
+            <OpportunityPipelineScreen onSelectOpportunity={handleSelectOpportunity} viewMode={pipelineViewMode} />
           </Box>
 
           {/* Opportunity Detail — push navigation */}

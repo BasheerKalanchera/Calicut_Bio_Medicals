@@ -8,17 +8,16 @@ import {
   InputAdornment,
   MenuItem,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listPipeline } from "../services/opportunities";
-import { listStages, listUsers } from "../services/masterData";
+import { listStages, listUsers, listZones } from "../services/masterData";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import type { PipelineOpportunity } from "../types/api";
 
 interface Props {
   onSelectOpportunity: (opp: PipelineOpportunity) => void;
+  viewMode: "kanban" | "list";
 }
 
 // ---------------------------------------------------------------------------
@@ -38,6 +37,7 @@ const PIPELINE_STAGE_CODES = [
 // active_progress.md deferred list. Remove these once fixed.
 interface StageOption { stage_code: string; stage_name: string; display_order: number }
 interface UserOption { id: string; display_name: string }
+interface ZoneOption { id: string; name: string }
 
 // ---------------------------------------------------------------------------
 // Status badge colours
@@ -220,10 +220,10 @@ function ListRow({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props) {
-  const [viewMode, setViewMode]       = useState<"kanban" | "list">("kanban");
+export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode }: Props) {
   const [activeStageCode, setActiveStageCode] = useState<string>("LEAD");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
+  const [zoneFilter, setZoneFilter]   = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -231,8 +231,8 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
   const kanbanRowRef = useRef<HTMLDivElement>(null);
 
   const { data: pipeline, isLoading } = useQuery({
-    queryKey: ["pipeline", ownerFilter],
-    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, page_size: 100 }),
+    queryKey: ["pipeline", ownerFilter, zoneFilter],
+    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter || undefined, page_size: 100 }),
   });
 
   const { data: stages = [] } = useQuery({
@@ -244,6 +244,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: async () => (await listUsers()) as UserOption[],
+    staleTime: Infinity,
+  });
+
+  const { data: zones = [] } = useQuery({
+    queryKey: ["zones"],
+    queryFn: async () => (await listZones()) as ZoneOption[],
     staleTime: Infinity,
   });
 
@@ -321,7 +327,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
               },
             }}
           />
-          {/* Owner filter + view toggle */}
+          {/* Owner + Zone filters */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <TextField
               select
@@ -336,29 +342,19 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity }: Props
                 <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
               ))}
             </TextField>
-            <ToggleButtonGroup
-              value={viewMode}
-              exclusive
-              onChange={(_, value) => { if (value !== null) setViewMode(value); }}
-              sx={{ border: "1px solid #e5e7eb", borderRadius: "0.75rem", overflow: "hidden", flexShrink: 0 }}
+            <TextField
+              select
+              value={zoneFilter}
+              onChange={(e) => setZoneFilter(e.target.value)}
+              size="small"
+              sx={{ flex: 1 }}
+              slotProps={{ select: { displayEmpty: true } }}
             >
-              {(["kanban", "list"] as const).map((mode) => (
-                <ToggleButton
-                  key={mode}
-                  value={mode}
-                  disableRipple
-                  sx={{
-                    px: 1.5, py: 0.75, fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-                    border: "none", color: "#9ca3af", bgcolor: "#fff",
-                    "&:hover": { bgcolor: "background.default" },
-                    "&.Mui-selected": { bgcolor: "primary.main", color: "#fff" },
-                    "&.Mui-selected:hover": { bgcolor: "primary.main" },
-                  }}
-                >
-                  {mode === "kanban" ? "⬛ Kanban" : "☰ List"}
-                </ToggleButton>
+              <MenuItem value="">All Zones</MenuItem>
+              {zones.map((z) => (
+                <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>
               ))}
-            </ToggleButtonGroup>
+            </TextField>
           </Box>
         </Box>
       </Box>

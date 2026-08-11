@@ -54,6 +54,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         stage_id: uuid.UUID | None = None,
         status_id: uuid.UUID | None = None,
         owner_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Opportunity]:
@@ -71,6 +72,12 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 noload(Opportunity.hold_reason),
             )
         )
+        if zone_id:
+            # Opportunity has no zone_id of its own -- zone lives one hop away via
+            # account_id -> account.zone_id, so this filter needs a join. Applied
+            # only when zone_id is actually passed, so the unfiltered case stays
+            # exactly as cheap as it is today.
+            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(Account.zone_id == zone_id)
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)
         if stage_id:
@@ -89,8 +96,11 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         stage_id: uuid.UUID | None = None,
         status_id: uuid.UUID | None = None,
         owner_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
     ) -> int:
         stmt = select(func.count(Opportunity.id))
+        if zone_id:
+            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(Account.zone_id == zone_id)
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)
         if stage_id:
