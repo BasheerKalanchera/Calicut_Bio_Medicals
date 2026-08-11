@@ -73,7 +73,9 @@ class TestListActive:
     def test_area_manager_scoped_to_own_sbu_and_shared_zone_and_self(self):
         # Set-intersection over user_zone (Milestone 1), not scalar zone_id
         # equality: a candidate is in scope if they share at least one zone
-        # with the caller.
+        # with the caller. Still holds unchanged after the closure-based
+        # rewrite (Zone Hierarchy, migration 0019) -- see the dedicated
+        # closure test below for what actually changed.
         current_user = _make_current_user("Area Manager")
         sql, _ = self._run(current_user)
 
@@ -85,6 +87,27 @@ class TestListActive:
         assert "user_profile.zone_id" not in sql
         assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
+
+    def test_area_manager_scope_routes_through_zone_closure(self):
+        # Proves the rewrite genuinely happened -- a candidate's own zone
+        # must be a *descendant* (via zone_closure) of any zone the caller
+        # is responsible for, not just a scalar/flat match. This is what
+        # lets a caller assigned to a State-level zone see candidates in a
+        # District several levels down; zone_closure includes a self-row
+        # per zone, so a childless zone still matches exactly as before --
+        # a strict superset, not a divergent code path (Zone-Hierarchy-
+        # Technical-Design.md SS4). Can't prove the multi-level semantics
+        # end-to-end here (that needs real zone_closure rows against a real
+        # Postgres connection -- manual verification's job, same caveat as
+        # every RLS-adjacent test this session); this just confirms the
+        # query shape actually routes through the table, not a coincidence.
+        current_user = _make_current_user("Area Manager")
+        sql, _ = self._run(current_user)
+
+        assert "zone_closure" in sql
+        assert "ancestor_zone_id" in sql
+        assert "descendant_zone_id" in sql
+        assert "user_zone.zone_id IN (SELECT zone_closure.descendant_zone_id" in sql
 
     def test_sales_manager_scoped_to_direct_reports_and_self(self):
         current_user = _make_current_user("Sales Manager")

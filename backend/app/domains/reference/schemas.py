@@ -3,6 +3,39 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
+# ------------------------------------------------------------------
+# Territory Admin (Zone Hierarchy) -- Admin/GM only, see reference/router.py
+# ------------------------------------------------------------------
+
+class ZoneCreate(BaseModel):
+    name: str
+    parent_zone_id: uuid.UUID | None = None
+    zone_level: str | None = None
+
+
+class ZoneUpdate(BaseModel):
+    # Rename: set name. Re-parent (move): set parent_zone_id. Either or both
+    # may be provided in one call -- both go through the same
+    # rebuild_all_closure() afterward regardless of which changed.
+    name: str | None = None
+    parent_zone_id: uuid.UUID | None = None
+    zone_level: str | None = None
+
+
+class ZoneTreeNode(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+    zone_level: str | None
+    is_active: bool | None
+    children: list["ZoneTreeNode"] = []
+
+
+class ZoneBlastRadius(BaseModel):
+    account_count: int
+    user_count: int
+
 
 class RoleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
 from app.domains.organization.models import UserProfile, UserZone
+from app.domains.reference.models import ZoneClosure
 
 # Mirrors opportunity_tier_visibility's OR-chain (alembic/versions/0010_rls_opportunity_children.py)
 # applied to user_profile rows instead of opportunity rows. Admin/General Manager are unrestricted
@@ -16,15 +17,24 @@ from app.domains.organization.models import UserProfile, UserZone
 UNRESTRICTED_ROLES = {"Admin", "General Manager"}
 TEAM_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
     "SBU Manager": lambda u: UserProfile.sbu_id == u.sbu_id,
-    # Set-intersection, not scalar equality: a candidate is in scope if they share
-    # at least one zone with the caller (both may now be multi-zone via user_zone,
-    # Milestone 1). A caller or candidate with zero user_zone rows never matches --
-    # same fail-closed behavior as the old zone_id IS NULL case.
+    # Closure-based, not flat set-intersection (rewritten again, migration 0019 --
+    # see that migration's docstring): a candidate is in scope if their own zone
+    # is a descendant (via zone_closure, which includes a self-row per zone) of
+    # any zone the caller is responsible for. A single-zone caller/candidate with
+    # no children behaves identically to Milestone 1's flat version -- this is a
+    # strict superset, not a divergent code path. A caller or candidate with zero
+    # user_zone rows never matches -- same fail-closed behavior as before.
     "Area Manager": lambda u: and_(
         UserProfile.sbu_id == u.sbu_id,
         UserProfile.id.in_(
             select(UserZone.user_id).where(
-                UserZone.zone_id.in_(select(UserZone.zone_id).where(UserZone.user_id == u.id))
+                UserZone.zone_id.in_(
+                    select(ZoneClosure.descendant_zone_id).where(
+                        ZoneClosure.ancestor_zone_id.in_(
+                            select(UserZone.zone_id).where(UserZone.user_id == u.id)
+                        )
+                    )
+                )
             )
         ),
     ),

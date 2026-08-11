@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import UUID, Boolean, CheckConstraint, Integer, Numeric, String, Text
+from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -35,13 +35,55 @@ class Zone(Base):
     __tablename__ = "zone"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    # NOT globally unique anymore as of migration 0019 -- see that migration's
+    # docstring. Uniqueness is now per-parent (uq_zone_parent_name) plus a
+    # partial index for the root case (uq_zone_root_name), not this column
+    # constraint alone.
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
+    # Self-referencing tree (migration 0019) -- arbitrary depth, no fixed
+    # levels. Existing 5 zones stay parent_zone_id=NULL (top-level) until a
+    # later seeding step gives them real State-level parents (Kerala,
+    # Karnataka). Same remote_side pattern as Account.parent_account_id
+    # (account/models.py) -- already-proven shape, not a new one.
+    parent_zone_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("zone.id"), nullable=True
+    )
+    # Purely advisory (STATE/ZONE/DISTRICT/TALUK/CLUSTER) -- not structurally
+    # enforced, since depth alone doesn't say what *kind* of node something
+    # is (a Bangalore numbered zone and a Kerala taluk can sit at the same
+    # tree depth but mean different things). Useful for UI/reporting only.
+    zone_level: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="zone", lazy="select")
     accounts: Mapped[list["Account"]] = relationship(back_populates="zone", lazy="select")
     user_zones: Mapped[list["UserZone"]] = relationship(back_populates="zone", lazy="select")
+    parent: Mapped["Zone | None"] = relationship(
+        back_populates="children", remote_side="Zone.id", lazy="joined"
+    )
+    children: Mapped[list["Zone"]] = relationship(back_populates="parent", lazy="select")
+
+
+class ZoneClosure(Base):
+    """The territory tree's "coverage binder" (Discussion-Zone-Hierarchy-2026-08.md).
+
+    Precomputed ancestor/descendant pairs for every zone, including a
+    self-row per zone (a zone is its own ancestor/descendant at distance
+    zero). Purely derived/computed -- no audit columns, not directly
+    user-editable. Rebuilt in full on every zone create/rename/move/
+    deprecate (reference/repository.py's rebuild_all_closure()) rather than
+    incrementally patched -- see that method's own docstring for why.
+    """
+
+    __tablename__ = "zone_closure"
+
+    ancestor_zone_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("zone.id"), primary_key=True
+    )
+    descendant_zone_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("zone.id"), primary_key=True
+    )
 
 
 class LeadSource(Base):

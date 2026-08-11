@@ -25,6 +25,7 @@ from app.domains.document import router as document_router
 from app.domains.opportunity import router as opportunity_router
 from app.domains.product import router as product_router
 from app.domains.project import router as project_router
+from app.domains.reference import router as reference_router
 from app.middleware.correlation_id import CorrelationIdMiddleware
 
 
@@ -142,6 +143,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(activity_router.router, prefix="/api/v1")
     application.include_router(product_router.router, prefix="/api/v1")
     application.include_router(document_router.router, prefix="/api/v1")
+    application.include_router(reference_router.router, prefix="/api/v1")
 
 
 app = create_app()

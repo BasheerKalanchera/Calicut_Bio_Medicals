@@ -12,11 +12,14 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-08-11 from the Dev database (Postgres 17.6), after
--- migration 0018 (new user_zone join table; opportunity_tier_visibility's
--- Area Manager branch rewritten from scalar zone equality to set-membership
--- over user_zone; cabio_app_zone_id() dropped — Multi-Zone Assignment
--- Milestone 1 build). See
--- docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md and
+-- migration 0019 (zone hierarchy: zone gains parent_zone_id + zone_level;
+-- zone.name's global unique constraint relaxed to per-parent uniqueness
+-- (uq_zone_parent_name) plus a partial index for the root case
+-- (uq_zone_root_name); new zone_closure table, seeded with self-rows only;
+-- opportunity_tier_visibility's Area Manager branch rewritten a second time,
+-- from flat user_zone set-membership (migration 0018) to closure-based tree
+-- membership -- Zone Hierarchy build). See
+-- docs/Zone-Hierarchy-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -35,7 +38,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TEe0gWIcFUx1g5gDWspaCfT5TgMq2TfjqZWQou2L0Z2nj4yqagRhw0zun8IvlIR
+\restrict y3hBsrr66v0xq2wTxuWYshcEnPdqekxfXWRhgTiJm7SpJXzO37qHfJ8RwML9N3D
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Debian 17.10-1.pgdg13+1)
@@ -641,7 +644,19 @@ CREATE TABLE public.zone (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(100) NOT NULL,
     description text,
-    is_active boolean DEFAULT true
+    is_active boolean DEFAULT true,
+    parent_zone_id uuid,
+    zone_level character varying(20)
+);
+
+
+--
+-- Name: zone_closure; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.zone_closure (
+    ancestor_zone_id uuid NOT NULL,
+    descendant_zone_id uuid NOT NULL
 );
 
 
@@ -950,6 +965,14 @@ ALTER TABLE ONLY public.target_plan
 
 
 --
+-- Name: zone uq_zone_parent_name; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.zone
+    ADD CONSTRAINT uq_zone_parent_name UNIQUE (parent_zone_id, name);
+
+
+--
 -- Name: user_profile user_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -966,11 +989,11 @@ ALTER TABLE ONLY public.user_zone
 
 
 --
--- Name: zone zone_name_key; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: zone_closure zone_closure_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.zone
-    ADD CONSTRAINT zone_name_key UNIQUE (name);
+ALTER TABLE ONLY public.zone_closure
+    ADD CONSTRAINT zone_closure_pkey PRIMARY KEY (ancestor_zone_id, descendant_zone_id);
 
 
 --
@@ -1178,6 +1201,13 @@ CREATE INDEX idx_user_zone_zone_id ON public.user_zone USING btree (zone_id);
 
 
 --
+-- Name: idx_zone_closure_descendant; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_zone_closure_descendant ON public.zone_closure USING btree (descendant_zone_id);
+
+
+--
 -- Name: ix_product_oem_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1189,6 +1219,13 @@ CREATE INDEX ix_product_oem_name ON public.product USING btree (oem_name);
 --
 
 CREATE INDEX ix_product_sbu_id ON public.product USING btree (sbu_id);
+
+
+--
+-- Name: uq_zone_root_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_zone_root_name ON public.zone USING btree (name) WHERE (parent_zone_id IS NULL);
 
 
 --
@@ -1929,6 +1966,30 @@ ALTER TABLE ONLY public.user_zone
 
 
 --
+-- Name: zone_closure zone_closure_ancestor_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.zone_closure
+    ADD CONSTRAINT zone_closure_ancestor_zone_id_fkey FOREIGN KEY (ancestor_zone_id) REFERENCES public.zone(id);
+
+
+--
+-- Name: zone_closure zone_closure_descendant_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.zone_closure
+    ADD CONSTRAINT zone_closure_descendant_zone_id_fkey FOREIGN KEY (descendant_zone_id) REFERENCES public.zone(id);
+
+
+--
+-- Name: zone zone_parent_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.zone
+    ADD CONSTRAINT zone_parent_zone_id_fkey FOREIGN KEY (parent_zone_id) REFERENCES public.zone(id);
+
+
+--
 -- Name: activity; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1996,9 +2057,11 @@ CREATE POLICY opportunity_stakeholder_via_opportunity ON public.opportunity_stak
 
 CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (account_id IN ( SELECT account.id
    FROM public.account
-  WHERE (account.zone_id IN ( SELECT user_zone.zone_id
-           FROM public.user_zone
-          WHERE (user_zone.user_id = public.cabio_app_uid())))))) OR ((public.cabio_app_role_name() = 'Sales Manager'::text) AND (owner_id IN ( SELECT user_profile.id
+  WHERE (account.zone_id IN ( SELECT zone_closure.descendant_zone_id
+           FROM public.zone_closure
+          WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
+                   FROM public.user_zone
+                  WHERE (user_zone.user_id = public.cabio_app_uid())))))))) OR ((public.cabio_app_role_name() = 'Sales Manager'::text) AND (owner_id IN ( SELECT user_profile.id
    FROM public.user_profile
   WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (owner_id = public.cabio_app_uid()) OR public.cabio_app_has_split(id) OR public.cabio_app_assigned_reminder(id)));
 
@@ -2069,5 +2132,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TEe0gWIcFUx1g5gDWspaCfT5TgMq2TfjqZWQou2L0Z2nj4yqagRhw0zun8IvlIR
+\unrestrict y3hBsrr66v0xq2wTxuWYshcEnPdqekxfXWRhgTiJm7SpJXzO37qHfJ8RwML9N3D
 
