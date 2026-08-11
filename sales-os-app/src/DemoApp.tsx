@@ -81,7 +81,6 @@ export default function DemoApp() {
   const [pipelineViewMode, setPipelineViewMode] = useState<"kanban" | "list">("kanban");
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
-  const customerAccountUpdateRef = useRef<((a: unknown) => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
   const projectOppsRefreshRef    = useRef<(() => void) | null>(null);
   const projectResetRef          = useRef<(() => void) | null>(null);
@@ -422,7 +421,6 @@ export default function DemoApp() {
               <CustomerDirectoryScreen
                 onSelectAccount={handleSelectAccount}
                 openCreateRef={customerCreateRef}
-                accountUpdateRef={customerAccountUpdateRef}
               />
             </Box>
             <Box sx={{ flex: 1, overflow: "hidden", display: accountSubTab === "projects" ? "flex" : "none", flexDirection: "column" }}>
@@ -445,7 +443,6 @@ export default function DemoApp() {
               accountId={selectedAccount.id}
               initialAccount={selectedAccount as any}
               onBack={handleBack360}
-              onAccountUpdate={(a: unknown) => customerAccountUpdateRef.current?.(a)}
               onSelectAccount={handleSelectAccount}
               onSelectOpportunity={handleSelectOpportunity}
               onSelectProject={handleSelectProject}

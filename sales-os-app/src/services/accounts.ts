@@ -1,10 +1,11 @@
 import api from "../lib/api";
+import type { AccountListPage, AccountResponse, AccountCountsEntry } from "../types/api";
 
 type Params = Record<string, string | number | boolean>;
 
 export async function listAccounts(
-  { search, zone_id, page = 1, page_size = 50 }: { search?: string; zone_id?: number; page?: number; page_size?: number } = {}
-): Promise<unknown> {
+  { search, zone_id, page = 1, page_size = 50 }: { search?: string; zone_id?: string; page?: number; page_size?: number } = {}
+): Promise<AccountListPage> {
   const params: Params = { page, page_size };
   if (search) params.search = search;
   if (zone_id) params.zone_id = zone_id;
@@ -12,17 +13,17 @@ export async function listAccounts(
   return response.data.data;
 }
 
-export async function getAccount(accountId: number): Promise<unknown> {
+export async function getAccount(accountId: string): Promise<AccountResponse> {
   const response = await api.get(`/accounts/${accountId}`);
   return response.data.data;
 }
 
-export async function getAccountCounts(ids: number[]): Promise<unknown> {
+export async function getAccountCounts(ids: string[]): Promise<Record<string, AccountCountsEntry>> {
   const response = await api.get("/accounts/counts", { params: { ids: ids.join(",") } });
   return response.data.data;
 }
 
-export async function createAccount(data: Record<string, unknown>): Promise<unknown> {
+export async function createAccount(data: Record<string, unknown>): Promise<AccountResponse> {
   const response = await api.post("/accounts", data);
   return response.data.data;
 }

@@ -71,7 +71,6 @@ interface Props {
   accountId: string;
   initialAccount?: any;
   onBack: () => void;
-  onAccountUpdate?: (account: any) => void;
   onSelectAccount?: (account: { id: string; name: string }) => void;
   onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
   onSelectProject?: (project: { id: string; name: string }) => void;
@@ -577,7 +576,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onAccountUpdate, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
   // BR-OP-12: only these roles may create an Opportunity outside their own SBU.
@@ -616,10 +615,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // initialAccount came from a summary list view) — once the account query itself
   // resolves with real counts, its fields take precedence over the stopgap.
   const mergedAccount = account ? { ...accountCounts, ...account } : account;
-
-  useEffect(() => {
-    if (account) onAccountUpdate?.(account);
-  }, [account]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const { data: stakeholders = [], isLoading: stakeholdersLoading } = useQuery({
     queryKey: ["stakeholders", "byAccount", accountId],
@@ -974,6 +969,12 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     payload.customer_type = editAccountCustomerType || null;
     await updateAccount(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
+    // Keeps the Customer Directory list in sync with an edit made here — used
+    // to happen via an accountUpdateRef prop-chain through DemoApp.tsx into
+    // CustomerDirectoryScreen's own module-level cache; superseded by this
+    // invalidation once that screen moved to React Query (its list query key
+    // is ["accounts", "list", ...]).
+    queryClient.invalidateQueries({ queryKey: ["accounts", "list"] });
     // The parent's own child_accounts list is a computed field on ITS query
     // cache entry, not this account's — invalidate both sides of a reparent
     // (old and new parent) so a page already viewing either one picks it up

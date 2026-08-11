@@ -356,6 +356,7 @@ Authoritative, per-file status for the MUI + React Query + TypeScript migration 
 | `Customer360Screen.tsx` | `src/screens/Customer360Screen.tsx` |
 | `ErrorBoundary.tsx` | `src/components/ErrorBoundary.tsx` |
 | `ProductCatalogScreen.tsx` | `src/screens/ProductCatalogScreen.tsx` |
+| `CustomerDirectoryScreen.tsx` | `src/screens/CustomerDirectoryScreen.tsx` |
 
 **Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
 Commit A/B split surfaced that these were asserting more than they checked):
@@ -380,7 +381,6 @@ migration — never removed early "to clean up."
 
 | File | Path | Styling | React Query | TypeScript |
 |---|---|---|---|---|
-| `CustomerDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 | `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
 
 **Out of scope — do not migrate:**
@@ -389,7 +389,43 @@ migration — never removed early "to clean up."
 |---|---|---|
 | `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
 
-**Totals:** 13 fully migrated · 2 pending · 1 explicitly out of scope.
+**Totals:** 14 fully migrated · 1 pending · 1 explicitly out of scope.
+
+`CustomerDirectoryScreen.tsx` moved to the fully-migrated table above 2026-08-11.
+Full triple-conversion, same shape as `ProductCatalogScreen.tsx`'s own migration:
+module-level `accountListCache` (SWR, 30s TTL) and `isMountedRef` deleted outright,
+not ported — superseded by React Query's own cache/staleness handling, which
+naturally reproduces the "instant paint on back-navigation" behavior the module
+cache's own comment described wanting. Manual `.then()` chains (list → dependent
+counts fetch, plus a separately-debounced parent-account search) converted to
+`useQuery`/`useMutation`. Also fixed in `services/accounts.ts` while here: `listAccounts`/
+`getAccount`/`getAccountCounts`/`createAccount` were typed with `number` ids and
+`Promise<unknown>` returns despite this app's ids being UUID strings everywhere else —
+now typed against `AccountListResponse`/`AccountResponse`/`AccountCountsEntry`
+(all already existed in `types/api.ts`, zero new hand-written aliases needed, unlike
+`ProductCatalogScreen.tsx`'s migration which needed 3). Every other function in that
+file is untouched — same pre-existing issue, out of scope here.
+**A real cross-file simplification, not just a same-file port:** the
+`accountUpdateRef`/`onAccountUpdate` prop chain (`DemoApp.tsx` → `Customer360Screen.tsx`)
+existed solely to patch an edited account back into this screen's now-deleted module
+cache — replaced by one `queryClient.invalidateQueries({queryKey: ["accounts","list"]})`
+call in `Customer360Screen.tsx`'s `handleUpdateAccount`, and the entire ref/prop chain
+removed from both files. `openCreateRef` (a separate, parent-triggered "open the create
+modal" mechanism, unrelated to caching) was left untouched.
+**One property-diff gap found, initially dropped, then restored on review:** the
+original scrolled the list container to top after a successful create
+(`listContainerRef.current?.scrollTo(...)`). First pass judged this a one-time
+decoration under §6.8's tiebreaker and left it out; on reflection that call didn't hold
+up — its actual purpose isn't decorative, it's preventing the user from being left
+stranded mid-scroll with no indication anything happened after the modal closes, which
+is a usability concern §6.8 says to restore, not a state-vs-decoration question at all.
+Restored, same `listContainerRef` + `scrollTo` shape as the original, called from the
+create mutation's `onSuccess`.
+Parent-account search (create modal) upgraded from a hand-rolled absolute-positioned
+dropdown to MUI `Autocomplete`, matching `Customer360Screen.tsx`'s own edit-form
+picker for the identical field on the identical entity — not a new pattern.
+`tsc --noEmit` and `npm run lint` (incl. Tailwind guard) both clean on the first pass.
+**Not yet manually verified on screen — Basheer's own pass, not done here.**
 
 `ProductCatalogScreen.tsx` moved to the fully-migrated table above 2026-08-07 (prerequisite
 for the Product Lifecycle feature build, which needed to add a new field to this

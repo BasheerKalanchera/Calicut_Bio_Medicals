@@ -4876,3 +4876,7 @@ export type UserUpdate = components["schemas"]["UserUpdate"];
 export type ProductListResponse = components["schemas"]["ProductListResponse"];
 export type ProductResponse = components["schemas"]["ProductResponse"];
 export type DocumentResponse = components["schemas"]["DocumentResponse"];
+export type AccountListResponse = components["schemas"]["AccountListResponse"];
+export type AccountListPage = components["schemas"]["PaginatedResponse_AccountListResponse_"];
+export type AccountResponse = components["schemas"]["AccountResponse"];
+export type AccountCountsEntry = components["schemas"]["AccountCountsEntry"];
