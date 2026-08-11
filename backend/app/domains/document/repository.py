@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
 from app.domains.document.models import Document
+from app.domains.opportunity.models import Opportunity
 from app.domains.product.models import Product
 
 
@@ -19,6 +20,17 @@ class DocumentRepository(BaseRepository[Document]):
         stmt = (
             select(Document)
             .where(Document.product_id == product_id)
+            .order_by(Document.uploaded_at.desc())
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
+        return self.db.get(Opportunity, opportunity_id) is not None
+
+    def list_by_opportunity(self, opportunity_id: uuid.UUID) -> list[Document]:
+        stmt = (
+            select(Document)
+            .where(Document.opportunity_id == opportunity_id)
             .order_by(Document.uploaded_at.desc())
         )
         return list(self.db.scalars(stmt).all())

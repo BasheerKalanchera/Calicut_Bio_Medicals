@@ -25,3 +25,8 @@ class DocumentResponse(BaseModel):
     file_type: str
     storage_path: str
     uploaded_at: datetime
+
+
+class DocumentDownloadUrl(BaseModel):
+    url: str
+    expires_at: datetime

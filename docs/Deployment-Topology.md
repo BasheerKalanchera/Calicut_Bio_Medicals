@@ -165,6 +165,7 @@ UAT is always the gate — a fix never reaches `prod` without first running on `
 - [x] Set up UptimeRobot keep-alive monitor for the UAT backend — done 2026-08-03, see "Keep-alive" note above
 - [x] Re-create the 6-person roster (+ Basheer) in the UAT Supabase project's Auth — done 2026-08-03; also uncovered and fixed a UAT-wide RLS lockout bug (18 tables had RLS enabled with no policies, blocking all `cabio_app` access), see `docs/Progress-Archive-2026-08.md`. Login now confirmed working — first real proof the Render backend reaches the UAT database end-to-end.
 - [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team
+- [ ] Supabase Storage `documents` bucket + `SUPABASE_SERVICE_ROLE_KEY` secret (Opportunity Document Upload, `docs/Opportunity-Document-Upload-Implementation-Plan.md`) — private bucket, provisioned per-environment **outside the Alembic migration chain entirely**, same out-of-band category as `rls_auto_enable()`. Dev: being provisioned 2026-08-11 (bucket in the Supabase dashboard, key added to `backend/.env`). **Must be repeated for UAT and Prod when this feature ships there** — bucket creation + `SUPABASE_SERVICE_ROLE_KEY` added to Render's env config, same treatment as the other per-environment secrets above (never logged, never committed).
 
 **Phase B — once UAT signs off:**
 - [ ] Upgrade the Supabase org to the Pro plan

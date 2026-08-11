@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: SecretStr
     SUPABASE_JWT_SECRET: SecretStr | None = None
+    # Privileged server-side Storage operations (Opportunity Document Upload) --
+    # uploading/deleting objects and minting signed download URLs in the private
+    # "documents" bucket. Distinct from SUPABASE_ANON_KEY, which is RLS-scoped and
+    # cannot perform these. Optional so the app still boots before an environment
+    # provisions it (feature degrades, doesn't crash startup).
+    SUPABASE_SERVICE_ROLE_KEY: SecretStr | None = None
     CABIO_APP_DB_PASSWORD: SecretStr | None = None
 
     DB_POOL_SIZE: int = 10

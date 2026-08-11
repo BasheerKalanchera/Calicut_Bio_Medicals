@@ -1,10 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Alert,
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   MenuItem,
   TextField,
@@ -14,6 +18,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CheckIcon from "@mui/icons-material/Check";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   getOpportunity,
   listOpportunityItems,
@@ -30,7 +35,8 @@ import { listStakeholders } from "../services/accounts";
 import { listActivitiesByOpportunity, listOpportunityReminders } from "../services/activities";
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
 import { listProducts } from "../services/products";
-import type { PipelineOpportunity, PipelinePage } from "../types/api";
+import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloadUrl, deleteDocument } from "../services/documents";
+import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { itemsTotal } from "../utils/opportunityItems";
@@ -63,6 +69,7 @@ const TABS = [
   { id: "products",      label: "Products" },
   { id: "splits",        label: "Splits" },
   { id: "stakeholders",  label: "Stakeholders" },
+  { id: "documents",     label: "Documents" },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -949,6 +956,184 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
 }
 
 // ---------------------------------------------------------------------------
+// Documents tab (BR-ACT-08 -- real upload to a private Supabase Storage
+// bucket; distinct from Product Catalog's URL-only collateral links)
+// ---------------------------------------------------------------------------
+const DOCUMENT_ALLOWED_TYPES = ["image/png", "image/jpeg", "application/pdf"];
+const DOCUMENT_ALLOWED_ACCEPT = DOCUMENT_ALLOWED_TYPES.join(",");
+const DOCUMENT_MAX_SIZE_BYTES = 4 * 1024 * 1024;
+
+// Not yet in the generated OpenAPI types until the backend's regenerated --
+// mirrors DocumentDownloadUrl's shape from document/schemas.py. Same stopgap
+// convention as the interfaces near the top of this file.
+interface DocumentDownloadUrlResponse {
+  url: string;
+  expires_at: string;
+}
+
+function documentIcon(fileType: string): string {
+  if (fileType === "application/pdf") return "📄";
+  if (fileType.startsWith("image/")) return "🖼️";
+  return "📎";
+}
+
+function DocumentsTab({ opportunityId }: { opportunityId: string }) {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; fileName: string; fileType: string } | null>(null);
+
+  const { data: documents = [], isLoading } = useQuery({
+    queryKey: ["opp-documents", opportunityId],
+    queryFn: () => listOpportunityDocuments(opportunityId) as Promise<DocumentResponse[]>,
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => uploadOpportunityDocument(opportunityId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["opp-documents", opportunityId] });
+      setUploadError(null);
+    },
+    onError: (err: any) => setUploadError(err.message || "Failed to upload document"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (documentId: string) => deleteDocument(documentId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["opp-documents", opportunityId] }),
+  });
+
+  // Opens an in-app preview modal (iframe/img on the signed URL) rather than
+  // window.open()-ing a new tab -- a new-tab navigation to a signed URL was
+  // triggering a browser download prompt instead of rendering inline for
+  // Basheer (2026-08-11), regardless of Supabase not setting
+  // Content-Disposition: attachment on the response.
+  const previewMutation = useMutation({
+    mutationFn: (doc: DocumentResponse) =>
+      (getDocumentDownloadUrl(doc.id) as Promise<DocumentDownloadUrlResponse>).then((data) => ({
+        url: data.url,
+        fileName: doc.file_name,
+        fileType: doc.file_type,
+      })),
+    onSuccess: (data) => setPreviewDoc(data),
+  });
+
+  function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file after an error
+    if (!file) return;
+    if (!DOCUMENT_ALLOWED_TYPES.includes(file.type)) {
+      setUploadError("Only PNG, JPEG, or PDF files are allowed.");
+      return;
+    }
+    if (file.size > DOCUMENT_MAX_SIZE_BYTES) {
+      setUploadError("File exceeds the 4MB size limit.");
+      return;
+    }
+    setUploadError(null);
+    uploadMutation.mutate(file);
+  }
+
+  if (isLoading) return <LoadingPlaceholder />;
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+          Documents ({documents.length})
+        </Typography>
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadMutation.isPending}
+          disableRipple
+          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+        >
+          {uploadMutation.isPending ? "Uploading…" : "+ Add"}
+        </Button>
+        <Box
+          component="input"
+          type="file"
+          ref={fileInputRef}
+          accept={DOCUMENT_ALLOWED_ACCEPT}
+          capture="environment"
+          onChange={handleFileSelected}
+          sx={{ display: "none" }}
+        />
+      </Box>
+
+      {uploadError && <Alert severity="error" sx={{ fontSize: "0.75rem" }}>{uploadError}</Alert>}
+
+      {!documents.length ? (
+        <EmptyPlaceholder message="No documents uploaded yet." />
+      ) : (
+        documents.map((doc) => (
+          <Box key={doc.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, bgcolor: "background.default", borderRadius: "1rem", px: 1.5, py: 1.25 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+              <span>{documentIcon(doc.file_type)}</span>
+              <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#1f2937", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {doc.file_name}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+              <IconButton
+                size="small"
+                onClick={() => previewMutation.mutate(doc)}
+                disabled={previewMutation.isPending && previewMutation.variables?.id === doc.id}
+                aria-label="View"
+                sx={{ color: "primary.main" }}
+              >
+                <VisibilityIcon sx={{ fontSize: 16 }} />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => deleteMutation.mutate(doc.id)}
+                disabled={deleteMutation.isPending && deleteMutation.variables === doc.id}
+                aria-label="Delete"
+                sx={{ color: "#f87171", "&:hover": { color: "#dc2626" } }}
+              >
+                <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+              </IconButton>
+            </Box>
+          </Box>
+        ))
+      )}
+
+      <DocumentPreviewModal doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+    </Box>
+  );
+}
+
+function DocumentPreviewModal({
+  doc,
+  onClose,
+}: {
+  doc: { url: string; fileName: string; fileType: string } | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={doc !== null} onClose={onClose} fullWidth maxWidth="md">
+      <DialogTitle component="h3" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        {doc?.fileName}
+      </DialogTitle>
+      <DialogContent sx={{ display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#f3f4f6", p: 0 }}>
+        {doc && doc.fileType === "application/pdf" ? (
+          <Box component="iframe" src={doc.url} title={doc.fileName} sx={{ width: "100%", height: "70vh", border: "none" }} />
+        ) : doc ? (
+          <Box component="img" src={doc.url} alt={doc.fileName} sx={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }} />
+        ) : null}
+      </DialogContent>
+      <DialogActions>
+        {doc && (
+          <Button component="a" href={doc.url} download={doc.fileName} target="_blank" rel="noopener noreferrer">
+            Download
+          </Button>
+        )}
+        <Button onClick={onClose} color="inherit">Close</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate, initialTab }: Props) {
@@ -1364,6 +1549,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         )}
         {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} accountId={opp.account.id} />}
+        {activeTab === "documents"    && <DocumentsTab opportunityId={opp.id} />}
         {activeTab === "activity"     && (
           <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} />
         )}
