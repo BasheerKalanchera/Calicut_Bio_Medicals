@@ -34,6 +34,13 @@ class UserProfile(AuditMixin, Base):
     zone: Mapped[Zone | None] = relationship(back_populates="user_profiles", lazy="joined")
     role: Mapped[Role] = relationship(back_populates="user_profiles", lazy="joined")
 
+    # selectin, not select: _to_user_list_response needs this on every row of
+    # every list page (one batched query), unlike this class's other
+    # lazy="select" collections which aren't needed per-row.
+    zones: Mapped[list[UserZone]] = relationship(
+        back_populates="user", foreign_keys="[UserZone.user_id]", lazy="selectin"
+    )
+
     target_plans: Mapped[list[TargetPlan]] = relationship(
         back_populates="user", foreign_keys="[TargetPlan.user_id]", lazy="select"
     )
@@ -58,3 +65,19 @@ class UserProfile(AuditMixin, Base):
     uploaded_documents: Mapped[list[Document]] = relationship(
         back_populates="uploaded_by_user", foreign_keys="[Document.uploaded_by_user_id]", lazy="select"
     )
+
+
+class UserZone(AuditMixin, Base):
+    __tablename__ = "user_zone"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), primary_key=True
+    )
+    zone_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("zone.id"), primary_key=True
+    )
+
+    user: Mapped[UserProfile] = relationship(
+        back_populates="zones", foreign_keys=[user_id], lazy="joined"
+    )
+    zone: Mapped[Zone] = relationship(back_populates="user_zones", lazy="joined")

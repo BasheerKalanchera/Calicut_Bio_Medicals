@@ -35,6 +35,7 @@ class UserListResponse(BaseModel):
     display_name: str
     sbu_id: uuid.UUID
     zone_id: uuid.UUID | None
+    zone_ids: list[uuid.UUID]
     role_id: uuid.UUID
     role_name: str
     manager_id: uuid.UUID | None
@@ -46,6 +47,7 @@ class UserCreate(BaseModel):
     sbu_id: uuid.UUID
     role_id: uuid.UUID
     zone_id: uuid.UUID | None = None
+    zone_ids: list[uuid.UUID] = []
     manager_id: uuid.UUID | None = None
 
 
@@ -54,4 +56,5 @@ class UserUpdate(BaseModel):
     sbu_id: uuid.UUID | None = None
     role_id: uuid.UUID | None = None
     zone_id: uuid.UUID | None = None
+    zone_ids: list[uuid.UUID] | None = None
     manager_id: uuid.UUID | None = None

@@ -241,6 +241,13 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **PATCH semantics:** if an update changes `sbu_id` and `manager_id` in the same call, the check compares the manager's SBU against the *new* `sbu_id`, not the user's current one.
 * **Reference:** Companion to BR-FIN-06 (Split Participant SBU Eligibility) and BR-OP-11 (Opportunity Item SBU Eligibility) — same "same-SBU-or-reject" pattern applied to manager assignment.
 
+### BR-ORG-02: Multi-Zone User Assignment (Milestone 1, 2026-08-11)
+* **Rule:** A user may be assigned to more than one zone via the `user_zone` join table, not just the single `user_profile.zone_id` scalar. `zone_id` remains a required "primary zone" pointer (used as the default zone for new Accounts they create, and shown in compact identity displays) — it must always be a member of that user's `zone_ids`, enforced at the API layer (`UserService.create_user`/`update_user`) with a `ValidationError` otherwise.
+* **Only the Area Manager RLS tier's visibility keys off zone membership.** `opportunity_tier_visibility`'s Area Manager branch now checks set-membership against `user_zone` (a candidate Opportunity is visible if its Account's zone is *any* zone the Area Manager is assigned to, not just one). SBU Manager, Sales Manager, Sales Staff, Admin/General Manager are unaffected — none of those tiers' visibility rules reference zone at all.
+* **Why:** A single Area Manager can genuinely cover more than one zone (e.g. North Kerala + Mangalore) — the prior scalar `zone_id` FK had no way to represent this, leaving such a person unable to see opportunities in their second zone at all.
+* **Enforcement:** `user_zone` table (migration `0018`); `opportunity_tier_visibility` RLS policy (same migration); `TEAM_SCOPE_BUILDERS["Area Manager"]` (`organization/repository.py`) — the same set-membership generalization applied to the User Directory's own team-scoping rule, not just the Opportunity RLS policy.
+* **Reference:** `docs/Multi-Zone-Assignment-Technical-Design.md`, `docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md`.
+
 ---
 
 # 6. Activity & Interaction Rules

@@ -2553,6 +2553,11 @@ export interface components {
             role_id: string;
             /** Zone Id */
             zone_id?: string | null;
+            /**
+             * Zone Ids
+             * @default []
+             */
+            zone_ids: string[];
             /** Manager Id */
             manager_id?: string | null;
         };
@@ -2572,6 +2577,8 @@ export interface components {
             sbu_id: string;
             /** Zone Id */
             zone_id: string | null;
+            /** Zone Ids */
+            zone_ids: string[];
             /**
              * Role Id
              * Format: uuid
@@ -2618,6 +2625,8 @@ export interface components {
             role_id?: string | null;
             /** Zone Id */
             zone_id?: string | null;
+            /** Zone Ids */
+            zone_ids?: string[] | null;
             /** Manager Id */
             manager_id?: string | null;
         };
@@ -3613,6 +3622,7 @@ export interface operations {
                 stage_id?: string | null;
                 status_id?: string | null;
                 owner_id?: string | null;
+                zone_id?: string | null;
                 page?: number;
                 page_size?: number;
             };

@@ -49,5 +49,3 @@ def set_rls_context(db: Session, user: UserProfile) -> None:
     db.execute(text("SET LOCAL app.current_user_id = :uid"), {"uid": str(user.id)})
     db.execute(text("SET LOCAL app.current_sbu_id = :sid"), {"sid": str(user.sbu_id)})
     db.execute(text("SET LOCAL app.current_role_id = :rid"), {"rid": str(user.role_id)})
-    if user.zone_id is not None:
-        db.execute(text("SET LOCAL app.current_zone_id = :zid"), {"zid": str(user.zone_id)})

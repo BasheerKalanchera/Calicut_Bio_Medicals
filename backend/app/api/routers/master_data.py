@@ -107,6 +107,7 @@ def _to_user_list_response(user: UserProfile) -> UserListResponse:
         display_name=user.display_name,
         sbu_id=user.sbu_id,
         zone_id=user.zone_id,
+        zone_ids=[uz.zone_id for uz in user.zones],
         role_id=user.role_id,
         role_name=user.role.role_name,
         manager_id=user.manager_id,

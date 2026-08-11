@@ -482,3 +482,91 @@ with a recorded reason (Option C, recommended, mirrors BR-OP-12's
 never-silent pattern) — for Basheer to take to Haroon and the Cabio
 leadership team. Not yet decided; see `docs/Backlog.md`'s Issue 1 entry
 for status.
+
+## 2026-08-11 (later, again) — Multi-Zone Milestone 1 six-tier verification passed; real Admin/GM bug found and fixed; frontend built
+
+Basheer ran the six-tier manual verification live on Dev (checklist:
+`docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md` step 11),
+including assigning Fazal his real second zone (Mangalore) via the actual
+`UserService.update_user()` code path and creating a genuine Mangalore/
+Imaging test opportunity to exercise it against.
+
+**Real bug found during step 9 (split/reminder carve-out check):** Basheer,
+logged in as an Admin account whose own `sbu_id` was Critical Care, could
+not add Fazal (Imaging) as a split participant on a Bangalore/Central
+Kerala (Imaging) opportunity. Root cause, confirmed directly against the
+DB and the code: `UserRepository.list_active()`'s `scope="sbu"` branch
+(`organization/repository.py`, the Split-participant picker's candidate
+query) filtered candidates against the **caller's own** `sbu_id` — for
+Admin/GM that's a meaningless NOT-NULL placeholder, not a real SBU
+membership. The `scoped` branch (Owner reassignment) already special-cased
+`role_name not in UNRESTRICTED_ROLES` before applying any tier filter; the
+`sbu` branch never got that same carve-out — an oversight from when the
+zone-restriction was dropped (commit `bc49eba`, 2026-08-07), not a
+deliberate design choice. Confirmed this wasn't a symptom of anything built
+this session: BR-FIN-06 itself is enforced correctly server-side in
+`replace_splits` against the *opportunity's* `sbu_id`, never the caller's —
+only the picker's candidate-list query had the caller/opportunity mixup.
+
+**Fix**: `scope="sbu"` now skips the `same_sbu` comparison entirely when
+the caller is Admin/GM, returning all active non-unrestricted users —
+matching how the `scoped` branch and BR-FIN-06 itself already treat
+Admin/GM as unrestricted. New regression test
+`test_scope_sbu_ignores_admin_placeholder_sbu`. 444/444 backend tests
+passing, ruff clean.
+
+**Full codebase audit performed** (Basheer asked directly: "are there any
+other places where Admin/GM's SBU is checked and restricted?") — every RLS
+policy (migrations 0010/0011/0012/0014/0018) and every application-layer
+scoping site was checked. Findings: `opportunity_tier_visibility` and
+everything joining back to it (activity/document/reminder/split/
+opportunity_item/opportunity_stakeholder) already unconditionally
+unrestrict Admin/GM; `product` reads are fully open to every role; `account`
+has no RLS at all (global data, only ever narrowed by an explicit opt-in UI
+filter); `activity/repository.py`'s Daily Report scoping and
+`opportunity/service.py`'s `create_opportunity` (BR-OP-12) both already had
+the correct Admin/GM carve-out; the zone/SBU filters in
+`account/repository.py`, `opportunity/repository.py` (Pipeline Zone Filter),
+and `product/repository.py` are all explicit opt-in query params, not
+implicitly keyed to the caller. One latent (not currently reachable) item
+noted for later: `account/router.py`'s `default_zone_id=current_user.zone_id`
+fallback would reproduce this same bug class for Admin/GM account creation
+if `AccountCreate.zone_id` is ever relaxed from required to optional — not
+actionable now, since it's schema-blocked today.
+
+**Frontend built** (`docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md`
+§12): `npm run generate:types` regenerated against a live backend (had to
+work around a stale process already squatting on port 8000 from earlier in
+the session, and a stuck-socket Windows quirk where `netstat`/`Get-Process`/
+`taskkill` disagreed about whether the old PIDs still existed — resolved by
+running the temporary verification backend/frontend pair on ports 8010/5180
+instead of fighting the stuck socket). `types/api.ts`'s hand-written-aliases
+block (wiped by every regen per its own header comment) was re-added.
+`UserDirectoryScreen.tsx`: the existing single "Zone" select stays exactly
+as-is (still `zone_id`, the primary zone); a new "+ Add another zone" link
+reveals a picker to add more zones into a local `additionalZones: string[]`
+array, rendered as a removable list (mirrors the Splits-tab's add-row + `×`
+remove precedent in `OpportunityDetailScreen.tsx`). `zone_ids` sent to the
+backend is `[zone_id, ...additionalZones]`, deduped; `openEdit` seeds
+`additionalZones` from `zone_ids` minus `zone_id`; the list-row secondary
+text now joins all assigned zone names, not just the primary. `tsc --noEmit`
+and `npm run lint` both clean.
+
+**Not manually verified in-browser** — the app requires Supabase login
+credentials, which per policy aren't typed in even with permission; per
+established practice this session, automated checks (typecheck/lint) are
+mine to run, live/manual verification in the browser is Basheer's own step.
+Isolated verification backend/frontend instances (ports 8010/5180) were
+torn down after the types regen; one unintended side effect during cleanup,
+disclosed to Basheer at the time: the process-kill filter matched on the
+port number as a substring and also caught an unrelated Antigravity IDE
+Chromium utility subprocess (not the main IDE process) — Electron apps
+normally respawn those on demand, flagged rather than assumed harmless.
+
+**Still outstanding**: the entire Multi-Zone Milestone 1 backend (migration
+`0018` + all code) plus today's Split-picker Admin/GM fix are **not yet
+committed** — Basheer was asked whether to commit before or after the
+frontend work and hasn't answered yet. Frontend changes
+(`UserDirectoryScreen.tsx`, `types/api.ts`) are also uncommitted. Next:
+Basheer's manual in-browser verification of the multi-zone UI, then commit
+(backend + frontend, together or separately per his call).

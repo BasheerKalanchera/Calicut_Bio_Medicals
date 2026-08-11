@@ -12,9 +12,11 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-08-11 from the Dev database (Postgres 17.6), after
--- migration 0017 (opportunity_item.description added, opportunity_item.product_id
--- made nullable, ck_opportunity_item_product_id_or_buyback added — Buyback
--- Free-Text build). See docs/Buyback-Freetext-Implementation-Plan.md and
+-- migration 0018 (new user_zone join table; opportunity_tier_visibility's
+-- Area Manager branch rewritten from scalar zone equality to set-membership
+-- over user_zone; cabio_app_zone_id() dropped — Multi-Zone Assignment
+-- Milestone 1 build). See
+-- docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -33,7 +35,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6cHq1oT1wy7HBaZ1XXmshPWYbbbeiR90c47bCJSOPjgmwC2F8MCch2VbyrBefGc
+\restrict TEe0gWIcFUx1g5gDWspaCfT5TgMq2TfjqZWQou2L0Z2nj4yqagRhw0zun8IvlIR
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.10 (Debian 17.10-1.pgdg13+1)
@@ -131,15 +133,6 @@ CREATE FUNCTION public.cabio_app_sbu_id() RETURNS uuid
 CREATE FUNCTION public.cabio_app_uid() RETURNS uuid
     LANGUAGE sql STABLE
     AS $$ SELECT NULLIF(current_setting('app.current_user_id', true), '')::uuid $$;
-
-
---
--- Name: cabio_app_zone_id(); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.cabio_app_zone_id() RETURNS uuid
-    LANGUAGE sql STABLE
-    AS $$ SELECT NULLIF(current_setting('app.current_zone_id', true), '')::uuid $$;
 
 
 --
@@ -593,6 +586,20 @@ CREATE TABLE public.user_profile (
 
 
 --
+-- Name: user_zone; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.user_zone (
+    user_id uuid NOT NULL,
+    zone_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid
+);
+
+
+--
 -- Name: vw_opportunities_with_value; Type: VIEW; Schema: public; Owner: -
 --
 
@@ -951,6 +958,14 @@ ALTER TABLE ONLY public.user_profile
 
 
 --
+-- Name: user_zone user_zone_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_zone
+    ADD CONSTRAINT user_zone_pkey PRIMARY KEY (user_id, zone_id);
+
+
+--
 -- Name: zone zone_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1156,6 +1171,13 @@ CREATE INDEX idx_user_profile_manager_id ON public.user_profile USING btree (man
 
 
 --
+-- Name: idx_user_zone_zone_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_zone_zone_id ON public.user_zone USING btree (zone_id);
+
+
+--
 -- Name: ix_product_oem_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1265,6 +1287,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.target_plan FOR EACH ROW E
 --
 
 CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.user_profile FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
+-- Name: user_zone trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.user_zone FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 
 --
@@ -1868,6 +1897,38 @@ ALTER TABLE ONLY public.user_profile
 
 
 --
+-- Name: user_zone user_zone_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_zone
+    ADD CONSTRAINT user_zone_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: user_zone user_zone_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_zone
+    ADD CONSTRAINT user_zone_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: user_zone user_zone_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_zone
+    ADD CONSTRAINT user_zone_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: user_zone user_zone_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_zone
+    ADD CONSTRAINT user_zone_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.zone(id);
+
+
+--
 -- Name: activity; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1935,7 +1996,9 @@ CREATE POLICY opportunity_stakeholder_via_opportunity ON public.opportunity_stak
 
 CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (account_id IN ( SELECT account.id
    FROM public.account
-  WHERE (account.zone_id = public.cabio_app_zone_id())))) OR ((public.cabio_app_role_name() = 'Sales Manager'::text) AND (owner_id IN ( SELECT user_profile.id
+  WHERE (account.zone_id IN ( SELECT user_zone.zone_id
+           FROM public.user_zone
+          WHERE (user_zone.user_id = public.cabio_app_uid())))))) OR ((public.cabio_app_role_name() = 'Sales Manager'::text) AND (owner_id IN ( SELECT user_profile.id
    FROM public.user_profile
   WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (owner_id = public.cabio_app_uid()) OR public.cabio_app_has_split(id) OR public.cabio_app_assigned_reminder(id)));
 
@@ -2006,5 +2069,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6cHq1oT1wy7HBaZ1XXmshPWYbbbeiR90c47bCJSOPjgmwC2F8MCch2VbyrBefGc
+\unrestrict TEe0gWIcFUx1g5gDWspaCfT5TgMq2TfjqZWQou2L0Z2nj4yqagRhw0zun8IvlIR
 

@@ -86,13 +86,17 @@ class TestListByDate:
         assert "user_profile.zone_id" not in sql
         assert "user_profile.manager_id" not in sql
 
-    def test_area_manager_scoped_to_own_sbu_and_zone_and_self(self):
+    def test_area_manager_scoped_to_own_sbu_and_shared_zone_and_self(self):
+        # Same shared TEAM_SCOPE_BUILDERS as organization/repository.py --
+        # set-intersection over user_zone (Milestone 1), not scalar equality.
         current_user = _make_current_user("Area Manager")
         sql, _ = self._run(current_user)
 
         assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" in sql
-        assert f"user_profile.zone_id = '{current_user.zone_id.hex}'" in sql
+        assert "user_profile.id IN (SELECT user_zone.user_id" in sql
+        assert f"user_zone.user_id = '{current_user.id.hex}'" in sql
         assert f"activity.user_id = '{current_user.id.hex}'" in sql
+        assert "user_profile.zone_id" not in sql
         assert "user_profile.manager_id" not in sql
 
     def test_sales_manager_scoped_to_direct_reports_and_self(self):

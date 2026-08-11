@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import MagicMock
 
-from app.domains.organization.models import UserProfile
+from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import UserRepository
 
 
@@ -70,13 +70,19 @@ class TestListActive:
         assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
 
-    def test_area_manager_scoped_to_own_sbu_and_zone_and_self(self):
+    def test_area_manager_scoped_to_own_sbu_and_shared_zone_and_self(self):
+        # Set-intersection over user_zone (Milestone 1), not scalar zone_id
+        # equality: a candidate is in scope if they share at least one zone
+        # with the caller.
         current_user = _make_current_user("Area Manager")
         sql, _ = self._run(current_user)
 
         assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" in sql
-        assert f"user_profile.zone_id = '{current_user.zone_id.hex}'" in sql
+        assert "user_profile.id IN (SELECT user_zone.user_id" in sql
+        assert "FROM user_zone" in sql
+        assert f"user_zone.user_id = '{current_user.id.hex}'" in sql
         assert f"user_profile.id = '{current_user.id.hex}'" in sql
+        assert "user_profile.zone_id" not in sql
         assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
 
@@ -162,3 +168,69 @@ class TestListActive:
         assert f"user_profile.id = '{current_user.id.hex}'" in sql
         assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
+
+    def test_scope_sbu_ignores_admin_placeholder_sbu(self):
+        """Admin/GM's own sbu_id is a NOT-NULL placeholder, not a real SBU
+        membership -- comparing candidates against it would wrongly restrict
+        the split-participant picker to whichever SBU happens to be on the
+        caller's placeholder row. BR-FIN-06 is enforced server-side against
+        the opportunity's sbu_id in replace_splits, not the caller's."""
+        current_user = _make_current_user("Admin")
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.all.return_value = []
+
+        repo = UserRepository(mock_db)
+        repo.list_active(current_user, scope="sbu")
+
+        sql = _compiled_where(mock_db)
+        assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" not in sql
+        assert f"user_profile.id = '{current_user.id.hex}'" not in sql
+        self._assert_excludes_unrestricted_roles(sql)
+
+
+class TestReplaceZones:
+    """Mirrors how OpportunityRepository.replace_splits's delete-then-reinsert
+    shape is exercised: mocked db, assert the delete/add/flush sequence and
+    the re-query used to build the returned list."""
+
+    def test_deletes_then_reinserts_and_returns_fresh_rows(self):
+        user = MagicMock(spec=UserProfile)
+        user.id = uuid.uuid4()
+        zone_a, zone_b = uuid.uuid4(), uuid.uuid4()
+        fresh_rows = [MagicMock(spec=UserZone), MagicMock(spec=UserZone)]
+
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = fresh_rows
+
+        repo = UserRepository(mock_db)
+        result = repo.replace_zones(user, [zone_a, zone_b])
+
+        # delete-then-reinsert: one DELETE, one add() per new zone_id
+        delete_stmt = mock_db.execute.call_args.args[0]
+        assert str(delete_stmt.table) == "user_zone"
+        assert mock_db.add.call_count == 2
+        added = [call.args[0] for call in mock_db.add.call_args_list]
+        assert {row.zone_id for row in added} == {zone_a, zone_b}
+        assert all(row.user_id == user.id for row in added)
+
+        mock_db.flush.assert_called_once()
+        # Stale-collection guard: the already-loaded (selectin) user.zones
+        # must be expired, not left holding pre-replace data.
+        mock_db.expire.assert_called_once_with(user, ["zones"])
+
+        assert result == fresh_rows
+
+    def test_empty_zone_ids_clears_all_assignments(self):
+        user = MagicMock(spec=UserProfile)
+        user.id = uuid.uuid4()
+
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = []
+
+        repo = UserRepository(mock_db)
+        result = repo.replace_zones(user, [])
+
+        mock_db.add.assert_not_called()
+        mock_db.flush.assert_called_once()
+        assert result == []

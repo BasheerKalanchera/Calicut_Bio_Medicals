@@ -49,12 +49,13 @@ def test_alembic_versions_directory_exists():
     assert versions_path.is_dir(), "alembic/versions/ directory not found"
 
 
-def test_all_25_tables_registered():
+def test_all_26_tables_registered():
     import app.db.registry  # noqa: F401
     from app.db.base import Base
 
+    # 26, not 25: Milestone 1 added user_zone (0018_add_user_zone_and_rewrite_area_manager_rls.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 25, f"Expected 25 tables, found {table_count}"
+    assert table_count == 26, f"Expected 26 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -74,7 +75,8 @@ def test_all_relationships_resolve():
     configure_mappers()
     rel_count = sum(len(m.relationships) for m in Base.registry.mappers)
     # 89, not 88: BR-ACT-05 added Reminder.closing_activity (0013_reminder_closing_activity.py).
-    assert rel_count == 89, f"Expected 89 relationships, found {rel_count}"
+    # 93, not 89: Milestone 1 added UserProfile.zones, UserZone.user, UserZone.zone, Zone.user_zones.
+    assert rel_count == 93, f"Expected 93 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

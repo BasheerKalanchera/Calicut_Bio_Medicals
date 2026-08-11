@@ -27,26 +27,8 @@ class TestSetRlsContext:
         assert ("SET LOCAL app.current_user_id = :uid", {"uid": str(user.id)}) in rendered
         assert ("SET LOCAL app.current_sbu_id = :sid", {"sid": str(user.sbu_id)}) in rendered
         assert ("SET LOCAL app.current_role_id = :rid", {"rid": str(user.role_id)}) in rendered
-
-    def test_sets_zone_session_variable_when_present(self):
-        db = MagicMock()
-        user = _mock_user(zone_id=uuid.uuid4())
-
-        set_rls_context(db, user)
-
-        calls = db.execute.call_args_list
-        rendered = [(str(call.args[0]), call.args[1]) for call in calls]
-
-        assert ("SET LOCAL app.current_zone_id = :zid", {"zid": str(user.zone_id)}) in rendered
-        assert len(calls) == 4
-
-    def test_skips_zone_session_variable_when_none(self):
-        db = MagicMock()
-        user = _mock_user(zone_id=None)
-
-        set_rls_context(db, user)
-
-        calls = db.execute.call_args_list
+        # 3, not 4: Milestone 1 removed the app.current_zone_id SET LOCAL -- the
+        # Area Manager RLS branch now reads user_zone directly via
+        # cabio_app_uid() instead of a scalar session GUC (a set can't live in
+        # a session var anyway).
         assert len(calls) == 3
-        for call in calls:
-            assert "current_zone_id" not in str(call.args[0])

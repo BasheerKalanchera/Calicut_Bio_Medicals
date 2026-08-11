@@ -139,6 +139,30 @@ class TestCreateAccount:
         result = service.create_account(data, created_by=TEST_USER_ID)
         assert result.payer_behavior == "GOOD"
 
+    def test_falls_back_to_default_zone_id_when_data_zone_id_missing(self):
+        # AccountBase.zone_id is Pydantic-required today, so this path isn't
+        # reachable via the live /accounts endpoint as things stand -- but the
+        # service method itself still carries the fallback (Milestone 1's
+        # design doc SS3: current_user.zone_id stays the correct default even
+        # for multi-zone users), so it's pinned here at the service layer,
+        # independent of whether the schema ever relaxes zone_id to optional.
+        repo = _make_repo()
+        service = AccountService(repository=repo)
+
+        data = AccountCreate.model_construct(name="New Hospital", zone_id=None)
+        result = service.create_account(data, created_by=TEST_USER_ID, default_zone_id=TEST_ZONE_ID)
+
+        assert result.zone_id == TEST_ZONE_ID
+
+    def test_raises_when_neither_zone_id_nor_default_zone_id_present(self):
+        repo = _make_repo()
+        service = AccountService(repository=repo)
+
+        data = AccountCreate.model_construct(name="New Hospital", zone_id=None)
+
+        with pytest.raises(ValidationError, match="Zone is required"):
+            service.create_account(data, created_by=TEST_USER_ID, default_zone_id=None)
+
     def test_rejects_invalid_payer_behavior(self):
         with pytest.raises(PydanticValidationError):
             AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID, payer_behavior="RANDOM_VALUE")

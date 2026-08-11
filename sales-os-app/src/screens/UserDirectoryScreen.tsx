@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Typography, Button, TextField, MenuItem, List, ListItemButton, ListItemText, Chip } from "@mui/material";
+import { Box, Typography, Button, TextField, MenuItem, List, ListItemButton, ListItemText, Chip, IconButton } from "@mui/material";
 import FormModal from "../components/FormModal";
 import { listUsers, listRoles, listSbus, listZones, createUser, updateUser } from "../services/masterData";
 import type { UserListResponse } from "../types/api";
@@ -15,13 +15,15 @@ interface RoleOption {
   role_name: string;
 }
 
-const EMPTY_FORM = { id: "", display_name: "", sbu_id: "", role_id: "", zone_id: "", manager_id: "" };
+const EMPTY_FORM = { id: "", display_name: "", sbu_id: "", role_id: "", zone_id: "", manager_id: "", additionalZones: [] as string[] };
 
 export default function UserDirectoryScreen() {
   const queryClient = useQueryClient();
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [addingZone, setAddingZone] = useState(false);
+  const [zoneToAdd, setZoneToAdd] = useState("");
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users", "directory"],
@@ -42,6 +44,8 @@ export default function UserDirectoryScreen() {
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
+    setAddingZone(false);
+    setZoneToAdd("");
     setDialogMode("create");
   };
 
@@ -54,13 +58,18 @@ export default function UserDirectoryScreen() {
       role_id: u.role_id,
       zone_id: u.zone_id || "",
       manager_id: u.manager_id || "",
+      additionalZones: u.zone_ids.filter((zid) => zid !== u.zone_id),
     });
+    setAddingZone(false);
+    setZoneToAdd("");
     setDialogMode("edit");
   };
 
   const closeDialog = () => setDialogMode(null);
 
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ["users"] });
+
+  const combinedZoneIds = () => Array.from(new Set([form.zone_id, ...form.additionalZones].filter(Boolean)));
 
   const handleCreate = async () => {
     if (!form.id.trim()) throw new Error("Supabase user UUID is required");
@@ -73,6 +82,7 @@ export default function UserDirectoryScreen() {
       sbu_id: form.sbu_id,
       role_id: form.role_id,
       zone_id: form.zone_id || undefined,
+      zone_ids: combinedZoneIds(),
       manager_id: form.manager_id || undefined,
     });
     invalidateUsers();
@@ -88,6 +98,7 @@ export default function UserDirectoryScreen() {
       sbu_id: form.sbu_id,
       role_id: form.role_id,
       zone_id: form.zone_id || undefined,
+      zone_ids: combinedZoneIds(),
       manager_id: form.manager_id || undefined,
     });
     invalidateUsers();
@@ -108,9 +119,9 @@ export default function UserDirectoryScreen() {
         <List sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
           {users.map((u) => {
             const sbuName = sbus.find((s) => s.id === u.sbu_id)?.name;
-            const zoneName = zones.find((z) => z.id === u.zone_id)?.name;
+            const zoneNames = u.zone_ids.map((zid) => zones.find((z) => z.id === zid)?.name).filter(Boolean).join(", ");
             const manager = users.find((m) => m.id === u.manager_id);
-            const secondaryParts = [sbuName, zoneName, manager ? `reports to ${manager.display_name}` : null].filter(Boolean);
+            const secondaryParts = [sbuName, zoneNames || null, manager ? `reports to ${manager.display_name}` : null].filter(Boolean);
             return (
               <ListItemButton
                 key={u.id}
@@ -188,6 +199,64 @@ export default function UserDirectoryScreen() {
           <MenuItem value="">No zone</MenuItem>
           {zones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
         </TextField>
+
+        {form.additionalZones.length > 0 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+            {form.additionalZones.map((zid) => {
+              const name = zones.find((z) => z.id === zid)?.name || zid;
+              return (
+                <Box
+                  key={zid}
+                  sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", bgcolor: "action.hover", borderRadius: 1, px: 1.5, py: 0.5 }}
+                >
+                  <Typography variant="body2">{name}</Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setForm({ ...form, additionalZones: form.additionalZones.filter((z) => z !== zid) })}
+                  >
+                    <Box component="span" sx={{ fontWeight: 900, fontSize: "1.125rem", lineHeight: 1 }}>×</Box>
+                  </IconButton>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        {addingZone ? (
+          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+            <TextField
+              select
+              label="Add zone"
+              value={zoneToAdd}
+              onChange={(e) => setZoneToAdd(e.target.value)}
+              fullWidth
+              size="small"
+              autoFocus
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select zone</MenuItem>
+              {zones
+                .filter((z) => z.id !== form.zone_id && !form.additionalZones.includes(z.id))
+                .map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
+            </TextField>
+            <Button
+              onClick={() => {
+                if (!zoneToAdd) return;
+                setForm({ ...form, additionalZones: [...form.additionalZones, zoneToAdd] });
+                setZoneToAdd("");
+                setAddingZone(false);
+              }}
+              disabled={!zoneToAdd}
+            >
+              Add
+            </Button>
+          </Box>
+        ) : (
+          <Button size="small" onClick={() => setAddingZone(true)} sx={{ alignSelf: "flex-start", textTransform: "none" }}>
+            + Add another zone
+          </Button>
+        )}
+
         <TextField
           select
           label="Manager"

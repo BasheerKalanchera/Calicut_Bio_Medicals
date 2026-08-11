@@ -41,6 +41,7 @@ class Zone(Base):
 
     user_profiles: Mapped[list["UserProfile"]] = relationship(back_populates="zone", lazy="select")
     accounts: Mapped[list["Account"]] = relationship(back_populates="zone", lazy="select")
+    user_zones: Mapped[list["UserZone"]] = relationship(back_populates="zone", lazy="select")
 
 
 class LeadSource(Base):

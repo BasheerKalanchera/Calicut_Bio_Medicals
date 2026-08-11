@@ -33,6 +33,14 @@ class UserService:
             raise NotFoundError(f"Role {data.role_id} not found")
         if data.zone_id is not None and not self.repository.zone_exists(data.zone_id):
             raise NotFoundError(f"Zone {data.zone_id} not found")
+        for zone_id in data.zone_ids:
+            if not self.repository.zone_exists(zone_id):
+                raise NotFoundError(f"Zone {zone_id} not found")
+        # Design doc SS3 invariant: the primary zone_id must always be a member of
+        # zone_ids -- never a silently-orphaned pointer to a zone the user isn't
+        # otherwise assigned to.
+        if data.zone_id is not None and data.zone_id not in data.zone_ids:
+            raise ValidationError("Primary zone_id must be included in zone_ids")
         if data.manager_id is not None:
             manager = self.repository.get_by_id(data.manager_id)
             if not manager:
@@ -47,7 +55,9 @@ class UserService:
             zone_id=data.zone_id,
             manager_id=data.manager_id,
         )
-        return self.repository.create(user)
+        user = self.repository.create(user)
+        self.repository.replace_zones(user, data.zone_ids)
+        return user
 
     def update_user(self, user_id: uuid.UUID, data: UserUpdate, *, role_name: str) -> UserProfile:
         if role_name not in _USER_WRITE_ROLES:
@@ -73,6 +83,21 @@ class UserService:
             raise NotFoundError(f"Role {data.role_id} not found")
         if data.zone_id is not None and not self.repository.zone_exists(data.zone_id):
             raise NotFoundError(f"Zone {data.zone_id} not found")
-        for field, value in data.model_dump(exclude_unset=True).items():
+        if data.zone_ids is not None:
+            for zone_id in data.zone_ids:
+                if not self.repository.zone_exists(zone_id):
+                    raise NotFoundError(f"Zone {zone_id} not found")
+        # Same SS3 invariant as create_user, checked against the effective
+        # post-update state -- either field may be omitted from this PATCH.
+        effective_zone_id = data.zone_id if data.zone_id is not None else user.zone_id
+        effective_zone_ids = (
+            data.zone_ids if data.zone_ids is not None else [uz.zone_id for uz in user.zones]
+        )
+        if effective_zone_id is not None and effective_zone_id not in effective_zone_ids:
+            raise ValidationError("Primary zone_id must be included in zone_ids")
+        for field, value in data.model_dump(exclude_unset=True, exclude={"zone_ids"}).items():
             setattr(user, field, value)
-        return self.repository.update(user)
+        user = self.repository.update(user)
+        if data.zone_ids is not None:
+            self.repository.replace_zones(user, data.zone_ids)
+        return user

@@ -1,13 +1,20 @@
 # Multi-Zone User Assignment — Technical Design
 
 **Status:** All three §8 decisions resolved — core multi-zone assignment
-(§§3–6) ready to plan/build. §7's Target/Coverage Planning work still has one
-separate open question (`target_plan.zone_id` nullability) before that part
-starts.
+(§§3–6) is **Milestone 1** and ready to plan/build now. §7 (Target & Coverage
+Planning zone scoping) is **Milestone 2** — the whole Target/Coverage
+Planning module has no implementation yet (no `service.py`, `router.py`,
+`schemas.py`, or screen — see §7), so it isn't part of this build and doesn't
+block it. §7's nullability question is resolved (below); nothing in §7
+remains open, it's simply sequenced later.
 **Prepared:** 2026-08-07. **Updated:** 2026-08-07 — added §7 (Target & Coverage
 Planning quota scoping, confirmed with Haroon); resolved §5/§8 Split-picker
 question, §8 role-scope question, and §8 territory-naming question (raw zone
-list, no named `territory` entity — see §8, item 3).
+list, no named `territory` entity — see §8, item 3). **2026-08-10** — resolved
+§7's `target_plan.zone_id` nullability question and confirmed §7 is Milestone
+2, not part of this build; corrected §1 (Fazal was never actually promoted to
+SBU Manager — see below); Milestone 1's ordered implementation steps are now
+written up in `Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md`.
 
 ## 1. Context
 
@@ -15,21 +22,29 @@ Trigger: Fazal, an Area Manager (Imaging), needs to cover both North Kerala and 
 newly added Mangalore zone. The current data model ties exactly one zone to one
 user (`user_profile.zone_id`), so this can't be represented today.
 
-Immediate stopgap agreed with Basheer (2026-08-07): promote Fazal to SBU Manager
-for Imaging, since no SBU Manager exists there yet — the SBU Manager RLS branch is
-unconditional across the whole SBU, so it happens to cover both of Fazal's zones
-with zero code change. This unblocks him today but is explicitly a workaround, not
-a fix:
+**Correction (2026-08-10):** an earlier version of this section, and
+`active_progress.md`, described a stopgap as already applied — promoting
+Fazal to SBU Manager for Imaging so the (unconditional, whole-SBU) SBU
+Manager RLS branch would happen to cover both his zones with zero code
+change. Basheer confirmed this was only ever a proposed stopgap; it was
+never actually applied. **Fazal's `zone_id` today is simply North Kerala —
+he currently cannot see Mangalore opportunities at all.** That's the real,
+live gap this design closes, not a workaround to unwind. The stopgap is
+still worth recording as a rejected option, since the reasoning for not
+using it stands:
 
-- **Over-grants.** SBU Manager sees every zone in Imaging, not just Fazal's two.
-- **Doesn't repeat.** Basheer confirmed "cases like Fazal" recur across Area
-  Managers — promoting each one to SBU Manager collapses the zone boundary the
-  entire Level-4 tier exists to enforce. Once two or more people hold "SBU
-  Manager" with full-SBU visibility, per-zone containment is gone for that SBU;
-  the trick only works cleanly once, for one person.
-- **Not durable.** Cabio expects to eventually appoint one real SBU Manager per
-  SBU. When that happens, Fazal's promotion has to be undone, and his original
-  multi-zone need resurfaces unsolved.
+- **Would have over-granted.** SBU Manager sees every zone in Imaging, not
+  just Fazal's two.
+- **Wouldn't have repeated.** Basheer confirmed "cases like Fazal" recur
+  across Area Managers — promoting each one to SBU Manager would collapse
+  the zone boundary the entire Level-4 tier exists to enforce. Once two or
+  more people hold "SBU Manager" with full-SBU visibility, per-zone
+  containment is gone for that SBU; the trick only works cleanly once, for
+  one person.
+- **Wouldn't have been durable.** Cabio expects to eventually appoint one
+  real SBU Manager per SBU. When that happens, a promotion-based stopgap
+  would have to be undone, and the original multi-zone need would resurface
+  unsolved.
 
 This document designs the actual fix: let a `user_profile` hold more than one
 zone.
@@ -161,7 +176,13 @@ a time in the directory UI is a reasonable, unforced UX choice, not a gap).
   multi-zone user filter across "any of my zones" at once; not required for
   correctness, can stay single-select.
 
-## 7. Target & Coverage Planning — zone-scoped quotas (confirmed 2026-08-07 with Haroon)
+## 7. Target & Coverage Planning — zone-scoped quotas (Milestone 2, confirmed 2026-08-07 with Haroon)
+
+**Milestone 2 — not part of this build.** This section records the design
+decision so it isn't lost, but the whole Target/Coverage Planning module has
+no implementation today (see below) — there's nothing here to retrofit or
+sequence ahead of §§3–6. Core multi-zone assignment (Milestone 1) does not
+wait on anything in this section.
 
 **Correction to this doc's earlier §6 claim** ("no `zone_id` anywhere in
 `planning/models.py`, genuinely unaffected"): that was true of the *code as it
@@ -213,13 +234,14 @@ the service layer when Target Planning is built (Fazal can have a Mangalore
 Target Plan *because* `user_zone` says he covers Mangalore; a user not in
 `user_zone` for a zone shouldn't be able to get one).
 
-**Open question, not yet resolved:** `target_plan.zone_id` — `NOT NULL`, or
-nullable? `user_profile.zone_id` is nullable today because Admin/GM (and
-possibly SBU Manager) carry no real zone. If Target Plans are only ever set for
-zoned, individual-contributor-style roles, `NOT NULL` is right; if an
-unzoned role can also hold a target, it needs to stay nullable. Nothing in the
-current code restricts *who* can have a `target_plan` by role, so this needs an
-explicit answer, not an assumption, before the migration is written.
+**Resolved 2026-08-10:** `target_plan.zone_id` is **nullable**. Basheer
+confirmed SBU Manager will definitely have a target plan of their own, and an
+SBU Manager isn't tied to any single zone — their `zone_id` row would just be
+`NULL`, meaning "this target covers the whole business unit, not one patch."
+(Confirmed in `Discussion-Zone-Hierarchy-2026-08.md`'s target-planning
+resolution — patch is an optional extra label on a target, not a required
+step.) `NOT NULL` would have wrongly forced every target, including an SBU
+Manager's, to name a single zone.
 
 **This also resolves a hedge already in the PRD**, not just a gap in this
 design: `Cabio Sales OS – Phase 1 - PRD.md:394`, §5 "Zone Allocation," states
@@ -302,10 +324,16 @@ Specific calls needed:
 
 ## 11. Recommendation
 
-Build this once §7's decisions are made. It's the only version of "Fazal-style"
-coverage that scales past one person, doesn't over-grant beyond the zones
-someone actually covers, and survives real SBU Managers being appointed later
-without needing to be unwound. Until then, the SBU Manager promotion (§1) is an
-acceptable, cheap stopgap for Fazal specifically — but shouldn't be repeated for
-the next person in the same situation, since each repetition further erodes the
-zone boundary the model relies on.
+Build Milestone 1 (§§3–6) now — all of §8's decisions are resolved and
+nothing in §7 blocks it. It's the only version of "Fazal-style" coverage that
+scales past one person, doesn't over-grant beyond the zones someone actually
+covers, and survives real SBU Managers being appointed later without needing
+to be unwound. Until then, the SBU Manager promotion (§1) is an acceptable,
+cheap stopgap for Fazal specifically — but shouldn't be repeated for the next
+person in the same situation, since each repetition further erodes the zone
+boundary the model relies on.
+
+Milestone 2 (§7, Target & Coverage Planning zone scoping) is sequenced later,
+as part of building that module for the first time — its one open question is
+now resolved, so nothing further is needed here until that module is actually
+scoped for build.
