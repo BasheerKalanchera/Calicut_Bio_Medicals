@@ -563,10 +563,492 @@ port number as a substring and also caught an unrelated Antigravity IDE
 Chromium utility subprocess (not the main IDE process) — Electron apps
 normally respawn those on demand, flagged rather than assumed harmless.
 
-**Still outstanding**: the entire Multi-Zone Milestone 1 backend (migration
-`0018` + all code) plus today's Split-picker Admin/GM fix are **not yet
-committed** — Basheer was asked whether to commit before or after the
-frontend work and hasn't answered yet. Frontend changes
-(`UserDirectoryScreen.tsx`, `types/api.ts`) are also uncommitted. Next:
-Basheer's manual in-browser verification of the multi-zone UI, then commit
-(backend + frontend, together or separately per his call).
+**Correction, added when archiving 2026-08-11 (late): committed as `ce61dc2`
+"feat: add multi-zone user assignment (Milestone 1)".** Manual in-browser
+verification of the multi-zone UI also passed (add/remove additional zone
+confirmed on both Create and Edit) — one detour along the way: the local
+backend on port 8000 kept serving stale code across restarts, root-caused
+to a broken Git Bash venv activation on Basheer's machine (`source
+.venv/Scripts/activate` mis-resolves PATH to a stray global Python install
+instead of the venv — start uvicorn via `.venv/Scripts/python.exe -m
+uvicorn ...` directly instead, going forward).
+
+---
+
+## 2026-08-07 — Product Lifecycle (trade-ins, refurbished inventory, accessories) — shipped
+
+Full design in `docs/Product-Lifecycle-TradeIns-Accessories-Technical-
+Design.md`. Three commits on `main` (pushed, reached `uat` along with the
+rest of that week's work):
+- `8f4526e` — `ProductCatalogScreen.jsx` → `.tsx` MUI/React Query/
+  TypeScript migration (prerequisite, needed to add `product_type` without
+  adding more Tailwind). `Frontend-Implementation-Standards.md` §9 and
+  `check-no-tailwind.js` updated.
+- `781aa07` — the feature itself: `Product.product_type` +
+  `OpportunityItem.line_type` columns, migration `0016` (applied to Dev,
+  verified, `Physical-Schema.sql` regenerated), `BR-CAT-02` (new) +
+  `BR-FIN-03` (amended) in `Business-Rules.md`, service-layer buyback
+  validation, `OpportunityDetailScreen.tsx`'s Products tab rebuilt with 3
+  add-modes (Add Product / Add Accessory / Buyback). 435 backend tests
+  passing (7 new).
+- `9d4f041` — cross-screen list-row consistency fix (border-radius,
+  shadow, avatar size/shape/hover unified across Pipeline/Product
+  Catalog/Account Management/Project Directory) plus a real bug fix:
+  Tailwind v4 gates `hover:`/`group-hover:` behind `@media (hover:
+  hover)`, which silently disabled every Tailwind hover effect app-wide on
+  Basheer's touch-capable Windows laptop (Chrome reports `hover: none`
+  there even under mouse use) while MUI's ungated `sx` hover rules kept
+  working. Fixed via `@custom-variant hover (&:hover)` in `index.css`.
+
+**Side finding, not acted on at the time:** regenerating `Physical-
+Schema.sql` from Dev revealed Dev is missing `rls_auto_enable()` — an
+event trigger UAT has that auto-enables RLS on new tables, added
+out-of-band, not present in the Alembic migration chain. Flagged to
+Basheer; reconciliation still open.
+
+**2026-08-07 — new zone `Mangalore` added to Dev and UAT `zone` tables**
+(plain lookup-table insert, same precedent as the `REPEAT_ORDER` rename —
+no schema/code change). Reference docs synced: `CLAUDE.md`'s zone list,
+`docs/Seed-Data.sql`, staleness notes added to two dated design docs that
+cited "4 zones." Confirmed not the JV-partner-geography question flagged
+at the 2026-08-05 leadership meeting — a plain direct-sales zone, same
+model as the existing 4.
+
+---
+
+## 2026-08-06/07 — Issue 1 (REPEAT_ORDER fast-track), Kanban centering fix, Daily Activity Report, tzdata fix
+
+**Issue 1 — Fast-track opportunity creation (REPEAT_ORDER) — `32c94ad`,
+merged to `uat`.** New `REPEAT_ORDER` lead-source value relaxes Demo
+Date/Expected Closure Date/Clinical Evaluation (`BR-OP-13`); Order
+Value/Product Details stay required. All 4 opportunity create/edit entry
+points brought to field parity — found and fixed a pre-existing gap in
+Project Detail's edit modal along the way. Full summary in
+`docs/Discussion-FastTrack-Opportunity-Creation.md`. Renamed lead source
+`REORDER` → `REPEAT_ORDER` in the same commit (Star Sales team feedback);
+pure data rename, both Dev and UAT rows confirmed correct. UAT smoke test
+passed. Opportunity cloning was considered and deliberately deferred
+(logged to `Backlog.md`).
+
+**Kanban pill/column centering fix — `ef9bc96`, on `main` and `uat`.**
+Found during the UAT smoke test above: clicking a stage pill on a
+laptop-width screen scrolled the wrong column into view. Root cause:
+`scrollToStage()` centered columns using `offsetLeft`, relative to the
+nearest *positioned* ancestor, not the scroll container — picked up
+`DemoApp`'s centered max-width layout margin and overshot. Fixed by
+replacing the math with a shared `getBoundingClientRect()`-based helper.
+Verified on Dev and UAT, laptop and mobile.
+
+**Daily Activity Report — `8fd7ff4`.** New cross-team screen (`GET
+/activities`) so a manager can see who logged what activity on a given day
+without opening every account/opportunity individually — Haroon's ask.
+Access scoped via the existing 6-tier role hierarchy (`organization/
+repository.py`'s `UNRESTRICTED_ROLES`/`TEAM_SCOPE_BUILDERS`, promoted from
+private to shared). Full design in `docs/Daily-Activity-Report-Technical-
+Design.md`. 428 tests passing (23 new). Found and fixed a live-refresh gap
+during manual verification: `LogActivityModal`/`CloseReminderModal`
+weren't invalidating the report's query.
+**tzdata fix — `7a3c8d7`.** Basheer hit `ZoneInfoNotFoundError` running the
+backend locally — `zoneinfo` (added for this report's IST handling) needs
+the OS's IANA tz database, which Windows doesn't ship. Added
+`tzdata>=2024.1; sys_platform == 'win32'` to `pyproject.toml`; confirmed
+no-op on UAT/Prod (Linux, already has its own tz database).
+**Considered and deferred:** a date-range view (vs. single-day) — backend's
+`[start, end)` window already supports extending later without a
+rearchitecture; deferred until real usage shows it's wanted.
+
+---
+
+## 2026-08-05 — Issue 2 (Split participant / cross-SBU) decided
+
+Full record in `docs/Discussion-SplitParticipant-SBU-Scope.md` (v6). Three
+parts: (1) Split stays same-SBU-any-zone — shipped as part of `bc49eba`.
+(2) Referral credit — new field, any SBU/zone, one-time, no revenue impact
+— design later folded into the Referral Credit & Relationship-Support plan
+below. (3) Relationship-support activity — self-reported `Activity`
+logged against the Account with a structured `opportunity_id` link — same
+plan.
+
+---
+
+## 2026-08-10/11 — Buyback free-text + Opportunity Items Picker Unification — shipped, `8ab0c4e`
+
+**Buyback free-text field.** `docs/Buyback-Freetext-Implementation-Plan.md`
+— dropped the requirement that a Buyback line point at a catalog Product;
+added a free-text `description` field instead. Migration `0017`
+(`opportunity_item.description` + `product_id` made nullable, relaxed
+CHECK constraint, additive-only, live-DB-safe) applied to Dev and
+verified. Real bug caught during planning and fixed before it shipped:
+`_validate_item_sbus`'s three call sites would have rejected every Buyback
+add/replace once `product_id` can be `None`, unless filtered.
+`Business-Rules.md` amended (BR-CAT-02 trimmed, new BR-CAT-03).
+
+**Opportunity Items Picker Unification.** Raised by Basheer testing
+Buyback free-text and finding Accessory/Buyback only worked from
+`OpportunityDetailScreen.tsx`, not the other 3 opportunity create/edit
+entry points. Unified all 4 compact-modal call sites on one shell (kept
+`OpportunityDetailScreen.tsx`'s Products tab inline as a deliberate
+exception); built a net-new Products section for `ProjectDirectoryScreen.
+jsx`'s "Add Opportunity" flow (had none before). No backend changes needed.
+New shared frontend files: `types/opportunityItems.ts`, `utils/
+opportunityItems.ts`, `components/OpportunityItemAddRow.tsx`,
+`components/OpportunityItemsList.tsx`. Wired into `OpportunityDetailScreen.
+tsx`, `QuickLeadModal.tsx`, `Customer360Screen.tsx`, and
+`ProjectDirectoryScreen.jsx` (edit flow converted from raw Tailwind to MUI
+to consume the shared components — partial conversion, doesn't graduate
+the file off §9's pending list). Preserved the "drop `id` on quantity/
+price/disc edit" technique in both diffing edit-flows (forces
+`handleUpdateOpp` to treat an edited row as delete-old + add-new, since
+there's no single-item PATCH endpoint).
+
+Both verified together by Basheer on Dev (his own call — tested as one
+combined pass, not incrementally), `tsc --noEmit`/lint/build all clean,
+committed together as `8ab0c4e`.
+
+---
+
+## 2026-08-11 — Pipeline screen zone filter — shipped, `2739bb0`
+
+`docs/Pipeline-Zone-Filter-Implementation-Plan.md` — Zone filter added to
+`OpportunityPipelineScreen.tsx` next to the existing Owner filter, for
+anyone who already sees multiple zones under RLS. Pure narrowing filter,
+no RLS/security interaction. Needed a repository join (`Opportunity` has
+no `zone_id` of its own, one hop via `account_id → account.zone_id`).
+Query-key correctly includes both `ownerFilter` and `zoneFilter`. Also
+found and fixed a real, unrelated bug during manual testing: `index.html`
+still pointed `<script src="/src/main.jsx">` at a file renamed to
+`main.tsx` in an earlier migration — Vite resolved it as a second
+independent module, so `createRoot()` ran twice on `#root` and eventually
+crashed. Also moved the Kanban/List toggle out of
+`OpportunityPipelineScreen.tsx` into `DemoApp.tsx`'s header row (filter
+labels were truncating to "All ..." at phone width once sharing a row with
+the toggle).
+
+---
+
+## 2026-08-11 — CustomerDirectoryScreen MUI migration — shipped, `59baa6b`, pushed
+
+`docs/CustomerDirectory-MUI-Migration-Plan.md` — `CustomerDirectoryScreen.
+jsx` → `.tsx`: module-level `accountListCache` (SWR) and `isMountedRef`
+deleted outright, superseded by React Query. Fixed a real pre-existing bug
+in `services/accounts.ts` along the way: `listAccounts`/`getAccount`/
+`getAccountCounts`/`createAccount` were typed with `number` ids and
+`Promise<unknown>` returns despite this app's ids being UUID strings
+everywhere else — retyped against `AccountListResponse`/`AccountResponse`/
+`AccountCountsEntry` (already existed in `types/api.ts`, zero new aliases
+needed). Real cross-file simplification: the `accountUpdateRef`/
+`onAccountUpdate` prop chain (`DemoApp.tsx` → `Customer360Screen.tsx`)
+existed only to patch this screen's now-deleted module cache — replaced by
+one `queryClient.invalidateQueries({queryKey:["accounts","list"]})` call,
+whole ref/prop chain removed from both files. Parent-account search
+upgraded to MUI `Autocomplete`, matching `Customer360Screen.tsx`'s own
+precedent. One property-diff gap found, dropped, then restored after
+Basheer questioned the call: scrolling the list to top after a successful
+create — first judged a decoration, on review it's real usability
+(prevents the user being stranded mid-scroll), restored. §9 updated (14
+fully migrated · 1 pending — only `ProjectDirectoryScreen.jsx` left · 1 out
+of scope), `Backlog.md`'s stale "3 files remain" note corrected. Verified
+manually by Basheer, committed `59baa6b` (8 files, explicitly staged), then
+pushed to `origin/main`.
+
+---
+
+## 2026-08-11 — Opportunity Document Upload — shipped, `49c4c1d`, pushed
+
+From `Backlog.md`'s "Document/photo upload on Opportunity" entry (sales
+staff feedback). Full plan in `docs/Opportunity-Document-Upload-
+Implementation-Plan.md`. Real file upload (PNG/JPEG/PDF, 4MB max) to a
+private Supabase Storage bucket — proxied through the backend (consistent
+with this codebase's "backend brokers every write" pattern), downloads via
+backend-issued short-lived signed URLs gated by the same RLS-scoped read.
+`Document` model needed zero schema changes (already forward-compatible).
+New `app/core/storage.py` (thin Supabase Storage REST wrapper),
+`document/repository.py`/`schemas.py`/`service.py`/`router.py` extended.
+`SUPABASE_SERVICE_ROLE_KEY` added to config; `httpx` + `python-multipart`
+promoted to runtime dependencies. File limits tightened from the
+originally-proposed JPEG/PNG/HEIC+10MB to PNG/JPEG/PDF+4MB per Basheer's
+call. Real bug caught and fixed during build: extending `delete_document`
+to also delete the Storage object would have broken deleting Product
+Catalog's URL-only collateral links — fixed by skipping the Storage call
+when `storage_path` is an external URL. 472/472 backend tests passing (18
+new). `Business-Rules.md` (new `BR-ACT-08`) and `Deployment-Topology.md`
+updated.
+
+Bucket had to be recreated lowercase `documents` (bucket names are
+case-sensitive). Verified against live Dev/Storage via a service-layer
+script first; **real bug found only once Basheer tried the actual UI**:
+`uploadOpportunityDocument` (`services/documents.ts`) sent `FormData`
+through the shared `api` axios instance, which defaults to `Content-Type:
+application/json` — axios's `transformRequest` JSON-stringifies `FormData`
+whenever the configured Content-Type contains `application/json`, so the
+backend received no real `file` field. Fixed by explicitly overriding
+`headers: {"Content-Type": "multipart/form-data"}` on that one call — a
+bug class the service-layer verification script structurally couldn't
+have caught. In-app document preview added afterward, not in the original
+plan (Basheer's UI feedback: viewing forced a download) —
+`DocumentPreviewModal` (PDF in an `<iframe>`, images in an `<img>`, both on
+the signed URL, explicit in-modal Download button).
+
+Manual testing was paused mid-checklist by a different, concurrent
+session's Zone Hierarchy work leaving Dev in a broken transitional state
+(`Zone` model expecting columns migration `0019` hadn't applied yet) — no
+actual file collision between the two sessions' own code, confirmed. Once
+migration `0019` landed, the rest of the checklist (rejection cases, phone
+camera capture, delete, cross-tier visibility, Product Catalog regression,
+multi-doc ordering) was confirmed by Basheer through the real UI.
+Committed `49c4c1d` (16 files, explicitly staged — the shared working tree
+also held the other session's uncommitted Zone Hierarchy files and
+`Backlog.md`'s mixed diff, none swept in), pushed to `origin/main`
+(`59baa6b..49c4c1d`).
+
+---
+
+## 2026-08-10/11 — Zone Hierarchy: territory data gathering, design, and backend build — shipped, `1e8bb5a`
+
+**Territory data gathering** — `docs/Zone-Hierarchy-Territory-Data-
+2026-08.md`, kept separate from the design doc since it churns
+independently. Gathered from Adarsh (South Kerala, incl. Vivek reporting
+to him), Shruthi (Bangalore + wider Karnataka), and Fahad/Fazal (North
+Kerala, Karnataka Coastal). Several real corrections made along the way:
+Idukki/Alappuzha needed a 4th tree level (Zone → District → Taluk) to
+represent the Adarsh/Vivek split, validating the flexible-depth design;
+"Fahad" and "Fazal" were initially wrongly read as the same person (they
+aren't — Fahad reports to Fazal), corrected across every section that had
+propagated the error; the Coorg/Kodagu district was claimed by two
+different managers' data, resolved to Fahad/Fazal's Karnataka Coastal
+cluster per Basheer's call; two informal cluster names settled ("Karnataka
+South" for Nagesh Ninganoor's grouping, "Karnataka Central" for
+Ravikumar's). Kerala confirmed as North + South zones only for now —
+Central Kerala dropped from the working table, its live zone row's fate
+(deprecate vs. leave dormant) left as an open question. 13 open questions
+logged, 5 resolved by end of gathering; not yet reviewed by Haroon.
+
+**Design** — `docs/Discussion-Zone-Hierarchy-2026-08.md` and `docs/
+Zone-Hierarchy-Technical-Design.md`. Self-referencing tree (`zone.
+parent_zone_id`, table keeps its name, not renamed to `territory`) +
+advisory `zone_level`; `zone_closure` "coverage binder" table,
+app-recomputed; RLS Area Manager branch rewritten a second time (Multi-
+Zone Milestone 1 took it scalar→flat set-membership, this takes it
+flat→closure-based tree-membership); shared zone picker (default-to-own-
+zone, type-ahead override) planned to eventually replace the flat picker
+across Account create/edit, User Directory, Pipeline Zone filter, and
+Customer Directory; Admin Territory Management screen designed
+(add/rename/re-parent/deprecate, blast-radius shown before a move).
+Basheer's framing shift mid-design: plan on the assumption territory
+groupings will keep changing, with the Admin edit screen as the mechanism
+that absorbs that, rather than blocking on full stakeholder review first.
+**Two real gaps found in review and fixed, not just noted**: (1)
+deprecated-zone RLS visibility was left implicit — now explicit and
+deliberate: deprecating a zone grandfathers existing `user_zone`/
+`account.zone_id` visibility, revokes nothing, blocks only new
+assignments (mirrors `BR-FIN-06`'s split grandfathering). (2) the
+closure-table maintenance algorithm was simplified from an incremental
+"recompute just the affected subtree" variant to one always-correct full
+rebuild — the incremental version was judged exactly the kind of logic
+where an off-by-one silently mis-grants RLS visibility, a security risk
+not worth accepting for a performance gain nobody needs at this scale.
+
+**Backend build** — `docs/Zone-Hierarchy-Implementation-Plan.md`. Built
+deliberately in parallel with the concurrent Document Upload session, file
+overlap checked repeatedly and confirmed zero conflict throughout (this
+build only ever touched `reference/*`, `organization/repository.py`,
+`main.py`, `alembic/versions/0019_*`, and their tests). Migration `0019`
+applied to the live Dev DB by Basheer directly (two of my own attempts were
+blocked by the Claude Code auto-mode safety classifier, which chat
+approval alone doesn't satisfy) and independently verified against it —
+`zone` gained `parent_zone_id`/`zone_level`; `zone.name`'s global unique
+constraint relaxed to per-parent (`uq_zone_parent_name`) + a partial index
+for the root case (`uq_zone_root_name`); new `zone_closure` table seeded
+with exactly 5 self-rows; `opportunity_tier_visibility`'s Area Manager
+branch confirmed rewritten to route through `zone_closure` via
+`pg_get_expr` against the live policy. `docs/Physical-Schema.sql`
+regenerated and diff-reviewed line by line. `ZoneRepository.
+rebuild_all_closure()` built as the *only* closure-maintenance method (no
+incremental variant), single recursive-CTE rebuild. `deprecate_zone` flips
+`is_active=False` only, touches nothing else, matching the grandfathering
+design. New `reference/service.py`/`router.py` (6 endpoints under
+`/admin/zones/*`, Admin/GM-gated). `TEAM_SCOPE_BUILDERS["Area Manager"]`
+(`organization/repository.py`) rewritten to the same closure-based logic.
+38 new/updated tests, 505/505 backend tests passing, ruff clean.
+
+**Real bug found during manual live verification, not by any automated
+test**: `rebuild_all_closure()` used `TRUNCATE zone_closure`, but the
+app's actual runtime DB role (`cabio_app`) is only granted DELETE/INSERT/
+SELECT/UPDATE on that table, not TRUNCATE — confirmed via `information_
+schema.role_table_grants` after the real endpoint code path failed with
+`InsufficientPrivilege` while creating two isolated test zones
+(`TEST-Parent`/`TEST-Child`) for manual RLS verification. This would have
+made `create_zone`/`update_zone`(re-parent)/`rebuild-closure` fail in
+production, not just in the verification script. Fixed to `DELETE FROM
+zone_closure` (functionally identical here — no sequence to reset, table
+stays tiny) — the matching repository test updated, full suite re-verified
+green, and the fix confirmed working live against Dev before proceeding.
+
+Committed `1e8bb5a` (19 files, staged explicitly — `active_progress.md`
+and `Backlog.md` deliberately excluded, their working-tree diffs mixing
+content from this and the concurrent Document Upload session). **Not yet
+pushed** — Basheer's six-tier manual RLS verification (steps 1-4 backend/
+RLS-layer, steps 5-8 broader spot-checks) still in progress; see
+`active_progress.md`'s current task for status.
+
+## 2026-08-12 — Zone Hierarchy territory data: SBU (Imaging/Critical Care) split added
+
+Data-gathering only, no code — `docs/Zone-Hierarchy-Territory-Data-2026-
+08.md` updated. Basheer relayed new field input from two more managers,
+Nishad and Adydev, for North Kerala. Clarifying back-and-forth surfaced
+that territory coverage in this doc had never tracked **SBU** (Imaging vs
+Critical Care — an existing RLS security boundary in the live system,
+just not previously a dimension of this doc) as its own axis, and that it
+needed to be.
+
+Confirmed by Basheer: **Nishad** holds the North Kerala Critical Care SBU
+charge directly for Kozhikode, Malappuram, and Wayanad; **Adydev** reports
+to Nishad within Critical Care and handles Kannur and Kasaragod. This also
+surfaced, as a side effect, that **Fahad** (previously only on record for
+the Karnataka Coastal cluster) holds the North Kerala **Imaging** SBU
+charge directly — confirming a standing open question in that doc's North
+Kerala section that had been open since the 2026-08-11 Fahad/Fazal
+correction. Also confirmed: **Shruthi's entire cluster (Bangalore + wider
+Karnataka) is Imaging**; **Adarsh's entire cluster (South Kerala) is
+Critical Care**.
+
+Added an SBU column to the doc's consolidated table (all ~36 rows,
+including 5 new rows for the Nishad/Adydev Critical Care assignments),
+updated the North Kerala tree diagram to show separate Imaging/Critical
+Care branches, and logged new open questions rather than guessing past
+the actual gaps. Both single-SBU states initially looked like data gaps
+(a missing counterpart manager not yet identified) but turned out, on the
+same day, to be business scope instead: **Karnataka sells Imaging
+products only** (confirmed directly by Shruthi for her whole cluster, and
+by Basheer that the same holds for Fazal's Karnataka Coastal territory —
+which also retired the ⚠-inferred SBU flags on those Karnataka Coastal
+rows), and **South Kerala sells Critical Care products only** (confirmed
+by Basheer). No open SBU coverage gaps remain; Kerala (via its North/
+South split) is the only state confirmed to run both SBUs side by side.
+Remaining open questions, none of them coverage gaps:
+- Whether Nishad reports to Fazal (North Kerala's established Area
+  Manager) the way Fahad's Imaging line is presumed to.
+- Whether Fazal is still a single cross-SBU North Kerala Area Manager
+  above both Fahad and Nishad, or whether the SBU split runs all the way
+  to the top with no shared manager.
+- Whether the Critical Care and Imaging district lists matching exactly
+  (same five North Kerala districts on both sides) is deliberate or
+  coincidental.
+
+Existing Imaging-side data (Irfan, "Staff New", Fazal) left untouched,
+just relabeled as presumed-Imaging (⚠) rather than overwritten — matching
+this doc's established practice of recording new information as an
+addition or explicit correction, never a silent overwrite, when it
+doesn't cleanly resolve an existing row (same pattern as the Fahad/Fazal
+correction). Feeds open decision #2 in `docs/Discussion-Zone-Hierarchy-
+2026-08.md`, same as the rest of this doc. Purely a data/planning
+artifact — no schema, model, or RLS impact; the live `zone`/`zone_closure`
+tables and `opportunity_tier_visibility` policy from the 2026-08-10/11
+build above are unaffected.
+
+## 2026-08-12 (later) — Zone Hierarchy verification completed, pushed; SBU
+manager-SBU fix; Territory Admin screen built; ZonePicker + coverage-view
+planned
+
+**Backend verification (steps 5-8) completed, all three commits pushed.**
+Step 5's cross-zone isolation check surfaced a real finding, root-caused
+live against Dev: the Test Area Manager (scoped to North Kerala +
+TEST-Parent) could see an unrelated real opportunity ("usg m/c" /
+"aster medicity," Central Kerala). Traced by evaluating each OR-branch of
+`opportunity_tier_visibility` individually against that user+opportunity —
+the closure-based Area Manager branch correctly excluded it; the actual
+cause was `cabio_app_assigned_reminder()`, a pre-existing, deliberate
+carve-out from migration `0011` (2026-07-27, predates this session's work
+entirely) firing on a stray leftover reminder from an earlier RLS-testing
+round that reused the same test user. Not a Zone Hierarchy bug. Steps 6-8
+(control zone, unaffected-tier spot-check, Activities/Documents/Reminders
+regression) passed clean. Pushed as three commits: `1e8bb5a` (Zone
+Hierarchy backend), `c6c287f` (default landing screen to Pipeline, a small
+unrelated backlog item picked up the same session), `aca2e9c` (see next).
+
+**Admin/GM manager-SBU match bug found and fixed, `aca2e9c`.** Surfaced
+live: assigning a different SBU to a user via User Directory failed with
+"Manager must belong to the same SBU as the user" whenever the manager was
+Admin/GM. Root cause: `organization/service.py`'s `create_user`/
+`update_user` compared `manager.sbu_id` against the target's SBU
+unconditionally — but Admin/GM's own `sbu_id` is a real column value
+(not yet nullable, separate open Backlog item) that's a meaningless
+placeholder, not real membership. Fixed by exempting managers whose role
+is in `_USER_WRITE_ROLES` from the same-SBU check, in both functions.
+Two new parametrized regression tests
+(`test_allows_admin_or_gm_manager_in_different_sbu`). Full 509-test suite
+green. (A separate, deliberately out-of-scope UX gap was found in the same
+investigation: the frontend always resends a user's existing `manager_id`
+on every save, even when untouched, so moving a user with a *normal*
+manager to a new SBU still fails today — left as a known, named gap, not
+fixed this session.)
+
+**Territory Admin screen built** (`docs/Territory-Admin-Screen-
+Implementation-Plan.md`) — new `TerritoryAdminScreen.tsx`, tree view with
+inline Add/Edit/Deprecate actions and a "Refresh Territory Visibility"
+button (renamed from "Rebuild Closure" for plain-language clarity), new
+Admin/GM-gated nav entry. No new frontend dependency — a small recursive
+component over existing `List`/`Collapse`, not `@mui/x-tree-view`. Reuses
+`FormModal` for the deprecate confirmation too (blast-radius count +
+grandfathering copy as plain children, no new dialog component). `tsc`/
+lint/`build` all clean. **Not yet manually verified on Dev by Basheer.**
+
+**Real zone data entry started** — Karnataka and Kerala created as new
+top-level states; Bangalore and a new "Coastal Karnataka" zone placed
+under Karnataka (Mangalore under Coastal Karnataka); North/South/Central
+Kerala placed under Kerala. Verified live: `zone_closure` correctly
+propagates two levels deep (Karnataka's descendant set already includes
+Mangalore through Coastal Karnataka). **Three open action items from this
+review, not yet actioned:**
+1. Central Kerala is active under Kerala — per Basheer's standing decision
+   (Kerala runs North+South only going forward), it should be deprecated
+   once its blast radius is checked, not left active indefinitely.
+2. Naming: built as "Coastal Karnataka," but `Zone-Hierarchy-Territory-
+   Data-2026-08.md` settled on "Karnataka Coastal" — worth confirming
+   intentional, since that doc flagged this exact name as needing
+   confirmation from Shruthi/Fahad directly.
+3. `TEST-Parent`/`TEST-Child` (the RLS-verification fixtures) are still
+   live on Dev and should be cleaned up now that verification has passed.
+
+**Design correction: zone assignment isn't Area-Manager-only after all —
+Territory Admin needs a coverage view, not an optional one.** Working
+through how the real territory hierarchy (State → Zone/Cluster → District
+→ Taluk) actually gets built surfaced that only the Area Manager tier
+gets a `user_zone` row today (the only tier `opportunity_tier_visibility`
+reads it for). But individual field reps (Vivek, Irfan, etc.) — the real
+day-to-day owners of a specific district — have no recorded assignment
+anywhere in the live system; that fact exists only in the territory
+planning doc, not as queryable data. Resolved: `user_zone` assignment was
+never actually role-restricted at the API layer (`replace_zones()` already
+runs unconditionally regardless of role) — Sales Staff should be assigned
+to their leaf zones too, purely as a **responsibility record**, explicitly
+inert for RLS (their visibility stays owner-only, unchanged — this is not
+a reopening of the earlier-rejected "make Sales Staff zone-aware for
+visibility" idea). This makes a "who's assigned to this zone" view on
+Territory Admin a required part of the feature, not deferred as originally
+scoped.
+
+**ZonePicker + coverage-view plan written and approved**
+(`docs/ZonePicker-And-Coverage-View-Implementation-Plan.md`), **not yet
+built.** Consolidates two decisions made this session: (1) one shared
+`ZonePicker` component (MUI `Autocomplete`, search-and-resolve with a
+server-computed breadcrumb path, same proven pattern as `Customer360Screen`'s
+Parent Customer field) used at all real zone-picking call sites —
+including Territory Admin's own Parent Zone field, not a separate flat
+picker there — rather than the originally-scoped five-screen list; (2) the
+coverage view itself, extending `GET /admin/zones/tree`'s response with
+each node's *direct* assignees (not rolled up through descendants — the
+tree's own nesting already shows that), labeled with role so an Area
+Manager's real-visibility assignment stays visually distinct from a Sales
+Staff responsibility record. Needs a new backend trigram search endpoint
+(`zone.name` has no GIN index yet, unlike `opportunity`/`account`/
+`product`/`project`) plus a small tree-serialization change (the existing
+`ZoneTreeNode.model_validate(z)` recursive-Pydantic call can't produce the
+new `assignees` field without an explicit builder function). Confirmed
+`QuickLeadModal.tsx` has no zone field at all, one fewer call site than
+assumed.
+
+**Sales Manager Tier Collapse** (`docs/Sales-Manager-Tier-Collapse-
+Implementation-Plan.md`, from earlier this session) remains planned only,
+deliberately not started — needs a Haroon review first, since it revises
+a leadership-approved ADR (ADR-009), not just an engineering cleanup.
