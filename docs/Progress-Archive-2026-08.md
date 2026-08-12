@@ -983,15 +983,16 @@ on every save, even when untouched, so moving a user with a *normal*
 manager to a new SBU still fails today — left as a known, named gap, not
 fixed this session.)
 
-**Territory Admin screen built** (`docs/Territory-Admin-Screen-
-Implementation-Plan.md`) — new `TerritoryAdminScreen.tsx`, tree view with
-inline Add/Edit/Deprecate actions and a "Refresh Territory Visibility"
-button (renamed from "Rebuild Closure" for plain-language clarity), new
-Admin/GM-gated nav entry. No new frontend dependency — a small recursive
-component over existing `List`/`Collapse`, not `@mui/x-tree-view`. Reuses
-`FormModal` for the deprecate confirmation too (blast-radius count +
-grandfathering copy as plain children, no new dialog component). `tsc`/
-lint/`build` all clean. **Not yet manually verified on Dev by Basheer.**
+**Territory Admin screen built and committed, `f6a2a11`** (`docs/Territory-
+Admin-Screen-Implementation-Plan.md`) — new `TerritoryAdminScreen.tsx`,
+tree view with inline Add/Edit/Deprecate actions and a "Refresh Territory
+Visibility" button (renamed from "Rebuild Closure" for plain-language
+clarity), new Admin/GM-gated nav entry. No new frontend dependency — a
+small recursive component over existing `List`/`Collapse`, not
+`@mui/x-tree-view`. Reuses `FormModal` for the deprecate confirmation too
+(blast-radius count + grandfathering copy as plain children, no new dialog
+component). `tsc`/lint/`build` all clean. **Committed and pushed; not yet
+manually verified on Dev by Basheer.**
 
 **Real zone data entry started** — Karnataka and Kerala created as new
 top-level states; Bangalore and a new "Coastal Karnataka" zone placed
@@ -1028,9 +1029,9 @@ visibility" idea). This makes a "who's assigned to this zone" view on
 Territory Admin a required part of the feature, not deferred as originally
 scoped.
 
-**ZonePicker + coverage-view plan written and approved**
-(`docs/ZonePicker-And-Coverage-View-Implementation-Plan.md`), **not yet
-built.** Consolidates two decisions made this session: (1) one shared
+**ZonePicker + coverage-view plan written, approved, and committed**
+(`docs/ZonePicker-And-Coverage-View-Implementation-Plan.md`, part of
+`719b83b`), **the feature itself not yet built.** Consolidates two decisions made this session: (1) one shared
 `ZonePicker` component (MUI `Autocomplete`, search-and-resolve with a
 server-computed breadcrumb path, same proven pattern as `Customer360Screen`'s
 Parent Customer field) used at all real zone-picking call sites —
@@ -1049,6 +1050,16 @@ new `assignees` field without an explicit builder function). Confirmed
 assumed.
 
 **Sales Manager Tier Collapse** (`docs/Sales-Manager-Tier-Collapse-
-Implementation-Plan.md`, from earlier this session) remains planned only,
-deliberately not started — needs a Haroon review first, since it revises
-a leadership-approved ADR (ADR-009), not just an engineering cleanup.
+Implementation-Plan.md`, from earlier this session, committed as part of
+`719b83b`) remains planned only, deliberately not started — needs a
+Haroon review first, since it revises a leadership-approved ADR (ADR-009),
+not just an engineering cleanup.
+
+**Session wrap-up, all pushed to `origin/main`:** `f6a2a11` (Territory
+Admin screen), `719b83b` (Sales Manager Tier Collapse + ZonePicker/
+coverage-view plans), `a10168e` (this file + `active_progress.md`'s
+handover update). One more small addition after that, still uncommitted:
+`docs/Backlog.md` gained an entry for the `UserDirectoryScreen.tsx`
+stale-`manager_id`-resend bug (found earlier this session, see above) —
+riding along with that file's existing, already-flagged mixed diff until
+it gets its own clean review and commit.
