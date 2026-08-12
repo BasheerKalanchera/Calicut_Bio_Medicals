@@ -147,6 +147,25 @@ class TestCreateUser:
 
         repo.create.assert_not_called()
 
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allows_admin_or_gm_manager_in_different_sbu(self, role_name):
+        # Admin/GM's own sbu_id is a meaningless placeholder (not yet
+        # nullable) -- the same-SBU invariant shouldn't apply when they're
+        # the one being assigned as manager.
+        manager = _make_user(sbu_id=uuid.uuid4())
+        manager.role = SimpleNamespace(role_name=role_name)
+        new_user = _make_user()
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: manager if uid == manager.id else None
+        repo.create.return_value = new_user
+
+        service = UserService(repository=repo)
+        data = self._data(manager_id=manager.id, sbu_id=uuid.uuid4())
+        result = service.create_user(data, role_name="Admin")
+
+        assert result is new_user
+        repo.create.assert_called_once()
+
     def test_allows_manager_in_same_sbu(self):
         shared_sbu = uuid.uuid4()
         manager = _make_user(sbu_id=shared_sbu)
@@ -269,6 +288,21 @@ class TestUpdateUser:
             service.update_user(user.id, UserUpdate(manager_id=manager.id), role_name="Admin")
 
         repo.update.assert_not_called()
+
+    @pytest.mark.parametrize("role_name", ["General Manager", "Admin"])
+    def test_allows_admin_or_gm_manager_in_different_sbu(self, role_name):
+        user = _make_user(sbu_id=uuid.uuid4())
+        manager = _make_user(sbu_id=uuid.uuid4())
+        manager.role = SimpleNamespace(role_name=role_name)
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: user if uid == user.id else (manager if uid == manager.id else None)
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        result = service.update_user(user.id, UserUpdate(manager_id=manager.id), role_name="Admin")
+
+        assert result is user
+        repo.update.assert_called_once()
 
     def test_manager_sbu_check_uses_effective_sbu_id_when_sbu_also_changing(self):
         # PATCH semantics: this update changes sbu_id in the same call, so the

@@ -45,7 +45,12 @@ class UserService:
             manager = self.repository.get_by_id(data.manager_id)
             if not manager:
                 raise NotFoundError(f"Manager {data.manager_id} not found")
-            if manager.sbu_id != data.sbu_id:
+            # Admin/GM (_USER_WRITE_ROLES) are an SBU-agnostic overlay tier --
+            # their own sbu_id is a real column value today (not yet nullable,
+            # see Backlog.md) but a meaningless placeholder, not real
+            # membership. The same-SBU invariant only makes sense for a
+            # manager who actually belongs to an SBU.
+            if manager.role.role_name not in _USER_WRITE_ROLES and manager.sbu_id != data.sbu_id:
                 raise ValidationError("Manager must belong to the same SBU as the user")
         user = UserProfile(
             id=data.id,
@@ -75,7 +80,10 @@ class UserService:
             # semantics) -- compare against the value the user will actually
             # end up with, not necessarily their current one.
             effective_sbu_id = data.sbu_id if data.sbu_id is not None else user.sbu_id
-            if manager.sbu_id != effective_sbu_id:
+            # Admin/GM (_USER_WRITE_ROLES) are an SBU-agnostic overlay tier --
+            # see the matching comment in create_user for why they're exempt
+            # from this invariant.
+            if manager.role.role_name not in _USER_WRITE_ROLES and manager.sbu_id != effective_sbu_id:
                 raise ValidationError("Manager must belong to the same SBU as the user")
         if data.sbu_id is not None and not self.repository.sbu_exists(data.sbu_id):
             raise NotFoundError(f"SBU {data.sbu_id} not found")
