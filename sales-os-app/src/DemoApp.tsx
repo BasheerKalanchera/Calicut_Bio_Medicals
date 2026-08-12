@@ -44,7 +44,7 @@ const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
   const queryClient = useQueryClient();
-  const [view, setView]                         = useState("customers");
+  const [view, setView]                         = useState("opportunities");
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
   // Where to return to on Back — Customer360/OpportunityDetail now have more than
