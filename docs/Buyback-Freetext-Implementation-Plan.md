@@ -1,11 +1,11 @@
 # Buyback Free-Text Field — Implementation Plan
 
-**Status:** Planned — approved for build, not yet started.
+**Status:** Shipped, `8ab0c4e` (2026-08-11).
 **Date:** 2026-08-10
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete, ordered implementation plan for the free-text Buyback
 change agreed in principle in
-`docs/Discussion-Buyback-Freetext-And-Intake-2026-08.md` — that doc records
+`docs/Discussion-Buyback-Freetext-2026-08.md` — that doc records
 the *decision*; this doc records the *execution steps* (exact SQL, files,
 tests, sequencing). The separate "trade-in intake tracking" table
 (post-close refurbish/parts/discard workflow) is explicitly out of scope —
@@ -18,7 +18,7 @@ see Context below.
 Today, a "Buyback" line item on an Opportunity (a customer's traded-in
 machine, credited against the deal total) must point at an existing catalog
 `Product` row tagged `product_type = REFURBISHED`, picked from a dropdown.
-Per `docs/Discussion-Buyback-Freetext-And-Intake-2026-08.md`: nobody knows
+Per `docs/Discussion-Buyback-Freetext-2026-08.md`: nobody knows
 the exact make/model/condition of a customer's used machine in advance, so
 cataloguing it *before* the deal happens doesn't fit how trade-ins actually
 occur. **Change agreed in principle:** the rep instead types a free-text

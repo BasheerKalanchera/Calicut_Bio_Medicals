@@ -164,7 +164,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ### BR-CAT-03: Buyback Line Items Are Free-Text (2026-08-10)
 * **Rule:** A Buyback line item on an Opportunity carries a free-text `description` of the customer's traded-in machine and no catalog `product_id`. PRODUCT/ACCESSORY line items are unaffected — they still require a catalog `product_id` and carry no `description`.
-* **Rationale:** Nobody knows the exact make/model/condition of a customer's used machine before the deal happens, so requiring it to be pre-catalogued as a `REFURBISHED` Product (the prior rule) didn't fit how trade-ins actually occur — see `docs/Discussion-Buyback-Freetext-And-Intake-2026-08.md`.
+* **Rationale:** Nobody knows the exact make/model/condition of a customer's used machine before the deal happens, so requiring it to be pre-catalogued as a `REFURBISHED` Product (the prior rule) didn't fit how trade-ins actually occur — see `docs/Discussion-Buyback-Freetext-2026-08.md`.
 * **Enforcement:** `OpportunityItemCreate` schema `model_validator` (description required when `line_type = BUYBACK`, `product_id` required otherwise) plus the relaxed `ck_opportunity_item_product_id_or_buyback` CHECK constraint (migration `0017`) — DB-level enforcement only requires `product_id IS NOT NULL OR line_type = 'BUYBACK'`, not `description IS NOT NULL`, since that's a new-write-only rule.
 * **Out of scope:** a separate post-close trade-in intake tracking workflow (refurbish / parts / discard) is still under discussion, not yet planned or built. The one settled fact so far: an intake queue row would be created only when the deal reaches Won, not when the Buyback line is added.
 
