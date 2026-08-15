@@ -1,22 +1,35 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Typography, Button, TextField, MenuItem, IconButton, Chip, Collapse, Alert } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  MenuItem,
+  IconButton,
+  Chip,
+  Collapse,
+  Alert,
+  FormControlLabel,
+  Checkbox,
+} from "@mui/material";
 import FormModal from "../components/FormModal";
-import { getZoneTree, createZone, updateZone, deprecateZone, getBlastRadius, rebuildClosure } from "../services/territoryAdmin";
+import ZonePicker from "../components/ZonePicker";
+import useDebouncedValue from "../hooks/useDebouncedValue";
+import {
+  getZoneTree,
+  createZone,
+  updateZone,
+  deprecateZone,
+  getBlastRadius,
+  rebuildClosure,
+  checkZoneName,
+} from "../services/territoryAdmin";
 import type { ZoneTreeNode, ZoneBlastRadius } from "../types/territoryAdmin";
+import type { ZoneSearchResult } from "../services/masterData";
 
 const EMPTY_FORM = { name: "", zone_level: "", parent_zone_id: "" };
 const ZONE_LEVELS = ["STATE", "ZONE", "DISTRICT", "TALUK", "CLUSTER"];
-
-interface FlatZone {
-  id: string;
-  name: string;
-  depth: number;
-}
-
-function flattenTree(nodes: ZoneTreeNode[], depth = 0): FlatZone[] {
-  return nodes.flatMap((n) => [{ id: n.id, name: n.name, depth }, ...flattenTree(n.children, depth + 1)]);
-}
 
 export default function TerritoryAdminScreen() {
   const queryClient = useQueryClient();
@@ -26,12 +39,31 @@ export default function TerritoryAdminScreen() {
   });
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [showCoverage, setShowCoverage] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | "deprecate" | null>(null);
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
   const [deprecatingZone, setDeprecatingZone] = useState<ZoneTreeNode | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [parentZone, setParentZone] = useState<ZoneSearchResult | null>(null);
+  const [isTopLevel, setIsTopLevel] = useState(false);
+  // Only set when editing a zone that currently has a parent -- drives the
+  // "will be removed from X" warning. Null for Add Zone (nothing to warn
+  // about yet) and for editing an already-top-level zone.
+  const [originalParentName, setOriginalParentName] = useState<string | null>(null);
   const [blastRadius, setBlastRadius] = useState<ZoneBlastRadius | null>(null);
   const [rebuildMessage, setRebuildMessage] = useState<string | null>(null);
+
+  const debouncedFormName = useDebouncedValue(form.name);
+  const effectiveParentId = isTopLevel ? null : form.parent_zone_id || null;
+  // Soft, non-blocking heads-up -- uq_zone_parent_name/uq_zone_root_name
+  // (migration 0019) deliberately allow the same name in different
+  // branches, so this never blocks Create/Save. It just catches the more
+  // likely case: the same real place added twice by mistake.
+  const { data: nameMatches = [] } = useQuery({
+    queryKey: ["zones", "name-check", debouncedFormName, effectiveParentId, editingZoneId],
+    enabled: (dialogMode === "create" || dialogMode === "edit") && debouncedFormName.trim().length >= 2,
+    queryFn: () => checkZoneName(debouncedFormName.trim(), effectiveParentId, editingZoneId),
+  });
 
   const invalidateTree = () => queryClient.invalidateQueries({ queryKey: ["zone-tree"] });
 
@@ -44,17 +76,25 @@ export default function TerritoryAdminScreen() {
     });
   };
 
-  const flatZones = flattenTree(tree);
-
   const openCreate = (parent: ZoneTreeNode | null) => {
     setEditingZoneId(null);
     setForm({ name: "", zone_level: "", parent_zone_id: parent?.id || "" });
+    setParentZone(parent ? { id: parent.id, name: parent.name, path: "" } : null);
+    // Always starts unchecked, even from the toolbar's parent-less "Add
+    // Zone" -- top-level is a rare, deliberate choice the Admin must
+    // explicitly opt into, not a default guessed from which button they
+    // clicked.
+    setIsTopLevel(false);
+    setOriginalParentName(null);
     setDialogMode("create");
   };
 
-  const openEdit = (zone: ZoneTreeNode, parentId: string | null) => {
+  const openEdit = (zone: ZoneTreeNode, parent: ZoneTreeNode | null) => {
     setEditingZoneId(zone.id);
-    setForm({ name: zone.name, zone_level: zone.zone_level || "", parent_zone_id: parentId || "" });
+    setForm({ name: zone.name, zone_level: zone.zone_level || "", parent_zone_id: parent?.id || "" });
+    setParentZone(parent ? { id: parent.id, name: parent.name, path: "" } : null);
+    setIsTopLevel(!parent);
+    setOriginalParentName(parent?.name ?? null);
     setDialogMode("edit");
   };
 
@@ -70,13 +110,21 @@ export default function TerritoryAdminScreen() {
     setDialogMode(null);
     setEditingZoneId(null);
     setDeprecatingZone(null);
+    setParentZone(null);
+  };
+
+  const validateZoneForm = () => {
+    if (!form.name.trim()) throw new Error("Zone name is required");
+    if (!isTopLevel && !form.parent_zone_id) {
+      throw new Error("Parent Zone is required, or mark this as a top-level zone");
+    }
   };
 
   const handleCreate = async () => {
-    if (!form.name.trim()) throw new Error("Zone name is required");
+    validateZoneForm();
     await createZone({
       name: form.name.trim(),
-      parent_zone_id: form.parent_zone_id || null,
+      parent_zone_id: isTopLevel ? null : form.parent_zone_id,
       zone_level: form.zone_level || null,
     });
     invalidateTree();
@@ -84,10 +132,10 @@ export default function TerritoryAdminScreen() {
 
   const handleEdit = async () => {
     if (!editingZoneId) return;
-    if (!form.name.trim()) throw new Error("Zone name is required");
+    validateZoneForm();
     await updateZone(editingZoneId, {
       name: form.name.trim(),
-      parent_zone_id: form.parent_zone_id || null,
+      parent_zone_id: isTopLevel ? null : form.parent_zone_id,
       zone_level: form.zone_level || null,
     });
     invalidateTree();
@@ -105,7 +153,7 @@ export default function TerritoryAdminScreen() {
     setTimeout(() => setRebuildMessage(null), 4000);
   };
 
-  const renderNode = (node: ZoneTreeNode, parentId: string | null, depth: number) => {
+  const renderNode = (node: ZoneTreeNode, parent: ZoneTreeNode | null, depth: number) => {
     const isExpanded = expanded.has(node.id);
     const hasChildren = node.children.length > 0;
     return (
@@ -136,7 +184,7 @@ export default function TerritoryAdminScreen() {
           <IconButton size="small" onClick={() => openCreate(node)} title="Add child zone">
             <Box component="span">➕</Box>
           </IconButton>
-          <IconButton size="small" onClick={() => openEdit(node, parentId)} title="Edit zone">
+          <IconButton size="small" onClick={() => openEdit(node, parent)} title="Edit zone">
             <Box component="span">✏️</Box>
           </IconButton>
           <IconButton
@@ -148,9 +196,16 @@ export default function TerritoryAdminScreen() {
             <Box component="span">🚫</Box>
           </IconButton>
         </Box>
+        {showCoverage && node.assignees.length > 0 && (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pl: depth * 3 + 5, pb: 0.75 }}>
+            {node.assignees.map((a) => (
+              <Chip key={a.id} label={`${a.display_name} · ${a.role_name}`} size="small" variant="outlined" />
+            ))}
+          </Box>
+        )}
         {hasChildren && (
           <Collapse in={isExpanded}>
-            {node.children.map((child) => renderNode(child, node.id, depth + 1))}
+            {node.children.map((child) => renderNode(child, node, depth + 1))}
           </Collapse>
         )}
       </Box>
@@ -162,6 +217,9 @@ export default function TerritoryAdminScreen() {
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 700 }}>Territory Map</Typography>
         <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="outlined" onClick={() => setShowCoverage((v) => !v)}>
+            {showCoverage ? "Hide Coverage" : "Show Coverage"}
+          </Button>
           <Button variant="outlined" onClick={handleRebuildClosure}>Refresh Territory Visibility</Button>
           <Button variant="contained" onClick={() => openCreate(null)}>Add Zone</Button>
         </Box>
@@ -192,6 +250,13 @@ export default function TerritoryAdminScreen() {
           size="small"
           autoFocus
         />
+        {nameMatches.length > 0 && (
+          <Alert severity="warning">
+            "{debouncedFormName.trim()}" already exists under{" "}
+            {nameMatches.map((m) => m.parent_name ?? "the top level").join(", ")}. Make sure this isn't the same
+            place added twice.
+          </Alert>
+        )}
         <TextField
           select
           label="Zone Level"
@@ -206,22 +271,37 @@ export default function TerritoryAdminScreen() {
             <MenuItem key={lvl} value={lvl}>{lvl}</MenuItem>
           ))}
         </TextField>
-        <TextField
-          select
+        <ZonePicker
           label="Parent Zone"
-          value={form.parent_zone_id}
-          onChange={(e) => setForm({ ...form, parent_zone_id: e.target.value })}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">No parent (top-level)</MenuItem>
-          {flatZones
-            .filter((z) => z.id !== editingZoneId)
-            .map((z) => (
-              <MenuItem key={z.id} value={z.id}>{"— ".repeat(z.depth)}{z.name}</MenuItem>
-            ))}
-        </TextField>
+          value={parentZone}
+          onChange={(zone) => {
+            setParentZone(zone);
+            setForm({ ...form, parent_zone_id: zone?.id || "" });
+          }}
+          excludeIds={editingZoneId ? [editingZoneId] : []}
+          disabled={isTopLevel}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isTopLevel}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsTopLevel(checked);
+                if (checked) {
+                  setParentZone(null);
+                  setForm({ ...form, parent_zone_id: "" });
+                }
+              }}
+            />
+          }
+          label="This is a top-level zone (no parent)"
+        />
+        {isTopLevel && originalParentName && (
+          <Alert severity="warning">
+            "{form.name || "This zone"}" will no longer belong to "{originalParentName}".
+          </Alert>
+        )}
       </FormModal>
 
       <FormModal

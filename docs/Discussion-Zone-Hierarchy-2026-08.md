@@ -15,9 +15,7 @@ South Kerala/Karnataka geography data (see `Zone-Hierarchy-Territory-Data-
 **Purpose:** Plain-language summary of how Cabio's geography (zones/districts)
 and role-based visibility should be restructured so it survives expansion beyond
 Kerala and Karnataka, written to be reviewed by non-technical stakeholders, not
-just engineers. Related but separate topic: see
-`Discussion-Buyback-Freetext-And-Intake-2026-08.md` for the trade-in/buyback
-handling discussed the same day.
+just engineers.
 
 ---
 

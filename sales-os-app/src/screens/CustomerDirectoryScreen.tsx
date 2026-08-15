@@ -1,4 +1,4 @@
-import { useRef, useState, type MouseEvent } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -8,22 +8,21 @@ import {
   Chip,
   IconButton,
   InputAdornment,
-  Menu,
   MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
-import { listZones } from "../services/masterData";
 import FormModal from "../components/FormModal";
+import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import { useAuth } from "../contexts/AuthContext";
 import type { AccountListResponse } from "../types/api";
+import type { ZoneSearchResult } from "../services/masterData";
 
-interface ZoneOption { id: string; name: string }
 interface AccountOption { id: string; name: string }
 
 const CUSTOMER_TYPES = [
@@ -59,17 +58,17 @@ interface Props {
 
 export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef }: Props) {
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState("");
-  const [zoneFilter, setZoneFilter] = useState("");
-  const [zoneMenuAnchorEl, setZoneMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [zoneFilter, setZoneFilter] = useState<ZoneSearchResult | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 50;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formName, setFormName] = useState("");
-  const [formZoneId, setFormZoneId] = useState("");
+  const [formZone, setFormZone] = useState<ZoneSearchResult | null>(null);
   const [formPayerBehavior, setFormPayerBehavior] = useState("");
   const [formCustomerType, setFormCustomerType] = useState("");
   const [formParentAccount, setFormParentAccount] = useState<AccountOption | null>(null);
@@ -77,12 +76,6 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
 
   const debouncedSearch = useDebouncedValue(search);
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
-
-  const { data: zones = [] } = useQuery({
-    queryKey: ["zones"],
-    queryFn: async () => (await listZones()) as ZoneOption[],
-    staleTime: Infinity,
-  });
 
   const { data: parentOptions = [], isFetching: parentOptionsLoading } = useQuery({
     queryKey: ["accounts", "parent-search", debouncedParentSearch],
@@ -94,11 +87,11 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   });
 
   const { data: listData, isLoading, isError, refetch } = useQuery({
-    queryKey: ["accounts", "list", { search: debouncedSearch, zoneFilter, page }],
+    queryKey: ["accounts", "list", { search: debouncedSearch, zoneId: zoneFilter?.id, page }],
     queryFn: () =>
       listAccounts({
         search: debouncedSearch || undefined,
-        zone_id: zoneFilter || undefined,
+        zone_id: zoneFilter?.id || undefined,
         page,
         page_size: pageSize,
       }),
@@ -135,7 +128,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
 
   const openCreateModal = () => {
     setFormName("");
-    setFormZoneId("");
+    // Pre-fill with the logged-in user's own zone (their day-to-day home
+    // base, not the broader zone_ids coverage list) so sales staff aren't
+    // re-searching their own zone on every new customer -- still editable.
+    setFormZone(userProfile?.zone ? { ...userProfile.zone, path: "" } : null);
     setFormPayerBehavior("");
     setFormCustomerType("");
     setFormParentAccount(null);
@@ -144,19 +140,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   };
   if (openCreateRef) openCreateRef.current = openCreateModal;
 
-  const openZoneMenu = (event: MouseEvent<HTMLElement>) => setZoneMenuAnchorEl(event.currentTarget);
-  const closeZoneMenu = () => setZoneMenuAnchorEl(null);
-  const selectZoneFilter = (zoneId: string) => {
-    setZoneFilter(zoneId);
-    setPage(1);
-    closeZoneMenu();
-  };
-  const activeZoneName = zones.find((z) => z.id === zoneFilter)?.name;
-
   const handleCreateAccount = async () => {
     if (!formName.trim()) throw new Error("Customer name is required");
-    if (!formZoneId) throw new Error("Zone is required");
-    const payload: Record<string, unknown> = { name: formName.trim(), zone_id: formZoneId };
+    if (!formZone) throw new Error("Zone is required");
+    const payload: Record<string, unknown> = { name: formName.trim(), zone_id: formZone.id };
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
     if (formCustomerType) payload.customer_type = formCustomerType;
     if (formParentAccount) payload.parent_account_id = formParentAccount.id;
@@ -204,25 +191,13 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
               },
             }}
           />
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={openZoneMenu}
-            endIcon={<ArrowDropDownIcon />}
-            sx={{ borderRadius: 999, textTransform: "none", whiteSpace: "nowrap", flexShrink: 0 }}
-          >
-            {activeZoneName || "All Zones"}
-          </Button>
-          <Menu anchorEl={zoneMenuAnchorEl} open={Boolean(zoneMenuAnchorEl)} onClose={closeZoneMenu}>
-            <MenuItem selected={!zoneFilter} onClick={() => selectZoneFilter("")}>
-              All Zones
-            </MenuItem>
-            {zones.map((z) => (
-              <MenuItem key={z.id} selected={zoneFilter === z.id} onClick={() => selectZoneFilter(z.id)}>
-                {z.name}
-              </MenuItem>
-            ))}
-          </Menu>
+          <Box sx={{ minWidth: { sm: 220 }, flexShrink: 0 }}>
+            <ZonePicker
+              label="All Zones"
+              value={zoneFilter}
+              onChange={(zone) => { setZoneFilter(zone); setPage(1); }}
+            />
+          </Box>
         </Box>
       </Box>
 
@@ -380,20 +355,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
           size="small"
           placeholder="Enter customer name"
         />
-        <TextField
-          select
-          label="Zone *"
-          value={formZoneId}
-          onChange={(e) => setFormZoneId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select zone</MenuItem>
-          {zones.map((z) => (
-            <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>
-          ))}
-        </TextField>
+        <ZonePicker label="Zone *" value={formZone} onChange={setFormZone} />
         <Autocomplete
           options={parentOptions}
           getOptionLabel={(o) => o.name}

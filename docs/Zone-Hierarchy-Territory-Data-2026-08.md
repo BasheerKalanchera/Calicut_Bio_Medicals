@@ -45,39 +45,62 @@ fully populated: Shruthi covers all of Karnataka except the Karnataka
 Coastal cluster (Fazal). Plain names only, no parenthetical caveats — see
 each row's Flag column for anything still uncertain about that row.
 
-| State | Zone | District / Cluster | Taluk | Assignee | Manager | Flag |
-|---|---|---|---|---|---|---|
-| Karnataka | Bangalore | Zone 1: Central + East Bangalore | — | Rudrappa | Shruthi | |
-| Karnataka | Bangalore | Zone 2: North + Rural North Bangalore | — | Om Hiremath | Shruthi | |
-| Karnataka | Bangalore | Zone 3: West | — | Om Hiremath | Shruthi | |
-| Karnataka | Bangalore | Zone 4: South Bangalore Core | — | Dhanushma | Shruthi | |
-| Karnataka | Bangalore | *Zone 5 — missing* | — | — | — | ⚠ gap in Shruthi's numbering |
-| Karnataka | Bangalore | Zone 6: South-West + Rural South | — | Dhanushma | Shruthi | |
-| Karnataka | Karnataka South | Mysore / Mandya / Ramnagara / Chamrajnagar | — | Nagesh Ninganoor | Shruthi | resolved 2026-08-11 — Coorg moved out, now under Karnataka Coastal below |
-| Karnataka | Karnataka Central | Tumkur / Chitradurga / Hassan | — | Ravikumar | Shruthi | ⚠ informal label, not Karnataka's official revenue division — Hassan officially belongs to the Mysore Division (with the South cluster above), not Bangalore Division (Tumkur/Chitradurga's actual division); Basheer's call 2026-08-11, kept informal |
-| Karnataka | Karnataka Coastal | Mangalore | — | Fahad (interim) | Fazal | ⚠ already a live top-level zone — nesting TBD |
-| Karnataka | Karnataka Coastal | Dakshin Kannada | — | Fahad (interim) | Fazal | |
-| Karnataka | Karnataka Coastal | Coorg | — | Fahad (interim) | Fazal | resolved 2026-08-11 — Basheer's call; formerly transcribed "Kodak" |
-| Karnataka | Karnataka Coastal | Udupi | — | Fahad (interim, until backfilled) | Fazal | |
-| Karnataka | Karnataka Coastal | Shimoga | — | Fahad (interim, until backfilled) | Fazal | ⚠ not geographically coastal |
-| Karnataka | Karnataka Coastal | Bhatkal | — | Fahad (interim, until backfilled) | Fazal | genuinely coastal |
-| Karnataka | — | Dharwad | — | Subdealer | Shruthi | ⚠ not an internal rep — open question |
-| Kerala | North Kerala | Kasaragod | — | Irfan | Fazal | ⚠ reporting line presumed, not confirmed |
-| Kerala | North Kerala | Kannur | — | Irfan | Fazal | ⚠ reporting line presumed, not confirmed |
-| Kerala | North Kerala | Kozhikode | — | Irfan | Fazal | resolved — was shared, now Irfan's alone; reporting line still presumed |
-| Kerala | North Kerala | Malappuram | — | "Staff New" | Fazal | ⚠ name/status pending; reporting line presumed |
-| Kerala | North Kerala | Wayanad | — | "Staff New" | Fazal | ⚠ name/status pending; reporting line presumed |
-| Kerala | South Kerala | Palakkad | — | Adarsh | Adarsh | ⚠ Adarsh's role as South Kerala lead is inferred, not an explicitly stated title |
-| Kerala | South Kerala | Thrissur | — | Adarsh | Adarsh | ⚠ same as above |
-| Kerala | South Kerala | Ernakulam | — | Adarsh | Adarsh | ⚠ same as above, plus boundary vs. Central Kerala unconfirmed |
-| Kerala | South Kerala | Alappuzha | Rest of Alappuzha | Adarsh | Adarsh | ⚠ exact taluk boundary not given |
-| Kerala | South Kerala | Alappuzha | Chengannur / Harippad / Kayamkulam | Vivek | Adarsh | |
-| Kerala | South Kerala | Idukki | Rest of Idukki | Adarsh | Adarsh | ⚠ exact taluk boundary not given |
-| Kerala | South Kerala | Idukki | Thodupuzha | Vivek | Adarsh | |
-| Kerala | South Kerala | Kottayam | — | Vivek | Adarsh | |
-| Kerala | South Kerala | Pathanamthitta | — | Vivek | Adarsh | |
-| Kerala | South Kerala | Kollam | — | Vivek | Adarsh | |
-| Kerala | South Kerala | Trivandrum | — | Vivek | Adarsh | |
+**"SBU" column** — added 2026-08-12, once it became clear territory
+coverage splits by Strategic Business Unit (Imaging vs Critical Care —
+SBUs are also RLS security boundaries in the live system, see CLAUDE.md).
+Confirmed 2026-08-12: **Shruthi's entire cluster (all of Bangalore +
+wider Karnataka) is Imaging**; **Adarsh's entire cluster (all of South
+Kerala) is Critical Care**; North Kerala has both — Fahad (Imaging) and
+Nishad (Critical Care, new this update, with Adydev reporting to him).
+
+Neither state has a genuine missing-SBU gap after all — both are business
+scope, confirmed directly by their managers, not data not yet gathered:
+**South Kerala sells Critical Care products only** (Adarsh's cluster has
+no Imaging counterpart to find), and **Karnataka sells Imaging products
+only** (Shruthi confirmed for her whole cluster, and per Basheer "same is
+the case with Fazal" — his Karnataka Coastal territory too, which also
+retires the ⚠-inferred SBU flags on those rows below; Fazal's Kerala-side
+territory, North Kerala, is unaffected and still has both SBUs). Kerala
+is the only state confirmed to run both SBUs side by side.
+
+| State | Zone | District / Cluster | Taluk | Assignee | Manager | SBU | Flag |
+|---|---|---|---|---|---|---|---|
+| Karnataka | Bangalore | Zone 1: Central + East Bangalore | — | Rudrappa | Shruthi | Imaging | |
+| Karnataka | Bangalore | Zone 2: North + Rural North Bangalore | — | Om Hiremath | Shruthi | Imaging | |
+| Karnataka | Bangalore | Zone 3: West | — | Om Hiremath | Shruthi | Imaging | |
+| Karnataka | Bangalore | Zone 4: South Bangalore Core | — | Dhanushma | Shruthi | Imaging | |
+| Karnataka | Bangalore | *Zone 5 — missing* | — | — | — | — | ⚠ gap in Shruthi's numbering |
+| Karnataka | Bangalore | Zone 6: South-West + Rural South | — | Dhanushma | Shruthi | Imaging | |
+| Karnataka | Karnataka South | Mysore / Mandya / Ramnagara / Chamrajnagar | — | Nagesh Ninganoor | Shruthi | Imaging | resolved 2026-08-11 — Coorg moved out, now under Karnataka Coastal below |
+| Karnataka | Karnataka Central | Tumkur / Chitradurga / Hassan | — | Ravikumar | Shruthi | Imaging | ⚠ informal label, not Karnataka's official revenue division — Hassan officially belongs to the Mysore Division (with the South cluster above), not Bangalore Division (Tumkur/Chitradurga's actual division); Basheer's call 2026-08-11, kept informal |
+| Karnataka | Karnataka Coastal | Mangalore | — | Fahad (interim) | Fazal | Imaging | ⚠ already a live top-level zone — nesting TBD |
+| Karnataka | Karnataka Coastal | Dakshin Kannada | — | Fahad (interim) | Fazal | Imaging | |
+| Karnataka | Karnataka Coastal | Coorg | — | Fahad (interim) | Fazal | Imaging | resolved 2026-08-11 — Basheer's call; formerly transcribed "Kodak" |
+| Karnataka | Karnataka Coastal | Udupi | — | Fahad (interim, until backfilled) | Fazal | Imaging | |
+| Karnataka | Karnataka Coastal | Shimoga | — | Fahad (interim, until backfilled) | Fazal | Imaging | ⚠ not geographically coastal |
+| Karnataka | Karnataka Coastal | Bhatkal | — | Fahad (interim, until backfilled) | Fazal | Imaging | genuinely coastal |
+| Karnataka | — | Dharwad | — | Subdealer | Shruthi | Imaging | ⚠ not an internal rep — open question |
+| Kerala | North Kerala | Kasaragod | — | Irfan | Fazal | Imaging ⚠ | ⚠ reporting line presumed, not confirmed; SBU presumed from Fahad's confirmed Imaging role, not independently stated for Irfan |
+| Kerala | North Kerala | Kannur | — | Irfan | Fazal | Imaging ⚠ | ⚠ reporting line presumed, not confirmed; SBU presumed, see Kasaragod row |
+| Kerala | North Kerala | Kozhikode | — | Irfan | Fazal | Imaging ⚠ | resolved — was shared, now Irfan's alone; reporting line still presumed; SBU presumed, see Kasaragod row |
+| Kerala | North Kerala | Malappuram | — | "Staff New" | Fazal | Imaging ⚠ | ⚠ name/status pending; reporting line presumed; SBU presumed, see Kasaragod row |
+| Kerala | North Kerala | Wayanad | — | "Staff New" | Fazal | Imaging ⚠ | ⚠ name/status pending; reporting line presumed; SBU presumed, see Kasaragod row |
+| Kerala | North Kerala | Kozhikode | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
+| Kerala | North Kerala | Malappuram | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
+| Kerala | North Kerala | Wayanad | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
+| Kerala | North Kerala | Kannur | — | Adydev | Nishad | Critical Care | ⚠ new, 2026-08-12 — Adydev reports to Nishad |
+| Kerala | North Kerala | Kasaragod | — | Adydev | Nishad | Critical Care | ⚠ new, 2026-08-12 — Adydev reports to Nishad |
+| Kerala | South Kerala | Palakkad | — | Adarsh | Adarsh | Critical Care | ⚠ Adarsh's role as South Kerala lead is inferred, not an explicitly stated title |
+| Kerala | South Kerala | Thrissur | — | Adarsh | Adarsh | Critical Care | ⚠ same as above |
+| Kerala | South Kerala | Ernakulam | — | Adarsh | Adarsh | Critical Care | ⚠ same as above, plus boundary vs. Central Kerala unconfirmed |
+| Kerala | South Kerala | Alappuzha | Rest of Alappuzha | Adarsh | Adarsh | Critical Care | ⚠ exact taluk boundary not given |
+| Kerala | South Kerala | Alappuzha | Chengannur / Harippad / Kayamkulam | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Idukki | Rest of Idukki | Adarsh | Adarsh | Critical Care | ⚠ exact taluk boundary not given |
+| Kerala | South Kerala | Idukki | Thodupuzha | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Kottayam | — | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Pathanamthitta | — | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Kollam | — | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Trivandrum | — | Vivek | Adarsh | Critical Care | |
 
 **Central Kerala dropped from this table, 2026-08-11 (later)** — per
 Basheer, Kerala operates with North and South zones only for now; see the
@@ -144,12 +167,85 @@ there's no longer a shared district here.
    Kerala's first district breakdown gathered so far — worth confirming
    with Fazal/Haroon that it's the *complete* list of North Kerala's
    districts, not a partial one.
-5. **New, 2026-08-11 (later): whose list is this, exactly — Fazal's or
-   Fahad's?** Raised by the Fahad/Fazal correction above. Doesn't change
-   the district facts themselves, but affects who to go back to for
-   corrections/confirmations on this section specifically.
+5. ~~Whose list is this, exactly — Fazal's or Fahad's?~~ — **partially
+   resolved 2026-08-12:** Fahad is confirmed to hold the North Kerala
+   **Imaging** SBU charge directly (see the Critical Care update below),
+   so this Imaging-side list plausibly came from Fahad rather than
+   Fazal. Not independently confirmed which of the two actually relayed
+   it, but Fahad having a direct North Kerala role is no longer in doubt.
+6. **New, 2026-08-12: is Fazal still the overall North Kerala Area
+   Manager across both SBUs, or does the Imaging/Critical Care split run
+   all the way to the top** (Fahad reporting for Imaging, Nishad for
+   Critical Care, with no single cross-SBU North Kerala manager above
+   both)? Affects whether "Fazal" belongs in the Manager column for
+   these Imaging rows at all, or whether it should read "Fahad" once
+   that's confirmed.
+
+### Update 2026-08-12 — Critical Care SBU split (Nishad & Adydev)
+
+Raw input, as given 2026-08-12: **Nishad** handles the North Kerala
+**Critical Care** SBU charge; **Fahad** handles the North Kerala
+**Imaging** SBU charge (confirming, per open question 5 above, that Fahad
+does have a direct North Kerala role, not just the Karnataka Coastal one
+already on record). **Adydev** reports to Nishad within Critical Care and
+handles Kannur and Kasaragod specifically.
+
+This is the first time SBU has been recorded as a distinct axis in this
+doc — see the new SBU column in the consolidated table above. It means
+every North Kerala district now has *two* independent assignments, one
+per SBU, not one:
+
+**Nishad** (Critical Care, whole districts, direct):
+- Kozhikode
+- Malappuram
+- Wayanad
+
+**Adydev** (Critical Care, reports to Nishad):
+- Kannur
+- Kasaragod
+
+**Tentative tree, revised for the SBU split:**
+```
+North Kerala
+ ├── Imaging (Manager: Fahad — org position above him TBD, see open Q6)
+ │    ├── Kasaragod      (Irfan)
+ │    ├── Kannur         (Irfan)
+ │    ├── Kozhikode      (Irfan)
+ │    ├── Malappuram     ("Staff New")
+ │    └── Wayanad        ("Staff New")
+ └── Critical Care (Manager: Nishad)
+      ├── Kozhikode      (Nishad, direct)
+      ├── Malappuram     (Nishad, direct)
+      ├── Wayanad        (Nishad, direct)
+      ├── Kannur         (Adydev, reports to Nishad)
+      └── Kasaragod      (Adydev, reports to Nishad)
+```
+
+**Open questions on this update:**
+1. **Does Nishad also report to Fazal**, the same way Fahad's Imaging
+   line does (presumed, per open question 2 above), or is Critical Care
+   North Kerala organizationally separate from Fazal's chain entirely?
+   Not stated either way yet.
+2. **District list mismatch** — Nishad/Adydev's five Critical Care
+   districts (Kozhikode, Malappuram, Wayanad, Kannur, Kasaragod) match
+   the Imaging side's five exactly. Worth confirming this is deliberate
+   (Critical Care mirrors Imaging's district boundaries in North Kerala)
+   rather than coincidental, especially before assuming the same mirror
+   holds for other zones.
+3. Same completeness question as open question 4 above, but for Critical
+   Care: is this the *complete* North Kerala Critical Care district list,
+   or partial?
 
 ## South Kerala — Adarsh & Vivek
+
+**Confirmed 2026-08-12: Adarsh's entire cluster is Critical Care SBU —
+and, per Basheer the same day, this isn't just an unfilled reporting gap:
+Cabio sells Critical Care products only in South Kerala.** No Imaging
+manager is missing here; there's no Imaging business in this zone to
+assign one to. This is a real business-scope fact, distinct from
+Bangalore/Karnataka's missing-Critical-Care-manager row below, which *is*
+still an open gap (Imaging clearly is sold there; the Critical Care side
+of that region just hasn't been gathered yet).
 
 Raw input, as given 2026-08-11:
 
@@ -213,6 +309,14 @@ fixed levels" design decision rather than requiring a change to it.
    two ways.
 
 ## Bangalore + wider Karnataka — Shruthi
+
+**Confirmed 2026-08-12: Shruthi's entire cluster is Imaging SBU — and,
+per Shruthi directly the same day, this is business scope, not a gap:
+Cabio sells Imaging products only across the whole Karnataka hierarchy
+under her.** Basheer separately confirmed the same holds for Fazal's
+Karnataka territory (Karnataka Coastal). No Critical Care manager is
+missing here; there's no Critical Care business in Karnataka to assign
+one to.
 
 Raw input, as given 2026-08-11 (verbatim table):
 
@@ -359,8 +463,8 @@ wasn't in the first version of this list.
 
 ## Status
 
-Draft, still converging — actively revised several times in one day
-already, including one **correction, not just an addition**: "Fahad" and
+Draft, still converging — actively revised several times across two days
+now, including one **correction, not just an addition**: "Fahad" and
 "Fazal" were wrongly treated as the same person through several earlier
 revisions of this doc (misreading Shruthi's "Fahad Manager (Fazal)" label);
 confirmed 2026-08-11 (later) they're two different people — Fahad reports
@@ -369,12 +473,28 @@ covers every Karnataka cluster except Karnataka Coastal, which is Fazal's**
 (Nagesh Ninganoor, Ravikumar, and Dharwad's subdealer relationship all
 confirmed reporting to her same day). Not yet reviewed by Haroon. Not yet
 extended to Central Kerala (dropped from scope entirely, not just "not yet
-gathered" — Kerala runs North/South zones only per Basheer). **13 open
-questions logged across the three sections above, 5 resolved** (North
-Kerala's Kozhikode overlap; Karnataka's "Fahad 1"/"Fahad 2" identity;
-Shruthi's management scope; and the Coorg conflict — Basheer's call,
+gathered" — Kerala runs North/South zones only per Basheer).
+
+**New 2026-08-12: SBU (Imaging vs Critical Care) added as a distinct axis**
+to the consolidated table, after confirmation that territory coverage
+splits by SBU. Confirmed: Shruthi's whole cluster = Imaging, Adarsh's
+whole cluster = Critical Care, North Kerala has both (Fahad = Imaging,
+Nishad = Critical Care with Adydev reporting to him on Kannur/Kasaragod).
+**No open SBU gaps remain** — both single-SBU states turned out to be
+business scope, not missing data: **Karnataka sells Imaging products
+only** (confirmed by Shruthi for her cluster and by Basheer for Fazal's
+Karnataka Coastal territory) and **South Kerala sells Critical Care
+products only** (confirmed by Basheer). Kerala as a whole still runs both
+SBUs side by side, via its North/South split.
+
+**17 open questions logged across the three sections above, 6 resolved**
+(North Kerala's Kozhikode overlap; Karnataka's "Fahad 1"/"Fahad 2"
+identity; Shruthi's management scope; the Coorg conflict — Basheer's call,
 2026-08-11: Coorg stays under Karnataka Coastal/Fazal, removed from Nagesh
-Ninganoor's Mysore cluster/Shruthi; "Kodak" no longer used anywhere in
-this doc). Feeds open decision #2 in `docs/Discussion-Zone-Hierarchy-2026-
+Ninganoor's Mysore cluster/Shruthi, "Kodak" no longer used anywhere in
+this doc; and, partially, whose North Kerala Imaging list this was —
+Fahad's direct North Kerala role is now confirmed via the SBU update,
+though which of Fazal/Fahad literally relayed the list is still open).
+Feeds open decision #2 in `docs/Discussion-Zone-Hierarchy-2026-
 08.md`; that doc's other open items (5, 6, 7) are independent of this data
 and still pending Haroon separately.

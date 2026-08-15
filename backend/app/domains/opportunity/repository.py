@@ -8,7 +8,13 @@ from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
-from app.domains.reference.models import LeadSource, LossReason, OpportunityStage, OpportunityStatus
+from app.domains.reference.models import (
+    LeadSource,
+    LossReason,
+    OpportunityStage,
+    OpportunityStatus,
+    ZoneClosure,
+)
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
@@ -76,8 +82,15 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             # Opportunity has no zone_id of its own -- zone lives one hop away via
             # account_id -> account.zone_id, so this filter needs a join. Applied
             # only when zone_id is actually passed, so the unfiltered case stays
-            # exactly as cheap as it is today.
-            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(Account.zone_id == zone_id)
+            # exactly as cheap as it is today. Matches the zone itself plus every
+            # zone beneath it (e.g. picking "Kerala" also returns opportunities
+            # for accounts tagged Kozhikode, Kottayam, etc.)
+            descendant_ids = select(ZoneClosure.descendant_zone_id).where(
+                ZoneClosure.ancestor_zone_id == zone_id
+            )
+            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(
+                Account.zone_id.in_(descendant_ids)
+            )
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)
         if stage_id:
@@ -100,7 +113,12 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     ) -> int:
         stmt = select(func.count(Opportunity.id))
         if zone_id:
-            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(Account.zone_id == zone_id)
+            descendant_ids = select(ZoneClosure.descendant_zone_id).where(
+                ZoneClosure.ancestor_zone_id == zone_id
+            )
+            stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(
+                Account.zone_id.in_(descendant_ids)
+            )
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)
         if stage_id:

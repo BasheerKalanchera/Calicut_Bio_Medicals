@@ -44,7 +44,6 @@ import {
   listOpportunitiesForStakeholder,
 } from "../services/opportunities";
 import {
-  listZones,
   listProjectStatuses,
   listLeadSources,
   listStages,
@@ -54,6 +53,8 @@ import {
   listHoldReasons,
   listSbus,
 } from "../services/masterData";
+import type { ZoneSearchResult } from "../services/masterData";
+import ZonePicker from "../components/ZonePicker";
 import { listProducts } from "../services/products";
 import { listActivitiesByAccount } from "../services/activities";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
@@ -663,7 +664,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // Edit Account
   const [showEditAccount, setShowEditAccount] = useState(false);
   const [editAccountName, setEditAccountName] = useState("");
-  const [editAccountZoneId, setEditAccountZoneId] = useState("");
+  const [editAccountZone, setEditAccountZone] = useState<ZoneSearchResult | null>(null);
   const [editAccountPayer, setEditAccountPayer] = useState("");
   const [editAccountCustomerType, setEditAccountCustomerType] = useState("");
   const [editAccountParent, setEditAccountParent] = useState<{ id: string; name: string } | null>(null);
@@ -773,13 +774,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editAInstallDate, setEditAInstallDate] = useState("");
   const [editADepartment, setEditADepartment] = useState("");
 
-  // Master data (fetched on demand — enabled only while the modal that needs it is open)
-  const { data: zones = [] } = useQuery({
-    queryKey: ["zones"],
-    queryFn: async () => { const d: any = await listZones(); return d.items || d; },
-    enabled: showEditAccount,
-    staleTime: Infinity,
-  });
 
   const { data: projectStatuses = [] } = useQuery({
     queryKey: ["project-statuses"],
@@ -947,7 +941,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // Edit account
   const openEditAccount = () => {
     setEditAccountName(account.name || "");
-    setEditAccountZoneId(account.zone?.id || "");
+    setEditAccountZone(account.zone ? { id: account.zone.id, name: account.zone.name, path: "" } : null);
     setEditAccountPayer(account.payer_behavior || "");
     setEditAccountCustomerType(account.customer_type || "");
     setEditAccountParent(account.parent_account || null);
@@ -957,12 +951,12 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const handleUpdateAccount = async () => {
     if (!editAccountName.trim()) throw new Error("Customer name is required");
-    if (!editAccountZoneId) throw new Error("Zone is required");
+    if (!editAccountZone) throw new Error("Zone is required");
     const previousParentId = account.parent_account?.id || null;
     const newParentId = editAccountParent?.id || null;
     const payload: any = {
       name: editAccountName.trim(),
-      zone_id: editAccountZoneId,
+      zone_id: editAccountZone.id,
       parent_account_id: newParentId,
     };
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
@@ -1316,13 +1310,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* Edit Account */}
       <FormModal isOpen={showEditAccount} onClose={() => setShowEditAccount(false)} title="Edit Customer" onSubmit={handleUpdateAccount}>
         <TextField label="Name *" value={editAccountName} onChange={(e) => setEditAccountName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        <TextField
-          select label="Zone *" value={editAccountZoneId} onChange={(e) => setEditAccountZoneId(e.target.value)}
-          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select zone</MenuItem>
-          {zones.map((z: any) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
-        </TextField>
+        <ZonePicker label="Zone *" value={editAccountZone} onChange={setEditAccountZone} />
         <Autocomplete
           options={parentAccountChoices}
           getOptionLabel={(o: any) => o.name}

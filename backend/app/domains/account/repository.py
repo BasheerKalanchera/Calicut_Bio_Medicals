@@ -9,7 +9,7 @@ from app.domains.activity.models import Activity
 from app.domains.asset.models import InstalledAsset
 from app.domains.opportunity.models import Opportunity
 from app.domains.project.models import Project
-from app.domains.reference.models import Zone
+from app.domains.reference.models import Zone, ZoneClosure
 
 
 class AccountRepository(BaseRepository[Account]):
@@ -45,7 +45,12 @@ class AccountRepository(BaseRepository[Account]):
         if search:
             stmt = stmt.where(Account.name.ilike(f"%{search}%"))
         if zone_id:
-            stmt = stmt.where(Account.zone_id == zone_id)
+            # Match the zone itself plus every zone beneath it (e.g. picking
+            # "Kerala" also returns hospitals tagged Kozhikode, Kottayam, etc.)
+            descendant_ids = select(ZoneClosure.descendant_zone_id).where(
+                ZoneClosure.ancestor_zone_id == zone_id
+            )
+            stmt = stmt.where(Account.zone_id.in_(descendant_ids))
 
         stmt = stmt.order_by(Account.name)
 

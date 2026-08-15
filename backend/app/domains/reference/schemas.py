@@ -22,6 +22,12 @@ class ZoneUpdate(BaseModel):
     zone_level: str | None = None
 
 
+class ZoneAssignee(BaseModel):
+    id: uuid.UUID
+    display_name: str
+    role_name: str
+
+
 class ZoneTreeNode(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,11 +36,29 @@ class ZoneTreeNode(BaseModel):
     zone_level: str | None
     is_active: bool | None
     children: list["ZoneTreeNode"] = []
+    assignees: list[ZoneAssignee] = []
 
 
 class ZoneBlastRadius(BaseModel):
     account_count: int
     user_count: int
+
+
+class ZoneNameMatch(BaseModel):
+    """Backs the Add/Edit Zone form's soft "this name exists elsewhere"
+    warning -- not an error, just a heads-up (see reference/repository.py's
+    find_by_name_elsewhere)."""
+
+    id: uuid.UUID
+    name: str
+    parent_name: str | None
+
+
+class ZoneSearchResult(BaseModel):
+    id: uuid.UUID
+    name: str
+    # Breadcrumb of ancestor names ("Kerala > South Kerala"), "" if top-level.
+    path: str
 
 
 class RoleResponse(BaseModel):

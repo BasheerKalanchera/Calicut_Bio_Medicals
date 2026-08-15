@@ -36,6 +36,69 @@ class ZoneRepository(BaseRepository[Zone]):
         instead of account_id/parent_account_id)."""
         return self.db.scalar(select(Zone.parent_zone_id).where(Zone.id == zone_id))
 
+    def search_by_name(self, query: str, limit: int = 10) -> list[Zone]:
+        """Trigram similarity search over active zones, backing the
+        ZonePicker component (docs/ZonePicker-And-Coverage-View-
+        Implementation-Plan.md). Only active zones are searchable, matching
+        the existing list_active() convention used everywhere else."""
+        similarity = func.similarity(Zone.name, query)
+        stmt = (
+            select(Zone)
+            .where(Zone.is_active == True, similarity > 0)  # noqa: E712
+            .order_by(similarity.desc())
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def exists_by_name(
+        self, name: str, *, parent_zone_id: uuid.UUID | None, exclude_id: uuid.UUID | None = None
+    ) -> bool:
+        """Scoped per-parent, matching uq_zone_parent_name / uq_zone_root_name
+        (migration 0019) -- a name can repeat across different parents, just
+        not twice under the same one (or twice at the top level)."""
+        stmt = select(func.count()).where(func.lower(Zone.name) == func.lower(name))
+        stmt = stmt.where(Zone.parent_zone_id == parent_zone_id) if parent_zone_id else stmt.where(
+            Zone.parent_zone_id.is_(None)
+        )
+        if exclude_id:
+            stmt = stmt.where(Zone.id != exclude_id)
+        return (self.db.scalar(stmt) or 0) > 0
+
+    def find_by_name_elsewhere(
+        self, name: str, *, parent_zone_id: uuid.UUID | None, exclude_id: uuid.UUID | None = None
+    ) -> list[Zone]:
+        """Active zones sharing this exact name outside the given parent
+        scope -- backs the Add/Edit Zone form's soft "this name exists
+        elsewhere" warning. Purely informational: uq_zone_parent_name /
+        uq_zone_root_name (migration 0019) deliberately only enforce
+        per-parent uniqueness, so the same name in a different branch is
+        allowed by design -- this just surfaces it before the Admin
+        commits, in case it's the same real place added twice by mistake
+        (e.g. Kasaragod under both North and South Kerala) rather than a
+        legitimate name reused across branches.
+        is_distinct_from is NULL-safe: two top-level zones (both
+        parent_zone_id IS NULL) count as the same scope, not "elsewhere."
+        """
+        stmt = select(Zone).where(
+            Zone.is_active == True,  # noqa: E712
+            func.lower(Zone.name) == func.lower(name),
+            Zone.parent_zone_id.is_distinct_from(parent_zone_id),
+        )
+        if exclude_id:
+            stmt = stmt.where(Zone.id != exclude_id)
+        return list(self.db.scalars(stmt).all())
+
+    def build_breadcrumb(self, zone: Zone) -> str:
+        """Walks Zone.parent (lazy="joined" one level, further hops lazy-
+        load on demand) up to the root, joining ancestor names -- excludes
+        the zone's own name. Cheap given ZonePicker results are capped at
+        ~10 per search and the tree is shallow."""
+        names: list[str] = []
+        current = zone.parent
+        while current is not None:
+            names.append(current.name)
+            current = current.parent
+        return " > ".join(reversed(names))
     def get_tree(self) -> list[Zone]:
         """Root zones (parent_zone_id IS NULL); children load lazily via
         Zone.children as the tree-view UI expands each node -- not eager

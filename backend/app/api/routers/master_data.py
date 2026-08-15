@@ -25,7 +25,7 @@ from app.domains.reference.models import (
     Role,
     Zone,
 )
-from app.domains.reference.repository import OpportunityStageRepository
+from app.domains.reference.repository import OpportunityStageRepository, ZoneRepository
 from app.domains.reference.schemas import (
     HoldReasonResponse,
     LeadSourceResponse,
@@ -36,6 +36,7 @@ from app.domains.reference.schemas import (
     RoleResponse,
     SBUResponse,
     ZoneResponse,
+    ZoneSearchResult,
 )
 
 router = APIRouter(tags=["Master Data & Identity"])
@@ -87,6 +88,22 @@ def list_master_data(
     _model, schema = ENTITY_REGISTRY[entity_name]
     items = _fetch_entities(entity_name, db)
     return APIResponse(data=[schema.model_validate(item) for item in items])
+
+
+# Sibling to /master-data/zones, not routed through ENTITY_REGISTRY -- needs
+# custom trigram-similarity query + breadcrumb logic. Not admin-gated: every
+# authenticated user uses zone pickers, not just Territory Admin.
+@router.get("/master-data/zones/search")
+def search_zones(
+    q: str = Query(min_length=2),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> APIResponse[list[ZoneSearchResult]]:
+    repo = ZoneRepository(db)
+    zones = repo.search_by_name(q)
+    return APIResponse(
+        data=[ZoneSearchResult(id=z.id, name=z.name, path=repo.build_breadcrumb(z)) for z in zones]
+    )
 
 
 # --- Users endpoint ---

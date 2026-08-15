@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { ZoneTreeNode, ZoneCreate, ZoneUpdate, ZoneBlastRadius } from "../types/territoryAdmin";
+import type { ZoneTreeNode, ZoneCreate, ZoneUpdate, ZoneBlastRadius, ZoneNameMatch } from "../types/territoryAdmin";
 
 export async function getZoneTree(): Promise<ZoneTreeNode[]> {
   const response = await api.get("/admin/zones/tree");
@@ -28,4 +28,15 @@ export async function getBlastRadius(zoneId: string): Promise<ZoneBlastRadius> {
 
 export async function rebuildClosure(): Promise<void> {
   await api.post("/admin/zones/rebuild-closure");
+}
+
+export async function checkZoneName(
+  name: string,
+  parentZoneId: string | null,
+  excludeId?: string | null
+): Promise<ZoneNameMatch[]> {
+  const response = await api.get("/admin/zones/name-check", {
+    params: { name, parent_zone_id: parentZoneId || undefined, exclude_id: excludeId || undefined },
+  });
+  return response.data.data;
 }

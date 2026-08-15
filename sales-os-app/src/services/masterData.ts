@@ -11,6 +11,17 @@ export async function listZones(): Promise<unknown> {
   return response.data.data;
 }
 
+export interface ZoneSearchResult {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export async function searchZones(q: string): Promise<ZoneSearchResult[]> {
+  const response = await api.get("/master-data/zones/search", { params: { q } });
+  return response.data.data;
+}
+
 export async function listProjectStatuses(): Promise<unknown> {
   const response = await api.get("/master-data/project-statuses");
   return response.data.data;

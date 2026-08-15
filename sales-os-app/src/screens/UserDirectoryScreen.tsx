@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Typography, Button, TextField, MenuItem, List, ListItemButton, ListItemText, Chip, IconButton } from "@mui/material";
 import FormModal from "../components/FormModal";
+import ZonePicker from "../components/ZonePicker";
 import { listUsers, listRoles, listSbus, listZones, createUser, updateUser } from "../services/masterData";
 import type { UserListResponse } from "../types/api";
+import type { ZoneSearchResult } from "../services/masterData";
 
 interface MasterDataOption {
   id: string;
@@ -22,8 +24,8 @@ export default function UserDirectoryScreen() {
   const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [primaryZone, setPrimaryZone] = useState<ZoneSearchResult | null>(null);
   const [addingZone, setAddingZone] = useState(false);
-  const [zoneToAdd, setZoneToAdd] = useState("");
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users", "directory"],
@@ -44,8 +46,8 @@ export default function UserDirectoryScreen() {
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
+    setPrimaryZone(null);
     setAddingZone(false);
-    setZoneToAdd("");
     setDialogMode("create");
   };
 
@@ -60,8 +62,9 @@ export default function UserDirectoryScreen() {
       manager_id: u.manager_id || "",
       additionalZones: u.zone_ids.filter((zid) => zid !== u.zone_id),
     });
+    const zoneName = zones.find((z) => z.id === u.zone_id)?.name;
+    setPrimaryZone(u.zone_id && zoneName ? { id: u.zone_id, name: zoneName, path: "" } : null);
     setAddingZone(false);
-    setZoneToAdd("");
     setDialogMode("edit");
   };
 
@@ -187,18 +190,14 @@ export default function UserDirectoryScreen() {
           <MenuItem value="">Select role</MenuItem>
           {roles.map((r) => <MenuItem key={r.id} value={r.id}>{r.role_name}</MenuItem>)}
         </TextField>
-        <TextField
-          select
+        <ZonePicker
           label="Zone"
-          value={form.zone_id}
-          onChange={(e) => setForm({ ...form, zone_id: e.target.value })}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">No zone</MenuItem>
-          {zones.map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
-        </TextField>
+          value={primaryZone}
+          onChange={(zone) => {
+            setPrimaryZone(zone);
+            setForm({ ...form, zone_id: zone?.id || "" });
+          }}
+        />
 
         {form.additionalZones.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
@@ -223,34 +222,16 @@ export default function UserDirectoryScreen() {
         )}
 
         {addingZone ? (
-          <Box sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
-            <TextField
-              select
-              label="Add zone"
-              value={zoneToAdd}
-              onChange={(e) => setZoneToAdd(e.target.value)}
-              fullWidth
-              size="small"
-              autoFocus
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Select zone</MenuItem>
-              {zones
-                .filter((z) => z.id !== form.zone_id && !form.additionalZones.includes(z.id))
-                .map((z) => <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>)}
-            </TextField>
-            <Button
-              onClick={() => {
-                if (!zoneToAdd) return;
-                setForm({ ...form, additionalZones: [...form.additionalZones, zoneToAdd] });
-                setZoneToAdd("");
-                setAddingZone(false);
-              }}
-              disabled={!zoneToAdd}
-            >
-              Add
-            </Button>
-          </Box>
+          <ZonePicker
+            label="Add zone"
+            value={null}
+            excludeIds={[form.zone_id, ...form.additionalZones].filter(Boolean)}
+            onChange={(zone) => {
+              if (!zone) return;
+              setForm({ ...form, additionalZones: [...form.additionalZones, zone.id] });
+              setAddingZone(false);
+            }}
+          />
         ) : (
           <Button size="small" onClick={() => setAddingZone(true)} sx={{ alignSelf: "flex-start", textTransform: "none" }}>
             + Add another zone

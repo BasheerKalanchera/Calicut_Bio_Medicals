@@ -1,6 +1,10 @@
 # Shared ZonePicker + Territory Admin Coverage View — Implementation Plan
 
-**Status:** Draft — planned, not yet built.
+**Status:** Built (2026-08-13) — migration 0020 applied to Dev, `tsc`/lint/
+ruff clean. Manual verification in progress (checklist below). Post-build:
+Territory Admin's coverage chips were cluttering the tree view by default,
+so a "Show Coverage"/"Hide Coverage" toggle button was added
+(`showCoverage` state, defaults to `false`, client-side only).
 **Date:** 2026-08-12
 
 ## Context
@@ -58,8 +62,83 @@ This plan builds both: a single shared `ZonePicker` component (search-and-pick, 
 
 ## Verification
 
-1. `npx tsc --noEmit` / `npm run lint` clean, per the repo's standard gate.
-2. Manual on Dev: search "kozh" in each retrofitted picker, confirm it resolves to Kozhikode with the correct breadcrumb; confirm a deprecated zone never appears in search results; confirm Territory Admin's Edit form can't select the zone being edited as its own parent.
-3. User Directory: assign a Sales Staff person (not Area Manager) to a leaf zone via the retrofitted picker, confirm it saves; confirm their opportunity visibility is *unchanged* (still owner-only) — this is the one case worth double-checking explicitly, since it's easy to assume a zone assignment does something to RLS when for this role it deliberately doesn't.
-4. Territory Admin: confirm that zone now shows the newly-assigned person as an assignee chip with their correct role label.
-5. Confirm a zone with zero direct assignees (e.g. the "Kerala"/"Karnataka" umbrella nodes, where nobody is assigned to the state-level row itself) renders cleanly with no assignee chips, not an error or empty-looking gap.
+Manual on Dev (Basheer runs this himself). Done as of this writing:
+`npx tsc --noEmit` / `npm run lint` / `ruff check` clean, migration 0020
+applied (Dev confirmed at head).
+
+### 0. Before you start
+- Logged in as Admin or General Manager (Territory Admin routes are role-gated).
+- Optional: DevTools Network tab open, to watch `GET /master-data/zones/search?q=...`
+  fire as you type — confirms the ~300ms debounce and the 2-character minimum
+  (nothing fires for a 1-character query).
+
+### 1. Search behavior (any one of the 5 pickers)
+- Type `kozh` — resolves to **Kozhikode** with a breadcrumb of its ancestors
+  (e.g. `North Kerala`), not just the bare name.
+- Type a single character — no request fires, no dropdown opens.
+- Clear the field (✕) — selection clears cleanly, no stale value left behind.
+
+### 2. Deprecated-zone exclusion
+- Deprecate `TEST-Child` in Territory Admin (already flagged for cleanup —
+  check its blast radius first, same as any deprecate).
+- Search for it by name in any `ZonePicker` — it must **never** appear in
+  results, even though it still exists in the DB (only `is_active=true`
+  zones are searchable).
+
+### 3. TerritoryAdminScreen — Parent Zone field + coverage view
+- **Add Zone**: click ➕ on an existing zone (e.g. South Kerala) — Parent
+  Zone pre-fills with South Kerala.
+- **Edit Zone**: click ✏️ on a zone with a parent (e.g. Kottayam under
+  South Kerala) — Parent Zone pre-fills correctly, and the zone being
+  edited never appears in its own Parent Zone search results
+  (`excludeIds` check — try typing its own name).
+- Clear the Parent Zone field on an edit and save — zone becomes
+  top-level (`parent_zone_id: null`).
+- Click "Show Coverage" — chips appear per zone. Expand South Kerala →
+  Kottayam — Vivek shows as an assignee chip with his role. Expand a
+  zone with nobody assigned directly (e.g. the Kerala/Karnataka umbrella
+  nodes) — renders cleanly, no chip row, no error/gap. Click "Hide
+  Coverage" — chips disappear, toggle relabels correctly.
+
+### 4. UserDirectoryScreen — zone_id + zone_ids
+- Open an existing user (e.g. Vivek or Adarsh) — primary Zone field shows
+  their current zone with the correct name (exercises the name-lookup
+  fallback via `listZones()`, since the users list endpoint doesn't
+  return zone names).
+- **The RLS check** (worth being deliberate about): pick a **Sales
+  Staff** user (not Area Manager), assign them to a leaf zone they don't
+  already have via the picker, save.
+  - Confirm the assignment saved (re-open the user, zone shows).
+  - Confirm that user's opportunity visibility is **unchanged** — still
+    owner-only. A zone assignment for this role must not grant any new
+    visibility; only Area Manager reads `user_zone` for RLS.
+- "+ Add another zone" — add a second zone; searching for one already
+  selected excludes it from results.
+- Remove an additional zone via the × button — unrelated flow still works.
+
+### 5. Customer360Screen — Account edit Zone field
+- Open any customer, Edit — Zone field pre-fills with the customer's
+  current zone (via `account.zone`, no separate lookup needed).
+- Change zone, save — customer's zone chip updates on the Overview tab.
+- Save with zone cleared — blocked with "Zone is required".
+
+### 6. CustomerDirectoryScreen — filter pill + create form
+- **Filter**: filter the customer list to Kozhikode via the "All Zones"
+  picker — list narrows correctly, same as the old Button+Menu did.
+  Clear it — list returns to unfiltered. Changing the filter resets
+  pagination to page 1.
+- **Create form**: New Customer → Zone field works the same way,
+  required validation still fires if left empty, created customer shows
+  the correct zone afterward.
+
+### 7. OpportunityPipelineScreen — zone filter
+- Filter the pipeline by a zone with opportunities in it (e.g. South
+  Kerala) — list/kanban narrows correctly. Clear the filter — full
+  pipeline returns.
+
+### 8. General regression pass
+- Each of these screens had unrelated code sitting right next to what
+  changed (owner filters, parent-customer autocomplete, additional-zone
+  chips, pagination) — worth a quick look that nothing else on these five
+  screens broke, even though the diffs were scoped tightly to the zone
+  fields.

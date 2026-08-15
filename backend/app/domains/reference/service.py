@@ -1,6 +1,12 @@
 import uuid
 
-from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+)
 from app.domains.reference.models import Zone
 from app.domains.reference.repository import ZoneRepository
 from app.domains.reference.schemas import ZoneCreate, ZoneUpdate
@@ -37,6 +43,8 @@ class ZoneAdminService:
         self._require_admin(role_name)
         if data.parent_zone_id is not None:
             self._validate_parent(data.parent_zone_id)
+        if self.repository.exists_by_name(data.name, parent_zone_id=data.parent_zone_id):
+            raise ConflictError(f"A zone named '{data.name}' already exists under this parent")
         zone = Zone(name=data.name, parent_zone_id=data.parent_zone_id, zone_level=data.zone_level)
         zone = self.repository.create(zone)
         self.repository.rebuild_all_closure()
@@ -49,13 +57,29 @@ class ZoneAdminService:
             raise NotFoundError(f"Zone {zone_id} not found")
 
         closure_affected = False
-        if data.parent_zone_id is not None and data.parent_zone_id != zone.parent_zone_id:
-            self._validate_parent(data.parent_zone_id)
-            if self._creates_cycle(zone_id=zone_id, parent_zone_id=data.parent_zone_id):
-                raise ValidationError("Setting this parent would create a circular reference")
-            zone.parent_zone_id = data.parent_zone_id
+        new_parent_id = zone.parent_zone_id
+        # "parent_zone_id" present in the payload but explicitly null means
+        # "make this zone top-level" -- distinct from the field being absent
+        # entirely, which means "leave the parent alone." A bare `is not
+        # None` check can't tell those apart, which used to make clearing
+        # the field in the Edit form silently no-op.
+        parent_provided = "parent_zone_id" in data.model_fields_set
+        if parent_provided and data.parent_zone_id != zone.parent_zone_id:
+            if data.parent_zone_id is not None:
+                self._validate_parent(data.parent_zone_id)
+                if self._creates_cycle(zone_id=zone_id, parent_zone_id=data.parent_zone_id):
+                    raise ValidationError("Setting this parent would create a circular reference")
+            new_parent_id = data.parent_zone_id
             closure_affected = True
 
+        new_name = data.name if data.name is not None else zone.name
+        if (new_name, new_parent_id) != (zone.name, zone.parent_zone_id) and self.repository.exists_by_name(
+            new_name, parent_zone_id=new_parent_id, exclude_id=zone_id
+        ):
+            raise ConflictError(f"A zone named '{new_name}' already exists under this parent")
+
+        if closure_affected:
+            zone.parent_zone_id = new_parent_id
         if data.name is not None:
             zone.name = data.name
         if data.zone_level is not None:
@@ -91,6 +115,12 @@ class ZoneAdminService:
         if not self.repository.zone_exists(zone_id):
             raise NotFoundError(f"Zone {zone_id} not found")
         return self.repository.blast_radius(zone_id)
+
+    def find_name_elsewhere(
+        self, name: str, *, parent_zone_id: uuid.UUID | None, exclude_id: uuid.UUID | None, role_name: str
+    ) -> list[Zone]:
+        self._require_admin(role_name)
+        return self.repository.find_by_name_elsewhere(name, parent_zone_id=parent_zone_id, exclude_id=exclude_id)
 
     def rebuild_all_closure(self, *, role_name: str) -> None:
         self._require_admin(role_name)

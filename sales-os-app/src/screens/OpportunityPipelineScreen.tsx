@@ -11,9 +11,11 @@ import {
 } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listPipeline } from "../services/opportunities";
-import { listStages, listUsers, listZones } from "../services/masterData";
+import { listStages, listUsers } from "../services/masterData";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
+import ZonePicker from "../components/ZonePicker";
 import type { PipelineOpportunity } from "../types/api";
+import type { ZoneSearchResult } from "../services/masterData";
 
 interface Props {
   onSelectOpportunity: (opp: PipelineOpportunity) => void;
@@ -37,7 +39,6 @@ const PIPELINE_STAGE_CODES = [
 // active_progress.md deferred list. Remove these once fixed.
 interface StageOption { stage_code: string; stage_name: string; display_order: number }
 interface UserOption { id: string; display_name: string }
-interface ZoneOption { id: string; name: string }
 
 // ---------------------------------------------------------------------------
 // Status badge colours
@@ -223,7 +224,7 @@ function ListRow({
 export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode }: Props) {
   const [activeStageCode, setActiveStageCode] = useState<string>("LEAD");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
-  const [zoneFilter, setZoneFilter]   = useState<string>("");
+  const [zoneFilter, setZoneFilter]   = useState<ZoneSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -231,8 +232,8 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   const kanbanRowRef = useRef<HTMLDivElement>(null);
 
   const { data: pipeline, isLoading } = useQuery({
-    queryKey: ["pipeline", ownerFilter, zoneFilter],
-    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter || undefined, page_size: 100 }),
+    queryKey: ["pipeline", ownerFilter, zoneFilter?.id],
+    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter?.id || undefined, page_size: 100 }),
   });
 
   const { data: stages = [] } = useQuery({
@@ -244,12 +245,6 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
     queryFn: async () => (await listUsers()) as UserOption[],
-    staleTime: Infinity,
-  });
-
-  const { data: zones = [] } = useQuery({
-    queryKey: ["zones"],
-    queryFn: async () => (await listZones()) as ZoneOption[],
     staleTime: Infinity,
   });
 
@@ -342,19 +337,9 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
                 <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
               ))}
             </TextField>
-            <TextField
-              select
-              value={zoneFilter}
-              onChange={(e) => setZoneFilter(e.target.value)}
-              size="small"
-              sx={{ flex: 1 }}
-              slotProps={{ select: { displayEmpty: true } }}
-            >
-              <MenuItem value="">All Zones</MenuItem>
-              {zones.map((z) => (
-                <MenuItem key={z.id} value={z.id}>{z.name}</MenuItem>
-              ))}
-            </TextField>
+            <Box sx={{ flex: 1 }}>
+              <ZonePicker label="All Zones" value={zoneFilter} onChange={setZoneFilter} />
+            </Box>
           </Box>
         </Box>
       </Box>

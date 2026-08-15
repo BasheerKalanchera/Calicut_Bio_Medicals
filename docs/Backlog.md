@@ -18,11 +18,14 @@ Opportunity Detail trio (`b662751`), Reminder click-through (`ac6d008`),
 Product Catalog collateral links (`ab67209`), Catalog role gate GM+Admin
 (`42fa050`)) — the MUI migration backlog resumes whenever picked back up.
 
-**3 files remain** (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`,
-`ProjectDirectoryScreen.jsx`), all still needing the full triple-conversion
-(styling + fetch + `.jsx`→`.tsx`) — bigger lift than `ErrorBoundary.jsx` was,
-no precedent file has been this file type yet. End with an honest §9 update
-per column, not a blanket "done."
+**1 file remains** (`ProjectDirectoryScreen.jsx`), needing the full
+triple-conversion (styling + fetch + `.jsx`→`.tsx`) — bigger lift than
+`ErrorBoundary.jsx` was. `ProductCatalogScreen.jsx` (migrated `8f4526e`,
+2026-08-07 — this note was stale until now, never updated when that
+landed) and `CustomerDirectoryScreen.jsx` (migrated 2026-08-11) are both
+done; `ProductCatalogScreen.tsx`'s own migration is the precedent this
+file type now has to follow. End with an honest §9 update per column,
+not a blanket "done."
 
 **Per-file ritual, mandatory for every remaining migration:**
 convert → property-diff (against pre-migration git history, full comparison
@@ -369,14 +372,15 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   place. The sidebar/zone display (line 272 of `DemoApp.tsx`, same
   meaningless-placeholder problem) was raised but deliberately left alone —
   not asked for.
-- **New product line onboarding (e.g., Cardiology) — not yet conceptualized.**
-  Raised in leadership discussion, 2026-08-05. Cabio is considering adding
-  entirely new departments/specialties beyond the current two SBUs (Imaging,
-  Critical Care). Open question not yet scoped: does a new line like
-  Cardiology become a third `SBU`, or a `category_name` within an existing
-  SBU's product catalog — the two have very different implications (RLS
-  tier scoping, target planning, zone/team assignment all key off `sbu_id`).
-  No design work started; needs scoping before it's actionable.
+- ~~**New product line onboarding (e.g., Cardiology) — not yet conceptualized.**~~
+  — **RESOLVED 2026-08-06, confirmed with Haroon.** Not a new SBU — Cardiology
+  sells under whichever existing SBU (Imaging or Critical Care) each product's
+  technology fits; no dedicated team yet means no case for SBU-level
+  infrastructure. No new tracking field either — `category_name` isn't being
+  repurposed (confirmed dead/unused in the codebase). Current Cardiology
+  inventory is entirely refurbished stock (confirmed 2026-08-13). Full
+  reasoning, and the cutover plan for whenever Cardiology does graduate to its
+  own SBU, in `docs/Discussion-Strategic-Growth-Topics-2026-08.md` §1.
 - **Account Manager concept — relationship ownership distinct from
   Opportunity ownership — not yet conceptualized.** Raised in leadership
   discussion, 2026-08-05. Idea: a named Account Manager owns the overall
@@ -411,20 +415,10 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   One narrower question remains open within §7 (Target/Coverage Planning's
   `target_plan.zone_id` nullability) — see the design doc, not tracked here
   since the core feature is unblocked.
-- **Document/photo upload on Opportunity (e.g. a PO).** Cabio sales staff
-  feedback, 2026-08-11. Backend already supports this — `Document`
-  (`backend/app/domains/document/models.py`) is polymorphic and already
-  accepts `opportunity_id` (its `chk_document_context` CHECK constraint lists
-  `account_id`/`project_id`/`opportunity_id`/`product_id`, any one of which
-  satisfies it), so no schema/migration work is needed. This is a pure
-  frontend gap: `OpportunityDetailScreen.tsx` has no Documents tab/upload UI
-  at all (confirmed via grep — zero references). The only existing upload UI
-  in the app today is `ProductCatalogScreen.tsx`'s collateral-link
-  upload/delete flow (`useMutation`, `services/documents.ts`) — that's the
-  precedent to follow, not a new pattern to invent. Not scoped further than
-  that yet — would need its own small design pass (what metadata to capture,
-  file-type/size limits, whether it's its own tab or folded into an existing
-  one) before building.
+- ~~Document/photo upload on Opportunity~~ — **DONE, 2026-08-11**, commit
+  `49c4c1d`, pushed to `origin/main`. Turned out to need real Storage
+  infrastructure, not just a frontend gap as first scoped here — see
+  `docs/Opportunity-Document-Upload-Implementation-Plan.md`.
 - **Activity Notes field silently blocks multi-line entry — root cause
   found, not yet fixed.** Cabio sales staff feedback, 2026-08-11 ("notes
   field is not allowed to go the next line"). Confirmed root cause:
@@ -439,18 +433,38 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   behavior is what's wanted, unlike `<input>`) — small enough that it may be
   worth fixing directly rather than staying parked here; flagged to Basheer,
   his call on timing.
-- **Pipeline screen zone filter — proposed 2026-08-07, ready to build, no
-  open questions.** Surfaced while discussing Multi-Zone Assignment:
-  `OpportunityPipelineScreen.tsx` has no way to narrow the Kanban/list view
-  to one zone, unlike `CustomerDirectoryScreen.jsx`'s existing zone-filter
-  pill (`8aff9cd`). Useful independent of Multi-Zone Assignment shipping —
-  SBU Manager/GM/Admin already see opportunities across multiple zones today
-  (existing RLS) with no way to filter down to one. Bigger lift than the
-  Account Directory version, though: `Opportunity` has no `zone_id` of its
-  own (one hop away via `account_id → account.zone_id`), and
-  `opportunity/repository.py`'s pipeline query only supports `owner_id`
-  filtering today — needs a new `zone_id` param threaded through repository
-  (join to `Account`) → service → router, plus a frontend `Select` next to
-  the existing Owner filter in `OpportunityPipelineScreen.tsx`, following the
-  same `listPipeline({ zone_id, ... })` / `listZones()` pattern already used
-  there for owners.
+- ~~**Pipeline screen zone filter**~~ — **DONE**, confirmed live in
+  `OpportunityPipelineScreen.tsx` (`listPipeline({ zone_id: zoneFilter,
+  ... })`) — already built and committed; this entry was stale.
+- ~~**Change default landing screen from Account Management to Pipeline**~~ —
+  **DONE, 2026-08-12.** `DemoApp.tsx:47`, `useState("customers")` →
+  `useState("opportunities")`. Back-navigation return-view state
+  (`accountReturnView`, `opportunityReturnView`, etc.) and `accountSubTab`
+  are independent `useState`s, confirmed unaffected.
+- **User Directory's Edit form always resends a user's existing `manager_id`,
+  even when untouched — root cause found, not yet fixed.** Surfaced
+  2026-08-12 while diagnosing the Admin/GM manager-SBU validation bug (fixed
+  same day, `aca2e9c`). `UserDirectoryScreen.tsx`'s `openEdit` (~line 60)
+  pre-fills `form.manager_id` from the user's current manager, and
+  `handleUpdate` (~lines 96-103) sends that same value back on *every* save
+  regardless of whether the Manager field was actually touched — not true
+  partial-PATCH semantics. Consequence: the `aca2e9c` fix only exempts the
+  case where the manager is Admin/GM. If a user's manager is a *normal*
+  (non-Admin/GM) person, moving that user to a different SBU still fails
+  with "Manager must belong to the same SBU as the user" — correctly, from
+  the backend's point of view, but confusingly, since the admin never meant
+  to touch the Manager field at all. Fix discussed but deliberately not
+  built this session: when the SBU dropdown changes, clear the Manager
+  field back to "No manager" (visibly, in the form) if the currently-
+  selected manager no longer belongs to the new SBU, forcing an explicit
+  re-pick rather than silently resending a now-invalid value.
+- ~~**Run `tsc --noEmit` / `npm run lint` / `ruff check` on the Territory
+  Admin session's changes (2026-08-15).**~~ — **DONE 2026-08-15.** All
+  four clean: `tsc --noEmit` (whole project, including legacy `.jsx` —
+  nothing pre-existing surfaced either), `npm run lint`, `ruff check
+  app/domains/reference/`, and a backend module-import + `FastAPI` app
+  build check (`from app.main import app`, 16 routes). Covered the full
+  batch: duplicate-zone-name 409 fix, clear-Parent-Zone-to-top-level fix +
+  explicit top-level checkbox, alphabetical child-zone sort, and the soft
+  "name exists elsewhere in the tree" warning. Still not manually
+  exercised on Dev.

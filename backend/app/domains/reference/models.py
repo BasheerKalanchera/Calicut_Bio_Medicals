@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,6 +33,9 @@ class SBU(Base):
 
 class Zone(Base):
     __tablename__ = "zone"
+    __table_args__ = (
+        Index("idx_zone_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # NOT globally unique anymore as of migration 0019 -- see that migration's
@@ -62,7 +65,9 @@ class Zone(Base):
     parent: Mapped["Zone | None"] = relationship(
         back_populates="children", remote_side="Zone.id", lazy="joined"
     )
-    children: Mapped[list["Zone"]] = relationship(back_populates="parent", lazy="select")
+    children: Mapped[list["Zone"]] = relationship(
+        back_populates="parent", lazy="select", order_by="Zone.name"
+    )
 
 
 class ZoneClosure(Base):

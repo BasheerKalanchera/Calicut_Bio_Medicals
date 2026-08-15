@@ -1063,3 +1063,61 @@ handover update). One more small addition after that, still uncommitted:
 stale-`manager_id`-resend bug (found earlier this session, see above) —
 riding along with that file's existing, already-flagged mixed diff until
 it gets its own clean review and commit.
+
+---
+
+## 2026-08-06 — Leadership strategic growth discussion (retroactive entry, written 2026-08-13)
+
+Written up in `docs/Discussion-Strategic-Growth-Topics-2026-08.md` at the time
+but never given an archive entry — the gap is likely why `docs/Backlog.md`'s
+Cardiology item went stale (still read "not yet conceptualized" as of
+2026-08-13) and why a later session summary repeated that stale framing
+instead of the actual resolution below. Fixed same day: `Backlog.md`'s entry
+corrected, and the doc itself gained one addition (see below).
+
+**Four topics from the 2026-08-05 leadership meeting, worked through
+2026-08-06:**
+
+1. **Cardiology/Thoracic SBU question — resolved, confirmed with Haroon.** Not
+   a new SBU: Haroon sells it himself today, no dedicated team, so no case for
+   SBU-level infrastructure (own targets/RLS tier/management chain).
+   Cardiology equipment sells under whichever existing SBU (Imaging or
+   Critical Care) each product's technology fits. No new tracking field
+   either — `category_name` isn't being repurposed (confirmed dead/unused
+   anywhere in the codebase or `Business-Rules.md`). Cutover plan for
+   whenever Cardiology does graduate to its own SBU is written up (no
+   retroactive reclassification; splitting/crediting across the transition
+   uses Referral, not Splits) but not needed yet.
+   **Addition, 2026-08-13:** confirmed current Cardiology inventory is
+   entirely refurbished stock — ties this directly to topic 4 below.
+2. **Account Manager concept, tied to incentives — still fully open.** Already
+   specified in the PRD (§6.3/§6.3A) as a "Primary Account Manager" per
+   account, distinct from `Opportunity.owner_id`. Reframed by the incentives
+   angle: the data model (an `account_manager_id` field) is the easy part —
+   the hard part is the compensation formula (percentage, cap, additive vs.
+   taken from the closer's split), which is a Finance/leadership decision
+   that should be settled before any schema work starts. Noted coupling: if
+   an Account Manager should own the whole relationship including a future
+   Cardiology line, that cuts against Cardiology staying a hard-walled SBU —
+   the two decisions need to be made together.
+3. **JV geography expansion — narrowed, not resolved.** Confirmed the JV is a
+   genuinely separate legal entity needing real data isolation, ruling out
+   the "just a new Zone" shortcut. Four candidate legal structures laid out
+   (franchise / distributor / sales agency / equity JV), each implying a
+   different system pattern (from no shared system at all, to a full Partner
+   Portal / PRM-style scoped-login model). "Commission on each machine sold"
+   points toward sales agency + Partner Portal, but needs legal/tax
+   confirmation before committing — still open, next thing to resolve.
+4. **Surfacing buyback/refurbished inventory to reps in the field — still
+   fully open.** Distinct from the trade-in data model
+   (`Product-Lifecycle-TradeIns-Accessories-Technical-Design.md`, which
+   covers recording a buyback): this is the *resale* side — a refurbished
+   unit is unit-level (serialized asset, not a SKU), needs a "reserve this
+   unit" mechanism to prevent two reps pitching the same physical machine,
+   and needs to be findable on mobile in the field. Ties to the open GST/
+   invoicing question from the trade-in design. Natural Phase 2 of the
+   trade-in work once GST is answered, not designed separately.
+
+**Not yet touched anywhere:** Account Manager compensation formula and the
+buyback/refurbished-inventory field-discovery design — both need Finance/
+leadership input before any design work starts.
