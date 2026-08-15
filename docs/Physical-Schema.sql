@@ -2055,15 +2055,15 @@ CREATE POLICY opportunity_stakeholder_via_opportunity ON public.opportunity_stak
 -- Name: opportunity opportunity_tier_visibility; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (account_id IN ( SELECT account.id
+CREATE POLICY opportunity_tier_visibility ON public.opportunity USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND ((account_id IN ( SELECT account.id
    FROM public.account
   WHERE (account.zone_id IN ( SELECT zone_closure.descendant_zone_id
            FROM public.zone_closure
           WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
                    FROM public.user_zone
-                  WHERE (user_zone.user_id = public.cabio_app_uid())))))))) OR ((public.cabio_app_role_name() = 'Sales Manager'::text) AND (owner_id IN ( SELECT user_profile.id
+                  WHERE (user_zone.user_id = public.cabio_app_uid()))))))) OR (owner_id IN ( SELECT user_profile.id
    FROM public.user_profile
-  WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (owner_id = public.cabio_app_uid()) OR public.cabio_app_has_split(id) OR public.cabio_app_assigned_reminder(id)));
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))))) OR (owner_id = public.cabio_app_uid()) OR public.cabio_app_has_split(id) OR public.cabio_app_assigned_reminder(id)));
 
 
 --

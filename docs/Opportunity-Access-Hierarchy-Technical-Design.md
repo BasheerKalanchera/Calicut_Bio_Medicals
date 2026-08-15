@@ -19,9 +19,36 @@ location), not the opportunity owner's `zone_id` — the earlier draft would hav
 same instability §8 already fixed for SBU. §6 expanded to cover Level 6 too, and to spell out why
 neither Level 5 nor 6 needs an independent SBU/Zone check.
 
+**Revision (2026-08-15):** Level 5 (Sales Manager) retired, collapsing the structure to 5 tiers
+— see `docs/Sales-Manager-Tier-Collapse-Implementation-Plan.md` and ADR-009's amendment for the
+full rationale. Real field data gathered 2026-08 showed no one in Cabio's org ever occupied this
+tier — every rep reports directly to an Area Manager. Separately, the zone hierarchy (self-
+referencing tree + `zone_closure`, migration 0019) now lets an Area Manager be assigned any
+granularity, from a whole state down to a single taluk, so "team lead with a small patch" and
+"regional manager with a big patch" collapsed into the same mechanism — granularity became a data
+question (which zone node an Area Manager is assigned), not a role question. §6's `manager_id`
+relationship didn't disappear: migration `0021` folds it into the Area Manager (Level 4) RLS
+branch as an additional OR-condition — a safety net for account-zone/reporting-line drift, not
+the primary mechanism. §1's table and §6 below describe the pre-collapse design; §1 is updated
+to 5 tiers, §6 is left as-is for the reasoning trail but its "Level 5" RLS rule is superseded by
+the fold described here.
+
 ---
 
 ## 1. Approved Reporting Structure
+
+**Superseded by the 2026-08-15 revision note above** — Sales Manager (Level 5) is retired.
+Current 5-tier structure:
+
+| Level | Role | Visibility |
+|---|---|---|
+| 1 (top) | Admin | Everything, across both SBUs |
+| 2 | General Manager | Everything, across both SBUs |
+| 3 | SBU Manager | Everything within their own SBU |
+| 4 (bottom) | Area Manager | Everything within their SBU **and** their region (zone-tree assigned, any granularity), **plus** anyone who directly reports to them (`manager_id` safety net) |
+| — | Sales Staff | Only their own opportunities |
+
+Original 6-tier table (2026-07-23, as approved), kept for history:
 
 | Level | Role | Visibility |
 |---|---|---|

@@ -102,7 +102,7 @@ class TestCreateProduct:
         assert result is product
         repo.create.assert_called_once()
 
-    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Manager"])
+    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Staff"])
     def test_disallowed_roles_raise_authorization_error(self, role_name):
         repo = _make_repo()
 
@@ -152,7 +152,7 @@ class TestUpdateProduct:
         assert result is product
         repo.update.assert_called_once()
 
-    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Manager"])
+    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Staff"])
     def test_disallowed_roles_raise_authorization_error(self, role_name):
         repo = _make_repo()
 

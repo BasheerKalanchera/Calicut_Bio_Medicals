@@ -154,7 +154,7 @@ class TestUsersEndpoint:
         mock_db.scalar.return_value = 0
         mock_db.scalars.return_value.all.return_value = []
 
-        _setup_overrides(mock_db, role_name="Sales Manager")
+        _setup_overrides(mock_db, role_name="Sales Staff")
         try:
             response = client.get("/api/v1/users")
         finally:

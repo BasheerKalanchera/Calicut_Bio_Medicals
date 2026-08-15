@@ -201,10 +201,10 @@ class TestCreateProduct:
 
         assert response.status_code == 403
 
-    def test_sales_manager_forbidden(self, client: TestClient) -> None:
+    def test_sales_staff_forbidden(self, client: TestClient) -> None:
         mock_db = MagicMock()
 
-        _setup_overrides(mock_db, role_name="Sales Manager")
+        _setup_overrides(mock_db, role_name="Sales Staff")
         try:
             response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
         finally:
@@ -229,10 +229,10 @@ class TestUpdateProduct:
 
         assert response.status_code == 403
 
-    def test_sales_manager_forbidden(self, client: TestClient) -> None:
+    def test_sales_staff_forbidden(self, client: TestClient) -> None:
         mock_db = MagicMock()
 
-        _setup_overrides(mock_db, role_name="Sales Manager")
+        _setup_overrides(mock_db, role_name="Sales Staff")
         try:
             response = client.put(f"/api/v1/products/{TEST_PRODUCT_ID}", json={"name": "X"})
         finally:

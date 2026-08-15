@@ -1121,3 +1121,132 @@ corrected, and the doc itself gained one addition (see below).
 **Not yet touched anywhere:** Account Manager compensation formula and the
 buyback/refurbished-inventory field-discovery design — both need Finance/
 leadership input before any design work starts.
+
+## 2026-08-13/15 — ZonePicker + Territory Admin coverage view; User Deactivate/Reactivate; Sales Manager Tier Collapse
+
+**ZonePicker + Territory Admin coverage view — shipped, `4f814e3`, manually
+verified.** All 6 backend pieces and 5 frontend retrofits from
+`docs/ZonePicker-And-Coverage-View-Implementation-Plan.md` built and
+verified against Dev. Notable fixes found during the build/verify pass:
+- `ZonePicker.tsx` breadcrumb color used `color="info.main"`, an invalid
+  MUI Typography `color` value (only bare palette keys or the literal
+  `"text.secondary"` are special-cased, not dot-paths) — silently fell
+  through to default text color. Fixed to `color="info"`.
+- Customer Directory / Opportunity Pipeline zone filters did an *exact*
+  `zone_id` match, so picking a parent zone (e.g. "Kerala") returned
+  nothing, since accounts are tagged at the leaf level. Fixed
+  `account/repository.py::list_accounts` and
+  `opportunity/repository.py::list_pipeline`/`count_pipeline` to match the
+  picked zone's full subtree via `zone_closure`.
+- Duplicate zone name (same name, same parent) crashed with a raw 500
+  instead of a clean error — `reference/service.py`'s `create_zone`/
+  `update_zone` let the DB's unique constraint throw uncaught. Added
+  `ZoneRepository.exists_by_name()` + a `ConflictError` (409) pre-check.
+- Clearing the Parent Zone field on Edit silently did nothing —
+  `update_zone` only treated a *new* parent id as a move, never a move
+  *to* null. Fixed via Pydantic's `model_fields_set`, paired with an
+  explicit "top-level zone" checkbox in the Add/Edit form.
+- Soft name-collision warning added: Add/Edit Zone form warns (non-
+  blocking) if the name typed already exists elsewhere in the tree under
+  a different parent — new `GET /admin/zones/name-check` endpoint,
+  debounced frontend check. Deliberately non-blocking since the DB
+  constraint already permits same name in different branches on purpose.
+- Territory Map sort fix: `Zone.children` had no `order_by`, unlike
+  `get_tree()`'s root query — added `order_by="Zone.name"`.
+- Post-build UX add-ons: Territory Admin's assignee chips gated behind a
+  "Show/Hide Coverage" toggle (were cluttering the default tree view);
+  New Customer form pre-fills Zone from the logged-in user's own zone.
+
+**User Deactivate/Reactivate — shipped, `980d81b`.** Closed a gap found
+while cleaning up 5 test-fixture users: no way to deactivate any user,
+ever, through the app. Built to match the proven zone-deprecate pattern
+(grandfathered, non-destructive, reversible, visible-but-grayed-out).
+Backend: `UserListResponse.is_active`, `UserBlastRadius` schema,
+`UserRepository.blast_radius`/`list_active(include_inactive=...)`,
+`UserService.deactivate_user`/`reactivate_user`, 3 new endpoints. The 3
+assignment pickers (Next Action/Split participant/Opportunity owner) stay
+active-only; only User Directory's own listing and the Pipeline Owner
+filter (deliberately, so a deactivated owner's existing deals stay
+findable) can opt into `include_inactive`. Frontend: Show/Hide Inactive
+toggle, Deactivate/Reactivate icon per row, grayed-out rendering.
+
+Notable bugs found and fixed during manual verification:
+- `UserRepository.blast_radius`'s lazy import pulled `OpportunityStatus`
+  from the wrong module (`opportunity.models` instead of
+  `reference.models`) — a plain `ImportError` only surfaced when the
+  method actually ran, invisible to import-only checks.
+- Deactivating a manager (Haroon, 5 direct reports) silently cleared the
+  "reports to Haroon" label everywhere — the name lookup only searched
+  the active-only-by-default `users` list. Fixed by always fetching the
+  full roster and applying "Show Inactive" as a client-side row filter,
+  not a fetch filter; the Manager dropdown now lists inactive managers
+  too (red, disabled) so existing assignments still render correctly.
+- A deactivated user's Supabase Auth credentials still granted app-shell
+  access, since Auth has no concept of `user_profile.is_active`. Took
+  three iterations to close correctly: `AuthContext.tsx`'s `signIn()`
+  originally set local session state before checking `/auth/me`, letting
+  `onAuthStateChange` race ahead independently and briefly grant access
+  anyway; consolidating both paths around one `applySession()` helper
+  (only place allowed to set a non-null session, only after `/auth/me`
+  succeeds) fixed the flicker, but then introduced a double-submit path
+  where a second `signIn()` call could wipe out the first attempt's error
+  state before the user saw it. Final fix: a `signingInRef` guard so the
+  listener skips any event already being driven end-to-end by an
+  in-flight `signIn()` call — exactly one handler per login attempt.
+- **`npm run generate:types` overwrote `types/api.ts`** and silently
+  deleted the hand-maintained block of convenience type aliases (~23
+  lines, not auto-generated) — broke type-checking across ~15 unrelated
+  files. Recovered via `git diff`; flagged as worth fixing properly later
+  (teach the generator to preserve the block, or drop the aliases).
+- **Never ran the real backend test suite this whole thread** — only
+  import/manual-exercise checks. A concurrent session (Sales Manager Tier
+  Collapse, below) happened to run `pytest` and found 4 pre-existing
+  failures, all traced back to this thread: the `include_inactive` kwarg
+  addition broke a strict `assert_called_once_with` in
+  `test_organization_service.py`, and `test_zone_service.py`'s shared
+  mock never set `exists_by_name.return_value = False` so it defaulted
+  truthy, tripping a false `ConflictError` on every zone create/rename
+  test. Both fixed; full suite went to 509 passed, 0 failed. **Lesson:
+  `pytest` needs to run before calling backend work done, not just `ruff
+  check` + manual method calls.**
+
+**Sales Manager Tier Collapse — built, migration `0021` applied to Dev,
+committed.** Per `docs/Sales-Manager-Tier-Collapse-Implementation-Plan.md`
+— Basheer confirmed no Haroon review gate needed (ZonePicker/Territory
+Admin verification was already done, closing the plan's sequencing
+concern; the org reframing doesn't reduce leadership-approved intent).
+Folded the retired Sales Manager tier's `manager_id` rule into the Area
+Manager RLS branch as an additional OR-condition, dropped the role.
+
+*Preflight surprise:* the plan assumed the `Test - Sales Manager` fixture
+user was a clean delete. A live-Dev FK sweep across all 41 constraints
+referencing `user_profile` found it wasn't — real dependents on
+`opportunity`, `opportunity_item`, `split`, and `user_zone`. Basheer
+reassigned the fixture's `role_id` to Area Manager directly in Supabase
+Table Editor instead of deleting the row, clearing the only reference to
+the retired role without cascading into those other tables.
+
+*Built:* migration `0021` (`ALTER POLICY opportunity_tier_visibility`
+folding `manager_id` in; `DELETE FROM role` for the retired id — 0 rows
+on Dev since already manually cleared, but needed for fresh/UAT/Prod).
+Python mirror in `organization/repository.py`'s `TEAM_SCOPE_BUILDERS`.
+Six test files updated. Docs: `Opportunity-Access-Hierarchy-Technical-
+Design.md` (5-tier table + dated revision note, old table kept for
+history), `ADR.md` ADR-009 (dated Amendment, not a rewrite),
+`Business-Rules.md` (BR-ORG-01/02), `Seed-Data.sql`, `Physical-
+Schema.sql` (RLS policy text re-synced to match Dev).
+
+*Manual verification found a test-scenario flaw, not a code bug:* first
+attempt used Amit R (Sales Staff, current `sbu_id` = Critical Care) →
+Arun Adarsh (Area Manager, Critical Care, South Kerala only), expecting
+his North-Kerala-zoned opportunity to appear via the new `manager_id`
+fold. It didn't. Root cause: both of Amit R's live opportunities are
+stamped `sbu_id` = Imaging from when he was created — frozen at creation
+per the Access Hierarchy doc's §8 ("SBU Transfers — Frozen Attribution"),
+unaffected by his later move to Critical Care. The Area Manager branch's
+outer `sbu_id = cabio_app_sbu_id()` guard blocked visibility before the
+`manager_id` fold was ever evaluated — confirmed by directly checking the
+live policy text and the fixture's DB state, nothing had regressed. A
+same-SBU real-data case (Basheer K → Fazal, "Ultrasound m/c" account in
+South Kerala, both Imaging) was identified as the corrected test but not
+yet run before session close.

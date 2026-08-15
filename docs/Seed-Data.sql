@@ -91,7 +91,6 @@ ON CONFLICT (name) DO NOTHING;
 -- ==========================================
 INSERT INTO role (id, role_name) VALUES
 ('77777777-7777-7777-7777-700000000001', 'Sales Executive'),
-('77777777-7777-7777-7777-700000000002', 'Sales Manager'),
 ('77777777-7777-7777-7777-700000000003', 'General Manager'),
 ('77777777-7777-7777-7777-700000000004', 'Admin')
 ON CONFLICT (role_name) DO NOTHING;

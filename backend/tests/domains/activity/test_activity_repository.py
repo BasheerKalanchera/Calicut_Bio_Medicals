@@ -86,26 +86,20 @@ class TestListByDate:
         assert "user_profile.zone_id" not in sql
         assert "user_profile.manager_id" not in sql
 
-    def test_area_manager_scoped_to_own_sbu_and_shared_zone_and_self(self):
+    def test_area_manager_scoped_to_own_sbu_and_shared_zone_or_direct_reports_and_self(self):
         # Same shared TEAM_SCOPE_BUILDERS as organization/repository.py --
         # set-intersection over user_zone (Milestone 1), not scalar equality.
+        # manager_id folded in (migration 0021, retired Sales Manager tier) as
+        # an OR alongside the zone check -- a safety net for account-zone/
+        # reporting-line drift, not the primary mechanism.
         current_user = _make_current_user("Area Manager")
         sql, _ = self._run(current_user)
 
         assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" in sql
         assert "user_profile.id IN (SELECT user_zone.user_id" in sql
         assert f"user_zone.user_id = '{current_user.id.hex}'" in sql
-        assert f"activity.user_id = '{current_user.id.hex}'" in sql
-        assert "user_profile.zone_id" not in sql
-        assert "user_profile.manager_id" not in sql
-
-    def test_sales_manager_scoped_to_direct_reports_and_self(self):
-        current_user = _make_current_user("Sales Manager")
-        sql, _ = self._run(current_user)
-
         assert f"user_profile.manager_id = '{current_user.id.hex}'" in sql
         assert f"activity.user_id = '{current_user.id.hex}'" in sql
-        assert "user_profile.sbu_id" not in sql
         assert "user_profile.zone_id" not in sql
 
     def test_sales_staff_scoped_to_self_only(self):
@@ -127,10 +121,10 @@ class TestListByDate:
         assert f"activity.user_id = '{target_user.hex}'" in sql
 
     def test_explicit_user_id_applies_on_top_of_tier_scope(self):
-        # A Sales Manager narrowing to one report's activity should still
-        # carry their own tier scope in the compiled WHERE -- narrowing
-        # doesn't replace it.
-        current_user = _make_current_user("Sales Manager")
+        # An Area Manager narrowing to one report's activity should still
+        # carry their own tier scope (including the folded-in manager_id
+        # check) in the compiled WHERE -- narrowing doesn't replace it.
+        current_user = _make_current_user("Area Manager")
         target_user = uuid.uuid4()
         sql, _ = self._run(current_user, user_id=target_user)
 

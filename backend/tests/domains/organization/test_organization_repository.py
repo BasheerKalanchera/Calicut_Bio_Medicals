@@ -70,12 +70,15 @@ class TestListActive:
         assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
 
-    def test_area_manager_scoped_to_own_sbu_and_shared_zone_and_self(self):
+    def test_area_manager_scoped_to_own_sbu_and_shared_zone_or_direct_reports_and_self(self):
         # Set-intersection over user_zone (Milestone 1), not scalar zone_id
         # equality: a candidate is in scope if they share at least one zone
         # with the caller. Still holds unchanged after the closure-based
         # rewrite (Zone Hierarchy, migration 0019) -- see the dedicated
         # closure test below for what actually changed.
+        # manager_id folded in (migration 0021, retired Sales Manager tier) as
+        # an OR alongside the zone check -- a safety net for account-zone/
+        # reporting-line drift, not the primary mechanism.
         current_user = _make_current_user("Area Manager")
         sql, _ = self._run(current_user)
 
@@ -83,10 +86,23 @@ class TestListActive:
         assert "user_profile.id IN (SELECT user_zone.user_id" in sql
         assert "FROM user_zone" in sql
         assert f"user_zone.user_id = '{current_user.id.hex}'" in sql
+        assert f"user_profile.manager_id = '{current_user.id.hex}'" in sql
         assert f"user_profile.id = '{current_user.id.hex}'" in sql
         assert "user_profile.zone_id" not in sql
-        assert "manager_id" not in sql
         self._assert_excludes_unrestricted_roles(sql)
+
+    def test_area_manager_zone_and_manager_id_combined_with_or_not_and(self):
+        # The genuinely new behavior from the collapse: a candidate outside
+        # the caller's zone tree, but who directly reports to the caller,
+        # must still be in scope -- proving the two conditions are OR'd
+        # inside the sbu_id AND, not AND'd together.
+        current_user = _make_current_user("Area Manager")
+        sql, _ = self._run(current_user)
+
+        zone_clause = "user_profile.id IN (SELECT user_zone.user_id"
+        manager_clause = f"user_profile.manager_id = '{current_user.id.hex}'"
+        between = sql[sql.index(zone_clause) : sql.index(manager_clause)]
+        assert " OR " in between
 
     def test_area_manager_scope_routes_through_zone_closure(self):
         # Proves the rewrite genuinely happened -- a candidate's own zone
@@ -108,16 +124,6 @@ class TestListActive:
         assert "ancestor_zone_id" in sql
         assert "descendant_zone_id" in sql
         assert "user_zone.zone_id IN (SELECT zone_closure.descendant_zone_id" in sql
-
-    def test_sales_manager_scoped_to_direct_reports_and_self(self):
-        current_user = _make_current_user("Sales Manager")
-        sql, _ = self._run(current_user)
-
-        assert f"user_profile.manager_id = '{current_user.id.hex}'" in sql
-        assert f"user_profile.id = '{current_user.id.hex}'" in sql
-        assert "sbu_id" not in sql
-        assert "zone_id" not in sql
-        self._assert_excludes_unrestricted_roles(sql)
 
     def test_sales_staff_scoped_to_self_only(self):
         current_user = _make_current_user("Sales Staff")

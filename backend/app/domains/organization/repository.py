@@ -10,10 +10,7 @@ from app.domains.reference.models import ZoneClosure
 
 # Mirrors opportunity_tier_visibility's OR-chain (alembic/versions/0010_rls_opportunity_children.py)
 # applied to user_profile rows instead of opportunity rows. Admin/General Manager are unrestricted
-# (not listed here). Sales Manager's manager_id check is deliberately one level deep, not a
-# recursive org-chart walk -- same "flat" scope Opportunity's own Level 5 rule uses, per
-# Opportunity-Access-Hierarchy-Technical-Design.md SS6. Every tier also always sees itself, applied
-# unconditionally below.
+# (not listed here). Every tier also always sees itself, applied unconditionally below.
 UNRESTRICTED_ROLES = {"Admin", "General Manager"}
 TEAM_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
     "SBU Manager": lambda u: UserProfile.sbu_id == u.sbu_id,
@@ -24,21 +21,28 @@ TEAM_SCOPE_BUILDERS: dict[str, Callable[[UserProfile], ColumnElement[bool]]] = {
     # no children behaves identically to Milestone 1's flat version -- this is a
     # strict superset, not a divergent code path. A caller or candidate with zero
     # user_zone rows never matches -- same fail-closed behavior as before.
+    # manager_id branch (migration 0021, folded in from the retired Sales Manager
+    # tier): deliberately one level deep, not a recursive org-chart walk -- same
+    # "flat" scope the old Level 5 rule used, per
+    # Opportunity-Access-Hierarchy-Technical-Design.md SS6. A safety net for
+    # account-zone/reporting-line drift, not the primary mechanism.
     "Area Manager": lambda u: and_(
         UserProfile.sbu_id == u.sbu_id,
-        UserProfile.id.in_(
-            select(UserZone.user_id).where(
-                UserZone.zone_id.in_(
-                    select(ZoneClosure.descendant_zone_id).where(
-                        ZoneClosure.ancestor_zone_id.in_(
-                            select(UserZone.zone_id).where(UserZone.user_id == u.id)
+        or_(
+            UserProfile.id.in_(
+                select(UserZone.user_id).where(
+                    UserZone.zone_id.in_(
+                        select(ZoneClosure.descendant_zone_id).where(
+                            ZoneClosure.ancestor_zone_id.in_(
+                                select(UserZone.zone_id).where(UserZone.user_id == u.id)
+                            )
                         )
                     )
                 )
-            )
+            ),
+            UserProfile.manager_id == u.id,
         ),
     ),
-    "Sales Manager": lambda u: UserProfile.manager_id == u.id,
 }
 
 
