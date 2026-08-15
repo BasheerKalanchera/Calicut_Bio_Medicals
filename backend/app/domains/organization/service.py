@@ -19,8 +19,11 @@ class UserService:
         limit: int = 50,
         *,
         scope: str = "scoped",
+        include_inactive: bool = False,
     ) -> tuple[list[UserProfile], int]:
-        return self.repository.list_active(current_user, offset=offset, limit=limit, scope=scope)
+        return self.repository.list_active(
+            current_user, offset=offset, limit=limit, scope=scope, include_inactive=include_inactive
+        )
 
     def create_user(self, data: UserCreate, *, role_name: str) -> UserProfile:
         if role_name not in _USER_WRITE_ROLES:
@@ -109,3 +112,35 @@ class UserService:
         if data.zone_ids is not None:
             self.repository.replace_zones(user, data.zone_ids)
         return user
+
+    def user_blast_radius(self, user_id: uuid.UUID, *, role_name: str) -> tuple[int, int]:
+        if role_name not in _USER_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can manage users")
+        if not self.repository.get_by_id(user_id):
+            raise NotFoundError(f"User {user_id} not found")
+        return self.repository.blast_radius(user_id)
+
+    def deactivate_user(self, user_id: uuid.UUID, *, role_name: str) -> UserProfile:
+        if role_name not in _USER_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can deactivate users")
+        user = self.repository.get_by_id(user_id)
+        if not user:
+            raise NotFoundError(f"User {user_id} not found")
+        # Deliberate: does NOT delete the row, does NOT touch manager_id
+        # references from their reports, owner_id on their opportunities, or
+        # created_by on their activities -- grandfathered exactly like
+        # Zone.deprecate_zone. Only blocks new logins going forward
+        # (api/dependencies.py's get_current_user already rejects
+        # is_active=False) and drops out of the three assignment pickers
+        # (UserRepository.list_active's default include_inactive=False).
+        user.is_active = False
+        return self.repository.update(user)
+
+    def reactivate_user(self, user_id: uuid.UUID, *, role_name: str) -> UserProfile:
+        if role_name not in _USER_WRITE_ROLES:
+            raise AuthorizationError("Only General Manager and Admin roles can reactivate users")
+        user = self.repository.get_by_id(user_id)
+        if not user:
+            raise NotFoundError(f"User {user_id} not found")
+        user.is_active = True
+        return self.repository.update(user)

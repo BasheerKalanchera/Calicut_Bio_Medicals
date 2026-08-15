@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { UserCreate, UserListResponse, UserUpdate } from "../types/api";
+import type { UserBlastRadius, UserCreate, UserListResponse, UserUpdate } from "../types/api";
 
 export async function listSbus(): Promise<unknown> {
   const response = await api.get("/master-data/sbus");
@@ -42,9 +42,29 @@ export async function listLeadSources(): Promise<unknown> {
   return response.data.data;
 }
 
-export async function listUsers(scope: "scoped" | "sbu" | "all" = "scoped"): Promise<UserListResponse[]> {
-  const response = await api.get(`/users?page_size=100&scope=${scope}`);
+export async function listUsers(
+  scope: "scoped" | "sbu" | "all" = "scoped",
+  includeInactive = false
+): Promise<UserListResponse[]> {
+  const response = await api.get(
+    `/users?page_size=100&scope=${scope}&include_inactive=${includeInactive}`
+  );
   return response.data.data.items;
+}
+
+export async function getUserBlastRadius(userId: string): Promise<UserBlastRadius> {
+  const response = await api.get(`/users/${userId}/blast-radius`);
+  return response.data.data;
+}
+
+export async function deactivateUser(userId: string): Promise<UserListResponse> {
+  const response = await api.post(`/users/${userId}/deactivate`);
+  return response.data.data;
+}
+
+export async function reactivateUser(userId: string): Promise<UserListResponse> {
+  const response = await api.post(`/users/${userId}/reactivate`);
+  return response.data.data;
 }
 
 export async function listRoles(): Promise<unknown> {

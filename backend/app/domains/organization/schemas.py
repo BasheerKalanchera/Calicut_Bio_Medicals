@@ -33,12 +33,22 @@ class UserListResponse(BaseModel):
 
     id: uuid.UUID
     display_name: str
+    is_active: bool | None
     sbu_id: uuid.UUID
     zone_id: uuid.UUID | None
     zone_ids: list[uuid.UUID]
     role_id: uuid.UUID
     role_name: str
     manager_id: uuid.UUID | None
+
+
+class UserBlastRadius(BaseModel):
+    """Backs the Deactivate confirmation -- informational only, same as
+    ZoneBlastRadius; deactivating is grandfathered, so neither count blocks
+    the action."""
+
+    direct_report_count: int
+    open_opportunity_count: int
 
 
 class UserCreate(BaseModel):

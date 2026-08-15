@@ -12,7 +12,7 @@ from app.db.base import ReferenceRepository
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import UserRepository
-from app.domains.organization.schemas import UserCreate, UserListResponse, UserUpdate
+from app.domains.organization.schemas import UserBlastRadius, UserCreate, UserListResponse, UserUpdate
 from app.domains.organization.service import UserService
 from app.domains.reference.models import (
     SBU,
@@ -122,6 +122,7 @@ def _to_user_list_response(user: UserProfile) -> UserListResponse:
     return UserListResponse(
         id=user.id,
         display_name=user.display_name,
+        is_active=user.is_active,
         sbu_id=user.sbu_id,
         zone_id=user.zone_id,
         zone_ids=[uz.zone_id for uz in user.zones],
@@ -136,12 +137,13 @@ def list_users(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     scope: str = Query(default="scoped", pattern="^(scoped|sbu|all)$"),
+    include_inactive: bool = Query(default=False),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: UserService = Depends(_get_user_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[UserListResponse]]:
     offset = (page - 1) * page_size
     users, total = service.list_active_users(
-        current_user, offset=offset, limit=page_size, scope=scope
+        current_user, offset=offset, limit=page_size, scope=scope, include_inactive=include_inactive
     )
     total_pages = (total + page_size - 1) // page_size
 
@@ -174,4 +176,40 @@ def update_user(
     service: UserService = Depends(_get_user_service),  # noqa: B008
 ) -> APIResponse[UserListResponse]:
     user = service.update_user(user_id, body, role_name=current_user.role.role_name)
+    return APIResponse(data=_to_user_list_response(user))
+
+
+@router.get("/users/{user_id}/blast-radius")
+def get_user_blast_radius(
+    user_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: UserService = Depends(_get_user_service),  # noqa: B008
+) -> APIResponse[UserBlastRadius]:
+    direct_report_count, open_opportunity_count = service.user_blast_radius(
+        user_id, role_name=current_user.role.role_name
+    )
+    return APIResponse(
+        data=UserBlastRadius(
+            direct_report_count=direct_report_count, open_opportunity_count=open_opportunity_count
+        )
+    )
+
+
+@router.post("/users/{user_id}/deactivate")
+def deactivate_user(
+    user_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: UserService = Depends(_get_user_service),  # noqa: B008
+) -> APIResponse[UserListResponse]:
+    user = service.deactivate_user(user_id, role_name=current_user.role.role_name)
+    return APIResponse(data=_to_user_list_response(user))
+
+
+@router.post("/users/{user_id}/reactivate")
+def reactivate_user(
+    user_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: UserService = Depends(_get_user_service),  # noqa: B008
+) -> APIResponse[UserListResponse]:
+    user = service.reactivate_user(user_id, role_name=current_user.role.role_name)
     return APIResponse(data=_to_user_list_response(user))

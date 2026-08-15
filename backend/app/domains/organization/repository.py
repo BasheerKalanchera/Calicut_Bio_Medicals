@@ -53,8 +53,16 @@ class UserRepository(BaseRepository[UserProfile]):
         limit: int = 50,
         *,
         scope: str = "scoped",
+        include_inactive: bool = False,
     ) -> tuple[list[UserProfile], int]:
-        stmt = select(UserProfile).where(UserProfile.is_active == True)  # noqa: E712
+        # include_inactive is for User Directory's own listing only (grayed-
+        # out, findable, reversible -- same "visible but deprecated" pattern
+        # as Territory Map's zones). The three picker scopes below (all/sbu/
+        # scoped) always call this with include_inactive=False -- you never
+        # want to assign work to a deactivated person.
+        stmt = select(UserProfile)
+        if not include_inactive:
+            stmt = stmt.where(UserProfile.is_active == True)  # noqa: E712
 
         # Three pickers, three different eligibility rules:
         #   "all" -- Next Action assignee (Business-Rules.md BR-ACT-06): any active
@@ -114,6 +122,25 @@ class UserRepository(BaseRepository[UserProfile]):
             self.db.scalars(stmt.offset(offset).limit(limit)).all()
         )
         return results, total or 0
+
+    def blast_radius(self, user_id: uuid.UUID) -> tuple[int, int]:
+        """(direct_report_count, open_opportunity_count) -- backs the
+        Deactivate confirmation, same spirit as ZoneRepository.blast_radius.
+        "Open" mirrors the terminal/non-terminal distinction already used
+        for opportunity status elsewhere (OpportunityStatus.is_terminal)."""
+        from app.domains.opportunity.models import Opportunity
+        from app.domains.reference.models import OpportunityStatus
+
+        direct_report_count = self.db.scalar(
+            select(func.count()).where(UserProfile.manager_id == user_id)
+        ) or 0
+        open_opportunity_count = self.db.scalar(
+            select(func.count())
+            .select_from(Opportunity)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .where(Opportunity.owner_id == user_id, OpportunityStatus.is_terminal == False)  # noqa: E712
+        ) or 0
+        return direct_report_count, open_opportunity_count
 
     def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
         from app.domains.reference.models import SBU

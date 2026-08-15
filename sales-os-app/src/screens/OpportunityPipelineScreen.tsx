@@ -6,6 +6,7 @@ import {
   ButtonBase,
   IconButton,
   InputAdornment,
+  ListSubheader,
   MenuItem,
   TextField,
 } from "@mui/material";
@@ -38,7 +39,7 @@ const PIPELINE_STAGE_CODES = [
 // TODO(fix-at-service-layer): give these functions real return types; see
 // active_progress.md deferred list. Remove these once fixed.
 interface StageOption { stage_code: string; stage_name: string; display_order: number }
-interface UserOption { id: string; display_name: string }
+interface UserOption { id: string; display_name: string; is_active?: boolean | null }
 
 // ---------------------------------------------------------------------------
 // Status badge colours
@@ -243,10 +244,16 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => (await listUsers()) as UserOption[],
+    queryKey: ["users", "include-inactive"],
+    // include_inactive=true -- this is a filter over existing deals, not an
+    // assignment picker, so a deactivated owner's opportunities still need
+    // to be findable here (unlike the assignee/reassignment pickers, which
+    // correctly stay active-only).
+    queryFn: async () => (await listUsers("scoped", true)) as UserOption[],
     staleTime: Infinity,
   });
+  const activeOwners = users.filter((u) => u.is_active !== false);
+  const inactiveOwners = users.filter((u) => u.is_active === false);
 
   const allDeals = pipeline?.items ?? [];
 
@@ -333,9 +340,17 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
               slotProps={{ select: { displayEmpty: true } }}
             >
               <MenuItem value="">All Owners</MenuItem>
-              {users.map((u) => (
+              {activeOwners.map((u) => (
                 <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
               ))}
+              {inactiveOwners.length > 0 && [
+                <ListSubheader key="inactive-header" sx={{ fontWeight: 700 }}>Inactive Owners</ListSubheader>,
+                ...inactiveOwners.map((u) => (
+                  <MenuItem key={u.id} value={u.id} sx={{ color: "error.main" }}>
+                    {u.display_name}
+                  </MenuItem>
+                )),
+              ]}
             </TextField>
             <Box sx={{ flex: 1 }}>
               <ZonePicker label="All Zones" value={zoneFilter} onChange={setZoneFilter} />

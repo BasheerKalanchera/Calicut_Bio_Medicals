@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Typography, Button, TextField, MenuItem, List, ListItemButton, ListItemText, Chip, IconButton } from "@mui/material";
+import { Box, Typography, Button, TextField, MenuItem, List, ListItemButton, ListItemText, Chip, IconButton, Alert, ListSubheader } from "@mui/material";
 import FormModal from "../components/FormModal";
 import ZonePicker from "../components/ZonePicker";
-import { listUsers, listRoles, listSbus, listZones, createUser, updateUser } from "../services/masterData";
-import type { UserListResponse } from "../types/api";
+import {
+  listUsers,
+  listRoles,
+  listSbus,
+  listZones,
+  createUser,
+  updateUser,
+  getUserBlastRadius,
+  deactivateUser,
+  reactivateUser,
+} from "../services/masterData";
+import type { UserBlastRadius, UserListResponse } from "../types/api";
 import type { ZoneSearchResult } from "../services/masterData";
 
 interface MasterDataOption {
@@ -21,16 +31,26 @@ const EMPTY_FORM = { id: "", display_name: "", sbu_id: "", role_id: "", zone_id:
 
 export default function UserDirectoryScreen() {
   const queryClient = useQueryClient();
-  const [dialogMode, setDialogMode] = useState<"create" | "edit" | null>(null);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit" | "deactivate" | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [primaryZone, setPrimaryZone] = useState<ZoneSearchResult | null>(null);
   const [addingZone, setAddingZone] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
+  const [deactivatingUser, setDeactivatingUser] = useState<UserListResponse | null>(null);
+  const [userBlastRadius, setUserBlastRadius] = useState<UserBlastRadius | null>(null);
+  const [blastRadiusError, setBlastRadiusError] = useState<string | null>(null);
 
+  // Always fetches the full roster (active + inactive) -- name lookups
+  // (manager labels, the Manager dropdown) need to resolve a deactivated
+  // person's name even when they're not otherwise being displayed as a
+  // row. "Show Inactive" is applied client-side below, purely to decide
+  // which rows render -- it never changes what's available to look up.
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["users", "directory"],
-    queryFn: () => listUsers(),
+    queryFn: () => listUsers("scoped", true),
   });
+  const visibleUsers = showInactive ? users : users.filter((u) => u.is_active !== false);
   const { data: roles = [] } = useQuery({
     queryKey: ["roles"],
     queryFn: () => listRoles() as Promise<RoleOption[]>,
@@ -68,7 +88,12 @@ export default function UserDirectoryScreen() {
     setDialogMode("edit");
   };
 
-  const closeDialog = () => setDialogMode(null);
+  const closeDialog = () => {
+    setDialogMode(null);
+    setDeactivatingUser(null);
+    setUserBlastRadius(null);
+    setBlastRadiusError(null);
+  };
 
   const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ["users"] });
 
@@ -107,37 +132,97 @@ export default function UserDirectoryScreen() {
     invalidateUsers();
   };
 
-  const managerOptions = users.filter((u) => u.id !== editingUserId);
+  const openDeactivate = async (u: UserListResponse) => {
+    setDeactivatingUser(u);
+    setUserBlastRadius(null);
+    setBlastRadiusError(null);
+    setDialogMode("deactivate");
+    try {
+      const result = await getUserBlastRadius(u.id);
+      setUserBlastRadius(result);
+    } catch {
+      setBlastRadiusError("Couldn't check this person's current assignments — try again.");
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!deactivatingUser) return;
+    await deactivateUser(deactivatingUser.id);
+    invalidateUsers();
+  };
+
+  const handleReactivate = async (u: UserListResponse) => {
+    await reactivateUser(u.id);
+    invalidateUsers();
+  };
+
+  // Active managers are freely pickable. Inactive ones are still listed --
+  // disabled -- so an *existing* assignment to a now-deactivated manager
+  // still renders correctly instead of going blank (MUI can't show a
+  // value's label without a matching option present); disabled blocks
+  // freshly picking a deactivated person as someone's new manager.
+  const otherUsers = users.filter((u) => u.id !== editingUserId);
+  const activeManagerOptions = otherUsers.filter((u) => u.is_active !== false);
+  const inactiveManagerOptions = otherUsers.filter((u) => u.is_active === false);
+  const selectedManagerIsInactive = inactiveManagerOptions.some((u) => u.id === form.manager_id);
 
   return (
-    <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      {/* Fixed: title + actions — does not scroll */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 3, pb: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 700 }}>User Directory</Typography>
-        <Button variant="contained" onClick={openCreate}>Add User</Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="outlined" onClick={() => setShowInactive((v) => !v)}>
+            {showInactive ? "Hide Inactive" : "Show Inactive"}
+          </Button>
+          <Button variant="contained" onClick={openCreate}>Add User</Button>
+        </Box>
       </Box>
 
-      {isLoading ? (
-        <Typography color="text.secondary">Loading...</Typography>
-      ) : (
-        <List sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
-          {users.map((u) => {
-            const sbuName = sbus.find((s) => s.id === u.sbu_id)?.name;
-            const zoneNames = u.zone_ids.map((zid) => zones.find((z) => z.id === zid)?.name).filter(Boolean).join(", ");
-            const manager = users.find((m) => m.id === u.manager_id);
-            const secondaryParts = [sbuName, zoneNames || null, manager ? `reports to ${manager.display_name}` : null].filter(Boolean);
-            return (
-              <ListItemButton
-                key={u.id}
-                onClick={() => openEdit(u)}
-                sx={{ py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}
-              >
-                <ListItemText primary={u.display_name} secondary={secondaryParts.join(" · ")} />
-                <Chip label={u.role_name} size="small" />
-              </ListItemButton>
-            );
-          })}
-        </List>
-      )}
+      {/* Scrollable: user list only */}
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3 }}>
+        {isLoading ? (
+          <Typography color="text.secondary">Loading...</Typography>
+        ) : (
+          <List sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
+            {visibleUsers.map((u) => {
+              const sbuName = sbus.find((s) => s.id === u.sbu_id)?.name;
+              const zoneNames = u.zone_ids.map((zid) => zones.find((z) => z.id === zid)?.name).filter(Boolean).join(", ");
+              const manager = users.find((m) => m.id === u.manager_id);
+              const secondaryParts = [sbuName, zoneNames || null, manager ? `reports to ${manager.display_name}` : null].filter(Boolean);
+              const inactive = u.is_active === false;
+              return (
+                <ListItemButton
+                  key={u.id}
+                  onClick={() => openEdit(u)}
+                  sx={{ py: 1.5, borderBottom: "1px solid", borderColor: "divider" }}
+                >
+                  {/* Opacity scoped to the info side only -- a child's own
+                      opacity can't undo a parent's, so the action button has
+                      to live outside this dimmed Box to stay fully visible. */}
+                  <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, opacity: inactive ? 0.5 : 1 }}>
+                    <ListItemText primary={u.display_name} secondary={secondaryParts.join(" · ")} />
+                    {inactive && <Chip label="Inactive" size="small" sx={{ mr: 1 }} />}
+                    <Chip label={u.role_name} size="small" sx={{ mr: 1 }} />
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (inactive) handleReactivate(u);
+                      else openDeactivate(u);
+                    }}
+                    title={inactive ? "Reactivate user" : "Deactivate user"}
+                    sx={{ color: "text.primary" }}
+                  >
+                    <Box component="span">{inactive ? "↩️" : "🚫"}</Box>
+                  </IconButton>
+                </ListItemButton>
+              );
+            })}
+          </List>
+        )}
+      </Box>
 
       <FormModal
         isOpen={dialogMode !== null}
@@ -246,10 +331,54 @@ export default function UserDirectoryScreen() {
           fullWidth
           size="small"
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          // The closed field's displayed text doesn't inherit the matched
+          // MenuItem's own sx -- MUI just reads its label, not its style --
+          // so the "reporting to an inactive manager" signal needs setting
+          // here too, not just on the open dropdown's red MenuItem.
+          sx={
+            selectedManagerIsInactive
+              ? { "& .MuiSelect-select": { color: "error.main", opacity: 0.7 } }
+              : undefined
+          }
         >
           <MenuItem value="">No manager</MenuItem>
-          {managerOptions.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+          {activeManagerOptions.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+          {inactiveManagerOptions.length > 0 && [
+            <ListSubheader key="inactive-managers-header" sx={{ fontWeight: 700 }}>Inactive</ListSubheader>,
+            ...inactiveManagerOptions.map((u) => (
+              <MenuItem key={u.id} value={u.id} disabled sx={{ color: "error.main" }}>
+                {u.display_name}
+              </MenuItem>
+            )),
+          ]}
         </TextField>
+      </FormModal>
+
+      <FormModal
+        isOpen={dialogMode === "deactivate"}
+        onClose={closeDialog}
+        title={`Deactivate "${deactivatingUser?.display_name ?? ""}"?`}
+        onSubmit={handleDeactivate}
+        submitLabel="Deactivate"
+      >
+        {blastRadiusError ? (
+          <Alert severity="error">{blastRadiusError}</Alert>
+        ) : userBlastRadius === null ? (
+          <Typography color="text.secondary">Checking current assignments…</Typography>
+        ) : (
+          <>
+            <Typography>
+              {userBlastRadius.direct_report_count} direct report{userBlastRadius.direct_report_count === 1 ? "" : "s"} and{" "}
+              {userBlastRadius.open_opportunity_count} open opportunit
+              {userBlastRadius.open_opportunity_count === 1 ? "y" : "ies"} are currently tied to this person.
+            </Typography>
+            <Alert severity="info">
+              They'll keep working exactly as before — deactivating only stops this person from logging in
+              and being picked for <strong>new</strong> assignments going forward. Reactivate any time from
+              this same screen.
+            </Alert>
+          </>
+        )}
       </FormModal>
     </Box>
   );

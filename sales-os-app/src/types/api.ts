@@ -72,6 +72,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/master-data/zones/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Zones */
+        get: operations["search_zones_api_v1_master_data_zones_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -105,6 +122,57 @@ export interface paths {
         head?: never;
         /** Update User */
         patch: operations["update_user_api_v1_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}/blast-radius": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User Blast Radius */
+        get: operations["get_user_blast_radius_api_v1_users__user_id__blast_radius_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate User */
+        post: operations["deactivate_user_api_v1_users__user_id__deactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/{user_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reactivate User */
+        post: operations["reactivate_user_api_v1_users__user_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/accounts": {
@@ -686,6 +754,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/download-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Document Download Url */
+        get: operations["get_document_download_url_api_v1_documents__document_id__download_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunities/{opportunity_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Opportunity Documents */
+        get: operations["list_opportunity_documents_api_v1_opportunities__opportunity_id__documents_get"];
+        put?: never;
+        /** Create Opportunity Document */
+        post: operations["create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Zone Tree */
+        get: operations["get_zone_tree_api_v1_admin_zones_tree_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Zone */
+        post: operations["create_zone_api_v1_admin_zones_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/{zone_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Zone */
+        patch: operations["update_zone_api_v1_admin_zones__zone_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/zones/{zone_id}/deprecate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deprecate Zone */
+        post: operations["deprecate_zone_api_v1_admin_zones__zone_id__deprecate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/name-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check Zone Name */
+        get: operations["check_zone_name_api_v1_admin_zones_name_check_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/{zone_id}/blast-radius": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Blast Radius */
+        get: operations["get_blast_radius_api_v1_admin_zones__zone_id__blast_radius_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/rebuild-closure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rebuild Closure */
+        post: operations["rebuild_closure_api_v1_admin_zones_rebuild_closure_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -731,6 +953,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ActivityResponse"];
+        };
+        /** APIResponse[DocumentDownloadUrl] */
+        APIResponse_DocumentDownloadUrl_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["DocumentDownloadUrl"];
         };
         /** APIResponse[DocumentResponse] */
         APIResponse_DocumentResponse_: {
@@ -984,6 +1220,20 @@ export interface components {
             message: string;
             data: components["schemas"]["StakeholderResponse"];
         };
+        /** APIResponse[UserBlastRadius] */
+        APIResponse_UserBlastRadius_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["UserBlastRadius"];
+        };
         /** APIResponse[UserListResponse] */
         APIResponse_UserListResponse_: {
             /**
@@ -1025,6 +1275,34 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["WorkspaceResponse"];
+        };
+        /** APIResponse[ZoneBlastRadius] */
+        APIResponse_ZoneBlastRadius_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ZoneBlastRadius"];
+        };
+        /** APIResponse[ZoneTreeNode] */
+        APIResponse_ZoneTreeNode_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ZoneTreeNode"];
         };
         /** APIResponse[dict[str, AccountCountsEntry]] */
         APIResponse_dict_str__AccountCountsEntry__: {
@@ -1224,6 +1502,51 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["WorkspaceProject"][];
+        };
+        /** APIResponse[list[ZoneNameMatch]] */
+        APIResponse_list_ZoneNameMatch__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ZoneNameMatch"][];
+        };
+        /** APIResponse[list[ZoneSearchResult]] */
+        APIResponse_list_ZoneSearchResult__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ZoneSearchResult"][];
+        };
+        /** APIResponse[list[ZoneTreeNode]] */
+        APIResponse_list_ZoneTreeNode__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ZoneTreeNode"][];
         };
         /** AccountCountsEntry */
         AccountCountsEntry: {
@@ -1512,6 +1835,11 @@ export interface components {
             /** Next Action Reminder Id */
             next_action_reminder_id?: string | null;
         };
+        /** Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post */
+        Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post: {
+            /** File */
+            file: string;
+        };
         /**
          * CustomerType
          * @description Institution nature — Cabio Sales OS Phase 1 PRD SS B.2.6.
@@ -1526,6 +1854,16 @@ export interface components {
             file_type: string;
             /** Storage Path */
             storage_path: string;
+        };
+        /** DocumentDownloadUrl */
+        DocumentDownloadUrl: {
+            /** Url */
+            url: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
         };
         /** DocumentResponse */
         DocumentResponse: {
@@ -2532,6 +2870,18 @@ export interface components {
             /** Is Terminal */
             is_terminal: boolean;
         };
+        /**
+         * UserBlastRadius
+         * @description Backs the Deactivate confirmation -- informational only, same as
+         *     ZoneBlastRadius; deactivating is grandfathered, so neither count blocks
+         *     the action.
+         */
+        UserBlastRadius: {
+            /** Direct Report Count */
+            direct_report_count: number;
+            /** Open Opportunity Count */
+            open_opportunity_count: number;
+        };
         /** UserCreate */
         UserCreate: {
             /**
@@ -2570,6 +2920,8 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+            /** Is Active */
+            is_active: boolean | null;
             /**
              * Sbu Id
              * Format: uuid
@@ -2795,6 +3147,51 @@ export interface components {
             /** Sentiment */
             sentiment: string | null;
         };
+        /** ZoneAssignee */
+        ZoneAssignee: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+            /** Role Name */
+            role_name: string;
+        };
+        /** ZoneBlastRadius */
+        ZoneBlastRadius: {
+            /** Account Count */
+            account_count: number;
+            /** User Count */
+            user_count: number;
+        };
+        /** ZoneCreate */
+        ZoneCreate: {
+            /** Name */
+            name: string;
+            /** Parent Zone Id */
+            parent_zone_id?: string | null;
+            /** Zone Level */
+            zone_level?: string | null;
+        };
+        /**
+         * ZoneNameMatch
+         * @description Backs the Add/Edit Zone form's soft "this name exists elsewhere"
+         *     warning -- not an error, just a heads-up (see reference/repository.py's
+         *     find_by_name_elsewhere).
+         */
+        ZoneNameMatch: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Parent Name */
+            parent_name: string | null;
+        };
         /** ZoneNested */
         ZoneNested: {
             /**
@@ -2804,6 +3201,51 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** ZoneSearchResult */
+        ZoneSearchResult: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Path */
+            path: string;
+        };
+        /** ZoneTreeNode */
+        ZoneTreeNode: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Zone Level */
+            zone_level: string | null;
+            /** Is Active */
+            is_active: boolean | null;
+            /**
+             * Children
+             * @default []
+             */
+            children: components["schemas"]["ZoneTreeNode"][];
+            /**
+             * Assignees
+             * @default []
+             */
+            assignees: components["schemas"]["ZoneAssignee"][];
+        };
+        /** ZoneUpdate */
+        ZoneUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Parent Zone Id */
+            parent_zone_id?: string | null;
+            /** Zone Level */
+            zone_level?: string | null;
         };
         /** ProductNested */
         app__domains__account__workspace_schemas__ProductNested: {
@@ -2944,12 +3386,46 @@ export interface operations {
             };
         };
     };
+    search_zones_api_v1_master_data_zones_search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneSearchResult__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_users_api_v1_users_get: {
         parameters: {
             query?: {
                 page?: number;
                 page_size?: number;
                 scope?: string;
+                include_inactive?: boolean;
             };
             header?: {
                 authorization?: string | null;
@@ -3030,6 +3506,105 @@ export interface operations {
                 "application/json": components["schemas"]["UserUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UserListResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_blast_radius_api_v1_users__user_id__blast_radius_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UserBlastRadius_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deactivate_user_api_v1_users__user_id__deactivate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UserListResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reactivate_user_api_v1_users__user_id__reactivate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -4846,15 +5421,349 @@ export interface operations {
             };
         };
     };
+    get_document_download_url_api_v1_documents__document_id__download_url_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_DocumentDownloadUrl_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_opportunity_documents_api_v1_opportunities__opportunity_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_DocumentResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_DocumentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_zone_tree_api_v1_admin_zones_tree_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneTreeNode__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_zone_api_v1_admin_zones_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ZoneTreeNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_zone_api_v1_admin_zones__zone_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ZoneUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ZoneTreeNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deprecate_zone_api_v1_admin_zones__zone_id__deprecate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ZoneTreeNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_zone_name_api_v1_admin_zones_name_check_get: {
+        parameters: {
+            query: {
+                name: string;
+                parent_zone_id?: string | null;
+                exclude_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneNameMatch__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_blast_radius_api_v1_admin_zones__zone_id__blast_radius_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ZoneBlastRadius_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rebuild_closure_api_v1_admin_zones_rebuild_closure_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
 }
 
-// ---------------------------------------------------------------------------
-// Hand-written aliases (kept minimal — only names other files actually
-// import). See .claude/active_progress.md for the reasoning behind each one;
-// regenerating this file wipes everything below this line, so any future
-// regen must re-add it, not hand-patch fields into the generated part above.
-// ---------------------------------------------------------------------------
-
+// Hand-maintained convenience aliases -- openapi-typescript only emits the
+// components/paths structure above; these named exports let the rest of the
+// app import plain type names instead of the verbose
+// components["schemas"]["X"] form. Re-add any of these lost on a future
+// `npm run generate:types` regen (it overwrites the whole file).
 export type PipelineOpportunity = components["schemas"]["PipelineOpportunity"];
 export type PipelinePage = components["schemas"]["PaginatedResponse_PipelineOpportunity_"];
 export type SplitResponse = components["schemas"]["SplitResponse"];
@@ -4863,8 +5772,6 @@ export type OpportunityItemResponse = components["schemas"]["OpportunityItemResp
 export type ReminderResponse = components["schemas"]["ReminderResponse"];
 export type ActivityResponse = components["schemas"]["ActivityResponse"];
 export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResponse_"];
-// Derived from ActivityResponse's own field instead of hand-listing the 6
-// values again, so this can never drift from the backend's enum.
 export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
 export type ActivityReportRow = components["schemas"]["ActivityReportRow"];
 export type ActivityReportPage = components["schemas"]["PaginatedResponse_ActivityReportRow_"];
@@ -4873,6 +5780,7 @@ export type StakeholderOpportunityCountsEntry = components["schemas"]["Stakehold
 export type UserListResponse = components["schemas"]["UserListResponse"];
 export type UserCreate = components["schemas"]["UserCreate"];
 export type UserUpdate = components["schemas"]["UserUpdate"];
+export type UserBlastRadius = components["schemas"]["UserBlastRadius"];
 export type ProductListResponse = components["schemas"]["ProductListResponse"];
 export type ProductResponse = components["schemas"]["ProductResponse"];
 export type DocumentResponse = components["schemas"]["DocumentResponse"];

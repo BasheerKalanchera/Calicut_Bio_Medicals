@@ -3,7 +3,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+)
 from app.domains.reference.models import Zone
 from app.domains.reference.repository import ZoneRepository
 from app.domains.reference.schemas import ZoneCreate, ZoneUpdate
@@ -11,12 +17,13 @@ from app.domains.reference.service import ZoneAdminService
 
 ADMIN = "Admin"
 GM = "General Manager"
-NON_ADMIN_ROLES = ["SBU Manager", "Area Manager", "Sales Manager", "Sales Staff"]
+NON_ADMIN_ROLES = ["SBU Manager", "Area Manager", "Sales Staff"]
 
 
 def _make_repo(**overrides) -> MagicMock:
     repo = MagicMock(spec=ZoneRepository)
     repo.zone_exists.return_value = True
+    repo.exists_by_name.return_value = False
     repo.create.side_effect = lambda obj: obj
     repo.update.side_effect = lambda obj: obj
     for k, v in overrides.items():
@@ -97,6 +104,15 @@ class TestCreateZone:
             service.create_zone(ZoneCreate(name="X", parent_zone_id=uuid.uuid4()), role_name=ADMIN)
         repo.create.assert_not_called()
 
+    def test_rejects_duplicate_name_under_same_parent(self):
+        repo = _make_repo()
+        repo.exists_by_name.return_value = True
+        service = ZoneAdminService(repository=repo)
+
+        with pytest.raises(ConflictError, match="already exists"):
+            service.create_zone(ZoneCreate(name="Kozhikode"), role_name=ADMIN)
+        repo.create.assert_not_called()
+
 
 class TestUpdateZone:
     def test_rename_only_does_not_rebuild_closure(self):
@@ -130,6 +146,18 @@ class TestUpdateZone:
 
         with pytest.raises(NotFoundError):
             service.update_zone(uuid.uuid4(), ZoneUpdate(name="X"), role_name=ADMIN)
+
+    def test_rejects_rename_to_duplicate_name_under_same_parent(self):
+        zone = _make_zone()
+        repo = _make_repo()
+        repo.get_by_id.return_value = zone
+        repo.exists_by_name.return_value = True
+        service = ZoneAdminService(repository=repo)
+
+        with pytest.raises(ConflictError, match="already exists"):
+            service.update_zone(zone.id, ZoneUpdate(name="Kozhikode"), role_name=ADMIN)
+        assert zone.name == "Test Zone"  # untouched -- rejected before mutation
+        repo.update.assert_not_called()
 
     def test_rejects_deeper_cycle(self):
         # Mirrors AccountService's test_rejects_deeper_cycle exactly (same
