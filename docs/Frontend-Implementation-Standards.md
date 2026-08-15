@@ -175,7 +175,7 @@ const { data: counts } = useQuery({
 });
 ```
 
-**No screen in this codebase implements this yet** — the three directory screens that use the counts pattern today (`CustomerDirectoryScreen.jsx`, `ProductCatalogScreen.jsx`, `ProjectDirectoryScreen.jsx`) are all pre-migration (§9). Verify this example against the real implementation the first time one of them migrates, and update it here.
+Verified against the real implementation in `ProductCatalogScreen.tsx` (migrated `8f4526e`, 2026-08-07) and `CustomerDirectoryScreen.tsx` (migrated `59baa6b`, 2026-08-11) — both match this shape exactly, including `enabled: ids.length > 0` gating the dependent query. `ProjectDirectoryScreen.jsx` is the one remaining pre-migration screen using this pattern (§9).
 
 **Rules (unchanged from v1.0):**
 - The list screen never waits for counts before rendering. Counts show as `—` or `0` while loading and populate in the background.
