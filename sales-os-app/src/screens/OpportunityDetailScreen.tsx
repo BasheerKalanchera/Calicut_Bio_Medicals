@@ -437,7 +437,7 @@ function ProductsTab({
           {items.map((item) => (
             <Box key={item.id} sx={{ bgcolor: item.line_type === "BUYBACK" ? "#fef2f2" : "background.default", borderRadius: "1rem", p: 1.5, display: "flex", flexDirection: "column", gap: 0.25 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937" }}>{item.description || item.product?.name}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: "0.75rem", color: "#1f2937", whiteSpace: "pre-wrap" }}>{item.description || item.product?.name}</Typography>
                 {item.product?.product_type === "REFURBISHED" && <Chip label="Refurbished" size="small" color="warning" />}
                 {item.line_type === "BUYBACK" && <Chip label="Buyback" size="small" color="error" />}
               </Box>

@@ -300,7 +300,7 @@ function ProductDetail({
                 <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 800, textTransform: "uppercase", display: "block", mb: 0.5 }}>
                   {f.label}
                 </Typography>
-                <Typography sx={{ fontWeight: 700 }}>{f.value || "—"}</Typography>
+                <Typography sx={{ fontWeight: 700, whiteSpace: f.label === "Description" ? "pre-wrap" : undefined }}>{f.value || "—"}</Typography>
               </Box>
             ))}
           </Box>
