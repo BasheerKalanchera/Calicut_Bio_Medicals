@@ -125,7 +125,7 @@ export default function ReminderRow({
           <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.25 }}>
             {ACTIVITY_TYPE_CONFIG[reminder.closing_activity.activity_type]?.icon ?? "📝"} Closed via {reminder.closing_activity.activity_type.replace("_", " ").toLowerCase()} on {formatDate(reminder.closing_activity.activity_date)}
           </Box>
-          {reminder.closing_activity.notes}
+          <Box sx={{ whiteSpace: "pre-wrap" }}>{reminder.closing_activity.notes}</Box>
         </Box>
       )}
     </Box>

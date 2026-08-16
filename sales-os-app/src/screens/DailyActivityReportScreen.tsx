@@ -85,7 +85,7 @@ function ReportRow({
         </Box>
 
         {row.notes && (
-          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625 }}>
+          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap" }}>
             {row.notes}
           </Box>
         )}

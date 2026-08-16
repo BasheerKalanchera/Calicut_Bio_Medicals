@@ -68,7 +68,7 @@ export default function FormModal({
         onSubmit={handleSubmit}
         onKeyDown={(e) => {
           const tag = (e.target as HTMLElement).tagName;
-          if (e.key === "Enter" && (tag === "INPUT" || tag === "TEXTAREA")) {
+          if (e.key === "Enter" && tag === "INPUT") {
             e.preventDefault();
           }
         }}

@@ -92,6 +92,7 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
               px: 1.5,
               py: 1,
               lineHeight: 1.625,
+              whiteSpace: "pre-wrap",
             }}
           >
             {activity.notes}
