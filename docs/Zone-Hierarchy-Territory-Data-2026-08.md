@@ -6,7 +6,9 @@ which this doc feeds open decision #2 of, but stays out of otherwise so
 that doc doesn't churn every time this list changes).
 **Date:** 2026-08-11
 **Sources so far:** Adarsh (South Kerala districts), Vivek (South Kerala
-sub-district splits — reports to Adarsh, confirmed 2026-08-11), Shruthi
+districts — reports to Adarsh, confirmed 2026-08-11; originally recorded
+as sub-district splits within Adarsh's districts, corrected 2026-08-16 to
+full-district assignment, see the South Kerala section below), Shruthi
 (Bangalore + wider Karnataka, and confirmed 2026-08-11 later as **Bangalore's
 own Manager**), Fazal/Fahad (North Kerala + Karnataka Coastal data,
 2026-08-11).
@@ -63,44 +65,47 @@ retires the ⚠-inferred SBU flags on those rows below; Fazal's Kerala-side
 territory, North Kerala, is unaffected and still has both SBUs). Kerala
 is the only state confirmed to run both SBUs side by side.
 
-| State | Zone | District / Cluster | Taluk | Assignee | Manager | SBU | Flag |
-|---|---|---|---|---|---|---|---|
-| Karnataka | Bangalore | Zone 1: Central + East Bangalore | — | Rudrappa | Shruthi | Imaging | |
-| Karnataka | Bangalore | Zone 2: North + Rural North Bangalore | — | Om Hiremath | Shruthi | Imaging | |
-| Karnataka | Bangalore | Zone 3: West | — | Om Hiremath | Shruthi | Imaging | |
-| Karnataka | Bangalore | Zone 4: South Bangalore Core | — | Dhanushma | Shruthi | Imaging | |
-| Karnataka | Bangalore | *Zone 5 — missing* | — | — | — | — | ⚠ gap in Shruthi's numbering |
-| Karnataka | Bangalore | Zone 6: South-West + Rural South | — | Dhanushma | Shruthi | Imaging | |
-| Karnataka | Karnataka South | Mysore / Mandya / Ramnagara / Chamrajnagar | — | Nagesh Ninganoor | Shruthi | Imaging | resolved 2026-08-11 — Coorg moved out, now under Karnataka Coastal below |
-| Karnataka | Karnataka Central | Tumkur / Chitradurga / Hassan | — | Ravikumar | Shruthi | Imaging | ⚠ informal label, not Karnataka's official revenue division — Hassan officially belongs to the Mysore Division (with the South cluster above), not Bangalore Division (Tumkur/Chitradurga's actual division); Basheer's call 2026-08-11, kept informal |
-| Karnataka | Karnataka Coastal | Mangalore | — | Fahad (interim) | Fazal | Imaging | ⚠ already a live top-level zone — nesting TBD |
-| Karnataka | Karnataka Coastal | Dakshin Kannada | — | Fahad (interim) | Fazal | Imaging | |
-| Karnataka | Karnataka Coastal | Coorg | — | Fahad (interim) | Fazal | Imaging | resolved 2026-08-11 — Basheer's call; formerly transcribed "Kodak" |
-| Karnataka | Karnataka Coastal | Udupi | — | Fahad (interim, until backfilled) | Fazal | Imaging | |
-| Karnataka | Karnataka Coastal | Shimoga | — | Fahad (interim, until backfilled) | Fazal | Imaging | ⚠ not geographically coastal |
-| Karnataka | Karnataka Coastal | Bhatkal | — | Fahad (interim, until backfilled) | Fazal | Imaging | genuinely coastal |
-| Karnataka | — | Dharwad | — | Subdealer | Shruthi | Imaging | ⚠ not an internal rep — open question |
-| Kerala | North Kerala | Kasaragod | — | Irfan | Fazal | Imaging ⚠ | ⚠ reporting line presumed, not confirmed; SBU presumed from Fahad's confirmed Imaging role, not independently stated for Irfan |
-| Kerala | North Kerala | Kannur | — | Irfan | Fazal | Imaging ⚠ | ⚠ reporting line presumed, not confirmed; SBU presumed, see Kasaragod row |
-| Kerala | North Kerala | Kozhikode | — | Irfan | Fazal | Imaging ⚠ | resolved — was shared, now Irfan's alone; reporting line still presumed; SBU presumed, see Kasaragod row |
-| Kerala | North Kerala | Malappuram | — | "Staff New" | Fazal | Imaging ⚠ | ⚠ name/status pending; reporting line presumed; SBU presumed, see Kasaragod row |
-| Kerala | North Kerala | Wayanad | — | "Staff New" | Fazal | Imaging ⚠ | ⚠ name/status pending; reporting line presumed; SBU presumed, see Kasaragod row |
-| Kerala | North Kerala | Kozhikode | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
-| Kerala | North Kerala | Malappuram | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
-| Kerala | North Kerala | Wayanad | — | Nishad | Nishad | Critical Care | ⚠ new, 2026-08-12 — see Critical Care update below |
-| Kerala | North Kerala | Kannur | — | Adydev | Nishad | Critical Care | ⚠ new, 2026-08-12 — Adydev reports to Nishad |
-| Kerala | North Kerala | Kasaragod | — | Adydev | Nishad | Critical Care | ⚠ new, 2026-08-12 — Adydev reports to Nishad |
-| Kerala | South Kerala | Palakkad | — | Adarsh | Adarsh | Critical Care | ⚠ Adarsh's role as South Kerala lead is inferred, not an explicitly stated title |
-| Kerala | South Kerala | Thrissur | — | Adarsh | Adarsh | Critical Care | ⚠ same as above |
-| Kerala | South Kerala | Ernakulam | — | Adarsh | Adarsh | Critical Care | ⚠ same as above, plus boundary vs. Central Kerala unconfirmed |
-| Kerala | South Kerala | Alappuzha | Rest of Alappuzha | Adarsh | Adarsh | Critical Care | ⚠ exact taluk boundary not given |
-| Kerala | South Kerala | Alappuzha | Chengannur / Harippad / Kayamkulam | Vivek | Adarsh | Critical Care | |
-| Kerala | South Kerala | Idukki | Rest of Idukki | Adarsh | Adarsh | Critical Care | ⚠ exact taluk boundary not given |
-| Kerala | South Kerala | Idukki | Thodupuzha | Vivek | Adarsh | Critical Care | |
-| Kerala | South Kerala | Kottayam | — | Vivek | Adarsh | Critical Care | |
-| Kerala | South Kerala | Pathanamthitta | — | Vivek | Adarsh | Critical Care | |
-| Kerala | South Kerala | Kollam | — | Vivek | Adarsh | Critical Care | |
-| Kerala | South Kerala | Trivandrum | — | Vivek | Adarsh | Critical Care | |
+| State | Zone | District / Cluster | Assignee | Manager | SBU | Notes |
+|---|---|---|---|---|---|---|
+| Karnataka | Bangalore | Zone 1: central + East | Rudrappa | Shruthi | Imaging | MG Road, Indiranagar, Ulsoor, Koramangala, Domlur, Richmond Town, Shantinagar, Marathahalli, Whitefield, KR Puram, Mahadevapura, Brookefield, CV Raman Nagar, Jeevanbheema Nagar,Vasanth Nagar, Majestic |
+| Karnataka | Bangalore | Zone 2: North + Rural North | Om Hiremath | Shruthi | Imaging | Hebbal, Yelahanka, RT Nagar, Jakkur, Sahakar Nagar, Hennur, Thanisandra, Frazer Town, Kammanahalli, Vidyaranyapura, Tindlu, Sanjay Nagar, Ganganagar,Rajajinagar, Vijayanagar, Magadi Road, Peenya, Malleshwaram, Yeshwanthpur, Rural - Devanahalli, Doddaballapur, Hesaraghatta, Chikkaballapur |
+| Karnataka | Bangalore | Zone 3: West | Om Hiremath | Shruthi | Imaging | Nagarbhavi, Basaveshwaranagar, Kamakshipalya, Nandini Layout,Kengeri |
+| Karnataka | Bangalore | Zone 4: South Core | Dhanushma | Shruthi | Imaging | Jayanagar, JP Nagar, Banashankari, BTM Layout, Padmanabhanagar, Basavanagudi, Girinagar, Kumaraswamy Layout, Uttarahalli, Chikkalasandra, Konanakunte,HSR Layout,Madiwala, Kudlu Gate, Devarachikkanahalli, Arekere, Bilekahalli, Rural: Hoskote,Anekal,Attibele,Hosur Border |
+| Karnataka | Bangalore | Zone 5 South East | Dhanushma | Shruthi | Imaging | HSR Layout, Bommanahalli, Electronic City, Begur, Bannerghatta Road |
+| Karnataka | Bangalore | Zone 6: South-West + Rural South | Dhanushma | Shruthi | Imaging | Kanakapura Road, Kumaraswamy Layout, Vasanthapura, Subramanyapura, ISRO Layout |
+| Karnataka | South Karnataka | Mysore | Nagesh Ninganoor | Shruthi | Imaging | |
+| Karnataka | South Karnataka | Mandya | Nagesh Ninganoor | Shruthi | Imaging | |
+| Karnataka | South Karnataka | Ramnagara | Nagesh Ninganoor | Shruthi | Imaging | |
+| Karnataka | South Karnataka | Chamrajnagar | Nagesh Ninganoor | Shruthi | Imaging | |
+| Karnataka | South Karnataka | Tumkur | Ravikumar | Shruthi | Imaging | |
+| Karnataka | Central Karnataka | Chitradurga | Ravikumar | Shruthi | Imaging | |
+| Karnataka | Central Karnataka | Hassan | Ravikumar | Shruthi | Imaging | |
+| Karnataka | Coastal Karnataka | Mangalore | Fahad | Fazal | Imaging | |
+| Karnataka | Coastal Karnataka | Dakshin Kannada | Fahad | Fazal | Imaging | |
+| Karnataka | Coastal Karnataka | Coorg | Fahad | Fazal | Imaging | |
+| Karnataka | Coastal Karnataka | Udupi | Fahad | Fazal | Imaging | |
+| Karnataka | Coastal Karnataka | Shimoga | Fahad | Fazal | Imaging | |
+| Karnataka | Coastal Karnataka | Bhatkal | Fahad | Fazal | Imaging | |
+| Karnataka | North Karnataka | Dharwad | Shruthi | Shruthi | Imaging | Subdealer gives the leads and Shruthi enters into the system |
+| Kerala | North Kerala | Kasaragod | Irfan | Fazal | Imaging | |
+| Kerala | North Kerala | Kannur | Irfan | Fazal | Imaging | |
+| Kerala | North Kerala | Kozhikode | Irfan | Fazal | Imaging | |
+| Kerala | North Kerala | Malappuram | "Staff New" | Naeem | Imaging | |
+| Kerala | North Kerala | Wayanad | "Staff New" | Naeem | Imaging | |
+| Kerala | North Kerala | Kozhikode | Adydev | Nishad | Critical Care | |
+| Kerala | North Kerala | Malappuram | Adydev | Nishad | Critical Care | |
+| Kerala | North Kerala | Wayanad | Nishad | Nishad | Critical Care | |
+| Kerala | North Kerala | Kannur | Adydev | Nishad | Critical Care | |
+| Kerala | North Kerala | Kasaragod | Adydev | Nishad | Critical Care | |
+| Kerala | South Kerala | Palakkad | Adarsh | Adarsh | Critical Care | |
+| Kerala | South Kerala | Thrissur | Adarsh | Adarsh | Critical Care | |
+| Kerala | South Kerala | Ernakulam | Adarsh | Adarsh | Critical Care | |
+| Kerala | South Kerala | Alappuzha | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Idukki | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Kottayam | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Pathanamthitta | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Kollam | Vivek | Adarsh | Critical Care | |
+| Kerala | South Kerala | Trivandrum | Vivek | Adarsh | Critical Care | |
 
 **Central Kerala dropped from this table, 2026-08-11 (later)** — per
 Basheer, Kerala operates with North and South zones only for now; see the
@@ -247,46 +252,53 @@ Bangalore/Karnataka's missing-Critical-Care-manager row below, which *is*
 still an open gap (Imaging clearly is sold there; the Critical Care side
 of that region just hasn't been gathered yet).
 
-Raw input, as given 2026-08-11:
+Raw input, as given 2026-08-11 — **superseded 2026-08-16, see correction
+below the tree diagram.**
 
 **Adarsh** (whole districts):
 - Palakkad
 - Thrissur
 - Ernakulam
-- Alappuzha *(shared with Vivek — see below)*
-- Idukki *(shared with Vivek — see below)*
 
-**Vivek** (reports to Adarsh — sub-district splits within two of Adarsh's
-districts, plus whole districts of his own):
-- Idukki — Thodupuzha (taluk-level slice; remainder of Idukki presumed
-  Adarsh's, exact boundary not yet given)
-- Alappuzha — Chengannur, Harippad, Kayamkulam (taluk-level slice;
-  remainder of Alappuzha presumed Adarsh's, exact boundary not yet given)
-- Kottayam (whole district)
-- Pathanamthitta (whole district)
-- Kollam (whole district)
-- Trivandrum (whole district)
+**Vivek** (reports to Adarsh — whole districts, all six):
+- Alappuzha
+- Idukki
+- Kottayam
+- Pathanamthitta
+- Kollam
+- Trivandrum
 
-**Tentative tree implied by this data** (South Kerala → District →
-[Taluk, only where a district is actually split):
+**Tree** (South Kerala → District — no taluk level needed here after all,
+see correction below):
 ```
 South Kerala
  ├── Palakkad                                  (Adarsh)
  ├── Thrissur                                  (Adarsh)
  ├── Ernakulam                                 (Adarsh)
- ├── Alappuzha                                 (Adarsh — "Rest of Alappuzha")
- │    └── Chengannur / Harippad / Kayamkulam   (Vivek)
- ├── Idukki                                    (Adarsh — "Rest of Idukki")
- │    └── Thodupuzha                           (Vivek)
+ ├── Alappuzha                                 (Vivek)
+ ├── Idukki                                    (Vivek)
  ├── Kottayam                                  (Vivek)
  ├── Pathanamthitta                            (Vivek)
  ├── Kollam                                    (Vivek)
  └── Trivandrum                                (Vivek)
 ```
-This is real, useful confirmation that the tree needs **four levels** in at
-least two places (Zone → District → Taluk), not the three shown in the main
-discussion doc's illustrative example — supports the "flexible depth, no
-fixed levels" design decision rather than requiring a change to it.
+
+**Correction, 2026-08-16 (Basheer):** the taluk-level split originally
+recorded here (Vivek holding only Chengannur/Harippad/Kayamkulam within
+Alappuzha and Thodupuzha within Idukki, with Adarsh holding "the rest" of
+each) was wrong — **Alappuzha and Idukki are fully assigned to Vivek**,
+same as his other four districts, not split. No taluk level needed for
+South Kerala after all; the four-level (Zone → District → Taluk) case
+this section originally cited as validating the flexible-depth design no
+longer applies here — that design decision stands on its own merits
+regardless. Adarsh may still work accounts directly in any South Kerala
+district including Alappuzha/Idukki, Vivek's included — that's a
+function of being **overall in-charge of South Kerala**, not a specific
+territory carve-out the way "Rest of Alappuzha" implied. This live
+Dev's `user_zone` assignments (Vivek: all 6 districts; Adarsh: the
+zone-level "South Kerala" row, not itemized per-district) already reflect
+this corrected version, done 2026-08-16 as part of setting up Vivek's real
+account — this doc was the one that had gone stale, not the data.
 
 **Open questions on this list:**
 1. **Ernakulam under South Kerala** — worth confirming this matches how
@@ -295,10 +307,8 @@ fixed levels" design decision rather than requiring a change to it.
    if any existing customers/deals are already tagged South Kerala but sit
    in Ernakulam, or vice versa, that's a data question to check, not
    something to silently reclassify based on this list.
-2. **"Remainder of Alappuzha" / "remainder of Idukki"** — Adarsh's actual
-   share once Vivek's taluks are carved out needs the real taluk names, not
-   an implicit "whatever's left" bucket — the tree needs named nodes on
-   both sides of a split, not one named node and one default.
+2. ~~"Remainder of Alappuzha" / "remainder of Idukki"~~ — **moot as of the
+   2026-08-16 correction above**; there's no split to name a boundary for.
 3. **Does Vivek reporting to Adarsh also grant Adarsh visibility into
    Vivek's patches, or is that already covered by the existing Sales
    Manager reporting-line rule alone** (see `Discussion-Zone-Hierarchy-2026-
@@ -428,9 +438,14 @@ wasn't in the first version of this list.
    Shimoga is intentionally part of Fahad's coverage rather than a
    transcription slip, and if so, whether it belongs in this cluster at
    all given the name.
-8. **"Karnataka Coastal" as the formal cluster name** — worth confirming
-   this is the name Shruthi and Fahad both want in the system, since
-   Shruthi's own table left this cluster unnamed.
+8. ~~"Karnataka Coastal" as the formal cluster name~~ — **resolved
+   2026-08-15.** Confirmed intentional as built live — the system's zone is
+   named "Coastal Karnataka" (word order reversed from this doc's working
+   name), deliberately: Basheer's call, to keep the `[Descriptor] [State]`
+   word order consistent with "North Kerala"/"South Kerala" rather than
+   `[State] [Descriptor]`. This doc's "Karnataka Coastal" references
+   throughout are the informal/planning name for the same cluster, not a
+   mismatch to fix in the system.
 9. ~~"Fahad 1" and "Fahad 2" — same person or two people?~~ — **resolved
    2026-08-11.** Same person — **Fahad** (correction, 2026-08-11 later:
    originally recorded here as "Fazal," which was this doc's mistaken

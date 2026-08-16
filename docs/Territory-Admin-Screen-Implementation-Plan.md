@@ -1,6 +1,8 @@
 # Territory Admin Screen — Frontend Implementation Plan
 
-**Status:** Draft — planned, not yet built.
+**Status:** Shipped, `f6a2a11`, 2026-08-12. Committed and pushed to
+`origin/main`. Manually verified on Dev, 2026-08-15 — used to build out the
+full real Territory map/hierarchy.
 **Date:** 2026-08-12
 
 ## Context

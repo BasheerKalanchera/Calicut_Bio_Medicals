@@ -22,16 +22,18 @@ Plan: `docs/Sales-Manager-Tier-Collapse-Implementation-Plan.md`.
 If step 2 doesn't show the opportunities, that's a real bug — stop and
 investigate before anything else touches `opportunity_tier_visibility`.
 
-**Four loose ends from the Zone Hierarchy real-data review, none actioned
-yet:**
-- Deprecate Central Kerala (check blast radius first) — Kerala runs
-  North+South only going forward, per Basheer's standing call.
-- Confirm "Coastal Karnataka" vs. the territory doc's "Karnataka Coastal"
-  naming is intentional, or rename to match.
-- Clean up `TEST-Parent`/`TEST-Child` — RLS-verification fixtures, no
-  longer needed.
-- Remove Kasaragod under South Kerala (data-entry duplicate — it's a real
-  North Kerala district). Keep the North Kerala copy.
+**All four loose ends from the Zone Hierarchy real-data review are now
+resolved** — deprecating Central Kerala, confirming "Coastal Karnataka"
+naming, and removing the Kasaragod duplicate were done 2026-08-15 by
+Basheer building out the full real Territory map/hierarchy on Dev via the
+now-verified Territory Admin screen (see `docs/Territory-Admin-Screen-
+Implementation-Plan.md`'s status line and `docs/Zone-Hierarchy-Territory-
+Data-2026-08.md`'s item 8); `TEST-Parent`/`TEST-Child` and their dependent
+fixture rows (`Test Account`, `Test opportunity` + its one
+`opportunity_item`, the `user_zone` link for the deactivated "Test - Area
+Manager" user, and 3 `zone_closure` rows) were deleted directly from Dev
+2026-08-16 — confirmed no real data was attached before deleting, and
+confirmed gone afterward.
 
 **Also flagged, not yet decided:** `sales-os-app/src/App.jsx` (legacy
 `/prototype` route, mock data only) still references "Sales Manager" —
