@@ -60,7 +60,9 @@ class TestAuthorizationGate:
         with pytest.raises(AuthorizationError):
             service.update_zone(zone_id, ZoneUpdate(name="X"), role_name=role)
         with pytest.raises(AuthorizationError):
-            service.deprecate_zone(zone_id, role_name=role)
+            service.deactivate_zone(zone_id, role_name=role)
+        with pytest.raises(AuthorizationError):
+            service.reactivate_zone(zone_id, role_name=role)
         with pytest.raises(AuthorizationError):
             service.blast_radius(zone_id, role_name=role)
         with pytest.raises(AuthorizationError):
@@ -95,12 +97,12 @@ class TestCreateZone:
             service.create_zone(ZoneCreate(name="X", parent_zone_id=uuid.uuid4()), role_name=ADMIN)
         repo.create.assert_not_called()
 
-    def test_rejects_deprecated_parent(self):
+    def test_rejects_deactivated_parent(self):
         repo = _make_repo()
         repo.get_by_id.return_value = _make_zone(is_active=False)
         service = ZoneAdminService(repository=repo)
 
-        with pytest.raises(BusinessRuleViolation, match="deprecated"):
+        with pytest.raises(BusinessRuleViolation, match="deactivated"):
             service.create_zone(ZoneCreate(name="X", parent_zone_id=uuid.uuid4()), role_name=ADMIN)
         repo.create.assert_not_called()
 
@@ -178,15 +180,15 @@ class TestUpdateZone:
             service.update_zone(zone_id, ZoneUpdate(parent_zone_id=b_id), role_name=ADMIN)
         repo.rebuild_all_closure.assert_not_called()
 
-    def test_rejects_deprecated_new_parent(self):
+    def test_rejects_deactivated_new_parent(self):
         zone = _make_zone()
-        deprecated_parent = _make_zone(is_active=False)
+        deactivated_parent = _make_zone(is_active=False)
         repo = _make_repo()
-        repo.get_by_id.side_effect = lambda zid: zone if zid == zone.id else deprecated_parent
+        repo.get_by_id.side_effect = lambda zid: zone if zid == zone.id else deactivated_parent
         service = ZoneAdminService(repository=repo)
 
-        with pytest.raises(BusinessRuleViolation, match="deprecated"):
-            service.update_zone(zone.id, ZoneUpdate(parent_zone_id=deprecated_parent.id), role_name=ADMIN)
+        with pytest.raises(BusinessRuleViolation, match="deactivated"):
+            service.update_zone(zone.id, ZoneUpdate(parent_zone_id=deactivated_parent.id), role_name=ADMIN)
 
     def test_no_op_parent_change_is_ignored(self):
         # Setting parent_zone_id to the same value it already has should not
@@ -203,13 +205,13 @@ class TestUpdateZone:
         repo.get_parent_id.assert_not_called()
 
 
-class TestDeprecateZone:
+class TestDeactivateZone:
     def test_sets_is_active_false_and_grandfathers_existing_visibility(self):
-        """The core deprecation-visibility decision (Zone-Hierarchy-Technical-
-        Design.md): deprecating must NOT delete the row, touch any existing
+        """The core deactivation-visibility decision (Zone-Hierarchy-Technical-
+        Design.md): deactivating must NOT delete the row, touch any existing
         account.zone_id/user_zone.zone_id row, or trigger a closure rebuild
         (which would be a no-op anyway since the zone's position in the tree
-        hasn't changed -- deprecating is a status flag, not a structural
+        hasn't changed -- deactivating is a status flag, not a structural
         edit). This test asserts exactly that surface: one field flipped,
         nothing else touched.
         """
@@ -218,7 +220,7 @@ class TestDeprecateZone:
         repo.get_by_id.return_value = zone
         service = ZoneAdminService(repository=repo)
 
-        service.deprecate_zone(zone.id, role_name=ADMIN)
+        service.deactivate_zone(zone.id, role_name=ADMIN)
 
         assert zone.is_active is False
         repo.rebuild_all_closure.assert_not_called()
@@ -230,7 +232,36 @@ class TestDeprecateZone:
         service = ZoneAdminService(repository=repo)
 
         with pytest.raises(NotFoundError):
-            service.deprecate_zone(uuid.uuid4(), role_name=ADMIN)
+            service.deactivate_zone(uuid.uuid4(), role_name=ADMIN)
+
+
+class TestReactivateZone:
+    def test_sets_is_active_true(self):
+        zone = _make_zone(is_active=False)
+        repo = _make_repo()
+        repo.get_by_id.return_value = zone
+        service = ZoneAdminService(repository=repo)
+
+        service.reactivate_zone(zone.id, role_name=ADMIN)
+
+        assert zone.is_active is True
+        repo.rebuild_all_closure.assert_not_called()
+
+    def test_rejects_nonexistent_zone(self):
+        repo = _make_repo()
+        repo.get_by_id.return_value = None
+        service = ZoneAdminService(repository=repo)
+
+        with pytest.raises(NotFoundError):
+            service.reactivate_zone(uuid.uuid4(), role_name=ADMIN)
+
+    @pytest.mark.parametrize("role", NON_ADMIN_ROLES)
+    def test_rejects_non_admin(self, role):
+        repo = _make_repo()
+        service = ZoneAdminService(repository=repo)
+
+        with pytest.raises(AuthorizationError):
+            service.reactivate_zone(uuid.uuid4(), role_name=role)
 
 
 class TestBlastRadius:

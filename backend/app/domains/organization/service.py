@@ -129,7 +129,7 @@ class UserService:
         # Deliberate: does NOT delete the row, does NOT touch manager_id
         # references from their reports, owner_id on their opportunities, or
         # created_by on their activities -- grandfathered exactly like
-        # Zone.deprecate_zone. Only blocks new logins going forward
+        # Zone.deactivate_zone. Only blocks new logins going forward
         # (api/dependencies.py's get_current_user already rejects
         # is_active=False) and drops out of the three assignment pickers
         # (UserRepository.list_active's default include_inactive=False).

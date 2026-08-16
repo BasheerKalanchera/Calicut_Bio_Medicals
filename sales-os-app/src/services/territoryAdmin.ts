@@ -16,8 +16,13 @@ export async function updateZone(zoneId: string, data: ZoneUpdate): Promise<Zone
   return response.data.data;
 }
 
-export async function deprecateZone(zoneId: string): Promise<ZoneTreeNode> {
-  const response = await api.post(`/admin/zones/${zoneId}/deprecate`);
+export async function deactivateZone(zoneId: string): Promise<ZoneTreeNode> {
+  const response = await api.post(`/admin/zones/${zoneId}/deactivate`);
+  return response.data.data;
+}
+
+export async function reactivateZone(zoneId: string): Promise<ZoneTreeNode> {
+  const response = await api.post(`/admin/zones/${zoneId}/reactivate`);
   return response.data.data;
 }
 

@@ -29,11 +29,11 @@ class ZoneAdminService:
         parent = self.repository.get_by_id(parent_zone_id)
         if parent is None:
             raise NotFoundError(f"Zone {parent_zone_id} not found")
-        # A deprecated zone can't gain new structure underneath it -- matches
-        # deprecate_zone's own "blocks new assignments" behavior, applied to
+        # A deactivated zone can't gain new structure underneath it -- matches
+        # deactivate_zone's own "blocks new assignments" behavior, applied to
         # new child territories the same way it applies to new user_zone rows.
         if not parent.is_active:
-            raise BusinessRuleViolation(f"Zone {parent_zone_id} is deprecated and cannot be used as a parent")
+            raise BusinessRuleViolation(f"Zone {parent_zone_id} is deactivated and cannot be used as a parent")
 
     def get_tree(self, *, role_name: str) -> list[Zone]:
         self._require_admin(role_name)
@@ -94,7 +94,7 @@ class ZoneAdminService:
             self.repository.rebuild_all_closure()
         return zone
 
-    def deprecate_zone(self, zone_id: uuid.UUID, *, role_name: str) -> Zone:
+    def deactivate_zone(self, zone_id: uuid.UUID, *, role_name: str) -> Zone:
         self._require_admin(role_name)
         zone = self.repository.get_by_id(zone_id)
         if zone is None:
@@ -106,8 +106,16 @@ class ZoneAdminService:
         # grandfathering exactly (existing stays, only new is gated). Only
         # NEW assignments are blocked: the zone picker (frontend, later
         # phase) filters is_active=true, and _validate_parent above rejects
-        # a deprecated zone as a new parent for create/move.
+        # a deactivated zone as a new parent for create/move.
         zone.is_active = False
+        return self.repository.update(zone)
+
+    def reactivate_zone(self, zone_id: uuid.UUID, *, role_name: str) -> Zone:
+        self._require_admin(role_name)
+        zone = self.repository.get_by_id(zone_id)
+        if zone is None:
+            raise NotFoundError(f"Zone {zone_id} not found")
+        zone.is_active = True
         return self.repository.update(zone)
 
     def blast_radius(self, zone_id: uuid.UUID, *, role_name: str) -> tuple[int, int]:

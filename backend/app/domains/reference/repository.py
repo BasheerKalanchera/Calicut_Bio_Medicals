@@ -121,7 +121,7 @@ class ZoneRepository(BaseRepository[Zone]):
         full delete + single-statement recursive-CTE rebuild on every
         edit is cheap enough that there's no reason to accept an
         incremental algorithm's risk for a performance gain nobody needs.
-        Called after every create/rename/move/deprecate, and directly
+        Called after every create/rename/move/deactivate, and directly
         exposed as the Admin screen's manual "rebuild everything" safety
         net -- same method, not a second code path to keep in sync.
 
@@ -154,7 +154,7 @@ class ZoneRepository(BaseRepository[Zone]):
     def blast_radius(self, zone_id: uuid.UUID) -> tuple[int, int]:
         """(account_count, user_count) currently assigned somewhere in this
         zone's own subtree (itself + every descendant, via zone_closure) --
-        backs the Admin screen's pre-move/pre-deprecate confirmation."""
+        backs the Admin screen's pre-move/pre-deactivate confirmation."""
         descendant_ids = select(ZoneClosure.descendant_zone_id).where(
             ZoneClosure.ancestor_zone_id == zone_id
         )

@@ -75,13 +75,23 @@ def update_zone(
     return APIResponse(data=_build_zone_tree_node(zone))
 
 
-@router.post("/admin/zones/{zone_id}/deprecate")
-def deprecate_zone(
+@router.post("/admin/zones/{zone_id}/deactivate")
+def deactivate_zone(
     zone_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: ZoneAdminService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[ZoneTreeNode]:
-    zone = service.deprecate_zone(zone_id, role_name=current_user.role.role_name)
+    zone = service.deactivate_zone(zone_id, role_name=current_user.role.role_name)
+    return APIResponse(data=_build_zone_tree_node(zone))
+
+
+@router.post("/admin/zones/{zone_id}/reactivate")
+def reactivate_zone(
+    zone_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ZoneAdminService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[ZoneTreeNode]:
+    zone = service.reactivate_zone(zone_id, role_name=current_user.role.role_name)
     return APIResponse(data=_build_zone_tree_node(zone))
 
 

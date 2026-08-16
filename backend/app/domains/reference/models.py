@@ -77,7 +77,7 @@ class ZoneClosure(Base):
     self-row per zone (a zone is its own ancestor/descendant at distance
     zero). Purely derived/computed -- no audit columns, not directly
     user-editable. Rebuilt in full on every zone create/rename/move/
-    deprecate (reference/repository.py's rebuild_all_closure()) rather than
+    deactivate (reference/repository.py's rebuild_all_closure()) rather than
     incrementally patched -- see that method's own docstring for why.
     """
 

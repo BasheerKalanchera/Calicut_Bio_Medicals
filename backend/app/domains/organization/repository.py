@@ -60,7 +60,7 @@ class UserRepository(BaseRepository[UserProfile]):
         include_inactive: bool = False,
     ) -> tuple[list[UserProfile], int]:
         # include_inactive is for User Directory's own listing only (grayed-
-        # out, findable, reversible -- same "visible but deprecated" pattern
+        # out, findable, reversible -- same "visible but deactivated" pattern
         # as Territory Map's zones). The three picker scopes below (all/sbu/
         # scoped) always call this with include_inactive=False -- you never
         # want to assign work to a deactivated person.

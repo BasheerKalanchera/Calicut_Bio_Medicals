@@ -20,7 +20,8 @@ import {
   getZoneTree,
   createZone,
   updateZone,
-  deprecateZone,
+  deactivateZone,
+  reactivateZone,
   getBlastRadius,
   rebuildClosure,
   checkZoneName,
@@ -40,9 +41,9 @@ export default function TerritoryAdminScreen() {
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [showCoverage, setShowCoverage] = useState(false);
-  const [dialogMode, setDialogMode] = useState<"create" | "edit" | "deprecate" | null>(null);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit" | "deactivate" | null>(null);
   const [editingZoneId, setEditingZoneId] = useState<string | null>(null);
-  const [deprecatingZone, setDeprecatingZone] = useState<ZoneTreeNode | null>(null);
+  const [deactivatingZone, setDeactivatingZone] = useState<ZoneTreeNode | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [parentZone, setParentZone] = useState<ZoneSearchResult | null>(null);
   const [isTopLevel, setIsTopLevel] = useState(false);
@@ -98,10 +99,10 @@ export default function TerritoryAdminScreen() {
     setDialogMode("edit");
   };
 
-  const openDeprecate = async (zone: ZoneTreeNode) => {
-    setDeprecatingZone(zone);
+  const openDeactivate = async (zone: ZoneTreeNode) => {
+    setDeactivatingZone(zone);
     setBlastRadius(null);
-    setDialogMode("deprecate");
+    setDialogMode("deactivate");
     const result = await getBlastRadius(zone.id);
     setBlastRadius(result);
   };
@@ -109,7 +110,7 @@ export default function TerritoryAdminScreen() {
   const closeDialog = () => {
     setDialogMode(null);
     setEditingZoneId(null);
-    setDeprecatingZone(null);
+    setDeactivatingZone(null);
     setParentZone(null);
   };
 
@@ -141,9 +142,14 @@ export default function TerritoryAdminScreen() {
     invalidateTree();
   };
 
-  const handleDeprecate = async () => {
-    if (!deprecatingZone) return;
-    await deprecateZone(deprecatingZone.id);
+  const handleDeactivate = async () => {
+    if (!deactivatingZone) return;
+    await deactivateZone(deactivatingZone.id);
+    invalidateTree();
+  };
+
+  const handleReactivate = async (zone: ZoneTreeNode) => {
+    await reactivateZone(zone.id);
     invalidateTree();
   };
 
@@ -167,20 +173,24 @@ export default function TerritoryAdminScreen() {
             pl: depth * 3,
             borderBottom: "1px solid",
             borderColor: "divider",
-            opacity: node.is_active === false ? 0.5 : 1,
           }}
         >
-          <IconButton
-            size="small"
-            onClick={() => toggleExpand(node.id)}
-            disabled={!hasChildren}
-            sx={{ visibility: hasChildren ? "visible" : "hidden" }}
-          >
-            <Box component="span" sx={{ fontSize: "0.75rem" }}>{isExpanded ? "▼" : "▶"}</Box>
-          </IconButton>
-          <Typography sx={{ flex: 1, fontWeight: 600 }}>{node.name}</Typography>
-          {node.zone_level && <Chip label={node.zone_level} size="small" sx={{ mr: 1 }} />}
-          {node.is_active === false && <Chip label="Deprecated" size="small" sx={{ mr: 1 }} />}
+          {/* Opacity scoped to the info side only -- a child's own opacity
+              can't undo a parent's, so the action buttons have to live
+              outside this dimmed Box to stay fully visible. */}
+          <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, opacity: node.is_active === false ? 0.5 : 1 }}>
+            <IconButton
+              size="small"
+              onClick={() => toggleExpand(node.id)}
+              disabled={!hasChildren}
+              sx={{ visibility: hasChildren ? "visible" : "hidden" }}
+            >
+              <Box component="span" sx={{ fontSize: "0.75rem" }}>{isExpanded ? "▼" : "▶"}</Box>
+            </IconButton>
+            <Typography sx={{ flex: 1, fontWeight: 600 }}>{node.name}</Typography>
+            {node.zone_level && <Chip label={node.zone_level} size="small" sx={{ mr: 1 }} />}
+            {node.is_active === false && <Chip label="Inactive" size="small" sx={{ mr: 1 }} />}
+          </Box>
           <IconButton size="small" onClick={() => openCreate(node)} title="Add child zone">
             <Box component="span">➕</Box>
           </IconButton>
@@ -189,11 +199,11 @@ export default function TerritoryAdminScreen() {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => openDeprecate(node)}
-            disabled={node.is_active === false}
-            title="Deprecate zone"
+            onClick={() => (node.is_active === false ? handleReactivate(node) : openDeactivate(node))}
+            title={node.is_active === false ? "Reactivate zone" : "Deactivate zone"}
+            sx={{ color: "text.primary" }}
           >
-            <Box component="span">🚫</Box>
+            <Box component="span">{node.is_active === false ? "↩️" : "🚫"}</Box>
           </IconButton>
         </Box>
         {showCoverage && node.assignees.length > 0 && (
@@ -305,11 +315,11 @@ export default function TerritoryAdminScreen() {
       </FormModal>
 
       <FormModal
-        isOpen={dialogMode === "deprecate"}
+        isOpen={dialogMode === "deactivate"}
         onClose={closeDialog}
-        title={`Deprecate "${deprecatingZone?.name ?? ""}"?`}
-        onSubmit={handleDeprecate}
-        submitLabel="Deprecate"
+        title={`Deactivate "${deactivatingZone?.name ?? ""}"?`}
+        onSubmit={handleDeactivate}
+        submitLabel="Deactivate"
       >
         {blastRadius === null ? (
           <Typography color="text.secondary">Checking current assignments…</Typography>
@@ -321,8 +331,8 @@ export default function TerritoryAdminScreen() {
               this zone (including its sub-zones).
             </Typography>
             <Alert severity="info">
-              They'll keep working exactly as before — deprecating only stops this zone from being picked for{" "}
-              <strong>new</strong> assignments going forward. This cannot be undone from here.
+              They'll keep working exactly as before — deactivating only stops this zone from being picked for{" "}
+              <strong>new</strong> assignments going forward.
             </Alert>
           </>
         )}

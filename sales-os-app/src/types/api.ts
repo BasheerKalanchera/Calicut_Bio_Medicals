@@ -840,7 +840,7 @@ export interface paths {
         patch: operations["update_zone_api_v1_admin_zones__zone_id__patch"];
         trace?: never;
     };
-    "/api/v1/admin/zones/{zone_id}/deprecate": {
+    "/api/v1/admin/zones/{zone_id}/deactivate": {
         parameters: {
             query?: never;
             header?: never;
@@ -849,8 +849,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Deprecate Zone */
-        post: operations["deprecate_zone_api_v1_admin_zones__zone_id__deprecate_post"];
+        /** Deactivate Zone */
+        post: operations["deactivate_zone_api_v1_admin_zones__zone_id__deactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/zones/{zone_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reactivate Zone */
+        post: operations["reactivate_zone_api_v1_admin_zones__zone_id__reactivate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5627,7 +5644,40 @@ export interface operations {
             };
         };
     };
-    deprecate_zone_api_v1_admin_zones__zone_id__deprecate_post: {
+    deactivate_zone_api_v1_admin_zones__zone_id__deactivate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                zone_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ZoneTreeNode_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reactivate_zone_api_v1_admin_zones__zone_id__reactivate_post: {
         parameters: {
             query?: never;
             header?: {
