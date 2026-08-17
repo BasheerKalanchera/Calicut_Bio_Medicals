@@ -135,7 +135,11 @@ export default function UserDirectoryScreen() {
       role_id: form.role_id,
       zone_id: form.zone_id || undefined,
       zone_ids: combinedZoneIds(),
-      manager_id: form.manager_id || undefined,
+      // null, not undefined -- an omitted key means "leave unchanged" under
+      // the backend's partial-update semantics, so clearing the Manager
+      // field (here or via the SBU-mismatch auto-clear above) would
+      // otherwise silently no-op and leave the stale manager_id in place.
+      manager_id: form.manager_id || null,
     });
     invalidateUsers();
   };
@@ -282,7 +286,22 @@ export default function UserDirectoryScreen() {
             select
             label="SBU *"
             value={form.sbu_id}
-            onChange={(e) => setForm({ ...form, sbu_id: e.target.value })}
+            onChange={(e) => {
+              const sbuId = e.target.value;
+              const currentManager = users.find((u) => u.id === form.manager_id);
+              // The edit form always resends manager_id on save, even
+              // untouched -- if the SBU change leaves a normal (non-Admin/GM)
+              // manager mismatched, resending it would silently trip the
+              // backend's same-SBU check on a field the admin never meant to
+              // touch. Clear it here instead, visibly, forcing an explicit
+              // re-pick -- Admin/GM managers are exempt, same as the backend.
+              const managerNowInvalid =
+                currentManager &&
+                currentManager.role_name !== "Admin" &&
+                currentManager.role_name !== "General Manager" &&
+                currentManager.sbu_id !== sbuId;
+              setForm({ ...form, sbu_id: sbuId, manager_id: managerNowInvalid ? "" : form.manager_id });
+            }}
             fullWidth
             size="small"
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
