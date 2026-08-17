@@ -47,5 +47,6 @@ def warm_pool() -> None:
 
 def set_rls_context(db: Session, user: UserProfile) -> None:
     db.execute(text("SET LOCAL app.current_user_id = :uid"), {"uid": str(user.id)})
-    db.execute(text("SET LOCAL app.current_sbu_id = :sid"), {"sid": str(user.sbu_id)})
+    sbu_id_str = str(user.sbu_id) if user.sbu_id is not None else ""
+    db.execute(text("SET LOCAL app.current_sbu_id = :sid"), {"sid": sbu_id_str})
     db.execute(text("SET LOCAL app.current_role_id = :rid"), {"rid": str(user.role_id)})

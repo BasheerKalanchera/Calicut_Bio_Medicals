@@ -156,6 +156,12 @@ class UserRepository(BaseRepository[UserProfile]):
 
         return self.db.get(Role, role_id) is not None
 
+    def get_role_name(self, role_id: uuid.UUID) -> str | None:
+        from app.domains.reference.models import Role
+
+        role = self.db.get(Role, role_id)
+        return role.role_name if role else None
+
     def zone_exists(self, zone_id: uuid.UUID) -> bool:
         from app.domains.reference.models import Zone
 

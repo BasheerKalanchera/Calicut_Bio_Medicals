@@ -24,7 +24,7 @@ class UserMeResponse(BaseModel):
     display_name: str
     is_active: bool | None
     role_name: str
-    sbu: SBUNested
+    sbu: SBUNested | None
     zone: ZoneNested | None
 
 
@@ -34,7 +34,7 @@ class UserListResponse(BaseModel):
     id: uuid.UUID
     display_name: str
     is_active: bool | None
-    sbu_id: uuid.UUID
+    sbu_id: uuid.UUID | None
     zone_id: uuid.UUID | None
     zone_ids: list[uuid.UUID]
     role_id: uuid.UUID
@@ -54,7 +54,7 @@ class UserBlastRadius(BaseModel):
 class UserCreate(BaseModel):
     id: uuid.UUID
     display_name: str
-    sbu_id: uuid.UUID
+    sbu_id: uuid.UUID | None = None
     role_id: uuid.UUID
     zone_id: uuid.UUID | None = None
     zone_ids: list[uuid.UUID] = []

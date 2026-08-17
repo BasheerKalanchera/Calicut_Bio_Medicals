@@ -4,7 +4,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+)
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import UserRepository
 from app.domains.organization.schemas import UserCreate, UserUpdate
@@ -15,6 +21,11 @@ def _make_repo(**overrides) -> MagicMock:
     repo = MagicMock(spec=UserRepository)
     repo.sbu_exists.return_value = True
     repo.role_exists.return_value = True
+    # Default resolves to an ordinary (non-Admin/GM) role, matching most
+    # tests' implicit assumption that the new user requires a real SBU --
+    # override explicitly (get_role_name=MagicMock(...)) for Admin/GM-target
+    # or role-missing scenarios.
+    repo.get_role_name.return_value = "Sales Staff"
     repo.zone_exists.return_value = True
     for k, v in overrides.items():
         setattr(repo, k, v)
@@ -118,12 +129,37 @@ class TestCreateUser:
         repo.create.assert_not_called()
 
     def test_raises_not_found_if_role_missing(self):
-        repo = _make_repo(role_exists=MagicMock(return_value=False))
+        repo = _make_repo(get_role_name=MagicMock(return_value=None))
         repo.get_by_id.return_value = None
 
         service = UserService(repository=repo)
         with pytest.raises(NotFoundError, match="Role"):
             service.create_user(self._data(), role_name="Admin")
+
+        repo.create.assert_not_called()
+
+    @pytest.mark.parametrize("agnostic_role", ["General Manager", "Admin"])
+    def test_admin_or_gm_can_be_created_without_sbu(self, agnostic_role):
+        new_user = _make_user(sbu_id=None)
+        repo = _make_repo(get_role_name=MagicMock(return_value=agnostic_role))
+        repo.get_by_id.return_value = None
+        repo.create.return_value = new_user
+
+        service = UserService(repository=repo)
+        data = self._data(sbu_id=None)
+        result = service.create_user(data, role_name="Admin")
+
+        assert result is new_user
+        repo.create.assert_called_once()
+
+    def test_raises_business_rule_violation_if_non_agnostic_role_created_without_sbu(self):
+        repo = _make_repo(get_role_name=MagicMock(return_value="Sales Staff"))
+        repo.get_by_id.return_value = None
+
+        service = UserService(repository=repo)
+        data = self._data(sbu_id=None)
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.create_user(data, role_name="Admin")
 
         repo.create.assert_not_called()
 
@@ -163,6 +199,26 @@ class TestCreateUser:
 
         service = UserService(repository=repo)
         data = self._data(manager_id=manager.id, sbu_id=uuid.uuid4())
+        result = service.create_user(data, role_name="Admin")
+
+        assert result is new_user
+        repo.create.assert_called_once()
+
+    @pytest.mark.parametrize("agnostic_role", ["General Manager", "Admin"])
+    def test_allows_admin_or_gm_new_user_with_non_agnostic_manager(self, agnostic_role):
+        # Symmetric to test_allows_admin_or_gm_manager_in_different_sbu:
+        # here the *new user* being created is Admin/GM (sbu_id=None), and
+        # the manager is an ordinary, SBU-scoped role -- the same-SBU
+        # invariant shouldn't apply from this side either.
+        manager = _make_user(sbu_id=uuid.uuid4())
+        manager.role = SimpleNamespace(role_name="Area Manager")
+        new_user = _make_user(sbu_id=None)
+        repo = _make_repo(get_role_name=MagicMock(return_value=agnostic_role))
+        repo.get_by_id.side_effect = lambda uid: manager if uid == manager.id else None
+        repo.create.return_value = new_user
+
+        service = UserService(repository=repo)
+        data = self._data(manager_id=manager.id, sbu_id=None)
         result = service.create_user(data, role_name="Admin")
 
         assert result is new_user

@@ -21,7 +21,7 @@ class UserProfile(AuditMixin, Base):
     __tablename__ = "user_profile"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
-    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
+    sbu_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=True)
     zone_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("zone.id"), nullable=True)
     role_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("role.id"), nullable=False)
     manager_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -30,7 +30,7 @@ class UserProfile(AuditMixin, Base):
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 
-    sbu: Mapped[SBU] = relationship(back_populates="user_profiles", lazy="joined")
+    sbu: Mapped[SBU | None] = relationship(back_populates="user_profiles", lazy="joined")
     zone: Mapped[Zone | None] = relationship(back_populates="user_profiles", lazy="joined")
     role: Mapped[Role] = relationship(back_populates="user_profiles", lazy="joined")
 

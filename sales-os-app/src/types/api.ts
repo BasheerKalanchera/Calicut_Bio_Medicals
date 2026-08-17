@@ -2908,11 +2908,8 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
-            /**
-             * Sbu Id
-             * Format: uuid
-             */
-            sbu_id: string;
+            /** Sbu Id */
+            sbu_id?: string | null;
             /**
              * Role Id
              * Format: uuid
@@ -2939,11 +2936,8 @@ export interface components {
             display_name: string;
             /** Is Active */
             is_active: boolean | null;
-            /**
-             * Sbu Id
-             * Format: uuid
-             */
-            sbu_id: string;
+            /** Sbu Id */
+            sbu_id: string | null;
             /** Zone Id */
             zone_id: string | null;
             /** Zone Ids */
@@ -2971,7 +2965,7 @@ export interface components {
             is_active: boolean | null;
             /** Role Name */
             role_name: string;
-            sbu: components["schemas"]["SBUNested"];
+            sbu: components["schemas"]["SBUNested"] | null;
             zone: components["schemas"]["ZoneNested"] | null;
         };
         /** UserNested */

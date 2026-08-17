@@ -50,8 +50,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
 
 ## Deferred / undecided items
 
-- **Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
-  Admin/General Manager.** Surfaced 2026-07-28 while fixing the `/users`
+- ~~**Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
+  Admin/General Manager.**~~ — **Superseded 2026-08-16 by
+  `docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md`**, a fresh full
+  investigation (every RLS policy + every Python `.sbu_id` read
+  re-checked against current code, not this stale 2026-07-28 scope).
+  Headline findings there: RLS is already completely safe (no change
+  needed), but `UserMeResponse.sbu` being non-nullable would lock Admin/GM
+  out of login entirely if missed — a real gap this original entry never
+  caught. Follow that doc, not the notes below (kept for history only).
+
+  Surfaced 2026-07-28 while fixing the `/users`
   endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —
   Admin/GM are an unrestricted overlay tier, not members of any SBU/zone, but
   `sbu_id` is `NOT NULL` today so their rows carry a meaningless placeholder

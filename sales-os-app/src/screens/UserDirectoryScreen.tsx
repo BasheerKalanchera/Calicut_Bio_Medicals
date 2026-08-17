@@ -64,6 +64,14 @@ export default function UserDirectoryScreen() {
     queryFn: () => listZones() as Promise<MasterDataOption[]>,
   });
 
+  // Admin/General Manager are an SBU-agnostic overlay tier -- backend mirror
+  // in organization/service.py's create_user (BR-OP-12's user-creation
+  // equivalent). Every other role still requires an SBU, same as always.
+  const isSbuAgnosticRole = (roleId: string) => {
+    const roleName = roles.find((r) => r.id === roleId)?.role_name;
+    return roleName === "Admin" || roleName === "General Manager";
+  };
+
   const openCreate = () => {
     setForm(EMPTY_FORM);
     setPrimaryZone(null);
@@ -76,7 +84,7 @@ export default function UserDirectoryScreen() {
     setForm({
       id: u.id,
       display_name: u.display_name,
-      sbu_id: u.sbu_id,
+      sbu_id: u.sbu_id || "",
       role_id: u.role_id,
       zone_id: u.zone_id || "",
       manager_id: u.manager_id || "",
@@ -102,12 +110,12 @@ export default function UserDirectoryScreen() {
   const handleCreate = async () => {
     if (!form.id.trim()) throw new Error("Supabase user UUID is required");
     if (!form.display_name.trim()) throw new Error("Display name is required");
-    if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.role_id) throw new Error("Role is required");
+    if (!form.sbu_id && !isSbuAgnosticRole(form.role_id)) throw new Error("SBU is required");
     await createUser({
       id: form.id.trim(),
       display_name: form.display_name.trim(),
-      sbu_id: form.sbu_id,
+      sbu_id: form.sbu_id || undefined,
       role_id: form.role_id,
       zone_id: form.zone_id || undefined,
       zone_ids: combinedZoneIds(),
@@ -119,11 +127,11 @@ export default function UserDirectoryScreen() {
   const handleUpdate = async () => {
     if (!editingUserId) return;
     if (!form.display_name.trim()) throw new Error("Display name is required");
-    if (!form.sbu_id) throw new Error("SBU is required");
     if (!form.role_id) throw new Error("Role is required");
+    if (!form.sbu_id && !isSbuAgnosticRole(form.role_id)) throw new Error("SBU is required");
     await updateUser(editingUserId, {
       display_name: form.display_name.trim(),
-      sbu_id: form.sbu_id,
+      sbu_id: form.sbu_id || undefined,
       role_id: form.role_id,
       zone_id: form.zone_id || undefined,
       zone_ids: combinedZoneIds(),
@@ -253,21 +261,15 @@ export default function UserDirectoryScreen() {
         />
         <TextField
           select
-          label="SBU *"
-          value={form.sbu_id}
-          onChange={(e) => setForm({ ...form, sbu_id: e.target.value })}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select SBU</MenuItem>
-          {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-        </TextField>
-        <TextField
-          select
           label="Role *"
           value={form.role_id}
-          onChange={(e) => setForm({ ...form, role_id: e.target.value })}
+          onChange={(e) => {
+            const roleId = e.target.value;
+            // Admin/General Manager have no meaningful SBU -- switching to
+            // either role clears whatever was selected rather than leaving a
+            // stale, now-hidden value behind.
+            setForm({ ...form, role_id: roleId, sbu_id: isSbuAgnosticRole(roleId) ? "" : form.sbu_id });
+          }}
           fullWidth
           size="small"
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
@@ -275,6 +277,20 @@ export default function UserDirectoryScreen() {
           <MenuItem value="">Select role</MenuItem>
           {roles.map((r) => <MenuItem key={r.id} value={r.id}>{r.role_name}</MenuItem>)}
         </TextField>
+        {!isSbuAgnosticRole(form.role_id) && (
+          <TextField
+            select
+            label="SBU *"
+            value={form.sbu_id}
+            onChange={(e) => setForm({ ...form, sbu_id: e.target.value })}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select SBU</MenuItem>
+            {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </TextField>
+        )}
         <ZonePicker
           label="Zone"
           value={primaryZone}

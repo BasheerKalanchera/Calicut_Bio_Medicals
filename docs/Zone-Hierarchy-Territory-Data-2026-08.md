@@ -127,10 +127,8 @@ both North Kerala and Karnataka Coastal together — worth a direct
 confirmation now that they're known to be different people, rather than
 assuming which of the two this section's data actually came from.
 
-**Irfan** (whole districts, presumed reporting to Fazal — confirmed
-elsewhere that Fazal is North Kerala's Area Manager, but Irfan's own direct
-reporting line to him specifically isn't explicitly stated, unlike
-Vivek/Adarsh; see open question below):
+**Irfan** (whole districts, reports to Fazal — confirmed 2026-08-16, see
+open question 2's resolution below):
 - Kasaragod
 - Kannur
 - Kozhikode
@@ -160,14 +158,25 @@ there's no longer a shared district here.
 **Open questions on this list (renumbered after the update above):**
 1. ~~Kozhikode overlap between Irfan and "Staff New"~~ — **resolved**,
    see the update above.
-2. **Do Irfan and "Staff New" report to Fazal?** Given as North Kerala
-   assignments under his list, presumed yes — but not stated explicitly
-   the way Vivek's reporting to Adarsh was confirmed. Worth getting the
-   same explicit confirmation.
-3. **"Staff New"** — is this a specific new hire whose name just wasn't
-   given yet, or literally an unfilled/open position with no person to
-   assign? Affects whether this territory should show as "assigned,
-   name pending" or "vacant" in the system.
+2. ~~Do Irfan and "Staff New" report to Fazal?~~ — **partially resolved
+   2026-08-16 (Basheer): Irfan reports to Fazal, confirmed.** "Staff
+   New"'s reporting line is different, not Fazal — see the Naeem note
+   below and open question 3's resolution.
+3. ~~"Staff New" — specific new hire or vacant position?~~ — **resolved
+   2026-08-16 (Basheer): it's a specific new hire Cabio is actively
+   recruiting for, not a vacant/unassigned position — name not yet
+   confirmed.** Should show as "assigned, name pending" once the system
+   models that state, not "vacant." **Also resolved: "Naeem," the
+   consolidated table's Manager for the Malappuram/Wayanad Imaging rows,
+   is a real, confirmed new manager** — not the data-entry anomaly this
+   doc originally flagged it as, since every other North Kerala Imaging
+   row lists Fazal. "Staff New" reports to **Naeem**, not Fazal — Naeem
+   is being onboarded as a distinct manager over this specific
+   Malappuram/Wayanad Imaging territory, separate from Fazal's chain.
+   This sharpens open question 6 below: the Imaging/Critical Care split
+   isn't the only fragmentation of Fazal's original single-manager North
+   Kerala Imaging territory — Naeem is a second, narrower one within
+   Imaging itself.
 4. This list (Kasaragod, Kannur, Kozhikode, Malappuram, Wayanad) is North
    Kerala's first district breakdown gathered so far — worth confirming
    with Fazal/Haroon that it's the *complete* list of North Kerala's
@@ -178,13 +187,27 @@ there's no longer a shared district here.
    so this Imaging-side list plausibly came from Fahad rather than
    Fazal. Not independently confirmed which of the two actually relayed
    it, but Fahad having a direct North Kerala role is no longer in doubt.
-6. **New, 2026-08-12: is Fazal still the overall North Kerala Area
-   Manager across both SBUs, or does the Imaging/Critical Care split run
-   all the way to the top** (Fahad reporting for Imaging, Nishad for
-   Critical Care, with no single cross-SBU North Kerala manager above
-   both)? Affects whether "Fazal" belongs in the Manager column for
-   these Imaging rows at all, or whether it should read "Fahad" once
-   that's confirmed.
+6. ~~Is Fazal still the overall North Kerala Area Manager across both
+   SBUs, or does the Imaging/Critical Care split run all the way to the
+   top?~~ — **resolved 2026-08-16 (Basheer, confirmed with Haroon): no
+   single cross-SBU/cross-territory North Kerala manager exists.** Fazal,
+   Naeem, and Nishad each report directly to Haroon as independent peers
+   — not a hierarchy with Fazal at the top of North Kerala. See the
+   correction immediately below for what this means for Fazal's own
+   charge specifically.
+
+**Correction, 2026-08-16 (Basheer, confirmed with Haroon): Fazal's North
+Kerala Imaging charge is narrower than originally recorded, and North
+Kerala Imaging now has two peer managers, not one.** Malappuram and
+Wayanad are carved out to **Naeem**, a new Imaging Area Manager hired
+specifically for those two districts, reporting directly to **Haroon**
+(not to Fazal). Fazal's own North Kerala Imaging charge narrows to just
+Kasaragod, Kannur, and Kozhikode (Irfan's districts) — his Mangalore/
+Karnataka Coastal charge is unaffected. Live Dev's `user_zone` already
+reflects this (Fazal: Kannur, Kasaragod, Kozhikode, Mangalore — the old
+"North Kerala" zone-level assignment removed to avoid overlapping with
+Naeem's territory). "Staff New," reporting to Naeem, is still an
+unconfirmed future hire — see open question 3's resolution above.
 
 ### Update 2026-08-12 — Critical Care SBU split (Nishad & Adydev)
 
@@ -209,15 +232,19 @@ per SBU, not one:
 - Kannur
 - Kasaragod
 
-**Tentative tree, revised for the SBU split:**
+**Tentative tree, revised for the SBU split — corrected 2026-08-16
+(Basheer, confirmed with Haroon) to show Imaging's own internal
+fragmentation (two peer managers, both reporting to Haroon directly, not
+one flat "Manager: Fahad" block and not Naeem under Fazal):**
 ```
 North Kerala
- ├── Imaging (Manager: Fahad — org position above him TBD, see open Q6)
- │    ├── Kasaragod      (Irfan)
- │    ├── Kannur         (Irfan)
- │    ├── Kozhikode      (Irfan)
- │    ├── Malappuram     ("Staff New")
- │    └── Wayanad        ("Staff New")
+ ├── Imaging
+ │    ├── Manager: Fazal (reports to Haroon) — Kasaragod, Kannur,
+ │    │   Kozhikode (Irfan, confirmed reporting to Fazal 2026-08-16)
+ │    └── Manager: Naeem (reports to Haroon, peer of Fazal, not his
+ │        report) — Malappuram, Wayanad ("Staff New," a specific new
+ │        hire Cabio is actively recruiting for, not yet named or
+ │        confirmed, reports to Naeem)
  └── Critical Care (Manager: Nishad)
       ├── Kozhikode      (Nishad, direct)
       ├── Malappuram     (Nishad, direct)

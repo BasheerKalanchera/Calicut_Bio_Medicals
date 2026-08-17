@@ -1,6 +1,12 @@
 import uuid
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from app.core.exceptions import (
+    AuthorizationError,
+    BusinessRuleViolation,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+)
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import UserRepository
 from app.domains.organization.schemas import UserCreate, UserUpdate
@@ -30,10 +36,20 @@ class UserService:
             raise AuthorizationError("Only General Manager and Admin roles can add users")
         if self.repository.get_by_id(data.id):
             raise ConflictError(f"User {data.id} already exists")
-        if not self.repository.sbu_exists(data.sbu_id):
-            raise NotFoundError(f"SBU {data.sbu_id} not found")
-        if not self.repository.role_exists(data.role_id):
+        new_user_role_name = self.repository.get_role_name(data.role_id)
+        if new_user_role_name is None:
             raise NotFoundError(f"Role {data.role_id} not found")
+        # BR-OP-12's mirror for user creation: Admin/GM have no meaningful "own"
+        # SBU, so they may be created with sbu_id omitted entirely -- every other
+        # role still requires one, same as always.
+        if new_user_role_name in _USER_WRITE_ROLES:
+            if data.sbu_id is not None and not self.repository.sbu_exists(data.sbu_id):
+                raise NotFoundError(f"SBU {data.sbu_id} not found")
+        else:
+            if data.sbu_id is None:
+                raise BusinessRuleViolation("SBU is required for this role")
+            if not self.repository.sbu_exists(data.sbu_id):
+                raise NotFoundError(f"SBU {data.sbu_id} not found")
         if data.zone_id is not None and not self.repository.zone_exists(data.zone_id):
             raise NotFoundError(f"Zone {data.zone_id} not found")
         for zone_id in data.zone_ids:
@@ -49,11 +65,15 @@ class UserService:
             if not manager:
                 raise NotFoundError(f"Manager {data.manager_id} not found")
             # Admin/GM (_USER_WRITE_ROLES) are an SBU-agnostic overlay tier --
-            # their own sbu_id is a real column value today (not yet nullable,
-            # see Backlog.md) but a meaningless placeholder, not real
-            # membership. The same-SBU invariant only makes sense for a
-            # manager who actually belongs to an SBU.
-            if manager.role.role_name not in _USER_WRITE_ROLES and manager.sbu_id != data.sbu_id:
+            # sbu_id is genuinely None for them, not a real membership. The
+            # same-SBU invariant only makes sense when both sides actually
+            # belong to an SBU, so it's skipped if either the manager or the
+            # user being created is Admin/GM.
+            if (
+                manager.role.role_name not in _USER_WRITE_ROLES
+                and new_user_role_name not in _USER_WRITE_ROLES
+                and manager.sbu_id != data.sbu_id
+            ):
                 raise ValidationError("Manager must belong to the same SBU as the user")
         user = UserProfile(
             id=data.id,
