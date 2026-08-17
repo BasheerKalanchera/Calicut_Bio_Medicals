@@ -1250,3 +1250,106 @@ live policy text and the fixture's DB state, nothing had regressed. A
 same-SBU real-data case (Basheer K → Fazal, "Ultrasound m/c" account in
 South Kerala, both Imaging) was identified as the corrected test but not
 yet run before session close.
+
+## 2026-08-17 — Activity Notes multi-line fix; Zone Deactivate/Reactivate; full regression pass
+
+**Activity Notes multi-line entry — shipped, `c9861a0`/`1a3738d`.** Sales
+staff feedback from 2026-08-11 ("notes field is not allowed to go the
+next line") had its root cause found and parked in the backlog at the
+time. Picked up this session: `FormModal.tsx`'s `onKeyDown` guard called
+`e.preventDefault()` on Enter for both `INPUT` and `TEXTAREA` tags — meant
+to stop a plain `<input>` from accidentally submitting the form, but a
+MUI `multiline` `TextField` renders as a `TEXTAREA`, so this also blocked
+it from ever inserting a newline. One-line fix: drop `TEXTAREA` from the
+check (a native `<textarea>`'s Enter never implicitly submits a form, so
+nothing was actually being guarded there). Verified safe for the other
+two `FormModal`-hosted `multiline` fields too (`ProductCatalogScreen.tsx`
+Description, `CloseReminderModal.tsx` "What was done?").
+Follow-on found during manual verification: three read-only *display*
+sites (`ActivityTimeline.tsx`, `DailyActivityReportScreen.tsx`,
+`ReminderRow.tsx`) rendered `notes` in a plain `Box` with no `whiteSpace`
+style, so newlines were saved correctly but collapsed visually — fixed
+with `whiteSpace: "pre-wrap"`. Same root cause, once surfaced, found two
+more instances: buyback item descriptions
+(`OpportunityDetailScreen.tsx`'s Products tab) and product descriptions
+(`ProductCatalogScreen.tsx`'s Product Detail view) — both multiline
+fields wrapped in `FormModal` (so already input-fixed as a side effect of
+the first fix), both missing the same display-side `pre-wrap`. Fixed in a
+second commit (`1a3738d`). Deliberately left untouched:
+`OpportunityItemsList.tsx`'s compact list-row rendering, which is
+intentionally `whiteSpace: "nowrap"` + truncated by design, not a bug.
+
+**Zone Deactivate/Reactivate — shipped, `b0b4109`.** Territory Admin's
+zone lifecycle was one-way (`deprecate_zone` set `is_active = false`, no
+path back through the app) — surfaced concretely when Central Kerala got
+deprecated 2026-08-15 with no in-app way to undo it. Renamed
+"deprecate"→"deactivate" throughout the Zone domain to match User
+Directory's already-shipped Deactivate/Reactivate vocabulary, and added
+the missing `reactivate_zone` service method + endpoint, mirroring
+`UserService.reactivate_user` near-verbatim. No migration —
+`zone.is_active` already existed. Full backend+frontend guard-green
+(pytest 514 passed, ruff clean, `tsc`/`lint`/`build` clean).
+
+**Full regression pass — `docs/Regression-Test-Plan-2026-08.md`, completed
+2026-08-17.** Both pre-listed blockers resolved before starting: Central
+Kerala confirmed `is_active = false` on live Dev (already correct,
+doc was stale); `Test - SBU Manager` reactivated (doubling as A3's
+reactivate-user check). All of Part A (A0–A9) passed, plus B5/B8/B9 and
+both remaining Part C checks — nothing broken. Notable findings, all
+confirmed correct/expected rather than bugs:
+- **A0 (Sales Manager Tier Collapse RLS):** Basheer K → Fazal manager
+  reassignment correctly surfaced Basheer K's South Kerala opportunities
+  on Fazal's Pipeline via the `manager_id` fold — confirming the fold is
+  genuinely zone-unconditional (`owner_id IN (SELECT id FROM user_profile
+  WHERE manager_id = cabio_app_uid())`, no zone clause at all). Basheer K
+  (Admin) never appears in Fazal's Owner-filter dropdown regardless,
+  because `organization/repository.py`'s `not_unrestricted` filter
+  excludes Admin/GM from every scoped picker listing unconditionally —
+  correct, pre-existing, unrelated to the fold.
+- **A1 (Zone Hierarchy RLS):** Arun Adarsh's empty Pipeline (Critical
+  Care, South Kerala + 3 districts) was real data thinness, not a
+  visibility bug — confirmed via direct DB check that all 4 live Critical
+  Care opportunities are owned by Nishad K V in North Kerala, entirely
+  outside Arun's coverage, and his one direct report (Vivek) owns
+  nothing. Shruthi's Pipeline showing a Lost, cross-zone (North Kerala)
+  split with Basheer K alongside her own Bangalore deal doubled as a live
+  confirmation of A7 (split zone-restriction drop) — `cabio_app_has_split`
+  is correctly unconditional on both zone and status (Won/Lost don't hide
+  a deal from a split participant, per ADR-028).
+- **Pipeline's Owner filter vs. RLS visibility:** confirmed these are
+  deliberately different questions — the filter is a literal
+  `Opportunity.owner_id == owner_id` match, while RLS asks "does this
+  person have *any* legitimate reason to see this row." Filtering by
+  Owner = Shruthi correctly excludes the split deal she doesn't own.
+- **Next Actions is personal-scoped, even for Admin:** confirmed via DB
+  that Abdul Latheef P has exactly 1 reminder total (completed, 0
+  pending) — Next Actions never broadens to "everyone's tasks" regardless
+  of role, unlike Accounts/Opportunities visibility.
+- **A2 cleanup:** two orphaned test zones (`Darwad`, `REGRESSION TEST
+  ZONE`) found still `is_active = true` on live Dev with no accounts/
+  users/children referencing them — deleted directly (`zone_closure` rows
+  first, then the `zone` rows, then a full closure rebuild), verified
+  clean and consistent afterward.
+- **Territory Map "Add Zone" perceived slowness:** investigated and
+  confirmed not a backend/algorithmic issue — the closure-rebuild query
+  itself runs in ~56ms against the current 43-zone tree; the felt latency
+  is several sequential round-trips per request (auth, parent lookup,
+  duplicate-name check, insert, closure delete+rebuild) plus a second
+  full tree refetch, each paying round-trip cost to the remote Supabase
+  pooler. Logged as a real but low-priority backlog item (Admin-only
+  tooling, not demo-facing), not fixed this session.
+- One originally-listed Part C check ("Catalog gate is the only role
+  restriction anywhere") was dropped as stale during the pass — written
+  before RLS/tier-visibility existed, directly contradicted by the entire
+  Part A surface this doc exists to test.
+
+Landed independently the same day, outside this regression-testing
+thread entirely (`91a0906`): Admin/GM made SBU- and zone-agnostic
+(migration `0022`) — see `docs/Admin-GM-SBU-Agnostic-Implementation-
+Plan.md` for full detail; noted here only because it changed
+`organization/service.py`/`repository.py` files this session's earlier
+work also touched. One loose end from that work: `Physical-Schema.sql`
+regen still pending, blocked on Docker Desktop's daemon not running
+locally.
+
+Demo moved from 2026-08-17 evening to 2026-08-18 evening.

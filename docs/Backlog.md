@@ -142,9 +142,24 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   aggregate metric, not a per-person score. Backend `nps_score` is already
   constrained `ge=-100, le=100` — the frontend-only 0–10 clamp idea needs
   revisiting/a decision before any fix is executed, not a ready-to-build task.
-  (2) Opportunity item-picker renders `{p.name}` only; Installed Base dropdowns
+  ~~(2) Opportunity item-picker renders `{p.name}` only; Installed Base dropdowns
   render `{p.name} — {p.model_number}`. One-line fix in `Customer360Screen.tsx`
-  line ~928 (still present as of `1bc4678`).
+  line ~928 (still present as of `1bc4678`).~~ — **INVESTIGATED AND DROPPED,
+  2026-08-17: the premise doesn't hold against real data.** Checked both
+  claims directly: no two products in the catalog share a `name` (zero
+  duplicates, confirmed by query), so there's no actual disambiguation gap
+  for a model-number suffix to close; and `name` is already, for ~27 of 29
+  real products, a literal `"{oem_name} {model_number}"` concatenation
+  (e.g. `EDAN` + `SE-1200 Express` = `EDAN SE-1200 Express`), so appending
+  `— {model_number}` would mostly just repeat the model number a second
+  time on the same line. Also confirmed the Installed Base dropdown does
+  **not** currently show the model number either (only the read-only
+  saved-asset summary row does) — the original "Installed Base already
+  does this" half of the claim was itself inaccurate, likely stale since
+  `Customer360Screen.tsx`'s MUI rewrite. One real product (`Siemens USG
+  M/c`, model `P500`) has a name that doesn't surface its model number,
+  but that's a single mislabeled row, not a systemic pattern worth a
+  cross-cutting fix. Not picked up.
 - **`OpportunityDetailScreen.tsx` — convert Products/Splits/Stakeholders inline edit
   forms to `FormModal` (desktop UX fix).** Surfaced during E2E verification 2026-07-06.
   On desktop (1920px) the inline edit mode for Products, Splits, and Stakeholders tabs
@@ -428,20 +443,16 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `49c4c1d`, pushed to `origin/main`. Turned out to need real Storage
   infrastructure, not just a frontend gap as first scoped here — see
   `docs/Opportunity-Document-Upload-Implementation-Plan.md`.
-- **Activity Notes field silently blocks multi-line entry — root cause
-  found, not yet fixed.** Cabio sales staff feedback, 2026-08-11 ("notes
-  field is not allowed to go the next line"). Confirmed root cause:
-  `FormModal.tsx`'s `<form onKeyDown>` handler (lines ~67-74) calls
-  `e.preventDefault()` on `Enter` for **both** `INPUT` and `TEXTAREA` tags —
-  clearly meant to stop a plain `<input>` from accidentally submitting the
-  form on Enter, but a MUI `multiline` `TextField` renders as a `TEXTAREA`
-  under the hood, so this also blocks it from ever inserting a newline.
-  `LogActivityModal.tsx`'s Notes field (`multiline rows={3}`, lines ~262-271)
-  is rendered inside `FormModal` and hits this directly. Likely a one-line
-  fix (drop `TEXTAREA` from the tag check, since native `<textarea>` Enter
-  behavior is what's wanted, unlike `<input>`) — small enough that it may be
-  worth fixing directly rather than staying parked here; flagged to Basheer,
-  his call on timing.
+- ~~**Activity Notes field silently blocks multi-line entry**~~ — **DONE,
+  2026-08-17 (`c9861a0`).** Root cause was exactly as suspected:
+  `FormModal.tsx`'s `<form onKeyDown>` handler blocked Enter on both
+  `INPUT` and `TEXTAREA` tags; dropped `TEXTAREA` from the check. Follow-on
+  found during verification: three read-only display sites (Activity
+  Timeline, Daily Activity Report, a closed reminder's activity) needed
+  `whiteSpace: "pre-wrap"` since newlines were saving correctly but
+  collapsing visually — fixed same commit. Two more instances of the same
+  display gap found and fixed in `1a3738d`: buyback item descriptions and
+  product descriptions.
 - ~~**Pipeline screen zone filter**~~ — **DONE**, confirmed live in
   `OpportunityPipelineScreen.tsx` (`listPipeline({ zone_id: zoneFilter,
   ... })`) — already built and committed; this entry was stale.
@@ -450,23 +461,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   `useState("opportunities")`. Back-navigation return-view state
   (`accountReturnView`, `opportunityReturnView`, etc.) and `accountSubTab`
   are independent `useState`s, confirmed unaffected.
-- **User Directory's Edit form always resends a user's existing `manager_id`,
-  even when untouched — root cause found, not yet fixed.** Surfaced
-  2026-08-12 while diagnosing the Admin/GM manager-SBU validation bug (fixed
-  same day, `aca2e9c`). `UserDirectoryScreen.tsx`'s `openEdit` (~line 60)
-  pre-fills `form.manager_id` from the user's current manager, and
-  `handleUpdate` (~lines 96-103) sends that same value back on *every* save
-  regardless of whether the Manager field was actually touched — not true
-  partial-PATCH semantics. Consequence: the `aca2e9c` fix only exempts the
-  case where the manager is Admin/GM. If a user's manager is a *normal*
-  (non-Admin/GM) person, moving that user to a different SBU still fails
-  with "Manager must belong to the same SBU as the user" — correctly, from
-  the backend's point of view, but confusingly, since the admin never meant
-  to touch the Manager field at all. Fix discussed but deliberately not
-  built this session: when the SBU dropdown changes, clear the Manager
-  field back to "No manager" (visibly, in the form) if the currently-
-  selected manager no longer belongs to the new SBU, forcing an explicit
-  re-pick rather than silently resending a now-invalid value.
+- ~~**User Directory's Edit form always resends a user's existing
+  `manager_id`, even when untouched.**~~ — **DONE, 2026-08-17.** Fixed
+  exactly as discussed when this was surfaced (2026-08-12): the SBU
+  `TextField`'s `onChange` in `UserDirectoryScreen.tsx` now looks up the
+  currently-selected manager in the already-fetched `users` list, and
+  clears `form.manager_id` back to `""` (visibly, in the form) if that
+  manager is a normal (non-Admin/GM) person whose `sbu_id` no longer
+  matches the newly-selected SBU — Admin/GM managers stay exempt, mirroring
+  the backend's own exemption. Forces an explicit re-pick instead of
+  silently resending a now-invalid value. Frontend-only, no backend/
+  migration change; `tsc --noEmit`/`npm run lint` clean.
 - ~~**Run `tsc --noEmit` / `npm run lint` / `ruff check` on the Territory
   Admin session's changes (2026-08-15).**~~ — **DONE 2026-08-15.** All
   four clean: `tsc --noEmit` (whole project, including legacy `.jsx` —

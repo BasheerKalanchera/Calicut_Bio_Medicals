@@ -1,5 +1,20 @@
 # Regression Test Plan — Changes Since July 20, 2026
 
+**Status: COMPLETED 2026-08-17.** Every Part A item (A0–A9), plus B5/B8/B9
+and both Part C cross-cutting checks, passed — nothing broken found.
+`docs/Progress-Archive-2026-08.md`'s 2026-08-17 entry has the full
+narrative (notable clarifications, not bugs: Basheer K's Admin role
+correctly excludes him from scoped picker dropdowns despite the
+`manager_id` visibility fold; Arun Adarsh's empty Pipeline was real data
+thinness, not an RLS gap; Shruthi's cross-zone Lost-status split
+confirmed A7 live). Two orphaned test zones (`Darwad`, `REGRESSION TEST
+ZONE`) found and deleted directly from Dev during the A2 pass — no real
+data attached, closure table rebuilt and verified clean afterward. One
+originally-listed Part C check ("Catalog gate is the only role
+restriction anywhere") was dropped as stale — its premise predates the
+Zone Hierarchy RLS rebuild this very doc exists to test. Demo has since
+moved to 2026-08-18 evening.
+
 **Purpose:** manual regression pass ahead of the Cabio leadership demo
 (tentatively Monday evening, 2026-08-17). Covers everything shipped since
 the last regression pass (`docs/Regression-Test-Plan.md`, July 20
