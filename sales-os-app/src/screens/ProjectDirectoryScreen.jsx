@@ -10,6 +10,7 @@ import { listAllProjects } from "../services/projects";
 import { listAccounts, createProject, updateProject, listOpportunities, updateOpportunity, createOpportunity, listOpportunityItems, addOpportunityItem, deleteOpportunityItem } from "../services/accounts";
 import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listHoldReasons, listLossReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
+import { listSbus } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
@@ -41,6 +42,10 @@ function setCache(key, data) {
 
 function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLogActivityRef, onSelectOpportunity }) {
   const { userProfile } = useAuth();
+  // BR-OP-12: Admin/General Manager have no meaningful "own" SBU -- must
+  // always explicitly choose one when creating an Opportunity. Same check
+  // as Customer360Screen.tsx / QuickLeadModal.tsx.
+  const isSbuOverrideRole = ["Admin", "General Manager"].includes(userProfile?.role_name);
   const [opps, setOpps] = useState([]);
   const [oppsLoading, setOppsLoading] = useState(true);
 
@@ -83,6 +88,8 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
   const [addOppPoNumber, setAddOppPoNumber] = useState("");
   const [addOppItems, setAddOppItems] = useState([]);
   const [showAddOppItemsModal, setShowAddOppItemsModal] = useState(false);
+  const [addOppSbuId, setAddOppSbuId] = useState("");
+  const [sbus, setSbus] = useState([]);
 
   const loadOpps = () => {
     setOppsLoading(true);
@@ -214,19 +221,35 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
     setAddOppStageId(""); setAddOppStatusId(""); setAddOppOwnerId("");
     setAddOppWinProb(""); setAddOppValue(""); setAddOppItems([]);
     setAddOppLeadSourceId(""); setAddOppDemoStart(""); setAddOppDemoEnd("");
-    setAddOppClosureDate(""); setAddOppPoNumber("");
+    setAddOppClosureDate(""); setAddOppPoNumber(""); setAddOppSbuId("");
     setShowAddOpp(true);
     await Promise.all([
       oppStages.length === 0 && listStages().then(setOppStages).catch(() => {}),
       oppStatuses.length === 0 && listStatuses().then(setOppStatuses).catch(() => {}),
       oppUsers.length === 0 && listUsers().then(setOppUsers).catch(() => {}),
-      oppProducts.length === 0 && listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setOppProducts(d.items || [])).catch(() => {}),
+      // Admin/GM have no own SBU to filter products by until they pick an
+      // override below -- the effect keyed on addOppSbuId (below) handles
+      // their case; everyone else's product list only ever needs fetching once.
+      !isSbuOverrideRole && oppProducts.length === 0 &&
+        listProducts({ page_size: 100, sbu_id: userProfile?.sbu?.id }).then((d) => setOppProducts(d.items || [])).catch(() => {}),
       leadSources.length === 0 && listLeadSources().then(setLeadSources).catch(() => {}),
+      isSbuOverrideRole && sbus.length === 0 && listSbus().then(setSbus).catch(() => {}),
     ]);
   }
 
+  // BR-OP-11: item choices must match the Opportunity's actual SBU, not the
+  // caller's own -- re-fetch the product list whenever an Admin/GM changes
+  // their SBU override, same reasoning as Customer360Screen.tsx's productsSbuId.
+  useEffect(() => {
+    if (showAddOpp && isSbuOverrideRole && addOppSbuId) {
+      listProducts({ page_size: 100, sbu_id: addOppSbuId }).then((d) => setOppProducts(d.items || [])).catch(() => {});
+    }
+  }, [showAddOpp, isSbuOverrideRole, addOppSbuId]);
+
   async function handleCreateOpp() {
     if (!addOppName.trim()) throw new Error("Opportunity name is required");
+    // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
+    if (isSbuOverrideRole && !addOppSbuId) throw new Error("SBU is required");
     if (!addOppStageId) throw new Error("Stage is required");
     if (!addOppStatusId) throw new Error("Status is required");
     if (!addOppOwnerId) throw new Error("Owner is required");
@@ -239,6 +262,7 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
       win_probability: Number(addOppWinProb),
       project_id: p.id,
     };
+    if (isSbuOverrideRole && addOppSbuId) payload.sbu_id = addOppSbuId;
     if (addOppValue !== "") payload.indicative_value = Number(addOppValue);
     if (addOppLeadSourceId) payload.lead_source_id = addOppLeadSourceId;
     if (addOppDemoStart) payload.demo_start_date = addOppDemoStart;
@@ -490,6 +514,20 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
           fullWidth
           size="small"
         />
+        {isSbuOverrideRole && (
+          <TextField
+            select
+            label="SBU *"
+            value={addOppSbuId}
+            onChange={(e) => setAddOppSbuId(e.target.value)}
+            fullWidth
+            size="small"
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+          >
+            <MenuItem value="">Select SBU</MenuItem>
+            {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+          </TextField>
+        )}
         <div className="flex gap-3">
           <TextField
             select
