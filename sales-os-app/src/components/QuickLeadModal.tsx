@@ -16,6 +16,12 @@ interface QuickLeadModalProps {
   onClose: () => void;
   onCreated?: () => void;
   sbuId?: string;
+  // Pre-fill Account/Project from wherever the user clicked "+ Lead" from
+  // (Customer 360, Opportunity Detail, or a Project's own detail view) --
+  // still fully editable, just saves re-picking the obvious choice. Same
+  // context-inference DemoApp.tsx already does for LogActivityModal.
+  initialAccountId?: string;
+  initialProjectId?: string;
 }
 
 // Local stopgap types — these services return Promise<unknown> today.
@@ -29,7 +35,7 @@ interface UserOption { id: string; display_name: string }
 interface LeadSourceOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
 
-export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: QuickLeadModalProps) {
+export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, initialAccountId, initialProjectId }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
   // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU
   // (the sbuId prop) and never sees the override field.
@@ -125,12 +131,12 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
 
   useEffect(() => {
     if (!isOpen) return;
-    setAccountId(""); setProjectId("");
+    setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
     setName(""); setSbuOverrideId(""); setStageId(""); setStatusId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setLeadSourceId("");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
-  }, [isOpen]);
+  }, [isOpen, initialAccountId, initialProjectId]);
 
   async function handleSubmit() {
     if (!name.trim()) throw new Error("Opportunity name is required");

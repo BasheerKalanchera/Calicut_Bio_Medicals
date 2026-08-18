@@ -542,6 +542,13 @@ export default function DemoApp() {
           queryClient.invalidateQueries({ queryKey: ["pipeline"] });
         }}
         sbuId={(userProfile as any)?.sbu?.id}
+        initialAccountId={
+          view === "customer360" ? selectedAccount?.id :
+          view === "opportunityDetail" ? (selectedOpportunity as PipelineOpportunity | null)?.account?.id :
+          projectDetailMode ? selectedProject?.account.id :
+          undefined
+        }
+        initialProjectId={projectDetailMode ? selectedProject?.id : undefined}
       />
       <LogActivityModal
         isOpen={showLogActivity}

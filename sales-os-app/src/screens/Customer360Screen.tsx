@@ -829,7 +829,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
   // which products are eligible (BR-OP-11 validates items against the opportunity's
   // actual SBU, not the caller's own) — everywhere else it's just the caller's own SBU.
-  const productsSbuId = (showCreateOpp && isSbuOverrideRole && newOSbuId) ? newOSbuId : (userProfile as any)?.sbu?.id;
+  // Editing an existing Opportunity must filter by *its own* sbu_id, not the caller's --
+  // otherwise Admin/GM (whose own userProfile.sbu is null, per BR-OP-12) fall through to
+  // an unfiltered fetch and see every product, regardless of the deal's actual SBU.
+  const productsSbuId = (showCreateOpp && isSbuOverrideRole && newOSbuId)
+    ? newOSbuId
+    : editingOpp
+    ? editingOpp.sbu_id
+    : (userProfile as any)?.sbu?.id;
   const { data: products = [] } = useQuery({
     queryKey: ["products", "picker", productsSbuId],
     queryFn: async () => {

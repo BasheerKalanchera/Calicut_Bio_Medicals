@@ -432,13 +432,17 @@ during these remaining migrations — §6.6/§6.8 are living documents.
   entity throughout. No design work started; likely the largest-scope item
   of the four raised in this meeting, worth scoping carefully before
   committing to a data-model direction.
-- **Multi-zone user assignment — decided 2026-08-07, moved to
-  `active_progress.md` as the next build item.** All of design doc
-  `docs/Multi-Zone-Assignment-Technical-Design.md`'s §8 decisions are now
-  resolved (raw zone list, no named territory entity; open to all roles).
-  One narrower question remains open within §7 (Target/Coverage Planning's
-  `target_plan.zone_id` nullability) — see the design doc, not tracked here
-  since the core feature is unblocked.
+- ~~**Multi-zone user assignment — decided 2026-08-07, moved to
+  `active_progress.md` as the next build item.**~~ — **SHIPPED, stale
+  entry corrected 2026-08-17.** Built as Multi-Zone Milestone 1 — confirmed
+  live and covered in the 2026-08-17 regression pass
+  (`docs/Regression-Test-Plan-2026-08.md`'s A1, verifying a multi-zone
+  Area Manager sees data from every assigned zone together). This entry
+  was never marked done when the feature shipped. One narrower question
+  from design doc `docs/Multi-Zone-Assignment-Technical-Design.md`'s §7
+  (Target/Coverage Planning's `target_plan.zone_id` nullability) wasn't
+  re-verified tonight — check that doc directly if it matters, not
+  re-litigated here.
 - ~~Document/photo upload on Opportunity~~ — **DONE, 2026-08-11**, commit
   `49c4c1d`, pushed to `origin/main`. Turned out to need real Storage
   infrastructure, not just a frontend gap as first scoped here — see

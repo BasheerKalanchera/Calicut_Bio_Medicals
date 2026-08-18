@@ -1,58 +1,139 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-17_
+_Session: 2026-08-18_
 
 ## Current task — STOP HERE FIRST
 
-**Regression pass complete, demo now tomorrow evening (2026-08-18).**
-Full manual pass against `docs/Regression-Test-Plan-2026-08.md` finished
-2026-08-17 — every Part A item (A0–A9), plus B5/B8/B9 and both Part C
-cross-cutting checks, confirmed working correctly. Nothing broken found.
-Two orphaned test zones (`Darwad`, `REGRESSION TEST ZONE`) deleted
-directly from Dev during the pass — verified clean, closure table
-rebuilt, no dangling references. Doc itself updated with a completion
-note; full narrative in `docs/Progress-Archive-2026-08.md`'s 2026-08-17
-entry.
+**`ProjectDirectoryScreen.tsx` MUI migration — DONE, verified, staged,
+not yet committed.** Full triple-conversion landed, 3 real bugs found
+and fixed during Basheer's manual verification (query-key collision
+crashing `QuickLeadModal.tsx`, Edit Project bouncing to the list instead
+of updating in place, Edit Opportunity's product picker ignoring the
+opportunity's own SBU — the last one also fixed in
+`Customer360Screen.tsx`, same pre-existing gap there). Global "+ Lead"
+now pre-fills Account/Project from context too. `docs/Frontend-
+Implementation-Standards.md`'s §9 migration table closed out (0 pending,
+collapsed to a pointer at Progress Archive per the doc's own
+post-migration cleanup instructions) and bumped to v3.0. Full narrative
+in `docs/Progress-Archive-2026-08.md`'s 2026-08-18 entries — not
+repeated here.
 
-**Also shipped tonight, both committed:**
-- Activity Notes multi-line entry + line-break display fix
-  (`c9861a0`, `1a3738d`) — `FormModal.tsx`'s Enter-key guard was blocking
-  newline entry in every `multiline` field, not just Activity Notes; same
-  fix applied to buyback item descriptions and product descriptions.
-- Zone Deactivate/Reactivate (`b0b4109`) — Territory Admin's zone
-  lifecycle was one-way before this; renamed "Deprecate"→"Deactivate" to
-  match User Directory's established vocabulary, added the missing
-  reactivate action.
+**Signal for the parallel Referral Credit session (below):** this
+migration has landed — the "deliberately held back" `ProjectDirectoryScreen`
+referral toggle (their item, not this one) can now be added as their
+follow-up.
 
-**Landed independently today, outside this session (`91a0906`):** Admin/GM
-made SBU- and zone-agnostic (migration `0022`, `user_profile.sbu_id`
-nullable) — full detail in `docs/Admin-GM-SBU-Agnostic-Implementation-
-Plan.md`. Shipped and verified (519-test suite green, `/auth/me` checked
-live for all 3 real Admin/GM accounts). **One loose end:**
-`Physical-Schema.sql` regen still pending — needs Docker Desktop running
-(`docker run postgres:17 pg_dump`), daemon wasn't reachable when this was
-built. Run once Docker Desktop is available.
+**Next step:** commit (message already drafted in conversation, staging
+already split from the Referral Credit session's concurrent edits to
+the same two files — see below).
 
-**Next step:** pick a backlog item to build before tomorrow evening's
-demo — see conversation for the shortlist under consideration
-(`docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`
-is the strongest, already-approved candidate).
+## Recently shipped, all committed (context for the migration above)
+
+- **BR-OP-10 fix** (`91e7fc2`) — all 3 Opportunity create screens
+  (Customer 360, +LEAD, Project Directory) were violating an
+  already-documented rule by offering On Hold/Lost/Won as initial Status
+  choices; filtered each to Active-only. Edit/Detail screens unchanged.
+- **`ProjectDirectoryScreen.jsx` SBU-parity fix** (`874bd8f`) — Add
+  Opportunity now has BR-OP-12's Admin/GM SBU-override logic, matching
+  Customer 360/+LEAD.
+- User Directory manager_id-resend fix (`49e7dfd`), Activity Notes
+  multi-line fix (`c9861a0`, `1a3738d`), Zone Deactivate/Reactivate
+  (`b0b4109`) — all from the 2026-08-17 session, detail in
+  `docs/Progress-Archive-2026-08.md`.
+
+Full manual regression pass against `docs/Regression-Test-Plan-2026-08.md`
+completed 2026-08-17 — nothing broken. Detail in Progress Archive.
+
+**Staging note for whoever commits next:** `QuickLeadModal.tsx` and
+`Customer360Screen.tsx` currently have this session's fixes staged
+(hunk-level, via `git apply --cached`) alongside the Referral Credit
+session's unstaged work in the same working-tree files. Committing now
+only commits the staged MUI-migration hunks — the Referral Credit
+session's edits stay untouched in the working tree, ready for them to
+stage and commit separately. Don't run a blanket `git add` on either
+file without checking `git diff --cached` first, or the two sessions'
+work will get committed together.
 
 ## Also still open (unrelated, carried over)
 
 The Critical Care/Imaging manager hierarchy build-out — see
 `docs/Progress-Archive-2026-07.md`'s Phase 2E section for the confirmed
-plan. The "create Supabase Auth accounts" blocker this was waiting on is
-resolved for Dev, but this item concerns the UAT/Prod rollout more
+plan. Blocked item resolved for Dev; concerns UAT/Prod rollout more
 broadly — revisit once UAT is fully proven out.
 
 **Deliberately left unconverted, not forgotten** (Basheer's explicit scope
 call, see the `@mui/x-date-pickers` archive entry): 9 date-only
 `type="date"` fields in `Customer360Screen.tsx`/`OpportunityDetailScreen.
-tsx`, and 2 more in `ProjectDirectoryScreen.jsx` (entangled with that
-file's own pending MUI migration). Pick up only if Basheer decides to
-extend scope.
+tsx`, and 2 more in `ProjectDirectoryScreen.jsx` (will naturally come up
+during the MUI migration above — pick up only if Basheer decides to
+extend scope during that pass).
 
 **Also flagged, not yet decided:** `sales-os-app/src/App.jsx` (legacy
 `/prototype` route, mock data only) still references "Sales Manager" —
 out of scope pending Basheer's call on whether the prototype route is
 worth touching at all.
+
+## Parallel task (separate session) — Referral Credit, Part 1 of 2
+
+Split from `docs/Referral-Credit-And-Relationship-Support-Implementation-
+Plan.md` — Part 1 (Referral Credit) being built now; Part 2
+(Relationship-Support Activity) deliberately deferred to a later pass,
+not touched here. Runs alongside the MUI migration above in a separate
+session — **zero file overlap** except one deliberately-held-back item
+(see below).
+
+**Backend — done, not yet committed:** migration `0023_add_referral_
+credit.py` (adds `opportunity.referred_by_user_id` FK + `referred_by_note`
+text + `ck_opportunity_referral_not_both` CHECK constraint), model,
+schemas (`OpportunityCreate`/`Update`/`Response`/`PipelineOpportunity`,
+mutual-exclusivity validator), `create_opportunity` service fix (doc's
+claim that no service change was needed was wrong — `create_opportunity`
+builds `Opportunity(...)` with named fields, unlike `update_opportunity`'s
+generic loop), BR-FIN-07 (`docs/Business-Rules.md`), 7 new backend tests.
+Applied to Dev (`alembic upgrade head`, now at `0023`). Full 526-test
+backend suite green, `ruff check` clean on all touched files.
+
+**`docs/Physical-Schema.sql` regen — DONE, 2026-08-18.** Docker Desktop
+started, `docker pull postgres:17` + `pg_dump --schema-only` against Dev,
+committed. Turned out to be further behind than just `0022`/`0023` — last
+regenerated after `0019`, so this pass also picked up `0020`'s
+`idx_zone_name_trgm` index (never regenerated after that one landed
+either). Diff verified clean: `opportunity.referred_by_user_id`/
+`referred_by_note`/`ck_opportunity_referral_not_both`/FK, `user_profile.
+sbu_id` nullable, `idx_zone_name_trgm` — all present, nothing unexpected.
+
+**Frontend — done, not yet committed.** Referral toggle built in all 3
+non-conflicting entry points: `QuickLeadModal.tsx`, `Customer360Screen.tsx`
+(both its New and Edit Opportunity forms), `OpportunityDetailScreen.tsx`
+edit form. Toggle shown only when Lead Source = Referral (not
+`OEM_REFERRAL`); colleague picker uses a new, distinctly-keyed
+`["users","referral-picker"]` query (`listUsers("all")`) in each file —
+confirmed and avoided the pre-existing `["users","all"]` naming-quirk
+collision in all 3.
+
+**Two real gaps found beyond the original plan doc, both fixed:**
+1. `WorkspaceOpportunity` (`backend/app/domains/account/workspace_schemas.py`)
+   is a *third* Opportunity response shape the doc never accounted for —
+   it's what `GET /accounts/{id}/opportunities` actually returns, and what
+   `Customer360Screen.tsx`'s `openEditOpp` reads from to prefill its Edit
+   form. Without adding `referred_by`/`referred_by_note` there too, that
+   screen's Edit form could never have shown the current referral value.
+2. `types/api.ts` has a hand-maintained "convenience aliases" block
+   (named type exports like `PipelineOpportunity`) appended after
+   openapi-typescript's generated output — `npm run generate:types`
+   silently wipes it (the file's own comment warns of this). Restored
+   from git history after regenerating; `tsc --noEmit` catches this
+   immediately if it's ever missed again (30+ errors, one per lost alias).
+
+`tsc --noEmit` and `npm run lint` (incl. `check-no-tailwind.js`) both
+clean across the whole project. Backend suite re-confirmed green (526
+passed) after the `workspace_schemas.py` change.
+
+**Deliberately held back:** `ProjectDirectoryScreen.jsx`'s own referral
+toggle (the 4th entry point) — that file is the other session's active
+MUI-migration target. Add it as a small follow-up once that migration
+lands, not now.
+
+**Still open for Part 1:** manual verification on Dev (Basheer, per
+usual) — toggle appears only for Referral not OEM Referral in all 3
+entry points, mutual exclusivity produces a 422, values round-trip on
+reload. Nothing committed yet — review diff first.

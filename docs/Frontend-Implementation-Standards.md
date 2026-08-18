@@ -1,15 +1,13 @@
-# Cabio Sales OS - Frontend Implementation Standards v2.0
+# Cabio Sales OS - Frontend Implementation Standards v3.0
 
-**Based on:** Architecture Freeze v1.0, ADR-029, ADR-030, ADR-031, ADR-032, ADR-033, Customer Directory / Customer 360 implementation (June 2026), MUI + React Query + TypeScript migration reconciliation (July 3, 2026).
+**Based on:** Architecture Freeze v1.0, ADR-029, ADR-030, ADR-031, ADR-032, ADR-033, Customer Directory / Customer 360 implementation (June 2026).
 
 ---
 
-> ## Standard, as of 2026-07-03
-> **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all new files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032).
+> ## Standard, as of 2026-08-18
+> **MUI is the sole UI framework** (ADR-031). **TypeScript is required** for all files (ADR-033). **TanStack React Query is required** for all data fetching and mutation — no manual `.then()` fetch chains, no module-level cache `Map` objects (ADR-032). **Tailwind CSS is prohibited.**
 >
-> **Tailwind CSS is prohibited in new components** and is being removed from the codebase file by file. Three screens still use Tailwind and/or the pre-React-Query manual fetch pattern — see **[§9 Migration Tracking](#9-migration-tracking)** for the authoritative, per-file list and status. Do not treat a Tailwind `className` you find in an existing file as a pattern to copy — check §9 first. If the file is listed as pending, it is *known debt*, not the standard.
->
-> This revision reconciles the doc with ADR-031/032/033 (accepted 2026-06-30, never reflected here until now — see the dated reconciliation note on ADR-031 in `docs/ADR.md`). Sections below that describe the pre-migration Tailwind/manual-fetch pattern are marked **Superseded**; they are kept only so pending files in §9 can be recognized for what they are.
+> The codebase-wide migration to this standard completed 2026-08-18 — every screen and component now conforms. Full migration history (per-file conversion notes, decisions, bugs found) is preserved in `docs/Progress-Archive-2026-08.md`, not here; this document describes only the current standard.
 
 ---
 
@@ -59,7 +57,6 @@ List screens that are the parent in a list → detail navigation pair **must sta
 - Every list screen (Customer Directory, Coverage Plans, Opportunity Pipeline, Target Plans, etc.) must use this pattern.
 - Detail screens (`Customer360Screen`, future detail screens) continue to conditionally mount/unmount. They receive `initialData` from the parent on mount so remount cost is negligible.
 - Never use `key={selectedAccount?.id}` on a list screen to force remount — this defeats the purpose.
-- **Superseded:** `DemoApp.jsx` no longer exists — the shell is `DemoApp.tsx`. The Tailwind `className` toggle shown in v1.0 (`` `${view === "x" ? "" : "hidden"}` ``) is prohibited in new code; `DemoApp.tsx` itself still uses it today and is tracked as pending in §9.
 
 ---
 
@@ -109,7 +106,7 @@ const completeMutation = useMutation({
 
 ### 3.3 Fast Back-Navigation for Always-Mounted Lists
 
-ADR-030 requires list screens to stay mounted so back-navigation is instant. React Query's cache (§4.1) already serves this: a `useQuery` call with the same `queryKey` returns cached data synchronously on re-render if within `staleTime` (30 s, configured once in `main.tsx`), with a silent background refetch. This replaces the v1.0 hand-rolled module-level `Map` cache (§4.1) entirely — **do not add a new one.**
+ADR-030 requires list screens to stay mounted so back-navigation is instant. React Query's cache (§4.1) already serves this: a `useQuery` call with the same `queryKey` returns cached data synchronously on re-render if within `staleTime` (30 s, configured once in `main.tsx`), with a silent background refetch. A hand-rolled module-level `Map` cache (§4.1) is not needed for this — **do not add one.**
 
 If a future detail screen needs to seed a query from data the parent list already has (avoiding a loading flash on first navigate), use `useQuery`'s `initialData` option. **First implemented in `Customer360Screen.tsx`** (`initialAccount` prop → the account query's `initialData`) — Directory-list navigation seeds it from already-fetched row data; Parent/Child account links currently only have a minimal `{id, name}` to seed with (see the `Backlog.md` item on richer parent/child `initialData` if that gap is ever closed).
 
@@ -137,29 +134,13 @@ The ref-guarded seeding subtlety this pattern needs when the seed data is a *dra
 
 **Caution:** the three `users` keys above return different data depending on `scope` (see `GET /users?scope=` in `API-Catalog.md`) — never reuse one of these three keys for a picker with different eligibility needs than the one it was introduced for, even if it seems convenient. That exact collision (all pickers sharing one `["users", "all"]` key despite needing different scopes) was a real regression, fixed 2026-07-30.
 
-### 3.4 Per-Resource Loading Flags — Superseded
-
-The v1.0 pattern below (one manual `useState(true)` per data section) is superseded. Every `useQuery` call already returns its own `isLoading` — do not add a parallel manual flag.
-
-```jsx
-// Superseded — do not write new code like this.
-const [stakeholdersLoading, setStakeholdersLoading] = useState(true);
-listStakeholders(accountId).then(setStakeholders).catch(() => {}).finally(() => setStakeholdersLoading(false));
-```
-
 ---
 
 ## 4. Caching Architecture (React Query — ADR-032)
 
-### 4.1 QueryClient Cache — Supersedes Manual SWR Cache
+### 4.1 QueryClient Cache
 
-The v1.0 hand-rolled module-level SWR `Map` cache (shown below) is **prohibited in new code**. `QueryClientProvider` (configured once in `main.tsx`: `staleTime: 30_000`, `retry: 1`) is now the single cache layer for all list and detail data. Do not add a second cache on top of it.
-
-```js
-// Superseded — do not write new code like this. QueryClientProvider replaces this entirely.
-const CACHE_TTL_MS = 30_000;
-const entityListCache = new Map();
-```
+`QueryClientProvider` (configured once in `main.tsx`: `staleTime: 30_000`, `retry: 1`) is the single cache layer for all list and detail data. A hand-rolled module-level cache (a `Map` with a manual TTL) is prohibited — do not add a second cache on top of `QueryClientProvider`.
 
 ### 4.2 Lazy Batch Aggregate Counts (ADR-029)
 
@@ -175,7 +156,7 @@ const { data: counts } = useQuery({
 });
 ```
 
-Verified against the real implementation in `ProductCatalogScreen.tsx` (migrated `8f4526e`, 2026-08-07) and `CustomerDirectoryScreen.tsx` (migrated `59baa6b`, 2026-08-11) — both match this shape exactly, including `enabled: ids.length > 0` gating the dependent query. `ProjectDirectoryScreen.jsx` is the one remaining pre-migration screen using this pattern (§9).
+Verified against the real implementation in `ProductCatalogScreen.tsx` and `CustomerDirectoryScreen.tsx` — both match this shape exactly, including `enabled: ids.length > 0` gating the dependent query.
 
 **Rules (unchanged from v1.0):**
 - The list screen never waits for counts before rendering. Counts show as `—` or `0` while loading and populate in the background.
@@ -201,19 +182,6 @@ This section defines what the frontend expects from any batch counts endpoint. B
 
 ## 6. Component Patterns
 
-### 6.1 `isMountedRef` Guard — Superseded by React Query
-
-The v1.0 guard below is unnecessary for any fetch done via `useQuery`/`useMutation` — React Query already discards results from unmounted components internally. Only relevant if a screen still has a raw `useEffect` + manual fetch outside React Query, which should not occur in new code.
-
-```jsx
-// Superseded for React Query fetches — kept for historical reference only.
-const isMountedRef = useRef(true);
-useEffect(() => {
-  isMountedRef.current = true;
-  return () => { isMountedRef.current = false; };
-}, []);
-```
-
 ### 6.2 Form Modals
 
 - Enter key in form modals must not submit the form. Add `onKeyDown` handling at the `<form>` element (see `FormModal.tsx`), not per-input.
@@ -226,7 +194,7 @@ Tab fetches must never surface an error to the user. If a tab's `useQuery` fails
 
 ### 6.4 MUI Styling — Reference Pattern (ADR-031)
 
-`LoginScreen.tsx` and `FormModal.tsx` are the only two files in the codebase that are fully MUI-compliant — zero Tailwind. Use them as source of truth for "what correct looks like," not any Tailwind-styled screen you may come across (check §9 first).
+`LoginScreen.tsx` and `FormModal.tsx` are the smallest, clearest reference examples of a fully MUI-compliant file — zero Tailwind. Use them as source of truth for "what correct looks like."
 
 ```tsx
 <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -240,9 +208,9 @@ Tab fetches must never surface an error to the user. If a tab's `useQuery` fails
 - Reuse the theme (`src/theme/index.ts`) for brand color/radius rather than hardcoding hex values inline where the theme already defines them.
 - Dialogs use MUI `Dialog` / `DialogTitle` / `DialogContent` / `DialogActions` (see `FormModal.tsx`) — do not hand-roll a modal with a Tailwind `fixed inset-0` overlay.
 
-### 6.5 Status Colors (target — pending, see §9 migration)
+### 6.5 Status Colors (target — not yet built)
 
-Semantic status colors (success/warning/error/etc.) will be defined once in `src/theme/statusColors.ts` and imported, never hardcoded per file. The app's established hex values are authoritative, not MUI palette defaults. Until the migration completes, screens carry inline hex; the shared module is created as a single post-migration pass.
+Semantic status colors (success/warning/error/etc.) will be defined once in `src/theme/statusColors.ts` and imported, never hardcoded per file. The app's established hex values are authoritative, not MUI palette defaults. Screens currently carry inline hex; consolidating them into the shared module is a tracked Backlog item (`docs/Backlog.md`), not yet done.
 
 ### 6.6 MUI Gotchas & Reusable Patterns (found during migration)
 
@@ -335,130 +303,4 @@ Use this checklist when implementing any new list screen + detail screen pair:
 
 ## 9. Migration Tracking
 
-Authoritative, per-file status for the MUI + React Query + TypeScript migration (ADR-031/032/033). Update this table in the same commit that migrates a file. Do not mark a file "Migrated" until it has zero `className` usages, all data fetching is via React Query, and it is `.tsx`/`.ts`.
-
-**These are not violations.** The banner above says Tailwind is prohibited *in new code* — every file listed below predates ADR-031/032/033 reconciliation (2026-07-03) and is grandfathered until converted. Converting a file off this list *is* the migration; a file sitting on this list is expected, tracked debt, not a rule someone broke. If banner and table ever seem to disagree, this paragraph governs: new/edited code follows the banner, files named here are pending by design until their row is deleted.
-
-**Fully migrated (source of truth for new code):**
-
-| File | Path |
-|---|---|
-| `LoginScreen.tsx` | `src/components/LoginScreen.tsx` |
-| `FormModal.tsx` | `src/components/FormModal.tsx` |
-| `main.tsx` | `src/main.tsx` |
-| `ActivityTimeline.tsx` | `src/components/ActivityTimeline.tsx` |
-| `NextActionsScreen.tsx` | `src/screens/NextActionsScreen.tsx` |
-| `LogActivityModal.tsx` | `src/components/LogActivityModal.tsx` |
-| `OpportunityPipelineScreen.tsx` | `src/screens/OpportunityPipelineScreen.tsx` |
-| `QuickLeadModal.tsx` | `src/components/QuickLeadModal.tsx` |
-| `OpportunityDetailScreen.tsx` | `src/screens/OpportunityDetailScreen.tsx` |
-| `DemoApp.tsx` | `src/DemoApp.tsx` |
-| `Customer360Screen.tsx` | `src/screens/Customer360Screen.tsx` |
-| `ErrorBoundary.tsx` | `src/components/ErrorBoundary.tsx` |
-| `ProductCatalogScreen.tsx` | `src/screens/ProductCatalogScreen.tsx` |
-| `CustomerDirectoryScreen.tsx` | `src/screens/CustomerDirectoryScreen.tsx` |
-
-**Column legend — what a ✓ actually certifies** (added after `OpportunityDetailScreen.tsx`'s
-Commit A/B split surfaced that these were asserting more than they checked):
-- **Styling ✓** — zero Tailwind `className` in the file. Mechanically checked by `check-no-tailwind.js`.
-- **React Query ✓** — zero manual `.then()` fetch chains; all data fetching via `useQuery`/`useMutation`.
-  Self-reported today, not mechanically checked (see the enforcement-gap note in `docs/Backlog.md`
-  — a grep-for-`.then(` guard is banked, not built).
-  A row is not marked ✓ here until that's actually true — a file can be Styling ✓ while this column
-  is still Pending.
-- **TypeScript ✓** — file is `.tsx`/`.ts` and compiles under `tsc --noEmit`. Does **not** certify the
-  absence of `any` — a file can be TypeScript ✓ and still be `any[]`-typed throughout. Called out
-  explicitly per-row only when verified during that file's migration; unverified rows keep the bare ✓.
-
-**Enforcement is live, not aspirational:** a pre-commit hook (`check-no-tailwind.js`) mechanically
-blocks any new Tailwind `className` from being committed — MUI-only is enforced automatically, not
-just documented. 14 `eslint-disable` suppressions currently keep lint green while pending files still
-use patterns the linter would otherwise flag; they are load-bearing (removing one before its file
-migrates breaks the commit gate) and get deleted one at a time, in the same commit as each file's own
-migration — never removed early "to clean up."
-
-**Pending:**
-
-| File | Path | Styling | React Query | TypeScript |
-|---|---|---|---|---|
-| `ProjectDirectoryScreen.jsx` | `src/screens/` | Tailwind (pending) | Pending — manual `.then()` + SWR cache | `.jsx` (pending) |
-
-**Out of scope — do not migrate:**
-
-| File | Path | Reason |
-|---|---|---|
-| `App.jsx` | `src/App.jsx` | Prototype only, mounted at `/prototype`, mock data, not reachable by an authenticated user. Not part of the production app. |
-
-**Totals:** 14 fully migrated · 1 pending · 1 explicitly out of scope.
-
-`CustomerDirectoryScreen.tsx` moved to the fully-migrated table above 2026-08-11.
-Full triple-conversion, same shape as `ProductCatalogScreen.tsx`'s own migration:
-module-level `accountListCache` (SWR, 30s TTL) and `isMountedRef` deleted outright,
-not ported — superseded by React Query's own cache/staleness handling, which
-naturally reproduces the "instant paint on back-navigation" behavior the module
-cache's own comment described wanting. Manual `.then()` chains (list → dependent
-counts fetch, plus a separately-debounced parent-account search) converted to
-`useQuery`/`useMutation`. Also fixed in `services/accounts.ts` while here: `listAccounts`/
-`getAccount`/`getAccountCounts`/`createAccount` were typed with `number` ids and
-`Promise<unknown>` returns despite this app's ids being UUID strings everywhere else —
-now typed against `AccountListResponse`/`AccountResponse`/`AccountCountsEntry`
-(all already existed in `types/api.ts`, zero new hand-written aliases needed, unlike
-`ProductCatalogScreen.tsx`'s migration which needed 3). Every other function in that
-file is untouched — same pre-existing issue, out of scope here.
-**A real cross-file simplification, not just a same-file port:** the
-`accountUpdateRef`/`onAccountUpdate` prop chain (`DemoApp.tsx` → `Customer360Screen.tsx`)
-existed solely to patch an edited account back into this screen's now-deleted module
-cache — replaced by one `queryClient.invalidateQueries({queryKey: ["accounts","list"]})`
-call in `Customer360Screen.tsx`'s `handleUpdateAccount`, and the entire ref/prop chain
-removed from both files. `openCreateRef` (a separate, parent-triggered "open the create
-modal" mechanism, unrelated to caching) was left untouched.
-**One property-diff gap found, initially dropped, then restored on review:** the
-original scrolled the list container to top after a successful create
-(`listContainerRef.current?.scrollTo(...)`). First pass judged this a one-time
-decoration under §6.8's tiebreaker and left it out; on reflection that call didn't hold
-up — its actual purpose isn't decorative, it's preventing the user from being left
-stranded mid-scroll with no indication anything happened after the modal closes, which
-is a usability concern §6.8 says to restore, not a state-vs-decoration question at all.
-Restored, same `listContainerRef` + `scrollTo` shape as the original, called from the
-create mutation's `onSuccess`.
-Parent-account search (create modal) upgraded from a hand-rolled absolute-positioned
-dropdown to MUI `Autocomplete`, matching `Customer360Screen.tsx`'s own edit-form
-picker for the identical field on the identical entity — not a new pattern.
-`tsc --noEmit` and `npm run lint` (incl. Tailwind guard) both clean on the first pass.
-**Not yet manually verified on screen — Basheer's own pass, not done here.**
-
-`ProductCatalogScreen.tsx` moved to the fully-migrated table above 2026-08-07 (prerequisite
-for the Product Lifecycle feature build, which needed to add a new field to this
-screen's create/edit form without adding more Tailwind). Full triple-conversion:
-Tailwind → MUI `sx`, the manual `.then()`/module-level `productListCache` `Map` → `useQuery`
-(list, count, single-product-detail, and product-documents all as independent parallel
-queries per §3.1) plus `useMutation` for collateral-link create/delete, `.jsx` → `.tsx`.
-The hand-rolled `ProductFormModal` was replaced with the shared `FormModal` component
-(matching `UserDirectoryScreen.tsx`'s precedent) rather than converted in place.
-`isMountedRef` (§6.1) and the `CACHE_TTL_MS`/`productListCache` module-level cache (§4.1)
-were both deleted outright, not ported — both are superseded by React Query's own
-cache/staleness handling. Added three new hand-written type aliases to `types/api.ts`
-(`ProductListResponse`, `ProductResponse`, `DocumentResponse`) since no prior screen had
-imported them. **Scope note:** this migration only closes the Styling/React
-Query/TypeScript columns tracked here — it did not restructure the screen's internal
-list↔detail navigation into the ADR-030 always-mounted pattern (§2.1), since that's a
-navigation-architecture change orthogonal to what this table tracks, not something this
-migration pass was scoped to touch.
-
-`OpportunityDetailScreen.tsx` moved to the fully-migrated table above once its React Query commit
-landed (all 6 manual `.then()` chains converted to `useQuery`, gated by `enabled` on the state that
-used to trigger each fetch — `editing`/`showAdd`/`showEditOpp` — so behavior is unchanged, just
-cached and parallelized). Its master-data lookups (stages/statuses/users/products/stakeholders) got
-local stopgap types (`StageOption`/`StatusOption`/`UserOption`/`ProductOption`/`StakeholderOption`)
-in place of `any[]`; the transient edit-buffer state (`editItems`/`editSplits`) and a few pre-existing
-`as any` ID casts remain untyped — not a claim of "no `any` anywhere in the file."
-
-### Post-migration cleanup (do this when the table above reaches 0 pending)
-
-The "Superseded" code blocks left inline in §2.1, §3.4, §4.1, and §6.1 exist only so a pending file's old pattern is still recognizable during the migration. They are traceability aids with a deliberate expiry, not permanent documentation — once every file above is migrated:
-- Delete every block and paragraph marked **Superseded** in this document (§2.1's `DemoApp.jsx` note, §3.4, §4.1's `Map` cache block, §6.1's `isMountedRef` block).
-- Delete this Migration Tracking section (§9) entirely, or collapse it to a single line recording the migration's completion date.
-- Bump the doc to v3.0 and drop the "Based on" line's migration-reconciliation mention — at that point MUI/React Query/TypeScript are just the standard, not a standard being migrated to.
-- Remove the top banner's grandfathering language, since there will be nothing left to grandfather.
-
-Leaving superseded content in place past this point is how the doc drifts back into the exact staleness this reconciliation was fixing — a doc with dead alternatives in it is noise a future session has to read past, not signal.
+The MUI + React Query + TypeScript migration (ADR-031/032/033) completed 2026-08-18 — every screen and component in `sales-os-app/src/` conforms to this document's standard. Per-file conversion history, decisions made along the way, and bugs found during the migration are preserved in `docs/Progress-Archive-2026-08.md`, not tracked here.

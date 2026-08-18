@@ -1353,3 +1353,530 @@ regen still pending, blocked on Docker Desktop's daemon not running
 locally.
 
 Demo moved from 2026-08-17 evening to 2026-08-18 evening.
+
+**Post-regression backlog work, same night.** With the extra day, picked
+two small items off `docs/Backlog.md` instead of new feature work.
+
+*Product-picker label consistency — investigated, dropped, not built.*
+The backlog entry claimed the Opportunity item-picker showed `{p.name}`
+only while Installed Base dropdowns showed `{p.name} — {p.model_number}`.
+Checked both halves directly against the live catalog before touching any
+code: zero products share a `name` (queried directly — no duplicates
+exist), so there's no actual disambiguation gap for a model-number suffix
+to close; and `name` is already, for ~27 of 29 real products, a literal
+`"{oem_name} {model_number}"` concatenation (e.g. `EDAN` + `SE-1200
+Express` = `EDAN SE-1200 Express`), so appending the model number again
+would mostly just repeat it on the same line. Also found the "Installed
+Base already does this" half of the original claim was itself wrong —
+that dropdown doesn't show the model number either, only the read-only
+saved-asset summary row does, likely stale since `Customer360Screen.tsx`'s
+MUI rewrite. One real product (`Siemens USG M/c`, model `P500`) has a name
+that doesn't surface its model number, but that's a single mislabeled
+row, not a systemic pattern. Backlog entry updated to record this rather
+than left stale.
+
+**User Directory manager_id-resend fix — shipped, `49e7dfd`.** The
+backlog item surfaced 2026-08-12: the Edit form always resent a user's
+existing `manager_id` on save even when untouched, so changing someone's
+SBU while their manager was a normal (non-Admin/GM) person from the old
+SBU would fail with "Manager must belong to the same SBU as the user" —
+correct from the backend's perspective, confusing from the admin's, since
+the Manager field was never touched. Fix: the SBU `TextField`'s
+`onChange` now looks up the currently-selected manager in the
+already-fetched `users` list and clears `manager_id` back to `""` if that
+manager is a normal person whose `sbu_id` no longer matches — Admin/GM
+managers stay exempt, mirroring the backend's own exemption
+(`organization/service.py`'s `_USER_WRITE_ROLES` check).
+
+*Two-bug investigation, not a one-line fix in practice.* First manual
+test (Vivek: Critical Care → Imaging, manager Arun Adarsh) showed the
+Manager field still displaying "Arun Adarsh" both live in the form and
+after save — looked like the fix wasn't working at all. Ruled out a stale
+Vite bundle first (only one dev-server process running, no PWA
+`devOptions` registering a service worker in dev mode, so a hard refresh
+should have been sufficient — and was, for the live-form half of the
+report). Direct DB check of Vivek's persisted row (`sbu_id` = Imaging,
+`manager_id` still Arun Adarsh) confirmed the save-time behavior was
+genuinely broken, not a caching illusion. Root cause: `handleUpdate` sent
+`manager_id: form.manager_id || undefined` — when the field is cleared to
+`""`, that becomes `undefined`, and `JSON.stringify` drops
+`undefined`-valued keys entirely from the request body. The backend's
+`exclude_unset=True` partial-update semantics treat an *absent* key as
+"leave this field alone," not "clear it" — so the PATCH silently no-op'd
+on `manager_id` every time. Fixed by sending explicit `null` instead.
+**Side finding, not previously known:** this same bug means manually
+selecting "No manager" from the dropdown and saving has likely never
+actually worked for anyone, for any user, since this screen shipped —
+not just for this new SBU-auto-clear path. The second, apparently
+unrelated report (retest after hard refresh looking identical) turned out
+to have a mundane explanation, not a second bug: Vivek's `sbu_id` was
+already persisted as Imaging from the first failed save, and MUI's
+`Select` doesn't fire `onChange` when the already-selected option is
+picked again — so that particular retest never actually exercised the
+code path at all.
+
+Verified end-to-end on live Dev: reverted Vivek to Critical Care first
+(matches Arun Adarsh, so no clearing expected — clean baseline), then
+redid the genuine test (Critical Care → Imaging) — Manager field reset to
+"No manager" live in the form, save succeeded, DB confirmed
+`manager_id = NULL` afterward, User Directory list stopped showing
+"reports to Arun Adarsh." Reverted Vivek to his correct real-world state
+(Critical Care, reports to Arun Adarsh) afterward, since he's a real
+person's account, not a fixture. `tsc --noEmit`/`npm run lint` clean.
+
+**Session closed for the night.** Tomorrow's plan (2026-08-18, before the
+evening demo): `ProjectDirectoryScreen.jsx`'s full MUI migration as the
+main event — deliberately deferred rather than started at the tail end of
+this already-long session, given it's the largest remaining item in the
+migration backlog and the project's own per-file ritual is slow by
+design. Two small, low-risk items queued to pick up first: the activity
+query correctness gap (`list_by_opportunity`'s approximated total) and
+the input text size/weight theme fix. Full detail in
+`.claude/active_progress.md`.
+
+## 2026-08-16/17 — Vivek account correction; Admin/GM SBU-agnostic; Fazal/Naeem territory split; Add Opportunity status-gate gap found
+
+**Amit R to Vivek account correction, executed directly on Dev.** A
+background check (triggered outside this session's visible context)
+into renaming Sales Staff "Amit R" to "Vivek" found they were not a
+naming inconsistency -- the `user_profile` row labelled "Amit R" already
+had the exact profile (manager Arun Adarsh, Critical Care) of the real,
+distinct field rep "Vivek" already documented in `docs/Zone-Hierarchy-
+Territory-Data-2026-08.md`, who had no account at all. Basheer confirmed:
+the "Amit R" row was itself the mis-labeled placeholder for what should
+have been Vivek's account all along, not two people needing two accounts.
+
+Renaming in place turned out not to be viable once a real login was
+needed: `user_profile.id` must equal the Supabase Auth `id` (ADR-024),
+and the old row's id was a synthetic demo-seed value with no matching
+Auth account -- Supabase's Dashboard "Add user" flow can't be told to
+reuse an arbitrary existing UUID either. Basheer created a real Auth
+account (`vivek@cabio-demo.com`), confirmed by direct `auth.users` query.
+Migration executed as one transaction: new `user_profile` row on the real
+Auth UUID (Sales Staff, Critical Care, manager Arun Adarsh) then
+re-pointed every live reference off the old placeholder id (a 50% split
+on "New USG m/c," a pending reminder, and -- found only via a full FK
+sweep against every table referencing `user_profile`, not just the
+opportunities originally suspected -- 3 owned Projects) then replaced the
+old coarse "South Kerala" zone-level assignment with the 6 specific
+districts from the territory doc then deleted the now-empty old
+placeholder row. Verified clean afterward (old row gone, all data intact
+on the new one).
+
+**Separate, unrelated finding surfaced reviewing Amit R's original 2
+opportunities:** both were stamped `sbu_id = Imaging` despite Amit R's
+own `sbu_id` being Critical Care. Not a bug -- `docs/Opportunity-Access-
+Hierarchy-Technical-Design.md` section 7/8's "SBU Transfers -- Frozen
+Attribution": an opportunity's SBU is fixed at creation, deliberately
+never following the owner's later SBU changes, to protect reporting
+integrity. The documented remediation for the resulting "who currently
+works this deal" gap is a manual ownership handoff -- Basheer reassigned
+both opportunities to Basheer K (Imaging), the documented fix, not a
+workaround.
+
+**Fazal/Naeem North Kerala territory split, confirmed with Haroon.**
+Two corrections to `docs/Zone-Hierarchy-Territory-Data-2026-08.md`,
+found to be stale relative to what Basheer had already fixed live:
+Alappuzha and Idukki are fully assigned to Vivek (not split with Adarsh
+at the taluk level as the doc's older, more granular section still
+claimed -- that section predates a since-simplified territory doc pass).
+And North Kerala Imaging is now two peer managers, not one: Fazal keeps
+only his 3 remaining districts (Kasaragod, Kannur, Kozhikode -- Irfan's,
+confirmed reporting to Fazal) plus his existing Mangalore/Karnataka
+Coastal charge; **Naeem**, a new Imaging Area Manager hired specifically
+for Malappuram/Wayanad, reports directly to **Haroon**, not to Fazal --
+resolving a long-open question in that doc about whether a single
+cross-SBU North Kerala manager exists above the Imaging/Critical Care
+split (it doesn't; Fazal, Naeem, and Nishad are independent peers).
+Live Dev's `user_zone` already matched the correction (verified) before
+the doc was updated to match.
+
+**Admin/GM made SBU- and zone-agnostic -- investigated, planned, built,
+shipped, `91a0906`.** `docs/Backlog.md` had carried this since 2026-07-28
+as "real multi-file work, not a quick follow-up." Re-investigated fresh
+rather than trusting the year-old scope, since a lot of the code it
+worried about (Zone Hierarchy, Multi-Zone Milestone 1, Sales Manager Tier
+Collapse, BR-OP-12) had been rebuilt since. Full audit of every RLS
+policy referencing `sbu_id` (6 migrations: `0009` through `0012`, `0014`)
+found the database security layer was already completely safe -- every
+policy gates Admin/GM on role name alone (`cabio_app_role_name() IN
+('Admin', 'General Manager') OR sbu_id = cabio_app_sbu_id()`), never
+evaluating `cabio_app_sbu_id()` for them. Same for the Python-level
+checks (`organization/repository.py`'s `list_active`, the BR-ORG-01
+manager-SBU match) -- both already role-branch before touching an
+Admin/GM's own `sbu_id`.
+
+**One genuinely dangerous gap found that the 2026-07-28 backlog entry
+never caught:** `UserMeResponse.sbu` was non-nullable. Since this backs
+`/auth/me`, called on every login, leaving it unfixed would have locked
+every Admin/GM out of the app the moment their `sbu_id` went `NULL` --
+not cosmetic, a hard lockout. Sequenced first in the build for exactly
+this reason.
+
+Decision needed on `UserCreate.sbu_id` (create a new Admin/GM with no
+SBU at all, or still require a placeholder at creation and only allow
+clearing it later): Basheer chose full support (option b) -- a new
+Admin/GM can skip SBU entirely at creation. This also surfaced a second,
+real gap the plan's first draft missed: `UserDirectoryScreen.tsx`'s Add
+User form unconditionally required SBU regardless of role (`if
+(!form.sbu_id) throw new Error("SBU is required")`, no exception) -- so
+this ended up touching the frontend too, not staying backend-only as
+first scoped.
+
+Built: migration `0022` (`sbu_id` nullable, backfilled to `NULL` by
+`role_name`, not hardcoded user ids -- same reasoning as `0021`'s
+role-id-constant pattern, applies identically to any environment).
+*Real bug caught applying it, not just written correctly the first
+time:* the migration's `UPDATE ... SET sbu_id = NULL` ran before the
+`ALTER COLUMN ... DROP NOT NULL` -- failed immediately with a
+`NotNullViolation` against live Dev. Postgres's transactional DDL rolled
+it back cleanly (confirmed `alembic current` still read `0021`
+afterward, no partial state); swapped the statement order, reran, clean.
+`UserProfile` model, `UserMeResponse`/`UserListResponse`/`UserCreate`
+schemas, `set_rls_context()`'s `None`-guard (mirroring the now-dead
+`cabio_app_zone_id()` GUC's old guard), `create_user`'s role-conditional
+SBU requirement (mirrors BR-OP-12's shape, extended slightly further
+than originally planned: the existing manager-SBU-match check now also
+exempts the case where the *new user* being created is Admin/GM, not
+just where the manager is -- a real gap in the pre-existing check, found
+while touching the same lines). 5 new/updated backend tests, full
+519-test suite green, `ruff check` clean.
+
+**Critical-path verification, not just unit tests:** exercised
+`/auth/me`'s exact code path directly against Dev (real ORM fetch plus
+`set_rls_context` plus `UserMeResponse` construction) for all 3 real
+Admin/GM accounts with `sbu_id` genuinely `NULL` -- confirmed working
+before considering this done, since a passing unit test suite wouldn't
+have caught a live-DB-only failure mode here.
+
+**Zone placeholder cleanup, separate and much smaller.** Same session,
+Basheer asked about Admin/GM's `zone_id` too. Checked the same things as
+for `sbu_id` and found `zone_id` had already been built correctly from
+day one: column already nullable, both schemas already `| None`, the
+zone-based RLS SQL function (`cabio_app_zone_id()`) already dead code
+since migration `0018` moved zone visibility to `user_zone`/
+`zone_closure`, the Add/Edit User form never required it, and the
+sidebar already rendered it defensively (`userProfile.zone ? ... : ""`).
+Pure stale-data cleanup, no code change needed: cleared `zone_id` and
+deleted the matching `user_zone` row for all 5 Admin/GM rows (3 real
+plus 2 deactivated fixtures) directly. Re-verified `/auth/me` clean
+afterward.
+
+**One loose end, not resolved this session:** `Physical-Schema.sql`
+regen (`docker run postgres:17 pg_dump ...`) -- Docker Desktop's CLI is
+installed on this machine but its engine daemon isn't running, so the
+regen command fails immediately. Needs Docker Desktop started, or
+Basheer to run the regen himself.
+
+**2026-08-17 (later) -- `ProjectDirectoryScreen.jsx` Add Opportunity SBU
+parity bug, found and fixed; bigger status-gate field gap found across
+all 3 create screens, fix deferred to tomorrow pending a decision.**
+Basheer reported "SBU is required to create an Opportunity as Admin or
+General Manager" with no SBU dropdown visible, adding an Opportunity from
+within a Project. Root cause: `ProjectDirectoryScreen.jsx`'s Add
+Opportunity form never had BR-OP-12's Admin/GM SBU-override logic at
+all -- `Customer360Screen.tsx` and `QuickLeadModal.tsx` (+LEAD) both
+already had it. Not a regression from the SBU-agnostic work above -- the
+form was always missing it; making Admin/GM's placeholder genuinely
+`NULL` just stopped it from coincidentally working. Fixed, mirroring the
+other two screens' exact pattern: `isSbuOverrideRole` check, a role-gated
+"SBU *" dropdown, `payload.sbu_id` wired to it, and the item picker's
+product list now refetches against the chosen override SBU (BR-OP-11)
+instead of the caller's now-blank placeholder. `eslint`/Tailwind-guard
+and `tsc --noEmit` clean. Committed 2026-08-18 (`874bd8f`).
+
+**Bigger gap found immediately after, while checking parity across all
+3 Add Opportunity screens per Basheer's request.** Basheer separately hit
+"Hold Reason is required to put an opportunity On-Hold." -- with the
+trailing period, which turned out to be the tell: that's the *backend's*
+validator message (`opportunity/validators.py:161`), not any frontend
+screen's client-side check, meaning the request reached the server with
+nothing catching it first. `validate_status_transition`'s own docstring
+confirms this is deliberate design, not an accident -- it's meant to gate
+*creation* too ("Pass `current_status_code='ACTIVE'`... when creating an
+opportunity so that non-Active initial statuses are validated"), not just
+edits. All 3 create screens (Customer 360, +LEAD, Project) list every
+status unfiltered in their initial Status dropdown, and none of them have
+Hold Reason/Reactivation Date/Loss Reason/Competitor Name fields or
+validation at create time -- only their Edit forms do.
+
+**Deeper than a missing UI field, though:** `OpportunityCreate` (backend
+schema) has no `hold_reason_id`/`reactivation_date`/`loss_reason_id`/
+`competitor_name` fields at all -- only `OpportunityUpdate` does -- and
+`create_opportunity`'s call to `validate_status_transition` hardcodes all
+of them to `None` unconditionally. So creating directly into On Hold or
+Lost is currently impossible regardless of frontend work; a perfect
+dropdown couldn't fix it without a backend schema/service change too.
+Two fix directions presented to Basheer, not decided yet: (A) full
+support -- add the missing fields to `OpportunityCreate`, thread them
+through `create_opportunity`, then build the frontend fields in all 3
+create screens; (B) narrower -- stop offering On Hold/Lost/Won as initial
+Status choices at create time at all (restrict to Active-family
+statuses), since nobody actually creates a deal that's already closed in
+normal use, and Edit already handles these transitions correctly
+everywhere. **Deferred to tomorrow, decision needed first.**
+
+## 2026-08-18 — BR-OP-10 fix: restrict initial Opportunity Status to Active (option B)
+
+Decision made the next session: **(B)**, the narrower fix — stop
+offering On Hold/Lost/Won as initial Status choices at create time,
+rather than (A)'s full backend-schema + all-3-screens field build-out.
+Investigation before building turned up that this isn't a new policy
+call at all: `docs/Business-Rules.md`'s **BR-OP-10** already states
+"User-facing Opportunity creation workflows must not allow direct
+creation of Opportunities in WON, LOST, STALLED, or ON_HOLD status" --
+the 3 create screens were simply violating an existing rule, not
+missing an undecided feature. The reference table also has a 5th status
+(`STALLED`, `is_system_generated = TRUE`) never surfaced as a user
+choice anywhere, so "Active only" is the complete fix, not a partial one.
+
+Same one-line filter added at each of the 3 confirmed create-only
+Status dropdown render sites (`oppStatuses.filter((s) => s.status_code
+=== "ACTIVE").map(...)`, in place of the unfiltered `.map(...)`):
+`Customer360Screen.tsx` ("New Opportunity" modal), `QuickLeadModal.tsx`
+(whole modal is create-only; its local `StatusOption` type had to gain
+a `status_code` field to support the filter), `ProjectDirectoryScreen.jsx`
+("Add Opportunity" modal). Edit/Detail-screen Status dropdowns in all 3
+files (`Customer360Screen.tsx`'s and `ProjectDirectoryScreen.jsx`'s own
+"Edit Opportunity" forms, `OpportunityDetailScreen.tsx`'s status-change
+control) were deliberately left untouched -- full Active/On-Hold/Won/Lost
+list still available there, since those are the only place a status
+*transition* legitimately happens post-creation. No backend or service
+change needed -- `OpportunityCreate` already only ever receives whatever
+`status_id` the picker offers.
+
+`npm run lint` (incl. Tailwind guard) and `npx tsc --noEmit` both clean.
+Manually verified end-to-end on Dev across all 3 create screens plus the
+edit/detail regression check (Basheer's own pass). Committed `91e7fc2`.
+
+## 2026-08-18 — `ProjectDirectoryScreen.jsx` MUI migration — plan agreed, conversion starting
+
+Full triple-conversion plan (Tailwind -> MUI `sx`, manual `.then()`/SWR
+cache -> React Query, `.jsx` -> `.tsx`) worked out and agreed with
+Basheer before touching code, per the file's size (1,090 lines) and the
+project's mandatory per-file migration ritual. One commit, not split --
+the fetch and styling code in this file are too entangled to separate
+cleanly, same call `ProductCatalogScreen.tsx`/`CustomerDirectoryScreen.tsx`
+made on their own migrations.
+
+**Key architectural decision: reuse `Customer360Screen.tsx`'s existing
+React Query keys rather than invent new ones**, since that screen
+already queries almost identical data (its Projects tab + Add/Edit
+Opportunity modals are a near-structural twin of this file's
+`ProjectDetailView`). Reusing `["opportunities", "byAccount", accountId]`,
+`["opp-items", opportunityId]`, `["stages"]`/`["statuses"]`/
+`["leadSources"]`/`["holdReasons"]`/`["lossReasons"]`, `["products",
+"picker", sbuId]`, `["sbus"]`, `["users", "all"]`, and
+`["projects", "byAccount", accountId]` (all `staleTime: Infinity` where
+Customer360Screen.tsx already sets it) means this file's cache is warm
+for free whenever the other screen was visited this session, and
+invalidating a shared key on mutation refreshes both screens --
+resolving the standing Backlog item ("this screen's opportunity
+create/update never invalidates React Query caches") as a natural side
+effect, not a separate patch. Only the top-level paginated project list
+needs a genuinely new key (`["projects", "list", {search, page}]`) since
+no other screen already queries it.
+
+Typing plan: local stopgap interfaces (`StageOption`/`StatusOption`/
+`UserOption`/`ProductOption`) copied verbatim from
+`OpportunityDetailScreen.tsx`, not redefined differently; opportunity/
+project lists stay `any[]` via `as Promise<any[]>` casts and
+`services/accounts.ts`'s `number`-typed ID params get the same `as any`
+cast at call sites, both matching `Customer360Screen.tsx`'s own
+treatment of the identical calls -- retyping the shared service layer
+itself is the separate, already-deferred Backlog item, out of scope
+here. Converting to `.tsx` will also type-check this file's use of
+`FormModal`/`ActivityTimeline`/`OpportunityItemAddRow`/
+`OpportunityItemsList` (all already `.tsx`) for the first time.
+
+Ritual to follow (per Frontend-Implementation-Standards.md §9): convert
+-> property-diff (evidence table against pre-migration git history) ->
+triage (§6.8 rules) -> Basheer's manual E2E -> guard-green (`lint` +
+`tsc --noEmit`) -> honest §9 table update (moves this file's row from
+Pending to Fully Migrated) -> commit. **Not started yet as of this
+entry** -- conversion begins next.
+
+## 2026-08-18 (later) -- `ProjectDirectoryScreen.jsx` MUI migration
+completed -- last pending file, MUI/React Query/TypeScript migration closed out
+
+Full triple-conversion (1,090 lines): Tailwind -> MUI `sx`, manual
+`.then()`/module-level SWR cache (`projectListCache`) -> React Query,
+`.jsx` -> `.tsx`, following the plan agreed earlier the same day (above).
+
+**Key decision, not just a same-file port:** rather than inventing new
+query keys, this migration deliberately reused `Customer360Screen.tsx`'s
+existing keys for data both screens already fetch --
+`["opportunities","byAccount",accountId]`, `["opp-items",id]`,
+`["stages"]`/`["statuses"]`/`["leadSources"]`/`["holdReasons"]`/
+`["lossReasons"]`, `["products","picker",sbuId]`, `["sbus"]`,
+`["users","all"]`, `["projects","byAccount",accountId]` (all
+`staleTime: Infinity` where `Customer360Screen.tsx` already sets it).
+Only the top-level paginated project list needed a genuinely new key
+(`["projects","list",{search,page}]`), given `placeholderData:
+keepPreviousData` so pagination doesn't flash a full loading state.
+Reusing these keys closes the standing gap where this screen's
+opportunity create/update never invalidated any cache -- invalidating a
+shared key now refreshes Customer 360's Opportunities tab too, as a
+natural side effect of the key choice, not a separate patch. The
+module-level `projectListCache` `Map` and its `CACHE_TTL_MS`/
+`getCached`/`setCache` helpers were deleted outright, not ported --
+superseded by React Query's own cache/staleness handling, same
+reasoning as every prior migration on this list. Local stopgap types
+(`StageOption`/`StatusOption`/etc. pattern) were skipped in favor of
+`any` throughout, matching `Customer360Screen.tsx`'s own established
+looseness for this exact same Project/Opportunity create/edit shape --
+not a new precedent.
+
+**Three real bugs found and fixed during manual verification**
+(Basheer's own pass on Dev), none of them in this file's own logic alone:
+1. **Query-key collision on `["accounts","picker"]`** with
+   `QuickLeadModal.tsx`'s own account picker -- this file's `queryFn`
+   returned the full `{items,total}` page object, `QuickLeadModal.tsx`'s
+   returned the bare `items` array; since `QuickLeadModal` is
+   always-mounted, whichever `queryFn` ran last poisoned the shared
+   cache entry for the other, crashing `QuickLeadModal` on every Create
+   Project. Fixed by matching shapes (bare array) so the shared entry is
+   unambiguous regardless of which component's `queryFn` executes.
+2. **Edit Project bounced back to the list on every save** instead of
+   reflecting the edit in place -- a pre-existing gap carried over from
+   the original file (`selectedProject` was a static snapshot with no
+   way to refresh, so returning to the list was the only way to see the
+   update). Fixed by patching `selectedProject` locally from the
+   already-loaded status/owner picker lists instead of clearing it.
+3. **Edit Opportunity's product picker ignored the opportunity's own
+   SBU** -- `productsSbuId` only ever resolved from the Add flow's
+   override or the caller's own SBU, never the opportunity being edited;
+   Admin/GM (whose own `userProfile.sbu` is null per BR-OP-12) saw every
+   product unfiltered instead of just the deal's actual SBU.
+   `Customer360Screen.tsx`'s own Edit Opportunity modal had the
+   identical gap (same pattern, not copied from here) -- fixed there too
+   in the same session, single-line addition to its own `productsSbuId`
+   resolution.
+
+Also added, adjacent but not part of the migration itself: the global
+"+ Lead" button now pre-fills Account/Project from wherever it was
+clicked (Customer 360, Opportunity Detail, or a Project's own detail
+view), mirroring `LogActivityModal.tsx`'s existing context-inference
+pattern exactly -- `QuickLeadModal.tsx` gained `initialAccountId`/
+`initialProjectId` props for this.
+
+`tsc --noEmit` and `npm run lint` (incl. Tailwind guard) both clean.
+**Manually verified end-to-end on Dev by Basheer** -- full checklist
+covering list/search/pagination, Create/Edit Project, Add/Edit
+Opportunity (including Admin/GM SBU override and BR-OP-02/03/05
+status-gated fields), Products sub-modals, cross-screen navigation via
+Customer 360, and ADR-030 always-mounted state preservation across
+sidebar navigation. One deliberate non-change confirmed during
+verification: `DemoApp.tsx`'s `navigate()` explicitly clears Project
+Directory's detail-view selection on every sidebar navigation (via
+`projectResetRef`) while leaving search/pagination state untouched --
+pre-existing intentional behavior carried over unchanged from the
+original file, not a migration regression; Basheer confirmed keeping it
+as-is rather than changing it to preserve the detail view too.
+
+**Two other-session collision found and worked around, not caused by
+this migration:** while committing, `QuickLeadModal.tsx` and
+`Customer360Screen.tsx` were found to have a concurrent session's
+Referral Credit feature work (BR-FIN-07) interleaved line-by-line with
+this session's fixes in the same uncommitted working tree. Split
+cleanly via zero-context diffs (`git diff -U0`) to isolate exact
+line-level hunks, staged only this session's hunks via `git apply
+--cached` (patches the index only), verified the staged subset
+compiles/lints cleanly in isolation, and confirmed via blob-hash
+comparison that the working tree's final content was byte-identical to
+before the split -- the other session's work was undisturbed and
+remained ready to commit separately.
+
+Following this closeout, `docs/Frontend-Implementation-Standards.md`'s
+§9 table reached 0 pending for the first time -- triggering that
+document's own "Post-migration cleanup" instructions (delete Superseded
+blocks, collapse §9, bump to v3.0). See the next entry below for the
+preserved history of every migration §9 tracked, before that cleanup
+removed the narrative from the standards doc itself.
+
+## 2026-08-18 -- `docs/Frontend-Implementation-Standards.md` §9 migration
+history preserved before doc cleanup (retrospective consolidation)
+
+§9's own text calls its per-file narrative entries "traceability aids
+with a deliberate expiry, not permanent documentation" -- once the
+table reached 0 pending (previous entry), its own "Post-migration
+cleanup" instructions call for deleting the Superseded pattern blocks
+and collapsing §9 entirely, since a standards doc's job is describing
+the current standard, not archiving how the codebase got there. That
+history belongs here instead. Consolidating everything §9 recorded,
+across the whole migration, before it's removed from that doc:
+
+**`ProductCatalogScreen.tsx`** (migrated 2026-08-07, prerequisite for
+the Product Lifecycle feature build, which needed to add a new field to
+this screen's create/edit form without adding more Tailwind). Full
+triple-conversion: Tailwind -> MUI `sx`, the manual `.then()`/
+module-level `productListCache` `Map` -> `useQuery` (list, count,
+single-product-detail, and product-documents all as independent
+parallel queries) plus `useMutation` for collateral-link create/delete,
+`.jsx` -> `.tsx`. The hand-rolled `ProductFormModal` was replaced with
+the shared `FormModal` component (matching `UserDirectoryScreen.tsx`'s
+precedent) rather than converted in place. `isMountedRef` and the
+`CACHE_TTL_MS`/`productListCache` module-level cache were both deleted
+outright, not ported -- both superseded by React Query's own
+cache/staleness handling. Added three new hand-written type aliases to
+`types/api.ts` (`ProductListResponse`, `ProductResponse`,
+`DocumentResponse`) since no prior screen had imported them. Scope note:
+this migration only closed the Styling/React Query/TypeScript columns --
+it did not restructure the screen's internal list<->detail navigation
+into the ADR-030 always-mounted pattern, since that's a
+navigation-architecture change orthogonal to what the migration tracked.
+
+**`OpportunityDetailScreen.tsx`** (migrated, date not recorded in the
+original §9 entry) -- moved to fully-migrated once its React Query
+commit landed: all 6 manual `.then()` chains converted to `useQuery`,
+gated by `enabled` on the state that used to trigger each fetch
+(`editing`/`showAdd`/`showEditOpp`) so behavior was unchanged, just
+cached and parallelized. Its master-data lookups (stages/statuses/
+users/products/stakeholders) got local stopgap types
+(`StageOption`/`StatusOption`/`UserOption`/`ProductOption`/
+`StakeholderOption`) in place of `any[]`; the transient edit-buffer
+state (`editItems`/`editSplits`) and a few pre-existing `as any` ID
+casts remained untyped -- never claimed as "no `any` anywhere in the
+file."
+
+**`CustomerDirectoryScreen.tsx`** (migrated 2026-08-11, `59baa6b`).
+Full triple-conversion, same shape as `ProductCatalogScreen.tsx`'s own
+migration: module-level `accountListCache` (SWR, 30s TTL) and
+`isMountedRef` deleted outright, not ported -- superseded by React
+Query's own cache/staleness handling, which naturally reproduced the
+"instant paint on back-navigation" behavior the module cache's own
+comment described wanting. Manual `.then()` chains (list -> dependent
+counts fetch, plus a separately-debounced parent-account search)
+converted to `useQuery`/`useMutation`. Also fixed in
+`services/accounts.ts` while there: `listAccounts`/`getAccount`/
+`getAccountCounts`/`createAccount` were typed with `number` ids and
+`Promise<unknown>` returns despite this app's ids being UUID strings
+everywhere else -- retyped against `AccountListResponse`/
+`AccountResponse`/`AccountCountsEntry` (all already existed in
+`types/api.ts`, zero new hand-written aliases needed). Every other
+function in that file was left untouched -- same pre-existing issue,
+out of scope. A real cross-file simplification, not just a same-file
+port: the `accountUpdateRef`/`onAccountUpdate` prop chain (`DemoApp.tsx`
+-> `Customer360Screen.tsx`) existed solely to patch an edited account
+back into this screen's now-deleted module cache -- replaced by one
+`queryClient.invalidateQueries({queryKey:["accounts","list"]})` call in
+`Customer360Screen.tsx`'s `handleUpdateAccount`, and the entire
+ref/prop chain removed from both files. One property-diff gap found,
+initially dropped, then restored on review: the original scrolled the
+list container to top after a successful create -- first pass judged
+this a one-time decoration and left it out; on reflection its actual
+purpose was preventing the user from being left stranded mid-scroll
+with no indication anything happened, a usability concern worth
+restoring, not a decoration. Restored, called from the create
+mutation's `onSuccess`. Parent-account search (create modal) upgraded
+from a hand-rolled absolute-positioned dropdown to MUI `Autocomplete`,
+matching `Customer360Screen.tsx`'s own edit-form picker for the
+identical field on the identical entity -- not a new pattern.
+
+**`ProjectDirectoryScreen.tsx`** (migrated 2026-08-18) -- see the entry
+immediately above this one for full detail; not repeated here.
+
+Every migration in this list shipped with `tsc --noEmit` and `npm run
+lint` (incl. the `check-no-tailwind.js` Tailwind guard) clean before
+commit -- that guard-green requirement never varied across the whole
+effort.
