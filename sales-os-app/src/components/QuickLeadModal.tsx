@@ -24,7 +24,7 @@ interface QuickLeadModalProps {
 interface AccountOption { id: string; name: string }
 interface ProjectOption { id: string; name: string }
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: number }
-interface StatusOption { id: string; status_name: string }
+interface StatusOption { id: string; status_name: string; status_code: string }
 interface UserOption { id: string; display_name: string }
 interface LeadSourceOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
@@ -258,7 +258,8 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId }: Qu
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           >
             <MenuItem value="">Select status</MenuItem>
-            {statuses.map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
+            {statuses.filter((s) => s.status_code === "ACTIVE").map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
           </TextField>
         </Box>
         <TextField

@@ -553,7 +553,8 @@ function ProjectDetailView({ project: p, onBack, onEdit, refreshOppsRef, openLog
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           >
             <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
+            {oppStatuses.filter((s) => s.status_code === "ACTIVE").map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
           </TextField>
         </div>
         <TextField

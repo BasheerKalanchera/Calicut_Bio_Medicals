@@ -1452,7 +1452,8 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           </TextField>
           <TextField select label="Status *" value={newOStatusId} onChange={(e) => setNewOStatusId(e.target.value)} fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
+            {oppStatuses.filter((s: any) => s.status_code === "ACTIVE").map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
           </TextField>
         </Box>
         <TextField select label="Lead Source" value={newOLeadSourceId} onChange={(e) => setNewOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
