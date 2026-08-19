@@ -59,6 +59,8 @@ def _mock_opportunity(**overrides) -> MagicMock:
         "sbu": _mock_nested(id=uuid.uuid4(), name="Imaging"),
         "project": None,
         "lead_source": None,
+        "referred_by_note": None,
+        "referred_by": None,
     }
     defaults.update(overrides)
     opp = MagicMock(spec=Opportunity)

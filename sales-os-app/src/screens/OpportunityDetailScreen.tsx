@@ -4,11 +4,13 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   IconButton,
   MenuItem,
   TextField,
@@ -47,6 +49,16 @@ import ReminderRow from "../components/ReminderRow";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
+
+// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
+// field first becomes relevant -- mirrors backend/app/domains/opportunity/
+// validators.py's BR-OP-00 gates exactly. A field showing purely from an
+// already-set value (not from the stage threshold) is never hidden by this --
+// see each field's render condition below (Backlog decision, 2026-08-18).
+const STAGE_ORDER_QUALIFIED = 20;
+const STAGE_ORDER_DEMO = 30;
+const STAGE_ORDER_NEGOTIATION = 50;
+const STAGE_ORDER_ORDER = 60;
 
 interface Props {
   opportunityId: string;
@@ -200,6 +212,7 @@ function OverviewTab({
           <Field label="SBU"                 value={opp.sbu.name} />
           <Field label="Lead Source"         value={opp.lead_source?.name ?? null} />
           <Field label="Associated Project"  value={opp.project?.name ?? null} />
+          <Field label="Referred By"         value={opp.referred_by?.display_name ?? opp.referred_by_note ?? null} />
         </Box>
         {opp.status.status_code === "ON_HOLD" && (
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
@@ -1210,6 +1223,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editReactivationDate, setEditReactivationDate] = useState("");
   const [editLossReasonId, setEditLossReasonId]   = useState("");
   const [editCompetitorName, setEditCompetitorName] = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [editIsExternalReferrer, setEditIsExternalReferrer] = useState(false);
+  const [editReferredByUserId, setEditReferredByUserId]     = useState("");
+  const [editReferredByNote, setEditReferredByNote]         = useState("");
 
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
@@ -1244,6 +1261,19 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     enabled:  showEditOpp,
     queryFn:  async () => {
       const d = await listUsers();
+      return Array.isArray(d) ? (d as UserOption[]) : [];
+    },
+    staleTime: Infinity,
+  });
+
+  // Distinct query key -- must not reuse ["users","all"] above (despite its name,
+  // that one calls listUsers() with no scope arg, defaulting to "scoped") or
+  // ["users","sbu"] (line ~484, Splits tab) -- this needs a genuine scope="all" list.
+  const { data: referralUsers = [] } = useQuery({
+    queryKey: ["users", "referral-picker"],
+    enabled:  showEditOpp,
+    queryFn:  async () => {
+      const d = await listUsers("all");
       return Array.isArray(d) ? (d as UserOption[]) : [];
     },
     staleTime: Infinity,
@@ -1344,6 +1374,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditReactivationDate(opp.reactivation_date ?? "");
     setEditLossReasonId(opp.loss_reason_id ?? "");
     setEditCompetitorName(opp.competitor_name ?? "");
+    setEditIsExternalReferrer(!!opp.referred_by_note);
+    setEditReferredByUserId(opp.referred_by?.id ?? "");
+    setEditReferredByNote(opp.referred_by_note ?? "");
     setShowEditOpp(true);
   };
 
@@ -1369,6 +1402,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     if (newStatus?.status_code === "WON" && !editPoNumber.trim()) {
       throw new Error("PO Number is required to mark an opportunity as Won");
     }
+    // LeadSource has no separate code column -- `name` already holds the pseudo-code.
+    // Computed inline (not the render-time `editLeadSourceCode` below, out of scope here).
+    const referralLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
     const payload: Record<string, unknown> = {
       name:                  editName.trim(),
       stage_id:              editStageId  || undefined,
@@ -1390,6 +1426,20 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       payload.loss_reason_id = editLossReasonId;
       if (editCompetitorName.trim()) payload.competitor_name = editCompetitorName.trim();
     }
+    if (referralLeadSourceCode === "REFERRAL") {
+      if (editIsExternalReferrer) {
+        payload.referred_by_note = editReferredByNote.trim() || null;
+        payload.referred_by_user_id = null;
+      } else {
+        payload.referred_by_user_id = editReferredByUserId || null;
+        payload.referred_by_note = null;
+      }
+    } else {
+      // Lead Source no longer Referral -- clear any previously-set referral credit
+      // rather than leaving it stranded and invisible (BR-FIN-07).
+      payload.referred_by_user_id = null;
+      payload.referred_by_note = null;
+    }
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Reconstruct nested objects from loaded master data so header + strip +
@@ -1397,6 +1447,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     const newStage       = stages.find((s) => s.id === editStageId);
     const newOwner       = users.find((u) => u.id === editOwnerId);
     const newLeadSource  = leadSources.find((ls) => ls.id === editLeadSourceId);
+    const newReferredBy  = referralLeadSourceCode === "REFERRAL" && !editIsExternalReferrer
+      ? referralUsers.find((u) => u.id === editReferredByUserId)
+      : undefined;
     applyOppPatch({
       name:                  editName.trim(),
       win_probability:       editWinProb !== "" ? editWinProb : opp.win_probability,
@@ -1410,6 +1463,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       reactivation_date:     newStatus?.status_code === "ON_HOLD" ? editReactivationDate : opp.reactivation_date,
       loss_reason_id:        newStatus?.status_code === "LOST" ? editLossReasonId : opp.loss_reason_id,
       competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
+      referred_by_note:      referralLeadSourceCode === "REFERRAL" ? (editIsExternalReferrer ? (editReferredByNote.trim() || null) : null) : null,
+      referred_by:           referralLeadSourceCode === "REFERRAL" ? (newReferredBy ?? null) : null,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
@@ -1421,6 +1476,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker below renders as the label.
   const editLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
+  const editStageOrder = stages.find((s) => s.id === editStageId)?.display_order ?? 0;
 
   // initialOpportunity can be just an {id, name} reference (Reminder
   // click-through) — every render below assumes the full PipelineOpportunity
@@ -1589,6 +1645,34 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         </Box>
         <TextField
           select
+          label="Lead Source"
+          value={editLeadSourceId}
+          onChange={(e) => setEditLeadSourceId(e.target.value)}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select source</MenuItem>
+          {leadSources.map((ls) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
+        </TextField>
+        {editLeadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={editIsExternalReferrer} onChange={(e) => { setEditIsExternalReferrer(e.target.checked); setEditReferredByUserId(""); setEditReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {editIsExternalReferrer ? (
+              <TextField label="Referred By" value={editReferredByNote} onChange={(e) => setEditReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={editReferredByUserId} onChange={(e) => setEditReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
+        <TextField
+          select
           label="Owner"
           value={editOwnerId}
           onChange={(e) => setEditOwnerId(e.target.value)}
@@ -1600,37 +1684,31 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           {users.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
         </TextField>
         <TextField label="Win Probability %" type="number" value={editWinProb} onChange={(e) => setEditWinProb(e.target.value)} placeholder="0–100" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        <TextField
-          label={`Indicative Value (₹ Lakhs)${hasItems ? " (auto)" : ""}`}
-          type="number"
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          disabled={hasItems}
-          placeholder="e.g. 25.50"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        {editLeadSourceCode !== "REPEAT_ORDER" && (
-          <>
-            <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-            <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-            <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-          </>
+        {(editStageOrder >= STAGE_ORDER_QUALIFIED || hasItems || editValue !== "") && (
+          <TextField
+            label={`Indicative Value (₹ Lakhs)${hasItems ? " (auto)" : ""}`}
+            type="number"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            disabled={hasItems}
+            placeholder="e.g. 25.50"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
         )}
-        <TextField
-          select
-          label="Lead Source"
-          value={editLeadSourceId}
-          onChange={(e) => setEditLeadSourceId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select source</MenuItem>
-          {leadSources.map((ls) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
-        </TextField>
-        <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoStart !== "") && (
+          <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoEnd !== "") && (
+          <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "") && (
+          <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {(editStageOrder >= STAGE_ORDER_ORDER || editPoNumber.trim() !== "" || editStatusCode === "WON") && (
+          <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         {editStatusCode === "ON_HOLD" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
             <TextField

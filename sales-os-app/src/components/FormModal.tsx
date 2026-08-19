@@ -64,7 +64,8 @@ export default function FormModal({
       disableEnforceFocus={disableEnforceFocus}
       slotProps={{ paper: { sx: { maxWidth: "28rem" } } }}
     >
-      <form
+      <Box
+        component="form"
         onSubmit={handleSubmit}
         onKeyDown={(e) => {
           const tag = (e.target as HTMLElement).tagName;
@@ -72,14 +73,23 @@ export default function FormModal({
             e.preventDefault();
           }
         }}
+        // A plain <form> here breaks the flex chain Dialog's Paper relies on to let
+        // DialogContent scroll independently -- without display:flex/minHeight:0/
+        // overflow:hidden here, the whole dialog (title + fields + actions) scrolls
+        // as one block instead of just the fields, hiding the header/buttons on a
+        // long form. Restoring the flex column + min-height:0 lets DialogContent's
+        // own overflowY:auto (MUI's default) take over as intended.
+        sx={{ display: "flex", flexDirection: "column", minHeight: 0, overflow: "hidden" }}
       >
         <DialogTitle component="h3">{title}</DialogTitle>
+        {error && (
+          // Deliberately outside DialogContent -- a sibling flex item, not part of the
+          // scrollable fields area, so the error stays visible without scrolling up to it.
+          <Alert severity="error" sx={{ mx: 3, mb: 1.5 }}>
+            {error}
+          </Alert>
+        )}
         <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
-              {error}
-            </Alert>
-          )}
           <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {children}
           </Box>
@@ -92,7 +102,7 @@ export default function FormModal({
             {submitting ? "Saving..." : submitLabel}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   );
 }

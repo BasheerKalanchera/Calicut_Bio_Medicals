@@ -2042,6 +2042,10 @@ export interface components {
             demo_end_date?: string | null;
             /** Po Number */
             po_number?: string | null;
+            /** Referred By User Id */
+            referred_by_user_id?: string | null;
+            /** Referred By Note */
+            referred_by_note?: string | null;
             /**
              * Items
              * @default []
@@ -2176,6 +2180,10 @@ export interface components {
             hold_reason_id: string | null;
             /** Reactivation Date */
             reactivation_date: string | null;
+            /** Referred By User Id */
+            referred_by_user_id: string | null;
+            /** Referred By Note */
+            referred_by_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2248,6 +2256,10 @@ export interface components {
             hold_reason_id?: string | null;
             /** Reactivation Date */
             reactivation_date?: string | null;
+            /** Referred By User Id */
+            referred_by_user_id?: string | null;
+            /** Referred By Note */
+            referred_by_note?: string | null;
         };
         /** OwnerNested */
         OwnerNested: {
@@ -2400,6 +2412,8 @@ export interface components {
             hold_reason_id: string | null;
             /** Reactivation Date */
             reactivation_date: string | null;
+            /** Referred By Note */
+            referred_by_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2417,6 +2431,7 @@ export interface components {
             sbu: components["schemas"]["SBUNested"];
             project: components["schemas"]["ProjectNested"] | null;
             lead_source: components["schemas"]["LeadSourceNested"] | null;
+            referred_by: components["schemas"]["OwnerNested"] | null;
         };
         /** ProductCreate */
         ProductCreate: {
@@ -3092,10 +3107,13 @@ export interface components {
             loss_reason_id: string | null;
             /** Competitor Name */
             competitor_name: string | null;
+            /** Referred By Note */
+            referred_by_note: string | null;
             stage: components["schemas"]["OpportunityStageNested"];
             status: components["schemas"]["OpportunityStatusNested"];
             owner: components["schemas"]["OwnerNested"];
             sbu: components["schemas"]["SBUNested"];
+            referred_by: components["schemas"]["OwnerNested"] | null;
         };
         /** WorkspaceProject */
         WorkspaceProject: {

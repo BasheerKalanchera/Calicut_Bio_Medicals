@@ -68,12 +68,21 @@ import OpportunityItemsList from "../components/OpportunityItemsList";
 import type { DraftOpportunityItem } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
 
+// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
+// field first becomes relevant -- mirrors backend/app/domains/opportunity/
+// validators.py's BR-OP-00 gates exactly, so a field never appears later than
+// the point the server would actually start requiring it.
+const STAGE_ORDER_QUALIFIED = 20;
+const STAGE_ORDER_DEMO = 30;
+const STAGE_ORDER_NEGOTIATION = 50;
+const STAGE_ORDER_ORDER = 60;
+
 interface Props {
   accountId: string;
   initialAccount?: any;
   onBack: () => void;
   onSelectAccount?: (account: { id: string; name: string }) => void;
-  onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }, detailTab?: string, customer360Tab?: string) => void;
   onSelectProject?: (project: { id: string; name: string }) => void;
   // Set when re-mounting after Back from Opportunity Detail (e.g. the
   // stakeholder bridge list), so this screen reopens on the tab the user
@@ -333,7 +342,7 @@ function StakeholderOpportunitiesModal({
 }: {
   stakeholder: { id: string; name: string } | null;
   onClose: () => void;
-  onSelectOpportunity?: (opportunity: { id: string; name: string }, initialTab?: string) => void;
+  onSelectOpportunity?: (opportunity: { id: string; name: string }, detailTab?: string, customer360Tab?: string) => void;
 }) {
   const { data: opportunities = [], isLoading } = useQuery({
     queryKey: ["stakeholder-opportunities", stakeholder?.id],
@@ -364,7 +373,7 @@ function StakeholderOpportunitiesModal({
                 key={o.id}
                 fullWidth
                 onClick={() => {
-                  onSelectOpportunity?.({ id: o.id, name: o.name }, "stakeholders");
+                  onSelectOpportunity?.({ id: o.id, name: o.name }, "stakeholders", "stakeholders");
                   onClose();
                 }}
                 sx={{
@@ -727,7 +736,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOSbuId, setNewOSbuId] = useState("");
   const [newOProjectId, setNewOProjectId] = useState("");
   const [newOStageId, setNewOStageId] = useState("");
-  const [newOStatusId, setNewOStatusId] = useState("");
   const [newOLeadSourceId, setNewOLeadSourceId] = useState("");
   const [newOOwnerId, setNewOOwnerId] = useState("");
   const [newOWinProb, setNewOWinProb] = useState("");
@@ -736,6 +744,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newODemoEnd, setNewODemoEnd] = useState("");
   const [newOClosureDate, setNewOClosureDate] = useState("");
   const [newOPoNumber, setNewOPoNumber] = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [newOIsExternalReferrer, setNewOIsExternalReferrer] = useState(false);
+  const [newOReferredByUserId, setNewOReferredByUserId] = useState("");
+  const [newOReferredByNote, setNewOReferredByNote] = useState("");
   const [newOItems, setNewOItems] = useState<DraftOpportunityItem[]>([]);
   const [editingOpp, setEditingOpp] = useState<any | null>(null);
   const [showEditOppItems, setShowEditOppItems] = useState(false);
@@ -755,10 +767,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // (see handleUpdateOpp), so editing an opportunity without touching its status
   // never overwrites a previously-set hold/loss reason with an unrelated blank field.
   const [editOPoNumber, setEditOPoNumber] = useState("");
+  // Bug fix, 2026-08-18: these 3 fields previously had no edit-form state at all in
+  // this file -- once a deal advanced to Demo/Negotiation, editing it here to set
+  // Stage there would fail server-side (BR-OP-00) with no field on screen to fix it.
+  const [editODemoStart, setEditODemoStart] = useState("");
+  const [editODemoEnd, setEditODemoEnd] = useState("");
+  const [editOClosureDate, setEditOClosureDate] = useState("");
   const [editOHoldReasonId, setEditOHoldReasonId] = useState("");
   const [editOReactivationDate, setEditOReactivationDate] = useState("");
   const [editOLossReasonId, setEditOLossReasonId] = useState("");
   const [editOCompetitorName, setEditOCompetitorName] = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [editOIsExternalReferrer, setEditOIsExternalReferrer] = useState(false);
+  const [editOReferredByUserId, setEditOReferredByUserId] = useState("");
+  const [editOReferredByNote, setEditOReferredByNote] = useState("");
 
   // Installed assets
   const [showCreateAsset, setShowCreateAsset] = useState(false);
@@ -826,6 +848,35 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     staleTime: Infinity,
   });
 
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
+  const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
+  const editOLeadSourceCode = leadSources.find((ls: any) => ls.id === editOLeadSourceId)?.name;
+
+  // BR-OP-10: creation must default to Active only -- there is exactly one Active
+  // status in the system, so this is never a real user choice on Add Opportunity.
+  // Set automatically rather than showing a one-option dropdown.
+  const activeStatusId = oppStatuses.find((s: any) => s.status_code === "ACTIVE")?.id;
+  // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
+  // field first becomes relevant -- mirrors backend/app/domains/opportunity/
+  // validators.py's BR-OP-00 gates exactly. On Edit, a field showing purely from
+  // an already-set value (not from the stage threshold) is never hidden by this --
+  // see each field's render condition below (Backlog decision, 2026-08-18).
+  const newOStageOrder = stages.find((s: any) => s.id === newOStageId)?.display_order ?? 0;
+  const editOStageOrder = stages.find((s: any) => s.id === editOStageId)?.display_order ?? 0;
+
+  // Distinct query key -- must not reuse ["users","all"] above, which (despite its
+  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  const { data: referralUsers = [] } = useQuery({
+    queryKey: ["users", "referral-picker"],
+    queryFn: async () => {
+      const d = await listUsers("all");
+      return Array.isArray(d) ? d : [];
+    },
+    enabled: newOLeadSourceCode === "REFERRAL" || editOLeadSourceCode === "REFERRAL",
+    staleTime: Infinity,
+  });
+
   // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
   // which products are eligible (BR-OP-11 validates items against the opportunity's
   // actual SBU, not the caller's own) — everywhere else it's just the caller's own SBU.
@@ -881,18 +932,35 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const chipBarRef = useRef<HTMLDivElement>(null);
 
-  const handleTabChange = useCallback((tabId: string) => {
-    setActiveTab(tabId);
+  const centerTab = useCallback((tabId: string, behavior: ScrollBehavior = "smooth") => {
     setTimeout(() => {
       const container = chipBarRef.current;
       if (container) {
         const chip = container.querySelector(`[data-tab="${tabId}"]`) as HTMLElement | null;
         if (chip) {
           const scrollLeft = chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
-          container.scrollTo({ left: scrollLeft, behavior: "smooth" });
+          container.scrollTo({ left: scrollLeft, behavior });
         }
       }
     }, 50);
+  }, []);
+
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveTab(tabId);
+    centerTab(tabId);
+  }, [centerTab]);
+
+  // Bug fix, 2026-08-19: this screen fully unmounts/remounts on every navigation
+  // away and back (DemoApp.tsx conditionally renders it), so `activeTab` can start
+  // on a non-"overview" tab (e.g. resuming "projects" after Back from Project
+  // Detail) without the user ever clicking a tab pill themselves -- handleTabChange
+  // above only centers the chip bar on an actual click, so without this the active
+  // chip was correctly highlighted but the scroll position defaulted to 0 (left
+  // edge), leaving it mostly off-screen on a narrow viewport. "auto" (instant),
+  // not "smooth", so it doesn't visibly animate on first paint.
+  useEffect(() => {
+    centerTab(activeTab, "auto");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-calc opportunity value from items
@@ -1078,9 +1146,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   // Opportunities
   const openCreateOpp = () => {
-    setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOStatusId(""); setNewOLeadSourceId("");
+    setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOLeadSourceId("");
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
+    setNewOIsExternalReferrer(false); setNewOReferredByUserId(""); setNewOReferredByNote("");
     setShowCreateOpp(true);
   };
 
@@ -1090,14 +1159,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (isSbuOverrideRole && !newOSbuId) throw new Error("SBU is required");
     if (!newOOwnerId) throw new Error("Owner is required");
     if (!newOStageId) throw new Error("Stage is required");
-    if (!newOStatusId) throw new Error("Status is required");
+    if (!activeStatusId) throw new Error("Unable to determine Active status -- please retry");
     if (newOWinProb === "") throw new Error("Win probability is required");
     const _stage = stages.find((s: any) => s.id === newOStageId);
     const _qual = stages.find((s: any) => s.stage_code === "QUALIFIED");
     if (_stage && _qual && _stage.display_order >= _qual.display_order && newOValue === "") {
       throw new Error("Indicative value is required for Qualified stage and above");
     }
-    const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: newOStatusId, win_probability: Number(newOWinProb) };
+    const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: activeStatusId, win_probability: Number(newOWinProb) };
     if (isSbuOverrideRole && newOSbuId) payload.sbu_id = newOSbuId;
     if (newOProjectId) payload.project_id = newOProjectId;
     if (newOLeadSourceId) payload.lead_source_id = newOLeadSourceId;
@@ -1106,6 +1175,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newODemoEnd) payload.demo_end_date = newODemoEnd;
     if (newOClosureDate) payload.expected_closure_date = newOClosureDate;
     if (newOPoNumber.trim()) payload.po_number = newOPoNumber.trim();
+    if (newOLeadSourceCode === "REFERRAL") {
+      if (newOIsExternalReferrer) {
+        if (newOReferredByNote.trim()) payload.referred_by_note = newOReferredByNote.trim();
+      } else if (newOReferredByUserId) {
+        payload.referred_by_user_id = newOReferredByUserId;
+      }
+    }
     if (newOItems.length > 0) payload.items = newOItems.map((i) => ({ product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }));
     await createOpportunity(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
@@ -1120,9 +1196,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOWinProb(o.win_probability != null ? String(o.win_probability) : "");
     setEditOValue(o.indicative_value != null ? String(o.indicative_value) : "");
     setEditOItems([]); setEditOOriginalItemIds([]);
+    setEditODemoStart(o.demo_start_date || ""); setEditODemoEnd(o.demo_end_date || "");
+    setEditOClosureDate(o.expected_closure_date || "");
     setEditOPoNumber(o.po_number || ""); setEditOHoldReasonId(o.hold_reason_id || "");
     setEditOReactivationDate(o.reactivation_date || ""); setEditOLossReasonId(o.loss_reason_id || "");
     setEditOCompetitorName(o.competitor_name || "");
+    setEditOIsExternalReferrer(!!o.referred_by_note);
+    setEditOReferredByUserId(o.referred_by?.id || ""); setEditOReferredByNote(o.referred_by_note || "");
   };
 
   const handleUpdateOpp = async () => {
@@ -1157,9 +1237,26 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       win_probability: editOWinProb !== "" ? Number(editOWinProb) : undefined,
       lead_source_id: editOLeadSourceId || null,
       indicative_value: editOValue !== "" ? Number(editOValue) : null,
+      demo_start_date: editODemoStart || null,
+      demo_end_date: editODemoEnd || null,
+      expected_closure_date: editOClosureDate || null,
     };
     if (editOProjectId) payload.project_id = editOProjectId;
     payload.po_number = editOPoNumber.trim() || null;
+    if (editOLeadSourceCode === "REFERRAL") {
+      if (editOIsExternalReferrer) {
+        payload.referred_by_note = editOReferredByNote.trim() || null;
+        payload.referred_by_user_id = null;
+      } else {
+        payload.referred_by_user_id = editOReferredByUserId || null;
+        payload.referred_by_note = null;
+      }
+    } else {
+      // Lead Source no longer Referral -- clear any previously-set referral credit
+      // rather than leaving it stranded and invisible (BR-FIN-07).
+      payload.referred_by_user_id = null;
+      payload.referred_by_note = null;
+    }
     if (_newStatus?.status_code === "ON_HOLD") {
       payload.hold_reason_id = editOHoldReasonId;
       payload.reactivation_date = editOReactivationDate;
@@ -1212,9 +1309,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
 
   const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
   const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
-  // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
-  const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
 
   return (
     <Box
@@ -1305,7 +1399,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} onSelectProject={(p: any) => onSelectProject?.({ ...p, account: { id: accountId, name: account?.name } })} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} onSelectOpportunity={onSelectOpportunity} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} />
@@ -1448,44 +1542,59 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <MenuItem value="">None</MenuItem>
           {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
         </TextField>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <TextField
-            select label="Stage *" value={newOStageId}
-            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setNewOStageId(e.target.value); if (s) setNewOWinProb(String(s.default_win_probability)); }}
-            fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select stage</MenuItem>
-            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-          </TextField>
-          <TextField select label="Status *" value={newOStatusId} onChange={(e) => setNewOStatusId(e.target.value)} fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">Select status</MenuItem>
-            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
-            {oppStatuses.filter((s: any) => s.status_code === "ACTIVE").map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
-          </TextField>
-        </Box>
+        <TextField
+          select label="Stage *" value={newOStageId}
+          onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setNewOStageId(e.target.value); if (s) setNewOWinProb(String(s.default_win_probability)); }}
+          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select stage</MenuItem>
+          {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+        </TextField>
         <TextField select label="Lead Source" value={newOLeadSourceId} onChange={(e) => setNewOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">Select source</MenuItem>
           {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
         </TextField>
+        {newOLeadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={newOIsExternalReferrer} onChange={(e) => { setNewOIsExternalReferrer(e.target.checked); setNewOReferredByUserId(""); setNewOReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {newOIsExternalReferrer ? (
+              <TextField label="Referred By" value={newOReferredByNote} onChange={(e) => setNewOReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={newOReferredByUserId} onChange={(e) => setNewOReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
         <TextField select label="Owner *" value={newOOwnerId} onChange={(e) => setNewOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">Select owner</MenuItem>
           {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
         </TextField>
         <TextField label="Win Probability % *" type="number" value={newOWinProb} onChange={(e) => setNewOWinProb(e.target.value)} placeholder="Enter Win Probability %" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        <TextField
-          label={`Indicative Value (Lakhs)${newOItems.length > 0 ? " (auto)" : ""}`}
-          type="number" value={newOValue} onChange={(e) => setNewOValue(e.target.value)}
-          disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
-          fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        {newOLeadSourceCode !== "REPEAT_ORDER" && (
+        {(newOStageOrder >= STAGE_ORDER_QUALIFIED || newOItems.length > 0) && (
+          <TextField
+            label={`Indicative Value (Lakhs)${newOItems.length > 0 ? " (auto)" : ""}`}
+            type="number" value={newOValue} onChange={(e) => setNewOValue(e.target.value)}
+            disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
+            fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
+        )}
+        {newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && (
           <>
-            <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={newODemoStart} onChange={(e) => setNewODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={newODemoEnd} onChange={(e) => setNewODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        <TextField label="PO Number" value={newOPoNumber} onChange={(e) => setNewOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" && (
+          <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {newOStageOrder >= STAGE_ORDER_ORDER && (
+          <TextField label="PO Number" value={newOPoNumber} onChange={(e) => setNewOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
@@ -1539,18 +1648,47 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <MenuItem value="">Select source</MenuItem>
           {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
         </TextField>
+        {editOLeadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={editOIsExternalReferrer} onChange={(e) => { setEditOIsExternalReferrer(e.target.checked); setEditOReferredByUserId(""); setEditOReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {editOIsExternalReferrer ? (
+              <TextField label="Referred By" value={editOReferredByNote} onChange={(e) => setEditOReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={editOReferredByUserId} onChange={(e) => setEditOReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
         <TextField select label="Owner" value={editOOwnerId} onChange={(e) => setEditOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">Select owner</MenuItem>
           {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
         </TextField>
         <TextField label="Win Probability %" type="number" value={editOWinProb} onChange={(e) => setEditOWinProb(e.target.value)} fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        <TextField
-          label={`Indicative Value (Lakhs)${editOItems.length > 0 ? " (auto)" : ""}`}
-          type="number" value={editOValue} onChange={(e) => setEditOValue(e.target.value)}
-          disabled={editOItems.length > 0}
-          fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        <TextField label="PO Number" value={editOPoNumber} onChange={(e) => setEditOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {(editOStageOrder >= STAGE_ORDER_QUALIFIED || editOItems.length > 0 || editOValue !== "") && (
+          <TextField
+            label={`Indicative Value (Lakhs)${editOItems.length > 0 ? " (auto)" : ""}`}
+            type="number" value={editOValue} onChange={(e) => setEditOValue(e.target.value)}
+            disabled={editOItems.length > 0}
+            fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
+        )}
+        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoStart !== "") && (
+          <TextField label="Demo Start Date" type="date" value={editODemoStart} onChange={(e) => setEditODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoEnd !== "") && (
+          <TextField label="Demo End Date" type="date" value={editODemoEnd} onChange={(e) => setEditODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER") || editOClosureDate !== "") && (
+          <TextField label="Expected Closure Date" type="date" value={editOClosureDate} onChange={(e) => setEditOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {(editOStageOrder >= STAGE_ORDER_ORDER || editOPoNumber.trim() !== "" || editOStatusCode === "WON") && (
+          <TextField label="PO Number" value={editOPoNumber} onChange={(e) => setEditOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         {editOStatusCode === "ON_HOLD" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
             <TextField

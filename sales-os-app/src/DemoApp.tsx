@@ -107,14 +107,25 @@ export default function DemoApp() {
     setView(accountReturnView);
   }
 
-  function handleSelectOpportunity(opp: PipelineOpportunity | { id: string; name: string }, initialTab?: string) {
+  // detailTab and customer360Tab are deliberately separate params, not one
+  // shared value -- bug fix, 2026-08-19. They were previously conflated into a
+  // single `initialTab`, which happened to work only for the stakeholder-bridge
+  // flow because OpportunityDetailScreen and Customer360Screen both happen to
+  // have a tab literally called "stakeholders". Passing Customer360's own tab
+  // id ("opportunities") through the same param for the plain Opportunities-tab
+  // click broke that coincidence: OpportunityDetailScreen has no "opportunities"
+  // tab, so nothing matched and its content area rendered blank.
+  function handleSelectOpportunity(
+    opp: PipelineOpportunity | { id: string; name: string },
+    detailTab?: string,
+    customer360Tab?: string,
+  ) {
     setOpportunityReturnView(view);
-    // Same value doubles as "which Customer 360 tab to reopen on Back" —
-    // in this flow (the stakeholder bridge list) both screens' relevant
-    // tab happens to share the id "stakeholders".
-    if (view === "customer360" && initialTab) setCustomer360InitialTab(initialTab);
+    // Unconditional (not gated on truthiness) so a future call site that
+    // forgets to pass one falls back to Overview, not a stale tab.
+    if (view === "customer360") setCustomer360InitialTab(customer360Tab);
     setSelectedOpportunity(opp);
-    setSelectedOpportunityInitialTab(initialTab);
+    setSelectedOpportunityInitialTab(detailTab);
     setView("opportunityDetail");
   }
 

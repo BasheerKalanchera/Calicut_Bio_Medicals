@@ -81,7 +81,8 @@ def test_all_relationships_resolve():
     # 0019_zone_hierarchy_tree_and_closure.py). ZoneClosure itself has no relationship()s --
     # plain FK columns only, deliberately not ORM-navigable (it's a derived/computed index,
     # not a domain object -- see its own model docstring).
-    assert rel_count == 95, f"Expected 95 relationships, found {rel_count}"
+    # 96, not 95: BR-FIN-07 added Opportunity.referred_by (0023_add_referral_credit.py).
+    assert rel_count == 96, f"Expected 96 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

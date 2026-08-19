@@ -22,9 +22,14 @@ migration has landed — the "deliberately held back" `ProjectDirectoryScreen`
 referral toggle (their item, not this one) can now be added as their
 follow-up.
 
-**Next step:** commit (message already drafted in conversation, staging
-already split from the Referral Credit session's concurrent edits to
-the same two files — see below).
+**Committed 2026-08-18 (`1d51b6d`).** The staging split described below
+worked cleanly — confirmed post-commit: `QuickLeadModal.tsx`/
+`Customer360Screen.tsx` in the commit carry only this migration's hunks
+(query-key collision fix, `initialAccountId`/`initialProjectId` props,
+the SBU product-picker fix); the Referral Credit session's edits to
+those same two files were undisturbed in the working tree afterward and
+confirmed intact (`tsc --noEmit`/`npm run lint` clean, referral markers
+all present) — see that session's note below.
 
 ## Recently shipped, all committed (context for the migration above)
 
@@ -128,12 +133,23 @@ collision in all 3.
 clean across the whole project. Backend suite re-confirmed green (526
 passed) after the `workspace_schemas.py` change.
 
-**Deliberately held back:** `ProjectDirectoryScreen.jsx`'s own referral
-toggle (the 4th entry point) — that file is the other session's active
-MUI-migration target. Add it as a small follow-up once that migration
-lands, not now.
+**4th entry point — `ProjectDirectoryScreen.tsx` referral toggle — DONE,
+2026-08-18**, added once the MUI migration above landed. Both its Add and
+Edit Opportunity forms (`addOpp*`/`editOpp*` state, matching this file's
+own naming convention, not Customer360Screen.tsx's `newO*`/`editO*`) got
+the same toggle, same distinctly-keyed `["users","referral-picker"]`
+query (shared across both forms in this file). `openEditOpp` seeds from
+`opp.referred_by`/`referred_by_note` — same `WorkspaceOpportunity`
+response shape as Customer360Screen.tsx's byAccount list, already
+carries the fields (no further backend change needed). Simplified one
+pre-existing inline `leadSources.find(...)` REPEAT_ORDER check to reuse
+the new `addOppLeadSourceCode` const while touching that line anyway.
+`tsc --noEmit` and `npm run lint` both clean across the whole project
+after this addition. **All 4 entry points for Referral Credit now done.**
 
 **Still open for Part 1:** manual verification on Dev (Basheer, per
-usual) — toggle appears only for Referral not OEM Referral in all 3
-entry points, mutual exclusivity produces a 422, values round-trip on
-reload. Nothing committed yet — review diff first.
+usual) across all 4 entry points now (QuickLeadModal, Customer360 New +
+Edit, OpportunityDetailScreen edit, ProjectDirectoryScreen Add + Edit) —
+toggle appears only for Referral not OEM Referral, mutual exclusivity
+produces a 422, values round-trip on reload. Nothing committed yet —
+review diff first.

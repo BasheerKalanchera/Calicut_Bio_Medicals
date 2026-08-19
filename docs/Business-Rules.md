@@ -219,6 +219,13 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Picker matches the rule exactly (fixed 2026-08-07).** The "add participant" picker suggests any active user in the caller's own SBU, any zone — previously also restricted to the caller's own zone (an interim, UI-level restriction narrower than what the server actually accepted), fixed to match this rule exactly. `GET /users?scope=sbu`.
 * **Reference:** ADR-037 (Split Participant SBU Restriction — Supersedes ADR-003's Cross-SBU Scope).
 
+### BR-FIN-07: Referral Credit (2026-08-18)
+* **Rule:** When an Opportunity's `lead_source_id` resolves to `Referral`, the Opportunity may optionally carry either `referred_by_user_id` (any active Cabio user, any SBU/zone — same eligibility as BR-ACT-06's Next Action assignee) or `referred_by_note` (free text, for a referral from a non-Cabio person such as a customer contact) — never both. Does not apply to the separate `OEM Referral` lead source, which names a partner company rather than a person.
+* **Purely a credit record.** No split-percentage impact, no RLS visibility grant, no SBU/zone revenue rollup effect (ADR-013's rollups deliberately do not read this field). Both fields are optional even when Lead Source is Referral — recording the referrer is opt-in, not mandatory. **Reconfirmed 2026-08-18** during manual E2E verification, when the question was raised of whether it should instead be required — Basheer's explicit call to keep it optional, not revisited since.
+* **Tied to Lead Source, not independently persistent.** If an Opportunity's `lead_source_id` is edited away from `Referral` to any other value, both `referred_by_user_id` and `referred_by_note` are cleared (set to `null`) as part of that same save — the credit record doesn't outlive the Lead Source value it depends on. Enforced client-side (all 3 edit forms explicitly send `null` for both fields whenever the effective Lead Source isn't Referral, rather than omitting them and relying on PATCH semantics to leave the old value untouched).
+* **Enforcement:** schema-level `model_validator` (mutual exclusivity) on both `OpportunityCreate`/`OpportunityUpdate` for a clean `422`, backed by a DB `CHECK` constraint (`ck_opportunity_referral_not_both`) as the last-resort guard.
+* **Reference:** `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`, ADR-013 (revenue rollups this does not feed), BR-ACT-06 (shared eligibility rule for the colleague picker).
+
 ---
 
 # 5. Account & Stakeholder Rules

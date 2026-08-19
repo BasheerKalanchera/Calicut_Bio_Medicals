@@ -165,6 +165,8 @@ class OpportunityService:
             demo_start_date=data.demo_start_date,
             demo_end_date=data.demo_end_date,
             po_number=data.po_number,
+            referred_by_user_id=data.referred_by_user_id,
+            referred_by_note=data.referred_by_note,
             created_by=created_by,
             updated_by=created_by,
         )

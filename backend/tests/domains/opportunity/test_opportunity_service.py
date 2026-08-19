@@ -299,6 +299,59 @@ class TestCreateOpportunity:
 
 
 # ===========================================================================
+# create_opportunity — BR-FIN-07 referral credit
+# ===========================================================================
+
+class TestCreateOpportunityReferralCredit:
+    def test_create_with_referred_by_user_id_persists(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+        referrer_id = uuid.uuid4()
+
+        result = service.create_opportunity(
+            ACCOUNT_ID,
+            _make_create_data(referred_by_user_id=referrer_id),
+            created_by=USER_ID,
+            sbu_id=SBU_ID,
+        )
+
+        assert result.referred_by_user_id == referrer_id
+        assert result.referred_by_note is None
+
+    def test_create_with_referred_by_note_persists(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID,
+            _make_create_data(referred_by_note="Dr. Menon, referring physician"),
+            created_by=USER_ID,
+            sbu_id=SBU_ID,
+        )
+
+        assert result.referred_by_note == "Dr. Menon, referring physician"
+        assert result.referred_by_user_id is None
+
+    def test_create_with_neither_referral_field_leaves_both_none(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo)
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        assert result.referred_by_user_id is None
+        assert result.referred_by_note is None
+
+    def test_create_with_both_referral_fields_raises_validation_error(self):
+        with pytest.raises(ValidationError, match="not both"):
+            _make_create_data(
+                referred_by_user_id=uuid.uuid4(),
+                referred_by_note="Dr. Menon",
+            )
+
+
+# ===========================================================================
 # create_opportunity — BR-OP-12 SBU override (Admin/General Manager only)
 # ===========================================================================
 
@@ -467,6 +520,41 @@ class TestUpdateOpportunity:
 
         assert opp.name == "New Name"
         assert opp.lead_source_id == LEAD_SOURCE_ID  # unchanged
+
+    def test_update_sets_referred_by_user_id(self):
+        opp = _make_opportunity(referred_by_user_id=None, referred_by_note=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        service = OpportunityService(repository=repo)
+        referrer_id = uuid.uuid4()
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(referred_by_user_id=referrer_id), updated_by=USER_ID
+        )
+
+        assert opp.referred_by_user_id == referrer_id
+
+    def test_update_sets_referred_by_note(self):
+        opp = _make_opportunity(referred_by_user_id=None, referred_by_note=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        service = OpportunityService(repository=repo)
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(referred_by_note="Dr. Menon, referring physician"),
+            updated_by=USER_ID,
+        )
+
+        assert opp.referred_by_note == "Dr. Menon, referring physician"
+
+    def test_update_with_both_referral_fields_raises_validation_error(self):
+        with pytest.raises(ValidationError, match="not both"):
+            OpportunityUpdate(referred_by_user_id=uuid.uuid4(), referred_by_note="Dr. Menon")
 
     def test_stage_advance_blocked_by_gate(self):
         opp = _make_opportunity(lead_source_id=None, indicative_value=None)

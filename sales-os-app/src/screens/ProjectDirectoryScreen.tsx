@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { Alert, Box, Button, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -19,6 +19,15 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+
+// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
+// field first becomes relevant -- mirrors backend/app/domains/opportunity/
+// validators.py's BR-OP-00 gates exactly, so a field never appears later than
+// the point the server would actually start requiring it.
+const STAGE_ORDER_QUALIFIED = 20;
+const STAGE_ORDER_DEMO = 30;
+const STAGE_ORDER_NEGOTIATION = 50;
+const STAGE_ORDER_ORDER = 60;
 
 // Minimal shape DemoApp.tsx's selectedProject state actually needs — this
 // screen's own project rows/queries carry richer objects (see the `any`
@@ -63,15 +72,24 @@ function ProjectDetailView({
   const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
   const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
   const [editOppPoNumber, setEditOppPoNumber] = useState("");
+  // Bug fix, 2026-08-18: these 3 fields previously had no edit-form state at all in
+  // this file -- once a deal advanced to Demo/Negotiation, editing it here to set
+  // Stage there would fail server-side (BR-OP-00) with no field on screen to fix it.
+  const [editOppDemoStart, setEditOppDemoStart] = useState("");
+  const [editOppDemoEnd, setEditOppDemoEnd] = useState("");
+  const [editOppClosureDate, setEditOppClosureDate] = useState("");
   const [editOppHoldReasonId, setEditOppHoldReasonId] = useState("");
   const [editOppReactivationDate, setEditOppReactivationDate] = useState("");
   const [editOppLossReasonId, setEditOppLossReasonId] = useState("");
   const [editOppCompetitorName, setEditOppCompetitorName] = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [editOppIsExternalReferrer, setEditOppIsExternalReferrer] = useState(false);
+  const [editOppReferredByUserId, setEditOppReferredByUserId] = useState("");
+  const [editOppReferredByNote, setEditOppReferredByNote] = useState("");
 
   const [showAddOpp, setShowAddOpp] = useState(false);
   const [addOppName, setAddOppName] = useState("");
   const [addOppStageId, setAddOppStageId] = useState("");
-  const [addOppStatusId, setAddOppStatusId] = useState("");
   const [addOppOwnerId, setAddOppOwnerId] = useState("");
   const [addOppWinProb, setAddOppWinProb] = useState("");
   const [addOppValue, setAddOppValue] = useState("");
@@ -83,6 +101,10 @@ function ProjectDetailView({
   const [addOppItems, setAddOppItems] = useState<DraftOpportunityItem[]>([]);
   const [showAddOppItemsModal, setShowAddOppItemsModal] = useState(false);
   const [addOppSbuId, setAddOppSbuId] = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [addOppIsExternalReferrer, setAddOppIsExternalReferrer] = useState(false);
+  const [addOppReferredByUserId, setAddOppReferredByUserId] = useState("");
+  const [addOppReferredByNote, setAddOppReferredByNote] = useState("");
 
   const { data: opportunities = [], isLoading: oppsLoading } = useQuery({
     queryKey: ["opportunities", "byAccount", p.account.id],
@@ -110,6 +132,30 @@ function ProjectDetailView({
     queryKey: ["leadSources"],
     queryFn: () => listLeadSources() as Promise<any[]>,
     enabled: showAddOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
+  const addOppLeadSourceCode = leadSources.find((ls: any) => ls.id === addOppLeadSourceId)?.name;
+  const editOppLeadSourceCode = leadSources.find((ls: any) => ls.id === editOppLeadSourceId)?.name;
+  // BR-OP-10: creation must default to Active only -- there is exactly one Active
+  // status in the system, so this is never a real user choice on Add Opportunity.
+  // Set automatically rather than showing a one-option dropdown.
+  const activeStatusId = oppStatuses.find((s: any) => s.status_code === "ACTIVE")?.id;
+  // On Edit, a field showing purely from an already-set value (not from the stage
+  // threshold) is never hidden by this -- see each field's render condition below
+  // (Backlog decision, 2026-08-18).
+  const addOppStageOrder = oppStages.find((s: any) => s.id === addOppStageId)?.display_order ?? 0;
+  const editOppStageOrder = oppStages.find((s: any) => s.id === editOppStageId)?.display_order ?? 0;
+  // Distinct query key -- must not reuse ["users","all"] below, which (despite its
+  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  const { data: referralUsers = [] } = useQuery({
+    queryKey: ["users", "referral-picker"],
+    queryFn: async () => {
+      const d = await listUsers("all");
+      return Array.isArray(d) ? (d as any[]) : [];
+    },
+    enabled: addOppLeadSourceCode === "REFERRAL" || editOppLeadSourceCode === "REFERRAL",
     staleTime: Infinity,
   });
   // Only needed on the Edit Opportunity modal (BR-OP-03/05 status gates) --
@@ -220,11 +266,17 @@ function ProjectDetailView({
     setEditOppItems([]);
     setEditOppOriginalItemIds([]);
     setEditOppLeadSourceId(opp.lead_source_id || "");
+    setEditOppDemoStart(opp.demo_start_date || "");
+    setEditOppDemoEnd(opp.demo_end_date || "");
+    setEditOppClosureDate(opp.expected_closure_date || "");
     setEditOppPoNumber(opp.po_number || "");
     setEditOppHoldReasonId(opp.hold_reason_id || "");
     setEditOppReactivationDate(opp.reactivation_date || "");
     setEditOppLossReasonId(opp.loss_reason_id || "");
     setEditOppCompetitorName(opp.competitor_name || "");
+    setEditOppIsExternalReferrer(!!opp.referred_by_note);
+    setEditOppReferredByUserId(opp.referred_by?.id || "");
+    setEditOppReferredByNote(opp.referred_by_note || "");
   }
 
   async function handleUpdateOpp() {
@@ -256,6 +308,9 @@ function ProjectDetailView({
     };
     if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
     payload.lead_source_id = editOppLeadSourceId || null;
+    payload.demo_start_date = editOppDemoStart || null;
+    payload.demo_end_date = editOppDemoEnd || null;
+    payload.expected_closure_date = editOppClosureDate || null;
     payload.po_number = editOppPoNumber.trim() || null;
     if (_newStatus?.status_code === "ON_HOLD") {
       payload.hold_reason_id = editOppHoldReasonId;
@@ -264,6 +319,20 @@ function ProjectDetailView({
     if (_newStatus?.status_code === "LOST") {
       payload.loss_reason_id = editOppLossReasonId;
       if (editOppCompetitorName.trim()) payload.competitor_name = editOppCompetitorName.trim();
+    }
+    if (editOppLeadSourceCode === "REFERRAL") {
+      if (editOppIsExternalReferrer) {
+        payload.referred_by_note = editOppReferredByNote.trim() || null;
+        payload.referred_by_user_id = null;
+      } else {
+        payload.referred_by_user_id = editOppReferredByUserId || null;
+        payload.referred_by_note = null;
+      }
+    } else {
+      // Lead Source no longer Referral -- clear any previously-set referral credit
+      // rather than leaving it stranded and invisible (BR-FIN-07).
+      payload.referred_by_user_id = null;
+      payload.referred_by_note = null;
     }
     await updateOpportunity(editingOpp.id as any, payload);
     const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
@@ -291,7 +360,6 @@ function ProjectDetailView({
   function openAddOpp() {
     setAddOppName(p.name);
     setAddOppStageId("");
-    setAddOppStatusId("");
     setAddOppOwnerId("");
     setAddOppWinProb("");
     setAddOppValue("");
@@ -302,6 +370,9 @@ function ProjectDetailView({
     setAddOppClosureDate("");
     setAddOppPoNumber("");
     setAddOppSbuId("");
+    setAddOppIsExternalReferrer(false);
+    setAddOppReferredByUserId("");
+    setAddOppReferredByNote("");
     setShowAddOpp(true);
   }
 
@@ -310,13 +381,13 @@ function ProjectDetailView({
     // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
     if (isSbuOverrideRole && !addOppSbuId) throw new Error("SBU is required");
     if (!addOppStageId) throw new Error("Stage is required");
-    if (!addOppStatusId) throw new Error("Status is required");
+    if (!activeStatusId) throw new Error("Unable to determine Active status -- please retry");
     if (!addOppOwnerId) throw new Error("Owner is required");
     if (addOppWinProb === "") throw new Error("Win probability is required");
     const payload: any = {
       name: addOppName.trim(),
       stage_id: addOppStageId,
-      status_id: addOppStatusId,
+      status_id: activeStatusId,
       owner_id: addOppOwnerId,
       win_probability: Number(addOppWinProb),
       project_id: p.id,
@@ -328,6 +399,13 @@ function ProjectDetailView({
     if (addOppDemoEnd) payload.demo_end_date = addOppDemoEnd;
     if (addOppClosureDate) payload.expected_closure_date = addOppClosureDate;
     if (addOppPoNumber.trim()) payload.po_number = addOppPoNumber.trim();
+    if (addOppLeadSourceCode === "REFERRAL") {
+      if (addOppIsExternalReferrer) {
+        if (addOppReferredByNote.trim()) payload.referred_by_note = addOppReferredByNote.trim();
+      } else if (addOppReferredByUserId) {
+        payload.referred_by_user_id = addOppReferredByUserId;
+      }
+    }
     if (addOppItems.length > 0)
       payload.items = addOppItems.map((i) => ({
         product_id: i.product_id,
@@ -458,7 +536,7 @@ function ProjectDetailView({
       <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
         {editingOpp && (
           <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
-            {p.name}
+            {p.account?.name} — {p.name}
           </Box>
         )}
         <TextField label="Name *" value={editOppName} onChange={(e) => setEditOppName(e.target.value)} autoFocus fullWidth size="small" />
@@ -506,6 +584,22 @@ function ProjectDetailView({
           <MenuItem value="">Select source</MenuItem>
           {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
         </TextField>
+        {editOppLeadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={editOppIsExternalReferrer} onChange={(e) => { setEditOppIsExternalReferrer(e.target.checked); setEditOppReferredByUserId(""); setEditOppReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {editOppIsExternalReferrer ? (
+              <TextField label="Referred By" value={editOppReferredByNote} onChange={(e) => setEditOppReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={editOppReferredByUserId} onChange={(e) => setEditOppReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
         <TextField
           select
           label="Owner"
@@ -528,18 +622,31 @@ function ProjectDetailView({
           size="small"
           slotProps={{ htmlInput: { min: 0, max: 100 } }}
         />
-        <TextField
-          label={`Indicative Value (Lakhs)${editOppItems.length > 0 ? " (auto)" : ""}`}
-          type="number"
-          value={editOppValue}
-          onChange={(e) => setEditOppValue(e.target.value)}
-          disabled={editOppItems.length > 0}
-          placeholder="e.g. 25.50"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        <TextField label="PO Number" value={editOppPoNumber} onChange={(e) => setEditOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {(editOppStageOrder >= STAGE_ORDER_QUALIFIED || editOppItems.length > 0 || editOppValue !== "") && (
+          <TextField
+            label={`Indicative Value (Lakhs)${editOppItems.length > 0 ? " (auto)" : ""}`}
+            type="number"
+            value={editOppValue}
+            onChange={(e) => setEditOppValue(e.target.value)}
+            disabled={editOppItems.length > 0}
+            placeholder="e.g. 25.50"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
+        )}
+        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoStart !== "") && (
+          <TextField label="Demo Start Date" type="date" value={editOppDemoStart} onChange={(e) => setEditOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoEnd !== "") && (
+          <TextField label="Demo End Date" type="date" value={editOppDemoEnd} onChange={(e) => setEditOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {((editOppStageOrder >= STAGE_ORDER_NEGOTIATION && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppClosureDate !== "") && (
+          <TextField label="Expected Closure Date" type="date" value={editOppClosureDate} onChange={(e) => setEditOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {(editOppStageOrder >= STAGE_ORDER_ORDER || editOppPoNumber.trim() !== "" || editOppStatusCode === "WON") && (
+          <TextField label="PO Number" value={editOppPoNumber} onChange={(e) => setEditOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         {editOppStatusCode === "ON_HOLD" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
             <TextField
@@ -601,7 +708,7 @@ function ProjectDetailView({
       {/* Add Opportunity Modal */}
       <FormModal isOpen={showAddOpp} onClose={() => setShowAddOpp(false)} title="Add Opportunity" onSubmit={handleCreateOpp}>
         <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
-          {p.name}
+          {p.account?.name} — {p.name}
         </Box>
         <TextField label="Name *" value={addOppName} onChange={(e) => setAddOppName(e.target.value)} autoFocus fullWidth size="small" />
         {isSbuOverrideRole && (
@@ -618,39 +725,22 @@ function ProjectDetailView({
             {sbus.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
           </TextField>
         )}
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <TextField
-            select
-            label="Stage *"
-            value={addOppStageId}
-            onChange={(e) => {
-              const s: any = oppStages.find((x: any) => x.id === e.target.value);
-              setAddOppStageId(e.target.value);
-              if (s) setAddOppWinProb(String(s.default_win_probability));
-            }}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select stage</MenuItem>
-            {oppStages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-          </TextField>
-          <TextField
-            select
-            label="Status *"
-            value={addOppStatusId}
-            onChange={(e) => setAddOppStatusId(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select status</MenuItem>
-            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
-            {oppStatuses.filter((s: any) => s.status_code === "ACTIVE").map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
-          </TextField>
-        </Box>
+        <TextField
+          select
+          label="Stage *"
+          value={addOppStageId}
+          onChange={(e) => {
+            const s: any = oppStages.find((x: any) => x.id === e.target.value);
+            setAddOppStageId(e.target.value);
+            if (s) setAddOppWinProb(String(s.default_win_probability));
+          }}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select stage</MenuItem>
+          {oppStages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+        </TextField>
         <TextField
           select
           label="Lead Source"
@@ -663,6 +753,22 @@ function ProjectDetailView({
           <MenuItem value="">Select source</MenuItem>
           {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
         </TextField>
+        {addOppLeadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={addOppIsExternalReferrer} onChange={(e) => { setAddOppIsExternalReferrer(e.target.checked); setAddOppReferredByUserId(""); setAddOppReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {addOppIsExternalReferrer ? (
+              <TextField label="Referred By" value={addOppReferredByNote} onChange={(e) => setAddOppReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={addOppReferredByUserId} onChange={(e) => setAddOppReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
         <TextField
           select
           label="Owner *"
@@ -685,25 +791,31 @@ function ProjectDetailView({
           size="small"
           slotProps={{ htmlInput: { min: 0, max: 100 } }}
         />
-        <TextField
-          label={`Indicative Value (Lakhs)${addOppItems.length > 0 ? " (auto)" : ""}`}
-          type="number"
-          value={addOppValue}
-          onChange={(e) => setAddOppValue(e.target.value)}
-          disabled={addOppItems.length > 0}
-          placeholder="e.g. 25.50"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        {leadSources.find((ls: any) => ls.id === addOppLeadSourceId)?.name !== "REPEAT_ORDER" && (
+        {(addOppStageOrder >= STAGE_ORDER_QUALIFIED || addOppItems.length > 0) && (
+          <TextField
+            label={`Indicative Value (Lakhs)${addOppItems.length > 0 ? " (auto)" : ""}`}
+            type="number"
+            value={addOppValue}
+            onChange={(e) => setAddOppValue(e.target.value)}
+            disabled={addOppItems.length > 0}
+            placeholder="e.g. 25.50"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
+        )}
+        {addOppStageOrder >= STAGE_ORDER_DEMO && addOppLeadSourceCode !== "REPEAT_ORDER" && (
           <>
-            <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={addOppDemoStart} onChange={(e) => setAddOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={addOppDemoEnd} onChange={(e) => setAddOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        <TextField label="PO Number" value={addOppPoNumber} onChange={(e) => setAddOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {addOppStageOrder >= STAGE_ORDER_NEGOTIATION && addOppLeadSourceCode !== "REPEAT_ORDER" && (
+          <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {addOppStageOrder >= STAGE_ORDER_ORDER && (
+          <TextField label="PO Number" value={addOppPoNumber} onChange={(e) => setAddOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Box>

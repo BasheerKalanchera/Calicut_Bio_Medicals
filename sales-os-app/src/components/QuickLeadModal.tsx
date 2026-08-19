@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
 import OpportunityItemAddRow from "./OpportunityItemAddRow";
 import OpportunityItemsList from "./OpportunityItemsList";
@@ -10,6 +10,18 @@ import { listStages, listStatuses, listUsers, listLeadSources, listSbus } from "
 import { useAuth } from "../contexts/AuthContext";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
+
+// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
+// field first becomes relevant -- mirrors backend/app/domains/opportunity/
+// validators.py's BR-OP-00 gates exactly, so a field never appears later than
+// the point the server would actually start requiring it. Progressive
+// disclosure on create only (Backlog decision, 2026-08-18) -- Edit forms show
+// every applicable field regardless of stage, since hiding a populated field
+// there would read as data loss.
+const STAGE_ORDER_QUALIFIED = 20;
+const STAGE_ORDER_DEMO = 30;
+const STAGE_ORDER_NEGOTIATION = 50;
+const STAGE_ORDER_ORDER = 60;
 
 interface QuickLeadModalProps {
   isOpen: boolean;
@@ -46,7 +58,6 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   const [name, setName]                 = useState("");
   const [sbuOverrideId, setSbuOverrideId] = useState("");
   const [stageId, setStageId]           = useState("");
-  const [statusId, setStatusId]         = useState("");
   const [ownerId, setOwnerId]           = useState("");
   const [winProb, setWinProb]           = useState("");
   const [value, setValue]               = useState("");
@@ -55,6 +66,10 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   const [demoEnd, setDemoEnd]           = useState("");
   const [closureDate, setClosureDate]   = useState("");
   const [poNumber, setPoNumber]         = useState("");
+  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
+  const [isExternalReferrer, setIsExternalReferrer] = useState(false);
+  const [referredByUserId, setReferredByUserId]     = useState("");
+  const [referredByNote, setReferredByNote]         = useState("");
 
   const effectiveSbuId = (isSbuOverrideRole && sbuOverrideId) ? sbuOverrideId : sbuId;
 
@@ -112,6 +127,27 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     queryFn: async () => (await listLeadSources()) as LeadSourceOption[],
   });
 
+  // LeadSource has no separate code column -- `name` already holds the pseudo-code
+  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
+  const leadSourceCode = leadSources.find((ls) => ls.id === leadSourceId)?.name;
+
+  // BR-OP-10: creation must default to Active only -- there is exactly one Active
+  // status in the system, so this is never a real user choice. Set automatically
+  // rather than showing a one-option dropdown.
+  const activeStatusId = statuses.find((s) => s.status_code === "ACTIVE")?.id;
+  const selectedStageOrder = stages.find((s) => s.id === stageId)?.display_order ?? 0;
+
+  // Distinct query key -- must not reuse ["users","all"] above, which (despite its
+  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  const { data: referralUsers = [] } = useQuery({
+    queryKey: ["users", "referral-picker"],
+    enabled: isOpen && leadSourceCode === "REFERRAL",
+    queryFn: async () => {
+      const d = await listUsers("all");
+      return Array.isArray(d) ? (d as UserOption[]) : [];
+    },
+  });
+
   const { data: projects = [], isFetching: projectsLoading } = useQuery({
     queryKey: ["projects", "byAccount", accountId],
     enabled: isOpen && !!accountId,
@@ -132,10 +168,11 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   useEffect(() => {
     if (!isOpen) return;
     setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
-    setName(""); setSbuOverrideId(""); setStageId(""); setStatusId(""); setOwnerId("");
+    setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setLeadSourceId("");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
+    setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
   }, [isOpen, initialAccountId, initialProjectId]);
 
   async function handleSubmit() {
@@ -144,7 +181,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     if (isSbuOverrideRole && !sbuOverrideId) throw new Error("SBU is required");
     if (!accountId) throw new Error("Account is required");
     if (!stageId) throw new Error("Stage is required");
-    if (!statusId) throw new Error("Status is required");
+    if (!activeStatusId) throw new Error("Unable to determine Active status -- please retry");
     if (!ownerId) throw new Error("Owner is required");
     if (winProb === "") throw new Error("Win probability is required");
     const _stage = stages.find((s) => s.id === stageId);
@@ -155,7 +192,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     const payload: Record<string, unknown> = {
       name: name.trim(),
       stage_id: stageId,
-      status_id: statusId,
+      status_id: activeStatusId,
       owner_id: ownerId,
       win_probability: Number(winProb),
     };
@@ -167,6 +204,13 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     if (demoEnd) payload.demo_end_date = demoEnd;
     if (closureDate) payload.expected_closure_date = closureDate;
     if (poNumber.trim()) payload.po_number = poNumber.trim();
+    if (leadSourceCode === "REFERRAL") {
+      if (isExternalReferrer) {
+        if (referredByNote.trim()) payload.referred_by_note = referredByNote.trim();
+      } else if (referredByUserId) {
+        payload.referred_by_user_id = referredByUserId;
+      }
+    }
     if (items.length > 0) payload.items = items.map((i) => ({
       product_id: i.product_id,
       description: i.description,
@@ -178,10 +222,6 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     await createOpportunity(accountId as any, payload);
     onCreated?.();
   }
-
-  // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
-  const leadSourceCode = leadSources.find((ls) => ls.id === leadSourceId)?.name;
 
   return (
     <>
@@ -235,39 +275,22 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
           <MenuItem value="">None</MenuItem>
           {projects.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
         </TextField>
-        <Box sx={{ display: "flex", gap: "0.75rem" }}>
-          <TextField
-            select
-            label="Stage *"
-            value={stageId}
-            onChange={(e) => {
-              const s = stages.find((x) => x.id === e.target.value);
-              setStageId(e.target.value);
-              if (s) setWinProb(String(s.default_win_probability));
-            }}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select stage</MenuItem>
-            {stages.map((s) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-          </TextField>
-          <TextField
-            select
-            label="Status *"
-            value={statusId}
-            onChange={(e) => setStatusId(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select status</MenuItem>
-            {/* BR-OP-10: creation must default to Active only -- Won/Lost/On-Hold/Stalled are post-create transitions, not initial choices. */}
-            {statuses.filter((s) => s.status_code === "ACTIVE").map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
-          </TextField>
-        </Box>
+        <TextField
+          select
+          label="Stage *"
+          value={stageId}
+          onChange={(e) => {
+            const s = stages.find((x) => x.id === e.target.value);
+            setStageId(e.target.value);
+            if (s) setWinProb(String(s.default_win_probability));
+          }}
+          fullWidth
+          size="small"
+          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+        >
+          <MenuItem value="">Select stage</MenuItem>
+          {stages.map((s) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
+        </TextField>
         <TextField
           select
           label="Lead Source"
@@ -280,6 +303,22 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
           <MenuItem value="">Select source</MenuItem>
           {leadSources.map((ls) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
         </TextField>
+        {leadSourceCode === "REFERRAL" && (
+          <Box>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={isExternalReferrer} onChange={(e) => { setIsExternalReferrer(e.target.checked); setReferredByUserId(""); setReferredByNote(""); }} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
+            />
+            {isExternalReferrer ? (
+              <TextField label="Referred By" value={referredByNote} onChange={(e) => setReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
+            ) : (
+              <TextField select label="Referred By" value={referredByUserId} onChange={(e) => setReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                <MenuItem value="">Select colleague</MenuItem>
+                {referralUsers.map((u) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
+              </TextField>
+            )}
+          </Box>
+        )}
         <TextField
           select
           label="Owner *"
@@ -302,25 +341,31 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
           size="small"
           slotProps={{ htmlInput: { min: 0, max: 100 } }}
         />
-        <TextField
-          label={`Indicative Value (Lakhs)${items.length > 0 ? " (auto)" : ""}`}
-          type="number"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          disabled={items.length > 0}
-          placeholder="Enter Indicative Value (Lakhs)"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, step: "any" } }}
-        />
-        {leadSourceCode !== "REPEAT_ORDER" && (
+        {(selectedStageOrder >= STAGE_ORDER_QUALIFIED || items.length > 0) && (
+          <TextField
+            label={`Indicative Value (Lakhs)${items.length > 0 ? " (auto)" : ""}`}
+            type="number"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            disabled={items.length > 0}
+            placeholder="Enter Indicative Value (Lakhs)"
+            fullWidth
+            size="small"
+            slotProps={{ htmlInput: { min: 0, step: "any" } }}
+          />
+        )}
+        {selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && (
           <>
-            <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo Start Date" type="date" value={demoStart} onChange={(e) => setDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={demoEnd} onChange={(e) => setDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" && (
+          <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {selectedStageOrder >= STAGE_ORDER_ORDER && (
+          <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        )}
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>

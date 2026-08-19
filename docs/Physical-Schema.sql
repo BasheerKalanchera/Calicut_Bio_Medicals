@@ -11,15 +11,14 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-11 from the Dev database (Postgres 17.6), after
--- migration 0019 (zone hierarchy: zone gains parent_zone_id + zone_level;
--- zone.name's global unique constraint relaxed to per-parent uniqueness
--- (uq_zone_parent_name) plus a partial index for the root case
--- (uq_zone_root_name); new zone_closure table, seeded with self-rows only;
--- opportunity_tier_visibility's Area Manager branch rewritten a second time,
--- from flat user_zone set-membership (migration 0018) to closure-based tree
--- membership -- Zone Hierarchy build). See
--- docs/Zone-Hierarchy-Implementation-Plan.md and
+-- Regenerated 2026-08-18 from the Dev database (Postgres 17.6), after
+-- migrations 0022 (user_profile.sbu_id nullable, for Admin/General Manager)
+-- and 0023 (opportunity.referred_by_user_id + referred_by_note, BR-FIN-07
+-- referral credit) — both regens were deferred pending Docker Desktop
+-- availability; caught up together in one pass since this file is a full
+-- snapshot, not an incremental diff. See
+-- docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md and
+-- docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md, and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -38,10 +37,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict y3hBsrr66v0xq2wTxuWYshcEnPdqekxfXWRhgTiJm7SpJXzO37qHfJ8RwML9N3D
+\restrict 7w9XyGpfLWknJnc3Zc2nmHvNGdL2k9gYgJdIfTuTDQbdIALkKKGS5afYjIF2N5m
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.10 (Debian 17.10-1.pgdg13+1)
+-- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -343,6 +342,9 @@ CREATE TABLE public.opportunity (
     created_by uuid,
     updated_by uuid,
     sbu_id uuid NOT NULL,
+    referred_by_user_id uuid,
+    referred_by_note text,
+    CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
     CONSTRAINT opportunity_win_probability_check CHECK (((win_probability >= (0)::numeric) AND (win_probability <= (100)::numeric)))
 );
 
@@ -575,7 +577,7 @@ CREATE TABLE public.target_plan (
 
 CREATE TABLE public.user_profile (
     id uuid NOT NULL,
-    sbu_id uuid NOT NULL,
+    sbu_id uuid,
     zone_id uuid,
     role_id uuid NOT NULL,
     display_name character varying(255) NOT NULL,
@@ -1208,6 +1210,13 @@ CREATE INDEX idx_zone_closure_descendant ON public.zone_closure USING btree (des
 
 
 --
+-- Name: idx_zone_name_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_zone_name_trgm ON public.zone USING gin (name public.gin_trgm_ops);
+
+
+--
 -- Name: ix_product_oem_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1627,6 +1636,14 @@ ALTER TABLE ONLY public.opportunity
 
 ALTER TABLE ONLY public.opportunity
     ADD CONSTRAINT opportunity_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.project(id);
+
+
+--
+-- Name: opportunity opportunity_referred_by_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opportunity
+    ADD CONSTRAINT opportunity_referred_by_user_id_fkey FOREIGN KEY (referred_by_user_id) REFERENCES public.user_profile(id);
 
 
 --
@@ -2132,5 +2149,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict y3hBsrr66v0xq2wTxuWYshcEnPdqekxfXWRhgTiJm7SpJXzO37qHfJ8RwML9N3D
+\unrestrict 7w9XyGpfLWknJnc3Zc2nmHvNGdL2k9gYgJdIfTuTDQbdIALkKKGS5afYjIF2N5m
 

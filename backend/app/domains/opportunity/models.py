@@ -27,6 +27,10 @@ class Opportunity(AuditMixin, Base):
             "win_probability >= 0 AND win_probability <= 100",
             name="ck_opportunity_win_probability",
         ),
+        CheckConstraint(
+            "NOT (referred_by_user_id IS NOT NULL AND referred_by_note IS NOT NULL)",
+            name="ck_opportunity_referral_not_both",
+        ),
         Index(
             "idx_opportunity_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}
         ),
@@ -70,12 +74,19 @@ class Opportunity(AuditMixin, Base):
     demo_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     demo_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     po_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    referred_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
+    referred_by_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")
     project: Mapped["Project | None"] = relationship(back_populates="opportunities", lazy="joined")
     owner: Mapped["UserProfile"] = relationship(
         back_populates="owned_opportunities", foreign_keys=[owner_id], lazy="joined"
+    )
+    referred_by: Mapped["UserProfile | None"] = relationship(
+        foreign_keys=[referred_by_user_id], lazy="joined"
     )
     stage: Mapped["OpportunityStage"] = relationship(back_populates="opportunities", lazy="joined")
     status: Mapped["OpportunityStatus"] = relationship(back_populates="opportunities", lazy="joined")
