@@ -164,55 +164,71 @@ export default function TerritoryAdminScreen() {
     const hasChildren = node.children.length > 0;
     return (
       <Box key={node.id}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-            py: 0.75,
-            pl: depth * 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          {/* Opacity scoped to the info side only -- a child's own opacity
-              can't undo a parent's, so the action buttons have to live
-              outside this dimmed Box to stay fully visible. */}
-          <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, opacity: node.is_active === false ? 0.5 : 1 }}>
+        {/* Bug fix, 2026-08-19: border was on the row alone, so it drew directly
+            under the row -- the coverage pills below then rendered past that line,
+            visually reading as the start of the *next* zone's card instead of the
+            tail end of this one's. Row + pills now share one wrapper so the border
+            only appears after both. */}
+        <Box sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              py: 0.75,
+              // Reduced from depth * 3 -- 5 possible zone levels (STATE down to
+              // CLUSTER) made the old per-level indent add up to a lot of wasted
+              // width on mobile.
+              pl: depth * 1.5,
+            }}
+          >
+            {/* Opacity scoped to the info side only -- a child's own opacity
+                can't undo a parent's, so the action buttons have to live
+                outside this dimmed Box to stay fully visible. */}
+            <Box sx={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, opacity: node.is_active === false ? 0.5 : 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => toggleExpand(node.id)}
+                disabled={!hasChildren}
+                sx={{ visibility: hasChildren ? "visible" : "hidden" }}
+              >
+                <Box component="span" sx={{ fontSize: "0.75rem" }}>{isExpanded ? "▼" : "▶"}</Box>
+              </IconButton>
+              {/* Bug fix, 2026-08-19: no truncation here meant a long zone name pushed
+                  past its allotted width instead of shrinking -- since nothing clips
+                  the overflow, the zone-level pill right after it spilled out over the
+                  "+" (add child zone) icon button for some zones. minWidth: 0 is what
+                  actually fixes that (lets this flex item shrink to the row's available
+                  width instead of forcing it wider); wraps onto a second line rather
+                  than truncating with an ellipsis, so the full name stays visible
+                  without opening Edit. */}
+              <Typography sx={{ flex: 1, minWidth: 0, fontWeight: 600, overflowWrap: "break-word", wordBreak: "break-word" }}>{node.name}</Typography>
+              {node.zone_level && <Chip label={node.zone_level} size="small" sx={{ mr: 1, flexShrink: 0 }} />}
+              {node.is_active === false && <Chip label="Inactive" size="small" sx={{ mr: 1, flexShrink: 0 }} />}
+            </Box>
+            <IconButton size="small" onClick={() => openCreate(node)} title="Add child zone" sx={{ flexShrink: 0 }}>
+              <Box component="span">➕</Box>
+            </IconButton>
+            <IconButton size="small" onClick={() => openEdit(node, parent)} title="Edit zone" sx={{ flexShrink: 0 }}>
+              <Box component="span">✏️</Box>
+            </IconButton>
             <IconButton
               size="small"
-              onClick={() => toggleExpand(node.id)}
-              disabled={!hasChildren}
-              sx={{ visibility: hasChildren ? "visible" : "hidden" }}
+              onClick={() => (node.is_active === false ? handleReactivate(node) : openDeactivate(node))}
+              title={node.is_active === false ? "Reactivate zone" : "Deactivate zone"}
+              sx={{ color: "text.primary", flexShrink: 0 }}
             >
-              <Box component="span" sx={{ fontSize: "0.75rem" }}>{isExpanded ? "▼" : "▶"}</Box>
+              <Box component="span">{node.is_active === false ? "↩️" : "🚫"}</Box>
             </IconButton>
-            <Typography sx={{ flex: 1, fontWeight: 600 }}>{node.name}</Typography>
-            {node.zone_level && <Chip label={node.zone_level} size="small" sx={{ mr: 1 }} />}
-            {node.is_active === false && <Chip label="Inactive" size="small" sx={{ mr: 1 }} />}
           </Box>
-          <IconButton size="small" onClick={() => openCreate(node)} title="Add child zone">
-            <Box component="span">➕</Box>
-          </IconButton>
-          <IconButton size="small" onClick={() => openEdit(node, parent)} title="Edit zone">
-            <Box component="span">✏️</Box>
-          </IconButton>
-          <IconButton
-            size="small"
-            onClick={() => (node.is_active === false ? handleReactivate(node) : openDeactivate(node))}
-            title={node.is_active === false ? "Reactivate zone" : "Deactivate zone"}
-            sx={{ color: "text.primary" }}
-          >
-            <Box component="span">{node.is_active === false ? "↩️" : "🚫"}</Box>
-          </IconButton>
+          {showCoverage && node.assignees.length > 0 && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pl: depth * 1.5 + 5, pb: 0.75 }}>
+              {node.assignees.map((a) => (
+                <Chip key={a.id} label={`${a.display_name} · ${a.role_name}`} size="small" variant="outlined" />
+              ))}
+            </Box>
+          )}
         </Box>
-        {showCoverage && node.assignees.length > 0 && (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, pl: depth * 3 + 5, pb: 0.75 }}>
-            {node.assignees.map((a) => (
-              <Chip key={a.id} label={`${a.display_name} · ${a.role_name}`} size="small" variant="outlined" />
-            ))}
-          </Box>
-        )}
         {hasChildren && (
           <Collapse in={isExpanded}>
             {node.children.map((child) => renderNode(child, node, depth + 1))}
@@ -222,28 +238,57 @@ export default function TerritoryAdminScreen() {
     );
   };
 
+  // Button sx shared by all 3 header actions -- shrinks on mobile (xs) so
+  // "Refresh Territory Visibility" doesn't force horizontal overflow next to
+  // the other two buttons on a narrow phone screen.
+  const headerButtonSx = { fontSize: { xs: "0.6875rem", sm: "0.8125rem" }, px: { xs: 1, sm: 1.5 }, whiteSpace: "nowrap" as const };
+
   return (
-    <Box sx={{ p: 3, height: "100%", overflow: "auto" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>Territory Map</Typography>
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button variant="outlined" onClick={() => setShowCoverage((v) => !v)}>
+    // Bug fix, 2026-08-19: header (title + action buttons) used to scroll away
+    // with the zone tree below it. Split into a fixed-height header (flexShrink:
+    // 0) and a separately scrollable content area (flex:1, overflow:auto) so the
+    // header stays visible while the tree scrolls independently.
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ p: 3, pb: rebuildMessage ? 0 : 2, flexShrink: 0 }}>
+        {/* Mobile (xs): Add Zone shares the title's row to save vertical space;
+            Show Coverage/Refresh get their own row below. Desktop (sm+): all
+            3 buttons stay on the title's row, as before. Two blocks (CSS
+            display toggle, not JS breakpoint detection) since flex-wrap alone
+            can't put just one of three buttons on the title's line. */}
+        <Box sx={{ display: { xs: "flex", sm: "none" }, justifyContent: "space-between", alignItems: "center", gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Territory Map</Typography>
+          <Button variant="contained" size="small" sx={headerButtonSx} onClick={() => openCreate(null)}>Add Zone</Button>
+        </Box>
+        <Box sx={{ display: { xs: "flex", sm: "none" }, gap: 1, flexWrap: "wrap", mt: 1 }}>
+          <Button variant="outlined" size="small" sx={headerButtonSx} onClick={() => setShowCoverage((v) => !v)}>
             {showCoverage ? "Hide Coverage" : "Show Coverage"}
           </Button>
-          <Button variant="outlined" onClick={handleRebuildClosure}>Refresh Territory Visibility</Button>
-          <Button variant="contained" onClick={() => openCreate(null)}>Add Zone</Button>
+          <Button variant="outlined" size="small" sx={headerButtonSx} onClick={handleRebuildClosure}>Refresh Territory Visibility</Button>
         </Box>
+
+        <Box sx={{ display: { xs: "none", sm: "flex" }, justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>Territory Map</Typography>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button variant="outlined" size="small" sx={headerButtonSx} onClick={() => setShowCoverage((v) => !v)}>
+              {showCoverage ? "Hide Coverage" : "Show Coverage"}
+            </Button>
+            <Button variant="outlined" size="small" sx={headerButtonSx} onClick={handleRebuildClosure}>Refresh Territory Visibility</Button>
+            <Button variant="contained" size="small" sx={headerButtonSx} onClick={() => openCreate(null)}>Add Zone</Button>
+          </Box>
+        </Box>
+
+        {rebuildMessage && <Alert severity="success" sx={{ mt: 2 }}>{rebuildMessage}</Alert>}
       </Box>
 
-      {rebuildMessage && <Alert severity="success" sx={{ mb: 2 }}>{rebuildMessage}</Alert>}
-
-      {isLoading ? (
-        <Typography color="text.secondary">Loading...</Typography>
-      ) : (
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
-          {tree.map((node) => renderNode(node, null, 0))}
-        </Box>
-      )}
+      <Box sx={{ flex: 1, overflow: "auto", px: 3, pb: 3 }}>
+        {isLoading ? (
+          <Typography color="text.secondary">Loading...</Typography>
+        ) : (
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
+            {tree.map((node) => renderNode(node, null, 0))}
+          </Box>
+        )}
+      </Box>
 
       <FormModal
         isOpen={dialogMode === "create" || dialogMode === "edit"}

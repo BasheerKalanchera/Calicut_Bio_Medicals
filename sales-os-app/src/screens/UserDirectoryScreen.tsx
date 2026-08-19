@@ -103,7 +103,14 @@ export default function UserDirectoryScreen() {
     setBlastRadiusError(null);
   };
 
-  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ["users"] });
+  const invalidateUsers = () => {
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    // Bug fix, 2026-08-19: Territory Map (TerritoryAdminScreen.tsx) reads
+    // each zone's user_count from ["zone-tree"] -- changing a user's zone
+    // assignment (or active/inactive status) here left that screen showing
+    // a stale count until a hard refresh, since nothing was invalidating it.
+    queryClient.invalidateQueries({ queryKey: ["zone-tree"] });
+  };
 
   const combinedZoneIds = () => Array.from(new Set([form.zone_id, ...form.additionalZones].filter(Boolean)));
 
