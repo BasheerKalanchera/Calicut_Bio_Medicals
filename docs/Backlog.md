@@ -9,46 +9,53 @@ Session Handoff rule).
 
 ## Parked initiatives
 
-### MUI migration backlog (§9 of Frontend-Implementation-Standards.md)
+### ~~MUI migration backlog (§9 of Frontend-Implementation-Standards.md)~~ — DONE, 2026-08-18
 
-**Milestone 1 gap-closure is fully complete** (all 6 items from
-`docs/Prototype-Production-Parity-Audit.md` §6 shipped — Parent Customer
-display + editing (`87fde5a`, `95e118a`), `CustomerType` (`70cf978`),
-Opportunity Detail trio (`b662751`), Reminder click-through (`ac6d008`),
-Product Catalog collateral links (`ab67209`), Catalog role gate GM+Admin
-(`42fa050`)) — the MUI migration backlog resumes whenever picked back up.
-
-**1 file remains** (`ProjectDirectoryScreen.jsx`), needing the full
-triple-conversion (styling + fetch + `.jsx`→`.tsx`) — bigger lift than
-`ErrorBoundary.jsx` was. `ProductCatalogScreen.jsx` (migrated `8f4526e`,
-2026-08-07 — this note was stale until now, never updated when that
-landed) and `CustomerDirectoryScreen.jsx` (migrated 2026-08-11) are both
-done; `ProductCatalogScreen.tsx`'s own migration is the precedent this
-file type now has to follow. End with an honest §9 update per column,
-not a blanket "done."
-
-**Per-file ritual, mandatory for every remaining migration:**
-convert → property-diff (against pre-migration git history, full comparison
-table, evidence not summary) → triage (categorize each gap using
-Frontend-Implementation-Standards.md §6.8's rules: fix-theme / fix-per-file /
-verify-first / do-not-fix) → verify on screen (manual E2E, Basheer's pass) →
-guard-green (`npm run lint` clean, `npx tsc --noEmit` clean) → update §9
-honestly (per-column, not a blanket "done") and the `check-no-tailwind.js`
-GRANDFATHERED list to match, in the same commit → commit. If a file's
-data-fetching and styling are genuinely separable risk profiles, split into
-two commits rather than bundling.
-
-`npx tsc --noEmit` is a deliberate addition, not a duplicate of `npm run lint`:
-`sales-os-app/eslint.config.js` only has a `files: ['**/*.{js,jsx}']` block
-(no `.ts`/`.tsx` glob) and there is no `typescript-eslint` package in
-`devDependencies`, so `eslint .` silently skips every `.tsx` file. `npm run
-build` is plain `vite build`, no `tsc` step either. Net effect: **no
-automated step other than `tsc --noEmit` type-checks `.tsx` files.**
-
-Update Frontend-Implementation-Standards.md as new gotchas/patterns surface
-during these remaining migrations — §6.6/§6.8 are living documents.
+**Fully complete.** `ProjectDirectoryScreen.tsx` (`1d51b6d`) was the last
+file — full triple-conversion (styling + React Query + `.jsx`→`.tsx`),
+same ritual as every prior migration on this list. `Frontend-
+Implementation-Standards.md`'s §9 table reached 0 pending, triggering its
+own post-migration cleanup instructions (Superseded blocks deleted, §9
+collapsed, doc bumped to v3.0) — full per-file migration history
+preserved in `docs/Progress-Archive-2026-08.md` before that cleanup
+removed the narrative from the standards doc itself. This backlog section
+kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
+
+- **Referral Credit Part 2 — Relationship-Support Activity.** Split out
+  2026-08-18 when Part 1 (Referral Credit, `BR-FIN-07`) shipped — see
+  `docs/Progress-Archive-2026-08.md`'s 2026-08-18/19 entry. Fully scoped,
+  ready to build: `docs/Referral-Credit-And-Relationship-Support-
+  Implementation-Plan.md` steps 5 (Activity schema/repository/service/
+  router), 7 (Business Rules — note the plan's own `BR-ACT-08` numbering
+  is now stale, that slot was taken by Opportunity Document Upload since
+  the plan was written; use the next free `BR-ACT-` number at build time),
+  8 (frontend `LogActivityModal.tsx`), and 10 (manual verification,
+  including the cross-SBU security check — the real one, can't be
+  skipped). Lets someone outside a deal's normal ownership/SBU log a
+  "relationship support" note against a specific Opportunity via a new,
+  narrow `SECURITY DEFINER` RLS carve-out; also adds a general "which
+  Opportunity is this about" picker to `LogActivityModal.tsx` when
+  logging from the Account level (a gap today regardless of this
+  feature). Nothing implemented yet.
+
+- **Critical Care/Imaging manager hierarchy — UAT/Prod rollout.** See
+  `docs/Progress-Archive-2026-07.md`'s Phase 2E section for the confirmed
+  plan. Blocked item already resolved for Dev; the broader UAT/Prod
+  rollout question is unresolved. Revisit once UAT is fully proven out —
+  the UAT migration/Users-Territories work in `active_progress.md` is a
+  natural point to pick this back up, not automatically part of it.
+- **9 date-only `type="date"` fields left unconverted, on purpose.**
+  Basheer's explicit scope call during the MUI migration (see the
+  `@mui/x-date-pickers` archive entry) — `Customer360Screen.tsx`/
+  `OpportunityDetailScreen.tsx` (7 fields) and `ProjectDirectoryScreen.tsx`
+  (2 fields). Pick up only if Basheer decides to extend scope; not
+  blocking anything.
+- **`sales-os-app/src/App.jsx` legacy `/prototype` route still says
+  "Sales Manager."** Mock-data-only route, unaffected by the real Sales
+  Manager Tier Collapse elsewhere in the app. Not yet decided whether the
+  prototype route is worth touching at all — Basheer's call, pending.
 
 - ~~**Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
   Admin/General Manager.**~~ — **Superseded 2026-08-16 by

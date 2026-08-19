@@ -1880,3 +1880,264 @@ Every migration in this list shipped with `tsc --noEmit` and `npm run
 lint` (incl. the `check-no-tailwind.js` Tailwind guard) clean before
 commit -- that guard-green requirement never varied across the whole
 effort.
+
+---
+
+## 2026-08-19 -- Leadership demo, presenter narrative + slide deck built; Referral Credit shown live
+
+**Demo delivered to leadership tonight -- went extremely well** (Basheer's
+own report). Covered all 25 code commits sitting on `main` since the last
+UAT migration (`origin/uat` at `7a3c8d7`, 2026-08-06) plus Referral
+Credit, added to the demo as a late but deliberate addition -- built,
+manually verified (`docs/Business-Rules.md`'s BR-FIN-07 records the
+2026-08-18 E2E reconfirmation), but still uncommitted -- because it
+directly answers a standing ask from leadership and the sales team: how
+to actually track a referral. Not a scope surprise on the night; a
+considered call to fold in a finished, verified feature for impact.
+
+**Two presenter artifacts built and iterated live with Basheer's
+feedback**, both published as Claude Artifacts (not committed to the
+repo as artifacts -- ephemeral presentation aids):
+1. A narrative briefing (also saved to the repo, see below) -- four
+   "movements" (Territory & Organization, The Deal Itself, Referral
+   Credit, Data You Can Stand Behind) plus a closing "Wider Picture"
+   section tying the whole build to ADR-001/ADR-013's Target -> Coverage
+   -> Opportunity -> Revenue hierarchy. Verified against
+   `backend/app/domains/planning/models.py` before writing the claim --
+   `TargetPlan`/`CoveragePlan`/`CoveragePlanEntry` tables genuinely exist
+   in the schema already, no UI yet, so the pitch ("the foundation snaps
+   onto the pipeline you're looking at right now") is accurate, not
+   aspirational marketing.
+2. A 7-slide browser-based presenter deck (dark, stage-lit design,
+   keyboard/click/swipe navigation) -- reordered and trimmed twice on
+   Basheer's live feedback (title slide dropped, hook slide relocated to
+   sit right before the vision slide, a stale "Sales Manager tier
+   retired" line cut from the Territory slide once it was pointed out as
+   redundant with the org-chart framing already covering it, and a
+   "Trade-ins, refurbished stock, accessories" bullet corrected -- the
+   actual product model is New Product / Accessory / Buyback as line
+   items, not "trade-ins" as its own category, confirmed against
+   `opportunity.models.py`'s `line_type` CHECK constraint and
+   `product.models.py`'s `product_type` CHECK constraint before fixing
+   the copy).
+
+**Narrative revision history worth remembering for next time:** the
+first draft was a straight feature-by-feature list organized into "Acts"
+with click-by-click demo instructions -- correctly rejected by Basheer as
+not impressive enough. Rebuilt around a real through-line (Sales
+Operating System vs. CRM, closing with the Target/Coverage vision) after
+a corporate-storyteller-style review requested staccato pacing on the
+climax, scenario-framed (not click-framed) demo cues, and an opening hook
+built on contrast ("did you log your activity" vs. "will this help you
+hit your target"). **Lesson: for a leadership audience, lead with the
+business narrative and only cite specific bugs/fixes as supporting
+evidence, never as the headline** -- an earlier pass that led with "here's
+what we found broken and fixed" was explicitly rejected (see the
+2026-08-18 thread) as the wrong frame for this audience, even though the
+same underlying fixes are completely fair game in the reference-detail
+section further down the page.
+
+Saved to the repo as `docs/Demo-Narrative-UAT-Migration-2026-08-19.md`
+(untracked, not yet committed) -- kept in sync with the final Artifact
+version by hand across every revision.
+
+**Real blocker hit, not resolved:** live DB read (a plain read-only
+`SELECT display_name, is_active FROM user_profile` via `psycopg2`,
+intended to cross-check which names in
+`docs/Zone-Hierarchy-Territory-Data-2026-08.md` (Adarsh, Vivek, Shruthi,
+Fazal, Fahad, Irfan, Nishad, Adydev, Naeem, Rudrappa, Om Hiremath,
+Dhanushma, Nagesh Ninganoor, Ravikumar) don't yet have a live
+`user_profile` row, for a planned demo moment) was blocked by the Claude
+Code auto-mode safety classifier -- same restriction the Zone Hierarchy
+build hit applying migration `0019` back on 2026-08-11. Chat approval
+alone doesn't satisfy it; Basheer either needs to run DB-touching
+commands himself (`!`-prefixed, runs directly in the session) or grant a
+Bash permission rule for them. **Not resolved -- relevant again for the
+UAT Users/Territories setup below, which will hit the identical wall.**
+
+**Nothing from tonight is committed, at the point this entry was
+written.** Referral Credit (backend + frontend, all 4 entry points, from
+the 2026-08-18 session above) and the narrative markdown file were both
+still sitting in the working tree.
+
+**Correction, same night:** Referral Credit was committed shortly after
+this entry was written, as `ea19bd1` (bundled with an Add/Edit Opportunity
+UX overhaul it prompted), followed by `9e32fb2` (Territory Map fixes) --
+see the entry immediately below this one for full detail. The narrative
+markdown file (`docs/Demo-Narrative-UAT-Migration-2026-08-19.md`) remains
+uncommitted. Remaining task: promote everything on `main` (36 commits
+ahead of `origin/uat`) to `uat`, and set up real Users and Territories in
+the UAT database to match what's been live on Dev since the Zone
+Hierarchy / Multi-Zone / Sales Manager Tier Collapse work -- see
+`.claude/active_progress.md`'s current task.
+
+## 2026-08-18/19 -- Referral Credit (BR-FIN-07) shipped, plus a UX
+overhaul and several bugs found during manual E2E (`ea19bd1`, `9e32fb2`)
+
+Ran as a separate session in parallel with the `ProjectDirectoryScreen.tsx`
+migration above -- deliberately split from
+`docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`:
+Part 1 (Referral Credit) built now; Part 2 (Relationship-Support Activity)
+deliberately deferred, not touched, moved to `docs/Backlog.md`.
+
+**Referral Credit backend:** migration `0023_add_referral_credit.py` adds
+`opportunity.referred_by_user_id` (FK -> `user_profile`, any SBU/zone,
+same eligibility as BR-ACT-06's Next Action assignee) and
+`referred_by_note` (free text, for a non-Cabio referrer), mutually
+exclusive via both a schema `model_validator` (clean `422`) and a DB
+`CHECK` constraint (`ck_opportunity_referral_not_both`) as backstop. Only
+applies when `lead_source_id` resolves to `Referral` -- deliberately not
+`OEM Referral`, which names a partner company rather than a person (this
+distinction was questioned mid-build and reconfirmed: merging them would
+bury "how many leads come through OEM partnerships" inside a generic
+bucket, losing real Lead Source Analytics granularity). The plan doc's
+claim that `create_opportunity` needed no change was wrong -- unlike
+`update_opportunity`'s generic `setattr` loop, `create_opportunity` builds
+`Opportunity(...)` with named fields, so the two new fields had to be
+added there explicitly. 7 new backend tests; full 526-test suite green
+throughout. Applied to Dev; `docs/Physical-Schema.sql` regenerated
+(Docker Desktop + `postgres:17` pg_dump) -- turned out to be stale since
+`0019`, so this pass also caught up `0020`'s `idx_zone_name_trgm` index
+that a prior regen had missed.
+
+**Two real gaps beyond the plan doc, found and fixed:**
+1. `WorkspaceOpportunity` (`backend/app/domains/account/workspace_schemas.py`)
+   is a third Opportunity response shape the plan never accounted for --
+   it's what `GET /accounts/{id}/opportunities` returns, and what both
+   Customer 360's and Project Directory's Edit Opportunity forms read from
+   to prefill. Missing the two new fields there would have meant those two
+   screens' Edit forms could never show the current referral value.
+2. `types/api.ts`'s hand-maintained "convenience aliases" block (named
+   type exports like `PipelineOpportunity`) gets silently wiped by every
+   `npm run generate:types` regen -- restored from git history each time
+   this came up (twice in this session); `tsc --noEmit` catches it
+   immediately if ever missed (30+ errors, one per lost alias).
+
+**Frontend, all 4 entry points** (`QuickLeadModal.tsx`; `Customer360Screen.
+tsx`'s New and Edit Opportunity forms; `OpportunityDetailScreen.tsx`'s
+edit form; `ProjectDirectoryScreen.tsx`'s Add and Edit forms, added once
+that screen's own MUI migration landed): a checkbox toggle between a
+Cabio-colleague picker (`["users","referral-picker"]`, a new,
+distinctly-keyed query calling `listUsers("all")` -- confirmed and avoided
+the pre-existing `["users","all"]` naming-quirk collision, where that key
+actually calls `listUsers()` with no scope arg despite its name) and a
+free-text external referrer field. Displayed on Opportunity Detail's
+Overview tab, positioned directly under Lead Source (moved there after
+Basheer flagged its first position as visually odd). Referral credit is
+now cleared automatically (`referred_by_user_id`/`note` explicitly sent as
+`null`, not omitted) whenever Lead Source is edited away from Referral --
+this was a real bug Basheer caught during manual verification: the fields
+were being left stranded and invisible instead of cleared.
+
+**Two navigation bugs found during Customer 360 E2E, unrelated to
+Referral Credit but surfaced by the same testing pass, both fixed in
+`DemoApp.tsx`/`Customer360Screen.tsx`:**
+1. Its tab bar could resume on the wrong tab after Back from Opportunity
+   Detail -- `DemoApp.tsx` was reusing one shared `initialTab` value for
+   two unrelated screens' tab state (which Customer 360 tab to resume on
+   Back, and which Opportunity Detail tab to open on). Split into two
+   independent params (`detailTab`, `customer360Tab`); every Customer 360
+   call site now passes its own current tab explicitly instead of leaving
+   a stale value from an earlier, unrelated Project visit in place. First
+   fix attempt reused the single value and broke the plain
+   Opportunities-tab click (opened Opportunity Detail on a non-existent
+   "opportunities" tab, rendering blank) -- caught immediately by Basheer,
+   fixed properly the same session.
+2. The tab-centering scroll (`handleTabChange`) only ran on an actual
+   click, never for the tab a screen resumed on after remounting (this
+   screen fully unmounts/remounts on every navigation away and back) --
+   the correct tab was highlighted but scrolled out of view. Added a
+   mount-time effect using the same centering logic, instant (not
+   animated) so it doesn't visibly slide on first paint.
+
+**Add/Edit Opportunity UX overhaul, prompted by Basheer noticing the
+modals had grown too tall to use comfortably:**
+- `FormModal.tsx`: the shared component behind every modal in the app had
+  a plain `<form>` wrapping `DialogTitle`/`DialogContent`/`DialogActions`,
+  which silently broke the flex-layout chain MUI's `Dialog` relies on to
+  let `DialogContent` scroll independently -- the whole dialog scrolled as
+  one block instead, hiding the header and Save/Cancel on a long form.
+  Fixed by making the form wrapper itself a flex column
+  (`display:flex, flexDirection:column, minHeight:0, overflow:hidden`).
+  The error `Alert` was also moved out of the scrollable `DialogContent`
+  into its own fixed row between the title and the fields, for the same
+  reason (it was scrolling out of view too).
+- Progressive disclosure on all 6 Add/Edit Opportunity forms, grounded
+  directly in `validators.py`'s BR-OP-00 stage-gate thresholds (not
+  invented cutoffs): Status removed entirely from Create (BR-OP-10 leaves
+  exactly one selectable value, so the dropdown was pure clutter -- set
+  automatically instead); Indicative Value/Demo Start/Demo End/Expected
+  Closure/PO Number now show only once the selected Stage reaches that
+  field's own gate. On Create, hidden below the threshold entirely. On
+  Edit, shown whenever the field already holds a value even below the
+  threshold (Basheer's explicit call, after the first pass covered Create
+  forms only per his own scope decision -- "we don't want to show the
+  fields if they are empty or not relevant" was the exact bar) so no
+  populated data is ever hidden; PO Number also stays visible whenever
+  Status is WON regardless of Stage, since Stage/Status are decoupled
+  (ADR-028) and a deal can reach Won without Stage having reached Order.
+- Bug fix: Customer 360 and Project Directory's Edit Opportunity forms had
+  no fields at all for Demo Start/End Date or Expected Closure Date --
+  `WorkspaceOpportunity` was missing the 3 columns (same schema gap as
+  above), so advancing a deal's Stage to Demo/Negotiation from those two
+  screens would fail server-side with no way to fix it on screen. Added,
+  and reordered all 3 Edit forms (Name -> Stage/Status -> Lead Source ->
+  Referred By -> Owner -> Win Probability -> Indicative Value -> Demo/
+  Closure dates -> PO Number -> Hold/Loss) to a consistent order --
+  Opportunity Detail's version previously had Lead Source stranded after
+  the dates instead of right after Stage/Status.
+- Project Directory's Add/Edit Opportunity modal badge showed only the
+  Project name, not the Account -- Basheer kept losing track of which
+  account he was in; now shows "Account -- Project".
+
+**Territory Map fixes** (`9e32fb2`, `TerritoryAdminScreen.tsx`/
+`UserDirectoryScreen.tsx`), found during a side conversation while
+Basheer was testing the above:
+1. Stale data: `UserDirectoryScreen.tsx`'s save/deactivate/reactivate only
+   invalidated `["users"]`, never `["zone-tree"]` (which Territory Map
+   reads each zone's `user_count` from) -- a zone reassignment stayed
+   stale until a hard refresh. One-line fix since all 4 mutations already
+   funnel through one `invalidateUsers()` helper.
+2. Coverage pills rendering under the wrong zone's card: the divider
+   border was on the zone row alone, so it drew directly under the row --
+   pills rendered below that line then visually read as the next zone's,
+   not their own. Row and pills now share one wrapper so the border only
+   appears after both.
+3. Zone-level pill overlapping the "+" (add child zone) icon: the
+   zone-name `Typography` had no `minWidth: 0`, so a long name pushed past
+   its allotted width instead of shrinking within the flex row. Fixed by
+   letting the name wrap onto a second line (not truncate -- Basheer
+   wanted long cluster names fully visible without opening Edit) plus
+   `flexShrink: 0` on the pills/icons so they never get squeezed.
+4. Mobile layout: header buttons shrunk (responsive `sx`); the title/
+   button row made sticky (split into a fixed header + independently
+   scrollable tree list, was one scrolling block); Add Zone moved onto the
+   title's own row on mobile only (CSS breakpoint toggle, two markup
+   blocks, since flex-wrap alone can't put one of three buttons on a
+   different line than its siblings) to save vertical space, with Show
+   Coverage/Refresh Territory Visibility on their own row below; per-level
+   indentation halved (`depth * 3` -> `depth * 1.5`) since 5 possible zone
+   levels made deep nesting waste a lot of width on narrow screens.
+
+**Also, mid-session:** the other (MUI migration) session's manual
+verification pass found and fixed real bugs in `QuickLeadModal.tsx`/
+`Customer360Screen.tsx` concurrently with this session's referral-credit
+edits landing in the same two files -- both sessions' work ended up
+interleaved line-by-line in the same live working tree (no worktree
+isolation). Untangled via a careful zero-context-diff `git apply --cached`
+split on their end; confirmed post-commit on this side that nothing was
+lost (`tsc --noEmit`/`npm run lint` clean, all referral markers intact).
+Real coordination cost from working the same files concurrently without
+checking first -- see `[[cabio_feedback_check_before_touching_wip_files]]`
+memory, written specifically from this incident.
+
+Manually verified end-to-end on Dev by Basheer across all 4 Referral
+Credit entry points, both the create and edit sides, plus the
+cross-cutting checks (mutual exclusivity, cross-SBU colleague picker as
+Admin/GM) and the Territory Map fixes. `tsc --noEmit`/`npm run lint`
+clean throughout both commits.
+
+**Part 2 (Relationship-Support Activity) not started** -- moved to
+`docs/Backlog.md` as a clearly-scoped, ready-to-build item (the original
+implementation plan doc already has full detail for it, steps 5/7-8/10
+plus BR-ACT-09).
