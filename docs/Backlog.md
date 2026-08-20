@@ -23,6 +23,16 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- **Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**
+  Raised at the 2026-08-19 leadership demo — reps need to skip Demo Date/Expected
+  Closure Date gates for a brand-new (non-`REPEAT_ORDER`) customer who declines a demo,
+  e.g. a referral going straight to negotiation. This is Option C from
+  `docs/Discussion-FastTrack-Opportunity-Creation.md` (2026-08-05), deliberately dropped
+  then with "revisit only if that case actually starts recurring" — it just recurred.
+  Full options analysis and a strawman recommendation are in
+  `docs/Discussion-FastTrack-Gate-Override-2026-08.md`, OPEN pending Basheer/Haroon
+  decision. Not started — do not build until that paper is decided.
+
 - **Referral Credit Part 2 — Relationship-Support Activity.** Split out
   2026-08-18 when Part 1 (Referral Credit, `BR-FIN-07`) shipped — see
   `docs/Progress-Archive-2026-08.md`'s 2026-08-18/19 entry. Fully scoped,
