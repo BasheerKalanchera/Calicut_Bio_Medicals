@@ -2141,3 +2141,73 @@ clean throughout both commits.
 `docs/Backlog.md` as a clearly-scoped, ready-to-build item (the original
 implementation plan doc already has full detail for it, steps 5/7-8/10
 plus BR-ACT-09).
+
+---
+
+## 2026-08-20 — UAT-to-Prod cutover strategy decided (data carry-forward + Render tier)
+
+Discussion prompted by drafting the Aug 22 extended-team training invite:
+once the extended sales team starts entering real inflight opportunities
+and activities in UAT alongside the Star team, UAT stops being disposable
+test data and becomes the seed of record for Production. `Deployment-
+Topology.md`'s original plan (`Data` row, Phase B checklist) assumed the
+opposite -- UAT holds "realistic-but-fake data" and Prod is always a
+brand-new, empty Supabase project created after sign-off. That assumption
+no longer holds, so the topology doc's Prod section was updated
+(see below) to reflect the decision made here.
+
+**Decision: promote the existing UAT Supabase project's data in place to
+become Prod, rather than dump/restore into a fresh Prod project.**
+Considered both:
+- *Dump/restore into a new project* (the literal "as-is migration" first
+  asked about) -- rejected as higher-risk than it looks. Supabase Auth
+  (`auth.users`) is project-scoped; `user_profile` FKs into it and RLS
+  policies key off `auth.uid()`. A new Prod project would need every
+  UAT user's auth identity recreated with matching UUIDs (or every FK
+  remapped) alongside the data copy -- real engineering work with a real
+  chance of silently broken ownership/RLS if anything is missed.
+  There's also no reliable way to bulk-migrate Supabase Auth accounts
+  between projects short of the admin API, which brings its own
+  password/session-reset complications.
+- *Promote in place* -- the UAT Supabase project's connection details
+  (URL, keys, project ref) don't change; it's the same physical database,
+  just relabeled as Prod going forward. Zero data-migration risk, since
+  nothing actually moves. A fresh, empty UAT project gets created
+  afterward for the next dev/test cycle. Cost is identical either way --
+  both paths need a 3rd paid Supabase project (Pro plan trigger), so
+  promote-in-place has no downside relative to the documented plan
+  beyond the doc itself needing an update.
+
+**Decision: Render hosting for Prod stays on the already-documented plan
+-- new Starter-tier services, not an in-place upgrade of the free-tier
+UAT services.** Two options considered:
+- *Upgrade `calicut-bio-medicals` (backend) / `cabio-sales-os-uat-frontend`
+  (frontend) in place* -- rejected. These are UAT-named/UAT-branded
+  services; repointing them to serve Prod either bakes "uat" into the
+  URL the whole sales team bookmarks, or requires renaming mid-flight
+  with unclear effects on the auto-assigned `.onrender.com` subdomain
+  (CORS/`VITE_API_BASE_URL` would need re-verifying either way).
+- *New Starter-tier services on the `prod` branch* (adopted) -- backend
+  env vars (`DATABASE_URL`, `ADMIN_DATABASE_URL`, `SUPABASE_URL`,
+  `SUPABASE_ANON_KEY`, `CABIO_APP_DB_PASSWORD`) copy over unchanged since
+  the DB connection details don't change under the promote-in-place plan
+  above. The old free-tier UAT services become idle once Prod is
+  verified, and get repointed at a freshly created empty UAT Supabase
+  project to serve as the next UAT environment. Starter tier confirmed
+  necessary (not optional) for Prod specifically because free tier's
+  ~15min idle spin-down / 30-50s cold start, currently masked on UAT by
+  an UptimeRobot keep-alive ping, isn't something to build real
+  production reliability on -- the doc's original Phase B plan already
+  called for Starter tier here, this only confirms it still holds under
+  the promote-in-place change.
+
+**Also reconfirmed, no change:** the fix-vs-Milestone-2 parallel
+development model (branch fixes off wherever the bug lives, verify on
+`uat`, promote the same tested commit to `prod`, cherry-pick into `main`)
+was already fully documented in `Deployment-Topology.md`'s Promotion
+Flow section, including the Alembic migration-divergence caveat -- no
+process change needed there, just confirmed it holds once Prod exists
+for real.
+
+`Deployment-Topology.md` updated same day to reflect the two decisions
+above (Data row, Phase B checklist, Approved Decisions note).
