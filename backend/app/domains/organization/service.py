@@ -120,7 +120,10 @@ class UserService:
                     raise NotFoundError(f"Zone {zone_id} not found")
         # Same SS3 invariant as create_user, checked against the effective
         # post-update state -- either field may be omitted from this PATCH.
-        effective_zone_id = data.zone_id if data.zone_id is not None else user.zone_id
+        # "zone_id" in model_fields_set (not `is not None`) distinguishes an
+        # explicit null (clear it) from an omitted key (leave unchanged) --
+        # both parse to the same Python None on the field itself.
+        effective_zone_id = data.zone_id if "zone_id" in data.model_fields_set else user.zone_id
         effective_zone_ids = (
             data.zone_ids if data.zone_ids is not None else [uz.zone_id for uz in user.zones]
         )

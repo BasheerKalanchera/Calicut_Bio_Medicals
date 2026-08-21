@@ -18,6 +18,15 @@ targets, own RLS tier, own management chain). **Cardiology equipment gets sold u
 whichever existing SBU each product's technology naturally fits (Imaging or Critical
 Care) — not a new SBU, and not tracked by a dedicated system field either (see below).**
 
+**Confirmed 2026-08-13: current Cardiology inventory is entirely refurbished
+stock.** Every Cardiology machine Cabio sells today is a refurbished unit —
+`product_type = REFURBISHED` in the Product Catalog, filed under whichever SBU
+(Imaging or Critical Care) its technology fits, same slotting rule as above.
+This connects directly to Section 4's still-open field-discovery problem below:
+a refurbished Cardiology machine needs the same "reserve this unit," find-it-
+in-the-field handling as any other refurbished asset — nothing Cardiology-
+specific about that gap, just a concrete case of it.
+
 **Also resolved (2026-08-06): no new field for this, and `category_name` stays as-is
 — it isn't being repurposed.** Considered two ways to formally tag Cardiology
 products/deals for tracking purposes — reusing the existing `category_name` field, or

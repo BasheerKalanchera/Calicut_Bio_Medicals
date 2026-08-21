@@ -1,38 +1,51 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-19_
+_Session: 2026-08-21_
 
 ## Current task — STOP HERE FIRST
 
 **UAT migration — promote everything on `main` to `uat`, then set up real
-Users and Territories in the UAT database.** Decided after tonight's
+Users and Territories in the UAT database.** Decided after the 2026-08-19
 leadership demo went well; full context in `docs/Progress-Archive-
 2026-08.md`'s 2026-08-19 entries.
 
-**Two parts, in order:**
+**Rollout is staged, not all-at-once:** training/rollout to the extended
+sales team moved from Sat 2026-08-22 to Mon 2026-08-24 (Basheer has a
+personal event needing weekend errands). Star Sales team gets territory
+setup first and must sign off on UAT before the extended team's users/
+territories go in — see `docs/Progress-Archive-2026-08.md`'s 2026-08-21
+entry.
 
-1. **Code promotion.** `origin/uat` is still at `7a3c8d7` (2026-08-06);
-   `origin/main` has moved on 36 commits since, ending at `9e32fb2`
-   (Territory Map fixes) — includes the Zone Hierarchy, Multi-Zone
-   Milestone 1, Sales Manager Tier Collapse, Admin/GM SBU-agnostic work,
-   the 3-screen MUI migration, and Referral Credit (`BR-FIN-07`), all
-   demoed tonight. Needs the usual merge/deploy path to `uat`, then a
-   Dev-parity smoke pass on the deployed UAT app before calling it done.
-2. **Users & Territories setup on UAT.** UAT's `zone`/`zone_closure`/
+**Two parts:**
+
+1. **Code promotion — DONE 2026-08-21.** `main` (`5aa4731`) fast-forward
+   pushed to `uat` (`git push origin main:uat`, `7a3c8d7..5aa4731`).
+   Render redeployed both `calicut-bio-medicals` (backend) and
+   `cabio-sales-os-uat-frontend` — both confirmed Live, health check
+   healthy. The 8 pending Alembic migrations (`0016`-`0023`: product
+   type/line, zone hierarchy tree/closure, `user_zone`, Sales Manager
+   Tier Collapse, SBU nullable, Referral Credit) applied cleanly against
+   UAT by Basheer via Git Bash (`ADMIN_DATABASE_URL` from
+   `backend/.env.uat`, `alembic upgrade head`, `0015 -> 0023`, no
+   errors). Confirmed working end-to-end: a pre-migration login attempt
+   surfaced `GET /api/v1/master-data/zones` → 500 (old schema missing
+   Zone Hierarchy tables) — expected, resolved by the migration run.
+   **Still needed:** Basheer to confirm the zones call now returns 200
+   after logging in post-migration, then a full Dev-parity smoke pass on
+   the deployed UAT app before calling code promotion fully done.
+2. **Users & Territories setup on UAT — staged (see above).** Star Sales
+   subset first (zone tree + their users/assignments), get their
+   buy-in, then the extended team. UAT's `zone`/`zone_closure`/
    `user_zone` tables don't yet reflect the real field org that's been
    live on Dev since the Zone Hierarchy build — the territory tree,
    multi-zone assignments, and SBU-split (Imaging/Critical Care) recorded
-   in `docs/Zone-Hierarchy-Territory-Data-2026-08.md`. This needs to be
-   built out on UAT the same way it was on Dev (Territory Admin screen,
-   or direct data entry), plus the corresponding `user_profile` rows for
-   anyone in that doc who doesn't have a UAT login yet.
+   in `docs/Zone-Hierarchy-Territory-Data-2026-08.md`. Basheer is doing
+   the actual user/zone creation himself this round.
 
-**Known blocker, will hit again here:** direct DB reads/writes via
-`psycopg2` get blocked by the Claude Code auto-mode safety classifier —
-chat approval alone doesn't satisfy it (hit tonight trying a plain
-read-only `SELECT` against `user_profile`; also hit applying migration
-`0019` back on 2026-08-11). Either Basheer runs DB-touching commands
-himself (`!`-prefixed, executes directly in the session) or grants a
-Bash permission rule for them — decide which before starting part 2.
+**Known blocker, hit again during code promotion:** direct DB-touching
+commands (migrations, raw queries) get blocked by the Claude Code
+auto-mode safety classifier — chat approval alone doesn't satisfy it.
+Basheer runs these himself (`!`-prefixed or his own terminal) — confirmed
+working pattern for the `alembic upgrade head` run above.
 
 ## Recently shipped, all committed (context for the migration above)
 

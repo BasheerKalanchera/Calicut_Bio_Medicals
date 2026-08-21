@@ -420,3 +420,21 @@ class TestUpdateUser:
 
         repo.update.assert_not_called()
         repo.replace_zones.assert_not_called()
+
+    def test_zone_id_explicit_null_clears_primary_zone(self):
+        # Explicit null (not omitted) is the only way to clear an existing
+        # zone_id -- model_fields_set distinguishes it from a merely-omitted
+        # key, which would instead fall back to the user's current zone_id
+        # (see test_raises_validation_error_when_effective_primary_zone_not_
+        # in_effective_zone_ids above).
+        current_zone = uuid.uuid4()
+        user = _make_user(zone_id=current_zone)
+        repo = _make_repo()
+        repo.get_by_id.return_value = user
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        service.update_user(user.id, UserUpdate(zone_id=None, zone_ids=[]), role_name="Admin")
+
+        assert user.zone_id is None
+        repo.replace_zones.assert_called_once_with(user, [])

@@ -23,6 +23,31 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- **UAT's `rls_auto_enable()` event trigger — permanent fix needed, not just
+  another one-off disable.** UAT (not Dev) has an out-of-band Supabase event
+  trigger that auto-enables RLS on any newly created table with zero
+  policies — added outside the Alembic migration chain, first surfaced
+  2026-08-05 while regenerating `Physical-Schema.sql` and flagged then as
+  "reconciliation still open" (`docs/Progress-Archive-2026-08.md`). It has
+  now caused **two separate lockout incidents**: the original 18-table
+  UAT-wide lockout on 2026-08-03 (root-caused and fixed via `ALTER TABLE
+  ... DISABLE ROW LEVEL SECURITY` on those 18 tables — see that day's
+  entry), and again on 2026-08-21 when migrations `0018`/`0019` created
+  `user_zone` and `zone_closure` — silently breaking Territory Map's
+  coverage pills (reads return empty, no error) and throwing a 500 on zone
+  assignment saves (which the browser misreports as a CORS error, since
+  the failure response skips CORS headers — not an actual CORS
+  misconfiguration). Both times fixed the same reactive way, per-table,
+  after something broke. **Needs a permanent fix:** either remove the
+  `rls_auto_enable()` trigger from UAT entirely (restoring parity with
+  Dev, which never had it), or add an explicit "check + disable RLS on any
+  new table" step to the migration workflow
+  (`Backend-Implementation-Standards.md`'s migration checklist) so it's
+  never missed again. Also applies to the eventual Prod promotion — see
+  Deployment-Topology.md's existing "Trap for Prod" note, which already
+  warns about the Supabase project-setup prompt but not about this
+  standing UAT-only trigger.
+
 - **Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**
   Raised at the 2026-08-19 leadership demo — reps need to skip Demo Date/Expected
   Closure Date gates for a brand-new (non-`REPEAT_ORDER`) customer who declines a demo,

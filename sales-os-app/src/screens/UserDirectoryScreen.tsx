@@ -124,7 +124,7 @@ export default function UserDirectoryScreen() {
       display_name: form.display_name.trim(),
       sbu_id: form.sbu_id || undefined,
       role_id: form.role_id,
-      zone_id: form.zone_id || undefined,
+      zone_id: form.zone_id || null,
       zone_ids: combinedZoneIds(),
       manager_id: form.manager_id || undefined,
     });
@@ -140,12 +140,12 @@ export default function UserDirectoryScreen() {
       display_name: form.display_name.trim(),
       sbu_id: form.sbu_id || undefined,
       role_id: form.role_id,
-      zone_id: form.zone_id || undefined,
-      zone_ids: combinedZoneIds(),
       // null, not undefined -- an omitted key means "leave unchanged" under
-      // the backend's partial-update semantics, so clearing the Manager
-      // field (here or via the SBU-mismatch auto-clear above) would
-      // otherwise silently no-op and leave the stale manager_id in place.
+      // the backend's partial-update semantics, so clearing the Zone/Manager
+      // fields (here or via the SBU-mismatch auto-clear above) would
+      // otherwise silently no-op and leave the stale value in place.
+      zone_id: form.zone_id || null,
+      zone_ids: combinedZoneIds(),
       manager_id: form.manager_id || null,
     });
     invalidateUsers();
