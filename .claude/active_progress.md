@@ -1,63 +1,52 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21_
+_Session: 2026-08-21 → 2026-08-22_
 
 ## Current task — STOP HERE FIRST
 
-**UAT migration — promote everything on `main` to `uat`, then set up real
-Users and Territories in the UAT database.** Decided after the 2026-08-19
-leadership demo went well; full context in `docs/Progress-Archive-
-2026-08.md`'s 2026-08-19 entries.
+**UAT migration, Part 2 — Users & Territories, staged rollout.** Part 1
+(code promotion) is DONE and verified on UAT. Full narrative for
+everything that happened 2026-08-21 (RLS lockout recurrence, zone_id
+clear-bug fix, Central Kerala deprecation, Karnataka tree-flattening
+decision) is in `docs/Progress-Archive-2026-08.md`'s 2026-08-21 entry —
+not repeated here.
 
-**Rollout is staged, not all-at-once:** training/rollout to the extended
-sales team moved from Sat 2026-08-22 to Mon 2026-08-24 (Basheer has a
-personal event needing weekend errands). Star Sales team gets territory
-setup first and must sign off on UAT before the extended team's users/
-territories go in — see `docs/Progress-Archive-2026-08.md`'s 2026-08-21
-entry.
+**Rollout stays staged:** Star Sales team's territory setup + their
+sign-off comes before notifying anyone or extending to the broader team.
+Training/rollout to the extended sales team is Mon 2026-08-24 (moved
+from Sat 2026-08-22 — Basheer has a personal event needing weekend
+errands).
 
-**Two parts:**
+**Immediate next step:** finish the Karnataka zone tree per the
+2026-08-21 decision (Karnataka → District flat, except Bangalore keeps
+its cluster node + Zone 1-6), then:
+1. Fazal — North Kerala (Kasaragod, Kannur, Kozhikode) + Coastal
+   Karnataka (Mangalore, Dakshin Kannada, Coorg, Udupi, Shimoga,
+   Bhatkal) district assignments, all Imaging. In progress when the
+   session ended.
+2. Shruthi — needs an explicit district-level assignment for each of
+   Mysore, Mandya, Ramnagara, Chamrajnagar, Tumkur, Chitradurga, Hassan,
+   Dharwad (South/Central/North Karnataka districts) once those clusters
+   flatten — not yet started. See the 2026-08-21 archive entry for why.
+3. Confirm Territory Map's coverage pills show correctly for all 4 Area
+   Managers.
+4. Only then notify the Cabio Star Sales team on WhatsApp to refresh —
+   remind them of the 2-step PWA refresh (force-close/reopen, then a
+   fresh browser visit if that alone doesn't pick up the new build;
+   `docs/PWA-UAT-MobileLaptop-Setup.md`).
+5. Get explicit Star Sales sign-off before extending to the broader team
+   ahead of Monday's training.
 
-1. **Code promotion — DONE 2026-08-21.** `main` (`5aa4731`) fast-forward
-   pushed to `uat` (`git push origin main:uat`, `7a3c8d7..5aa4731`).
-   Render redeployed both `calicut-bio-medicals` (backend) and
-   `cabio-sales-os-uat-frontend` — both confirmed Live, health check
-   healthy. The 8 pending Alembic migrations (`0016`-`0023`: product
-   type/line, zone hierarchy tree/closure, `user_zone`, Sales Manager
-   Tier Collapse, SBU nullable, Referral Credit) applied cleanly against
-   UAT by Basheer via Git Bash (`ADMIN_DATABASE_URL` from
-   `backend/.env.uat`, `alembic upgrade head`, `0015 -> 0023`, no
-   errors). Confirmed working end-to-end: a pre-migration login attempt
-   surfaced `GET /api/v1/master-data/zones` → 500 (old schema missing
-   Zone Hierarchy tables) — expected, resolved by the migration run.
-   **Still needed:** Basheer to confirm the zones call now returns 200
-   after logging in post-migration, then a full Dev-parity smoke pass on
-   the deployed UAT app before calling code promotion fully done.
-2. **Users & Territories setup on UAT — staged (see above).** Star Sales
-   subset first (zone tree + their users/assignments), get their
-   buy-in, then the extended team. UAT's `zone`/`zone_closure`/
-   `user_zone` tables don't yet reflect the real field org that's been
-   live on Dev since the Zone Hierarchy build — the territory tree,
-   multi-zone assignments, and SBU-split (Imaging/Critical Care) recorded
-   in `docs/Zone-Hierarchy-Territory-Data-2026-08.md`. Basheer is doing
-   the actual user/zone creation himself this round.
+**Uncommitted right now:** `CLAUDE.md` and `docs/Zone-Hierarchy-
+Territory-Data-2026-08.md` (Central Kerala deprecation + Karnataka
+tree-shape decision, both 2026-08-21). Stage only these two by name when
+committing — not a broad `git add` (see the 2026-08-21 archive entry for
+why that matters this round).
 
-**Known blocker, hit again during code promotion:** direct DB-touching
-commands (migrations, raw queries) get blocked by the Claude Code
-auto-mode safety classifier — chat approval alone doesn't satisfy it.
-Basheer runs these himself (`!`-prefixed or his own terminal) — confirmed
-working pattern for the `alembic upgrade head` run above.
-
-## Recently shipped, all committed (context for the migration above)
-
-- `ProjectDirectoryScreen.tsx` MUI migration (`1d51b6d`).
-- Referral Credit Part 1 (`BR-FIN-07`) — backend + all 4 create/edit
-  entry points, plus the Add/Edit Opportunity UX overhaul it prompted
-  (`ea19bd1`).
-- Territory Map fixes — staleness and mobile UX (`9e32fb2`).
-
-Manually verified end-to-end on Dev by Basheer across all of the above,
-then demoed live to leadership 2026-08-19. `tsc --noEmit`/`npm run lint`
-clean throughout. Full narrative in `docs/Progress-Archive-2026-08.md`.
+**Known blocker, still standing:** direct DB-touching commands
+(migrations, raw queries) get blocked by the Claude Code auto-mode
+safety classifier regardless of chat approval. Basheer runs these
+himself (`!`-prefixed or his own terminal) — confirmed working pattern
+throughout 2026-08-21.
 
 ## Next up, after UAT migration lands
 

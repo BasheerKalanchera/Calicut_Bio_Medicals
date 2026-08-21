@@ -2211,3 +2211,119 @@ for real.
 
 `Deployment-Topology.md` updated same day to reflect the two decisions
 above (Data row, Phase B checklist, Approved Decisions note).
+
+## 2026-08-21 — UAT code promotion executed; RLS lockout recurrence;
+zone_id clear bug; Central Kerala deprecated; Karnataka tree flattened
+
+**Code promotion (Part 1 of the UAT migration) executed and verified.**
+`main` (`5aa4731`, 39 commits ahead of `uat`'s `7a3c8d7`) fast-forward
+pushed to `uat` (`git push origin main:uat`). Render redeployed both
+`calicut-bio-medicals` (backend) and `cabio-sales-os-uat-frontend` --
+both confirmed Live, health check healthy. The 8 pending Alembic
+migrations (`0016`-`0023`) applied cleanly against UAT by Basheer via Git
+Bash (`ADMIN_DATABASE_URL` from `backend/.env.uat`, `.venv/Scripts/
+python.exe -m alembic upgrade head`, `0015 -> 0023`, no errors) --
+confirms the known DB-command-blocked-for-Claude pattern still holds
+(hit again requesting a plain read; Basheer ran it himself, same as
+migration `0019` back on 2026-08-11).
+
+**Bug found and fixed: UAT-wide RLS lockout recurrence, this time scoped
+to 2 tables.** Basheer reported Territory Map's "Show Coverage" pills
+empty despite the 4 Area Managers showing zone assignments in User
+Directory. Traced to the exact same root cause as the 2026-08-03
+UAT-wide lockout: UAT's out-of-band `rls_auto_enable()` Supabase event
+trigger (flagged as an open reconciliation item back on 2026-08-05,
+never closed) auto-enables RLS with zero policies on any newly created
+table. Today's migrations created two new tables -- `user_zone`
+(`0018`) and `zone_closure` (`0019`) -- and neither migration adds an
+RLS policy for its table (by design; Alembic has never touched RLS
+outside the original 8 Phase-2E tables). Confirmed via a read-only
+`pg_class`/`pg_policies` check (`RLS enabled: True | policies: 0` for
+both). Reads silently returned empty rows (explaining the missing
+coverage pills and, unnoticed at the time, an equally-empty `zone_ids`
+list anywhere User Directory's list view relies on it); writes hit a
+genuine Postgres RLS policy violation, which the browser reported as a
+CORS error (`blocked by CORS policy`) because the 500 response skipped
+CORS headers -- a red herring chased for a few messages before the
+actual pattern was recognized. **Fixed** with the same remediation as
+2026-08-03: `ALTER TABLE user_zone/zone_closure DISABLE ROW LEVEL
+SECURITY`, run by Basheer via the same Git-Bash-blocked-for-Claude
+pattern. **Logged to `docs/Backlog.md`** as a standing item: this will
+recur on every future migration that adds a table until `rls_auto_enable()`
+is either removed from UAT or a "check + disable RLS on any new table"
+step is added to the migration checklist -- two incidents now, not a
+one-off.
+
+**Bug found and fixed: `zone_id` couldn't be cleared once set, blocking
+"Admin/GM shouldn't have a territory" cleanup.** After the RLS fix,
+Basheer noticed GM/Admin accounts showing a zone (stale pre-Zone-
+Hierarchy `zone_id` values, auto-backfilled into `user_zone` by
+migration `0018`'s backfill `INSERT`) -- correctly flagged as not
+making sense for an SBU/zone-agnostic overlay role. Clearing the zone
+in User Directory and saving threw `400 "Primary zone_id must be
+included in zone_ids"`. Two bugs, not one:
+1. **Frontend** (`UserDirectoryScreen.tsx`) sent `zone_id: form.zone_id
+   || undefined` -- `undefined` is dropped entirely by `JSON.stringify`,
+   so a cleared picker never reached the request body at all. Same class
+   of bug already fixed for `manager_id` on 2026-08-17; `zone_id` was
+   missed. Fixed: `|| null` instead, both create and update payloads.
+2. **Backend** (`organization/service.py::update_user`) had the matching
+   gap even after the frontend fix: `effective_zone_id = data.zone_id if
+   data.zone_id is not None else user.zone_id` can't distinguish an
+   explicit `null` from an omitted key (both parse to Python `None` on
+   the field itself) -- it kept falling back to the stale `zone_id`
+   either way. Fixed: check `"zone_id" in data.model_fields_set` instead
+   of `is not None`. Only found because Basheer re-tested in Dev and hit
+   the identical `400` again after the frontend-only fix.
+   New regression test (`test_zone_id_explicit_null_clears_primary_
+   zone`) added deliberately, given this is the *second* field
+   (`manager_id`, `zone_id`) to hit this exact omitted-vs-null gap in the
+   same service. Verified: `tsc --noEmit`/lint clean, 74 backend tests
+   (`-k user`) pass, manually confirmed on both Dev and UAT (UAT needed a
+   second PWA hard-refresh before the new bundle actually took --
+   consistent with `PWA-UAT-MobileLaptop-Setup.md`'s documented
+   fallback). Committed `81fded7` -- accidentally swept in `git commit`
+   without file-scoping (`active_progress.md`, `Backlog.md`, and
+   Basheer's two unrelated personal Discussion docs came along); left
+   as-is since none of it was sensitive, not worth a `main` force-push
+   rewrite to un-bundle. Promoted `main` -> `uat` the same way as the
+   morning's code promotion.
+
+**Central Kerala deprecated.** Basheer moved the hospital accounts that
+were incorrectly sitting in Central Kerala over to South Kerala in UAT,
+then deactivated the Central Kerala zone once confirmed empty --
+resolving the open question `Zone-Hierarchy-Territory-Data-2026-08.md`
+flagged on 2026-08-11 ("does Central Kerala need to be deprecated/
+merged, or does it just sit dormant?") that was never acted on.
+`CLAUDE.md`'s Zones line updated to drop it.
+
+**Zone tree shape decided: not uniform across states, deliberately.**
+Basheer asked about flattening every zone level to State -> District
+except Bangalore (which needs its numbered Zone 1-6 sub-split). Analysis:
+the cluster level's only real value is letting a manager whose true
+coverage is a whole region be assigned once and automatically inherit
+any district added to that region later, via `zone_closure` tree
+membership -- worth keeping only where a manager's actual boundary is
+the whole cluster. **Decided:** Kerala keeps its existing 3-level shape
+(Kerala -> North/South Kerala -> District) since the North/South split
+is a real, durable operational boundary, not just a UI grouping.
+Karnataka flattens to 2 levels (Karnataka -> District) except Bangalore,
+which keeps its own cluster node + Zone 1-6 children (already at the
+same depth as the clusters being removed, not structurally a special
+case). **Known cost, accepted:** Shruthi covers Bangalore + South/
+Central/North Karnataka (all of Karnataka except Fazal's Coastal
+cluster) -- once those three clusters flatten, she needs an explicit
+district-level `user_zone` row per district instead of 3 cluster-level
+rows, and any *new* Karnataka district added later outside Bangalore
+won't automatically fall under her coverage. Recorded in `Zone-
+Hierarchy-Territory-Data-2026-08.md` alongside the decision so it isn't
+forgotten when Karnataka's tree gets built out.
+
+**Status at session end:** code promotion (Part 1) fully done and
+verified on UAT. Part 2 (Users & Territories) in progress -- Fazal's
+North Kerala + Coastal Karnataka district assignments and the Karnataka
+tree flattening were being worked on directly in Territory Admin by
+Basheer when the session ended; not yet confirmed complete. `CLAUDE.md`
+and `Zone-Hierarchy-Territory-Data-2026-08.md`'s latest edits (Central
+Kerala + tree-shape decision) are uncommitted. See `active_progress.md`
+for the exact next step.

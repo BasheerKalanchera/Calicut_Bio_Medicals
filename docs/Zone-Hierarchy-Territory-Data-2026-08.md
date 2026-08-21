@@ -30,6 +30,39 @@ does the existing Central Kerala zone row need to be deprecated/merged, or
 does it just sit unused/dormant today? Not resolved here — flagged, not
 acted on.
 
+**Resolved 2026-08-21:** Central Kerala is deprecated, not merely dormant.
+The hospital accounts that were incorrectly assigned to it in UAT were
+moved to South Kerala, and the Central Kerala zone itself was deactivated
+in UAT's Territory Admin screen once confirmed empty. `CLAUDE.md`'s Zones
+line updated to match (South Kerala + North Kerala only for Kerala).
+
+**Decided 2026-08-21 — tree shape differs by state, deliberately not
+uniform:** Kerala keeps its existing 3-level shape (Kerala → North/South
+Kerala → District) — the North/South split is a real, durable operational
+boundary (see the 2026-08-11 note above), not just a UI grouping.
+Karnataka flattens to 2 levels (Karnataka → District) **except Bangalore**,
+which keeps its own node with the numbered Zone 1-6 children beneath it —
+Bangalore already sits at the same tree depth as the cluster nodes being
+removed (South Karnataka, Central Karnataka, Coastal Karnataka, North
+Karnataka), so this isn't a special case structurally, just the one
+Karnataka cluster that survives.
+**Why:** the cluster level's only real value is letting a manager whose
+coverage is a whole region be assigned once and automatically inherit any
+district added to it later (via `zone_closure` tree-membership) — worth
+keeping where a manager's true boundary is the whole cluster (Adarsh = all
+of South Kerala, Nishad = all of North Kerala for Critical Care), not
+worth keeping where nobody relies on it.
+**Known cost — Shruthi:** covers Bangalore + South/Central/North Karnataka
+(all of Karnataka except Fazal's Coastal cluster). Once those three
+non-Bangalore clusters are flattened, she needs an explicit district-level
+`user_zone` row for each of their districts (Mysore, Mandya, Ramnagara,
+Chamrajnagar, Tumkur, Chitradurga, Hassan, Dharwad) instead of 3 cluster-
+level rows — and **any new Karnataka district added later outside
+Bangalore will not automatically fall under her coverage**; whoever adds
+it must remember to also assign Shruthi to it explicitly. Fazal's Coastal
+Karnataka districts were already being assigned individually regardless
+(no change there).
+
 ---
 
 ## Consolidated territory table
