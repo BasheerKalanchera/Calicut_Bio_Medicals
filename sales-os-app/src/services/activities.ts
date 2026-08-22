@@ -75,11 +75,34 @@ export async function logActivity(
 
 export async function listReminders(
   includeCompleted = false,
+  dueAfter?: string,
+  dueBefore?: string,
 ): Promise<ReminderResponse[]> {
-  const r = await api.get("/reminders", {
-    params: { include_completed: includeCompleted, page_size: 50 },
-  });
+  const params: Record<string, string | number | boolean> = {
+    include_completed: includeCompleted,
+    page_size: 50,
+  };
+  if (dueAfter) params.due_after = dueAfter;
+  if (dueBefore) params.due_before = dueBefore;
+  const r = await api.get("/reminders", { params });
   return r.data.data.items;
+}
+
+// Reminders-on-login: a lightweight count (page_size=1, only `total` is
+// read) of the current user's pending reminders due today or already
+// overdue -- backs the post-login banner without fetching full reminder
+// payloads just to show a number.
+export async function countDueOrOverdueReminders(): Promise<number> {
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
+  const r = await api.get("/reminders", {
+    params: {
+      include_completed: false,
+      due_before: endOfToday.toISOString(),
+      page_size: 1,
+    },
+  });
+  return r.data.data.total;
 }
 
 export async function listOpportunityReminders(

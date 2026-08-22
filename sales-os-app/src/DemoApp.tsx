@@ -14,6 +14,7 @@ import { HELP_CONTENT } from "./utils/helpContent";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
+import LoginRemindersBanner from "./components/LoginRemindersBanner";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
@@ -81,6 +82,10 @@ export default function DemoApp() {
   // in this header row next to the "Pipeline" title, freeing the filter row
   // below for the Owner/Zone selects (narrow-viewport layout fix).
   const [pipelineViewMode, setPipelineViewMode] = useState<"kanban" | "list">("kanban");
+  // Set when the post-login reminders banner is clicked -- consumed by
+  // NextActionsScreen to pre-filter to "due today or overdue" instead of
+  // opening with no date filter applied.
+  const [nextActionsInitialDueBefore, setNextActionsInitialDueBefore] = useState<string | undefined>(undefined);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
@@ -171,6 +176,13 @@ export default function DemoApp() {
   // Project 360 is a sub-state of "customers" (Account Management), not its
   // own top-level view -- distinguish it here so Help shows the right topic.
   const helpViewId = view === "customers" && projectDetailMode ? "projectDetail" : view;
+
+  function handleReviewLoginReminders() {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    setNextActionsInitialDueBefore(endOfToday.toISOString());
+    navigate("nextActions");
+  }
 
   return (
     <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column", bgcolor: "#f3f4f6", overflow: "hidden", position: "relative" }}>
@@ -378,6 +390,8 @@ export default function DemoApp() {
         </Box>
       </Box>
 
+      <LoginRemindersBanner onReview={handleReviewLoginReminders} />
+
       {/* Main content */}
       <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: "56rem", mx: "auto", width: "100%" }}>
         <ErrorBoundary>
@@ -529,7 +543,11 @@ export default function DemoApp() {
                 Next Actions
               </Typography>
             </Box>
-            <NextActionsScreen onSelectAccount={handleSelectAccount} onSelectOpportunity={handleSelectOpportunity} />
+            <NextActionsScreen
+              onSelectAccount={handleSelectAccount}
+              onSelectOpportunity={handleSelectOpportunity}
+              initialDueBefore={nextActionsInitialDueBefore}
+            />
           </Box>
 
           {/* Daily Activity Report — always mounted, hidden when not active; scoped per

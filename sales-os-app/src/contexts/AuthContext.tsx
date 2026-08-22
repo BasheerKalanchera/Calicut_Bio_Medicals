@@ -10,6 +10,13 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAuthenticated: boolean;
+  // True for one render cycle right after an explicit signIn() success --
+  // never set by session-restore (mount-time getSession()) or token-refresh
+  // (onAuthStateChange), so it's a reliable "the user just logged in, not
+  // just reopened the tab" signal. Consumers must call clearJustLoggedIn()
+  // once they've reacted to it, or it stays true for the rest of the session.
+  justLoggedIn: boolean;
+  clearJustLoggedIn: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -18,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession]         = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading]         = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
   const queryClient = useQueryClient();
   // True while signIn() below is actively driving a login attempt end to
   // end -- guards the onAuthStateChange listener from *also* reacting to
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // accepted the credentials, re-enabling the button before the
       // is_active check had even run.
       await applySession(data.session);
+      setJustLoggedIn(true);
     } finally {
       signingInRef.current = false;
     }
@@ -97,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUserProfile(null);
+    setJustLoggedIn(false);
   }
 
   return (
@@ -108,6 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signOut,
         isAuthenticated: !!session,
+        justLoggedIn,
+        clearJustLoggedIn: () => setJustLoggedIn(false),
       }}
     >
       {children}

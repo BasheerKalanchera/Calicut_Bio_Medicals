@@ -176,6 +176,8 @@ class ReminderRepository(BaseRepository[Reminder]):
         user_id: uuid.UUID,
         *,
         include_completed: bool = False,
+        due_after: datetime | None = None,
+        due_before: datetime | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Reminder]:
@@ -183,10 +185,12 @@ class ReminderRepository(BaseRepository[Reminder]):
             select(Reminder)
             .where(Reminder.assigned_to_user_id == user_id)
             .where(Reminder.is_completed == include_completed)
-            .order_by(Reminder.due_date.asc())
-            .offset(offset)
-            .limit(limit)
         )
+        if due_after is not None:
+            stmt = stmt.where(Reminder.due_date >= due_after)
+        if due_before is not None:
+            stmt = stmt.where(Reminder.due_date <= due_before)
+        stmt = stmt.order_by(Reminder.due_date.asc()).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def count_for_user(
@@ -194,11 +198,17 @@ class ReminderRepository(BaseRepository[Reminder]):
         user_id: uuid.UUID,
         *,
         include_completed: bool = False,
+        due_after: datetime | None = None,
+        due_before: datetime | None = None,
     ) -> int:
         stmt = select(func.count(Reminder.id)).where(
             Reminder.assigned_to_user_id == user_id,
             Reminder.is_completed == include_completed,
         )
+        if due_after is not None:
+            stmt = stmt.where(Reminder.due_date >= due_after)
+        if due_before is not None:
+            stmt = stmt.where(Reminder.due_date <= due_before)
         return self.db.scalar(stmt) or 0
 
     def list_by_opportunity(

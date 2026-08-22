@@ -1,6 +1,6 @@
 import math
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -143,6 +143,8 @@ def log_activity(
 @router.get("/reminders")
 def list_reminders(
     include_completed: bool = Query(False),
+    due_after: datetime | None = Query(None),
+    due_before: datetime | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -151,6 +153,8 @@ def list_reminders(
     items, total = service.list_for_user(
         current_user.id,
         include_completed=include_completed,
+        due_after=due_after,
+        due_before=due_before,
         page=page,
         page_size=page_size,
     )

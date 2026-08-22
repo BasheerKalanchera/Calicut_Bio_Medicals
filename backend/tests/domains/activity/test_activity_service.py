@@ -565,9 +565,11 @@ class TestListForUser:
         svc.list_for_user(USER_ID, page=1, page_size=50)
 
         repo.list_for_user.assert_called_once_with(
-            USER_ID, include_completed=False, offset=0, limit=50
+            USER_ID, include_completed=False, due_after=None, due_before=None, offset=0, limit=50
         )
-        repo.count_for_user.assert_called_once_with(USER_ID, include_completed=False)
+        repo.count_for_user.assert_called_once_with(
+            USER_ID, include_completed=False, due_after=None, due_before=None
+        )
 
     def test_include_completed_true_forwarded(self):
         repo = _make_reminder_repo()
@@ -576,9 +578,11 @@ class TestListForUser:
         svc.list_for_user(USER_ID, include_completed=True, page=1, page_size=50)
 
         repo.list_for_user.assert_called_once_with(
-            USER_ID, include_completed=True, offset=0, limit=50
+            USER_ID, include_completed=True, due_after=None, due_before=None, offset=0, limit=50
         )
-        repo.count_for_user.assert_called_once_with(USER_ID, include_completed=True)
+        repo.count_for_user.assert_called_once_with(
+            USER_ID, include_completed=True, due_after=None, due_before=None
+        )
 
     def test_offset_calculated_from_page(self):
         repo = _make_reminder_repo()
@@ -587,7 +591,22 @@ class TestListForUser:
         svc.list_for_user(USER_ID, page=2, page_size=25)
 
         repo.list_for_user.assert_called_once_with(
-            USER_ID, include_completed=False, offset=25, limit=25
+            USER_ID, include_completed=False, due_after=None, due_before=None, offset=25, limit=25
+        )
+
+    def test_due_after_and_due_before_forwarded(self):
+        repo = _make_reminder_repo()
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+        after = datetime(2026, 8, 22, 0, 0, 0)
+        before = datetime(2026, 8, 22, 23, 59, 59)
+
+        svc.list_for_user(USER_ID, due_after=after, due_before=before, page=1, page_size=50)
+
+        repo.list_for_user.assert_called_once_with(
+            USER_ID, include_completed=False, due_after=after, due_before=before, offset=0, limit=50
+        )
+        repo.count_for_user.assert_called_once_with(
+            USER_ID, include_completed=False, due_after=after, due_before=before
         )
 
 

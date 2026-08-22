@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
 import { listReminders } from "../services/activities";
 import ReminderRow from "../components/ReminderRow";
 import CloseReminderModal from "../components/CloseReminderModal";
@@ -9,24 +11,40 @@ import type { ReminderResponse } from "../types/api";
 export default function NextActionsScreen({
   onSelectAccount,
   onSelectOpportunity,
+  initialDueBefore,
 }: {
   onSelectAccount?: (account: { id: string; name: string }) => void;
   onSelectOpportunity?: (opportunity: { id: string; name: string }) => void;
+  // Pre-applies the "due" filter when arriving via the post-login reminders
+  // banner -- an ISO datetime string (crosses from DemoApp as a plain prop,
+  // not a Dayjs), re-applied whenever it changes (i.e. each time the banner
+  // is clicked).
+  initialDueBefore?: string;
 }) {
   const queryClient = useQueryClient();
   const [includeCompleted, setIncludeCompleted] = useState(false);
   const [closingReminder, setClosingReminder] = useState<ReminderResponse | null>(null);
+  const [dueAfter, setDueAfter] = useState<Dayjs | null>(null);
+  const [dueBefore, setDueBefore] = useState<Dayjs | null>(null);
+
+  useEffect(() => {
+    if (initialDueBefore) setDueBefore(dayjs(initialDueBefore));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialDueBefore]);
+
+  const dueAfterParam = dueAfter ? dueAfter.startOf("day").toISOString() : undefined;
+  const dueBeforeParam = dueBefore ? dueBefore.endOf("day").toISOString() : undefined;
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["reminders", includeCompleted],
-    queryFn: () => listReminders(includeCompleted),
+    queryKey: ["reminders", includeCompleted, dueAfterParam, dueBeforeParam],
+    queryFn: () => listReminders(includeCompleted, dueAfterParam, dueBeforeParam),
   });
 
   const reminders = data ?? [];
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
         <ToggleButtonGroup
           value={includeCompleted}
           exclusive
@@ -60,6 +78,21 @@ export default function NextActionsScreen({
             Completed
           </ToggleButton>
         </ToggleButtonGroup>
+
+        <DatePicker
+          label="Due from"
+          value={dueAfter}
+          onChange={(v) => setDueAfter(v)}
+          slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
+          sx={{ width: 160 }}
+        />
+        <DatePicker
+          label="Due to"
+          value={dueBefore}
+          onChange={(v) => setDueBefore(v)}
+          slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
+          sx={{ width: 160 }}
+        />
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>

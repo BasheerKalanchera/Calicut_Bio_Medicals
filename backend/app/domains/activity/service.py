@@ -161,6 +161,8 @@ class ReminderService:
         user_id: uuid.UUID,
         *,
         include_completed: bool = False,
+        due_after: datetime | None = None,
+        due_before: datetime | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Reminder], int]:
@@ -168,10 +170,17 @@ class ReminderService:
         items = self.repository.list_for_user(
             user_id,
             include_completed=include_completed,
+            due_after=due_after,
+            due_before=due_before,
             offset=offset,
             limit=page_size,
         )
-        total = self.repository.count_for_user(user_id, include_completed=include_completed)
+        total = self.repository.count_for_user(
+            user_id,
+            include_completed=include_completed,
+            due_after=due_after,
+            due_before=due_before,
+        )
         return items, total
 
     def list_for_opportunity(
