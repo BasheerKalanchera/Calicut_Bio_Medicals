@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_current_user
+from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.main import app
 
@@ -41,7 +42,10 @@ def _mock_user() -> MagicMock:
 class TestAuthMe:
     def test_returns_user_profile(self, client: TestClient) -> None:
         mock_user = _mock_user()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 3
         app.dependency_overrides[get_current_user] = lambda: mock_user
+        app.dependency_overrides[get_db] = lambda: mock_db
         try:
             response = client.get("/api/v1/auth/me")
         finally:
@@ -56,6 +60,7 @@ class TestAuthMe:
         assert data["role_name"] == "Sales Executive"
         assert data["sbu"]["name"] == "Imaging"
         assert data["zone"]["name"] == "North"
+        assert data["due_or_overdue_reminder_count"] == 3
 
     def test_missing_auth_returns_401(self, client: TestClient) -> None:
         response = client.get("/api/v1/auth/me")

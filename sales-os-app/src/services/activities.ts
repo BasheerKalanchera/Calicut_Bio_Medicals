@@ -88,23 +88,6 @@ export async function listReminders(
   return r.data.data.items;
 }
 
-// Reminders-on-login: a lightweight count (page_size=1, only `total` is
-// read) of the current user's pending reminders due today or already
-// overdue -- backs the post-login banner without fetching full reminder
-// payloads just to show a number.
-export async function countDueOrOverdueReminders(): Promise<number> {
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-  const r = await api.get("/reminders", {
-    params: {
-      include_completed: false,
-      due_before: endOfToday.toISOString(),
-      page_size: 1,
-    },
-  });
-  return r.data.data.total;
-}
-
 export async function listOpportunityReminders(
   opportunityId: string,
   includeCompleted = false,

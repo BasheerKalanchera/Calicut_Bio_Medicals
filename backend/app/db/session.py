@@ -46,7 +46,14 @@ def warm_pool() -> None:
 
 
 def set_rls_context(db: Session, user: UserProfile) -> None:
-    db.execute(text("SET LOCAL app.current_user_id = :uid"), {"uid": str(user.id)})
+    # All three settings in one statement -- one round trip to Supabase
+    # instead of three. is_local=true mirrors SET LOCAL (transaction-scoped).
     sbu_id_str = str(user.sbu_id) if user.sbu_id is not None else ""
-    db.execute(text("SET LOCAL app.current_sbu_id = :sid"), {"sid": sbu_id_str})
-    db.execute(text("SET LOCAL app.current_role_id = :rid"), {"rid": str(user.role_id)})
+    db.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :uid, true), "
+            "set_config('app.current_sbu_id', :sid, true), "
+            "set_config('app.current_role_id', :rid, true)"
+        ),
+        {"uid": str(user.id), "sid": sbu_id_str, "rid": str(user.role_id)},
+    ).all()

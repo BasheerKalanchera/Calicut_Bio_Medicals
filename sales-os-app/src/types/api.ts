@@ -2982,6 +2982,8 @@ export interface components {
             role_name: string;
             sbu: components["schemas"]["SBUNested"] | null;
             zone: components["schemas"]["ZoneNested"] | null;
+            /** Due Or Overdue Reminder Count */
+            due_or_overdue_reminder_count: number;
         };
         /** UserNested */
         UserNested: {
@@ -3097,6 +3099,12 @@ export interface components {
             win_probability: string;
             /** Indicative Value */
             indicative_value: string | null;
+            /** Expected Closure Date */
+            expected_closure_date: string | null;
+            /** Demo Start Date */
+            demo_start_date: string | null;
+            /** Demo End Date */
+            demo_end_date: string | null;
             /** Po Number */
             po_number: string | null;
             /** Hold Reason Id */
@@ -5033,6 +5041,8 @@ export interface operations {
         parameters: {
             query?: {
                 include_completed?: boolean;
+                due_after?: string | null;
+                due_before?: string | null;
                 page?: number;
                 page_size?: number;
             };

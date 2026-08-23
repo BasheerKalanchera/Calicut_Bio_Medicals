@@ -14,7 +14,7 @@ import { HELP_CONTENT } from "./utils/helpContent";
 import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
-import LoginRemindersBanner from "./components/LoginRemindersBanner";
+import LoginRemindersDialog from "./components/LoginRemindersDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
@@ -390,7 +390,7 @@ export default function DemoApp() {
         </Box>
       </Box>
 
-      <LoginRemindersBanner onReview={handleReviewLoginReminders} />
+      <LoginRemindersDialog onReview={handleReviewLoginReminders} />
 
       {/* Main content */}
       <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: "56rem", mx: "auto", width: "100%" }}>

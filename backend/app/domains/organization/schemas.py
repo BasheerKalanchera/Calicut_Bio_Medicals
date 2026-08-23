@@ -26,6 +26,10 @@ class UserMeResponse(BaseModel):
     role_name: str
     sbu: SBUNested | None
     zone: ZoneNested | None
+    # Reminders-on-login: piggybacked here (not a separate call) so the
+    # login dialog gets this for free on the request the app already makes
+    # for every sign-in -- no second RLS-context round trip just for a count.
+    due_or_overdue_reminder_count: int
 
 
 class UserListResponse(BaseModel):

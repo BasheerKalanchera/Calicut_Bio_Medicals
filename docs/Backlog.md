@@ -75,12 +75,15 @@ kept only as a pointer; nothing left to pick up here.
   logging from the Account level (a gap today regardless of this
   feature). Nothing implemented yet.
 
-- **Critical Care/Imaging manager hierarchy — UAT/Prod rollout.** See
-  `docs/Progress-Archive-2026-07.md`'s Phase 2E section for the confirmed
-  plan. Blocked item already resolved for Dev; the broader UAT/Prod
-  rollout question is unresolved. Revisit once UAT is fully proven out —
-  the UAT migration/Users-Territories work in `active_progress.md` is a
-  natural point to pick this back up, not automatically part of it.
+- ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
+  **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/
+  Progress-Archive-2026-07.md`'s Phase 2E section) was about *test*
+  accounts blocked on Basheer creating new Supabase Auth UUIDs — that
+  blocker no longer applies. A real Critical Care hierarchy with real
+  staff has since been built: `docs/Zone-Hierarchy-Territory-Data-2026-08.md`
+  (2026-08-12 update) shows Nishad managing Critical Care in North Kerala
+  with Adydev reporting to him, and Adarsh's entire South Kerala cluster
+  confirmed Critical Care SBU. Nothing left to pick up under this entry.
 - **9 date-only `type="date"` fields left unconverted, on purpose.**
   Basheer's explicit scope call during the MUI migration (see the
   `@mui/x-date-pickers` archive entry) — `Customer360Screen.tsx`/
@@ -93,14 +96,17 @@ kept only as a pointer; nothing left to pick up here.
   prototype route is worth touching at all — Basheer's call, pending.
 
 - ~~**Make `user_profile.sbu_id` (and audit `zone_id`) properly nullable for
-  Admin/General Manager.**~~ — **Superseded 2026-08-16 by
-  `docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md`**, a fresh full
-  investigation (every RLS policy + every Python `.sbu_id` read
-  re-checked against current code, not this stale 2026-07-28 scope).
-  Headline findings there: RLS is already completely safe (no change
-  needed), but `UserMeResponse.sbu` being non-nullable would lock Admin/GM
-  out of login entirely if missed — a real gap this original entry never
-  caught. Follow that doc, not the notes below (kept for history only).
+  Admin/General Manager.**~~ — **DONE, confirmed 2026-08-22.** Superseded
+  2026-08-16 by `docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md` (a
+  fresh full investigation — every RLS policy + every Python `.sbu_id`
+  read re-checked against current code, not this stale 2026-07-28 scope),
+  then **shipped 2026-08-17, commit `91a0906`**: migration `0022` drops
+  `sbu_id`'s `NOT NULL` and backfills Admin/GM rows to `NULL`;
+  `UserProfile` model, `UserMeResponse`/`UserListResponse`/`UserCreate`
+  schemas, and `set_rls_context()`'s None-guard all updated to match;
+  `UserDirectoryScreen.tsx` hides the SBU field for Admin/GM. Verified
+  live on Dev for all 3 real Admin/GM accounts per the commit message.
+  Nothing left to pick up here — notes below kept for history only.
 
   Surfaced 2026-07-28 while fixing the `/users`
   endpoint's visibility filter (see `docs/Progress-Archive-2026-07.md`) —
@@ -293,7 +299,29 @@ kept only as a pointer; nothing left to pick up here.
   If real brand filtering is ever needed, add it to
   `ProductService.list_products`/`ProductRepository.list_products` and add
   a genuine test for it then — not before.
-- Reminders-on-login feature is DEFERRED behind the migration — not lost, not current.
+- ~~Reminders-on-login feature is DEFERRED behind the migration — not
+  lost, not current.~~ — **BUILT 2026-08-22, revised 2026-08-23, not yet
+  verified.** GM Haroon requested a login notification; implemented as
+  this same deferred feature (each user sees their own due/overdue Next
+  Actions on login, plus a date-range filter on the Next Actions
+  screen). Committed `dc826b2` as an inline banner 2026-08-22; changed
+  to an overlay `Dialog` 2026-08-23 per Basheer's UX call, which also
+  surfaced and fixed a pre-existing ~500-700ms latency (count now rides
+  free on the `/auth/me` response already fetched at login, instead of a
+  separate round trip). Manual E2E verification still pending — see
+  `active_progress.md`. Full design in
+  `docs/Reminders-on-Login-Implementation-Plan.md`; narrative in
+  `docs/Progress-Archive-2026-08.md`'s 2026-08-22 and 2026-08-23 entries.
+- **`pool_pre_ping` health-check round trip on every DB connection
+  checkout — app-wide latency, deliberately not touched.** Surfaced
+  2026-08-23 while root-causing the reminders-dialog latency
+  (`docs/Progress-Archive-2026-08.md`'s 2026-08-23 entry). Adds ~60-100ms
+  to every single API request. Removing it in favor of
+  `pool_recycle`-based staleness handling (`backend/app/db/session.py`'s
+  `engine`) would save that app-wide, but trades off some
+  connection-error resilience — on a live shared dev DB, Basheer should
+  make that call deliberately, not have it bundled into a quiet perf
+  patch. Not started.
 - ~~**`docs/Physical-Schema.sql` is stale and unreliable**~~ — **RESOLVED
   2026-08-03.** Regenerated via `pg_dump --schema-only` (Docker, `postgres:17`
   image matched to the live server's actual version — see finding below)
@@ -329,22 +357,15 @@ kept only as a pointer; nothing left to pick up here.
   log. Performance item (code-splitting via dynamic `import()`), not a
   correctness one. Candidate approach in the build's own warning: dynamic
   imports or `build.rolldownOptions.output.codeSplitting`.
-- **`ProjectDirectoryScreen.jsx`'s opportunity create/update never refreshes
-  React Query caches at all** — surfaced 2026-08-03 while fixing the Pipeline
-  screen's stale-after-create bug (`7bdafae`, see
-  `docs/Progress-Archive-2026-08.md`). That fix added
-  `invalidateQueries(["pipeline"])` to every other create/update call site
-  (`Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`), but
-  `ProjectDirectoryScreen.tsx handleCreateOpp`/`handleUpdateOpp` (~lines 135,
-  180) don't use React Query at all — they refresh their own local `opps`
-  state via a direct `listOpportunities()` call and nothing else, so an
-  opportunity created/edited from a Project's detail view won't show up on
-  Pipeline *or* on that account's Customer 360 Opportunities tab
-  (`["opportunities", "byAccount", accountId]`) without a hard refresh.
-  Deferred rather than bundled into the Pipeline fix because it needs
-  `useQueryClient` wired into the file from scratch, not a one-line addition
-  — and this file is already on the pending MUI-migration list above, which
-  is a more natural place to fix it properly.
+- ~~**`ProjectDirectoryScreen.jsx`'s opportunity create/update never refreshes
+  React Query caches at all**~~ — **DONE, confirmed 2026-08-22.** Resolved
+  as part of the file's MUI + React Query + TypeScript migration
+  (`1d51b6d`, `ProjectDirectoryScreen.tsx`) — the deferral rationale below
+  ("fix it when this file's migration lands") played out exactly as
+  planned. Confirmed 10 `queryClient.invalidateQueries(...)` calls now
+  present across the opportunity/project create/update handlers,
+  including `["opportunities", "byAccount", ...]` and `["pipeline"]`.
+  Nothing left to pick up here.
 - ~~**Opportunity create forms are missing stage-gate fields (Demo Date,
   Expected Closure Date, PO Number) — BR-OP-00 direct-to-advanced-stage
   creation fails.**~~ — **SHIPPED 2026-08-05, `main` commit `6a8e841`.**

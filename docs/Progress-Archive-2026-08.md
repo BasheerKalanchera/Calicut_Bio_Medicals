@@ -2327,3 +2327,156 @@ Basheer when the session ended; not yet confirmed complete. `CLAUDE.md`
 and `Zone-Hierarchy-Territory-Data-2026-08.md`'s latest edits (Central
 Kerala + tree-shape decision) are uncommitted. See `active_progress.md`
 for the exact next step.
+
+## 2026-08-22 -- Reminders-on-Login built and committed; E2E verification pending
+
+GM Haroon asked for "a notification note when a user logs in." Clarified
+with Basheer this meant the previously-deferred **Reminders-on-login**
+backlog item (`docs/Backlog.md`) -- each user seeing their own pending
+Next Actions on login, not a GM-facing "who logged in" alert.
+
+**Scope decided with Basheer:**
+- Trigger: every user, every login.
+- Content: a short, clickable headline counting Next Actions due today
+  or overdue (not the full list) -- clicking it opens Next Actions
+  pre-filtered to the same set.
+- Zero due/overdue -> show nothing (no empty-state banner).
+- Bonus: added a manual date-range filter to the Next Actions screen
+  itself, both for reps planning their day/week and as groundwork for
+  Milestone 2's coverage-execution planning (generic `due_after`/
+  `due_before`, not hardcoded to "today").
+
+**Why this was cheap to build:** the Reminder data model, repository,
+service, `GET /reminders` endpoint, and rendering component
+(`ReminderRow`, with its existing `isOverdue()` helper) already existed
+from the earlier Next Actions module and were already scoped to the
+current user server-side. No DB migration, no new endpoint, no new
+subsystem -- purely an additive query filter plus a small piece of
+frontend UI.
+
+**What shipped** (full detail in
+`docs/Reminders-on-Login-Implementation-Plan.md`):
+- Backend: `ReminderRepository`/`ReminderService`/`GET /reminders` gain
+  optional `due_after`/`due_before` filters.
+- `AuthContext.tsx`: new `justLoggedIn` flag, set only on an explicit
+  `signIn()` success (not on page-refresh session-restore or token
+  refresh) -- the reliable "just logged in" signal the banner needs.
+- New `LoginRemindersBanner.tsx`: dismissible one-line banner, shown
+  once per login, only when the due/overdue count is > 0.
+- `DemoApp.tsx`: mounts the banner; click-through navigates to Next
+  Actions pre-filtered to "due today or overdue."
+- `NextActionsScreen.tsx`: added a "Due from / Due to" `DatePicker`
+  filter (same pattern as `DailyActivityReportScreen.tsx`).
+
+**Verified so far:** 528 backend tests pass (existing `ReminderService`
+mock-assertion tests extended for the new params, plus a new
+`test_due_after_and_due_before_forwarded` case); frontend `tsc --noEmit`,
+`vite build`, and `eslint` all clean. `npm run generate:types` was
+deliberately skipped -- it needs a live backend against the shared dev
+DB, and nothing in the changed frontend code consumes the generated
+types for these query params (built as plain request params), so
+nothing depends on it.
+
+**Not yet done: manual E2E.** Committed by Basheer as `dc826b2` before
+the walkthrough happened. Basheer will run it first thing tomorrow
+morning (2026-08-23), before resuming UAT migration Part 2. Checklist is
+in the plan doc's Verification section and mirrored in
+`active_progress.md`.
+
+## 2026-08-23 -- Reminders-on-Login changed from banner to overlay dialog
+
+Before the manual E2E pass, Basheer flagged that what shipped (an inline
+`Alert` banner mounted in the app shell, appearing over whichever screen
+happens to be active on login) didn't match his recollection of the
+agreed UX -- he expected a separate overlaying dialog box. Neither
+`docs/Backlog.md` nor the 2026-08-22 entry above recorded a dialog
+decision, so the mismatch was never written down either way; Basheer
+confirmed he now wants the overlay dialog on UX grounds regardless.
+
+**Change:** `LoginRemindersBanner.tsx` replaced by
+`LoginRemindersDialog.tsx` -- same trigger (`justLoggedIn`), same
+zero-count no-render behavior, now rendered as an MUI `Dialog` with
+Dismiss/Review actions instead of an inline `Alert`. `DemoApp.tsx`
+updated to mount the new component under the same name/prop contract
+(`onReview={handleReviewLoginReminders}`). Plan doc updated to describe
+the dialog. Manual E2E checklist unchanged in substance -- still
+pending.
+
+### Same session: dialog exposed a pre-existing latency, root-caused and fixed
+
+Basheer noticed the new dialog took noticeably longer to appear than
+the pipeline screen behind it. Root-caused with live measurements
+against the shared dev DB (Supabase, ap-south-1) rather than guessing:
+
+- Every backend request already paid a ~350ms tax before running its
+  own query: a `pool_pre_ping` health check + three separate
+  `SET LOCAL` statements (`set_rls_context` in `backend/app/db/session.py`)
+  to seed the RLS context, each a separate network round trip (measured
+  ~45-115ms each against a warm connection to the Supabase pooler --
+  query execution itself was ~2.6ms, all the cost was round-trip
+  latency, not query cost).
+- On top of that baseline, the old `countDueOrOverdueReminders()`
+  (`sales-os-app/src/services/activities.ts`) ran the full
+  `ReminderService.list_for_user()` -- which always executes *both* a
+  `list_for_user` item-fetch *and* a separate `count_for_user` query --
+  just to read `total` and discard the items. One whole extra DB round
+  trip solely for this dialog's benefit.
+- The banner had the exact same latency; it was just an inline element
+  that blended in while the rest of the page settled, so nobody
+  noticed. The dialog's screen-dimming overlay made the pre-existing
+  wait visible, it didn't introduce a new one (MUI's default ~225ms
+  `Dialog` fade-in transition added a little, but that's animation, not
+  the fetch).
+
+**Two fixes applied (Basheer approved both after a plain-language
+walkthrough of the diagnosis):**
+
+1. **Piggyback the count on `/auth/me` instead of a separate call.**
+   `AuthContext.applySession()` already calls `getCurrentUser()`
+   (`GET /auth/me`) on every sign-in, and by the time it responds the
+   RLS context is already set on that request's DB session. Added
+   `due_or_overdue_reminder_count: int` to `UserMeResponse`
+   (`backend/app/domains/organization/schemas.py`); `get_me`
+   (`backend/app/api/routers/auth.py`) now also takes
+   `db: Session = Depends(get_db)` (FastAPI dependency-caches this to
+   the *same* session `get_current_user` already used -- no new
+   connection/handshake) and runs one `ReminderRepository.count_for_user`
+   call against it, using an IST end-of-day boundary
+   (`zoneinfo.ZoneInfo("Asia/Kolkata")` -- no existing "due today"
+   convention existed server-side to match, so this establishes one).
+   `LoginRemindersDialog.tsx` now reads
+   `userProfile.due_or_overdue_reminder_count` directly instead of
+   fetching -- the dialog has its data before it ever renders.
+   `countDueOrOverdueReminders()` deleted from `activities.ts` (no
+   longer called anywhere). This is the fix that actually removes the
+   dialog's wait, not just shortens it.
+2. **Collapsed the three `SET LOCAL` statements into one round trip,
+   app-wide.** `set_rls_context()` now sets all three context vars via
+   a single `SELECT set_config(...), set_config(...), set_config(...)`
+   statement instead of three sequential `db.execute()` calls. Verified
+   live against the dev DB: one round trip, correct readback via
+   `current_setting()`. Benefits every API call in the app, not just
+   this feature.
+
+**Not done, flagged for a separate deliberate decision:** `pool_pre_ping`
+still fires a health-check round trip on every connection checkout
+(~60-100ms/request app-wide). Removing it in favor of `pool_recycle`-based
+staleness handling would save more, but trades off some connection-error
+resilience -- given the live shared dev DB, that's a call for Basheer to
+make on its own, not bundle into a quiet perf patch.
+
+**Verification:** 528 backend tests pass (two updated for the new
+call shapes: `test_auth_endpoint.py::TestAuthMe::test_returns_user_profile`
+now overrides `get_db` and asserts the new field;
+`test_session.py::TestSetRlsContext` now asserts one combined call
+instead of three). Frontend `tsc --noEmit`, `eslint`, `vite build` all
+clean. The combined `set_config` statement and the `/auth/me` count
+query were both re-verified directly against the live dev DB. Types
+regenerated (`npm run generate:types`) -- this also picked up
+`due_after`/`due_before` on `GET /reminders` and some
+`expected_closure_date`/`demo_start_date`/`demo_end_date` fields that
+had drifted in from unrelated prior backend changes never regenerated
+until now; the hand-maintained type-alias block at the bottom of
+`api.ts` (wiped by every regen, per its own comment) was restored.
+Not yet committed -- folding into the same commit as the manual E2E
+pass once that's done.

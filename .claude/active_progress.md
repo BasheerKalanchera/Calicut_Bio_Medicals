@@ -1,10 +1,43 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-08-22_
+_Session: 2026-08-21 → 2026-08-23_
 
 ## Current task — STOP HERE FIRST
 
-**UAT migration, Part 2 — Users & Territories, staged rollout.** Part 1
-(code promotion) is DONE and verified on UAT. Full narrative for
+**E2E-verify Reminders-on-Login before anything else.** Built
+2026-08-22 (`dc826b2`), then revised 2026-08-23: banner → overlay
+dialog (Basheer's UX call), plus two latency fixes (see the 2026-08-23
+entry in `docs/Progress-Archive-2026-08.md`). Not yet manually walked
+through. Full design in `docs/Reminders-on-Login-Implementation-Plan.md`.
+
+**What it does:** an overlay dialog appears right after an explicit
+login (never on page refresh/session restore) if the user has any Next
+Actions due today or overdue; clicking Review opens Next Actions
+pre-filtered to that same set. Next Actions also gained a manual
+"Due from / Due to" date-range filter.
+
+**Checklist for the manual pass:**
+- Log in as a user with ≥1 overdue and ≥1 due-today reminder → dialog
+  shows the correct count, closes on Dismiss or on Review.
+- Log in as a user with none due/overdue → no dialog appears.
+- Refresh the page after logging in → dialog does **not** reappear.
+- Click Review → Next Actions opens pre-filtered to today.
+- Manually adjust the new date-range filter on Next Actions → results
+  match the selected range.
+- Dialog should now appear essentially instantly after login (no
+  separate fetch/wait) — confirm it doesn't lag behind the pipeline
+  screen the way the original banner did.
+
+Automated coverage is already green (528 backend tests, `tsc --noEmit`,
+`vite build`, `eslint`) — this is purely the manual walkthrough. Not
+yet committed.
+
+**Once verified:** drop this section from this file. If the walkthrough
+finds a bug, fix it, then log the fix in the 2026-08-23 Progress Archive
+entry (append, don't rewrite) before moving on to UAT migration.
+
+## Then: resume UAT migration, Part 2 — Users & Territories, staged rollout
+
+Part 1 (code promotion) is DONE and verified on UAT. Full narrative for
 everything that happened 2026-08-21 (RLS lockout recurrence, zone_id
 clear-bug fix, Central Kerala deprecation, Karnataka tree-flattening
 decision) is in `docs/Progress-Archive-2026-08.md`'s 2026-08-21 entry —
@@ -36,17 +69,14 @@ its cluster node + Zone 1-6), then:
 5. Get explicit Star Sales sign-off before extending to the broader team
    ahead of Monday's training.
 
-**Uncommitted right now:** `CLAUDE.md` and `docs/Zone-Hierarchy-
-Territory-Data-2026-08.md` (Central Kerala deprecation + Karnataka
-tree-shape decision, both 2026-08-21). Stage only these two by name when
-committing — not a broad `git add` (see the 2026-08-21 archive entry for
-why that matters this round).
-
 **Known blocker, still standing:** direct DB-touching commands
 (migrations, raw queries) get blocked by the Claude Code auto-mode
 safety classifier regardless of chat approval. Basheer runs these
 himself (`!`-prefixed or his own terminal) — confirmed working pattern
-throughout 2026-08-21.
+throughout 2026-08-21. **Partial nuance, 2026-08-23:** read-only SQL
+(SELECT queries via a python/psycopg2 script, used to root-cause the
+reminders-dialog latency) ran fine without tripping the classifier —
+the blocker may be scoped to writes/DDL specifically, not untested here.
 
 ## Next up, after UAT migration lands
 
