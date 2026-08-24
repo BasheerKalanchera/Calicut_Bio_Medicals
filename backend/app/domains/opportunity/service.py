@@ -7,6 +7,7 @@ from app.core.exceptions import (
     ConflictError,
     NotFoundError,
 )
+from app.domains.notification.service import NotificationService
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
@@ -26,8 +27,9 @@ _SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
 
 
 class OpportunityService:
-    def __init__(self, repository: OpportunityRepository):
+    def __init__(self, repository: OpportunityRepository, notification_service: NotificationService):
         self.repository = repository
+        self.notification_service = notification_service
 
     # ------------------------------------------------------------------
     # Pipeline / list
@@ -175,6 +177,14 @@ class OpportunityService:
         for item_data in data.items:
             self._create_item(opp.id, item_data, created_by=created_by)
 
+        if data.owner_id != created_by:
+            self.notification_service.notify_opportunity_assigned(
+                recipient_user_id=data.owner_id,
+                opportunity_id=opp.id,
+                actor_id=created_by,
+                lead_source_name=lead_source_name,
+            )
+
         return opp
 
     # ------------------------------------------------------------------
@@ -206,10 +216,36 @@ class OpportunityService:
         current_status_code = current_status.status_code
         current_is_terminal = current_status.is_terminal
 
+        # Captured before the setattr loop below overwrites it.
+        previous_owner_id = opportunity.owner_id
+
         # Apply field updates
         for field, value in updates.items():
             setattr(opportunity, field, value)
         opportunity.updated_by = updated_by
+
+        # Opportunity-assignment notification: fires only on an actual
+        # reassignment to someone else -- not a no-op re-save of the same
+        # owner, not an explicit-null owner_id (schema allows it but the
+        # column is NOT NULL; the update itself will fail below), and not
+        # the actor assigning it to themselves.
+        new_owner_id = updates.get("owner_id")
+        if (
+            new_owner_id is not None
+            and new_owner_id != previous_owner_id
+            and new_owner_id != updated_by
+        ):
+            lead_source_name: str | None = None
+            if opportunity.lead_source_id:
+                lead_source = self.repository.get_lead_source(opportunity.lead_source_id)
+                if lead_source:
+                    lead_source_name = lead_source.name
+            self.notification_service.notify_opportunity_assigned(
+                recipient_user_id=new_owner_id,
+                opportunity_id=opportunity.id,
+                actor_id=updated_by,
+                lead_source_name=lead_source_name,
+            )
 
         # Resolve effective stage and status after updates
         effective_stage = (

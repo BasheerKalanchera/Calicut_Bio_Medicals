@@ -314,6 +314,23 @@ CREATE TABLE public.loss_reason (
 
 
 --
+-- Name: notification; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.notification (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    recipient_user_id uuid NOT NULL,
+    type character varying(50) NOT NULL,
+    entity_type character varying(50) NOT NULL,
+    entity_id uuid NOT NULL,
+    created_by uuid NOT NULL,
+    is_urgent boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    read_at timestamp with time zone
+);
+
+
+--
 -- Name: opportunity; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -783,6 +800,14 @@ ALTER TABLE ONLY public.loss_reason
 
 
 --
+-- Name: notification notification_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: opportunity_item opportunity_item_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1067,6 +1092,23 @@ CREATE INDEX idx_document_opportunity_id ON public.document USING btree (opportu
 --
 
 CREATE INDEX idx_installed_asset_account_id ON public.installed_asset USING btree (account_id);
+
+
+--
+-- Name: idx_notification_recipient_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notification_recipient_user_id ON public.notification USING btree (recipient_user_id);
+
+
+--
+-- Name: idx_notification_recipient_unread; Type: INDEX; Schema: public; Owner: -
+--
+
+-- Serves the header-bell/urgent-dialog poll (unread-count, urgent-unread) --
+-- a partial index keeps that hot, frequent query cheap regardless of how
+-- large notification grows, since it only ever indexes the still-unread rows.
+CREATE INDEX idx_notification_recipient_unread ON public.notification USING btree (recipient_user_id) WHERE (read_at IS NULL);
 
 
 --
@@ -1551,6 +1593,22 @@ ALTER TABLE ONLY public.installed_asset
 
 
 --
+-- Name: notification notification_recipient_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: notification notification_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: opportunity opportunity_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2032,6 +2090,19 @@ ALTER TABLE public.document ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY document_tier_visibility ON public.document USING (((opportunity_id IS NULL) OR (opportunity_id IN ( SELECT opportunity.id
    FROM public.opportunity))));
+
+
+--
+-- Name: notification; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: notification notification_own_only; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY notification_own_only ON public.notification USING (((recipient_user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid()))) WITH CHECK (((created_by = public.cabio_app_uid()) OR (recipient_user_id = public.cabio_app_uid())));
 
 
 --

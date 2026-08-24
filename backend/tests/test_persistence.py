@@ -49,14 +49,15 @@ def test_alembic_versions_directory_exists():
     assert versions_path.is_dir(), "alembic/versions/ directory not found"
 
 
-def test_all_27_tables_registered():
+def test_all_28_tables_registered():
     import app.db.registry  # noqa: F401
     from app.db.base import Base
 
     # 26, not 25: Milestone 1 added user_zone (0018_add_user_zone_and_rewrite_area_manager_rls.py).
     # 27, not 26: Zone Hierarchy added zone_closure (0019_zone_hierarchy_tree_and_closure.py).
+    # 28, not 27: Opportunity-Assignment Notifications added notification (0024_add_notification_table.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 27, f"Expected 27 tables, found {table_count}"
+    assert table_count == 28, f"Expected 28 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -82,7 +83,9 @@ def test_all_relationships_resolve():
     # plain FK columns only, deliberately not ORM-navigable (it's a derived/computed index,
     # not a domain object -- see its own model docstring).
     # 96, not 95: BR-FIN-07 added Opportunity.referred_by (0023_add_referral_credit.py).
-    assert rel_count == 96, f"Expected 96 relationships, found {rel_count}"
+    # 97, not 96: Opportunity-Assignment Notifications added Notification.actor
+    # (0024_add_notification_table.py).
+    assert rel_count == 97, f"Expected 97 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

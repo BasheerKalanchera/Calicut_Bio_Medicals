@@ -8,6 +8,8 @@ from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
 from app.domains.account.workspace_schemas import WorkspaceOpportunity
+from app.domains.notification.repository import NotificationRepository
+from app.domains.notification.service import NotificationService
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
     ItemsBulkUpdate,
@@ -35,7 +37,14 @@ router = APIRouter(tags=["Opportunities"])
 def _get_service(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> OpportunityService:
-    return OpportunityService(repository=OpportunityRepository(db))
+    return OpportunityService(
+        repository=OpportunityRepository(db),
+        notification_service=NotificationService(repository=NotificationRepository(db)),
+    )
+
+
+def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:  # noqa: B008
+    return NotificationService(repository=NotificationRepository(db))
 
 
 # ------------------------------------------------------------------
@@ -119,8 +128,12 @@ def get_opportunity(
     opportunity_id: uuid.UUID,
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
+    notification_service: NotificationService = Depends(_get_notification_service),  # noqa: B008
 ) -> APIResponse[PipelineOpportunity]:
     opportunity = service.get_opportunity(opportunity_id)
+    # WhatsApp-style read receipt: opening the Opportunity itself marks any
+    # assignment notification for it read, not merely opening the bell dropdown.
+    notification_service.mark_read_for_entity(current_user.id, "opportunity", opportunity_id)
     return APIResponse(data=PipelineOpportunity.model_validate(opportunity))
 
 

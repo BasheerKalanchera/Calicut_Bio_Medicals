@@ -194,6 +194,31 @@ class TestGetOpportunity:
         assert item["project"] is None
         assert item["lead_source"] is None
 
+    def test_marks_assignment_notification_read_as_side_effect(self, client: TestClient) -> None:
+        opp = _mock_opportunity()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = opp
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/opportunities/{OPP_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        # NotificationService.mark_read_for_entity issues an UPDATE against
+        # `notification`, scoped to this viewer + this opportunity -- piggybacks
+        # on the detail fetch (WhatsApp-style: opening the item marks it read).
+        update_calls = [
+            c for c in mock_db.execute.call_args_list
+            if "UPDATE notification" in str(c.args[0])
+        ]
+        assert len(update_calls) == 1
+        sql = str(update_calls[0].args[0].compile(compile_kwargs={"literal_binds": True}))
+        assert f"notification.recipient_user_id = '{TEST_USER_ID.hex}'" in sql
+        assert "notification.entity_type = 'opportunity'" in sql
+        assert f"notification.entity_id = '{OPP_ID.hex}'" in sql
+
 
 class TestListOpportunitiesForStakeholder:
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
