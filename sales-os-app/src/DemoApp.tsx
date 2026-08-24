@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Backdrop, Box, Button, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useAuth } from "./contexts/AuthContext";
@@ -15,10 +15,12 @@ import OpportunityPipelineScreen from "./screens/OpportunityPipelineScreen";
 import OpportunityDetailScreen from "./screens/OpportunityDetailScreen";
 import NextActionsScreen from "./screens/NextActionsScreen";
 import LoginRemindersDialog from "./components/LoginRemindersDialog";
+import NotificationBell from "./components/NotificationBell";
+import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
-import type { PipelineOpportunity } from "./types/api";
+import type { PipelineOpportunity } from "./types/api-aliases";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
 
@@ -93,7 +95,9 @@ export default function DemoApp() {
   const projectResetRef          = useRef<(() => void) | null>(null);
   const projectOpenRef           = useRef<((p: { id: string; name: string }) => void) | null>(null);
   const openLogActivityRef       = useRef<(() => void) | null>(null);
-  openLogActivityRef.current = () => setShowLogActivity(true);
+  useEffect(() => {
+    openLogActivityRef.current = () => setShowLogActivity(true);
+  }, []);
 
   function handleSelectAccount(account: { id: string; name: string }) {
     // Only capture the return view when entering from elsewhere — Customer360Screen
@@ -349,6 +353,7 @@ export default function DemoApp() {
             >
               + Log
             </Button>
+            <NotificationBell onSelectOpportunity={handleSelectOpportunity} />
             {HELP_CONTENT[helpViewId] && (
               <IconButton
                 onClick={() => setShowHelp(true)}
@@ -391,6 +396,7 @@ export default function DemoApp() {
       </Box>
 
       <LoginRemindersDialog onReview={handleReviewLoginReminders} />
+      <UrgentNotificationDialog onSelectOpportunity={handleSelectOpportunity} />
 
       {/* Main content */}
       <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: "56rem", mx: "auto", width: "100%" }}>

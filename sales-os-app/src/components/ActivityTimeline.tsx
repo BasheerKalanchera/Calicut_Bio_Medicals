@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button } from "@mui/material";
 import { listActivitiesByAccount, listActivitiesByOpportunity, listActivitiesByProject } from "../services/activities";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
-import type { ActivityResponse } from "../types/api";
+import type { ActivityResponse } from "../types/api-aliases";
 
 interface Props {
   accountId?: string;

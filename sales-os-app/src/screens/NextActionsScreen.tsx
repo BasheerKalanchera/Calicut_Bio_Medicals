@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { listReminders } from "../services/activities";
 import ReminderRow from "../components/ReminderRow";
 import CloseReminderModal from "../components/CloseReminderModal";
-import type { ReminderResponse } from "../types/api";
+import type { ReminderResponse } from "../types/api-aliases";
 
 export default function NextActionsScreen({
   onSelectAccount,

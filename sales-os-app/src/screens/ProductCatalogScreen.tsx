@@ -21,7 +21,7 @@ import { listSbus } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
-import type { ProductListResponse, ProductResponse, DocumentResponse } from "../types/api";
+import type { ProductListResponse, ProductResponse, DocumentResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
 

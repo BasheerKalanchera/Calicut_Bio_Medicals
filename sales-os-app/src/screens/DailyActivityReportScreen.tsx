@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { listActivityReport } from "../services/activities";
 import { listUsers } from "../services/masterData";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
-import type { ActivityReportRow } from "../types/api";
+import type { ActivityReportRow } from "../types/api-aliases";
 
 interface UserOption { id: string; display_name: string }
 

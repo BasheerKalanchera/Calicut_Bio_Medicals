@@ -158,7 +158,10 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   });
 
   useEffect(() => {
+    // Derives the Value field from the items list; React 18 batches this
+    // into one re-render, not worth restructuring for.
     if (items.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(itemsTotal(items).toFixed(2));
     } else {
       setValue("");
@@ -167,6 +170,9 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
 
   useEffect(() => {
     if (!isOpen) return;
+    // Resets this form's fields on open; React 18 batches these into one
+    // re-render, not worth restructuring this actively-used modal for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
     setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);

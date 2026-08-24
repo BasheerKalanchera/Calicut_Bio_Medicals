@@ -7,7 +7,7 @@ import FormModal from "./FormModal";
 import { logActivity } from "../services/activities";
 import { listAccounts } from "../services/accounts";
 import { listUsers } from "../services/masterData";
-import type { ActivityType } from "../types/api";
+import type { ActivityType } from "../types/api-aliases";
 
 interface Props {
   isOpen: boolean;
@@ -91,6 +91,9 @@ export default function LogActivityModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    // Resets this form's fields on open; React 18 batches these into one
+    // re-render, not worth restructuring this actively-used modal for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActivityType("CALL");
     setActivityDate(nowLocal());
     setNotes("");

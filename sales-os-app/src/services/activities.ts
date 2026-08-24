@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { ActivityPage, ActivityReportPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api";
+import type { ActivityPage, ActivityReportPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api-aliases";
 
 export interface LogActivityPayload {
   account_id: string;

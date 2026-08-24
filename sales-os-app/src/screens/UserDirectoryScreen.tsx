@@ -14,7 +14,7 @@ import {
   deactivateUser,
   reactivateUser,
 } from "../services/masterData";
-import type { UserBlastRadius, UserListResponse } from "../types/api";
+import type { UserBlastRadius, UserListResponse } from "../types/api-aliases";
 import type { ZoneSearchResult } from "../services/masterData";
 
 interface MasterDataOption {

@@ -15,7 +15,7 @@ import { listPipeline } from "../services/opportunities";
 import { listStages, listUsers } from "../services/masterData";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import ZonePicker from "../components/ZonePicker";
-import type { PipelineOpportunity } from "../types/api";
+import type { PipelineOpportunity } from "../types/api-aliases";
 import type { ZoneSearchResult } from "../services/masterData";
 
 interface Props {

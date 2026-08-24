@@ -1,4 +1,4 @@
-import type { ActivityType } from "../types/api";
+import type { ActivityType } from "../types/api-aliases";
 
 // bg/color pairs match the original Tailwind shade names, e.g. VISIT: violet-50 / violet-700.
 // Shared by ActivityTimeline, ReminderRow, and DailyActivityReportScreen — previously

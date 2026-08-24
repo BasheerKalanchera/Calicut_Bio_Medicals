@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Alert, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -111,10 +111,12 @@ function ProjectDetailView({
     queryFn: () => listOpportunities(p.account.id as any) as Promise<any[]>,
   });
   const opps = opportunities.filter((o: any) => o.project_id === p.id);
-  if (refreshOppsRef) {
-    refreshOppsRef.current = () =>
-      queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", p.account.id] });
-  }
+  useEffect(() => {
+    if (refreshOppsRef) {
+      refreshOppsRef.current = () =>
+        queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", p.account.id] });
+    }
+  }, [refreshOppsRef, queryClient, p.account.id]);
 
   const { data: oppStages = [] } = useQuery({
     queryKey: ["stages"],
@@ -237,18 +239,28 @@ function ProjectDetailView({
       unit_price_lakhs: Number(i.unit_price_lakhs),
       discount_lakhs: Number(i.discount_lakhs),
     }));
+    // Seeds the Edit Opportunity item table from the fetched items once per
+    // opportunity opened (seededOppIdRef dedups it); React 18 batches these
+    // into one re-render, not worth restructuring this actively-used form for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditOppItems(mapped);
     setEditOppOriginalItemIds(mapped.map((i: any) => i.id));
   }, [editingOpp, oppItemsData]);
 
   useEffect(() => {
+    // Derives the Edit Opportunity Value field from its item list; React 18
+    // batches this into one re-render, not worth restructuring for.
     if (editOppItems.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditOppValue(itemsTotal(editOppItems).toFixed(2));
     }
   }, [editOppItems]);
 
   useEffect(() => {
+    // Derives the Add Opportunity Value field from its item list; React 18
+    // batches this into one re-render, not worth restructuring for.
     if (addOppItems.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAddOppValue(itemsTotal(addOppItems).toFixed(2));
     } else {
       setAddOppValue("");
@@ -951,26 +963,30 @@ export default function ProjectDirectoryScreen({
     staleTime: Infinity,
   });
 
-  const openCreateProject = () => {
+  const openCreateProject = useCallback(() => {
     setNewProjectAccountId("");
     setNewProjectName("");
     setNewProjectStatusId("");
     setNewProjectOwnerId("");
     setNewProjectBidDate("");
     setShowCreateProject(true);
-  };
-  if (openCreateRef) openCreateRef.current = openCreateProject;
+  }, []);
+  useEffect(() => {
+    if (openCreateRef) openCreateRef.current = openCreateProject;
+  }, [openCreateRef, openCreateProject]);
 
   // Called by DemoApp.tsx's navigate() when leaving this screen via the sidebar —
   // this screen stays mounted (hidden via CSS) rather than unmounting like
   // Customer360Screen/OpportunityDetailScreen, so its own detail-mode state
   // doesn't reset for free and needs this explicit nudge from the parent.
-  if (resetDetailRef) {
-    resetDetailRef.current = () => {
-      setSelectedProject(null);
-      onSelectProject?.(null);
-    };
-  }
+  useEffect(() => {
+    if (resetDetailRef) {
+      resetDetailRef.current = () => {
+        setSelectedProject(null);
+        onSelectProject?.(null);
+      };
+    }
+  }, [resetDetailRef, onSelectProject]);
 
   // Called by DemoApp.tsx to jump straight to a specific project's detail
   // view from outside this screen (e.g. clicking a project card on Customer
@@ -980,13 +996,15 @@ export default function ProjectDirectoryScreen({
   // record ProjectDetailView needs (.account, .status, .owner, ...) — same
   // cross-file looseness the 2026-08-01 archive entry already documents and
   // fixed once before; not new here.
-  if (openProjectRef) {
-    openProjectRef.current = (p) => {
-      setSelectedProject(p);
-      onSelectProject?.(p as unknown as ProjectRef);
-      onDetailModeChange?.(true);
-    };
-  }
+  useEffect(() => {
+    if (openProjectRef) {
+      openProjectRef.current = (p) => {
+        setSelectedProject(p);
+        onSelectProject?.(p as unknown as ProjectRef);
+        onDetailModeChange?.(true);
+      };
+    }
+  }, [openProjectRef, onSelectProject, onDetailModeChange]);
 
   const handleCreateProject = async () => {
     if (!newProjectAccountId) throw new Error("Account is required");

@@ -7,7 +7,7 @@ import FormModal from "./FormModal";
 import { completeReminder } from "../services/activities";
 import { listUsers } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
-import type { ActivityType, ReminderResponse } from "../types/api";
+import type { ActivityType, ReminderResponse } from "../types/api-aliases";
 
 interface Props {
   isOpen: boolean;
@@ -67,6 +67,9 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
 
   useEffect(() => {
     if (!isOpen) return;
+    // Resets this form's fields on open; React 18 batches these into one
+    // re-render, not worth restructuring this actively-used modal for.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTab("details");
     setActivityType("CALL");
     setActivityDate(nowLocal());

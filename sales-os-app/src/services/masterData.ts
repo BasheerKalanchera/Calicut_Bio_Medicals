@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { UserBlastRadius, UserCreate, UserListResponse, UserUpdate } from "../types/api";
+import type { UserBlastRadius, UserCreate, UserListResponse, UserUpdate } from "../types/api-aliases";
 
 export async function listSbus(): Promise<unknown> {
   const response = await api.get("/master-data/sbus");

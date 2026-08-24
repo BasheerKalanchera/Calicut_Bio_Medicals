@@ -789,6 +789,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notifications */
+        get: operations["list_notifications_api_v1_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Unread Count */
+        get: operations["get_unread_count_api_v1_notifications_unread_count_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/urgent-unread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Urgent Unread */
+        get: operations["list_urgent_unread_api_v1_notifications_urgent_unread_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/zones/tree": {
         parameters: {
             query?: never;
@@ -1237,6 +1288,20 @@ export interface components {
             message: string;
             data: components["schemas"]["StakeholderResponse"];
         };
+        /** APIResponse[UnreadCountResponse] */
+        APIResponse_UnreadCountResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["UnreadCountResponse"];
+        };
         /** APIResponse[UserBlastRadius] */
         APIResponse_UserBlastRadius_: {
             /**
@@ -1399,6 +1464,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["DocumentResponse"][];
+        };
+        /** APIResponse[list[NotificationResponse]] */
+        APIResponse_list_NotificationResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["NotificationResponse"][];
         };
         /** APIResponse[list[OpportunityForStakeholder]] */
         APIResponse_list_OpportunityForStakeholder__: {
@@ -1852,6 +1932,16 @@ export interface components {
             /** Next Action Reminder Id */
             next_action_reminder_id?: string | null;
         };
+        /** ActorNested */
+        ActorNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+        };
         /** Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post */
         Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post: {
             /** File */
@@ -2005,6 +2095,37 @@ export interface components {
          * @enum {string}
          */
         MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "sbus" | "zones" | "roles";
+        /** NotificationResponse */
+        NotificationResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Type */
+            type: string;
+            /** Entity Type */
+            entity_type: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Is Urgent */
+            is_urgent: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Read At */
+            read_at: string | null;
+            actor: components["schemas"]["ActorNested"];
+            /** Opportunity Name */
+            opportunity_name?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+        };
         /** OpportunityCreate */
         OpportunityCreate: {
             /** Name */
@@ -2901,6 +3022,13 @@ export interface components {
             status_name: string;
             /** Is Terminal */
             is_terminal: boolean;
+        };
+        /** UnreadCountResponse */
+        UnreadCountResponse: {
+            /** Unread Count */
+            unread_count: number;
+            /** Urgent Unread Count */
+            urgent_unread_count: number;
         };
         /**
          * UserBlastRadius
@@ -5563,6 +5691,101 @@ export interface operations {
             };
         };
     };
+    list_notifications_api_v1_notifications_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_NotificationResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unread_count_api_v1_notifications_unread_count_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_UnreadCountResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_urgent_unread_api_v1_notifications_urgent_unread_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_NotificationResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_zone_tree_api_v1_admin_zones_tree_get: {
         parameters: {
             query?: never;
@@ -5830,33 +6053,3 @@ export interface operations {
         };
     };
 }
-
-// Hand-maintained convenience aliases -- openapi-typescript only emits the
-// components/paths structure above; these named exports let the rest of the
-// app import plain type names instead of the verbose
-// components["schemas"]["X"] form. Re-add any of these lost on a future
-// `npm run generate:types` regen (it overwrites the whole file).
-export type PipelineOpportunity = components["schemas"]["PipelineOpportunity"];
-export type PipelinePage = components["schemas"]["PaginatedResponse_PipelineOpportunity_"];
-export type SplitResponse = components["schemas"]["SplitResponse"];
-export type StakeholderLinkResponse = components["schemas"]["StakeholderLinkResponse"];
-export type OpportunityItemResponse = components["schemas"]["OpportunityItemResponse"];
-export type ReminderResponse = components["schemas"]["ReminderResponse"];
-export type ActivityResponse = components["schemas"]["ActivityResponse"];
-export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResponse_"];
-export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
-export type ActivityReportRow = components["schemas"]["ActivityReportRow"];
-export type ActivityReportPage = components["schemas"]["PaginatedResponse_ActivityReportRow_"];
-export type OpportunityForStakeholder = components["schemas"]["OpportunityForStakeholder"];
-export type StakeholderOpportunityCountsEntry = components["schemas"]["StakeholderOpportunityCountsEntry"];
-export type UserListResponse = components["schemas"]["UserListResponse"];
-export type UserCreate = components["schemas"]["UserCreate"];
-export type UserUpdate = components["schemas"]["UserUpdate"];
-export type UserBlastRadius = components["schemas"]["UserBlastRadius"];
-export type ProductListResponse = components["schemas"]["ProductListResponse"];
-export type ProductResponse = components["schemas"]["ProductResponse"];
-export type DocumentResponse = components["schemas"]["DocumentResponse"];
-export type AccountListResponse = components["schemas"]["AccountListResponse"];
-export type AccountListPage = components["schemas"]["PaginatedResponse_AccountListResponse_"];
-export type AccountResponse = components["schemas"]["AccountResponse"];
-export type AccountCountsEntry = components["schemas"]["AccountCountsEntry"];

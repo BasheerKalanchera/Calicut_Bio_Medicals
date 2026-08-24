@@ -38,7 +38,7 @@ import { listActivitiesByOpportunity, listOpportunityReminders } from "../servic
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloadUrl, deleteDocument } from "../services/documents";
-import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api";
+import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api-aliases";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { itemsTotal } from "../utils/opportunityItems";
@@ -734,10 +734,13 @@ function StakeholdersTab({ opportunityId, accountId }: { opportunityId: string; 
   };
 
   const handleUnlink = async (stakeholderId: string) => {
+    setLinkError(null);
     try {
       await removeOpportunityStakeholder(opportunityId, stakeholderId);
       await queryClient.invalidateQueries({ queryKey: ["opp-stakeholders", opportunityId] });
-    } catch {}
+    } catch (e: any) {
+      setLinkError(e.message || "Failed to remove stakeholder");
+    }
   };
 
   const openEditLink = (lnk: { stakeholder_id: string; influence_level: string | null; decision_role: string | null; notes: string | null }) => {

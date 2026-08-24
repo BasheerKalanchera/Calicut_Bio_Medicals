@@ -1,6 +1,6 @@
 import { Box, Button } from "@mui/material";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
-import type { ReminderResponse } from "../types/api";
+import type { ReminderResponse } from "../types/api-aliases";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {

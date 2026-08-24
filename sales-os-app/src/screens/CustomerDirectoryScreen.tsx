@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -20,7 +20,7 @@ import FormModal from "../components/FormModal";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { useAuth } from "../contexts/AuthContext";
-import type { AccountListResponse } from "../types/api";
+import type { AccountListResponse } from "../types/api-aliases";
 import type { ZoneSearchResult } from "../services/masterData";
 
 interface AccountOption { id: string; name: string }
@@ -126,7 +126,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     },
   });
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     setFormName("");
     // Pre-fill with the logged-in user's own zone (their day-to-day home
     // base, not the broader zone_ids coverage list) so sales staff aren't
@@ -137,8 +137,10 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     setFormParentAccount(null);
     setParentSearchInput("");
     setShowCreateModal(true);
-  };
-  if (openCreateRef) openCreateRef.current = openCreateModal;
+  }, [userProfile]);
+  useEffect(() => {
+    if (openCreateRef) openCreateRef.current = openCreateModal;
+  }, [openCreateRef, openCreateModal]);
 
   const handleCreateAccount = async () => {
     if (!formName.trim()) throw new Error("Customer name is required");

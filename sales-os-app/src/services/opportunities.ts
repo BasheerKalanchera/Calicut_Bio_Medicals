@@ -7,7 +7,7 @@ import type {
   OpportunityItemResponse,
   OpportunityForStakeholder,
   StakeholderOpportunityCountsEntry,
-} from "../types/api";
+} from "../types/api-aliases";
 
 export interface PipelineParams {
   account_id?: string;

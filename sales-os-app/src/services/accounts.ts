@@ -1,5 +1,5 @@
 import api from "../lib/api";
-import type { AccountListPage, AccountResponse, AccountCountsEntry } from "../types/api";
+import type { AccountListPage, AccountResponse, AccountCountsEntry } from "../types/api-aliases";
 
 type Params = Record<string, string | number | boolean>;
 
