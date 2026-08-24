@@ -308,10 +308,26 @@ kept only as a pointer; nothing left to pick up here.
   to an overlay `Dialog` 2026-08-23 per Basheer's UX call, which also
   surfaced and fixed a pre-existing ~500-700ms latency (count now rides
   free on the `/auth/me` response already fetched at login, instead of a
-  separate round trip). Manual E2E verification still pending — see
-  `active_progress.md`. Full design in
+  separate round trip). **Manual E2E: partially done** — remaining
+  checklist items are now bundled with the Opportunity-Assignment-
+  Notifications feature's manual pass (both surface in the app header)
+  — see `active_progress.md`. Full design in
   `docs/Reminders-on-Login-Implementation-Plan.md`; narrative in
   `docs/Progress-Archive-2026-08.md`'s 2026-08-22 and 2026-08-23 entries.
+- **Opportunity-Assignment Notifications — three pieces deliberately
+  deferred, not built.** Built 2026-08-24 (`b772416`, plan in
+  `docs/Opportunity-Assignment-Notifications-Implementation-Plan.md`):
+  a header bell notifies a user when someone else assigns them an
+  Opportunity, with an interrupting dialog for IndiaMART-sourced leads
+  (4-hour buylead-credit SLA). Explicitly out of scope for that build:
+  (1) notifying the *previous* owner when displaced by a reassignment;
+  (2) a full notification history page beyond the header dropdown's
+  recent list; (3) real push notifications (service worker + backend
+  push sender) that would reach a recipient whose app/phone is fully
+  closed — the shipped urgent dialog only helps if the app is already
+  open when it polls. Also not wired: BR-OP-06's Stalled-opportunity
+  notification, though the generic `notification` table this feature
+  introduced is shaped to support it later without rework.
 - **`pool_pre_ping` health-check round trip on every DB connection
   checkout — app-wide latency, deliberately not touched.** Surfaced
   2026-08-23 while root-causing the reminders-dialog latency
