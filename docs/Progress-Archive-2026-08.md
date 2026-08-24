@@ -2480,3 +2480,55 @@ until now; the hand-maintained type-alias block at the bottom of
 `api.ts` (wiped by every regen, per its own comment) was restored.
 Not yet committed -- folding into the same commit as the manual E2E
 pass once that's done.
+
+## 2026-08-24 -- Karnataka zone tree finished; Star Sales team testing UAT, extended team not yet rolled out
+
+Karnataka zone tree work from the 2026-08-21 decision (Karnataka ->
+District flat, except Bangalore keeps its cluster node + Zone 1-6) is
+complete: Fazal's North Kerala + Coastal Karnataka district
+assignments and Shruthi's explicit per-district assignments (Mysore,
+Mandya, Ramnagara, Chamrajnagar, Tumkur, Chitradurga, Hassan, Dharwad)
+are both done -- see `docs/Zone-Hierarchy-Territory-Data-2026-08.md`'s
+2026-08-21 section for the underlying data/decision this implements.
+
+Staged rollout is proceeding exactly as planned, not skipped: **only
+the Star Sales team has been given UAT access so far, and they are
+currently testing.** The extended sales team has not been rolled out
+and has not started testing -- that step (and their training) stays
+gated behind explicit Star Sales sign-off, which has not been received
+yet. (An earlier pass at this entry incorrectly said the extended-team
+rollout had happened -- corrected same day, 2026-08-24, per Basheer.)
+
+**Reminders-on-Login manual E2E: partially done**, not itemized here --
+Basheer is folding the remaining checklist items (see the 2026-08-22
+entry's Verification section / `active_progress.md`) into the manual
+pass for the new Opportunity-Assignment-Notifications feature since
+both surface in the same app-header area. The two features are not
+code-dependent on each other -- this is a testing convenience, not a
+technical link.
+
+### Same day: Opportunity-Assignment Notifications built and committed
+
+The feature planned earlier the same day
+(`docs/Opportunity-Assignment-Notifications-Implementation-Plan.md`)
+was fully built and committed as `b772416`: backend `notification`
+domain (model/repository/service/router), migrations
+0024-0026, hooks into `create_opportunity`/`update_opportunity` (fires
+only on an actual reassignment to someone else, not self-assignment or
+a no-op re-save), frontend `NotificationBell` + `UrgentNotificationDialog`,
+and backend test coverage.
+
+**Two RLS bugs found and fixed during manual testing** (migrations
+0025, 0026, same commit): the recipient-scoped policy's implicit
+`WITH CHECK` blocked any INSERT where the actor differs from the
+recipient -- i.e. every real assignment, since the actor and recipient
+are different people by definition. Even after that fix, SQLAlchemy's
+read-your-write `RETURNING` clause on the INSERT was still being
+filtered by the original narrow `USING` clause, since `RETURNING` on
+INSERT is checked against `USING`, not `WITH CHECK` -- a second,
+separate fix.
+
+**Not yet done:** the full manual E2E walkthrough of the feature
+end-to-end (bell badge, urgent dialog, click-through, mark-as-read on
+open) -- see `active_progress.md` for the checklist, bundled with the
+remaining Reminders-on-Login items above.

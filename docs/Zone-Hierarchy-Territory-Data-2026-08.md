@@ -63,6 +63,12 @@ it must remember to also assign Shruthi to it explicitly. Fazal's Coastal
 Karnataka districts were already being assigned individually regardless
 (no change there).
 
+**Resolved 2026-08-24:** both assignments above are done in UAT — Fazal's
+North Kerala + Coastal Karnataka districts, and Shruthi's explicit
+per-district rows for Mysore, Mandya, Ramnagara, Chamrajnagar, Tumkur,
+Chitradurga, Hassan, and Dharwad. See `docs/Progress-Archive-2026-08.md`'s
+2026-08-24 entry.
+
 ---
 
 ## Consolidated territory table
