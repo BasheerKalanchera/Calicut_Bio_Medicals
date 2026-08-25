@@ -102,13 +102,12 @@ class TestCreateProduct:
         assert result is product
         repo.create.assert_called_once()
 
-    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Staff"])
-    def test_disallowed_roles_raise_authorization_error(self, role_name):
+    def test_disallowed_roles_raise_authorization_error(self):
         repo = _make_repo()
 
         service = ProductService(repository=repo)
         with pytest.raises(AuthorizationError):
-            service.create_product(self._data(), created_by=uuid.uuid4(), role_name=role_name)
+            service.create_product(self._data(), created_by=uuid.uuid4(), role_name="Sales Staff")
 
         repo.sbu_exists.assert_not_called()
         repo.create.assert_not_called()
@@ -152,14 +151,13 @@ class TestUpdateProduct:
         assert result is product
         repo.update.assert_called_once()
 
-    @pytest.mark.parametrize("role_name", ["Sales Executive", "Sales Staff"])
-    def test_disallowed_roles_raise_authorization_error(self, role_name):
+    def test_disallowed_roles_raise_authorization_error(self):
         repo = _make_repo()
 
         service = ProductService(repository=repo)
         with pytest.raises(AuthorizationError):
             service.update_product(
-                uuid.uuid4(), ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name=role_name
+                uuid.uuid4(), ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name="Sales Staff"
             )
 
         repo.get_by_id.assert_not_called()

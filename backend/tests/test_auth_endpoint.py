@@ -16,7 +16,7 @@ TEST_ROLE_ID = uuid.UUID("44444444-4444-4444-4444-444444444444")
 
 def _mock_user() -> MagicMock:
     role = MagicMock()
-    role.role_name = "Sales Executive"
+    role.role_name = "Sales Staff"
 
     sbu = MagicMock()
     sbu.id = TEST_SBU_ID
@@ -57,7 +57,7 @@ class TestAuthMe:
         data = body["data"]
         assert data["id"] == str(TEST_USER_ID)
         assert data["display_name"] == "Test User"
-        assert data["role_name"] == "Sales Executive"
+        assert data["role_name"] == "Sales Staff"
         assert data["sbu"]["name"] == "Imaging"
         assert data["zone"]["name"] == "North"
         assert data["due_or_overdue_reminder_count"] == 3
