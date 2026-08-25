@@ -49,7 +49,15 @@ export default function NotificationBell({
     // notification read server-side -- refetch shortly after so the badge
     // and dropdown catch up instead of waiting for the next 60s poll.
     onSelectOpportunity({ id: n.entity_id, name: n.opportunity_name ?? "Opportunity" });
-    setTimeout(() => queryClient.invalidateQueries({ queryKey: ["notifications"] }), 500);
+    // Not ["notifications"] -- that would also sweep up urgent-unread by
+    // prefix match, which can pop UrgentNotificationDialog back up over
+    // this navigation if 2+ urgent items were outstanding (see that
+    // component's matching comment). urgent-unread refreshes on its own
+    // 60s refetchInterval instead.
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+    }, 500);
   }
 
   return (
@@ -57,7 +65,7 @@ export default function NotificationBell({
       <IconButton
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-label="Notifications"
-        sx={{ width: 40, height: 40, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
+        sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}
       >
         <Badge variant="dot" color="error" invisible={unreadCount === 0}>
           <Box component="span" sx={{ fontSize: "1.1rem" }}>🔔</Box>

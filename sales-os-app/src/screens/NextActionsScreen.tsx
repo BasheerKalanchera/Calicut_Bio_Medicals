@@ -44,7 +44,7 @@ export default function NextActionsScreen({
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
-      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+      <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0, display: "flex", flexDirection: "column", gap: 1 }}>
         <ToggleButtonGroup
           value={includeCompleted}
           exclusive
@@ -79,20 +79,22 @@ export default function NextActionsScreen({
           </ToggleButton>
         </ToggleButtonGroup>
 
-        <DatePicker
-          label="Due from"
-          value={dueAfter}
-          onChange={(v) => setDueAfter(v)}
-          slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
-          sx={{ width: 160 }}
-        />
-        <DatePicker
-          label="Due to"
-          value={dueBefore}
-          onChange={(v) => setDueBefore(v)}
-          slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
-          sx={{ width: 160 }}
-        />
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <DatePicker
+            label="Due from"
+            value={dueAfter}
+            onChange={(v) => setDueAfter(v)}
+            slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
+            sx={{ width: 160 }}
+          />
+          <DatePicker
+            label="Due to"
+            value={dueBefore}
+            onChange={(v) => setDueBefore(v)}
+            slotProps={{ textField: { size: "small" }, field: { clearable: true } }}
+            sx={{ width: 160 }}
+          />
+        </Box>
       </Box>
 
       <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, pt: 1 }}>

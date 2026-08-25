@@ -9,8 +9,26 @@ function formatDate(iso: string) {
   });
 }
 
+function formatDateOnly(iso: string) {
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+}
+
+// Matches the backend's own due-vs-overdue boundary (auth.py's end_of_today
+// for due_or_overdue_reminder_count): a reminder due earlier *today* is still
+// "due today," not overdue -- only a due_date on an earlier calendar day is.
+// Comparing against the exact current instant (not the start of today) would
+// mark anything due before the current time of day as overdue, even hours
+// before midnight.
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export function isOverdue(reminder: ReminderResponse) {
-  return !reminder.is_completed && new Date(reminder.due_date) < new Date();
+  return !reminder.is_completed && new Date(reminder.due_date) < startOfToday();
 }
 
 export default function ReminderRow({
@@ -39,7 +57,7 @@ export default function ReminderRow({
     ? { bg: "#ecfdf5", color: "#047857", label: "Done" }
     : overdue
     ? { bg: "#fef2f2", color: "#dc2626", label: "Overdue" }
-    : { bg: "#eff6ff", color: "#1d4ed8", label: "Due " + formatDate(reminder.due_date) };
+    : { bg: "#eff6ff", color: "#1d4ed8", label: "Due " + formatDateOnly(reminder.due_date) };
 
   return (
     <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
@@ -112,6 +130,8 @@ export default function ReminderRow({
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, fontSize: "10px", color: "#9ca3af", fontWeight: 500 }}>
+        <Box component="span">Due: {formatDateOnly(reminder.due_date)}</Box>
+        <Box component="span" sx={{ color: "#e5e7eb" }}>•</Box>
         <Box component="span">Owner: {reminder.assigned_to_user.display_name}</Box>
         <Box component="span" sx={{ color: "#e5e7eb" }}>•</Box>
         <Box component="span">Logged by: {reminder.activity.user.display_name}</Box>

@@ -64,6 +64,12 @@ export default function DemoApp() {
   // full PipelineOpportunity (Pipeline navigation) — OpportunityDetailScreen
   // fetches the rest itself and reports back via onOpportunityUpdate.
   const [selectedOpportunity, setSelectedOpportunity] = useState<PipelineOpportunity | { id: string; name: string } | null>(null);
+  // Lifted out of UrgentNotificationDialog so *any* navigation to an Opportunity
+  // (bell dropdown, pipeline, search, the urgent dialog itself, ...) suppresses
+  // it -- otherwise it can reappear on top of the screen handleSelectOpportunity
+  // just navigated to, since it only hides once its own dataUpdatedAt/dismissedAt
+  // check passes.
+  const [urgentDialogDismissedAt, setUrgentDialogDismissedAt] = useState(0);
   // Set by the Customer 360 stakeholder bridge list, so OpportunityDetailScreen
   // can open straight on the tab the user actually came here for, instead of
   // always defaulting to Overview.
@@ -129,7 +135,15 @@ export default function DemoApp() {
     detailTab?: string,
     customer360Tab?: string,
   ) {
-    setOpportunityReturnView(view);
+    setUrgentDialogDismissedAt(Date.now());
+    // Only capture a *new* return view when not already on Opportunity Detail --
+    // otherwise opening a second Opportunity from within the first one's detail
+    // screen (e.g. picking another notification from the bell dropdown while
+    // already viewing an Opportunity) would overwrite this with "opportunityDetail"
+    // itself, and Back would land on that view with no selectedOpportunity, i.e.
+    // the blank-screen bug. Keeping the original entry view preserves it correctly
+    // across any number of chained Detail -> Detail navigations.
+    if (view !== "opportunityDetail") setOpportunityReturnView(view);
     // Unconditional (not gated on truthiness) so a future call site that
     // forgets to pass one falls back to Overview, not a stale tab.
     if (view === "customer360") setCustomer360InitialTab(customer360Tab);
@@ -322,26 +336,26 @@ export default function DemoApp() {
       {/* Top header */}
       <Box sx={{ bgcolor: "#fff", boxShadow: SHADOW_SM, borderBottom: "1px solid #f3f4f6", zIndex: 100 }}>
         <Box sx={{ maxWidth: "56rem", mx: "auto", width: "100%", px: 2, py: 1.5, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 } }}>
             <IconButton
               onClick={() => setIsSidebarOpen(true)}
-              sx={{ width: 40, height: 40, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
+              sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
             >
               <Box component="span" sx={{ fontSize: "1.25rem" }}>☰</Box>
             </IconButton>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ height: 40, objectFit: "contain" }} />
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 1.5 } }}>
+              <Box component="img" src="/Cabio%20logo.jpeg" alt="Logo" sx={{ height: 40, flexShrink: 0, objectFit: "contain" }} />
               <Typography component="h1" sx={{ fontSize: "1.125rem", fontWeight: 900, color: "#1f2937", letterSpacing: "-0.025em", display: { xs: "none", sm: "block" } }}>
                 Sales OS
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 } }}>
             <Button
               variant="contained"
               onClick={() => setShowQuickLead(true)}
-              sx={{ px: 1.5, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
+              sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
             >
               + Lead
             </Button>
@@ -349,7 +363,7 @@ export default function DemoApp() {
               variant="contained"
               color="primary"
               onClick={() => setShowLogActivity(true)}
-              sx={{ px: 1.5, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em" }}
+              sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap" }}
             >
               + Log
             </Button>
@@ -358,7 +372,7 @@ export default function DemoApp() {
               <IconButton
                 onClick={() => setShowHelp(true)}
                 aria-label="Help"
-                sx={{ width: 40, height: 40, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
+                sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: "0.75rem", bgcolor: "#f9fafb", color: "#4b5563", "&:hover": { bgcolor: "#f3f4f6" }, boxShadow: SHADOW_SM }}
               >
                 <Box component="span" sx={{ fontSize: "1rem", fontWeight: 900 }}>?</Box>
               </IconButton>
@@ -396,7 +410,11 @@ export default function DemoApp() {
       </Box>
 
       <LoginRemindersDialog onReview={handleReviewLoginReminders} />
-      <UrgentNotificationDialog onSelectOpportunity={handleSelectOpportunity} />
+      <UrgentNotificationDialog
+        onSelectOpportunity={handleSelectOpportunity}
+        dismissedAt={urgentDialogDismissedAt}
+        onDismiss={() => setUrgentDialogDismissedAt(Date.now())}
+      />
 
       {/* Main content */}
       <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: "56rem", mx: "auto", width: "100%" }}>
