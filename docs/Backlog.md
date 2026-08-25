@@ -48,15 +48,33 @@ kept only as a pointer; nothing left to pick up here.
   warns about the Supabase project-setup prompt but not about this
   standing UAT-only trigger.
 
-- **Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**
-  Raised at the 2026-08-19 leadership demo — reps need to skip Demo Date/Expected
-  Closure Date gates for a brand-new (non-`REPEAT_ORDER`) customer who declines a demo,
-  e.g. a referral going straight to negotiation. This is Option C from
-  `docs/Discussion-FastTrack-Opportunity-Creation.md` (2026-08-05), deliberately dropped
-  then with "revisit only if that case actually starts recurring" — it just recurred.
-  Full options analysis and a strawman recommendation are in
-  `docs/Discussion-FastTrack-Gate-Override-2026-08.md`, OPEN pending Basheer/Haroon
-  decision. Not started — do not build until that paper is decided.
+- ~~**Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**~~
+  — **BUILT 2026-08-25, applied to Dev; not yet committed or manually verified.**
+  Raised at the 2026-08-19 leadership demo, decided same-day (2026-08-25,
+  Basheer/Haroon, `docs/Discussion-FastTrack-Gate-Override-2026-08.md`) and built
+  in the same session per `docs/Manager-Attested-Gate-Override-Implementation-
+  Plan.md`: migration `0027`, `BR-OP-14` in `Business-Rules.md`, all 4 opportunity
+  entry points. Full build narrative:
+  `docs/Progress-Archive-2026-08.md`'s "2026-08-25 (later)" entry. **Still open:**
+  the commit itself (24 files staged, Basheer committing directly) and manual E2E
+  (14-case checklist,
+  `docs/Manager-Attested-Gate-Override-Manual-E2E-Verification.md`).
+
+- ~~**`UrgentNotificationDialog` multi-item race.**~~ — **DONE.** Diagnosed
+  2026-08-25 as a gap in the 2026-08-25 Progress-Archive entry's bug #1 fix
+  ("Urgent dialog blocking the Opportunity Detail screen") — that fix covered
+  the single-item and bell-dropdown cases but left one edge case uncovered:
+  reviewing one of 2+ outstanding urgent items still popped the dialog back up
+  over the just-opened Opportunity Detail screen within ~500ms, since
+  `handleReview`'s `setTimeout(..., 500)` invalidated `["notifications"]`
+  wholesale, which by prefix-matching also swept up `urgent-unread` — the exact
+  query the earlier fix scoped `refetchOnWindowFocus: false` on specifically to
+  stop it refetching out-of-band. Fixed (confirmed live in
+  `UrgentNotificationDialog.tsx`, committed as part of `e47ccc9`, on `main`):
+  narrowed that invalidate to `["notifications", "unread-count"]` and
+  `["notifications", "list"]` only, leaving `urgent-unread` to its own
+  `refetchInterval: 60_000` — consistent with the component's own documented
+  design ("reappears on next poll, not silence-forever-able by accident").
 
 - **Referral Credit Part 2 — Relationship-Support Activity.** Split out
   2026-08-18 when Part 1 (Referral Credit, `BR-FIN-07`) shipped — see
@@ -68,12 +86,92 @@ kept only as a pointer; nothing left to pick up here.
   the plan was written; use the next free `BR-ACT-` number at build time),
   8 (frontend `LogActivityModal.tsx`), and 10 (manual verification,
   including the cross-SBU security check — the real one, can't be
-  skipped). Lets someone outside a deal's normal ownership/SBU log a
-  "relationship support" note against a specific Opportunity via a new,
-  narrow `SECURITY DEFINER` RLS carve-out; also adds a general "which
-  Opportunity is this about" picker to `LogActivityModal.tsx` when
-  logging from the Account level (a gap today regardless of this
-  feature). Nothing implemented yet.
+  skipped). **Migration number confirmed 2026-08-25** against
+  `backend/alembic/versions/`: highest on disk is `0026` (Part 1's own
+  migration landed as `0023_add_referral_credit.py`, 2026-08-18; `0024`-`0026`
+  are the notification feature, 2026-08-24). Part 2's migration is
+  **`0028`** (reassigned same day — `0027` went to the Gate Override feature
+  instead, see next entry, since it's being built first), containing *only*
+  the two `SECURITY DEFINER` functions + the `activity_tier_visibility` RLS
+  amendment — the `referred_by_user_id`/`referred_by_note` columns are
+  already live via `0023`, don't recreate them. Plan doc corrected same day
+  to stop describing this shipped work as pending. Lets someone outside a
+  deal's normal ownership/SBU log a "relationship support" note against a
+  specific
+  Opportunity via a new, narrow `SECURITY DEFINER` RLS carve-out.
+
+  **Opportunity picker scope narrowed 2026-08-25** (architecture discussion
+  with Basheer): the "which Opportunity is this about" picker in
+  `LogActivityModal.tsx` now renders **only when Activity Type =
+  Relationship Support is selected** — the earlier plan's general-purpose
+  version (available for *any* activity type logged from the Account level)
+  is explicitly dropped from this build, not bundled in. Two options were
+  considered and rejected before landing here: (a) drop the
+  Opportunity-level link entirely, logging only at the Account level — this
+  would have avoided the cross-SBU visibility question altogether (an
+  Account-only note already works today for anyone, zero new backend code),
+  but loses which specific deal the support was about; (b) keep the
+  general-purpose picker as originally planned — rejected as unnecessarily
+  broad exposure for a narrow, informal use case, and it would have shipped
+  the general convenience as an incidental side effect rather than a
+  deliberate decision. **Important:** the activity-type gate is
+  frontend-only — it doesn't shrink the backend security work, since the
+  lookup function itself can't know why the frontend is calling it and
+  still has to return that Account's Opportunity names to anyone who calls
+  it. Same manual cross-SBU verification still required, including via a
+  raw API call, not just through the gated UI. Nothing implemented yet.
+
+- **Milestone 2 — Target Planning, Insights Dashboard/Reporting, Coverage Planning. All
+  three fully scoped 2026-08-25, none started.** Sequencing decided the same session,
+  superseding the original Target → Coverage → Reporting order from
+  `implementation_plan.md`: Coverage Planning is new rep data-entry work that pays off
+  only after adoption, while Reporting Batch 1 needs no new behavior from anyone and
+  pays off immediately on data already flowing in — same "adoption before more
+  features" reasoning that drove the 2-region weekly-deploy model
+  (`docs/Deployment-Topology.md`). Decided rollout order:
+  1. **Target Planning** — `docs/Target-Planning-Implementation-Plan.md`. Hard
+     prerequisite for Coverage Planning (`BR-PL-03`'s FK). RLS-enable-only migration —
+     `target_plan` already exists live, unprotected, never went through Alembic (a
+     pre-migration-baseline leftover, same category as the `rls_auto_enable()` item
+     above). **5 open decisions pending Basheer**, listed in the plan: who can set
+     targets (proposed: SBU Manager/Area Manager/Admin/GM write, Sales Staff read-only
+     own row), SBU Target as a computed rollup vs. a stored row, annual-as-sum-of-
+     quarters, no approval workflow, no edit-lock once Coverage Plans reference a
+     Target Plan.
+  2. **Insights Dashboard / Reporting Batch 1** — `docs/Insights-Dashboard-Implementation-Plan.md`.
+     Zero dependency on Target or Coverage Planning — split out from the PRD's much
+     larger Reporting & Review Module (§5) to the target-independent subset: Pipeline
+     Value, Weighted/Unweighted Forecast, Overdue Actions, Activity Levels, a read-only
+     Stagnant Deals report. Explicitly **not** `BR-OP-06`'s real Stalled-status
+     automation — no job scheduler exists in this codebase yet, so that stays a
+     separate future item. **All 3 open decisions resolved 2026-08-25:** Pipeline
+     Aging dropped from Batch 1 entirely (no stage-history table exists, and the only
+     fallback — `opportunity.updated_at` — was judged too imprecise to ship); stagnant-
+     deal threshold ships as a `threshold_days` query parameter defaulting to 180
+     (`BR-OP-06`), with 90/~3-months (PRD §5.7) selectable as the alternate, rather
+     than picking one; Overdue Actions tile is team-rollup only (Sales Staff don't get
+     it — redundant with their own Reminders-on-Login bell — SBU Manager/Area
+     Manager/Admin/GM see their team's count broken out per rep). **Real gap still
+     open, not a decision, an incompleteness in the plan itself:** 3 of the 8 Batch 1
+     items — High-Priority Deals, Opportunities On Hold, Product Performance Summary —
+     are listed in the plan's scope table but have no `schemas.py`/`router.py` entry
+     spec'd yet; need fleshing out before build covers the full stated scope.
+  3. **Coverage Planning** — `docs/Coverage-Planning-Implementation-Plan.md`. Same
+     RLS-enable-only migration situation as Target Planning (`coverage_plan`/
+     `coverage_plan_entry` also live, unprotected, pre-Alembic). Permission shape is
+     the *reverse* of Target Planning — self-authored by the rep, not manager-set.
+     **4 open decisions**: who authors a plan (self vs. manager-delegated), whether
+     Account selection should be territory-restricted (nothing else in the app
+     restricts Account choice by zone/SBU today, so this would be a new precedent),
+     `coverage_frequency` as free text vs. a fixed picklist, and the same "approved
+     Target Plan" wording gap as Target Planning's decision.
+  4. **Reporting Batch 2** (attainment %, Pipeline Coverage Ratio, Beat Plan
+     Compliance) — needs both Target and Coverage Planning data to exist, necessarily
+     last. Not separately scoped yet — fast-follow once #1 and #3 have real data.
+
+  **Not yet reconciled against Referral Credit Part 2's queue position** (next
+  entry below) — that item was "next up" before this session's Milestone 2 planning;
+  no explicit decision was made on relative priority between the two tracks.
 
 - ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
   **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/

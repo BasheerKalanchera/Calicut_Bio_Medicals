@@ -2532,3 +2532,223 @@ separate fix.
 end-to-end (bell badge, urgent dialog, click-through, mark-as-read on
 open) -- see `active_progress.md` for the checklist, bundled with the
 remaining Reminders-on-Login items above.
+
+---
+
+## 2026-08-25 -- Opportunity-Assignment Notifications + Reminders-on-Login: full manual E2E pass, five bugs found and fixed
+
+Both features' outstanding manual E2E checklists (from the 2026-08-22
+and 2026-08-24 entries above) were walked through live in-browser this
+session. Backend suite green throughout (547 -> 558 passed after the
+one gap closed below). Frontend changes committed `e47ccc9`; backend
+router test gap committed `a6fbf0a`.
+
+**Backend test gap closed (`a6fbf0a`):** the notification feature's
+Verification section promised router-level tests for its three new
+endpoints (`GET /notifications`, `/unread-count`, `/urgent-unread`),
+but none existed -- `notification/router.py` sat at 67% coverage,
+missing exactly the three endpoint bodies. Repository and service
+layers were tested; the HTTP wiring (routing, auth dependency,
+response envelope, `limit` query param) wasn't. Added
+`test_notification_router.py`, same pattern as
+`test_opportunity_router.py` (mocked `db`, real router+service+
+repository wiring exercised). Brings that file to 100%.
+
+**Five bugs found and fixed during the E2E pass (`e47ccc9`):**
+
+1. **Urgent dialog blocking the Opportunity Detail screen it just
+   navigated to** -- two distinct root causes, found in sequence:
+   - The bell dropdown's `onSelectOpportunity` never touched the
+     urgent dialog's dismissal state at all (it was local state
+     inside `UrgentNotificationDialog`, only set by that dialog's own
+     Dismiss/Review). Fixed by lifting `dismissedAt` to `DemoApp.tsx`
+     as `urgentDialogDismissedAt`, stamped unconditionally by
+     `handleSelectOpportunity` -- the single shared handler every
+     "open an Opportunity" call site uses app-wide, not just this
+     dialog.
+   - Even after that fix, it could still reappear moments later: the
+     `urgent-unread` query had no `refetchInterval` of its own, so it
+     only ever refreshed via React Query's default
+     `refetchOnWindowFocus` (still on app-wide) or via a `setTimeout`-
+     delayed `invalidateQueries(["notifications"])` in `handleReview`
+     -- which by prefix-matching also swept up `urgent-unread`. Either
+     one could land *after* a click's `dismissedAt` timestamp and pop
+     the dialog back up over the newly-opened screen. Confirmed live:
+     with only one urgent item, `urgent.length` also independently
+     dropped to 0 after the refetch, masking the race; with two, the
+     remaining item kept `urgent.length > 0`, exposing it. Fixed by
+     scoping `refetchOnWindowFocus: false` + an explicit
+     `refetchInterval: 60_000` to that one query (not the global
+     `QueryClient`, so no other screen loses its own focus-refresh
+     behavior), and narrowing the `invalidateQueries` calls in both
+     `UrgentNotificationDialog.handleReview` and
+     `NotificationBell.handleSelect` to `unread-count`/`list` only,
+     leaving `urgent-unread` to its own interval.
+2. **Urgent dialog UX simplified**: was one "Review" button per urgent
+   item crammed into the alert dialog (via MUI's `secondaryAction`),
+   looking cramped/misaligned with Dismiss. Changed to a single Review
+   button in `DialogActions` -- one item navigates straight to it;
+   2+ items open a small "Tap a Lead to Review" picker sub-dialog
+   (rows are tap-targets, no per-row buttons -- better on mobile).
+3. **Opportunity Detail's Back button landing on a blank screen**
+   when opening a *second* Opportunity (via the bell dropdown) while
+   already viewing a *first* one. `handleSelectOpportunity` was
+   unconditionally overwriting `opportunityReturnView` with whatever
+   `view` currently was -- which, mid-chain, is `"opportunityDetail"`
+   itself. Back then set `view = "opportunityDetail"` with
+   `selectedOpportunity = null`, and the render guard
+   (`view === "opportunityDetail" && selectedOpportunity && (...)`)
+   rendered nothing. Fixed by only capturing a new return view when
+   not already on the Detail screen, preserving the true original
+   entry point (Pipeline, Customer 360, etc.) across any number of
+   chained Detail -> Detail navigations.
+4. **Header layout squeeze on narrow viewports**: the logo and
+   `+Lead`/`+Log` buttons had no `flexShrink`/`whiteSpace` protection,
+   so the header's 6 items (hamburger, logo, 2 buttons, bell, help,
+   sign out) could squeeze below their real size at ~392px -- the
+   logo shrank from 40px to 28px, and `"+ Lead"` (marginally wider
+   than `"+ Log"`) wrapped to two lines while `"+ Log"` didn't,
+   producing visibly mismatched button heights. Root-caused precisely
+   via live DOM inspection (`scrollWidth` vs actual `width`), not
+   guessed -- also ruled out an unrelated NotificationBell change via
+   a live revert-and-retest before finding the real cause. Fixed with
+   `flexShrink: 0` on every fixed-size header item plus tighter
+   `xs`-only gaps/button padding to reclaim the space that protection
+   costs.
+5. **Next Actions screen, three related fixes**:
+   - "Due from"/"Due to" date-range filters moved to their own row
+     below the Pending/Completed toggle -- they wrapped awkwardly
+     next to it on mobile.
+   - Due date now shown (date only, no time) on every reminder card
+     -- previously only shown for not-yet-due items, so anything
+     Overdue or Completed showed no date at all.
+   - Overdue badge was flagging reminders due *earlier today* as
+     Overdue, inconsistent with the backend's own due-vs-overdue
+     boundary (`auth.py`'s `due_or_overdue_reminder_count` compares
+     against end-of-today, not the live instant). Fixed
+     `ReminderRow.isOverdue` to compare against start-of-today instead
+     of `new Date()`, so "due today" stays "due today" regardless of
+     what time of day it currently is, only becoming Overdue once the
+     calendar day actually passes. Verified live against a real
+     reminder logged due earlier the same day.
+
+All five verified live in-browser (not just code review) before being
+called done, including two cases (the refetch race, the chained-
+navigation blank screen) that needed actual DOM/React-state inspection
+to root-cause correctly after an initial wrong theory each.
+
+**Same session: `UrgentNotificationDialog`'s remaining multi-item edge
+case reviewed and fixed.** Basheer brought a diagnosis written up in a
+prior session for review. Traced it line-by-line against the actual
+code and confirmed it was correct: bug #1 above (the
+`dismissedAt`/`refetchInterval` fix) resolved the single-item and
+bell-dropdown cases, but reviewing one of 2+ outstanding urgent items
+still popped the dialog back up over the just-opened Opportunity Detail
+screen within ~500ms. Root cause: `handleReview`'s
+`setTimeout(..., 500)` called
+`queryClient.invalidateQueries({queryKey: ["notifications"]})`, which by
+prefix-matching also invalidated `urgent-unread` -- the exact query bug
+#1's fix scoped `refetchOnWindowFocus: false` on specifically to stop it
+refetching out-of-band. With only 1 item outstanding the bug was masked
+(the refetch also dropped `urgent.length` to 0, independently hiding
+the dialog via a separate guard clause); with 2+, the remaining item
+kept `urgent.length > 0` and exposed the race. Fixed by narrowing that
+invalidate to `unread-count`/`list` only, leaving `urgent-unread` to its
+own 60s `refetchInterval` -- committed as part of `e47ccc9`, confirmed
+live in the file, already on `main`.
+
+---
+
+## 2026-08-25 (later) -- Manager-Attested Gate Override (BR-OP-14) built end-to-end, applied to Dev
+
+Full plan: `docs/Manager-Attested-Gate-Override-Implementation-Plan.md`;
+decision record: `docs/Discussion-FastTrack-Gate-Override-2026-08.md`
+(DECIDED same day, Basheer/Haroon). Built the same session the decision
+landed in.
+
+**Backend (migration `0027`, applied to Dev by Basheer):** new
+`gate_override_reason` master-data table (3 seed rows) + 5 new nullable
+columns on `opportunity` (`gate_override_approver_id`,
+`gate_override_reason_id`, `gate_override_note`, `gate_override_set_at`,
+`gate_override_set_by`) + a DB check constraint mirroring the referral
+credit pattern (`ck_opportunity_gate_override_reason_required`).
+`validate_stage_transition` gets the same `not is_gate_override` skip
+`REPEAT_ORDER` already has on the Demo Date and Expected Closure Date
+gates only -- Negotiation->Order and Order->Delivery stay untouched.
+`OpportunityService._validate_gate_override`: approver must be the
+owner's own `manager_id` holding the Area Manager role, or (escalation
+path, no reporting-line check) any General Manager. 17 new backend
+tests (5 validator, 7 create-path, 4 update-path covering the full
+approver matrix, 1 master-data) -- suite went 558 -> 575 passing.
+
+**Real backend gap found mid-build, not in the original plan's scope:**
+`WorkspaceOpportunity` (`backend/app/domains/account/workspace_schemas.py`)
+-- a separate response schema Customer 360's and Project Directory's
+opportunity lists actually use, distinct from `OpportunityResponse`/
+`PipelineOpportunity` (which the plan did cover) -- was missing the
+gate-override fields entirely. Without it, editing an Opportunity from
+either of those two screens couldn't prefill an existing override. Added
+the 3 flat fields + 2 nested (`gate_override_approver`, new
+`GateOverrideReasonNested`) to match; caught before any frontend work
+against it, not after.
+
+**`Physical-Schema.sql` regenerated** via Docker `pg_dump` against Dev's
+`ADMIN_DATABASE_URL` post-migration; diff reviewed line by line --
+exactly the new table/columns/constraint/FKs, plus two pre-existing
+`notification` index/FK definitions that only swapped `pg_dump`'s
+non-deterministic dump order (confirmed not a real schema change).
+`BR-OP-14` added to `Business-Rules.md`, same structure as `BR-OP-13`.
+
+**Frontend built across all 4 opportunity entry points**
+(`QuickLeadModal.tsx`, `Customer360Screen.tsx` create+edit,
+`ProjectDirectoryScreen.tsx` create+edit, `OpportunityDetailScreen.tsx`):
+a conditional "Gate Override" section (shown when the Demo Date/Expected
+Closure Date gates would otherwise block, or an override is already
+set), an approver picker scoped to the owner's actual manager + every
+active General Manager (mirrors the backend's own eligibility check so
+the picker never offers a choice the request would reject), a reason
+dropdown (`listGateOverrideReasons`, new in `masterData.ts`) + optional
+note, and client-side "reason required if approver set" validation
+mirroring the schema rule. `OpportunityDetailScreen.tsx`'s Overview tab
+also got a read-only display box, matching the existing Hold/Loss
+reason pattern. `types/api.ts` regenerated twice (once after the
+backend build, again after the `WorkspaceOpportunity` fix) against a
+locally-run backend. `tsc --noEmit`: clean. `npm run lint`: 0 errors,
+238 warnings (all pre-existing `no-explicit-any`, none new).
+
+**Confirmed, not assumed: a Sales Staff rep can create a brand-new
+Opportunity directly at Negotiation or Order stage** using this feature
+in one create action -- `_validate_gate_override` checks only the named
+approver's role, never the creator's, and no Stage picker on any create
+form is role-restricted. Verified by reading the actual code
+(`_SBU_OVERRIDE_ROLES` only gates the SBU field, unrelated), not
+assumed from the design doc.
+
+**Windows networking detour, unrelated to the feature itself:** after
+this session's own temporary `uvicorn --port 8000` (started twice to
+regenerate `types/api.ts`) was supposedly torn down via `kill %1`, that
+only killed the Bash job wrapper, not the underlying Windows process --
+left `python.exe` PID squatting on port 8000 with Windows' exclusive-
+socket semantics. When Basheer later tried to start his own backend, he
+hit `WinError 10013` ("access forbidden"), which was first suspected to
+be a Hyper-V/WSL2/Docker Desktop dynamic port-exclusion issue (Docker
+had been started earlier the same session for the `pg_dump` step) --
+disproven by `netsh interface ipv4 show excludedportrange protocol=tcp`
+(8000 wasn't in any excluded range). `netstat -ano` then found the real
+leftover PID actually `LISTENING` on 8000; `tasklist`/`wmic` confirmed
+it was the stray `uvicorn` process; `taskkill //F` cleared it, port
+free immediately, Basheer's own server started fine afterward.
+
+**Committed: nothing yet.** 24 files staged (backend + tests + docs +
+frontend, explicitly listed, not `git add -A` -- excluded several other
+files already dirty/untracked in the working tree before this session
+started, unrelated to this feature) -- Basheer is committing this one
+himself.
+
+**Not yet done: manual E2E on Dev.** 14-case checklist written:
+`docs/Manager-Attested-Gate-Override-Manual-E2E-Verification.md`,
+covering the create-straight-into-Negotiation scenario, the approver-
+validation matrix (including two cases that need a direct API call
+since the UI picker only ever offers valid choices), gates that stay
+enforced, clearing an override, and audit/display. Results log table in
+that same file, to be filled in as Basheer runs it.
