@@ -79,6 +79,13 @@ class LeadSourceNested(BaseModel):
     name: str
 
 
+class GateOverrideReasonNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    reason_name: str
+
+
 # ------------------------------------------------------------------
 # Opportunity items
 # ------------------------------------------------------------------
@@ -225,12 +232,25 @@ class OpportunityCreate(BaseModel):
     # in the UI, but not enforced here since the field is opt-in, not mandatory.
     referred_by_user_id: uuid.UUID | None = None
     referred_by_note: str | None = None
+    # Manager-Attested Gate Override (BR-OP-14) -- optional, skips the Demo
+    # Date / Expected Closure Date gates when set. Approver validation
+    # (owner's manager holding Area Manager, or any General Manager) happens
+    # in the service layer, not here.
+    gate_override_approver_id: uuid.UUID | None = None
+    gate_override_reason_id: uuid.UUID | None = None
+    gate_override_note: str | None = None
     items: list[OpportunityItemCreate] = []
 
     @model_validator(mode="after")
     def _check_referral_not_both(self) -> "OpportunityCreate":
         if self.referred_by_user_id is not None and self.referred_by_note:
             raise ValueError("Referral credit is either a Cabio colleague or a free-text note, not both.")
+        return self
+
+    @model_validator(mode="after")
+    def _check_gate_override_reason_required(self) -> "OpportunityCreate":
+        if self.gate_override_approver_id is not None and self.gate_override_reason_id is None:
+            raise ValueError("Gate override reason is required whenever an approver is set.")
         return self
 
 
@@ -254,11 +274,20 @@ class OpportunityUpdate(BaseModel):
     reactivation_date: date | None = None
     referred_by_user_id: uuid.UUID | None = None
     referred_by_note: str | None = None
+    gate_override_approver_id: uuid.UUID | None = None
+    gate_override_reason_id: uuid.UUID | None = None
+    gate_override_note: str | None = None
 
     @model_validator(mode="after")
     def _check_referral_not_both(self) -> "OpportunityUpdate":
         if self.referred_by_user_id is not None and self.referred_by_note:
             raise ValueError("Referral credit is either a Cabio colleague or a free-text note, not both.")
+        return self
+
+    @model_validator(mode="after")
+    def _check_gate_override_reason_required(self) -> "OpportunityUpdate":
+        if self.gate_override_approver_id is not None and self.gate_override_reason_id is None:
+            raise ValueError("Gate override reason is required whenever an approver is set.")
         return self
 
 
@@ -291,9 +320,16 @@ class OpportunityResponse(BaseModel):
     reactivation_date: date | None
     referred_by_user_id: uuid.UUID | None
     referred_by_note: str | None
+    gate_override_approver_id: uuid.UUID | None
+    gate_override_reason_id: uuid.UUID | None
+    gate_override_note: str | None
+    gate_override_set_at: datetime | None
+    gate_override_set_by: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
     sbu: SBUNested
+    gate_override_approver: OwnerNested | None
+    gate_override_reason: GateOverrideReasonNested | None
 
 
 class PipelineOpportunity(BaseModel):
@@ -314,6 +350,11 @@ class PipelineOpportunity(BaseModel):
     hold_reason_id: uuid.UUID | None
     reactivation_date: date | None
     referred_by_note: str | None
+    gate_override_approver_id: uuid.UUID | None
+    gate_override_reason_id: uuid.UUID | None
+    gate_override_note: str | None
+    gate_override_set_at: datetime | None
+    gate_override_set_by: uuid.UUID | None
     created_at: datetime
     updated_at: datetime
     account: AccountNested
@@ -324,3 +365,5 @@ class PipelineOpportunity(BaseModel):
     project: ProjectNested | None
     lead_source: LeadSourceNested | None
     referred_by: OwnerNested | None
+    gate_override_approver: OwnerNested | None
+    gate_override_reason: GateOverrideReasonNested | None

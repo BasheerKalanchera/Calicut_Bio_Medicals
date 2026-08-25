@@ -127,6 +127,11 @@ def _make_opportunity(**overrides) -> MagicMock:
         hold_reason_id=None,
         reactivation_date=None,
         project_id=None,
+        gate_override_approver_id=None,
+        gate_override_reason_id=None,
+        gate_override_note=None,
+        gate_override_set_at=None,
+        gate_override_set_by=None,
     )
     defaults.update(overrides)
     opp = MagicMock(spec=Opportunity)
@@ -147,6 +152,8 @@ def _make_repo(**overrides) -> MagicMock:
     repo.get_status.return_value = _make_status("ACTIVE")
     repo.get_loss_reason.return_value = _make_loss_reason("PRICE")
     repo.get_lead_source.return_value = _make_lead_source("REFERRAL")
+    repo.get_owner_manager_id.return_value = None
+    repo.get_user_role_name.return_value = None
     repo.get_for_update.return_value = None         # tests override as needed
     repo.has_items.return_value = False
     repo.create.side_effect = lambda obj: obj
@@ -533,6 +540,119 @@ class TestCreateOpportunitySbuOverride:
 
 
 # ===========================================================================
+# create_opportunity — BR-OP-14 manager-attested gate override
+# ===========================================================================
+
+class TestCreateOpportunityGateOverride:
+    def _override_data(self, **overrides) -> OpportunityCreate:
+        defaults = dict(
+            stage_id=STAGE_DEMO_ID,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+            demo_start_date=None,
+            gate_override_approver_id=uuid.uuid4(),
+            gate_override_reason_id=uuid.uuid4(),
+            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        )
+        defaults.update(overrides)
+        return _make_create_data(**defaults)
+
+    def test_valid_area_manager_approver_succeeds_and_stamps_audit_fields(self):
+        approver_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        data = self._override_data(gate_override_approver_id=approver_id)
+        result = service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+        assert result.gate_override_approver_id == approver_id
+        assert result.gate_override_set_by == USER_ID
+        assert result.gate_override_set_at is not None
+
+    def test_approver_not_manager_and_not_gm_raises(self):
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = uuid.uuid4()  # someone else
+        repo.get_user_role_name.return_value = "Sales Staff"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(AuthorizationError, match="immediate manager"):
+            service.create_opportunity(
+                ACCOUNT_ID, self._override_data(), created_by=USER_ID, sbu_id=SBU_ID
+            )
+
+    def test_approver_is_manager_but_not_area_manager_role_raises(self):
+        approver_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Sales Staff"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(AuthorizationError, match="Area Manager role"):
+            service.create_opportunity(
+                ACCOUNT_ID,
+                self._override_data(gate_override_approver_id=approver_id),
+                created_by=USER_ID,
+                sbu_id=SBU_ID,
+            )
+
+    def test_gm_escalation_not_owners_manager_succeeds(self):
+        """A General Manager qualifies with no reporting-line check, even when they
+        are not this owner's manager -- the escalation path (5.1/5.2)."""
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = uuid.uuid4()  # unrelated manager
+        repo.get_user_role_name.return_value = "General Manager"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, self._override_data(), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        assert result.gate_override_approver_id is not None
+
+    def test_gm_who_is_also_owners_manager_succeeds(self):
+        """The GM-and-manager overlap case: the OR shouldn't accidentally exclude it."""
+        approver_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "General Manager"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.create_opportunity(
+            ACCOUNT_ID,
+            self._override_data(gate_override_approver_id=approver_id),
+            created_by=USER_ID,
+            sbu_id=SBU_ID,
+        )
+
+        assert result.gate_override_approver_id == approver_id
+
+    def test_no_override_leaves_audit_fields_unstamped(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        assert result.gate_override_approver_id is None
+        assert result.gate_override_set_at is None
+        assert result.gate_override_set_by is None
+
+    def test_reason_omitted_raises_schema_validation_error(self):
+        """Schema-level 422, not a 500 -- gate_override_reason_id is required
+        whenever gate_override_approver_id is set."""
+        with pytest.raises(ValidationError, match="reason is required"):
+            _make_create_data(gate_override_approver_id=uuid.uuid4())
+
+
+# ===========================================================================
 # update_opportunity (PATCH semantics)
 # ===========================================================================
 
@@ -815,6 +935,81 @@ class TestUpdateOpportunity:
         service.update_opportunity(OPP_ID, OpportunityUpdate(name="X"), updated_by=USER_ID)
 
         assert opp.updated_by == USER_ID
+
+
+# ===========================================================================
+# update_opportunity — BR-OP-14 manager-attested gate override
+# ===========================================================================
+
+class TestUpdateOpportunityGateOverride:
+    def test_setting_valid_override_validates_and_stamps(self):
+        approver_id = uuid.uuid4()
+        opp = _make_opportunity(owner_id=USER_ID)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(gate_override_approver_id=approver_id, gate_override_reason_id=uuid.uuid4()),
+            updated_by=USER_ID,
+        )
+
+        assert opp.gate_override_approver_id == approver_id
+        assert opp.gate_override_set_by == USER_ID
+        assert opp.gate_override_set_at is not None
+
+    def test_setting_invalid_approver_raises(self):
+        opp = _make_opportunity(owner_id=USER_ID)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.get_owner_manager_id.return_value = uuid.uuid4()  # someone else
+        repo.get_user_role_name.return_value = "Sales Staff"
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(AuthorizationError, match="immediate manager"):
+            service.update_opportunity(
+                OPP_ID,
+                OpportunityUpdate(
+                    gate_override_approver_id=uuid.uuid4(), gate_override_reason_id=uuid.uuid4()
+                ),
+                updated_by=USER_ID,
+            )
+
+    def test_unrelated_update_does_not_revalidate_or_restamp(self):
+        """An update that leaves gate_override_approver_id untouched must not
+        re-run approver validation or re-stamp set_at/set_by."""
+        existing_approver_id = uuid.uuid4()
+        existing_set_at = "2026-08-01T00:00:00Z"
+        existing_set_by = uuid.uuid4()
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            gate_override_approver_id=existing_approver_id,
+            gate_override_set_at=existing_set_at,
+            gate_override_set_by=existing_set_by,
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(OPP_ID, OpportunityUpdate(name="New Name"), updated_by=uuid.uuid4())
+
+        assert opp.gate_override_set_at == existing_set_at
+        assert opp.gate_override_set_by == existing_set_by
+        repo.get_owner_manager_id.assert_not_called()
+        repo.get_user_role_name.assert_not_called()
+
+    def test_reason_omitted_raises_schema_validation_error(self):
+        with pytest.raises(ValidationError, match="reason is required"):
+            OpportunityUpdate(gate_override_approver_id=uuid.uuid4())
 
 
 # ===========================================================================

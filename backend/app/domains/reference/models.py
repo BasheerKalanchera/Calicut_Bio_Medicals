@@ -165,3 +165,16 @@ class HoldReason(Base):
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
 
     opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="hold_reason", lazy="select")
+
+
+class GateOverrideReason(Base):
+    __tablename__ = "gate_override_reason"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    reason_code: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    reason_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
+
+    opportunities: Mapped[list["Opportunity"]] = relationship(
+        back_populates="gate_override_reason", lazy="select"
+    )

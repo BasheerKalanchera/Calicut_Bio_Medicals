@@ -6,7 +6,7 @@ import OpportunityItemAddRow from "./OpportunityItemAddRow";
 import OpportunityItemsList from "./OpportunityItemsList";
 import { listAccounts, listProjects, createOpportunity } from "../services/accounts";
 import { listProducts } from "../services/products";
-import { listStages, listStatuses, listUsers, listLeadSources, listSbus } from "../services/masterData";
+import { listStages, listStatuses, listUsers, listLeadSources, listSbus, listGateOverrideReasons } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
@@ -22,6 +22,8 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+
+const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
 interface QuickLeadModalProps {
   isOpen: boolean;
@@ -44,8 +46,15 @@ interface ProjectOption { id: string; name: string }
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: number }
 interface StatusOption { id: string; status_name: string; status_code: string }
 interface UserOption { id: string; display_name: string }
+// role_name/manager_id: only the scope="all" user fetch (referralUsers below)
+// populates these -- needed to resolve a gate override approver's eligibility
+// (owner's manager_id, or role_name === "General Manager") client-side for the
+// picker's option set. Same underlying UserListResponse shape as UserOption,
+// just not narrowed away.
+interface AllUserOption extends UserOption { role_name: string; manager_id: string | null }
 interface LeadSourceOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
+interface GateOverrideReasonOption { id: string; reason_name: string }
 
 export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, initialAccountId, initialProjectId }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
@@ -70,6 +79,11 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   const [isExternalReferrer, setIsExternalReferrer] = useState(false);
   const [referredByUserId, setReferredByUserId]     = useState("");
   const [referredByNote, setReferredByNote]         = useState("");
+  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
+  // Date gates would otherwise block (see gateOverrideRelevant below).
+  const [gateOverrideApproverId, setGateOverrideApproverId] = useState("");
+  const [gateOverrideReasonId, setGateOverrideReasonId]     = useState("");
+  const [gateOverrideNote, setGateOverrideNote]             = useState("");
 
   const effectiveSbuId = (isSbuOverrideRole && sbuOverrideId) ? sbuOverrideId : sbuId;
 
@@ -139,14 +153,50 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
 
   // Distinct query key -- must not reuse ["users","all"] above, which (despite its
   // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  // Also doubles as the gate override approver picker's source (role_name/
+  // manager_id, via AllUserOption) -- the approver can be outside the current
+  // viewer's own scoped visibility (any Area Manager tier or GM company-wide),
+  // so it's enabled whenever the modal is open, not just for REFERRAL.
   const { data: referralUsers = [] } = useQuery({
     queryKey: ["users", "referral-picker"],
-    enabled: isOpen && leadSourceCode === "REFERRAL",
+    enabled: isOpen,
     queryFn: async () => {
       const d = await listUsers("all");
-      return Array.isArray(d) ? (d as UserOption[]) : [];
+      return Array.isArray(d) ? (d as AllUserOption[]) : [];
     },
   });
+
+  const { data: gateOverrideReasons = [] } = useQuery({
+    queryKey: ["gateOverrideReasons"],
+    enabled: isOpen,
+    queryFn: async () => (await listGateOverrideReasons()) as GateOverrideReasonOption[],
+  });
+
+  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
+  // otherwise block advancing (same stage-threshold pattern those two fields
+  // already use above), or when an override is already set.
+  const gateOverrideRelevant =
+    (selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && demoStart === "") ||
+    (selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" && closureDate === "") ||
+    gateOverrideApproverId !== "";
+
+  // Approver picker option set: the selected owner's own immediate manager (via
+  // manager_id) plus every active General Manager, not a free user picker --
+  // mirrors the backend's own approver eligibility check
+  // (OpportunityService._validate_gate_override) so the picker never offers a
+  // choice the request would then reject.
+  const gateOverrideOwner = referralUsers.find((u) => u.id === ownerId);
+  const gateOverrideManager = gateOverrideOwner?.manager_id
+    ? referralUsers.find((u) => u.id === gateOverrideOwner.manager_id)
+    : undefined;
+  const gateOverrideApproverOptions = (() => {
+    const byId = new Map<string, AllUserOption>();
+    if (gateOverrideManager) byId.set(gateOverrideManager.id, gateOverrideManager);
+    for (const u of referralUsers) {
+      if (u.role_name === GATE_OVERRIDE_ESCALATION_ROLE) byId.set(u.id, u);
+    }
+    return Array.from(byId.values());
+  })();
 
   const { data: projects = [], isFetching: projectsLoading } = useQuery({
     queryKey: ["projects", "byAccount", accountId],
@@ -179,6 +229,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     setLeadSourceId("");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
+    setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
   }, [isOpen, initialAccountId, initialProjectId]);
 
   async function handleSubmit() {
@@ -194,6 +245,11 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     const _qualified = stages.find((s) => s.stage_code === "QUALIFIED");
     if (_stage && _qualified && _stage.display_order >= _qualified.display_order && value === "") {
       throw new Error("Indicative value is required for Qualified stage and above");
+    }
+    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
+    // the failure surfaces before the round-trip, not just as a 422.
+    if (gateOverrideRelevant && gateOverrideApproverId && !gateOverrideReasonId) {
+      throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: Record<string, unknown> = {
       name: name.trim(),
@@ -216,6 +272,11 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
       } else if (referredByUserId) {
         payload.referred_by_user_id = referredByUserId;
       }
+    }
+    if (gateOverrideRelevant && gateOverrideApproverId) {
+      payload.gate_override_approver_id = gateOverrideApproverId;
+      payload.gate_override_reason_id = gateOverrideReasonId || null;
+      if (gateOverrideNote.trim()) payload.gate_override_note = gateOverrideNote.trim();
     }
     if (items.length > 0) payload.items = items.map((i) => ({
       product_id: i.product_id,
@@ -368,6 +429,45 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
         )}
         {selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" && (
           <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {gateOverrideRelevant && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
+              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
+            </Typography>
+            <TextField
+              select
+              label={gateOverrideApproverId ? "Approved By *" : "Approved By"}
+              value={gateOverrideApproverId}
+              onChange={(e) => setGateOverrideApproverId(e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              helperText="The owner's immediate manager, or a General Manager"
+            >
+              <MenuItem value="">No override</MenuItem>
+              {gateOverrideApproverOptions.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
+                </MenuItem>
+              ))}
+            </TextField>
+            {gateOverrideApproverId && (
+              <>
+                <TextField
+                  select label="Reason *" value={gateOverrideReasonId} onChange={(e) => setGateOverrideReasonId(e.target.value)}
+                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                >
+                  <MenuItem value="">Select reason</MenuItem>
+                  {gateOverrideReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+                </TextField>
+                <TextField
+                  label="Note" value={gateOverrideNote} onChange={(e) => setGateOverrideNote(e.target.value)}
+                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
+                />
+              </>
+            )}
+          </Box>
         )}
         {selectedStageOrder >= STAGE_ORDER_ORDER && (
           <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />

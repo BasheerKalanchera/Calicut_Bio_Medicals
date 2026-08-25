@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -7,6 +7,7 @@ from sqlalchemy import (
     CheckConstraint,
     Computed,
     Date,
+    DateTime,
     ForeignKey,
     Index,
     Integer,
@@ -30,6 +31,10 @@ class Opportunity(AuditMixin, Base):
         CheckConstraint(
             "NOT (referred_by_user_id IS NOT NULL AND referred_by_note IS NOT NULL)",
             name="ck_opportunity_referral_not_both",
+        ),
+        CheckConstraint(
+            "gate_override_approver_id IS NULL OR gate_override_reason_id IS NOT NULL",
+            name="ck_opportunity_gate_override_reason_required",
         ),
         Index(
             "idx_opportunity_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}
@@ -78,6 +83,17 @@ class Opportunity(AuditMixin, Base):
         UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
     )
     referred_by_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gate_override_approver_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
+    gate_override_reason_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("gate_override_reason.id"), nullable=True
+    )
+    gate_override_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gate_override_set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    gate_override_set_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")
@@ -88,11 +104,20 @@ class Opportunity(AuditMixin, Base):
     referred_by: Mapped["UserProfile | None"] = relationship(
         foreign_keys=[referred_by_user_id], lazy="joined"
     )
+    gate_override_approver: Mapped["UserProfile | None"] = relationship(
+        foreign_keys=[gate_override_approver_id], lazy="joined"
+    )
+    gate_override_set_by_user: Mapped["UserProfile | None"] = relationship(
+        foreign_keys=[gate_override_set_by], lazy="joined"
+    )
     stage: Mapped["OpportunityStage"] = relationship(back_populates="opportunities", lazy="joined")
     status: Mapped["OpportunityStatus"] = relationship(back_populates="opportunities", lazy="joined")
     lead_source: Mapped["LeadSource | None"] = relationship(back_populates="opportunities", lazy="joined")
     loss_reason: Mapped["LossReason | None"] = relationship(back_populates="opportunities", lazy="joined")
     hold_reason: Mapped["HoldReason | None"] = relationship(back_populates="opportunities", lazy="joined")
+    gate_override_reason: Mapped["GateOverrideReason | None"] = relationship(
+        back_populates="opportunities", lazy="joined"
+    )
 
     opportunity_stakeholders: Mapped[list["OpportunityStakeholder"]] = relationship(
         back_populates="opportunity", lazy="select"

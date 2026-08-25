@@ -71,6 +71,28 @@ class TestMasterDataEndpoint:
         assert len(body["data"]) == 1
         assert body["data"][0]["stage_code"] == "LEAD"
 
+    def test_gate_override_reasons_returns_active_rows(self, client: TestClient) -> None:
+        reason = MagicMock()
+        reason.id = uuid.uuid4()
+        reason.reason_code = "DEMO_DECLINED"
+        reason.reason_name = "Customer declined demo"
+        reason.is_active = True
+
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = [reason]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/master-data/gate-override-reasons")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["success"] is True
+        assert isinstance(body["data"], list)
+        assert body["data"][0]["reason_code"] == "DEMO_DECLINED"
+
     def test_sbus_returns_list(self, client: TestClient) -> None:
         sbu = MagicMock()
         sbu.id = uuid.uuid4()

@@ -91,3 +91,8 @@ export async function listHoldReasons(): Promise<unknown> {
   const response = await api.get("/master-data/hold-reasons");
   return response.data.data;
 }
+
+export async function listGateOverrideReasons(): Promise<unknown> {
+  const response = await api.get("/master-data/gate-override-reasons");
+  return response.data.data;
+}

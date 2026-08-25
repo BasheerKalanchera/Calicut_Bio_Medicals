@@ -1991,6 +1991,16 @@ export interface components {
              */
             uploaded_at: string;
         };
+        /** GateOverrideReasonNested */
+        GateOverrideReasonNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reason Name */
+            reason_name: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -2094,7 +2104,7 @@ export interface components {
          * MasterDataEntity
          * @enum {string}
          */
-        MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "sbus" | "zones" | "roles";
+        MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "gate-override-reasons" | "sbus" | "zones" | "roles";
         /** NotificationResponse */
         NotificationResponse: {
             /**
@@ -2167,6 +2177,12 @@ export interface components {
             referred_by_user_id?: string | null;
             /** Referred By Note */
             referred_by_note?: string | null;
+            /** Gate Override Approver Id */
+            gate_override_approver_id?: string | null;
+            /** Gate Override Reason Id */
+            gate_override_reason_id?: string | null;
+            /** Gate Override Note */
+            gate_override_note?: string | null;
             /**
              * Items
              * @default []
@@ -2305,6 +2321,16 @@ export interface components {
             referred_by_user_id: string | null;
             /** Referred By Note */
             referred_by_note: string | null;
+            /** Gate Override Approver Id */
+            gate_override_approver_id: string | null;
+            /** Gate Override Reason Id */
+            gate_override_reason_id: string | null;
+            /** Gate Override Note */
+            gate_override_note: string | null;
+            /** Gate Override Set At */
+            gate_override_set_at: string | null;
+            /** Gate Override Set By */
+            gate_override_set_by: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2316,6 +2342,8 @@ export interface components {
              */
             updated_at: string;
             sbu: components["schemas"]["SBUNested"];
+            gate_override_approver: components["schemas"]["OwnerNested"] | null;
+            gate_override_reason: components["schemas"]["GateOverrideReasonNested"] | null;
         };
         /** OpportunityStageNested */
         OpportunityStageNested: {
@@ -2381,6 +2409,12 @@ export interface components {
             referred_by_user_id?: string | null;
             /** Referred By Note */
             referred_by_note?: string | null;
+            /** Gate Override Approver Id */
+            gate_override_approver_id?: string | null;
+            /** Gate Override Reason Id */
+            gate_override_reason_id?: string | null;
+            /** Gate Override Note */
+            gate_override_note?: string | null;
         };
         /** OwnerNested */
         OwnerNested: {
@@ -2535,6 +2569,16 @@ export interface components {
             reactivation_date: string | null;
             /** Referred By Note */
             referred_by_note: string | null;
+            /** Gate Override Approver Id */
+            gate_override_approver_id: string | null;
+            /** Gate Override Reason Id */
+            gate_override_reason_id: string | null;
+            /** Gate Override Note */
+            gate_override_note: string | null;
+            /** Gate Override Set At */
+            gate_override_set_at: string | null;
+            /** Gate Override Set By */
+            gate_override_set_by: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2553,6 +2597,8 @@ export interface components {
             project: components["schemas"]["ProjectNested"] | null;
             lead_source: components["schemas"]["LeadSourceNested"] | null;
             referred_by: components["schemas"]["OwnerNested"] | null;
+            gate_override_approver: components["schemas"]["OwnerNested"] | null;
+            gate_override_reason: components["schemas"]["GateOverrideReasonNested"] | null;
         };
         /** ProductCreate */
         ProductCreate: {

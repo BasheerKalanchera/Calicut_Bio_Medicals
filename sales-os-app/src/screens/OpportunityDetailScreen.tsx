@@ -35,7 +35,7 @@ import {
 } from "../services/opportunities";
 import { listStakeholders } from "../services/accounts";
 import { listActivitiesByOpportunity, listOpportunityReminders } from "../services/activities";
-import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources } from "../services/masterData";
+import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources, listGateOverrideReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloadUrl, deleteDocument } from "../services/documents";
 import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api-aliases";
@@ -59,6 +59,8 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+
+const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
 interface Props {
   opportunityId: string;
@@ -92,9 +94,16 @@ type TabId = typeof TABS[number]["id"];
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: string }
 interface StatusOption { id: string; status_code: string; status_name: string; is_terminal?: boolean }
 interface UserOption { id: string; display_name: string }
+// role_name/manager_id: only the scope="all" user fetches (referralUsers below)
+// populate these -- needed to resolve a gate override approver's eligibility
+// (owner's manager_id, or role_name === "General Manager") client-side for the
+// picker's option set. Same underlying UserListResponse shape as UserOption,
+// just not narrowed away.
+interface AllUserOption extends UserOption { role_name: string; manager_id: string | null }
 interface HoldReasonOption { id: string; reason_name: string }
 interface LossReasonOption { id: string; reason_name: string; reason_code: string }
 interface LeadSourceOption { id: string; name: string }
+interface GateOverrideReasonOption { id: string; reason_name: string }
 interface StakeholderOption { id: string; name: string; designation?: string | null }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +233,13 @@ function OverviewTab({
           <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
             <Field label="Loss Reason"      value={lossReasonName ?? null} />
             <Field label="Competitor Name"  value={opp.competitor_name ?? null} />
+          </Box>
+        )}
+        {opp.gate_override_approver_id && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Field label="Gate Override Approved By" value={opp.gate_override_approver?.display_name ?? null} />
+            <Field label="Gate Override Reason"      value={opp.gate_override_reason?.reason_name ?? null} />
+            {opp.gate_override_note && <Field label="Gate Override Note" value={opp.gate_override_note} />}
           </Box>
         )}
         <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f9fafb" }}>
@@ -1230,6 +1246,12 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editIsExternalReferrer, setEditIsExternalReferrer] = useState(false);
   const [editReferredByUserId, setEditReferredByUserId]     = useState("");
   const [editReferredByNote, setEditReferredByNote]         = useState("");
+  // BR-OP-14: gate override, only relevant when the Demo Date / Expected
+  // Closure Date gates would otherwise block (see gateOverrideRelevant below)
+  // or an override is already set.
+  const [editGateOverrideApproverId, setEditGateOverrideApproverId] = useState("");
+  const [editGateOverrideReasonId, setEditGateOverrideReasonId]     = useState("");
+  const [editGateOverrideNote, setEditGateOverrideNote]             = useState("");
 
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
@@ -1272,12 +1294,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // Distinct query key -- must not reuse ["users","all"] above (despite its name,
   // that one calls listUsers() with no scope arg, defaulting to "scoped") or
   // ["users","sbu"] (line ~484, Splits tab) -- this needs a genuine scope="all" list.
+  // Also doubles as the gate override approver picker's source (role_name/
+  // manager_id, via AllUserOption) -- the approver can be outside the current
+  // viewer's own scoped visibility (any Area Manager tier or GM company-wide),
+  // same reason the referral picker already needed scope="all".
   const { data: referralUsers = [] } = useQuery({
     queryKey: ["users", "referral-picker"],
     enabled:  showEditOpp,
     queryFn:  async () => {
       const d = await listUsers("all");
-      return Array.isArray(d) ? (d as UserOption[]) : [];
+      return Array.isArray(d) ? (d as AllUserOption[]) : [];
     },
     staleTime: Infinity,
   });
@@ -1303,6 +1329,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     queryKey: ["leadSources"],
     enabled:  showEditOpp,
     queryFn:  async () => (await listLeadSources()) as LeadSourceOption[],
+    staleTime: Infinity,
+  });
+
+  // BR-OP-14: needed on the Edit modal (approver picker) AND on the read-only
+  // Overview display whenever an override is already set (same pattern as
+  // holdReasons/lossReasons above).
+  const { data: gateOverrideReasons = [] } = useQuery({
+    queryKey: ["gateOverrideReasons"],
+    enabled:  showEditOpp || !!opp?.gate_override_approver_id,
+    queryFn:  async () => (await listGateOverrideReasons()) as GateOverrideReasonOption[],
     staleTime: Infinity,
   });
 
@@ -1380,6 +1416,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditIsExternalReferrer(!!opp.referred_by_note);
     setEditReferredByUserId(opp.referred_by?.id ?? "");
     setEditReferredByNote(opp.referred_by_note ?? "");
+    setEditGateOverrideApproverId(opp.gate_override_approver_id ?? "");
+    setEditGateOverrideReasonId(opp.gate_override_reason_id ?? "");
+    setEditGateOverrideNote(opp.gate_override_note ?? "");
     setShowEditOpp(true);
   };
 
@@ -1404,6 +1443,11 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     }
     if (newStatus?.status_code === "WON" && !editPoNumber.trim()) {
       throw new Error("PO Number is required to mark an opportunity as Won");
+    }
+    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
+    // the failure surfaces before the PATCH round-trip, not just as a 422.
+    if (gateOverrideRelevant && editGateOverrideApproverId && !editGateOverrideReasonId) {
+      throw new Error("Gate override reason is required whenever an approver is set");
     }
     // LeadSource has no separate code column -- `name` already holds the pseudo-code.
     // Computed inline (not the render-time `editLeadSourceCode` below, out of scope here).
@@ -1443,6 +1487,14 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       payload.referred_by_user_id = null;
       payload.referred_by_note = null;
     }
+    // BR-OP-14: only sent while the section is actually shown (gateOverrideRelevant) --
+    // clearing the approver (blank picker) clears reason/note with it, since the DB
+    // check constraint only requires a reason when an approver is set.
+    if (gateOverrideRelevant) {
+      payload.gate_override_approver_id = editGateOverrideApproverId || null;
+      payload.gate_override_reason_id   = editGateOverrideApproverId ? (editGateOverrideReasonId || null) : null;
+      payload.gate_override_note        = editGateOverrideApproverId ? (editGateOverrideNote.trim() || null) : null;
+    }
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Reconstruct nested objects from loaded master data so header + strip +
@@ -1452,6 +1504,12 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     const newLeadSource  = leadSources.find((ls) => ls.id === editLeadSourceId);
     const newReferredBy  = referralLeadSourceCode === "REFERRAL" && !editIsExternalReferrer
       ? referralUsers.find((u) => u.id === editReferredByUserId)
+      : undefined;
+    const newGateOverrideApprover = gateOverrideRelevant && editGateOverrideApproverId
+      ? gateOverrideApproverOptions.find((u) => u.id === editGateOverrideApproverId)
+      : undefined;
+    const newGateOverrideReason = gateOverrideRelevant && editGateOverrideReasonId
+      ? gateOverrideReasons.find((r) => r.id === editGateOverrideReasonId)
       : undefined;
     applyOppPatch({
       name:                  editName.trim(),
@@ -1468,6 +1526,13 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
       referred_by_note:      referralLeadSourceCode === "REFERRAL" ? (editIsExternalReferrer ? (editReferredByNote.trim() || null) : null) : null,
       referred_by:           referralLeadSourceCode === "REFERRAL" ? (newReferredBy ?? null) : null,
+      ...(gateOverrideRelevant && {
+        gate_override_approver_id: editGateOverrideApproverId || null,
+        gate_override_reason_id:   editGateOverrideApproverId ? (editGateOverrideReasonId || null) : null,
+        gate_override_note:        editGateOverrideApproverId ? (editGateOverrideNote.trim() || null) : null,
+        gate_override_approver:    editGateOverrideApproverId ? (newGateOverrideApprover ? { id: newGateOverrideApprover.id, display_name: newGateOverrideApprover.display_name } : opp.gate_override_approver) : null,
+        gate_override_reason:      editGateOverrideApproverId ? (newGateOverrideReason ? { id: newGateOverrideReason.id, reason_name: newGateOverrideReason.reason_name } : opp.gate_override_reason) : null,
+      }),
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
@@ -1480,6 +1545,33 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker below renders as the label.
   const editLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
   const editStageOrder = stages.find((s) => s.id === editStageId)?.display_order ?? 0;
+
+  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
+  // otherwise block advancing (same stage-threshold pattern those two fields
+  // already use above), or when an override is already set on this Opportunity --
+  // mirrors how Hold Reason only appears once status is being set to On-Hold.
+  const gateOverrideRelevant =
+    (editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER" && editDemoStart === "") ||
+    (editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER" && editClosureDate === "") ||
+    editGateOverrideApproverId !== "";
+
+  // Approver picker option set: the current owner's own immediate manager
+  // (via manager_id) plus every active General Manager, not a free user
+  // picker -- mirrors the backend's own approver eligibility check
+  // (OpportunityService._validate_gate_override) so the picker never offers
+  // a choice the PATCH would then reject.
+  const editOwnerRecord = referralUsers.find((u) => u.id === editOwnerId);
+  const gateOverrideManager = editOwnerRecord?.manager_id
+    ? referralUsers.find((u) => u.id === editOwnerRecord.manager_id)
+    : undefined;
+  const gateOverrideApproverOptions = (() => {
+    const byId = new Map<string, AllUserOption>();
+    if (gateOverrideManager) byId.set(gateOverrideManager.id, gateOverrideManager);
+    for (const u of referralUsers) {
+      if (u.role_name === GATE_OVERRIDE_ESCALATION_ROLE) byId.set(u.id, u);
+    }
+    return Array.from(byId.values());
+  })();
 
   // initialOpportunity can be just an {id, name} reference (Reminder
   // click-through) — every render below assumes the full PipelineOpportunity
@@ -1708,6 +1800,45 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         )}
         {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "") && (
           <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {gateOverrideRelevant && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
+              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
+            </Typography>
+            <TextField
+              select
+              label={editGateOverrideApproverId ? "Approved By *" : "Approved By"}
+              value={editGateOverrideApproverId}
+              onChange={(e) => setEditGateOverrideApproverId(e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              helperText="The owner's immediate manager, or a General Manager"
+            >
+              <MenuItem value="">No override</MenuItem>
+              {gateOverrideApproverOptions.map((u) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
+                </MenuItem>
+              ))}
+            </TextField>
+            {editGateOverrideApproverId && (
+              <>
+                <TextField
+                  select label="Reason *" value={editGateOverrideReasonId} onChange={(e) => setEditGateOverrideReasonId(e.target.value)}
+                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                >
+                  <MenuItem value="">Select reason</MenuItem>
+                  {gateOverrideReasons.map((r) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+                </TextField>
+                <TextField
+                  label="Note" value={editGateOverrideNote} onChange={(e) => setEditGateOverrideNote(e.target.value)}
+                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
+                />
+              </>
+            )}
+          </Box>
         )}
         {(editStageOrder >= STAGE_ORDER_ORDER || editPoNumber.trim() !== "" || editStatusCode === "WON") && (
           <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />

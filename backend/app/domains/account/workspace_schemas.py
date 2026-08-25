@@ -114,6 +114,13 @@ class OpportunityStatusNested(BaseModel):
     status_name: str
 
 
+class GateOverrideReasonNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    reason_name: str
+
+
 class WorkspaceOpportunity(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -133,11 +140,16 @@ class WorkspaceOpportunity(BaseModel):
     loss_reason_id: uuid.UUID | None
     competitor_name: str | None
     referred_by_note: str | None
+    gate_override_approver_id: uuid.UUID | None
+    gate_override_reason_id: uuid.UUID | None
+    gate_override_note: str | None
     stage: OpportunityStageNested
     status: OpportunityStatusNested
     owner: OwnerNested
     sbu: SBUNested
     referred_by: OwnerNested | None
+    gate_override_approver: OwnerNested | None
+    gate_override_reason: GateOverrideReasonNested | None
 
 
 class WorkspaceResponse(BaseModel):

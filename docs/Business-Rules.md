@@ -148,6 +148,15 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`) — gated on the selected lead source's `name` equalling `REPEAT_ORDER`, looked up via `OpportunityRepository.get_lead_source`.
 * **Reference:** ADR-015 (Opportunity Creation at Any Sales Stage); `docs/Discussion-FastTrack-Opportunity-Creation.md` for the full options analysis and decision record.
 
+### BR-OP-14: Manager-Attested Gate Override (2026-08-25)
+* **Rule:** A rep may skip the Qualified → Demo (Demo Date) and Clinical Evaluation → Negotiation (Expected Closure Date) gates in BR-OP-01 for a deal-specific reason (e.g. the customer declines a demo), distinct from BR-OP-13's REPEAT_ORDER exception (which is lead-source-driven, not a judgment call). Setting `gate_override_approver_id` requires naming either the opportunity owner's own immediate manager — validated against `user_profile.manager_id` — who must hold the Area Manager role, or (as an escalation path for when that manager is unavailable, e.g. on leave) any user holding the General Manager role, with no reporting-line check for that path. Plus a `gate_override_reason_id` (master data) and optional `gate_override_note`.
+* **Effect:** Identical to BR-OP-13's — Negotiation → Order and Order → Delivery gates are unaffected; Order Value, Product Details, and PO Number remain mandatory.
+* **Approver:** The rep sets the override themselves (an attestation, not a blocking approval workflow) but must name a real approving manager at the same time, creating an auditable record without a wait-for-approval step.
+* **Audit:** `gate_override_set_at`/`gate_override_set_by` capture who actually set it and when, distinct from `gate_override_approver_id` (who approved it).
+* **Overuse safeguard:** None at launch — monitor via reporting (`gate_override_approver_id`/`gate_override_reason_id` are independently queryable), revisit only if usage patterns suggest misuse.
+* **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`).
+* **Reference:** `docs/Discussion-FastTrack-Gate-Override-2026-08.md`.
+
 ---
 
 # 3a. Product Catalog Rules

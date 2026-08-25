@@ -13,6 +13,7 @@ from app.domains.reference.models import (
     LossReason,
     OpportunityStage,
     OpportunityStatus,
+    Role,
     ZoneClosure,
 )
 
@@ -36,6 +37,18 @@ class OpportunityRepository(BaseRepository[Opportunity]):
 
     def get_lead_source(self, lead_source_id: uuid.UUID) -> LeadSource | None:
         return self.db.get(LeadSource, lead_source_id)
+
+    # ------------------------------------------------------------------
+    # Gate override approver validation (BR-OP-14)
+    # ------------------------------------------------------------------
+
+    def get_owner_manager_id(self, owner_id: uuid.UUID) -> uuid.UUID | None:
+        return self.db.scalar(select(UserProfile.manager_id).where(UserProfile.id == owner_id))
+
+    def get_user_role_name(self, user_id: uuid.UUID) -> str | None:
+        return self.db.scalar(
+            select(Role.role_name).join(UserProfile, UserProfile.role_id == Role.id).where(UserProfile.id == user_id)
+        )
 
     # ------------------------------------------------------------------
     # Account existence check

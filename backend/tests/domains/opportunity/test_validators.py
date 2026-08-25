@@ -223,6 +223,85 @@ class TestClinicalToNegotiationGate:
         )
 
 
+class TestGateOverride:
+    """BR-OP-14: a manager-attested gate override waives the same two gates as
+    REPEAT_ORDER, but is triggered by gate_override_approver_id being set
+    rather than by lead_source. Approver validity itself is a service-layer
+    concern (test_opportunity_service.py) -- this only exercises the skip."""
+
+    GATE_OVERRIDE_APPROVER_ID = uuid.uuid4()
+
+    def test_gate_override_skips_demo_start_date_requirement(self):
+        validate_stage_transition(
+            new_stage_order=DEMO,
+            current_stage_order=QUALIFIED,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=INDICATIVE_VALUE,
+            demo_start_date=None,
+            expected_closure_date=None,
+            po_number=None,
+            has_items=True,
+            gate_override_approver_id=self.GATE_OVERRIDE_APPROVER_ID,
+        )
+
+    def test_without_override_still_requires_demo_start_date(self):
+        with pytest.raises(BusinessRuleViolation, match="Demo Start Date"):
+            validate_stage_transition(
+                new_stage_order=DEMO,
+                current_stage_order=QUALIFIED,
+                lead_source_id=LEAD_SOURCE_ID,
+                indicative_value=INDICATIVE_VALUE,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=True,
+                gate_override_approver_id=None,
+            )
+
+    def test_gate_override_skips_expected_closure_date_requirement(self):
+        validate_stage_transition(
+            new_stage_order=NEGOTIATION,
+            current_stage_order=CLINICAL_EVAL,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=INDICATIVE_VALUE,
+            demo_start_date=None,
+            expected_closure_date=None,
+            po_number=None,
+            has_items=True,
+            gate_override_approver_id=self.GATE_OVERRIDE_APPROVER_ID,
+        )
+
+    def test_gate_override_still_requires_order_value_at_negotiation_to_order(self):
+        """Negotiation -> Order and Order -> Delivery are untouched by BR-OP-14 --
+        only the Demo Date / Expected Closure Date gates are waived."""
+        with pytest.raises(BusinessRuleViolation, match="Order Value"):
+            validate_stage_transition(
+                new_stage_order=ORDER,
+                current_stage_order=NEGOTIATION,
+                lead_source_id=LEAD_SOURCE_ID,
+                indicative_value=None,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=True,
+                gate_override_approver_id=self.GATE_OVERRIDE_APPROVER_ID,
+            )
+
+    def test_gate_override_still_requires_po_number_at_order_to_delivery(self):
+        with pytest.raises(BusinessRuleViolation, match="PO Number"):
+            validate_stage_transition(
+                new_stage_order=DELIVERY,
+                current_stage_order=ORDER,
+                lead_source_id=LEAD_SOURCE_ID,
+                indicative_value=INDICATIVE_VALUE,
+                demo_start_date=None,
+                expected_closure_date=None,
+                po_number=None,
+                has_items=True,
+                gate_override_approver_id=self.GATE_OVERRIDE_APPROVER_ID,
+            )
+
+
 class TestNegotiationToOrderGate:
     def test_blocked_without_indicative_value(self):
         with pytest.raises(BusinessRuleViolation, match="Order Value"):

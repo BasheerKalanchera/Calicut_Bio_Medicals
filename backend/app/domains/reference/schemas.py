@@ -137,3 +137,11 @@ class HoldReasonResponse(BaseModel):
     id: uuid.UUID
     reason_code: str
     reason_name: str
+
+
+class GateOverrideReasonResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    reason_code: str
+    reason_name: str

@@ -51,6 +51,7 @@ import {
   listUsers,
   listLossReasons,
   listHoldReasons,
+  listGateOverrideReasons,
   listSbus,
 } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
@@ -76,6 +77,8 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+
+const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
 interface Props {
   accountId: string;
@@ -748,6 +751,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOIsExternalReferrer, setNewOIsExternalReferrer] = useState(false);
   const [newOReferredByUserId, setNewOReferredByUserId] = useState("");
   const [newOReferredByNote, setNewOReferredByNote] = useState("");
+  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
+  // Date gates would otherwise block (see newOGateOverrideRelevant below).
+  const [newOGateOverrideApproverId, setNewOGateOverrideApproverId] = useState("");
+  const [newOGateOverrideReasonId, setNewOGateOverrideReasonId] = useState("");
+  const [newOGateOverrideNote, setNewOGateOverrideNote] = useState("");
   const [newOItems, setNewOItems] = useState<DraftOpportunityItem[]>([]);
   const [editingOpp, setEditingOpp] = useState<any | null>(null);
   const [showEditOppItems, setShowEditOppItems] = useState(false);
@@ -781,6 +789,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editOIsExternalReferrer, setEditOIsExternalReferrer] = useState(false);
   const [editOReferredByUserId, setEditOReferredByUserId] = useState("");
   const [editOReferredByNote, setEditOReferredByNote] = useState("");
+  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
+  // Date gates would otherwise block (see editOGateOverrideRelevant below).
+  const [editOGateOverrideApproverId, setEditOGateOverrideApproverId] = useState("");
+  const [editOGateOverrideReasonId, setEditOGateOverrideReasonId] = useState("");
+  const [editOGateOverrideNote, setEditOGateOverrideNote] = useState("");
 
   // Installed assets
   const [showCreateAsset, setShowCreateAsset] = useState(false);
@@ -841,6 +854,16 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     staleTime: Infinity,
   });
 
+  // BR-OP-14: needed on both Create and Edit (unlike hold/loss reasons, which are
+  // Edit-only -- gate override applies on creation too, e.g. a referral going
+  // straight to Negotiation with no prior demo).
+  const { data: gateOverrideReasons = [] } = useQuery({
+    queryKey: ["gateOverrideReasons"],
+    queryFn: () => listGateOverrideReasons() as Promise<any[]>,
+    enabled: showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
+
   const { data: users = [] } = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers() as Promise<any[]>,
@@ -865,15 +888,49 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const newOStageOrder = stages.find((s: any) => s.id === newOStageId)?.display_order ?? 0;
   const editOStageOrder = stages.find((s: any) => s.id === editOStageId)?.display_order ?? 0;
 
+  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
+  // otherwise block advancing (same stage-threshold pattern those two fields
+  // already use above), or when an override is already set.
+  const newOGateOverrideRelevant =
+    (newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && newODemoStart === "") ||
+    (newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" && newOClosureDate === "") ||
+    newOGateOverrideApproverId !== "";
+  const editOGateOverrideRelevant =
+    (editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER" && editODemoStart === "") ||
+    (editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER" && editOClosureDate === "") ||
+    editOGateOverrideApproverId !== "";
+
+  // Approver picker option set: the selected owner's own immediate manager (via
+  // manager_id) plus every active General Manager, not a free user picker --
+  // mirrors the backend's own approver eligibility check
+  // (OpportunityService._validate_gate_override) so the picker never offers a
+  // choice the request would then reject.
+  function gateOverrideApproverOptionsFor(ownerId: string): any[] {
+    const owner = referralUsers.find((u: any) => u.id === ownerId);
+    const manager = owner?.manager_id ? referralUsers.find((u: any) => u.id === owner.manager_id) : undefined;
+    const byId = new Map<string, any>();
+    if (manager) byId.set(manager.id, manager);
+    for (const u of referralUsers as any[]) {
+      if (u.role_name === GATE_OVERRIDE_ESCALATION_ROLE) byId.set(u.id, u);
+    }
+    return Array.from(byId.values());
+  }
+  const newOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(newOOwnerId);
+  const editOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(editOOwnerId);
+
   // Distinct query key -- must not reuse ["users","all"] above, which (despite its
   // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  // Also doubles as the gate override approver picker's source (role_name/
+  // manager_id per user) -- the approver can be outside the current viewer's own
+  // scoped visibility (any Area Manager tier or GM company-wide), so it's enabled
+  // whenever either modal is open, not just for the REFERRAL lead source case.
   const { data: referralUsers = [] } = useQuery({
     queryKey: ["users", "referral-picker"],
     queryFn: async () => {
       const d = await listUsers("all");
       return Array.isArray(d) ? d : [];
     },
-    enabled: newOLeadSourceCode === "REFERRAL" || editOLeadSourceCode === "REFERRAL",
+    enabled: showCreateOpp || editingOpp !== null,
     staleTime: Infinity,
   });
 
@@ -1150,6 +1207,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
     setNewOIsExternalReferrer(false); setNewOReferredByUserId(""); setNewOReferredByNote("");
+    setNewOGateOverrideApproverId(""); setNewOGateOverrideReasonId(""); setNewOGateOverrideNote("");
     setShowCreateOpp(true);
   };
 
@@ -1166,6 +1224,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (_stage && _qual && _stage.display_order >= _qual.display_order && newOValue === "") {
       throw new Error("Indicative value is required for Qualified stage and above");
     }
+    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
+    // the failure surfaces before the round-trip, not just as a 422.
+    if (newOGateOverrideRelevant && newOGateOverrideApproverId && !newOGateOverrideReasonId) {
+      throw new Error("Gate override reason is required whenever an approver is set");
+    }
     const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: activeStatusId, win_probability: Number(newOWinProb) };
     if (isSbuOverrideRole && newOSbuId) payload.sbu_id = newOSbuId;
     if (newOProjectId) payload.project_id = newOProjectId;
@@ -1181,6 +1244,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       } else if (newOReferredByUserId) {
         payload.referred_by_user_id = newOReferredByUserId;
       }
+    }
+    if (newOGateOverrideRelevant && newOGateOverrideApproverId) {
+      payload.gate_override_approver_id = newOGateOverrideApproverId;
+      payload.gate_override_reason_id = newOGateOverrideReasonId || null;
+      if (newOGateOverrideNote.trim()) payload.gate_override_note = newOGateOverrideNote.trim();
     }
     if (newOItems.length > 0) payload.items = newOItems.map((i) => ({ product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }));
     await createOpportunity(accountId as any, payload);
@@ -1203,6 +1271,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOCompetitorName(o.competitor_name || "");
     setEditOIsExternalReferrer(!!o.referred_by_note);
     setEditOReferredByUserId(o.referred_by?.id || ""); setEditOReferredByNote(o.referred_by_note || "");
+    setEditOGateOverrideApproverId(o.gate_override_approver_id || "");
+    setEditOGateOverrideReasonId(o.gate_override_reason_id || "");
+    setEditOGateOverrideNote(o.gate_override_note || "");
   };
 
   const handleUpdateOpp = async () => {
@@ -1230,6 +1301,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     }
     if (_newStatus?.status_code === "WON" && !editOPoNumber.trim()) {
       throw new Error("PO Number is required to mark an opportunity as Won");
+    }
+    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
+    // the failure surfaces before the round-trip, not just as a 422.
+    if (editOGateOverrideRelevant && editOGateOverrideApproverId && !editOGateOverrideReasonId) {
+      throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: any = {
       name: editOName.trim(), owner_id: editOOwnerId || undefined,
@@ -1264,6 +1340,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (_newStatus?.status_code === "LOST") {
       payload.loss_reason_id = editOLossReasonId;
       if (editOCompetitorName.trim()) payload.competitor_name = editOCompetitorName.trim();
+    }
+    // BR-OP-14: only sent while the section is actually shown (editOGateOverrideRelevant) --
+    // clearing the approver (blank picker) clears reason/note with it, since the DB
+    // check constraint only requires a reason when an approver is set.
+    if (editOGateOverrideRelevant) {
+      payload.gate_override_approver_id = editOGateOverrideApproverId || null;
+      payload.gate_override_reason_id = editOGateOverrideApproverId ? (editOGateOverrideReasonId || null) : null;
+      payload.gate_override_note = editOGateOverrideApproverId ? (editOGateOverrideNote.trim() || null) : null;
     }
     await updateOpportunity(editingOpp.id, payload);
     const currentIds = editOItems.filter((i: any) => i.id).map((i: any) => i.id);
@@ -1592,6 +1676,45 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" && (
           <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
+        {newOGateOverrideRelevant && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
+              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
+            </Typography>
+            <TextField
+              select
+              label={newOGateOverrideApproverId ? "Approved By *" : "Approved By"}
+              value={newOGateOverrideApproverId}
+              onChange={(e) => setNewOGateOverrideApproverId(e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              helperText="The owner's immediate manager, or a General Manager"
+            >
+              <MenuItem value="">No override</MenuItem>
+              {newOGateOverrideApproverOptions.map((u: any) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
+                </MenuItem>
+              ))}
+            </TextField>
+            {newOGateOverrideApproverId && (
+              <>
+                <TextField
+                  select label="Reason *" value={newOGateOverrideReasonId} onChange={(e) => setNewOGateOverrideReasonId(e.target.value)}
+                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                >
+                  <MenuItem value="">Select reason</MenuItem>
+                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+                </TextField>
+                <TextField
+                  label="Note" value={newOGateOverrideNote} onChange={(e) => setNewOGateOverrideNote(e.target.value)}
+                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
+                />
+              </>
+            )}
+          </Box>
+        )}
         {newOStageOrder >= STAGE_ORDER_ORDER && (
           <TextField label="PO Number" value={newOPoNumber} onChange={(e) => setNewOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
         )}
@@ -1685,6 +1808,45 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         )}
         {((editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER") || editOClosureDate !== "") && (
           <TextField label="Expected Closure Date" type="date" value={editOClosureDate} onChange={(e) => setEditOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
+        )}
+        {editOGateOverrideRelevant && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
+            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
+              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
+            </Typography>
+            <TextField
+              select
+              label={editOGateOverrideApproverId ? "Approved By *" : "Approved By"}
+              value={editOGateOverrideApproverId}
+              onChange={(e) => setEditOGateOverrideApproverId(e.target.value)}
+              fullWidth
+              size="small"
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              helperText="The owner's immediate manager, or a General Manager"
+            >
+              <MenuItem value="">No override</MenuItem>
+              {editOGateOverrideApproverOptions.map((u: any) => (
+                <MenuItem key={u.id} value={u.id}>
+                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
+                </MenuItem>
+              ))}
+            </TextField>
+            {editOGateOverrideApproverId && (
+              <>
+                <TextField
+                  select label="Reason *" value={editOGateOverrideReasonId} onChange={(e) => setEditOGateOverrideReasonId(e.target.value)}
+                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                >
+                  <MenuItem value="">Select reason</MenuItem>
+                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
+                </TextField>
+                <TextField
+                  label="Note" value={editOGateOverrideNote} onChange={(e) => setEditOGateOverrideNote(e.target.value)}
+                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
+                />
+              </>
+            )}
+          </Box>
         )}
         {(editOStageOrder >= STAGE_ORDER_ORDER || editOPoNumber.trim() !== "" || editOStatusCode === "WON") && (
           <TextField label="PO Number" value={editOPoNumber} onChange={(e) => setEditOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />

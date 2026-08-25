@@ -35,6 +35,7 @@ def validate_stage_transition(
     expected_closure_date: date | None,
     po_number: str | None,
     has_items: bool,
+    gate_override_approver_id: uuid.UUID | None = None,
 ) -> None:
     """
     Enforce exit criteria when advancing to a new stage.
@@ -52,6 +53,11 @@ def validate_stage_transition(
     # those two gates don't apply. Order Value and Product Details (the Negotiation ->
     # Order gate below) still do, unchanged.
     is_repeat_order = lead_source_name == _REPEAT_ORDER_LEAD_SOURCE
+    # BR-OP-14: a manager-attested gate override waives the same two gates as
+    # REPEAT_ORDER, for a deal-specific reason (e.g. customer declines a demo)
+    # rather than a lead-source-driven one -- see that rule for the approver
+    # validation this presumes already happened in the service layer.
+    is_gate_override = gate_override_approver_id is not None
 
     # Gate: Lead → Qualified
     if current_stage_order < _ORDER_QUALIFIED <= new_stage_order:
@@ -70,7 +76,7 @@ def validate_stage_transition(
 
     # Gate: Qualified → Demo
     if current_stage_order < _ORDER_DEMO <= new_stage_order:
-        if not is_repeat_order and not demo_start_date:
+        if not is_repeat_order and not is_gate_override and not demo_start_date:
             raise BusinessRuleViolation(
                 "Demo Start Date is required to advance to Demo stage."
             )
@@ -81,7 +87,7 @@ def validate_stage_transition(
 
     # Gate: Clinical Evaluation → Negotiation
     if current_stage_order < _ORDER_NEGOTIATION <= new_stage_order:
-        if not is_repeat_order and not expected_closure_date:
+        if not is_repeat_order and not is_gate_override and not expected_closure_date:
             raise BusinessRuleViolation(
                 "Expected Closure Date is required to advance to Negotiation stage."
             )

@@ -11,14 +11,12 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-18 from the Dev database (Postgres 17.6), after
--- migrations 0022 (user_profile.sbu_id nullable, for Admin/General Manager)
--- and 0023 (opportunity.referred_by_user_id + referred_by_note, BR-FIN-07
--- referral credit) — both regens were deferred pending Docker Desktop
--- availability; caught up together in one pass since this file is a full
--- snapshot, not an incremental diff. See
--- docs/Admin-GM-SBU-Agnostic-Implementation-Plan.md and
--- docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md, and
+-- Regenerated 2026-08-25 from the Dev database (Postgres 17.6), catching up
+-- migrations 0024 (Opportunity-Assignment Notifications: notification table),
+-- 0025/0026 (notification RLS fixes -- no schema shape change), and 0027
+-- (Manager-Attested Gate Override, BR-OP-14: gate_override_reason table +
+-- opportunity.gate_override_* columns) since the last regen on 2026-08-18.
+-- See docs/Manager-Attested-Gate-Override-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -37,7 +35,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 7w9XyGpfLWknJnc3Zc2nmHvNGdL2k9gYgJdIfTuTDQbdIALkKKGS5afYjIF2N5m
+\restrict aVy8OHJGAwgukjUwEnpssN891azQkYFglDwrStQswJAyjWyh2GBKNrae5HtTVDA
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -258,6 +256,18 @@ CREATE TABLE public.document (
 
 
 --
+-- Name: gate_override_reason; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gate_override_reason (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    reason_code character varying(50) NOT NULL,
+    reason_name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true
+);
+
+
+--
 -- Name: hold_reason; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -361,6 +371,12 @@ CREATE TABLE public.opportunity (
     sbu_id uuid NOT NULL,
     referred_by_user_id uuid,
     referred_by_note text,
+    gate_override_approver_id uuid,
+    gate_override_reason_id uuid,
+    gate_override_note text,
+    gate_override_set_at timestamp with time zone,
+    gate_override_set_by uuid,
+    CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
     CONSTRAINT opportunity_win_probability_check CHECK (((win_probability >= (0)::numeric) AND (win_probability <= (100)::numeric)))
 );
@@ -744,6 +760,22 @@ ALTER TABLE ONLY public.document
 
 
 --
+-- Name: gate_override_reason gate_override_reason_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gate_override_reason
+    ADD CONSTRAINT gate_override_reason_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: gate_override_reason gate_override_reason_reason_code_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gate_override_reason
+    ADD CONSTRAINT gate_override_reason_reason_code_key UNIQUE (reason_code);
+
+
+--
 -- Name: hold_reason hold_reason_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1095,20 +1127,17 @@ CREATE INDEX idx_installed_asset_account_id ON public.installed_asset USING btre
 
 
 --
+-- Name: idx_notification_recipient_unread; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_notification_recipient_unread ON public.notification USING btree (recipient_user_id) WHERE (read_at IS NULL);
+
+
+--
 -- Name: idx_notification_recipient_user_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_notification_recipient_user_id ON public.notification USING btree (recipient_user_id);
-
-
---
--- Name: idx_notification_recipient_unread; Type: INDEX; Schema: public; Owner: -
---
-
--- Serves the header-bell/urgent-dialog poll (unread-count, urgent-unread) --
--- a partial index keeps that hot, frequent query cheap regardless of how
--- large notification grows, since it only ever indexes the still-unread rows.
-CREATE INDEX idx_notification_recipient_unread ON public.notification USING btree (recipient_user_id) WHERE (read_at IS NULL);
 
 
 --
@@ -1593,19 +1622,19 @@ ALTER TABLE ONLY public.installed_asset
 
 
 --
--- Name: notification notification_recipient_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.notification
-    ADD CONSTRAINT notification_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.user_profile(id);
-
-
---
 -- Name: notification notification_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.notification
     ADD CONSTRAINT notification_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: notification notification_recipient_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.notification
+    ADD CONSTRAINT notification_recipient_user_id_fkey FOREIGN KEY (recipient_user_id) REFERENCES public.user_profile(id);
 
 
 --
@@ -1622,6 +1651,30 @@ ALTER TABLE ONLY public.opportunity
 
 ALTER TABLE ONLY public.opportunity
     ADD CONSTRAINT opportunity_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: opportunity opportunity_gate_override_approver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opportunity
+    ADD CONSTRAINT opportunity_gate_override_approver_id_fkey FOREIGN KEY (gate_override_approver_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: opportunity opportunity_gate_override_reason_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opportunity
+    ADD CONSTRAINT opportunity_gate_override_reason_id_fkey FOREIGN KEY (gate_override_reason_id) REFERENCES public.gate_override_reason(id);
+
+
+--
+-- Name: opportunity opportunity_gate_override_set_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opportunity
+    ADD CONSTRAINT opportunity_gate_override_set_by_fkey FOREIGN KEY (gate_override_set_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2220,5 +2273,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 7w9XyGpfLWknJnc3Zc2nmHvNGdL2k9gYgJdIfTuTDQbdIALkKKGS5afYjIF2N5m
+\unrestrict aVy8OHJGAwgukjUwEnpssN891azQkYFglDwrStQswJAyjWyh2GBKNrae5HtTVDA
 

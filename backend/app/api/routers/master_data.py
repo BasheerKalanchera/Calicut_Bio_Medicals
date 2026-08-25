@@ -16,6 +16,7 @@ from app.domains.organization.schemas import UserBlastRadius, UserCreate, UserLi
 from app.domains.organization.service import UserService
 from app.domains.reference.models import (
     SBU,
+    GateOverrideReason,
     HoldReason,
     LeadSource,
     LossReason,
@@ -27,6 +28,7 @@ from app.domains.reference.models import (
 )
 from app.domains.reference.repository import OpportunityStageRepository, ZoneRepository
 from app.domains.reference.schemas import (
+    GateOverrideReasonResponse,
     HoldReasonResponse,
     LeadSourceResponse,
     LossReasonResponse,
@@ -49,6 +51,7 @@ class MasterDataEntity(enum.StrEnum):
     LEAD_SOURCES = "lead-sources"
     LOSS_REASONS = "loss-reasons"
     HOLD_REASONS = "hold-reasons"
+    GATE_OVERRIDE_REASONS = "gate-override-reasons"
     SBUS = "sbus"
     ZONES = "zones"
     ROLES = "roles"
@@ -61,6 +64,7 @@ ENTITY_REGISTRY: dict[MasterDataEntity, tuple[type, type]] = {
     MasterDataEntity.LEAD_SOURCES: (LeadSource, LeadSourceResponse),
     MasterDataEntity.LOSS_REASONS: (LossReason, LossReasonResponse),
     MasterDataEntity.HOLD_REASONS: (HoldReason, HoldReasonResponse),
+    MasterDataEntity.GATE_OVERRIDE_REASONS: (GateOverrideReason, GateOverrideReasonResponse),
     MasterDataEntity.SBUS: (SBU, SBUResponse),
     MasterDataEntity.ZONES: (Zone, ZoneResponse),
     MasterDataEntity.ROLES: (Role, RoleResponse),

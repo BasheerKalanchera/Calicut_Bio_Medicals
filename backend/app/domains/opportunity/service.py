@@ -1,6 +1,8 @@
 import uuid
 from decimal import Decimal
 
+from sqlalchemy import func
+
 from app.core.exceptions import (
     AuthorizationError,
     BusinessRuleViolation,
@@ -24,6 +26,11 @@ from app.domains.opportunity.validators import validate_stage_transition, valida
 
 # BR-OP-12: only these roles may create an Opportunity outside their own SBU.
 _SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
+
+# BR-OP-14: gate override approver must be the owner's own manager (holding
+# this role) or, as an escalation path, any user holding the GM role.
+_GATE_OVERRIDE_MANAGER_ROLE = "Area Manager"
+_GATE_OVERRIDE_ESCALATION_ROLE = "General Manager"
 
 
 class OpportunityService:
@@ -126,6 +133,9 @@ class OpportunityService:
             if lead_source:
                 lead_source_name = lead_source.name
 
+        if data.gate_override_approver_id is not None:
+            self._validate_gate_override(data.owner_id, data.gate_override_approver_id)
+
         # BR-OP-00: gates apply even on creation at a non-Lead stage
         validate_stage_transition(
             new_stage_order=new_stage.display_order,
@@ -137,6 +147,7 @@ class OpportunityService:
             expected_closure_date=data.expected_closure_date,
             po_number=data.po_number,
             has_items=bool(data.items),
+            gate_override_approver_id=data.gate_override_approver_id,
         )
 
         validate_status_transition(
@@ -169,6 +180,11 @@ class OpportunityService:
             po_number=data.po_number,
             referred_by_user_id=data.referred_by_user_id,
             referred_by_note=data.referred_by_note,
+            gate_override_approver_id=data.gate_override_approver_id,
+            gate_override_reason_id=data.gate_override_reason_id,
+            gate_override_note=data.gate_override_note,
+            gate_override_set_at=func.now() if data.gate_override_approver_id is not None else None,
+            gate_override_set_by=created_by if data.gate_override_approver_id is not None else None,
             created_by=created_by,
             updated_by=created_by,
         )
@@ -223,6 +239,14 @@ class OpportunityService:
         for field, value in updates.items():
             setattr(opportunity, field, value)
         opportunity.updated_by = updated_by
+
+        # BR-OP-14: validate + stamp only when this request actually sets a new
+        # gate override approver -- an update that leaves gate_override_approver_id
+        # untouched must not re-run validation or re-stamp set_at/set_by.
+        if "gate_override_approver_id" in updates and opportunity.gate_override_approver_id is not None:
+            self._validate_gate_override(opportunity.owner_id, opportunity.gate_override_approver_id)
+            opportunity.gate_override_set_at = func.now()
+            opportunity.gate_override_set_by = updated_by
 
         # Opportunity-assignment notification: fires only on an actual
         # reassignment to someone else -- not a no-op re-save of the same
@@ -281,6 +305,7 @@ class OpportunityService:
                 expected_closure_date=opportunity.expected_closure_date,
                 po_number=opportunity.po_number,
                 has_items=has_items,
+                gate_override_approver_id=opportunity.gate_override_approver_id,
             )
 
         # BR-OP-02 / BR-OP-03 / BR-OP-05 / BR-OP-09: status transition validation
@@ -541,6 +566,24 @@ class OpportunityService:
                     f"Product {product_id} is not in this Opportunity's SBU; "
                     "products must belong to the same SBU as the Opportunity."
                 )
+
+    def _validate_gate_override(self, owner_id: uuid.UUID, approver_id: uuid.UUID) -> None:
+        # BR-OP-14: approver must satisfy one of two paths -- the owner's own
+        # manager (holding Area Manager), or any General Manager as an
+        # escalation path for when that manager is unavailable, with no
+        # reporting-line check for the escalation path.
+        approver_role_name = self.repository.get_user_role_name(approver_id)
+
+        if approver_role_name == _GATE_OVERRIDE_ESCALATION_ROLE:
+            return
+
+        manager_id = self.repository.get_owner_manager_id(owner_id)
+        if manager_id is None or approver_id != manager_id:
+            raise AuthorizationError(
+                "Gate override approver must be the opportunity owner's immediate manager, or a General Manager."
+            )
+        if approver_role_name != _GATE_OVERRIDE_MANAGER_ROLE:
+            raise AuthorizationError("Gate override approver must hold the Area Manager role.")
 
     def _create_item(
         self,
