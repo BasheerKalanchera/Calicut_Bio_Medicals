@@ -49,16 +49,19 @@ kept only as a pointer; nothing left to pick up here.
   standing UAT-only trigger.
 
 - ~~**Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**~~
-  — **BUILT 2026-08-25, applied to Dev; not yet committed or manually verified.**
+  — **DONE, 2026-08-27.**
   Raised at the 2026-08-19 leadership demo, decided same-day (2026-08-25,
   Basheer/Haroon, `docs/Discussion-FastTrack-Gate-Override-2026-08.md`) and built
   in the same session per `docs/Manager-Attested-Gate-Override-Implementation-
   Plan.md`: migration `0027`, `BR-OP-14` in `Business-Rules.md`, all 4 opportunity
-  entry points. Full build narrative:
-  `docs/Progress-Archive-2026-08.md`'s "2026-08-25 (later)" entry. **Still open:**
-  the commit itself (24 files staged, Basheer committing directly) and manual E2E
-  (14-case checklist,
-  `docs/Manager-Attested-Gate-Override-Manual-E2E-Verification.md`).
+  entry points. Reworked 2026-08-26/27 from an auto-appearing box (rejected
+  during E2E) to an explicit "Fast-Track this Deal" checkbox; gained a
+  one-time approver notification; two audit-integrity bugs found and fixed (a
+  re-stamping/re-notifying bug on unrelated saves, and an uncheck-doesn't-
+  reblock-the-gate bug). Manual E2E complete, 20 Pass / 2 Skipped. Committed
+  `9043a50`, `a7fb786`. Full build narrative:
+  `docs/Progress-Archive-2026-08.md`'s "2026-08-25 (later)" and "2026-08-26/27"
+  entries.
 
 - ~~**`UrgentNotificationDialog` multi-item race.**~~ — **DONE.** Diagnosed
   2026-08-25 as a gap in the 2026-08-25 Progress-Archive entry's bug #1 fix
@@ -174,9 +177,9 @@ kept only as a pointer; nothing left to pick up here.
      Compliance) — needs both Target and Coverage Planning data to exist, necessarily
      last. Not separately scoped yet — fast-follow once #1 and #3 have real data.
 
-  **Not yet reconciled against Referral Credit Part 2's queue position** (next
-  entry below) — that item was "next up" before this session's Milestone 2 planning;
-  no explicit decision was made on relative priority between the two tracks.
+  **Referral Credit Part 2 (was competing for the same queue slot) shipped
+  2026-08-27** — see that entry below. Target Planning is next in line for
+  this track, still gated on the 5 open decisions above; nothing built yet.
 
 - **Annual Development-Activity KPI — a real manager-set target, tracked against
   Sales Development Activities.** Decided with Haroon 2026-08-27

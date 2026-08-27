@@ -2752,3 +2752,230 @@ validation matrix (including two cases that need a direct API call
 since the UI picker only ever offers valid choices), gates that stay
 enforced, clearing an override, and audit/display. Results log table in
 that same file, to be filled in as Basheer runs it.
+
+## 2026-08-26/27 -- Manager-Attested Gate Override: checkbox rework, approver
+notification, two audit bugs found and fixed; manual E2E complete, committed
+
+**Auto-trigger design rejected during manual E2E, replaced with an explicit
+checkbox.** The original design (override UI appearing automatically whenever
+Stage reached Demo with a blank Demo Date) showed the override box on every
+Opportunity reaching Demo stage, intended or not -- not a deliberate opt-in.
+Replaced across all 4 entry points (`QuickLeadModal.tsx`, `Customer360Screen.tsx`,
+`ProjectDirectoryScreen.tsx`, `OpportunityDetailScreen.tsx`) with an explicit
+**"Fast-Track this Deal"** checkbox as the sole trigger; redundant duplicate
+banner text removed.
+
+**Real crash found and fixed during this rework:** `Customer360Screen.tsx`
+called its approver-picker function before the `referralUsers` query it
+depends on was declared -- a temporal-dead-zone `ReferenceError` that crashed
+the whole screen's render. This is why a newly created Opportunity appeared to
+vanish from the pipeline after saving: the `POST` had actually succeeded, the
+screen just couldn't render afterward. Fixed by reordering the declarations.
+
+**Approver notification added, 2026-08-27:** the named approver now gets a
+one-time, non-urgent bell-icon notification (`GATE_OVERRIDE_NAMED`,
+`notification/service.py`) when named -- never the interrupting urgent dialog
+(that's reserved for IndiaMART buylead SLA cases). Found and fixed a real bug
+along the way: `update_opportunity` was re-stamping
+`gate_override_set_at`/`set_by` (and would have re-notified) on *every* save
+once an override was set, not just the save that actually set it, because the
+frontend always resends the field once checked. Fixed by comparing against the
+previous value before re-stamping/notifying.
+
+**Second bug, found by Basheer running TC-6 himself:** unchecking the override
+on a deal already sitting at a gated stage (e.g. Negotiation with no Closure
+Date) silently succeeded instead of re-blocking the save -- stage gates only
+fire on a *forward* stage move (`validators.py`'s `validate_stage_transition`
+returns immediately when `new_stage_order <= current_stage_order`), and this
+save doesn't change Stage. Worse than the gate simply not re-firing: it let a
+rep erase the one audit signal (the named approver) that a shortcut was ever
+taken, while keeping the shortcut's effect. Fixed in `update_opportunity`: when
+a save clears the override, re-check the current stage's cumulative gates as
+if arriving there fresh (`current_stage_order=0`, same pattern
+`create_opportunity` uses).
+
+**10 new backend tests added across the two fixes -- 585 passing total** at
+the time; `tsc --noEmit` clean. `docs/Manager-Attested-Gate-Override-
+Implementation-Plan.md` (step 15) and `docs/Business-Rules.md` (`BR-OP-14`)
+updated to match both fixes.
+
+**Unrelated fix, found while testing this feature:** logging in as
+Fahad/Fazal (Sales Staff/Area Manager, not Admin/GM) to test the approver
+flow surfaced a pre-existing, harmless-but-noisy issue -- the Territory Map
+screen is always mounted in the background (`DemoApp.tsx`, for instant tab
+switching) and fetched its zone tree unconditionally, 403-ing for any
+non-Admin/GM session repeatedly on every window focus. Not caused by this
+feature (verified against git history back to 2026-08-12/15) -- just never
+noticed before, since prior testing was all on Admin accounts. Fixed:
+`TerritoryAdminScreen.tsx`'s query now gates on the same Admin/General-Manager
+check its nav entry already used (`TERRITORY_ADMIN_ROLES`, mirrors the
+backend's own `_TERRITORY_ADMIN_ROLES`).
+
+**Manual E2E on Dev complete.** All 22 cases run against Dev (guided one
+section at a time; TC-14/16 fired live via authenticated fetch as Fahad;
+TC-19/21/22 verified against the live DB via an admin connection since Fazal
+wasn't logged in separately). 20 Pass, 2 Skipped (TC-13: not representative of
+real usage; TC-15: no live test user matched that data shape). No open issues
+found. Full detail: `docs/Manager-Attested-Gate-Override-Manual-E2E-
+Verification.md`'s Results log.
+
+**Committed:** the checkbox rework + crash fix + notification + both
+audit-stamp fixes, `9043a50`; the unrelated Territory Map fix, `a7fb786`.
+Feature fully done.
+
+## 2026-08-27 -- Sales Development Activities (BR-ACT-09) built end-to-end,
+committed
+
+**Feature:** six new `activity_type` values (Conference/Expo, OEM/Product
+Training, Certification, Sales Training, Seminar/Trade Show, Other
+Development) let reps log capability-building activity -- conferences,
+training, certifications -- with no hospital/deal attached, addressing a GM
+request (Haroon) that this kind of activity had nowhere to go in Sales OS.
+Decided and scoped in `docs/Discussion-Sales-Development-Activities-2026-08.md`;
+built per `docs/Sales-Development-Activities-Implementation-Plan.md`.
+
+**Migration `0028`:** `activity.account_id` made nullable, replaced with a
+`chk_activity_account_required` `CHECK` constraint (`account_id IS NOT NULL OR
+activity_type IN (...)`) rather than a blanket `NOT NULL` drop -- keeps
+BR-ACT-01's guarantee intact for every existing activity type, only the six
+new ones are exempted. New `outcome_notes` column. Seeded a `CONFERENCE`
+`lead_source` row, confirmed missing from the live dropdown by Basheer --
+naming matches the table's existing `ALL_CAPS_WITH_UNDERSCORES` convention
+(`COLD_CALL`, `WEBSITE`, ...), not the loosely-worded "Conference" from the
+discussion doc.
+
+**Two real gaps found during the build that the discussion doc didn't cover:**
+BR-ACT-04's mandatory-next-action rule and BR-ACT-05's closing-activity rule
+both only exempted `MANAGER_NOTE` -- extended to the six new types (neither is
+a customer interaction). Also found and fixed: `ActivityService.log_activity`
+unconditionally called `account_exists(data.account_id)`, which would have
+misbehaved once `account_id` could be `None`. New shared
+`SALES_DEVELOPMENT_ACTIVITY_TYPES` frozenset in `activity/schemas.py` governs
+all three exemptions (no-next-action, no-account-required, invalid-closing-
+type) so the three call sites can't drift apart the way `MANAGER_NOTE`'s
+single-site exemption previously invited.
+
+**Decision #4a, made with Basheer:** `notes` (the general description) is
+required specifically for `OTHER_DEVELOPMENT` -- the other five types name
+themselves ("Certification" already says what happened), but the catch-all
+type carries no information on its own without it.
+
+**BR-ACT-09** added to `Business-Rules.md`; `BR-ACT-01`/`BR-ACT-03`/`BR-ACT-04`
+amended to describe the six-type exception precisely.
+
+**Frontend:** `LogActivityModal.tsx` -- six new type options, the shared
+exemption set (kept in sync by hand with the backend, no shared package
+between frontend/backend), account picker becomes optional for these six,
+new "Outcome/Learning" field. `activityTypes.ts` gained six new
+icon/label/color entries (the `ACTIVITY_TYPE_CONFIG` `Record` is typed
+exhaustively over `ActivityType`, so `tsc` fails to compile until all six are
+present -- a useful forcing function).
+
+**Real UI bug found live during manual E2E, fixed same session:**
+`DailyActivityReportScreen.tsx`'s `ReportRow` rendered `notes` inline but
+never referenced the new `outcome_notes` field at all -- meaning the one field
+BR-ACT-09 actually requires, the whole point of these entries, was invisible
+on the only screen these unattached activities ever appear on (per BR-ACT-09,
+they never show on any Account/Opportunity page). First fix labeled every
+entry's description box ("DESCRIPTION:") unconditionally, which Basheer
+correctly flagged as clutter -- 11 of 12 activity types only ever show one
+box and never needed disambiguating. Corrected: labels only render when both
+`notes` and `outcome_notes` are present on the same row (`Other Development`
+only, the sole case needing to tell two boxes apart); every other type/entry
+stays a single unlabeled box, exactly as it always worked.
+
+**Testing:** 619/619 backend tests passing (17 new, covering the six-type
+validators, the `account_exists` guard fix, the BR-ACT-05 exclusion, and
+`ActivityReportRow`/`ActivityContextNested` serializing correctly with
+`account=None`); `ruff`/`tsc`/`lint` clean.
+
+**Manual E2E on Dev: 17/17 cases pass**, run live as Fahad, driven via Claude
+browser automation with Basheer supervising (his explicit request that
+session). Confirmed: all six types save correctly with no account; the
+required-field validators block correctly; a normal type's account/next-action
+requirements are unaffected (regression); Manager Note unaffected; the
+BR-ACT-05 exclusion rejects at the API level, not just in the gated UI;
+`—` renders cleanly for a blank account, no crash; the `CONFERENCE`
+lead_source row is live and reachable. Full detail: `docs/Sales-Development-
+Activities-Manual-E2E-Verification.md`'s Results log.
+
+**Committed:** `ac587a3`. Feature fully done.
+
+## 2026-08-27 (later) -- Referral Credit Part 2 / Relationship-Support Activity
+(BR-ACT-10) built end-to-end, committed
+
+**Feature:** a new `RELATIONSHIP_SUPPORT` activity type lets someone with no
+standing access to an Opportunity -- outside its owner/split/tier-visibility
+route entirely, regardless of SBU or zone -- log a short note against it
+documenting informal help given (an introduction, a call to a contact), with
+no ownership/split/revenue change. Completes the two-part plan from
+`docs/Discussion-SplitParticipant-SBU-Scope.md` (v6, §3.3) -- Part 1
+(Referral Credit, `BR-FIN-07`) shipped 2026-08-18; this is Part 2, the
+informal counterpart (Referral Credit is for whoever originated the lead;
+Relationship Support is for whoever helped along the way without originating
+anything). Built per `docs/Referral-Credit-And-Relationship-Support-
+Implementation-Plan.md`.
+
+**Migration `0029`** (originally planned as `0028`, bumped a second time
+because Sales Development Activities claimed it first that same week): two
+narrow `SECURITY DEFINER` functions mirroring the existing
+`cabio_app_has_split()`/`cabio_app_assigned_reminder()` pattern --
+`cabio_app_opportunity_in_account(opportunity_id, account_id)` (write-path
+check: lets `log_activity` accept an Opportunity the caller's own RLS-scoped
+`opportunity_exists()` would otherwise correctly reject as invisible) and
+`cabio_app_account_opportunities(account_id)` (the "Related Opportunity"
+picker's lookup -- the first row-returning `SECURITY DEFINER` function in
+this codebase, not assumed safe by analogy to the boolean ones alone). Plus
+`activity_tier_visibility` gains `OR user_id = cabio_app_uid()`, so the
+cross-SBU logger's own just-written row is readable back afterward.
+
+**Two real gaps found and filled beyond the original plan:** `opportunity_id`
+and `notes` are both now required for `RELATIONSHIP_SUPPORT` -- the plan left
+both optional at the schema level, which would have let the feature degrade
+into a meaningless unlinked, empty note (no different from an ordinary
+Account-level Note). `BR-ACT-10` added to `Business-Rules.md`;
+`BR-ACT-04`/`BR-ACT-05` amended a second time to add this type to the
+existing `NOT_CUSTOMER_FACING_TYPES` exemption set (consolidated from the
+Sales Development Activities build rather than reintroducing a second,
+overlapping exemption set).
+
+**Frontend:** `LogActivityModal.tsx` -- new "Related Opportunity" picker,
+rendered only when `activityType === "RELATIONSHIP_SUPPORT"` and there's no
+fixed `opportunityId` prop (2026-08-25 architecture decision with Basheer --
+the general-purpose "tag any note to a deal from the Account level" version
+from the original plan draft was explicitly dropped, not bundled in). Cleared
+automatically when switching away from the type.
+
+**Two real UI/data bugs found live during manual E2E, both fixed same
+session:** (1) the new picker's floating label overlapped its "Select
+opportunity" placeholder text -- missing `inputLabel: { shrink: true }`,
+exactly the pattern the modal's own "Assign Next Action To" field already
+used for the same shape of labeled-select-with-placeholder. (2) Basheer
+caught, testing from Customer 360: the linked Opportunity's name never
+rendered on the logger's own Daily Activity Report entry, even for a same-
+appearing-but-actually-cross-SBU case -- `ActivityReportRow.opportunity` is
+populated via a plain SQLAlchemy relationship load, which goes through
+Opportunity's own tier-visibility RLS, silently returning `None` even for the
+person who logged the activity. Fixed in the router: backfill the name via
+the same unscoped lookup the picker itself used (one lookup per distinct
+account among affected rows, not per row) -- not a new information leak,
+since the caller already saw and picked that exact name seconds earlier.
+
+**Testing:** 621/621 backend tests passing (13 new across both the initial
+build and the opportunity-name backfill fix); `ruff`/`tsc`/`lint` clean.
+
+**Manual E2E on Dev: 16/16 cases pass**, run live as Fahad doubling as both
+the same-SBU sanity check and the cross-SBU test subject (Imaging/Mangalore
+logging against a Critical Care opportunity he had zero standing access to).
+**The real security-relevant check, confirmed:** the target Opportunity
+returned 0 results in a normal Pipeline search and 404'd on direct API access
+both before and after the cross-SBU write -- the widening never expanded
+beyond the picker itself. **One finding, tighter than planned, not a bug:**
+after the opportunity-name backfill fix, a cross-SBU logger's own note text
+and the Opportunity's name both now read back correctly on their own entry,
+but `GET /opportunities/{id}` and `GET /opportunities/{id}/activities` both
+still 404 for them -- the widening really is name-only, confirmed at the API
+level, nowhere else. Full detail: `docs/Referral-Credit-And-Relationship-
+Support-Manual-E2E-Verification.md`'s Results log.
+
+**Committed:** `4e1f4c8`. Feature fully done.
