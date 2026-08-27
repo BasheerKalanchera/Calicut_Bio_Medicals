@@ -88,8 +88,10 @@ function ProjectDetailView({
   const [editOppIsExternalReferrer, setEditOppIsExternalReferrer] = useState(false);
   const [editOppReferredByUserId, setEditOppReferredByUserId] = useState("");
   const [editOppReferredByNote, setEditOppReferredByNote] = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
-  // Date gates would otherwise block (see editOppGateOverrideRelevant below).
+  // BR-OP-14: gate override. editOppGateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [editOppGateOverrideChecked, setEditOppGateOverrideChecked] = useState(false);
   const [editOppGateOverrideApproverId, setEditOppGateOverrideApproverId] = useState("");
   const [editOppGateOverrideReasonId, setEditOppGateOverrideReasonId] = useState("");
   const [editOppGateOverrideNote, setEditOppGateOverrideNote] = useState("");
@@ -112,8 +114,10 @@ function ProjectDetailView({
   const [addOppIsExternalReferrer, setAddOppIsExternalReferrer] = useState(false);
   const [addOppReferredByUserId, setAddOppReferredByUserId] = useState("");
   const [addOppReferredByNote, setAddOppReferredByNote] = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
-  // Date gates would otherwise block (see addOppGateOverrideRelevant below).
+  // BR-OP-14: gate override. addOppGateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [addOppGateOverrideChecked, setAddOppGateOverrideChecked] = useState(false);
   const [addOppGateOverrideApproverId, setAddOppGateOverrideApproverId] = useState("");
   const [addOppGateOverrideReasonId, setAddOppGateOverrideReasonId] = useState("");
   const [addOppGateOverrideNote, setAddOppGateOverrideNote] = useState("");
@@ -162,17 +166,6 @@ function ProjectDetailView({
   const addOppStageOrder = oppStages.find((s: any) => s.id === addOppStageId)?.display_order ?? 0;
   const editOppStageOrder = oppStages.find((s: any) => s.id === editOppStageId)?.display_order ?? 0;
 
-  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
-  // otherwise block advancing (same stage-threshold pattern those two fields
-  // already use above), or when an override is already set.
-  const addOppGateOverrideRelevant =
-    (addOppStageOrder >= STAGE_ORDER_DEMO && addOppLeadSourceCode !== "REPEAT_ORDER" && addOppDemoStart === "") ||
-    (addOppStageOrder >= STAGE_ORDER_NEGOTIATION && addOppLeadSourceCode !== "REPEAT_ORDER" && addOppClosureDate === "") ||
-    addOppGateOverrideApproverId !== "";
-  const editOppGateOverrideRelevant =
-    (editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER" && editOppDemoStart === "") ||
-    (editOppStageOrder >= STAGE_ORDER_NEGOTIATION && editOppLeadSourceCode !== "REPEAT_ORDER" && editOppClosureDate === "") ||
-    editOppGateOverrideApproverId !== "";
 
   // Distinct query key -- must not reuse ["users","all"] below, which (despite its
   // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
@@ -345,6 +338,7 @@ function ProjectDetailView({
     setEditOppIsExternalReferrer(!!opp.referred_by_note);
     setEditOppReferredByUserId(opp.referred_by?.id || "");
     setEditOppReferredByNote(opp.referred_by_note || "");
+    setEditOppGateOverrideChecked(!!opp.gate_override_approver_id);
     setEditOppGateOverrideApproverId(opp.gate_override_approver_id || "");
     setEditOppGateOverrideReasonId(opp.gate_override_reason_id || "");
     setEditOppGateOverrideNote(opp.gate_override_note || "");
@@ -372,7 +366,7 @@ function ProjectDetailView({
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the round-trip, not just as a 422.
-    if (editOppGateOverrideRelevant && editOppGateOverrideApproverId && !editOppGateOverrideReasonId) {
+    if (editOppGateOverrideChecked && editOppGateOverrideApproverId && !editOppGateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: any = {
@@ -384,9 +378,9 @@ function ProjectDetailView({
     };
     if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
     payload.lead_source_id = editOppLeadSourceId || null;
-    payload.demo_start_date = editOppDemoStart || null;
-    payload.demo_end_date = editOppDemoEnd || null;
-    payload.expected_closure_date = editOppClosureDate || null;
+    payload.demo_start_date = editOppGateOverrideChecked ? null : (editOppDemoStart || null);
+    payload.demo_end_date = editOppGateOverrideChecked ? null : (editOppDemoEnd || null);
+    payload.expected_closure_date = (editOppGateOverrideChecked && editOppStageOrder >= STAGE_ORDER_ORDER) ? null : (editOppClosureDate || null);
     payload.po_number = editOppPoNumber.trim() || null;
     if (_newStatus?.status_code === "ON_HOLD") {
       payload.hold_reason_id = editOppHoldReasonId;
@@ -410,14 +404,12 @@ function ProjectDetailView({
       payload.referred_by_user_id = null;
       payload.referred_by_note = null;
     }
-    // BR-OP-14: only sent while the section is actually shown (editOppGateOverrideRelevant) --
-    // clearing the approver (blank picker) clears reason/note with it, since the DB
-    // check constraint only requires a reason when an approver is set.
-    if (editOppGateOverrideRelevant) {
-      payload.gate_override_approver_id = editOppGateOverrideApproverId || null;
-      payload.gate_override_reason_id = editOppGateOverrideApproverId ? (editOppGateOverrideReasonId || null) : null;
-      payload.gate_override_note = editOppGateOverrideApproverId ? (editOppGateOverrideNote.trim() || null) : null;
-    }
+    // BR-OP-14: always sent explicitly (not conditionally omitted), same style as
+    // demo_start_date etc above -- unchecking Gate Override must actively clear a
+    // previously-set override, not just hide it client-side (TC-17).
+    payload.gate_override_approver_id = editOppGateOverrideChecked ? (editOppGateOverrideApproverId || null) : null;
+    payload.gate_override_reason_id = (editOppGateOverrideChecked && editOppGateOverrideApproverId) ? (editOppGateOverrideReasonId || null) : null;
+    payload.gate_override_note = (editOppGateOverrideChecked && editOppGateOverrideApproverId) ? (editOppGateOverrideNote.trim() || null) : null;
     await updateOpportunity(editingOpp.id as any, payload);
     const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
     const toDelete = editOppOriginalItemIds.filter((id) => !currentItemIds.includes(id));
@@ -457,6 +449,7 @@ function ProjectDetailView({
     setAddOppIsExternalReferrer(false);
     setAddOppReferredByUserId("");
     setAddOppReferredByNote("");
+    setAddOppGateOverrideChecked(false);
     setAddOppGateOverrideApproverId("");
     setAddOppGateOverrideReasonId("");
     setAddOppGateOverrideNote("");
@@ -473,7 +466,7 @@ function ProjectDetailView({
     if (addOppWinProb === "") throw new Error("Win probability is required");
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the round-trip, not just as a 422.
-    if (addOppGateOverrideRelevant && addOppGateOverrideApproverId && !addOppGateOverrideReasonId) {
+    if (addOppGateOverrideChecked && addOppGateOverrideApproverId && !addOppGateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: any = {
@@ -487,9 +480,9 @@ function ProjectDetailView({
     if (isSbuOverrideRole && addOppSbuId) payload.sbu_id = addOppSbuId;
     if (addOppValue !== "") payload.indicative_value = Number(addOppValue);
     if (addOppLeadSourceId) payload.lead_source_id = addOppLeadSourceId;
-    if (addOppDemoStart) payload.demo_start_date = addOppDemoStart;
-    if (addOppDemoEnd) payload.demo_end_date = addOppDemoEnd;
-    if (addOppClosureDate) payload.expected_closure_date = addOppClosureDate;
+    if (addOppDemoStart && !addOppGateOverrideChecked) payload.demo_start_date = addOppDemoStart;
+    if (addOppDemoEnd && !addOppGateOverrideChecked) payload.demo_end_date = addOppDemoEnd;
+    if (addOppClosureDate && !(addOppGateOverrideChecked && addOppStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = addOppClosureDate;
     if (addOppPoNumber.trim()) payload.po_number = addOppPoNumber.trim();
     if (addOppLeadSourceCode === "REFERRAL") {
       if (addOppIsExternalReferrer) {
@@ -498,7 +491,7 @@ function ProjectDetailView({
         payload.referred_by_user_id = addOppReferredByUserId;
       }
     }
-    if (addOppGateOverrideRelevant && addOppGateOverrideApproverId) {
+    if (addOppGateOverrideChecked && addOppGateOverrideApproverId) {
       payload.gate_override_approver_id = addOppGateOverrideApproverId;
       payload.gate_override_reason_id = addOppGateOverrideReasonId || null;
       if (addOppGateOverrideNote.trim()) payload.gate_override_note = addOppGateOverrideNote.trim();
@@ -732,20 +725,22 @@ function ProjectDetailView({
             slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoStart !== "") && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={editOppGateOverrideChecked} onChange={(e) => setEditOppGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoStart !== "") && !editOppGateOverrideChecked && (
           <TextField label="Demo Start Date" type="date" value={editOppDemoStart} onChange={(e) => setEditOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoEnd !== "") && (
+        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoEnd !== "") && !editOppGateOverrideChecked && (
           <TextField label="Demo End Date" type="date" value={editOppDemoEnd} onChange={(e) => setEditOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editOppStageOrder >= STAGE_ORDER_NEGOTIATION && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppClosureDate !== "") && (
+        {((editOppStageOrder >= STAGE_ORDER_NEGOTIATION && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppClosureDate !== "") &&
+          !(editOppGateOverrideChecked && editOppStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={editOppClosureDate} onChange={(e) => setEditOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {editOppGateOverrideRelevant && (
+        {editOppGateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={editOppGateOverrideApproverId ? "Approved By *" : "Approved By"}
@@ -940,20 +935,22 @@ function ProjectDetailView({
             slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {addOppStageOrder >= STAGE_ORDER_DEMO && addOppLeadSourceCode !== "REPEAT_ORDER" && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={addOppGateOverrideChecked} onChange={(e) => setAddOppGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {addOppStageOrder >= STAGE_ORDER_DEMO && addOppLeadSourceCode !== "REPEAT_ORDER" && !addOppGateOverrideChecked && (
           <>
             <TextField label="Demo Start Date" type="date" value={addOppDemoStart} onChange={(e) => setAddOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={addOppDemoEnd} onChange={(e) => setAddOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        {addOppStageOrder >= STAGE_ORDER_NEGOTIATION && addOppLeadSourceCode !== "REPEAT_ORDER" && (
+        {addOppStageOrder >= STAGE_ORDER_NEGOTIATION && addOppLeadSourceCode !== "REPEAT_ORDER" &&
+          !(addOppGateOverrideChecked && addOppStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {addOppGateOverrideRelevant && (
+        {addOppGateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={addOppGateOverrideApproverId ? "Approved By *" : "Approved By"}

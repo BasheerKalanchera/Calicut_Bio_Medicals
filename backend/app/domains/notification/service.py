@@ -46,3 +46,24 @@ class NotificationService:
             is_urgent=is_urgent,
         )
         return self.repository.create(notification)
+
+    def notify_gate_override_named(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        opportunity_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # BR-OP-14: awareness only, never urgent -- the deal is already
+        # fast-tracked by the time this fires, nothing waits on the named
+        # approver acting on it, so this must never trigger
+        # UrgentNotificationDialog (that's gated on is_urgent server-side).
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="GATE_OVERRIDE_NAMED",
+            entity_type="opportunity",
+            entity_id=opportunity_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)

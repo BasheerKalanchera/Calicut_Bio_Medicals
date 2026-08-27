@@ -14,6 +14,9 @@ function formatDate(iso: string) {
 function describe(n: NotificationResponse): string {
   const who = n.actor.display_name;
   const what = n.opportunity_name ?? "an Opportunity";
+  if (n.type === "GATE_OVERRIDE_NAMED") {
+    return `${who} named you as approving manager for ${what}`;
+  }
   return `${who} assigned you ${what}`;
 }
 

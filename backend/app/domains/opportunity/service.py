@@ -201,6 +201,13 @@ class OpportunityService:
                 lead_source_name=lead_source_name,
             )
 
+        if data.gate_override_approver_id is not None:
+            self.notification_service.notify_gate_override_named(
+                recipient_user_id=data.gate_override_approver_id,
+                opportunity_id=opp.id,
+                actor_id=created_by,
+            )
+
         return opp
 
     # ------------------------------------------------------------------
@@ -234,19 +241,34 @@ class OpportunityService:
 
         # Captured before the setattr loop below overwrites it.
         previous_owner_id = opportunity.owner_id
+        previous_gate_override_approver_id = opportunity.gate_override_approver_id
 
         # Apply field updates
         for field, value in updates.items():
             setattr(opportunity, field, value)
         opportunity.updated_by = updated_by
 
-        # BR-OP-14: validate + stamp only when this request actually sets a new
-        # gate override approver -- an update that leaves gate_override_approver_id
-        # untouched must not re-run validation or re-stamp set_at/set_by.
-        if "gate_override_approver_id" in updates and opportunity.gate_override_approver_id is not None:
+        # BR-OP-14: validate + stamp + notify only when this request actually
+        # sets a *new* gate override approver (previously null, or changed to
+        # a different approver) -- the frontend always resends
+        # gate_override_approver_id once the checkbox is checked, so keying
+        # off "field present in updates" alone (the original bug, fixed
+        # 2026-08-27) re-stamped set_at/set_by -- and would have re-notified
+        # the approver -- on every unrelated edit, not just the one that
+        # actually set it.
+        if (
+            "gate_override_approver_id" in updates
+            and opportunity.gate_override_approver_id is not None
+            and opportunity.gate_override_approver_id != previous_gate_override_approver_id
+        ):
             self._validate_gate_override(opportunity.owner_id, opportunity.gate_override_approver_id)
             opportunity.gate_override_set_at = func.now()
             opportunity.gate_override_set_by = updated_by
+            self.notification_service.notify_gate_override_named(
+                recipient_user_id=opportunity.gate_override_approver_id,
+                opportunity_id=opportunity.id,
+                actor_id=updated_by,
+            )
 
         # Opportunity-assignment notification: fires only on an actual
         # reassignment to someone else -- not a no-op re-save of the same
@@ -287,14 +309,14 @@ class OpportunityService:
 
         has_items = self.repository.has_items(opportunity_id)
 
+        lead_source_name: str | None = None
+        if opportunity.lead_source_id:
+            lead_source = self.repository.get_lead_source(opportunity.lead_source_id)
+            if lead_source:
+                lead_source_name = lead_source.name
+
         # BR-OP-00 / BR-OP-01: stage gate validation on advance
         if "stage_id" in updates:
-            lead_source_name: str | None = None
-            if opportunity.lead_source_id:
-                lead_source = self.repository.get_lead_source(opportunity.lead_source_id)
-                if lead_source:
-                    lead_source_name = lead_source.name
-
             validate_stage_transition(
                 new_stage_order=effective_stage.display_order,
                 current_stage_order=current_stage_order,
@@ -306,6 +328,39 @@ class OpportunityService:
                 po_number=opportunity.po_number,
                 has_items=has_items,
                 gate_override_approver_id=opportunity.gate_override_approver_id,
+            )
+
+        # BR-OP-14 (2026-08-27 fix): a save that *clears* the override must
+        # not let the deal silently keep sitting at a stage whose gates it
+        # never actually satisfied without the waiver -- gates only fire on
+        # a forward stage move (validate_stage_transition returns immediately
+        # when new_stage_order <= current_stage_order), so without this, an
+        # uncheck-and-save at an already-reached stage sailed through even
+        # with the required date still blank, erasing the one audit signal
+        # (the named approver) that a shortcut was ever taken while keeping
+        # its effect. Re-check the *current* effective stage's cumulative
+        # gates as if arriving there fresh (current_stage_order=0, same
+        # pattern create_opportunity uses for a brand-new Opportunity created
+        # directly at a non-Lead stage), now that the override is gone. Only
+        # the clear transition needs this -- a genuine forward move is
+        # already checked above, and every other save (override staying set,
+        # staying unset) doesn't change what exemption applies.
+        if (
+            "gate_override_approver_id" in updates
+            and previous_gate_override_approver_id is not None
+            and opportunity.gate_override_approver_id is None
+        ):
+            validate_stage_transition(
+                new_stage_order=effective_stage.display_order,
+                current_stage_order=0,
+                lead_source_id=opportunity.lead_source_id,
+                lead_source_name=lead_source_name,
+                indicative_value=opportunity.indicative_value,
+                demo_start_date=opportunity.demo_start_date,
+                expected_closure_date=opportunity.expected_closure_date,
+                po_number=opportunity.po_number,
+                has_items=has_items,
+                gate_override_approver_id=None,
             )
 
         # BR-OP-02 / BR-OP-03 / BR-OP-05 / BR-OP-09: status transition validation

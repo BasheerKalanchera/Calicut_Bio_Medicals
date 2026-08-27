@@ -79,8 +79,10 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
   const [isExternalReferrer, setIsExternalReferrer] = useState(false);
   const [referredByUserId, setReferredByUserId]     = useState("");
   const [referredByNote, setReferredByNote]         = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
-  // Date gates would otherwise block (see gateOverrideRelevant below).
+  // BR-OP-14: gate override. gateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [gateOverrideChecked, setGateOverrideChecked]       = useState(false);
   const [gateOverrideApproverId, setGateOverrideApproverId] = useState("");
   const [gateOverrideReasonId, setGateOverrideReasonId]     = useState("");
   const [gateOverrideNote, setGateOverrideNote]             = useState("");
@@ -172,14 +174,6 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     queryFn: async () => (await listGateOverrideReasons()) as GateOverrideReasonOption[],
   });
 
-  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
-  // otherwise block advancing (same stage-threshold pattern those two fields
-  // already use above), or when an override is already set.
-  const gateOverrideRelevant =
-    (selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && demoStart === "") ||
-    (selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" && closureDate === "") ||
-    gateOverrideApproverId !== "";
-
   // Approver picker option set: the selected owner's own immediate manager (via
   // manager_id) plus every active General Manager, not a free user picker --
   // mirrors the backend's own approver eligibility check
@@ -229,6 +223,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     setLeadSourceId("");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
+    setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
   }, [isOpen, initialAccountId, initialProjectId]);
 
@@ -248,7 +243,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the round-trip, not just as a 422.
-    if (gateOverrideRelevant && gateOverrideApproverId && !gateOverrideReasonId) {
+    if (gateOverrideChecked && gateOverrideApproverId && !gateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: Record<string, unknown> = {
@@ -262,9 +257,9 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     if (value !== "") payload.indicative_value = Number(value);
     if (projectId) payload.project_id = projectId;
     if (leadSourceId) payload.lead_source_id = leadSourceId;
-    if (demoStart) payload.demo_start_date = demoStart;
-    if (demoEnd) payload.demo_end_date = demoEnd;
-    if (closureDate) payload.expected_closure_date = closureDate;
+    if (demoStart && !gateOverrideChecked) payload.demo_start_date = demoStart;
+    if (demoEnd && !gateOverrideChecked) payload.demo_end_date = demoEnd;
+    if (closureDate && !(gateOverrideChecked && selectedStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = closureDate;
     if (poNumber.trim()) payload.po_number = poNumber.trim();
     if (leadSourceCode === "REFERRAL") {
       if (isExternalReferrer) {
@@ -273,7 +268,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
         payload.referred_by_user_id = referredByUserId;
       }
     }
-    if (gateOverrideRelevant && gateOverrideApproverId) {
+    if (gateOverrideChecked && gateOverrideApproverId) {
       payload.gate_override_approver_id = gateOverrideApproverId;
       payload.gate_override_reason_id = gateOverrideReasonId || null;
       if (gateOverrideNote.trim()) payload.gate_override_note = gateOverrideNote.trim();
@@ -421,20 +416,22 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
             slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && !gateOverrideChecked && (
           <>
             <TextField label="Demo Start Date" type="date" value={demoStart} onChange={(e) => setDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={demoEnd} onChange={(e) => setDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        {selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" && (
+        {selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" &&
+          !(gateOverrideChecked && selectedStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {gateOverrideRelevant && (
+        {gateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={gateOverrideApproverId ? "Approved By *" : "Approved By"}

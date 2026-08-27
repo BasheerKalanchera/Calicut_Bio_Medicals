@@ -52,7 +52,7 @@ not a reuse of that one.
 | Trigger | `lead_source = REPEAT_ORDER` | A separate, per-Opportunity override field |
 | Gates waived | Demo Date; Expected Closure Date | Same two — no reason to touch Negotiation→Order or Order→Delivery |
 | Order Value / Product Details / PO Number | Still mandatory | Still mandatory — unchanged principle |
-| Who can invoke | Any rep, no approval | Rep sets it themselves, attesting to their own immediate manager's approval (Area Manager tier, via `manager_id` — see §5.1/§5.2). REPEAT_ORDER's "any rep, no approval" design is safe *because* it's gated on a structural fact (lead source), not a judgment call — this case is a judgment call, which is exactly what the original paper's §3 flagged as the risk of an ungated skip, hence the named-approver requirement. |
+| Who can invoke | Any rep, no approval | Rep sets it themselves, attesting to approval from their own immediate manager (Area Manager tier, via `manager_id`) **or any General Manager**, an escalation path for when the immediate manager is unavailable (see §5.1/§5.2). REPEAT_ORDER's "any rep, no approval" design is safe *because* it's gated on a structural fact (lead source), not a judgment call — this case is a judgment call, which is exactly what the original paper's §3 flagged as the risk of an ungated skip, hence the named-approver requirement. |
 | Volume | ~40% of pipeline, predictable | Expected to be rare/occasional (your framing: "occasionally") — doesn't need REPEAT_ORDER's high-volume, frictionless design |
 
 ## 4. Proposed mechanism: Manager-Attested Gate Override
@@ -64,8 +64,11 @@ themselves but must name a real approving manager and a reason at the same time,
 creating an auditable record without a separate wait-for-approval step.
 
 **New fields on `Opportunity`:**
-- `gate_override_approver_id` — FK to `user_profile`, must equal the rep's own
-  `manager_id` and hold the Area Manager role (see §5.1/§5.2).
+- `gate_override_approver_id` — FK to `user_profile`. Must satisfy one of two paths (see
+  §5.1/§5.2): (a) equal the rep's own `manager_id` and hold the Area Manager role, or
+  (b) hold the General Manager role — an escalation path for when the rep's own manager
+  is unavailable (e.g. on leave), with no `manager_id` check for this path since a GM
+  sits above the whole hierarchy, not scoped to any one rep's reporting line.
 - `gate_override_reason_id` — FK to a new `GateOverrideReason` master-data list (see
   §5.3), plus:
 - `gate_override_note` — optional free-text, alongside the reason.
@@ -88,21 +91,29 @@ after the fact, without needing a blocking approval step up front.
 
 ## 5. Decisions (2026-08-25)
 
-### 5.1 Who qualifies as approver? — DECIDED: the rep's immediate manager (Area Manager)
+### 5.1 Who qualifies as approver? — DECIDED: the rep's immediate manager (Area Manager), or any General Manager as escalation
 
 Corrects this paper's original framing: the Sales Manager Tier Collapse did *not* leave
 the system with only `Sales Staff`/`General Manager`/`Admin` — `Area Manager` is a real,
 active first-line manager tier (migration `0008`, folded further in migration `0021` so
 every rep reports directly to one). `user_profile.manager_id` already models the
 rep→manager reporting line and is already used exactly this way by
-`opportunity_tier_visibility`'s RLS policy. So the approver is not GM/Admin (this paper's
-earlier fallback assumption) but the rep's own immediate manager.
+`opportunity_tier_visibility`'s RLS policy. So the primary approver is not GM/Admin
+(this paper's earlier fallback assumption) but the rep's own immediate manager.
 
-### 5.2 Does the approver need to be the rep's *own* reporting line, or any qualifying role? — DECIDED: own reporting line
+**Added 2026-08-25:** a rep's immediate manager may be unavailable (on leave, etc.), so
+General Manager is kept as a second, escalation-only qualifying role — not because GM is
+the default (Area Manager is), but so a rep isn't blocked waiting on one specific person.
 
-Validated against the existing `manager_id` FK, not "any Area Manager." Simpler to build
-than assumed — no new hierarchy modeling needed, since `manager_id` already exists and is
-already load-bearing for the equivalent RLS check.
+### 5.2 Does the approver need to be the rep's *own* reporting line, or any qualifying role? — DECIDED: own reporting line for Area Manager; no reporting-line check for General Manager
+
+For the Area Manager path: validated against the existing `manager_id` FK, not "any Area
+Manager." Simpler to build than assumed — no new hierarchy modeling needed, since
+`manager_id` already exists and is already load-bearing for the equivalent RLS check.
+
+For the General Manager escalation path: no reporting-line check — any user holding the
+General Manager role qualifies, since GM sits above the whole hierarchy and isn't scoped
+to a subset of reps the way an Area Manager is.
 
 ### 5.3 Reason: free text or a master-data reason list? — DECIDED: dropdown + optional note
 
@@ -123,7 +134,8 @@ the original paper took toward REPEAT_ORDER's volume before committing to Option
 
 - Build the Manager-Attested Gate Override as scoped in §4.
 - Approver: rep's immediate manager (Area Manager tier), validated against
-  `user_profile.manager_id` (§5.1/§5.2).
+  `user_profile.manager_id` — or, as an escalation path when the manager is unavailable,
+  any General Manager, with no reporting-line check for that path (§5.1/§5.2).
 - Reason: master-data list + optional note (§5.3).
 - No overuse safeguard beyond reporting visibility at launch (§5.4).
 - Record as `BR-OP-14` once built, amending `BR-OP-01`'s gate table the same way

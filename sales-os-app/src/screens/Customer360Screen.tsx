@@ -751,8 +751,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOIsExternalReferrer, setNewOIsExternalReferrer] = useState(false);
   const [newOReferredByUserId, setNewOReferredByUserId] = useState("");
   const [newOReferredByNote, setNewOReferredByNote] = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
-  // Date gates would otherwise block (see newOGateOverrideRelevant below).
+  // BR-OP-14: gate override. newOGateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [newOGateOverrideChecked, setNewOGateOverrideChecked] = useState(false);
   const [newOGateOverrideApproverId, setNewOGateOverrideApproverId] = useState("");
   const [newOGateOverrideReasonId, setNewOGateOverrideReasonId] = useState("");
   const [newOGateOverrideNote, setNewOGateOverrideNote] = useState("");
@@ -789,8 +791,10 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editOIsExternalReferrer, setEditOIsExternalReferrer] = useState(false);
   const [editOReferredByUserId, setEditOReferredByUserId] = useState("");
   const [editOReferredByNote, setEditOReferredByNote] = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected Closure
-  // Date gates would otherwise block (see editOGateOverrideRelevant below).
+  // BR-OP-14: gate override. editOGateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [editOGateOverrideChecked, setEditOGateOverrideChecked] = useState(false);
   const [editOGateOverrideApproverId, setEditOGateOverrideApproverId] = useState("");
   const [editOGateOverrideReasonId, setEditOGateOverrideReasonId] = useState("");
   const [editOGateOverrideNote, setEditOGateOverrideNote] = useState("");
@@ -888,17 +892,21 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const newOStageOrder = stages.find((s: any) => s.id === newOStageId)?.display_order ?? 0;
   const editOStageOrder = stages.find((s: any) => s.id === editOStageId)?.display_order ?? 0;
 
-  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
-  // otherwise block advancing (same stage-threshold pattern those two fields
-  // already use above), or when an override is already set.
-  const newOGateOverrideRelevant =
-    (newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && newODemoStart === "") ||
-    (newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" && newOClosureDate === "") ||
-    newOGateOverrideApproverId !== "";
-  const editOGateOverrideRelevant =
-    (editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER" && editODemoStart === "") ||
-    (editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER" && editOClosureDate === "") ||
-    editOGateOverrideApproverId !== "";
+  // Distinct query key -- must not reuse ["users","all"] above, which (despite its
+  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
+  // Also doubles as the gate override approver picker's source (role_name/
+  // manager_id per user) -- the approver can be outside the current viewer's own
+  // scoped visibility (any Area Manager tier or GM company-wide), so it's enabled
+  // whenever either modal is open, not just for the REFERRAL lead source case.
+  const { data: referralUsers = [] } = useQuery({
+    queryKey: ["users", "referral-picker"],
+    queryFn: async () => {
+      const d = await listUsers("all");
+      return Array.isArray(d) ? d : [];
+    },
+    enabled: showCreateOpp || editingOpp !== null,
+    staleTime: Infinity,
+  });
 
   // Approver picker option set: the selected owner's own immediate manager (via
   // manager_id) plus every active General Manager, not a free user picker --
@@ -917,22 +925,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   }
   const newOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(newOOwnerId);
   const editOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(editOOwnerId);
-
-  // Distinct query key -- must not reuse ["users","all"] above, which (despite its
-  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
-  // Also doubles as the gate override approver picker's source (role_name/
-  // manager_id per user) -- the approver can be outside the current viewer's own
-  // scoped visibility (any Area Manager tier or GM company-wide), so it's enabled
-  // whenever either modal is open, not just for the REFERRAL lead source case.
-  const { data: referralUsers = [] } = useQuery({
-    queryKey: ["users", "referral-picker"],
-    queryFn: async () => {
-      const d = await listUsers("all");
-      return Array.isArray(d) ? d : [];
-    },
-    enabled: showCreateOpp || editingOpp !== null,
-    staleTime: Infinity,
-  });
 
   // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
   // which products are eligible (BR-OP-11 validates items against the opportunity's
@@ -1207,6 +1199,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
     setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
     setNewOIsExternalReferrer(false); setNewOReferredByUserId(""); setNewOReferredByNote("");
+    setNewOGateOverrideChecked(false);
     setNewOGateOverrideApproverId(""); setNewOGateOverrideReasonId(""); setNewOGateOverrideNote("");
     setShowCreateOpp(true);
   };
@@ -1226,7 +1219,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the round-trip, not just as a 422.
-    if (newOGateOverrideRelevant && newOGateOverrideApproverId && !newOGateOverrideReasonId) {
+    if (newOGateOverrideChecked && newOGateOverrideApproverId && !newOGateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: activeStatusId, win_probability: Number(newOWinProb) };
@@ -1234,9 +1227,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newOProjectId) payload.project_id = newOProjectId;
     if (newOLeadSourceId) payload.lead_source_id = newOLeadSourceId;
     if (newOValue !== "") payload.indicative_value = Number(newOValue);
-    if (newODemoStart) payload.demo_start_date = newODemoStart;
-    if (newODemoEnd) payload.demo_end_date = newODemoEnd;
-    if (newOClosureDate) payload.expected_closure_date = newOClosureDate;
+    if (newODemoStart && !newOGateOverrideChecked) payload.demo_start_date = newODemoStart;
+    if (newODemoEnd && !newOGateOverrideChecked) payload.demo_end_date = newODemoEnd;
+    if (newOClosureDate && !(newOGateOverrideChecked && newOStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = newOClosureDate;
     if (newOPoNumber.trim()) payload.po_number = newOPoNumber.trim();
     if (newOLeadSourceCode === "REFERRAL") {
       if (newOIsExternalReferrer) {
@@ -1245,7 +1238,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         payload.referred_by_user_id = newOReferredByUserId;
       }
     }
-    if (newOGateOverrideRelevant && newOGateOverrideApproverId) {
+    if (newOGateOverrideChecked && newOGateOverrideApproverId) {
       payload.gate_override_approver_id = newOGateOverrideApproverId;
       payload.gate_override_reason_id = newOGateOverrideReasonId || null;
       if (newOGateOverrideNote.trim()) payload.gate_override_note = newOGateOverrideNote.trim();
@@ -1271,6 +1264,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditOCompetitorName(o.competitor_name || "");
     setEditOIsExternalReferrer(!!o.referred_by_note);
     setEditOReferredByUserId(o.referred_by?.id || ""); setEditOReferredByNote(o.referred_by_note || "");
+    setEditOGateOverrideChecked(!!o.gate_override_approver_id);
     setEditOGateOverrideApproverId(o.gate_override_approver_id || "");
     setEditOGateOverrideReasonId(o.gate_override_reason_id || "");
     setEditOGateOverrideNote(o.gate_override_note || "");
@@ -1304,7 +1298,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the round-trip, not just as a 422.
-    if (editOGateOverrideRelevant && editOGateOverrideApproverId && !editOGateOverrideReasonId) {
+    if (editOGateOverrideChecked && editOGateOverrideApproverId && !editOGateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     const payload: any = {
@@ -1313,9 +1307,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       win_probability: editOWinProb !== "" ? Number(editOWinProb) : undefined,
       lead_source_id: editOLeadSourceId || null,
       indicative_value: editOValue !== "" ? Number(editOValue) : null,
-      demo_start_date: editODemoStart || null,
-      demo_end_date: editODemoEnd || null,
-      expected_closure_date: editOClosureDate || null,
+      demo_start_date: editOGateOverrideChecked ? null : (editODemoStart || null),
+      demo_end_date: editOGateOverrideChecked ? null : (editODemoEnd || null),
+      expected_closure_date: (editOGateOverrideChecked && editOStageOrder >= STAGE_ORDER_ORDER) ? null : (editOClosureDate || null),
     };
     if (editOProjectId) payload.project_id = editOProjectId;
     payload.po_number = editOPoNumber.trim() || null;
@@ -1341,14 +1335,12 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       payload.loss_reason_id = editOLossReasonId;
       if (editOCompetitorName.trim()) payload.competitor_name = editOCompetitorName.trim();
     }
-    // BR-OP-14: only sent while the section is actually shown (editOGateOverrideRelevant) --
-    // clearing the approver (blank picker) clears reason/note with it, since the DB
-    // check constraint only requires a reason when an approver is set.
-    if (editOGateOverrideRelevant) {
-      payload.gate_override_approver_id = editOGateOverrideApproverId || null;
-      payload.gate_override_reason_id = editOGateOverrideApproverId ? (editOGateOverrideReasonId || null) : null;
-      payload.gate_override_note = editOGateOverrideApproverId ? (editOGateOverrideNote.trim() || null) : null;
-    }
+    // BR-OP-14: always sent explicitly (not conditionally omitted), same style as
+    // demo_start_date etc above -- unchecking Gate Override must actively clear a
+    // previously-set override, not just hide it client-side (TC-17).
+    payload.gate_override_approver_id = editOGateOverrideChecked ? (editOGateOverrideApproverId || null) : null;
+    payload.gate_override_reason_id = (editOGateOverrideChecked && editOGateOverrideApproverId) ? (editOGateOverrideReasonId || null) : null;
+    payload.gate_override_note = (editOGateOverrideChecked && editOGateOverrideApproverId) ? (editOGateOverrideNote.trim() || null) : null;
     await updateOpportunity(editingOpp.id, payload);
     const currentIds = editOItems.filter((i: any) => i.id).map((i: any) => i.id);
     const toDelete = editOOriginalItemIds.filter((id) => !currentIds.includes(id));
@@ -1667,20 +1659,22 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={newOGateOverrideChecked} onChange={(e) => setNewOGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && !newOGateOverrideChecked && (
           <>
             <TextField label="Demo Start Date" type="date" value={newODemoStart} onChange={(e) => setNewODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
             <TextField label="Demo End Date" type="date" value={newODemoEnd} onChange={(e) => setNewODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        {newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" && (
+        {newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" &&
+          !(newOGateOverrideChecked && newOStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {newOGateOverrideRelevant && (
+        {newOGateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={newOGateOverrideApproverId ? "Approved By *" : "Approved By"}
@@ -1800,20 +1794,22 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoStart !== "") && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={editOGateOverrideChecked} onChange={(e) => setEditOGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoStart !== "") && !editOGateOverrideChecked && (
           <TextField label="Demo Start Date" type="date" value={editODemoStart} onChange={(e) => setEditODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoEnd !== "") && (
+        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoEnd !== "") && !editOGateOverrideChecked && (
           <TextField label="Demo End Date" type="date" value={editODemoEnd} onChange={(e) => setEditODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER") || editOClosureDate !== "") && (
+        {((editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER") || editOClosureDate !== "") &&
+          !(editOGateOverrideChecked && editOStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={editOClosureDate} onChange={(e) => setEditOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {editOGateOverrideRelevant && (
+        {editOGateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={editOGateOverrideApproverId ? "Approved By *" : "Approved By"}

@@ -93,6 +93,36 @@ class TestNotifyOpportunityAssigned:
         assert created.created_by == ACTOR_ID
 
 
+class TestNotifyGateOverrideNamed:
+    def test_created_row_shape(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.notify_gate_override_named(
+            recipient_user_id=RECIPIENT_ID,
+            opportunity_id=OPP_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        created = repo.create.call_args[0][0]
+        assert created.recipient_user_id == RECIPIENT_ID
+        assert created.type == "GATE_OVERRIDE_NAMED"
+        assert created.entity_type == "opportunity"
+        assert created.entity_id == OPP_ID
+        assert created.created_by == ACTOR_ID
+
+    def test_is_never_urgent(self):
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_gate_override_named(
+            recipient_user_id=RECIPIENT_ID,
+            opportunity_id=OPP_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        assert notification.is_urgent is False
+
+
 class TestPassThroughMethods:
     def test_list_for_user_delegates(self):
         repo = _make_repo()

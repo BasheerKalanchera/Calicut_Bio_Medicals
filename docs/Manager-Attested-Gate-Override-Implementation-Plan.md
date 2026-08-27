@@ -27,6 +27,49 @@ workflow.
 - No overuse safeguard at launch — reporting visibility only, monitor-then-decide.
 - New rule to be recorded as `BR-OP-14` once built.
 
+## Correction (2026-08-26) — trigger mechanism, not the gate effect
+
+Backend (steps 1–11 below) shipped 2026-08-25 (commits `31971e4`, `cdde722`)
+and is **not being reverted** — it's sound and stays as-is. What was wrong is
+entirely in the frontend's trigger logic (step 12).
+
+**What shipped:** the 4 entry points computed a `gateOverrideRelevant`
+boolean from `selectedStageOrder >= Demo` (or `>= Negotiation`) **and** the
+corresponding date field being blank. The Approver/Reason box appeared
+automatically the moment those conditions were true — which is every
+opportunity sitting at Demo stage or later with a date not yet filled in,
+override or not. Basheer's manual E2E pass (2026-08-26) caught this: any
+lead reached Demo stage and got shown the override box, whether or not the
+rep intended to invoke one.
+
+**Corrected design:** an explicit, always-visible checkbox (labeled
+**"Fast-Track this Deal"** — see step 12 for the 2026-08-27 wording
+revision) on the form is the sole trigger, replacing the stage/blank-date
+inference entirely:
+- **Unchecked (default):** no override UI shown at all, at any stage.
+  `BR-OP-01`'s gates apply exactly as they would if this feature didn't
+  exist — a rep advancing to Demo or Negotiation without the required date
+  gets the normal validation error, full stop.
+- **Checked:** reveals Approver/Reason/Note, same fields and same picker
+  logic as today. Once Approver + Reason are filled and saved, behavior is
+  unchanged from what's already built — `gate_override_approver_id` being
+  non-null is still exactly what waives the Demo Date and Expected Closure
+  Date gates (`validators.py`'s `is_gate_override`, untouched).
+
+**No schema or backend change needed.** The backend never had the
+stage-inference bug — it only ever checked `gate_override_approver_id is not
+None`, which is already the correct signal. Checkbox state on an existing
+Opportunity is simply derived on load from whether that field is already
+set — no new column. This is a frontend-only fix, confined to step 12.
+
+**Also noted during the same manual pass, resolved as tester error:** the
+Approver picker appeared to only offer the escalation-path General Manager
+(Haroon Sidheeq), not the owner's actual immediate manager (Fazal), for a
+rep (Fahad) whose `manager_id` correctly points to Fazal (Area Manager,
+active). Cause: the Opportunity Owner field hadn't actually been set to
+Fahad in that test run — the manager option only populates once an owner is
+selected. Not a code defect; no fix needed.
+
 ## Confirmed current state (verified directly against the codebase)
 
 - `BR-OP-13`'s mechanism (the closest sibling): `lead_source_id` resolves to a
@@ -400,43 +443,174 @@ against a fully-migrated environment, commit alongside migration `0027`.
 - Router test: create/update an Opportunity with a valid gate override,
   happy path.
 
-### 12. Frontend — 4 opportunity create/edit entry points
+### 12. Frontend — 4 opportunity create/edit entry points (reworked 2026-08-26)
 
 `QuickLeadModal.tsx`, `Customer360Screen.tsx`, `ProjectDirectoryScreen.tsx`,
-`OpportunityDetailScreen.tsx` — same field-parity bar as the 2026-08-05 Demo
-Date/Hold-Lost work (`Backlog.md`). Add:
+`OpportunityDetailScreen.tsx`. Already built: the Approver/Reason/Note fields
+and their picker plumbing. **What changes:** replace the stage/blank-date
+`gateOverrideRelevant` inference with an explicit checkbox as the sole
+trigger.
 
-- A "Gate Override" section, shown only when relevant (e.g. Demo Date is
-  empty and the user is advancing past Qualified, mirroring how Hold Reason
-  fields only appear when status is being set to On-Hold — see
-  `OpportunityDetailScreen.tsx`'s `editHoldReasonId` pattern around line
-  1718).
+- **"Fast-Track this Deal" checkbox** (label revised 2026-08-27 — reads as
+  an action for the rep rather than a compliance notice; the Approver
+  field's own helper text still carries the manager-approval requirement),
+  always visible on the form regardless of Stage or which date fields are
+  filled — not conditionally rendered. Plain boolean UI state (e.g.
+  `gateOverrideChecked`), initialized on edit from whether the Opportunity
+  already has `gate_override_approver_id` set, and `false` by default on
+  create.
+- **Unchecked:** Approver/Reason/Note fields are not rendered at all, and
+  `gate_override_*` is omitted from the payload — the existing Demo
+  Date/Expected Closure Date requirements in `BR-OP-01` apply exactly as if
+  this feature didn't exist.
+- **Checked:** reveals Approver/Reason/Note directly — no separate heading
+  message above them (an earlier draft repeated the checkbox's own label
+  as a second banner inside the box; dropped 2026-08-27 as redundant). Same
+  fields, same required-reason-when-approver-set validation already in
+  place. No other change to how these fields behave once shown.
+- **Demo Start Date / Demo End Date:** hidden immediately once the checkbox
+  is checked, regardless of Stage. A skipped demo is never relevant at any
+  stage — same treatment these fields already get for
+  `leadSourceCode === "REPEAT_ORDER"` (`QuickLeadModal.tsx:424`,
+  `leadSourceCode !== "REPEAT_ORDER"` in the render condition). Add
+  `&& !gateOverrideChecked` alongside that existing exclusion at all 4 entry
+  points, rather than inventing a new pattern.
+- **Expected Closure Date — stage-dependent, not tied to the checkbox
+  alone.** Its gate (`BR-OP-01`'s Clinical Evaluation → Negotiation) fires
+  specifically when *entering* Negotiation, and the field stays meaningful
+  while a deal sits in Negotiation even if Demo/Clinical Evaluation were
+  skipped — a rep can still forecast when they expect to close. So: with
+  the checkbox checked, **keep showing this field (optional, never
+  mandatory) while Stage = Negotiation**; hide it only once **Stage = Order
+  or beyond** — at that point the deal has moved past forecasting a closure
+  date. Concretely: visible when `!gateOverrideChecked || selectedStageOrder
+  < STAGE_ORDER_ORDER`, hidden when `gateOverrideChecked &&
+  selectedStageOrder >= STAGE_ORDER_ORDER`. This is a genuine behavioral
+  difference from Demo Date, not the same `&& !gateOverrideChecked` pattern
+  — don't copy the Demo Date treatment here.
+- **Unchecking on an edit that already has an override set** must clear
+  `gate_override_approver_id`/`gate_override_reason_id`/`gate_override_note`
+  to `null` in the payload (not just hide the fields client-side) — this is
+  what TC-11 in the manual E2E checklist already expects, and re-enforces
+  the gate once cleared.
 - Approver picker — scoped to the owner's actual manager **plus all active
-  General Managers** (escalation path), not a free user picker. Fetch the
-  owner's `manager_id`/manager name via the existing user list (check at
-  build time whether `UserDirectoryScreen.tsx`'s existing user-list fetch
-  already carries `manager_id` per row) and cross-reference against the
-  `roles` master-data list filtered to `General Manager` to build the GM
-  option set — a new small endpoint is only needed if neither existing
-  fetch cleanly supports this.
-- Reason dropdown from `listGateOverrideReasons()` (new function in
-  `services/masterData.ts`, same shape as `listHoldReasons`) + optional note
-  free-text field.
+  General Managers** (escalation path), not a free user picker. Already
+  built correctly; the owner's manager only appears once an Owner is
+  selected on the form, so verify with a real manager/rep pair
+  (Fahad → Fazal) with Owner explicitly set during manual E2E.
+- Reason dropdown from `listGateOverrideReasons()` (already built, same
+  shape as `listHoldReasons`) + optional note free-text field — unchanged.
 
 ### 13. `types/api.ts`
 
 Regenerate via `generate:types` script once the backend schema changes land.
 
+### 14. Approver awareness notification + audit-stamp fix (added 2026-08-27)
+
+Raised by Basheer during manual E2E: Fazal (the named approver) had no idea
+an opportunity had named him, and the Overview tab's "Approved By Fazal"
+reads as a completed fact when it's actually the rep's attestation. Decision
+(see `docs/Business-Rules.md`'s BR-OP-14): stay with the attestation model —
+no request/approve workflow, no blocking state — but give the named manager
+a passive, in-app heads-up.
+
+- **Bug found while designing this, fixed in the same pass:**
+  `OpportunityService.update_opportunity` currently re-stamps
+  `gate_override_set_at`/`gate_override_set_by` (and re-runs
+  `_validate_gate_override`) on **every save** that includes
+  `gate_override_approver_id` in the payload — not just the save that
+  actually sets it. Because the frontend always resends the field once the
+  checkbox is checked (BR-OP-14's existing "always sent explicitly" pattern
+  — see step 12), an unrelated edit (renaming the deal, fixing a phone
+  number) silently overwrites the audit timestamp. Fix: capture
+  `previous_gate_override_approver_id = opportunity.gate_override_approver_id`
+  before the update loop (same pattern as the existing `previous_owner_id`
+  capture just above it), and only re-stamp/re-validate when the value
+  actually changed. This was already TC-19's expectation — it just wasn't
+  actually enforced.
+- **Notification:** `NotificationService.notify_gate_override_named()`
+  (new, mirrors `notify_opportunity_assigned`) — type `GATE_OVERRIDE_NAMED`,
+  `is_urgent=False` always (bell icon only, never
+  `UrgentNotificationDialog`). Called from `OpportunityService` in two
+  places: `create_opportunity` when `gate_override_approver_id` is set on
+  creation, and `update_opportunity` only inside the "actually changed"
+  branch from the bug fix above — so it fires exactly once per genuine
+  approver assignment, never on a routine re-save.
+- **Frontend:** `NotificationBell.tsx`'s `describe()` hardcodes "assigned
+  you" text for every notification (only one type existed until now). Add a
+  branch on `n.type === "GATE_OVERRIDE_NAMED"`, e.g. "{rep} named you as
+  approving manager for {opportunity}." `UrgentNotificationDialog.tsx`
+  needs no change — already scoped to `is_urgent` only.
+- **No schema change** — `Notification.type` is a free-text column, no new
+  migration, no `types/api.ts` regeneration needed for this step.
+
+### 15. Uncheck-doesn't-retroactively-block bug (found and fixed 2026-08-27)
+
+Found by Basheer running TC-6: unchecking the override and saving does **not**
+re-block the save even when the current Stage's normal gates (Demo Date,
+Expected Closure Date) are unmet — contradicting TC-6's own documented
+expectation.
+
+**Root cause:** `validate_stage_transition` (`validators.py:48`) returns
+immediately when `new_stage_order <= current_stage_order` — gates only fire
+on a *forward* stage move, by design, for the entire gate system (BR-OP-00/
+01), not something specific to BR-OP-14. `OpportunityService.
+update_opportunity` only calls the validator at all when `"stage_id" in
+updates`, but the frontend always resends the current `stage_id` on every
+save (`OpportunityDetailScreen.tsx:1459`, `editStageId || undefined`), so
+the validator *does* run on every save — it just no-ops immediately because
+the stage isn't advancing in that particular save.
+
+**Why this is worse than "the gate doesn't re-fire":** a rep can check the
+box, jump straight to Negotiation with no Closure Date, save — then uncheck
+the box and save again. The override fields clear (no more named approver,
+reason, or note), the deal stays at Negotiation, the Closure Date is still
+blank, and save succeeds. The one audit signal that a shortcut was ever
+taken (the named approver) is now gone, while the shortcut's effect (being
+at Negotiation without a Closure Date) persists — worse than a gate that
+simply never re-checks, because it erases the trail.
+
+**Fix (built):** in `update_opportunity`, when this save clears the override
+(`previous_gate_override_approver_id` was not null, new value is null),
+re-run `validate_stage_transition` against the opportunity's *current*
+effective stage as if arriving there fresh — `current_stage_order=0`, same
+pattern `create_opportunity` already uses for a brand-new Opportunity
+created directly at a non-Lead stage — with `gate_override_approver_id=None`
+and the (possibly just-edited) current field values. If that raises, the
+save is blocked with the same message the gate would show on a real forward
+move, instead of silently letting the uncheck through. Scoped narrowly to
+the clear-transition case only — every other save path (override staying
+set, override staying unset, a genuine forward stage move) is unaffected.
+3 new backend tests added (585 passing total): blocks when the date is
+still blank, succeeds when the rep filled it in before unchecking, and
+doesn't block when the deal never reached a gated stage in the first place.
+
 ## Ordering
 
-Migration + master data table (1) → reference model/schema (2) → master-data
-router (3) → opportunity model (4) → opportunity schemas (5) → validators (6)
-→ repository lookup (7) → service (8) → backend tests (11), run suite green
-→ apply to Dev + regenerate `Physical-Schema.sql` (10) → `Business-Rules.md`
-(9) → frontend, 4 entry points (12) → regenerate `types/api.ts` (13) →
-manual verification on Dev (approver-validation checks are the
-security-relevant ones — don't skip: wrong approver, non-Area-Manager
-approver, reason omitted).
+**Steps 1–11 (backend) already built, applied to Dev, and shipped** —
+`31971e4`/`cdde722`, 2026-08-25. Not being redone.
+
+**Remaining scope (2026-08-26 rework):** step 12 only — replace the
+stage/blank-date trigger with the explicit checkbox — across all 4 entry
+points → regenerate
+`types/api.ts` (13) if any type shape changed (unlikely — no schema change)
+→ re-run manual verification on Dev, starting from TC-1 (checkbox now
+gates whether the box appears at all) through the approver-validation cases
+(TC-8/TC-9, security-relevant — don't skip) and TC-11 (uncheck clears the
+override). The manual E2E checklist doc itself needs a matching revision
+before that re-run — separate follow-up, not done as part of this plan
+update.
+
+**Step 14 (2026-08-27):** `notification/service.py` +
+`opportunity/service.py` (audit-stamp fix + notify hooks) →
+`NotificationBell.tsx` (new `describe()` branch) → manual verification of
+the new TC (notification fires once, doesn't re-fire/re-stamp on an
+unrelated edit) — see the E2E checklist's Section F.
+
+**Step 15 (found and fixed 2026-08-27):** `opportunity/service.py`
+(`update_opportunity`'s clear-transition re-validation) → 3 new backend
+tests added to `TestUpdateOpportunityGateOverride` → re-run TC-6 on Dev to
+confirm the block now fires live, not just under the mocked test suite.
 
 ### Critical files
 - backend/alembic/versions/0027_add_gate_override.py
@@ -448,12 +622,14 @@ approver, reason omitted).
 - backend/app/domains/opportunity/validators.py
 - backend/app/domains/opportunity/repository.py
 - backend/app/domains/opportunity/service.py
+- backend/app/domains/notification/service.py
 - docs/Business-Rules.md
 - docs/Physical-Schema.sql
 - sales-os-app/src/components/QuickLeadModal.tsx
 - sales-os-app/src/screens/Customer360Screen.tsx
 - sales-os-app/src/screens/ProjectDirectoryScreen.tsx
 - sales-os-app/src/screens/OpportunityDetailScreen.tsx
+- sales-os-app/src/components/NotificationBell.tsx
 - sales-os-app/src/services/masterData.ts
 - sales-os-app/src/types/api.ts
 

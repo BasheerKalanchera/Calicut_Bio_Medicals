@@ -572,6 +572,35 @@ class TestCreateOpportunityGateOverride:
         assert result.gate_override_set_by == USER_ID
         assert result.gate_override_set_at is not None
 
+    def test_notifies_named_approver(self):
+        approver_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        data = self._override_data(gate_override_approver_id=approver_id)
+        result = service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+        notification_service.notify_gate_override_named.assert_called_once_with(
+            recipient_user_id=approver_id,
+            opportunity_id=result.id,
+            actor_id=USER_ID,
+        )
+
+    def test_no_override_does_not_notify(self):
+        repo = _make_repo()
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        notification_service.notify_gate_override_named.assert_not_called()
+
     def test_approver_not_manager_and_not_gm_raises(self):
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(30, "DEMO")
@@ -962,6 +991,186 @@ class TestUpdateOpportunityGateOverride:
         assert opp.gate_override_approver_id == approver_id
         assert opp.gate_override_set_by == USER_ID
         assert opp.gate_override_set_at is not None
+
+    def test_setting_from_null_notifies_approver(self):
+        approver_id = uuid.uuid4()
+        opp = _make_opportunity(owner_id=USER_ID)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(gate_override_approver_id=approver_id, gate_override_reason_id=uuid.uuid4()),
+            updated_by=USER_ID,
+        )
+
+        notification_service.notify_gate_override_named.assert_called_once_with(
+            recipient_user_id=approver_id,
+            opportunity_id=OPP_ID,
+            actor_id=USER_ID,
+        )
+
+    def test_resending_same_approver_does_not_restamp_or_notify(self):
+        """2026-08-27 fix: the frontend always resends gate_override_approver_id
+        once the checkbox is checked, even on an unrelated edit. Re-sending the
+        *same* value that was already set must not re-validate, re-stamp
+        set_at/set_by, or re-notify the approver -- only a genuine change
+        (null -> set, or set -> a different approver) should."""
+        existing_approver_id = uuid.uuid4()
+        existing_set_at = "2026-08-01T00:00:00Z"
+        existing_set_by = uuid.uuid4()
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            gate_override_approver_id=existing_approver_id,
+            gate_override_set_at=existing_set_at,
+            gate_override_set_by=existing_set_by,
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(
+                gate_override_approver_id=existing_approver_id, gate_override_reason_id=uuid.uuid4()
+            ),
+            updated_by=uuid.uuid4(),
+        )
+
+        assert opp.gate_override_set_at == existing_set_at
+        assert opp.gate_override_set_by == existing_set_by
+        repo.get_owner_manager_id.assert_not_called()
+        repo.get_user_role_name.assert_not_called()
+        notification_service.notify_gate_override_named.assert_not_called()
+
+    def test_changing_to_a_different_approver_restamps_and_notifies(self):
+        existing_approver_id = uuid.uuid4()
+        new_approver_id = uuid.uuid4()
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            gate_override_approver_id=existing_approver_id,
+            gate_override_set_at="2026-08-01T00:00:00Z",
+            gate_override_set_by=uuid.uuid4(),
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.get_owner_manager_id.return_value = new_approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(
+                gate_override_approver_id=new_approver_id, gate_override_reason_id=uuid.uuid4()
+            ),
+            updated_by=USER_ID,
+        )
+
+        assert opp.gate_override_approver_id == new_approver_id
+        assert opp.gate_override_set_by == USER_ID
+        notification_service.notify_gate_override_named.assert_called_once_with(
+            recipient_user_id=new_approver_id,
+            opportunity_id=OPP_ID,
+            actor_id=USER_ID,
+        )
+
+    def test_unchecking_at_gated_stage_without_required_date_blocks(self):
+        """2026-08-27 fix (TC-6): clearing the override on a deal already
+        sitting at Negotiation with no Expected Closure Date must re-enforce
+        the gate it was waiving, not silently let the save through just
+        because Stage itself isn't changing in this request."""
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            stage_id=STAGE_LEAD_ID,
+            gate_override_approver_id=uuid.uuid4(),
+            gate_override_reason_id=uuid.uuid4(),
+            expected_closure_date=None,
+            demo_start_date=date(2026, 8, 1),
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(50, "NEGOTIATION")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="Expected Closure Date"):
+            service.update_opportunity(
+                OPP_ID,
+                OpportunityUpdate(gate_override_approver_id=None),
+                updated_by=USER_ID,
+            )
+
+    def test_unchecking_at_gated_stage_with_required_date_present_succeeds(self):
+        """Same scenario, but the rep filled in the Closure Date before
+        unchecking -- the gate is genuinely satisfied now, so clearing the
+        override must succeed."""
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            stage_id=STAGE_LEAD_ID,
+            gate_override_approver_id=uuid.uuid4(),
+            gate_override_reason_id=uuid.uuid4(),
+            expected_closure_date=date(2026, 9, 1),
+            demo_start_date=date(2026, 8, 1),
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(50, "NEGOTIATION")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(gate_override_approver_id=None),
+            updated_by=USER_ID,
+        )
+
+        assert result.gate_override_approver_id is None
+
+    def test_unchecking_at_a_stage_the_gate_never_applied_to_succeeds(self):
+        """Unchecking on a deal still at Qualified (never reached Demo/
+        Negotiation) has nothing to re-enforce -- must not block."""
+        opp = _make_opportunity(
+            owner_id=USER_ID,
+            stage_id=STAGE_LEAD_ID,
+            gate_override_approver_id=uuid.uuid4(),
+            gate_override_reason_id=uuid.uuid4(),
+            demo_start_date=None,
+            expected_closure_date=None,
+            lead_source_id=LEAD_SOURCE_ID,
+            indicative_value=Decimal("10.00"),
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(20, "QUALIFIED")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(gate_override_approver_id=None),
+            updated_by=USER_ID,
+        )
+
+        assert result.gate_override_approver_id is None
 
     def test_setting_invalid_approver_raises(self):
         opp = _make_opportunity(owner_id=USER_ID)

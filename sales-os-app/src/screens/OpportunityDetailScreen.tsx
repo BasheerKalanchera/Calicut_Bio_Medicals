@@ -1246,9 +1246,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editIsExternalReferrer, setEditIsExternalReferrer] = useState(false);
   const [editReferredByUserId, setEditReferredByUserId]     = useState("");
   const [editReferredByNote, setEditReferredByNote]         = useState("");
-  // BR-OP-14: gate override, only relevant when the Demo Date / Expected
-  // Closure Date gates would otherwise block (see gateOverrideRelevant below)
-  // or an override is already set.
+  // BR-OP-14: gate override. gateOverrideChecked is the sole trigger -- an
+  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
+  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
+  const [gateOverrideChecked, setGateOverrideChecked] = useState(false);
   const [editGateOverrideApproverId, setEditGateOverrideApproverId] = useState("");
   const [editGateOverrideReasonId, setEditGateOverrideReasonId]     = useState("");
   const [editGateOverrideNote, setEditGateOverrideNote]             = useState("");
@@ -1416,6 +1417,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditIsExternalReferrer(!!opp.referred_by_note);
     setEditReferredByUserId(opp.referred_by?.id ?? "");
     setEditReferredByNote(opp.referred_by_note ?? "");
+    setGateOverrideChecked(!!opp.gate_override_approver_id);
     setEditGateOverrideApproverId(opp.gate_override_approver_id ?? "");
     setEditGateOverrideReasonId(opp.gate_override_reason_id ?? "");
     setEditGateOverrideNote(opp.gate_override_note ?? "");
@@ -1446,7 +1448,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the PATCH round-trip, not just as a 422.
-    if (gateOverrideRelevant && editGateOverrideApproverId && !editGateOverrideReasonId) {
+    if (gateOverrideChecked && editGateOverrideApproverId && !editGateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
     // LeadSource has no separate code column -- `name` already holds the pseudo-code.
@@ -1459,9 +1461,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       owner_id:              editOwnerId  || undefined,
       win_probability:       editWinProb !== "" ? Number(editWinProb) : undefined,
       indicative_value:      editValue   !== "" ? Number(editValue)   : null,
-      expected_closure_date: editClosureDate || null,
-      demo_start_date:       editDemoStart   || null,
-      demo_end_date:         editDemoEnd     || null,
+      expected_closure_date: (gateOverrideChecked && editStageOrder >= STAGE_ORDER_ORDER) ? null : (editClosureDate || null),
+      demo_start_date:       gateOverrideChecked ? null : (editDemoStart || null),
+      demo_end_date:         gateOverrideChecked ? null : (editDemoEnd || null),
       lead_source_id:        editLeadSourceId || null,
       po_number:             editPoNumber.trim() || null,
     };
@@ -1487,14 +1489,12 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       payload.referred_by_user_id = null;
       payload.referred_by_note = null;
     }
-    // BR-OP-14: only sent while the section is actually shown (gateOverrideRelevant) --
-    // clearing the approver (blank picker) clears reason/note with it, since the DB
-    // check constraint only requires a reason when an approver is set.
-    if (gateOverrideRelevant) {
-      payload.gate_override_approver_id = editGateOverrideApproverId || null;
-      payload.gate_override_reason_id   = editGateOverrideApproverId ? (editGateOverrideReasonId || null) : null;
-      payload.gate_override_note        = editGateOverrideApproverId ? (editGateOverrideNote.trim() || null) : null;
-    }
+    // BR-OP-14: always sent explicitly (not conditionally omitted), same style as
+    // demo_start_date etc above -- unchecking Gate Override must actively clear a
+    // previously-set override, not just hide it client-side (TC-17).
+    payload.gate_override_approver_id = gateOverrideChecked ? (editGateOverrideApproverId || null) : null;
+    payload.gate_override_reason_id   = (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideReasonId || null) : null;
+    payload.gate_override_note        = (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideNote.trim() || null) : null;
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Reconstruct nested objects from loaded master data so header + strip +
@@ -1505,19 +1505,19 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     const newReferredBy  = referralLeadSourceCode === "REFERRAL" && !editIsExternalReferrer
       ? referralUsers.find((u) => u.id === editReferredByUserId)
       : undefined;
-    const newGateOverrideApprover = gateOverrideRelevant && editGateOverrideApproverId
+    const newGateOverrideApprover = gateOverrideChecked && editGateOverrideApproverId
       ? gateOverrideApproverOptions.find((u) => u.id === editGateOverrideApproverId)
       : undefined;
-    const newGateOverrideReason = gateOverrideRelevant && editGateOverrideReasonId
+    const newGateOverrideReason = gateOverrideChecked && editGateOverrideReasonId
       ? gateOverrideReasons.find((r) => r.id === editGateOverrideReasonId)
       : undefined;
     applyOppPatch({
       name:                  editName.trim(),
       win_probability:       editWinProb !== "" ? editWinProb : opp.win_probability,
       indicative_value:      editValue   !== "" ? editValue   : null,
-      expected_closure_date: editClosureDate || null,
-      demo_start_date:       editDemoStart   || null,
-      demo_end_date:         editDemoEnd     || null,
+      expected_closure_date: (gateOverrideChecked && editStageOrder >= STAGE_ORDER_ORDER) ? null : (editClosureDate || null),
+      demo_start_date:       gateOverrideChecked ? null : (editDemoStart || null),
+      demo_end_date:         gateOverrideChecked ? null : (editDemoEnd || null),
       lead_source:           editLeadSourceId ? (newLeadSource ?? opp.lead_source) : null,
       po_number:             editPoNumber.trim() || null,
       hold_reason_id:        newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
@@ -1526,13 +1526,11 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
       referred_by_note:      referralLeadSourceCode === "REFERRAL" ? (editIsExternalReferrer ? (editReferredByNote.trim() || null) : null) : null,
       referred_by:           referralLeadSourceCode === "REFERRAL" ? (newReferredBy ?? null) : null,
-      ...(gateOverrideRelevant && {
-        gate_override_approver_id: editGateOverrideApproverId || null,
-        gate_override_reason_id:   editGateOverrideApproverId ? (editGateOverrideReasonId || null) : null,
-        gate_override_note:        editGateOverrideApproverId ? (editGateOverrideNote.trim() || null) : null,
-        gate_override_approver:    editGateOverrideApproverId ? (newGateOverrideApprover ? { id: newGateOverrideApprover.id, display_name: newGateOverrideApprover.display_name } : opp.gate_override_approver) : null,
-        gate_override_reason:      editGateOverrideApproverId ? (newGateOverrideReason ? { id: newGateOverrideReason.id, reason_name: newGateOverrideReason.reason_name } : opp.gate_override_reason) : null,
-      }),
+      gate_override_approver_id: gateOverrideChecked ? (editGateOverrideApproverId || null) : null,
+      gate_override_reason_id:   (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideReasonId || null) : null,
+      gate_override_note:        (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideNote.trim() || null) : null,
+      gate_override_approver:    (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideApprover ? { id: newGateOverrideApprover.id, display_name: newGateOverrideApprover.display_name } : opp.gate_override_approver) : null,
+      gate_override_reason:      (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideReason ? { id: newGateOverrideReason.id, reason_name: newGateOverrideReason.reason_name } : opp.gate_override_reason) : null,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
@@ -1545,15 +1543,6 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker below renders as the label.
   const editLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
   const editStageOrder = stages.find((s) => s.id === editStageId)?.display_order ?? 0;
-
-  // BR-OP-14: shown when the Demo Date / Expected Closure Date gates would
-  // otherwise block advancing (same stage-threshold pattern those two fields
-  // already use above), or when an override is already set on this Opportunity --
-  // mirrors how Hold Reason only appears once status is being set to On-Hold.
-  const gateOverrideRelevant =
-    (editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER" && editDemoStart === "") ||
-    (editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER" && editClosureDate === "") ||
-    editGateOverrideApproverId !== "";
 
   // Approver picker option set: the current owner's own immediate manager
   // (via manager_id) plus every active General Manager, not a free user
@@ -1792,20 +1781,22 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
         )}
-        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoStart !== "") && (
+        <FormControlLabel
+          control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+        />
+        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoStart !== "") && !gateOverrideChecked && (
           <TextField label="Demo Start Date" type="date" value={editDemoStart} onChange={(e) => setEditDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoEnd !== "") && (
+        {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoEnd !== "") && !gateOverrideChecked && (
           <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "") && (
+        {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "") &&
+          !(gateOverrideChecked && editStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {gateOverrideRelevant && (
+        {gateOverrideChecked && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <Typography sx={{ fontSize: "0.75rem", fontWeight: 700, color: "#991b1b" }}>
-              Gate Override — skips Demo Date / Expected Closure Date requirements for this deal (BR-OP-14)
-            </Typography>
             <TextField
               select
               label={editGateOverrideApproverId ? "Approved By *" : "Approved By"}
