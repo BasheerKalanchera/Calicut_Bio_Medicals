@@ -5,8 +5,13 @@
 `opportunity.referred_by_user_id`/`referred_by_note` + `ck_opportunity_referral_not_both`
 in the model, and the 4-entry-point frontend toggle in `OpportunityDetailScreen.tsx`
 (and its sibling forms) are all confirmed present in the codebase. **Part 2
-(Relationship-Support Activity) is still not started** — this is the only piece left,
-see `docs/Backlog.md`'s "Referral Credit Part 2" entry.
+(Relationship-Support Activity) built 2026-08-27** (backend, frontend, migration
+`0029`, `BR-ACT-10`, tests) — not yet applied to Dev or manually verified, see
+`docs/Backlog.md`'s "Referral Credit Part 2" entry for current status. This doc's
+stale references to migration `0028`/`BR-ACT-09` (both since claimed by Sales
+Development Activities, built same week) are corrected below where the actual
+build differs — read the code and `Business-Rules.md` as authoritative over this
+doc's original numbering.
 **Date:** 2026-08-11 (original plan; Part 1 shipped 2026-08-18, this doc corrected
 2026-08-25 to stop describing shipped work as pending — see numbering fixes below)
 **Prepared by:** Basheer Kalanchera (with Claude)
@@ -206,6 +211,65 @@ amendment to **BR-ACT-04** generalizing its exemption list, and a new rule for
 relationship-support activity — **not `BR-ACT-08`** (that number was taken by
 Opportunity Document Upload, shipped since this plan was written). Next free is
 **BR-ACT-09** — re-check at build time, same caveat.
+
+## Build summary, 2026-08-27 (read this before the steps below — they're the
+original plan, kept for the reasoning, but numbering/detail drifted)
+
+**Migration is `0029`, not `0028`** — `0028` was claimed by Sales Development
+Activities, built the same week (`docs/Sales-Development-Activities-
+Implementation-Plan.md`). File:
+`backend/alembic/versions/0029_relationship_support_activity_rls.py`. Contains
+only the two `SECURITY DEFINER` functions and the `activity_tier_visibility`
+RLS amendment, exactly as scoped below — not applied to Dev yet.
+
+**BR-ACT-10, not BR-ACT-09** — `BR-ACT-09` was also claimed by Sales
+Development Activities. Written into `Business-Rules.md` as BR-ACT-10; the
+BR-ACT-04/BR-ACT-05 amendments below also landed.
+
+**Exemption mechanism differs from the plan's sketch, for a good reason**:
+the plan proposed a fresh `_EXEMPT_FROM_NEXT_ACTION = {"MANAGER_NOTE",
+"RELATIONSHIP_SUPPORT"}` set. By build time, Sales Development Activities had
+already generalized this into `SALES_DEVELOPMENT_ACTIVITY_TYPES` plus inline
+`MANAGER_NOTE` checks at both the next-action and closing-activity sites.
+Rather than add a second, overlapping set, both sites now share one
+`NOT_CUSTOMER_FACING_TYPES` frozenset (`MANAGER_NOTE` ∪
+`SALES_DEVELOPMENT_ACTIVITY_TYPES` ∪ `{"RELATIONSHIP_SUPPORT"}`) —
+deliberately *not* merged with the separate account-requirement exemption,
+since Relationship Support still requires an Account (unlike the six Sales
+Development types). See `activity/schemas.py`.
+
+**Two real gaps found and filled that the plan didn't cover**:
+1. **`opportunity_id` is required for `RELATIONSHIP_SUPPORT`** — the plan's
+   schema section (step 5) never added this. Without it, logging this type
+   would just produce an ordinary Account-level note, which every other
+   activity type already covers — the entire point of the feature is tying
+   support to a *specific* deal.
+2. **`notes` is required for `RELATIONSHIP_SUPPORT`** — same reasoning as
+   Sales Development's `OTHER_DEVELOPMENT` requirement: without a
+   description, the entry is a name attached to someone else's deal with no
+   record of what was actually done.
+
+**Everything else matches the plan as written** — the two `SECURITY DEFINER`
+functions, the `activity_tier_visibility` amendment, the
+`opportunity_exists() OR opportunity_in_account()` fallback in
+`log_activity`, the `OpportunityLookup` schema (deliberately distinct from
+`OpportunityNested`), the new lookup endpoint, and the "Related Opportunity"
+picker gated to `activityType === "RELATIONSHIP_SUPPORT"` only.
+
+**Verified, 2026-08-27:** 619/619 backend tests pass (11 new, covering the
+cross-SBU OR-fallback, the two new required-field validators, the BR-ACT-05
+exclusion, and the lookup endpoint's 200/404 shapes), `ruff` clean, `tsc
+--noEmit` and `npm run lint` clean (0 errors). Migration `0029` applied to
+Dev, `Physical-Schema.sql` regenerated and reviewed. **Manual verification
+complete, all 16 cases pass** — including the cross-SBU flow (step 12.3),
+run live as Fahad doubling as both the same-SBU sanity check and the
+cross-SBU test subject — see
+`docs/Referral-Credit-And-Relationship-Support-Manual-E2E-Verification.md`.
+One finding recorded there: the RLS widening turned out tighter than
+planned — a cross-SBU logger's own note text reads back, but the linked
+Opportunity's *name* stays invisible even on their own entry, since the
+nested `opportunity` relationship load still goes through Opportunity's own
+RLS. Feature is done.
 
 ## Implementation steps
 

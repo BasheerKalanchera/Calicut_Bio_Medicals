@@ -562,6 +562,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/{account_id}/opportunities/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Account Opportunities Lookup */
+        get: operations["list_account_opportunities_lookup_api_v1_accounts__account_id__opportunities_lookup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/opportunities/{opportunity_id}/activities": {
         parameters: {
             query?: never;
@@ -1510,6 +1527,21 @@ export interface components {
             /** Data */
             data: components["schemas"]["OpportunityItemResponse"][];
         };
+        /** APIResponse[list[OpportunityLookup]] */
+        APIResponse_list_OpportunityLookup__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["OpportunityLookup"][];
+        };
         /** APIResponse[list[SplitResponse]] */
         APIResponse_list_SplitResponse__: {
             /**
@@ -1822,7 +1854,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT";
             /**
              * Activity Date
              * Format: date-time
@@ -1850,7 +1882,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT";
             /**
              * Activity Date
              * Format: date-time
@@ -1878,7 +1910,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT";
             /**
              * Activity Date
              * Format: date-time
@@ -1915,7 +1947,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT";
             /**
              * Activity Date
              * Format: date-time
@@ -2248,6 +2280,16 @@ export interface components {
             /** Line Type */
             line_type: string;
             product: components["schemas"]["app__domains__opportunity__schemas__ProductNested"] | null;
+        };
+        /** OpportunityLookup */
+        OpportunityLookup: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** OpportunityNested */
         OpportunityNested: {
@@ -2859,7 +2901,7 @@ export interface components {
             /** Is Completed */
             is_completed: boolean;
             /** Activity Type */
-            activity_type?: ("VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT") | null;
+            activity_type?: ("VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT") | null;
             /** Activity Date */
             activity_date?: string | null;
             /** Notes */
@@ -5065,6 +5107,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_PaginatedResponse_ActivityResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_account_opportunities_lookup_api_v1_accounts__account_id__opportunities_lookup_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_OpportunityLookup__"];
                 };
             };
             /** @description Validation Error */

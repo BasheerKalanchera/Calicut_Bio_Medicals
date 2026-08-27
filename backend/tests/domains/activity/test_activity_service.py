@@ -52,6 +52,9 @@ def _make_activity_repo() -> MagicMock:
     repo = MagicMock(spec=ActivityRepository)
     repo.account_exists.return_value = True
     repo.opportunity_exists.return_value = True
+    # BR-ACT-10: default to no cross-SBU carve-out -- most tests aren't
+    # exercising Relationship Support's special access path.
+    repo.opportunity_in_account.return_value = False
     repo.project_exists.return_value = True
     repo.list_by_account.return_value = []
     repo.count_by_account.return_value = 0
@@ -166,6 +169,34 @@ class TestListByAccount:
         svc.list_by_account(ACCOUNT_ID, page=1, page_size=10)
 
         repo.list_by_account.assert_called_once_with(ACCOUNT_ID, offset=0, limit=10)
+
+
+# ---------------------------------------------------------------------------
+# ActivityService.list_account_opportunities_lookup (BR-ACT-10)
+# ---------------------------------------------------------------------------
+
+class TestListAccountOpportunitiesLookup:
+    def test_raises_not_found_when_account_missing(self):
+        repo = _make_activity_repo()
+        repo.account_exists.return_value = False
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        with pytest.raises(NotFoundError):
+            svc.list_account_opportunities_lookup(ACCOUNT_ID)
+
+    def test_returns_repository_results_unscoped(self):
+        # Thin pass-through -- no tier filtering applied at this layer,
+        # deliberately, since the repository method already calls the
+        # SECURITY DEFINER function that does the (lack of) scoping.
+        repo = _make_activity_repo()
+        expected = [(OPP_ID, "Some Deal"), (uuid.uuid4(), "Another Deal")]
+        repo.list_account_opportunities_lookup.return_value = expected
+        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+
+        result = svc.list_account_opportunities_lookup(ACCOUNT_ID)
+
+        assert result == expected
+        repo.list_account_opportunities_lookup.assert_called_once_with(ACCOUNT_ID)
 
 
 # ---------------------------------------------------------------------------
@@ -317,6 +348,48 @@ class TestLogActivity:
         svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID)
 
         repo.opportunity_exists.assert_not_called()
+
+    def test_opportunity_visible_only_via_cross_sbu_carveout_succeeds(self):
+        # BR-ACT-10: opportunity_exists (RLS-scoped) says no, but
+        # opportunity_in_account (SECURITY DEFINER) says yes -- must not be
+        # rejected. This is the exact Relationship Support scenario.
+        repo = _make_activity_repo()
+        repo.opportunity_exists.return_value = False
+        repo.opportunity_in_account.return_value = True
+        repo.create.return_value = _make_activity(opportunity_id=OPP_ID)
+        svc = self._svc(activity_repo=repo)
+
+        svc.log_activity(
+            self._data(
+                activity_type="RELATIONSHIP_SUPPORT",
+                opportunity_id=OPP_ID,
+                notes="Called the contact and made an introduction",
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        repo.opportunity_in_account.assert_called_once_with(OPP_ID, ACCOUNT_ID)
+
+    def test_opportunity_invisible_via_both_routes_raises(self):
+        # Regression: the OR must not become an unconditional pass.
+        repo = _make_activity_repo()
+        repo.opportunity_exists.return_value = False
+        repo.opportunity_in_account.return_value = False
+        svc = self._svc(activity_repo=repo)
+
+        with pytest.raises(NotFoundError):
+            svc.log_activity(
+                self._data(
+                    activity_type="RELATIONSHIP_SUPPORT",
+                    opportunity_id=OPP_ID,
+                    notes="Called the contact and made an introduction",
+                    next_action_text=None,
+                    next_action_due_date=None,
+                ),
+                created_by=ACTOR_ID,
+            )
 
     def test_user_id_defaults_to_created_by_when_not_provided(self):
         repo = _make_activity_repo()
@@ -660,6 +733,52 @@ class TestSalesDevelopmentActivityValidation:
             **self._data(activity_type="OTHER_DEVELOPMENT", notes="Attended a webinar on X")
         )
         assert data.notes == "Attended a webinar on X"
+
+
+# ---------------------------------------------------------------------------
+# ActivityCreate — BR-ACT-10 Relationship Support validation
+# ---------------------------------------------------------------------------
+
+class TestRelationshipSupportValidation:
+    def _data(self, **overrides) -> dict:
+        defaults = dict(
+            account_id=ACCOUNT_ID,
+            opportunity_id=OPP_ID,
+            project_id=None,
+            user_id=None,
+            activity_type="RELATIONSHIP_SUPPORT",
+            activity_date=NOW,
+            notes="Called the contact and made an introduction",
+            next_action_text=None,
+            next_action_due_date=None,
+        )
+        defaults.update(overrides)
+        return defaults
+
+    def test_account_and_opportunity_succeeds(self):
+        data = ActivityCreate(**self._data())
+        assert data.account_id == ACCOUNT_ID
+        assert data.opportunity_id == OPP_ID
+
+    def test_without_opportunity_raises(self):
+        # BR-ACT-10: the whole point is tying support to a specific deal.
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(opportunity_id=None))
+
+    def test_without_account_raises(self):
+        # Regression: unlike the six Sales Development types, Relationship
+        # Support is NOT exempt from BR-ACT-01's account requirement.
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(account_id=None))
+
+    def test_without_next_action_succeeds(self):
+        data = ActivityCreate(**self._data())
+        assert data.next_action_text is None
+        assert data.next_action_due_date is None
+
+    def test_without_notes_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(notes=None))
 
 
 # ---------------------------------------------------------------------------
@@ -1092,6 +1211,12 @@ class TestReminderUpdateValidation:
         # customer-facing action, so none can close a Reminder.
         with pytest.raises(pydantic.ValidationError):
             ReminderUpdate(**{**_closing_data(), "activity_type": activity_type})
+
+    def test_completing_with_relationship_support_type_raises(self):
+        # BR-ACT-05 extension (BR-ACT-10): the logger has no standing access
+        # to the deal, so they can't be the one completing its follow-up.
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "activity_type": "RELATIONSHIP_SUPPORT"})
 
     def test_completing_with_all_fields_succeeds(self):
         data = ReminderUpdate(**_closing_data())

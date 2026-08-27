@@ -129,6 +129,63 @@ class TestListDailyActivityReport:
         assert item["account"] is None
         assert item["outcome_notes"] == "Learned about the new imaging line"
 
+    def test_relationship_support_row_backfills_opportunity_name(self, client: TestClient) -> None:
+        # BR-ACT-10: opportunity=None here isn't a mock gap -- it's the real
+        # RLS-blocked case (Opportunity's own tier-visibility RLS, not
+        # activity's), and the router should backfill the name via the same
+        # unscoped lookup the picker itself uses, since the caller already
+        # saw and chose this name.
+        opp_id = uuid.uuid4()
+        activity = _mock_activity(
+            activity_type="RELATIONSHIP_SUPPORT",
+            account_id=ACCOUNT_ID,
+            opportunity_id=opp_id,
+            opportunity=None,
+            notes="Introduced the contact",
+        )
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1  # count_by_date + account_exists (in the backfill)
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [activity]
+        mock_db.execute.return_value.all.return_value = [
+            _mock_nested(id=opp_id, name="A Deal Belonging To Someone Else"),
+        ]
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.get("/api/v1/activities", params={"report_date": "2026-08-06"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"]["items"][0]
+        assert item["opportunity"] == {"id": str(opp_id), "name": "A Deal Belonging To Someone Else"}
+
+    def test_relationship_support_row_stays_null_when_lookup_has_no_match(self, client: TestClient) -> None:
+        # Defensive: if the account's lookup somehow doesn't contain this
+        # opportunity (e.g. it was deleted), don't fabricate a row -- leave
+        # opportunity null rather than guessing.
+        activity = _mock_activity(
+            activity_type="RELATIONSHIP_SUPPORT",
+            account_id=ACCOUNT_ID,
+            opportunity_id=uuid.uuid4(),
+            opportunity=None,
+            notes="Introduced the contact",
+        )
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [activity]
+        mock_db.execute.return_value.all.return_value = []
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.get("/api/v1/activities", params={"report_date": "2026-08-06"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"]["items"][0]
+        assert item["opportunity"] is None
+
     def test_sales_staff_can_also_call_it(self, client: TestClient) -> None:
         # No allow/deny gate -- every role is authorized, scoping happens in
         # the query itself (test_activity_repository.py covers that).
@@ -167,3 +224,46 @@ class TestListDailyActivityReport:
         body = response.json()["data"]
         assert body["page"] == 2
         assert body["page_size"] == 25
+
+
+class TestListAccountOpportunitiesLookup:
+    """
+    GET /accounts/{account_id}/opportunities/lookup (BR-ACT-10) -- feeds the
+    Relationship Support "Related Opportunity" picker. Deliberately unscoped
+    by the caller's own SBU/zone tier; that's the entire point of the
+    feature, not a bug -- see the schema's own docstring.
+    """
+
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/accounts/{ACCOUNT_ID}/opportunities/lookup")
+        assert response.status_code == 401
+
+    def test_returns_id_and_name_only(self, client: TestClient) -> None:
+        opp_id = uuid.uuid4()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1  # account_exists
+        mock_db.execute.return_value.all.return_value = [
+            _mock_nested(id=opp_id, name="A Deal Belonging To Someone Else"),
+        ]
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.get(f"/api/v1/accounts/{ACCOUNT_ID}/opportunities/lookup")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        items = response.json()["data"]
+        assert items == [{"id": str(opp_id), "name": "A Deal Belonging To Someone Else"}]
+
+    def test_missing_account_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0  # account_exists -> False
+
+        _setup_overrides(mock_db, role_name="Sales Staff")
+        try:
+            response = client.get(f"/api/v1/accounts/{uuid.uuid4()}/opportunities/lookup")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404

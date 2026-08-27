@@ -18,4 +18,7 @@ export const ACTIVITY_TYPE_CONFIG: Record<ActivityType, { icon: string; label: s
   SALES_TRAINING: { icon: "📚", label: "Sales Training", bg: "#eef2ff", color: "#4338ca" },
   SEMINAR_TRADE_SHOW: { icon: "🗣️", label: "Seminar/Trade Show", bg: "#fef2f2", color: "#b91c1c" },
   OTHER_DEVELOPMENT: { icon: "🌱", label: "Other Development", bg: "#f7fee7", color: "#4d7c0f" },
+  // BR-ACT-10: cross-SBU informal help on a deal the logger has no standing
+  // access to. See docs/Business-Rules.md.
+  RELATIONSHIP_SUPPORT: { icon: "🤲", label: "Relationship Support", bg: "#fdf2f8", color: "#be185d" },
 };

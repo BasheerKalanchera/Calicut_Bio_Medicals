@@ -13,8 +13,8 @@ export interface LogActivityPayload {
   notes?: string;
   // BR-ACT-09: required when activity_type is a Sales Development type.
   outcome_notes?: string;
-  // BR-ACT-04: required unless activity_type is MANAGER_NOTE or a Sales
-  // Development type.
+  // BR-ACT-04: required unless activity_type is MANAGER_NOTE, a Sales
+  // Development type, or RELATIONSHIP_SUPPORT (BR-ACT-10).
   next_action_text?: string;
   next_action_due_date?: string;
   next_action_owner_id?: string;
@@ -68,6 +68,18 @@ export async function listActivityReport(params: ActivityReportParams): Promise<
   };
   if (params.user_id) p.user_id = params.user_id;
   const r = await api.get("/activities", { params: p });
+  return r.data.data;
+}
+
+// BR-ACT-10: feeds the "Related Opportunity" picker for Relationship
+// Support -- deliberately unscoped by the caller's own SBU/zone tier, the
+// same narrow widening as cabio_app_account_opportunities() itself. Only
+// ever called when Relationship Support is selected (a frontend
+// convention, not the backend's enforcement mechanism).
+export async function listAccountOpportunitiesLookup(
+  accountId: string,
+): Promise<{ id: string; name: string }[]> {
+  const r = await api.get(`/accounts/${accountId}/opportunities/lookup`);
   return r.data.data;
 }
 

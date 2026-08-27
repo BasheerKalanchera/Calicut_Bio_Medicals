@@ -299,16 +299,17 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 * **Purpose:** Ensures every customer-facing Activity record is always directly traceable to a customer Account. Database-level `CHECK` enforcement provides a safety net independent of application validation logic and API layer behaviour, while still permitting the six deliberately-unattached Sales Development Activity types (BR-ACT-09).
 
-### BR-ACT-04: Mandatory Next Action Capture (PRD §4.3; exemption widened BR-ACT-09, 2026-08-27)
+### BR-ACT-04: Mandatory Next Action Capture (PRD §4.3; exemption widened BR-ACT-09, 2026-08-27; widened again BR-ACT-10, 2026-08-27)
 * **Rule:** Every logged Activity must capture a Next Action (free text),
-  a Due Date, and an Owner, EXCEPT when `activity_type == MANAGER_NOTE`
-  or `activity_type` is one of the six BR-ACT-09 Sales Development Activity
-  types. The interaction cannot be saved without these fields for any other
+  a Due Date, and an Owner, EXCEPT when `activity_type == MANAGER_NOTE`,
+  `activity_type` is one of the six BR-ACT-09 Sales Development Activity
+  types, or `activity_type == RELATIONSHIP_SUPPORT` (BR-ACT-10). The
+  interaction cannot be saved without these fields for any other
   activity_type.
 * **Implementation:** Enforced at the Pydantic schema layer via a
   conditional validator (`ActivityCreate.next_action_text` /
-  `.next_action_due_date` are required unless `activity_type` is
-  `MANAGER_NOTE` or a Sales Development Activity type) and realized as a
+  `.next_action_due_date` are required unless `activity_type` is in
+  `NOT_CUSTOMER_FACING_TYPES`) and realized as a
   Reminder record auto-created in the
   same transaction as the Activity it belongs to (see ADR-023 — Reminders
   are Activity-linked, not a separate user-initiated entity in this flow).
@@ -317,12 +318,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   defaults to the Activity's `user_id` (the person the interaction is
   logged against).
 * **Scope / exemption:** Applies to all activity_type values EXCEPT
-  MANAGER_NOTE and the six BR-ACT-09 types. A Manager Note is internal
+  MANAGER_NOTE, the six BR-ACT-09 types, and RELATIONSHIP_SUPPORT
+  (BR-ACT-10). A Manager Note is internal
   manager-to-rep guidance (BR-ACT-02), not a customer interaction — it
   carries no follow-up commitment to an account, so mandatory next-action
   capture does not apply to it. Sales Development Activities (BR-ACT-09)
   are the same shape of exception for the same reason — a conference or
-  training entry isn't a customer interaction either.
+  training entry isn't a customer interaction either. Relationship Support
+  (BR-ACT-10) is exempt for a different reason: the logger has no standing
+  access to the deal at all, so committing them to a follow-up on it doesn't
+  fit — same conclusion, different cause.
 * **Purpose:** Ensures every genuine customer interaction produces a
   trackable, assigned follow-up, closing the loop between activity logging
   and the Reminders/Tasks system (§7.2 of `docs/API-Catalog.md`), without
@@ -342,10 +347,11 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   from the Reminder's own (creating) Activity — same customer/deal thread —
   and is linked back via `Reminder.closing_activity_id` (distinct from
   `Reminder.activity_id`, which points to the Activity that *created* the
-  Reminder, per BR-ACT-04). `MANAGER_NOTE` and the six BR-ACT-09 Sales
-  Development Activity types are not valid closing Activity Types (rejected
-  by the same validator) — none of them represent a customer interaction,
-  so none can describe what closed a customer follow-up.
+  Reminder, per BR-ACT-04). `MANAGER_NOTE`, the six BR-ACT-09 Sales
+  Development Activity types, and `RELATIONSHIP_SUPPORT` (BR-ACT-10) are not
+  valid closing Activity Types (rejected by the same validator,
+  `NOT_CUSTOMER_FACING_TYPES`) — none of them represent a customer
+  interaction, so none can describe what closed a customer follow-up.
 * **Scope:** Mirrors BR-ACT-04 in the opposite direction — that rule requires
   every logged Activity to produce a Next Action; this rule requires every
   completed Next Action to produce a closing Activity. Together they close
@@ -436,6 +442,59 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   attribution reporting.
 * **Reference:** `docs/Sales-Development-Activities-Implementation-Plan.md`,
   `docs/Discussion-Sales-Development-Activities-2026-08.md`.
+
+### BR-ACT-10: Relationship-Support Activity — Narrow Cross-SBU Logging Carve-Out
+* **Rule:** A new `RELATIONSHIP_SUPPORT` `activity_type` lets someone with no
+  standing access to an Opportunity — outside its owner/split/tier-visibility
+  route entirely, regardless of SBU or zone — log a short note against it
+  documenting informal help they gave (an introduction, a call to a contact),
+  without any change to the deal's ownership, split, or revenue attribution.
+  It is the informal counterpart to Referral Credit (BR-FIN-07): Referral
+  Credit is for someone who originated the lead; Relationship Support is for
+  someone who helped along the way without originating anything. Requires an
+  Account (BR-ACT-01, no exemption) **and** an Opportunity — unlike every
+  other activity type, `opportunity_id` is mandatory here, since without it
+  this would just be an ordinary Account-level note, which any other
+  activity type already covers. `notes` is also required (unlike most
+  types, where it's optional) — same reasoning as `OTHER_DEVELOPMENT`'s
+  requirement (BR-ACT-09): without a description, the entry is a name
+  attached to someone else's deal with no record of what was actually done.
+* **Exempt from BR-ACT-04/BR-ACT-05** (`NOT_CUSTOMER_FACING_TYPES`, same
+  mechanism as `MANAGER_NOTE`/BR-ACT-09): no mandatory Next Action, not a
+  valid Reminder-closing activity type — the logger has no standing access
+  to the deal, so neither promising nor completing a follow-up on it fits.
+* **Database/RLS mechanism (migration `0029`):** two `SECURITY DEFINER`
+  functions, narrow and read-only, mirroring the existing
+  `cabio_app_has_split()`/`cabio_app_assigned_reminder()` pattern:
+  - `cabio_app_opportunity_in_account(opportunity_id, account_id)` — write
+    path. `ActivityService.log_activity` accepts an `opportunity_id` if
+    *either* the caller's own RLS-scoped `opportunity_exists()` check passes
+    (the normal case) *or* this function confirms the Opportunity genuinely
+    belongs to the given Account (the cross-SBU case) — an OR, not a
+    replacement of the normal check.
+  - `cabio_app_account_opportunities(account_id)` — the lookup behind the
+    "Related Opportunity" picker (`GET /accounts/{account_id}/opportunities/lookup`,
+    `OpportunityLookup` schema — deliberately not `OpportunityNested`, to
+    keep this response shape visibly distinct from a fully-authorized
+    Opportunity reference). Returns `id`+`name` only, across every SBU/zone,
+    for any authenticated caller — **the frontend only calls this when
+    Activity Type = Relationship Support is selected, but that gating is a
+    UI convention, not a backend enforcement mechanism; the function itself
+    carries no such restriction.** Same narrow, name-only widening as
+    `GET /users?scope=all` (BR-ACT-06), not a blanket Opportunity visibility
+    grant — no value/stage/owner/financials are exposed, and the caller
+    still cannot open the Opportunity itself.
+  - `activity_tier_visibility` gains `OR user_id = cabio_app_uid()` — without
+    it, the cross-SBU logger's own just-written row would be invisible to
+    them on read-back, since the policy otherwise still filters through
+    `opportunity`'s own tier-visibility.
+* **Consistent with ADR-037/BR-FIN-06's "SBU is an RLS security boundary"
+  stance** — this is a conscious, scoped exception (one fact — did this
+  Opportunity get informal help — visible to exactly the person who logged
+  it and whoever can already see the Opportunity), not a reversal of that
+  boundary.
+* **Reference:** `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`,
+  `docs/Discussion-SplitParticipant-SBU-Scope.md` (v6, §3.3).
 
 ---
 

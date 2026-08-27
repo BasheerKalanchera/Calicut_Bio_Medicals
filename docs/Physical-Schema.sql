@@ -11,12 +11,15 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-25 from the Dev database (Postgres 17.6), catching up
--- migrations 0024 (Opportunity-Assignment Notifications: notification table),
--- 0025/0026 (notification RLS fixes -- no schema shape change), and 0027
--- (Manager-Attested Gate Override, BR-OP-14: gate_override_reason table +
--- opportunity.gate_override_* columns) since the last regen on 2026-08-18.
--- See docs/Manager-Attested-Gate-Override-Implementation-Plan.md and
+-- Regenerated 2026-08-27 from the Dev database (Postgres 17.6), catching up
+-- migrations 0028 (Sales Development Activities, BR-ACT-09: activity.account_id
+-- made nullable + chk_activity_account_required, activity.outcome_notes column,
+-- CONFERENCE lead_source seed row) and 0029 (Relationship-Support Activity,
+-- BR-ACT-10: cabio_app_opportunity_in_account() and
+-- cabio_app_account_opportunities() SECURITY DEFINER functions,
+-- activity_tier_visibility RLS amendment) since the last regen on 2026-08-25.
+-- See docs/Sales-Development-Activities-Implementation-Plan.md,
+-- docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md, and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -35,7 +38,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aVy8OHJGAwgukjUwEnpssN891azQkYFglDwrStQswJAyjWyh2GBKNrae5HtTVDA
+\restrict tcTgsRiwkcpc7Cl7EyLpwBv7Eo2xjwiqwdP32cosiF3MMSFQpyVlpemPoaELbvr
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -67,6 +70,20 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
+-- Name: cabio_app_account_opportunities(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_account_opportunities(p_account_id uuid) RETURNS TABLE(id uuid, name text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            SELECT o.id, o.name FROM opportunity o
+            WHERE o.account_id = p_account_id
+            ORDER BY o.name
+        $$;
+
+
+--
 -- Name: cabio_app_assigned_reminder(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -95,6 +112,21 @@ CREATE FUNCTION public.cabio_app_has_split(p_opportunity_id uuid) RETURNS boolea
                 SELECT 1 FROM split
                 WHERE opportunity_id = p_opportunity_id
                   AND user_id = cabio_app_uid()
+            )
+        $$;
+
+
+--
+-- Name: cabio_app_opportunity_in_account(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_opportunity_in_account(p_opportunity_id uuid, p_account_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            SELECT EXISTS (
+                SELECT 1 FROM opportunity
+                WHERE id = p_opportunity_id AND account_id = p_account_id
             )
         $$;
 
@@ -179,7 +211,7 @@ CREATE TABLE public.account (
 
 CREATE TABLE public.activity (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    account_id uuid NOT NULL,
+    account_id uuid,
     project_id uuid,
     opportunity_id uuid,
     user_id uuid NOT NULL,
@@ -187,7 +219,9 @@ CREATE TABLE public.activity (
     activity_date timestamp with time zone NOT NULL,
     notes text,
     created_at timestamp with time zone DEFAULT now(),
-    created_by uuid
+    created_by uuid,
+    outcome_notes text,
+    CONSTRAINT chk_activity_account_required CHECK (((account_id IS NOT NULL) OR ((activity_type)::text = ANY ((ARRAY['CONFERENCE_EXPO'::character varying, 'OEM_PRODUCT_TRAINING'::character varying, 'CERTIFICATION'::character varying, 'SALES_TRAINING'::character varying, 'SEMINAR_TRADE_SHOW'::character varying, 'OTHER_DEVELOPMENT'::character varying])::text[]))))
 );
 
 
@@ -2128,7 +2162,7 @@ ALTER TABLE public.activity ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY activity_tier_visibility ON public.activity USING (((opportunity_id IS NULL) OR (opportunity_id IN ( SELECT opportunity.id
-   FROM public.opportunity))));
+   FROM public.opportunity)) OR (user_id = public.cabio_app_uid())));
 
 
 --
@@ -2273,5 +2307,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aVy8OHJGAwgukjUwEnpssN891azQkYFglDwrStQswJAyjWyh2GBKNrae5HtTVDA
+\unrestrict tcTgsRiwkcpc7Cl7EyLpwBv7Eo2xjwiqwdP32cosiF3MMSFQpyVlpemPoaELbvr
 

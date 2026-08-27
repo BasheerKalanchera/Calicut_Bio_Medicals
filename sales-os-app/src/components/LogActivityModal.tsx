@@ -4,7 +4,7 @@ import { Box, Button, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
-import { logActivity } from "../services/activities";
+import { logActivity, listAccountOpportunitiesLookup } from "../services/activities";
 import { listAccounts } from "../services/accounts";
 import { listUsers } from "../services/masterData";
 import type { ActivityType } from "../types/api-aliases";
@@ -33,6 +33,7 @@ const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "SALES_TRAINING",        label: "📚 Sales Training" },
   { value: "SEMINAR_TRADE_SHOW",    label: "🗣️ Seminar/Trade Show" },
   { value: "OTHER_DEVELOPMENT",     label: "🌱 Other Development" },
+  { value: "RELATIONSHIP_SUPPORT",  label: "🤲 Relationship Support" },
 ];
 
 // BR-ACT-09: no Account required, no mandatory next action, not a valid
@@ -83,12 +84,16 @@ export default function LogActivityModal({
   const [nextActionText, setNextActionText]       = useState("");
   const [nextActionDueDate, setNextActionDueDate] = useState(nowPlusDaysLocal(1));
   const [nextActionOwnerId, setNextActionOwnerId] = useState(currentUserId ?? "");
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [activeTab, setActiveTab] = useState<"details" | "nextAction">("details");
 
   const isManagerNote = activityType === "MANAGER_NOTE";
   const isSalesDevelopment = SALES_DEVELOPMENT_ACTIVITY_TYPES.has(activityType);
-  // BR-ACT-04: neither type carries a follow-up commitment to an account.
-  const hidesNextAction = isManagerNote || isSalesDevelopment;
+  const isRelationshipSupport = activityType === "RELATIONSHIP_SUPPORT";
+  // BR-ACT-04: none of these carry a follow-up commitment -- Manager Note
+  // isn't customer-facing, Sales Development isn't a customer interaction,
+  // Relationship Support's logger has no standing access to the deal.
+  const hidesNextAction = isManagerNote || isSalesDevelopment || isRelationshipSupport;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -108,6 +113,17 @@ export default function LogActivityModal({
     },
   });
 
+  const resolvedAccountId = accountId ?? selectedAccountId;
+
+  // BR-ACT-10: only fetched when Relationship Support is selected -- the
+  // lookup itself is unscoped by the caller's own SBU/zone (that's the
+  // whole point), but there's no reason to fetch it for any other type.
+  const { data: opportunityOptions = [] } = useQuery({
+    queryKey: ["opportunities", "lookup", resolvedAccountId],
+    enabled: isOpen && !!resolvedAccountId && !opportunityId && isRelationshipSupport,
+    queryFn: () => listAccountOpportunitiesLookup(resolvedAccountId),
+  });
+
   useEffect(() => {
     if (!isOpen) return;
     // Resets this form's fields on open; React 18 batches these into one
@@ -122,10 +138,9 @@ export default function LogActivityModal({
     setNextActionText("");
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId(currentUserId ?? "");
+    setSelectedOpportunityId("");
     setActiveTab("details");
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const resolvedAccountId = accountId ?? selectedAccountId;
 
   async function handleSubmit() {
     // BR-ACT-01/BR-ACT-09: Account is required for every activity_type
@@ -146,16 +161,26 @@ export default function LogActivityModal({
     if (activityType === "OTHER_DEVELOPMENT" && !notes.trim()) {
       setActiveTab("details"); throw new Error("Description is required for Other Development");
     }
+    // BR-ACT-10: the whole point is tying support to a specific deal, and
+    // without notes the entry says nothing about what was actually done.
+    if (isRelationshipSupport) {
+      if (!opportunityId && !selectedOpportunityId) {
+        setActiveTab("details"); throw new Error("Related Opportunity is required for Relationship Support");
+      }
+      if (!notes.trim()) {
+        setActiveTab("details"); throw new Error("Notes describing what was done are required for Relationship Support");
+      }
+    }
     // BR-ACT-04: Next Action is mandatory for every activity_type except
-    // MANAGER_NOTE and the Sales Development types (neither is a customer
-    // interaction — carries no follow-up commitment).
+    // MANAGER_NOTE, the Sales Development types, and Relationship Support
+    // (none of them carry a follow-up commitment).
     if (!hidesNextAction) {
       if (!nextActionText.trim()) { setActiveTab("nextAction"); throw new Error("Next Action is required"); }
       if (!nextActionDueDate) { setActiveTab("nextAction"); throw new Error("Next Action Due Date is required"); }
     }
     await logActivity({
       account_id: resolvedAccountId || undefined,
-      opportunity_id: opportunityId,
+      opportunity_id: opportunityId ?? (selectedOpportunityId || undefined),
       project_id: projectId,
       user_id: userId || undefined,
       activity_type: activityType,
@@ -168,11 +193,12 @@ export default function LogActivityModal({
         next_action_owner_id: nextActionOwnerId || undefined,
       }),
     });
+    const loggedOpportunityId = opportunityId ?? (selectedOpportunityId || undefined);
     if (resolvedAccountId) {
       queryClient.invalidateQueries({ queryKey: ["activities", "account", resolvedAccountId] });
     }
-    if (opportunityId) {
-      queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
+    if (loggedOpportunityId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", loggedOpportunityId] });
     }
     if (projectId) {
       queryClient.invalidateQueries({ queryKey: ["activities", "project", projectId] });
@@ -250,8 +276,18 @@ export default function LogActivityModal({
               onChange={(e) => {
                 const value = e.target.value as ActivityType;
                 setActivityType(value);
-                if (value === "MANAGER_NOTE" || SALES_DEVELOPMENT_ACTIVITY_TYPES.has(value)) {
+                if (
+                  value === "MANAGER_NOTE"
+                  || value === "RELATIONSHIP_SUPPORT"
+                  || SALES_DEVELOPMENT_ACTIVITY_TYPES.has(value)
+                ) {
                   setActiveTab("details");
+                }
+                // BR-ACT-10: clear a picked Opportunity when switching away
+                // from Relationship Support, so a stale selection doesn't
+                // silently ride along on a different activity type.
+                if (value !== "RELATIONSHIP_SUPPORT") {
+                  setSelectedOpportunityId("");
                 }
               }}
               fullWidth
@@ -291,6 +327,28 @@ export default function LogActivityModal({
                 Linked to this opportunity
               </Box>
             )}
+            {/* BR-ACT-10: only shown when Relationship Support is selected
+                and there's no fixed opportunityId prop -- the two never
+                appear together. cabio_app_account_opportunities() (the
+                lookup behind this) is unscoped by the caller's own
+                SBU/zone, deliberately, since that's the entire point of
+                the feature. */}
+            {!opportunityId && isRelationshipSupport && (
+              <TextField
+                select
+                label="Related Opportunity *"
+                value={selectedOpportunityId}
+                onChange={(e) => setSelectedOpportunityId(e.target.value)}
+                fullWidth
+                size="small"
+                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+              >
+                <MenuItem value="">Select opportunity</MenuItem>
+                {opportunityOptions.map((o) => (
+                  <MenuItem key={o.id} value={o.id}>{o.name}</MenuItem>
+                ))}
+              </TextField>
+            )}
             {projectId && (
               <Box
                 sx={{
@@ -303,7 +361,7 @@ export default function LogActivityModal({
               </Box>
             )}
             <TextField
-              label={activityType === "OTHER_DEVELOPMENT" ? "Description *" : "Notes"}
+              label={activityType === "OTHER_DEVELOPMENT" || isRelationshipSupport ? "Description *" : "Notes"}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               multiline

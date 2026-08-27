@@ -13,6 +13,8 @@ from app.domains.activity.schemas import (
     ActivityCreate,
     ActivityReportRow,
     ActivityResponse,
+    OpportunityLookup,
+    OpportunityNested,
     ReminderCreate,
     ReminderResponse,
     ReminderUpdate,
@@ -59,6 +61,19 @@ def list_activities(
             total_pages=math.ceil(total / page_size) if total else 0,
         )
     )
+
+
+@router.get("/accounts/{account_id}/opportunities/lookup")
+def list_account_opportunities_lookup(
+    account_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+) -> APIResponse[list[OpportunityLookup]]:
+    # BR-ACT-10: deliberately unscoped by the caller's own SBU/zone tier --
+    # see cabio_app_account_opportunities() and the schema's own docstring
+    # for why this is a narrow, conscious exception, not a bug.
+    items = service.list_account_opportunities_lookup(account_id)
+    return APIResponse(data=[OpportunityLookup(id=i, name=n) for i, n in items])
 
 
 @router.get("/opportunities/{opportunity_id}/activities")
@@ -113,9 +128,29 @@ def list_daily_activity_report(
     items, total = service.list_daily_report(
         current_user, report_date, user_id=user_id, page=page, page_size=page_size
     )
+    rows = [ActivityReportRow.model_validate(a) for a in items]
+    # BR-ACT-10: a cross-SBU Relationship Support logger's own row has
+    # opportunity=None -- the nested relationship load goes through
+    # Opportunity's own tier-visibility RLS, which they still fail, even on
+    # their own logged activity. Not a leak to plug: they already saw and
+    # picked this exact name from the "Related Opportunity" picker (same
+    # unscoped lookup), so redisplaying it here reveals nothing new. One
+    # lookup per distinct account among the affected rows, not per row.
+    lookups_by_account: dict[uuid.UUID, list[tuple[uuid.UUID, str]]] = {}
+    for row, activity in zip(rows, items, strict=True):
+        if row.activity_type == "RELATIONSHIP_SUPPORT" and row.opportunity is None and activity.opportunity_id:
+            if activity.account_id not in lookups_by_account:
+                lookups_by_account[activity.account_id] = service.list_account_opportunities_lookup(
+                    activity.account_id
+                )
+            match = next(
+                (t for t in lookups_by_account[activity.account_id] if t[0] == activity.opportunity_id), None
+            )
+            if match:
+                row.opportunity = OpportunityNested(id=match[0], name=match[1])
     return APIResponse(
         data=PaginatedResponse(
-            items=[ActivityReportRow.model_validate(a) for a in items],
+            items=rows,
             total=total,
             page=page,
             page_size=page_size,

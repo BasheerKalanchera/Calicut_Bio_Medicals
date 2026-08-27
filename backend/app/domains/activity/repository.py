@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, text
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -22,6 +22,28 @@ class ActivityRepository(BaseRepository[Activity]):
 
     def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Opportunity.id == opportunity_id)) or 0) > 0
+
+    def opportunity_in_account(self, opportunity_id: uuid.UUID, account_id: uuid.UUID) -> bool:
+        # BR-ACT-10: raw call to the SECURITY DEFINER function, not a plain
+        # RLS-scoped query -- a cross-SBU Relationship Support logger's own
+        # session would otherwise have this Opportunity filtered out as
+        # invisible, even though it genuinely exists.
+        return bool(
+            self.db.execute(
+                text("SELECT cabio_app_opportunity_in_account(:opportunity_id, :account_id)"),
+                {"opportunity_id": opportunity_id, "account_id": account_id},
+            ).scalar()
+        )
+
+    def list_account_opportunities_lookup(self, account_id: uuid.UUID) -> list[tuple[uuid.UUID, str]]:
+        # BR-ACT-10: same SECURITY DEFINER widening as above, feeding the
+        # "Related Opportunity" picker -- id+name only, deliberately
+        # unscoped by the caller's own SBU/zone.
+        rows = self.db.execute(
+            text("SELECT id, name FROM cabio_app_account_opportunities(:account_id)"),
+            {"account_id": account_id},
+        ).all()
+        return [(row.id, row.name) for row in rows]
 
     def project_exists(self, project_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Project.id == project_id)) or 0) > 0

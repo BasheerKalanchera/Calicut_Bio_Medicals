@@ -5,11 +5,12 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # Approved activity types (BR-ACT-02 adds MANAGER_NOTE; BR-ACT-09 adds the six
-# Sales Development Activity types)
+# Sales Development Activity types; BR-ACT-10 adds RELATIONSHIP_SUPPORT)
 ActivityType = Literal[
     "VISIT", "CALL", "EMAIL", "MEETING", "NOTE", "MANAGER_NOTE",
     "CONFERENCE_EXPO", "OEM_PRODUCT_TRAINING", "CERTIFICATION",
     "SALES_TRAINING", "SEMINAR_TRADE_SHOW", "OTHER_DEVELOPMENT",
+    "RELATIONSHIP_SUPPORT",
 ]
 
 # BR-ACT-09: no Account required, no mandatory next action (BR-ACT-04), not a
@@ -20,6 +21,20 @@ SALES_DEVELOPMENT_ACTIVITY_TYPES: frozenset[str] = frozenset({
     "CONFERENCE_EXPO", "OEM_PRODUCT_TRAINING", "CERTIFICATION",
     "SALES_TRAINING", "SEMINAR_TRADE_SHOW", "OTHER_DEVELOPMENT",
 })
+
+# BR-ACT-04/BR-ACT-05: every type here is exempt from the mandatory Next
+# Action AND invalid as a Reminder-closing activity type, for the same
+# underlying reason each time -- none of them represent a customer-facing
+# action/commitment. MANAGER_NOTE isn't customer-facing at all; the six
+# Sales Development types (BR-ACT-09) aren't a customer interaction;
+# RELATIONSHIP_SUPPORT (BR-ACT-10) is logged by someone with no standing
+# access to the deal, so neither promising nor completing a follow-up on it
+# makes sense for them. Deliberately does NOT include the account-required
+# exemption (SALES_DEVELOPMENT_ACTIVITY_TYPES alone governs that) --
+# RELATIONSHIP_SUPPORT still requires an Account, unlike the six above.
+NOT_CUSTOMER_FACING_TYPES: frozenset[str] = SALES_DEVELOPMENT_ACTIVITY_TYPES | {
+    "MANAGER_NOTE", "RELATIONSHIP_SUPPORT",
+}
 
 
 # ------------------------------------------------------------------
@@ -77,11 +92,29 @@ class ActivityCreate(BaseModel):
 
     @model_validator(mode="after")
     def _require_next_action_unless_exempt(self) -> "ActivityCreate":
-        if self.activity_type != "MANAGER_NOTE" and self.activity_type not in SALES_DEVELOPMENT_ACTIVITY_TYPES:
+        if self.activity_type not in NOT_CUSTOMER_FACING_TYPES:
             if not self.next_action_text:
                 raise ValueError("Next Action is required to log this activity.")
             if not self.next_action_due_date:
                 raise ValueError("Next Action Due Date is required to log this activity.")
+        return self
+
+    @model_validator(mode="after")
+    def _require_opportunity_for_relationship_support(self) -> "ActivityCreate":
+        # BR-ACT-10: the whole point is tying support to a specific deal --
+        # without an opportunity_id this would just be an ordinary Account
+        # note, which any Note/Call/etc. already covers.
+        if self.activity_type == "RELATIONSHIP_SUPPORT" and not self.opportunity_id:
+            raise ValueError("Related Opportunity is required for Relationship Support.")
+        return self
+
+    @model_validator(mode="after")
+    def _require_notes_for_relationship_support(self) -> "ActivityCreate":
+        # BR-ACT-10: without a description, a Relationship Support entry is
+        # just a name tied to someone else's deal with no record of what
+        # was actually done -- same reasoning as OTHER_DEVELOPMENT above.
+        if self.activity_type == "RELATIONSHIP_SUPPORT" and not self.notes:
+            raise ValueError("Notes describing what was done are required for Relationship Support.")
         return self
 
     @model_validator(mode="after")
@@ -126,6 +159,17 @@ class ActivityResponse(BaseModel):
     created_at: datetime
     user: UserNested
     next_action_reminder_id: uuid.UUID | None = None
+
+
+class OpportunityLookup(BaseModel):
+    # BR-ACT-10: deliberately not OpportunityNested reused -- this response
+    # shape is fed by cabio_app_account_opportunities(), which returns
+    # id+name across SBU/zone boundaries, unlike every other Opportunity
+    # reference in this codebase. Keeping it a visibly distinct schema
+    # avoids it being mistaken for a fully-authorized Opportunity reference
+    # elsewhere.
+    id: uuid.UUID
+    name: str
 
 
 class ActivityReportRow(BaseModel):
@@ -174,10 +218,8 @@ class ReminderUpdate(BaseModel):
         if self.is_completed:
             if not self.activity_type:
                 raise ValueError("Activity type is required to close a Next Action.")
-            if self.activity_type == "MANAGER_NOTE":
-                raise ValueError("Manager Note is not a valid closing activity type.")
-            if self.activity_type in SALES_DEVELOPMENT_ACTIVITY_TYPES:
-                raise ValueError("Sales Development activities are not a valid closing activity type.")
+            if self.activity_type in NOT_CUSTOMER_FACING_TYPES:
+                raise ValueError(f"{self.activity_type} is not a valid closing activity type.")
             if not self.activity_date:
                 raise ValueError("Activity date is required to close a Next Action.")
             if not self.notes:

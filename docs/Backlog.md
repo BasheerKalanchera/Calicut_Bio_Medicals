@@ -76,52 +76,55 @@ kept only as a pointer; nothing left to pick up here.
   `refetchInterval: 60_000` — consistent with the component's own documented
   design ("reappears on next poll, not silence-forever-able by accident").
 
-- **Referral Credit Part 2 — Relationship-Support Activity.** Split out
-  2026-08-18 when Part 1 (Referral Credit, `BR-FIN-07`) shipped — see
-  `docs/Progress-Archive-2026-08.md`'s 2026-08-18/19 entry. Fully scoped,
-  ready to build: `docs/Referral-Credit-And-Relationship-Support-
-  Implementation-Plan.md` steps 5 (Activity schema/repository/service/
-  router), 7 (Business Rules — note the plan's own `BR-ACT-08` numbering
-  is now stale, that slot was taken by Opportunity Document Upload since
-  the plan was written; use the next free `BR-ACT-` number at build time),
-  8 (frontend `LogActivityModal.tsx`), and 10 (manual verification,
-  including the cross-SBU security check — the real one, can't be
-  skipped). **Migration number reassigned again 2026-08-27:** Part 2's migration
-  is now **`0029`** (was `0028`, bumped because Sales Development Activities is
-  building first — see `docs/Sales-Development-Activities-Implementation-Plan.md`,
-  which takes `0028`). Highest on disk as of 2026-08-25 was `0026` (Part 1's own
-  migration landed as `0023_add_referral_credit.py`, 2026-08-18; `0024`-`0026`
-  are the notification feature, 2026-08-24); `0027` went to Gate Override same
-  day. Re-check the actual highest migration on disk at build time regardless.
-  Part 2's migration contains *only*
-  the two `SECURITY DEFINER` functions + the `activity_tier_visibility` RLS
-  amendment — the `referred_by_user_id`/`referred_by_note` columns are
-  already live via `0023`, don't recreate them. Plan doc corrected same day
-  to stop describing this shipped work as pending. Lets someone outside a
-  deal's normal ownership/SBU log a "relationship support" note against a
-  specific
-  Opportunity via a new, narrow `SECURITY DEFINER` RLS carve-out.
+- ~~**Referral Credit Part 2 — Relationship-Support Activity.**~~ —
+  **DONE, 2026-08-27.** Split out 2026-08-18 when Part 1 (Referral Credit,
+  `BR-FIN-07`) shipped — see `docs/Progress-Archive-2026-08.md`'s
+  2026-08-18/19 entry. Built per `docs/Referral-Credit-And-Relationship-
+  Support-Implementation-Plan.md`: migration `0029` (two `SECURITY DEFINER`
+  functions + `activity_tier_visibility` RLS amendment — the
+  `referred_by_user_id`/`referred_by_note` columns were already live via
+  `0023`, not recreated), `BR-ACT-10` in `Business-Rules.md` (also amends
+  BR-ACT-04/BR-ACT-05), `LogActivityModal.tsx`'s "Related Opportunity"
+  picker, the new `GET /accounts/{account_id}/opportunities/lookup`
+  endpoint. Lets someone outside a deal's normal ownership/SBU log a
+  "relationship support" note against a specific Opportunity via a narrow
+  `SECURITY DEFINER` RLS carve-out. 11 new backend tests, 619/619 passing;
+  `tsc`/lint clean. **Two gaps found and filled beyond the original plan:**
+  `opportunity_id` and `notes` are both now required for this type (the plan
+  left both optional at the schema level, which would have let the feature
+  degrade into a meaningless unlinked, empty note). Migration applied to Dev,
+  `Physical-Schema.sql` regenerated and reviewed. **Manual verification
+  complete, all 16 cases pass** — including the cross-SBU flow (plan doc
+  step 12.3), run live as Fahad doubling as both the same-SBU sanity check
+  and the cross-SBU test subject
+  (`docs/Referral-Credit-And-Relationship-Support-Manual-E2E-Verification.md`).
+  **One finding, tighter than planned, not a bug:** a cross-SBU logger's own
+  note text reads back fine, but the linked Opportunity's *name* stays
+  invisible even on their own logged entry — the nested `opportunity`
+  relationship load still goes through Opportunity's own RLS, which they
+  still fail. The widening is even narrower in practice than "name-only in
+  the picker" as designed.
 
   **Opportunity picker scope narrowed 2026-08-25** (architecture discussion
-  with Basheer): the "which Opportunity is this about" picker in
-  `LogActivityModal.tsx` now renders **only when Activity Type =
+  with Basheer, before the build): the "which Opportunity is this about"
+  picker in `LogActivityModal.tsx` renders **only when Activity Type =
   Relationship Support is selected** — the earlier plan's general-purpose
   version (available for *any* activity type logged from the Account level)
-  is explicitly dropped from this build, not bundled in. Two options were
-  considered and rejected before landing here: (a) drop the
-  Opportunity-level link entirely, logging only at the Account level — this
-  would have avoided the cross-SBU visibility question altogether (an
-  Account-only note already works today for anyone, zero new backend code),
-  but loses which specific deal the support was about; (b) keep the
-  general-purpose picker as originally planned — rejected as unnecessarily
-  broad exposure for a narrow, informal use case, and it would have shipped
-  the general convenience as an incidental side effect rather than a
-  deliberate decision. **Important:** the activity-type gate is
-  frontend-only — it doesn't shrink the backend security work, since the
-  lookup function itself can't know why the frontend is calling it and
+  was explicitly dropped, not bundled in. Two options were considered and
+  rejected before landing here: (a) drop the Opportunity-level link
+  entirely, logging only at the Account level — this would have avoided the
+  cross-SBU visibility question altogether (an Account-only note already
+  works today for anyone, zero new backend code), but loses which specific
+  deal the support was about; (b) keep the general-purpose picker as
+  originally planned — rejected as unnecessarily broad exposure for a
+  narrow, informal use case, and it would have shipped the general
+  convenience as an incidental side effect rather than a deliberate
+  decision. **Important, confirmed still true as built:** the activity-type
+  gate is frontend-only — it doesn't shrink the backend security work, since
+  the lookup function itself can't know why the frontend is calling it and
   still has to return that Account's Opportunity names to anyone who calls
-  it. Same manual cross-SBU verification still required, including via a
-  raw API call, not just through the gated UI. Nothing implemented yet.
+  it. Manual cross-SBU verification still required, including via a raw API
+  call, not just through the gated UI.
 
 - **Milestone 2 — Target Planning, Insights Dashboard/Reporting, Coverage Planning. All
   three fully scoped 2026-08-25, none started.** Sequencing decided the same session,

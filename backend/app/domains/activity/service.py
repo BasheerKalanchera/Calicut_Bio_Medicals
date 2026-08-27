@@ -66,6 +66,15 @@ class ActivityService:
         total = offset + len(items)
         return items, total
 
+    def list_account_opportunities_lookup(self, account_id: uuid.UUID) -> list[tuple[uuid.UUID, str]]:
+        # BR-ACT-10: feeds the "Related Opportunity" picker for Relationship
+        # Support -- account_exists is a plain RLS-scoped check (the caller
+        # must already be able to see the Account itself), but the
+        # Opportunity list underneath deliberately isn't tier-scoped.
+        if not self.repository.account_exists(account_id):
+            raise NotFoundError(f"Account {account_id} not found")
+        return self.repository.list_account_opportunities_lookup(account_id)
+
     def list_by_opportunity(
         self,
         opportunity_id: uuid.UUID,
@@ -125,8 +134,17 @@ class ActivityService:
         if data.account_id and not self.repository.account_exists(data.account_id):
             raise NotFoundError(f"Account {data.account_id} not found")
 
-        if data.opportunity_id and not self.repository.opportunity_exists(data.opportunity_id):
-            raise NotFoundError(f"Opportunity {data.opportunity_id} not found")
+        if data.opportunity_id:
+            # BR-ACT-10: a Relationship Support logger has no standing
+            # (RLS-visible) route to the Opportunity, so opportunity_exists
+            # alone would wrongly 404 a real one -- opportunity_in_account
+            # is the deliberate, narrow carve-out for exactly that case.
+            visible = self.repository.opportunity_exists(data.opportunity_id)
+            in_account = bool(data.account_id) and self.repository.opportunity_in_account(
+                data.opportunity_id, data.account_id
+            )
+            if not (visible or in_account):
+                raise NotFoundError(f"Opportunity {data.opportunity_id} not found")
 
         activity = Activity(
             account_id=data.account_id,
