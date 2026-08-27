@@ -173,6 +173,45 @@ kept only as a pointer; nothing left to pick up here.
   entry below) — that item was "next up" before this session's Milestone 2 planning;
   no explicit decision was made on relative priority between the two tracks.
 
+- **Annual Development-Activity KPI — a real manager-set target, tracked against
+  Sales Development Activities.** Decided with Haroon 2026-08-27
+  (`docs/Discussion-Sales-Development-Activities-2026-08.md`): once Sales Development
+  Activities exist, a manager should be able to set an annual target for a rep (e.g.
+  "4 trainings this year") and see actual-vs-target attainment for it, the same idea
+  as the revenue target in Target Planning but for a count of development activities
+  instead of money.
+  **Architecture decision, made 2026-08-27:** this does **not** get bolted onto the
+  `target_plan` table Target Planning is building this week. That table is
+  revenue-only (a currency amount) and quarterly only, by design — forcing a
+  count-based, annual metric into the same row would complicate the very migration
+  currently shipping and produce a confusing half-currency/half-count table. Instead,
+  this gets its **own table** later (something like `annual_kpi_target`: user, SBU,
+  year, KPI type, target count), reusing the same manager/RLS scoping pattern Target
+  Planning establishes, once it exists to copy from.
+  **Sequencing:** deliberately last in line — needs both Target Planning (to copy the
+  scoping pattern from) and Sales Development Activities (to have real logged
+  activity counts to compare against) built first. Not yet scoped as a formal
+  implementation plan; nothing implemented.
+
+- **Activity log privacy hole — some entries are visible to everyone in the
+  company, not just the rep's own manager chain.** Surfaced 2026-08-27 while
+  scoping Sales Development Activities (`docs/Discussion-Sales-Development-
+  Activities-2026-08.md`). Every activity a rep logs is supposed to be
+  visible only to that rep and their reporting chain (manager, GM, etc.) —
+  same as everything else in the app. But there's an existing bug in the
+  database-level rule that enforces this: for any activity that isn't
+  attached to a specific Opportunity, the rule doesn't restrict it at all —
+  it's visible to every logged-in user, any role, any zone. This bug already
+  exists today for some activity types. The new Sales Development Activities
+  (conferences, training, certifications) are designed to never be attached
+  to an Opportunity or even an Account, so every single one of them will
+  fall into this open bucket. Not urgent — nothing sensitive about customer
+  deals is exposed, just things like "so-and-so attended a training" — but
+  it's a real, growing gap worth fixing properly (correcting the underlying
+  database rule) rather than leaving it to spread further as more
+  unattached activity types get added. Needs Basheer's call on priority;
+  nothing implemented.
+
 - ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
   **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/
   Progress-Archive-2026-07.md`'s Phase 2E section) was about *test*
