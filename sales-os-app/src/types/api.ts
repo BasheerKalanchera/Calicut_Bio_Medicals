@@ -1822,7 +1822,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
             /**
              * Activity Date
              * Format: date-time
@@ -1830,17 +1830,16 @@ export interface components {
             activity_date: string;
             /** Notes */
             notes: string | null;
-            account: components["schemas"]["AccountNested"];
+            /** Outcome Notes */
+            outcome_notes: string | null;
+            account: components["schemas"]["AccountNested"] | null;
             opportunity: components["schemas"]["OpportunityNested"] | null;
             user: components["schemas"]["UserNested"];
         };
         /** ActivityCreate */
         ActivityCreate: {
-            /**
-             * Account Id
-             * Format: uuid
-             */
-            account_id: string;
+            /** Account Id */
+            account_id?: string | null;
             /** Opportunity Id */
             opportunity_id?: string | null;
             /** Project Id */
@@ -1851,7 +1850,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
             /**
              * Activity Date
              * Format: date-time
@@ -1859,6 +1858,8 @@ export interface components {
             activity_date: string;
             /** Notes */
             notes?: string | null;
+            /** Outcome Notes */
+            outcome_notes?: string | null;
             /** Next Action Text */
             next_action_text?: string | null;
             /** Next Action Due Date */
@@ -1877,7 +1878,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
             /**
              * Activity Date
              * Format: date-time
@@ -1885,7 +1886,9 @@ export interface components {
             activity_date: string;
             /** Notes */
             notes: string | null;
-            account: components["schemas"]["AccountNested"];
+            /** Outcome Notes */
+            outcome_notes: string | null;
+            account: components["schemas"]["AccountNested"] | null;
             opportunity: components["schemas"]["OpportunityNested"] | null;
             project: components["schemas"]["ProjectNested"] | null;
             user: components["schemas"]["UserNested"];
@@ -1897,11 +1900,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /**
-             * Account Id
-             * Format: uuid
-             */
-            account_id: string;
+            /** Account Id */
+            account_id: string | null;
             /** Opportunity Id */
             opportunity_id: string | null;
             /** Project Id */
@@ -1915,7 +1915,7 @@ export interface components {
              * Activity Type
              * @enum {string}
              */
-            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE";
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT";
             /**
              * Activity Date
              * Format: date-time
@@ -1923,6 +1923,8 @@ export interface components {
             activity_date: string;
             /** Notes */
             notes: string | null;
+            /** Outcome Notes */
+            outcome_notes: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2857,7 +2859,7 @@ export interface components {
             /** Is Completed */
             is_completed: boolean;
             /** Activity Type */
-            activity_type?: ("VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE") | null;
+            activity_type?: ("VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT") | null;
             /** Activity Date */
             activity_date?: string | null;
             /** Notes */
@@ -3291,11 +3293,19 @@ export interface components {
             competitor_name: string | null;
             /** Referred By Note */
             referred_by_note: string | null;
+            /** Gate Override Approver Id */
+            gate_override_approver_id: string | null;
+            /** Gate Override Reason Id */
+            gate_override_reason_id: string | null;
+            /** Gate Override Note */
+            gate_override_note: string | null;
             stage: components["schemas"]["OpportunityStageNested"];
             status: components["schemas"]["OpportunityStatusNested"];
             owner: components["schemas"]["OwnerNested"];
             sbu: components["schemas"]["SBUNested"];
             referred_by: components["schemas"]["OwnerNested"] | null;
+            gate_override_approver: components["schemas"]["OwnerNested"] | null;
+            gate_override_reason: components["schemas"]["GateOverrideReasonNested"] | null;
         };
         /** WorkspaceProject */
         WorkspaceProject: {

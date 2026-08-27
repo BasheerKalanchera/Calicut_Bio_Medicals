@@ -118,8 +118,11 @@ class ActivityService:
         *,
         created_by: uuid.UUID,
     ) -> tuple[Activity, Reminder | None]:
-        # BR-ACT-01: account must exist
-        if not self.repository.account_exists(data.account_id):
+        # BR-ACT-01/BR-ACT-09: account must exist when provided -- required
+        # for every type except the six Sales Development Activity types
+        # (schema validator already enforces the account_id is present at all
+        # for those; here we just don't gate on it being None).
+        if data.account_id and not self.repository.account_exists(data.account_id):
             raise NotFoundError(f"Account {data.account_id} not found")
 
         if data.opportunity_id and not self.repository.opportunity_exists(data.opportunity_id):
@@ -133,6 +136,7 @@ class ActivityService:
             activity_type=data.activity_type,
             activity_date=data.activity_date,
             notes=data.notes,
+            outcome_notes=data.outcome_notes,
             created_by=created_by,
         )
         activity = self.repository.create(activity)

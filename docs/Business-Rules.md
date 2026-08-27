@@ -269,44 +269,47 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 # 6. Activity & Interaction Rules
 
-### BR-ACT-01: Activity Account Requirement (ADR-006 — clarified June 20, 2026)
-* **Rule:** Every Activity must be associated with an Account. Activities may optionally be linked to a Project and/or Opportunity to provide additional business context.
+### BR-ACT-01: Activity Account Requirement (ADR-006 — clarified June 20, 2026; exception added BR-ACT-09, 2026-08-27)
+* **Rule:** Every Activity must be associated with an Account, **except the six Sales Development Activity types (BR-ACT-09), which are deliberately unattached.** Activities may optionally be linked to a Project and/or Opportunity to provide additional business context.
 * **Database Constraints:**
-  * `account_id` — NOT NULL (mandatory)
+  * `account_id` — nullable; required for every `activity_type` except the six BR-ACT-09 types, enforced by `chk_activity_account_required` (see BR-ACT-03)
   * `project_id` — nullable (optional Project linkage)
   * `opportunity_id` — nullable (optional Opportunity linkage)
 * **Classification Logic:**
   * Activities linked to an Opportunity contribute to pipeline velocity and forecast confidence scores.
   * Activities linked to a Project (with no Opportunity) are classified as "Project Engagement" activities.
   * Activities linked only to an Account (with no Project or Opportunity) are classified as "Account Scanning/Profiling" and do not contribute to forecast confidence scores.
-* **Constraint:** An Activity without an Account reference must be rejected at both the application layer and the database layer.
+  * Sales Development Activities (BR-ACT-09) are none of the above — no Account, no forecast contribution, no pipeline classification.
+* **Constraint:** An Activity without an Account reference must be rejected at both the application layer and the database layer, unless `activity_type` is one of the six BR-ACT-09 types.
 
 ### BR-ACT-02: Manager Push (Logging)
 *   **Rule:** Managers can log "Manager Notes" on any Opportunity.
 *   **Visibility:** These are highlighted in the activity timeline and cannot be deleted or edited by the Sales Executive owner.
 
-### BR-ACT-03: Activity Account Constraint — Database Enforcement
+### BR-ACT-03: Activity Account Constraint — Database Enforcement (amended BR-ACT-09, 2026-08-27)
 * **Rule:** The Activity Account Requirement (BR-ACT-01) must be enforced at the database level in addition to application-layer validation.
-* **Constraint:** `account_id` must be defined as NOT NULL in the `activity` table physical schema. This is the authoritative database-level enforcement mechanism.
+* **Constraint:** `account_id` is nullable in the `activity` table physical schema (as of migration `0028`, down from blanket NOT NULL), but a `CHECK` constraint — `chk_activity_account_required` — reinstates the same guarantee for every `activity_type` except the six BR-ACT-09 Sales Development Activity types: `account_id IS NOT NULL OR activity_type IN ('CONFERENCE_EXPO', 'OEM_PRODUCT_TRAINING', 'CERTIFICATION', 'SALES_TRAINING', 'SEMINAR_TRADE_SHOW', 'OTHER_DEVELOPMENT')`. This, not the column's own nullability, is the authoritative database-level enforcement mechanism.
 * **Nullability Summary:**
 
   | Column | Nullability | Purpose |
   | :--- | :--- | :--- |
-  | `account_id` | NOT NULL | Mandatory. Every Activity must belong to an Account. |
+  | `account_id` | NULLABLE, conditionally required via `chk_activity_account_required` | Mandatory for every Activity except the six BR-ACT-09 types. |
   | `project_id` | NULLABLE | Optional. Provides Project context when applicable. |
   | `opportunity_id` | NULLABLE | Optional. Provides Opportunity context when applicable. |
 
-* **Purpose:** Ensures every Activity record is always directly traceable to a customer Account. Database-level NOT NULL enforcement provides a safety net independent of application validation logic and API layer behaviour.
+* **Purpose:** Ensures every customer-facing Activity record is always directly traceable to a customer Account. Database-level `CHECK` enforcement provides a safety net independent of application validation logic and API layer behaviour, while still permitting the six deliberately-unattached Sales Development Activity types (BR-ACT-09).
 
-### BR-ACT-04: Mandatory Next Action Capture (PRD §4.3)
+### BR-ACT-04: Mandatory Next Action Capture (PRD §4.3; exemption widened BR-ACT-09, 2026-08-27)
 * **Rule:** Every logged Activity must capture a Next Action (free text),
-  a Due Date, and an Owner, EXCEPT when `activity_type == MANAGER_NOTE`.
-  The interaction cannot be saved without these fields for any other
+  a Due Date, and an Owner, EXCEPT when `activity_type == MANAGER_NOTE`
+  or `activity_type` is one of the six BR-ACT-09 Sales Development Activity
+  types. The interaction cannot be saved without these fields for any other
   activity_type.
 * **Implementation:** Enforced at the Pydantic schema layer via a
   conditional validator (`ActivityCreate.next_action_text` /
   `.next_action_due_date` are required unless `activity_type` is
-  `MANAGER_NOTE`) and realized as a Reminder record auto-created in the
+  `MANAGER_NOTE` or a Sales Development Activity type) and realized as a
+  Reminder record auto-created in the
   same transaction as the Activity it belongs to (see ADR-023 — Reminders
   are Activity-linked, not a separate user-initiated entity in this flow).
   No Reminder is created when the exemption applies.
@@ -314,14 +317,17 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   defaults to the Activity's `user_id` (the person the interaction is
   logged against).
 * **Scope / exemption:** Applies to all activity_type values EXCEPT
-  MANAGER_NOTE. A Manager Note is internal manager-to-rep guidance
-  (BR-ACT-02), not a customer interaction — it carries no follow-up
-  commitment to an account, so mandatory next-action capture does not
-  apply to it.
+  MANAGER_NOTE and the six BR-ACT-09 types. A Manager Note is internal
+  manager-to-rep guidance (BR-ACT-02), not a customer interaction — it
+  carries no follow-up commitment to an account, so mandatory next-action
+  capture does not apply to it. Sales Development Activities (BR-ACT-09)
+  are the same shape of exception for the same reason — a conference or
+  training entry isn't a customer interaction either.
 * **Purpose:** Ensures every genuine customer interaction produces a
   trackable, assigned follow-up, closing the loop between activity logging
   and the Reminders/Tasks system (§7.2 of `docs/API-Catalog.md`), without
-  forcing meaningless due dates onto internal notes.
+  forcing meaningless due dates onto internal notes or development
+  activities.
 
 ### BR-ACT-05: Mandatory Closing Activity on Reminder Completion
 * **Rule:** A Reminder ("Next Action") cannot be marked complete without
@@ -336,10 +342,10 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   from the Reminder's own (creating) Activity — same customer/deal thread —
   and is linked back via `Reminder.closing_activity_id` (distinct from
   `Reminder.activity_id`, which points to the Activity that *created* the
-  Reminder, per BR-ACT-04). `MANAGER_NOTE` is not a valid closing Activity
-  Type (rejected by the same validator) — it represents internal
-  manager-to-rep guidance, not a customer interaction, so it can't describe
-  what closed a customer follow-up.
+  Reminder, per BR-ACT-04). `MANAGER_NOTE` and the six BR-ACT-09 Sales
+  Development Activity types are not valid closing Activity Types (rejected
+  by the same validator) — none of them represent a customer interaction,
+  so none can describe what closed a customer follow-up.
 * **Scope:** Mirrors BR-ACT-04 in the opposite direction — that rule requires
   every logged Activity to produce a Next Action; this rule requires every
   completed Next Action to produce a closing Activity. Together they close
@@ -379,6 +385,57 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** File type/size limits confirmed by Basheer 2026-08-11 (tightened from an originally-proposed JPEG/PNG/HEIC + 10MB) — small enough to keep well within Supabase Storage's free-tier 1GB-per-project allocation across Dev/UAT, and restrictive enough that a rejected upload (e.g. a HEIC photo straight off an iPhone, a real case given the camera-capture flow) fails clearly rather than silently. The signed-URL indirection is what keeps Storage's own bucket-level access in sync with the `Document` row's RLS visibility (BR-ACT-07) without a second, parallel access policy to maintain — a user who can't see the row gets the same 404 any other RLS-protected read would give, before Storage is ever asked for a URL.
 * **Implementation:** `app/core/storage.py` wraps Supabase Storage's REST API (private `documents` bucket, `SUPABASE_SERVICE_ROLE_KEY`) — upload and delete are proxied through the backend, never direct-to-storage from the frontend, consistent with this codebase's "backend brokers every write" pattern. `DocumentService.delete_document` deletes the Storage object before the DB row (storage-delete-fails-safe: the DB row survives and the orphan is visible/retryable). Documents with an external `storage_path` (Product Catalog's URL-only collateral links, `http(s)://...`) are a distinct case — they have no real Storage object, so both the signed-URL endpoint and delete skip the Storage call entirely for these.
 * **Reference:** `docs/Opportunity-Document-Upload-Implementation-Plan.md`.
+
+### BR-ACT-09: Sales Development Activities — Unattached Capability-Building Log
+* **Rule:** Six additional `activity_type` values exist for logging
+  capability-building activity with no hospital/deal attached: `CONFERENCE_EXPO`
+  ("Conference/Expo"), `OEM_PRODUCT_TRAINING` ("OEM/Product Training"),
+  `CERTIFICATION` ("Certification"), `SALES_TRAINING` ("Sales Training"),
+  `SEMINAR_TRADE_SHOW` ("Seminar/Trade Show"), and `OTHER_DEVELOPMENT` ("Other
+  Development"). Unlike every other Activity type, these do not require an
+  Account (BR-ACT-01 exception) and do not require a Next Action (BR-ACT-04
+  exemption); they are also not a valid closing Activity Type for a Reminder
+  (BR-ACT-05 exclusion).
+* **Required field:** `outcome_notes` — a distinct free-text field from the
+  general-purpose `notes`, required for all six types, capturing what the rep
+  actually got out of the activity. This is deliberate: it's the one thing
+  that keeps a logged entry meaningful rather than a rubber stamp, without
+  imposing attendance/roster proof (out of scope, see exclusions below).
+* **`OTHER_DEVELOPMENT` additionally requires `notes`.** The other five types
+  name themselves — "Certification" already says what happened. The catch-all
+  type carries no such information on its own, so its general-purpose
+  description field is required too (the other five leave it optional).
+* **The optional Account field is generic, not type-scoped — use judgment.**
+  All six types can optionally carry an Account, but for most of them (Sales
+  Training, Certification, Other Development) there's rarely a real reason
+  to — these are about the rep's own capability, not a specific hospital.
+  `OEM_PRODUCT_TRAINING`/`CONFERENCE_EXPO`/`SEMINAR_TRADE_SHOW` are more likely
+  to have a genuine account link (e.g. a vendor training held on-site at a
+  hospital). The system doesn't restrict which types may carry an account —
+  it's on the rep to attach one only when it's actually meaningful, not a
+  designed "training delivered to a hospital" feature.
+* **Database enforcement:** `account_id` nullability + `chk_activity_account_required`
+  (BR-ACT-03), migration `0028`. No RLS policy change — `activity_tier_visibility`
+  already branches only on `opportunity_id IS NULL`, not `account_id`, so these
+  unattached entries fall into the same already-open visibility bucket as any
+  other `opportunity_id IS NULL` activity. That's a pre-existing gap, not one
+  this rule introduces or closes — tracked separately in `docs/Backlog.md`'s
+  "Activity log privacy hole" entry.
+* **Reporting:** included in the Insights Dashboard's `RepActivityLevelResponse`
+  activity count (decided with Haroon 2026-08-27) and appears automatically in
+  the Daily Activity Report (which queries by date/user, not by Account). Not
+  shown on any Account/Opportunity page, since they're deliberately unattached.
+  A separate annual target/attainment KPI for this data is tracked as its own
+  future item (`docs/Backlog.md`'s "Annual Development-Activity KPI" entry),
+  not part of this rule.
+* **Deliberately excluded:** an hours/duration field (would frame this as a
+  productivity tracker, the opposite of the intent), any link to HR
+  attendance/leave/payroll, and any automatic link between a logged Conference
+  entry and Leads it produces — a Lead's `lead_source` can be tagged
+  "Conference" independently, but that's a separate, unlinked mechanism, not
+  attribution reporting.
+* **Reference:** `docs/Sales-Development-Activities-Implementation-Plan.md`,
+  `docs/Discussion-Sales-Development-Activities-2026-08.md`.
 
 ---
 

@@ -11,8 +11,12 @@ class Activity(CreatedAtMixin, Base):
     __tablename__ = "activity"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    account_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("account.id"), nullable=False, index=True
+    # BR-ACT-01/BR-ACT-03: NOT NULL for every activity_type except the six
+    # Sales Development Activity types (BR-ACT-09) -- enforced at the
+    # database level via chk_activity_account_required, not by this column's
+    # own nullability alone.
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("account.id"), nullable=True, index=True
     )
     project_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("project.id"), nullable=True
@@ -26,8 +30,11 @@ class Activity(CreatedAtMixin, Base):
     activity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     activity_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # BR-ACT-09: required (at the app layer) for the six Sales Development
+    # Activity types, distinct from the general-purpose `notes` above.
+    outcome_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    account: Mapped["Account"] = relationship(back_populates="activities", lazy="joined")
+    account: Mapped["Account | None"] = relationship(back_populates="activities", lazy="joined")
     project: Mapped["Project | None"] = relationship(back_populates="activities", lazy="joined")
     opportunity: Mapped["Opportunity | None"] = relationship(back_populates="activities", lazy="joined")
     user: Mapped["UserProfile"] = relationship(

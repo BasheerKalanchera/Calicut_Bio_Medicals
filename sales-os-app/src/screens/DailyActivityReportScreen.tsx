@@ -51,13 +51,20 @@ function ReportRow({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0.75, fontSize: "11px", color: "#6b7280", fontWeight: 500, mb: 0.5 }}>
-          <Box
-            component="span"
-            onClick={onSelectAccount ? () => onSelectAccount(row.account) : undefined}
-            sx={onSelectAccount ? { color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } } : { color: "inherit" }}
-          >
-            {row.account.name}
-          </Box>
+          {/* BR-ACT-09: the six Sales Development Activity types are
+              deliberately unattached -- row.account is genuinely null here,
+              not just a type technicality. */}
+          {row.account ? (
+            <Box
+              component="span"
+              onClick={onSelectAccount ? () => onSelectAccount(row.account!) : undefined}
+              sx={onSelectAccount ? { color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } } : { color: "inherit" }}
+            >
+              {row.account.name}
+            </Box>
+          ) : (
+            <Box component="span" sx={{ color: "#9ca3af" }}>—</Box>
+          )}
           {row.opportunity && (
             <>
               <Box component="span" sx={{ color: "#d1d5db" }}>•</Box>
@@ -80,13 +87,33 @@ function ReportRow({
           )}
         </Box>
 
-        <Box sx={{ fontSize: "10px", fontWeight: 700, color: "#6b7280", mb: row.notes ? 0.5 : 0 }}>
+        <Box sx={{ fontSize: "10px", fontWeight: 700, color: "#6b7280", mb: (row.notes || row.outcome_notes) ? 0.5 : 0 }}>
           {row.user.display_name}
         </Box>
 
+        {/* Labels only shown when both notes and outcome_notes are present
+            (Other Development, BR-ACT-09) -- that's the only case where two
+            boxes need telling apart. Every other type has always had just
+            one box, unlabeled, and stays that way. */}
         {row.notes && (
-          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap" }}>
+          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: "background.default", borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap", mb: row.outcome_notes ? 0.5 : 0 }}>
+            {row.outcome_notes && (
+              <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9ca3af" }}>
+                Description:{" "}
+              </Box>
+            )}
             {row.notes}
+          </Box>
+        )}
+
+        {row.outcome_notes && (
+          <Box sx={{ fontSize: "0.75rem", color: "#374151", bgcolor: cfg.bg, borderRadius: "0.75rem", px: 1.5, py: 1, lineHeight: 1.625, whiteSpace: "pre-wrap" }}>
+            {row.notes && (
+              <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: cfg.color }}>
+                Outcome/Learning:{" "}
+              </Box>
+            )}
+            {row.outcome_notes}
           </Box>
         )}
       </Box>

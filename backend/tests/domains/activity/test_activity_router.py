@@ -48,6 +48,7 @@ def _mock_activity(**overrides) -> MagicMock:
         "activity_type": "VISIT",
         "activity_date": datetime(2026, 8, 6, 10, 0, 0, tzinfo=UTC),
         "notes": "Discussed pricing",
+        "outcome_notes": None,
         "account": _mock_nested(id=ACCOUNT_ID, name="Test Hospital"),
         "opportunity": None,
         "project": None,
@@ -104,6 +105,29 @@ class TestListDailyActivityReport:
         assert item["opportunity"] is None
         assert item["project"] is None
         assert item["user"] == {"id": str(TEST_USER_ID), "display_name": "Test Rep"}
+
+    def test_sales_development_row_with_no_account_serializes(self, client: TestClient) -> None:
+        # BR-ACT-09: account is genuinely null for these rows, not a mock gap.
+        activity = _mock_activity(
+            activity_type="CONFERENCE_EXPO",
+            account=None,
+            outcome_notes="Learned about the new imaging line",
+        )
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [activity]
+
+        _setup_overrides(mock_db, role_name="Admin")
+        try:
+            response = client.get("/api/v1/activities", params={"report_date": "2026-08-06"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"]["items"][0]
+        assert item["activity_type"] == "CONFERENCE_EXPO"
+        assert item["account"] is None
+        assert item["outcome_notes"] == "Learned about the new imaging line"
 
     def test_sales_staff_can_also_call_it(self, client: TestClient) -> None:
         # No allow/deny gate -- every role is authorized, scoping happens in

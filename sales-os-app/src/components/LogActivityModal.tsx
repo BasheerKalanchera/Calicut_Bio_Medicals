@@ -27,7 +27,22 @@ const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "MEETING",      label: "🤝 Meeting" },
   { value: "NOTE",         label: "📝 Note" },
   { value: "MANAGER_NOTE", label: "📋 Manager Note" },
+  { value: "CONFERENCE_EXPO",       label: "🎪 Conference/Expo" },
+  { value: "OEM_PRODUCT_TRAINING",  label: "🎓 OEM/Product Training" },
+  { value: "CERTIFICATION",         label: "📜 Certification" },
+  { value: "SALES_TRAINING",        label: "📚 Sales Training" },
+  { value: "SEMINAR_TRADE_SHOW",    label: "🗣️ Seminar/Trade Show" },
+  { value: "OTHER_DEVELOPMENT",     label: "🌱 Other Development" },
 ];
+
+// BR-ACT-09: no Account required, no mandatory next action, not a valid
+// Reminder-closing activity type. Kept in sync by hand with the backend's
+// own SALES_DEVELOPMENT_ACTIVITY_TYPES (activity/schemas.py) — no shared
+// package between frontend/backend to import this from.
+const SALES_DEVELOPMENT_ACTIVITY_TYPES = new Set<ActivityType>([
+  "CONFERENCE_EXPO", "OEM_PRODUCT_TRAINING", "CERTIFICATION",
+  "SALES_TRAINING", "SEMINAR_TRADE_SHOW", "OTHER_DEVELOPMENT",
+]);
 
 // Local stopgap types — listUsers/listAccounts return Promise<unknown> today.
 // TODO(fix-at-service-layer): give these functions real return types; see
@@ -63,6 +78,7 @@ export default function LogActivityModal({
   const [activityType, setActivityType] = useState<ActivityType>("CALL");
   const [activityDate, setActivityDate] = useState(nowLocal());
   const [notes, setNotes]               = useState("");
+  const [outcomeNotes, setOutcomeNotes] = useState("");
   const [userId, setUserId]             = useState(currentUserId ?? "");
   const [nextActionText, setNextActionText]       = useState("");
   const [nextActionDueDate, setNextActionDueDate] = useState(nowPlusDaysLocal(1));
@@ -70,6 +86,9 @@ export default function LogActivityModal({
   const [activeTab, setActiveTab] = useState<"details" | "nextAction">("details");
 
   const isManagerNote = activityType === "MANAGER_NOTE";
+  const isSalesDevelopment = SALES_DEVELOPMENT_ACTIVITY_TYPES.has(activityType);
+  // BR-ACT-04: neither type carries a follow-up commitment to an account.
+  const hidesNextAction = isManagerNote || isSalesDevelopment;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -97,6 +116,7 @@ export default function LogActivityModal({
     setActivityType("CALL");
     setActivityDate(nowLocal());
     setNotes("");
+    setOutcomeNotes("");
     setUserId(currentUserId ?? "");
     setSelectedAccountId(accountId ?? "");
     setNextActionText("");
@@ -108,31 +128,49 @@ export default function LogActivityModal({
   const resolvedAccountId = accountId ?? selectedAccountId;
 
   async function handleSubmit() {
-    if (!resolvedAccountId) { setActiveTab("details"); throw new Error("Account is required"); }
+    // BR-ACT-01/BR-ACT-09: Account is required for every activity_type
+    // except the six Sales Development types, which are deliberately
+    // unattached.
+    if (!isSalesDevelopment && !resolvedAccountId) {
+      setActiveTab("details"); throw new Error("Account is required");
+    }
     if (!activityType) { setActiveTab("details"); throw new Error("Activity type is required"); }
     if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
+    // BR-ACT-09: Outcome/Learning is the one required field for these
+    // otherwise-lightweight entries.
+    if (isSalesDevelopment && !outcomeNotes.trim()) {
+      setActiveTab("details"); throw new Error("Outcome/Learning is required");
+    }
+    // BR-ACT-09, decision #4a: OTHER_DEVELOPMENT's label carries no
+    // information on its own, unlike the other five Sales Development types.
+    if (activityType === "OTHER_DEVELOPMENT" && !notes.trim()) {
+      setActiveTab("details"); throw new Error("Description is required for Other Development");
+    }
     // BR-ACT-04: Next Action is mandatory for every activity_type except
-    // MANAGER_NOTE (internal manager-to-rep guidance, not a customer
+    // MANAGER_NOTE and the Sales Development types (neither is a customer
     // interaction — carries no follow-up commitment).
-    if (!isManagerNote) {
+    if (!hidesNextAction) {
       if (!nextActionText.trim()) { setActiveTab("nextAction"); throw new Error("Next Action is required"); }
       if (!nextActionDueDate) { setActiveTab("nextAction"); throw new Error("Next Action Due Date is required"); }
     }
     await logActivity({
-      account_id: resolvedAccountId,
+      account_id: resolvedAccountId || undefined,
       opportunity_id: opportunityId,
       project_id: projectId,
       user_id: userId || undefined,
       activity_type: activityType,
       activity_date: new Date(activityDate).toISOString(),
       notes: notes.trim() || undefined,
-      ...(!isManagerNote && {
+      ...(isSalesDevelopment && { outcome_notes: outcomeNotes.trim() }),
+      ...(!hidesNextAction && {
         next_action_text: nextActionText.trim(),
         next_action_due_date: new Date(nextActionDueDate).toISOString(),
         next_action_owner_id: nextActionOwnerId || undefined,
       }),
     });
-    queryClient.invalidateQueries({ queryKey: ["activities", "account", resolvedAccountId] });
+    if (resolvedAccountId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "account", resolvedAccountId] });
+    }
     if (opportunityId) {
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
     }
@@ -168,7 +206,7 @@ export default function LogActivityModal({
         >
           Details
         </Button>
-        {!isManagerNote && (
+        {!hidesNextAction && (
           <Button
             type="button"
             onClick={() => setActiveTab("nextAction")}
@@ -199,7 +237,7 @@ export default function LogActivityModal({
                 size="small"
                 slotProps={{ select: { displayEmpty: true } }}
               >
-                <MenuItem value="">Select account</MenuItem>
+                <MenuItem value="">{isSalesDevelopment ? "Select account (optional)" : "Select account"}</MenuItem>
                 {accounts.map((a) => (
                   <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
                 ))}
@@ -212,7 +250,9 @@ export default function LogActivityModal({
               onChange={(e) => {
                 const value = e.target.value as ActivityType;
                 setActivityType(value);
-                if (value === "MANAGER_NOTE") setActiveTab("details");
+                if (value === "MANAGER_NOTE" || SALES_DEVELOPMENT_ACTIVITY_TYPES.has(value)) {
+                  setActiveTab("details");
+                }
               }}
               fullWidth
               size="small"
@@ -263,7 +303,7 @@ export default function LogActivityModal({
               </Box>
             )}
             <TextField
-              label="Notes"
+              label={activityType === "OTHER_DEVELOPMENT" ? "Description *" : "Notes"}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               multiline
@@ -272,10 +312,22 @@ export default function LogActivityModal({
               size="small"
               placeholder="What happened? Key discussion points, next steps…"
             />
+            {isSalesDevelopment && (
+              <TextField
+                label="Outcome/Learning *"
+                value={outcomeNotes}
+                onChange={(e) => setOutcomeNotes(e.target.value)}
+                multiline
+                rows={2}
+                fullWidth
+                size="small"
+                placeholder="What did you get out of it?"
+              />
+            )}
           </Box>
         )}
 
-        {activeTab === "nextAction" && !isManagerNote && (
+        {activeTab === "nextAction" && !hidesNextAction && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               label="Next Action *"

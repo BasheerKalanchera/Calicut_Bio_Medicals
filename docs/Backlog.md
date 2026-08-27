@@ -86,12 +86,14 @@ kept only as a pointer; nothing left to pick up here.
   the plan was written; use the next free `BR-ACT-` number at build time),
   8 (frontend `LogActivityModal.tsx`), and 10 (manual verification,
   including the cross-SBU security check — the real one, can't be
-  skipped). **Migration number confirmed 2026-08-25** against
-  `backend/alembic/versions/`: highest on disk is `0026` (Part 1's own
+  skipped). **Migration number reassigned again 2026-08-27:** Part 2's migration
+  is now **`0029`** (was `0028`, bumped because Sales Development Activities is
+  building first — see `docs/Sales-Development-Activities-Implementation-Plan.md`,
+  which takes `0028`). Highest on disk as of 2026-08-25 was `0026` (Part 1's own
   migration landed as `0023_add_referral_credit.py`, 2026-08-18; `0024`-`0026`
-  are the notification feature, 2026-08-24). Part 2's migration is
-  **`0028`** (reassigned same day — `0027` went to the Gate Override feature
-  instead, see next entry, since it's being built first), containing *only*
+  are the notification feature, 2026-08-24); `0027` went to Gate Override same
+  day. Re-check the actual highest migration on disk at build time regardless.
+  Part 2's migration contains *only*
   the two `SECURITY DEFINER` functions + the `activity_tier_visibility` RLS
   amendment — the `referred_by_user_id`/`referred_by_note` columns are
   already live via `0023`, don't recreate them. Plan doc corrected same day

@@ -381,6 +381,27 @@ class TestLogActivity:
 
         assert result[0] is activity
 
+    def test_account_not_checked_for_sales_development_type_when_omitted(self):
+        # BR-ACT-01/BR-ACT-09: the six Sales Development types don't require
+        # an account, so log_activity shouldn't gate on account_exists at all
+        # when none was provided.
+        repo = _make_activity_repo()
+        repo.create.return_value = _make_activity(account_id=None, activity_type="CONFERENCE_EXPO")
+        svc = self._svc(activity_repo=repo)
+
+        svc.log_activity(
+            self._data(
+                account_id=None,
+                activity_type="CONFERENCE_EXPO",
+                outcome_notes="Learned about the new imaging line",
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        repo.account_exists.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # ActivityService.log_activity — BR-ACT-04 Next Action / Reminder creation
@@ -489,6 +510,30 @@ class TestLogActivityReminderCreation:
         reminder_repo.create.assert_not_called()
         assert result[1] is None
 
+    def test_sales_development_type_creates_no_reminder(self):
+        # BR-ACT-04 exemption widened by BR-ACT-09 -- same shape as the
+        # MANAGER_NOTE case above.
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(
+            account_id=None, activity_type="SALES_TRAINING"
+        )
+        reminder_repo = _make_reminder_repo()
+        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+
+        result = svc.log_activity(
+            self._data(
+                account_id=None,
+                activity_type="SALES_TRAINING",
+                outcome_notes="Learned the new objection-handling script",
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        reminder_repo.create.assert_not_called()
+        assert result[1] is None
+
 
 # ---------------------------------------------------------------------------
 # ActivityCreate — BR-ACT-04 mandatory Next Action validation
@@ -539,6 +584,82 @@ class TestActivityCreateValidation:
             )
         )
         assert data.next_action_text == "Optional follow-up"
+
+
+# ---------------------------------------------------------------------------
+# ActivityCreate — BR-ACT-09 Sales Development Activity validation
+# ---------------------------------------------------------------------------
+
+class TestSalesDevelopmentActivityValidation:
+    def _data(self, **overrides) -> dict:
+        defaults = dict(
+            account_id=None,
+            opportunity_id=None,
+            project_id=None,
+            user_id=None,
+            activity_type="CONFERENCE_EXPO",
+            activity_date=NOW,
+            notes=None,
+            outcome_notes="Learned about the new imaging line",
+            next_action_text=None,
+            next_action_due_date=None,
+            next_action_owner_id=None,
+        )
+        defaults.update(overrides)
+        return defaults
+
+    def test_no_account_succeeds(self):
+        data = ActivityCreate(**self._data())
+        assert data.account_id is None
+
+    def test_account_optionally_provided_also_succeeds(self):
+        data = ActivityCreate(**self._data(account_id=ACCOUNT_ID))
+        assert data.account_id == ACCOUNT_ID
+
+    def test_non_sales_development_type_without_account_raises(self):
+        # Regression: BR-ACT-01's requirement must still hold for every
+        # other activity_type, not just be silently dropped by the schema
+        # widening account_id to optional.
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(
+                **self._data(
+                    account_id=None,
+                    activity_type="VISIT",
+                    outcome_notes=None,
+                    next_action_text="Follow up",
+                    next_action_due_date=NOW,
+                )
+            )
+
+    def test_without_outcome_notes_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(outcome_notes=None))
+
+    def test_without_next_action_succeeds(self):
+        data = ActivityCreate(**self._data())
+        assert data.next_action_text is None
+        assert data.next_action_due_date is None
+
+    @pytest.mark.parametrize(
+        "activity_type",
+        [
+            "CONFERENCE_EXPO", "OEM_PRODUCT_TRAINING", "CERTIFICATION",
+            "SALES_TRAINING", "SEMINAR_TRADE_SHOW",
+        ],
+    )
+    def test_notes_optional_for_every_type_except_other_development(self, activity_type):
+        data = ActivityCreate(**self._data(activity_type=activity_type, notes=None))
+        assert data.notes is None
+
+    def test_other_development_without_notes_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(activity_type="OTHER_DEVELOPMENT", notes=None))
+
+    def test_other_development_with_notes_succeeds(self):
+        data = ActivityCreate(
+            **self._data(activity_type="OTHER_DEVELOPMENT", notes="Attended a webinar on X")
+        )
+        assert data.notes == "Attended a webinar on X"
 
 
 # ---------------------------------------------------------------------------
@@ -958,6 +1079,19 @@ class TestReminderUpdateValidation:
     def test_completing_with_manager_note_type_raises(self):
         with pytest.raises(pydantic.ValidationError):
             ReminderUpdate(**{**_closing_data(), "activity_type": "MANAGER_NOTE"})
+
+    @pytest.mark.parametrize(
+        "activity_type",
+        [
+            "CONFERENCE_EXPO", "OEM_PRODUCT_TRAINING", "CERTIFICATION",
+            "SALES_TRAINING", "SEMINAR_TRADE_SHOW", "OTHER_DEVELOPMENT",
+        ],
+    )
+    def test_completing_with_sales_development_type_raises(self, activity_type):
+        # BR-ACT-05 extension (BR-ACT-09): none of the six types represent a
+        # customer-facing action, so none can close a Reminder.
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(**{**_closing_data(), "activity_type": activity_type})
 
     def test_completing_with_all_fields_succeeds(self):
         data = ReminderUpdate(**_closing_data())

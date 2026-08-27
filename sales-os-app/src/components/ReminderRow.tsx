@@ -106,15 +106,22 @@ export default function ReminderRow({
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "11px", color: "#6b7280", fontWeight: 500 }}>
         <span>{icon}</span>
-        <Box
-          component="span"
-          onClick={onSelectAccount ? () => onSelectAccount(reminder.activity.account) : undefined}
-          sx={onSelectAccount
-            ? { color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }
-            : { color: "inherit" }}
-        >
-          {reminder.activity.account.name}
-        </Box>
+        {/* reminder.activity.account is typed optional (BR-ACT-09 widened
+            ActivityContextNested), but a Reminder can only ever descend from
+            an account-having Activity in practice -- the six Sales
+            Development types never carry a Next Action, so never produce
+            one. Guarded anyway. */}
+        {reminder.activity.account && (
+          <Box
+            component="span"
+            onClick={onSelectAccount ? () => onSelectAccount(reminder.activity.account!) : undefined}
+            sx={onSelectAccount
+              ? { color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }
+              : { color: "inherit" }}
+          >
+            {reminder.activity.account.name}
+          </Box>
+        )}
         {!hideOpportunity && reminder.activity.opportunity && (
           <>
             <Box component="span" sx={{ color: "#d1d5db" }}>•</Box>

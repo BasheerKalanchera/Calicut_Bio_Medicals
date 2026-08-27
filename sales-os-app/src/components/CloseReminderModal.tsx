@@ -105,7 +105,13 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     // The backend creates a real Activity to document this closure (BR-ACT-05)
     // — invalidate the Activity tab query it lands in, same as LogActivityModal
     // does for a normally-logged one, so it shows up without a hard refresh.
-    queryClient.invalidateQueries({ queryKey: ["activities", "account", reminder.activity.account.id] });
+    // reminder.activity.account is typed optional (BR-ACT-09 widened
+    // ActivityContextNested), but a Reminder can only ever descend from an
+    // account-having Activity in practice -- the six Sales Development types
+    // never carry a Next Action, so never produce one. Guarded anyway.
+    if (reminder.activity.account) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "account", reminder.activity.account.id] });
+    }
     if (reminder.activity.opportunity) {
       queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", reminder.activity.opportunity.id] });
     }

@@ -1,7 +1,14 @@
 # Referral Credit & Relationship-Support Activity — Implementation Plan
 
-**Status:** Planned — approved for build, not yet started.
-**Date:** 2026-08-11
+**Status:** Part 1 (Referral Credit, BR-FIN-07) **shipped 2026-08-18**, migration
+`0023_add_referral_credit.py` — confirmed live: `Business-Rules.md`'s `BR-FIN-07`,
+`opportunity.referred_by_user_id`/`referred_by_note` + `ck_opportunity_referral_not_both`
+in the model, and the 4-entry-point frontend toggle in `OpportunityDetailScreen.tsx`
+(and its sibling forms) are all confirmed present in the codebase. **Part 2
+(Relationship-Support Activity) is still not started** — this is the only piece left,
+see `docs/Backlog.md`'s "Referral Credit Part 2" entry.
+**Date:** 2026-08-11 (original plan; Part 1 shipped 2026-08-18, this doc corrected
+2026-08-25 to stop describing shipped work as pending — see numbering fixes below)
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete, ordered implementation plan for parts 2 and 3 of
 `docs/Discussion-SplitParticipant-SBU-Scope.md` (v6) — "Referral credit" and
@@ -55,26 +62,31 @@ relationship-support logger has no standing access to the deal at all today
 reason this feature needs a new RLS bypass) — forcing the same mandatory
 follow-up flow used by an actual owner/split participant doesn't fit.
 
-**The account-scoped Opportunity picker — scope widened.** The original doc
-scoped this narrowly: "so the relationship-support person has something to
-pick from." Planning surfaced that **no path in this codebase today** lets
-anyone link a logged Activity to a specific Opportunity when working from
-the Account level (`LogActivityModal.tsx` only shows an opportunity at all
-when the modal is opened *from inside* that Opportunity's own page — a fixed
-prop, never a picker). Since the picker and its backing lookup have to be
-built regardless, **decided:** make it available for any activity type
-logged from the Account level, not gated to `RELATIONSHIP_SUPPORT` only.
+**The account-scoped Opportunity picker — scope narrowed back down, 2026-08-25.**
+The original 2026-08-11 draft of this plan widened the picker to appear for *any*
+activity type logged from the Account level, reasoning that the lookup had to be
+built regardless. **Reversed in a 2026-08-25 architecture discussion with
+Basheer:** the picker now renders **only when `Activity Type = Relationship
+Support` is selected** — not for every note logged from the Account level. The
+general-purpose "tag any note to a deal from the Account page" convenience (a
+real, separately-noticed gap) is explicitly **dropped from this build**, not
+bundled in — it can be picked up later as its own deliberate decision if wanted,
+see `docs/Backlog.md`.
 
-**Flag this plainly, not buried:** the new lookup this requires
-(`cabio_app_account_opportunities()`, below) returns every Opportunity's
-`id`+`name` under an Account regardless of the caller's SBU/zone tier — a
-deliberate, narrow (name-only, no value/stage/owner/financials) widening of
-what's visible across the SBU security boundary that ADR-037/BR-FIN-06 treat
-seriously elsewhere. It's opt-in (only surfaces when actively logging an
-activity from that Account) and was already anticipated for the cross-SBU
-relationship-support case specifically; generalizing it to every activity
-type is what extends the exposure to everyone. Worth a second look before
-building, flagged here so it isn't missed on a read-through.
+**Important nuance, so the remaining effort is scoped accurately:** gating the
+*dropdown's rendering* to one activity type is a frontend-only change — it does
+**not** shrink the backend security work. The lookup (`cabio_app_account_opportunities()`,
+below) still has to exist as a plain, callable capability, and it still has to
+return every Opportunity's `id`+`name` under an Account regardless of the
+caller's SBU/zone tier, because the backend has no way to know *why* the
+frontend is asking. That's the same deliberate, narrow (name-only, no
+value/stage/owner/financials) widening of the SBU security boundary
+(ADR-037/BR-FIN-06) as before — same manual cross-SBU verification required
+(including a raw API call, not just through the gated UI, since gating is a UI
+convention, not an enforcement mechanism). What changes is *who realistically
+encounters the picker in the UI* and *that the general-purpose version is no
+longer shipped as an incidental side effect* — not the size of the backend
+build.
 
 ## Confirmed current state (verified directly against the codebase)
 
@@ -174,38 +186,55 @@ this feature is for (a cross-SBU relationship-support logger has no tier
 route to those rows). The new lookup endpoint is a second, deliberately
 unscoped sibling to this one, not a replacement.
 
-**Migration numbering**: highest on disk is `0016`. Two other plans
-(`docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md`,
-`docs/Buyback-Freetext-Implementation-Plan.md`) have already claimed `0017`
-and `0018` respectively, neither built yet. This migration should use
-**`0019`** — re-check `backend/alembic/versions/` at actual build time,
-since whichever of the three lands first shifts what's actually free.
+**Migration numbering — corrected 2026-08-25:** Part 1 shipped as `0023_add_referral_credit.py`
+(2026-08-18), containing only the `referred_by_user_id`/`referred_by_note` columns and
+the `ck_opportunity_referral_not_both` constraint — **not** the two `SECURITY DEFINER`
+functions or the `activity_tier_visibility` RLS amendment described in Step 1 below,
+which are Part 2 only and were correctly deferred. Highest migration on disk is now
+`0026` (`0024`/`0025`/`0026` were the notification-feature migrations, landed
+2026-08-24). **Part 2's migration should use `0028`** — `0027` was reassigned to
+`Manager-Attested-Gate-Override-Implementation-Plan.md` (2026-08-25, both plans
+initially claimed `0027`; Gate Override is being built first as the more contained
+change) — and must contain **only** the `SECURITY DEFINER` functions + RLS policy
+amendment. Re-check `backend/alembic/versions/` at actual build time regardless,
+same caveat as before, since this number will drift again if anything else lands
+first.
 
-**Business rules to add** (`docs/Business-Rules.md`): next free rule numbers
-confirmed by grep — **BR-FIN-07** (last is BR-FIN-06) for referral credit,
-**BR-ACT-08** (last is BR-ACT-07) for relationship-support activity, plus an
-amendment to **BR-ACT-04** generalizing its exemption list.
+**Business rules — status corrected 2026-08-25:** **BR-FIN-07 is done** (Referral
+Credit, live in `Business-Rules.md`, confirmed 2026-08-18). Still needed: an
+amendment to **BR-ACT-04** generalizing its exemption list, and a new rule for
+relationship-support activity — **not `BR-ACT-08`** (that number was taken by
+Opportunity Document Upload, shipped since this plan was written). Next free is
+**BR-ACT-09** — re-check at build time, same caveat.
 
 ## Implementation steps
 
-### 1. Migration `0019_referral_credit_and_relationship_support.py`
+### 1. Migration — **DONE** (columns/constraint) / **remaining** (RLS pieces only)
 
-`down_revision = "0016"` (re-check head at build time — may need to chain
-after `0017`/`0018` if either lands first).
+**Already shipped**, `0023_add_referral_credit.py` (2026-08-18): the
+`referred_by_user_id`/`referred_by_note` columns and
+`ck_opportunity_referral_not_both` constraint below are **live** — do not
+recreate them. What's left is a **new, separate migration** —
+`0028_relationship_support_activity_rls.py` (re-check the actual next-free
+number at build time) — containing only the two `SECURITY DEFINER`
+functions and the RLS policy amendment:
 
 ```python
-def upgrade() -> None:
-    op.add_column(
-        "opportunity",
-        sa.Column("referred_by_user_id", sa.UUID(as_uuid=True), sa.ForeignKey("user_profile.id"), nullable=True),
-    )
-    op.add_column("opportunity", sa.Column("referred_by_note", sa.Text(), nullable=True))
-    op.create_check_constraint(
-        "ck_opportunity_referral_not_both",
-        "opportunity",
-        "NOT (referred_by_user_id IS NOT NULL AND referred_by_note IS NOT NULL)",
-    )
+# Already live via 0023_add_referral_credit.py -- shown here for context only,
+# do NOT repeat these in the new migration:
+#
+#   op.add_column(
+#       "opportunity",
+#       sa.Column("referred_by_user_id", sa.UUID(as_uuid=True), sa.ForeignKey("user_profile.id"), nullable=True),
+#   )
+#   op.add_column("opportunity", sa.Column("referred_by_note", sa.Text(), nullable=True))
+#   op.create_check_constraint(
+#       "ck_opportunity_referral_not_both",
+#       "opportunity",
+#       "NOT (referred_by_user_id IS NOT NULL AND referred_by_note IS NOT NULL)",
+#   )
 
+def upgrade() -> None:
     op.execute(
         """
         CREATE OR REPLACE FUNCTION public.cabio_app_opportunity_in_account(
@@ -257,12 +286,12 @@ def downgrade() -> None:
     )
     op.execute("DROP FUNCTION IF EXISTS public.cabio_app_account_opportunities(uuid);")
     op.execute("DROP FUNCTION IF EXISTS public.cabio_app_opportunity_in_account(uuid, uuid);")
-    op.drop_constraint("ck_opportunity_referral_not_both", "opportunity", type_="check")
-    op.drop_column("opportunity", "referred_by_note")
-    op.drop_column("opportunity", "referred_by_user_id")
+    # referred_by_user_id/referred_by_note/ck_opportunity_referral_not_both belong to
+    # 0023_add_referral_credit.py -- that migration's own downgrade() handles them,
+    # not this one.
 ```
 
-### 2. Model — `opportunity/models.py`
+### 2. Model — `opportunity/models.py` — **DONE, shipped 2026-08-18**
 
 - `referred_by_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True)`
 - `referred_by_note: Mapped[str | None] = mapped_column(Text, nullable=True)`
@@ -271,7 +300,7 @@ def downgrade() -> None:
   `foreign_keys=` disambiguation, same as `Reminder.closing_activity`
   (`activity/models.py:65-67`) already does for its second FK into `activity`.
 
-### 3. Schemas — `opportunity/schemas.py`
+### 3. Schemas — `opportunity/schemas.py` — **DONE, shipped 2026-08-18**
 
 - `OwnerNested` (existing, line 54) is reused as-is for the response's
   `referred_by` field — no new nested class needed.
@@ -297,12 +326,18 @@ def downgrade() -> None:
 - `OpportunityResponse`: add `referred_by_user_id: uuid.UUID | None`,
   `referred_by_note: str | None`, `referred_by: OwnerNested | None`.
 
-### 4. Service — `opportunity/service.py`
+### 4. Service — `opportunity/service.py` — **DONE, shipped 2026-08-18**
 
 No special-case logic needed for persistence — `update_opportunity`'s
 existing generic `setattr` loop over `model_dump(exclude_unset=True)`
 already handles both new optional fields. No change to `create_opportunity`
 beyond the schema already carrying the two new optional fields through.
+
+---
+
+**Everything below this point (Steps 5–8, 10–12) is Part 2 — Relationship-Support
+Activity — and is what's actually still outstanding.** Step 9 (frontend referral
+toggle) is also done, marked below in place.
 
 ### 5. Activity — schemas / repository / service / router
 
@@ -356,24 +391,18 @@ Opportunity reference elsewhere.
 
 ### 6. Business rules — `docs/Business-Rules.md`
 
-- **BR-FIN-07: Referral Credit (2026-08-11)** — new rule. States: when
-  `lead_source_id` resolves to `Referral`, the Opportunity may optionally
-  carry either `referred_by_user_id` (any active Cabio user, any SBU/zone —
-  same eligibility as BR-ACT-06's Next Action assignee) or
-  `referred_by_note` (free text, for a non-Cabio referrer), never both.
-  Pure credit record — no split-percentage impact, no RLS visibility grant,
-  no SBU/zone revenue rollup effect. Does not apply to the separate
-  `OEM Referral` lead source. Enforcement: schema `model_validator` (mutual
-  exclusivity) + DB `CHECK` constraint as a backstop. Reference: this doc,
-  ADR-013 (rollups this deliberately does *not* feed), BR-ACT-06 (shared
-  eligibility rule for the colleague picker).
-- **BR-ACT-04 amendment**: update the exemption list from "every
+- ~~**BR-FIN-07: Referral Credit**~~ — **DONE, shipped 2026-08-18**, live in
+  `Business-Rules.md` exactly as originally drafted. Nothing left to do here.
+- **BR-ACT-04 amendment** (still outstanding): update the exemption list from "every
   `activity_type` except `MANAGER_NOTE`" to "except `MANAGER_NOTE` and
   `RELATIONSHIP_SUPPORT`" — add one sentence on why (the logger has no
   standing access to the deal, so a mandatory follow-up on someone else's
   deal doesn't fit; contrast with `MANAGER_NOTE`'s reason, which is "not
   customer-facing").
-- **BR-ACT-08: Relationship-Support Activity (2026-08-11)** — new rule.
+- **BR-ACT-09** (still outstanding — renumbered 2026-08-25: `BR-ACT-08` was
+  taken by Opportunity Document Upload, shipped since this plan was written;
+  re-check the actual next-free `BR-ACT-` number at build time) —
+  **Relationship-Support Activity**, new rule.
   States the `RELATIONSHIP_SUPPORT` activity type, its exemption from
   BR-ACT-04 (cross-reference), and the write/read RLS mechanism:
   `cabio_app_opportunity_in_account()` widens the write path,
@@ -381,21 +410,24 @@ Opportunity reference elsewhere.
   read path — both narrow, per-fact grants, never a blanket Opportunity
   visibility grant. **Explicitly document the account-opportunity lookup's
   visibility widening here too** (`cabio_app_account_opportunities()`
-  exposes `id`+`name` only, across SBU boundaries, to anyone logging any
-  activity from that Account) — cross-reference ADR-037/BR-FIN-06's
+  exposes `id`+`name` only, across SBU boundaries, callable by anyone —
+  **the frontend only invokes it when Activity Type = Relationship Support
+  is selected (2026-08-25 scope decision), but the function itself carries
+  no such restriction, since that's a UI convention, not a backend
+  enforcement mechanism**) — cross-reference ADR-037/BR-FIN-06's
   "SBU is an RLS security boundary" framing so this reads as a conscious,
   scoped exception, not an inconsistency with that stance.
 
 ### 7. Regenerate `docs/Physical-Schema.sql`
 
-`pg_dump --schema-only` against Dev immediately after applying migration
-`0019` — not batched to the end.
+`pg_dump --schema-only` against Dev immediately after applying the new
+relationship-support-activity migration — not batched to the end.
 
 ### 8. Backend tests
 
-**`backend/tests/domains/opportunity/test_opportunity_service.py`**
-(`TestCreateOpportunity`, and a new update-focused block near
-`TestReplaceSplits`):
+~~**`backend/tests/domains/opportunity/test_opportunity_service.py`**~~ — **DONE**,
+Part 1's referral tests shipped 2026-08-18 alongside the feature. Kept below for
+reference only, not remaining work:
 - Create/update with `referred_by_user_id` set — persists, response nests
   `referred_by`.
 - Create/update with `referred_by_note` set — persists, `referred_by` nested
@@ -429,9 +461,13 @@ repo's service-layer tests mock the repository/session, so they cannot
 exercise Postgres's actual policy evaluation. Step 11 below is the real
 check for this, not a substitute unit test.
 
-### 9. Frontend — referral toggle (4 entry points)
+### 9. Frontend — referral toggle (4 entry points) — **DONE, shipped 2026-08-18**
 
-Add to each of: `sales-os-app/src/components/QuickLeadModal.tsx`,
+Confirmed live: `["users", "referral-picker"]` query and
+`referred_by_user_id`/`referred_by_note` handling all present in
+`OpportunityDetailScreen.tsx` (checked 2026-08-25). Kept below for reference only.
+
+Added to each of: `sales-os-app/src/components/QuickLeadModal.tsx`,
 `sales-os-app/src/screens/Customer360Screen.tsx` (Add Opportunity modal),
 `sales-os-app/src/screens/ProjectDirectoryScreen.jsx` (create form),
 `sales-os-app/src/screens/OpportunityDetailScreen.tsx` (edit form, near the
@@ -469,13 +505,18 @@ precedent as BR-OP-13/REPEAT_ORDER (Issue 1):
   string}[]>` → `GET /accounts/{accountId}/opportunities/lookup`.
 - New state `const [selectedOpportunityId, setSelectedOpportunityId] =
   useState("")`; new `useQuery` (`["opportunities", "lookup", accountId]`,
-  `enabled: isOpen && !!resolvedAccountId && !opportunityId`) calling the
-  new service function.
-- New `TextField select` ("Related Opportunity (optional)"), shown whenever
-  `resolvedAccountId` is set and `opportunityId` prop is **not** fixed —
-  available for every activity type (per the scope decision above), not
-  gated to `RELATIONSHIP_SUPPORT`. Reset alongside the other fields in the
-  `useEffect` at line 92.
+  `enabled: isOpen && !!resolvedAccountId && !opportunityId &&
+  activityType === "RELATIONSHIP_SUPPORT"`) calling the new service
+  function — **the added `activityType` condition is the 2026-08-25 scope
+  change**, so the lookup isn't even fetched unless this specific activity
+  type is selected.
+- New `TextField select` ("Related Opportunity"), shown whenever
+  `resolvedAccountId` is set, `opportunityId` prop is **not** fixed, **and**
+  `activityType === "RELATIONSHIP_SUPPORT"` — **narrowed 2026-08-25**, no
+  longer available for every activity type. Reset alongside the other
+  fields in the `useEffect` at line 92, and also cleared if the user
+  switches away from `RELATIONSHIP_SUPPORT` to a different activity type
+  after having picked one.
 - `handleSubmit`'s `logActivity(...)` call: `opportunity_id: opportunityId
   ?? (selectedOpportunityId || undefined)`.
 - Existing "Linked to this opportunity" chip (line 240-250) stays for the
@@ -510,40 +551,38 @@ response shape automatically. No manual edits.
    read-back fix), (e) they still **cannot** open the Opportunity itself or
    see any of its other detail (owner, value, stage) — the widening is
    name-only, confirm it stays that way.
-4. Confirm a normal same-SBU user logging any activity type from the
-   Account level can now optionally tag it to one of that account's
-   Opportunities via the same picker (the generalized case).
+4. **Confirm the picker does NOT appear for any activity type other than
+   Relationship Support** (narrowed 2026-08-25) — log a normal Call/Visit/Email
+   note from the Account level and confirm no "Related Opportunity" dropdown
+   renders; switch the Activity Type selector to Relationship Support and
+   confirm it appears; switch away again and confirm it disappears and any
+   selection is cleared.
 5. Confirm `MANAGER_NOTE` is still exempt from Next Action (regression).
 6. Confirm `Physical-Schema.sql` was regenerated and committed alongside
-   migration `0019`.
+   the new relationship-support-activity migration (`0028` at time of
+   writing — re-check).
 
-## Ordering
+## Ordering — corrected 2026-08-25, Part 1 (steps 1–4, 9) already done
 
-Migration (1) → model (2) → schemas/validators, both domains (3, 5) →
-opportunity service — no-op confirmation (4) → activity repository/service/
-router (5) → backend tests (8), run suite green → apply to Dev + regenerate
-`Physical-Schema.sql` (7) → `Business-Rules.md` (6) → frontend referral
-toggle × 4 files (9) → frontend `LogActivityModal.tsx` (10) → regenerate
-`types/api.ts` (11) → manual verification on Dev, including the cross-SBU
-security check (12).
+**Remaining work:** activity schemas/repository/service/router (5) →
+backend tests (8), run suite green → apply migration `0028` (RLS pieces
+only) to Dev + regenerate `Physical-Schema.sql` (7) → `Business-Rules.md`
+(6) → frontend `LogActivityModal.tsx` (10) → regenerate `types/api.ts` (11)
+→ manual verification on Dev, including the cross-SBU security check (12).
 
-### Critical files
-- backend/alembic/versions/0019_referral_credit_and_relationship_support.py
-- backend/app/domains/opportunity/models.py
-- backend/app/domains/opportunity/schemas.py
+### Critical files — remaining work only
+- backend/alembic/versions/0028_relationship_support_activity_rls.py (new — re-check number)
 - backend/app/domains/activity/models.py (no change — reference only, `activity_type` already a plain string)
 - backend/app/domains/activity/schemas.py
 - backend/app/domains/activity/repository.py
 - backend/app/domains/activity/service.py
 - backend/app/domains/activity/router.py
-- backend/tests/domains/opportunity/test_opportunity_service.py
 - backend/tests/domains/activity/test_activity_service.py
-- sales-os-app/src/screens/OpportunityDetailScreen.tsx
-- sales-os-app/src/screens/Customer360Screen.tsx
-- sales-os-app/src/screens/ProjectDirectoryScreen.jsx
-- sales-os-app/src/components/QuickLeadModal.tsx
 - sales-os-app/src/components/LogActivityModal.tsx
-- sales-os-app/src/services/masterData.ts
 - sales-os-app/src/services/activities.ts
 - docs/Business-Rules.md
 - docs/Physical-Schema.sql
+
+(`QuickLeadModal.tsx`, `Customer360Screen.tsx`, `ProjectDirectoryScreen.jsx`,
+`OpportunityDetailScreen.tsx`, and `services/masterData.ts` were Part 1's files —
+already shipped 2026-08-18, not touched by the remaining work.)

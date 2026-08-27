@@ -2,14 +2,19 @@ import api from "../lib/api";
 import type { ActivityPage, ActivityReportPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api-aliases";
 
 export interface LogActivityPayload {
-  account_id: string;
+  // BR-ACT-01/BR-ACT-09: required unless activity_type is one of the six
+  // Sales Development Activity types.
+  account_id?: string;
   opportunity_id?: string;
   project_id?: string;
   user_id?: string;
   activity_type: string;
   activity_date: string;
   notes?: string;
-  // BR-ACT-04: required unless activity_type is MANAGER_NOTE.
+  // BR-ACT-09: required when activity_type is a Sales Development type.
+  outcome_notes?: string;
+  // BR-ACT-04: required unless activity_type is MANAGER_NOTE or a Sales
+  // Development type.
   next_action_text?: string;
   next_action_due_date?: string;
   next_action_owner_id?: string;
