@@ -16,6 +16,7 @@ import {
 import FormModal from "../components/FormModal";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import { useAuth } from "../contexts/AuthContext";
 import {
   getZoneTree,
   createZone,
@@ -31,12 +32,21 @@ import type { ZoneSearchResult } from "../services/masterData";
 
 const EMPTY_FORM = { name: "", zone_level: "", parent_zone_id: "" };
 const ZONE_LEVELS = ["STATE", "ZONE", "DISTRICT", "TALUK", "CLUSTER"];
+// Mirrors the backend's own gate (ReferenceService._TERRITORY_ADMIN_ROLES) --
+// this screen is always mounted in the background (DemoApp.tsx, for instant
+// tab switching) regardless of who's logged in, so without this the zone-tree
+// fetch below fires for every non-admin user and gets a 403 it was never
+// going to get past. Same set as DemoApp.tsx's ADMIN_ROLES, which already
+// hides this screen's own nav entry the same way.
+const TERRITORY_ADMIN_ROLES = new Set(["Admin", "General Manager"]);
 
 export default function TerritoryAdminScreen() {
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
   const { data: tree = [], isLoading } = useQuery({
     queryKey: ["zone-tree"],
     queryFn: getZoneTree,
+    enabled: TERRITORY_ADMIN_ROLES.has(userProfile?.role_name),
   });
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
