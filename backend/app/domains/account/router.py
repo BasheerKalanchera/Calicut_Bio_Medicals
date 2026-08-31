@@ -103,7 +103,10 @@ def create_account(
     service: AccountService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[AccountResponse]:
     account = service.create_account(
-        body, created_by=current_user.id, default_zone_id=current_user.zone_id
+        body,
+        created_by=current_user.id,
+        role_name=current_user.role.role_name,
+        default_zone_id=current_user.zone_id,
     )
     return APIResponse(data=AccountResponse.model_validate(account))
 

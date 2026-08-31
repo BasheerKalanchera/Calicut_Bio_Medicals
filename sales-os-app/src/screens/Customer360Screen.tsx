@@ -53,9 +53,12 @@ import {
   listHoldReasons,
   listGateOverrideReasons,
   listSbus,
+  searchZonesForHospital,
 } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
 import ZonePicker from "../components/ZonePicker";
+import { ApiError } from "../lib/api";
+import { SilentModalError } from "../lib/formErrors";
 import { listProducts } from "../services/products";
 import { listActivitiesByAccount } from "../services/activities";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
@@ -681,6 +684,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editAccountCustomerType, setEditAccountCustomerType] = useState("");
   const [editAccountParent, setEditAccountParent] = useState<{ id: string; name: string } | null>(null);
   const [parentSearchInput, setParentSearchInput] = useState("");
+  // Option B duplicate-hospital warning on rename (BR-ACC-03, same as
+  // CustomerDirectoryScreen's create flow) -- set when the backend's
+  // near-duplicate check (POSSIBLE_DUPLICATE) rejects the in-flight rename.
+  const [editDuplicateCandidates, setEditDuplicateCandidates] = useState<{ id: string; name: string }[] | null>(null);
+  const [pendingUpdatePayload, setPendingUpdatePayload] = useState<Record<string, unknown> | null>(null);
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
 
   const childAccountIds: string[] = (mergedAccount?.child_accounts || []).map((c: any) => c.id);
@@ -1070,21 +1078,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setEditAccountCustomerType(account.customer_type || "");
     setEditAccountParent(account.parent_account || null);
     setParentSearchInput("");
+    setEditDuplicateCandidates(null);
+    setPendingUpdatePayload(null);
     setShowEditAccount(true);
   };
 
-  const handleUpdateAccount = async () => {
-    if (!editAccountName.trim()) throw new Error("Customer name is required");
-    if (!editAccountZone) throw new Error("Zone is required");
+  const closeEditAccount = () => {
+    setShowEditAccount(false);
+    setEditDuplicateCandidates(null);
+    setPendingUpdatePayload(null);
+  };
+
+  const applyAccountUpdate = async (payload: Record<string, unknown>) => {
     const previousParentId = account.parent_account?.id || null;
-    const newParentId = editAccountParent?.id || null;
-    const payload: any = {
-      name: editAccountName.trim(),
-      zone_id: editAccountZone.id,
-      parent_account_id: newParentId,
-    };
-    if (editAccountPayer) payload.payer_behavior = editAccountPayer;
-    payload.customer_type = editAccountCustomerType || null;
+    const newParentId = (payload.parent_account_id as string | null) || null;
     await updateAccount(accountId as any, payload);
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
     // Keeps the Customer Directory list in sync with an edit made here — used
@@ -1103,6 +1110,40 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (newParentId && newParentId !== previousParentId) {
       queryClient.invalidateQueries({ queryKey: ["account", newParentId] });
     }
+  };
+
+  const handleUpdateAccount = async () => {
+    if (!editAccountName.trim()) throw new Error("Customer name is required");
+    if (!editAccountZone) throw new Error("Zone is required");
+    const payload: any = {
+      name: editAccountName.trim(),
+      zone_id: editAccountZone.id,
+      parent_account_id: editAccountParent?.id || null,
+    };
+    if (editAccountPayer) payload.payer_behavior = editAccountPayer;
+    payload.customer_type = editAccountCustomerType || null;
+    setEditDuplicateCandidates(null);
+    try {
+      await applyAccountUpdate(payload);
+    } catch (err) {
+      if (err instanceof ApiError && err.errorCode === "POSSIBLE_DUPLICATE" && err.candidates?.length) {
+        setEditDuplicateCandidates(err.candidates);
+        setPendingUpdatePayload(payload);
+        throw new SilentModalError();
+      }
+      throw err;
+    }
+  };
+
+  const handleRenameAnyway = async () => {
+    if (!pendingUpdatePayload) return;
+    await applyAccountUpdate({ ...pendingUpdatePayload, force_create: true });
+    closeEditAccount();
+  };
+
+  const handleUseExistingInsteadOfRename = (candidate: { id: string; name: string }) => {
+    closeEditAccount();
+    onSelectAccount?.(candidate);
   };
 
   // Stakeholder
@@ -1485,9 +1526,38 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* ---- Modals ---- */}
 
       {/* Edit Account */}
-      <FormModal isOpen={showEditAccount} onClose={() => setShowEditAccount(false)} title="Edit Customer" onSubmit={handleUpdateAccount}>
+      <FormModal isOpen={showEditAccount} onClose={closeEditAccount} title="Edit Customer" onSubmit={handleUpdateAccount}>
+        {editDuplicateCandidates && editDuplicateCandidates.length > 0 && (
+          <>
+            <Alert severity="warning" sx={{ "& .MuiAlert-message": { width: "100%" } }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                {editDuplicateCandidates.length === 1
+                  ? <>Did you mean <strong>{editDuplicateCandidates[0].name}</strong>? It's already in the directory.</>
+                  : "This looks similar to hospitals already in the directory:"}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                {editDuplicateCandidates.map((candidate) => (
+                  <Box key={candidate.id} sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    {editDuplicateCandidates.length > 1 && (
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
+                    )}
+                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExistingInsteadOfRename(candidate)}>
+                      Use this one instead
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Alert>
+            {/* Outside the Alert, not inside its message slot -- the warning
+                icon indents the message area, which would otherwise shift
+                this full-width button off from the rest of the form's fields. */}
+            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleRenameAnyway}>
+              Change Anyway
+            </Button>
+          </>
+        )}
         <TextField label="Name *" value={editAccountName} onChange={(e) => setEditAccountName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        <ZonePicker label="Zone *" value={editAccountZone} onChange={setEditAccountZone} />
+        <ZonePicker label="Zone *" value={editAccountZone} onChange={setEditAccountZone} searchFn={searchZonesForHospital} />
         <Autocomplete
           options={parentAccountChoices}
           getOptionLabel={(o: any) => o.name}

@@ -1,52 +1,45 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-08-27_
+_Session: 2026-08-21 → 2026-08-31_
 
-## Current task — none in flight; all recent work committed and verified
+## Current task — BR-ACC-03 prototype + two follow-on fixes built, none manually tested or committed yet
 
-Three features landed and closed out this session, in order:
+Full build (backend + frontend, end-to-end): the Option B near-duplicate
+warning on hospital creation (BR-ACC-03), a zone-branch lookup bug fix
+(a hospital filed at a bare state zone like "Kerala" got no duplicate
+check at all), and a new rep-territory-scoped zone picker for Add/Edit
+Hospital (reps see only their own zone; Admin/GM unrestricted; a
+zone-less rep is hard-blocked from adding a hospital, backend + frontend).
+Backend 638/638 passing, frontend `tsc`/`lint` clean. Full narrative:
+`docs/Progress-Archive-2026-08.md`'s 2026-08-30 and 2026-08-31 entries.
 
-1. **Manager-Attested Gate Override (BR-OP-14)** — checkbox rework,
-   approver notification, two audit-integrity bugs found and fixed, manual
-   E2E complete (20 Pass / 2 Skipped). Committed `9043a50`, `a7fb786`.
-2. **Sales Development Activities (BR-ACT-09)** — six new unattached
-   activity types. Manual E2E complete (17/17 Pass). Committed `ac587a3`.
-3. **Referral Credit Part 2 / Relationship-Support Activity (BR-ACT-10)** —
-   cross-SBU logging carve-out. Manual E2E complete, including the
-   cross-SBU security flow (16/16 Pass). Committed `4e1f4c8`.
-
-Full build narrative, bugs found, and design decisions for all three:
-`docs/Progress-Archive-2026-08.md`'s 2026-08-26/27 entries. Not repeated
-here.
+**Next step: manual browser pass, then commit.** None of this has been
+exercised in the browser yet, and nothing is staged/committed — this is
+~1000 lines uncommitted across backend + frontend. Also still open: the
+Option A vs. B decision itself is Haroon's call, per
+`docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md`; nothing here is
+live for the sales team regardless.
 
 **Next up:** nothing picked yet. See `docs/Backlog.md` for candidates —
-Referral Credit Part 2 was the last "next up" item and is now done, so this
-needs a fresh call. Two ready-to-build contenders as of 2026-08-27: Milestone
-2 / Target Planning (5 open decisions pending Basheer before it can start)
-and the Annual Development-Activity KPI (sequenced after both Sales
-Development Activities and Target Planning — only the first prerequisite is
-met so far). The UAT `rls_auto_enable()` trigger is a standing risk item, not
+Milestone 2 / Target Planning (5 open decisions pending Basheer before it
+can start) and the Annual Development-Activity KPI (sequenced after Target
+Planning). The UAT `rls_auto_enable()` trigger is a standing risk item, not
 a feature, worth a look regardless of what's picked next.
 
-## UAT migration — status as of 2026-08-24
+## UAT migration — status as of 2026-08-29
 
-**Done:** Karnataka zone tree (Karnataka → District flat, except
-Bangalore keeps its cluster node + Zone 1-6), Fazal's and Shruthi's
-district-level assignments. Full narrative:
-`docs/Progress-Archive-2026-08.md`'s 2026-08-21 and 2026-08-24 entries;
-underlying territory data: `docs/Zone-Hierarchy-Territory-Data-2026-08.md`.
-
-**Staged rollout is on track and unchanged in shape:** only the Star
-Sales team has been given UAT access so far, and they are currently
-testing. **The extended sales team has NOT been rolled out or started
-testing** — that step, and Monday-style training for them, is still
-gated behind explicit Star Sales sign-off, which has not been received
-yet. Don't assume the extended team has any access until that sign-off
-lands and the next rollout step actually happens.
+Both Star Sales and the extended sales team now have UAT access and have
+been walked through the app. Full territory/roster detail:
+`docs/Progress-Archive-2026-08.md`'s 2026-08-24 and 2026-08-29 entries;
+underlying territory data: `docs/Zone-Hierarchy-Territory-Data-2026-08.md`
+(now stale in two places — Bangalore's zone-tree shape, and Nagesh
+Ninganoor's territory after his resignation — see the 2026-08-29 archive
+entry for both).
 
 **Known blocker, still standing:** direct DB-touching commands
-(migrations, raw queries) get blocked by the Claude Code auto-mode
-safety classifier regardless of chat approval. Basheer runs these
-himself (`!`-prefixed or his own terminal). **Partial nuance,
-2026-08-23:** read-only SQL (SELECT queries via a python/psycopg2
-script) ran fine without tripping the classifier — the blocker may be
-scoped to writes/DDL specifically, not tested further.
+(migrations, raw queries) get blocked by the Claude Code auto-mode safety
+classifier regardless of chat approval. Basheer runs these himself
+(`!`-prefixed or his own terminal). Read-only SQL (SELECT queries via a
+python/psycopg2 script, using `.venv/Scripts/python.exe` directly — Git
+Bash mis-resolves `source .venv/Scripts/activate` on this machine) runs
+fine without tripping the classifier — used repeatedly this session for
+UAT diagnostics with no issue.

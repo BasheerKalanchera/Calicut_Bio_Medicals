@@ -36,18 +36,27 @@ class ZoneRepository(BaseRepository[Zone]):
         instead of account_id/parent_account_id)."""
         return self.db.scalar(select(Zone.parent_zone_id).where(Zone.id == zone_id))
 
-    def search_by_name(self, query: str, limit: int = 10) -> list[Zone]:
+    def search_by_name(
+        self, query: str, limit: int = 10, *, within_zone_id: uuid.UUID | None = None
+    ) -> list[Zone]:
         """Trigram similarity search over active zones, backing the
         ZonePicker component (docs/ZonePicker-And-Coverage-View-
         Implementation-Plan.md). Only active zones are searchable, matching
-        the existing list_active() convention used everywhere else."""
+        the existing list_active() convention used everywhere else.
+
+        `within_zone_id`, when given, restricts results to that zone plus
+        everything under it (via zone_closure) -- backs the Add/Edit Hospital
+        picker's rep-scoped search (master_data.py's
+        search_zones_for_hospital), same descendant-sweep pattern as
+        AccountRepository.find_similar_by_name and list_accounts."""
         similarity = func.similarity(Zone.name, query)
-        stmt = (
-            select(Zone)
-            .where(Zone.is_active == True, similarity > 0)  # noqa: E712
-            .order_by(similarity.desc())
-            .limit(limit)
-        )
+        stmt = select(Zone).where(Zone.is_active == True, similarity > 0)  # noqa: E712
+        if within_zone_id is not None:
+            descendant_ids = select(ZoneClosure.descendant_zone_id).where(
+                ZoneClosure.ancestor_zone_id == within_zone_id
+            )
+            stmt = stmt.where(Zone.id.in_(descendant_ids))
+        stmt = stmt.order_by(similarity.desc()).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def exists_by_name(

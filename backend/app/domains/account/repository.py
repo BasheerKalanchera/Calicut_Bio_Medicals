@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session, noload, selectinload
 
 from app.db.base import BaseRepository
+from app.domains.account.duplicate_matching import score_query_containment
 from app.domains.account.models import Account, Stakeholder
 from app.domains.activity.models import Activity
 from app.domains.asset.models import InstalledAsset
@@ -85,6 +86,87 @@ class AccountRepository(BaseRepository[Account]):
         if exclude_id:
             stmt = stmt.where(Account.id != exclude_id)
         return (self.db.scalar(stmt) or 0) > 0
+
+    def find_similar_by_name(
+        self,
+        name: str,
+        *,
+        zone_id: uuid.UUID,
+        threshold: float = 0.5,
+        limit: int = 5,
+        exclude_id: uuid.UUID | None = None,
+    ) -> list[Account]:
+        """Near-duplicate check for hospital creation (BR pending Haroon sign-off,
+        see docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md's Option B).
+
+        `exclude_id`, used by AccountService.update_account (renaming an
+        existing hospital), excludes that account itself from the candidate
+        pool. Deliberately separate from the exact-name exclusion below: on a
+        rename, the account being edited still holds its *old* name in the DB
+        when this query runs, so excluding by name alone wouldn't reliably
+        exclude it from being scored against its own new name.
+
+        Scoped to the whole operational zone branch (e.g. all of "North Kerala",
+        not just whichever district/taluk zone was picked) via zone_closure --
+        an exact zone_id match would miss a hospital filed at a parent zone
+        against the same hospital re-filed at a child zone (found 2026-08-30:
+        "Al Shifa Hospital" filed at North Kerala vs "al Shifa" filed at its
+        Malappuram sub-zone).
+
+        The branch root is the nearest ancestor at zone_level="ZONE"
+        (North Kerala / South Kerala / Bangalore / Mangalore / etc.), not the
+        topmost ancestor with no parent at all -- those two used to be the same
+        zone, but no longer are: Kerala/Karnataka now sit above them as
+        zone_level="STATE" parents (found 2026-08-30, testing against real
+        Dev data: walking to the true root merged North Kerala and South
+        Kerala into one pool, e.g. a Kozhikode hospital getting compared
+        against an Ernakulam one).
+
+        Scoring uses score_query_containment (duplicate_matching.py), not raw
+        trigram similarity: widening the pool this much reintroduces the
+        shared-generic-word false positives (two unrelated "Medical College
+        Hospital"s) that raw similarity can't tell apart from a real duplicate
+        -- confirmed on real data, where a false-positive pair scored *higher*
+        on raw similarity than a true duplicate pair did. The candidate pool
+        stays small (one zone branch's worth of accounts), so scoring it in
+        Python is not a meaningful cost next to the DB round-trip itself.
+
+        Fallback for zone_id itself being at or above zone_level="ZONE" (e.g.
+        an account filed directly at the state "Kerala", not a district under
+        it): there's no ZONE-level ancestor to walk up to, so the lookup below
+        comes back empty. Found 2026-08-31 -- an account filed at bare "Kerala"
+        silently matched against nothing, since branch_zone_ids resolved to
+        `ancestor_zone_id = NULL`, which SQL never matches. Falling back to
+        zone_id itself as the branch root means the walk-up-then-sweep-down
+        behavior above still applies, just anchored one level higher than
+        usual -- it naturally sweeps every ZONE branch underneath "Kerala"
+        too, via the same zone_closure query, no special-casing needed.
+        """
+        root_zone_id = self.db.scalar(
+            select(ZoneClosure.ancestor_zone_id)
+            .join(Zone, Zone.id == ZoneClosure.ancestor_zone_id)
+            .where(ZoneClosure.descendant_zone_id == zone_id, Zone.zone_level == "ZONE")
+        )
+        if root_zone_id is None:
+            root_zone_id = zone_id
+        branch_zone_ids = select(ZoneClosure.descendant_zone_id).where(
+            ZoneClosure.ancestor_zone_id == root_zone_id
+        )
+        stmt = select(Account).where(
+            Account.zone_id.in_(branch_zone_ids),
+            func.lower(Account.name) != func.lower(name),
+        )
+        if exclude_id is not None:
+            stmt = stmt.where(Account.id != exclude_id)
+        candidates = self.db.scalars(stmt).all()
+
+        scored = [(score_query_containment(name, c.name), c) for c in candidates]
+        matches = sorted(
+            (pair for pair in scored if pair[0] >= threshold),
+            key=lambda pair: pair[0],
+            reverse=True,
+        )
+        return [account for _, account in matches[:limit]]
 
     def get_account_with_counts(self, account_id: uuid.UUID):
         account = self.db.scalar(

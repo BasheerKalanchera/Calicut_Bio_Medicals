@@ -13,6 +13,7 @@ from app.core.exceptions import (
     BusinessRuleViolation,
     ConflictError,
     NotFoundError,
+    PossibleDuplicateError,
     ValidationError,
 )
 from app.core.logging import logger, setup_logging
@@ -114,6 +115,17 @@ def _register_exception_handlers(application: FastAPI) -> None:
         return JSONResponse(
             status_code=409,
             content=ErrorResponse(message=exc.message).model_dump(),
+        )
+
+    @application.exception_handler(PossibleDuplicateError)
+    async def possible_duplicate_handler(_request: Request, exc: PossibleDuplicateError) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content=ErrorResponse(
+                message=exc.message,
+                error_code="POSSIBLE_DUPLICATE",
+                candidates=exc.candidates,
+            ).model_dump(),
         )
 
     @application.exception_handler(ValidationError)

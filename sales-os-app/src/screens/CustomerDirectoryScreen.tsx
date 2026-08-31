@@ -6,6 +6,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -16,12 +20,19 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
+import { ApiError } from "../lib/api";
 import FormModal from "../components/FormModal";
+import { SilentModalError } from "../lib/formErrors";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { useAuth } from "../contexts/AuthContext";
-import type { AccountListResponse } from "../types/api-aliases";
+import { searchZonesForHospital } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
+
+// Mirrors AccountService's _ZONE_ASSIGNMENT_EXEMPT_ROLES (backend/app/domains/
+// account/service.py) -- Admin/GM can add a hospital in any territory, so
+// they're the only roles exempt from needing a zone on file first.
+const ZONE_ASSIGNMENT_EXEMPT_ROLES = new Set(["Admin", "General Manager"]);
 
 interface AccountOption { id: string; name: string }
 
@@ -52,7 +63,11 @@ function payerBehaviorChipSx(value: string) {
 }
 
 interface Props {
-  onSelectAccount: (account: AccountListResponse) => void;
+  // Minimal shape (id + name) -- matches the convention already used by every
+  // other caller of onSelectAccount in the app (ReminderRow, DailyActivityReportScreen,
+  // NextActionsScreen, Customer360Screen's own parent/child links); Customer360Screen
+  // fetches the full record itself from accountId, so nothing more is needed here.
+  onSelectAccount: (account: { id: string; name: string }) => void;
   openCreateRef?: React.RefObject<(() => void) | null>;
 }
 
@@ -73,6 +88,17 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   const [formCustomerType, setFormCustomerType] = useState("");
   const [formParentAccount, setFormParentAccount] = useState<AccountOption | null>(null);
   const [parentSearchInput, setParentSearchInput] = useState("");
+  // Option B duplicate-hospital warning (docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md,
+  // BR-ACC-03): set when the backend's near-duplicate check (POSSIBLE_DUPLICATE) rejects the
+  // in-flight create -- duplicateCandidates are every existing match it found (there can be
+  // more than one), pendingCreatePayload is what to resubmit with force_create if the rep
+  // confirms this is genuinely a different hospital.
+  const [duplicateCandidates, setDuplicateCandidates] = useState<AccountOption[] | null>(null);
+  const [pendingCreatePayload, setPendingCreatePayload] = useState<Record<string, unknown> | null>(null);
+  // Rep with no territory assigned can't add a hospital at all -- backend
+  // enforces this too (AccountService.create_account), this is just the
+  // friendlier front-door version so they see why before filling the form.
+  const [showNoZoneBlock, setShowNoZoneBlock] = useState(false);
 
   const debouncedSearch = useDebouncedValue(search);
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
@@ -127,6 +153,11 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   });
 
   const openCreateModal = useCallback(() => {
+    const roleName = userProfile?.role_name;
+    if (!(roleName && ZONE_ASSIGNMENT_EXEMPT_ROLES.has(roleName)) && !userProfile?.zone) {
+      setShowNoZoneBlock(true);
+      return;
+    }
     setFormName("");
     // Pre-fill with the logged-in user's own zone (their day-to-day home
     // base, not the broader zone_ids coverage list) so sales staff aren't
@@ -136,11 +167,19 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     setFormCustomerType("");
     setFormParentAccount(null);
     setParentSearchInput("");
+    setDuplicateCandidates(null);
+    setPendingCreatePayload(null);
     setShowCreateModal(true);
   }, [userProfile]);
   useEffect(() => {
     if (openCreateRef) openCreateRef.current = openCreateModal;
   }, [openCreateRef, openCreateModal]);
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setDuplicateCandidates(null);
+    setPendingCreatePayload(null);
+  };
 
   const handleCreateAccount = async () => {
     if (!formName.trim()) throw new Error("Customer name is required");
@@ -149,7 +188,28 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
     if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
     if (formCustomerType) payload.customer_type = formCustomerType;
     if (formParentAccount) payload.parent_account_id = formParentAccount.id;
-    await createMutation.mutateAsync(payload);
+    setDuplicateCandidates(null);
+    try {
+      await createMutation.mutateAsync(payload);
+    } catch (err) {
+      if (err instanceof ApiError && err.errorCode === "POSSIBLE_DUPLICATE" && err.candidates?.length) {
+        setDuplicateCandidates(err.candidates);
+        setPendingCreatePayload(payload);
+        throw new SilentModalError();
+      }
+      throw err;
+    }
+  };
+
+  const handleCreateAnyway = async () => {
+    if (!pendingCreatePayload) return;
+    await createMutation.mutateAsync({ ...pendingCreatePayload, force_create: true });
+    closeCreateModal();
+  };
+
+  const handleUseExisting = (account: AccountOption) => {
+    closeCreateModal();
+    onSelectAccount(account);
   };
 
   return (
@@ -343,11 +403,40 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
 
       <FormModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={closeCreateModal}
         title="New Customer"
         onSubmit={handleCreateAccount}
         submitLabel="Create"
       >
+        {duplicateCandidates && duplicateCandidates.length > 0 && (
+          <>
+            <Alert severity="warning" sx={{ "& .MuiAlert-message": { width: "100%" } }}>
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                {duplicateCandidates.length === 1
+                  ? <>Did you mean <strong>{duplicateCandidates[0].name}</strong>? It's already in the directory.</>
+                  : "This looks similar to hospitals already in the directory:"}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                {duplicateCandidates.map((candidate) => (
+                  <Box key={candidate.id} sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    {duplicateCandidates.length > 1 && (
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
+                    )}
+                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExisting(candidate)}>
+                      Use this one instead
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            </Alert>
+            {/* Outside the Alert, not inside its message slot -- the warning
+                icon indents the message area, which would otherwise shift
+                this full-width button off from the rest of the form's fields. */}
+            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleCreateAnyway}>
+              Create Anyway
+            </Button>
+          </>
+        )}
         <TextField
           label="Name *"
           value={formName}
@@ -357,7 +446,7 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
           size="small"
           placeholder="Enter customer name"
         />
-        <ZonePicker label="Zone *" value={formZone} onChange={setFormZone} />
+        <ZonePicker label="Zone *" value={formZone} onChange={setFormZone} searchFn={searchZonesForHospital} />
         <Autocomplete
           options={parentOptions}
           getOptionLabel={(o) => o.name}
@@ -399,6 +488,19 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
           ))}
         </TextField>
       </FormModal>
+
+      <Dialog open={showNoZoneBlock} onClose={() => setShowNoZoneBlock(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>No territory assigned yet</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You don't have a territory assigned yet, so you can't add a new
+            hospital. Ask your manager to get one set up for you first.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowNoZoneBlock(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

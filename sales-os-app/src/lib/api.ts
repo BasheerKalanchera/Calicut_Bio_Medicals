@@ -3,9 +3,22 @@ import { supabase } from "./supabase";
 
 export class ApiError extends Error {
   status?: number;
-  constructor(message: string, status?: number) {
+  // Structured payload alongside `message`, for callers that need to react to
+  // *why* the request failed, not just show text -- e.g. the account-creation
+  // near-duplicate warning (error_code "POSSIBLE_DUPLICATE") needs the
+  // candidate list, not just a human-readable sentence.
+  errorCode?: string;
+  candidates?: { id: string; name: string }[];
+  constructor(
+    message: string,
+    status?: number,
+    errorCode?: string,
+    candidates?: { id: string; name: string }[]
+  ) {
     super(message);
     this.status = status;
+    this.errorCode = errorCode;
+    this.candidates = candidates;
   }
 }
 
@@ -62,7 +75,9 @@ api.interceptors.response.use(
       "Something went wrong";
     const enriched = new ApiError(
       typeof detail === "string" ? detail : JSON.stringify(detail),
-      error.response?.status
+      error.response?.status,
+      error.response?.data?.error_code,
+      error.response?.data?.candidates
     );
     return Promise.reject(enriched);
   }

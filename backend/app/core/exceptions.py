@@ -32,5 +32,17 @@ class ConflictError(AppError):
     pass
 
 
+class PossibleDuplicateError(AppError):
+    """Raised when a near-duplicate exists but hasn't been confirmed as intentional.
+
+    Distinct from ConflictError (an exact-name clash, which always blocks) --
+    this is a soft block: the caller can retry with force=True to proceed.
+    """
+
+    def __init__(self, message: str, candidates: list[dict]):
+        self.candidates = candidates
+        super().__init__(message)
+
+
 class ValidationError(AppError):
     pass

@@ -94,6 +94,12 @@ def list_master_data(
     return APIResponse(data=[schema.model_validate(item) for item in items])
 
 
+# Same role-gate shape as reference/service.py's _TERRITORY_ADMIN_ROLES and
+# account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES -- each module keeps its
+# own private copy rather than sharing one, per existing convention.
+_TERRITORY_ADMIN_ROLES = {"Admin", "General Manager"}
+
+
 # Sibling to /master-data/zones, not routed through ENTITY_REGISTRY -- needs
 # custom trigram-similarity query + breadcrumb logic. Not admin-gated: every
 # authenticated user uses zone pickers, not just Territory Admin.
@@ -105,6 +111,32 @@ def search_zones(
 ) -> APIResponse[list[ZoneSearchResult]]:
     repo = ZoneRepository(db)
     zones = repo.search_by_name(q)
+    return APIResponse(
+        data=[ZoneSearchResult(id=z.id, name=z.name, path=repo.build_breadcrumb(z)) for z in zones]
+    )
+
+
+# Deliberately separate from search_zones above rather than a flag on it:
+# every other zone picker in the app (Territory Admin, User Directory, etc.)
+# needs the unrestricted search -- only Add/Edit Hospital should be scoped to
+# the rep's own territory. Same role-gate shape as AccountService's
+# _ZONE_ASSIGNMENT_EXEMPT_ROLES (account/service.py) -- Admin/GM get the
+# unrestricted search, everyone else is scoped to their own zone_id + every
+# zone under it. A rep with no zone_id gets no results at all, matching
+# AccountService.create_account's hard block for the same case.
+@router.get("/master-data/zones/search-for-hospital")
+def search_zones_for_hospital(
+    q: str = Query(min_length=2),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    db: Session = Depends(get_db),  # noqa: B008
+) -> APIResponse[list[ZoneSearchResult]]:
+    repo = ZoneRepository(db)
+    if current_user.role.role_name in _TERRITORY_ADMIN_ROLES:
+        zones = repo.search_by_name(q)
+    elif current_user.zone_id is None:
+        zones = []
+    else:
+        zones = repo.search_by_name(q, within_zone_id=current_user.zone_id)
     return APIResponse(
         data=[ZoneSearchResult(id=z.id, name=z.name, path=repo.build_breadcrumb(z)) for z in zones]
     )

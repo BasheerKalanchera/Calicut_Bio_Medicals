@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
 
+    # BR-ACC-03: how similar a new hospital name has to be to an existing one
+    # (within the same zone branch) before the rep is warned. Tunable without a
+    # redeploy since the brief anticipated this needing real-world adjustment
+    # in the first few weeks -- see docs/Duplicate-Hospital-Decision-Brief-
+    # 2026-08-29.md.
+    ACCOUNT_DUPLICATE_SIMILARITY_THRESHOLD: float = 0.5
+
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]

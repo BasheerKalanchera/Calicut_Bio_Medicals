@@ -261,7 +261,9 @@ class TestCreateAccount:
     def test_creates_account(self, client: TestClient) -> None:
         account = _mock_account(name="New Hospital")
         mock_db = MagicMock()
-        mock_db.scalar.side_effect = [0, 1]  # exists_by_name=0, zone_exists=1
+        # exists_by_name=0, zone_exists=1, find_similar_by_name's root-zone lookup=TEST_ZONE_ID
+        # (candidates themselves come back empty via the default mock_db.scalars(...).all())
+        mock_db.scalar.side_effect = [0, 1, TEST_ZONE_ID]
 
         def _capture_add(obj):
             for attr in ["id", "name", "parent_account_id", "zone_id",
@@ -327,7 +329,8 @@ class TestCreateAccount:
         for behavior in ["GOOD", "AVERAGE", "PROBLEMATIC", "UNKNOWN"]:
             account = _mock_account(name="Hospital", payer_behavior=behavior)
             mock_db = MagicMock()
-            mock_db.scalar.side_effect = [0, 1]  # exists_by_name=0, zone_exists=1
+            # exists_by_name=0, zone_exists=1, find_similar_by_name's root-zone lookup=TEST_ZONE_ID
+            mock_db.scalar.side_effect = [0, 1, TEST_ZONE_ID]
 
             def _capture_add(obj, _acct=account):
                 for attr in ["id", "name", "parent_account_id", "zone_id",
@@ -392,8 +395,10 @@ class TestUpdateAccount:
     def test_updates_account(self, client: TestClient) -> None:
         account = _mock_account()
         mock_db = MagicMock()
-        # scalar calls in order: get_for_update → account, exists_by_name → 0
-        mock_db.scalar.side_effect = [account, 0]
+        # scalar calls in order: get_for_update → account, exists_by_name → 0,
+        # find_similar_by_name's root-zone lookup (rename triggers the near-
+        # duplicate check too) → TEST_ZONE_ID
+        mock_db.scalar.side_effect = [account, 0, TEST_ZONE_ID]
 
         _setup_overrides(mock_db)
         try:

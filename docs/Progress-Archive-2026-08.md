@@ -2979,3 +2979,308 @@ level, nowhere else. Full detail: `docs/Referral-Credit-And-Relationship-
 Support-Manual-E2E-Verification.md`'s Results log.
 
 **Committed:** `4e1f4c8`. Feature fully done.
+
+## 2026-08-29 -- Extended sales team walkthrough: onboarding, live storage bug fixed, a false-alarm report "bug," and a duplicate-hospital decision brief
+
+**Extended sales team walkthrough held today**, ahead of the Star Sales
+sign-off this doc's 2026-08-24 entry said was required -- Basheer's explicit
+call to proceed without it, not an oversight. Ran roughly 1.5-2 hours after
+the decision to go ahead.
+
+**Onboarding.** Claude proposed a 10-person roster for the extended team
+(email/role/SBU/primary zone/manager per person), matching the existing
+7-account UAT convention (`firstname@cabio-uat.com`, `docs/Progress-
+Archive-2026-08.md`'s 2026-08-03 entry). Basheer created every Supabase
+Auth account and every `user_profile` row himself -- Claude never wrote to
+the live DB, only proposed the roster and verified the result afterward via
+read-only query (`ADMIN_DATABASE_URL` from `backend/.env.uat`, same
+mechanism as the original 7-account bootstrap).
+
+Verified live roster: Vivek (South Kerala / Adarsh), Rudrappa Deevatagi
+(Bangalore East / Shruthi), Om Hiremath (Bangalore West / Shruthi),
+Dhanushma (Bangalore South / Shruthi), Ravi Kumar (Chitradurga / Shruthi),
+Irfan (Kasaragod / Fazal), Fahad (Mangalore / Fazal), Adydev (Kozhikode /
+Nishad), Naeem (Malappuram, Area Manager / Haroon), and **Gopika pv**
+(Malappuram / Naeem) -- Gopika wasn't in the original proposed roster,
+added by Basheer directly.
+
+**Nagesh Ninganoor was deliberately not onboarded -- he has resigned.**
+His territory (Mysuru, Mandya, Ramnagara, Chamrajanagar) needed interim
+coverage; Basheer's call: Shruthi covers it until a replacement joins.
+Checked via read-only query on `user_zone` -- **already true**, no DB
+change needed. Shruthi's 2026-08-24 territory assignment already included
+all four of those districts as part of her broader Karnataka-wide
+coverage. `docs/Zone-Hierarchy-Territory-Data-2026-08.md` still names
+Nagesh as the assignee for those four districts -- stale, needs a
+correction pass (Shruthi interim, then whoever replaces Nagesh) next time
+that doc is touched.
+
+**Structural finding, incidental to the onboarding work:** live UAT's
+Bangalore zone tree is 5 directional clusters (Central/East/North/South/
+West), not the numbered "Zone 1-6" scheme `Zone-Hierarchy-Territory-Data-
+2026-08.md` describes. The planning doc is stale on Bangalore's actual
+built structure -- discovered while trying to map Rudrappa/Om Hiremath/
+Dhanushma's planning-doc zone numbers onto real `zone` table rows during
+roster prep; Basheer confirmed the live `user_profile` assignments (already
+made) as authoritative rather than have Claude guess a mapping.
+
+**Bug found and fixed: Opportunity Document upload (PDF/JPG) failing in
+UAT.** Surfaced live during the walkthrough -- upload attempts failed
+outright. Root-caused by checking the actual app config rather than the
+Supabase dashboard: `backend/app/core/storage.py` calls Supabase's Storage
+REST API directly via `httpx`, using `SUPABASE_SERVICE_ROLE_KEY` -- separate
+from both the SQLAlchemy `DATABASE_URL` connection (backend) and the
+`supabase-js` client (frontend, Auth-only, confirmed via grep to have zero
+`.from()` table-query calls). `backend/.env.uat` had `SUPABASE_URL` but
+**no `SUPABASE_SERVICE_ROLE_KEY` at all** -- confirmed by grepping the key
+name (not its value). The `documents` Storage bucket itself also hadn't
+been created in UAT. Matches the unchecked checklist item in
+`docs/Deployment-Topology.md` ("Supabase Storage `documents` bucket +
+`SUPABASE_SERVICE_ROLE_KEY` secret must be provisioned... per-environment")
+-- that item is tracked for Prod only, so UAT's own gap had gone
+unverified. **Fixed by Basheer:** created the private `documents` bucket in
+UAT Supabase Storage (private, not public -- all access is proxied through
+the backend's service-role key and short-lived signed URLs per BR-ACT-08,
+so no bucket-level policies were needed), set `SUPABASE_SERVICE_ROLE_KEY`
+in Render's UAT environment variables and in `backend/.env.uat` locally,
+redeployed. **Verified working** by Basheer, live, after the fix. Same gap
+plausibly exists for Prod -- still an open, unchecked item there.
+
+**False alarm, not a bug: Daily Activity Report "missing" an activity.**
+Also surfaced live during the walkthrough -- an activity logged for Naeem
+(MEETING type) didn't appear in the Daily Activity Report, even though the
+row existed in the `activity` table and Basheer was viewing as Admin
+(unrestricted role, rules out the tier-visibility scoping in
+`ActivityRepository._apply_daily_report_scope`). Read-only diagnostic query
+against UAT showed the row's `activity_date` = 2026-08-15, while
+`created_at` = today -- confirmed by Basheer as **correct**: a real past
+visit, entered retroactively today. The report correctly filters by
+`activity_date` (when the activity happened), not `created_at` (when it was
+logged) -- `ActivityService.list_daily_report` computes an IST calendar-day
+window from the requested `report_date` and queries `Activity.activity_date`
+against it, exactly as designed. No code change made or needed.
+
+**Duplicate hospital names -- decision brief written, not yet built either
+way.** Raised by Basheer during the walkthrough: Account creation only
+blocks an exact case-insensitive name match (`Account
+Repository.exists_by_name`, `func.lower(Account.name) ==
+func.lower(name)`) -- a one-character-different name is allowed through, so
+near-duplicate hospital records can accumulate. Two options sized for a
+decision: **(A) restrict new-Account creation to Admin/GM roles**
+(~half a day -- one role check mirroring the existing BR-OP-12 pattern, hide
+the "Add Account" affordance in `CustomerDirectoryScreen.tsx` for other
+roles -- but removes the "add a hospital on the spot" field workflow the
+UAT setup doc explicitly describes as expected usage); **(B) a soft
+similarity warning at creation time** using Postgres's `pg_trgm` extension
+(`similarity()` scoring against existing names, non-blocking confirm dialog
+on a near-match) -- ~1-1.5 days plus follow-up threshold-tuning time, since
+common Indian hospital-name tokens ("Hospital," "Medical College," "Nursing
+Home") will inflate similarity scores until normalized out. Recommendation:
+Option B, on workflow-fit grounds, at roughly 2-3x Option A's cost. Written
+up for a non-technical audience and saved to `docs/Duplicate-Hospital-
+Decision-Brief-2026-08-29.md`; tracked in `docs/Backlog.md`'s "Deferred /
+undecided items." Basheer taking it to Haroon 2026-08-30 -- no code
+changes made pending that decision.
+
+---
+
+## 2026-08-30 -- Two real duplicate hospitals found and fixed in UAT, directory-wide cleanup, and an Option B prototype (BR-ACC-03)
+
+**Trigger: Nishad K V called in a real duplicate.** He'd added "EMS
+cooperative hospital Cherpulassery" ~3 weeks earlier, forgot, and added it
+again as "Cooperative hos Cherpulassery" -- then logged a real ₹16.85L
+Critical Care Opportunity (Edan CX12, Aeonmed 7200A, Magnamed OxyMag) and a
+VISIT activity against the wrong (new) account. Root cause confirmed by
+direct UAT queries via `ADMIN_DATABASE_URL` (the app-role `DATABASE_URL`
+connection returns zero rows for RLS-protected tables like `opportunity`
+without the app's `set_config` session context -- cost real time
+mid-investigation before realizing the "not found" result was RLS silently
+filtering, not an empty table). Fixed: `UPDATE opportunity`/`UPDATE
+activity` re-pointing both to the original account, `DELETE` the duplicate
+account -- run by Basheer directly in the Supabase SQL Editor (DB-mutating
+commands stay outside Claude's tool access per this project's standing
+rule).
+
+**While tracing a side-finding (a no-`created_by` "EMS Hospital" account),
+found the real explanation in this file's own 2026-08-02 entry:** UAT was
+seeded from Dev with an 18-down-to-11-account demo copy ahead of the first
+orientation, done as a direct DB copy (no app user, hence no `created_by`).
+Audited all 11 for dependencies: 7 were untouched and clean; `Aster MIMS
+Calicut` carried live Haroon Sidheeq pipeline data (kept); `Aster DM`,
+`KIMS Al-Shifa Hospital, Perinthalmanna`, and `aster medicity` carried only
+Basheer's own "ICU Monitor" demo opportunities from the manager
+orientation (all three created within one hour on 2026-08-03). Deleted the
+9 accounts with no real data, deleted the 3 demo opportunities + Aster DM's
+"New Imaging department" demo project, kept Aster DM itself since it's the
+real parent-group record for two genuine hospitals.
+
+**A full fuzzy-duplicate sweep of the whole 76-account UAT directory**
+(after the above cleanup) found a second real duplicate, unrelated to
+Nishad's: `Aster Mims Mother Areekode` / `Aster MIMS Mother Hospital
+Areekode`, both entered by Haroon Sidheeq 15 days apart, each carrying a
+different real deal (an ECG machine, a portable ultrasound) plus real
+activities -- a true merge, not a delete, since both deals were genuine.
+Consolidated both onto the older account (which already had the correct
+`parent_account_id`), deleted the duplicate. Net across the whole session:
+**77 -> 66 UAT accounts**, zero real Opportunity/Activity data lost.
+First-pass fuzzy search used raw `pg_trgm` `similarity()` and produced 96
+noisy candidate pairs, dominated by false positives on shared generic
+words ("Medical College Hospital," "Diagnostics," "Cooperative Hospital");
+a second pass stripping those generic words before fuzzy-matching the
+remaining significant words cut this to 12 candidates and correctly
+separated the 2 real duplicates from the rest (e.g. Ramaiah/KMCT/Yenepoya
+Medical College Hospital -- three real, unrelated hospitals -- no longer
+false-flagged).
+
+**Turned into an Option B prototype (BR-ACC-03, `docs/Business-Rules.md`)
+to test whether it would actually have prevented both real incidents.**
+`AccountService.create_account` now checks `AccountRepository.
+find_similar_by_name` before creating; a match raises `PossibleDuplicateError`
+(new in `core/exceptions.py`) -> `409 POSSIBLE_DUPLICATE` with candidate
+accounts, unless the caller sets `force_create=true` on `AccountCreate`.
+`CustomerDirectoryScreen.tsx`'s "New Customer" modal shows the match(es)
+with "Use this one instead" (navigates to the existing account via
+`onSelectAccount`, whose type was widened from the full `AccountListResponse`
+to the `{id, name}` shape every other caller in the app already uses) and
+"No, create it anyway" (resubmits with `force_create`).
+
+**First version scoped the check to an exact `zone_id` match** (a rep
+re-entering a hospital is almost always in their own zone, cutting most
+cross-hospital generic-word false positives for free) -- validated against
+both real incidents successfully. **Basheer found a real gap during manual
+testing:** tried adding "al Shifa" against an existing "Al Shifa Hospital"
+and it didn't fire, because zones are a hierarchy (`zone_closure` table,
+migration `0019`) -- the existing hospital was filed at the top-level
+"North Kerala" zone, the new one at "Malappuram," a sub-zone of it. Exact
+`zone_id` equality missed same-territory duplicates filed at different
+tree depths.
+
+**Fix widened the check to the whole top-level zone branch** (via
+`zone_closure`'s ancestor/descendant rows) and replaced raw
+`similarity()` with the same generic-word-stripped token matcher validated
+during the directory sweep above -- required together, not separately:
+widening the pool alone reopens the false-positive problem raw similarity
+has (confirmed with real numbers -- `Ramaiah Medical College Hospital` vs
+`Kmct Medical college Hospital`, different real hospitals, scores *higher*
+on raw similarity, 0.649, than the real `Al Shifa Hospital`/`al Shifa`
+duplicate does, 0.529 -- no single raw-similarity threshold gets both
+right). New `account/duplicate_matching.py` holds the scorer, independently
+unit-tested (`test_duplicate_matching.py`) -- the first time this
+similarity logic has had direct test coverage, since the codebase's
+existing convention was to leave `pg_trgm`-dependent repository methods
+untested (no real-DB integration suite for them). One accepted, documented
+trade-off found in that process: two genuinely different real hospital
+branches sharing a brand + generic wording, differing only in town name
+(`EMS cooperative hospital Cherpulassery` vs `EMS Coperative Hospital
+Perambra`), still score above threshold -- acceptable since the UX is a
+one-tap-dismiss warning, not a hard block.
+
+**Hardened from prototype to reviewable state, all in this session:**
+similarity threshold moved to `ACCOUNT_DUPLICATE_SIMILARITY_THRESHOLD`
+(config, default `0.5`, tunable without a redeploy -- the brief itself
+anticipated needing real-world tuning); every warning and every override
+now logged (`account_possible_duplicate_warned` / `account_
+duplicate_override_confirmed`, `core/logging.py`'s existing `structlog`
+setup -- the first domain-service use of it, previously confined to
+`main.py`'s infra-level logging) so the threshold can actually be tuned
+from real usage later; the confirmation UI now lists every candidate
+returned (previously only showed the closest); BR-ACC-03 written up in
+`docs/Business-Rules.md` and the decision brief's status updated to
+reflect it's built-and-validated-but-not-approved. Backend suite: 631/631
+passing (was 623 before this session's changes); frontend `tsc --noEmit`
+and `npm run lint` both clean, no new warnings.
+
+**Explicitly not a rollout.** This is still a prototype built to answer
+"would Option B have worked" -- validated yes, against three real cases
+(Nishad's, Haroon's Areekode entries, and the Al Shifa zone-hierarchy
+gap Basheer found manually). The Option A vs. B decision itself is still
+Haroon's, per the original brief; nothing here is live for the sales team.
+
+**Also not yet in this file as of the 08-30 write-up above:** the actual
+create-hospital UI for the warning (`SilentModalError`, the "Did you mean
+X?" Alert with Use This One / Create Anyway in `CustomerDirectoryScreen.tsx`,
+`FormModal.tsx`, `lib/api.ts`, `lib/formErrors.ts`) was built in the same
+session but ~4 hours after this entry and `active_progress.md` were last
+saved -- reconstructed 2026-08-31 from file mtimes when the handover doc
+turned out to be stale. Noted here so the gap doesn't repeat: this file and
+`active_progress.md` need updating as work lands, not only at a session's
+first stopping point.
+
+## 2026-08-31 -- Real "aster 1"/"aster 2" duplicate in dev exposed a zone-branch lookup gap; fixed, plus rep territory scoping for Add/Edit Hospital
+
+**Trigger:** Basheer manually testing the BR-ACC-03 prototype added "aster
+1" to the directory with its zone set to bare "Kerala" (the state node, not
+a district or region under it), then added "aster 2" the same way -- no
+duplicate warning fired for either.
+
+**Root cause:** `AccountRepository.find_similar_by_name` finds its search
+scope by walking up from the new hospital's zone to the nearest ancestor at
+`zone_level="ZONE"` (North Kerala / South Kerala / etc.), then compares
+against every account in that whole branch. That walk assumes the zone
+picked is always a ZONE-level node or something under it. "Kerala" itself
+sits *above* ZONE level (a `zone_level="STATE"` parent, added earlier in the
+zone-hierarchy work) -- walking up from it finds no ZONE-level ancestor at
+all, so the old code (`root_zone_id` built as a `.scalar_subquery()` and
+never independently executed) silently produced `ancestor_zone_id = NULL`,
+which SQL never matches anything. Confirmed directly against dev data: the
+ancestor lookup for Kerala's own `zone_id` returned zero rows, and the
+existing "aster 1" account really was filed at `zone_id = Kerala`.
+
+**Fix (`find_similar_by_name`):** execute the ancestor lookup as a real
+query first; if it comes back empty, fall back to the hospital's own
+`zone_id` as the search root instead of giving up. The existing "walk up,
+then sweep every zone underneath the root" logic (`zone_closure`) then
+naturally covers the whole state when anchored at "Kerala" -- no special-
+casing needed. Verified against real data: a new "aster 2" filed at Kerala
+now correctly surfaces all 5 existing Aster-named hospitals across the
+state (`aster 1`, `aster md`, `Aster MIMS Calicut`, `aster hospital`, plus
+one unrelated near-miss).
+
+**Discussed and deliberately did NOT narrow the comparison scope to fix
+this** (raised by Basheer): the region-wide sweep is intentional, not
+collateral -- it's what catches a colleague or manager having already
+added the same hospital in a neighboring district or at the region level,
+which is the exact real-incident pattern (Nishad's, Haroon's) BR-ACC-03
+exists to catch. Confirmed empirically that climbing from an already-ZONE-
+level pick (e.g. "North Kerala") does *not* over-widen to the state --
+only a pick with no ZONE-level ancestor at all triggers the fallback.
+
+**Follow-up scoping decision, also from this session:** should reps be
+allowed to pick a zone that broad in the first place? Concluded: no --
+built a second, narrower fix rather than only patching the query.
+
+- **New rep-scoped zone search**, `master-data/zones/search-for-hospital`
+  (`master_data.py`) + `ZoneRepository.search_by_name`'s new
+  `within_zone_id` param: Admin/General Manager keep the existing
+  unrestricted search; every other role is scoped to their own
+  `zone_id` plus everything under it (chosen over their multi-zone
+  `UserZone` assignments -- a hospital's physical location can only ever
+  be one place, so the single home zone is the right source of truth
+  here, unlike the Opportunity-visibility RLS rule which does use
+  `UserZone`). Verified against real data: a rep scoped to "Kozhikode"
+  gets "Kozhikode" back for a "Koz" search and nothing for "Ernakulam";
+  the existing unrestricted `zones/search` endpoint (used by Territory
+  Admin, User Directory, Customer 360's other pickers, Opportunity
+  Pipeline) is untouched -- new sibling endpoint, not a flag on the old
+  one, so those four screens can't regress.
+- **`ZonePicker.tsx`** gained an optional `searchFn` prop (defaults to
+  the existing unrestricted search) rather than a second component --
+  wired into the new endpoint only in `CustomerDirectoryScreen.tsx`
+  (Add) and `Customer360Screen.tsx` (Edit)'s hospital zone field; the
+  Directory's own zone *filter* picker stays unrestricted, since
+  Accounts have no RLS and are already visible to everyone (confirmed
+  directly: no `ENABLE ROW LEVEL SECURITY` on `account` in
+  Physical-Schema.sql, unlike Opportunity's tiered RLS policy).
+- **Hard block for a rep with no zone assigned**, Add only (not Edit, by
+  explicit scope call): `AccountService.create_account` now checks the
+  creating user's own `zone_id` before anything else in the method and
+  raises `BusinessRuleViolation` regardless of what `zone_id` was
+  submitted -- can't be bypassed by calling the API directly even if the
+  UI's restricted picker is skipped. Mirrored in
+  `CustomerDirectoryScreen.tsx`'s `openCreateModal` with a plain-language
+  dialog before the form even opens, same message text both places.
+
+Backend suite: 638/638 passing (was 634 going in). Frontend `tsc --noEmit`
+and `npm run lint` both clean, no new warnings. **Not yet done:** no manual
+browser pass on any of this session's three changes, and nothing is
+committed.

@@ -34,7 +34,9 @@ class AccountBase(BaseModel):
 
 
 class AccountCreate(AccountBase):
-    pass
+    # Set after the caller has seen a POSSIBLE_DUPLICATE warning and confirmed
+    # this is genuinely a different hospital -- see AccountService.create_account.
+    force_create: bool = False
 
 
 class AccountUpdate(BaseModel):
@@ -43,6 +45,10 @@ class AccountUpdate(BaseModel):
     zone_id: uuid.UUID | None = None
     payer_behavior: PayerBehavior | None = None
     customer_type: CustomerType | None = None
+    # Set after the caller has seen a POSSIBLE_DUPLICATE warning on a rename
+    # and confirmed this is genuinely a different hospital -- mirrors
+    # AccountCreate.force_create, see AccountService.update_account.
+    force_create: bool = False
 
 
 class ZoneNested(BaseModel):

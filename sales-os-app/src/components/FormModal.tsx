@@ -8,6 +8,7 @@ import {
   Button,
   Alert,
 } from "@mui/material";
+import { SilentModalError } from "../lib/formErrors";
 
 interface FormModalProps {
   isOpen: boolean;
@@ -48,8 +49,10 @@ export default function FormModal({
       await onSubmit();
       onClose();
     } catch (err) {
-      const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
-      setError(axiosErr.response?.data?.detail ?? axiosErr.message ?? "Something went wrong");
+      if (!(err instanceof SilentModalError)) {
+        const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
+        setError(axiosErr.response?.data?.detail ?? axiosErr.message ?? "Something went wrong");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -95,7 +98,7 @@ export default function FormModal({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} disabled={submitting} color="inherit">
+          <Button type="button" onClick={onClose} disabled={submitting} color="inherit">
             Cancel
           </Button>
           <Button type="submit" variant="contained" disabled={submitting}>
