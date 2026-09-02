@@ -39,6 +39,11 @@ code or changing structure. On any conflict, the document wins over this file.
   month changes. Not loaded at session start; grep it for the detail behind a decision.
   Exception: a thread actively in progress *this session* stays in active_progress.md
   until it resolves — moving it mid-flight makes it harder to follow, not easier.
+- **Testing narration:** during manual/E2E testing, when a bug is found and fixed, or a
+  notable decision/finding comes up in discussion, log it to the current
+  Progress-Archive file promptly — a brief note, not a full write-up, so it doesn't
+  slow down the testing flow. Don't wait to be told to "write it down," but don't log
+  routine back-and-forth either.
 - **Backlog:** deferred/parked ideas and undecided product questions live in
   `docs/Backlog.md`, not active_progress.md.
 - **Standing decisions:** anything durable (a business rule, an architecture call, an

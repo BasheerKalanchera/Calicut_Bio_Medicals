@@ -1,218 +1,212 @@
-# Deployment Topology — Dev / UAT / Prod
+# Deployment Topology — Dev / Prod
 
-**Status:** Decided, not yet executed — no accounts/projects created as of 2026-07-14.
+**Status:** Decided, not yet executed — no Prod environment exists as of 2026-08-25.
 
-**Revision (2026-07-25) — two-phase rollout, deferring the Pro spend:** rather than upgrading to
-Supabase Pro and creating all 3 projects up front, **Dev and UAT run on the free tier** (2
-projects fit within the free cap) while RLS (Phase 2E) is built and proven out with the Cabio
-Star Sales team. The **Pro upgrade and Prod project creation are deferred until after UAT
-sign-off** — no reason to pay for Prod-tier infrastructure before Prod is actually needed.
-Auto-pause (free tier's 7-day-inactivity pause) was raised as a risk and ruled out: the Star
-Sales team will use UAT daily once it starts, so the inactivity window is never reached.
+**Revision (2026-08-25) — collapsed to 2 tiers (Dev / Prod), retiring the recurring UAT
+rehearsal tier:** the 3-tier model below (Approved Decisions, Cost, Topology sections)
+is superseded. Driver: **cognitive load on the Cabio Sales team**, not cost. Asking a
+non-technical sales team to track "is this a real bug, or am I in UAT" is real overhead,
+and it compounds with every feature that ships. Two supporting factors made this an
+acceptable trade rather than a safety regression:
+
+1. **Most of Milestone 2 (Target, Coverage planning, Reporting) is Manager-scoped.** RLS
+   already restricts these screens to the Manager role, so a weekly batch's blast radius
+   is naturally contained to a small, engaged audience — not the full rep force logging
+   Activities/Opportunities daily. This gives an informal canary group for free, with no
+   separate environment required.
+2. **Small weekly batches are themselves a risk mitigant.** A bug in a small increment is
+   easier to isolate and roll back than one in a milestone-sized drop — this substitutes
+   for some of the safety that a separate rehearsal tier provided.
+
+What this changes: no more "fresh empty UAT project for the next dev/test cycle" (the old
+Phase B open item) — once the current UAT project is promoted to Prod, **Dev → Prod is
+the only remaining hop**, on a weekly cadence, through a scheduled deploy window (see
+Promotion Flow). What this does **not** change: migrations are still authored and run in
+Dev first; Prod still never receives untested code. The former UAT → Prod promotion step
+(2026-08-20 revision below) still happens once — it's the *ongoing* recreate-UAT cycle
+that's retired, not the original promotion.
+
+**Escape hatch, not a standing tier:** for a migration judged genuinely risky (touches
+RLS policy definitions, auth, or a schema change on a large rep-facing table), spin up a
+throwaway Supabase project for that one migration, verify, tear it down. This is
+deliberately ad hoc — it must not regrow into a standing 3rd environment, which is the
+exact cognitive-load problem this revision exists to remove.
+
+---
+
+**Revision (2026-07-25) — two-phase rollout, deferring the Pro spend (historical):**
+rather than upgrading to Supabase Pro and creating all 3 projects up front, Dev and UAT
+ran on the free tier while RLS (Phase 2E) was built and proven out with the Cabio Star
+Sales team. Superseded by the 2026-08-25 revision above — there is no longer a Phase B
+Pro-tier upgrade, since Dev + Prod is only 2 projects, within the free cap.
 
 ---
 
 ## Purpose
 
-Milestone 1 gap-closure is complete (`42fa050`) and the demo is scheduled for
-July 20. After that, the plan is to roll the app out to a small pilot group
-of star sales reps — real users, real customer data — while Milestone 2
-development continues. This doc records why a single shared environment is
-no longer sufficient, the 3-tier topology decided on, and the hosting choices
-behind it.
+Milestone 1 gap-closure is complete (`42fa050`) and the demo was held July 20. After
+that, the plan was to roll the app out to a small pilot group of star sales reps — real
+users, real customer data — while Milestone 2 development continues. This doc records
+why a single shared environment stopped being enough, and the topology decided on.
 
 ---
 
 ## Why a single environment stopped being enough
 
-Today everything — active development and the manual verification Basheer
-does himself — runs against one shared Supabase project (`backend/.env`,
-flagged in `CLAUDE.md` as live and not disposable). That was fine while the
-only audience was Basheer. It stops being fine the moment real pilot reps
-depend on the data being there and correct, because Milestone 2 work
-(stalled-opportunity detection, delivery/handover fields, RLS itself — the
-latter has since landed, see the Open Items update below) means **active
-schema migrations will keep happening at the same time pilot reps are using
-the app.** Without separation, every migration's first real test would be
-production, on top of real pipeline data.
-
-This mirrors Basheer's own enterprise background running dev/UAT/prod for
-prior employers — the same pattern, right-sized for this project's scale.
+Today active development and the manual verification Basheer does himself run against
+one shared Supabase project (`backend/.env`, flagged in `CLAUDE.md` as live and not
+disposable). That was fine while the only audience was Basheer. It stops being fine the
+moment real pilot reps depend on the data being there and correct, because Milestone 2
+work (RLS, Target/Coverage/Reporting, notifications) means **active schema migrations
+keep happening while pilot reps use the app.** Without any separation, every migration's
+first real test would be production. The 2026-08-25 revision doesn't remove this
+concern — it keeps Dev as the place migrations are authored and run first, and adds a
+scheduled deploy window plus manager-scoped soft launch as the mitigation for what a
+2nd rehearsal tier used to catch.
 
 ---
 
-## Approved Decisions
-
-**Revision (2026-08-20) — UAT-to-Prod data carry-forward:** the original plan below
-assumed UAT would only ever hold realistic-but-fake data and Prod would always be a
-brand-new empty Supabase project. That assumption broke once the Cabio Star Sales team,
-and soon the full extended sales team, began entering real inflight opportunities and
-activities directly into UAT — re-entering all of that by hand into a fresh Prod project
-would be a serious letdown for the team. Decision: **Prod is the existing UAT Supabase
-project, promoted in place** (same connection URL/keys, just relabeled) rather than a new
-project seeded via dump/restore — avoids remapping Supabase Auth UUIDs and RLS
-`auth.uid()` ownership across projects, which is real risk for no benefit here. A fresh,
-empty UAT project is created afterward for the next dev/test cycle. Full reasoning in
-`docs/Progress-Archive-2026-08.md`'s 2026-08-20 entry. This changes *which* Supabase
-project becomes Prod and updates the Data row and Phase B checklist below; it does not
-change the branch model, the hotfix flow, or the cost structure (a 3rd paid project is
-required either way).
+## Approved Decisions (current — 2-tier model)
 
 | Decision Area | Approved Approach |
 |---|---|
-| Environment count | 3 tiers: Dev, UAT (bugfix/staging), Prod |
-| Dev | The **existing** Supabase project — reused as-is, no new project. **Free tier.** |
-| UAT | New Supabase project — migrations land here first, mirrors Prod config, realistic-but-fake data **until the 2026-08 extended-team rollout, after which it holds real inflight data — see 2026-08-20 revision above**. **Free tier** (Dev + UAT = 2 projects, within the free cap). |
-| Prod | **The UAT Supabase project, promoted in place** once the extended-team UAT period signs off — same connection details, no new project, no data migration. A fresh empty Supabase project is created afterward to become the next UAT. **Promotion requires the Pro upgrade at that point (3rd project exceeds the free cap).** |
-| Frontend hosting | **Render Static Sites** (free) for UAT and Prod |
-| Backend hosting | UAT: **Render Web Service, Free tier** (actual — spins down after ~15 min idle; mitigated by an external keep-alive ping, see "Keep-alive" below). Prod: planned **Starter tier** ($7/mo), which does not spin down. |
-| Frontend hosting — rejected option | Vercel — Hobby tier's ToS explicitly prohibits commercial use ("personal or non-commercial use" only); Pro tier ($20/mo/seat) would have worked but is an unnecessary extra vendor once Render already hosts the backend |
-| Local Dev hosting | Stays local — `uvicorn`/`npm run dev` against the Dev Supabase project, no hosting needed |
+| Environment count | **2 tiers: Dev, Prod.** No recurring UAT/rehearsal project. |
+| Dev | The existing Supabase project — reused as-is. **Free tier.** Basheer's local dev + all demos happen here before a weekly batch promotes. |
+| Prod | **The current UAT Supabase project, promoted in place** once the extended-team UAT period signs off — same connection details, no new project, no data migration (real inflight opportunity/activity data already in it carries forward). All subsequent weeks: `main` → `prod` directly, through the scheduled deploy window. |
+| Frontend hosting | Render Static Sites (free) for Prod |
+| Backend hosting | Prod: Render Web Service, **Starter tier** ($7/mo, does not spin down) — the only ongoing paid line item |
+| Rehearsal for risky migrations | Not a standing tier — a throwaway Supabase project, spun up and torn down per-migration, only when a change touches RLS/auth/large rep-facing tables |
+
+### Historical decisions (superseded 2026-08-25)
+
+**Revision (2026-08-20) — UAT-to-Prod data carry-forward (historical, still relevant to
+the one-time promotion):** the original 3-tier plan assumed UAT would only ever hold
+realistic-but-fake data and Prod would always be a brand-new empty Supabase project. That
+broke once the Cabio Star Sales team began entering real inflight opportunities directly
+into UAT. Decision: **Prod is the existing UAT Supabase project, promoted in place** (same
+connection URL/keys, just relabeled) — avoids remapping Supabase Auth UUIDs and RLS
+`auth.uid()` ownership across projects. This part of the 08-20 decision still stands; it's
+the *next* clause ("a fresh empty UAT project is created afterward") that the 08-25
+revision retires.
 
 ---
 
-## Cost — two phases
-
-**Phase A (now — Dev + UAT, free tier):**
+## Cost
 
 | Component | Cost | Notes |
 |---|---|---|
-| Supabase — Dev + UAT | $0/mo | Free tier, 2 projects, within the free cap |
-| Render — backend × 1 (UAT, Free tier) | $0/mo | Spins down after ~15 min idle; mitigated via external keep-alive ping — see "Keep-alive" below |
-| Render — frontend × 1 (UAT, static) | $0/mo | Free tier, no commercial-use restriction |
-| **Phase A total** | **~$0/month** | |
+| Supabase — Dev + Prod | $0/mo | Free tier, 2 projects total, within the free cap — **no Pro upgrade needed under the 2-tier model** |
+| Render — backend (Prod, Starter) | $7/mo | Avoids spin-down for real users |
+| Render — frontend (Prod, static) | $0/mo | Free tier, no commercial-use restriction |
+| **Total, once Prod exists** | **~$7/month** | vs. ~$59/mo under the retired 3-tier plan |
 
-**Phase B (later — adding Prod, once UAT signs off):**
+**Free-tier caveat to monitor:** Supabase's free tier has row/storage/bandwidth caps
+beyond just the 2-project limit. Not a blocker today, but worth revisiting if Prod usage
+grows — flagged here rather than resolved, since it wasn't sized under the old plan
+either.
 
-| Component | Cost | Notes |
-|---|---|---|
-| Supabase — Pro org plan | $25/mo | Charged once per organization, not per project; required once a 3rd project (Prod) is created |
-| Supabase — compute (3 projects × Micro) | $20/mo | $10/mo each; one Micro is covered by the Pro plan's included $10 credit |
-| Render — backend × 1 (Prod, Starter) | $7/mo | |
-| Render — frontend × 1 (Prod, static) | $0/mo | |
-| **Phase B addition** | **~$52/month** | |
-| **Grand total once Prod exists** | **~$59/month** | Matches the original single-phase estimate — this plan only changes *when* the spend starts, not the eventual total |
-
-Supabase's free tier caps at 2 active projects per org and auto-pauses after
-a week of inactivity. **Auto-pause is not a concern for UAT here** — the Cabio
-Star Sales team will use it daily once testing starts, so the 7-day-idle
-threshold never triggers. The Pro upgrade becomes necessary only when Prod
-(the 3rd project) is created.
-
-**Keep-alive (Render backend, UAT):** unlike Supabase's 7-day pause, Render's
-free-tier web service spins down after ~15 min of *any* idle time (not just
-daily-usage-scale gaps), and a cold start after spin-down costs ~30-50s on
-the next request — too disruptive during a live walkthrough or ad-hoc
-testing. Mitigated with a free external monitor (UptimeRobot) pinging the
-unauthenticated `GET /api/v1/health` endpoint on
-`https://calicut-bio-medicals.onrender.com` every 5 minutes — safely under
-the 15-min spin-down window. No repo code involved; this is third-party
-config only. Prod avoids this entirely by running on the Starter tier
-(doesn't spin down), so the keep-alive ping is a UAT-only, Phase-A concern.
-**Set up and verified 2026-08-03** (UptimeRobot free plan, monitor named
-`calicut-bio-medicals.onrender.com`, email alert contact enabled, "No
-delay, no repeat"). This mitigates the *idle spin-down* failure mode only —
-it is not a general uptime guarantee, and it does not by itself mean the
-UAT site is usable yet (no UAT Auth roster exists — see Open Items).
+**Keep-alive:** no longer needed once Prod runs on Render's Starter tier (doesn't spin
+down). The UptimeRobot monitor set up 2026-08-03 for the free-tier backend can be
+retired once Prod is live on Starter.
 
 ---
 
 ## Topology
 
 ```
-GitHub repo (single source, three long-lived branches)
+GitHub repo (single source, two long-lived branches)
 
-  feature/*  ──PR──▶  main   (Dev, local — Milestone 2 integration, unchanged workflow)
+  feature/*  ──PR──▶  main   (Dev, local — ongoing feature work, unchanged workflow)
                          │
-                         │  merge when a batch is ready for real users
+                         │  weekly batch, merged during the scheduled deploy window
                          ▼
-                        uat   (hosted — Render UAT service tracks this branch)
-                         │
-                         │  merge once Cabio Star Sales signs off
-                         ▼
-                        prod  (hosted — Render Prod service tracks this branch, Phase B)
+                        prod   (hosted — Render Prod service tracks this branch)
 ```
 
-| | **Dev** | **UAT / bugfix** | **Prod** |
-|---|---|---|---|
-| Branch | `main` | `uat` | `prod` |
-| Who uses it | Basheer only | Basheer + Cabio Star Sales team (daily) | Pilot sales reps (real users) |
-| Frontend | `npm run dev` on `localhost:5173` | Render Static Site | Render Static Site |
-| Backend | `uvicorn` on `localhost:8000` | Render Web Service (Starter) | Render Web Service (Starter) |
-| Database | Supabase project #1 (current, free tier) | Supabase project #2 (existing, free tier) — **promoted to become Prod at sign-off, then replaced with a fresh empty project #3 for the next UAT cycle** | **The former Supabase project #2**, promoted in place at UAT sign-off — same connection details, requires Pro |
-| Data | Freely disposable, test writes OK | Realistic fake data through early testing; **real inflight opportunity/activity data from the 2026-08 extended-team rollout onward — this data carries forward into Prod, see 2026-08-20 revision above** | Real customer/opportunity data — no test writes, ever. Inherited as-is from UAT at promotion, not re-entered |
-| Migrations | Authored and run here first | Applied second, verified against `Regression-Test-Plan.md` | Applied last, only after UAT passes |
+| | **Dev** | **Prod** |
+|---|---|---|
+| Branch | `main` | `prod` |
+| Who uses it | Basheer only (demos happen here) | Cabio Sales team (daily); Managers are the first-touch group for new Manager-scoped features |
+| Frontend | `npm run dev` on `localhost:5173` | Render Static Site |
+| Backend | `uvicorn` on `localhost:8000` | Render Web Service (Starter) |
+| Database | Supabase project #1 (current, free tier) | The promoted former-UAT Supabase project |
+| Data | Freely disposable, test writes OK | Real customer/opportunity data — no test writes, ever |
+| Migrations | Authored and run here first | Applied during the weekly deploy window, after Dev verification (incl. RLS/role smoke test) |
 
 ### Promotion flow
 
 **Branches**
-- `main` — Milestone 2 integration branch. Local Dev tracks this, same as today's workflow; feature branches merge here via PR.
-- `uat` — cut from `main` when UAT goes live (Phase A). Render's UAT service tracks this branch; nothing reaches UAT except what's merged here.
-- `prod` — cut from `uat` once UAT signs off (Phase B). Render's Prod service tracks this branch.
+- `main` — ongoing feature work. Local Dev tracks this, unchanged from today.
+- `prod` — the promoted former-UAT branch. Render's Prod service tracks this branch;
+  nothing reaches Prod except what's merged here.
 
-**Feature promotion (planned batches)**
-1. Milestone 2 feature work happens on `main` — unchanged from today's workflow.
-2. When a batch is ready for real users, merge `main` → `uat`. The new Alembic migration(s) run there first, followed by the regression pass and any manual verification (e.g. the 4-role Catalog gate test pattern).
-3. Once UAT is clean **and the Cabio Star Sales team has signed off**, promote the *same tested commit* — `uat` → `prod`. Never re-fix or re-derive the build for Prod; it must be the exact code that already passed UAT.
+**Weekly batch promotion**
+1. Feature work happens on `main` — unchanged.
+2. Before merge, run an RLS/role smoke-test pass in Dev: a handful of test accounts
+   across roles (rep, manager, admin) exercising the week's changes. This is the
+   lightweight stand-in for what UAT's multi-user testing used to catch — it's what
+   surfaced both real RLS bugs found during the notification feature build.
+3. Merge `main` → `prod` **during the scheduled deploy window** (day/time: TBD — see Open
+   Items). Alembic migrations run against Prod at this point; a brief service restart is
+   the expected worst case, not a long freeze, for the additive/RLS-policy-shaped
+   migrations seen so far.
+4. Any user-reported fixes found in Prod during the week ride along in the *next* weekly
+   batch, or go out same-week via the hotfix flow below if urgent.
 
-**Hotfix flow (bug reported by UAT or Prod users)**
-UAT is always the gate — a fix never reaches `prod` without first running on `uat`, even when the bug was found directly in `prod`.
-1. Branch `fix/*` off the branch where the bug lives (`uat`, or `prod` once it exists) — not off `main`, which may already contain unreleased Milestone 2 changes.
+**Hotfix flow (bug reported in Prod)**
+1. Branch `fix/*` off `prod`.
 2. Develop and sanity-check the fix locally against Dev.
-3. Merge `fix/*` → `uat`. Render redeploys UAT; verify the fix there, including the regression pass.
-4. If the bug was in `prod`, promote that same tested commit `uat` → `prod` once verified — not before.
-5. Cherry-pick the fix into `main` too, so Milestone 2 doesn't lose it or reintroduce the same bug at the next promotion.
+3. Merge `fix/*` → `prod` directly (no intermediate rehearsal tier) — deploy during the
+   next available window, or immediately if severity warrants an off-cycle deploy.
+4. Cherry-pick the fix into `main` too, so ongoing feature work doesn't lose it or
+   reintroduce the same bug at the next weekly promotion.
 
-**Migration caveat:** Alembic migrations form a strict chain (`down_revision`). If a hotfix on `uat` adds a migration after `main` has already added its own newer ones, cherry-picking that migration file into `main` will likely produce two competing heads — reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than letting `alembic upgrade` fail on divergent heads.
+**Migration caveat:** Alembic migrations form a strict chain (`down_revision`). If a
+hotfix on `prod` adds a migration after `main` has already added newer ones, cherry-
+picking that migration file into `main` will likely produce two competing heads —
+reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than letting
+`alembic upgrade` fail on divergent heads.
 
 ---
 
 ## Open Items (not yet done)
 
-**Phase A — now:**
-- [x] Create the UAT Supabase project (free tier) — `cabio-sales-os-uat`, Mumbai (ap-south-1), created 2026-08-02
-- [x] Cut the `uat` branch from `main`; pushed to origin 2026-08-02 — still needs Render's UAT service pointed at it once that service exists
-- [x] Create Render backend Web Service for UAT — `calicut-bio-medicals` (Free tier, Oregon region — no Mumbai/Singapore option available at signup time), branch `uat`, root `backend`, build `pip install .`, start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, `PYTHON_VERSION=3.11.9` pinned to match local dev. Live and health-checked 2026-08-02 (`/api/v1/health` returns 200). DB connectivity from Render's network specifically not yet proven end-to-end (every business endpoint requires an authenticated Supabase JWT; `warm_pool()` swallows connection errors silently so its log line isn't proof) — real test deferred to the Auth roster step.
-- [x] Create Render static frontend site for UAT — `cabio-sales-os-uat-frontend`, branch `uat`, root `sales-os-app`, build `npm install --legacy-peer-deps && npm run build` (repo has a pre-existing `typescript@^6.0.3` vs. `openapi-typescript@7.13.0`'s `typescript@^5.x` peer conflict — see `docs/Backlog.md`), publish dir `dist`, `SKIP_INSTALL_DEPS=true` (Render static sites auto-run a plain `npm install` before the Build Command otherwise, which bypasses `--legacy-peer-deps` and fails the same way regardless of Build Command content). SPA rewrite rule added (`/*` -> `/index.html`, action Rewrite) — required, confirmed `/login` 404'd before and returns 200 after. Live and verified 2026-08-02.
-- [x] Per-environment secrets for UAT, local (`backend/.env.uat`): `DATABASE_URL`, `ADMIN_DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `CABIO_APP_DB_PASSWORD` — all set 2026-08-02. `SUPABASE_JWT_SECRET` deliberately omitted: unused by the backend (JWKS-based verification, see `security.py`), despite being listed in `.env.example`. Same values pasted into the Render backend service's environment 2026-08-02, including `CORS_ORIGINS` — initially a `localhost` placeholder, updated to `["https://cabio-sales-os-uat-frontend.onrender.com"]` once the frontend existed; verified via a preflight `OPTIONS` request returning the matching `access-control-allow-origin` header. Frontend's own env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL=https://calicut-bio-medicals.onrender.com/api/v1`) set the same day.
-- [x] Run Alembic migrations against the new UAT DB, including creating the `cabio_app` role — done 2026-08-02. Non-trivial: `docs/Physical-Schema.sql` at `HEAD` turned out to be stale (missing migrations 0002/0003/0004/0007/0013-0015 — see `docs/Backlog.md`), so UAT was bootstrapped from the pre-migration-0001 snapshot (git commit `a09794d`) + `Seed-Data.sql`, then `alembic upgrade head` ran the full 0001-0015 chain for real, same as Dev's actual history. Verified against the live DB afterward (role, RLS, and recent columns all confirmed present), not just Alembic's own bookkeeping. Also fixed a latent bug in `alembic/env.py`: `configparser` chokes on a literal `%` in a percent-encoded password (e.g. `%40`) — `ADMIN_DATABASE_URL`'s `%` now gets escaped to `%%` before being handed to `config.set_main_option`.
-- [x] Land RLS (Phase 2E) — implemented and live on Dev since 2026-07-27, committed `7d7155d` (2026-07-30); see `Phase-2E-Security-Architecture.md`
-- [x] Set up UptimeRobot keep-alive monitor for the UAT backend — done 2026-08-03, see "Keep-alive" note above
-- [x] Re-create the 6-person roster (+ Basheer) in the UAT Supabase project's Auth — done 2026-08-03; also uncovered and fixed a UAT-wide RLS lockout bug (18 tables had RLS enabled with no policies, blocking all `cabio_app` access), see `docs/Progress-Archive-2026-08.md`. Login now confirmed working — first real proof the Render backend reaches the UAT database end-to-end.
-- [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team
-- [ ] Supabase Storage `documents` bucket + `SUPABASE_SERVICE_ROLE_KEY` secret (Opportunity Document Upload, `docs/Opportunity-Document-Upload-Implementation-Plan.md`) — private bucket, provisioned per-environment **outside the Alembic migration chain entirely**, same out-of-band category as `rls_auto_enable()`. Dev: being provisioned 2026-08-11 (bucket in the Supabase dashboard, key added to `backend/.env`). **Must be repeated for UAT and Prod when this feature ships there** — bucket creation + `SUPABASE_SERVICE_ROLE_KEY` added to Render's env config, same treatment as the other per-environment secrets above (never logged, never committed).
-
-**Phase B — once UAT signs off** (revised 2026-08-20 — Prod is the promoted UAT project,
-not a fresh one; see Approved Decisions above and `docs/Progress-Archive-2026-08.md`'s
-2026-08-20 entry for the full reasoning):
-- [ ] Upgrade the Supabase org to the Pro plan
+**One-time promotion (UAT → Prod):**
+- [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team, and get sign-off
+      from the extended team's rollout (still gated — see `.claude/active_progress.md`)
 - [ ] Promote the existing UAT Supabase project to be Prod — relabel only, same
-      connection URL/keys/project ref, **no dump/restore, no new project created here**.
-      Skip the "new Prod project" RLS setup-prompt risk entirely (was a real incident on
-      UAT 2026-08-03, see `docs/Progress-Archive-2026-08.md`) since no new project is
-      created — nothing to re-decline.
-- [ ] Cut the `prod` branch from `uat` at the sign-off commit
-- [ ] Create **new** Render Starter-tier services for Prod (backend + static frontend),
-      tracking the `prod` branch — do **not** upgrade the existing free-tier UAT services
-      in place (they're UAT-branded and stay UAT; see reasoning in the 2026-08-20 archive
-      entry). Backend env vars (`DATABASE_URL`, `ADMIN_DATABASE_URL`, `SUPABASE_URL`,
-      `SUPABASE_ANON_KEY`, `CABIO_APP_DB_PASSWORD`) copy over unchanged from UAT's backend
-      service, since the DB connection details don't change under promotion. Frontend gets
-      a clean prod-branded name, not carrying over `-uat-` in its URL.
-- [ ] Update the new Prod backend's `CORS_ORIGINS` to the new frontend's URL
-- [ ] Smoke-test Prod end-to-end against the real (inherited) data before announcing cutover
-- [ ] Drop the UptimeRobot keep-alive ping for Prod (Starter tier doesn't spin down);
-      keep it running for whichever service continues to serve as UAT
-- [ ] Create a fresh, empty Supabase project for the next UAT cycle; once Prod is
-      verified, repoint the old free-tier UAT services (`calicut-bio-medicals`,
-      `cabio-sales-os-uat-frontend`) at it — this becomes the ongoing UAT environment
-- [ ] Decide and document the actual promotion mechanism (manual trigger vs. CI/CD on tag/merge) — see "Promotion flow" above for the branch-level flow already decided; this item is about the trigger tooling only
+      connection URL/keys/project ref, no dump/restore, no new project created
+- [ ] **Decide:** rename the `uat` branch to `prod`, or cut `prod` fresh from `uat` at
+      the sign-off commit and retire the `uat` branch name — either works, pick one
+- [ ] **Decide:** keep the existing Render service URLs as-is (they currently carry
+      `-uat-` in the name, e.g. `cabio-sales-os-uat-frontend.onrender.com`) or create
+      cleanly-named Prod services and repoint. Renaming avoids permanent "uat" branding
+      in a URL the sales team bookmarks; keeping avoids re-doing CORS/env config and
+      breaking existing bookmarks during the promotion itself. Flagged as a decision,
+      not resolved here.
+- [ ] Upgrade the Prod Render backend to Starter tier (whichever service ends up
+      Prod-branded, per the decision above)
+- [ ] Update Prod backend's `CORS_ORIGINS` if the frontend URL changes
+- [ ] Smoke-test Prod end-to-end against the real (inherited) data before announcing
+      cutover
+- [ ] Retire the UptimeRobot keep-alive monitor once Prod is confirmed on Starter tier
+
+**Ongoing 2-tier operation:**
+- [ ] Pick and document the weekly deploy window (day + time, IST) — recommend a
+      weekday evening after reps have logged the day's activity
+- [ ] Communicate the deploy-window ritual to the Cabio Sales team once (what to expect,
+      how long, who to report issues to) — this replaces "how UAT works" onboarding
+- [ ] Define the RLS/role smoke-test checklist referenced in the Promotion Flow above —
+      which test accounts, which roles, run against which screens
+- [ ] Supabase Storage `documents` bucket + `SUPABASE_SERVICE_ROLE_KEY` secret must be
+      provisioned for Prod when Opportunity Document Upload ships there (per-environment,
+      outside the Alembic migration chain — same treatment as Dev's existing setup)
 
 ---
 
 ## References
 
-- `Phase-2E-Security-Architecture.md` — RLS implementation, landed on Dev 2026-07-27; must be proven out on UAT before Prod is real
+- `Phase-2E-Security-Architecture.md` — RLS implementation, landed on Dev 2026-07-27
 - `Prototype-Production-Parity-Audit.md` §6 — Milestone 1/2 scoping
 - `CLAUDE.md` — current Dev Supabase project is live/shared, not disposable
 - `.claude/active_progress.md` — session-to-session handoff status

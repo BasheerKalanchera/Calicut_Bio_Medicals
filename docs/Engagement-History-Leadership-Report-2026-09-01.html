@@ -1,0 +1,512 @@
+<title>Signal in the Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --paper: #f7f4ec;
+    --paper-raised: #fffdf8;
+    --ink: #16211d;
+    --ink-soft: #47554f;
+    --ink-faint: #8a938d;
+    --line: #dcd6c6;
+    --brand: #1c4a5e;
+    --brand-bright: #2f86a6;
+    --brand-tint: #e2edf0;
+    --good: #2f7d4e;
+    --good-tint: #e4f0e7;
+    --warning: #b8791f;
+    --warning-tint: #f6ecd9;
+    --critical: #ac3b2b;
+    --critical-tint: #f5e3df;
+    --shadow: 0 1px 2px rgba(23,29,25,0.06), 0 8px 24px rgba(23,29,25,0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #12181a;
+      --paper-raised: #1a2123;
+      --ink: #eee9dd;
+      --ink-soft: #b7c0ba;
+      --ink-faint: #7c8884;
+      --line: #2b3436;
+      --brand: #6fb6cf;
+      --brand-bright: #4fa3c0;
+      --brand-tint: #1c3038;
+      --good: #6bbf8e;
+      --good-tint: #1c2f24;
+      --warning: #e0ac57;
+      --warning-tint: #332811;
+      --critical: #e08475;
+      --critical-tint: #34211d;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #12181a;
+    --paper-raised: #1a2123;
+    --ink: #eee9dd;
+    --ink-soft: #b7c0ba;
+    --ink-faint: #7c8884;
+    --line: #2b3436;
+    --brand: #6fb6cf;
+    --brand-bright: #4fa3c0;
+    --brand-tint: #1c3038;
+    --good: #6bbf8e;
+    --good-tint: #1c2f24;
+    --warning: #e0ac57;
+    --warning-tint: #332811;
+    --critical: #e08475;
+    --critical-tint: #34211d;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  @page { margin: 14mm 12mm; }
+  @media print {
+    .stats-section { padding: 32px 0 !important; }
+    .proof-section { padding: 8px 0 8px !important; }
+    .masthead { padding: 32px 0 24px !important; }
+
+    /* Never split a single tile, chart, or card mid-content — but let them
+       flow naturally onto the next page as whole units, don't force breaks. */
+    .stat-tile, .chart-box, .proof-card {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--brand-bright); }
+  h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; text-wrap: balance; color: var(--ink); margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 28px; }
+  .wrap-wide { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    padding: 64px 0 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-bright);
+    margin-bottom: 18px;
+  }
+  .masthead h1 {
+    font-size: clamp(34px, 5vw, 52px);
+    font-weight: 600;
+    line-height: 1.08;
+    max-width: 14ch;
+  }
+  .masthead .sub {
+    margin-top: 18px;
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+  .masthead .meta {
+    margin-top: 28px;
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .masthead .meta span b { color: var(--ink-soft); font-weight: 500; }
+
+  /* ---------- Hero: before/after ---------- */
+  .hero-section { padding: 56px 0 8px; }
+  .hero-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 10px;
+  }
+  .hero-section h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; max-width: 26ch; margin-bottom: 36px; }
+
+  .transform {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: stretch;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--paper-raised);
+    box-shadow: var(--shadow);
+  }
+  .transform .panel { padding: 28px 30px; }
+  .transform .panel-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .transform .before { background: var(--paper); }
+  .transform .before .panel-label { color: var(--ink-faint); }
+  .transform .before .log-entry {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--line);
+    padding-left: 12px;
+    margin-bottom: 14px;
+  }
+  .transform .before .log-entry .date { color: var(--ink-faint); }
+  .transform .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    background: var(--paper-raised);
+    color: var(--brand-bright);
+    font-size: 22px;
+  }
+  .transform .after { background: var(--brand-tint); }
+  .transform .after .panel-label { color: var(--brand); }
+  .transform .after .verdict {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--critical);
+    margin-bottom: 10px;
+  }
+  .transform .after p { margin: 0 0 10px; color: var(--ink); font-size: 15px; }
+  .transform .after .fact-line { font-size: 14px; color: var(--ink-soft); }
+  .transform .after .fact-line b { color: var(--ink); font-weight: 600; }
+  .hero-foot {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--ink-faint);
+    max-width: 62ch;
+  }
+
+  @media (max-width: 720px) {
+    .transform { grid-template-columns: 1fr; }
+    .transform .arrow { padding: 6px 0; transform: rotate(90deg); }
+  }
+
+  /* ---------- Stat strip ---------- */
+  .stats-section { padding: 64px 0; }
+  .stats-section .section-head { margin-bottom: 32px; }
+  .stats-section .section-head h2 { font-size: 26px; font-weight: 600; }
+  .stats-section .section-head p { margin-top: 8px; color: var(--ink-soft); max-width: 60ch; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .stat-tile { background: var(--paper-raised); padding: 26px 22px; }
+  .stat-tile .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .stat-tile.flag .num { color: var(--critical); }
+  .stat-tile .num small { font-size: 16px; font-weight: 500; color: var(--ink-faint); }
+  .stat-tile .label { margin-top: 10px; font-size: 13.5px; color: var(--ink-soft); }
+
+  @media (max-width: 760px) {
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .chart-row {
+    margin-top: 1px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    overflow: hidden;
+  }
+  .chart-box { background: var(--paper-raised); padding: 24px 26px 26px; }
+  .chart-box h3 { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 16px; }
+  .seg-bar { display: flex; height: 22px; border-radius: 3px; overflow: hidden; }
+  .seg-bar .seg { height: 100%; }
+  .seg-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .seg-legend .item { display: flex; align-items: center; gap: 6px; }
+  .seg-legend .dot { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+  .seg-legend .val { font-family: 'IBM Plex Mono', monospace; color: var(--ink); font-weight: 500; }
+
+  .coverage-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; }
+  .coverage-bar .seg { display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: #fff; }
+
+  @media (max-width: 760px) {
+    .chart-row { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Proof cards ---------- */
+  .proof-section { padding: 8px 0 64px; }
+  .proof-section .section-head { margin-bottom: 8px; }
+  .proof-section .section-head h2 { font-size: 26px; font-weight: 600; }
+  .proof-section .section-head p { margin-top: 8px; color: var(--ink-soft); max-width: 64ch; }
+
+  .proof-grid {
+    margin-top: 32px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+  }
+  .proof-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 24px 26px;
+    box-shadow: var(--shadow);
+  }
+  .proof-card .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--brand-bright);
+    margin-bottom: 10px;
+  }
+  .proof-card h3 { font-size: 19px; font-weight: 600; margin-bottom: 4px; }
+  .proof-card .account-name { font-size: 13px; color: var(--ink-faint); margin-bottom: 14px; }
+  .proof-card p { margin: 0 0 10px; font-size: 14.5px; color: var(--ink-soft); }
+  .proof-card p b { color: var(--ink); font-weight: 600; }
+  .proof-card .pill {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: 100px;
+    margin-top: 6px;
+  }
+  .pill.won { background: var(--good-tint); color: var(--good); }
+  .pill.lost { background: var(--critical-tint); color: var(--critical); }
+  .pill.active { background: var(--brand-tint); color: var(--brand); }
+  .pill.flag { background: var(--warning-tint); color: var(--warning); }
+
+  .proof-card.wide { grid-column: 1 / -1; }
+
+  @media (max-width: 760px) {
+    .proof-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- Gap section ---------- */
+  .gap-section {
+    padding: 56px 0;
+    background: var(--paper-raised);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+  .gap-inner { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 56px; align-items: center; }
+  .gap-inner .big-stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 84px;
+    font-weight: 600;
+    color: var(--critical);
+    line-height: 0.95;
+  }
+  .gap-inner .big-stat .cap { margin-top: 10px; font-size: 15px; color: var(--ink-soft); max-width: 22ch; }
+  .gap-inner .copy h3 { font-size: 21px; font-weight: 600; margin-bottom: 12px; }
+  .gap-inner .copy p { color: var(--ink-soft); font-size: 15px; margin-bottom: 12px; }
+  .gap-inner .copy ul { margin: 0; padding-left: 20px; color: var(--ink-soft); font-size: 14.5px; }
+  .gap-inner .copy li { margin-bottom: 6px; }
+
+  @media (max-width: 780px) {
+    .gap-inner { grid-template-columns: 1fr; gap: 28px; }
+  }
+
+  /* ---------- Closing / ask ---------- */
+  .closing-section { padding: 64px 0 80px; }
+  .closing-section .section-head h2 { font-size: 26px; font-weight: 600; margin-bottom: 14px; }
+  .closing-section .lede { font-size: 17px; color: var(--ink-soft); max-width: 68ch; margin-bottom: 36px; }
+
+  .ask-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 40px; }
+  .ask-card {
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    border-radius: 4px;
+    padding: 24px 26px;
+  }
+  .ask-card .step { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--brand-bright); margin-bottom: 8px; }
+  .ask-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .ask-card p { font-size: 14.5px; color: var(--ink-soft); margin: 0; }
+
+  @media (max-width: 760px) {
+    .ask-grid { grid-template-columns: 1fr; }
+  }
+
+  .callout {
+    border-left: 3px solid var(--brand-bright);
+    background: var(--brand-tint);
+    padding: 20px 24px;
+    border-radius: 0 4px 4px 0;
+    font-size: 15.5px;
+    color: var(--ink);
+  }
+  .callout b { color: var(--brand); }
+
+  .footer {
+    padding: 32px 0 60px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+</style>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="eyebrow">Cabio Sales OS — Internal Briefing</div>
+    <h1>Turning activity logs into account intelligence</h1>
+    <p class="sub">Every call, visit and follow-up a rep logs already contains the answer to
+    "where does this account stand" — it's just scattered across dozens of entries today, visible
+    to no one at a glance. Below is a hand-built preview of what surfaces once that data is read
+    back as a whole, built from your own team's real UAT activity, not a mockup.</p>
+    <div class="meta">
+      <span>Source: <b>UAT environment</b>, live team data</span>
+      <span>Prepared: <b>1 September 2026</b></span>
+      <span>Basis: <b>58 accounts</b>, <b>120</b> logged activities</span>
+    </div>
+  </div>
+</header>
+
+<section class="stats-section" style="padding-top:56px;">
+  <div class="wrap-wide">
+    <div class="section-head">
+      <h2>What the account book looks like today</h2>
+      <p>Pulled directly from the UAT database on 1 September 2026 — not projected, not a demo dataset.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="num">79</div>
+        <div class="label">Total accounts in the system</div>
+      </div>
+      <div class="stat-tile">
+        <div class="num">58 <small>/ 79</small></div>
+        <div class="label">Have at least one activity ever logged</div>
+      </div>
+      <div class="stat-tile">
+        <div class="num">67</div>
+        <div class="label">Open or closed opportunities on record</div>
+      </div>
+      <div class="stat-tile flag">
+        <div class="num">59%</div>
+        <div class="label">Of open next actions are overdue</div>
+      </div>
+    </div>
+
+    <div class="chart-row">
+      <div class="chart-box">
+        <h3>Opportunity mix — 67 total</h3>
+        <div class="seg-bar">
+          <div class="seg" style="width:74.6%; background: var(--brand-bright);"></div>
+          <div class="seg" style="width:17.9%; background: var(--good);"></div>
+          <div class="seg" style="width:4.5%; background: var(--warning);"></div>
+          <div class="seg" style="width:3.0%; background: var(--critical);"></div>
+        </div>
+        <div class="seg-legend">
+          <div class="item"><span class="dot" style="background: var(--brand-bright);"></span>Active <span class="val">50</span></div>
+          <div class="item"><span class="dot" style="background: var(--good);"></span>Won <span class="val">12</span></div>
+          <div class="item"><span class="dot" style="background: var(--warning);"></span>On hold <span class="val">3</span></div>
+          <div class="item"><span class="dot" style="background: var(--critical);"></span>Lost <span class="val">2</span></div>
+        </div>
+      </div>
+      <div class="chart-box">
+        <h3>Activity coverage — 79 accounts</h3>
+        <div class="coverage-bar">
+          <div class="seg" style="width:73.4%; background: var(--brand-bright);">58 logged</div>
+          <div class="seg" style="width:26.6%; background: var(--ink-faint);">21 silent</div>
+        </div>
+        <div class="seg-legend" style="margin-top:16px;">
+          <div class="item">27% of the account book has <b style="color:var(--ink);">never</b> had a single activity recorded against it.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="proof-section">
+  <div class="wrap-wide">
+    <div class="section-head">
+      <h2>Five accounts, five different kinds of insight</h2>
+      <p>Not cherry-picked for drama — chosen to show the range of what surfaces once activity
+      history gets read back as a whole, rather than one entry at a time.</p>
+    </div>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="kicker">Nuance, not just a headline</div>
+        <h3>Ramaiah Memorial Hospital</h3>
+        <div class="account-name">Shruthi · 7 activities</div>
+        <p>One hospital, two truths at once: <b>Vascular is sold</b> — the HOD's team said
+        they'll recommend the purchase — while <b>Neuro ICU is stuck</b> on a budget gap for the
+        tier they actually want. Reading any single entry gives you one department's story, not
+        the account's.</p>
+        <span class="pill active">Demo cycle, split outcome</span>
+      </div>
+
+      <div class="proof-card">
+        <div class="kicker">Catches what reps miss</div>
+        <h3>IQRAA Community Hospital</h3>
+        <div class="account-name">Haroon Sidheeq · 7 activities</div>
+        <p>A pricing dispute was logged as <b>"cleared"</b> on Aug 22 — then, nine days later,
+        <b>"need more follow up"</b> with no resolution recorded in between. Nobody flagged the
+        contradiction; it only becomes visible when the full history is read at once.</p>
+        <span class="pill flag">Contradiction flagged</span>
+      </div>
+
+      <div class="proof-card">
+        <div class="kicker">Same-day, not weeks-later</div>
+        <h3>G&F Medicine, Kozhikode</h3>
+        <div class="account-name">Haroon Sidheeq · 5 activities</div>
+        <p>Delivered <b>today</b>. The final rate, billing, advance collection and delivery all
+        happened within 72 hours — and the account's status reflects "won, delivered" the same
+        day the last entry was logged, not on the next reporting cycle.</p>
+        <span class="pill won">Won — delivered</span>
+      </div>
+
+      <div class="proof-card">
+        <div class="kicker">A paragraph, compressed to a date</div>
+        <h3>Pragathi Hospital, Puttur</h3>
+        <div class="account-name">Fahad · 3 activities</div>
+        <p>Three activities' worth of Rotary Club approval politics — quotation, board discussion,
+        signature routing — reduce to one operational fact: <b>PO expected 12 September</b>,
+        pending the founder's sign-off. That's the number a manager actually needs.</p>
+        <span class="pill active">Near close</span>
+      </div>
+
+      <div class="proof-card wide">
+        <div class="kicker">Flags what's missing, not just what's there</div>
+        <h3>Sapthagiri Medical College and Hospital</h3>
+        <div class="account-name">Shruthi · 4 activities</div>
+        <p>Won, on paper — the PO arrived last month. But cross-referencing against the Next
+        Actions table shows <b>nothing is currently scheduled</b> to chase the advance payment
+        that's still outstanding. The gap is invisible in either table alone; it only shows up
+        once the two are read together.</p>
+        <span class="pill flag">Payment gap, unscheduled</span>
+      </div>
+    </div>
+  </div>
+</section>
