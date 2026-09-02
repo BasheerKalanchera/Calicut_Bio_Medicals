@@ -3284,3 +3284,184 @@ Backend suite: 638/638 passing (was 634 going in). Frontend `tsc --noEmit`
 and `npm run lint` both clean, no new warnings. **Not yet done:** no manual
 browser pass on any of this session's three changes, and nothing is
 committed.
+
+---
+
+## 2026-08-31 (later) — Duplicate Opportunity incident (Mount Zion/Vivek), and a full architecture design session for Marketing-Sourced Lead Management + Relationship Notes
+
+Separate session, investigation/planning only — no code changes, no
+migrations, no commits. Ran in parallel with the BR-ACC-03 session above;
+confirmed zero file overlap throughout.
+
+**Investigated and fixed: periodic-logout bug.** Traced to
+`AuthContext.tsx`'s deactivation check (added 2026-08-15, `980d81b`)
+signing users out on *any* `/auth/me` failure, including transient network
+blips during the hourly background token refresh — not just a genuine
+401/403. Also designed a 60-minute inactivity timeout (previously absent
+entirely). Full design: `docs/Auth-Session-Resilience-Implementation-
+Plan.md`. (Built same day by the BR-ACC-03 session per that plan's status
+line — not built by this session.)
+
+**Planned: Audit Trail for account/user_profile/product/opportunity.**
+Implements ADR-017 for the four tables named in `docs/Audit-Trail-
+Implementation-Brief-2026-08-31.md`. Design went through two real
+simplifications during review, both catching genuine over-engineering in
+the first draft: (1) UPDATE logs only the fields that actually changed,
+computed generically via `jsonb_each` comparison, not a full-row copy;
+(2) CREATE isn't logged at all — the master row's own `created_by`/
+`created_at` plus the first edit's `old_data` already recover everything a
+creation snapshot would add, so the trigger only reacts to UPDATE/DELETE.
+One high-risk implementation detail flagged prominently: the trigger
+function must be `SECURITY DEFINER` or its own insert into the RLS-
+protected `audit_log` table would fail and roll back every write to all
+four tables. Full design: `docs/Audit-Trail-Implementation-Plan.md`.
+
+**Incident: duplicate Opportunity for Mount Zion Medical College.**
+"CTG Machine @ Mount Zion Medical College" — created by Abdul Latheef P
+2026-08-31 09:23 UTC, assigned to Vivek — turned out to duplicate an
+Opportunity Vivek had already entered himself, already at Demo stage.
+Verified zero FK dependents (`activity`, `document`, `opportunity_item`,
+`opportunity_stakeholder`, `split`, and `reminder` via `activity` all
+returned 0 rows) via a read-only check against UAT before deleting;
+confirmed no `ON DELETE CASCADE` exists anywhere in the schema, so the
+delete would have been safely refused by Postgres if any dependent had
+existed. Deleted directly per Basheer's request. Side finding: UAT is
+missing at least migration `0024` (`notification` table doesn't exist
+there) — confirmed known/expected, not a bug (some migrations haven't been
+promoted to UAT yet).
+
+**That incident became a full architecture discussion, landing on two new
+planned features:**
+
+1. **A new "Marketing User" role** (create-and-assign only, no pipeline
+   visibility) is needed to enter leads from conference events and
+   IndiaMART, assigning each to the appropriate rep. Researched how
+   Salesforce/Zoho/Dynamics 365 handle this (all three: a separate,
+   loosely-structured Lead object, converted into a real Opportunity only
+   after a human reviews it; Dynamics' disqualify-reasons even include a
+   named "Duplicate" outcome). Landed on a Cabio-appropriate variant: a new
+   `lead` table (not reusing `opportunity`) so unqualified/junk marketing
+   interest never touches real pipeline data or its forecasting numbers.
+   The Mount Zion incident wouldn't have been prevented by a same-account
+   duplicate-Opportunity warning at creation time (no product matched —
+   it was a vague post-conference "interest recorded" entry, not a scoped
+   deal) — the actual fix is structural: nothing becomes a real Opportunity
+   until a rep has carefully reviewed and converted it, so a duplicate gets
+   caught (and simply discarded) before it ever enters the pipeline, not
+   detected after the fact. Confirmed existing full-access reps/managers
+   already have a working self-check for this via Customer 360's
+   Opportunities tab — the gap only exists for a role with no other
+   visibility. **Also decided:** the existing IndiaMART 4-hour buylead-
+   credit urgent-notification behavior (`URGENT_LEAD_SOURCE_NAMES` in
+   `notification/service.py`, shipped as part of Opportunity-Assignment-
+   Notifications, `b772416`) needs to be retired — that response now
+   happens on IndiaMART's own platform, by the lead-entry person, before
+   anything reaches Cabio at all. Confirmed this feature is Dev-only, never
+   promoted to UAT/Prod, so the revert carries no live-environment risk.
+   Full design: `docs/Lead-Management-Implementation-Plan.md`.
+
+2. **A new `RELATIONSHIP_NOTE` Activity type** for durable, editable
+   relationship/deal context ("procurement head is price-sensitive"), as
+   distinct from Activity's existing per-interaction timestamped log.
+   Discovered the codebase already has almost exactly this shape of thing
+   (`MANAGER_NOTE`, exempt from BR-ACT-04's mandatory-next-action rule) —
+   extending that established pattern rather than adding an overwritable
+   column on `account`/`opportunity` avoids ever losing history in the
+   first place (an overwritable field would have needed the Audit Trail as
+   a safety net, which has no viewing UI this phase — a real answer for
+   compliance, not a practical one for reading back "what did this note
+   used to say"). Bundled with a same-ship Activity-tab type filter on
+   Customer 360, since a new note type nobody can find in a long-running
+   account's activity history is only half a feature. Full design:
+   `docs/Relationship-Note-Implementation-Plan.md`.
+
+**Not yet decided:** sequencing among the four now-queued items (Auth
+Session Resilience — built; Audit Trail; Lead Management; Relationship
+Note) beyond Auth-before-Audit-Trail, decided earlier the same day.
+Whether the Marketing User role also needs Account-creation rights (tying
+directly into BR-ACC-03's still-undecided Option A/B call) is flagged as
+an open question in the Lead Management plan, not resolved here.
+
+## 2026-08-31 (later) -- Auth Session Resilience Part B (idle timeout) built, manually tested, found broken -- root cause not yet found
+
+Built both parts of `docs/Auth-Session-Resilience-Implementation-Plan.md`
+end to end: Part A (retry up to 2x before signing out on a transient
+`/auth/me` failure, only a definitive 401/403 signs out immediately) and
+Part B (60-minute inactivity timeout, new `useIdleLogout` hook mounted in
+`AuthGate`, a distinct "signed out due to inactivity" message on
+`LoginScreen` via a new `signOutReason` context field). `tsc --noEmit` and
+`npm run lint` both clean throughout. One real bug caught by the compiler
+before it ever ran: `DemoApp.tsx`'s "Log out" button was wired
+`onClick={signOut}` -- now that `signOut` takes an optional reason, that
+would have silently passed the click event itself as the reason on every
+manual logout. Fixed to `onClick={() => signOut()}`.
+
+**Manual testing found Part B's message not displaying, then found Part B
+itself not reliably firing at all -- two separate problems, only the
+first is understood.**
+
+1. **Message not showing, first fix (confirmed real, but insufficient
+   alone):** `signOut()` was writing `signOutReason` as its *last* step,
+   after `supabase.auth.signOut()` -- which independently triggers its own
+   `onAuthStateChange(SIGNED_OUT)` event that can reach `LoginScreen`
+   before `signOut()`'s own state updates land. Reordered to set
+   `signOutReason` first. Confirmed via added trace logging
+   (`console.log` calls marked `// TEMPORARY` in `AuthContext.tsx`,
+   `useIdleLogout.ts`, `LoginScreen.tsx` -- not yet removed) that with
+   this fix, one clean test (stayed on the tab, watched it, didn't
+   background) worked correctly end to end: timer fired, `signOut("idle")`
+   called, `LoginScreen` rendered with `signOutReason: "idle"` on both
+   renders after.
+
+2. **Backgrounding the tab never exercised the fix at all.** Every attempt
+   to background the tab and return (20s, then a real 1-hour gap) produced
+   the identical console signature as a fresh page load/hard refresh --
+   the startup burst (`applySession(null)` x3, several blank `LoginScreen`
+   renders) with no `useIdleLogout` firing log and no `signOut` log at all.
+   Most likely cause: the browser is discarding/reloading the backgrounded
+   tab outright (Chrome's memory-saving tab discarding, more aggressive
+   than expected even at ~20s -- confirmed still on a laptop, not mobile,
+   per Basheer), which wipes all in-page JS state including the idle timer
+   before it can run. Added a `visibilitychange`-triggered immediate
+   re-check (on top of the existing interval, not replacing it) specifically
+   to catch a throttled-while-hidden timer the moment focus returns -- this
+   does not violate the plan's "don't reset on visibilitychange" design
+   rule (a check isn't a reset).
+
+3. **Regression found after the visibilitychange fix, not yet
+   understood:** subsequent tests -- including sitting and watching the
+   tab the whole time, no backgrounding at all -- now show the user get
+   signed out around 13-15s with *no* `useIdleLogout`/`signOut` trace logs
+   at all, i.e. not going through Part B's code path, and no message
+   shown. This was not happening in the one earlier clean success (item 1
+   above). Leading unverified hypothesis for tomorrow: `applySession`'s
+   *other* branch (Part A's own definitive-401/403 path, `AuthContext.tsx`
+   ~line 92-95) calls `supabase.auth.signOut()` directly, bypassing the
+   context's `signOut()` wrapper entirely -- that path has no trace
+   logging added (only the `if (!s)` branch does), so it would produce
+   exactly this signature (silent, no idle/signOut logs, but a real
+   `applySession(null)`-triggered sign-out) if `/auth/me` is genuinely
+   returning a 401/403 around that time for an unrelated reason. Not
+   confirmed. Suspicious 13-15s timing (close to the temporary 15s test
+   constant) may be coincidental or may point at an interaction between
+   Part A and Part B not yet understood.
+
+**State of the files as of stopping -- must NOT be committed as-is:**
+- `sales-os-app/src/hooks/useIdleLogout.ts`: `IDLE_TIMEOUT_MS`/
+  `CHECK_INTERVAL_MS`/`ACTIVITY_THROTTLE_MS` temporarily shrunk from
+  60min/30s/30s to 15s/3s/2s for testing; original values noted in a
+  comment. Plus one `// TEMPORARY` debug `console.log` on firing.
+- `sales-os-app/src/contexts/AuthContext.tsx`: two `// TEMPORARY` debug
+  `console.log` calls (in `applySession`'s null-session branch, and in
+  `signOut`). The `signOut` reorder fix (set `signOutReason` before the
+  Supabase call) is a real, permanent fix -- keep it.
+- `sales-os-app/src/components/LoginScreen.tsx`: one `// TEMPORARY` debug
+  `console.log` on every render.
+
+**Next session:** add trace logging to `applySession`'s other (definitive-
+rejection) branch to confirm or rule out the leading hypothesis above;
+consider testing Part A and Part B in isolation from each other (e.g.
+temporarily disable `useIdleLogout`'s call in `AuthGate` to see if Part A
+alone still causes unexplained sign-outs); once root-caused and fixed,
+strip all `TEMPORARY` logging and restore the real timeout constants
+before this can be committed alongside BR-ACC-03.
