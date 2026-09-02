@@ -1,5 +1,37 @@
 # Progress Archive — September 2026
 
+## 2026-09-02 (later) — Tally SBU/Territory accounting memo, plus two housekeeping commits
+
+**Tally accounting alignment.** Latheef Bhai called Basheer with a
+specific concern: marketing expenses aren't visible split by SBU. No
+prior work exists on this — first time Tally/accounting integration has
+come up in the project. Wrote up the recommendation (Cost Category/Cost
+Centre tagging in Tally, no Sales OS engineering needed for the
+SBU-visibility fix itself; the real payoff of later connecting Tally to
+Sales OS is a Marketing ROI-by-SBU report) both as a project doc
+(`docs/Discussion-Tally-SBU-Territory-Accounting-2026-09.md`) and as a
+designed memo artifact for sharing directly with Latheef Bhai — iterated
+down twice on Basheer's request, first for plain language, then to a
+tight 2-3 paragraph summary added to the top of both versions. Committed
+`docs: add Tally SBU/territory cost-centre alignment discussion doc`.
+Logged in `docs/Backlog.md` as a relayed recommendation, not a decision
+or build item — nothing for Sales OS engineering to do unless/until the
+actual Tally integration gets scoped.
+
+**Housekeeping: committed 11 stale, uncommitted doc-only files**,
+unrelated to any current work and confirmed to have zero overlap with
+the parallel Lead Management session (checked each diff before staging,
+same discipline as the Audit Trail commit's file-sorting exercise
+earlier today) — `CLAUDE.md`'s "Testing narration" rule,
+`Deployment-Topology.md`'s 2-tier revision, `BR-ACC-03-Manual-E2E-Test-
+Plan.md`, `Coverage-Planning-Implementation-Plan.md`,
+`Relationship-Note-Implementation-Plan.md`, and the Engagement History
+generation plan + its UAT data preview + leadership deck (report/slides,
+html/pdf). All of these had been sitting untracked or modified in the
+working tree since earlier sessions.
+
+---
+
 ## 2026-09-02 — Lead Management: `marketing_lead.account_id` made nullable ("Not Sure Yet"), fixed a latent inner-join bug it would have exposed
 
 **Raised by Basheer during Group B testing:** the create form's Account
