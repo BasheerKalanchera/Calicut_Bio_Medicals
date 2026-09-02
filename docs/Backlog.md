@@ -50,15 +50,16 @@ kept only as a pointer; nothing left to pick up here.
   **Not yet committed** as of this writing.
 
 - **Lead Management for Marketing-Sourced Leads — built, migrations `0031`
-  + `0032` applied to Dev, manual E2E in progress as of 2026-09-02.**
+  through `0034` applied to Dev, manual E2E in progress (Groups A and B
+  passed 2026-09-02; resume at Group C).**
   **Renamed `lead`/`leads` → `marketing_lead`/`marketing-leads` mid-E2E**
   (collided with the existing Opportunity Stage "Lead" — see
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry and migration
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entries and migration
   `0032_rename_lead_to_marketing_lead.py`). Raised
   2026-08-31 after a duplicate-Opportunity incident (Mount Zion Medical
   College, assigned to Vivek, duplicated a deal he'd already entered
   himself). New "Marketing User" role (create-and-assign only, zero
-  pipeline visibility) plus a new `lead` table — deliberately not reusing
+  pipeline visibility) plus a new `marketing_lead` table — deliberately not reusing
   `opportunity`, since a marketing/conference-sourced entry may not even
   be a real prospect yet, and putting it directly into the pipeline table
   would pollute forecast numbers before anyone's judged whether it's
@@ -90,6 +91,21 @@ kept only as a pointer; nothing left to pick up here.
   rights. Correct fix is a second, separate constant scoped to "roles
   that don't need a real SBU membership" (Admin, GM, Marketing User),
   leaving the authorization check untouched.
+
+- **Tally accounting alignment (SBU/Territory Cost Centre tagging) — a
+  recommendation relayed to Latheef Bhai, not a decision or a build item.**
+  Raised 2026-09-02 (phone call to Basheer): marketing expenses aren't
+  visible by SBU today. Full write-up:
+  `docs/Discussion-Tally-SBU-Territory-Accounting-2026-09.md` (also
+  published as a memo artifact for sharing). Core recommendation — set up
+  "SBU" and "Territory" as two independent Cost Categories in Tally, make
+  Cost Centre tagging mandatory on Marketing ledgers first — needs **zero
+  Sales OS engineering work**; it's a Tally configuration change for the
+  accounts team. The eventual payoff of actually connecting Tally to
+  Sales OS (once that integration is scoped, not started) is a Marketing
+  ROI-by-SBU report pairing Tally spend against Sales OS lead/revenue
+  data — not something to build now. Nothing for this session to pick up
+  unless/until Latheef Bhai wants the integration itself scoped.
 
 - **Engagement History generation — planned, not built, one open decision.**
   Superseded the earlier "Relationship Notes" plan (manual Activity type)
