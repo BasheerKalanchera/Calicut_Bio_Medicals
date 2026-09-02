@@ -3,7 +3,7 @@ import { Box, Paper, TextField, Button, Alert, Typography } from "@mui/material"
 import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signOutReason, sessionCheckFailed } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,19 @@ export default function LoginScreen() {
             fullWidth
             size="small"
           />
+
+          {!error && signOutReason === "idle" && (
+            <Alert severity="info" sx={{ py: 0.5 }}>
+              You were signed out due to inactivity. Sign in again to continue.
+            </Alert>
+          )}
+
+          {!error && !signOutReason && sessionCheckFailed && (
+            <Alert severity="warning" sx={{ py: 0.5 }}>
+              We were unable to verify your session due to a connectivity
+              issue. Please refresh the page before signing in again.
+            </Alert>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ py: 0.5 }}>

@@ -11,6 +11,7 @@ import App from "./App.jsx";
 import DemoApp from "./DemoApp";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import LoginScreen from "./components/LoginScreen";
+import useIdleLogout from "./hooks/useIdleLogout";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +23,9 @@ const queryClient = new QueryClient({
 });
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, signOut } = useAuth();
+
+  useIdleLogout(() => { signOut("idle"); }, isAuthenticated);
 
   if (loading) {
     return (

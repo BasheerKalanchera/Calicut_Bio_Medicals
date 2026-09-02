@@ -378,7 +378,7 @@ export default function DemoApp() {
               </IconButton>
             )}
             <Button
-              onClick={signOut}
+              onClick={() => signOut()}
               sx={{
                 bgcolor: "#f3f4f6",
                 color: "#4b5563",
