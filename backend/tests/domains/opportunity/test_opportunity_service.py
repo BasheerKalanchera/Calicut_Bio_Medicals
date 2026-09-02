@@ -323,7 +323,6 @@ class TestCreateOpportunity:
             recipient_user_id=new_owner_id,
             opportunity_id=result.id,
             actor_id=USER_ID,
-            lead_source_name=None,
         )
 
     def test_does_not_notify_when_owner_is_creator(self):
@@ -336,23 +335,6 @@ class TestCreateOpportunity:
         )
 
         notification_service.notify_opportunity_assigned.assert_not_called()
-
-    def test_notify_passes_resolved_lead_source_name(self):
-        repo = _make_repo()
-        repo.get_lead_source.return_value = _make_lead_source("IndiaMART")
-        notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
-        new_owner_id = uuid.uuid4()
-
-        service.create_opportunity(
-            ACCOUNT_ID,
-            _make_create_data(owner_id=new_owner_id, lead_source_id=LEAD_SOURCE_ID),
-            created_by=USER_ID,
-            sbu_id=SBU_ID,
-        )
-
-        _, kwargs = notification_service.notify_opportunity_assigned.call_args
-        assert kwargs["lead_source_name"] == "IndiaMART"
 
 
 # ===========================================================================
@@ -772,25 +754,7 @@ class TestUpdateOpportunity:
             recipient_user_id=new_owner_id,
             opportunity_id=opp.id,
             actor_id=actor_id,
-            lead_source_name=None,  # opp.lead_source_id defaults to None
         )
-
-    def test_notify_on_reassignment_resolves_lead_source_name(self):
-        opp = _make_opportunity(owner_id=USER_ID, lead_source_id=LEAD_SOURCE_ID)
-        repo = _make_repo()
-        repo.get_for_update.return_value = opp
-        repo.get_stage.return_value = _make_stage(10, "LEAD")
-        repo.get_status.return_value = _make_status("ACTIVE")
-        repo.get_lead_source.return_value = _make_lead_source("IndiaMART")
-        notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
-
-        service.update_opportunity(
-            OPP_ID, OpportunityUpdate(owner_id=uuid.uuid4()), updated_by=uuid.uuid4()
-        )
-
-        _, kwargs = notification_service.notify_opportunity_assigned.call_args
-        assert kwargs["lead_source_name"] == "IndiaMART"
 
     def test_does_not_notify_when_owner_id_unchanged(self):
         opp = _make_opportunity(owner_id=USER_ID)

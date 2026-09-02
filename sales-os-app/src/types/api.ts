@@ -1027,6 +1027,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/marketing-leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Marketing Leads */
+        get: operations["list_marketing_leads_api_v1_marketing_leads_get"];
+        put?: never;
+        /** Create Marketing Lead */
+        post: operations["create_marketing_lead_api_v1_marketing_leads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/marketing-leads/{lead_id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Discard Marketing Lead */
+        patch: operations["discard_marketing_lead_api_v1_marketing_leads__lead_id__discard_patch"];
+        trace?: never;
+    };
+    "/api/v1/marketing-leads/{lead_id}/mark-converted": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Mark Converted */
+        patch: operations["mark_converted_api_v1_marketing_leads__lead_id__mark_converted_patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1114,6 +1166,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["InstalledAssetResponse"];
+        };
+        /** APIResponse[MarketingLeadResponse] */
+        APIResponse_MarketingLeadResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["MarketingLeadResponse"];
         };
         /** APIResponse[OpportunityItemResponse] */
         APIResponse_OpportunityItemResponse_: {
@@ -1529,6 +1595,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["DocumentResponse"][];
+        };
+        /** APIResponse[list[MarketingLeadResponse]] */
+        APIResponse_list_MarketingLeadResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["MarketingLeadResponse"][];
         };
         /** APIResponse[list[NotificationResponse]] */
         APIResponse_list_NotificationResponse__: {
@@ -2034,6 +2115,16 @@ export interface components {
             /** Display Name */
             display_name: string;
         };
+        /** AssignedToNested */
+        AssignedToNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Display Name */
+            display_name: string;
+        };
         /** AuditLogResponse */
         AuditLogResponse: {
             /**
@@ -2233,6 +2324,104 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** MarketingLeadCreate */
+        MarketingLeadCreate: {
+            /** Account Id */
+            account_id?: string | null;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /**
+             * Lead Source Id
+             * Format: uuid
+             */
+            lead_source_id: string;
+            /** Event Name */
+            event_name?: string | null;
+            /** Raw Interest Note */
+            raw_interest_note?: string | null;
+            /** Product Id */
+            product_id?: string | null;
+            /**
+             * Assigned To User Id
+             * Format: uuid
+             */
+            assigned_to_user_id: string;
+        };
+        /** MarketingLeadDiscard */
+        MarketingLeadDiscard: {
+            /** Discard Reason */
+            discard_reason: string;
+            /** Discard Note */
+            discard_note?: string | null;
+        };
+        /** MarketingLeadMarkConverted */
+        MarketingLeadMarkConverted: {
+            /**
+             * Converted Opportunity Id
+             * Format: uuid
+             */
+            converted_opportunity_id: string;
+        };
+        /** MarketingLeadResponse */
+        MarketingLeadResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Account Id */
+            account_id: string | null;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /**
+             * Lead Source Id
+             * Format: uuid
+             */
+            lead_source_id: string;
+            /** Event Name */
+            event_name: string | null;
+            /** Raw Interest Note */
+            raw_interest_note: string | null;
+            /** Product Id */
+            product_id: string | null;
+            /**
+             * Assigned To User Id
+             * Format: uuid
+             */
+            assigned_to_user_id: string;
+            assigned_to_user: components["schemas"]["AssignedToNested"];
+            /** Status */
+            status: string;
+            /** Discard Reason */
+            discard_reason: string | null;
+            /** Discard Note */
+            discard_note: string | null;
+            /** Converted Opportunity Id */
+            converted_opportunity_id: string | null;
+            /** Created By */
+            created_by: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Lead Source Name */
+            lead_source_name?: string | null;
+            /** Product Name */
+            product_name?: string | null;
         };
         /**
          * MasterDataEntity
@@ -6355,6 +6544,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_PaginatedResponse_AuditLogResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_marketing_leads_api_v1_marketing_leads_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_MarketingLeadResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_marketing_lead_api_v1_marketing_leads_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketingLeadCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarketingLeadResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_marketing_lead_api_v1_marketing_leads__lead_id__discard_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketingLeadDiscard"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarketingLeadResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_converted_api_v1_marketing_leads__lead_id__mark_converted_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketingLeadMarkConverted"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarketingLeadResponse_"];
                 };
             };
             /** @description Validation Error */

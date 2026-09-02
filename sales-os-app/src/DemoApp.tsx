@@ -21,9 +21,12 @@ import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
+import MarketingLeadEntryScreen from "./screens/MarketingLeadEntryScreen";
+import MarketingLeadReviewQueueScreen from "./screens/MarketingLeadReviewQueueScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
+const MARKETING_ROLE = "Marketing User";
 
 const NAV_SECTIONS = [
   {
@@ -31,6 +34,7 @@ const NAV_SECTIONS = [
     items: [
       { id: "customers",     label: "Account Management", icon: "🏥" },
       { id: "opportunities", label: "Pipeline",           icon: "📈" },
+      { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
       { id: "nextActions",   label: "Next Actions",       icon: "✅" },
       { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
     ],
@@ -46,12 +50,30 @@ const NAV_SECTIONS = [
   },
 ];
 
+// Marketing User has zero pipeline visibility (docs/Lead-Management-
+// Implementation-Plan.md) -- rather than adding one nav item to the normal
+// sections above, their whole sidebar is replaced with just this. Every
+// other view (customers, opportunities, catalog, ...) stays unreachable
+// since nothing in their nav links to it -- the always-mounted screens
+// underneath are simply never shown display:flex for this role.
+const MARKETING_NAV_SECTIONS = [
+  {
+    title: "MARKETING",
+    items: [{ id: "marketingLeads", label: "Marketing Leads", icon: "📥", adminOnly: false }],
+  },
+];
+
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
 
 export default function DemoApp() {
   const { userProfile, signOut } = useAuth();
   const queryClient = useQueryClient();
-  const [view, setView]                         = useState("opportunities");
+  const isMarketingUser = (userProfile as { role_name?: string } | null)?.role_name === MARKETING_ROLE;
+  // Lazy initializer -- AuthGate only mounts DemoApp once auth has resolved,
+  // so userProfile is already populated at first render here; reading it
+  // once up front avoids a flash of the (unreachable, for this role)
+  // Pipeline view before a later effect could correct it.
+  const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "opportunities"));
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
   // Where to return to on Back — Customer360/OpportunityDetail now have more than
@@ -253,7 +275,7 @@ export default function DemoApp() {
 
           {/* Navigation */}
           <Box sx={{ flex: 1, overflowY: "auto", p: 2, display: "flex", flexDirection: "column", gap: 3, minHeight: 0 }}>
-            {NAV_SECTIONS.map((section) => (
+            {(isMarketingUser ? MARKETING_NAV_SECTIONS : NAV_SECTIONS).map((section) => (
               <Box component="section" key={section.title}>
                 <Typography component="h3" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 1, px: 1 }}>
                   {section.title}
@@ -319,11 +341,16 @@ export default function DemoApp() {
                 <Box sx={{ fontSize: "9px", opacity: 0.85, lineHeight: "normal", borderTop: "1px solid rgba(255,255,255,0.1)", pt: 0.5, mt: 0.5 }}>
                   <Box>
                     {(userProfile as any).role_name}
-                    {(userProfile as any).zone ? ` • ${(userProfile as any).zone.name}` : ""}
+                    {/* Marketing User isn't territory-scoped (same reasoning as the
+                        SBU badge below) -- suppress a leftover zone value too. */}
+                    {(userProfile as any).zone && !isMarketingUser ? ` • ${(userProfile as any).zone.name}` : ""}
                   </Box>
                   {/* BR-OP-12: Admin/GM's sbu_id is a meaningless NOT-NULL placeholder,
-                      not a real assignment -- don't display it as if it were one. */}
-                  {!ADMIN_ROLES.has((userProfile as any)?.role_name) && (
+                      not a real assignment -- don't display it as if it were one. Same
+                      for Marketing User (found 2026-09-02): they pick an SBU per-lead
+                      in the create form, not scoped to their own profile's leftover
+                      value -- see docs/Lead-Management-Implementation-Plan.md. */}
+                  {!ADMIN_ROLES.has((userProfile as any)?.role_name) && !isMarketingUser && (
                     <Box sx={{ fontWeight: 700, color: "#bfdbfe", textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7px", mt: 0.25, bgcolor: "rgba(255,255,255,0.1)", px: 0.5, py: 0.25, borderRadius: "4px", width: "fit-content" }}>
                       SBU: {(userProfile as any).sbu?.name}
                     </Box>
@@ -354,22 +381,39 @@ export default function DemoApp() {
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 } }}>
-            <Button
-              variant="contained"
-              onClick={() => setShowQuickLead(true)}
-              sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
-            >
-              + Lead
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setShowLogActivity(true)}
-              sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap" }}
-            >
-              + Log
-            </Button>
-            <NotificationBell onSelectOpportunity={handleSelectOpportunity} />
+            {/* Hidden for Marketing User: creating an Opportunity directly here
+                bypasses the whole Convert/Discard review workflow this role
+                exists to enforce (docs/Lead-Management-Implementation-Plan.md).
+                Their own "+ New Marketing Lead" lives on the Marketing Leads
+                screen instead. */}
+            {!isMarketingUser && (
+              <Button
+                variant="contained"
+                onClick={() => setShowQuickLead(true)}
+                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap", bgcolor: "#059669", "&:hover": { bgcolor: "#047857" } }}
+              >
+                + Lead
+              </Button>
+            )}
+            {!isMarketingUser && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setShowLogActivity(true)}
+                sx={{ px: { xs: 1, sm: 1.5 }, py: 1, fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.05em", whiteSpace: "nowrap" }}
+              >
+                + Log
+              </Button>
+            )}
+            {/* Hidden for Marketing User: this role never owns Opportunities or
+                approves gate overrides, so nothing would ever notify them --
+                and clicking through a notification navigates via
+                onSelectOpportunity straight into OpportunityDetailScreen, an
+                escape hatch around the restricted nav. Found live during
+                Group A E2E testing, 2026-09-02. */}
+            {!isMarketingUser && (
+              <NotificationBell onSelectOpportunity={handleSelectOpportunity} />
+            )}
             {HELP_CONTENT[helpViewId] && (
               <IconButton
                 onClick={() => setShowHelp(true)}
@@ -565,6 +609,16 @@ export default function DemoApp() {
           {/* Audit Log — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "auditLog" ? "flex" : "none", flexDirection: "column" }}>
             <AuditLogScreen />
+          </Box>
+
+          {/* Marketing Leads — Marketing User's entry screen, always mounted, hidden when not active */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "marketingLeads" ? "flex" : "none", flexDirection: "column" }}>
+            <MarketingLeadEntryScreen />
+          </Box>
+
+          {/* Marketing Lead Review Queue — always mounted, hidden when not active; not shown to Marketing User (nothing is ever assigned to them) */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "marketingLeadQueue" ? "flex" : "none", flexDirection: "column" }}>
+            <MarketingLeadReviewQueueScreen />
           </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}

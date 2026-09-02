@@ -1,5 +1,183 @@
 # Progress Archive — September 2026
 
+## 2026-09-02 — Lead Management: `marketing_lead.account_id` made nullable ("Not Sure Yet"), fixed a latent inner-join bug it would have exposed
+
+**Raised by Basheer during Group B testing:** the create form's Account
+helper text already said "Not in the list? Note it below for the rep to
+follow up on" -- but the field was still hard-required underneath, so
+that message was actively wrong: you couldn't actually submit without
+picking *some* existing account. This was the same gap flagged earlier in
+the session (the "Not Sure Yet" request, matching Product) that got
+deferred in favor of the "+ Add Hospital" shortcut work and never
+finished.
+
+**Fix:** migration `0034_make_marketing_lead_account_nullable.py` drops
+`account_id`'s `NOT NULL`. Model/schema updated to match
+(`MarketingLeadCreate.account_id: uuid.UUID | None = None`). Frontend:
+Account field's blank option now reads "Not sure yet" (same pattern as
+Product), the client-side required-check removed, helper text corrected
+to actually describe what happens.
+
+**Found and fixed while implementing, not after:** `MarketingLeadRepository
+._enriched_select()`'s Account join was a plain `join()` (inner) --
+with `account_id` now nullable, that would have silently dropped every
+null-account lead from *every* list (the Marketing User's own screen, the
+assigned rep's queue, everything) with no error, since an inner join on a
+NULL foreign key simply excludes the row. Changed to `outerjoin()` before
+it ever shipped broken -- caught by reasoning through the change, not by
+a failing test (existing tests all used non-null account_id fixtures, so
+none would have caught this).
+
+**Convert flow:** `QuickLeadModal`'s Account field now starts genuinely
+blank when converting a lead with no account (`initialAccountId ??
+undefined`) -- the assigned rep resolves it there, either picking an
+existing account or using the new "+ Add Hospital" shortcut.
+
+New test: `test_account_id_optional`. 661/661 backend tests pass, `tsc`/
+lint clean (0 errors).
+
+---
+
+## 2026-09-02 — Lead Management: extracted AddHospitalModal.tsx, added inline "+ Add Hospital" to the Convert flow
+
+**Raised by Basheer during Group B testing:** if a Marketing Lead's
+hospital isn't in the Accounts directory yet, the assigned rep converting
+it had no way to create the hospital without leaving the Convert dialog
+entirely -- cancel out, go to Customer Directory -> Add Hospital, then
+come back and reopen Convert. Not broken, just a detour across two
+screens.
+
+**Fix: extracted `AddHospitalModal.tsx`** (new, shared) out of
+`CustomerDirectoryScreen.tsx` -- the entire BR-ACC-03 duplicate-checked
+create flow (form fields, "Did you mean X?" warning, Create Anyway, the
+no-territory-assigned block) now lives in one self-contained component
+(`isOpen`/`onClose`/`onCreated`/`onExistingSelected` props) instead of
+being inlined in one screen. `CustomerDirectoryScreen.tsx` now just
+renders it -- same "New Customer" title/copy, same behavior, verified via
+`tsc`/lint (0 errors); its own BR-ACC-03 E2E coverage still applies
+unchanged since nothing about the actual flow changed, only where the
+code lives. One deliberate behavioral nuance preserved exactly: a fresh
+create still doesn't auto-navigate (just closes + refreshes the list,
+original behavior), while picking an *existing* duplicate match still
+does (via the new `onExistingSelected` callback) -- these differ from
+what `QuickLeadModal.tsx` needed, which is why the component exposes two
+separate callbacks rather than one.
+
+**`QuickLeadModal.tsx` gets a new "+ Add Hospital" button** next to its
+Account picker, opening `AddHospitalModal` as a nested dialog (same
+focus-trap `disableEnforceFocus` pattern already used there for the
+Products sub-modal). Both outcomes (create or pick-existing) select the
+account inline and close -- no reason to distinguish them in this
+context, unlike Customer Directory. Benefits both the normal "+ Lead"
+Opportunity-creation flow and the Marketing Lead Convert flow (since
+Convert reuses `QuickLeadModal`). **Deliberately not added to
+`MarketingLeadCreateModal.tsx`** -- Marketing User still has no Account-
+creation rights, per the earlier explicit decision.
+
+Verified: 660/660 backend tests unaffected (frontend-only change), `tsc
+--noEmit`/lint clean (0 errors) throughout.
+
+---
+
+## 2026-09-02 — Lead Management: Marketing Lead's Lead Source picker restricted to Conference/IndiaMART via a data-driven flag
+
+**Raised by Basheer during Group B testing:** the Marketing Lead creation
+form was showing all 12 `lead_source` values (Referral, Tender, Cold
+Call, Repeat Order, ...) — only Conference and IndiaMART actually make
+sense for something a Marketing User logs; the rest describe how a *rep*
+categorizes an Opportunity they're creating directly.
+
+**Decided against a hardcoded name match** (`name === "CONFERENCE"`,
+matching the existing `isConference` pattern already in the codebase) —
+fragile against a rename, and wasn't enforceable server-side (nothing
+stopped any `lead_source_id` being POSTed directly). Went with a
+data-driven flag instead: new `lead_source.is_marketing_source` boolean
+(migration `0033_add_lead_source_is_marketing_source.py`, seeded true for
+CONFERENCE/INDIAMART only). Both layers now read the same flag — the
+frontend picker filters on it (`MarketingLeadCreateModal.tsx`), and
+`MarketingLeadService.create_lead` validates it server-side too (a real
+gap that didn't exist before: previously *any* `lead_source_id` was
+accepted). A future marketing-relevant source, or a rename of either
+existing one, is now a data change, not a code change.
+
+**Touches:** `reference/models.py`/`schemas.py` (new column/field),
+`marketing_lead/repository.py` (`is_valid_marketing_source`),
+`marketing_lead/service.py` (validation + `BusinessRuleViolation`), one
+new test (`test_non_marketing_lead_source_rejected`). 660/660 backend
+tests pass, `tsc`/lint clean.
+
+---
+
+## 2026-09-02 — Lead Management: `lead` table renamed to `marketing_lead` mid-E2E (naming collision with the Opportunity "Lead" stage)
+
+**Raised by Basheer during Group A testing:** Cabio's pipeline already
+uses "Lead" as the name of the *first Opportunity stage* (a real, owned
+pipeline record) — this feature's `lead` table meant something earlier
+and different (an unqualified, unreviewed inbound inquiry, not yet a real
+prospect). Same bare word, two different meanings — "how many Leads do
+we have" becomes ambiguous. The term itself isn't wrong (Salesforce/Zoho/
+Dynamics all call exactly this concept "Lead," converted to Opportunity
+by a human) — Cabio's own pipeline vocabulary just got there first with a
+different meaning. Renaming the *stage* would have been the disruptive
+fix (live reference data, stage-gate logic, historical Opportunities);
+renaming this brand-new, not-yet-load-bearing table was the cheap one.
+
+**Decided: rename to `marketing_lead`** — pairs with the already-seeded
+"Marketing User" role name ("Marketing User creates Marketing Leads"),
+unambiguous against the pipeline's own "Lead" stage.
+
+**Full rename, both layers:**
+- New migration `0032_rename_lead_to_marketing_lead.py` (0031 is already
+  applied to Dev and must never be edited) — `ALTER TABLE ... RENAME`,
+  plus explicit renames of every constraint/index/policy still on the old
+  `lead_*` spelling (Postgres doesn't cascade those on a table rename).
+  Applied to Dev by Basheer; `Physical-Schema.sql` regenerated.
+- Backend: `backend/app/domains/lead/` → `marketing_lead/` (`Lead` →
+  `MarketingLead` throughout: model, repository, service, schemas), router
+  `leads.py` → `marketing_leads.py` (`/leads` → `/marketing-leads`),
+  `main.py`/`registry.py` rewired, test suite moved and renamed
+  (`test_marketing_lead_service.py`).
+- Frontend: `services/leads.ts` → `marketingLeads.ts`, both modals and
+  both screens renamed (`MarketingLeadCreateModal`, `MarketingLeadDiscard
+  Modal`, `MarketingLeadEntryScreen`, `MarketingLeadReviewQueueScreen`),
+  `QuickLeadModal.tsx`'s Convert-flow prop renamed
+  (`leadContextNote` → `marketingLeadContextNote`), UI copy updated
+  throughout ("Leads" → "Marketing Leads", "Lead Queue" → "Marketing Lead
+  Queue", nav item ids `leads`/`leadQueue` → `marketingLeads`/
+  `marketingLeadQueue`). Types regenerated from the live (auto-reloaded)
+  dev server both before and after the rename.
+- Verified at each step: 659/659 backend tests, `tsc --noEmit`/lint clean
+  (0 errors) on the frontend.
+
+**Docs updated:** `docs/Lead-Management-Implementation-Plan.md`'s RLS
+section, `docs/Lead-Management-Manual-E2E-Test-Plan.md`'s status header
+and Group G, `docs/Backlog.md`'s Lead Management entry.
+
+---
+
+## 2026-09-02 — Lead Management: manual E2E started, Group A found and fixed a nav-restriction gap
+
+Migration `0031_add_lead.py` applied to Dev, `Physical-Schema.sql`
+regenerated (clean diff: `lead` table + FKs/indexes + the 3 corrected RLS
+policies only). `backend/app/main.py` wired, frontend types regenerated.
+Manual E2E per `docs/Lead-Management-Manual-E2E-Test-Plan.md` begun —
+Fahad's role temporarily reassigned to Marketing User for testing (Dev is
+single-user right now; revert after testing).
+
+**Group A (nav restriction) found one real gap:** the header's
+`NotificationBell` was still visible for Marketing User — missed when
+building the restricted sidebar/header, since the `+ Lead`/`+ Log` buttons
+were gated but the bell wasn't. Low practical risk (this role never owns
+Opportunities or approves gate overrides, so nothing would ever populate
+it) but a real escape hatch in principle: clicking through a notification
+navigates via `onSelectOpportunity` straight into `OpportunityDetailScreen`,
+bypassing the restricted nav entirely. Fixed same pattern as the other two
+buttons (`!isMarketingUser &&`). Confirmed gone live after the fix.
+Group A now fully passing (sidebar, header buttons, and bell all
+correctly restricted).
+
+---
+
 ## 2026-09-02 — Audit Trail: migration built and applied, Admin/GM Audit Log screen added same-day, all 5 verification checks pass
 
 **Built per `docs/Audit-Trail-Implementation-Plan.md`** (ADR-017 Phase 1,

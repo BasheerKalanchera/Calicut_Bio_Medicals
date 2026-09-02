@@ -59,8 +59,11 @@ def test_all_28_tables_registered():
     # 29, not 28: Manager-Attested Gate Override added gate_override_reason
     # (0027_add_gate_override.py).
     # 30, not 29: Audit Trail added audit_log (0030_add_audit_log.py).
+    # 31, not 30: Lead Management added lead (0031_add_lead.py), renamed to
+    # marketing_lead (0032_rename_lead_to_marketing_lead.py) -- same table,
+    # count unchanged by the rename.
     table_count = len(Base.metadata.tables)
-    assert table_count == 30, f"Expected 30 tables, found {table_count}"
+    assert table_count == 31, f"Expected 31 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -94,7 +97,11 @@ def test_all_relationships_resolve():
     # Still 101 after Audit Trail (0030_add_audit_log.py) -- AuditLog has zero
     # relationship()s, plain FK columns only (like ZoneClosure), not a domain
     # object with its own navigable relationships.
-    assert rel_count == 101, f"Expected 101 relationships, found {rel_count}"
+    # 102, not 101: Lead Management added MarketingLead.assigned_to_user
+    # (0031_add_lead.py, table renamed 0032) -- one-directional only, no
+    # back_populates added to UserProfile (see marketing_lead/models.py's
+    # own comment on that choice).
+    assert rel_count == 102, f"Expected 102 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

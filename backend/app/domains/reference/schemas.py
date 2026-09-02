@@ -93,6 +93,7 @@ class LeadSourceResponse(BaseModel):
     id: uuid.UUID
     name: str
     description: str | None
+    is_marketing_source: bool
 
 
 class OpportunityStageResponse(BaseModel):

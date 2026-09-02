@@ -198,7 +198,6 @@ class OpportunityService:
                 recipient_user_id=data.owner_id,
                 opportunity_id=opp.id,
                 actor_id=created_by,
-                lead_source_name=lead_source_name,
             )
 
         if data.gate_override_approver_id is not None:
@@ -281,16 +280,10 @@ class OpportunityService:
             and new_owner_id != previous_owner_id
             and new_owner_id != updated_by
         ):
-            lead_source_name: str | None = None
-            if opportunity.lead_source_id:
-                lead_source = self.repository.get_lead_source(opportunity.lead_source_id)
-                if lead_source:
-                    lead_source_name = lead_source.name
             self.notification_service.notify_opportunity_assigned(
                 recipient_user_id=new_owner_id,
                 opportunity_id=opportunity.id,
                 actor_id=updated_by,
-                lead_source_name=lead_source_name,
             )
 
         # Resolve effective stage and status after updates

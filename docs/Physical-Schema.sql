@@ -12,12 +12,11 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-09-02 from the Dev database (Postgres 17.6), catching up
--- migration 0030 (Audit Trail, ADR-017: new `audit_log` table, generic
--- `audit_log_row_change()` SECURITY DEFINER trigger function, 4 triggers
--- (account/user_profile/product/opportunity, AFTER UPDATE OR DELETE), RLS
--- enabled with an Admin/GM-only read policy) since the last regen on
--- 2026-08-27. See docs/Audit-Trail-Implementation-Plan.md and
--- docs/Backend-Implementation-Standards.md's migration workflow for the
+-- migration 0031 (Lead Management for Marketing-Sourced Leads: new `lead`
+-- table, `lead_select`/`lead_insert`/`lead_update` RLS policies, a
+-- "Marketing User" role row) since the last regen the same day (Audit
+-- Trail, migration 0030). See docs/Lead-Management-Implementation-Plan.md
+-- and docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
 -- Regenerate with (any fully-migrated environment, Dev or UAT, is equivalent
@@ -35,7 +34,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Gj8N4tHcWLQIFESFXhjSMzDFL2bnyIJdv0lgfM57jDtkAShiaNZItanD77Z9fr4
+\restrict bsiccsWjszbYMepc8RsrxboD8X9PFNor5epfspgfzuQ8ASLDBG6MNyjVRbgnReB
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -379,6 +378,32 @@ CREATE TABLE public.installed_asset (
     created_by uuid,
     updated_by uuid,
     CONSTRAINT chk_competitor_equipment CHECK ((((is_competitor_equipment = false) AND (product_id IS NOT NULL)) OR (is_competitor_equipment = true)))
+);
+
+
+--
+-- Name: lead; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lead (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    account_id uuid NOT NULL,
+    sbu_id uuid NOT NULL,
+    lead_source_id uuid NOT NULL,
+    event_name character varying(255),
+    raw_interest_note text,
+    product_id uuid,
+    assigned_to_user_id uuid NOT NULL,
+    status character varying(20) DEFAULT 'NEW'::character varying NOT NULL,
+    discard_reason character varying(20),
+    discard_note text,
+    converted_opportunity_id uuid,
+    created_by uuid,
+    created_at timestamp with time zone DEFAULT now(),
+    reviewed_by uuid,
+    reviewed_at timestamp with time zone,
+    CONSTRAINT ck_lead_discard_reason CHECK (((discard_reason IS NULL) OR ((discard_reason)::text = ANY ((ARRAY['DUPLICATE'::character varying, 'NOT_INTERESTED'::character varying, 'UNABLE_TO_CONTACT'::character varying, 'JUNK'::character varying])::text[])))),
+    CONSTRAINT ck_lead_status CHECK (((status)::text = ANY ((ARRAY['NEW'::character varying, 'CONVERTED'::character varying, 'DISCARDED'::character varying])::text[])))
 );
 
 
@@ -891,6 +916,14 @@ ALTER TABLE ONLY public.installed_asset
 
 
 --
+-- Name: lead lead_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lead_source lead_source_name_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1229,6 +1262,20 @@ CREATE INDEX idx_document_opportunity_id ON public.document USING btree (opportu
 --
 
 CREATE INDEX idx_installed_asset_account_id ON public.installed_asset USING btree (account_id);
+
+
+--
+-- Name: idx_lead_assigned_pending; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_lead_assigned_pending ON public.lead USING btree (assigned_to_user_id) WHERE ((status)::text = 'NEW'::text);
+
+
+--
+-- Name: idx_lead_assigned_to_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_lead_assigned_to_user_id ON public.lead USING btree (assigned_to_user_id);
 
 
 --
@@ -1760,6 +1807,70 @@ ALTER TABLE ONLY public.installed_asset
 
 ALTER TABLE ONLY public.installed_asset
     ADD CONSTRAINT installed_asset_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: lead lead_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
+
+
+--
+-- Name: lead lead_assigned_to_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_assigned_to_user_id_fkey FOREIGN KEY (assigned_to_user_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: lead lead_converted_opportunity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_converted_opportunity_id_fkey FOREIGN KEY (converted_opportunity_id) REFERENCES public.opportunity(id);
+
+
+--
+-- Name: lead lead_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: lead lead_lead_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_lead_source_id_fkey FOREIGN KEY (lead_source_id) REFERENCES public.lead_source(id);
+
+
+--
+-- Name: lead lead_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.product(id);
+
+
+--
+-- Name: lead lead_reviewed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: lead lead_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lead
+    ADD CONSTRAINT lead_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
 
 
 --
@@ -2300,6 +2411,33 @@ CREATE POLICY document_tier_visibility ON public.document USING (((opportunity_i
 
 
 --
+-- Name: lead; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.lead ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lead lead_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY lead_insert ON public.lead FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Marketing User'::text, 'Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: lead lead_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY lead_select ON public.lead FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = ANY (ARRAY['SBU Manager'::text, 'Area Manager'::text])) AND (sbu_id = public.cabio_app_sbu_id())) OR (assigned_to_user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid())));
+
+
+--
+-- Name: lead lead_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY lead_update ON public.lead FOR UPDATE USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (assigned_to_user_id = public.cabio_app_uid()))) WITH CHECK (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (assigned_to_user_id = public.cabio_app_uid())));
+
+
+--
 -- Name: notification; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2427,5 +2565,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Gj8N4tHcWLQIFESFXhjSMzDFL2bnyIJdv0lgfM57jDtkAShiaNZItanD77Z9fr4
+\unrestrict bsiccsWjszbYMepc8RsrxboD8X9PFNor5epfspgfzuQ8ASLDBG6MNyjVRbgnReB
 

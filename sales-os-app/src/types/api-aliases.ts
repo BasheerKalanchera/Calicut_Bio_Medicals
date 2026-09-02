@@ -35,3 +35,6 @@ export type NotificationResponse = components["schemas"]["NotificationResponse"]
 export type UnreadCountResponse = components["schemas"]["UnreadCountResponse"];
 export type AuditLogResponse = components["schemas"]["AuditLogResponse"];
 export type AuditLogPage = components["schemas"]["PaginatedResponse_AuditLogResponse_"];
+export type MarketingLeadResponse = components["schemas"]["MarketingLeadResponse"];
+export type MarketingLeadCreate = components["schemas"]["MarketingLeadCreate"];
+export type MarketingLeadDiscard = components["schemas"]["MarketingLeadDiscard"];

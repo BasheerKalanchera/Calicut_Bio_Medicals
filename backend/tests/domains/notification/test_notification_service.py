@@ -2,8 +2,10 @@
 Unit tests for NotificationService.
 
 Repository is fully mocked — no DB required. Tests cover:
-  - notify_opportunity_assigned: is_urgent set for IndiaMART-sourced (case-
-    insensitive), unset for other/no lead source
+  - notify_opportunity_assigned: always is_urgent=False as of the Lead
+    Management change (docs/Lead-Management-Implementation-Plan.md) --
+    IndiaMART's 4-hour SLA is now met by the Marketing User directly on
+    IndiaMART's platform, before anything reaches this notification.
   - pass-through methods (list_for_user, list_urgent_unread, count_unread,
     mark_read_for_entity) delegate to the repository unchanged
 """
@@ -26,50 +28,13 @@ def _make_repo() -> MagicMock:
 
 
 class TestNotifyOpportunityAssigned:
-    def test_indiamart_lead_source_is_urgent(self):
+    def test_is_never_urgent(self):
         service = NotificationService(repository=_make_repo())
 
         notification = service.notify_opportunity_assigned(
             recipient_user_id=RECIPIENT_ID,
             opportunity_id=OPP_ID,
             actor_id=ACTOR_ID,
-            lead_source_name="IndiaMART",
-        )
-
-        assert notification.is_urgent is True
-
-    def test_indiamart_match_is_case_insensitive(self):
-        service = NotificationService(repository=_make_repo())
-
-        notification = service.notify_opportunity_assigned(
-            recipient_user_id=RECIPIENT_ID,
-            opportunity_id=OPP_ID,
-            actor_id=ACTOR_ID,
-            lead_source_name="indiamart",
-        )
-
-        assert notification.is_urgent is True
-
-    def test_other_lead_source_is_not_urgent(self):
-        service = NotificationService(repository=_make_repo())
-
-        notification = service.notify_opportunity_assigned(
-            recipient_user_id=RECIPIENT_ID,
-            opportunity_id=OPP_ID,
-            actor_id=ACTOR_ID,
-            lead_source_name="Referral",
-        )
-
-        assert notification.is_urgent is False
-
-    def test_no_lead_source_is_not_urgent(self):
-        service = NotificationService(repository=_make_repo())
-
-        notification = service.notify_opportunity_assigned(
-            recipient_user_id=RECIPIENT_ID,
-            opportunity_id=OPP_ID,
-            actor_id=ACTOR_ID,
-            lead_source_name=None,
         )
 
         assert notification.is_urgent is False
@@ -82,7 +47,6 @@ class TestNotifyOpportunityAssigned:
             recipient_user_id=RECIPIENT_ID,
             opportunity_id=OPP_ID,
             actor_id=ACTOR_ID,
-            lead_source_name=None,
         )
 
         created = repo.create.call_args[0][0]

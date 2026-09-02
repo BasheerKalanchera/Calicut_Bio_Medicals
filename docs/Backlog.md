@@ -49,27 +49,47 @@ kept only as a pointer; nothing left to pick up here.
   narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry.
   **Not yet committed** as of this writing.
 
-- **Lead Management for Marketing-Sourced Leads — planned, not built.
-  Sequencing vs. Audit Trail (above) and Engagement History (below) not
-  yet decided.** Raised 2026-08-31 after a duplicate-Opportunity
-  incident (Mount Zion Medical College, assigned to Vivek, duplicated a
-  deal he'd already entered himself). New "Marketing User" role
-  (create-and-assign only, zero pipeline visibility) plus a new `lead`
-  table — deliberately not reusing `opportunity`, since a marketing/
-  conference-sourced entry may not even be a real prospect yet, and
-  putting it directly into the pipeline table would pollute forecast
-  numbers before anyone's judged whether it's real. Nothing becomes a
-  real Opportunity until the assigned rep reviews and converts it —
-  structurally prevents the kind of duplicate that triggered this, rather
-  than trying to detect it after creation. Bundled in: the IndiaMART
-  4-hour buylead-credit SLA moves outside Cabio entirely (the lead-entry
-  person now handles it directly on IndiaMART's platform before anything
-  reaches Sales OS), which retires the existing `URGENT_LEAD_SOURCE_NAMES`
-  urgent-notification logic in `notification/service.py` — confirmed
-  Dev-only, never promoted to UAT/Prod, so no live-environment risk. Full
-  design, resolved decisions, and two open questions (does this role also
-  need Account-creation rights; assignment-list scope):
-  `docs/Lead-Management-Implementation-Plan.md`.
+- **Lead Management for Marketing-Sourced Leads — built, migrations `0031`
+  + `0032` applied to Dev, manual E2E in progress as of 2026-09-02.**
+  **Renamed `lead`/`leads` → `marketing_lead`/`marketing-leads` mid-E2E**
+  (collided with the existing Opportunity Stage "Lead" — see
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry and migration
+  `0032_rename_lead_to_marketing_lead.py`). Raised
+  2026-08-31 after a duplicate-Opportunity incident (Mount Zion Medical
+  College, assigned to Vivek, duplicated a deal he'd already entered
+  himself). New "Marketing User" role (create-and-assign only, zero
+  pipeline visibility) plus a new `lead` table — deliberately not reusing
+  `opportunity`, since a marketing/conference-sourced entry may not even
+  be a real prospect yet, and putting it directly into the pipeline table
+  would pollute forecast numbers before anyone's judged whether it's
+  real. Nothing becomes a real Opportunity until the assigned rep reviews
+  and converts it — structurally prevents the kind of duplicate that
+  triggered this, rather than trying to detect it after creation. Bundled
+  in: the IndiaMART 4-hour buylead-credit SLA moved outside Cabio
+  entirely (the lead-entry person now handles it directly on IndiaMART's
+  platform before anything reaches Sales OS), retiring the old
+  `URGENT_LEAD_SOURCE_NAMES` urgent-notification logic in
+  `notification/service.py`. Both of the plan's original open questions
+  are resolved (no Account-creation rights for Marketing User;
+  assignment picker filtered by the lead's `sbu_id`). Full design:
+  `docs/Lead-Management-Implementation-Plan.md`; E2E plan and live
+  progress: `docs/Lead-Management-Manual-E2E-Test-Plan.md`,
+  `docs/Progress-Archive-2026-09.md`.
+  **Follow-up, not part of this phase (raised 2026-09-02, during Group A
+  E2E testing):** creating a *brand-new* Marketing User via User
+  Directory's "+ Add User" flow currently fails with "SBU is required for
+  this role" — `organization/service.py`'s `create_user` (`service.py:45-
+  52`) only exempts the SBU-required check for roles in
+  `_USER_WRITE_ROLES = {"General Manager", "Admin"}`, and Marketing User
+  isn't in that set. Doesn't block current testing (reassigning an
+  *existing* user's role, as done for live E2E, goes through `update_user`
+  instead, which has no such check at all). **Not a one-line fix:**
+  `_USER_WRITE_ROLES` is overloaded — it also gates who's authorized to
+  create/update users at all (`service.py:35`), so simply adding
+  Marketing User to it would incorrectly grant this role user-management
+  rights. Correct fix is a second, separate constant scoped to "roles
+  that don't need a real SBU membership" (Admin, GM, Marketing User),
+  leaving the authorization check untouched.
 
 - **Engagement History generation — planned, not built, one open decision.**
   Superseded the earlier "Relationship Notes" plan (manual Activity type)

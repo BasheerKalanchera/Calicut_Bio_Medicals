@@ -1,22 +1,14 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-02_
 
-## Current task 0 — Audit Trail (+ Admin/GM Audit Log screen): built, fully verified, ready to commit
+## Current task 0 — Audit Trail (+ Admin/GM Audit Log screen): committed
 
 Migration `0030_add_audit_log.py` applied to Dev, `Physical-Schema.sql`
-regenerated. Scope grew same-day to also include the Admin/GM "Audit Log"
-review screen (`backend/app/domains/audit/`, `AuditLogScreen.tsx`) —
-originally a deferred follow-up, picked up same session. All 5 items in
-the implementation plan's verification checklist passed live against Dev,
-including RLS confirmed both at the DB level and live in the app
-(Shruthi's non-admin login correctly has no Audit Log nav entry). Full
-narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry (top
-entry).
-
-**Next step: commit.** This unblocks Current task 3 below (Lead
-Management) — it's deliberately holding off touching `backend/app/
-main.py` and `docs/Physical-Schema.sql` until this commits, to avoid
-stepping on this session's uncommitted changes to those same 2 files.
+regenerated, Admin/GM "Audit Log" review screen built same-day. All 5
+verification-plan checks passed live against Dev. **Committed `099e54c`**
+("feat: add Audit Trail for account/user_profile/product/opportunity
+(ADR-017)"). Full narrative: `docs/Progress-Archive-2026-09.md`'s
+2026-09-02 entry.
 
 ## Current task 1 — BR-ACC-03 (duplicate hospital): committed, manual E2E plan not yet confirmed complete
 
@@ -39,32 +31,51 @@ caused and fixed 2026-09-02 after the 2026-08-31 mid-debug stop point.
 + transient-failure retry)"). Full narrative: `docs/Progress-Archive-
 2026-09.md`'s 2026-09-02 entry.
 
-## Current task 3 — Lead Management for Marketing-Sourced Leads: backend+frontend built and unit-tested, blocked on shared-file wiring
+## Current task 3 — Lead Management for Marketing-Sourced Leads (now "Marketing Lead"): built, migrated, manual E2E in progress
 
 Full build per `docs/Lead-Management-Implementation-Plan.md` (two open
 decisions resolved 2026-09-02: no Account-creation rights for Marketing
-User; assignment picker filtered by the lead's `sbu_id`). New `lead`
-backend domain, migration `0031_add_lead.py` (found and fixed a real RLS
-gap in the plan's original policy sketch — see the plan doc's RLS
-section), notification IndiaMART-urgency removal, and the full frontend
-(Lead Entry screen, Lead Review Queue, Convert/Discard flows, Marketing
-User's fully restricted nav). 659/659 backend tests pass (added
-`tests/domains/lead/test_lead_service.py`, 100% service coverage;
-also fixed a pre-existing test-ordering fragility in
-`tests/test_persistence.py` while wiring `db/registry.py`), `tsc`/lint
-clean on the frontend.
+User; assignment picker filtered by the lead's `sbu_id`). Migration
+`0031_add_lead.py` applied to Dev, `main.py` wired, `Physical-Schema.sql`
++ frontend types regenerated.
 
-**Deliberately not wired yet, per conflict-check with the parallel Audit
-Trail session:** `backend/app/main.py` (leads router not registered) and
-`docs/Physical-Schema.sql` — both are mid-edit in that other session
-(currently doing its own manual E2E verification, not yet committed as of
-2026-09-02). `sales-os-app/src/services/leads.ts` uses hand-typed
-interfaces instead of generated API aliases for the same reason. Once
-that session commits: register `leads_router` in `main.py`, regenerate
-`Physical-Schema.sql` and frontend types, then run the manual E2E pass
-already drafted at `docs/Lead-Management-Manual-E2E-Test-Plan.md`.
+**Renamed `lead`/`leads` → `marketing_lead`/`marketing-leads` mid-E2E
+(2026-09-02, Group A)** — collided with the existing Opportunity Stage
+"Lead." Migration `0032_rename_lead_to_marketing_lead.py` (0031 never
+edited), full backend domain + router + tests renamed, full frontend
+(services/components/screens/DemoApp.tsx nav) renamed, types
+regenerated again. Full reasoning: `docs/Progress-Archive-2026-09.md`'s
+2026-09-02 entry. 659/659 backend tests pass, `tsc`/lint clean throughout.
 
-**Next up after that: two items now queued in `docs/Backlog.md`.**
+**Manual E2E in progress** per `docs/Lead-Management-Manual-E2E-Test-
+Plan.md`: **Group A passed**, after fixing two gaps found live —
+`NotificationBell` and the sidebar's SBU/zone badge were both still
+visible for Marketing User despite the "zero pipeline visibility" design
+(neither functionally dangerous, but inconsistent — fixed same
+`!isMarketingUser` pattern as the other restricted elements). **Currently
+mid-Group B**, which found and fixed three more real gaps live: (1) Lead
+Source picker restricted to CONFERENCE/IndiaMART via a new
+`lead_source.is_marketing_source` flag (migration `0033`) instead of
+showing all 12 reference values; (2) extracted `AddHospitalModal.tsx` out
+of `CustomerDirectoryScreen.tsx` and added an inline "+ Add Hospital"
+shortcut to `QuickLeadModal.tsx`'s Convert flow; (3) `marketing_lead.
+account_id` made nullable (migration `0034`, "Not Sure Yet" — the
+create-form's own helper text had been claiming this worked when the
+field was actually still required) — also caught and fixed a latent
+inner-join bug this would have caused in `MarketingLeadRepository`
+before it ever shipped. All three: full detail in `docs/Progress-Archive-
+2026-09.md`'s 2026-09-02 entries. 661/661 backend tests pass, `tsc`/lint
+clean throughout.
+
+**Groups A and B both now fully passed live** (migrations `0031`-`0034`
+all applied to Dev). **Stopped for the day here — resume manual E2E at
+Group C** (`docs/Lead-Management-Manual-E2E-Test-Plan.md`: rep's Marketing
+Lead Queue shows assigned leads, cross-rep visibility check) **tomorrow**,
+then Groups D-G (Convert, Discard, RLS/authorization, regression).
+
+**Next up after E2E completes: two items now queued in `docs/Backlog.md`
+(plus the SBU-required-at-Marketing-User-creation gap parked there too —
+see that doc for detail).**
 1. **Engagement History generation** (supersedes the old "Relationship
    Notes" plan as of 2026-09-01) —
    `docs/Engagement-History-Generation-Implementation-Plan.md`. **Blocked

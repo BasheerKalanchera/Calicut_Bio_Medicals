@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
+import AddHospitalModal from "./AddHospitalModal";
 import OpportunityItemAddRow from "./OpportunityItemAddRow";
 import OpportunityItemsList from "./OpportunityItemsList";
 import { listAccounts, listProjects, createOpportunity } from "../services/accounts";
@@ -28,7 +29,11 @@ const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 interface QuickLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated?: () => void;
+  // Receives the newly created Opportunity (id included) -- the Marketing
+  // Lead Convert flow (MarketingLeadReviewQueueScreen) needs the id to call
+  // markMarketingLeadConverted afterward. Existing callers that ignore the
+  // argument are unaffected (a zero-arg callback is still assignable here).
+  onCreated?: (createdOpportunity: { id: string }) => void | Promise<void>;
   sbuId?: string;
   // Pre-fill Account/Project from wherever the user clicked "+ Lead" from
   // (Customer 360, Opportunity Detail, or a Project's own detail view) --
@@ -36,6 +41,13 @@ interface QuickLeadModalProps {
   // context-inference DemoApp.tsx already does for LogActivityModal.
   initialAccountId?: string;
   initialProjectId?: string;
+  // Marketing Lead Convert flow only (MarketingLeadReviewQueueScreen) --
+  // pre-fills Lead Source and shows the Marketing User's original note as
+  // read-only context above the form. Opportunity has no free-text note
+  // column of its own, so the note is reference only, never written to a
+  // field.
+  initialLeadSourceId?: string;
+  marketingLeadContextNote?: string | null;
 }
 
 // Local stopgap types — these services return Promise<unknown> today.
@@ -56,7 +68,16 @@ interface LeadSourceOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
 interface GateOverrideReasonOption { id: string; reason_name: string }
 
-export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, initialAccountId, initialProjectId }: QuickLeadModalProps) {
+export default function QuickLeadModal({
+  isOpen,
+  onClose,
+  onCreated,
+  sbuId,
+  initialAccountId,
+  initialProjectId,
+  initialLeadSourceId,
+  marketingLeadContextNote,
+}: QuickLeadModalProps) {
   const { userProfile } = useAuth();
   // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU
   // (the sbuId prop) and never sees the override field.
@@ -91,6 +112,7 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
 
   const [items, setItems]                   = useState<DraftOpportunityItem[]>([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
+  const [showAddHospital, setShowAddHospital] = useState(false);
 
   const { data: accounts = [] } = useQuery({
     queryKey: ["accounts", "picker"],
@@ -220,12 +242,12 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
     setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
     setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
-    setLeadSourceId("");
+    setLeadSourceId(initialLeadSourceId || "");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
-  }, [isOpen, initialAccountId, initialProjectId]);
+  }, [isOpen, initialAccountId, initialProjectId, initialLeadSourceId]);
 
   async function handleSubmit() {
     if (!name.trim()) throw new Error("Opportunity name is required");
@@ -281,13 +303,25 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
       discount_lakhs: i.discount_lakhs,
       line_type: i.line_type,
     }));
-    await createOpportunity(accountId as any, payload);
-    onCreated?.();
+    const created = await createOpportunity(accountId as any, payload);
+    // Awaited -- the Lead Convert flow's onCreated (LeadReviewQueueScreen)
+    // does a second async call (markLeadConverted) that must complete, and
+    // any failure there must surface through FormModal's normal error
+    // handling, not become an unhandled rejection after this dialog closes.
+    await onCreated?.(created as { id: string });
   }
 
   return (
     <>
-      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal}>
+      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital}>
+        {marketingLeadContextNote && (
+          <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
+              From the marketing lead
+            </Typography>
+            <Typography sx={{ fontSize: "0.875rem", color: "#374151" }}>{marketingLeadContextNote}</Typography>
+          </Box>
+        )}
         <TextField
           label="Name *"
           value={name}
@@ -324,6 +358,19 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
           <MenuItem value="">Select account</MenuItem>
           {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
         </TextField>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -0.5 }}>
+          <Button
+            type="button"
+            onClick={() => setShowAddHospital(true)}
+            sx={{
+              px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900,
+              textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5",
+              "&:hover": { bgcolor: "#d1fae5" },
+            }}
+          >
+            + Add Hospital
+          </Button>
+        </Box>
         <TextField
           select
           label={`Project${projectsLoading ? " — loading…" : ""}`}
@@ -503,6 +550,20 @@ export default function QuickLeadModal({ isOpen, onClose, onCreated, sbuId, init
           <OpportunityItemAddRow products={products} onAdd={(item) => setItems([...items, item])} />
         </Box>
       </FormModal>
+
+      {/* Add Hospital secondary modal -- lets the rep create the account
+          inline instead of backing out to Customer Directory and coming
+          back. Same duplicate-checked flow (BR-ACC-03) either way, since
+          both use AddHospitalModal.tsx. Both outcomes (fresh create or
+          picking an existing near-duplicate match) select the account here
+          -- unlike CustomerDirectoryScreen.tsx, there's no reason to treat
+          them differently in this context. */}
+      <AddHospitalModal
+        isOpen={showAddHospital}
+        onClose={() => setShowAddHospital(false)}
+        onCreated={(account) => { setAccountId(account.id); setProjectId(""); setShowAddHospital(false); }}
+        onExistingSelected={(account) => { setAccountId(account.id); setProjectId(""); setShowAddHospital(false); }}
+      />
     </>
   );
 }

@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routers import auth, health, master_data
+from app.api.routers import auth, health, marketing_leads, master_data
 from app.api.schemas import ErrorResponse
 from app.core.config import settings
 from app.core.exceptions import (
@@ -160,6 +160,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(notification_router.router, prefix="/api/v1")
     application.include_router(reference_router.router, prefix="/api/v1")
     application.include_router(audit_router.router, prefix="/api/v1")
+    application.include_router(marketing_leads.router, prefix="/api/v1")
 
 
 app = create_app()

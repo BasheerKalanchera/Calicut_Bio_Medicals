@@ -98,6 +98,12 @@ class LeadSource(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool | None] = mapped_column(Boolean, server_default="true")
+    # Which sources a Marketing User may pick when logging a MarketingLead
+    # (docs/Lead-Management-Implementation-Plan.md) -- data-driven, not a
+    # hardcoded name match in code, so a rename or a future marketing-
+    # relevant source is a data change, not a code change. Seeded true for
+    # CONFERENCE/INDIAMART only (0033_add_lead_source_is_marketing_source.py).
+    is_marketing_source: Mapped[bool] = mapped_column(Boolean, server_default="false", nullable=False)
 
     opportunities: Mapped[list["Opportunity"]] = relationship(back_populates="lead_source", lazy="select")
 

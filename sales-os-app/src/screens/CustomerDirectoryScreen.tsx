@@ -1,51 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Alert,
-  Autocomplete,
   Box,
   Button,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   InputAdornment,
-  MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { listAccounts, createAccount, getAccountCounts } from "../services/accounts";
-import { ApiError } from "../lib/api";
-import FormModal from "../components/FormModal";
-import { SilentModalError } from "../lib/formErrors";
+import { listAccounts, getAccountCounts } from "../services/accounts";
+import AddHospitalModal from "../components/AddHospitalModal";
 import ZonePicker from "../components/ZonePicker";
 import useDebouncedValue from "../hooks/useDebouncedValue";
-import { useAuth } from "../contexts/AuthContext";
-import { searchZonesForHospital } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
-
-// Mirrors AccountService's _ZONE_ASSIGNMENT_EXEMPT_ROLES (backend/app/domains/
-// account/service.py) -- Admin/GM can add a hospital in any territory, so
-// they're the only roles exempt from needing a zone on file first.
-const ZONE_ASSIGNMENT_EXEMPT_ROLES = new Set(["Admin", "General Manager"]);
-
-interface AccountOption { id: string; name: string }
-
-const CUSTOMER_TYPES = [
-  { value: "MULTISPECIALITY_HOSPITAL", label: "Multispeciality Hospital" },
-  { value: "SPECIALTY_HOSPITAL", label: "Specialty Hospital" },
-  { value: "DIAGNOSTIC_CENTER", label: "Diagnostic Center" },
-  { value: "CLINIC", label: "Clinic" },
-  { value: "DEALER", label: "Dealer" },
-  { value: "MEDICAL_COLLEGE_HOSPITAL", label: "Medical College Hospital" },
-  { value: "GOVERNMENT_HOSPITAL", label: "Government Hospital" },
-  { value: "OTHER", label: "Other" },
-] as const;
 
 // "MULTISPECIALITY_HOSPITAL" -> "Multispeciality Hospital"
 function formatEnumLabel(value?: string | null): string {
@@ -72,8 +44,6 @@ interface Props {
 }
 
 export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef }: Props) {
-  const queryClient = useQueryClient();
-  const { userProfile } = useAuth();
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState("");
@@ -82,35 +52,8 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   const pageSize = 50;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formZone, setFormZone] = useState<ZoneSearchResult | null>(null);
-  const [formPayerBehavior, setFormPayerBehavior] = useState("");
-  const [formCustomerType, setFormCustomerType] = useState("");
-  const [formParentAccount, setFormParentAccount] = useState<AccountOption | null>(null);
-  const [parentSearchInput, setParentSearchInput] = useState("");
-  // Option B duplicate-hospital warning (docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md,
-  // BR-ACC-03): set when the backend's near-duplicate check (POSSIBLE_DUPLICATE) rejects the
-  // in-flight create -- duplicateCandidates are every existing match it found (there can be
-  // more than one), pendingCreatePayload is what to resubmit with force_create if the rep
-  // confirms this is genuinely a different hospital.
-  const [duplicateCandidates, setDuplicateCandidates] = useState<AccountOption[] | null>(null);
-  const [pendingCreatePayload, setPendingCreatePayload] = useState<Record<string, unknown> | null>(null);
-  // Rep with no territory assigned can't add a hospital at all -- backend
-  // enforces this too (AccountService.create_account), this is just the
-  // friendlier front-door version so they see why before filling the form.
-  const [showNoZoneBlock, setShowNoZoneBlock] = useState(false);
 
   const debouncedSearch = useDebouncedValue(search);
-  const debouncedParentSearch = useDebouncedValue(parentSearchInput);
-
-  const { data: parentOptions = [], isFetching: parentOptionsLoading } = useQuery({
-    queryKey: ["accounts", "parent-search", debouncedParentSearch],
-    enabled: showCreateModal && !formParentAccount && debouncedParentSearch.trim().length > 0,
-    queryFn: async () => {
-      const d = await listAccounts({ search: debouncedParentSearch, page_size: 8 });
-      return d.items as AccountOption[];
-    },
-  });
 
   const { data: listData, isLoading, isError, refetch } = useQuery({
     queryKey: ["accounts", "list", { search: debouncedSearch, zoneId: zoneFilter?.id, page }],
@@ -134,80 +77,28 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
   });
   const rows = accounts.map((a) => ({ ...a, ...(counts?.[a.id] ?? {}) }));
 
-  const createMutation = useMutation({
-    mutationFn: createAccount,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["accounts", "list"] });
-      // Customer 360's account query cache is keyed by ["account", id] (React
-      // Query) — a brand-new child doesn't exist in it yet, but the parent's
-      // entry does, and its child_accounts list is now stale (see
-      // Customer360Screen.tsx's handleUpdateAccount for the matching fix).
-      if (formParentAccount) {
-        queryClient.invalidateQueries({ queryKey: ["account", formParentAccount.id] });
-      }
-      // Restored from the pre-migration version (property-diff, 2026-08-11):
-      // resets the list view to a known position after the modal closes,
-      // rather than leaving the user stranded wherever they'd scrolled to.
-      listContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    },
-  });
-
-  const openCreateModal = useCallback(() => {
-    const roleName = userProfile?.role_name;
-    if (!(roleName && ZONE_ASSIGNMENT_EXEMPT_ROLES.has(roleName)) && !userProfile?.zone) {
-      setShowNoZoneBlock(true);
-      return;
-    }
-    setFormName("");
-    // Pre-fill with the logged-in user's own zone (their day-to-day home
-    // base, not the broader zone_ids coverage list) so sales staff aren't
-    // re-searching their own zone on every new customer -- still editable.
-    setFormZone(userProfile?.zone ? { ...userProfile.zone, path: "" } : null);
-    setFormPayerBehavior("");
-    setFormCustomerType("");
-    setFormParentAccount(null);
-    setParentSearchInput("");
-    setDuplicateCandidates(null);
-    setPendingCreatePayload(null);
-    setShowCreateModal(true);
-  }, [userProfile]);
+  const openCreateModal = () => setShowCreateModal(true);
   useEffect(() => {
     if (openCreateRef) openCreateRef.current = openCreateModal;
-  }, [openCreateRef, openCreateModal]);
+  });
 
-  const closeCreateModal = () => {
-    setShowCreateModal(false);
-    setDuplicateCandidates(null);
-    setPendingCreatePayload(null);
-  };
+  const closeCreateModal = () => setShowCreateModal(false);
 
-  const handleCreateAccount = async () => {
-    if (!formName.trim()) throw new Error("Customer name is required");
-    if (!formZone) throw new Error("Zone is required");
-    const payload: Record<string, unknown> = { name: formName.trim(), zone_id: formZone.id };
-    if (formPayerBehavior) payload.payer_behavior = formPayerBehavior;
-    if (formCustomerType) payload.customer_type = formCustomerType;
-    if (formParentAccount) payload.parent_account_id = formParentAccount.id;
-    setDuplicateCandidates(null);
-    try {
-      await createMutation.mutateAsync(payload);
-    } catch (err) {
-      if (err instanceof ApiError && err.errorCode === "POSSIBLE_DUPLICATE" && err.candidates?.length) {
-        setDuplicateCandidates(err.candidates);
-        setPendingCreatePayload(payload);
-        throw new SilentModalError();
-      }
-      throw err;
-    }
-  };
-
-  const handleCreateAnyway = async () => {
-    if (!pendingCreatePayload) return;
-    await createMutation.mutateAsync({ ...pendingCreatePayload, force_create: true });
+  // Restored from the pre-migration version (property-diff, 2026-08-11):
+  // resets the list view to a known position after the create modal closes,
+  // rather than leaving the user stranded wherever they'd scrolled to.
+  // AddHospitalModal.tsx already invalidates the ["accounts"] query prefix
+  // on a successful create -- this is purely the scroll-position side
+  // effect, which is specific to this screen's own list.
+  const handleAccountCreated = () => {
     closeCreateModal();
+    listContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleUseExisting = (account: AccountOption) => {
+  // Original behavior, preserved exactly: picking an *existing* duplicate
+  // match navigates straight to it (unlike a fresh create, which just
+  // closes and refreshes the list in place -- see handleAccountCreated).
+  const handleExistingSelected = (account: { id: string; name: string }) => {
     closeCreateModal();
     onSelectAccount(account);
   };
@@ -401,106 +292,12 @@ export default function CustomerDirectoryScreen({ onSelectAccount, openCreateRef
         )}
       </Box>
 
-      <FormModal
+      <AddHospitalModal
         isOpen={showCreateModal}
         onClose={closeCreateModal}
-        title="New Customer"
-        onSubmit={handleCreateAccount}
-        submitLabel="Create"
-      >
-        {duplicateCandidates && duplicateCandidates.length > 0 && (
-          <>
-            <Alert severity="warning" sx={{ "& .MuiAlert-message": { width: "100%" } }}>
-              <Typography variant="body2" sx={{ mb: 1 }}>
-                {duplicateCandidates.length === 1
-                  ? <>Did you mean <strong>{duplicateCandidates[0].name}</strong>? It's already in the directory.</>
-                  : "This looks similar to hospitals already in the directory:"}
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                {duplicateCandidates.map((candidate) => (
-                  <Box key={candidate.id} sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                    {duplicateCandidates.length > 1 && (
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
-                    )}
-                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExisting(candidate)}>
-                      Use this one instead
-                    </Button>
-                  </Box>
-                ))}
-              </Box>
-            </Alert>
-            {/* Outside the Alert, not inside its message slot -- the warning
-                icon indents the message area, which would otherwise shift
-                this full-width button off from the rest of the form's fields. */}
-            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleCreateAnyway}>
-              Create Anyway
-            </Button>
-          </>
-        )}
-        <TextField
-          label="Name *"
-          value={formName}
-          onChange={(e) => setFormName(e.target.value)}
-          autoFocus
-          fullWidth
-          size="small"
-          placeholder="Enter customer name"
-        />
-        <ZonePicker label="Zone *" value={formZone} onChange={setFormZone} searchFn={searchZonesForHospital} />
-        <Autocomplete
-          options={parentOptions}
-          getOptionLabel={(o) => o.name}
-          isOptionEqualToValue={(o, v) => o.id === v.id}
-          value={formParentAccount}
-          loading={parentOptionsLoading}
-          onChange={(_e, newValue) => setFormParentAccount(newValue)}
-          onInputChange={(_e, newInputValue) => setParentSearchInput(newInputValue)}
-          renderInput={(params) => <TextField {...params} label="Parent Customer" size="small" />}
-          fullWidth
-        />
-        <TextField
-          select
-          label="Payer Behavior"
-          value={formPayerBehavior}
-          onChange={(e) => setFormPayerBehavior(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select behavior</MenuItem>
-          <MenuItem value="GOOD">Good</MenuItem>
-          <MenuItem value="AVERAGE">Average</MenuItem>
-          <MenuItem value="PROBLEMATIC">Problematic</MenuItem>
-          <MenuItem value="UNKNOWN">Unknown</MenuItem>
-        </TextField>
-        <TextField
-          select
-          label="Customer Type"
-          value={formCustomerType}
-          onChange={(e) => setFormCustomerType(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select type</MenuItem>
-          {CUSTOMER_TYPES.map((t) => (
-            <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
-          ))}
-        </TextField>
-      </FormModal>
-
-      <Dialog open={showNoZoneBlock} onClose={() => setShowNoZoneBlock(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>No territory assigned yet</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            You don't have a territory assigned yet, so you can't add a new
-            hospital. Ask your manager to get one set up for you first.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowNoZoneBlock(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        onCreated={handleAccountCreated}
+        onExistingSelected={handleExistingSelected}
+      />
     </Box>
   );
 }
