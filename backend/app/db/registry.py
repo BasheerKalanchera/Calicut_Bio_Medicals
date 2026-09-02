@@ -7,6 +7,7 @@
 from app.domains.account import models as _acct  # noqa: F401
 from app.domains.activity import models as _act  # noqa: F401
 from app.domains.asset import models as _asset  # noqa: F401
+from app.domains.audit import models as _audit  # noqa: F401
 from app.domains.document import models as _doc  # noqa: F401
 from app.domains.notification import models as _notif  # noqa: F401
 from app.domains.opportunity import models as _opp  # noqa: F401

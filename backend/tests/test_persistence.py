@@ -58,8 +58,9 @@ def test_all_28_tables_registered():
     # 28, not 27: Opportunity-Assignment Notifications added notification (0024_add_notification_table.py).
     # 29, not 28: Manager-Attested Gate Override added gate_override_reason
     # (0027_add_gate_override.py).
+    # 30, not 29: Audit Trail added audit_log (0030_add_audit_log.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 29, f"Expected 29 tables, found {table_count}"
+    assert table_count == 30, f"Expected 30 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -90,6 +91,9 @@ def test_all_relationships_resolve():
     # 101, not 97: BR-OP-14 added GateOverrideReason.opportunities,
     # Opportunity.gate_override_approver, Opportunity.gate_override_set_by_user,
     # Opportunity.gate_override_reason (0027_add_gate_override.py).
+    # Still 101 after Audit Trail (0030_add_audit_log.py) -- AuditLog has zero
+    # relationship()s, plain FK columns only (like ZoneClosure), not a domain
+    # object with its own navigable relationships.
     assert rel_count == 101, f"Expected 101 relationships, found {rel_count}"
 
 

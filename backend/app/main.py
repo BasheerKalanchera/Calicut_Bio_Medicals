@@ -22,6 +22,7 @@ from app.domains.account import router as account_router
 from app.domains.account import stakeholder_router
 from app.domains.activity import router as activity_router
 from app.domains.asset import router as asset_router
+from app.domains.audit import router as audit_router
 from app.domains.document import router as document_router
 from app.domains.notification import router as notification_router
 from app.domains.opportunity import router as opportunity_router
@@ -158,6 +159,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(document_router.router, prefix="/api/v1")
     application.include_router(notification_router.router, prefix="/api/v1")
     application.include_router(reference_router.router, prefix="/api/v1")
+    application.include_router(audit_router.router, prefix="/api/v1")
 
 
 app = create_app()

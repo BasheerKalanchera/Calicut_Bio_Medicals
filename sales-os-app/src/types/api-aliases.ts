@@ -33,3 +33,5 @@ export type AccountResponse = components["schemas"]["AccountResponse"];
 export type AccountCountsEntry = components["schemas"]["AccountCountsEntry"];
 export type NotificationResponse = components["schemas"]["NotificationResponse"];
 export type UnreadCountResponse = components["schemas"]["UnreadCountResponse"];
+export type AuditLogResponse = components["schemas"]["AuditLogResponse"];
+export type AuditLogPage = components["schemas"]["PaginatedResponse_AuditLogResponse_"];

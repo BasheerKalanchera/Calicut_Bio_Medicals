@@ -20,6 +20,7 @@ import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
+import AuditLogScreen from "./screens/AuditLogScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
@@ -40,6 +41,7 @@ const NAV_SECTIONS = [
       { id: "catalog",     label: "Product Catalog", icon: "📦" },
       { id: "users",       label: "User Directory",  icon: "👥", adminOnly: true },
       { id: "territories", label: "Territory Map",   icon: "🗺️", adminOnly: true },
+      { id: "auditLog",    label: "Audit Log",       icon: "📜", adminOnly: true },
     ],
   },
 ];
@@ -558,6 +560,11 @@ export default function DemoApp() {
           {/* Territory Map — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "territories" ? "flex" : "none", flexDirection: "column" }}>
             <TerritoryAdminScreen />
+          </Box>
+
+          {/* Audit Log — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "auditLog" ? "flex" : "none", flexDirection: "column" }}>
+            <AuditLogScreen />
           </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}

@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/master-data/zones/search-for-hospital": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Zones For Hospital */
+        get: operations["search_zones_for_hospital_api_v1_master_data_zones_search_for_hospital_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users": {
         parameters: {
             query?: never;
@@ -993,6 +1010,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Audit Log */
+        get: operations["list_audit_log_api_v1_admin_audit_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1150,6 +1184,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["PaginatedResponse_ActivityResponse_"];
+        };
+        /** APIResponse[PaginatedResponse[AuditLogResponse]] */
+        APIResponse_PaginatedResponse_AuditLogResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PaginatedResponse_AuditLogResponse_"];
         };
         /** APIResponse[PaginatedResponse[PipelineOpportunity]] */
         APIResponse_PaginatedResponse_PipelineOpportunity__: {
@@ -1701,6 +1749,11 @@ export interface components {
             zone_id: string;
             payer_behavior?: components["schemas"]["PayerBehavior"] | null;
             customer_type?: components["schemas"]["CustomerType"] | null;
+            /**
+             * Force Create
+             * @default false
+             */
+            force_create: boolean;
         };
         /** AccountDetailResponse */
         AccountDetailResponse: {
@@ -1842,6 +1895,11 @@ export interface components {
             zone_id?: string | null;
             payer_behavior?: components["schemas"]["PayerBehavior"] | null;
             customer_type?: components["schemas"]["CustomerType"] | null;
+            /**
+             * Force Create
+             * @default false
+             */
+            force_create: boolean;
         };
         /** ActivityContextNested */
         ActivityContextNested: {
@@ -1975,6 +2033,48 @@ export interface components {
             id: string;
             /** Display Name */
             display_name: string;
+        };
+        /** AuditLogResponse */
+        AuditLogResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Table Name */
+            table_name: string;
+            /**
+             * Record Id
+             * Format: uuid
+             */
+            record_id: string;
+            /** Record Label */
+            record_label: string | null;
+            /** Action */
+            action: string;
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed By Name */
+            changed_by_name: string | null;
+            /** Old Data */
+            old_data: {
+                [key: string]: unknown;
+            } | null;
+            /** New Data */
+            new_data: {
+                [key: string]: unknown;
+            } | null;
+            /** Old Data Display */
+            old_data_display: {
+                [key: string]: string;
+            };
+            /** New Data Display */
+            new_data_display: {
+                [key: string]: string;
+            };
         };
         /** Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post */
         Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post: {
@@ -2500,6 +2600,19 @@ export interface components {
         PaginatedResponse_ActivityResponse_: {
             /** Items */
             items: components["schemas"]["ActivityResponse"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total Pages */
+            total_pages: number;
+        };
+        /** PaginatedResponse[AuditLogResponse] */
+        PaginatedResponse_AuditLogResponse_: {
+            /** Items */
+            items: components["schemas"]["AuditLogResponse"][];
             /** Total */
             total: number;
             /** Page */
@@ -3650,6 +3763,39 @@ export interface operations {
         };
     };
     search_zones_api_v1_master_data_zones_search_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneSearchResult__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_zones_for_hospital_api_v1_master_data_zones_search_for_hospital_get: {
         parameters: {
             query: {
                 q: string;
@@ -6171,6 +6317,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_audit_log_api_v1_admin_audit_log_get: {
+        parameters: {
+            query?: {
+                table_name?: string | null;
+                record_id?: string | null;
+                changed_by?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_AuditLogResponse__"];
+                };
             };
             /** @description Validation Error */
             422: {

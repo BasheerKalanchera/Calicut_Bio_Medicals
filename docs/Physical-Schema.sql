@@ -11,15 +11,12 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-08-27 from the Dev database (Postgres 17.6), catching up
--- migrations 0028 (Sales Development Activities, BR-ACT-09: activity.account_id
--- made nullable + chk_activity_account_required, activity.outcome_notes column,
--- CONFERENCE lead_source seed row) and 0029 (Relationship-Support Activity,
--- BR-ACT-10: cabio_app_opportunity_in_account() and
--- cabio_app_account_opportunities() SECURITY DEFINER functions,
--- activity_tier_visibility RLS amendment) since the last regen on 2026-08-25.
--- See docs/Sales-Development-Activities-Implementation-Plan.md,
--- docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md, and
+-- Regenerated 2026-09-02 from the Dev database (Postgres 17.6), catching up
+-- migration 0030 (Audit Trail, ADR-017: new `audit_log` table, generic
+-- `audit_log_row_change()` SECURITY DEFINER trigger function, 4 triggers
+-- (account/user_profile/product/opportunity, AFTER UPDATE OR DELETE), RLS
+-- enabled with an Admin/GM-only read policy) since the last regen on
+-- 2026-08-27. See docs/Audit-Trail-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -38,7 +35,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict tcTgsRiwkcpc7Cl7EyLpwBv7Eo2xjwiqwdP32cosiF3MMSFQpyVlpemPoaELbvr
+\restrict Gj8N4tHcWLQIFESFXhjSMzDFL2bnyIJdv0lgfM57jDtkAShiaNZItanD77Z9fr4
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -67,6 +64,41 @@ CREATE SCHEMA public;
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
+
+
+--
+-- Name: audit_log_row_change(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.audit_log_row_change() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+        DECLARE
+            diff_old jsonb;
+            diff_new jsonb;
+        BEGIN
+            IF TG_OP = 'DELETE' THEN
+                INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
+                VALUES (TG_TABLE_NAME, OLD.id, TG_OP, cabio_app_uid(), to_jsonb(OLD), NULL);
+                RETURN OLD;
+
+            ELSE
+                SELECT jsonb_object_agg(o.key, o.value), jsonb_object_agg(o.key, n.value)
+                INTO diff_old, diff_new
+                FROM jsonb_each(to_jsonb(OLD)) o
+                JOIN jsonb_each(to_jsonb(NEW)) n USING (key)
+                WHERE o.value IS DISTINCT FROM n.value
+                  AND o.key <> 'updated_at';
+
+                IF diff_old IS NOT NULL THEN
+                    INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
+                    VALUES (TG_TABLE_NAME, NEW.id, TG_OP, cabio_app_uid(), diff_old, diff_new);
+                END IF;
+                RETURN NEW;
+            END IF;
+        END;
+        $$;
 
 
 --
@@ -231,6 +263,23 @@ CREATE TABLE public.activity (
 
 CREATE TABLE public.alembic_version (
     version_num character varying(32) NOT NULL
+);
+
+
+--
+-- Name: audit_log; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.audit_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    table_name text NOT NULL,
+    record_id uuid NOT NULL,
+    action text NOT NULL,
+    changed_by uuid,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    old_data jsonb,
+    new_data jsonb,
+    CONSTRAINT ck_audit_log_action CHECK ((action = ANY (ARRAY['UPDATE'::text, 'DELETE'::text])))
 );
 
 
@@ -754,6 +803,14 @@ ALTER TABLE ONLY public.alembic_version
 
 
 --
+-- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT audit_log_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: coverage_plan_entry coverage_plan_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1140,6 +1197,20 @@ CREATE INDEX idx_activity_user_id ON public.activity USING btree (user_id);
 
 
 --
+-- Name: idx_audit_log_changed_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_changed_at ON public.audit_log USING btree (changed_at);
+
+
+--
+-- Name: idx_audit_log_table_record; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_audit_log_table_record ON public.audit_log USING btree (table_name, record_id, changed_at DESC);
+
+
+--
 -- Name: idx_document_account_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1343,6 +1414,34 @@ CREATE UNIQUE INDEX uq_zone_root_name ON public.zone USING btree (name) WHERE (p
 
 
 --
+-- Name: account trg_audit_account; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_account AFTER DELETE OR UPDATE ON public.account FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: opportunity trg_audit_opportunity; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_opportunity AFTER DELETE OR UPDATE ON public.opportunity FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: product trg_audit_product; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_product AFTER DELETE OR UPDATE ON public.product FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: user_profile trg_audit_user_profile; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_user_profile AFTER DELETE OR UPDATE ON public.user_profile FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: account trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1517,6 +1616,14 @@ ALTER TABLE ONLY public.activity
 
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: audit_log audit_log_changed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.audit_log
+    ADD CONSTRAINT audit_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2166,6 +2273,19 @@ CREATE POLICY activity_tier_visibility ON public.activity USING (((opportunity_i
 
 
 --
+-- Name: audit_log; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: audit_log audit_log_admin_gm_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY audit_log_admin_gm_read ON public.audit_log FOR SELECT USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
 -- Name: document; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2307,5 +2427,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict tcTgsRiwkcpc7Cl7EyLpwBv7Eo2xjwiqwdP32cosiF3MMSFQpyVlpemPoaELbvr
+\unrestrict Gj8N4tHcWLQIFESFXhjSMzDFL2bnyIJdv0lgfM57jDtkAShiaNZItanD77Z9fr4
 

@@ -23,6 +23,67 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- ~~**Audit trail for account/user_profile/product/opportunity.**~~ —
+  **DONE, 2026-09-02.** Migration `0030_add_audit_log.py` per
+  `docs/Audit-Trail-Implementation-Plan.md` (ADR-017 Phase 1): one shared
+  `audit_log` table, a generic `SECURITY DEFINER` trigger function
+  (`UPDATE`/`DELETE` only — CREATE deliberately not logged, see the plan's
+  resolved question 1), Admin/GM-only RLS read policy. Applied to Dev,
+  `Physical-Schema.sql` regenerated. **Scope grew same-day beyond the
+  original DB-only plan:** built the Admin/GM "Audit Log" screen too
+  (new `backend/app/domains/audit/` domain + `AuditLogScreen.tsx`, nav-
+  gated same as Territory Map/User Directory) — originally logged as a
+  deferred follow-up below, picked up same session once Basheer saw the
+  raw-UUID `changed_by` column and asked for it. Two rounds of live
+  E2E-driven refinement beyond the base build: (1) resolved `changed_by`,
+  the row's own `record_label`, and ~18 known foreign-key fields
+  (`zone_id`, `owner_id`, `stage_id`, etc. — a hand-maintained
+  field-name→table map, a deliberate, bounded exception to the trigger's
+  own genericness) to human names instead of raw UUIDs; (2) a DELETE
+  entry's full-row snapshot (all ~29 columns) was cluttered on screen —
+  fixed by collapsing it behind a "Show all N fields" toggle, collapsed
+  by default per Basheer's explicit call. All 5 verification-plan checks
+  passed live against Dev, including RLS confirmed both at the DB level
+  (direct role-scoped query) and in the app itself (Shruthi's non-admin
+  login correctly has no Audit Log nav entry). Full build/verification
+  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-02 entry.
+  **Not yet committed** as of this writing.
+
+- **Lead Management for Marketing-Sourced Leads — planned, not built.
+  Sequencing vs. Audit Trail (above) and Engagement History (below) not
+  yet decided.** Raised 2026-08-31 after a duplicate-Opportunity
+  incident (Mount Zion Medical College, assigned to Vivek, duplicated a
+  deal he'd already entered himself). New "Marketing User" role
+  (create-and-assign only, zero pipeline visibility) plus a new `lead`
+  table — deliberately not reusing `opportunity`, since a marketing/
+  conference-sourced entry may not even be a real prospect yet, and
+  putting it directly into the pipeline table would pollute forecast
+  numbers before anyone's judged whether it's real. Nothing becomes a
+  real Opportunity until the assigned rep reviews and converts it —
+  structurally prevents the kind of duplicate that triggered this, rather
+  than trying to detect it after creation. Bundled in: the IndiaMART
+  4-hour buylead-credit SLA moves outside Cabio entirely (the lead-entry
+  person now handles it directly on IndiaMART's platform before anything
+  reaches Sales OS), which retires the existing `URGENT_LEAD_SOURCE_NAMES`
+  urgent-notification logic in `notification/service.py` — confirmed
+  Dev-only, never promoted to UAT/Prod, so no live-environment risk. Full
+  design, resolved decisions, and two open questions (does this role also
+  need Account-creation rights; assignment-list scope):
+  `docs/Lead-Management-Implementation-Plan.md`.
+
+- **Engagement History generation — planned, not built, one open decision.**
+  Superseded the earlier "Relationship Notes" plan (manual Activity type)
+  2026-09-01: reps get zero new fields to fill in. Instead, a weekly batch
+  job (plus an on-demand refresh) synthesizes a standing "where does this
+  account stand" summary purely from Activity + Next Action data reps
+  already enter, shown on a new Engagement History tab (Account/Opportunity
+  360) and rolled up into a manager-dashboard Account Engagement Report.
+  Validated by hand against real UAT data first (58 accounts) before
+  committing to build. **Open:** which LLM/processing approach to use is a
+  data-privacy decision for leadership, not an engineering call — options
+  and a recommendation are laid out in the plan. Full design:
+  `docs/Engagement-History-Generation-Implementation-Plan.md`.
+
 - **UAT's `rls_auto_enable()` event trigger — permanent fix needed, not just
   another one-off disable.** UAT (not Dev) has an out-of-band Supabase event
   trigger that auto-enables RLS on any newly created table with zero
@@ -47,6 +108,32 @@ kept only as a pointer; nothing left to pick up here.
   Deployment-Topology.md's existing "Trap for Prod" note, which already
   warns about the Supabase project-setup prompt but not about this
   standing UAT-only trigger.
+
+- **Duplicate hospital names in the Customer Directory — Option B built
+  and committed (`e86d49a`, 2026-08-31); not Haroon's decision status
+  below).** Account creation only blocked an exact-name match
+  (case-insensitive); a one-character-off name was allowed through, so
+  near-duplicate hospital records could pile up. Raised 2026-08-29
+  (extended sales team walkthrough); two options were written up for
+  Haroon's decision (restrict new-hospital creation to Admins only, or a
+  soft similarity-warning using Postgres `pg_trgm`). Option B was built
+  and validated as a working prototype 2026-08-30/31 — near-duplicate
+  warning on both create AND rename, a zone-branch lookup bug fix, and a
+  rep-territory-scoped zone picker. Backend 644/644 passing, `tsc`/`lint`
+  clean. **Manual E2E status, 2026-09-01: Basheer reports the full
+  Groups A-G pass (`docs/BR-ACC-03-Manual-E2E-Test-Plan.md`) is now
+  complete, with several bugs found and fixed along the way — but none
+  of that was logged at the time, and the specifics aren't recoverable
+  from memory now.** No further detail exists beyond what's in this
+  entry; treat the feature as manually verified but its testing history
+  as undocumented. This gap is what prompted the new "Testing narration"
+  rule in `CLAUDE.md` (log bugs found/fixed during manual testing as they
+  happen, going forward). **Whether it actually ships is still Haroon's
+  call** per the original brief (Option A vs. B) — building it only
+  proved Option B works, it didn't make the decision. Full writeup:
+  `docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md`; build
+  narrative: `docs/Progress-Archive-2026-08.md`'s 2026-08-30 and
+  2026-08-31 entries.
 
 - ~~**Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**~~
   — **DONE, 2026-08-27.**
