@@ -40,13 +40,16 @@ caused and fixed 2026-09-02 after the 2026-08-31 mid-debug stop point.
 + transient-failure retry)"). Full narrative: `docs/Progress-Archive-
 2026-09.md`'s 2026-09-02 entry.
 
-## Current task 3 — Lead Management for Marketing-Sourced Leads ("Marketing Lead"): built, migrated (0031-0035), Groups A-E passed live
+## Current task 3 — Lead Management for Marketing-Sourced Leads ("Marketing Lead"): built, migrated (0031-0038), Groups A-F passed live, committed
 
 Full build per `docs/Lead-Management-Implementation-Plan.md`, staged as
 `marketing_lead`/`marketing-leads` (renamed mid-E2E — collided with the
-Opportunity Stage "Lead"). 668/668 backend tests pass, `tsc`/lint clean.
-**Not yet committed** — staged, commit message drafted, Basheer committing
-it himself.
+Opportunity Stage "Lead"). Original feature build **committed** `4b24eb5`
+("feat: add Lead Management for Marketing-Sourced Leads..."); everything
+below (notifications, manager rights, RLS fixes, reference tag) is a
+substantial follow-on built 2026-09-03, **committed `c7b90db`** ("feat:
+add marketing lead assignment notifications, manager Convert/Discard/
+Reassign rights", 2026-09-03 21:31).
 
 **Grew substantially during Groups C-E live testing, 2026-09-03** (full
 narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-03 entries):
@@ -160,7 +163,20 @@ state/assignee in the notification) but Basheer said not to over-engineer
 it -- simpler fix: `NotificationBell.tsx`'s `describe()` now includes a
 short tag from `entity_id` ("...marketing lead #A1B2C3"), already on
 every notification response, no backend change. Same tag recurs across a
-lead's reassignment history.
+lead's reassignment history. Factored into a shared `marketingLeadRef()`
+helper (`utils/marketingLeadMilestone.ts`) and rolled out everywhere a
+lead appears, per Basheer's follow-up ("should be visible throughout the
+system") — both queue card types, the Marketing User's own list,
+Discard/Reassign modal titles, and Convert's green context box. Then
+restyled again on Basheer's feedback: moved from a trailing light-grey
+label to a **leading**, bold indigo badge (`#eef2ff`/`#4338ca`) ahead of
+the account name on every card, so it actually stands out instead of
+reading as an afterthought. `tsc`/lint clean throughout, no backend
+changes for any of this.
+
+**Session wrap-up 2026-09-03 (late):** all of today's work (30 files: 24
+modified, 6 new — migrations 0035-0038, marketing_lead/notification
+backend, 3 new frontend files, doc updates) **committed** as `c7b90db`.
 
 **Next step: Group G (regression)** — the last group in
 `docs/Lead-Management-Manual-E2E-Test-Plan.md`: normal rep's +Lead/+Log

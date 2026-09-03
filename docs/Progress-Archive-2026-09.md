@@ -1,5 +1,170 @@
 # Progress Archive — September 2026
 
+## 2026-09-03 (parallel thread) — Latheef Bhai's data-quality idea, Activity-note coaching to the team, UAT/main migration audit
+
+Separate conversation thread from the Group C-F Lead Management work logged
+below — non-code, advisory/analysis work, captured here so it isn't lost.
+
+**Latheef Bhai's data-quality-nudge idea — discussed, not yet decided or
+built.** Relayed via Basheer: while reviewing the day's Activity entries
+around 4-4:30 PM, Latheef Bhai noticed only a few reps had logged
+anything yet, and separately noticed a quality gap — some reps write
+generic notes ("Met the Manager") vs. specific ones ("Met the BME, Mr. X
+and Y", citing Vivek's entries as the standard). His proposal: an
+Amazon-style "people who bought this also bought" prompt — when a rep's
+note looks generic, suggest what a more detailed entry usually includes,
+dismissible either way.
+- **Scoped into two separate problems:** timeliness (late logging — not
+  solvable by a note-quality nudge) vs. specificity (the actual nudge
+  target).
+- **Recommended NOT starting with an LLM call.** The concrete example
+  given (missing a name after a role word like "Manager"/"BME") is a
+  pattern-match problem, not an intelligence problem — a cheap heuristic
+  (role-keyword present, no proper-noun nearby) can catch it with zero
+  LLM cost/latency/privacy exposure, ships fast. True AI-generalized
+  suggestions ("similar visits also included X") would need an LLM and
+  should be bundled with the same pending data-privacy decision already
+  blocking Engagement History Generation (`docs/Engagement-History-
+  Generation-Implementation-Plan.md` §6) rather than making that call
+  twice.
+- **UX design discussed for the heuristic version, if built:** never
+  block Save; bias toward under-firing over false positives; back off if
+  a rep repeatedly dismisses the same nudge; frame as a tip not a
+  correction; rate-limit frequency; give a personal opt-out; and
+  critically — never surface individual dismiss/accept counts to a
+  manager (turns a tip into a surveillance signal, kills trust/adoption).
+  Sharing genuinely good examples **team-wide** as positive, credited
+  best-practice content (not corrective, not singling out weak entries)
+  was agreed to be better than the private per-rep nudge alone, and
+  simpler to start with (no pattern-matching needed at all).
+- **Basheer's own pushback, worth remembering:** a heuristic doesn't
+  remove the need for someone to define "good" — it just narrows that
+  definition to one specific, cheaply-encoded pattern (missing names).
+  It won't generalize to other vagueness (e.g. "Discussed pricing" with
+  no product named) the way an LLM shown good/bad examples could, without
+  anyone writing exhaustive rules. That's the real argument for the LLM
+  version eventually, not a claim the heuristic avoids the definition
+  problem.
+- **Not logged as a Backlog.md item or Discussion doc yet** — exists only
+  in this conversation and this archive entry. Needs Basheer's call on
+  whether/how to formalize.
+
+**UAT Activity-notes quality pass — real examples pulled, sent to team.**
+Queried UAT's `activity` table directly (read-only, `.venv/Scripts/
+python.exe` + psycopg2, `.env.uat`'s `DATABASE_URL`) for the longest/most
+detailed notes, to find genuine best-practice examples rather than
+inventing hypothetical ones. Found several strong examples (Naeem —
+Al Abeer Hospital, Tirur Nursing Home; Shruthi — Secure Hospital Hubli;
+Nishad K V — Eranad hospital) that name every stakeholder with role,
+name specific competing products/models, and state a clear next step.
+Formatted as a WhatsApp message (4-point formula: Who/What/Why/Next,
+Naeem's Al Abeer note as the illustration) and sent to the team —
+deliberately credits Naeem by name (positive framing) without naming
+anyone as the weak-example contrast.
+
+**Order-stage-with-zero-Activity finding — analyzed, logged, coached.**
+Basheer noticed some Order-stage opportunities in the app had no Activity
+trail and asked for a systematic check. Query attempt #1 against UAT
+returned 0 opportunities — turned out to be `opportunity`'s RLS policy
+correctly blocking an unauthenticated connection (unlike `activity`,
+which has the known privacy-hole bug — see Backlog.md — that leaks
+unattached rows to anyone with no context set at all). Re-ran after
+setting the same three session variables `set_rls_context()`
+(`app/db/session.py`) sets per-request, using an Admin/GM UAT user's id —
+confirmed 96 real opportunities, actively worked (Lead 44 / Qualified 13
+/ Demo 9 / Negotiation 11 / Order 19, none currently at Clinical
+Evaluation).
+- Every BR-OP-01 gate field (Demo Date, Expected Closure Date, PO
+  Number, Order Value, Product items) checked out clean across all 96 —
+  every apparent gap traced to a legitimate `REPEAT_ORDER` skip
+  (BR-OP-13), confirmed by cross-referencing `lead_source`. No real
+  structural data-quality issue there.
+- **The one real gap:** 4 of 19 Order-stage opportunities — all already
+  **Won** (Mihras Hospital "Labour room product"; ST JOHNS HOSPITAL
+  Kattappana "EDAN IX 12 MONITOR"; KIMS Alshifa Perinthalmanna "Transport
+  Incubator" and "Oxymag Transport Ventilator") — have zero Activity
+  logged anywhere against the account. All `REPEAT_ORDER`/
+  `EXISTING_CUSTOMER` deals, so not a BR-OP-13 violation — Activity
+  presence simply has no stage-gate check at all today
+  (`validate_stage_transition`, `app/domains/opportunity/validators.py`).
+  Logged as a candidate soft-warning rule in `docs/Backlog.md` (same
+  shape as BR-ACC-03's near-duplicate-hospital warning), not built.
+- Sent a second WhatsApp coaching note same day: praised the team for
+  clean required-field discipline, asked for at least one Activity entry
+  even on quick repeat/existing-customer orders that skip the demo cycle.
+
+**UAT-vs-main commit/migration audit — reference only, no action taken.**
+`git log origin/uat..origin/main` (fetched fresh): 27 commits ahead, 15
+code (feat/fix/test) grouped into 11 features — Reminders-on-Login,
+Opportunity-Assignment Notifications, Manager-Attested Gate Override,
+Territory Map 403 fix, Sales Development Activities, Relationship-Support
+Activity, near-duplicate-hospital warning, Auth Session Resilience, Audit
+Trail, and Lead Management/Marketing Lead (12 more commits were docs-only,
+excluded). **11 migrations pending on UAT** (`0024` through `0034`,
+confirmed via `git diff origin/uat origin/main --stat -- backend/alembic/
+versions/`) — most create new tables, each needing the same "check +
+disable RLS" care `rls_auto_enable()` has twice already caused a UAT
+lockout over (see that Backlog.md item). Not acted on — informational,
+for whenever the next UAT push is planned.
+
+## 2026-09-03 (even later) — Marketing lead reference tag: notification-linking gap, then a UX pass, then session wrap-up
+
+**The linking gap.** After Group F closed out, Basheer walked through a
+real scenario: Fahad assigned a lead to Rudrappa; Basheer (SBU Manager)
+reassigned it to Shruthi; Shruthi reassigned it back to Rudrappa.
+Rudrappa ended up with two bell notifications ("Fahad assigned you a
+marketing lead," "Shruthi assigned you a marketing lead") but only one
+row in his actual queue. Confirmed this matches the *existing* Opportunity
+notification pattern exactly (`update_opportunity`'s reassignment path
+fires a fresh `notify_opportunity_assigned` on every owner change, never
+touches the old one) — not a new bug, and the right model (notifications
+are an event history, not a live mirror of current state; the queue is
+the live mirror). Basheer accepted that, but raised the real problem:
+weeks later, two identically-worded notifications give no way to tell
+they're the same lead rather than two different ones — genuinely
+indistinguishable from the system having silently dropped one.
+
+**First proposal, rejected as over-engineering:** enrich each
+notification with the lead's live status/current-assignee at read time
+(a join lookup). Basheer: keep it simple — literally just make the same
+identifying text recur across a lead's notifications. Landed on:
+`entity_id` (the marketing_lead's own id) is already on every
+notification response, so a short slice of it, shown consistently,
+solves this with zero backend changes — no new field, no join, no
+enrichment.
+
+**Built:** `marketingLeadRef(id)` in new shared `utils/marketingLeadMile
+stone.ts` export — `#` + first 6 chars of the id, uppercased.
+`NotificationBell.tsx`'s `describe()` uses it for `MARKETING_LEAD_ASSIGNED`
+("Shruthi assigned you marketing lead #A1B2C3"). Basheer then asked
+"shouldn't the same id show in the Review Queue screens too, throughout
+the system" — rolled out to both queue card types
+(`MarketingLeadReviewQueueScreen.tsx`), the Marketing User's own list
+(`MarketingLeadEntryScreen.tsx`), Discard/Reassign modal titles, and
+Convert's green context box (`QuickLeadModal.tsx`, threaded a new
+`marketingLeadId` prop through from the queue screen).
+
+**Then a UX pass, same conversation:** Basheer flagged the tag was
+trailing the account name in light grey (`#9ca3af`) — easy to miss,
+should stand out. Restyled as a leading, bold indigo badge
+(`#eef2ff`/`#4338ca`, `fontWeight: 900`) ahead of the account name on
+every card, matching the visual weight of the milestone pill next to it
+rather than reading as a muted afterthought.
+
+`tsc`/`ruff check`/`eslint` clean throughout — no backend changes for any
+of this (confirmed no test/lint regressions from the earlier Group F/
+reassignment work either, still 686/686 backend passing).
+
+**Session wrap-up:** all of today's work (30 files — migrations 0035-
+0038, marketing_lead/notification domain changes, 3 new frontend files,
+doc updates) staged for commit at Basheer's request ("getting late,
+finish testing in the morning"), full drafted commit message handed to
+him. **Not committed** — Basheer committing himself once Group G passes
+tomorrow. Caught two doc gaps while writing this entry: `active_progress
+.md`'s task-3 header still said "Groups A-E, not yet committed" (stale —
+actually through Group F, staged) and this reference-tag work had never
+been written up here at all; both fixed as part of this same pass.
+
 ## 2026-09-03 (later) — Group F: manager visibility gap found, then widened to manager Convert/Discard/Reassign rights
 
 While driving Group F (`docs/Lead-Management-Manual-E2E-Test-Plan.md`)

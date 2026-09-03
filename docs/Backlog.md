@@ -23,6 +23,59 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- **Order-stage deals closing with zero Activity logged — candidate soft-
+  warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
+  data for pipeline-stage coaching guidance): of 96 real opportunities in
+  UAT, every BR-OP-01 gate field (Demo Date, Expected Closure Date, PO
+  Number, Order Value, Product items) checked out clean once `REPEAT_ORDER`
+  cases were excluded (BR-OP-13 legitimately skips the demo/negotiation
+  dates for those). The one genuine gap found: 4 of 19 Order-stage
+  opportunities — all already **Won** (Mihras Hospital "Labour room
+  product"; ST JOHNS HOSPITAL Kattappana "EDAN IX 12 MONITOR"; KIMS Alshifa
+  Perinthalmanna "Transport Incubator" and "Oxymag Transport Ventilator")
+  — have **zero Activity logged anywhere against the account**. The order
+  itself is on record (PO number, value) but nothing documents the
+  conversation that led there. All 4 are `REPEAT_ORDER`/`EXISTING_CUSTOMER`
+  deals, so this isn't a BR-OP-13 violation — it's a separate, currently
+  unenforced gap: Activity presence has no stage-gate check at all in
+  `validate_stage_transition` (`app/domains/opportunity/validators.py`).
+  **Candidate fix, same shape as BR-ACC-03's near-duplicate-hospital soft
+  warning:** a non-blocking prompt (not a hard gate — legitimate
+  phone-only repeat orders exist) when advancing to Order or Won with zero
+  Activity on the account. A softer version (team coaching, not tooling)
+  already went out as a WhatsApp best-practice note 2026-09-03. Needs
+  Basheer's call on whether the coaching note is sufficient or this
+  warrants an actual rule.
+
+- **Activity-note data-quality nudge (Latheef Bhai's idea) — VERY LOW
+  PRIORITY, not decided, not scoped.** Raised 2026-09-03 (phone call to
+  Basheer): while reviewing the day's Activity entries, Latheef Bhai
+  noticed a quality gap — some reps write generic notes ("Met the
+  Manager") vs. specific ones ("Met the BME, Mr. X and Y", citing Vivek's
+  entries as the standard). Proposed an Amazon-style "people who bought
+  this also bought" prompt: when a rep's note looks generic, suggest what
+  a more detailed entry usually includes, dismissible either way.
+  Discussed at length, not built: a cheap heuristic (role-keyword present,
+  no proper-noun nearby — e.g. "Manager"/"BME" with no name after it)
+  could catch the specific example given, with zero LLM cost/latency/
+  privacy exposure, but only that one pattern — it doesn't generalize to
+  other vagueness ("Discussed pricing" with no product named) the way an
+  LLM shown good/bad examples could. The general-purpose AI version would
+  need an LLM and should be bundled with the same pending data-privacy
+  decision already blocking Engagement History Generation
+  (`docs/Engagement-History-Generation-Implementation-Plan.md` §6) rather
+  than a second separate vendor/privacy call. If ever built: never block
+  Save, bias toward under-firing over false positives, frame as a tip not
+  a correction, give a personal opt-out, and never surface individual
+  dismiss/accept counts to a manager (turns a tip into a surveillance
+  signal). A lighter, already-shipped alternative exists today: sharing
+  real good examples team-wide as positive/credited best-practice content
+  — see the two WhatsApp notes sent 2026-09-03 (`docs/Progress-
+  Archive-2026-09.md`'s "2026-09-03 (parallel thread)" entry) and the
+  Order-stage-Activity entry above. Needs Basheer's call on whether this
+  is worth scoping at all, or if the WhatsApp-coaching approach is
+  sufficient going forward.
+
 - **`marketing_lead` not covered by the ADR-017 audit trail.** Raised
   2026-09-03 while scoping manager Convert/Discard/Reassign rights
   (`docs/Lead-Management-Manual-E2E-Test-Plan.md`'s Group F). ADR-017's
