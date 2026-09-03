@@ -19,6 +19,7 @@ from app.domains.notification.service import NotificationService
 RECIPIENT_ID = uuid.uuid4()
 OPP_ID = uuid.uuid4()
 ACTOR_ID = uuid.uuid4()
+LEAD_ID = uuid.uuid4()
 
 
 def _make_repo() -> MagicMock:
@@ -87,6 +88,36 @@ class TestNotifyGateOverrideNamed:
         assert notification.is_urgent is False
 
 
+class TestNotifyMarketingLeadAssigned:
+    def test_created_row_shape(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.notify_marketing_lead_assigned(
+            recipient_user_id=RECIPIENT_ID,
+            marketing_lead_id=LEAD_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        created = repo.create.call_args[0][0]
+        assert created.recipient_user_id == RECIPIENT_ID
+        assert created.type == "MARKETING_LEAD_ASSIGNED"
+        assert created.entity_type == "marketing_lead"
+        assert created.entity_id == LEAD_ID
+        assert created.created_by == ACTOR_ID
+
+    def test_is_never_urgent(self):
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_marketing_lead_assigned(
+            recipient_user_id=RECIPIENT_ID,
+            marketing_lead_id=LEAD_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        assert notification.is_urgent is False
+
+
 class TestPassThroughMethods:
     def test_list_for_user_delegates(self):
         repo = _make_repo()
@@ -125,3 +156,11 @@ class TestPassThroughMethods:
         service.mark_read_for_entity(RECIPIENT_ID, "opportunity", OPP_ID)
 
         repo.mark_read_for_entity.assert_called_once_with(RECIPIENT_ID, "opportunity", OPP_ID)
+
+    def test_mark_read_for_type_delegates(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.mark_read_for_type(RECIPIENT_ID, "marketing_lead")
+
+        repo.mark_read_for_type.assert_called_once_with(RECIPIENT_ID, "marketing_lead")

@@ -1079,6 +1079,23 @@ export interface paths {
         patch: operations["mark_converted_api_v1_marketing_leads__lead_id__mark_converted_patch"];
         trace?: never;
     };
+    "/api/v1/marketing-leads/{lead_id}/reassign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reassign Marketing Lead */
+        patch: operations["reassign_marketing_lead_api_v1_marketing_leads__lead_id__reassign_patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2366,6 +2383,14 @@ export interface components {
              */
             converted_opportunity_id: string;
         };
+        /** MarketingLeadReassign */
+        MarketingLeadReassign: {
+            /**
+             * New Assigned To User Id
+             * Format: uuid
+             */
+            new_assigned_to_user_id: string;
+        };
         /** MarketingLeadResponse */
         MarketingLeadResponse: {
             /**
@@ -2412,6 +2437,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** First Viewed At */
+            first_viewed_at: string | null;
             /** Reviewed By */
             reviewed_by: string | null;
             /** Reviewed At */
@@ -6674,6 +6701,43 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MarketingLeadMarkConverted"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarketingLeadResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reassign_marketing_lead_api_v1_marketing_leads__lead_id__reassign_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketingLeadReassign"];
             };
         };
         responses: {

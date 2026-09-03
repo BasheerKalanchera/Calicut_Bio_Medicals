@@ -2,18 +2,11 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import MarketingLeadCreateModal from "../components/MarketingLeadCreateModal";
+import { REASONS as DISCARD_REASONS } from "../components/MarketingLeadDiscardModal";
 import { listMarketingLeads } from "../services/marketingLeads";
+import { MARKETING_LEAD_MILESTONE_STYLES, formatMarketingLeadDate, marketingLeadMilestone, marketingLeadRef } from "../utils/marketingLeadMilestone";
 
-// Marketing User's status badge -- CONVERTED/DISCARDED reuse the same
-// small pill shape as OpportunityPipelineScreen's stage chips, just three
-// fixed values instead of a dynamic stage list.
-const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
-  NEW: { bg: "#eff6ff", color: "#2563eb" },
-  CONVERTED: { bg: "#f0fdf4", color: "#16a34a" },
-  DISCARDED: { bg: "#f9fafb", color: "#6b7280" },
-};
-
-export default function MarketingLeadEntryScreen() {
+export default function MarketingLeadEntryScreen({ active }: { active: boolean }) {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -21,9 +14,19 @@ export default function MarketingLeadEntryScreen() {
   // Marketing User's own created_by=self rows -- reference/history only,
   // per docs/Lead-Management-Implementation-Plan.md's RLS section. No
   // manual filtering.
+  //
+  // enabled: active -- this screen stays mounted in the background for
+  // EVERY logged-in user, not just Marketing User (DemoApp toggles it via
+  // display:none, not unmount/role-gate), so without this it fires the
+  // instant any user's session loads. GET /marketing-leads also marks the
+  // *caller's own* MARKETING_LEAD_ASSIGNED notifications read server-side
+  // -- ungated, this was marking a rep's own assignment notifications read
+  // moments after login, before they ever looked at the bell (found live
+  // 2026-09-03, same bug as MarketingLeadReviewQueueScreen's).
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["marketingLeads", "mine"],
     queryFn: listMarketingLeads,
+    enabled: active,
   });
 
   const leads = data ?? [];
@@ -63,16 +66,22 @@ export default function MarketingLeadEntryScreen() {
         {!isLoading && leads.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {leads.map((lead) => {
-              const statusStyle = STATUS_STYLES[lead.status] ?? STATUS_STYLES.NEW;
+              const { pill, date } = marketingLeadMilestone(lead);
+              const pillStyle = MARKETING_LEAD_MILESTONE_STYLES[pill] ?? MARKETING_LEAD_MILESTONE_STYLES.NEW;
               return (
                 <Box
                   key={lead.id}
                   sx={{ p: 2, borderRadius: "1rem", border: "1px solid #f3f4f6", bgcolor: "#fff", display: "flex", flexDirection: "column", gap: 0.5 }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <Typography sx={{ fontWeight: 700, color: "#1f2937" }}>{lead.account_name ?? "Unknown account"}</Typography>
-                    <Box sx={{ px: 1.25, py: 0.25, borderRadius: "9999px", fontSize: "0.6875rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", bgcolor: statusStyle.bg, color: statusStyle.color }}>
-                      {lead.status}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                      <Box sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.05em", bgcolor: "#eef2ff", color: "#4338ca", whiteSpace: "nowrap" }}>
+                        {marketingLeadRef(lead.id)}
+                      </Box>
+                      <Typography sx={{ fontWeight: 700, color: "#1f2937" }}>{lead.account_name ?? "Unknown account"}</Typography>
+                    </Box>
+                    <Box sx={{ px: 1.25, py: 0.25, borderRadius: "9999px", fontSize: "0.6875rem", fontWeight: 900, letterSpacing: "0.05em", bgcolor: pillStyle.bg, color: pillStyle.color, whiteSpace: "nowrap" }}>
+                      {pill} {formatMarketingLeadDate(date)}
                     </Box>
                   </Box>
                   <Typography sx={{ fontSize: "0.8125rem", color: "#6b7280" }}>
@@ -80,6 +89,12 @@ export default function MarketingLeadEntryScreen() {
                   </Typography>
                   {lead.raw_interest_note && (
                     <Typography sx={{ fontSize: "0.8125rem", color: "#374151" }}>{lead.raw_interest_note}</Typography>
+                  )}
+                  {lead.status === "DISCARDED" && lead.discard_reason && (
+                    <Typography sx={{ fontSize: "0.8125rem", color: "#dc2626" }}>
+                      Reason: {DISCARD_REASONS.find((r) => r.value === lead.discard_reason)?.label ?? lead.discard_reason}
+                      {lead.discard_note ? ` — ${lead.discard_note}` : ""}
+                    </Typography>
                   )}
                 </Box>
               );

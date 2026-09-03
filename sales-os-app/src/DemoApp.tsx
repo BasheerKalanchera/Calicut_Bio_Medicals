@@ -412,7 +412,10 @@ export default function DemoApp() {
                 escape hatch around the restricted nav. Found live during
                 Group A E2E testing, 2026-09-02. */}
             {!isMarketingUser && (
-              <NotificationBell onSelectOpportunity={handleSelectOpportunity} />
+              <NotificationBell
+                onSelectOpportunity={handleSelectOpportunity}
+                onSelectMarketingLead={() => setView("marketingLeadQueue")}
+              />
             )}
             {HELP_CONTENT[helpViewId] && (
               <IconButton
@@ -611,14 +614,21 @@ export default function DemoApp() {
             <AuditLogScreen />
           </Box>
 
-          {/* Marketing Leads — Marketing User's entry screen, always mounted, hidden when not active */}
+          {/* Marketing Leads — Marketing User's entry screen, always mounted (for every
+              role, not just Marketing User), hidden when not active. active gates the
+              screen's own query -- GET /marketing-leads also marks the caller's own
+              MARKETING_LEAD_ASSIGNED notifications read server-side, so it must not
+              fire just because this stays mounted in the background for every user. */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "marketingLeads" ? "flex" : "none", flexDirection: "column" }}>
-            <MarketingLeadEntryScreen />
+            <MarketingLeadEntryScreen active={view === "marketingLeads"} />
           </Box>
 
-          {/* Marketing Lead Review Queue — always mounted, hidden when not active; not shown to Marketing User (nothing is ever assigned to them) */}
+          {/* Marketing Lead Review Queue — always mounted, hidden when not active; not shown to Marketing User (nothing is ever assigned to them).
+              active gates the screen's own query -- GET /marketing-leads also
+              marks MARKETING_LEAD_ASSIGNED notifications read server-side, so
+              it must not fire just because this stays mounted in the background. */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "marketingLeadQueue" ? "flex" : "none", flexDirection: "column" }}>
-            <MarketingLeadReviewQueueScreen />
+            <MarketingLeadReviewQueueScreen active={view === "marketingLeadQueue"} />
           </Box>
 
           {/* Next Actions — always mounted, hidden when not active */}

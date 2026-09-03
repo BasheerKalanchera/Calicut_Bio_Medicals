@@ -24,3 +24,10 @@ export async function markMarketingLeadConverted(leadId: string, convertedOpport
   });
   return r.data.data;
 }
+
+export async function reassignMarketingLead(leadId: string, newAssignedToUserId: string): Promise<MarketingLead> {
+  const r = await api.patch(`/marketing-leads/${leadId}/reassign`, {
+    new_assigned_to_user_id: newAssignedToUserId,
+  });
+  return r.data.data;
+}

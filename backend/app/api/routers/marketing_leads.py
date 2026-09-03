@@ -12,9 +12,12 @@ from app.domains.marketing_lead.schemas import (
     MarketingLeadCreate,
     MarketingLeadDiscard,
     MarketingLeadMarkConverted,
+    MarketingLeadReassign,
     MarketingLeadResponse,
 )
 from app.domains.marketing_lead.service import MarketingLeadService
+from app.domains.notification.repository import NotificationRepository
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
 router = APIRouter(prefix="/marketing-leads", tags=["Marketing Leads"])
@@ -24,7 +27,11 @@ def _get_service(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     db: Session = Depends(get_db),  # noqa: B008
 ) -> MarketingLeadService:
-    return MarketingLeadService(repository=MarketingLeadRepository(db), user_id=current_user.id)
+    return MarketingLeadService(
+        repository=MarketingLeadRepository(db),
+        user_id=current_user.id,
+        notification_service=NotificationService(repository=NotificationRepository(db)),
+    )
 
 
 def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
@@ -45,6 +52,7 @@ def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
         converted_opportunity_id=lead.converted_opportunity_id,
         created_by=lead.created_by,
         created_at=lead.created_at,
+        first_viewed_at=lead.first_viewed_at,
         reviewed_by=lead.reviewed_by,
         reviewed_at=lead.reviewed_at,
         account_name=account_name,
@@ -53,11 +61,25 @@ def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
     )
 
 
+def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:  # noqa: B008
+    return NotificationService(repository=NotificationRepository(db))
+
+
 @router.get("")
 def list_marketing_leads(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+    notification_service: NotificationService = Depends(_get_notification_service),  # noqa: B008
 ) -> APIResponse[list[MarketingLeadResponse]]:
+    # Marked before listing (not after) so this same response already
+    # reflects first_viewed_at/read state, rather than the rep seeing
+    # "Created" for one more fetch before it flips to "Seen" client-side.
+    #
+    # Viewing the queue is the read receipt -- marketing_lead has no
+    # single-item detail screen to hang a per-entity read receipt off of
+    # the way GET /opportunities/{id} does for OPPORTUNITY_ASSIGNED.
+    service.mark_first_viewed()
+    notification_service.mark_read_for_type(current_user.id, "marketing_lead")
     rows = service.list_leads()
     return APIResponse(data=[_to_response(r) for r in rows])
 
@@ -80,7 +102,9 @@ def discard_marketing_lead(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: MarketingLeadService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[MarketingLeadResponse]:
-    lead = service.discard_lead(lead_id, data, role_name=current_user.role.role_name)
+    lead = service.discard_lead(
+        lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
+    )
     row = service.repository.get_enriched_by_id(lead.id)
     return APIResponse(message="Marketing lead discarded", data=_to_response(row))
 
@@ -92,6 +116,22 @@ def mark_converted(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: MarketingLeadService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[MarketingLeadResponse]:
-    lead = service.mark_converted(lead_id, data, role_name=current_user.role.role_name)
+    lead = service.mark_converted(
+        lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
+    )
     row = service.repository.get_enriched_by_id(lead.id)
     return APIResponse(message="Marketing lead marked converted", data=_to_response(row))
+
+
+@router.patch("/{lead_id}/reassign")
+def reassign_marketing_lead(
+    lead_id: uuid.UUID,
+    data: MarketingLeadReassign,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[MarketingLeadResponse]:
+    lead = service.reassign_lead(
+        lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
+    )
+    row = service.repository.get_enriched_by_id(lead.id)
+    return APIResponse(message="Marketing lead reassigned", data=_to_response(row))

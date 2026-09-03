@@ -14,13 +14,22 @@ import {
 import { getUnreadCount, listUrgentUnread } from "../services/notifications";
 import type { NotificationResponse } from "../types/api-aliases";
 
-// IndiaMART lead SLA: Cabio must respond to an IndiaMART-sourced lead within
-// 4 hours to get credit for the buylead. A quiet bell badge risks being
-// missed for hours, so an assignment notification flagged urgent (see
-// backend NotificationService.notify_opportunity_assigned) also pops this
-// interrupting dialog. This only reaches someone with the app open when the
-// poll runs -- it can't wake a closed app (real push notifications are
-// deferred, see the implementation plan's Out of scope).
+// Originally built for the IndiaMART lead SLA: Cabio had to respond to an
+// IndiaMART-sourced lead within 4 hours to get credit for the buylead, so a
+// quiet bell badge risked being missed for hours -- an assignment
+// notification flagged urgent (backend NotificationService.
+// notify_opportunity_assigned) also popped this interrupting dialog. That
+// IndiaMART path was retired 2026-09-02 (IndiaMART inquiries now go through
+// the marketing_lead review queue first; notify_opportunity_assigned always
+// passes is_urgent=False now) -- but this dialog, its polling, and the
+// is_urgent plumbing behind it are DELIBERATELY still here, generic and
+// ready to reuse for whatever the next urgent-notification case turns out
+// to be. See docs/Backlog.md, "Urgent-notification infrastructure retained
+// for future reuse."
+//
+// This only reaches someone with the app open when the poll runs -- it
+// can't wake a closed app (real push notifications are deferred, see the
+// implementation plan's Out of scope).
 //
 // Dismiss closes the dialog for now, but the notification stays unread until
 // its Opportunity is actually opened, so it reappears on the next poll --

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MenuItem, TextField } from "@mui/material";
 import FormModal from "./FormModal";
 import { discardMarketingLead, type MarketingLead } from "../services/marketingLeads";
+import { marketingLeadRef } from "../utils/marketingLeadMilestone";
 
 interface MarketingLeadDiscardModalProps {
   lead: MarketingLead | null;
@@ -9,7 +10,10 @@ interface MarketingLeadDiscardModalProps {
   onDiscarded?: () => void;
 }
 
-const REASONS: { value: string; label: string }[] = [
+// Exported so MarketingLeadEntryScreen can render the same human-readable
+// label for discard_reason on the Marketing User's own screen, instead of
+// duplicating this list or showing the raw DUPLICATE/NOT_INTERESTED/etc enum.
+export const REASONS: { value: string; label: string }[] = [
   { value: "DUPLICATE", label: "Duplicate" },
   { value: "NOT_INTERESTED", label: "Not interested" },
   { value: "UNABLE_TO_CONTACT", label: "Unable to contact" },
@@ -34,7 +38,13 @@ export default function MarketingLeadDiscardModal({ lead, onClose, onDiscarded }
   }
 
   return (
-    <FormModal isOpen={!!lead} onClose={onClose} title="Discard Marketing Lead" onSubmit={handleSubmit} submitLabel="Discard">
+    <FormModal
+      isOpen={!!lead}
+      onClose={onClose}
+      title={lead ? `Discard Marketing Lead ${marketingLeadRef(lead.id)}` : "Discard Marketing Lead"}
+      onSubmit={handleSubmit}
+      submitLabel="Discard"
+    >
       <TextField
         select
         label="Reason *"
@@ -42,6 +52,7 @@ export default function MarketingLeadDiscardModal({ lead, onClose, onDiscarded }
         onChange={(e) => setReason(e.target.value)}
         fullWidth
         size="small"
+        sx={{ mt: 1 }}
         slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
       >
         <MenuItem value="">Select reason</MenuItem>

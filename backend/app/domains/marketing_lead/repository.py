@@ -1,11 +1,12 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.marketing_lead.models import MarketingLead
+from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
 from app.domains.reference.models import LeadSource
 
@@ -43,6 +44,28 @@ class MarketingLeadRepository(BaseRepository[MarketingLead]):
     def get_enriched_by_id(self, lead_id: uuid.UUID) -> MarketingLeadRow | None:
         stmt = self._enriched_select().where(MarketingLead.id == lead_id)
         return self.db.execute(stmt).first()
+
+    def mark_first_viewed(self, user_id: uuid.UUID) -> None:
+        # Scoped to assigned_to_user_id=user_id -- naturally a no-op when the
+        # caller is a Marketing User viewing their own created-leads list
+        # (MarketingLeadEntryScreen shares this same GET endpoint), since
+        # they're never the assignee of their own leads. Only fires for a
+        # rep genuinely viewing their own Marketing Lead Queue.
+        self.db.execute(
+            update(MarketingLead)
+            .where(
+                MarketingLead.assigned_to_user_id == user_id,
+                MarketingLead.status == "NEW",
+                MarketingLead.first_viewed_at.is_(None),
+            )
+            .values(first_viewed_at=func.now())
+        )
+
+    def get_rep_manager_id(self, rep_user_id: uuid.UUID) -> uuid.UUID | None:
+        # Mirrors OpportunityRepository.get_owner_manager_id exactly (BR-OP-14's
+        # "gate override approver must be the owner's immediate manager") -- same
+        # user_profile.manager_id lookup, different domain.
+        return self.db.scalar(select(UserProfile.manager_id).where(UserProfile.id == rep_user_id))
 
     def is_valid_marketing_source(self, lead_source_id: uuid.UUID) -> bool:
         # False both when the id doesn't exist and when it exists but isn't

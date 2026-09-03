@@ -11,6 +11,7 @@ import { listStages, listStatuses, listUsers, listLeadSources, listSbus, listGat
 import { useAuth } from "../contexts/AuthContext";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
+import { marketingLeadRef } from "../utils/marketingLeadMilestone";
 
 // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
 // field first becomes relevant -- mirrors backend/app/domains/opportunity/
@@ -42,12 +43,16 @@ interface QuickLeadModalProps {
   initialAccountId?: string;
   initialProjectId?: string;
   // Marketing Lead Convert flow only (MarketingLeadReviewQueueScreen) --
-  // pre-fills Lead Source and shows the Marketing User's original note as
-  // read-only context above the form. Opportunity has no free-text note
-  // column of its own, so the note is reference only, never written to a
-  // field.
+  // pre-fills Lead Source and shows the Marketing User's original note (plus
+  // the Conference event name, or the lead source itself when there's no
+  // event name -- e.g. IndiaMART) as read-only context above the form.
+  // Opportunity has no free-text note or event-name column of its own, so
+  // all of these are reference only, never written to a field.
   initialLeadSourceId?: string;
   marketingLeadContextNote?: string | null;
+  marketingLeadEventName?: string | null;
+  marketingLeadSourceName?: string | null;
+  marketingLeadId?: string;
 }
 
 // Local stopgap types — these services return Promise<unknown> today.
@@ -77,6 +82,9 @@ export default function QuickLeadModal({
   initialProjectId,
   initialLeadSourceId,
   marketingLeadContextNote,
+  marketingLeadEventName,
+  marketingLeadSourceName,
+  marketingLeadId,
 }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
   // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU
@@ -314,12 +322,27 @@ export default function QuickLeadModal({
   return (
     <>
       <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital}>
-        {marketingLeadContextNote && (
+        {(marketingLeadContextNote || marketingLeadEventName || marketingLeadSourceName) && (
           <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
-              From the marketing lead
+              From the marketing lead{marketingLeadId ? ` ${marketingLeadRef(marketingLeadId)}` : ""}
             </Typography>
-            <Typography sx={{ fontSize: "0.875rem", color: "#374151" }}>{marketingLeadContextNote}</Typography>
+            {/* Source always shows when known; Conference additionally shows
+                its event name as its own line -- every lead source gets the
+                same "Source: X" line, Conference just gets one more on top. */}
+            {marketingLeadSourceName && (
+              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#166534", mb: marketingLeadEventName || marketingLeadContextNote ? 0.25 : 0 }}>
+                Source: {marketingLeadSourceName}
+              </Typography>
+            )}
+            {marketingLeadEventName && (
+              <Typography sx={{ fontSize: "0.8125rem", fontWeight: 700, color: "#166534", mb: marketingLeadContextNote ? 0.25 : 0 }}>
+                Conference: {marketingLeadEventName}
+              </Typography>
+            )}
+            {marketingLeadContextNote && (
+              <Typography sx={{ fontSize: "0.875rem", color: "#374151" }}>{marketingLeadContextNote}</Typography>
+            )}
           </Box>
         )}
         <TextField

@@ -1,5 +1,225 @@
 # Progress Archive — September 2026
 
+## 2026-09-03 (later) — Group F: manager visibility gap found, then widened to manager Convert/Discard/Reassign rights
+
+While driving Group F (`docs/Lead-Management-Manual-E2E-Test-Plan.md`)
+live, Basheer temporarily reassigned Basheer K's role to SBU Manager/
+Imaging to test manager visibility, then reported seeing zero marketing
+leads on the Marketing Lead Queue screen despite two of Fazal's (a rep in
+that SBU) leads being sitting NEW.
+
+**Investigated via the same RLS-context-simulation technique used earlier
+for the IndiaMART/Shruthi and Fazal/Nishad checks** (`set_config('app.
+current_user_id', ...)` etc., mirroring the app's own session-variable
+pattern from `db/session.py`): confirmed at the DB level that RLS's
+`marketing_lead_select` policy correctly returned all 5 Imaging leads to
+Basheer K as SBU Manager. The bug was entirely client-side —
+`MarketingLeadReviewQueueScreen.tsx`'s `pending` filter only ever showed
+"leads assigned to me," and nothing in the UI surfaced the broader
+manager-chain visibility RLS already granted. Same gap would have hit
+Admin/GM too (their RLS grant is unrestricted, no SBU limit at all).
+
+**Fix: new "Team Marketing Leads" section** on that screen, showing
+everything else RLS returns beyond the personal queue (any status, not
+just NEW). Shared pill/milestone rendering factored out of
+`MarketingLeadEntryScreen.tsx` into `utils/marketingLeadMilestone.ts` so
+both screens render identically.
+
+**Basheer then raised two follow-on product questions** ("SBU Manager and
+the rep's manager should also get Convert/Discard rights, right? And we
+need a way to reassign a lead if the assigned rep is on leave"). Resolved
+via two clarifying questions before building (`AskUserQuestion`, both
+picked the recommended option):
+1. Area Manager's action rights scoped to specifically *their own
+   reports* (via `user_profile.manager_id`), not any Area Manager in the
+   SBU — reusing BR-OP-14's existing "gate override approver must be the
+   owner's immediate manager" precedent (`opportunity/service.py`'s
+   `get_owner_manager_id`) rather than the looser SBU-wide visibility
+   grant `marketing_lead_select` already uses for Area Manager.
+2. Reassignment restricted to the manager set (SBU Manager, the rep's own
+   Area Manager, Admin/GM) — deliberately **not** the assigned rep
+   themselves; only a manager decides to move a lead off someone.
+
+**Built:** migration `0036_marketing_lead_manager_update_rights.py`
+(widens `marketing_lead_update`'s RLS policy); `MarketingLeadRepository.
+get_rep_manager_id` (mirrors `OpportunityRepository.get_owner_manager_id`
+exactly); `MarketingLeadService._actor_manages` (shared by the widened
+`_get_reviewable_lead` and the new `reassign_lead`); new `PATCH /
+marketing-leads/{id}/reassign` endpoint; new `MarketingLeadReassignModal.
+tsx` (rep picker scoped to the lead's SBU, same pattern as the Assign To
+picker at creation, excluding the current assignee and non-rep roles).
+Reassignment resets `first_viewed_at` to `NULL`, fires a fresh
+`notify_marketing_lead_assigned` to the new assignee, and marks the old
+assignee's notification read via the existing `mark_read_for_entity`.
+Deliberately no new audit columns for reassignment — logged via
+`structlog` same as every other action in this domain; a real audit trail
+(`marketing_lead` isn't covered by ADR-017's trigger) logged as a
+`docs/Backlog.md` item instead of scope-creeping into this change.
+
+**Verification:** 683/683 backend tests pass (16 new — SBU Manager/Area
+Manager authorization branches on discard/convert, full `TestReassignLead`
+coverage), `tsc`/`ruff check`/`eslint` all clean.
+
+**Migration `0036` applied to Dev same day; live testing found two more
+real gaps, both fixed:**
+
+1. **Reassign picker over-excluded.** `MarketingLeadReassignModal.tsx`'s
+   target-rep list excluded SBU Manager/Area Manager from the start —
+   inconsistent with `MarketingLeadCreateModal.tsx`'s own Assign To
+   picker, which never excluded those roles (a manager can personally own
+   deals too). Basheer caught this by noticing only one rep (Rudrappa)
+   ever showed up in Imaging's reassignment dropdown, for either Basheer K
+   (SBU Manager) or a GM login — traced to Fazal/Shruthi holding Area
+   Manager, Basheer K holding SBU Manager, and Fahad's role having been
+   borrowed for Marketing User testing earlier the same session, leaving
+   Rudrappa the only actual Sales Staff rep left in that SBU. Fixed by
+   aligning `MarketingLeadReassignModal`'s exclusion list to match
+   `MarketingLeadCreateModal`'s exactly (`Admin`/`General Manager`/
+   `Marketing User` only).
+2. **Self-delegation gap.** Fazal (Area Manager) has leads assigned
+   directly to himself (since Area Manager was never excluded from the
+   Assign To picker) and wanted to hand one to Fahad, his own report.
+   `reassign_lead`'s `_actor_manages` check alone couldn't cover this — it
+   asks "does the caller manage the *current* assignee," which is always
+   false when the caller IS the current assignee. Added an explicit
+   self-delegation carve-out: any manager-tier role (SBU Manager, Area
+   Manager, Admin, GM) can now reassign a lead assigned to *themselves*,
+   on top of the existing "manages the current assignee" path for leads
+   assigned to someone else. Reassign button now also shows in the
+   personal-queue section when the viewer holds a manager role — still
+   absent for a plain rep's own queue. 2 more backend tests (685 total).
+
+Both fixes verified `tsc`/`ruff check`/`eslint` clean.
+
+**A third gap, found the same way (Basheer testing live, then asking "is
+that expected?"):** Fazal could still *see* Shruthi's leads under "Team
+Marketing Leads" even after the above fixes — because
+`marketing_lead_select`'s Area Manager clause had been SBU-wide since the
+*original* 0031 policy (same as SBU Manager's), never narrowed when 0036
+tightened the *update* policy to own-reports-only. Visibility and action
+rights had quietly diverged. Before concluding this was "just" a
+visibility gap and not an actual authorization bypass, verified directly:
+connected as Fazal (real RLS context — `set_config('app.current_user_id'
+...)` etc.) and attempted a real `UPDATE` against one of Shruthi's leads
+— 0 rows affected, confirming the update policy already correctly
+blocked it regardless of what was visible. Migration `0037_marketing_
+lead_area_manager_select_own_reports.py` narrows Area Manager's SELECT to
+exactly match UPDATE (own reports only, via `manager_id`) — SBU Manager's
+own-SBU visibility is unchanged. No service-layer code changes needed
+(list_leads already just trusts whatever RLS returns), only stale
+comments in `marketing_lead/service.py` and `MarketingLeadReviewQueue
+Screen.tsx` describing the old SBU-wide grant, corrected. 685/685 backend
+tests still pass (pure RLS change, nothing new to unit-test), `tsc`/lint
+clean.
+
+**Migration 0037 applied same day; immediately surfaced a fourth,
+unrelated bug on the very next thing Basheer tried** (Fazal
+self-delegating one of his own leads to Shruthi): a 500, traceback
+showing `psycopg2.errors.InsufficientPrivilege: new row violates
+row-level security policy for table "marketing_lead"`. Root cause: 0036
+gave `marketing_lead_update` an identical `USING` and `WITH CHECK` clause
+— fine for Convert/Discard, which never touch `assigned_to_user_id`, but
+wrong for Reassign, whose entire purpose is changing that column. Two of
+the four authorization clauses (`assigned_to_user_id = self`; Area
+Manager's own-reports subquery) are keyed on that same column, and
+Postgres evaluates `WITH CHECK` against the row *after* the update — so
+reassigning to anyone who wasn't the actor themselves or one of their own
+reports failed, regardless of whether the Python-level authorization
+(which correctly allows self-delegation to anyone) had already approved
+it. No unit test could have caught this — the repository is fully mocked
+in tests, RLS only exists in real Postgres. Migration `0038_fix_
+marketing_lead_update_with_check.py` relaxes `WITH CHECK` to `true` —
+`USING`, evaluated against the pre-update row, remains the sole RLS
+authorization gate, matching how the Python service layer was always the
+actual source of truth (RLS as backstop, not a second independent
+business-rule engine). 685/685 backend tests still pass.
+
+**0038 applied; retried; still 500'd, same error.** Isolated with three
+clean single-shot DB tests (fresh connection each, avoiding a rollback/
+session-config contamination bug in the first attempt at this): reassign
+Fazal's own lead to himself → succeeds; to Fahad (his report) → succeeds;
+to Shruthi (not his report) → fails, byte-for-byte the same error. This
+revealed the real mechanism: **Postgres independently refuses to let an
+UPDATE leave the resulting row invisible to the actor under the table's
+own SELECT policy — regardless of what `WITH CHECK` says.** 0037 narrowed
+Area Manager's SELECT visibility to their own reports only, so
+reassigning outside that set became structurally impossible for an Area
+Manager no matter what `marketing_lead_update` allowed. `WITH CHECK
+(true)` (0038) was necessary but not sufficient.
+
+Presented Basheer two ways forward: (a) restrict reassignment targets to
+people the actor can already see (simple, narrower than originally
+asked), or (b) a `SECURITY DEFINER` function that performs the write with
+elevated privilege after Python's own authorization has already approved
+it (preserves full flexibility -- reassign to anyone eligible in the SBU
+-- but adds a genuine privilege-escalation code path; precedented once in
+this codebase, 0011's read-only visibility helpers, but never for a
+write). **Basheer chose (a).**
+
+Built: `_actor_manages` (`marketing_lead/service.py`) generalized from
+taking a `MarketingLead` to an explicit `(target_user_id, target_sbu_id)`
+pair, reused for two questions now instead of one -- "can I act on the
+lead's current assignee" (unchanged) and a new "can I hand it to this new
+assignee." For Area Manager, the new assignee must also be one of their
+own reports; SBU Manager/Admin/GM are unaffected (already SBU-wide/
+unrestricted, and SBU Manager's check is keyed on the lead's own `sbu_id`
+column, which reassignment never changes, so it was never exposed to this
+bug at all -- only Area Manager's manager_id-keyed clause was).
+`MarketingLeadReassignModal.tsx` mirrors this client-side: Area Manager's
+rep picker now filters to `manager_id === self` (needed `useAuth()` for
+the viewer's own id/role, plus `manager_id` added to the picker's
+`UserOption` type -- already present in the API response, just wasn't
+being read). 686/686 backend tests pass (2 new: self-delegation to a
+report succeeds; to a non-report fails), `tsc`/`ruff check`/`eslint` all
+clean.
+
+**Group F manual E2E (steps 2-7) still not run live** — this was all
+built reactively from Basheer's live testing rather than a completed
+pass; the actual manager-
+role logins, Area-Manager-on-non-report-403, and self-delegation flow
+still need to be walked through end to end.
+
+## 2026-09-03 — Urgent IndiaMART dialog reappeared for Shruthi: stale pre-fix row, not a regression
+
+During manual E2E (resuming at Group C of `docs/Lead-Management-Manual-
+E2E-Test-Plan.md`), Basheer reported the old "Urgent: IndiaMART Lead"
+interrupting dialog still firing on login as Shruthi ("aster medicity...
+Assigned by Basheer K — respond within 4 hours for buylead credit"),
+despite the 2026-09-02 Lead Management change that hardcoded
+`notify_opportunity_assigned`'s `is_urgent` to `False`.
+
+**Root cause, confirmed live against Dev** (read-only query, RLS context
+set to Shruthi's own `user_id` via `set_config('app.current_user_id', ...)`
+same pattern as prior UAT diagnostics): `Notification.is_urgent` is frozen
+at row-creation time, not recalculated later. Notification
+`87636436-c484-4872-862b-3cd4201494e6`, recipient Shruthi, was created
+2026-08-30 02:45 UTC — **before** the fix — back when `is_urgent` was
+still computed from `URGENT_LEAD_SOURCE_NAMES`. Still unread
+(`read_at IS NULL`), so it still passes `list_urgent_unread`'s
+`is_urgent = true AND read_at IS NULL` filter and keeps popping the
+dialog on every login. Checked all of Shruthi's other notifications: every
+other row (several more Aug 25/30 IndiaMART-test ones, same "aster
+medicity" account) is already read; this was the one lone unread leftover.
+`git log -p` on `notification/service.py` confirmed the old
+`URGENT_LEAD_SOURCE_NAMES` logic is fully gone — no path can create a new
+urgent row today.
+
+**Decision:** Basheer wants the urgent-notification machinery kept, not
+removed — just not firing for IndiaMART. Since that's already the current
+code state (nothing computes `is_urgent=True` anymore), no code change was
+needed there. Documented prominently instead, per Basheer's request, so
+this is easy to pick back up: comments added to `notify_opportunity_assigned`
+in `backend/app/domains/notification/service.py` and to the top of
+`sales-os-app/src/components/UrgentNotificationDialog.tsx`, plus a new
+`docs/Backlog.md` entry ("Urgent-notification infrastructure retained for
+future reuse") covering both the retained-machinery decision and the
+stale-row loose end.
+
+**Not yet cleaned up:** the one stale unread row for Shruthi. Basheer to
+choose between opening it as her (Review marks it read through the normal
+`GET /opportunities/{id}` → `mark_read_for_entity` path) or a one-time
+direct `UPDATE` on that row — tracked in `docs/Backlog.md`.
+
 ## 2026-09-02 (later) — Tally SBU/Territory accounting memo, plus two housekeeping commits
 
 **Tally accounting alignment.** Latheef Bhai called Basheer with a

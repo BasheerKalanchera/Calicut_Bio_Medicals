@@ -23,6 +23,47 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- **`marketing_lead` not covered by the ADR-017 audit trail.** Raised
+  2026-09-03 while scoping manager Convert/Discard/Reassign rights
+  (`docs/Lead-Management-Manual-E2E-Test-Plan.md`'s Group F). ADR-017's
+  audit_log trigger only covers account/user_profile/product/opportunity
+  (Phase 1) — `marketing_lead` reassignment, conversion, and discard
+  currently only get a `structlog` info-level log line, same as every
+  other action in that domain, not a queryable history. Deliberately kept
+  minimal for now rather than scoping a schema addition into an
+  already-large change. Worth a real audit trail (who reassigned what,
+  from whom, when, why) if reassignment turns out to be used often enough
+  that "why did this move" becomes a real question — extending the
+  existing audit_log trigger to this table would be the natural Phase 2.
+
+- **Urgent-notification infrastructure retained for future reuse.** The
+  IndiaMART 4-hour-SLA urgent path (`URGENT_LEAD_SOURCE_NAMES` computing
+  `is_urgent` in `notify_opportunity_assigned`) was retired 2026-09-02 as
+  part of Lead Management — IndiaMART inquiries now go through the
+  `marketing_lead` review queue first, so nothing needs to interrupt a rep
+  the moment an Opportunity is assigned anymore. **Explicitly decided
+  2026-09-03: do NOT remove the underlying machinery** — `notification
+  .is_urgent`, `NotificationRepository.list_urgent_unread`/`count_unread`'s
+  urgent split, `GET /notifications/urgent-unread`, and the frontend's
+  `UrgentNotificationDialog.tsx` (interrupting popup + 60s poll + dismiss/
+  review flow) all stay in place, unused but ready. To light up a new
+  urgent case later: add a `notify_*` method in `backend/app/domains/
+  notification/service.py` that passes `is_urgent=True` for whatever
+  condition warrants it — no new infrastructure needed, same shape the old
+  IndiaMART logic had. See the comments on `notify_opportunity_assigned`
+  and at the top of `UrgentNotificationDialog.tsx`.
+  **Loose end found live 2026-09-03 while investigating this:** `is_urgent`
+  is frozen on a `Notification` row at creation, not recalculated — a
+  handful of pre-2026-09-02 IndiaMART test rows (all "aster medicity",
+  actor Basheer K/Abdul Latheef P, Aug 25 and Aug 30) still carry
+  `is_urgent = true` in the shared Dev DB. All but one are already read; one
+  unread row (id `87636436-c484-4872-862b-3cd4201494e6`, recipient Shruthi,
+  created 2026-08-30) still pops the dialog on her login. Not a recurring
+  bug — confirmed no code path can create a new urgent row today — just
+  stale pre-fix data. **Not yet cleaned up** — Basheer to pick: open it as
+  Shruthi (Review marks it read, same as any assignment notification) or a
+  one-time `UPDATE ... SET read_at = now()` on that row.
+
 - ~~**Audit trail for account/user_profile/product/opportunity.**~~ —
   **DONE, 2026-09-02.** Migration `0030_add_audit_log.py` per
   `docs/Audit-Trail-Implementation-Plan.md` (ADR-017 Phase 1): one shared

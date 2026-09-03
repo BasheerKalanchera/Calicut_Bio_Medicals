@@ -40,18 +40,133 @@ caused and fixed 2026-09-02 after the 2026-08-31 mid-debug stop point.
 + transient-failure retry)"). Full narrative: `docs/Progress-Archive-
 2026-09.md`'s 2026-09-02 entry.
 
-## Current task 3 — Lead Management for Marketing-Sourced Leads ("Marketing Lead"): built, migrated (0031-0034), Groups A+B passed live
+## Current task 3 — Lead Management for Marketing-Sourced Leads ("Marketing Lead"): built, migrated (0031-0035), Groups A-E passed live
 
 Full build per `docs/Lead-Management-Implementation-Plan.md`, staged as
 `marketing_lead`/`marketing-leads` (renamed mid-E2E — collided with the
-Opportunity Stage "Lead"; see `docs/Progress-Archive-2026-09.md`'s
-2026-09-02 entries for that and every other fix found during Group A/B
-live testing). 661/661 backend tests pass, `tsc`/lint clean. **Not yet
-committed** — staged, commit message drafted, Basheer committing it
-himself.
+Opportunity Stage "Lead"). 668/668 backend tests pass, `tsc`/lint clean.
+**Not yet committed** — staged, commit message drafted, Basheer committing
+it himself.
 
-**Next step: resume manual E2E at Group C**
-(`docs/Lead-Management-Manual-E2E-Test-Plan.md`), then D-G.
+**Grew substantially during Groups C-E live testing, 2026-09-03** (full
+narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-03 entries):
+assignment notifications for marketing leads (`notify_marketing_lead_
+assigned`, mirrors the existing Opportunity-assignment pattern); two live
+bugs found and fixed (both screens sharing `GET /marketing-leads`
+auto-fired on every login instead of only when actually viewed, silently
+marking notifications read — now gated on an `active` prop); Convert's
+green context box now shows Source/Conference (previously silently
+dropped); Convert wasn't invalidating the Pipeline query (fixed); new
+`first_viewed_at` column (migration `0035`, applied) driving a single
+milestone pill (NEW→SEEN→CONVERTED/DISCARDED) on the Marketing User's own
+screen, replacing the old static status pill; discarded leads now show
+their reason/note there too.
+
+**Group F (visibility/authorization) found a real gap, now fixed, then
+scope grew further on Basheer's own call:** RLS already granted SBU/Area
+Manager (own SBU) and Admin/GM (all SBUs) visibility into other reps'
+marketing leads, but no screen surfaced it — the queue only ever showed
+"assigned to me." New "Team Marketing Leads" section added to
+`MarketingLeadReviewQueueScreen.tsx`. Basheer then decided managers
+should be able to **act**, not just see: migration `0036_marketing_lead_
+manager_update_rights.py` widens `marketing_lead_update` to let SBU
+Manager (own SBU) and Area Manager (own reports only, via `manager_id` —
+mirrors BR-OP-14's immediate-manager precedent) Convert/Discard directly,
+plus a **new Reassign action** (same manager set, deliberately excluding
+the assigned rep themselves) for handing a lead to a different rep, e.g.
+someone on leave — resets "seen" state and re-notifies the new assignee.
+**Migration 0036 applied.** Live testing (SBU Manager/GM logins) then
+found two more real gaps, both fixed same day: (1) the Reassign modal's
+rep picker over-excluded SBU Manager/Area Manager, inconsistent with the
+original Assign-To picker at creation — aligned to match; (2)
+self-delegation — Fazal (Area Manager) has leads assigned directly to
+himself and had no way to hand one to his own report, since
+`_actor_manages` alone can't authorize "delegate my own lead" (asks "do I
+manage myself," always false). Added an explicit self-delegation
+carve-out for any manager-tier role; Reassign now also shows in the
+personal-queue section for managers. **Then a third gap, also fixed same
+day:** Fazal (Area Manager) could still *see* Shruthi's leads under "Team
+Marketing Leads" despite her not reporting to him — Area Manager's
+`marketing_lead_select` visibility had been SBU-wide since the original
+0031 policy, never narrowed when 0036 tightened the *update* policy to
+own-reports-only. Migration `0037_marketing_lead_area_manager_select_
+own_reports.py` narrows SELECT to match UPDATE exactly (SBU Manager's
+own-SBU visibility unchanged). Verified via a direct UPDATE attempt as
+Fazal against Shruthi's lead (0 rows affected, RLS already correctly
+blocking the write) before concluding this was a visibility-only gap, not
+an authorization bypass. 685/685 backend tests pass, `tsc`/lint clean.
+
+**Migration 0037 applied; immediately hit a real 500 on Reassign:**
+`marketing_lead_update`'s `WITH CHECK` (0036) was identical to its
+`USING` clause — fine for Convert/Discard (never touch
+`assigned_to_user_id`), but Reassign's whole job is changing that column,
+and two of the four authorization clauses are keyed on it. Postgres
+re-evaluates `WITH CHECK` against the row *after* the update, so
+reassigning to anyone who isn't the actor themselves or (for Area
+Manager) their own report got rejected with `InsufficientPrivilege` — hit
+immediately when Fazal self-delegated to Shruthi. Migration `0038_fix_
+marketing_lead_update_with_check.py` relaxes `WITH CHECK` to `true`.
+685/685 still passed, but this alone **did not actually fix it** —
+applied live, retried, still 500'd.
+
+**Root cause was deeper than WITH CHECK.** Isolated via direct DB tests
+(reassign Fazal's own lead to himself: succeeds; to Fahad, his report:
+succeeds; to Shruthi, not his report: fails, identical error): Postgres
+independently refuses to let an UPDATE leave the resulting row invisible
+to the actor under the table's own SELECT policy — regardless of what
+`WITH CHECK` says. Since 0037 narrowed Area Manager's SELECT visibility
+to their own reports only, reassigning outside that set was structurally
+impossible for an Area Manager no matter what the UPDATE policy allowed.
+Presented two fixes to Basheer: (a) restrict reassignment targets to
+people the actor can already see (simple, narrower), or (b) a
+SECURITY-DEFINER bypass function (preserves full flexibility, adds a
+privilege-escalation code path). **Basheer chose (a).**
+
+Built: `_actor_manages` generalized to take an explicit `(target_user_id,
+target_sbu_id)` pair instead of a lead object, reused for both "can I act
+on the current assignee" and a new second check, "can I hand it to this
+new assignee" — an Area Manager's reassignment target must now also be
+one of their own reports (SBU Manager/Admin/GM unaffected, already
+SBU-wide/unrestricted). Frontend `MarketingLeadReassignModal.tsx` mirrors
+this: Area Manager's rep picker now filters to `manager_id === self`
+instead of "anyone in the SBU." 686/686 backend tests pass (2 new — a
+positive self-delegation-to-a-report case, a negative
+delegation-to-a-non-report case), `tsc`/lint clean. Full narrative:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-03 (later) entry.
+
+**F.1-F.3, self-delegation (step 7) confirmed working live 2026-09-03**
+(Basheer K as SBU Manager, Fazal reassigning to Fahad with the restricted
+picker). One more bug found during this pass, fixed same day: Fahad
+(Marketing User) assigned a lead to Rudrappa — bell showed a red dot, but
+the dropdown entry wasn't highlighted. DB check: notification read 36s
+after creation, consistent with Rudrappa genuinely opening Marketing Lead
+Queue via the sidebar (not by clicking the bell notification) — that
+path marks it read server-side but never told the bell's cached
+unread-count to refresh, only its own 60s poll would eventually catch up.
+`MarketingLeadReviewQueueScreen.tsx` now invalidates `["notifications",
+"unread-count"/"list"]` itself whenever it becomes active, not just on
+bell-click-through. `tsc`/lint clean, no backend change needed.
+
+**Group F complete (steps 4-6 passed live 2026-09-03)** — Admin/GM
+full visibility+action across SBUs, already-reviewed-lead rejection,
+plain-rep-cannot-reassign all confirmed.
+
+**Small polish, same day:** Basheer noticed a lead reassigned away and
+back (Rudrappa -> Shruthi -> Rudrappa) produces two notifications reading
+identically ("assigned you a marketing lead") with no way to tell weeks
+later they're the same lead, not two, or notice nothing got silently
+dropped. Considered a live-status enrichment (show the lead's current
+state/assignee in the notification) but Basheer said not to over-engineer
+it -- simpler fix: `NotificationBell.tsx`'s `describe()` now includes a
+short tag from `entity_id` ("...marketing lead #A1B2C3"), already on
+every notification response, no backend change. Same tag recurs across a
+lead's reassignment history.
+
+**Next step: Group G (regression)** — the last group in
+`docs/Lead-Management-Manual-E2E-Test-Plan.md`: normal rep's +Lead/+Log
+unaffected, direct-IndiaMART-Opportunity assignment stays non-urgent,
+normal assignment notification unchanged. Once G passes, the whole Lead
+Management feature (Groups A-G) is E2E-confirmed end to end.
 
 **Next up after E2E completes: two items now queued in `docs/Backlog.md`
 (plus the SBU-required-at-Marketing-User-creation gap parked there too —

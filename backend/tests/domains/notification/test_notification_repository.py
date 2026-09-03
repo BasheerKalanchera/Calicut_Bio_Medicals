@@ -37,6 +37,23 @@ class TestMarkReadForEntity:
         assert "notification.read_at IS NULL" in sql
 
 
+class TestMarkReadForType:
+    def test_scopes_to_recipient_type_and_unread_only(self):
+        mock_db = MagicMock()
+        repo = NotificationRepository(mock_db)
+
+        repo.mark_read_for_type(USER_ID, "marketing_lead")
+
+        stmt = mock_db.execute.call_args.args[0]
+        sql = _compiled(stmt.whereclause)
+        assert f"notification.recipient_user_id = '{USER_ID.hex}'" in sql
+        assert "notification.entity_type = 'marketing_lead'" in sql
+        assert "notification.read_at IS NULL" in sql
+        # No entity_id clause -- this is the bulk variant, unlike
+        # mark_read_for_entity above.
+        assert "notification.entity_id" not in sql
+
+
 class TestCountUnread:
     def test_filters_recipient_and_unread_only(self):
         mock_db = MagicMock()

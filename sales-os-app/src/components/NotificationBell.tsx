@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge, Box, IconButton, List, ListItemButton, ListItemText, Popover, Typography } from "@mui/material";
 import { getUnreadCount, listNotifications } from "../services/notifications";
 import type { NotificationResponse } from "../types/api-aliases";
+import { marketingLeadRef } from "../utils/marketingLeadMilestone";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -13,6 +14,19 @@ function formatDate(iso: string) {
 
 function describe(n: NotificationResponse): string {
   const who = n.actor.display_name;
+  if (n.type === "MARKETING_LEAD_ASSIGNED") {
+    // A marketing lead has no name/title of its own (unlike an Opportunity),
+    // so a reassigned-then-reassigned-back lead produces two notifications
+    // that otherwise read as identical events ("assigned you a marketing
+    // lead") -- weeks later there's no way to tell they're the same lead,
+    // not two different ones, or notice the system silently reused an id.
+    // entity_id is the same underlying marketing_lead row across all its
+    // notifications -- marketingLeadRef shows consistently everywhere a
+    // lead appears (this bell, the queue cards, the Marketing User's own
+    // list), letting it visually recur without a backend lookup (Basheer,
+    // 2026-09-03: keep this simple, don't build a live-status enrichment).
+    return `${who} assigned you marketing lead ${marketingLeadRef(n.entity_id)}`;
+  }
   const what = n.opportunity_name ?? "an Opportunity";
   if (n.type === "GATE_OVERRIDE_NAMED") {
     return `${who} named you as approving manager for ${what}`;
@@ -22,8 +36,12 @@ function describe(n: NotificationResponse): string {
 
 export default function NotificationBell({
   onSelectOpportunity,
+  onSelectMarketingLead,
 }: {
   onSelectOpportunity: (opportunity: { id: string; name: string }) => void;
+  // Marketing leads have no per-item detail screen (unlike Opportunity) --
+  // there's nothing to select, just the queue itself to open.
+  onSelectMarketingLead: () => void;
 }) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const queryClient = useQueryClient();
@@ -48,6 +66,17 @@ export default function NotificationBell({
 
   function handleSelect(n: NotificationResponse) {
     setAnchorEl(null);
+    if (n.type === "MARKETING_LEAD_ASSIGNED") {
+      // No per-lead detail screen to open -- GET /marketing-leads (fired by
+      // the queue screen) bulk-marks all MARKETING_LEAD_ASSIGNED read on
+      // view, same read-receipt idea as opening an Opportunity below.
+      onSelectMarketingLead();
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+      }, 500);
+      return;
+    }
     // GET /opportunities/{id} (fired by whatever screen this opens) marks the
     // notification read server-side -- refetch shortly after so the badge
     // and dropdown catch up instead of waiting for the next 60s poll.

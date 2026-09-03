@@ -20,6 +20,9 @@ class NotificationService:
     def mark_read_for_entity(self, user_id: uuid.UUID, entity_type: str, entity_id: uuid.UUID) -> None:
         self.repository.mark_read_for_entity(user_id, entity_type, entity_id)
 
+    def mark_read_for_type(self, user_id: uuid.UUID, entity_type: str) -> None:
+        self.repository.mark_read_for_type(user_id, entity_type)
+
     def notify_opportunity_assigned(
         self,
         *,
@@ -35,6 +38,25 @@ class NotificationService:
         # before anything reaches this notification at all. Matches
         # notify_gate_override_named's own hardcoded False just below, same
         # reasoning: nothing should wait on this.
+        #
+        # is_urgent is a point-in-time value frozen on the row at creation
+        # (Notification model's own comment) -- this hardcoded False only
+        # stops *new* rows from being flagged urgent. It does not retroactively
+        # touch existing rows: a pre-2026-09-02 row created back when this
+        # computed is_urgent from URGENT_LEAD_SOURCE_NAMES can still be
+        # sitting unread and will still pop UrgentNotificationDialog until
+        # its read_at is set (confirmed live 2026-09-03, see docs/Progress-
+        # Archive-2026-09.md).
+        #
+        # The urgent-notification machinery itself (this is_urgent column,
+        # NotificationRepository.list_urgent_unread/count_unread's urgent
+        # split, GET /notifications/urgent-unread, and the frontend's
+        # UrgentNotificationDialog.tsx) is deliberately NOT being removed --
+        # kept in place on purpose for a future urgent-notification need.
+        # To light it back up for some other case, pass is_urgent=True from
+        # a notify_* method here for whatever condition warrants it; no new
+        # infrastructure required. See docs/Backlog.md, "Urgent-notification
+        # infrastructure retained for future reuse."
         notification = Notification(
             recipient_user_id=recipient_user_id,
             type="OPPORTUNITY_ASSIGNED",
@@ -61,6 +83,26 @@ class NotificationService:
             type="GATE_OVERRIDE_NAMED",
             entity_type="opportunity",
             entity_id=opportunity_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)
+
+    def notify_marketing_lead_assigned(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        marketing_lead_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # Non-urgent, same reasoning as notify_opportunity_assigned above --
+        # the IndiaMART 4-hour SLA is the Marketing User's responsibility on
+        # IndiaMART's own platform, not the assigned rep's.
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="MARKETING_LEAD_ASSIGNED",
+            entity_type="marketing_lead",
+            entity_id=marketing_lead_id,
             created_by=actor_id,
             is_urgent=False,
         )

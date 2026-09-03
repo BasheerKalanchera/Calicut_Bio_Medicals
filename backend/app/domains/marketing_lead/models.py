@@ -48,6 +48,11 @@ class MarketingLead(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("user_profile.id"))
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Set the first time the assigned rep opens Marketing Lead Queue while
+    # still NEW (MarketingLeadRepository.mark_first_viewed) -- a visibility
+    # signal only, not a status value; see 0035_add_marketing_lead_first_
+    # viewed_at.py for why this isn't folded into `status`.
+    first_viewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # One-directional only (no back_populates on Account/SBU/LeadSource/Product/
     # UserProfile) -- same choice as Notification.actor. Keeps this domain from

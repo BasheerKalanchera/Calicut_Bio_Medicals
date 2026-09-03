@@ -23,6 +23,10 @@ class MarketingLeadMarkConverted(BaseModel):
     converted_opportunity_id: uuid.UUID
 
 
+class MarketingLeadReassign(BaseModel):
+    new_assigned_to_user_id: uuid.UUID
+
+
 class AssignedToNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -46,6 +50,7 @@ class MarketingLeadResponse(BaseModel):
     converted_opportunity_id: uuid.UUID | None
     created_by: uuid.UUID | None
     created_at: datetime
+    first_viewed_at: datetime | None
     reviewed_by: uuid.UUID | None
     reviewed_at: datetime | None
     # Resolved at read time, not denormalized onto the row -- same pattern as
