@@ -239,32 +239,34 @@ kept only as a pointer; nothing left to pick up here.
   warns about the Supabase project-setup prompt but not about this
   standing UAT-only trigger.
 
-- **Opportunity Notes Privacy — discussion brief written, awaiting
-  Haroon's buy-in before any implementation plan.** Raised 2026-09-04:
-  Haroon (doing field work himself, entering deals directly) doesn't want
-  his private discussion notes visible to Area Managers in whose
-  territory those deals sit, even though today's zone-wide Area Manager
-  visibility is intentional (migration `0021`). Recommendation, per
-  Basheer's call: hide only the Activity-tab notes (one RLS policy
-  change, `activity_tier_visibility`) — leave the Opportunity record
-  itself (hospital, value, stage) fully visible so territory owners
-  still know a deal exists there, avoiding a new duplicate-outreach blind
-  spot with no other safeguard against it today. Full writeup:
+- **Opportunity Notes Privacy — Haroon agreed 2026-09-05, implementation
+  plan written, not yet built.** Raised 2026-09-04: Haroon (doing field
+  work himself, entering deals directly) doesn't want his private
+  discussion notes visible to Area Managers/SBU Managers in whose
+  territory/SBU those deals sit, even though today's zone/SBU-wide
+  visibility is intentional (migration `0021`). Agreed approach: hide
+  only the Activity-tab notes via a role-hierarchy RLS rule (Area
+  Manager can't see SBU Manager/GM/Admin notes, SBU Manager can't see
+  GM/Admin notes), looped-in split/reminder carve-out grants full
+  visibility regardless of rank, Documents and the Opportunity record
+  itself stay fully visible. Full plan:
+  `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`. Full brief:
   `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`
-  (uncommitted); build narrative once it starts:
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 entry.
+  (both uncommitted); build narrative once it starts:
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
 
-- **UAT backup/disaster-recovery — first manual dump taken 2026-09-05,
-  still no recurring script or schedule.** Raised 2026-09-04 (Latheef
-  Bhai's autonomous-agent-data-loss article prompted the question).
-  Free-tier Supabase has no automatic backups; landed on a manual daily
-  `pg_dump` via a throwaway Docker `postgres:17` container,
-  `--schema=public` only (UAT is tiny — 13 MB total, ~408 KB `public`
-  schema — so sizing and incremental backups aren't a concern), output
-  copied to Basheer's external disk. First dump taken and verified
-  2026-09-05; this remains a manual one-off, not automation. Full
-  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
-  2026-09-05 entries.
+- **UAT backup/disaster-recovery — recurring script written 2026-09-05,
+  Basheer still to install/schedule/verify it.** Raised 2026-09-04
+  (Latheef Bhai's autonomous-agent-data-loss article prompted the
+  question). Free-tier Supabase has no automatic backups; first manual
+  dump taken and verified 2026-09-05. Same day, `scripts/backup_uat.ps1`
+  built: daily `pg_dump --schema=public` via throwaway Docker
+  `postgres:17`, 14-day local retention, mirrors to Google Drive when
+  that path exists, manual weekly external-disk copy stays as-is. See
+  `.claude/active_progress.md` for the exact remaining steps (install
+  Google Drive for Desktop, register the daily 07:30 IST Task Scheduler
+  entry, confirm first live run). Full narrative:
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
 
 - **Duplicate hospital names in the Customer Directory — Option B built
   and committed (`e86d49a`, 2026-08-31); not Haroon's decision status

@@ -3,32 +3,70 @@ _Session: 2026-08-21 → 2026-09-04_
 
 ## Pending, awaiting Haroon / not yet actioned
 
-**Opportunity Notes Privacy — discussion brief written 2026-09-04,
-awaiting Haroon's buy-in before an implementation plan starts.** Haroon
-(doing field work himself) doesn't want his private discussion notes
-visible to Area Managers in whose territory his deals sit, even though
-today's zone-wide Area Manager visibility is working as designed.
-Recommendation: hide only the Activity-tab notes (one RLS policy line,
-`activity_tier_visibility`), leave the Opportunity record itself fully
-visible so territory owners still know a deal exists (avoids a new
-duplicate-outreach blind spot). Full brief: `docs/Opportunity-Notes-
-Privacy-Discussion-Brief-2026-09-04.md`. **Uncommitted.** Full narrative:
-`docs/Progress-Archive-2026-09.md`'s 2026-09-04 entry. Also tracked in
-`docs/Backlog.md`.
+**Opportunity Notes Privacy — built, migrated (0039), all 8 verification
+steps passed live against Dev 2026-09-05. Not yet committed.** Haroon
+(doing field work himself) didn't want his private discussion notes
+visible to Area Managers/SBU Managers in whose territory/SBU his deals
+sit, even though the zone/SBU-wide visibility itself is working as
+designed. Built: hide only the Activity-tab notes (RLS policy
+`activity_tier_visibility`, migration `0039`, new
+`cabio_app_user_role_name` helper) via a role-hierarchy check — Area
+Manager can't see notes logged by SBU Manager/GM/Admin, SBU Manager
+can't see GM/Admin notes — with a looped-in carve-out (existing
+split/reminder) granting full visibility regardless of rank. Documents
+and the Opportunity record itself stay fully visible. `Physical-
+Schema.sql` regenerated 2026-09-05 (also caught up migrations 0032-0038,
+not regenerated since 2026-09-02). Full plan:
+`docs/Opportunity-Notes-Privacy-Implementation-Plan.md`.
 
-**UAT backup/disaster-recovery — first manual dump taken 2026-09-05, no schedule/script yet.**
-Free-tier Supabase has no automatic backups; landed on a manual daily
-`pg_dump` via a throwaway Docker `postgres:17` container (no native
-`psql`/`pg_dump` installed), `--schema=public` only, output to
-`C:\Backups\CabioUAT` then copied to Basheer's external disk. UAT is
-tiny (13 MB total, ~408 KB `public` schema) so sizing/incremental-backup
-complexity isn't a concern. **First dump taken and copied to external
-disk 2026-09-05** (`cabio_uat_2026-09-05.dump`, 204 KB compressed);
+**Two incidental findings during verification, both confirmed correct
+behavior, not bugs — logged for the record, no action taken:**
+1. Admin/General Manager can never appear in the Split-participant
+   picker (`GET /users?scope=sbu`) — by design, BR-FIN-06/ADR-037 (their
+   `sbu_id` is a NOT-NULL placeholder, not real membership). Means Haroon
+   himself can't be added to a split anywhere in the app. Same root
+   pattern as this whole feature (GM personally working deals breaks
+   assumptions built for an overlay-only role) — flagged as a possible
+   future product question, not fixed here.
+2. A Sales Staff rep with a split/reminder on a superior's deal sees all
+   its notes regardless of rank (confirmed live: Vivek + Basheer K's
+   split) — correct, Sales Staff was deliberately left out of the
+   hierarchy-hide scope, and the carve-out is unconditional by design.
+   Losing opportunity visibility entirely when a split is removed (also
+   observed live) is `opportunity_tier_visibility` behaving normally,
+   unrelated to this migration.
+
+**Next step: commit** (migration `0039`, `Physical-Schema.sql`, both
+plan/brief docs). Full narrative: `docs/Progress-Archive-2026-09.md`'s
+2026-09-04 and 2026-09-05 entries. Also tracked in `docs/Backlog.md`.
+
+**UAT backup/disaster-recovery — recurring script written 2026-09-05, not yet scheduled or run by Basheer.**
+Free-tier Supabase has no automatic backups; first manual dump taken
+2026-09-05 (`cabio_uat_2026-09-05.dump`, 204 KB compressed,
 `pg_restore --list` verified complete against the 4-table UAT/main
-migration gap (`audit_log`, `gate_override_reason`, `lead`,
-`notification` — expected, UAT is behind head). **Still no
-recurring script/schedule — this remains a manual one-off per run.** New
-CLAUDE.md rule came out of this thread too (below). Full narrative:
+migration gap — expected, UAT is behind head). UAT is tiny (13 MB total,
+~408 KB `public` schema) so sizing/incremental-backup complexity isn't a
+concern. **Built same day: `scripts/backup_uat.ps1`** — same throwaway
+Docker `postgres:17` `pg_dump --schema=public` approach, reads
+`ADMIN_DATABASE_URL` from `backend/.env.uat`, writes to
+`C:\Backups\CabioUAT`, prunes dumps older than 14 days, copies to Google
+Drive (`G:\My Drive\CabioUATBackups`, skips with a log warning if that
+path doesn't exist yet), logs every run to `backup_log.txt`. External-
+disk copy stays a manual weekly step per Basheer's call — not automated.
+**Next step, Basheer's to do:**
+1. Install Google Drive for Desktop if not already done, confirm/adjust
+   the `$GoogleDrivePath` variable at the top of the script to match.
+2. Register the daily 07:30 IST scheduled task (command already
+   supplied in-conversation; runs only while logged in, per Basheer's
+   choice — no Windows password stored):
+   ```powershell
+   $action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"C:\Users\Basheer\GitHub\Calicut_Bio_Medicals\scripts\backup_uat.ps1`""
+   $trigger = New-ScheduledTaskTrigger -Daily -At 7:30AM
+   Register-ScheduledTask -TaskName "CabioUATBackup" -Action $action -Trigger $trigger -Description "Daily UAT pg_dump backup"
+   ```
+3. Confirm the first live run (reads UAT, read-only) succeeds and appears
+   in `backup_log.txt`.
+New CLAUDE.md rule came out of this thread too (below). Full narrative:
 `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
 
 **CLAUDE.md — new UAT-access safety rule, uncommitted.** Never connect

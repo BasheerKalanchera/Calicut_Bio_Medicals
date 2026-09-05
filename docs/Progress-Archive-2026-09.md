@@ -1046,3 +1046,81 @@ known UAT-behind-`main` migration lag (not a dump defect).
 Copied to Basheer's external disk — first completed off-machine backup.
 **Still no recurring schedule/script** — this was one manual run, not
 automation.
+
+---
+
+## 2026-09-05 — Opportunity Notes Privacy: Haroon agreed, implementation plan written
+
+Haroon signed off on the 2026-09-04 brief's recommendation ("hide the notes, not the
+deal"), extended to cover both Area Manager and SBU Manager as restricted viewers (SBU
+Manager also can't see a GM's notes, mirroring the Area-Manager-vs-SBU-Manager case).
+Two scope questions the brief had left open got resolved directly: (1) documents/
+attachments stay out of scope — notes only; (2) a viewer looped into a deal via an
+existing Split or assigned Reminder sees all notes on it regardless of rank, a
+deliberate carve-out rather than a strict hierarchy rule with no exceptions.
+
+**Design:** a role-hierarchy check added to `activity_tier_visibility` (new migration
+`0039`, `ALTER POLICY` — same mechanism as `0021`/`0029`), plus a new small helper
+`cabio_app_user_role_name(p_user_id)` (mirrors the existing `cabio_app_role_name()` but
+resolves an arbitrary user's role, needed to compare the *note owner's* tier against the
+viewer's). Confirmed no Python-side duplicate of Activity's visibility logic exists to
+also update (unlike `organization/repository.py`'s deliberate mirror of
+`opportunity_tier_visibility`) — Activity relies solely on RLS. Confirmed
+`reminder_via_activity` needs no separate change (already derives from Activity
+visibility). `document_tier_visibility` explicitly untouched per the notes-only scope
+call.
+
+Full plan, including the exact SQL, migration shape, and an 8-step manual verification
+plan: `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`. **Not yet built** —
+migration 0039 doesn't exist yet.
+
+---
+
+## 2026-09-05 (later) — Opportunity Notes Privacy: built, migrated, all 8 steps verified live
+
+Migration `0039_hide_senior_activity_notes.py` applied to Dev by Basheer (direct
+DB-touching commands are blocked for this session by the auto-mode classifier).
+`docs/Physical-Schema.sql` regenerated same day — also caught up migrations
+0032-0038, which had accumulated since the file's last regen on 2026-09-02 (`lead`→
+`marketing_lead` rename, `is_marketing_source`, nullable `marketing_lead.account_id`,
+`first_viewed_at`, manager update/select rights). Diff reviewed line by line — nothing
+unexpected, all of it traces to already-committed migrations plus the new
+`cabio_app_user_role_name` function and the tightened `activity_tier_visibility` policy.
+
+**All 8 verification steps passed live**, run by Basheer against Dev:
+1. Own notes unaffected.
+2. Area Manager (Nishad) blocked from Haroon's (GM) note; opportunity itself stays
+   visible.
+3. SBU Manager also blocked from the same note; opportunity stays visible.
+4. Admin/GM unaffected — see everything.
+5. Looped-in carve-out — confirmed with Shruthi (Area Manager) given a split on Basheer
+   K's (SBU Manager) opportunity: all of Basheer K's notes became visible to her. (A
+   first attempt using Vivek, a Sales Staff rep with a pre-existing split on the same
+   opportunity, didn't actually exercise this — Sales Staff was never subject to the
+   hierarchy-hide in the first place, split or not, so that case couldn't distinguish
+   the carve-out from "never blocked to begin with.")
+6. Reverse direction — Shruthi's own notes stayed visible to Basheer K (senior viewing
+   junior's notes never blocked).
+7. Regression — an ordinary Sales Staff rep's own notes, viewed by themselves,
+   unaffected.
+8. Documents — Haroon's uploaded document stayed visible to Basheer K throughout,
+   confirming `document_tier_visibility` (deliberately untouched) still works.
+
+**Two incidental findings during testing, both confirmed as correct/pre-existing
+behavior, not bugs, no action taken:**
+- Admin/General Manager can never appear in the Split-participant picker
+  (`GET /users?scope=sbu`) — `UserRepository.list_active`'s `scope="sbu"` branch
+  (`backend/app/domains/organization/repository.py:83-104`) explicitly filters out
+  `UNRESTRICTED_ROLES = {"Admin", "General Manager"}` per BR-FIN-06/ADR-037, since
+  their `sbu_id` is only a NOT-NULL placeholder, not real SBU membership. Means Haroon
+  can't be added to a split anywhere in the app, discovered when he tried a 50/50 split
+  with Shruthi for himself. Same underlying pattern as the whole Notes Privacy feature —
+  Haroon personally working deals breaks assumptions built for an overlay-only role —
+  flagged as a possible future product question for Haroon/Basheer, not fixed here.
+- Removing Shruthi's split from an opportunity outside her own zone made it disappear
+  from her pipeline entirely — correct, unrelated `opportunity_tier_visibility`
+  behavior (the split was her only path to that opportunity; once gone, none of her
+  other visibility branches applied).
+
+**Not yet committed** — migration `0039`, `Physical-Schema.sql`, and both the plan and
+discussion-brief docs are staged/uncommitted pending Basheer's manual commit.
