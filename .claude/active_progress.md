@@ -4,7 +4,7 @@ _Session: 2026-08-21 → 2026-09-04_
 ## Pending, awaiting Haroon / not yet actioned
 
 **Opportunity Notes Privacy — built, migrated (0039), all 8 verification
-steps passed live against Dev 2026-09-05. Not yet committed.** Haroon
+steps passed live against Dev 2026-09-05. Committed `552c0ee`.** Haroon
 (doing field work himself) didn't want his private discussion notes
 visible to Area Managers/SBU Managers in whose territory/SBU his deals
 sit, even though the zone/SBU-wide visibility itself is working as
@@ -36,11 +36,10 @@ behavior, not bugs — logged for the record, no action taken:**
    observed live) is `opportunity_tier_visibility` behaving normally,
    unrelated to this migration.
 
-**Next step: commit** (migration `0039`, `Physical-Schema.sql`, both
-plan/brief docs). Full narrative: `docs/Progress-Archive-2026-09.md`'s
+Full narrative: `docs/Progress-Archive-2026-09.md`'s
 2026-09-04 and 2026-09-05 entries. Also tracked in `docs/Backlog.md`.
 
-**UAT backup/disaster-recovery — recurring script written 2026-09-05, not yet scheduled or run by Basheer.**
+**UAT backup/disaster-recovery — recurring script committed `ec8b2c4`, not yet scheduled or run by Basheer.**
 Free-tier Supabase has no automatic backups; first manual dump taken
 2026-09-05 (`cabio_uat_2026-09-05.dump`, 204 KB compressed,
 `pg_restore --list` verified complete against the 4-table UAT/main

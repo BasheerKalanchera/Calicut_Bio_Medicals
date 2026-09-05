@@ -239,23 +239,23 @@ kept only as a pointer; nothing left to pick up here.
   warns about the Supabase project-setup prompt but not about this
   standing UAT-only trigger.
 
-- **Opportunity Notes Privacy — Haroon agreed 2026-09-05, implementation
-  plan written, not yet built.** Raised 2026-09-04: Haroon (doing field
-  work himself, entering deals directly) doesn't want his private
-  discussion notes visible to Area Managers/SBU Managers in whose
-  territory/SBU those deals sit, even though today's zone/SBU-wide
-  visibility is intentional (migration `0021`). Agreed approach: hide
-  only the Activity-tab notes via a role-hierarchy RLS rule (Area
-  Manager can't see SBU Manager/GM/Admin notes, SBU Manager can't see
-  GM/Admin notes), looped-in split/reminder carve-out grants full
-  visibility regardless of rank, Documents and the Opportunity record
-  itself stay fully visible. Full plan:
-  `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`. Full brief:
-  `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`
-  (both uncommitted); build narrative once it starts:
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
+- ~~**Opportunity Notes Privacy — Haroon agreed 2026-09-05, built, migrated
+  (0039), all 8 verification steps passed live against Dev.**~~ —
+  **DONE, committed `552c0ee`.** Haroon (doing field work himself,
+  entering deals directly) didn't want his private discussion notes
+  visible to Area Managers/SBU Managers in whose territory/SBU those
+  deals sit, even though today's zone/SBU-wide visibility is intentional
+  (migration `0021`). Built: hide only the Activity-tab notes via a
+  role-hierarchy RLS rule (Area Manager can't see SBU Manager/GM/Admin
+  notes, SBU Manager can't see GM/Admin notes), looped-in split/reminder
+  carve-out grants full visibility regardless of rank, Documents and the
+  Opportunity record itself stay fully visible. Full plan:
+  `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`; full brief:
+  `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`. Full
+  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
+  2026-09-05 entries.
 
-- **UAT backup/disaster-recovery — recurring script written 2026-09-05,
+- **UAT backup/disaster-recovery — recurring script committed `ec8b2c4`,
   Basheer still to install/schedule/verify it.** Raised 2026-09-04
   (Latheef Bhai's autonomous-agent-data-loss article prompted the
   question). Free-tier Supabase has no automatic backups; first manual
