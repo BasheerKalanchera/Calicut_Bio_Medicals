@@ -15,6 +15,9 @@
 - **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not local/disposable —
   never write test data through the live API without checking first. `Activity` rows are
   immutable (no DELETE endpoint), so test writes there are permanent.
+- **Safety:** never connect directly to the UAT Supabase project (`backend/.env.uat`) —
+  no queries, size checks, dumps, or scripts against it — without asking Basheer first,
+  even read-only ones. Ask, state exactly what will run, and wait for explicit go-ahead.
 
 ## Authoritative References
 These documents are the source of truth. Consult the relevant one before writing

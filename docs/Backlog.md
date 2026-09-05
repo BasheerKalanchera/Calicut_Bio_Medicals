@@ -239,6 +239,33 @@ kept only as a pointer; nothing left to pick up here.
   warns about the Supabase project-setup prompt but not about this
   standing UAT-only trigger.
 
+- **Opportunity Notes Privacy — discussion brief written, awaiting
+  Haroon's buy-in before any implementation plan.** Raised 2026-09-04:
+  Haroon (doing field work himself, entering deals directly) doesn't want
+  his private discussion notes visible to Area Managers in whose
+  territory those deals sit, even though today's zone-wide Area Manager
+  visibility is intentional (migration `0021`). Recommendation, per
+  Basheer's call: hide only the Activity-tab notes (one RLS policy
+  change, `activity_tier_visibility`) — leave the Opportunity record
+  itself (hospital, value, stage) fully visible so territory owners
+  still know a deal exists there, avoiding a new duplicate-outreach blind
+  spot with no other safeguard against it today. Full writeup:
+  `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`
+  (uncommitted); build narrative once it starts:
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 entry.
+
+- **UAT backup/disaster-recovery — first manual dump taken 2026-09-05,
+  still no recurring script or schedule.** Raised 2026-09-04 (Latheef
+  Bhai's autonomous-agent-data-loss article prompted the question).
+  Free-tier Supabase has no automatic backups; landed on a manual daily
+  `pg_dump` via a throwaway Docker `postgres:17` container,
+  `--schema=public` only (UAT is tiny — 13 MB total, ~408 KB `public`
+  schema — so sizing and incremental backups aren't a concern), output
+  copied to Basheer's external disk. First dump taken and verified
+  2026-09-05; this remains a manual one-off, not automation. Full
+  narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
+  2026-09-05 entries.
+
 - **Duplicate hospital names in the Customer Directory — Option B built
   and committed (`e86d49a`, 2026-08-31); not Haroon's decision status
   below).** Account creation only blocked an exact-name match

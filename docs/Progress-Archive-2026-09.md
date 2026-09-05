@@ -1,5 +1,109 @@
 # Progress Archive — September 2026
 
+## 2026-09-04 — UAT backup/disaster-recovery: pg_dump approach settled; a live UAT check without asking crossed the line, new CLAUDE.md rule added
+
+**Trigger:** Latheef Bhai sent Basheer an article about an autonomous agent
+wiping out a company's production data with no backup to recover from.
+Basheer asked what Supabase's free-tier backup/recovery story is for our
+UAT project, and whether he needs to manually back it up himself.
+
+**Answer: yes.** Supabase's free tier takes zero automatic snapshots —
+daily backups only start on the Pro plan ($25/mo, 7-day window). Walked
+through how `pg_dump`/`pg_restore` actually work (a full snapshot to one
+file; restore rebuilds from it; no incremental mode exists at this scale)
+and confirmed sizing isn't a real constraint: live UAT check showed **13
+MB total, ~408 KB in the `public` schema** — years of daily full dumps
+would stay under 1 GB.
+
+**Process gap, caught and fixed same session:** that live size check was
+run directly against UAT (via `psycopg2`, no prior ask) — Basheer flagged
+this immediately ("Don't run such commands on UAT without my
+permission"). Added a new rule to `CLAUDE.md` (Architecture/Safety): no
+direct connection to the UAT Supabase project (`backend/.env.uat`) — no
+queries, size checks, or dumps, even read-only — without asking first and
+stating exactly what will run. Saved to memory too so it survives across
+sessions. **This CLAUDE.md edit is still uncommitted as of 2026-09-05.**
+
+**Landed approach:** since no `psql`/`pg_dump` is installed locally, run
+it via a throwaway `postgres:17` Docker container (Docker Desktop already
+installed, avoids a native install) — `docker run --rm -v
+"C:\Backups\CabioUAT:/backup" ... postgres:17 pg_dump --format=custom
+--no-owner --no-privileges --schema=public -h
+aws-1-ap-south-1.pooler.supabase.com -p 5432 -U
+postgres.xstczlbazlzalhzubtwa -d postgres -f
+/backup/cabio_uat_<date>.dump`, over the Session Pooler (port 5432 — safe
+for `pg_dump`; the Transaction Pooler on 6543 is not), `--schema=public`
+only (excludes Supabase-managed `auth`/`storage`/`realtime` to avoid
+restore conflicts). Then copy the `.dump` file to Basheer's external hard
+disk as the actual off-machine backup. Session ended mid-guide (how to
+open PowerShell to run it) — **no dump has actually been taken yet, and
+no script/schedule has been built.** Supabase Pro pricing page was
+pointed to (`supabase.com/pricing`) in case an upgrade is preferred over
+the manual route later.
+
+---
+
+## 2026-09-04 — Opportunity Notes Privacy: Haroon's visibility complaint investigated, confirmed working-as-designed, discussion brief written for his buy-in
+
+**Trigger:** Haroon called Basheer reporting that in UAT, junior staff
+(Nishad, Fazal — both Area Manager) could see opportunities Haroon
+himself had entered in their zones, including his private discussion
+notes.
+
+**Root cause confirmed via live UAT read (Basheer ran the queries
+himself, per the same-day rule above) — working as designed, not a
+bug.** Haroon holds General Manager (sees every opportunity, every zone);
+Area Manager visibility is intentionally zone-wide regardless of who
+entered the record (folded in by migration `0021`, "Collapse Sales
+Manager into Area Manager"). Confirmed against real data: Nishad/Fazal's
+role, zone, and manager_id, and that Haroon's 26 opportunities span
+multiple zones.
+
+**Haroon's ask, refined over the discussion:** not a literal copy of the
+Sales Rep "only see your own" rule (that would strip managers of their
+own team's rollup visibility) — each level should see everything at or
+below their own rank, but nothing entered by a level above them
+(Area Manager can't see SBU Manager's or GM's opportunities in their
+territory; SBU Manager can't see GM's).
+
+**Side thread, same call, resolved as non-issue:** Basheer separately
+asked whether Order-stage opportunities' missing PO document uploads
+meant the upload feature was broken. Confirmed working (Basheer
+successfully uploaded a test PDF live) — it's an adoption gap, not a
+technical one; nobody has used the feature yet in UAT. Basheer will
+raise it with the team that originally requested it. No action taken
+here.
+
+**Back on visibility — one twist changed the recommendation:** Haroon
+does field work himself (hospital visits, deal entry) and wants his own
+discussion notes kept private from the territory owner, but still wants
+that territory owner to know a deal exists there (to avoid two people
+unknowingly chasing the same hospital — there's no other safeguard in
+the system for that today). This ruled out blocking the whole
+opportunity record from a superior's view, and pointed to a narrower fix
+instead: Activity has its own separate RLS policy from Opportunity
+(`activity_tier_visibility`, migration `0011`) that just says "if you can
+see the parent opportunity, you can see its activities" — that's the one
+line that would need to change, leaving Opportunity's own visibility
+policy untouched. Also confirmed: attribution (`owner_id`) is already
+independent of visibility, so a future Target-vs-Actual report crediting
+the GM for a deal he personally worked is unaffected either way (Target
+Planning itself isn't built yet, so no live report is at risk today).
+
+**Decision: hide only the notes, not the deal.** Basheer chose this over
+blocking the full opportunity record, and asked for a written discussion
+brief — same format as the earlier Duplicate-Hospital-Decision-Brief
+(problem, options considered with pros/cons, recommendation, open
+questions) — to get Haroon's buy-in before any implementation plan gets
+written. Written to `docs/Opportunity-Notes-Privacy-Discussion-Brief-
+2026-09-04.md`. **Still uncommitted as of 2026-09-05. Nothing built. Two
+questions left open for Haroon:** whether this should also cover
+attached files/documents (not just notes), and whether someone
+deliberately looped into a superior's deal should see everything on it
+regardless of rank.
+
+---
+
 ## 2026-09-03 (parallel thread) — Latheef Bhai's data-quality idea, Activity-note coaching to the team, UAT/main migration audit
 
 Separate conversation thread from the Group C-F Lead Management work logged
@@ -919,3 +1023,26 @@ gone for good.
    before writing or trusting a commit-status claim in a handover doc; and
    the testing-narration trigger itself, so both survive across sessions
    independent of `CLAUDE.md`.
+
+---
+
+## 2026-09-05 — UAT backup: first manual pg_dump taken and verified, copied to external disk
+
+Basheer ran the throwaway-Docker `pg_dump` command settled on 2026-09-04
+himself (per the UAT-access safety rule — asked first each time, command
+form corrected from the original draft to match: discrete `-h/-p/-U/-d`
+flags plus `--no-owner --no-privileges`, not a connection URI). Output:
+`cabio_uat_2026-09-05.dump`, 204 KB (custom/gzip format, so smaller than
+the raw ~408 KB `public` schema size — expected, not a red flag).
+
+**Verified via `pg_restore --list`** (same throwaway-container pattern,
+no restore actually run): 28 tables with matched `TABLE`/`TABLE DATA`
+pairs, full FK/index/trigger/RLS-policy set. Cross-checked table count
+against `docs/Physical-Schema.sql` (32 tables) — the 4 missing
+(`audit_log`, `gate_override_reason`, `lead`, `notification`) are exactly
+the tables added by migrations UAT hasn't run yet, consistent with the
+known UAT-behind-`main` migration lag (not a dump defect).
+
+Copied to Basheer's external disk — first completed off-machine backup.
+**Still no recurring schedule/script** — this was one manual run, not
+automation.

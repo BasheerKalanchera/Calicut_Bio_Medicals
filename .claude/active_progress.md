@@ -1,5 +1,41 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-02_
+_Session: 2026-08-21 → 2026-09-04_
+
+## Pending, awaiting Haroon / not yet actioned
+
+**Opportunity Notes Privacy — discussion brief written 2026-09-04,
+awaiting Haroon's buy-in before an implementation plan starts.** Haroon
+(doing field work himself) doesn't want his private discussion notes
+visible to Area Managers in whose territory his deals sit, even though
+today's zone-wide Area Manager visibility is working as designed.
+Recommendation: hide only the Activity-tab notes (one RLS policy line,
+`activity_tier_visibility`), leave the Opportunity record itself fully
+visible so territory owners still know a deal exists (avoids a new
+duplicate-outreach blind spot). Full brief: `docs/Opportunity-Notes-
+Privacy-Discussion-Brief-2026-09-04.md`. **Uncommitted.** Full narrative:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-04 entry. Also tracked in
+`docs/Backlog.md`.
+
+**UAT backup/disaster-recovery — first manual dump taken 2026-09-05, no schedule/script yet.**
+Free-tier Supabase has no automatic backups; landed on a manual daily
+`pg_dump` via a throwaway Docker `postgres:17` container (no native
+`psql`/`pg_dump` installed), `--schema=public` only, output to
+`C:\Backups\CabioUAT` then copied to Basheer's external disk. UAT is
+tiny (13 MB total, ~408 KB `public` schema) so sizing/incremental-backup
+complexity isn't a concern. **First dump taken and copied to external
+disk 2026-09-05** (`cabio_uat_2026-09-05.dump`, 204 KB compressed);
+`pg_restore --list` verified complete against the 4-table UAT/main
+migration gap (`audit_log`, `gate_override_reason`, `lead`,
+`notification` — expected, UAT is behind head). **Still no
+recurring script/schedule — this remains a manual one-off per run.** New
+CLAUDE.md rule came out of this thread too (below). Full narrative:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
+
+**CLAUDE.md — new UAT-access safety rule, uncommitted.** Never connect
+directly to the UAT Supabase project (`backend/.env.uat`), even
+read-only, without asking Basheer first and stating exactly what will
+run. Added after a live UAT size-check ran without asking during the
+backup discussion above. Also saved to memory.
 
 ## Current task 0 — Audit Trail (+ Admin/GM Audit Log screen): committed
 
