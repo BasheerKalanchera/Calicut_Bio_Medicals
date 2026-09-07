@@ -1,16 +1,21 @@
-# Daily UAT backup: pg_dump (schema public only) via a throwaway postgres:17
+# UAT backup: pg_dump (schema public only) via a throwaway postgres:17
 # Docker container, matching the live UAT server's actual version (17.6) so
-# pg_dump/pg_restore stay compatible. Keeps 14 days locally, mirrors to
-# Google Drive when that path exists. Read-only against UAT.
+# pg_dump/pg_restore stay compatible. Keeps 14 days locally. Read-only against
+# UAT. Starts Docker Desktop if it isn't already running, and stops it again
+# afterwards if this script was the one that started it.
 
 $ErrorActionPreference = "Stop"
 
-$RepoRoot      = Split-Path -Parent $PSScriptRoot
-$EnvFile       = Join-Path $RepoRoot "backend\.env.uat"
-$BackupDir     = "C:\Backups\CabioUAT"
-$LogFile       = Join-Path $BackupDir "backup_log.txt"
-$RetentionDays = 14
+$RepoRoot        = Split-Path -Parent $PSScriptRoot
+$EnvFile         = Join-Path $RepoRoot "backend\.env.uat"
+$BackupDir       = "C:\Backups\CabioUAT"
+$LogFile         = Join-Path $BackupDir "backup_log.txt"
+$RetentionDays   = 14
 $GoogleDrivePath = "G:\My Drive\CabioUATBackups"  # adjust once Google Drive for Desktop is installed
+$DockerDesktopExe    = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+$DockerStartTimeoutSec = 90
+$DockerPollIntervalSec = 5
+$script:DockerStartedByScript = $false
 
 function Write-Log {
     param([string]$Message)
@@ -19,9 +24,55 @@ function Write-Log {
     Write-Host $line
 }
 
+function Test-DockerUp {
+    $prevPref = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
+    docker info *> $null
+    $ErrorActionPreference = $prevPref
+    return ($LASTEXITCODE -eq 0)
+}
+
+function Ensure-DockerRunning {
+    if (Test-DockerUp) {
+        return
+    }
+
+    Write-Log "Docker not running, starting Docker Desktop..."
+    Start-Process -FilePath $DockerDesktopExe
+    $script:DockerStartedByScript = $true
+
+    $elapsed = 0
+    while ($elapsed -lt $DockerStartTimeoutSec) {
+        Start-Sleep -Seconds $DockerPollIntervalSec
+        $elapsed += $DockerPollIntervalSec
+        if (Test-DockerUp) {
+            Write-Log "Docker is up after ${elapsed}s."
+            return
+        }
+    }
+
+    throw "Docker did not come up within $DockerStartTimeoutSec seconds"
+}
+
+function Stop-DockerIfStartedByScript {
+    if (-not $script:DockerStartedByScript) {
+        return
+    }
+
+    Write-Log "Stopping Docker Desktop (started by this script)..."
+    Stop-Process -Name "Docker Desktop" -Force -ErrorAction SilentlyContinue
+    $prevPref = $ErrorActionPreference
+    $ErrorActionPreference = "SilentlyContinue"
+    wsl --shutdown *> $null
+    $ErrorActionPreference = $prevPref
+    Write-Log "Docker Desktop stopped."
+}
+
 New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
 
 try {
+    Ensure-DockerRunning
+
     if (-not (Test-Path $EnvFile)) {
         throw "Env file not found: $EnvFile"
     }
@@ -59,14 +110,18 @@ try {
             Write-Log "Pruned old dump: $($_.Name)"
         }
 
-    if (Test-Path $GoogleDrivePath) {
-        Copy-Item -Path $dumpPath -Destination $GoogleDrivePath -Force
-        Write-Log "Copied to Google Drive: $GoogleDrivePath\$dumpFile"
-    } else {
-        Write-Log "SKIPPED Google Drive copy: path not found ($GoogleDrivePath) — set up Google Drive for Desktop and re-check the path in this script"
-    }
+    # Google Drive copy disabled for now — Google Drive for Desktop not set up yet.
+    # if (Test-Path $GoogleDrivePath) {
+    #     Copy-Item -Path $dumpPath -Destination $GoogleDrivePath -Force
+    #     Write-Log "Copied to Google Drive: $GoogleDrivePath\$dumpFile"
+    # } else {
+    #     Write-Log "SKIPPED Google Drive copy: path not found ($GoogleDrivePath) — set up Google Drive for Desktop and re-check the path in this script"
+    # }
 }
 catch {
     Write-Log "FAILED: $($_.Exception.Message)"
     throw
+}
+finally {
+    Stop-DockerIfStartedByScript
 }
