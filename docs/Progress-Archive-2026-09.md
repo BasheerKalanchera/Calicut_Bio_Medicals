@@ -1124,3 +1124,281 @@ behavior, not bugs, no action taken:**
 
 **Not yet committed** — migration `0039`, `Physical-Schema.sql`, and both the plan and
 discussion-brief docs are staged/uncommitted pending Basheer's manual commit.
+
+---
+
+## 2026-09-05 (later still) — UAT data-quality pass, WON-opportunity immutability gap found
+
+**Account coverage gaps in UAT**, checked via read-only queries (asked/confirmed before
+each run per the UAT-access rule):
+- 12 accounts with zero Opportunities and zero Activity logged at all — two were
+  literal test junk ("Duplicate", "Duplicate."), which Basheer deleted live via the
+  app; re-ran the same query afterward and confirmed 10 genuine accounts remain (AJ
+  Hospital & Research Centre, al shifa, Archish Fertility Centre & IVF Centre
+  Kundalahalli, Aster DM, Forever Women's Clinic, Ganga hospital, Iqraa Hospital
+  Vazhakkad, Ramaiah Medical College Hospital, Rangaswamy, Unity Pediatric Centre).
+- Broadened to "missing either one": 114 accounts total — 22 have an Opportunity but
+  zero Activity logged against it (the more concerning gap, overlaps the existing
+  Backlog item on Order-stage/Won deals closing with no Activity), 80 have Activity
+  but never became an Opportunity (visited/contacted, not converted), plus the 12
+  above missing both.
+
+**Activity-quality spot check, 2026-09-04/05 (52 entries):** mostly solid — named
+contacts, products, next steps. Flagged: Dr.Moopen's Medical College (Haroon) logged
+"Done" twice, one minute apart, identical text — looks like an accidental double-
+submit, not two real interactions. A few other generic entries (Santhi Hospital
+Omesseey "Po collected", KIMS Hospital Koduvally's 09-05 call, Medical Trust
+Hospital's typo-heavy note) lack any name or clear outcome. Om Hiremath's 6
+back-to-back Vijaynagar visits (16:26-16:34) are a good example of consistent,
+specific logging — same standard as Vivek's entries, already cited in the
+data-quality Backlog item. No action taken beyond noting it.
+
+**Real bug found: WON/LOST opportunities aren't actually immutable (BR-OP-09 gap).**
+While investigating a report from Nishad (Area Manager) that he couldn't edit an
+item's price on an opportunity he owns that's marked WON, Basheer (Admin) tried the
+same edit himself and it went through with no error. Traced the discrepancy: BR-OP-09
+says WON/LOST records "remain immutable" and require audit capture for any
+administrative edit, but only the `status_id` field is actually protected —
+`OpportunityService.update_opportunity`'s field-update loop
+(`backend/app/domains/opportunity/service.py:246-247`) runs unconditionally before any
+terminal-status check, and `add_item`/`replace_items` (lines 389-438) have no
+terminal-status check at all. Confirmed at every layer: router, service, the
+`opportunity_item_via_opportunity` RLS policy (visibility-only, no status check), and
+the frontend's `ProductsTab` (no status or role prop passed in at all). Also confirmed
+there's no role-based edit gate anywhere for opportunity items — Admin/GM's only real
+structural advantage is the `opportunity_tier_visibility` overlay-tier clause
+(unconditional access to every opportunity, any zone/SBU/owner), which doesn't apply
+here since Nishad owns the opportunity in question and should have passed RLS on
+ownership alone.
+
+**Nishad's specific block is still unexplained** — no code path found that would stop
+an owner from editing their own WON opportunity's items, Admin or not. Without an
+exact error message or repro from him, this is logged as an open question, not
+resolved. Attempted to check UAT data directly for historical evidence of post-WON
+edits (`opportunity_item.updated_at > created_at` on currently-WON deals) — the query
+came back empty, but that result is **not meaningful**: `OpportunityRepository.
+replace_items` (`repository.py:248-262`) deletes and reinserts every line item on
+every save, so an edited item always gets a fresh, identical `created_at`/`updated_at`
+pair. There is no reliable way to detect a post-close item edit in UAT's existing
+data — it would need either the audit trail extended to `opportunity_item` (noisier
+than `opportunity`'s own trigger, since a full delete-and-reinsert has no clean diff)
+or a dedicated `won_at`/`closed_at` timestamp column, ideally both. Neither exists
+today. Logged to `docs/Backlog.md`, including Basheer's explicit requirement that any
+fix preserve an Admin/GM correction path for genuine data-entry mistakes, not just
+lock the record down.
+
+---
+
+## 2026-09-05 — UAT backup: recurring script built and committed, split from an unrelated parallel-session commit
+
+Built `scripts/backup_uat.ps1`: daily `pg_dump --schema=public` via a throwaway
+`postgres:17` Docker container (same version-matched approach as the prior manual
+dump), reading `ADMIN_DATABASE_URL` from `backend/.env.uat` at runtime rather than
+hardcoding it. Writes to `C:\Backups\CabioUAT`, prunes dumps older than 14 days,
+copies to Google Drive (`G:\My Drive\CabioUATBackups`) when that path exists —
+Google Drive for Desktop isn't installed on this machine yet, confirmed by checking
+`Get-PSDrive` and common mount paths, so that step will silently skip (logged as a
+warning) until Basheer installs it. External-disk copy stays a separate manual
+weekly step, per Basheer's explicit call, rather than folding it into the script.
+
+**Decisions, all Basheer's:** daily run at 07:30 IST; Task Scheduler trigger set to
+"only when logged in" (avoids storing a Windows password, accepted the tradeoff that
+the task won't fire if the machine is locked/off at that time); 14-day local
+retention. The one-time `Register-ScheduledTask` command was handed to Basheer to run
+himself, not run by Claude — matches the standing pattern of Basheer running
+DB-touching/system-level commands directly.
+
+**Committing this ran into an unrelated, already-uncommitted parallel-session
+change:** by the time this was ready to commit, `active_progress.md` showed
+Opportunity Notes Privacy (migration `0039`) had been separately built, migrated, and
+verified live against Dev by Basheer directly in this same working tree — a second,
+fully unrelated uncommitted feature. Split into 4 commits rather than bundling
+everything: `552c0ee` (Opportunity Notes Privacy feat), `ec8b2c4` (this backup
+script), `a135ae7` (docs catch-up for both threads), and a small follow-up `57b202d`
+— two doc corrections (citing the actual commit hashes for the two feat commits) were
+made *after* `a135ae7`'s `git add`, so they were left sitting unstaged post-commit;
+staging is a snapshot, not a live link to the file. Caught by re-running `git status`
+after "everything committed" was reported, per the standing rule to verify handover
+claims against git rather than trust them.
+
+---
+
+## 2026-09-05 — Hospital "Name, City" enforcement: architecture discussion, ends in a naming-convention-only decision, nothing built
+
+Basheer asked whether the Add/Edit Hospital screens could enforce "always add the
+city after the hospital name." Investigated the current data model first:
+`Account` (`backend/app/domains/account/models.py`) has no `city` field at all —
+only `zone_id`, which is a *region* (North Kerala, South Kerala, Bangalore,
+Mangalore), not a city; `name` is a single free-text column, and
+`AddHospitalModal.tsx` has exactly one `Name *` field. No existing structured place
+for "city" to live.
+
+**Three approaches surfaced and compared:**
+1. **Soft pattern rule on the existing `name` field** — cheapest, but easy to game
+   and not real queryable data.
+2. **Dedicated `city` reference table** (id, `zone_id` FK, name) + `account.city_id`,
+   a `CityPicker` component mirroring `ZonePicker.tsx`, and a shared
+   `formatAccountLabel()` helper swapped into every account-name display site.
+3. **Reuse the Zone tree's `TALUK` level to mean "city"** — surfaced because
+   `Zone.zone_level` (`backend/app/domains/reference/models.py:60`) already includes
+   `DISTRICT`/`TALUK` as advisory levels, never actually populated, and `BR-ACC-03`'s
+   own zone-branch dedup logic (`docs/Business-Rules.md:253`) already anticipates an
+   Account's `zone_id` being set at a level deeper than `ZONE` — the data model was
+   seemingly left open for exactly this. Checked `TerritoryAdminScreen.tsx` directly
+   to confirm the real cost: it renders the *entire* zone tree at any depth as one
+   flat Admin/GM rep-territory-assignment view (`ZONE_LEVELS` at line 34), so ~90+
+   city-only `TALUK` leaves would sit inside the same screen used to govern rep
+   assignment — a real coupling risk, not theoretical.
+
+Basheer chose **Option 2** first, specifically to keep "city" (a hospital attribute)
+separate from "zone" (the RLS/territory-assignment boundary). Two follow-on
+governance questions were then raised — who can add a new city to the picklist
+(Admin/GM-only vs. any rep inline), and how to backfill the ~90 existing accounts
+with no city on file (CSV round-trip vs. manual per-account UI entry, Basheer chose
+manual UI entry) — and at that point Basheer judged the whole thing not worth the
+build cost for what it delivers.
+
+**Final decision: no schema change, no new table, no picker.** "Hospital Name, City"
+becomes a naming *convention* on the existing free-text `name` field only — reps
+type the city into the name themselves (e.g. "EMS Cooperative Hospital, Kozhikode"),
+with zero code enforcement. Two minimal artifacts were proposed to support the
+convention (a placeholder-text hint in `AddHospitalModal.tsx`'s Name field, and a
+short note in `docs/Business-Rules.md` documenting the expected format) but **neither
+is built yet** — Basheer's next call whether to do even that much.
+
+## 2026-09-06 — UAT backup: Docker Desktop auto-start/stop added to the script, verified live end-to-end
+
+First manual run of `scripts/backup_uat.ps1` this session **failed immediately**:
+Docker Desktop wasn't running (`failed to connect to the docker API at
+npipe:////./pipe/dockerDesktopLinuxEngine`). Basheer flagged the real problem —
+scheduling a script that assumes Docker is already up defeats the point of
+scheduling it unattended.
+
+**Fix, round 1:** added `Ensure-DockerRunning` — check `docker info`, and if it
+fails, `Start-Process` the Docker Desktop exe and poll every 5s up to a 90s
+timeout before giving up with a clear log line. First re-run **still failed
+immediately**, before the poll loop could even run: `$ErrorActionPreference =
+"Stop"` (set script-wide) turned the native `docker info` command's stderr
+output into a terminating `NativeCommandError` the instant it ran — a known
+PowerShell 5.1 quirk (redirecting a native command's stderr wraps each line as
+an ErrorRecord and sets `$?` false even on success). **Fix, round 2:** extracted
+`Test-DockerUp`, which locally scopes `$ErrorActionPreference = "SilentlyContinue"`
+around the `docker info *> $null` call so only `$LASTEXITCODE` is read, not the
+stream. Re-ran: Docker Desktop launched, came up after 5s, `pg_dump` produced
+`cabio_uat_2026-09-06.dump` (234,055 bytes) in `C:\Backups\CabioUAT`, all logged
+correctly to `backup_log.txt`.
+
+**Design discussion, prompted by Basheer:** leaving Docker Desktop running
+unattended all day (e.g. via its own "start on login" setting) just to cover a
+once-daily backup wastes RAM/CPU for no reason. Basheer's counter-proposal,
+adopted: tie the whole run to logon instead of a fixed clock time — the script
+starts Docker itself (already built), runs the dump, and now also **stops Docker
+Desktop again afterwards, but only if the script itself was the one that
+started it** (tracked via `$script:DockerStartedByScript`, checked in a
+`finally` block so it runs on both success and failure paths) —
+`Stop-Process -Name "Docker Desktop"` plus `wsl --shutdown` to release the WSL2
+VM's memory too. Google Drive mirror step commented out for now (not installed
+yet) — everything else in the script unchanged. Not yet re-tested against a
+cold Docker-not-running state after this change (today's verification run
+happened before this edit); the shutdown path itself hasn't been observed live
+yet. Scheduled-task registration also not done — trigger will be `-AtLogOn`
+instead of the originally planned `Daily -At 7:30AM`, once the shutdown path is
+confirmed.
+
+**Next step, Basheer's to do:** re-run the script tomorrow to confirm Docker
+Desktop actually starts and then shuts down cleanly end to end, then register
+the `-AtLogOn` scheduled task.
+
+## 2026-09-07 — Near-Duplicate Hospital Warning: Haroon decided Option B
+
+**Trigger:** Basheer was compiling the list of unreleased-to-UAT commits to
+showcase to Haroon for signoff, found BR-ACC-03 (near-duplicate hospital
+warning, `e86d49a`) still marked "prototype, pending Haroon's decision" in
+`docs/Business-Rules.md` and the decision brief. Confirmed the code
+(`backend/app/domains/account/service.py:138-159`,
+`account/duplicate_matching.py`) already implements Option B specifically —
+soft-block warning with `force_create=true` override, not an Admin-only
+create restriction (which would have been Option A).
+
+**Decision:** Haroon has chosen Option B. Updated `docs/Business-Rules.md`
+(BR-ACC-03 header/status) and
+`docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md` (status line) from
+"awaiting decision" to "decided 2026-09-07, approved for rollout as-is."
+No code change — the prototype built 2026-08-30 already matches what was
+approved. Still not yet deployed to UAT (`e86d49a` is on `main`, not
+`origin/uat`); goes in this week's UAT showcase/signoff batch alongside the
+other 33 commits ahead of UAT.
+
+## 2026-09-07 (later) — Audit trail scoping beyond the original 4 tables; opportunity_item/split root-cause found; UAT verification; Audit Trail Extension plan written
+
+**Trigger:** while finalizing the Haroon signoff feature list, Basheer asked
+which other tables should get the same audit trail as account/user_profile/
+product/opportunity (`099e54c`), starting from his own observation that
+`opportunity_item` price/quantity edits aren't tracked.
+
+**Scoping discussion, ranked by risk:** recommended `opportunity_item` →
+`split` → `stakeholder` → `marketing_lead` (already a known Backlog gap) →
+`user_zone` → `target_plan`. Basheer correctly pushed back twice: (1)
+`stakeholder` was initially waved off as low-stakes — wrong, it holds the
+actual contact channel (email/phone/WhatsApp) to customer decision-makers
+plus `nps_score`/`sentiment`, both plausible tampering/error targets, added
+to scope. (2) `user_zone` dropped for the right reason — confirmed via code
+(`organization/service.py:14,90-92`) it's already gated to Admin/General
+Manager only (`_USER_WRITE_ROLES`), a small enough trusted circle that an
+audit trail adds little. `target_plan` deferred, not dropped — feature
+isn't built yet — logged as its own Backlog item.
+
+**Real finding: `opportunity_item` and `split` don't do in-place UPDATE at
+all.** Both are edited via delete-all-then-reinsert
+(`opportunity/repository.py:249-260`, `:292-301`) — so the existing generic
+audit trigger would only ever see a DELETE (old values) with no paired
+"changed to" entry, not a clean before→after diff. First proposed accepting
+this as a known trade-off ("look at the current row for the new value") —
+**Basheer rejected this outright** ("that is ridiculous"), correctly: a
+usable audit log needs one readable before→after entry, not a
+delete-and-infer workaround.
+
+**Traced the design's actual origin, since Basheer suspected a compelling
+technical reason was being missed — there wasn't one.** `docs/API-
+Catalog.md:105-111` (Architecture Freeze v1.0, long before ADR-017 existed)
+states the entire justification: "`PUT` (bulk replace) handles deletions
+inherently without needing explicit `DELETE` endpoints" — an endpoint-count
+shortcut for Phase 1, not a performance or concurrency decision (confirmed:
+no latency difference at this row count either way). `docs/ADR.md:45`'s
+SBU-grandfathering rule was built around the same behavior, confirming it
+was a known, deliberate trade-off at the time — just one nobody revisited
+once the audit trail came along later. The original prototype screen
+(`sales-os-app/src/App.jsx`, referenced in `docs/Traceability-Matrix.md:57-
+58`) already had "edit an in-memory list, Save once" before there was a
+formal backend, and the later API was built to match that existing UI
+rather than reconsidering it.
+
+**Fix identified:** thread each row's real identity through the save path
+so an edit becomes a genuine UPDATE — `opportunity_item` needs its `id`
+added back into the save payload (the frontend already has it in
+`editItems`, `OpportunityDetailScreen.tsx:380-384` currently strips it
+before sending) plus a schema/repository change to upsert instead of
+replace; `split` needs no frontend change at all, since `(opportunity_id,
+user_id)` is already a natural unique key the UI already enforces.
+
+**UAT verification, asked/approved before each query per the standing
+rule:** direct `DATABASE_URL` query first reported `opportunity` = 0,
+`opportunity_item` = 0, `split` = 0 against real `account` (211)/
+`stakeholder` (134)/`user_profile` (17) counts — correctly flagged as
+suspicious rather than taken at face value. Root cause: `DATABASE_URL` is
+RLS-constrained and returns 0 rows with no error on protected tables when
+queried outside the app's request context — not evidence of an empty
+table. The `ADMIN_DATABASE_URL` credential (bypasses RLS) would give the
+real number, but invoking it tripped the Claude Code auto-mode classifier
+even for a plain read-only SELECT; Basheer ran it himself and reported
+back: **108 opportunities, 0 split rows** in UAT. Zero `split` rows means
+zero legacy-data risk for that half of the fix — nothing to reconcile.
+New finding saved to memory (`cabio_uat_rls_silent_zero_rows`) so a future
+session doesn't repeat the same false-empty-table mistake.
+
+**Output:** `docs/Audit-Trail-Extension-Implementation-Plan.md` written,
+same structure as the original `docs/Audit-Trail-Implementation-Plan.md`.
+**Start date set to 2026-09-10** — deliberately after the 2026-09-08 UAT
+batch has a week to stabilize, per Basheer's explicit sequencing call.
+`docs/Backlog.md` and `.claude/active_progress.md` both updated with
+pointers (Current task 0b). No code written yet — planning only.

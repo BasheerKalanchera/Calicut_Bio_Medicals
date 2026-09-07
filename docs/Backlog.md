@@ -89,6 +89,16 @@ kept only as a pointer; nothing left to pick up here.
   that "why did this move" becomes a real question — extending the
   existing audit_log trigger to this table would be the natural Phase 2.
 
+- **`target_plan` not covered by the ADR-017 audit trail.** Raised
+  2026-09-07 during the `opportunity_item`/`split`/`stakeholder` audit
+  scoping discussion. Deferred rather than dropped: Target Planning itself
+  isn't built yet, so there's nothing to audit. Add `target_plan` to the
+  `audit_log` trigger list (same generic mechanism, see `docs/Audit-Trail-
+  Extension-Implementation-Plan.md` for the pattern) once that feature
+  ships — targets being quietly adjusted after the fact would undermine
+  any performance conversation built on them, same risk category as the
+  WON-immutability concern.
+
 - **Urgent-notification infrastructure retained for future reuse.** The
   IndiaMART 4-hour-SLA urgent path (`URGENT_LEAD_SOURCE_NAMES` computing
   `is_urgent` in `notify_opportunity_assigned`) was retired 2026-09-02 as
@@ -255,18 +265,71 @@ kept only as a pointer; nothing left to pick up here.
   narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
   2026-09-05 entries.
 
-- **UAT backup/disaster-recovery — recurring script committed `ec8b2c4`,
-  Basheer still to install/schedule/verify it.** Raised 2026-09-04
+- **UAT backup/disaster-recovery — script working end to end 2026-09-06,
+  scheduled Task Scheduler entry not yet registered.** Raised 2026-09-04
   (Latheef Bhai's autonomous-agent-data-loss article prompted the
   question). Free-tier Supabase has no automatic backups; first manual
-  dump taken and verified 2026-09-05. Same day, `scripts/backup_uat.ps1`
-  built: daily `pg_dump --schema=public` via throwaway Docker
-  `postgres:17`, 14-day local retention, mirrors to Google Drive when
-  that path exists, manual weekly external-disk copy stays as-is. See
-  `.claude/active_progress.md` for the exact remaining steps (install
-  Google Drive for Desktop, register the daily 07:30 IST Task Scheduler
-  entry, confirm first live run). Full narrative:
-  `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
+  dump taken and verified 2026-09-05. `scripts/backup_uat.ps1` now
+  starts Docker Desktop itself if it isn't already running (polls up to
+  90s), runs `pg_dump --schema=public` via throwaway Docker `postgres:17`,
+  keeps 14 days locally, then stops Docker Desktop again if the script
+  was the one that started it. Manual run 2026-09-06 confirmed the full
+  auto-start → dump → success path live. Google Drive mirror step is
+  commented out for now (Google Drive for Desktop not installed);
+  manual weekly external-disk copy stays as-is regardless. Trigger
+  design changed from a fixed daily 07:30 IST time to `-AtLogOn`, so the
+  script's own Docker start/stop covers it without needing Docker
+  running unattended all day. See `.claude/active_progress.md` for the
+  exact remaining steps (register the logon-triggered task, verify
+  Docker-shutdown path on a day Docker starts clean, confirm first
+  scheduled run). Full narrative: `docs/Progress-Archive-2026-09.md`'s
+  2026-09-04, 2026-09-05 and 2026-09-06 entries.
+
+- **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,
+  found live 2026-09-05.** BR-OP-09 says historical WON/LOST records
+  "remain immutable" and any administrative modification "must be
+  captured in audit history," but today only the Status field itself is
+  protected. Confirmed live: changed a product's price on an opportunity
+  already marked WON with no error, no warning. Checked every layer —
+  router, `OpportunityService.update_opportunity`/`add_item`/
+  `replace_items` (`backend/app/domains/opportunity/service.py`), the
+  `opportunity_item_via_opportunity` RLS policy, and the frontend's
+  `ProductsTab` (`OpportunityDetailScreen.tsx`) — none of them check
+  `current_is_terminal` for anything except an explicit `status_id`
+  change. Stage and every other field (price, quantity, items, PO
+  number, owner, etc.) go through unguarded, and none of it is caught by
+  the ADR-017 audit trail either, since that only covers the
+  `opportunity` table's own scalar columns, not `opportunity_item`.
+  **Basheer's call:** don't just lock it down — a correction path is
+  still needed for genuine data-entry mistakes made before marking a
+  deal Won. Likely shape: block terminal-opportunity edits for the
+  normal team, but leave an explicit Admin/GM-only override path (same
+  "administrative modification" language BR-OP-09 already uses),
+  captured by the audit trail. Not scoped or built yet.
+  **Open question, not resolved:** the bug was originally reported by
+  Nishad (Area Manager), who said he couldn't edit an item's price on an
+  opportunity **he owns** that's marked WON — Basheer (Admin) then tried
+  the same edit and it worked. Since ownership alone should pass RLS
+  regardless of role, and no role-based edit gate exists anywhere in the
+  code (checked router, service, RLS, and frontend), Nishad's specific
+  block is unexplained — no error message or repro captured yet. Needs a
+  live retry with the actual error text/screenshot before concluding
+  whether this is a second real bug or an unrelated UI issue.
+  **Audit trail extension, discussed not decided:** extending the
+  ADR-017 audit trigger to `opportunity_item` would help going forward,
+  but `OpportunityRepository.replace_items` deletes and reinserts every
+  line item on every save (not an in-place `UPDATE`), so it would log a
+  full delete of every item on every save rather than a clean per-field
+  diff like `opportunity`'s own trigger gives — noisier, but usable
+  (DELETE `old_data` + timestamp is enough to tell "was this touched, and
+  when"). A dedicated `won_at`/`closed_at` timestamp on `opportunity`
+  would answer "was this edited after Won" more directly and doesn't
+  depend on the audit trail — leaning toward doing both together rather
+  than picking one. **Cannot be applied retroactively to UAT's existing
+  history either way** — confirmed live: `opportunity_item.updated_at >
+  created_at` returns zero rows on UAT today, but that's not a clean
+  finding — it's a false negative caused by the delete-and-reinsert
+  pattern above, not evidence that no post-close edits ever happened.
 
 - **Duplicate hospital names in the Customer Directory — Option B built
   and committed (`e86d49a`, 2026-08-31); not Haroon's decision status

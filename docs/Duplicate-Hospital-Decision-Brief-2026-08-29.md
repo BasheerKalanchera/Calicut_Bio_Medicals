@@ -2,11 +2,10 @@
 
 **Date:** 2026-08-29
 **Raised by:** Basheer, during the extended sales team walkthrough
-**Status:** Awaiting Haroon's decision. Option B has been built and validated as a
+**Status:** Decided 2026-09-07 — Haroon chose **Option B**. Built and validated as a
 prototype (2026-08-30) against two real incidents that happened while this brief
 was still pending — see BR-ACC-03 in `docs/Business-Rules.md` for what was built
-and its known trade-offs. It is not rolled out to the sales team; that's still
-Haroon's call between Option A and Option B below.
+and its known trade-offs. Approved for rollout to the sales team as-is.
 
 ## The problem
 

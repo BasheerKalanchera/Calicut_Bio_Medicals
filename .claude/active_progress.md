@@ -1,7 +1,32 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-04_
+_Session: 2026-08-21 → 2026-09-07_
 
 ## Pending, awaiting Haroon / not yet actioned
+
+**WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
+live 2026-09-05, not yet fixed.** Confirmed a product's price can be
+changed on an opportunity already marked WON with no error — only the
+`status_id` field itself is protected, not stage/price/items/owner/etc.,
+and none of it is caught by the audit trail (`opportunity_item` isn't
+covered — fix planned, see Current task 0b below). Basheer's explicit requirement: any fix must keep an
+Admin/GM-only correction path for genuine data-entry mistakes, not just
+lock terminal opportunities down entirely. **Open, unresolved sub-
+question:** Nishad (Area Manager, owns the opportunity in question)
+reported he couldn't make the same edit that Basheer (Admin) could — no
+role-based gate found anywhere in the code, so this is unexplained
+pending a live repro with the actual error text. Full detail: `docs/
+Backlog.md`'s WON/LOST entry; full narrative: `docs/Progress-
+Archive-2026-09.md`'s "2026-09-05 (later still)" entry.
+
+**UAT data-quality pass, same session, no action pending:** 10 accounts
+(after Basheer deleted 2 junk "Duplicate" rows live) have zero
+Opportunities and zero Activity; 22 more have an Opportunity but zero
+Activity logged (ties into the existing Order-stage-zero-Activity
+Backlog item); 80 have Activity but never became an Opportunity.
+Activity-quality spot check on 52 entries logged 2026-09-04/05 mostly
+solid, flagged one likely accidental double-submit (Dr.Moopen's Medical
+College, "Done"/"Done" a minute apart) and a few generic entries. Full
+detail: same Progress Archive entry as above.
 
 **Opportunity Notes Privacy — built, migrated (0039), all 8 verification
 steps passed live against Dev 2026-09-05. Committed `552c0ee`.** Haroon
@@ -39,34 +64,54 @@ behavior, not bugs — logged for the record, no action taken:**
 Full narrative: `docs/Progress-Archive-2026-09.md`'s
 2026-09-04 and 2026-09-05 entries. Also tracked in `docs/Backlog.md`.
 
-**UAT backup/disaster-recovery — recurring script committed `ec8b2c4`, not yet scheduled or run by Basheer.**
+**UAT backup/disaster-recovery — script verified working live 2026-09-06, scheduled task still not registered.**
 Free-tier Supabase has no automatic backups; first manual dump taken
 2026-09-05 (`cabio_uat_2026-09-05.dump`, 204 KB compressed,
 `pg_restore --list` verified complete against the 4-table UAT/main
 migration gap — expected, UAT is behind head). UAT is tiny (13 MB total,
 ~408 KB `public` schema) so sizing/incremental-backup complexity isn't a
-concern. **Built same day: `scripts/backup_uat.ps1`** — same throwaway
-Docker `postgres:17` `pg_dump --schema=public` approach, reads
-`ADMIN_DATABASE_URL` from `backend/.env.uat`, writes to
-`C:\Backups\CabioUAT`, prunes dumps older than 14 days, copies to Google
-Drive (`G:\My Drive\CabioUATBackups`, skips with a log warning if that
-path doesn't exist yet), logs every run to `backup_log.txt`. External-
-disk copy stays a manual weekly step per Basheer's call — not automated.
-**Next step, Basheer's to do:**
-1. Install Google Drive for Desktop if not already done, confirm/adjust
-   the `$GoogleDrivePath` variable at the top of the script to match.
-2. Register the daily 07:30 IST scheduled task (command already
-   supplied in-conversation; runs only while logged in, per Basheer's
-   choice — no Windows password stored):
+concern. **`scripts/backup_uat.ps1`** — throwaway Docker `postgres:17`
+`pg_dump --schema=public` approach, reads `ADMIN_DATABASE_URL` from
+`backend/.env.uat`, writes to `C:\Backups\CabioUAT`, prunes dumps older
+than 14 days, logs every run to `backup_log.txt`. Google Drive mirror
+step is commented out for now (Google Drive for Desktop not installed).
+External-disk copy stays a manual weekly step per Basheer's call — not
+automated.
+
+**2026-09-06: manual run failed first (Docker Desktop wasn't running),
+then failed again after a naive fix (PowerShell 5.1 turned the
+`docker info` stderr redirect into a terminating error under
+`$ErrorActionPreference = "Stop"`), then succeeded** once
+`Test-DockerUp` locally scoped `SilentlyContinue` around that check.
+Script now: checks if Docker Desktop is running, starts it and polls up
+to 90s if not, runs the dump, then **stops Docker Desktop again
+afterwards if the script itself was the one that started it** (tracked
+via `$script:DockerStartedByScript`, in a `finally` block so it runs on
+both success and failure) — avoids Docker sitting idle all day just for
+one daily dump. Verified live: Docker auto-start → `pg_dump` →
+`cabio_uat_2026-09-06.dump` (234,055 bytes) all succeeded and logged
+correctly. **Not yet verified: the shutdown-after path** (today's
+successful run happened before that code was added).
+
+**Design change:** scheduled-task trigger will be `-AtLogOn` instead of
+the originally planned `Daily -At 7:30AM`, since the script now handles
+its own Docker start/stop — ties the backup to "logged in" (already the
+constraint, no stored password) without needing Docker running
+unattended all day.
+
+**Next step, Basheer's to do (re-run planned for tomorrow):**
+1. Re-run the script from a cold state (Docker not already running) to
+   confirm the full start → dump → **stop** cycle works end to end.
+2. Once confirmed, register the logon-triggered scheduled task:
    ```powershell
    $action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"C:\Users\Basheer\GitHub\Calicut_Bio_Medicals\scripts\backup_uat.ps1`""
-   $trigger = New-ScheduledTaskTrigger -Daily -At 7:30AM
-   Register-ScheduledTask -TaskName "CabioUATBackup" -Action $action -Trigger $trigger -Description "Daily UAT pg_dump backup"
+   $trigger = New-ScheduledTaskTrigger -AtLogOn
+   Register-ScheduledTask -TaskName "CabioUATBackup" -Action $action -Trigger $trigger -Description "UAT pg_dump backup, runs at logon"
    ```
-3. Confirm the first live run (reads UAT, read-only) succeeds and appears
-   in `backup_log.txt`.
+3. Confirm the first scheduled run succeeds and appears in `backup_log.txt`.
 New CLAUDE.md rule came out of this thread too (below). Full narrative:
-`docs/Progress-Archive-2026-09.md`'s 2026-09-04 and 2026-09-05 entries.
+`docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05 and
+2026-09-06 entries.
 
 **CLAUDE.md — new UAT-access safety rule, uncommitted.** Never connect
 directly to the UAT Supabase project (`backend/.env.uat`), even
@@ -91,6 +136,24 @@ scoped later. (2) 11 unrelated stale doc-only files (pre-dating this
 session, zero overlap with Lead Management) caught up and committed.
 Full narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-02 (later)"
 entry.
+
+## Current task 0b — Audit Trail Extension (opportunity_item/split/stakeholder): planned, start 2026-09-10
+
+Not yet built. Full plan: `docs/Audit-Trail-Extension-Implementation-Plan.md`.
+Deliberately starts after the 2026-09-08 UAT batch has a week to stabilize.
+Real work isn't the new triggers (trivial reuse of the existing
+`audit_log_row_change()` function) — it's fixing `opportunity_item`/`split`,
+which today are edited via delete-all-then-reinsert
+(`opportunity/repository.py:249-260`, `:292-301`), not in-place UPDATE, so
+the trigger alone would only show "row deleted," not a clean before→after
+diff. Fix threads each row's `id` (items) or `(opportunity_id, user_id)`
+(splits) through the save path so a real edit becomes a real UPDATE.
+Confirmed 2026-09-07 against live UAT: 108 opportunities exist (all
+unaffected by this fix — purely forward-acting, no backfill); `split` table
+has zero rows today, so no legacy dedup risk there. `stakeholder` needs no
+save-path change, already edited in place — just needs the trigger.
+`target_plan`'s own audit-trail gap is tracked separately in
+`docs/Backlog.md`, deferred until Target Planning itself is built.
 
 ## Current task 1 — BR-ACC-03 (duplicate hospital): committed, manual E2E plan not yet confirmed complete
 
@@ -287,5 +350,16 @@ classifier regardless of chat approval. Basheer runs these himself
 (`!`-prefixed or his own terminal). Read-only SQL (SELECT queries via a
 python/psycopg2 script, using `.venv/Scripts/python.exe` directly — Git
 Bash mis-resolves `source .venv/Scripts/activate` on this machine) runs
-fine without tripping the classifier — used repeatedly this session for
-UAT diagnostics with no issue.
+fine without tripping the classifier when using the normal app-role
+connection string — used repeatedly this session for UAT diagnostics with
+no issue.
+
+**New finding, 2026-09-07:** the normal app-role connection is RLS-
+constrained, so a raw script query on an RLS-protected table can silently
+return 0 rows with no error, indistinguishable from "table is empty" (hit
+this checking the Opportunity count: showed 0, reality was 108, confirmed
+once Basheer ran the elevated query himself). The elevated/admin
+connection string bypasses RLS and gives the real count, but using it
+trips the classifier even for a plain read-only SELECT, so it has to be
+run by Basheer directly. Takeaway: never trust a low/zero count from the
+normal connection on an RLS-protected table without cross-checking.
