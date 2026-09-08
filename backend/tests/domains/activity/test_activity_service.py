@@ -28,6 +28,7 @@ from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
 from app.domains.activity.service import ActivityService, ReminderService
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
 # ---------------------------------------------------------------------------
@@ -75,6 +76,10 @@ def _make_current_user(role_name: str = "Admin", **overrides) -> MagicMock:
     role.role_name = role_name
     user.role = role
     return user
+
+
+def _make_notification_service() -> MagicMock:
+    return MagicMock(spec=NotificationService)
 
 
 def _make_reminder_repo() -> MagicMock:
@@ -132,7 +137,11 @@ class TestListByAccount:
     def test_raises_not_found_when_account_missing(self):
         repo = _make_activity_repo()
         repo.account_exists.return_value = False
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         with pytest.raises(NotFoundError):
             svc.list_by_account(ACCOUNT_ID, page=1, page_size=50)
@@ -145,7 +154,11 @@ class TestListByAccount:
         repo = _make_activity_repo()
         activities = [_make_activity(), _make_activity(id=uuid.uuid4())]
         repo.list_by_account.return_value = activities
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         items, total = svc.list_by_account(ACCOUNT_ID, page=1, page_size=50)
 
@@ -156,7 +169,11 @@ class TestListByAccount:
     def test_calculates_offset_from_page(self):
         repo = _make_activity_repo()
         repo.count_by_account.return_value = 0
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         svc.list_by_account(ACCOUNT_ID, page=3, page_size=20)
 
@@ -164,7 +181,11 @@ class TestListByAccount:
 
     def test_page_1_has_zero_offset(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         svc.list_by_account(ACCOUNT_ID, page=1, page_size=10)
 
@@ -179,7 +200,11 @@ class TestListAccountOpportunitiesLookup:
     def test_raises_not_found_when_account_missing(self):
         repo = _make_activity_repo()
         repo.account_exists.return_value = False
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         with pytest.raises(NotFoundError):
             svc.list_account_opportunities_lookup(ACCOUNT_ID)
@@ -191,7 +216,11 @@ class TestListAccountOpportunitiesLookup:
         repo = _make_activity_repo()
         expected = [(OPP_ID, "Some Deal"), (uuid.uuid4(), "Another Deal")]
         repo.list_account_opportunities_lookup.return_value = expected
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         result = svc.list_account_opportunities_lookup(ACCOUNT_ID)
 
@@ -207,7 +236,11 @@ class TestListByProject:
     def test_raises_not_found_when_project_missing(self):
         repo = _make_activity_repo()
         repo.project_exists.return_value = False
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         with pytest.raises(NotFoundError):
             svc.list_by_project(PROJECT_ID, page=1, page_size=50)
@@ -217,7 +250,11 @@ class TestListByProject:
         activities = [_make_activity(project_id=PROJECT_ID), _make_activity(id=uuid.uuid4(), project_id=PROJECT_ID)]
         repo.list_by_project.return_value = activities
         repo.count_by_project.return_value = 2
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         items, total = svc.list_by_project(PROJECT_ID, page=1, page_size=50)
 
@@ -226,7 +263,11 @@ class TestListByProject:
 
     def test_calculates_offset_from_page(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         svc.list_by_project(PROJECT_ID, page=3, page_size=20)
 
@@ -234,7 +275,11 @@ class TestListByProject:
 
     def test_page_1_has_zero_offset(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         svc.list_by_project(PROJECT_ID, page=1, page_size=10)
 
@@ -248,7 +293,11 @@ class TestListByProject:
 class TestListDailyReport:
     def test_converts_report_date_to_ist_range(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
         current_user = _make_current_user("Admin")
 
         svc.list_daily_report(current_user, date(2026, 8, 6), page=1, page_size=50)
@@ -265,7 +314,11 @@ class TestListDailyReport:
 
     def test_calculates_offset_from_page(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6), page=3, page_size=20)
 
@@ -275,7 +328,11 @@ class TestListDailyReport:
 
     def test_forwards_explicit_user_id_filter(self):
         repo = _make_activity_repo()
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
         target_user = uuid.uuid4()
 
         svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6), user_id=target_user)
@@ -288,7 +345,11 @@ class TestListDailyReport:
         activities = [_make_activity(), _make_activity(id=uuid.uuid4())]
         repo.list_by_date.return_value = activities
         repo.count_by_date.return_value = 2
-        svc = ActivityService(repository=repo, reminder_repository=_make_reminder_repo())
+        svc = ActivityService(
+            repository=repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=_make_notification_service(),
+        )
 
         items, total = svc.list_daily_report(_make_current_user("Admin"), date(2026, 8, 6))
 
@@ -322,7 +383,11 @@ class TestLogActivity:
         activity_repo = activity_repo or _make_activity_repo()
         reminder_repo = reminder_repo or _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        return ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        return ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
     def test_raises_not_found_when_account_missing(self):
         repo = _make_activity_repo()
@@ -503,7 +568,11 @@ class TestLogActivityReminderCreation:
         activity_repo.create.return_value = activity
         reminder_repo = _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         svc.log_activity(self._data(), created_by=ACTOR_ID)
 
@@ -515,7 +584,11 @@ class TestLogActivityReminderCreation:
         activity_repo.create.return_value = _make_activity(user_id=USER_ID)
         reminder_repo = _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         svc.log_activity(self._data(next_action_owner_id=None), created_by=ACTOR_ID)
 
@@ -528,7 +601,11 @@ class TestLogActivityReminderCreation:
         activity_repo.create.return_value = _make_activity(user_id=USER_ID)
         reminder_repo = _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         svc.log_activity(self._data(next_action_owner_id=explicit_owner), created_by=ACTOR_ID)
 
@@ -540,7 +617,11 @@ class TestLogActivityReminderCreation:
         activity_repo.create.return_value = _make_activity()
         reminder_repo = _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         svc.log_activity(
             self._data(next_action_text="Call the biomedical engineer", next_action_due_date=NOW),
@@ -557,7 +638,11 @@ class TestLogActivityReminderCreation:
         activity_repo.create.return_value = _make_activity()
         reminder_repo = _make_reminder_repo()
         reminder_repo.create.return_value = _make_reminder()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         svc.log_activity(self._data(), created_by=ACTOR_ID)
 
@@ -569,7 +654,11 @@ class TestLogActivityReminderCreation:
         activity_repo = _make_activity_repo()
         activity_repo.create.return_value = _make_activity(activity_type="MANAGER_NOTE")
         reminder_repo = _make_reminder_repo()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         result = svc.log_activity(
             self._data(
@@ -583,6 +672,73 @@ class TestLogActivityReminderCreation:
         reminder_repo.create.assert_not_called()
         assert result[1] is None
 
+    def test_manager_note_notifies_the_rep_it_was_logged_against(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(
+            activity_type="MANAGER_NOTE", user_id=USER_ID
+        )
+        notification_service = _make_notification_service()
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=notification_service,
+        )
+
+        svc.log_activity(
+            self._data(
+                activity_type="MANAGER_NOTE",
+                next_action_text=None,
+                next_action_due_date=None,
+                is_urgent=True,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        notification_service.notify_manager_note_added.assert_called_once_with(
+            recipient_user_id=USER_ID,
+            activity_id=ACTIVITY_ID,
+            actor_id=ACTOR_ID,
+            is_urgent=True,
+        )
+
+    def test_manager_note_logged_against_self_does_not_notify(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(
+            activity_type="MANAGER_NOTE", user_id=ACTOR_ID
+        )
+        notification_service = _make_notification_service()
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=notification_service,
+        )
+
+        svc.log_activity(
+            self._data(
+                activity_type="MANAGER_NOTE",
+                user_id=ACTOR_ID,
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        notification_service.notify_manager_note_added.assert_not_called()
+
+    def test_non_manager_note_activity_does_not_notify(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(activity_type="VISIT", user_id=USER_ID)
+        notification_service = _make_notification_service()
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=_make_reminder_repo(),
+            notification_service=notification_service,
+        )
+
+        svc.log_activity(self._data(), created_by=ACTOR_ID)
+
+        notification_service.notify_manager_note_added.assert_not_called()
+
     def test_sales_development_type_creates_no_reminder(self):
         # BR-ACT-04 exemption widened by BR-ACT-09 -- same shape as the
         # MANAGER_NOTE case above.
@@ -591,7 +747,11 @@ class TestLogActivityReminderCreation:
             account_id=None, activity_type="SALES_TRAINING"
         )
         reminder_repo = _make_reminder_repo()
-        svc = ActivityService(repository=activity_repo, reminder_repository=reminder_repo)
+        svc = ActivityService(
+            repository=activity_repo,
+            reminder_repository=reminder_repo,
+            notification_service=_make_notification_service(),
+        )
 
         result = svc.log_activity(
             self._data(
@@ -636,6 +796,25 @@ class TestActivityCreateValidation:
     def test_non_manager_note_without_next_action_due_date_raises(self):
         with pytest.raises(pydantic.ValidationError):
             ActivityCreate(**self._data(activity_type="CALL", next_action_due_date=None))
+
+    def test_is_urgent_on_non_manager_note_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ActivityCreate(**self._data(activity_type="VISIT", is_urgent=True))
+
+    def test_is_urgent_on_manager_note_succeeds(self):
+        data = ActivityCreate(
+            **self._data(
+                activity_type="MANAGER_NOTE",
+                next_action_text=None,
+                next_action_due_date=None,
+                is_urgent=True,
+            )
+        )
+        assert data.is_urgent is True
+
+    def test_is_urgent_defaults_to_false(self):
+        data = ActivityCreate(**self._data(activity_type="VISIT"))
+        assert data.is_urgent is False
 
     def test_manager_note_without_next_action_fields_succeeds(self):
         data = ActivityCreate(

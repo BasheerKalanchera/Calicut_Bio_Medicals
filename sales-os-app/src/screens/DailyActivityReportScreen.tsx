@@ -88,7 +88,9 @@ function ReportRow({
         </Box>
 
         <Box sx={{ fontSize: "10px", fontWeight: 700, color: "#6b7280", mb: (row.notes || row.outcome_notes) ? 0.5 : 0 }}>
-          {row.user.display_name}
+          {/* row.user is who this is logged AGAINST (BR-ACT-04), not who wrote
+              it -- see ActivityTimeline.tsx's matching comment. */}
+          {row.created_by_user?.display_name ?? row.user.display_name}
         </Box>
 
         {/* Labels only shown when both notes and outcome_notes are present

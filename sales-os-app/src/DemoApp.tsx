@@ -129,14 +129,15 @@ export default function DemoApp() {
     openLogActivityRef.current = () => setShowLogActivity(true);
   }, []);
 
-  function handleSelectAccount(account: { id: string; name: string }) {
+  function handleSelectAccount(account: { id: string; name: string }, initialTab?: string) {
     // Only capture the return view when entering from elsewhere — Customer360Screen
     // also calls this internally for parent/child account links, and in that case
     // view is already "customer360", so capturing it would make Back a no-op.
     if (view !== "customer360") setAccountReturnView(view);
     // Any fresh account open (including a parent/child link to a different
-    // account) should start on Overview, not whatever tab a prior visit left.
-    setCustomer360InitialTab(undefined);
+    // account) starts on Overview by default -- callers that need a specific
+    // tab (e.g. a Manager Note notification landing on Activity) pass one.
+    setCustomer360InitialTab(initialTab);
     setSelectedAccount(account);
     setView("customer360");
   }
@@ -414,6 +415,7 @@ export default function DemoApp() {
             {!isMarketingUser && (
               <NotificationBell
                 onSelectOpportunity={handleSelectOpportunity}
+                onSelectAccount={handleSelectAccount}
                 onSelectMarketingLead={() => setView("marketingLeadQueue")}
               />
             )}
@@ -461,6 +463,7 @@ export default function DemoApp() {
       <LoginRemindersDialog onReview={handleReviewLoginReminders} />
       <UrgentNotificationDialog
         onSelectOpportunity={handleSelectOpportunity}
+        onSelectAccount={handleSelectAccount}
         dismissedAt={urgentDialogDismissedAt}
         onDismiss={() => setUrgentDialogDismissedAt(Date.now())}
       />

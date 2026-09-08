@@ -5,17 +5,23 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
+from app.domains.activity.models import Activity
 from app.domains.marketing_lead.models import MarketingLead
 from app.domains.notification.models import Notification
 from app.domains.opportunity.models import Opportunity
 
-# (Notification, opportunity name, account name) -- account/opportunity are
-# outer-joined and resolved at read time (no denormalization onto the row),
-# same pattern as ReminderRepository's activity/account context. account name
-# is resolved from whichever polymorphic entity_type the row actually has
-# (opportunity's account, or a marketing_lead's account) -- see
-# _enriched_select's coalesce.
-NotificationRow = tuple[Notification, str | None, str | None]
+# (Notification, opportunity name, account name, account_id, opportunity_id)
+# -- account/opportunity are outer-joined and resolved at read time (no
+# denormalization onto the row), same pattern as ReminderRepository's
+# activity/account context. account name is resolved from whichever
+# polymorphic entity_type the row actually has (opportunity's account, or a
+# marketing_lead's account) -- see _enriched_select's coalesce. account_id/
+# opportunity_id are only populated for entity_type == "activity" today
+# (MANAGER_NOTE_ADDED, docs/Manager-Note-Notification-Implementation-Plan.md)
+# -- the frontend needs them to know which detail screen to open, since an
+# Activity has no detail screen of its own (unlike Opportunity, where
+# entity_id already doubles as the navigable id).
+NotificationRow = tuple[Notification, str | None, str | None, uuid.UUID | None, uuid.UUID | None]
 
 
 class NotificationRepository(BaseRepository[Notification]):
@@ -24,6 +30,7 @@ class NotificationRepository(BaseRepository[Notification]):
 
     def _enriched_select(self):
         marketing_lead_account = Account.__table__.alias("marketing_lead_account")
+        activity_account = Account.__table__.alias("activity_account")
         return (
             select(
                 Notification,
@@ -31,7 +38,10 @@ class NotificationRepository(BaseRepository[Notification]):
                 case(
                     (Notification.entity_type == "opportunity", Account.name),
                     (Notification.entity_type == "marketing_lead", marketing_lead_account.c.name),
+                    (Notification.entity_type == "activity", activity_account.c.name),
                 ),
+                Activity.account_id,
+                Activity.opportunity_id,
             )
             .outerjoin(
                 Opportunity,
@@ -49,6 +59,14 @@ class NotificationRepository(BaseRepository[Notification]):
                 ),
             )
             .outerjoin(marketing_lead_account, marketing_lead_account.c.id == MarketingLead.account_id)
+            .outerjoin(
+                Activity,
+                and_(
+                    Notification.entity_type == "activity",
+                    Activity.id == Notification.entity_id,
+                ),
+            )
+            .outerjoin(activity_account, activity_account.c.id == Activity.account_id)
             .options(joinedload(Notification.actor))
         )
 

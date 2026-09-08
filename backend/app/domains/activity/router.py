@@ -20,6 +20,8 @@ from app.domains.activity.schemas import (
     ReminderUpdate,
 )
 from app.domains.activity.service import ActivityService, ReminderService
+from app.domains.notification.repository import NotificationRepository
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
 router = APIRouter(tags=["Activities & Reminders"])
@@ -29,6 +31,7 @@ def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:  # 
     return ActivityService(
         repository=ActivityRepository(db),
         reminder_repository=ReminderRepository(db),
+        notification_service=NotificationService(repository=NotificationRepository(db)),
     )
 
 

@@ -11,8 +11,9 @@ import {
   ListItemButton,
   ListItemText,
 } from "@mui/material";
-import { getUnreadCount, listUrgentUnread } from "../services/notifications";
+import { getUnreadCount, listUrgentUnread, markNotificationRead } from "../services/notifications";
 import type { NotificationResponse } from "../types/api-aliases";
+import { describeNotification } from "../utils/notificationDescribe";
 
 // Originally built for the IndiaMART lead SLA: Cabio had to respond to an
 // IndiaMART-sourced lead within 4 hours to get credit for the buylead, so a
@@ -36,10 +37,15 @@ import type { NotificationResponse } from "../types/api-aliases";
 // not silence-forever-able by accident.
 export default function UrgentNotificationDialog({
   onSelectOpportunity,
+  onSelectAccount,
   dismissedAt,
   onDismiss,
 }: {
-  onSelectOpportunity: (opportunity: { id: string; name: string }) => void;
+  onSelectOpportunity: (opportunity: { id: string; name: string }, detailTab?: string) => void;
+  // Only used by MANAGER_NOTE_ADDED when the note is Account-only (no
+  // opportunity_id) -- every other urgent notification type navigates via
+  // onSelectOpportunity instead.
+  onSelectAccount: (account: { id: string; name: string }, initialTab?: string) => void;
   // Epoch ms of the last dismissal -- compared against the urgent-unread
   // query's own dataUpdatedAt below, so the dialog stays hidden only until
   // the *next* poll actually lands (not silence-forever-able by accident).
@@ -79,7 +85,24 @@ export default function UrgentNotificationDialog({
   });
 
   function handleReview(n: NotificationResponse) {
-    onSelectOpportunity({ id: n.entity_id, name: n.opportunity_name ?? "Opportunity" });
+    if (n.type === "MANAGER_NOTE_ADDED") {
+      // entity_id here is the Activity id, not an Opportunity id -- unlike
+      // every type below, it has no detail screen of its own. Navigate via
+      // opportunity_id when the note is tied to a deal, else account_id
+      // (same branching as NotificationBell.tsx's handleSelect). No GET-by-id
+      // route to piggyback a read receipt on, so mark it explicitly.
+      markNotificationRead("activity", n.entity_id);
+      if (n.opportunity_id) {
+        onSelectOpportunity(
+          { id: n.opportunity_id, name: n.opportunity_name ?? "Opportunity" },
+          "activity",
+        );
+      } else if (n.account_id) {
+        onSelectAccount({ id: n.account_id, name: n.account_name ?? "Account" }, "activity");
+      }
+    } else {
+      onSelectOpportunity({ id: n.entity_id, name: n.opportunity_name ?? "Opportunity" });
+    }
     setPickerOpen(false);
     // Deliberately NOT ["notifications"] (which would also sweep up
     // urgent-unread by prefix match) -- that reintroduces the exact race
@@ -108,14 +131,14 @@ export default function UrgentNotificationDialog({
   return (
     <>
       <Dialog open={!pickerOpen} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ color: "#dc2626" }}>Urgent: IndiaMART Lead{urgent.length === 1 ? "" : "s"}</DialogTitle>
+        <DialogTitle sx={{ color: "#dc2626" }}>Urgent Notification{urgent.length === 1 ? "" : "s"}</DialogTitle>
         <DialogContent>
           <List disablePadding>
             {urgent.map((n) => (
               <ListItem key={n.id} disablePadding sx={{ py: 1, borderBottom: "1px solid #f3f4f6" }}>
                 <ListItemText
                   primary={n.account_name ?? n.opportunity_name ?? "Opportunity"}
-                  secondary={`Assigned by ${n.actor.display_name} — respond within 4 hours for buylead credit.`}
+                  secondary={describeNotification(n)}
                   slotProps={{
                     primary: { sx: { fontWeight: 700, fontSize: "0.875rem" } },
                     secondary: { sx: { fontSize: "0.75rem" } },
@@ -134,7 +157,7 @@ export default function UrgentNotificationDialog({
       </Dialog>
 
       <Dialog open={pickerOpen} maxWidth="sm" fullWidth onClose={() => setPickerOpen(false)}>
-        <DialogTitle sx={{ color: "#dc2626" }}>Tap a Lead to Review</DialogTitle>
+        <DialogTitle sx={{ color: "#dc2626" }}>Tap One to Review</DialogTitle>
         <DialogContent>
           <List disablePadding>
             {urgent.map((n) => (
@@ -146,10 +169,10 @@ export default function UrgentNotificationDialog({
                       n.opportunity_name ? (
                         <>
                           <span style={{ fontWeight: 700, color: "#1d4ed8" }}>{n.opportunity_name}</span>
-                          {` — Assigned by ${n.actor.display_name}`}
+                          {` — ${describeNotification(n)}`}
                         </>
                       ) : (
-                        `Assigned by ${n.actor.display_name}`
+                        describeNotification(n)
                       )
                     }
                     slotProps={{

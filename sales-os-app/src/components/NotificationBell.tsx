@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge, Box, IconButton, List, ListItemButton, ListItemText, Popover, Typography } from "@mui/material";
-import { getUnreadCount, listNotifications } from "../services/notifications";
+import { getUnreadCount, listNotifications, markNotificationRead } from "../services/notifications";
 import type { NotificationResponse } from "../types/api-aliases";
-import { marketingLeadRef } from "../utils/marketingLeadMilestone";
+import { describeNotification } from "../utils/notificationDescribe";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -12,33 +12,20 @@ function formatDate(iso: string) {
   });
 }
 
-function describe(n: NotificationResponse): string {
-  const who = n.actor.display_name;
-  if (n.type === "MARKETING_LEAD_ASSIGNED") {
-    // A marketing lead has no name/title of its own (unlike an Opportunity),
-    // so a reassigned-then-reassigned-back lead produces two notifications
-    // that otherwise read as identical events ("assigned you a marketing
-    // lead") -- weeks later there's no way to tell they're the same lead,
-    // not two different ones, or notice the system silently reused an id.
-    // entity_id is the same underlying marketing_lead row across all its
-    // notifications -- marketingLeadRef shows consistently everywhere a
-    // lead appears (this bell, the queue cards, the Marketing User's own
-    // list), letting it visually recur without a backend lookup (Basheer,
-    // 2026-09-03: keep this simple, don't build a live-status enrichment).
-    return `${who} assigned you marketing lead ${marketingLeadRef(n.entity_id)}`;
-  }
-  const what = n.opportunity_name ?? "an Opportunity";
-  if (n.type === "GATE_OVERRIDE_NAMED") {
-    return `${who} named you as approving manager for ${what}`;
-  }
-  return `${who} assigned you ${what}`;
-}
-
 export default function NotificationBell({
   onSelectOpportunity,
+  onSelectAccount,
   onSelectMarketingLead,
 }: {
-  onSelectOpportunity: (opportunity: { id: string; name: string }) => void;
+  // detailTab lets MANAGER_NOTE_ADDED land straight on the Opportunity's
+  // Activity tab (DemoApp's handleSelectOpportunity already supports this
+  // second param -- OPPORTUNITY_ASSIGNED/GATE_OVERRIDE_NAMED just never
+  // needed it before).
+  onSelectOpportunity: (opportunity: { id: string; name: string }, detailTab?: string) => void;
+  // Only used by MANAGER_NOTE_ADDED when the note is Account-only (no
+  // opportunity_id) -- every other notification type navigates via
+  // onSelectOpportunity instead.
+  onSelectAccount: (account: { id: string; name: string }, initialTab?: string) => void;
   // Marketing leads have no per-item detail screen (unlike Opportunity) --
   // there's nothing to select, just the queue itself to open.
   onSelectMarketingLead: () => void;
@@ -71,6 +58,27 @@ export default function NotificationBell({
       // the queue screen) bulk-marks all MARKETING_LEAD_ASSIGNED read on
       // view, same read-receipt idea as opening an Opportunity below.
       onSelectMarketingLead();
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+        queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
+      }, 500);
+      return;
+    }
+    if (n.type === "MANAGER_NOTE_ADDED") {
+      // entity_id here is the Activity id, not an Opportunity id -- unlike
+      // every type below, it has no detail screen of its own. Navigate via
+      // opportunity_id when the note is tied to a deal, else account_id
+      // (docs/Manager-Note-Notification-Implementation-Plan.md). No GET-by-id
+      // route to piggyback a read receipt on, so mark it explicitly.
+      markNotificationRead("activity", n.entity_id);
+      if (n.opportunity_id) {
+        onSelectOpportunity(
+          { id: n.opportunity_id, name: n.opportunity_name ?? "Opportunity" },
+          "activity",
+        );
+      } else if (n.account_id) {
+        onSelectAccount({ id: n.account_id, name: n.account_name ?? "Account" }, "activity");
+      }
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
         queryClient.invalidateQueries({ queryKey: ["notifications", "list"] });
@@ -132,7 +140,7 @@ export default function NotificationBell({
                   }}
                 >
                   <ListItemText
-                    primary={describe(n)}
+                    primary={describeNotification(n)}
                     secondary={
                       <>
                         {n.account_name && <>{n.account_name} · </>}

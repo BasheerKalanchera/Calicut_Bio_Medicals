@@ -874,6 +874,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/mark-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark Read */
+        post: operations["mark_read_api_v1_notifications_mark_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/zones/tree": {
         parameters: {
             query?: never;
@@ -2054,6 +2071,11 @@ export interface components {
             next_action_due_date?: string | null;
             /** Next Action Owner Id */
             next_action_owner_id?: string | null;
+            /**
+             * Is Urgent
+             * @default false
+             */
+            is_urgent: boolean;
         };
         /** ActivityReportRow */
         ActivityReportRow: {
@@ -2080,6 +2102,7 @@ export interface components {
             opportunity: components["schemas"]["OpportunityNested"] | null;
             project: components["schemas"]["ProjectNested"] | null;
             user: components["schemas"]["UserNested"];
+            created_by_user?: components["schemas"]["UserNested"] | null;
         };
         /** ActivityResponse */
         ActivityResponse: {
@@ -2119,6 +2142,7 @@ export interface components {
              */
             created_at: string;
             user: components["schemas"]["UserNested"];
+            created_by_user?: components["schemas"]["UserNested"] | null;
             /** Next Action Reminder Id */
             next_action_reminder_id?: string | null;
         };
@@ -2342,6 +2366,16 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** MarkReadRequest */
+        MarkReadRequest: {
+            /** Entity Type */
+            entity_type: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+        };
         /** MarketingLeadCreate */
         MarketingLeadCreate: {
             /** Account Id */
@@ -2485,6 +2519,10 @@ export interface components {
             opportunity_name?: string | null;
             /** Account Name */
             account_name?: string | null;
+            /** Account Id */
+            account_id?: string | null;
+            /** Opportunity Id */
+            opportunity_id?: string | null;
         };
         /** OpportunityCreate */
         OpportunityCreate: {
@@ -6267,6 +6305,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["APIResponse_list_NotificationResponse__"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_read_api_v1_notifications_mark_read_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkReadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

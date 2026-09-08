@@ -80,7 +80,11 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
           </Box>
         </Box>
         <Box sx={{ fontSize: "10px", fontWeight: 700, color: "#6b7280", mb: 0.5 }}>
-          {activity.user.display_name}
+          {/* activity.user is who this is logged AGAINST (BR-ACT-04), not who
+              wrote it -- same person for every type except MANAGER_NOTE, where
+              they genuinely differ. created_by_user is the true author;
+              falls back to activity.user for legacy rows predating this field. */}
+          {activity.created_by_user?.display_name ?? activity.user.display_name}
         </Box>
         {activity.notes && (
           <Box

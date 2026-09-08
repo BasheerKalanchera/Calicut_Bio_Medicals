@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Autocomplete, Box, Button, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
@@ -89,6 +89,7 @@ export default function LogActivityModal({
   const [nextActionOwnerId, setNextActionOwnerId] = useState(currentUserId ?? "");
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [activeTab, setActiveTab] = useState<"details" | "nextAction">("details");
+  const [isUrgent, setIsUrgent] = useState(false);
 
   const isManagerNote = activityType === "MANAGER_NOTE";
   const isSalesDevelopment = SALES_DEVELOPMENT_ACTIVITY_TYPES.has(activityType);
@@ -150,6 +151,7 @@ export default function LogActivityModal({
     setNextActionOwnerId(currentUserId ?? "");
     setSelectedOpportunityId("");
     setActiveTab("details");
+    setIsUrgent(false);
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit() {
@@ -196,6 +198,7 @@ export default function LogActivityModal({
       activity_type: activityType,
       activity_date: new Date(activityDate).toISOString(),
       notes: notes.trim() || undefined,
+      ...(isManagerNote && { is_urgent: isUrgent }),
       ...(isSalesDevelopment && { outcome_notes: outcomeNotes.trim() }),
       ...(!hidesNextAction && {
         next_action_text: nextActionText.trim(),
@@ -304,6 +307,11 @@ export default function LogActivityModal({
                 if (value !== "RELATIONSHIP_SUPPORT") {
                   setSelectedOpportunityId("");
                 }
+                // Same reasoning -- a stale "Urgent" tick shouldn't silently
+                // ride along onto a different (non-Manager-Note) activity type.
+                if (value !== "MANAGER_NOTE") {
+                  setIsUrgent(false);
+                }
               }}
               fullWidth
               size="small"
@@ -320,6 +328,14 @@ export default function LogActivityModal({
             />
             <TextField
               select
+              // Unlabeled for every other activity type (unchanged) -- but
+              // Manager Note is the one type where this field ("logged
+              // against," BR-ACT-04) genuinely differs from who's writing
+              // it, and silently defaulting to yourself here means "no one
+              // to notify." A real label makes it unmissable specifically
+              // for that type (2026-09-08 live testing: two managers each
+              // left this on themselves, expecting the rep to be notified).
+              label={isManagerNote ? "This Note Is For *" : undefined}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               fullWidth
@@ -341,6 +357,17 @@ export default function LogActivityModal({
               >
                 Linked to this opportunity
               </Box>
+            )}
+            {isManagerNote && (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={isUrgent}
+                    onChange={(e) => setIsUrgent(e.target.checked)}
+                  />
+                }
+                label="Urgent — notify immediately"
+              />
             )}
             {/* BR-ACT-10: only shown when Relationship Support is selected
                 and there's no fixed opportunityId prop -- the two never

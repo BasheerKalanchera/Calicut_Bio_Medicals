@@ -101,7 +101,12 @@ def test_all_relationships_resolve():
     # (0031_add_lead.py, table renamed 0032) -- one-directional only, no
     # back_populates added to UserProfile (see marketing_lead/models.py's
     # own comment on that choice).
-    assert rel_count == 102, f"Expected 102 relationships, found {rel_count}"
+    # 103, not 102: Manager Note author display fix (2026-09-08) added
+    # Activity.created_by_user -- one-directional only, same reasoning as
+    # MarketingLead.assigned_to_user above. No migration (created_by already
+    # existed on the activity table via CreatedAtMixin; this only adds an
+    # ORM-level relationship() over that existing column).
+    assert rel_count == 103, f"Expected 103 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

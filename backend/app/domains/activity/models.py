@@ -40,6 +40,14 @@ class Activity(CreatedAtMixin, Base):
     user: Mapped["UserProfile"] = relationship(
         back_populates="activities", foreign_keys=[user_id], lazy="joined"
     )
+    # Who actually logged this Activity, as opposed to `user` above (who it's
+    # logged against, BR-ACT-04) -- the two are the same person for every
+    # activity type except MANAGER_NOTE, where they're deliberately
+    # different. Nullable because `created_by` (CreatedAtMixin) predates this
+    # relationship and is itself nullable.
+    created_by_user: Mapped["UserProfile | None"] = relationship(
+        foreign_keys="Activity.created_by", lazy="joined"
+    )
 
     reminders: Mapped[list["Reminder"]] = relationship(
         back_populates="activity", foreign_keys="Reminder.activity_id", lazy="select"

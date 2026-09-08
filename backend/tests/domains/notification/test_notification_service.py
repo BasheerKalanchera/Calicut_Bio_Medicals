@@ -20,6 +20,7 @@ RECIPIENT_ID = uuid.uuid4()
 OPP_ID = uuid.uuid4()
 ACTOR_ID = uuid.uuid4()
 LEAD_ID = uuid.uuid4()
+ACTIVITY_ID = uuid.uuid4()
 
 
 def _make_repo() -> MagicMock:
@@ -116,6 +117,39 @@ class TestNotifyMarketingLeadAssigned:
         )
 
         assert notification.is_urgent is False
+
+
+class TestNotifyManagerNoteAdded:
+    def test_created_row_shape(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.notify_manager_note_added(
+            recipient_user_id=RECIPIENT_ID,
+            activity_id=ACTIVITY_ID,
+            actor_id=ACTOR_ID,
+            is_urgent=False,
+        )
+
+        created = repo.create.call_args[0][0]
+        assert created.recipient_user_id == RECIPIENT_ID
+        assert created.type == "MANAGER_NOTE_ADDED"
+        assert created.entity_type == "activity"
+        assert created.entity_id == ACTIVITY_ID
+        assert created.created_by == ACTOR_ID
+
+    def test_is_urgent_reflects_caller_choice(self):
+        service = NotificationService(repository=_make_repo())
+
+        urgent = service.notify_manager_note_added(
+            recipient_user_id=RECIPIENT_ID, activity_id=ACTIVITY_ID, actor_id=ACTOR_ID, is_urgent=True
+        )
+        passive = service.notify_manager_note_added(
+            recipient_user_id=RECIPIENT_ID, activity_id=ACTIVITY_ID, actor_id=ACTOR_ID, is_urgent=False
+        )
+
+        assert urgent.is_urgent is True
+        assert passive.is_urgent is False
 
 
 class TestPassThroughMethods:

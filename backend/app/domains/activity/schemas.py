@@ -89,6 +89,18 @@ class ActivityCreate(BaseModel):
     next_action_text: str | None = Field(default=None, min_length=1)
     next_action_due_date: datetime | None = None
     next_action_owner_id: uuid.UUID | None = None  # defaults to Activity.user_id
+    # Manager Note notification (2026-09-08): the manager logging the note
+    # chooses whether it pops UrgentNotificationDialog for the rep or just
+    # sits in their bell -- not persisted on Activity itself, only seeds
+    # Notification.is_urgent at creation (see notification/models.py's own
+    # "frozen at creation" comment).
+    is_urgent: bool = False
+
+    @model_validator(mode="after")
+    def _restrict_urgent_to_manager_note(self) -> "ActivityCreate":
+        if self.is_urgent and self.activity_type != "MANAGER_NOTE":
+            raise ValueError("is_urgent is only valid for MANAGER_NOTE.")
+        return self
 
     @model_validator(mode="after")
     def _require_next_action_unless_exempt(self) -> "ActivityCreate":
@@ -158,6 +170,11 @@ class ActivityResponse(BaseModel):
     outcome_notes: str | None
     created_at: datetime
     user: UserNested
+    # Who actually logged this Activity -- distinct from `user` above (who
+    # it's logged against, BR-ACT-04). Nullable: legacy rows predating
+    # created_by tracking, or the rare case where created_by user was since
+    # deleted.
+    created_by_user: UserNested | None = None
     next_action_reminder_id: uuid.UUID | None = None
 
 
@@ -240,6 +257,7 @@ class ActivityContextNested(BaseModel):
     account: AccountNested | None
     opportunity: OpportunityNested | None
     user: UserNested
+    created_by_user: UserNested | None = None
 
 
 class ReminderResponse(BaseModel):

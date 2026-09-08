@@ -6,6 +6,7 @@ from app.core.exceptions import NotFoundError
 from app.domains.activity.models import Activity, Reminder
 from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
+from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
 # Cabio operates in India; a "day" for the Daily Activity Report means the IST
@@ -43,9 +44,15 @@ def _maybe_create_next_action_reminder(
 
 
 class ActivityService:
-    def __init__(self, repository: ActivityRepository, reminder_repository: ReminderRepository):
+    def __init__(
+        self,
+        repository: ActivityRepository,
+        reminder_repository: ReminderRepository,
+        notification_service: NotificationService,
+    ):
         self.repository = repository
         self.reminder_repository = reminder_repository
+        self.notification_service = notification_service
 
     def list_by_account(
         self,
@@ -169,6 +176,16 @@ class ActivityService:
             next_action_owner_id=data.next_action_owner_id,
             created_by=created_by,
         )
+
+        # Manager Note notification (2026-09-08): skip when the manager
+        # logs a note against their own name -- no one to notify.
+        if activity.activity_type == "MANAGER_NOTE" and activity.user_id != created_by:
+            self.notification_service.notify_manager_note_added(
+                recipient_user_id=activity.user_id,
+                activity_id=activity.id,
+                actor_id=created_by,
+                is_urgent=data.is_urgent,
+            )
 
         return activity, reminder
 

@@ -66,7 +66,9 @@ class TestListNotifications:
     def test_returns_serialized_list_with_resolved_names(self, client: TestClient) -> None:
         notification = _mock_notification()
         mock_db = MagicMock()
-        mock_db.execute.return_value.all.return_value = [(notification, "Radiology Upgrade", "Test Hospital")]
+        mock_db.execute.return_value.all.return_value = [
+            (notification, "Radiology Upgrade", "Test Hospital", None, None)
+        ]
 
         _setup_overrides(mock_db)
         try:
@@ -83,6 +85,28 @@ class TestListNotifications:
         assert item["opportunity_name"] == "Radiology Upgrade"
         assert item["account_name"] == "Test Hospital"
         assert item["actor"] == {"id": str(ACTOR_ID), "display_name": "Test Actor"}
+
+    def test_manager_note_notification_carries_account_and_opportunity_id(self, client: TestClient) -> None:
+        account_id = uuid.uuid4()
+        opportunity_id = uuid.uuid4()
+        notification = _mock_notification(
+            type="MANAGER_NOTE_ADDED", entity_type="activity", entity_id=uuid.uuid4()
+        )
+        mock_db = MagicMock()
+        mock_db.execute.return_value.all.return_value = [
+            (notification, None, "Test Hospital", account_id, opportunity_id)
+        ]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/notifications")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        item = response.json()["data"][0]
+        assert item["account_id"] == str(account_id)
+        assert item["opportunity_id"] == str(opportunity_id)
 
     def test_empty_list_when_no_notifications(self, client: TestClient) -> None:
         mock_db = MagicMock()
@@ -164,7 +188,7 @@ class TestListUrgentUnread:
     def test_returns_serialized_urgent_notifications(self, client: TestClient) -> None:
         notification = _mock_notification(is_urgent=True)
         mock_db = MagicMock()
-        mock_db.execute.return_value.all.return_value = [(notification, None, None)]
+        mock_db.execute.return_value.all.return_value = [(notification, None, None, None, None)]
 
         _setup_overrides(mock_db)
         try:

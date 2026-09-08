@@ -88,6 +88,30 @@ class NotificationService:
         )
         return self.repository.create(notification)
 
+    def notify_manager_note_added(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        activity_id: uuid.UUID,
+        actor_id: uuid.UUID,
+        is_urgent: bool,
+    ) -> Notification:
+        # Unlike every notify_* method above, is_urgent is a real
+        # caller-supplied choice, not hardcoded False -- the manager
+        # ticks "Urgent" when logging the note (2026-09-08, docs/Manager-
+        # Note-Notification-Implementation-Plan.md). Ticked pops
+        # UrgentNotificationDialog same as any other urgent row; unticked
+        # is bell-only, same as every other type here.
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="MANAGER_NOTE_ADDED",
+            entity_type="activity",
+            entity_id=activity_id,
+            created_by=actor_id,
+            is_urgent=is_urgent,
+        )
+        return self.repository.create(notification)
+
     def notify_marketing_lead_assigned(
         self,
         *,
