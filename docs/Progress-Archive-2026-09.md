@@ -1523,3 +1523,269 @@ stopped at `ORDER`, never including the later stage — any opportunity
 that reached it just had no column to render in on Kanban (List view
 unaffected, no such filter there). Fixed: added `"DELIVERY_INSTALLATION"`
 to the array (`OpportunityPipelineScreen.tsx:36`).
+
+## 2026-09-08 (later) — Account picker silently truncated at 100 hospitals,
+found live right after the UAT promotion, fixed in 4 places
+
+**Reported urgent, same day as the 9-feature UAT batch:** the "+Lead"
+button's Account dropdown wasn't showing the full hospital list. Root
+cause, not caused by the migration: `LogActivityModal.tsx` (and, once
+audited, three siblings) fetched accounts via a single
+`listAccounts({ page_size: 100 })` call with no search, rendered as a
+plain `<TextField select>` — the backend's own `/accounts` endpoint hard-
+caps `page_size` at 100 (`account/router.py:44`, `le=100`), so once real
+UAT hospital count passed 100 (confirmed 211, 2026-09-07 count), anything
+past the first page silently never showed up. Existed since the picker
+was first added (`f14e4c3`, 2026-06-30) — just never crossed the
+threshold until now, coincidentally the same day as the migration.
+
+**Audited every account picker in the app for the same pattern** before
+fixing anything — found 3 more with the identical shape, two of them
+(`QuickLeadModal.tsx` and `ProjectDirectoryScreen.tsx`) even sharing one
+React Query cache key (`["accounts","picker"]`, both `page_size: 100`) by
+explicit design per a comment in `ProjectDirectoryScreen.tsx`. Confirmed
+`Customer360Screen.tsx`, `AddHospitalModal.tsx`, and
+`CustomerDirectoryScreen.tsx` already search server-side — used
+`Customer360Screen.tsx`'s parent-account `Autocomplete` (debounced,
+`listAccounts({ search, page_size: 20 })`) as the template. Checked Users
+and Product Catalog pickers too — same pattern not found there.
+
+**Fixed in Dev, all four with the same approach** (frontend-only, no
+backend/migration change): `LogActivityModal.tsx`, `QuickLeadModal.tsx`
+("+Lead" — the reported bug), `ProjectDirectoryScreen.tsx` ("Add
+Project"), `MarketingLeadCreateModal.tsx`. `QuickLeadModal.tsx` was the
+one real complication — its Account field stays populated from
+`initialAccountId` when "+Lead" is opened with context (Customer 360,
+Opportunity Detail, a Project), and the picker no longer preloads the
+full list to resolve that id's name against. Solved with a
+three-state `selectedAccount` (`undefined` = no manual pick yet, falls
+back to a small `getAccount(initialAccountId)` lookup's name; `null` =
+explicitly cleared; an object = explicitly picked) rather than a
+`useEffect` + `setState`, specifically to avoid the
+`react-hooks/set-state-in-effect` lint error that first draft hit.
+
+**Verified:** `tsc --noEmit`, `eslint` (0 errors project-wide, only
+pre-existing `any` warnings), `npm run build`, and the Tailwind guard all
+clean. Basheer manually tested all 4 forms in Dev — context-prefilled
+"+Lead", the inline "+ Add Hospital" create/use-existing paths, the
+Project-dropdown dependency on the selected account, clearing a
+selection, submit validation (required vs. optional account), and "+Log"
+from a fixed-context screen (picker correctly stays hidden) — all passed,
+no issues found.
+
+**Committed `a4cf3d9`** ("fix: search accounts server-side in Log
+Activity, New Opportunity, Add Project, and New Marketing Lead pickers" —
+4 files: `LogActivityModal.tsx`, `QuickLeadModal.tsx`,
+`MarketingLeadCreateModal.tsx`, `ProjectDirectoryScreen.tsx`). Not yet
+promoted to `uat` — plain `main` -> `uat` push whenever next promoted,
+no migration needed since nothing here touched the schema.
+
+## 2026-09-08 (later still) — Manager Note notification built
+
+Built per `docs/Manager-Note-Notification-Implementation-Plan.md`, all
+decisions from earlier today (urgent + passive, manager ticks "Urgent"
+at note-creation time). Not yet committed — awaiting Basheer's live test.
+
+**Backend:** `ActivityCreate` gains `is_urgent` (validator rejects it on
+any type but `MANAGER_NOTE`). `ActivityService` gains a
+`notification_service` dependency; `log_activity` calls the new
+`NotificationService.notify_manager_note_added` after creating a
+`MANAGER_NOTE`, skipped when the manager logs one against their own name.
+`notify_manager_note_added` is the first `notify_*` method where
+`is_urgent` is a real caller-supplied value, not hardcoded `False`.
+
+**Real gap found while wiring the notification bell's click-through, not
+anticipated in the plan doc:** every existing notification type's
+`entity_id` doubles as the id the frontend navigates to (`entity_id` =
+opportunity id for `OPPORTUNITY_ASSIGNED`). `MANAGER_NOTE_ADDED`'s
+`entity_id` is the *Activity* id, which has no detail screen of its own —
+navigating needs the Activity's `account_id`/`opportunity_id` instead,
+which `NotificationResponse` had no field for. Fixed: `Notification
+Repository._enriched_select` gained an `entity_type == "activity"` outer
+join (resolving `account_id`/`opportunity_id` straight off the `activity`
+row, plus the account name via a second aliased `Account` join, same
+`case()` pattern as `opportunity`/`marketing_lead`); `NotificationResponse`
+gained both fields.
+
+**Second gap found the same way:** `GET /opportunities/{id}` marks
+`OPPORTUNITY_ASSIGNED` read as a side effect, but that only matches
+`entity_type == "opportunity"` — a `MANAGER_NOTE_ADDED` row
+(`entity_type == "activity"`) would never get marked read that way, and
+there's no single-entity GET route for an Activity to piggyback on
+either. Added a new `POST /notifications/mark-read` endpoint (`entity_
+type`/`entity_id` body, `mark_read_for_entity` pass-through, `204`,
+matching the `rebuild-closure` no-body-response convention already used
+elsewhere) and a frontend `markNotificationRead()` call fired explicitly
+from `NotificationBell.tsx`'s `handleSelect` before navigating.
+
+**Frontend:** `LogActivityModal.tsx` — "Urgent" checkbox shown only when
+`isManagerNote`, cleared on switching to any other type (same pattern as
+the existing Relationship-Support opportunity-clear). `NotificationBell.
+tsx` — new `describe()` case, new `handleSelect()` branch checking
+`opportunity_id` first (opens the Opportunity's own Activity tab via
+`onSelectOpportunity`'s already-existing but previously-unused `detailTab`
+param) then falling back to `account_id` (new `onSelectAccount` prop,
+Customer 360's Activity tab). `DemoApp.tsx` — `handleSelectAccount`
+previously *always* hardcoded the Overview tab; widened to accept an
+optional `initialTab` so this case can request Activity directly, with
+every existing caller unaffected (defaults to `undefined`, same behavior
+as before).
+
+**Verification:** 10 new backend tests (schema validator, service
+notify-and-skip-self-notify behavior, `NotificationService` row shape,
+router-level `account_id`/`opportunity_id` serialization) — 695/695
+backend tests pass. Regenerated `types/api.ts` against a locally-run
+backend to pick up the new fields/endpoint before touching frontend code.
+`tsc --noEmit`, `eslint` (0 new warnings — only pre-existing `any`
+warnings elsewhere), and `npm run build` all clean.
+
+**Files touched, none committed yet:** `activity/schemas.py`,
+`activity/service.py`, `activity/router.py`, `notification/service.py`,
+`notification/repository.py`, `notification/schemas.py`,
+`notification/router.py`, `LogActivityModal.tsx`, `NotificationBell.tsx`,
+`DemoApp.tsx`, `services/notifications.ts`, plus test files
+`test_activity_service.py`, `test_notification_service.py`,
+`test_notification_router.py`.
+
+**Next: Basheer live-tests** — log a Manager Note against a rep both
+urgent and passive, both Account-only and Opportunity-tied, confirm the
+bell shows the right message, click-through lands on the correct tab
+(Opportunity's Activity tab vs. Customer 360's), and the notification
+marks read. Then commit.
+
+## 2026-09-08 (later still) — Manager Note notification live testing: one confirmed bug, one root cause found, one unresolved DB-read mystery — session ended here
+
+Basheer began the 15-case manual E2E plan (`docs/Manager-Note-
+Notification-Manual-E2E-Test-Plan.md`) as Fazal → Fahad, then Haroon →
+Shruthi/Fazal. First report: no bell notification and no urgent dialog
+fired at all for either recipient, despite the Activity itself saving and
+showing correctly in the Opportunity's Activity tab.
+
+**Bug 1, confirmed and real, not yet fixed:** `UrgentNotificationDialog.tsx`
+was never actually touched during the build — the implementation plan
+incorrectly stated "no changes needed." It's hardcoded for its original
+single use case: title is literally `"Urgent: IndiaMART Lead(s)"` and the
+body always reads "...respond within 4 hours for buylead credit,"
+regardless of what triggered it. Its `handleReview` also still does
+`onSelectOpportunity({ id: n.entity_id, ... })` unconditionally — correct
+for every existing type (where `entity_id` doubles as the opportunity id)
+but wrong for `MANAGER_NOTE_ADDED`, where `entity_id` is the Activity id
+and there's no `account_id`/`opportunity_id` branching like
+`NotificationBell.tsx` now has. This is why Haroon's urgent note to Fazal
+did show *a* popup, just with the wrong (IndiaMART) copy and broken
+click-through. **Fix needed:** extract `NotificationBell.tsx`'s
+`describe()` into a shared util both components import; give
+`UrgentNotificationDialog` the same `opportunity_id`/`account_id`
+branching + `onSelectAccount` prop + `markNotificationRead` call as
+`NotificationBell`'s `handleSelect`; wire `onSelectAccount` into its
+`DemoApp.tsx` call site (currently only `onSelectOpportunity` is passed).
+
+**Root cause found for the "nothing happens at all" reports, via direct
+DB reads (Dev, read-only, impersonating each user via the same
+`set_config('app.current_user_id', ...)` call `session.py`'s
+`set_rls_context` makes per-request — safe, mirrors what the app itself
+does for that user's own session, not a privilege bypass):** both the
+Fazal→Fahad row and the first Haroon→Shruthi row had `user_id` equal to
+the **actor's own id**, not the intended rep — e.g. Fazal's note (text
+"Hi Fahad, Please respond to customer in 2 days...") saved with
+`user_id=Fazal`, `created_by=Fazal`, both identical. My code deliberately
+skips notifying when a note is logged against yourself, so it did exactly
+that, correctly, twice. `LogActivityModal.tsx`'s "user" field
+(`:329-341`) has **no label at all** and defaults to "Me" — correct for
+every other activity type (you're logging your own call/visit) but the
+one type where that default is almost always wrong. The Activity
+Timeline's own display (`ActivityTimeline.tsx:83`, `activity.user.
+display_name`) then shows the actor's own name next to a note addressed
+to someone else in the free text, which reads as a glaring mismatch once
+you notice it but is easy to miss while filling the form. **Confirmed via
+a direct, rolled-back reproduction through the real `ActivityService.
+log_activity` code** (not a guess): a genuine cross-person case (Haroon
+creates, Fazal as `user_id`) ran with no exception and would have created
+the notification correctly. **Fix needed:** label that field; for
+Manager Note specifically, make unmistakable that it means "who this note
+is about," and don't silently default it to self for that one type.
+
+**Unresolved as the session ends:** later live tests (opportunity "USG
+M/c - Test Aug 18"; a new opportunity on the Al Shifa Hospital account;
+Activity id `e9d9ef21-0494-4027-be13-49cb2937ab29` with `user_id`
+confirmed by Basheer as Fazal's `14e64ec3-438e-4a68-85d9-0a0634e4f202`)
+do not appear in the Dev database at all via the same read-only query
+approach that successfully found the two earlier rows — not by id, not
+by id prefix, not by note-text search, under Haroon's (GM, broadest
+visibility) impersonation. Ruled out along the way: wrong frontend URL
+(confirmed `localhost:5173/demo`); a `DATABASE_URL` shell-environment
+override left over from the same day's UAT migration work (confirmed
+`echo $DATABASE_URL` in the backend's terminal is empty, so it falls back
+to `backend/.env`'s Dev connection, `config.py`'s `env_file=".env"` is
+also relative to the backend directory, which the terminal was already
+in); stale/unbuilt code (confirmed the running server, started 10:16:48Z
+via `uvicorn app.main:app --reload`, serves the new `/notifications/
+mark-read` route). Then a genuinely confusing signal: a row found earlier
+in *this same debugging session* (the Fazal→Fahad one) later came back
+empty from what should have been the same query, suggesting the read
+path itself (Supabase's pooler, `aws-1-ap-south-1.pooler.supabase.com`)
+may not be fully consistent for these ad-hoc read-only scripts, not
+necessarily that the rows never existed. Last question asked and not yet
+answered when the session ended: whether the Supabase project reference
+Basheer sees in Studio's URL matches `drwtvgesygbsglzpnomi` (the project
+`backend/.env`'s `DATABASE_URL` points at) — comparing that is the fastest
+way to either confirm a genuine environment split or rule it out for good
+and go back to the code.
+
+**Basheer's assessment, stated directly:** frustrated with the quality of
+this build — "sloppy coding for first time in many weeks." The
+`UrgentNotificationDialog` miss is a legitimate gap (the plan doc said no
+changes were needed there and that was wrong); the unlabeled-field
+default is a real design miss too, not just a testing artifact. Session
+ended here at Basheer's request, to resume fresh.
+
+## 2026-09-08 (later still) — SBU Manager blocked from Add Hospital by two
+independent zone-gate checks, both fixed
+
+**Reported live:** an SBU Manager got "No territory assigned yet... ask
+your manager to get one set up for you first" when opening Add Hospital
+from Account Management's "+Add." Basheer's own instinct was right —
+SBU Manager isn't supposed to have a personal territory at all (confirmed:
+`organization/repository.py`'s `TEAM_SCOPE_BUILDERS["SBU Manager"]` scopes
+purely by `sbu_id`, no zone dependency anywhere in that role's logic; a
+`zone_id` of `NULL` is valid data for this role, not a data-entry gap).
+
+**Root cause:** a rule written for reps ("no territory on file = can't add
+a hospital, since the app wouldn't know which region to file it under")
+exempted only Admin/General Manager — SBU Manager, an equally
+zone-agnostic overlay role, was simply never considered when that
+exemption list was written. Never surfaced before because no SBU Manager
+had tried adding a hospital until today. Not written up anywhere in
+`docs/Business-Rules.md` as its own numbered rule — only exists as code
+comments (`account/service.py`'s `_ZONE_ASSIGNMENT_EXEMPT_ROLES`).
+
+**Fixed, then immediately hit a second, deeper copy of the same bug.**
+Added `"SBU Manager"` to `account/service.py`'s
+`_ZONE_ASSIGNMENT_EXEMPT_ROLES` (+ mirrored in `AddHospitalModal.tsx`'s own
+frontend copy) — unblocked the modal, but the Zone field itself then came
+up empty. Second root cause: the Zone field's search endpoint
+(`master_data.py`'s `/zones/search-for-hospital`) has its *own* separate
+role list (`_TERRITORY_ADMIN_ROLES`) deciding "search every zone" vs.
+"search only within my own zone" — a zone-less caller fell into neither
+branch and got zero results. **Naming trap found along the way:**
+`reference/service.py` has an unrelated `_TERRITORY_ADMIN_ROLES` of its
+own (gates *editing* the territory map, correctly Admin/GM-only) —
+confirmed via the module-level comment that `master_data.py`'s copy is
+actually paired with `account/service.py`'s set, not
+`reference/service.py`'s, despite the identical name. Left
+`reference/service.py`'s untouched.
+
+**Fixed:** `master_data.py:105` — added `"SBU Manager"` to that module's
+own `_TERRITORY_ADMIN_ROLES`. Two new regression tests added
+(`test_sbu_manager_exempt_even_with_no_zone_assigned` in
+`test_account_service.py`; `test_sbu_manager_with_no_zone_gets_unrestricted_search`
++ `test_area_manager_with_no_zone_gets_empty_results` in
+`test_master_data.py`, the latter locking in that a genuinely gated role
+still correctly gets nothing). 698/698 backend tests pass, `ruff` clean,
+`tsc`/`eslint` clean. Basheer confirmed working live in Dev.
+
+**Committed `c16b45a`** ("fix: exempt SBU Manager from the zone-assignment
+requirement on Add Hospital") — 5 files: `master_data.py`,
+`account/service.py`, `AddHospitalModal.tsx`,
+`test_account_service.py`, `test_master_data.py`. Not yet promoted to
+`uat`; no migration needed, pure authorization-logic fix on both ends.

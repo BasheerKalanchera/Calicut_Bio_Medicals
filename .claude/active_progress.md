@@ -3,13 +3,61 @@ _Session: 2026-08-21 → 2026-09-07_
 
 ## Pending, awaiting Haroon / not yet actioned
 
-**Two Haroon phone-call asks, 2026-09-08, both scoped but not built —
-awaiting go-ahead.** (1) Manager Note notification to the assigned rep —
-feasible with no schema change, needs only Basheer/Haroon's call on
-urgent vs. passive. (2) Activity inline comments (manager commenting on a
-rep's specific logged Activity) — design doc drafted, three open product
-decisions before implementation. Both tracked in `docs/Backlog.md`; full
-design for (2) in `docs/Activity-Comment-Implementation-Plan.md`.
+**Two Dev bug fixes today, both committed, neither promoted to UAT yet —
+next promotion is a plain `main` -> `uat` push, no migration needed for
+either:**
+1. Account picker silently truncated at 100 hospitals (found via "+Lead"),
+   fixed in 4 files, **committed `a4cf3d9`**.
+2. SBU Manager blocked from Add Hospital by two independent zone-gate
+   checks that only exempted Admin/GM, **committed `c16b45a`**.
+
+Full narrative for both: `docs/Progress-Archive-2026-09.md`'s "2026-09-08
+(later)" and "2026-09-08 (later still)" entries.
+
+**Manager Note notification to the assigned rep — built 2026-09-08, NOT
+committed, live testing found 2 real problems, 1 unresolved. Session
+paused here at Basheer's request; resume by reading this and the full
+narrative before touching anything.** Per `docs/Manager-Note-
+Notification-Implementation-Plan.md` / `docs/Manager-Note-Notification-
+Manual-E2E-Test-Plan.md`.
+
+1. **Confirmed bug, fix not yet applied:** `UrgentNotificationDialog.tsx`
+   was never actually updated for the new notification type — still
+   hardcoded IndiaMART-only copy and old `entity_id`-as-opportunity-id
+   click-through, so a `MANAGER_NOTE_ADDED` urgent notification pops with
+   wrong text and broken navigation. Needs the same `opportunity_id`/
+   `account_id` branching + `onSelectAccount` prop + `markNotificationRead`
+   call `NotificationBell.tsx`'s `handleSelect` already has (extract
+   `describe()` to a shared util both use).
+2. **Root cause confirmed for "no notification fired" reports:**
+   `LogActivityModal.tsx`'s "user" field (`:329-341`) has no label,
+   defaults to yourself — two live tests (Fazal→Fahad, Haroon→Shruthi)
+   both saved with `user_id == created_by` (the actor's own id), which my
+   code correctly treats as "no one to notify." Confirmed via a direct,
+   rolled-back reproduction through the real service code that a genuine
+   cross-person case works with no error. Needs a label + an explicit,
+   non-defaulted choice for Manager Note specifically.
+3. **Unresolved:** several later live test rows (incl. Activity id
+   `e9d9ef21-0494-4027-be13-49cb2937ab29`) don't show up via read-only
+   diagnostic queries against Dev, despite frontend URL, backend env,
+   and running-server code all confirmed correct — and one earlier-found
+   row later came back empty from what should have been the same query.
+   Last open question: does the Supabase project ref in Basheer's Studio
+   URL match `drwtvgesygbsglzpnomi` (`backend/.env`'s `DATABASE_URL`)?
+   Check that first before any more DB-side debugging.
+
+Full narrative, exact queries used, and everything ruled out:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-08 (later still) — Manager
+Note notification live testing" entry. **Do not commit or re-run the
+E2E plan until items 1-3 are resolved.**
+
+**Activity inline comments — implementation plan finalized, not yet
+built.** Two-way thread, anyone who can see the Activity can post, no
+edit/delete in v1 — `docs/Activity-Comment-Implementation-Plan.md`.
+Shares the `entity_type="activity"` notification infrastructure the
+Manager Note feature above just built (join + `account_id`/
+`opportunity_id` fields + mark-read endpoint) — building this next reuses
+all of it. Tracked in `docs/Backlog.md`.
 
 **WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
 live 2026-09-05, not yet fixed.** Confirmed a product's price can be

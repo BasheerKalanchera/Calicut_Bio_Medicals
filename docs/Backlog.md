@@ -23,31 +23,103 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
-- **Manager Note notification to the assigned rep — not built, scoped
-  2026-09-08.** Raised via phone call, Haroon to Basheer: when a manager
-  logs a `MANAGER_NOTE` Activity (BR-ACT-02, internal manager-to-rep
-  guidance), the rep it's about gets no notification today. Feasible with
-  no schema change — the `notification` table (migration behind
-  `OPPORTUNITY_ASSIGNED`) was deliberately built generic
-  (`backend/app/domains/notification/models.py:17-19`) to carry new types
-  like this. Mechanism: Activity's own `user_id` is already "the person the
-  interaction is logged against" (BR-ACT-04), so it's the recipient with no
-  new field needed — hook into `ActivityService`'s create path, call a new
-  `NotificationService.notify_manager_note_added(...)`, same pattern as
-  `notify_opportunity_assigned`. **Open call:** urgent (pops
-  `UrgentNotificationDialog`) or passive (bell/count only)? Recommended
-  passive, same reasoning BR-ACT-04 already uses to exempt `MANAGER_NOTE`
-  from customer-facing urgency. Not yet built — needs Basheer/Haroon's
-  go-ahead on the urgency call before implementation.
-- **Activity Inline Comments — design doc drafted, not built, decisions
-  pending.** Same 2026-09-08 phone call: can a manager comment on an
+- **Codify the searchable-account-picker pattern in
+  `Frontend-Implementation-Standards.md` — not yet written down.** Four
+  separate account pickers (`LogActivityModal.tsx`, `QuickLeadModal.tsx`,
+  `ProjectDirectoryScreen.tsx`, `MarketingLeadCreateModal.tsx`) all
+  independently reinvented the same broken shape — preload up to
+  `page_size: 100` accounts, no search — found and fixed 2026-09-08,
+  committed `a4cf3d9` (full detail in `docs/Progress-Archive-2026-09.md`'s
+  "2026-09-08 (later)" entry) once UAT's real hospital count passed 100. The fix (debounced
+  server-side search via `Autocomplete`, per `Customer360Screen.tsx`'s
+  existing parent-account picker) isn't written down anywhere as the
+  required pattern for a new picker over any master-data list that can
+  plausibly exceed ~50-100 rows (accounts today; watch Products/Projects
+  too as those grow) — worth a short standards-doc note next time that
+  doc is touched, so a 5th copy of the same bug doesn't get written.
+
+- **Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
+  concerns — not yet renamed, no incident yet but one near-miss.**
+  `reference/service.py` and `master_data.py` each have their own private
+  `_TERRITORY_ADMIN_ROLES` constant, by deliberate convention (each module
+  keeps its own copy rather than sharing one) — but the two mean different
+  things: `reference/service.py`'s gates *editing the territory map*
+  (rightly Admin/GM-only, unrelated to any individual's own zone);
+  `master_data.py`'s gates *searching zones for hospital creation* (paired
+  with `account/service.py`'s `_ZONE_ASSIGNMENT_EXEMPT_ROLES`, which SBU
+  Manager was added to 2026-09-08, commit `c16b45a`). Same name, same
+  `{"Admin", "General Manager"}` shape, genuinely different intent —
+  confirmed only by reading each module's own comment before editing.
+  Worth a distinct name for at least one of them (e.g.
+  `_TERRITORY_MAP_ADMIN_ROLES` for `reference/service.py`'s) next time
+  either file is touched, so a future edit doesn't update the wrong one on
+  the strength of the name matching.
+
+- **Manager Note notification to the assigned rep — built 2026-09-08, not
+  committed, awaiting Basheer's live testing.** Raised via phone call,
+  Haroon to Basheer: when a manager logs a `MANAGER_NOTE` Activity
+  (BR-ACT-02, internal manager-to-rep guidance), the rep it's about gets
+  no notification today. Full plan: `docs/Manager-Note-Notification-
+  Implementation-Plan.md`. Manager ticks an "Urgent" checkbox at
+  note-creation time (only shown for `MANAGER_NOTE`); ticked pops
+  `UrgentNotificationDialog`, unticked is bell-only. Built the
+  `NotificationResponse.account_id`/`opportunity_id` gap this surfaced
+  (every other notification type's `entity_id` doubles as the navigable
+  id; `MANAGER_NOTE_ADDED`'s `entity_id` is the Activity id, which has
+  none) plus a new `POST /notifications/mark-read` endpoint (`entity_type
+  "activity"` has no per-item GET route to piggyback a read-receipt on).
+  695/695 backend tests pass, `tsc`/lint/build clean. Full narrative:
+  `docs/Progress-Archive-2026-09.md`'s "2026-09-08 (later still)" entry.
+- **Activity Inline Comments — implementation plan finalized 2026-09-08,
+  not yet built.** Same 2026-09-08 phone call: can a manager comment on an
   Activity the Opportunity owner already logged, tied to that specific
   entry (not a new separate `MANAGER_NOTE`)? Full design:
-  `docs/Activity-Comment-Implementation-Plan.md`. Three open product
-  decisions before implementation: who can comment (anyone who can already
-  see the Activity vs. direct manager only), one-directional vs. a real
-  two-way thread, and whether comments can be edited/deleted. Would reuse
-  the same notification mechanism as the Manager Note item above.
+  `docs/Activity-Comment-Implementation-Plan.md`. **Decided:** anyone who
+  can already see the Activity (via `activity_tier_visibility`) can
+  comment, it's a real two-way thread (rep can reply too), no edit/delete
+  in v1. New comment triggers a non-urgent notification to the Activity's
+  owner, reusing the same `entity_type="activity"` notification
+  infrastructure the Manager Note item above just built (repository join,
+  `account_id`/`opportunity_id` fields, `POST /notifications/mark-read`)
+  — none of that needs rebuilding. Ready to build, no open decisions
+  remaining.
+- **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
+  decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
+  each quarter's stock-purchasing decision (currently underway for EDAN
+  and SonoScape) is heavy manual work — Musheer has to chase every rep for
+  a closing-probability read on every open deal, per product, to figure
+  out how many units of stock are actually spoken for before Haroon can
+  set the reorder quantity. Latheef's proposal: auto-generate a first-pass
+  order-quantity suggestion per product per quarter as `MOQ_threshold -
+  (current_stock - expected_units_from_pipeline)`, using data already
+  logged in the system, so Haroon/Musheer only need to review and
+  fine-tune it (spot-checking high-probability/high-value lines) instead
+  of building it from scratch by hand.
+  **What already exists for this:** `opportunity.win_probability` and
+  `opportunity_item.quantity`/`product_id` are already populated per deal
+  — the pipeline-demand half of the formula is a query away, no schema
+  change needed.
+  **What's missing — the harder half:** no stock-on-hand data anywhere in
+  `Physical-Schema.sql` (no `stock`/`warehouse` table, no quantity field
+  on `product`), and no MOQ/minimum-quarterly-stock field per product
+  either. Relevant prior scope call, from a different context (wholesale
+  partner distribution) in `docs/Discussion-Strategic-Growth-Topics-
+  2026-08.md`: *"Cabio only needs visibility into wholesale purchase
+  orders and shipments — an ERP/inventory concern, not a CRM one."* Same
+  boundary question applies here.
+  **Open questions needing Basheer/Haroon/Latheef's call before any
+  scoping starts:** (1) where does "current stock" come from — sync from
+  an existing system (Tally?), a manually-maintained count inside Sales
+  OS, or is a full inventory module actually wanted (much bigger than what
+  was asked); (2) is "expected units" a probability-threshold count (only
+  deals above X% count as "will close" — Latheef's own example reads this
+  way) or a strict probability-weighted sum (Σ qty × win_probability%) —
+  these give different numbers; (3) which opportunities count — filtered
+  by `expected_closure_date` in the target quarter, and are WON-but-
+  undelivered deals already excluded from "stock available" (already
+  earmarked) or double-counted; (4) MOQ threshold source — flat per
+  product, or varies by SBU/zone/quarter, and where does it live (new
+  `product` column vs. a config table).
 - **Order-stage deals closing with zero Activity logged — candidate soft-
   warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
   data for pipeline-stage coaching guidance): of 96 real opportunities in
