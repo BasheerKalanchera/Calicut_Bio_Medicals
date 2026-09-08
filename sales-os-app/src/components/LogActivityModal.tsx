@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Button, MenuItem, TextField } from "@mui/material";
+import { Autocomplete, Box, Button, MenuItem, TextField } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
 import { logActivity, listAccountOpportunitiesLookup } from "../services/activities";
 import { listAccounts } from "../services/accounts";
 import { listUsers } from "../services/masterData";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 import type { ActivityType } from "../types/api-aliases";
 
 interface Props {
@@ -45,9 +46,9 @@ const SALES_DEVELOPMENT_ACTIVITY_TYPES = new Set<ActivityType>([
   "SALES_TRAINING", "SEMINAR_TRADE_SHOW", "OTHER_DEVELOPMENT",
 ]);
 
-// Local stopgap types — listUsers/listAccounts return Promise<unknown> today.
-// TODO(fix-at-service-layer): give these functions real return types; see
-// active_progress.md deferred list. Remove these once fixed.
+// Local stopgap type — listUsers returns Promise<unknown> today.
+// TODO(fix-at-service-layer): give this function a real return type; see
+// active_progress.md deferred list. Remove once fixed.
 interface UserOption { id: string; display_name: string }
 interface AccountOption { id: string; name: string }
 
@@ -75,7 +76,9 @@ export default function LogActivityModal({
   onCreated,
 }: Props) {
   const queryClient = useQueryClient();
-  const [selectedAccountId, setSelectedAccountId] = useState(accountId ?? "");
+  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
+  const [accountSearchInput, setAccountSearchInput] = useState("");
+  const debouncedAccountSearch = useDebouncedValue(accountSearchInput);
   const [activityType, setActivityType] = useState<ActivityType>("CALL");
   const [activityDate, setActivityDate] = useState(nowLocal());
   const [notes, setNotes]               = useState("");
@@ -104,16 +107,22 @@ export default function LogActivityModal({
     },
   });
 
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts", "picker"],
+  // Searches server-side instead of preloading every account -- a plain
+  // page_size bump still silently truncates once accounts exceed the
+  // backend's page_size cap (le=100, account/router.py), which is exactly
+  // what happened in UAT once real hospital count passed 100 (2026-09-08).
+  // Same debounced-Autocomplete pattern as Customer360Screen's parent-
+  // account picker.
+  const { data: accounts = [], isFetching: accountsLoading } = useQuery({
+    queryKey: ["accounts", "picker", debouncedAccountSearch],
     enabled: isOpen && !accountId,
     queryFn: async () => {
-      const d = await listAccounts({ page_size: 100 });
-      return (d as { items?: AccountOption[] }).items ?? [];
+      const d = await listAccounts({ search: debouncedAccountSearch || undefined, page_size: 20 });
+      return d.items ?? [];
     },
   });
 
-  const resolvedAccountId = accountId ?? selectedAccountId;
+  const resolvedAccountId = accountId ?? (selectedAccount?.id ?? "");
 
   // BR-ACT-10: only fetched when Relationship Support is selected -- the
   // lookup itself is unscoped by the caller's own SBU/zone (that's the
@@ -134,7 +143,8 @@ export default function LogActivityModal({
     setNotes("");
     setOutcomeNotes("");
     setUserId(currentUserId ?? "");
-    setSelectedAccountId(accountId ?? "");
+    setSelectedAccount(null);
+    setAccountSearchInput("");
     setNextActionText("");
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId(currentUserId ?? "");
@@ -255,19 +265,24 @@ export default function LogActivityModal({
         {activeTab === "details" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {!accountId && (
-              <TextField
-                select
-                value={selectedAccountId}
-                onChange={(e) => setSelectedAccountId(e.target.value)}
+              <Autocomplete
+                options={accounts}
+                getOptionLabel={(a) => a.name}
+                isOptionEqualToValue={(a, v) => a.id === v.id}
+                value={selectedAccount}
+                loading={accountsLoading}
+                onChange={(_e, newValue) => setSelectedAccount(newValue)}
+                onInputChange={(_e, newInputValue) => setAccountSearchInput(newInputValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={isSalesDevelopment ? "Select account (optional)" : "Select account"}
+                    size="small"
+                  />
+                )}
                 fullWidth
                 size="small"
-                slotProps={{ select: { displayEmpty: true } }}
-              >
-                <MenuItem value="">{isSalesDevelopment ? "Select account (optional)" : "Select account"}</MenuItem>
-                {accounts.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-                ))}
-              </TextField>
+              />
             )}
             <TextField
               select

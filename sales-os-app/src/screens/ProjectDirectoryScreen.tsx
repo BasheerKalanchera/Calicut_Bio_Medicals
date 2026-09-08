@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { Alert, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -1077,6 +1077,8 @@ export default function ProjectDirectoryScreen({
   // Create form
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [newProjectAccountId, setNewProjectAccountId] = useState("");
+  const [newProjectAccount, setNewProjectAccount] = useState<{ id: string; name: string } | null>(null);
+  const [newProjectAccountSearch, setNewProjectAccountSearch] = useState("");
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectStatusId, setNewProjectStatusId] = useState("");
   const [newProjectOwnerId, setNewProjectOwnerId] = useState("");
@@ -1101,13 +1103,16 @@ export default function ProjectDirectoryScreen({
   const total = listData?.total ?? 0;
   const totalPages = Math.ceil(total / pageSize) || 1;
 
-  // Key/shape shared with QuickLeadModal.tsx's own account picker (both fetch
-  // the same "all accounts, page_size 100" data) -- queryFn must return the
-  // bare items array, not the {items,total} page wrapper, since whichever
-  // component's queryFn actually runs populates this cache entry for both.
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts", "picker"],
-    queryFn: async () => (await listAccounts({ page_size: 100 })).items ?? [],
+  const debouncedNewProjectAccountSearch = useDebouncedValue(newProjectAccountSearch);
+
+  // Searches server-side instead of preloading every account -- a plain
+  // page_size bump still silently truncates once accounts exceed the
+  // backend's page_size cap (le=100, account/router.py), which is exactly
+  // what happened in UAT once real hospital count passed 100 (2026-09-08).
+  const { data: accounts = [], isFetching: accountsLoading } = useQuery({
+    queryKey: ["accounts", "picker", debouncedNewProjectAccountSearch],
+    queryFn: async () =>
+      (await listAccounts({ search: debouncedNewProjectAccountSearch || undefined, page_size: 20 })).items ?? [],
     enabled: showCreateProject || editingProject !== null,
   });
   const { data: projectStatuses = [] } = useQuery({
@@ -1125,6 +1130,8 @@ export default function ProjectDirectoryScreen({
 
   const openCreateProject = useCallback(() => {
     setNewProjectAccountId("");
+    setNewProjectAccount(null);
+    setNewProjectAccountSearch("");
     setNewProjectName("");
     setNewProjectStatusId("");
     setNewProjectOwnerId("");
@@ -1396,19 +1403,18 @@ export default function ProjectDirectoryScreen({
 
       {/* Create Project Modal */}
       <FormModal isOpen={showCreateProject} onClose={() => setShowCreateProject(false)} title="New Project" onSubmit={handleCreateProject} submitLabel="Create">
-        <TextField
-          select
-          label="Account *"
-          value={newProjectAccountId}
-          onChange={(e) => setNewProjectAccountId(e.target.value)}
+        <Autocomplete
+          options={accounts}
+          getOptionLabel={(a: any) => a.name}
+          isOptionEqualToValue={(a: any, v: any) => a.id === v.id}
+          value={newProjectAccount}
+          loading={accountsLoading}
+          onChange={(_e, newValue: any) => { setNewProjectAccount(newValue); setNewProjectAccountId(newValue?.id ?? ""); }}
+          onInputChange={(_e, newInputValue) => setNewProjectAccountSearch(newInputValue)}
+          renderInput={(params) => <TextField {...params} label="Account *" size="small" sx={{ mt: 1.5 }} />}
           fullWidth
           size="small"
-          sx={{ mt: 1.5 }}
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select account</MenuItem>
-          {accounts.map((a: any) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
-        </TextField>
+        />
         <TextField label="Name *" value={newProjectName} onChange={(e) => setNewProjectName(e.target.value)} placeholder="Enter project name" autoFocus fullWidth size="small" />
         <TextField
           select

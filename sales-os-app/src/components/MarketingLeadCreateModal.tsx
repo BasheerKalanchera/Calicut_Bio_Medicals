@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MenuItem, TextField } from "@mui/material";
+import { Autocomplete, MenuItem, TextField } from "@mui/material";
 import FormModal from "./FormModal";
 import { listAccounts } from "../services/accounts";
 import { listProducts } from "../services/products";
 import { listLeadSources, listSbus, listUsers } from "../services/masterData";
 import { createMarketingLead } from "../services/marketingLeads";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 
 interface MarketingLeadCreateModalProps {
   isOpen: boolean;
@@ -34,6 +35,9 @@ const NON_REP_ROLES = new Set(["Admin", "General Manager", "Marketing User"]);
 
 export default function MarketingLeadCreateModal({ isOpen, onClose, onCreated }: MarketingLeadCreateModalProps) {
   const [accountId, setAccountId] = useState("");
+  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null>(null);
+  const [accountSearchInput, setAccountSearchInput] = useState("");
+  const debouncedAccountSearch = useDebouncedValue(accountSearchInput);
   const [sbuId, setSbuId] = useState("");
   const [leadSourceId, setLeadSourceId] = useState("");
   const [eventName, setEventName] = useState("");
@@ -41,12 +45,16 @@ export default function MarketingLeadCreateModal({ isOpen, onClose, onCreated }:
   const [productId, setProductId] = useState("");
   const [assignedToUserId, setAssignedToUserId] = useState("");
 
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts", "picker"],
+  // Searches server-side instead of preloading every account -- a plain
+  // page_size bump still silently truncates once accounts exceed the
+  // backend's page_size cap (le=100, account/router.py), which is exactly
+  // what happened in UAT once real hospital count passed 100 (2026-09-08).
+  const { data: accounts = [], isFetching: accountsLoading } = useQuery({
+    queryKey: ["accounts", "picker", debouncedAccountSearch],
     enabled: isOpen,
     queryFn: async () => {
-      const d = await listAccounts({ page_size: 100 });
-      return (d as { items?: AccountOption[] }).items ?? [];
+      const d = await listAccounts({ search: debouncedAccountSearch || undefined, page_size: 20 });
+      return d.items ?? [];
     },
   });
 
@@ -96,7 +104,8 @@ export default function MarketingLeadCreateModal({ isOpen, onClose, onCreated }:
   useEffect(() => {
     if (!isOpen) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAccountId(""); setSbuId(""); setLeadSourceId(""); setEventName("");
+    setAccountId(""); setSelectedAccount(null); setAccountSearchInput("");
+    setSbuId(""); setLeadSourceId(""); setEventName("");
     setNote(""); setProductId(""); setAssignedToUserId("");
   }, [isOpen]);
 
@@ -119,20 +128,26 @@ export default function MarketingLeadCreateModal({ isOpen, onClose, onCreated }:
 
   return (
     <FormModal isOpen={isOpen} onClose={onClose} title="New Marketing Lead" onSubmit={handleSubmit} submitLabel="Create">
-      <TextField
-        select
-        label="Account"
-        value={accountId}
-        onChange={(e) => setAccountId(e.target.value)}
+      <Autocomplete
+        options={accounts}
+        getOptionLabel={(a) => a.name}
+        isOptionEqualToValue={(a, v) => a.id === v.id}
+        value={selectedAccount}
+        loading={accountsLoading}
+        onChange={(_e, newValue) => { setSelectedAccount(newValue); setAccountId(newValue?.id ?? ""); }}
+        onInputChange={(_e, newInputValue) => setAccountSearchInput(newInputValue)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Account"
+            size="small"
+            sx={{ mt: 1.5 }}
+            helperText="Not in the list? Leave blank and describe the hospital in the note below -- the rep will sort it out."
+          />
+        )}
         fullWidth
         size="small"
-        sx={{ mt: 1.5 }}
-        slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        helperText="Not in the list? Leave as 'Not sure yet' and describe the hospital in the note below -- the rep will sort it out."
-      >
-        <MenuItem value="">Not sure yet</MenuItem>
-        {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
-      </TextField>
+      />
       <TextField
         select
         label="SBU *"

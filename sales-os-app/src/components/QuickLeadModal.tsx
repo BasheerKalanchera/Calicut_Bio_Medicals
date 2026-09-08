@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
 import AddHospitalModal from "./AddHospitalModal";
 import OpportunityItemAddRow from "./OpportunityItemAddRow";
 import OpportunityItemsList from "./OpportunityItemsList";
-import { listAccounts, listProjects, createOpportunity } from "../services/accounts";
+import { listAccounts, getAccount, listProjects, createOpportunity } from "../services/accounts";
 import { listProducts } from "../services/products";
 import { listStages, listStatuses, listUsers, listLeadSources, listSbus, listGateOverrideReasons } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
+import useDebouncedValue from "../hooks/useDebouncedValue";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
 import { marketingLeadRef } from "../utils/marketingLeadMilestone";
@@ -92,6 +93,14 @@ export default function QuickLeadModal({
   const isSbuOverrideRole = ["Admin", "General Manager"].includes((userProfile as any)?.role_name);
 
   const [accountId, setAccountId]       = useState("");
+  // undefined = no manual pick yet this time the modal's open -- falls back
+  // to the resolved initialAccountId's name below. null = explicitly
+  // cleared. An object = explicitly picked. Keeping this three-way instead
+  // of deriving straight from initialAccountData avoids a
+  // setState-in-effect just to sync a value the user can then override.
+  const [selectedAccount, setSelectedAccount] = useState<AccountOption | null | undefined>(undefined);
+  const [accountSearchInput, setAccountSearchInput] = useState("");
+  const debouncedAccountSearch = useDebouncedValue(accountSearchInput);
   const [projectId, setProjectId]       = useState("");
   const [name, setName]                 = useState("");
   const [sbuOverrideId, setSbuOverrideId] = useState("");
@@ -122,13 +131,26 @@ export default function QuickLeadModal({
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [showAddHospital, setShowAddHospital] = useState(false);
 
-  const { data: accounts = [] } = useQuery({
-    queryKey: ["accounts", "picker"],
+  // Searches server-side instead of preloading every account -- a plain
+  // page_size bump still silently truncates once accounts exceed the
+  // backend's page_size cap (le=100, account/router.py), which is exactly
+  // what happened in UAT once real hospital count passed 100 (2026-09-08).
+  const { data: accounts = [], isFetching: accountsLoading } = useQuery({
+    queryKey: ["accounts", "picker", debouncedAccountSearch],
     enabled: isOpen,
     queryFn: async () => {
-      const d = await listAccounts({ page_size: 100 });
-      return (d as { items?: AccountOption[] }).items ?? [];
+      const d = await listAccounts({ search: debouncedAccountSearch || undefined, page_size: 20 });
+      return d.items ?? [];
     },
+  });
+
+  // Resolves the pre-filled account's name (context-aware "+ Lead" from
+  // Customer 360 / Opportunity Detail / a Project) since the picker no
+  // longer preloads the full account list to search against.
+  const { data: initialAccountData } = useQuery({
+    queryKey: ["accounts", "byId", initialAccountId],
+    enabled: isOpen && !!initialAccountId,
+    queryFn: () => getAccount(initialAccountId as string),
   });
 
   const { data: stages = [] } = useQuery({
@@ -248,6 +270,7 @@ export default function QuickLeadModal({
     // re-render, not worth restructuring this actively-used modal for.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
+    setSelectedAccount(undefined); setAccountSearchInput("");
     setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setLeadSourceId(initialLeadSourceId || "");
@@ -256,6 +279,16 @@ export default function QuickLeadModal({
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
   }, [isOpen, initialAccountId, initialProjectId, initialLeadSourceId]);
+
+  // Falls back to the resolved initialAccountId's name only until the user
+  // (or Add Hospital) makes an explicit pick -- see selectedAccount's
+  // declaration above for why this isn't a setState-in-effect instead.
+  const displayedAccount =
+    selectedAccount !== undefined
+      ? selectedAccount
+      : initialAccountData
+        ? { id: initialAccountData.id, name: initialAccountData.name }
+        : null;
 
   async function handleSubmit() {
     if (!name.trim()) throw new Error("Opportunity name is required");
@@ -369,18 +402,22 @@ export default function QuickLeadModal({
             {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
           </TextField>
         )}
-        <TextField
-          select
-          label="Account *"
-          value={accountId}
-          onChange={(e) => { setAccountId(e.target.value); setProjectId(""); }}
+        <Autocomplete
+          options={accounts}
+          getOptionLabel={(a) => a.name}
+          isOptionEqualToValue={(a, v) => a.id === v.id}
+          value={displayedAccount}
+          loading={accountsLoading}
+          onChange={(_e, newValue) => {
+            setSelectedAccount(newValue);
+            setAccountId(newValue?.id ?? "");
+            setProjectId("");
+          }}
+          onInputChange={(_e, newInputValue) => setAccountSearchInput(newInputValue)}
+          renderInput={(params) => <TextField {...params} label="Account *" size="small" />}
           fullWidth
           size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select account</MenuItem>
-          {accounts.map((a) => <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>)}
-        </TextField>
+        />
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -0.5 }}>
           <Button
             type="button"
@@ -584,8 +621,8 @@ export default function QuickLeadModal({
       <AddHospitalModal
         isOpen={showAddHospital}
         onClose={() => setShowAddHospital(false)}
-        onCreated={(account) => { setAccountId(account.id); setProjectId(""); setShowAddHospital(false); }}
-        onExistingSelected={(account) => { setAccountId(account.id); setProjectId(""); setShowAddHospital(false); }}
+        onCreated={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
+        onExistingSelected={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
       />
     </>
   );
