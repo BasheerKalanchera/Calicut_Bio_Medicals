@@ -3,6 +3,14 @@ _Session: 2026-08-21 → 2026-09-07_
 
 ## Pending, awaiting Haroon / not yet actioned
 
+**Two Haroon phone-call asks, 2026-09-08, both scoped but not built —
+awaiting go-ahead.** (1) Manager Note notification to the assigned rep —
+feasible with no schema change, needs only Basheer/Haroon's call on
+urgent vs. passive. (2) Activity inline comments (manager commenting on a
+rep's specific logged Activity) — design doc drafted, three open product
+decisions before implementation. Both tracked in `docs/Backlog.md`; full
+design for (2) in `docs/Activity-Comment-Implementation-Plan.md`.
+
 **WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
 live 2026-09-05, not yet fixed.** Confirmed a product's price can be
 changed on an opportunity already marked WON with no error — only the
@@ -334,7 +342,19 @@ see that doc for detail).**
    `rls_auto_enable()` trigger remains a standing risk item, not a
    feature.
 
-## UAT migration — status as of 2026-08-29
+## UAT migration — status as of 2026-09-08
+
+**2026-09-08 batch promoted and complete:** `main` -> `uat` (`dbfaea1`),
+migrations `0024`-`0039` applied (Marketing Lead Handling, Private Manager
+Notes, Audit Trail, Manager-Approved Fast-Tracking, New Activity Types,
+Relationship-Support Notes, Reminders on Login, Deal Assignment Alerts,
+Duplicate Hospital Warning). One live gotcha (`gate_override_reason`
+losing its RLS to UAT's standing `rls_auto_enable()` trigger — 3rd
+occurrence, see `docs/Backlog.md`) caught pre-emptively and fixed.
+Smoke-tested (3-login pass, all 9 features), team notified via WhatsApp,
+UAT reopened. Full step-by-step record: `docs/UAT-Migration-2026-09-08.md`;
+narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-08 entry. No action
+pending from this thread.
 
 Both Star Sales and the extended sales team now have UAT access and have
 been walked through the app. Full territory/roster detail:

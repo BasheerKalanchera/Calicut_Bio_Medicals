@@ -33,6 +33,7 @@ const PIPELINE_STAGE_CODES = [
   "CLINICAL_EVALUATION",
   "NEGOTIATION",
   "ORDER",
+  "DELIVERY_INSTALLATION",
 ];
 
 // Local stopgap types — listStages/listUsers return Promise<unknown> today.

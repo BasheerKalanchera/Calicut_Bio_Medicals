@@ -102,6 +102,21 @@ try {
     $size = (Get-Item $dumpPath).Length
     Write-Log "OK: dump created ($dumpFile, $size bytes)"
 
+    $tocLines = docker run --rm `
+        -v "${BackupDir}:/backup" `
+        postgres:17 `
+        pg_restore --list "/backup/$dumpFile"
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "pg_restore --list failed with exit code $LASTEXITCODE (dump may be corrupt)"
+    }
+
+    $tocCount = ($tocLines | Where-Object { $_ -match '^\d+;' } | Measure-Object).Count
+    if ($tocCount -eq 0) {
+        throw "pg_restore --list returned 0 TOC entries (dump appears empty or corrupt)"
+    }
+    Write-Log "Verify: TOC has $tocCount entries"
+
     $cutoff = (Get-Date).AddDays(-$RetentionDays)
     Get-ChildItem -Path $BackupDir -Filter "cabio_uat_*.dump" |
         Where-Object { $_.LastWriteTime -lt $cutoff } |

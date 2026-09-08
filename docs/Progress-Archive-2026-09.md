@@ -1402,3 +1402,124 @@ same structure as the original `docs/Audit-Trail-Implementation-Plan.md`.
 batch has a week to stabilize, per Basheer's explicit sequencing call.
 `docs/Backlog.md` and `.claude/active_progress.md` both updated with
 pointers (Current task 0b). No code written yet — planning only.
+
+## 2026-09-08 — UAT deployment: 9-feature batch promoted, 16 migrations
+(0023 -> 0039)
+
+**Milestone: the biggest single UAT promotion since 2026-08-21** — 36
+commits, 16 migrations, 9 user-facing features (Marketing Lead Handling,
+Private Manager Notes, Audit Trail, Manager-Approved Fast-Tracking, New
+Activity Types for Team Development, Relationship-Support Notes, Reminders
+on Login, Deal Assignment Alerts, Duplicate Hospital Warning). Team told to
+stay off UAT beforehand via WhatsApp. Full step-by-step record, including
+every command run: `docs/UAT-Migration-2026-09-08.md` — this entry is the
+narrative summary only.
+
+**Pre-flight audit caught a live bug before it happened.** Reading each
+pending migration ahead of running anything found that `0027`
+(`gate_override_reason`) creates a new table with no RLS policy of its own
+— same shape as `hold_reason`/`loss_reason` (no RLS at all on Dev), but UAT
+carries the standing out-of-band `rls_auto_enable()` Supabase trigger
+(`docs/Backlog.md`, first flagged 2026-08-05) that force-enables RLS with
+zero policies on any new table regardless of what the migration itself
+does. This would have silently emptied the Fast-Track reason dropdown —
+**this is the 3rd time this exact trigger has caused a lockout** (2026-08-03
+UAT-wide, 2026-08-21 on `user_zone`/`zone_closure`). Planned the fix
+(`ALTER TABLE gate_override_reason DISABLE ROW LEVEL SECURITY`) ahead of
+time instead of waiting for a bug report. `docs/Backlog.md`'s standing item
+updated with this 3rd occurrence — still needs Basheer's call on the
+permanent fix (remove the trigger vs. mandatory migration-checklist step).
+
+**Execution, in order:** Basheer took a fresh UAT backup
+(`scripts\backup_uat.ps1`) before anything else; Claude pushed `main` to
+`uat` (`git push origin main:uat`, fast-forward, `81fded7..dbfaea1`),
+triggering Render's auto-redeploy of both services; Basheer confirmed both
+Live, then ran the migrations himself (DB-mutating commands stay outside
+Claude Code's tool access on this project) via
+`.venv/Scripts/python.exe -m alembic upgrade head` against
+`ADMIN_DATABASE_URL` sourced from `backend/.env.uat`.
+
+**One real snag, caught before touching the database:** the first
+migration attempt failed on a `pydantic_settings` `SettingsError` for
+`CORS_ORIGINS` — sourcing `.env.uat`'s values into the real shell
+environment (`set -a; source ...`) makes pydantic-settings demand strict
+JSON for list-typed fields, stricter than its normal `.env`-file parser,
+and `.env.uat`'s `CORS_ORIGINS` isn't JSON-formatted. Alembic never reads
+that setting, so `unset CORS_ORIGINS` before retrying was sufficient — no
+file edited, nothing UAT-side touched by the failed attempt. Retry: clean
+`0023 -> 0039`, confirmed via `alembic current` -> `0039 (head)`.
+
+**`gate_override_reason` fix confirmed necessary, not just theoretical:** a
+read-only check immediately after migrating showed `relrowsecurity = True`
+with zero policies, exactly as predicted — fixed with the planned `ALTER
+TABLE ... DISABLE ROW LEVEL SECURITY`.
+
+**Smoke test — 3 logins instead of 9 separate feature checks,** per
+`Deployment-Topology.md`'s promotion ritual: found `rudrappa@cabio-uat.com`
+had the most open reminders via a quick read-only query (reused for the
+next Reminders-related test, saved in `docs/UAT-Migration-2026-09-08.md`),
+used him for Pass 1 (rep-facing checks); `shruthi@cabio-uat.com` (his Area
+Manager) for Pass 2; `haroonsidheeq@cabio-uat.com` (GM) briefly plus Admin
+for Pass 3, specifically to confirm a senior manager's private note is
+hidden from an Area Manager below them but visible to Admin/GM. All 9
+features passed, no issues found. WhatsApp sent to the team, app reopened.
+
+**Standing items untouched by this migration, still open in
+`docs/Backlog.md`:** the `rls_auto_enable()` permanent fix (now 3
+occurrences); Current task 0b (Audit Trail Extension) still starts
+2026-09-10 as planned, one week after this batch, to let it stabilize
+first.
+
+## 2026-09-08 (later) — UAT backup TOC-verify step added; two Haroon asks scoped
+
+**UAT backup script hardened.** `scripts/backup_uat.ps1` now runs
+`pg_restore --list` against the freshly-created dump right after `pg_dump`
+succeeds, counts TOC entries, and logs `Verify: TOC has N entries` — throws
+(marks the run `FAILED`) on a non-zero exit or a zero-entry result, so a
+corrupt/truncated dump no longer passes silently. Verified live twice same
+day: first run pre-migration (245,483 bytes, 311 TOC entries), second
+post-migration after the `main` → UAT promotion earlier today (273,715
+bytes, 361 entries — the jump is expected, reflecting the newly-migrated
+schema/data). Also confirmed by reading the log: the second run found
+Docker already up (started by something else in the ~77 min gap — the
+migration work, most likely) and correctly left it running rather than
+stopping it, since the script only stops what it itself started
+(`$script:DockerStartedByScript`). Basheer separately confirmed Docker was
+fully closed sometime after that run; the log shows the script did not do
+that stop (no such log line for the second run) — whatever closed it did
+so outside the script.
+
+**Haroon called with two feature asks, both scoped, neither built:**
+1. **Notify the assigned rep when a manager logs a `MANAGER_NOTE`
+   against them.** Confirmed cheap: the `notification` table
+   (`backend/app/domains/notification/models.py`) was deliberately built
+   generic when `OPPORTUNITY_ASSIGNED` shipped, specifically to carry
+   future types like this with no migration. Activity's own `user_id` is
+   already defined (BR-ACT-04) as "the person the interaction is logged
+   against," so it's the recipient with no new field needed. Open call
+   for Basheer/Haroon: urgent vs. passive notification — recommended
+   passive. Logged in `docs/Backlog.md`.
+2. **Inline comments on a specific logged Activity**, so a manager can
+   react to the exact entry rather than logging a separate, disconnected
+   `MANAGER_NOTE`. Confirmed Activity has no update/edit endpoint at all
+   today (create-only, matches its documented immutability) — a comment
+   thread needs its own new table, not a field on `activity`. Full design
+   drafted: `docs/Activity-Comment-Implementation-Plan.md` — new
+   `activity_comment` table, RLS gated on `activity_id IN (SELECT id FROM
+   activity)` so it inherits the Activity's own visibility rules
+   (including the `0039` Opportunity Notes Privacy hierarchy-hide) for
+   free, no new role logic. Three open product decisions before build:
+   who can comment, one-way vs. two-way thread, and edit/delete. Neither
+   item started — both awaiting Basheer/Haroon's decisions, tracked in
+   `docs/Backlog.md`.
+
+**Kanban bug found via Fahad's UAT review comment, fixed same day:**
+Delivery & Installation stage (`DELIVERY_INSTALLATION`, `display_order`
+70 in `opportunity_stage`, fully gated backend-side —
+`validators.py:106-112` requires PO Number to advance into it) never
+appeared as a column in the Pipeline Kanban view. Root cause:
+`OpportunityPipelineScreen.tsx`'s `PIPELINE_STAGE_CODES` hardcoded array
+stopped at `ORDER`, never including the later stage — any opportunity
+that reached it just had no column to render in on Kanban (List view
+unaffected, no such filter there). Fixed: added `"DELIVERY_INSTALLATION"`
+to the array (`OpportunityPipelineScreen.tsx:36`).

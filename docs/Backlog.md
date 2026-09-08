@@ -23,6 +23,31 @@ kept only as a pointer; nothing left to pick up here.
 
 ## Deferred / undecided items
 
+- **Manager Note notification to the assigned rep — not built, scoped
+  2026-09-08.** Raised via phone call, Haroon to Basheer: when a manager
+  logs a `MANAGER_NOTE` Activity (BR-ACT-02, internal manager-to-rep
+  guidance), the rep it's about gets no notification today. Feasible with
+  no schema change — the `notification` table (migration behind
+  `OPPORTUNITY_ASSIGNED`) was deliberately built generic
+  (`backend/app/domains/notification/models.py:17-19`) to carry new types
+  like this. Mechanism: Activity's own `user_id` is already "the person the
+  interaction is logged against" (BR-ACT-04), so it's the recipient with no
+  new field needed — hook into `ActivityService`'s create path, call a new
+  `NotificationService.notify_manager_note_added(...)`, same pattern as
+  `notify_opportunity_assigned`. **Open call:** urgent (pops
+  `UrgentNotificationDialog`) or passive (bell/count only)? Recommended
+  passive, same reasoning BR-ACT-04 already uses to exempt `MANAGER_NOTE`
+  from customer-facing urgency. Not yet built — needs Basheer/Haroon's
+  go-ahead on the urgency call before implementation.
+- **Activity Inline Comments — design doc drafted, not built, decisions
+  pending.** Same 2026-09-08 phone call: can a manager comment on an
+  Activity the Opportunity owner already logged, tied to that specific
+  entry (not a new separate `MANAGER_NOTE`)? Full design:
+  `docs/Activity-Comment-Implementation-Plan.md`. Three open product
+  decisions before implementation: who can comment (anyone who can already
+  see the Activity vs. direct manager only), one-directional vs. a real
+  two-way thread, and whether comments can be edited/deleted. Would reuse
+  the same notification mechanism as the Manager Note item above.
 - **Order-stage deals closing with zero Activity logged — candidate soft-
   warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
   data for pipeline-stage coaching guidance): of 96 real opportunities in
@@ -230,16 +255,21 @@ kept only as a pointer; nothing left to pick up here.
   policies — added outside the Alembic migration chain, first surfaced
   2026-08-05 while regenerating `Physical-Schema.sql` and flagged then as
   "reconciliation still open" (`docs/Progress-Archive-2026-08.md`). It has
-  now caused **two separate lockout incidents**: the original 18-table
+  now caused **three separate lockout incidents**: the original 18-table
   UAT-wide lockout on 2026-08-03 (root-caused and fixed via `ALTER TABLE
   ... DISABLE ROW LEVEL SECURITY` on those 18 tables — see that day's
-  entry), and again on 2026-08-21 when migrations `0018`/`0019` created
-  `user_zone` and `zone_closure` — silently breaking Territory Map's
-  coverage pills (reads return empty, no error) and throwing a 500 on zone
-  assignment saves (which the browser misreports as a CORS error, since
-  the failure response skips CORS headers — not an actual CORS
-  misconfiguration). Both times fixed the same reactive way, per-table,
-  after something broke. **Needs a permanent fix:** either remove the
+  entry), 2026-08-21 when migrations `0018`/`0019` created `user_zone` and
+  `zone_closure` — silently breaking Territory Map's coverage pills (reads
+  return empty, no error) and throwing a 500 on zone assignment saves
+  (which the browser misreports as a CORS error, since the failure
+  response skips CORS headers — not an actual CORS misconfiguration) — and
+  **2026-09-08, migration `0027`'s `gate_override_reason` table** (caught
+  *before* it broke anything this time, since the pending migrations were
+  read in advance during the UAT promotion pre-flight check — see
+  `docs/UAT-Migration-2026-09-08.md`). First two times fixed reactively,
+  per-table, after something broke; the third was fixed pre-emptively, but
+  the underlying trigger is still live and will hit the next migration
+  that creates a table too. **Needs a permanent fix:** either remove the
   `rls_auto_enable()` trigger from UAT entirely (restoring parity with
   Dev, which never had it), or add an explicit "check + disable RLS on any
   new table" step to the migration workflow
