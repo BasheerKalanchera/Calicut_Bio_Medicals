@@ -16,8 +16,11 @@ from app.domains.account.schemas import AccountCreate, AccountUpdate
 # BR-ACC-03 follow-up: a rep with no territory assigned can't add a hospital
 # at all -- same role-gate shape as reference/service.py's
 # _TERRITORY_ADMIN_ROLES, not a new authorization mechanism. Admin/GM aren't
-# tied to a single zone, so they're exempt from needing one on file.
-_ZONE_ASSIGNMENT_EXEMPT_ROLES = {"Admin", "General Manager"}
+# tied to a single zone, so they're exempt from needing one on file. SBU
+# Manager joins them 2026-09-08 -- found live, that role's own scope is
+# already SBU-wide, not zone-based (see organization/repository.py's
+# TEAM_SCOPE_BUILDERS["SBU Manager"]), so it was never correctly gated here.
+_ZONE_ASSIGNMENT_EXEMPT_ROLES = {"Admin", "General Manager", "SBU Manager"}
 
 
 class AccountService:

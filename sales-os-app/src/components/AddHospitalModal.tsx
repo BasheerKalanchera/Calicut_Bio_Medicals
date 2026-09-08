@@ -24,9 +24,12 @@ import { useAuth } from "../contexts/AuthContext";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 // Mirrors AccountService's _ZONE_ASSIGNMENT_EXEMPT_ROLES (backend/app/domains/
-// account/service.py) -- Admin/GM can add a hospital in any territory, so
-// they're the only roles exempt from needing a zone on file first.
-const ZONE_ASSIGNMENT_EXEMPT_ROLES = new Set(["Admin", "General Manager"]);
+// account/service.py) -- Admin/GM/SBU Manager can add a hospital in any
+// territory, so they're the only roles exempt from needing a zone on file
+// first. SBU Manager's own scope is already SBU-wide, not zone-based
+// (organization/repository.py's TEAM_SCOPE_BUILDERS), so requiring a
+// personal zone here was never correct for that role either.
+const ZONE_ASSIGNMENT_EXEMPT_ROLES = new Set(["Admin", "General Manager", "SBU Manager"]);
 
 const CUSTOMER_TYPES = [
   { value: "MULTISPECIALITY_HOSPITAL", label: "Multispeciality Hospital" },

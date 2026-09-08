@@ -96,8 +96,13 @@ def list_master_data(
 
 # Same role-gate shape as reference/service.py's _TERRITORY_ADMIN_ROLES and
 # account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES -- each module keeps its
-# own private copy rather than sharing one, per existing convention.
-_TERRITORY_ADMIN_ROLES = {"Admin", "General Manager"}
+# own private copy rather than sharing one, per existing convention. Kept in
+# sync with account/service.py's set (SBU Manager added 2026-09-08, found
+# live one call site down from that fix -- an SBU Manager cleared to add a
+# hospital with no personal zone still needs the unrestricted zone search
+# here, not the "within my own zone" branch below, which returns nothing
+# for a zone-less caller).
+_TERRITORY_ADMIN_ROLES = {"Admin", "General Manager", "SBU Manager"}
 
 
 # Sibling to /master-data/zones, not routed through ENTITY_REGISTRY -- needs

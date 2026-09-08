@@ -287,6 +287,19 @@ class TestZoneAssignmentRequired:
         )
         assert result.name == "New Hospital"
 
+    def test_sbu_manager_exempt_even_with_no_zone_assigned(self):
+        # SBU Manager's own scope is SBU-wide, not zone-based
+        # (organization/repository.py's TEAM_SCOPE_BUILDERS) -- found live
+        # 2026-09-08 blocking a real SBU Manager from adding a hospital.
+        repo = _make_repo()
+        service = AccountService(repository=repo)
+        data = AccountCreate(name="New Hospital", zone_id=TEST_ZONE_ID)
+
+        result = service.create_account(
+            data, created_by=TEST_USER_ID, role_name="SBU Manager", default_zone_id=None
+        )
+        assert result.name == "New Hospital"
+
     def test_general_manager_exempt_even_with_no_zone_assigned(self):
         repo = _make_repo()
         service = AccountService(repository=repo)

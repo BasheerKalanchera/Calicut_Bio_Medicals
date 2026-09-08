@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 from typing import ClassVar
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
@@ -248,3 +248,55 @@ class TestUpdateUser:
             _teardown_overrides()
 
         assert response.status_code == 403
+
+
+class TestSearchZonesForHospital:
+    """AddHospitalModal's ZonePicker -- found live 2026-09-08 blocking an
+    SBU Manager (correctly zone-less, per _ZONE_ASSIGNMENT_EXEMPT_ROLES in
+    account/service.py) from seeing any zone at all, since this endpoint's
+    own _TERRITORY_ADMIN_ROLES hadn't been updated to match."""
+
+    def test_sbu_manager_with_no_zone_gets_unrestricted_search(self, client: TestClient) -> None:
+        user = _mock_user(role_name="SBU Manager")
+        user.zone_id = None
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_db] = lambda: mock_db
+
+        zone = MagicMock()
+        zone.id = uuid.uuid4()
+        zone.name = "North Kerala"
+
+        try:
+            with patch("app.api.routers.master_data.ZoneRepository") as MockRepo:
+                repo = MockRepo.return_value
+                repo.search_by_name.return_value = [zone]
+                repo.build_breadcrumb.return_value = "Kerala"
+                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "North"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["data"]) == 1
+        assert body["data"][0]["name"] == "North Kerala"
+        # Unrestricted -- no within_zone_id kwarg, unlike a zone-scoped rep.
+        repo.search_by_name.assert_called_once_with("North")
+
+    def test_area_manager_with_no_zone_gets_empty_results(self, client: TestClient) -> None:
+        user = _mock_user(role_name="Area Manager")
+        user.zone_id = None
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_db] = lambda: mock_db
+
+        try:
+            with patch("app.api.routers.master_data.ZoneRepository") as MockRepo:
+                repo = MockRepo.return_value
+                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "North"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert response.json()["data"] == []
+        repo.search_by_name.assert_not_called()
