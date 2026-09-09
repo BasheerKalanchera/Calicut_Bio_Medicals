@@ -3,8 +3,8 @@ _Session: 2026-08-21 → 2026-09-07_
 
 ## Pending, awaiting Haroon / not yet actioned
 
-**Three Dev bug fixes, none promoted to UAT yet — next promotion is a
-plain `main` -> `uat` push, no migration needed for any:**
+**Three Dev bug fixes, promoted to UAT 2026-09-09 — plain `main` -> `uat`
+push (`dbfaea1`..`643256f`, 8 commits, no migrations involved):**
 1. Account picker silently truncated at 100 hospitals (found via "+Lead"),
    fixed in 4 files, **committed `a4cf3d9`**.
 2. SBU Manager blocked from Add Hospital by two independent zone-gate
@@ -24,7 +24,7 @@ plain `main` -> `uat` push, no migration needed for any:**
    assigned zones) instead of just `zone_id`. New regression test
    (`test_rep_with_additional_zones_searches_across_all_of_them`)
    reproduces Vivek's exact case. 711/711 backend tests pass, `ruff`
-   clean. **Not yet committed.**
+   clean. Manually verified live. **Committed `643256f`.**
 
 Full narrative for #1-2: `docs/Progress-Archive-2026-09.md`'s "2026-09-08
 (later)" and "2026-09-08 (later still)" entries.
@@ -377,9 +377,21 @@ see that doc for detail).**
    `rls_auto_enable()` trigger remains a standing risk item, not a
    feature.
 
-## UAT migration — status as of 2026-09-08
+## UAT migration — status as of 2026-09-09
 
-**2026-09-08 batch promoted and complete:** `main` -> `uat` (`dbfaea1`),
+**2026-09-09 batch promoted:** `main` -> `uat` (`origin/uat` fast-forwarded
+`dbfaea1`..`643256f`, verified a clean fast-forward before pushing, no
+migrations in this range so no DB step needed). 8 commits: the three Dev
+bug fixes above (#1-3), the Manager Note notification feature + its E2E
+close-out (`356933d`, `38b8729`), the Docker-graceful-shutdown fix to
+`backup_uat.ps1` (`fbb1a77`), and two handover/doc-only commits
+(`58a59ad`, `dad13ca`). **Smoke-tested manually by Basheer 2026-09-09, passed. Team notified,
+UAT clear to use for these features. No action pending from this
+thread.** Local `uat` git branch ref was found stale
+(pointed at a 2026-08-21 commit, `81fded7`) and corrected to track
+`origin/uat`.
+
+**2026-09-08 batch (prior promotion):** `main` -> `uat` (`dbfaea1`),
 migrations `0024`-`0039` applied (Marketing Lead Handling, Private Manager
 Notes, Audit Trail, Manager-Approved Fast-Tracking, New Activity Types,
 Relationship-Support Notes, Reminders on Login, Deal Assignment Alerts,
@@ -388,8 +400,7 @@ losing its RLS to UAT's standing `rls_auto_enable()` trigger — 3rd
 occurrence, see `docs/Backlog.md`) caught pre-emptively and fixed.
 Smoke-tested (3-login pass, all 9 features), team notified via WhatsApp,
 UAT reopened. Full step-by-step record: `docs/UAT-Migration-2026-09-08.md`;
-narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-08 entry. No action
-pending from this thread.
+narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-08 entry.
 
 Both Star Sales and the extended sales team now have UAT access and have
 been walked through the app. Full territory/roster detail:
