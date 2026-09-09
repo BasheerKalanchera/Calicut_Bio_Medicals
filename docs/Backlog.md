@@ -66,19 +66,25 @@ kept only as a pointer; nothing left to pick up here.
   Manager-Note-Notification-Implementation-Plan.md`; full narrative:
   `docs/Progress-Archive-2026-09.md`'s 2026-09-08 (later still, both
   entries) and 2026-09-09 entries.
-- **Activity Inline Comments — implementation plan finalized 2026-09-08,
-  not yet built.** Same 2026-09-08 phone call: can a manager comment on an
-  Activity the Opportunity owner already logged, tied to that specific
-  entry (not a new separate `MANAGER_NOTE`)? Full design:
-  `docs/Activity-Comment-Implementation-Plan.md`. **Decided:** anyone who
-  can already see the Activity (via `activity_tier_visibility`) can
-  comment, it's a real two-way thread (rep can reply too), no edit/delete
-  in v1. New comment triggers a non-urgent notification to the Activity's
-  owner, reusing the same `entity_type="activity"` notification
-  infrastructure the Manager Note item above just built (repository join,
-  `account_id`/`opportunity_id` fields, `POST /notifications/mark-read`)
-  — none of that needs rebuilding. Ready to build, no open decisions
-  remaining.
+- ~~**Activity Inline Comments, Phase 1 (the thread itself).**~~ —
+  **DONE, 2026-09-09.** Raised 2026-09-08 (phone call: can a manager
+  comment on an Activity the Opportunity owner already logged, tied to
+  that specific entry, not a new separate `MANAGER_NOTE`?). **Decided:**
+  anyone who can already see the Activity (via `activity_tier_visibility`)
+  can comment, real two-way thread (rep can reply too), no edit/delete in
+  v1 — enforced at the database level (migration `0040`, no UPDATE/DELETE
+  RLS policy at all). Full 12-case E2E pass: `docs/Activity-Comment-
+  Phase1-Manual-E2E-Test-Plan.md`; narrative: `docs/Progress-Archive-2026-
+  09.md`'s 2026-09-09 (later) entry.
+  **Phase 2 (notifications) deliberately not built yet** — a review pass
+  found the plan's original design would (a) never notify the person who
+  started a thread once the Activity's owner replies (self-notify skip
+  firing on the wrong person for a true two-way conversation), and (b)
+  collide `mark_read_for_entity` with `MANAGER_NOTE_ADDED` once a comment
+  lands on a Manager Note, since both would share the same `(entity_type,
+  entity_id)` pair with no `type` filter. Both need fixing before Phase 2
+  builds — not just reusing the Manager Note join as originally planned.
+  Full design: `docs/Activity-Comment-Implementation-Plan.md`.
 - **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
   decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
   each quarter's stock-purchasing decision (currently underway for EDAN

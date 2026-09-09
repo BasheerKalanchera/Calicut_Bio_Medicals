@@ -11,15 +11,13 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-05 from the Dev database (Postgres 17.6), catching up
--- migrations 0032-0039 since the last regen (2026-09-02, which caught up
--- through 0031): lead->marketing_lead rename + is_marketing_source column +
--- nullable account_id + first_viewed_at + manager-tier update/select rights
--- (0032-0038, Lead Management follow-ons), and the new
--- cabio_app_user_role_name() function + tightened activity_tier_visibility
--- policy (0039, Opportunity Notes Privacy — hides senior-tier Activity
--- notes from Area Manager/SBU Manager). See
--- docs/Opportunity-Notes-Privacy-Implementation-Plan.md and
+-- Regenerated 2026-09-09 from the Dev database (Postgres 17.6), catching up
+-- migration 0040 since the last regen (2026-09-05, which caught up through
+-- 0039): new activity_comment table (Activity Inline Comments, Phase 1 --
+-- notifications deferred to Phase 2), with two RLS policies (SELECT/INSERT
+-- only, no UPDATE/DELETE policy at all -- edit/delete is blocked at the
+-- database level, not just by omitting a PATCH/DELETE endpoint). See
+-- docs/Activity-Comment-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -38,7 +36,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict zqyezlSrhhnMQdOtFS8mIUgmgpDrAn6PXrdWgGOCTI10RD0vRJeEy2wctWrrPnk
+\restrict rdMID6x1001YjIrxUIOBcgmtxwipKw9MccHFcgt04edcMmelTbW2gvDnfBw5i5x
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -270,6 +268,19 @@ CREATE TABLE public.activity (
     created_by uuid,
     outcome_notes text,
     CONSTRAINT chk_activity_account_required CHECK (((account_id IS NOT NULL) OR ((activity_type)::text = ANY ((ARRAY['CONFERENCE_EXPO'::character varying, 'OEM_PRODUCT_TRAINING'::character varying, 'CERTIFICATION'::character varying, 'SALES_TRAINING'::character varying, 'SEMINAR_TRADE_SHOW'::character varying, 'OTHER_DEVELOPMENT'::character varying])::text[]))))
+);
+
+
+--
+-- Name: activity_comment; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.activity_comment (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    activity_id uuid NOT NULL,
+    body text NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    created_by uuid NOT NULL
 );
 
 
@@ -831,6 +842,14 @@ ALTER TABLE ONLY public.account
 
 
 --
+-- Name: activity_comment activity_comment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_comment
+    ADD CONSTRAINT activity_comment_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1232,6 +1251,13 @@ CREATE INDEX idx_activity_account_id ON public.activity USING btree (account_id)
 --
 
 CREATE INDEX idx_activity_activity_date ON public.activity USING btree (activity_date);
+
+
+--
+-- Name: idx_activity_comment_activity_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_activity_comment_activity_id ON public.activity_comment USING btree (activity_id);
 
 
 --
@@ -1650,6 +1676,22 @@ ALTER TABLE ONLY public.account
 
 ALTER TABLE ONLY public.activity
     ADD CONSTRAINT activity_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
+
+
+--
+-- Name: activity_comment activity_comment_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_comment
+    ADD CONSTRAINT activity_comment_activity_id_fkey FOREIGN KEY (activity_id) REFERENCES public.activity(id);
+
+
+--
+-- Name: activity_comment activity_comment_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.activity_comment
+    ADD CONSTRAINT activity_comment_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2395,6 +2437,28 @@ ALTER TABLE ONLY public.zone
 ALTER TABLE public.activity ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: activity_comment; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.activity_comment ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: activity_comment activity_comment_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY activity_comment_insert ON public.activity_comment FOR INSERT WITH CHECK (((activity_id IN ( SELECT activity.id
+   FROM public.activity)) AND (created_by = public.cabio_app_uid())));
+
+
+--
+-- Name: activity_comment activity_comment_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY activity_comment_select ON public.activity_comment FOR SELECT USING ((activity_id IN ( SELECT activity.id
+   FROM public.activity)));
+
+
+--
 -- Name: activity activity_tier_visibility; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -2588,5 +2652,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict zqyezlSrhhnMQdOtFS8mIUgmgpDrAn6PXrdWgGOCTI10RD0vRJeEy2wctWrrPnk
+\unrestrict rdMID6x1001YjIrxUIOBcgmtxwipKw9MccHFcgt04edcMmelTbW2gvDnfBw5i5x
 

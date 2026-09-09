@@ -24,10 +24,10 @@ import pydantic
 import pytest
 
 from app.core.exceptions import NotFoundError
-from app.domains.activity.models import Activity, Reminder
-from app.domains.activity.repository import ActivityRepository, ReminderRepository
-from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
-from app.domains.activity.service import ActivityService, ReminderService
+from app.domains.activity.models import Activity, ActivityComment, Reminder
+from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
+from app.domains.activity.schemas import ActivityCommentCreate, ActivityCreate, ReminderCreate, ReminderUpdate
+from app.domains.activity.service import ActivityCommentService, ActivityService, ReminderService
 from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
@@ -127,6 +127,23 @@ def _closing_data(**overrides) -> dict:
     defaults = dict(is_completed=True, activity_type="CALL", activity_date=NOW, notes="Called the customer")
     defaults.update(overrides)
     return defaults
+
+
+def _make_comment_repo() -> MagicMock:
+    repo = MagicMock(spec=ActivityCommentRepository)
+    repo.activity_exists.return_value = True
+    repo.list_for_activity.return_value = []
+    return repo
+
+
+def _make_comment(**overrides) -> ActivityComment:
+    c = MagicMock(spec=ActivityComment)
+    c.id = overrides.get("id", uuid.uuid4())
+    c.activity_id = overrides.get("activity_id", ACTIVITY_ID)
+    c.body = overrides.get("body", "Please follow up by Friday")
+    c.created_by = overrides.get("created_by", ACTOR_ID)
+    c.created_at = NOW
+    return c
 
 
 # ---------------------------------------------------------------------------
@@ -1424,3 +1441,72 @@ class TestReminderUpdateValidation:
         data = ReminderUpdate(**_closing_data(next_action_text="Send the quote", next_action_due_date=NOW))
         assert data.next_action_text == "Send the quote"
         assert data.next_action_due_date == NOW
+
+
+# ---------------------------------------------------------------------------
+# ActivityCommentService.list_for_activity
+# ---------------------------------------------------------------------------
+
+class TestListActivityComments:
+    def test_raises_not_found_when_activity_missing(self):
+        repo = _make_comment_repo()
+        repo.activity_exists.return_value = False
+        svc = ActivityCommentService(repository=repo)
+
+        with pytest.raises(NotFoundError):
+            svc.list_for_activity(ACTIVITY_ID)
+
+    def test_returns_comments_from_repo(self):
+        repo = _make_comment_repo()
+        comments = [_make_comment(), _make_comment()]
+        repo.list_for_activity.return_value = comments
+        svc = ActivityCommentService(repository=repo)
+
+        result = svc.list_for_activity(ACTIVITY_ID)
+
+        assert result == comments
+
+
+# ---------------------------------------------------------------------------
+# ActivityCommentService.create_comment
+# ---------------------------------------------------------------------------
+
+class TestCreateActivityComment:
+    def test_raises_not_found_when_activity_missing(self):
+        repo = _make_comment_repo()
+        repo.activity_exists.return_value = False
+        svc = ActivityCommentService(repository=repo)
+
+        with pytest.raises(NotFoundError):
+            svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
+
+    def test_created_by_set_to_author_id(self):
+        repo = _make_comment_repo()
+        repo.create.return_value = _make_comment()
+        svc = ActivityCommentService(repository=repo)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
+
+        call_args = repo.create.call_args[0][0]
+        assert call_args.created_by == ACTOR_ID
+
+    def test_activity_id_and_body_set_correctly(self):
+        repo = _make_comment_repo()
+        repo.create.return_value = _make_comment()
+        svc = ActivityCommentService(repository=repo)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="On it, thanks"), author_id=ACTOR_ID)
+
+        call_args = repo.create.call_args[0][0]
+        assert call_args.activity_id == ACTIVITY_ID
+        assert call_args.body == "On it, thanks"
+
+    def test_returns_comment_from_repo(self):
+        repo = _make_comment_repo()
+        comment = _make_comment()
+        repo.create.return_value = comment
+        svc = ActivityCommentService(repository=repo)
+
+        result = svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
+
+        assert result is comment

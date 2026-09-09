@@ -8,8 +8,10 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
-from app.domains.activity.repository import ActivityRepository, ReminderRepository
+from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import (
+    ActivityCommentCreate,
+    ActivityCommentResponse,
     ActivityCreate,
     ActivityReportRow,
     ActivityResponse,
@@ -19,7 +21,7 @@ from app.domains.activity.schemas import (
     ReminderResponse,
     ReminderUpdate,
 )
-from app.domains.activity.service import ActivityService, ReminderService
+from app.domains.activity.service import ActivityCommentService, ActivityService, ReminderService
 from app.domains.notification.repository import NotificationRepository
 from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
@@ -40,6 +42,10 @@ def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # 
         repository=ReminderRepository(db),
         activity_repository=ActivityRepository(db),
     )
+
+
+def _get_comment_service(db: Session = Depends(get_db)) -> ActivityCommentService:  # noqa: B008
+    return ActivityCommentService(repository=ActivityCommentRepository(db))
 
 
 # ------------------------------------------------------------------
@@ -172,6 +178,27 @@ def log_activity(
     response = ActivityResponse.model_validate(activity)
     response.next_action_reminder_id = reminder.id if reminder else None
     return APIResponse(data=response)
+
+
+@router.get("/activities/{activity_id}/comments")
+def list_activity_comments(
+    activity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ActivityCommentService = Depends(_get_comment_service),  # noqa: B008
+) -> APIResponse[list[ActivityCommentResponse]]:
+    items = service.list_for_activity(activity_id)
+    return APIResponse(data=[ActivityCommentResponse.model_validate(c) for c in items])
+
+
+@router.post("/activities/{activity_id}/comments", status_code=201)
+def create_activity_comment(
+    activity_id: uuid.UUID,
+    body: ActivityCommentCreate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ActivityCommentService = Depends(_get_comment_service),  # noqa: B008
+) -> APIResponse[ActivityCommentResponse]:
+    comment = service.create_comment(activity_id, body, author_id=current_user.id)
+    return APIResponse(data=ActivityCommentResponse.model_validate(comment))
 
 
 # ------------------------------------------------------------------

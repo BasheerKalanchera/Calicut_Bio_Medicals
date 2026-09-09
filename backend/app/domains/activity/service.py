@@ -3,9 +3,9 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.core.exceptions import NotFoundError
-from app.domains.activity.models import Activity, Reminder
-from app.domains.activity.repository import ActivityRepository, ReminderRepository
-from app.domains.activity.schemas import ActivityCreate, ReminderCreate, ReminderUpdate
+from app.domains.activity.models import Activity, ActivityComment, Reminder
+from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
+from app.domains.activity.schemas import ActivityCommentCreate, ActivityCreate, ReminderCreate, ReminderUpdate
 from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
@@ -188,6 +188,33 @@ class ActivityService:
             )
 
         return activity, reminder
+
+
+class ActivityCommentService:
+    def __init__(self, repository: ActivityCommentRepository):
+        self.repository = repository
+
+    def list_for_activity(self, activity_id: uuid.UUID) -> list[ActivityComment]:
+        if not self.repository.activity_exists(activity_id):
+            raise NotFoundError(f"Activity {activity_id} not found")
+        return self.repository.list_for_activity(activity_id)
+
+    def create_comment(
+        self,
+        activity_id: uuid.UUID,
+        data: ActivityCommentCreate,
+        *,
+        author_id: uuid.UUID,
+    ) -> ActivityComment:
+        if not self.repository.activity_exists(activity_id):
+            raise NotFoundError(f"Activity {activity_id} not found")
+
+        comment = ActivityComment(
+            activity_id=activity_id,
+            body=data.body,
+            created_by=author_id,
+        )
+        return self.repository.create(comment)
 
 
 class ReminderService:

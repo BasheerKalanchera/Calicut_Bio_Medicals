@@ -18,6 +18,7 @@ export type ActivityPage = components["schemas"]["PaginatedResponse_ActivityResp
 export type ActivityType = components["schemas"]["ActivityResponse"]["activity_type"];
 export type ActivityReportRow = components["schemas"]["ActivityReportRow"];
 export type ActivityReportPage = components["schemas"]["PaginatedResponse_ActivityReportRow_"];
+export type ActivityCommentResponse = components["schemas"]["ActivityCommentResponse"];
 export type OpportunityForStakeholder = components["schemas"]["OpportunityForStakeholder"];
 export type StakeholderOpportunityCountsEntry = components["schemas"]["StakeholderOpportunityCountsEntry"];
 export type UserListResponse = components["schemas"]["UserListResponse"];

@@ -648,6 +648,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/activities/{activity_id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Activity Comments */
+        get: operations["list_activity_comments_api_v1_activities__activity_id__comments_get"];
+        put?: never;
+        /** Create Activity Comment */
+        post: operations["create_activity_comment_api_v1_activities__activity_id__comments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reminders": {
         parameters: {
             query?: never;
@@ -1145,6 +1163,20 @@ export interface components {
             message: string;
             data: components["schemas"]["AccountResponse"];
         };
+        /** APIResponse[ActivityCommentResponse] */
+        APIResponse_ActivityCommentResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ActivityCommentResponse"];
+        };
         /** APIResponse[ActivityResponse] */
         APIResponse_ActivityResponse_: {
             /**
@@ -1615,6 +1647,21 @@ export interface components {
             /** Data */
             data: unknown[];
         };
+        /** APIResponse[list[ActivityCommentResponse]] */
+        APIResponse_list_ActivityCommentResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ActivityCommentResponse"][];
+        };
         /** APIResponse[list[DocumentResponse]] */
         APIResponse_list_DocumentResponse__: {
             /**
@@ -2016,6 +2063,32 @@ export interface components {
              */
             force_create: boolean;
         };
+        /** ActivityCommentCreate */
+        ActivityCommentCreate: {
+            /** Body */
+            body: string;
+        };
+        /** ActivityCommentResponse */
+        ActivityCommentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Activity Id
+             * Format: uuid
+             */
+            activity_id: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            author: components["schemas"]["UserNested"];
+        };
         /** ActivityContextNested */
         ActivityContextNested: {
             /**
@@ -2040,6 +2113,7 @@ export interface components {
             account: components["schemas"]["AccountNested"] | null;
             opportunity: components["schemas"]["OpportunityNested"] | null;
             user: components["schemas"]["UserNested"];
+            created_by_user?: components["schemas"]["UserNested"] | null;
         };
         /** ActivityCreate */
         ActivityCreate: {
@@ -5683,6 +5757,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_ActivityResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_activity_comments_api_v1_activities__activity_id__comments_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                activity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ActivityCommentResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_activity_comment_api_v1_activities__activity_id__comments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                activity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityCommentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ActivityCommentResponse_"];
                 };
             };
             /** @description Validation Error */

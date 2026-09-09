@@ -1856,3 +1856,81 @@ Chrome-automation tab) -- Supabase persists its session to `localStorage`
 exactly this kind of flaky symptom. Retested directly (single browser,
 no concurrent second login) and it worked correctly -- confirms this was
 a testing-methodology artifact, not a product bug.
+
+## 2026-09-09 (later) — Activity Inline Comments: Phase 1 built, migrated, full E2E pass, no notifications yet by design
+
+Built per `docs/Activity-Comment-Implementation-Plan.md`. Basheer split
+the work into two phases mid-review after a code-review pass surfaced
+two real gaps in the plan's original notification design (a reply from
+the Activity's own owner would never notify the original commenter --
+self-notify skip firing on the wrong person -- and a same-`entity_id`
+read-receipt collision with `MANAGER_NOTE_ADDED` once a comment lands on
+a Manager Note): **Phase 1 is the comment thread itself, wired up and
+visible under each Activity's own card; Phase 2 (notifications) is
+deferred until Phase 1 is confirmed solid.**
+
+**Backend**, within the existing `activity` domain (mirrors how
+`Reminder` was added, not a new domain folder): new `ActivityComment`
+model (`id`, `activity_id`, `body`, `created_at`, `created_by` --
+aliased to `author` in the ORM relationship, no separate `author_id`
+column), `ActivityCommentRepository`/`ActivityCommentService` mirroring
+`ReminderRepository`/`ReminderService`'s shape, `GET`/`POST
+/activities/{activity_id}/comments`. Two decisions made explicitly
+before writing the migration, both resolved stricter than the plan's own
+precedent:
+1. **RLS:** the plan cited `reminder_via_activity`'s single blanket
+   policy (relies only on no PATCH/DELETE endpoint existing for
+   immutability, same as `activity` itself). Basheer chose to go
+   stricter instead -- separate `FOR SELECT`/`FOR INSERT` policies with
+   no UPDATE/DELETE policy at all, so edit/delete is blocked at the
+   database level too, plus `created_by = cabio_app_uid()` in the INSERT
+   `WITH CHECK` so no one can post as someone else. Migration `0040`,
+   applied to Dev; `Physical-Schema.sql` regenerated same day (only
+   diff: the new table + these two policies, confirmed via `diff`
+   against the previous regen).
+2. **URL shape:** activity_id in the path (`POST /activities/{id}
+   /comments`), not in the body the way `Reminder`'s own sibling
+   endpoint (`POST /reminders`) does it -- removes a class of
+   mismatched-id bug, small intentional inconsistency with `Reminder`'s
+   exact shape.
+
+**Fly-by fix, unrelated to comments, found via `tsc --noEmit`:**
+`DailyActivityReportScreen.tsx` already expected `row.created_by_user`
+(the Manager Note author-display fix from `356933d`), but that commit
+only added the field to `ActivityResponse`/`ActivityContextNested`, not
+`ActivityReportRow` -- `Activity.created_by_user` was already
+eager-loading (`lazy="joined"`) so no repository change was needed, just
+the missing schema field. Basheer approved fixing it in the same pass.
+
+**Frontend:** `ActivityCommentThread.tsx`, rendered directly inside
+`ActivityItem` (`ActivityTimeline.tsx`) so the thread sits under its own
+Activity's card, not a separate screen -- lazy-loaded on expand (`enabled:
+expanded`) so opening a timeline with many entries doesn't fire one query
+per entry. `services/activities.ts` gained `listActivityComments`/
+`createActivityComment` (same file `Reminder`'s functions already live
+in). 710/710 backend tests pass (12 new), `tsc`/`eslint`/`npm run build`
+all clean.
+
+**Full 12-case manual E2E pass, same day, Basheer K (SBU Manager) and
+Fazal live against Dev:** posting, chronological rendering, two-way
+replies (Fazal replying to Basheer K's note, and vice versa on a
+separate note), both entry points (Opportunity-tied and account-only via
+Customer 360), no bell/urgent-dialog activity from either party after
+posting (confirms Phase 2 boundary intact), no regression to the
+existing timeline. One case (TC-8, RLS visibility inheritance for a
+senior-private note) marked verified-by-design rather than live-tested,
+per Basheer's own observation: the real use case is a manager commenting
+on a *visible* activity, not commenting on one's own private note nobody
+else can see in the first place, so the scenario doesn't come up in
+practice -- the RLS composition through the parent Activity's own policy
+is a safety net, confirmed structurally via the migration + regenerated
+schema, not something a live click-through adds much to. Full results:
+`docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`.
+
+**Next: Phase 2 (notifications)**, once Basheer's ready -- `notify_*` on
+comment creation, reusing the same `entity_type="activity"` notification-
+repository join `MANAGER_NOTE_ADDED` already built, but fixing the two
+gaps found in review first (notify actual thread participants, not just
+the Activity's fixed `user_id`; scope `mark_read_for_entity` by `type`
+too, not just `entity_type`/`entity_id`, so a Manager Note and a comment
+on it don't silently mark each other read).

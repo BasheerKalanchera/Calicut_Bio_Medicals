@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button } from "@mui/material";
 import { listActivitiesByAccount, listActivitiesByOpportunity, listActivitiesByProject } from "../services/activities";
 import { ACTIVITY_TYPE_CONFIG } from "../utils/activityTypes";
+import ActivityCommentThread from "./ActivityCommentThread";
 import type { ActivityResponse } from "../types/api-aliases";
 
 interface Props {
@@ -102,6 +103,7 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
             {activity.notes}
           </Box>
         )}
+        <ActivityCommentThread activityId={activity.id} />
       </Box>
     </Box>
   );

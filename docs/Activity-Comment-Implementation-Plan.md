@@ -1,10 +1,15 @@
 # Activity Inline Comments — Implementation Plan
 
-**Status:** Approved, ready to build. **Raised:** 2026-09-08, Haroon (phone
-call to Basheer) — can a manager leave an inline comment on an Activity
-already logged by the Opportunity owner? **Decisions confirmed** (Basheer,
-2026-09-08): anyone who can already see the Activity can comment; it's a
-real two-way thread (the rep can reply too); no edit/delete in v1.
+**Status:** **Phase 1 built, migrated (`0040`), full 12-case E2E pass
+2026-09-09** — `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`.
+**Phase 2 (notifications) decisions finalized 2026-09-09, not yet built**
+— split out mid-review after two real gaps were found in this plan's
+original notification design (see Decision 4 below). **Raised:**
+2026-09-08, Haroon (phone call to Basheer) — can a manager leave an
+inline comment on an Activity already logged by the Opportunity owner?
+**Decisions confirmed** (Basheer, 2026-09-08): anyone who can already see
+the Activity can comment; it's a real two-way thread (the rep can reply
+too); no edit/delete in v1.
 
 ## Problem
 
@@ -26,7 +31,7 @@ comments per Activity, growing over time) and a different mutability
 profile (editing/deleting your own comment is a reasonable future ask) —
 belongs in its own table, not a field bolted onto `activity`.
 
-## Decisions (confirmed 2026-09-08)
+## Decisions (confirmed 2026-09-08, Decision 4 revised 2026-09-09)
 
 1. **Who can comment:** anyone who can already see the Activity under
    `activity_tier_visibility` (Area/SBU Manager per territory, GM/Admin,
@@ -37,80 +42,128 @@ belongs in its own table, not a field bolted onto `activity`.
    the rep replying back — not manager-only.
 3. **No edit/delete in v1.** Post-only, matching Activity's own
    audit-friendly, nothing-silently-changes posture. Revisit only if
-   actually requested.
-4. **Notification on new comment:** yes — notify the Activity's `user_id`
-   (its owner) when someone else comments. Non-urgent (this feature has no
-   urgent variant, unlike the Manager Note notification). Shares the same
-   `entity_type="activity"` notification-repository join as
-   `docs/Manager-Note-Notification-Implementation-Plan.md`'s
-   `MANAGER_NOTE_ADDED` — build that join once, both notification types
-   use it.
+   actually requested. Built stricter than originally scoped — see Phase
+   1 design below.
+4. **Notification on new comment (revised 2026-09-09):** the original
+   design ("always notify `activity.user_id`, skip if the author is that
+   same person") breaks for a real two-way thread — if the Activity's
+   owner is the one replying, the self-notify skip fires and the person
+   they're replying to hears nothing. Found during a review pass before
+   Phase 2 was started, alongside a second gap: `ACTIVITY_COMMENT_ADDED`
+   and `MANAGER_NOTE_ADDED` would share the same `(entity_type,
+   entity_id)` pair once a comment lands on a Manager Note, and
+   `mark_read_for_entity` has no `type` filter — opening either would
+   silently mark both read.
+   **Resolved (Basheer, 2026-09-09):**
+   - **Recipients:** the Activity's owner (`user_id`) plus everyone who
+     has already commented on it, minus whoever is posting right now.
+     Considered narrower alternatives (notify only the immediately
+     previous commenter, WhatsApp-reply-style) but Basheer's call: real
+     threads here are small in practice (rep, immediate manager, a split
+     participant, GM, someone who gave Relationship Support — rarely
+     more than a handful of people), so "everyone already in the
+     conversation hears about it" is both the simpler rule to reason
+     about and cheap enough to test properly (one clean 3-person pass
+     covers it, not one test per possible group size).
+   - **Read-receipt collision:** no code change needed. Since the
+     comment thread renders directly under its Activity's own note in
+     the same card (Phase 1's own design), opening either one puts both
+     in front of the viewer — so treating the whole Activity's
+     notifications as "read" together actually matches what was seen on
+     screen, not a bug to fix.
+   - Still non-urgent (this feature has no urgent variant, unlike the
+     Manager Note notification). Shares the same `entity_type="activity"`
+     notification-repository join `docs/Manager-Note-Notification-
+     Implementation-Plan.md`'s `MANAGER_NOTE_ADDED` already built.
 
-## Proposed design
+## Phase 1 — built, migrated, E2E-verified (2026-09-09)
 
-**Backend:**
-- New table `activity_comment`: `id`, `activity_id` (FK → `activity`,
-  NOT NULL, indexed), `author_id` (FK → `user_profile`, NOT NULL), `body`
-  (text, NOT NULL), `created_at`. No `updated_at`/edited flag unless
-  decision 3 changes.
-- RLS: gate reads/writes on `activity_id IN (SELECT id FROM activity)` —
-  the same compose-through-parent-table pattern already used elsewhere in
-  this schema (e.g. `opportunity_item_via_opportunity`,
-  `reminder_via_activity`). Since Postgres RLS on the referenced `activity`
-  table is already applied when evaluating that subquery, a comment
-  automatically inherits the Activity's own visibility rules — including
-  the Opportunity Notes Privacy hierarchy-hide (migration `0039`) — with no
-  new role logic to write or keep in sync.
-- New `activity_comment` domain (model/repository/service/router), mirroring
-  the existing `reminder` domain's shape: `POST /activities/{id}/comments`,
-  `GET /activities/{id}/comments`.
-- Notification: on create, call a new
-  `NotificationService.notify_activity_comment_added(recipient_user_id=
-  activity.user_id, activity_id=activity.id, actor_id=author_id)`, skipped
-  when `author_id == activity.user_id` (no self-notify — the rep replying
-  to a comment on their own Activity doesn't notify themselves). New
-  `type="ACTIVITY_COMMENT_ADDED"`, `entity_type="activity"`,
-  `entity_id=activity.id` (not the comment's own id — matches
-  `MANAGER_NOTE_ADDED`'s convention, and both need the same "which account
-  does this Activity belong to" resolution), `is_urgent=False` — same
-  reasoning as the other awareness-only notification types
-  (`notify_opportunity_assigned`, `notify_gate_override_named`).
-- Reuses the `entity_type="activity"` join in
-  `NotificationRepository._enriched_select` and the `account_id`/
-  `opportunity_id` fields on `NotificationResponse`, both introduced by
-  `docs/Manager-Note-Notification-Implementation-Plan.md` — build once, no
-  duplicate work if both features ship together. Same click-through logic
-  applies: a comment on an Opportunity-tied Activity opens that
-  Opportunity's Activity tab; a comment on an Account-only Activity opens
-  Customer 360's Activity tab instead.
+**Backend**, added within the existing `activity` domain (mirrors how
+`Reminder` lives there too, not a new domain folder):
+- `ActivityComment` model: `id`, `activity_id` (FK → `activity`, NOT
+  NULL, indexed), `body` (text, NOT NULL), `created_at`, `created_by`
+  (FK → `user_profile`, NOT NULL) — aliased to an `author` relationship
+  in the ORM (no separate `author_id` column; a comment has no "who it's
+  about" distinction the way `MANAGER_NOTE` does, so `created_by` alone
+  is the author, same pattern `Notification.actor` already uses over its
+  own `created_by`).
+- `ActivityCommentRepository`/`ActivityCommentService`, mirroring
+  `ReminderRepository`/`ReminderService`'s shape.
+- `GET`/`POST /activities/{activity_id}/comments` — activity_id in the
+  URL path, not the request body the way `Reminder`'s own sibling
+  endpoint (`POST /reminders`) does it. Deliberate, small inconsistency
+  with `Reminder`'s exact shape: removes a class of mismatched-id bug.
+- **RLS, built stricter than this plan originally proposed:** the plan
+  cited `reminder_via_activity`'s single blanket policy (relies only on
+  no PATCH/DELETE endpoint existing for immutability, same as `activity`
+  itself). Basheer chose to go further — two separate policies instead
+  of one:
+  - `activity_comment_select` (`FOR SELECT`): `activity_id IN (SELECT id
+    FROM activity)` — the same compose-through-parent-table pattern as
+    `reminder_via_activity`/`opportunity_item_via_opportunity`. Postgres
+    evaluates `activity`'s own RLS (including the migration `0039`
+    hierarchy-hide) when resolving the subquery, so a comment is
+    automatically only as visible as its parent Activity.
+  - `activity_comment_insert` (`FOR INSERT`): same parent-visibility
+    check, plus `created_by = cabio_app_uid()` so no one can post a
+    comment as someone else.
+  - **No UPDATE/DELETE policy at all** — with RLS enabled, the absence
+    of a matching policy is a default deny for those commands regardless
+    of role. Edit/delete is blocked at the database level, not just by
+    omitting a PATCH/DELETE endpoint.
 
 **Frontend:**
-- Customer 360's Activity tab: each timeline entry gets a comment
-  count + expandable thread + "Add comment" control — new
-  `ActivityCommentThread` component near wherever the Activity Timeline
-  currently renders.
-- `NotificationBell.tsx`'s `describe()` gets a label for
-  `ACTIVITY_COMMENT_ADDED`, same pattern as every other notification type;
-  `handleSelect()` reuses the same account-navigation branch added for
-  `MANAGER_NOTE_ADDED` (both are `entity_type="activity"`).
+- `ActivityCommentThread.tsx`, rendered directly inside `ActivityItem`
+  (`ActivityTimeline.tsx`) — a comment count/expand toggle + chronological
+  thread + "Add a comment…" box, sitting under the Activity's own card so
+  it visually reads as part of it, not a separate screen. Lazy-loaded
+  (`enabled: expanded`) so a timeline with many entries doesn't fire one
+  query per entry on load.
+- `services/activities.ts` gained `listActivityComments`/
+  `createActivityComment` (same file `Reminder`'s functions already live
+  in).
 
-## Migration
+**Verification:** 710/710 backend tests pass (12 new), `tsc`/`eslint`/
+`npm run build` all clean. Full 12-case manual E2E pass against Dev —
+`docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`. Migration `0040`
+applied to Dev, `Physical-Schema.sql` regenerated same day.
 
-One new table, one new index (`activity_id`), one RLS policy referencing
-`activity`'s own visibility (no new SECURITY DEFINER function needed —
-unlike migration `0039`, this doesn't need to resolve *another* user's
-role, just check the current user can already see the row).
+## Phase 2 — notifications, decisions finalized, not yet built
+
+- Backend: `NotificationService.notify_activity_comment_added`, called
+  once per recipient per Decision 4's resolved rule above (Activity
+  owner ∪ distinct prior commenters, minus the current poster) — a small
+  repository query (distinct `created_by` values for the activity) plus
+  a loop calling the same single-recipient `notify_*` shape every other
+  type already uses. `type="ACTIVITY_COMMENT_ADDED"`,
+  `entity_type="activity"`, `entity_id=activity.id` (matches
+  `MANAGER_NOTE_ADDED`'s convention), `is_urgent=False`.
+- Reuses the `entity_type="activity"` join in
+  `NotificationRepository._enriched_select` and the `account_id`/
+  `opportunity_id` fields on `NotificationResponse`, both already built
+  for `MANAGER_NOTE_ADDED` — no repository changes needed for this part.
+- Frontend: `NotificationBell.tsx`'s `describe()` gets a label for
+  `ACTIVITY_COMMENT_ADDED`. `handleSelect()`'s account-navigation branch
+  is currently keyed on `n.type === "MANAGER_NOTE_ADDED"` specifically,
+  not on `entity_type === "activity"` — worth refactoring to the latter
+  as part of this build so both types share one branch instead of two
+  near-duplicates. No `UrgentNotificationDialog` work needed — comments
+  are always non-urgent.
+- No `mark_read_for_entity` change needed (Decision 4's read-receipt
+  resolution above) — verify this assumption still holds with a live
+  test once built, since it was reasoned through rather than tested.
 
 ## Deferred, not part of this plan
 
-Edit/delete, @mentions, read receipts on comments — none raised, not
-scoped here.
+Edit/delete, @mentions, read receipts on comments (distinct from the
+notification read-receipt above), narrowing notification recipients
+below "everyone in the thread" if it turns out to be too noisy in
+practice — none raised, not scoped here.
 
 ## Sequencing
 
-Independent of everything currently in flight (Current task 0b, UAT
-migration work). Small, self-contained. Shares notification-repository
-changes with `docs/Manager-Note-Notification-Implementation-Plan.md` —
-building both in the same pass avoids touching `_enriched_select` and
-`NotificationBell.tsx` twice, but neither blocks the other; either can
-ship alone.
+Phase 1 shipped independent of everything else in flight. Phase 2:
+Basheer's call to start once the parallel in-flight session (Audit Trail
+Extension, `opportunity_item`/`split` work) applies its own changes,
+manually verifies, and commits — avoids two sessions' uncommitted changes
+colliding in the same working tree.

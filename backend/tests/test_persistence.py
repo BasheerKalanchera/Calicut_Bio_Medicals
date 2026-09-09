@@ -62,8 +62,10 @@ def test_all_28_tables_registered():
     # 31, not 30: Lead Management added lead (0031_add_lead.py), renamed to
     # marketing_lead (0032_rename_lead_to_marketing_lead.py) -- same table,
     # count unchanged by the rename.
+    # 32, not 31: Activity Inline Comments (Phase 1) added activity_comment
+    # (0040_add_activity_comment_table.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 31, f"Expected 31 tables, found {table_count}"
+    assert table_count == 32, f"Expected 32 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -106,7 +108,10 @@ def test_all_relationships_resolve():
     # MarketingLead.assigned_to_user above. No migration (created_by already
     # existed on the activity table via CreatedAtMixin; this only adds an
     # ORM-level relationship() over that existing column).
-    assert rel_count == 103, f"Expected 103 relationships, found {rel_count}"
+    # 106, not 103: Activity Inline Comments (Phase 1, 0040_add_activity_
+    # comment_table.py) added Activity.comments, ActivityComment.activity,
+    # ActivityComment.author.
+    assert rel_count == 106, f"Expected 106 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

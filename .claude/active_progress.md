@@ -38,13 +38,18 @@ the same origin) -- retested directly and it worked correctly. Feature
 itself confirmed working. Full narrative: `docs/Progress-Archive-2026-09
 .md`'s 2026-09-09 entry.
 
-**Activity inline comments — implementation plan finalized, not yet
-built.** Two-way thread, anyone who can see the Activity can post, no
-edit/delete in v1 — `docs/Activity-Comment-Implementation-Plan.md`.
-Shares the `entity_type="activity"` notification infrastructure the
-Manager Note feature above just built (join + `account_id`/
-`opportunity_id` fields + mark-read endpoint) — building this next reuses
-all of it. Tracked in `docs/Backlog.md`.
+**Activity inline comments — Phase 1 built, migrated (0040), full 12-case
+E2E pass completed 2026-09-09, no action pending.** Two-way thread,
+anyone who can see the Activity can post, no edit/delete in v1 — thread
+renders directly under each Activity's own card. Notifications
+deliberately deferred to Phase 2 (not yet built) after a review pass
+found two real gaps in the original notification design (see
+`docs/Activity-Comment-Implementation-Plan.md`'s reviewed decisions and
+`docs/Progress-Archive-2026-09.md`'s 2026-09-09 (later) entry for both).
+Fly-by fix in the same pass: `ActivityReportRow` was missing the
+`created_by_user` field `DailyActivityReportScreen.tsx` already expected
+(gap from `356933d`, caught via `tsc`). Full test results: `docs/
+Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`.
 
 **WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
 live 2026-09-05, not yet fixed.** Confirmed a product's price can be

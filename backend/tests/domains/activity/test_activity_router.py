@@ -53,6 +53,7 @@ def _mock_activity(**overrides) -> MagicMock:
         "opportunity": None,
         "project": None,
         "user": _mock_nested(id=TEST_USER_ID, display_name="Test Rep"),
+        "created_by_user": None,
     }
     defaults.update(overrides)
     activity = MagicMock(spec=Activity)
@@ -267,3 +268,78 @@ class TestListAccountOpportunitiesLookup:
             _teardown_overrides()
 
         assert response.status_code == 404
+
+
+class TestListActivityComments:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/activities/{uuid.uuid4()}/comments")
+        assert response.status_code == 401
+
+    def test_missing_activity_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0  # activity_exists -> False
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/activities/{uuid.uuid4()}/comments")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404
+
+    def test_returns_serialized_comments(self, client: TestClient) -> None:
+        activity_id = uuid.uuid4()
+        comment_id = uuid.uuid4()
+        author_id = uuid.uuid4()
+        comment = MagicMock()
+        comment.id = comment_id
+        comment.activity_id = activity_id
+        comment.body = "On it, thanks"
+        comment.created_at = datetime(2026, 9, 9, 8, 0, 0, tzinfo=UTC)
+        comment.author = _mock_nested(id=author_id, display_name="Shruthi")
+
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1  # activity_exists -> True
+        mock_db.scalars.return_value.all.return_value = [comment]
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get(f"/api/v1/activities/{activity_id}/comments")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        items = response.json()["data"]
+        assert len(items) == 1
+        assert items[0]["body"] == "On it, thanks"
+        assert items[0]["author"] == {"id": str(author_id), "display_name": "Shruthi"}
+
+
+class TestCreateActivityComment:
+    def test_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.post(f"/api/v1/activities/{uuid.uuid4()}/comments", json={"body": "Hi"})
+        assert response.status_code == 401
+
+    def test_missing_activity_returns_404(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0  # activity_exists -> False
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(f"/api/v1/activities/{uuid.uuid4()}/comments", json={"body": "Hi"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 404
+
+    def test_empty_body_returns_422(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1  # activity_exists -> True
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.post(f"/api/v1/activities/{uuid.uuid4()}/comments", json={"body": ""})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422

@@ -1,5 +1,12 @@
 import api from "../lib/api";
-import type { ActivityPage, ActivityReportPage, ActivityResponse, ActivityType, ReminderResponse } from "../types/api-aliases";
+import type {
+  ActivityCommentResponse,
+  ActivityPage,
+  ActivityReportPage,
+  ActivityResponse,
+  ActivityType,
+  ReminderResponse,
+} from "../types/api-aliases";
 
 export interface LogActivityPayload {
   // BR-ACT-01/BR-ACT-09: required unless activity_type is one of the six
@@ -87,6 +94,19 @@ export async function logActivity(
   payload: LogActivityPayload,
 ): Promise<ActivityResponse> {
   const r = await api.post("/activities", payload);
+  return r.data.data;
+}
+
+export async function listActivityComments(activityId: string): Promise<ActivityCommentResponse[]> {
+  const r = await api.get(`/activities/${activityId}/comments`);
+  return r.data.data;
+}
+
+export async function createActivityComment(
+  activityId: string,
+  body: string,
+): Promise<ActivityCommentResponse> {
+  const r = await api.post(`/activities/${activityId}/comments`, { body });
   return r.data.data;
 }
 

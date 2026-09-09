@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
-from app.domains.activity.models import Activity, Reminder
+from app.domains.activity.models import Activity, ActivityComment, Reminder
 from app.domains.opportunity.models import Opportunity
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
@@ -181,6 +181,22 @@ class ActivityRepository(BaseRepository[Activity]):
         )
         stmt = self._apply_daily_report_scope(stmt, current_user, user_id)
         return self.db.scalar(stmt) or 0
+
+
+class ActivityCommentRepository(BaseRepository[ActivityComment]):
+    def __init__(self, db: Session):
+        super().__init__(ActivityComment, db)
+
+    def activity_exists(self, activity_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(Activity.id == activity_id)) or 0) > 0
+
+    def list_for_activity(self, activity_id: uuid.UUID) -> list[ActivityComment]:
+        stmt = (
+            select(ActivityComment)
+            .where(ActivityComment.activity_id == activity_id)
+            .order_by(ActivityComment.created_at.asc())
+        )
+        return list(self.db.scalars(stmt).all())
 
 
 class ReminderRepository(BaseRepository[Reminder]):

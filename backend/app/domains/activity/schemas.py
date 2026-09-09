@@ -201,6 +201,31 @@ class ActivityReportRow(BaseModel):
     opportunity: OpportunityNested | None
     project: ProjectNested | None
     user: UserNested
+    # Who actually logged this Activity, distinct from `user` above (who it's
+    # logged against, BR-ACT-04) -- same field/reasoning as ActivityResponse's
+    # own created_by_user. Missed on this schema when that field was added
+    # elsewhere (2026-09-08); DailyActivityReportScreen.tsx already expected
+    # it. Activity.created_by_user is `lazy="joined"`, so no repository
+    # change is needed -- it's already being fetched, just never exposed here.
+    created_by_user: UserNested | None = None
+
+
+# ------------------------------------------------------------------
+# Activity Comment
+# ------------------------------------------------------------------
+
+class ActivityCommentCreate(BaseModel):
+    body: str = Field(..., min_length=1)
+
+
+class ActivityCommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    activity_id: uuid.UUID
+    body: str
+    created_at: datetime
+    author: UserNested
 
 
 # ------------------------------------------------------------------

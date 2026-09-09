@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base, CreatedAtMixin
@@ -52,6 +52,31 @@ class Activity(CreatedAtMixin, Base):
     reminders: Mapped[list["Reminder"]] = relationship(
         back_populates="activity", foreign_keys="Reminder.activity_id", lazy="select"
     )
+    comments: Mapped[list["ActivityComment"]] = relationship(
+        back_populates="activity", foreign_keys="ActivityComment.activity_id", lazy="select"
+    )
+
+
+class ActivityComment(Base):
+    __tablename__ = "activity_comment"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("activity.id"), nullable=False, index=True
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # No updated_at/edited flag -- post-only in v1, same immutability posture as
+    # Activity itself (see docs/Activity-Comment-Implementation-Plan.md, decision 3).
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=False
+    )
+
+    activity: Mapped["Activity"] = relationship(back_populates="comments", foreign_keys=[activity_id], lazy="joined")
+    # Aliased to `author` (not `created_by_user`, unlike Activity's own field) --
+    # a comment has no "who it's about" distinction the way MANAGER_NOTE does,
+    # so there's only ever one person to name here.
+    author: Mapped["UserProfile"] = relationship(foreign_keys=[created_by], lazy="joined")
 
 
 class Reminder(AuditMixin, Base):
