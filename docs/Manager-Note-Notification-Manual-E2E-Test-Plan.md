@@ -1,10 +1,11 @@
 # Manager Note Notification — Manual E2E Test Plan
 
-**Status:** Not yet run. Built 2026-09-08 per `docs/Manager-Note-
-Notification-Implementation-Plan.md`, not yet committed. 695/695 backend
-tests pass, `tsc`/lint/build clean — this plan covers what those can't:
-the actual notification arriving, the bell's click-through landing on the
-right screen/tab, and the read-receipt actually clearing.
+**Status:** All 15 cases passed 2026-09-09, run against Dev with Basheer
+K (M) and Shruthi/Rudrappa (R). Built 2026-09-08 per `docs/Manager-Note-
+Notification-Implementation-Plan.md`, committed `356933d`. Also
+confirmed resolved: that commit's own "KNOWN ISSUE, NOT YET DEBUGGED" (
+urgent popup/bell red-dot not reliably firing on a fresh login) — fired
+correctly on every fresh-login repro this pass (TC-8, TC-12).
 
 ## Setup
 
@@ -136,18 +137,18 @@ to `docs/Progress-Archive-2026-09.md` once the full pass is complete.
 
 | TC | Result | Notes |
 |----|--------|-------|
-| 1  |        |       |
-| 2  |        |       |
-| 3  |        |       |
-| 4  |        |       |
-| 5  |        |       |
-| 6  |        |       |
-| 7  |        |       |
-| 8  |        |       |
-| 9  |        |       |
-| 10 |        |       |
-| 11 |        |       |
-| 12 |        |       |
-| 13 |        |       |
-| 14 |        |       |
-| 15 |        |       |
+| 1  | Pass   | No Urgent checkbox for Call, no label on user field |
+| 2  | Pass   | Checkbox appears unchecked; user field labeled "This Note Is For *" |
+| 3  | Pass   | Checked, switched to Call then back to Manager Note -- unchecked again |
+| 4  | Pass   | Shruthi logged passive Manager Note against Rudrappa on Al Shifa Hospital (account-only, no opportunity) |
+| 5  | Pass   | Rudrappa's bell showed red dot, dropdown read "Shruthi left you a manager note" (no "urgent" wording); UrgentNotificationDialog did not pop |
+| 6  | Pass   | Click navigated straight to Al Shifa Hospital's Activity tab (not Overview); bell red dot cleared after |
+| 7  | Pass   | Shruthi logged urgent Manager Note against Rudrappa on Al Shifa Hospital (account-only) |
+| 8  | Pass   | UrgentNotificationDialog popped on Rudrappa's fresh login, correct copy "Shruthi left you an urgent manager note" |
+| 9  | Pass   | Review navigated to Al Shifa Hospital's Activity tab, showing the new note; bell red dot cleared |
+| 10 | Pass   | Basheer K logged urgent Manager Note against Shruthi on "Test Opportunity owner assignment notification feature" (Aster MIMS Calicut) |
+| 11 | Pass   | Bell click-through opened the Opportunity's own Activity tab, not Customer 360 |
+| 12 | Pass   | Urgent ticked -- UrgentNotificationDialog popped correctly on Shruthi's fresh login with correct copy ("Basheer K left you an urgent manager note") -- this is the KNOWN ISSUE from commit 356933d, now confirmed resolved |
+| 13 | Pass   | Rudrappa logged Manager Note against himself -- saved, no notification, bell unchanged |
+| 14 | Pass   | Verified via backend test `test_is_urgent_on_non_manager_note_raises` (schema-level, same rule a raw API call would hit) instead of a manual REST call |
+| 15 | Pass   | Reassigned Opportunity "Good Marketing lead" to Rudrappa -- correct plain-assignment copy, no urgent popup, click-through landed on Overview tab (not Activity), read-receipt cleared -- no regression from the new entity_type="activity" join |

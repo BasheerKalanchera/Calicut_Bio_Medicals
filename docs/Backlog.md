@@ -55,21 +55,17 @@ kept only as a pointer; nothing left to pick up here.
   either file is touched, so a future edit doesn't update the wrong one on
   the strength of the name matching.
 
-- **Manager Note notification to the assigned rep — built 2026-09-08, not
-  committed, awaiting Basheer's live testing.** Raised via phone call,
-  Haroon to Basheer: when a manager logs a `MANAGER_NOTE` Activity
-  (BR-ACT-02, internal manager-to-rep guidance), the rep it's about gets
-  no notification today. Full plan: `docs/Manager-Note-Notification-
-  Implementation-Plan.md`. Manager ticks an "Urgent" checkbox at
-  note-creation time (only shown for `MANAGER_NOTE`); ticked pops
-  `UrgentNotificationDialog`, unticked is bell-only. Built the
-  `NotificationResponse.account_id`/`opportunity_id` gap this surfaced
-  (every other notification type's `entity_id` doubles as the navigable
-  id; `MANAGER_NOTE_ADDED`'s `entity_id` is the Activity id, which has
-  none) plus a new `POST /notifications/mark-read` endpoint (`entity_type
-  "activity"` has no per-item GET route to piggyback a read-receipt on).
-  695/695 backend tests pass, `tsc`/lint/build clean. Full narrative:
-  `docs/Progress-Archive-2026-09.md`'s "2026-09-08 (later still)" entry.
+- ~~**Manager Note notification to the assigned rep.**~~ — **DONE.** Raised
+  via phone call, Haroon to Basheer: when a manager logs a `MANAGER_NOTE`
+  Activity (BR-ACT-02, internal manager-to-rep guidance), the rep it's
+  about gets no notification today. Built 2026-09-08 (Manager ticks an
+  "Urgent" checkbox at note-creation time, only shown for `MANAGER_NOTE`;
+  ticked pops `UrgentNotificationDialog`, unticked is bell-only), committed
+  `356933d`, full 15-case manual E2E pass completed 2026-09-09 (`docs/
+  Manager-Note-Notification-Manual-E2E-Test-Plan.md`). Full plan: `docs/
+  Manager-Note-Notification-Implementation-Plan.md`; full narrative:
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-08 (later still, both
+  entries) and 2026-09-09 entries.
 - **Activity Inline Comments — implementation plan finalized 2026-09-08,
   not yet built.** Same 2026-09-08 phone call: can a manager comment on an
   Activity the Opportunity owner already logged, tied to that specific
@@ -196,22 +192,23 @@ kept only as a pointer; nothing left to pick up here.
   any performance conversation built on them, same risk category as the
   WON-immutability concern.
 
-- **Urgent-notification infrastructure retained for future reuse.** The
-  IndiaMART 4-hour-SLA urgent path (`URGENT_LEAD_SOURCE_NAMES` computing
-  `is_urgent` in `notify_opportunity_assigned`) was retired 2026-09-02 as
-  part of Lead Management — IndiaMART inquiries now go through the
-  `marketing_lead` review queue first, so nothing needs to interrupt a rep
-  the moment an Opportunity is assigned anymore. **Explicitly decided
-  2026-09-03: do NOT remove the underlying machinery** — `notification
-  .is_urgent`, `NotificationRepository.list_urgent_unread`/`count_unread`'s
-  urgent split, `GET /notifications/urgent-unread`, and the frontend's
+- **Urgent-notification infrastructure — retained 2026-09-02, now back in
+  active use via Manager Note (2026-09-08/09).** The IndiaMART 4-hour-SLA
+  urgent path (`URGENT_LEAD_SOURCE_NAMES` computing `is_urgent` in
+  `notify_opportunity_assigned`) was retired 2026-09-02 as part of Lead
+  Management — IndiaMART inquiries now go through the `marketing_lead`
+  review queue first, so nothing needs to interrupt a rep the moment an
+  Opportunity is assigned anymore. **Explicitly decided 2026-09-03: do NOT
+  remove the underlying machinery** — `notification.is_urgent`,
+  `NotificationRepository.list_urgent_unread`/`count_unread`'s urgent
+  split, `GET /notifications/urgent-unread`, and the frontend's
   `UrgentNotificationDialog.tsx` (interrupting popup + 60s poll + dismiss/
-  review flow) all stay in place, unused but ready. To light up a new
-  urgent case later: add a `notify_*` method in `backend/app/domains/
-  notification/service.py` that passes `is_urgent=True` for whatever
-  condition warrants it — no new infrastructure needed, same shape the old
-  IndiaMART logic had. See the comments on `notify_opportunity_assigned`
-  and at the top of `UrgentNotificationDialog.tsx`.
+  review flow) all stayed in place, unused but ready — and that bet paid
+  off: `notify_manager_note_added` (2026-09-08) is the first caller since
+  IndiaMART to pass a real `is_urgent` value, no new infrastructure
+  needed, same shape the old IndiaMART logic had. See the comments on
+  `notify_opportunity_assigned` and at the top of `UrgentNotificationDialog
+  .tsx`.
   **Loose end found live 2026-09-03 while investigating this:** `is_urgent`
   is frozen on a `Notification` row at creation, not recalculated — a
   handful of pre-2026-09-02 IndiaMART test rows (all "aster medicity",

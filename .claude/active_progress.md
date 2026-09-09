@@ -14,42 +14,14 @@ either:**
 Full narrative for both: `docs/Progress-Archive-2026-09.md`'s "2026-09-08
 (later)" and "2026-09-08 (later still)" entries.
 
-**Manager Note notification to the assigned rep — built 2026-09-08, NOT
-committed, live testing found 2 real problems, 1 unresolved. Session
-paused here at Basheer's request; resume by reading this and the full
-narrative before touching anything.** Per `docs/Manager-Note-
-Notification-Implementation-Plan.md` / `docs/Manager-Note-Notification-
-Manual-E2E-Test-Plan.md`.
-
-1. **Confirmed bug, fix not yet applied:** `UrgentNotificationDialog.tsx`
-   was never actually updated for the new notification type — still
-   hardcoded IndiaMART-only copy and old `entity_id`-as-opportunity-id
-   click-through, so a `MANAGER_NOTE_ADDED` urgent notification pops with
-   wrong text and broken navigation. Needs the same `opportunity_id`/
-   `account_id` branching + `onSelectAccount` prop + `markNotificationRead`
-   call `NotificationBell.tsx`'s `handleSelect` already has (extract
-   `describe()` to a shared util both use).
-2. **Root cause confirmed for "no notification fired" reports:**
-   `LogActivityModal.tsx`'s "user" field (`:329-341`) has no label,
-   defaults to yourself — two live tests (Fazal→Fahad, Haroon→Shruthi)
-   both saved with `user_id == created_by` (the actor's own id), which my
-   code correctly treats as "no one to notify." Confirmed via a direct,
-   rolled-back reproduction through the real service code that a genuine
-   cross-person case works with no error. Needs a label + an explicit,
-   non-defaulted choice for Manager Note specifically.
-3. **Unresolved:** several later live test rows (incl. Activity id
-   `e9d9ef21-0494-4027-be13-49cb2937ab29`) don't show up via read-only
-   diagnostic queries against Dev, despite frontend URL, backend env,
-   and running-server code all confirmed correct — and one earlier-found
-   row later came back empty from what should have been the same query.
-   Last open question: does the Supabase project ref in Basheer's Studio
-   URL match `drwtvgesygbsglzpnomi` (`backend/.env`'s `DATABASE_URL`)?
-   Check that first before any more DB-side debugging.
-
-Full narrative, exact queries used, and everything ruled out:
-`docs/Progress-Archive-2026-09.md`'s "2026-09-08 (later still) — Manager
-Note notification live testing" entry. **Do not commit or re-run the
-E2E plan until items 1-3 are resolved.**
+**Manager Note notification — 15-case E2E pass completed 2026-09-09, no
+action pending.** One live report right after the pass (urgent note to
+Rudrappa not appearing immediately) turned out to be cross-tab session
+interference from running two logins in the same physical browser during
+testing (Supabase's `localStorage`-backed session syncs across tabs of
+the same origin) -- retested directly and it worked correctly. Feature
+itself confirmed working. Full narrative: `docs/Progress-Archive-2026-09
+.md`'s 2026-09-09 entry.
 
 **Activity inline comments — implementation plan finalized, not yet
 built.** Two-way thread, anyone who can see the Activity can post, no

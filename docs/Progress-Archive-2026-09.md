@@ -1789,3 +1789,70 @@ requirement on Add Hospital") — 5 files: `master_data.py`,
 `account/service.py`, `AddHospitalModal.tsx`,
 `test_account_service.py`, `test_master_data.py`. Not yet promoted to
 `uat`; no migration needed, pure authorization-logic fix on both ends.
+
+## 2026-09-08 (later still) — Manager Note notification: both open bugs fixed and committed, one new issue found live, session ended without an archive entry
+
+Not logged at the time (handover gap found and corrected 2026-09-09 —
+see that date's entry). After the SBU Manager fix above, work resumed
+same evening on the two open Manager Note Notification bugs from the
+earlier "one confirmed bug, one root cause found" entry: `Urgent
+NotificationDialog.tsx` was updated with the same `opportunity_id`/
+`account_id` branching as `NotificationBell.tsx` (extracted into a
+shared `describeNotification()` util, `utils/notificationDescribe.ts`),
+and `LogActivityModal.tsx`'s "who this is about" field gained the
+"This Note Is For *" label for Manager Note specifically, no longer
+silently defaulting to self. Also added `Activity.created_by_user` (no
+migration, `created_by` already existed) so the Activity Timeline and
+Daily Activity Report show who *wrote* a Manager Note, not who it's
+about. 695/695 backend tests pass, `tsc`/eslint clean. **Committed
+`356933d`** ("feat: add Manager Note notification, fix Activity author
+display").
+
+That commit's own message flagged a new, not-yet-debugged issue found
+in the same live pass: the urgent popup and bell red-dot didn't
+reliably fire on a fresh login for a genuinely unread urgent
+notification, even though the backend row was confirmed correct. Left
+as the next thing to chase — see 2026-09-09's entry for the resolution.
+
+## 2026-09-09 — Manager Note notification: handover gap found and corrected, full 15-case E2E pass, "doesn't fire on login" issue confirmed resolved
+
+`.claude/active_progress.md` still described the Manager Note feature
+as blocked on 3 open items from the 2026-09-08 live-testing session,
+written before that evening's follow-on work (`356933d` above) fixed 2
+of them and surfaced a 3rd, different issue. Caught by checking git log
+against the handover doc before touching anything, per the "verify
+handover against git" habit — commit timestamps showed `356933d` landed
+*after* the handover was last written, so it was never reflected there.
+
+Ran the full `docs/Manager-Note-Notification-Manual-E2E-Test-Plan.md`
+(15 cases, Groups A-F) live against Dev, Basheer as M (Basheer K/
+Shruthi) and R (Shruthi/Rudrappa). All 15 passed, no new bugs found.
+Notably: TC-8 and TC-12 reproduced the exact "fresh login" scenario from
+`356933d`'s known issue (urgent Manager Note already sitting unread,
+then a genuine sign-in as the recipient) three separate times (Shruthi
+receiving from Basheer K, twice for Rudrappa receiving from Shruthi) —
+the urgent dialog and bell red dot fired correctly every time, with
+correct copy and click-through, so that issue is now considered
+resolved (most likely fixed incidentally by the `356933d` fixes
+themselves, since nothing further was changed before this pass). One
+brief false alarm during TC-15: the bell still showed a red dot
+immediately after a click-through; a direct DB check (impersonating
+Rudrappa via `set_config`, same safe read-only pattern as before) showed
+0 actual unread rows, and a re-check a few seconds later showed the
+badge had cleared — a UI refresh lag, not a real bug.
+
+Test plan's results table and status line updated in place. Feature is
+now fully E2E-confirmed end to end (Groups A-F, all 15 cases).
+
+**Follow-on same day:** right after the pass, Basheer reported an urgent
+note to Rudrappa not showing the popup/red-dot immediately after a
+genuine sign-out/sign-in (not mid-session, so the 60s poll explanation
+didn't fit). DB showed the row created correctly but not marked read
+until ~2.5 min later. Root cause: today's testing had two logins open in
+the *same physical browser* at once (Basheer's own tab and the
+Chrome-automation tab) -- Supabase persists its session to `localStorage`
+(shared per origin, not per tab) and syncs auth state across tabs via the
+`storage` event, so concurrent sign-in/out across the two could produce
+exactly this kind of flaky symptom. Retested directly (single browser,
+no concurrent second login) and it worked correctly -- confirms this was
+a testing-methodology artifact, not a product bug.
