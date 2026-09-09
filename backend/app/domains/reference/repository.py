@@ -1,4 +1,5 @@
 import uuid
+from collections.abc import Sequence
 
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
@@ -37,23 +38,27 @@ class ZoneRepository(BaseRepository[Zone]):
         return self.db.scalar(select(Zone.parent_zone_id).where(Zone.id == zone_id))
 
     def search_by_name(
-        self, query: str, limit: int = 10, *, within_zone_id: uuid.UUID | None = None
+        self, query: str, limit: int = 10, *, within_zone_ids: Sequence[uuid.UUID] | None = None
     ) -> list[Zone]:
         """Trigram similarity search over active zones, backing the
         ZonePicker component (docs/ZonePicker-And-Coverage-View-
         Implementation-Plan.md). Only active zones are searchable, matching
         the existing list_active() convention used everywhere else.
 
-        `within_zone_id`, when given, restricts results to that zone plus
-        everything under it (via zone_closure) -- backs the Add/Edit Hospital
-        picker's rep-scoped search (master_data.py's
+        `within_zone_ids`, when given, restricts results to those zones plus
+        everything under each of them (via zone_closure) -- backs the
+        Add/Edit Hospital picker's rep-scoped search (master_data.py's
         search_zones_for_hospital), same descendant-sweep pattern as
-        AccountRepository.find_similar_by_name and list_accounts."""
+        AccountRepository.find_similar_by_name and list_accounts. Takes every
+        zone a caller is assigned to (not just their primary zone_id) --
+        found 2026-09-09, a rep with additional zones beyond their primary
+        (e.g. Vivek: Alappuzha primary + 5 more districts) couldn't find any
+        of the others here, only the primary."""
         similarity = func.similarity(Zone.name, query)
         stmt = select(Zone).where(Zone.is_active == True, similarity > 0)  # noqa: E712
-        if within_zone_id is not None:
+        if within_zone_ids is not None:
             descendant_ids = select(ZoneClosure.descendant_zone_id).where(
-                ZoneClosure.ancestor_zone_id == within_zone_id
+                ZoneClosure.ancestor_zone_id.in_(within_zone_ids)
             )
             stmt = stmt.where(Zone.id.in_(descendant_ids))
         stmt = stmt.order_by(similarity.desc()).limit(limit)

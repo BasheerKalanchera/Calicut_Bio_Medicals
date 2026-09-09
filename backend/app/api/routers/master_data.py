@@ -126,9 +126,13 @@ def search_zones(
 # needs the unrestricted search -- only Add/Edit Hospital should be scoped to
 # the rep's own territory. Same role-gate shape as AccountService's
 # _ZONE_ASSIGNMENT_EXEMPT_ROLES (account/service.py) -- Admin/GM get the
-# unrestricted search, everyone else is scoped to their own zone_id + every
-# zone under it. A rep with no zone_id gets no results at all, matching
-# AccountService.create_account's hard block for the same case.
+# unrestricted search, everyone else is scoped to every zone they're
+# assigned to (primary zone_id plus any additional zones via user_zone) +
+# everything under each. A rep with no zones assigned gets no results at
+# all, matching AccountService.create_account's hard block for the same
+# case. Found 2026-09-09: this used to scope by zone_id alone, so a rep
+# with additional zones beyond their primary (e.g. Vivek: Alappuzha primary
+# + 5 more districts) couldn't find any of the others here.
 @router.get("/master-data/zones/search-for-hospital")
 def search_zones_for_hospital(
     q: str = Query(min_length=2),
@@ -138,10 +142,9 @@ def search_zones_for_hospital(
     repo = ZoneRepository(db)
     if current_user.role.role_name in _TERRITORY_ADMIN_ROLES:
         zones = repo.search_by_name(q)
-    elif current_user.zone_id is None:
-        zones = []
     else:
-        zones = repo.search_by_name(q, within_zone_id=current_user.zone_id)
+        zone_ids = [uz.zone_id for uz in current_user.zones]
+        zones = repo.search_by_name(q, within_zone_ids=zone_ids) if zone_ids else []
     return APIResponse(
         data=[ZoneSearchResult(id=z.id, name=z.name, path=repo.build_breadcrumb(z)) for z in zones]
     )

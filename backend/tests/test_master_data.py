@@ -286,6 +286,7 @@ class TestSearchZonesForHospital:
     def test_area_manager_with_no_zone_gets_empty_results(self, client: TestClient) -> None:
         user = _mock_user(role_name="Area Manager")
         user.zone_id = None
+        user.zones = []
         mock_db = MagicMock()
         app.dependency_overrides[get_current_user] = lambda: user
         app.dependency_overrides[get_db] = lambda: mock_db
@@ -300,3 +301,39 @@ class TestSearchZonesForHospital:
         assert response.status_code == 200
         assert response.json()["data"] == []
         repo.search_by_name.assert_not_called()
+
+    def test_rep_with_additional_zones_searches_across_all_of_them(self, client: TestClient) -> None:
+        """Found live 2026-09-09: Vivek (Sales Staff) has Alappuzha as his
+        primary zone plus 5 additional districts (Idukki, Kottayam,
+        Pathanamthitta, Kollam, Trivandrum) via user_zone, but couldn't find
+        any of the 5 additional ones in the Add Hospital picker -- it only
+        ever searched his primary zone_id. Reproduced identically on Dev,
+        confirming a code bug, not UAT-specific data."""
+        user = _mock_user(role_name="Sales Staff")
+        alappuzha_id = uuid.uuid4()
+        additional_ids = [uuid.uuid4() for _ in range(5)]
+        user.zone_id = alappuzha_id
+        user.zones = [MagicMock(zone_id=zid) for zid in [alappuzha_id, *additional_ids]]
+        mock_db = MagicMock()
+        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_db] = lambda: mock_db
+
+        zone = MagicMock()
+        zone.id = additional_ids[2]
+        zone.name = "Kollam"
+
+        try:
+            with patch("app.api.routers.master_data.ZoneRepository") as MockRepo:
+                repo = MockRepo.return_value
+                repo.search_by_name.return_value = [zone]
+                repo.build_breadcrumb.return_value = "Kerala"
+                response = client.get("/api/v1/master-data/zones/search-for-hospital", params={"q": "Kollam"})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body["data"]) == 1
+        assert body["data"][0]["name"] == "Kollam"
+        called_zone_ids = repo.search_by_name.call_args.kwargs["within_zone_ids"]
+        assert set(called_zone_ids) == {alappuzha_id, *additional_ids}

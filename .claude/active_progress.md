@@ -3,15 +3,30 @@ _Session: 2026-08-21 → 2026-09-07_
 
 ## Pending, awaiting Haroon / not yet actioned
 
-**Two Dev bug fixes today, both committed, neither promoted to UAT yet —
-next promotion is a plain `main` -> `uat` push, no migration needed for
-either:**
+**Three Dev bug fixes, none promoted to UAT yet — next promotion is a
+plain `main` -> `uat` push, no migration needed for any:**
 1. Account picker silently truncated at 100 hospitals (found via "+Lead"),
    fixed in 4 files, **committed `a4cf3d9`**.
 2. SBU Manager blocked from Add Hospital by two independent zone-gate
    checks that only exempted Admin/GM, **committed `c16b45a`**.
+3. Add/Edit Hospital's rep-scoped zone picker (`search_zones_for_hospital`,
+   built `e86d49a` 2026-08-31) only ever searched a rep's **primary**
+   zone_id, ignoring any additional zones assigned via `user_zone` --
+   found live 2026-09-09 (Vivek, Sales Staff: Alappuzha primary + 5 more
+   districts, could only find Alappuzha; also affects Naeem's secondary
+   zone Wayanad). Not a UAT-specific data problem -- reproduced
+   identically on Dev for Vivek before fixing. Not a regression from a
+   recent change either: the bug has existed since the picker was built:
+   it just never got exercised on UAT until yesterday's 2026-09-08 batch
+   shipped this feature there for the first time. Fixed: `ZoneRepository.
+   search_by_name` now takes `within_zone_ids` (plural) and
+   `search_zones_for_hospital` scopes by `current_user.zones` (all
+   assigned zones) instead of just `zone_id`. New regression test
+   (`test_rep_with_additional_zones_searches_across_all_of_them`)
+   reproduces Vivek's exact case. 711/711 backend tests pass, `ruff`
+   clean. **Not yet committed.**
 
-Full narrative for both: `docs/Progress-Archive-2026-09.md`'s "2026-09-08
+Full narrative for #1-2: `docs/Progress-Archive-2026-09.md`'s "2026-09-08
 (later)" and "2026-09-08 (later still)" entries.
 
 **Manager Note notification — 15-case E2E pass completed 2026-09-09, no
