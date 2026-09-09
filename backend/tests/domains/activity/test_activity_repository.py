@@ -183,3 +183,34 @@ class TestCountByDate:
         total = repo.count_by_date(current_user, START, END)
 
         assert total == 0
+
+
+class TestListByAccountCommentCount:
+    """docs/Activity-Comment-Implementation-Plan.md's comment_count addition
+    -- one extra correlated-subquery column, not a separate per-row fetch."""
+
+    def _make_activity(self) -> MagicMock:
+        return MagicMock(id=uuid.uuid4())
+
+    def test_query_selects_comment_count_subquery(self):
+        mock_db = MagicMock()
+        mock_db.execute.return_value.unique.return_value.all.return_value = []
+        repo = ActivityRepository(mock_db)
+
+        repo.list_by_account(uuid.uuid4())
+
+        stmt = mock_db.execute.call_args.args[0]
+        compiled = str(stmt.compile(compile_kwargs={"literal_binds": True}))
+        assert "count(activity_comment.id)" in compiled.lower()
+        assert "activity_comment.activity_id = activity.id" in compiled.lower()
+
+    def test_comment_count_attached_to_returned_activity(self):
+        mock_db = MagicMock()
+        activity = self._make_activity()
+        mock_db.execute.return_value.unique.return_value.all.return_value = [(activity, 3)]
+        repo = ActivityRepository(mock_db)
+
+        result = repo.list_by_account(uuid.uuid4())
+
+        assert result == [activity]
+        assert activity.comment_count == 3

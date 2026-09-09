@@ -38,18 +38,27 @@ the same origin) -- retested directly and it worked correctly. Feature
 itself confirmed working. Full narrative: `docs/Progress-Archive-2026-09
 .md`'s 2026-09-09 entry.
 
-**Activity inline comments — Phase 1 built, migrated (0040), full 12-case
-E2E pass completed 2026-09-09, no action pending.** Two-way thread,
-anyone who can see the Activity can post, no edit/delete in v1 — thread
-renders directly under each Activity's own card. Notifications
-deliberately deferred to Phase 2 (not yet built) after a review pass
-found two real gaps in the original notification design (see
-`docs/Activity-Comment-Implementation-Plan.md`'s reviewed decisions and
-`docs/Progress-Archive-2026-09.md`'s 2026-09-09 (later) entry for both).
-Fly-by fix in the same pass: `ActivityReportRow` was missing the
-`created_by_user` field `DailyActivityReportScreen.tsx` already expected
-(gap from `356933d`, caught via `tsc`). Full test results: `docs/
-Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`.
+**Activity inline comments — both phases built, full E2E passes, no
+action pending.** Two-way thread, anyone who can see the Activity can
+post, no edit/delete in v1 — thread renders directly under each
+Activity's own card. **Phase 1** (the thread itself, migration `0040`):
+12-case E2E pass 2026-09-09, `docs/Activity-Comment-Phase1-Manual-E2E-
+Test-Plan.md`. **Phase 2** (notifications), built same day after Basheer
+resolved the two design gaps a review pass found (notify actual thread
+participants, not just the Activity's fixed owner; no separate read-
+receipt handling needed since the thread renders under its Manager Note
+in the same card): 11-case E2E pass, `docs/Activity-Comment-Phase2-
+Notifications-Manual-E2E-Test-Plan.md` — one case (TC-5) briefly looked
+like a real fan-out bug, root-caused to a transient dev-server reload
+race, not a code defect. **Polish, same day:** each Activity's comment
+toggle now shows a count badge ("Comments" + a small red pill, or a
+plain "Add comment" link when there's none yet) instead of a bare
+"Comments" label for every entry regardless of whether it has any —
+`comment_count` added to `ActivityResponse` via a correlated subquery,
+no new endpoint. Fly-by fix in the Phase 1 pass: `ActivityReportRow` was
+missing the `created_by_user` field `DailyActivityReportScreen.tsx`
+already expected (gap from `356933d`, caught via `tsc`). Full plan:
+`docs/Activity-Comment-Implementation-Plan.md`.
 
 **WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
 live 2026-09-05, not yet fixed.** Confirmed a product's price can be

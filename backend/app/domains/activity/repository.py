@@ -1,7 +1,8 @@
 import uuid
+from collections.abc import Iterable
 from datetime import datetime
 
-from sqlalchemy import func, or_, select, text
+from sqlalchemy import ScalarSelect, func, or_, select, text
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -48,6 +49,24 @@ class ActivityRepository(BaseRepository[Activity]):
     def project_exists(self, project_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Project.id == project_id)) or 0) > 0
 
+    def _comment_count_column(self) -> ScalarSelect:
+        # Correlated scalar subquery, not a join -- one extra column on the
+        # existing Activity query instead of a separate per-row fetch, so
+        # ActivityTimeline.tsx can show "Comments (N)" without an N+1 request.
+        return (
+            select(func.count(ActivityComment.id))
+            .where(ActivityComment.activity_id == Activity.id)
+            .correlate(Activity)
+            .scalar_subquery()
+        )
+
+    def _rows_with_comment_counts(self, rows: Iterable[tuple[Activity, int]]) -> list[Activity]:
+        activities = []
+        for activity, comment_count in rows:
+            activity.comment_count = comment_count
+            activities.append(activity)
+        return activities
+
     def list_by_account(
         self,
         account_id: uuid.UUID,
@@ -56,7 +75,7 @@ class ActivityRepository(BaseRepository[Activity]):
         limit: int = 50,
     ) -> list[Activity]:
         stmt = (
-            select(Activity)
+            select(Activity, self._comment_count_column())
             .where(Activity.account_id == account_id)
             .options(
                 noload(Activity.reminders),
@@ -71,7 +90,7 @@ class ActivityRepository(BaseRepository[Activity]):
             .offset(offset)
             .limit(limit)
         )
-        return list(self.db.scalars(stmt).unique().all())
+        return self._rows_with_comment_counts(self.db.execute(stmt).unique().all())
 
     def count_by_account(self, account_id: uuid.UUID) -> int:
         return self.db.scalar(
@@ -86,7 +105,7 @@ class ActivityRepository(BaseRepository[Activity]):
         limit: int = 50,
     ) -> list[Activity]:
         stmt = (
-            select(Activity)
+            select(Activity, self._comment_count_column())
             .where(Activity.opportunity_id == opportunity_id)
             .options(
                 noload(Activity.reminders),
@@ -98,7 +117,7 @@ class ActivityRepository(BaseRepository[Activity]):
             .offset(offset)
             .limit(limit)
         )
-        return list(self.db.scalars(stmt).unique().all())
+        return self._rows_with_comment_counts(self.db.execute(stmt).unique().all())
 
     def count_by_opportunity(self, opportunity_id: uuid.UUID) -> int:
         return self.db.scalar(
@@ -113,7 +132,7 @@ class ActivityRepository(BaseRepository[Activity]):
         limit: int = 50,
     ) -> list[Activity]:
         stmt = (
-            select(Activity)
+            select(Activity, self._comment_count_column())
             .where(Activity.project_id == project_id)
             .options(
                 noload(Activity.reminders),
@@ -125,7 +144,7 @@ class ActivityRepository(BaseRepository[Activity]):
             .offset(offset)
             .limit(limit)
         )
-        return list(self.db.scalars(stmt).unique().all())
+        return self._rows_with_comment_counts(self.db.execute(stmt).unique().all())
 
     def count_by_project(self, project_id: uuid.UUID) -> int:
         return self.db.scalar(
@@ -190,12 +209,28 @@ class ActivityCommentRepository(BaseRepository[ActivityComment]):
     def activity_exists(self, activity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Activity.id == activity_id)) or 0) > 0
 
+    def get_activity_owner_id(self, activity_id: uuid.UUID) -> uuid.UUID | None:
+        # Feeds the notification fan-out (Decision 4) -- the Activity's own
+        # `user_id`, always included as a recipient so the very first comment
+        # on a note still notifies someone, even before anyone else has
+        # commented.
+        return self.db.scalar(select(Activity.user_id).where(Activity.id == activity_id))
+
     def list_for_activity(self, activity_id: uuid.UUID) -> list[ActivityComment]:
         stmt = (
             select(ActivityComment)
             .where(ActivityComment.activity_id == activity_id)
             .order_by(ActivityComment.created_at.asc())
         )
+        return list(self.db.scalars(stmt).all())
+
+    def list_distinct_commenter_ids(self, activity_id: uuid.UUID) -> list[uuid.UUID]:
+        # docs/Activity-Comment-Implementation-Plan.md's Decision 4: feeds
+        # the notification fan-out (Activity owner + everyone who's already
+        # commented, minus whoever's posting right now) -- called before the
+        # new comment is flushed, so it never includes the current poster's
+        # own not-yet-committed row.
+        stmt = select(ActivityComment.created_by).where(ActivityComment.activity_id == activity_id).distinct()
         return list(self.db.scalars(stmt).all())
 
 

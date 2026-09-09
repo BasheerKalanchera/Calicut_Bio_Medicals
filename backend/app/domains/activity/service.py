@@ -191,8 +191,9 @@ class ActivityService:
 
 
 class ActivityCommentService:
-    def __init__(self, repository: ActivityCommentRepository):
+    def __init__(self, repository: ActivityCommentRepository, notification_service: NotificationService):
         self.repository = repository
+        self.notification_service = notification_service
 
     def list_for_activity(self, activity_id: uuid.UUID) -> list[ActivityComment]:
         if not self.repository.activity_exists(activity_id):
@@ -209,12 +210,30 @@ class ActivityCommentService:
         if not self.repository.activity_exists(activity_id):
             raise NotFoundError(f"Activity {activity_id} not found")
 
+        # docs/Activity-Comment-Implementation-Plan.md's Decision 4: notify
+        # the Activity's owner plus everyone who's already commented, minus
+        # whoever's posting right now -- computed before this comment is
+        # created so the poster's own new row can't leak into "prior
+        # commenters".
+        owner_id = self.repository.get_activity_owner_id(activity_id)
+        prior_commenter_ids = self.repository.list_distinct_commenter_ids(activity_id)
+        recipient_ids = {owner_id, *prior_commenter_ids} - {author_id, None}
+
         comment = ActivityComment(
             activity_id=activity_id,
             body=data.body,
             created_by=author_id,
         )
-        return self.repository.create(comment)
+        comment = self.repository.create(comment)
+
+        for recipient_id in recipient_ids:
+            self.notification_service.notify_activity_comment_added(
+                recipient_user_id=recipient_id,
+                activity_id=activity_id,
+                actor_id=author_id,
+            )
+
+        return comment
 
 
 class ReminderService:

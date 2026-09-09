@@ -26,6 +26,11 @@ export function describeNotification(n: NotificationResponse): string {
       ? `${who} left you an urgent manager note`
       : `${who} left you a manager note`;
   }
+  if (n.type === "ACTIVITY_COMMENT_ADDED") {
+    // Always non-urgent (Activity-Comment-Implementation-Plan.md) -- no
+    // is_urgent branch, unlike MANAGER_NOTE_ADDED above.
+    return `${who} commented on an activity`;
+  }
   const what = n.opportunity_name ?? "an Opportunity";
   if (n.type === "GATE_OVERRIDE_NAMED") {
     return `${who} named you as approving manager for ${what}`;

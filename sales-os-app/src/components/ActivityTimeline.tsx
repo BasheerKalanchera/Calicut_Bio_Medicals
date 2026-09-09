@@ -103,7 +103,7 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
             {activity.notes}
           </Box>
         )}
-        <ActivityCommentThread activityId={activity.id} />
+        <ActivityCommentThread activityId={activity.id} commentCount={activity.comment_count} />
       </Box>
     </Box>
   );

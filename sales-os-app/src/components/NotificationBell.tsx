@@ -64,12 +64,14 @@ export default function NotificationBell({
       }, 500);
       return;
     }
-    if (n.type === "MANAGER_NOTE_ADDED") {
-      // entity_id here is the Activity id, not an Opportunity id -- unlike
-      // every type below, it has no detail screen of its own. Navigate via
-      // opportunity_id when the note is tied to a deal, else account_id
-      // (docs/Manager-Note-Notification-Implementation-Plan.md). No GET-by-id
-      // route to piggyback a read receipt on, so mark it explicitly.
+    if (n.entity_type === "activity") {
+      // Both MANAGER_NOTE_ADDED and ACTIVITY_COMMENT_ADDED (docs/Activity-
+      // Comment-Implementation-Plan.md) share this branch -- entity_id here
+      // is the Activity id, not an Opportunity id, so unlike every type
+      // below it has no detail screen of its own. Navigate via
+      // opportunity_id when the note is tied to a deal, else account_id. No
+      // GET-by-id route to piggyback a read receipt on, so mark it
+      // explicitly.
       markNotificationRead("activity", n.entity_id);
       if (n.opportunity_id) {
         onSelectOpportunity(

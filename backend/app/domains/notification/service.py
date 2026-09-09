@@ -112,6 +112,30 @@ class NotificationService:
         )
         return self.repository.create(notification)
 
+    def notify_activity_comment_added(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        activity_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # Docs/Activity-Comment-Implementation-Plan.md's Decision 4 (revised
+        # 2026-09-09): unlike every other notify_* method here, a single
+        # comment can fan out to more than one recipient -- the caller
+        # (ActivityCommentService.create_comment) works out who's in the
+        # thread and calls this once per recipient, same single-recipient
+        # shape as every other type. Always non-urgent -- this feature has
+        # no urgent variant, unlike Manager Note.
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="ACTIVITY_COMMENT_ADDED",
+            entity_type="activity",
+            entity_id=activity_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)
+
     def notify_marketing_lead_assigned(
         self,
         *,

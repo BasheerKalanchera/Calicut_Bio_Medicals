@@ -2024,3 +2024,58 @@ and clicking the chip opens the right Opportunity/Customer 360 screen.
 which depends on this coverage -- `target_plan`'s own audit-trail gap
 stays tracked separately in `docs/Backlog.md`, deferred until Target
 Planning itself is built.
+
+## 2026-09-09 (later) — Activity Inline Comments Phase 2: notifications built, an apparent fan-out bug root-caused to a reload race, comment-count badge polish
+
+Started once the Audit Trail Extension session above committed (no file
+overlap between the two, but both touch the shared handover docs, so
+this waited to avoid a race on those). Built per `docs/Activity-Comment-
+Implementation-Plan.md`'s revised Decision 4: `NotificationService.
+notify_activity_comment_added` (mirrors every other `notify_*` method's
+single-recipient shape); `ActivityCommentRepository` gained
+`get_activity_owner_id`/`list_distinct_commenter_ids`;
+`ActivityCommentService.create_comment` computes recipients as the
+Activity's owner plus everyone who's already commented, minus whoever's
+posting right now, and calls the notify method once per recipient.
+Frontend: `notificationDescribe.ts` gained the `ACTIVITY_COMMENT_ADDED`
+case; `NotificationBell.tsx`'s navigation branch was refactored from
+`type === "MANAGER_NOTE_ADDED"` specifically to `entity_type ===
+"activity"`, so both notification types share one code path instead of
+two near-duplicates (the gap flagged during Phase 1's own review).
+
+**TC-5 of the E2E pass initially looked like a real multi-recipient bug**
+-- Basheer K's comment (third participant in a thread) only notified the
+Activity's owner, not the other prior commenter, despite the code
+correctly computing a 2-person recipient set. Added temporary debug
+logging (`print()` tracing `owner_id`/`prior_commenter_ids`/
+`recipient_ids` and each notify call's returned id) and re-tested twice
+more with Haroon posting again: both times the correct recipient set was
+computed AND both notifications were confirmed persisted in the database
+by their exact ids, each impersonating the actual recipient's own RLS
+context. Root cause: a transient dev-server hot-reload race during the
+window of rapid successive file edits just before, not a defect in the
+shipped logic. Debug logging removed, 738/738 tests still pass. Full
+11-case results: `docs/Activity-Comment-Phase2-Notifications-Manual-E2E-
+Test-Plan.md`.
+
+**Same-day polish, Basheer's own follow-up request:** the plain
+"Comments" toggle label showed identically whether an Activity had zero
+comments or several, giving no visual hint either way. Iterated through
+a few visual treatments live in the browser (a colored parenthetical
+count read as cramped/invisible against the label at three different
+colors in a row) before landing on a small rounded badge -- "Comments"
+plus a red pill showing the count, or a plain "Add comment" link with no
+badge when there's nothing there yet. Backend: `comment_count` added to
+`ActivityResponse`, computed via one correlated scalar subquery on the
+existing `list_by_account`/`list_by_opportunity`/`list_by_project`
+queries (a `func.count(activity_comment.id)` subquery attached as a
+plain Python attribute on each returned `Activity`, not a new endpoint
+or a second per-row fetch -- new `_comment_count_column`/`_rows_with_
+comment_counts` helpers on `ActivityRepository`, shared across all
+three). Frontend: posting a comment now also invalidates the `activities`
+query prefix (not just the comment-list query), so the badge count
+updates live without a manual refresh. 740/740 backend tests pass (2
+new repository tests pinning the subquery + attribute-attachment
+behavior), `tsc`/`eslint`/`npm run build` all clean, verified live in
+the browser across all three label states (badge, "Add comment",
+expanded "Hide comments").

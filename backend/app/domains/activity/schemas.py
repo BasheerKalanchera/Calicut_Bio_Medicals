@@ -176,6 +176,12 @@ class ActivityResponse(BaseModel):
     # deleted.
     created_by_user: UserNested | None = None
     next_action_reminder_id: uuid.UUID | None = None
+    # Query-time only, not a stored column -- populated by
+    # list_by_account/list_by_opportunity/list_by_project via a correlated
+    # subquery, so the timeline can show "Comments (N)" without a separate
+    # per-row fetch. Defaults to 0 for any other caller (e.g. log_activity's
+    # own response, a just-created Activity that can't have comments yet).
+    comment_count: int = 0
 
 
 class OpportunityLookup(BaseModel):

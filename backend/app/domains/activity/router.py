@@ -45,7 +45,10 @@ def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # 
 
 
 def _get_comment_service(db: Session = Depends(get_db)) -> ActivityCommentService:  # noqa: B008
-    return ActivityCommentService(repository=ActivityCommentRepository(db))
+    return ActivityCommentService(
+        repository=ActivityCommentRepository(db),
+        notification_service=NotificationService(repository=NotificationRepository(db)),
+    )
 
 
 # ------------------------------------------------------------------

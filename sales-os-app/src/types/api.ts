@@ -2219,6 +2219,11 @@ export interface components {
             created_by_user?: components["schemas"]["UserNested"] | null;
             /** Next Action Reminder Id */
             next_action_reminder_id?: string | null;
+            /**
+             * Comment Count
+             * @default 0
+             */
+            comment_count: number;
         };
         /** ActorNested */
         ActorNested: {

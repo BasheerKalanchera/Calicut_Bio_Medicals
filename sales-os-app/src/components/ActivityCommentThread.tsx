@@ -10,12 +10,22 @@ function formatDate(iso: string) {
   });
 }
 
-// Phase 1 (docs/Activity-Comment-Implementation-Plan.md): a flat, post-only
-// thread against a single Activity, rendered directly under it so it reads
-// as part of the same card. No notifications yet, no edit/delete, no unread
-// state -- all deferred to Phase 2. Collapsed and unfetched until expanded,
-// so opening a timeline with many entries doesn't fire one query per entry.
-export default function ActivityCommentThread({ activityId }: { activityId: string }) {
+// Activity Inline Comments (docs/Activity-Comment-Implementation-Plan.md): a
+// flat, post-only thread against a single Activity, rendered directly under
+// it so it reads as part of the same card. Collapsed and unfetched until
+// expanded, so opening a timeline with many entries doesn't fire one query
+// per entry -- commentCount (from the parent Activity list's own query,
+// docs/Activity-Comment-Implementation-Plan.md's later comment_count
+// addition) drives the toggle label instead: "Comments (N)" once there's at
+// least one, otherwise a plain "Add comment" link with no count implying a
+// thread that isn't there yet.
+export default function ActivityCommentThread({
+  activityId,
+  commentCount,
+}: {
+  activityId: string;
+  commentCount: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState("");
   const queryClient = useQueryClient();
@@ -32,6 +42,10 @@ export default function ActivityCommentThread({ activityId }: { activityId: stri
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey });
+      // Not `exact` -- matches every ["activities", ...] list query
+      // (account/opportunity/project), so the new comment_count shows up
+      // without a manual refresh.
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 
@@ -47,6 +61,9 @@ export default function ActivityCommentThread({ activityId }: { activityId: stri
         onClick={() => setExpanded((e) => !e)}
         disableRipple
         sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 0.75,
           fontSize: "10px",
           fontWeight: 900,
           color: "#9ca3af",
@@ -56,7 +73,31 @@ export default function ActivityCommentThread({ activityId }: { activityId: stri
           "&:hover": { color: "#4b5563", bgcolor: "transparent" },
         }}
       >
-        {expanded ? "Hide comments" : "Comments"}
+        {expanded ? (
+          "Hide comments"
+        ) : commentCount > 0 ? (
+          <>
+            <Box component="span">Comments</Box>
+            <Box
+              component="span"
+              sx={{
+                bgcolor: "#fee2e2",
+                color: "#dc2626",
+                fontWeight: 900,
+                fontSize: "10px",
+                borderRadius: "999px",
+                px: 0.75,
+                py: 0.125,
+                lineHeight: 1.5,
+                letterSpacing: 0,
+              }}
+            >
+              {commentCount}
+            </Box>
+          </>
+        ) : (
+          "Add comment"
+        )}
       </Button>
 
       {expanded && (

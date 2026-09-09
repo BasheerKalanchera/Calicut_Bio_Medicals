@@ -2,9 +2,11 @@
 
 **Status:** **Phase 1 built, migrated (`0040`), full 12-case E2E pass
 2026-09-09** — `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`.
-**Phase 2 (notifications) decisions finalized 2026-09-09, not yet built**
-— split out mid-review after two real gaps were found in this plan's
-original notification design (see Decision 4 below). **Raised:**
+**Phase 2 (notifications) built and full 11-case E2E pass 2026-09-09** —
+`docs/Activity-Comment-Phase2-Notifications-Manual-E2E-Test-Plan.md`.
+Both phases split apart mid-review after two real gaps were found in
+this plan's original notification design (see Decision 4 below).
+**Raised:**
 2026-09-08, Haroon (phone call to Basheer) — can a manager leave an
 inline comment on an Activity already logged by the Opportunity owner?
 **Decisions confirmed** (Basheer, 2026-09-08): anyone who can already see
@@ -128,7 +130,7 @@ belongs in its own table, not a field bolted onto `activity`.
 `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`. Migration `0040`
 applied to Dev, `Physical-Schema.sql` regenerated same day.
 
-## Phase 2 — notifications, decisions finalized, not yet built
+## Phase 2 — notifications, built and E2E-verified (2026-09-09)
 
 - Backend: `NotificationService.notify_activity_comment_added`, called
   once per recipient per Decision 4's resolved rule above (Activity
@@ -142,16 +144,18 @@ applied to Dev, `Physical-Schema.sql` regenerated same day.
   `NotificationRepository._enriched_select` and the `account_id`/
   `opportunity_id` fields on `NotificationResponse`, both already built
   for `MANAGER_NOTE_ADDED` — no repository changes needed for this part.
-- Frontend: `NotificationBell.tsx`'s `describe()` gets a label for
+- Frontend: `NotificationBell.tsx`'s `describe()` gained a label for
   `ACTIVITY_COMMENT_ADDED`. `handleSelect()`'s account-navigation branch
-  is currently keyed on `n.type === "MANAGER_NOTE_ADDED"` specifically,
-  not on `entity_type === "activity"` — worth refactoring to the latter
-  as part of this build so both types share one branch instead of two
-  near-duplicates. No `UrgentNotificationDialog` work needed — comments
-  are always non-urgent.
-- No `mark_read_for_entity` change needed (Decision 4's read-receipt
-  resolution above) — verify this assumption still holds with a live
-  test once built, since it was reasoned through rather than tested.
+  was refactored from `n.type === "MANAGER_NOTE_ADDED"` specifically to
+  `entity_type === "activity"`, so both types share one branch instead of
+  two near-duplicates. No `UrgentNotificationDialog` work needed —
+  comments are always non-urgent.
+- No `mark_read_for_entity` change was needed (Decision 4's read-receipt
+  resolution above) — confirmed live (TC-9,
+  `docs/Activity-Comment-Phase2-Notifications-Manual-E2E-Test-Plan.md`):
+  both a Manager Note and a comment notification on the same Activity
+  shared the identical `read_at` timestamp after clicking only one of
+  them, proving the single mark-read call correctly cleared both.
 
 ## Deferred, not part of this plan
 
@@ -162,8 +166,10 @@ practice — none raised, not scoped here.
 
 ## Sequencing
 
-Phase 1 shipped independent of everything else in flight. Phase 2:
-Basheer's call to start once the parallel in-flight session (Audit Trail
-Extension, `opportunity_item`/`split` work) applies its own changes,
-manually verifies, and commits — avoids two sessions' uncommitted changes
-colliding in the same working tree.
+Phase 1 shipped independent of everything else in flight. Phase 2's code
+touches entirely separate files from the parallel in-flight session
+(Audit Trail Extension, `opportunity_item`/`split` work) — no source
+overlap — but was built and E2E-verified without yet updating the shared
+handover docs (`active_progress.md`, `Progress-Archive-2026-09.md`,
+`Backlog.md`), which stay held until that other session commits, so the
+two threads' entries land in order instead of racing on the same files.

@@ -152,6 +152,36 @@ class TestNotifyManagerNoteAdded:
         assert passive.is_urgent is False
 
 
+class TestNotifyActivityCommentAdded:
+    def test_created_row_shape(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.notify_activity_comment_added(
+            recipient_user_id=RECIPIENT_ID,
+            activity_id=ACTIVITY_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        created = repo.create.call_args[0][0]
+        assert created.recipient_user_id == RECIPIENT_ID
+        assert created.type == "ACTIVITY_COMMENT_ADDED"
+        assert created.entity_type == "activity"
+        assert created.entity_id == ACTIVITY_ID
+        assert created.created_by == ACTOR_ID
+
+    def test_is_never_urgent(self):
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_activity_comment_added(
+            recipient_user_id=RECIPIENT_ID,
+            activity_id=ACTIVITY_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        assert notification.is_urgent is False
+
+
 class TestPassThroughMethods:
     def test_list_for_user_delegates(self):
         repo = _make_repo()

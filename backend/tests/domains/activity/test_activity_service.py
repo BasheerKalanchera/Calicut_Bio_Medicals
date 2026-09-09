@@ -133,6 +133,8 @@ def _make_comment_repo() -> MagicMock:
     repo = MagicMock(spec=ActivityCommentRepository)
     repo.activity_exists.return_value = True
     repo.list_for_activity.return_value = []
+    repo.get_activity_owner_id.return_value = USER_ID
+    repo.list_distinct_commenter_ids.return_value = []
     return repo
 
 
@@ -1451,7 +1453,7 @@ class TestListActivityComments:
     def test_raises_not_found_when_activity_missing(self):
         repo = _make_comment_repo()
         repo.activity_exists.return_value = False
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         with pytest.raises(NotFoundError):
             svc.list_for_activity(ACTIVITY_ID)
@@ -1460,7 +1462,7 @@ class TestListActivityComments:
         repo = _make_comment_repo()
         comments = [_make_comment(), _make_comment()]
         repo.list_for_activity.return_value = comments
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         result = svc.list_for_activity(ACTIVITY_ID)
 
@@ -1475,7 +1477,7 @@ class TestCreateActivityComment:
     def test_raises_not_found_when_activity_missing(self):
         repo = _make_comment_repo()
         repo.activity_exists.return_value = False
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         with pytest.raises(NotFoundError):
             svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
@@ -1483,7 +1485,7 @@ class TestCreateActivityComment:
     def test_created_by_set_to_author_id(self):
         repo = _make_comment_repo()
         repo.create.return_value = _make_comment()
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
 
@@ -1493,7 +1495,7 @@ class TestCreateActivityComment:
     def test_activity_id_and_body_set_correctly(self):
         repo = _make_comment_repo()
         repo.create.return_value = _make_comment()
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="On it, thanks"), author_id=ACTOR_ID)
 
@@ -1505,8 +1507,108 @@ class TestCreateActivityComment:
         repo = _make_comment_repo()
         comment = _make_comment()
         repo.create.return_value = comment
-        svc = ActivityCommentService(repository=repo)
+        svc = ActivityCommentService(repository=repo, notification_service=_make_notification_service())
 
         result = svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
 
         assert result is comment
+
+
+# ---------------------------------------------------------------------------
+# ActivityCommentService.create_comment -- notification fan-out
+# (docs/Activity-Comment-Implementation-Plan.md's Decision 4, revised
+# 2026-09-09: notify the Activity's owner plus everyone who's already
+# commented, minus whoever's posting right now)
+# ---------------------------------------------------------------------------
+
+class TestCreateActivityCommentNotificationFanOut:
+    def _recipients(self, notification_service: MagicMock) -> set:
+        return {
+            call.kwargs["recipient_user_id"]
+            for call in notification_service.notify_activity_comment_added.call_args_list
+        }
+
+    def test_first_comment_notifies_only_the_owner(self):
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = USER_ID
+        repo.list_distinct_commenter_ids.return_value = []
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Please follow up"), author_id=ACTOR_ID)
+
+        assert self._recipients(notification_service) == {USER_ID}
+
+    def test_owner_replying_to_their_own_note_notifies_no_one(self):
+        # The exact case that broke the original design: if the Activity's
+        # owner is the one posting, and nobody else has commented yet, there
+        # is genuinely no one else in the conversation to tell.
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = ACTOR_ID
+        repo.list_distinct_commenter_ids.return_value = []
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Just a note"), author_id=ACTOR_ID)
+
+        notification_service.notify_activity_comment_added.assert_not_called()
+
+    def test_owner_replying_after_someone_else_commented_notifies_that_person(self):
+        # The scenario the original design broke: owner replies, self-notify
+        # skip must not silently drop the person they're replying to.
+        other_commenter = uuid.uuid4()
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = ACTOR_ID
+        repo.list_distinct_commenter_ids.return_value = [other_commenter]
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Thanks, on it"), author_id=ACTOR_ID)
+
+        assert self._recipients(notification_service) == {other_commenter}
+
+    def test_multi_person_thread_notifies_everyone_except_the_poster(self):
+        owner_id = uuid.uuid4()
+        first_commenter = uuid.uuid4()
+        second_commenter = uuid.uuid4()
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = owner_id
+        repo.list_distinct_commenter_ids.return_value = [first_commenter, second_commenter]
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Reply"), author_id=first_commenter)
+
+        assert self._recipients(notification_service) == {owner_id, second_commenter}
+
+    def test_owner_already_among_prior_commenters_is_notified_only_once(self):
+        owner_id = uuid.uuid4()
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = owner_id
+        repo.list_distinct_commenter_ids.return_value = [owner_id]
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Reply"), author_id=ACTOR_ID)
+
+        notification_service.notify_activity_comment_added.assert_called_once()
+        assert self._recipients(notification_service) == {owner_id}
+
+    def test_notify_call_carries_correct_activity_and_actor(self):
+        repo = _make_comment_repo()
+        repo.get_activity_owner_id.return_value = USER_ID
+        repo.list_distinct_commenter_ids.return_value = []
+        repo.create.return_value = _make_comment()
+        notification_service = _make_notification_service()
+        svc = ActivityCommentService(repository=repo, notification_service=notification_service)
+
+        svc.create_comment(ACTIVITY_ID, ActivityCommentCreate(body="Hi"), author_id=ACTOR_ID)
+
+        call = notification_service.notify_activity_comment_added.call_args
+        assert call.kwargs["activity_id"] == ACTIVITY_ID
+        assert call.kwargs["actor_id"] == ACTOR_ID
