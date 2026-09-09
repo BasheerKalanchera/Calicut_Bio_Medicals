@@ -402,15 +402,23 @@ kept only as a pointer; nothing left to pick up here.
   `ProductsTab` (`OpportunityDetailScreen.tsx`) — none of them check
   `current_is_terminal` for anything except an explicit `status_id`
   change. Stage and every other field (price, quantity, items, PO
-  number, owner, etc.) go through unguarded, and none of it is caught by
-  the ADR-017 audit trail either, since that only covers the
-  `opportunity` table's own scalar columns, not `opportunity_item`.
+  number, owner, etc.) go through unguarded — at the time this was found
+  (2026-09-05), none of it was caught by the ADR-017 audit trail either,
+  since that only covered the `opportunity` table's own scalar columns,
+  not `opportunity_item`. **That specific gap is now closed:**
+  `opportunity_item`/`split`/`stakeholder` audit coverage shipped
+  2026-09-09 (`docs/Audit-Trail-Extension-Implementation-Plan.md`,
+  Current task 0b) — an edit to a WON opportunity's items would now show
+  up in the Audit Log. Doesn't fix BR-OP-09 itself (nothing blocks the
+  edit from happening, it's just visible after the fact now) — the
+  block-with-Admin/GM-override design below is still unbuilt.
   **Basheer's call:** don't just lock it down — a correction path is
   still needed for genuine data-entry mistakes made before marking a
   deal Won. Likely shape: block terminal-opportunity edits for the
   normal team, but leave an explicit Admin/GM-only override path (same
   "administrative modification" language BR-OP-09 already uses),
-  captured by the audit trail. Not scoped or built yet.
+  captured by the audit trail (which can now actually capture it). Not
+  scoped or built yet.
   **Open question, not resolved:** the bug was originally reported by
   Nishad (Area Manager), who said he couldn't edit an item's price on an
   opportunity **he owns** that's marked WON — Basheer (Admin) then tried

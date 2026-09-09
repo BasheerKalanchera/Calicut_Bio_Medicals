@@ -11,7 +11,7 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-10 from the Dev database (Postgres 17.6), catching up
+-- Regenerated 2026-09-09 from the Dev database (Postgres 17.6), catching up
 -- migration 0041 since the last regen (2026-09-09, which caught up through
 -- 0040): three new audit triggers (trg_audit_stakeholder,
 -- trg_audit_opportunity_item, trg_audit_split) on the existing

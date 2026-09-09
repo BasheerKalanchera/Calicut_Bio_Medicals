@@ -185,76 +185,21 @@ session, zero overlap with Lead Management) caught up and committed.
 Full narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-02 (later)"
 entry.
 
-## Current task 0b — Audit Trail Extension (opportunity_item/split/stakeholder): built, migrated, full 18-case E2E pass complete, not yet committed
+## Current task 0b — Audit Trail Extension (opportunity_item/split/stakeholder): built, migrated, full 18-case E2E pass, committed
 
-Built 2026-09-10 per `docs/Audit-Trail-Extension-Implementation-Plan.md`.
-Coordinated around the other session's concurrent Activity Comments build
-(zero file overlap — confirmed via `git status` before starting; only
-touching `opportunity`/`audit`, they're entirely in `activity`) — held the
-migration + `Physical-Schema.sql` until their `0040` landed
-(`738ef64`), then chained mine on top as `0041` (`alembic heads` confirms
-a single linear head, no branching). Migration applied to Dev,
-`Physical-Schema.sql` regenerated.
+Built and E2E-tested live against Dev 2026-09-09, including a
+click-through follow-on for the new parent-context chips. Two real bugs
+found and fixed during the pass (spurious `updated_by`-only audit rows
+on untouched lines; a `KeyError` that 500'd the entire Audit Log
+endpoint), both re-verified live. 738/738 backend tests pass, `ruff`/
+`tsc` clean. **Committed `6a580fa`.** Full narrative: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-09 (later still)" entry; full test results: `docs/Audit-Trail-
+Extension-Manual-E2E-Test-Plan.md`.
 
-**Built:** `opportunity/repository.py`'s `replace_items`/`replace_splits`
-now partition into real UPDATE/DELETE/INSERT instead of delete-all-then-
-reinsert (threading `id` for items / `(opportunity_id, user_id)` for
-splits through the save path), `opportunity/schemas.py`/`service.py`
-carry `id` through, `OpportunityDetailScreen.tsx` round-trips it on save.
-`audit/repository.py` gained the new FK resolvers (`opportunity_id`,
-`product_id`, `user_id`) and a `stakeholder` record label.
-`alembic/versions/0041_add_audit_triggers_item_split_stakeholder.py` adds
-the three triggers (no function change — `audit_log_row_change()` stays
-fully generic). `Business-Rules.md`'s BR-AUD-01 updated with the real
-audited-table list and the delete-driven-by-design note for pre-fix rows.
-
-**Full 18-case manual E2E pass completed live against Dev 2026-09-09/10**
-(`docs/Audit-Trail-Extension-Manual-E2E-Test-Plan.md`) — 17 pass, 1
-(Admin/GM-only gate) not independently re-tested since that code path is
-untouched by this build. **Two real bugs found and fixed during the
-pass, both re-verified live afterward:**
-1. `replace_items`/`replace_splits` unconditionally reassigned
-   `updated_by` on every line in a save, including untouched ones —
-   produced a spurious audit row on any line whenever the actor differed
-   from whoever last saved it. Fixed: only touch a line's fields
-   (`updated_by` included) when its real content actually changed.
-2. `Stakeholder` was added to `_RECORD_LABEL_RESOLVER_MAP` but not
-   `_MODEL_DISPLAY_ATTR` — threw a bare `KeyError`, 500ing the **entire**
-   Audit Log endpoint (every table, not just stakeholder) the moment any
-   stakeholder audit row existed. Reproduced directly against Dev via a
-   throwaway script to get the real traceback (the plain app-role
-   connection silently returns 0 rows on this RLS-protected table, so
-   this needed the RLS context set manually to actually hit the bug).
-
-New regression tests for both (repository partitioning-by-actor tests,
-plus a check that every `_RECORD_LABEL_RESOLVER_MAP` model also has a
-`_MODEL_DISPLAY_ATTR` entry — the gap the original resolver-map test
-missed). Also fixed in the same pass: `AuditLogScreen.tsx`'s
-`TABLE_OPTIONS` never had the three new tables, so they were missing from
-the filter dropdown (data itself was never hidden, just the label/filter
-— confirmed and fixed).
-
-**Follow-on same day, raised by Basheer during review:** `opportunity_
-item`/`split` rows showed only a raw record id with no link back to their
-Opportunity, `stakeholder` nothing back to its Account — generalized on
-his call to also show `opportunity` rows' own Account. Added a
-`_PARENT_CONTEXT_MAP` (`opportunity`→Account, `opportunity_item`/`split`
-→Opportunity, `stakeholder`→Account), live lookup for UPDATE rows (the
-parent FK is essentially never in the diff itself), snapshot fallback for
-DELETE. Then made the chip **clickable** on Basheer's follow-up ask:
-backend reshaped to structured `parent_type`/`parent_id`/`parent_label`
-(not just a formatted string) so the frontend has an id to navigate with;
-`AuditLogScreen.tsx` now takes `onSelectOpportunity`/`onSelectAccount`
-props, same click-through pattern `NotificationBell` already uses.
-Verified live against Dev both ways — every row type shows its parent
-(including a DELETEd split, via the snapshot fallback), and clicking the
-chip opens the right Opportunity/Customer 360 screen. 738/738 backend
-tests pass, `ruff`/`tsc` clean.
-
-**Nothing committed yet.** Next step: commit, then promote to UAT
-alongside the WON/LOST (BR-OP-09) fix, which depends on this coverage.
-`target_plan`'s own audit-trail gap stays tracked separately in
-`docs/Backlog.md`, deferred until Target Planning itself is built.
+**Next step:** promote to UAT alongside the WON/LOST (BR-OP-09) fix,
+which depends on this coverage. `target_plan`'s own audit-trail gap
+stays tracked separately in `docs/Backlog.md`, deferred until Target
+Planning itself is built.
 
 ## Current task 1 — BR-ACC-03 (duplicate hospital): committed, manual E2E plan not yet confirmed complete
 

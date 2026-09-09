@@ -1,6 +1,6 @@
 # Audit Trail Extension (opportunity_item / split / stakeholder) — Manual E2E Test Plan
 
-**Status:** All 18 cases run live against Dev 2026-09-09/10 (Haroon
+**Status:** All 18 cases run live against Dev 2026-09-09 (Haroon
 Sidheeq, General Manager), on Opportunity "USG M/c - Test Aug 18"
 (Fahad) plus one Stakeholder on its Account (Aster MIMS Calicut). **Two
 real bugs found and fixed during this pass** (see below), both

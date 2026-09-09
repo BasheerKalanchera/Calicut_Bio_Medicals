@@ -1934,3 +1934,93 @@ gaps found in review first (notify actual thread participants, not just
 the Activity's fixed `user_id`; scope `mark_read_for_entity` by `type`
 too, not just `entity_type`/`entity_id`, so a Manager Note and a comment
 on it don't silently mark each other read).
+
+## 2026-09-09 (later still) — Audit Trail Extension: built, migrated, full 18-case E2E pass, two real bugs found and fixed live, then a click-through follow-on
+
+Built same day per `docs/Audit-Trail-Extension-Implementation-Plan.md` --
+Current task 0b, deliberately started after the 2026-09-08 UAT batch had
+a week to stabilize. Coordinated around the other session's concurrent
+Activity Comments build above: confirmed zero file overlap via `git
+status` before starting (this work only ever touched `opportunity`/
+`audit`, theirs entirely in `activity`), then deliberately held the new
+migration and `Physical-Schema.sql` regen until their `0040` was
+committed (`738ef64`), chaining mine on top as `0041` (`alembic heads`
+confirmed a single linear head, no branching) rather than both branching
+off `0039`.
+
+**The real work, per the plan, wasn't the triggers** (three lines of SQL
+reusing the existing generic `audit_log_row_change()` function
+unchanged) **but fixing how `opportunity_item`/`split` are saved.** Both
+went through delete-all-then-reinsert on every save
+(`OpportunityRepository.replace_items`/`replace_splits`), which the
+trigger would have seen as an unrelated DELETE+INSERT pair instead of a
+clean edit. Fixed by threading each row's own `id` (items) or
+`(opportunity_id, user_id)` (splits) through the save path so a real
+edit becomes a real UPDATE, partitioning the resubmitted list into
+UPDATE/DELETE/INSERT. `stakeholder` needed no save-path change (already
+edited in place) -- just the trigger. `audit/repository.py` gained new
+FK resolvers (`opportunity_id`, `product_id`, `user_id`) and a
+`stakeholder` record label. `Business-Rules.md`'s BR-AUD-01 updated with
+the real audited-table list.
+
+**Full 18-case manual E2E pass run live against Dev the same day**
+(Haroon Sidheeq, General Manager, on Opportunity "USG M/c - Test Aug 18"
+/Fahad, plus a Stakeholder on its Account, Aster MIMS Calicut) --
+`docs/Audit-Trail-Extension-Manual-E2E-Test-Plan.md`. 17 pass, 1
+(Admin/GM-only gate) not independently re-tested since untouched by this
+build. **Two real bugs found and fixed during the pass, both re-verified
+live afterward:**
+1. `replace_items`/`replace_splits` were unconditionally reassigning
+   `updated_by` on every line in a save, including untouched ones --
+   `service.py` sets the current actor's id on every constructed
+   item/split regardless of whether it changed, so an *untouched* line
+   went dirty (and fired a spurious audit row) whenever the actor
+   differed from whoever last saved it. Confirmed live: editing one of
+   two products produced a genuine UPDATE for the edited line, but also
+   a bogus `updated_by`-only row for the untouched one. Fixed by only
+   reassigning a line's fields (including `updated_by`) when its real
+   content actually changed.
+2. `Stakeholder` was added to `_RECORD_LABEL_RESOLVER_MAP` but not
+   `_MODEL_DISPLAY_ATTR` -- threw a bare `KeyError`, 500ing the **entire**
+   Audit Log endpoint (every table, not just stakeholder) the moment any
+   stakeholder audit row existed. Surfaced live as a "Couldn't load the
+   audit log" error right after the first stakeholder edit. Reproduced
+   directly against Dev with the real traceback via a throwaway script
+   (the plain app-role connection silently returns 0 rows on this
+   RLS-protected table, so this needed `set_rls_context` called manually
+   to actually reach the bug). Fixed by adding the missing
+   `_MODEL_DISPLAY_ATTR` entry.
+
+New regression tests for both, plus a fix for a cosmetic gap found in the
+same pass: `AuditLogScreen.tsx`'s `TABLE_OPTIONS` never had the three new
+tables, so they were missing from the filter dropdown (data itself was
+never hidden, just the label/filter).
+
+**Two follow-ons raised by Basheer during review, same day.** First:
+`opportunity_item`/`split` rows showed only a raw record id
+(`397ad3a4-...`) with nothing tying them back to their Opportunity, and
+`stakeholder` rows nothing tying them back to their Account -- generalized
+further on his call to also show `opportunity` rows' own Account. Added a
+`_PARENT_CONTEXT_MAP` (`opportunity`->Account, `opportunity_item`/`split`
+->Opportunity, `stakeholder`->Account): a live lookup against the row's
+own table for UPDATE (the parent FK essentially never changes, so it's
+almost never present in the diff itself), falling back to the DELETE
+snapshot's own captured FK when the row itself is gone. New tests guard
+the same `_MODEL_DISPLAY_ATTR` KeyError class bug 2 above hit, this time
+for `_PARENT_CONTEXT_MAP`'s target models. Second: Basheer asked for the
+resulting chip to be clickable, to jump straight to the parent
+Opportunity/Account rather than just naming it -- reshaped the backend
+response from a single formatted string to structured
+`parent_type`/`parent_id`/`parent_label` fields, and `AuditLogScreen.tsx`
+now takes `onSelectOpportunity`/`onSelectAccount` props, reusing the
+exact click-through pattern `NotificationBell`/`UrgentNotificationDialog`
+already use (`DemoApp.tsx`'s `handleSelectOpportunity`/
+`handleSelectAccount`). Verified live both ways: every row type
+(including a DELETEd split, via the snapshot fallback) shows its parent,
+and clicking the chip opens the right Opportunity/Customer 360 screen.
+
+738/738 backend tests pass, `ruff`/`tsc` clean throughout. **Committed
+`6a580fa`.** Next: promote to UAT alongside the WON/LOST (BR-OP-09) fix,
+which depends on this coverage -- `target_plan`'s own audit-trail gap
+stays tracked separately in `docs/Backlog.md`, deferred until Target
+Planning itself is built.
