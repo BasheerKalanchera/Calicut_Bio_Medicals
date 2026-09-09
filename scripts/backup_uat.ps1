@@ -60,7 +60,23 @@ function Stop-DockerIfStartedByScript {
     }
 
     Write-Log "Stopping Docker Desktop (started by this script)..."
-    Stop-Process -Name "Docker Desktop" -Force -ErrorAction SilentlyContinue
+
+    $proc = Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue
+    if ($proc) {
+        $proc | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+
+        $elapsed = 0
+        while ($elapsed -lt 30 -and (Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue)) {
+            Start-Sleep -Seconds 2
+            $elapsed += 2
+        }
+    }
+
+    if (Get-Process -Name "Docker Desktop" -ErrorAction SilentlyContinue) {
+        Write-Log "Docker Desktop did not close gracefully after 30s, forcing..."
+        Stop-Process -Name "Docker Desktop" -Force -ErrorAction SilentlyContinue
+    }
+
     $prevPref = $ErrorActionPreference
     $ErrorActionPreference = "SilentlyContinue"
     wsl --shutdown *> $null
