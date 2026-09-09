@@ -20,6 +20,9 @@ const TABLE_OPTIONS = [
   { value: "user_profile", label: "User" },
   { value: "product", label: "Product" },
   { value: "opportunity", label: "Opportunity" },
+  { value: "stakeholder", label: "Stakeholder" },
+  { value: "opportunity_item", label: "Opportunity Item" },
+  { value: "split", label: "Split" },
 ];
 
 function formatDateTime(iso: string) {
@@ -34,7 +37,19 @@ function formatValue(v: unknown): string {
   return String(v);
 }
 
-function EntryCard({ entry }: { entry: AuditLogResponse }) {
+interface AuditLogScreenProps {
+  // Same click-through pattern NotificationBell/UrgentNotificationDialog
+  // already use (DemoApp.tsx) -- lets a parent_context chip jump straight
+  // to the Opportunity/Account it belongs to.
+  onSelectOpportunity?: (opp: { id: string; name: string }) => void;
+  onSelectAccount?: (account: { id: string; name: string }) => void;
+}
+
+function EntryCard({
+  entry,
+  onSelectOpportunity,
+  onSelectAccount,
+}: { entry: AuditLogResponse } & AuditLogScreenProps) {
   // DELETE never has new_data (the row is gone) -- old_data is the full row,
   // not a diff, so it's rendered as a flat "final state" list instead of
   // old->new pairs. UPDATE's old_data/new_data only ever contain the fields
@@ -66,6 +81,22 @@ function EntryCard({ entry }: { entry: AuditLogResponse }) {
         <Typography variant="caption" color="text.secondary">
           {entry.record_label ?? entry.record_id}
         </Typography>
+        {entry.parent_type && entry.parent_id && entry.parent_label && (
+          <Chip
+            label={`${entry.parent_type === "account" ? "Account" : "Opportunity"}: ${entry.parent_label}`}
+            size="small"
+            variant="outlined"
+            clickable
+            onClick={() => {
+              if (entry.parent_type === "account") {
+                onSelectAccount?.({ id: entry.parent_id!, name: entry.parent_label! });
+              } else {
+                onSelectOpportunity?.({ id: entry.parent_id!, name: entry.parent_label! });
+              }
+            }}
+            sx={{ fontSize: "10px", height: 20 }}
+          />
+        )}
         <Box sx={{ flex: 1 }} />
         <Typography variant="caption" color="text.secondary">{formatDateTime(entry.changed_at)}</Typography>
       </Box>
@@ -112,7 +143,7 @@ function EntryCard({ entry }: { entry: AuditLogResponse }) {
   );
 }
 
-export default function AuditLogScreen() {
+export default function AuditLogScreen({ onSelectOpportunity, onSelectAccount }: AuditLogScreenProps) {
   const { userProfile } = useAuth();
   const isAdmin = AUDIT_LOG_ADMIN_ROLES.has((userProfile as any)?.role_name);
 
@@ -201,7 +232,12 @@ export default function AuditLogScreen() {
         {!isLoading && rows.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {rows.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+                onSelectOpportunity={onSelectOpportunity}
+                onSelectAccount={onSelectAccount}
+              />
             ))}
           </Box>
         )}

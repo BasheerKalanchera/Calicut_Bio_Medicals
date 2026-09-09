@@ -614,7 +614,7 @@ export default function DemoApp() {
 
           {/* Audit Log — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "auditLog" ? "flex" : "none", flexDirection: "column" }}>
-            <AuditLogScreen />
+            <AuditLogScreen onSelectOpportunity={handleSelectOpportunity} onSelectAccount={handleSelectAccount} />
           </Box>
 
           {/* Marketing Leads — Marketing User's entry screen, always mounted (for every

@@ -7,9 +7,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
-from app.domains.account.models import Account
+from app.domains.account.models import Account, Stakeholder
 from app.domains.audit.models import AuditLog
-from app.domains.opportunity.models import Opportunity
+from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
 from app.domains.project.models import Project
@@ -55,6 +55,14 @@ _FIELD_RESOLVER_MAP: dict[str, type] = {
     "loss_reason_id": LossReason,
     "hold_reason_id": HoldReason,
     "gate_override_reason_id": GateOverrideReason,
+    # Added for the Audit Trail Extension (opportunity_item/split/stakeholder,
+    # Audit-Trail-Extension-Implementation-Plan.md) -- opportunity_id and
+    # product_id are new FK *names* the diff hadn't needed to resolve before;
+    # user_id here means split's participant (UserProfile), same target every
+    # other user_id-shaped column already resolves to.
+    "opportunity_id": Opportunity,
+    "product_id": Product,
+    "user_id": UserProfile,
 }
 
 # table_name (as stamped by TG_TABLE_NAME) -> (model, display attribute) --
@@ -64,6 +72,12 @@ _RECORD_LABEL_RESOLVER_MAP: dict[str, tuple[type, str]] = {
     "user_profile": (UserProfile, "display_name"),
     "product": (Product, "name"),
     "opportunity": (Opportunity, "name"),
+    "stakeholder": (Stakeholder, "name"),
+    # opportunity_item and split deliberately get no entry here -- neither
+    # has a natural single-column label (a line item's identity is a
+    # product+quantity combination, a split's is a percentage); the diff
+    # itself already carries the meaningful before/after values. See the
+    # implementation plan's "Display-layer additions" section.
 }
 
 # model -> its display attribute name. Consistent per model across both maps
@@ -84,6 +98,24 @@ _MODEL_DISPLAY_ATTR: dict[type, str] = {
     GateOverrideReason: "reason_name",
     Product: "name",
     Opportunity: "name",
+    Stakeholder: "name",
+}
+
+# table_name -> (own model, FK column name, target model, parent type).
+# Resolves each row's immediate parent for display -- e.g. "Opportunity:
+# USG M/c" on a split row, "Account: Aster MIMS Calicut" on an Opportunity
+# row -- so someone browsing the log can place a row (and click through
+# to it) without cross-referencing the DB by id. `parent type` is a plain
+# lowercase tag ("account"/"opportunity"), not a display label -- the
+# frontend already owns capitalization for table_name via TABLE_OPTIONS,
+# same convention here. Only tables with one natural parent get an entry;
+# account/user_profile/product sit at the top of their own hierarchy
+# already.
+_PARENT_CONTEXT_MAP: dict[str, tuple[type, str, type, str]] = {
+    "opportunity": (Opportunity, "account_id", Account, "account"),
+    "opportunity_item": (OpportunityItem, "opportunity_id", Opportunity, "opportunity"),
+    "split": (Split, "opportunity_id", Opportunity, "opportunity"),
+    "stakeholder": (Stakeholder, "account_id", Account, "account"),
 }
 
 AuditLogRawRow = tuple[AuditLog, str | None]
@@ -94,6 +126,9 @@ class ResolvedAuditRow:
     entry: AuditLog
     changed_by_name: str | None
     record_label: str | None
+    parent_type: str | None = None
+    parent_id: uuid.UUID | None = None
+    parent_label: str | None = None
     old_data_display: dict[str, str] = field(default_factory=dict)
     new_data_display: dict[str, str] = field(default_factory=dict)
 
@@ -166,6 +201,44 @@ class AuditLogRepository(BaseRepository[AuditLog]):
                             ids_by_model.setdefault(model, set()).add(uuid.UUID(val))
         return ids_by_model
 
+    def _resolve_parent_ids(
+        self, raw_rows: list[AuditLogRawRow]
+    ) -> dict[tuple[str, uuid.UUID], uuid.UUID]:
+        """Maps each row needing parent context to its parent's id --
+        from old_data's full-row snapshot for a DELETE (the row itself is
+        gone, nothing left to query live), or a single batched live
+        lookup per table for anything else (the row still exists, and its
+        parent FK almost never changes, so it's rarely present in the
+        diff itself). Keyed by (table_name, record_id) rather than just
+        record_id since ids aren't guaranteed unique across tables."""
+        parent_ids: dict[tuple[str, uuid.UUID], uuid.UUID] = {}
+        live_lookup_ids: dict[str, set[uuid.UUID]] = {}
+
+        for entry, _ in raw_rows:
+            context = _PARENT_CONTEXT_MAP.get(entry.table_name)
+            if not context:
+                continue
+            if entry.action == "DELETE":
+                _own_model, fk_column, _target_model, _label = context
+                raw_val = (entry.old_data or {}).get(fk_column)
+                if isinstance(raw_val, str):
+                    with contextlib.suppress(ValueError):
+                        parent_ids[(entry.table_name, entry.record_id)] = uuid.UUID(raw_val)
+            else:
+                live_lookup_ids.setdefault(entry.table_name, set()).add(entry.record_id)
+
+        for table_name, record_ids in live_lookup_ids.items():
+            own_model, fk_column, _target_model, _label = _PARENT_CONTEXT_MAP[table_name]
+            fk_col = getattr(own_model, fk_column)
+            rows = self.db.execute(
+                select(own_model.id, fk_col).where(own_model.id.in_(record_ids))
+            ).all()
+            for record_id, parent_id in rows:
+                if parent_id is not None:
+                    parent_ids[(table_name, record_id)] = parent_id
+
+        return parent_ids
+
     def _resolve_diff_display(
         self, data: dict | None, resolved: dict[type, dict[uuid.UUID, str]]
     ) -> dict[str, str]:
@@ -186,6 +259,10 @@ class AuditLogRepository(BaseRepository[AuditLog]):
 
     def _resolve_display_values(self, raw_rows: list[AuditLogRawRow]) -> list[ResolvedAuditRow]:
         ids_by_model = self._collect_ids_by_model(raw_rows)
+        parent_ids = self._resolve_parent_ids(raw_rows)
+        for (table_name, _record_id), parent_id in parent_ids.items():
+            target_model = _PARENT_CONTEXT_MAP[table_name][2]
+            ids_by_model.setdefault(target_model, set()).add(parent_id)
 
         # One SELECT per referenced model for the whole page, not per row.
         resolved: dict[type, dict[uuid.UUID, str]] = {}
@@ -208,11 +285,28 @@ class AuditLogRepository(BaseRepository[AuditLog]):
                 if record_label is None and entry.old_data:
                     record_label = entry.old_data.get(display_field)
 
+            parent_type = None
+            parent_id_out = None
+            parent_label = None
+            context = _PARENT_CONTEXT_MAP.get(entry.table_name)
+            if context:
+                _own_model, _fk_column, target_model, ptype = context
+                parent_id = parent_ids.get((entry.table_name, entry.record_id))
+                if parent_id is not None:
+                    parent_name = resolved.get(target_model, {}).get(parent_id)
+                    if parent_name is not None:
+                        parent_type = ptype
+                        parent_id_out = parent_id
+                        parent_label = parent_name
+
             result.append(
                 ResolvedAuditRow(
                     entry=entry,
                     changed_by_name=changed_by_name,
                     record_label=record_label,
+                    parent_type=parent_type,
+                    parent_id=parent_id_out,
+                    parent_label=parent_label,
                     old_data_display=self._resolve_diff_display(entry.old_data, resolved),
                     new_data_display=self._resolve_diff_display(entry.new_data, resolved),
                 )

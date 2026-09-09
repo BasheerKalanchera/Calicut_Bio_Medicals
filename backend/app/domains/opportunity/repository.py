@@ -248,11 +248,55 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def replace_items(
         self, opportunity_id: uuid.UUID, new_items: list[OpportunityItem]
     ) -> list[OpportunityItem]:
-        self.db.execute(
-            delete(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
-        )
+        """Partitions the resubmitted list into real UPDATE/DELETE/INSERT
+        instead of the old delete-all-then-reinsert, so the audit trigger
+        (Audit-Trail-Extension-Implementation-Plan.md) sees a clean
+        before/after diff for an edited line instead of a delete paired
+        with an unrelated-looking insert. `new_items` carries the
+        client-submitted `id` (None for a genuinely new line) -- an id
+        that doesn't match an existing row on this opportunity (stale,
+        foreign, or tampered) is treated as new rather than trusted, same
+        posture as not being sent at all."""
+        existing_by_id = {
+            item.id: item
+            for item in self.db.scalars(
+                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+            ).unique().all()
+        }
+        incoming_ids = {item.id for item in new_items if item.id is not None}
+
+        for existing_id, existing_item in existing_by_id.items():
+            if existing_id not in incoming_ids:
+                self.db.delete(existing_item)
+
         for item in new_items:
-            self.db.add(item)
+            target = existing_by_id.get(item.id) if item.id is not None else None
+            if target is not None:
+                # Every line in the resubmitted list carries the current
+                # actor's id (service.py sets it uniformly), so blindly
+                # reassigning updated_by here would mark an untouched line
+                # dirty -- and produce a spurious audit row -- whenever the
+                # actor differs from whoever last saved it. Only touch
+                # anything if a real field actually changed.
+                changed = (
+                    target.product_id != item.product_id
+                    or target.description != item.description
+                    or target.quantity != item.quantity
+                    or target.unit_price_lakhs != item.unit_price_lakhs
+                    or target.discount_lakhs != item.discount_lakhs
+                    or target.line_type != item.line_type
+                )
+                if changed:
+                    target.product_id = item.product_id
+                    target.description = item.description
+                    target.quantity = item.quantity
+                    target.unit_price_lakhs = item.unit_price_lakhs
+                    target.discount_lakhs = item.discount_lakhs
+                    target.line_type = item.line_type
+                    target.updated_by = item.updated_by
+            else:
+                item.id = None
+                self.db.add(item)
         self.db.flush()
         # Re-query so product relationship (lazy="joined") is loaded for the response
         return list(
@@ -291,9 +335,35 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def replace_splits(
         self, opportunity_id: uuid.UUID, new_splits: list[Split]
     ) -> list[Split]:
-        self.db.execute(delete(Split).where(Split.opportunity_id == opportunity_id))
+        """Upserts by the natural key (opportunity_id, user_id) instead of
+        delete-all-then-reinsert, same reasoning as replace_items above --
+        no id round-trip needed here since a rep's own user_id already
+        uniquely identifies their split row on this opportunity."""
+        existing_by_user = {
+            split.user_id: split
+            for split in self.db.scalars(
+                select(Split).where(Split.opportunity_id == opportunity_id)
+            ).all()
+        }
+        incoming_user_ids = {s.user_id for s in new_splits}
+
+        for user_id, existing_split in existing_by_user.items():
+            if user_id not in incoming_user_ids:
+                self.db.delete(existing_split)
+
         for split in new_splits:
-            self.db.add(split)
+            target = existing_by_user.get(split.user_id)
+            if target is not None:
+                # Same reasoning as replace_items above -- every split in
+                # the resubmitted list carries the current actor's id, so
+                # only touch updated_by when the percentage actually
+                # changed, or an untouched participant produces a spurious
+                # audit row whenever the actor differs from the last saver.
+                if target.split_percentage != split.split_percentage:
+                    target.split_percentage = split.split_percentage
+                    target.updated_by = split.updated_by
+            else:
+                self.db.add(split)
         self.db.flush()
         # Re-query so user relationship (lazy="joined") is loaded for the response
         return list(

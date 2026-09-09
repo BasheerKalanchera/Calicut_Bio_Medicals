@@ -423,6 +423,7 @@ class OpportunityService:
 
         new_items = [
             OpportunityItem(
+                id=item.id,
                 opportunity_id=opportunity_id,
                 product_id=item.product_id,
                 description=item.description,

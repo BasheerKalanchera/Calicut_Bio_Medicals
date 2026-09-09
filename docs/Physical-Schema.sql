@@ -11,13 +11,12 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-09 from the Dev database (Postgres 17.6), catching up
--- migration 0040 since the last regen (2026-09-05, which caught up through
--- 0039): new activity_comment table (Activity Inline Comments, Phase 1 --
--- notifications deferred to Phase 2), with two RLS policies (SELECT/INSERT
--- only, no UPDATE/DELETE policy at all -- edit/delete is blocked at the
--- database level, not just by omitting a PATCH/DELETE endpoint). See
--- docs/Activity-Comment-Implementation-Plan.md and
+-- Regenerated 2026-09-10 from the Dev database (Postgres 17.6), catching up
+-- migration 0041 since the last regen (2026-09-09, which caught up through
+-- 0040): three new audit triggers (trg_audit_stakeholder,
+-- trg_audit_opportunity_item, trg_audit_split) on the existing
+-- audit_log_row_change() function -- no new tables, no function change. See
+-- docs/Audit-Trail-Extension-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -36,7 +35,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict rdMID6x1001YjIrxUIOBcgmtxwipKw9MccHFcgt04edcMmelTbW2gvDnfBw5i5x
+\restrict RKkKUuNtwxjyImDejfHiSTmdDr52PMePTJzEKPIEhcj8rRswWdXxGH4FWVpmehm
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -1520,10 +1519,31 @@ CREATE TRIGGER trg_audit_opportunity AFTER DELETE OR UPDATE ON public.opportunit
 
 
 --
+-- Name: opportunity_item trg_audit_opportunity_item; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_opportunity_item AFTER DELETE OR UPDATE ON public.opportunity_item FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: product trg_audit_product; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER trg_audit_product AFTER DELETE OR UPDATE ON public.product FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: split trg_audit_split; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_split AFTER DELETE OR UPDATE ON public.split FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: stakeholder trg_audit_stakeholder; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_stakeholder AFTER DELETE OR UPDATE ON public.stakeholder FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
 
 
 --
@@ -2652,5 +2672,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict rdMID6x1001YjIrxUIOBcgmtxwipKw9MccHFcgt04edcMmelTbW2gvDnfBw5i5x
+\unrestrict RKkKUuNtwxjyImDejfHiSTmdDr52PMePTJzEKPIEhcj8rRswWdXxGH4FWVpmehm
 

@@ -12,6 +12,16 @@ class AuditLogResponse(BaseModel):
     # if it can't be resolved (an unrecognized table_name, or a deleted
     # record whose old_data snapshot happened to omit its own name field).
     record_label: str | None
+    # The row's immediate parent for context and click-through -- e.g.
+    # parent_type="opportunity" on a split/opportunity_item row,
+    # parent_type="account" on an opportunity/stakeholder row. All three
+    # are None together for tables with no natural parent (account,
+    # user_profile, product) or when it can't be resolved (parent
+    # deleted, or a DELETE row whose old_data snapshot happened to omit
+    # the FK).
+    parent_type: str | None
+    parent_id: uuid.UUID | None
+    parent_label: str | None
     action: str
     changed_at: datetime
     # None when changed_by itself is None (a direct-DB write outside a

@@ -2256,6 +2256,12 @@ export interface components {
             record_id: string;
             /** Record Label */
             record_label: string | null;
+            /** Parent Type */
+            parent_type: string | null;
+            /** Parent Id */
+            parent_id: string | null;
+            /** Parent Label */
+            parent_label: string | null;
             /** Action */
             action: string;
             /**
@@ -2665,6 +2671,8 @@ export interface components {
         };
         /** OpportunityItemCreate */
         OpportunityItemCreate: {
+            /** Id */
+            id?: string | null;
             /** Product Id */
             product_id?: string | null;
             /** Description */

@@ -358,6 +358,7 @@ function ProductsTab({
   const openEdit = () => {
     setEditItems(
       (items ?? []).map((i) => ({
+        id:                i.id,
         product_id:        i.product_id,
         product_name:      i.product?.name,
         product_type:      i.product?.product_type,
@@ -377,7 +378,11 @@ function ProductsTab({
     try {
       await replaceOpportunityItems(
         opportunityId,
+        // id round-tripped for existing rows (undefined for a newly-added
+        // line) so the backend can UPDATE in place instead of delete+insert
+        // -- see Audit-Trail-Extension-Implementation-Plan.md.
         editItems.map((i) => ({
+          id: i.id,
           product_id: i.product_id, description: i.description, quantity: i.quantity,
           unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs,
           line_type: i.line_type,

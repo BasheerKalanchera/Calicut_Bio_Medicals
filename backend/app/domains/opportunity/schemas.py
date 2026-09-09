@@ -91,6 +91,13 @@ class GateOverrideReasonNested(BaseModel):
 # ------------------------------------------------------------------
 
 class OpportunityItemCreate(BaseModel):
+    # Optional: round-tripped from OpportunityItemResponse.id for an existing
+    # line so replace_items can UPDATE it in place instead of delete+insert
+    # (Audit-Trail-Extension-Implementation-Plan.md) -- omitted/None for a
+    # genuinely new line. Backward compatible by construction: any caller
+    # that omits it just gets today's delete-all/insert-all behavior for
+    # that item, no breaking change.
+    id: uuid.UUID | None = None
     product_id: uuid.UUID | None = None
     description: str | None = None
     quantity: int = Field(..., gt=0)

@@ -516,6 +516,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Examples:** Opportunities, Contributor Splits, Target Plans, Coverage Plans, and Projects.
 * **Constraint:** Users must be able to identify who made a change and when the change occurred.
 * **Constraint:** Audit history must not be editable through standard application workflows.
+* **Implementation (ADR-017):** `audit_log_row_change()` triggers currently cover `account`,
+  `user_profile`, `product`, `opportunity` (0030), plus `stakeholder`, `opportunity_item`, and
+  `split` (0041, Audit-Trail-Extension-Implementation-Plan.md). `opportunity_item`/`split` edits
+  route through `OpportunityRepository.replace_items`/`replace_splits`, which now UPDATE an
+  existing row in place when its id (items) or `(opportunity_id, user_id)` (splits) matches — a
+  save that predates this fix, or a row a caller genuinely removes from the list, still shows as
+  a DELETE, which is correct (a real removal), not a defect. `target_plan`'s and Project's own
+  audit coverage remain unbuilt, tracked separately until those features exist.
 
 ---
 
