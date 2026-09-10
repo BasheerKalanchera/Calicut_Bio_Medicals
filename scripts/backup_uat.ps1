@@ -77,6 +77,13 @@ function Stop-DockerIfStartedByScript {
         Stop-Process -Name "Docker Desktop" -Force -ErrorAction SilentlyContinue
     }
 
+    # "Docker Desktop" is only the tray/dashboard frontend -- the actual engine
+    # runs as separate com.docker.* backend processes, which stay alive after
+    # the frontend closes and silently relaunch a new frontend (--reason=open-
+    # tray) to keep the tray icon present. Stop those too, or this function
+    # just causes Docker Desktop to reopen itself.
+    Get-Process -Name "com.docker.*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+
     $prevPref = $ErrorActionPreference
     $ErrorActionPreference = "SilentlyContinue"
     wsl --shutdown *> $null
