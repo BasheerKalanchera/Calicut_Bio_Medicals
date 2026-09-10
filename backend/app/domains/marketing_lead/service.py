@@ -16,7 +16,7 @@ from app.domains.notification.service import NotificationService
 
 logger = structlog.get_logger()
 
-# Same role-gate shape as reference/service.py's _TERRITORY_ADMIN_ROLES --
+# Same role-gate shape as reference/service.py's _TERRITORY_MAP_ADMIN_ROLES --
 # not a new authorization mechanism. Admin/GM can create on the Marketing
 # User's behalf (e.g. fixing a mis-entered lead), matching how Admin/GM
 # carry an unrestricted overlay tier everywhere else in this app.

@@ -14,7 +14,7 @@ from app.domains.reference.schemas import ZoneCreate, ZoneUpdate
 # Territory map edits are rare, deliberate admin actions (Discussion-Zone-
 # Hierarchy-2026-08.md) -- same role-gate shape as opportunity/service.py's
 # _SBU_OVERRIDE_ROLES, not a new authorization mechanism.
-_TERRITORY_ADMIN_ROLES = {"Admin", "General Manager"}
+_TERRITORY_MAP_ADMIN_ROLES = {"Admin", "General Manager"}
 
 
 class ZoneAdminService:
@@ -22,7 +22,7 @@ class ZoneAdminService:
         self.repository = repository
 
     def _require_admin(self, role_name: str) -> None:
-        if role_name not in _TERRITORY_ADMIN_ROLES:
+        if role_name not in _TERRITORY_MAP_ADMIN_ROLES:
             raise AuthorizationError("Only Admin/General Manager can manage the territory map")
 
     def _validate_parent(self, parent_zone_id: uuid.UUID) -> None:

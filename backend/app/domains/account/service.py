@@ -14,8 +14,8 @@ from app.domains.account.repository import AccountRepository
 from app.domains.account.schemas import AccountCreate, AccountUpdate
 
 # BR-ACC-03 follow-up: a rep with no territory assigned can't add a hospital
-# at all -- same role-gate shape as reference/service.py's
-# _TERRITORY_ADMIN_ROLES, not a new authorization mechanism. Admin/GM aren't
+# at all -- same role-gate shape as master_data.py's
+# _ZONE_SEARCH_UNRESTRICTED_ROLES, not a new authorization mechanism. Admin/GM aren't
 # tied to a single zone, so they're exempt from needing one on file. SBU
 # Manager joins them 2026-09-08 -- found live, that role's own scope is
 # already SBU-wide, not zone-based (see organization/repository.py's

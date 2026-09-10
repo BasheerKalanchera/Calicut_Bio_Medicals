@@ -254,7 +254,7 @@ class TestSearchZonesForHospital:
     """AddHospitalModal's ZonePicker -- found live 2026-09-08 blocking an
     SBU Manager (correctly zone-less, per _ZONE_ASSIGNMENT_EXEMPT_ROLES in
     account/service.py) from seeing any zone at all, since this endpoint's
-    own _TERRITORY_ADMIN_ROLES hadn't been updated to match."""
+    own _ZONE_SEARCH_UNRESTRICTED_ROLES hadn't been updated to match."""
 
     def test_sbu_manager_with_no_zone_gets_unrestricted_search(self, client: TestClient) -> None:
         user = _mock_user(role_name="SBU Manager")

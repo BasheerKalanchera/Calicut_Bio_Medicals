@@ -94,7 +94,7 @@ def list_master_data(
     return APIResponse(data=[schema.model_validate(item) for item in items])
 
 
-# Same role-gate shape as reference/service.py's _TERRITORY_ADMIN_ROLES and
+# Same role-gate shape as reference/service.py's _TERRITORY_MAP_ADMIN_ROLES and
 # account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES -- each module keeps its
 # own private copy rather than sharing one, per existing convention. Kept in
 # sync with account/service.py's set (SBU Manager added 2026-09-08, found
@@ -102,7 +102,7 @@ def list_master_data(
 # hospital with no personal zone still needs the unrestricted zone search
 # here, not the "within my own zone" branch below, which returns nothing
 # for a zone-less caller).
-_TERRITORY_ADMIN_ROLES = {"Admin", "General Manager", "SBU Manager"}
+_ZONE_SEARCH_UNRESTRICTED_ROLES = {"Admin", "General Manager", "SBU Manager"}
 
 
 # Sibling to /master-data/zones, not routed through ENTITY_REGISTRY -- needs
@@ -140,7 +140,7 @@ def search_zones_for_hospital(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> APIResponse[list[ZoneSearchResult]]:
     repo = ZoneRepository(db)
-    if current_user.role.role_name in _TERRITORY_ADMIN_ROLES:
+    if current_user.role.role_name in _ZONE_SEARCH_UNRESTRICTED_ROLES:
         zones = repo.search_by_name(q)
     else:
         zone_ids = [uz.zone_id for uz in current_user.zones]
