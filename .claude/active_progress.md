@@ -41,9 +41,10 @@ itself confirmed working. Full narrative: `docs/Progress-Archive-2026-09
 **Activity inline comments — both phases built, full E2E passes, no
 action pending.** Two-way thread, anyone who can see the Activity can
 post, no edit/delete in v1 — thread renders directly under each
-Activity's own card. **Phase 1** (the thread itself, migration `0040`):
-12-case E2E pass 2026-09-09, `docs/Activity-Comment-Phase1-Manual-E2E-
-Test-Plan.md`. **Phase 2** (notifications), built same day after Basheer
+Activity's own card. **Phase 1** (the thread itself, migration `0040`,
+**committed `738ef64`**): 12-case E2E pass 2026-09-09, `docs/Activity-
+Comment-Phase1-Manual-E2E-Test-Plan.md`. **Phase 2** (notifications),
+built same day after Basheer
 resolved the two design gaps a review pass found (notify actual thread
 participants, not just the Activity's fixed owner; no separate read-
 receipt handling needed since the thread renders under its Manager Note
@@ -57,8 +58,9 @@ plain "Add comment" link when there's none yet) instead of a bare
 `comment_count` added to `ActivityResponse` via a correlated subquery,
 no new endpoint. Fly-by fix in the Phase 1 pass: `ActivityReportRow` was
 missing the `created_by_user` field `DailyActivityReportScreen.tsx`
-already expected (gap from `356933d`, caught via `tsc`). Full plan:
-`docs/Activity-Comment-Implementation-Plan.md`.
+already expected (gap from `356933d`, caught via `tsc`). Phase 2 +
+polish **committed `80bef46`**. Full plan: `docs/Activity-Comment-
+Implementation-Plan.md`.
 
 **WON/LOST opportunities are not actually immutable — BR-OP-09 gap, found
 live 2026-09-05, not yet fixed.** Confirmed a product's price can be
@@ -145,10 +147,19 @@ to 90s if not, runs the dump, then **stops Docker Desktop again
 afterwards if the script itself was the one that started it** (tracked
 via `$script:DockerStartedByScript`, in a `finally` block so it runs on
 both success and failure) — avoids Docker sitting idle all day just for
-one daily dump. Verified live: Docker auto-start → `pg_dump` →
-`cabio_uat_2026-09-06.dump` (234,055 bytes) all succeeded and logged
-correctly. **Not yet verified: the shutdown-after path** (today's
-successful run happened before that code was added).
+one daily dump.
+
+**2026-09-10: shutdown path exercised for real, found broken, fixed,
+re-verified.** Docker Desktop relaunched itself right after the script
+reported stopping it — root cause was `Stop-DockerIfStartedByScript`
+only killing the frontend (`Docker Desktop.exe`), while the separate
+`com.docker.backend`/`com.docker.build` processes stayed alive and
+silently respawned the frontend to keep the tray icon present. Fixed to
+also stop `com.docker.*` processes before `wsl --shutdown`. **Committed
+`7931491`.** Re-verified live with a genuine cold start (Docker fully
+quit via tray icon first): start → dump → verify → stop, zero Docker
+processes left running afterward. Full narrative:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-10 entry.
 
 **Design change:** scheduled-task trigger will be `-AtLogOn` instead of
 the originally planned `Daily -At 7:30AM`, since the script now handles
@@ -156,19 +167,17 @@ its own Docker start/stop — ties the backup to "logged in" (already the
 constraint, no stored password) without needing Docker running
 unattended all day.
 
-**Next step, Basheer's to do (re-run planned for tomorrow):**
-1. Re-run the script from a cold state (Docker not already running) to
-   confirm the full start → dump → **stop** cycle works end to end.
-2. Once confirmed, register the logon-triggered scheduled task:
+**Next step, Basheer's to do:**
+1. Register the logon-triggered scheduled task:
    ```powershell
    $action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"C:\Users\Basheer\GitHub\Calicut_Bio_Medicals\scripts\backup_uat.ps1`""
    $trigger = New-ScheduledTaskTrigger -AtLogOn
    Register-ScheduledTask -TaskName "CabioUATBackup" -Action $action -Trigger $trigger -Description "UAT pg_dump backup, runs at logon"
    ```
-3. Confirm the first scheduled run succeeds and appears in `backup_log.txt`.
+2. Confirm the first scheduled run succeeds and appears in `backup_log.txt`.
 New CLAUDE.md rule came out of this thread too (below). Full narrative:
-`docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05 and
-2026-09-06 entries.
+`docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05, 2026-09-06
+and 2026-09-10 entries.
 
 **CLAUDE.md — new UAT-access safety rule, uncommitted.** Never connect
 directly to the UAT Supabase project (`backend/.env.uat`), even

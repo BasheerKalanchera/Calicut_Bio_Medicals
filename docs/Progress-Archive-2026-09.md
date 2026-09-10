@@ -2078,4 +2078,53 @@ updates live without a manual refresh. 740/740 backend tests pass (2
 new repository tests pinning the subquery + attribute-attachment
 behavior), `tsc`/`eslint`/`npm run build` all clean, verified live in
 the browser across all three label states (badge, "Add comment",
-expanded "Hide comments").
+expanded "Hide comments"). **Committed `80bef46`** ("feat: add Activity
+Inline Comments Phase 2 (notifications) + comment-count badge") — 18
+files: notification/activity service+repository+schema+router changes,
+the two frontend components, the new Phase 2 test plan doc, and this
+handover trio.
+
+## 2026-09-10
+
+**UAT backup script — real bug found in the Docker shutdown path, fixed
+and verified live.** Ran `scripts/backup_uat.ps1` for the day's routine
+dump (`cabio_uat_2026-09-10.dump`, 297,408 bytes, TOC 361 entries,
+succeeded). Basheer noticed Docker Desktop was running again right after
+the script had just reported stopping it.
+
+Root cause, confirmed via `Get-CimInstance Win32_Process`: Docker Desktop
+splits into a frontend shell (`Docker Desktop.exe`, the window/tray icon)
+and separate `com.docker.backend`/`com.docker.build` processes that run
+the actual engine independently. `Stop-DockerIfStartedByScript` only ever
+targeted the frontend (`Get-Process -Name "Docker Desktop"`); the backend
+processes were never touched and stayed alive across the "stop." Process
+trace nailed it exactly: the relaunched frontend (`--reason=open-tray`)
+had `ParentProcessId` pointing at `com.docker.backend`, spawned at the
+same second (12:07:09) the old frontend was force-killed -- the backend
+owns the systray lifecycle in current Docker Desktop builds and respawns
+the frontend whenever it disappears unexpectedly, independent of any
+Windows-level relaunch mechanism. Ruled out before landing on this:
+Docker's own `settings-store.json` has `AutoStart: false`, no
+Docker-related scheduled task exists, no Run-key fires mid-session
+(only at logon), and no Windows Event Log crash entry for Docker Desktop
+around the relaunch time -- this was Docker's own backend self-healing,
+not an OS-level trigger.
+
+Fix: `Stop-DockerIfStartedByScript` now also stops any `com.docker.*`
+process before `wsl --shutdown`, not just `Docker Desktop` itself.
+**Committed `7931491`** ("fix: stop Docker backend processes in UAT
+backup script, not just the frontend").
+
+**Verified live, full cold-start cycle, twice:** first attempt (Docker
+already running from the earlier same-day dump) confirmed the negative
+case -- script correctly skipped both start and stop since it hadn't
+started Docker itself, so it wasn't a real test. Basheer then fully quit
+Docker Desktop via the tray icon's "Quit Docker Desktop" (closing just
+the window, tried first, left the backend running -- confirmed via
+`Get-Process`, same split as the bug itself) and re-ran the script: start
+→ dump → verify → stop, and a `Get-Process` check 5s after completion
+found zero `Docker Desktop`/`com.docker.*` processes running. Fix holds.
+
+**Next step:** register the `-AtLogOn` scheduled task (command already
+in `.claude/active_progress.md`), then confirm the first logon-triggered
+run appears correctly in `backup_log.txt`.

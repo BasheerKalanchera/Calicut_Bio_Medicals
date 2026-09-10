@@ -73,8 +73,9 @@ kept only as a pointer; nothing left to pick up here.
   the Activity (via `activity_tier_visibility`) can comment, real
   two-way thread (rep can reply too), no edit/delete in v1 — enforced at
   the database level (migration `0040`, no UPDATE/DELETE RLS policy at
-  all). **Phase 1** (the thread itself), full 12-case E2E pass: `docs/
-  Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`. **Phase 2**
+  all). **Phase 1** (the thread itself, **committed `738ef64`**), full
+  12-case E2E pass: `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan
+  .md`. **Phase 2**
   (notifications) — the review pass had found the original design would
   (a) never notify the person who started a thread once the Activity's
   owner replies, and (b) collide `mark_read_for_entity` with
@@ -88,8 +89,9 @@ kept only as a pointer; nothing left to pick up here.
   Phase2-Notifications-Manual-E2E-Test-Plan.md`. Same-day polish: a
   small red count badge ("Comments" + pill, or a plain "Add comment"
   link when empty) instead of an identical "Comments" label regardless
-  of whether an Activity has any. Full design: `docs/Activity-Comment-
-  Implementation-Plan.md`; narrative: `docs/Progress-Archive-2026-09.md`'s
+  of whether an Activity has any. Phase 2 + polish **committed
+  `80bef46`**. Full design: `docs/Activity-Comment-Implementation-Plan
+  .md`; narrative: `docs/Progress-Archive-2026-09.md`'s
   2026-09-09 entries.
 - **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
   decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
@@ -376,25 +378,29 @@ kept only as a pointer; nothing left to pick up here.
   narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
   2026-09-05 entries.
 
-- **UAT backup/disaster-recovery — script working end to end 2026-09-06,
-  scheduled Task Scheduler entry not yet registered.** Raised 2026-09-04
-  (Latheef Bhai's autonomous-agent-data-loss article prompted the
-  question). Free-tier Supabase has no automatic backups; first manual
-  dump taken and verified 2026-09-05. `scripts/backup_uat.ps1` now
-  starts Docker Desktop itself if it isn't already running (polls up to
-  90s), runs `pg_dump --schema=public` via throwaway Docker `postgres:17`,
-  keeps 14 days locally, then stops Docker Desktop again if the script
-  was the one that started it. Manual run 2026-09-06 confirmed the full
-  auto-start → dump → success path live. Google Drive mirror step is
+- **UAT backup/disaster-recovery — script verified working end to end
+  2026-09-10 (including the Docker shutdown path), scheduled Task
+  Scheduler entry not yet registered.** Raised 2026-09-04 (Latheef
+  Bhai's autonomous-agent-data-loss article prompted the question).
+  Free-tier Supabase has no automatic backups; first manual dump taken
+  and verified 2026-09-05. `scripts/backup_uat.ps1` starts Docker
+  Desktop itself if it isn't already running (polls up to 90s), runs
+  `pg_dump --schema=public` via throwaway Docker `postgres:17`, keeps 14
+  days locally, then stops Docker Desktop again if the script was the
+  one that started it. A real bug in that shutdown step (killed only
+  the frontend, leaving `com.docker.*` backend processes alive to
+  silently relaunch it) was found and fixed 2026-09-10, **committed
+  `7931491`**, then re-verified live with a genuine cold start — zero
+  Docker processes left running afterward. Google Drive mirror step is
   commented out for now (Google Drive for Desktop not installed);
   manual weekly external-disk copy stays as-is regardless. Trigger
   design changed from a fixed daily 07:30 IST time to `-AtLogOn`, so the
   script's own Docker start/stop covers it without needing Docker
-  running unattended all day. See `.claude/active_progress.md` for the
-  exact remaining steps (register the logon-triggered task, verify
-  Docker-shutdown path on a day Docker starts clean, confirm first
-  scheduled run). Full narrative: `docs/Progress-Archive-2026-09.md`'s
-  2026-09-04, 2026-09-05 and 2026-09-06 entries.
+  running unattended all day. **Remaining step:** register the
+  logon-triggered scheduled task and confirm the first run — exact
+  command in `.claude/active_progress.md`. Full narrative:
+  `docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05,
+  2026-09-06 and 2026-09-10 entries.
 
 - **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,
   found live 2026-09-05.** BR-OP-09 says historical WON/LOST records
