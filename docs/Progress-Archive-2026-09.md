@@ -2300,3 +2300,73 @@ errors, the same count as before this session, with no accumulated
 technical debt. Re-verified live after these edits that the notification
 fix itself still works.
 
+**Committed `5a0bd4e`** ("fix: point Activity comment/manager-note
+notifications at the exact Activity") -- 8 files: `NotificationBell.tsx`,
+`UrgentNotificationDialog.tsx`, `DemoApp.tsx`, `OpportunityDetailScreen.tsx`,
+`Customer360Screen.tsx`, `ActivityTimeline.tsx`, `ActivityCommentThread.tsx`,
+and this Progress Archive entry. Staging note: `docs/Progress-Archive-2026-
+09.md` had a second, unrelated section appended by another session
+(`## 2026-09-10 (later still) — Activity log privacy hole...`, below) that
+was still uncommitted at the time -- a plain `git add` on the whole file
+would have silently bundled it into this commit. Split it out (removed it
+from the working copy, staged, restored it unstaged) so this commit carries
+only this entry; that section's own commit is still pending, separately.
+
+## 2026-09-10 (later still) — Activity log privacy hole: confirmed live with a real example, awaiting Haroon's decision
+
+Picked up `docs/Backlog.md`'s standing item (surfaced 2026-08-27, never
+confirmed live). Investigated live in the browser as Shruthi (Area
+Manager, Bangalore, Imaging SBU) on Al Shifa Hospital's Activity tab.
+
+**Confirmed real, with a concrete example.** Shruthi could see all 3 of
+Fahad's deal-less activities on this account -- Fahad is Sales Staff,
+Mangalore zone, Imaging SBU, reports to Fazal, with zero relationship to
+Shruthi in zone, tier, or reporting chain. Direct query against Dev
+confirmed all 3 rows have `activity.opportunity_id IS NULL`, matching the
+`activity_tier_visibility` RLS policy's unconditional `opportunity_id IS
+NULL` bypass clause exactly.
+
+**One correction made mid-investigation:** an early read misattributed a
+`MANAGER_NOTE` ("Hi Fazal, talk to GM") as Fazal's own exposed note.
+Checking `activity/models.py`'s `created_by_user` comment caught the
+mistake -- for `MANAGER_NOTE` specifically, `user_id` is who the note is
+*about*, `created_by` is who actually wrote it (the two match for every
+other activity type). That note was actually written by Basheer K
+(Admin) about Fazal, not by Fazal -- doesn't change the finding (Fahad's
+3 rows stand on their own), but flagged as a real open design question
+for whoever builds the fix: which of the two identities should govern
+visibility for a `MANAGER_NOTE` under the corrected rule.
+
+**Confirmed which screens are actually exposed, and which aren't.**
+Basheer's own framing assumption -- that this only surfaced via the
+Daily Activity Report -- turned out to be wrong, and checking it
+uncovered the real exposure: `_apply_daily_report_scope`
+(`activity/repository.py:154`) already applies its own independent
+hierarchy filter to that specific screen, mirroring
+`TEAM_SCOPE_BUILDERS`, so the Daily Activity Report was never actually
+affected. `list_by_account`/`list_by_project` (same file, lines 70/127)
+have no such filter and rely solely on the buggy RLS policy -- that's
+where a hospital or project's Activity tab genuinely leaks deal-less
+notes to anyone.
+
+**Proposed fix, discussed, not built:** replace the `opportunity_id IS
+NULL` bypass with the same manager-chain logic
+`_apply_daily_report_scope` already gets right, expressed as a database
+rule rather than a per-screen check -- consistent with this app's
+existing RLS-first architecture, and so it automatically covers
+`list_by_account`/`list_by_project` today and any future activity-listing
+endpoint (including the planned Sales Development Activities) without
+relying on each new screen remembering to add its own filter.
+
+**Basheer's call: discussing with Haroon before deciding how to build
+this.** Logged to `docs/Backlog.md` and `.claude/active_progress.md`
+for handover; nothing built yet.
+
+**Housekeeping note:** while making this edit, found this file (and
+`sales-os-app`'s notification/activity frontend files) had been modified
+by a parallel, concurrent session on the exact same account (Al Shifa
+Hospital) shortly before this entry -- see the "Activity comment
+notifications" entry immediately above. No overlap or conflict with this
+entry's content; noted here only per the standing practice of checking
+`git status`/`git diff` before editing a file that might be in
+concurrent use.

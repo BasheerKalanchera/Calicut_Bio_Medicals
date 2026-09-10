@@ -1,7 +1,70 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-07_
+_Session: 2026-08-21 → 2026-09-10_
+
+## 2026-09-10 session — three small fixes closed, no action pending
+
+1. **UAT backup script's Docker shutdown bug** — fixed and verified live,
+   **committed `7931491`**. Full detail below under "UAT backup/disaster-
+   recovery."
+2. **`_TERRITORY_ADMIN_ROLES` naming clash (from `docs/Backlog.md`)** —
+   two unrelated constants sharing one name (territory map editing vs.
+   zone search for hospital creation), flagged as a near-miss risk, no
+   incident yet. Renamed to `_TERRITORY_MAP_ADMIN_ROLES`
+   (`reference/service.py`) and `_ZONE_SEARCH_UNRESTRICTED_ROLES`
+   (`master_data.py`); fixed one comment in `account/service.py` that
+   had been pointing at the wrong one of the two. No behavior change —
+   740/740 backend tests pass, live smoke test across Sales Staff, Area
+   Manager, and Admin/GM confirmed the zone picker and Territory Map
+   edit gates unaffected. **Committed `4c1bf83`.** Backlog entry
+   removed — nothing left to pick up here.
+3. **UAT's `rls_auto_enable()` event trigger — permanent fix (from
+   `docs/Backlog.md`, 3 prior lockout incidents)** — identified its real
+   name (`ensure_rls`) via a read-only `pg_event_trigger` lookup,
+   confirmed Dev never had it, then Basheer ran `DROP EVENT TRIGGER
+   ensure_rls;` live on UAT via Supabase's SQL Editor. Re-verified after:
+   UAT now matches Dev exactly (only the six standard Supabase-managed
+   triggers remain). UAT migrations now behave exactly as authored, no
+   more silent third-party RLS override. Backlog entry closed — one
+   follow-up left for whenever Prod is set up (confirm Prod has no
+   equivalent trigger before assuming parity, and decline Supabase's
+   "enable RLS for the whole database" setup prompt — see
+   `docs/Progress-Archive-2026-08.md`'s "Trap for Prod" note).
+4. **Activity comment/manager-note notifications didn't say which
+   Activity** — clicking one landed on the deal's Activity tab with no
+   indication which entry the comment was on (found live via `/demo`,
+   Al Shifa Hospital, a deal with comments on more than one Activity).
+   Fixed: the notification's Activity id is now threaded through to
+   `ActivityTimeline.tsx`, which scrolls to, highlights, and auto-expands
+   the right one. Two follow-on bugs found during a live walk-through of
+   every notification on one deal (both from Activity cards staying
+   mounted across repeated notification clicks) fixed the same session.
+   **Committed `5a0bd4e`.** Full narrative: `docs/Progress-Archive-2026-09
+   .md`'s "2026-09-10 (later)" entry.
+
+**Next step:** none chosen yet — see `docs/Backlog.md` for the
+remaining shortlist (WON/LOST immutability, registering the UAT backup
+scheduled task, Insights Dashboard).
 
 ## Pending, awaiting Haroon / not yet actioned
+
+**Activity log privacy hole — confirmed live 2026-09-10 with a real
+example, Basheer to discuss approach with Haroon before deciding how to
+build the fix.** Deal-less activities (no `opportunity_id`) bypass the
+`activity_tier_visibility` RLS policy entirely and become visible to
+literally anyone — confirmed live: Shruthi (Area Manager, Bangalore,
+Imaging) can see all 3 of Fahad's deal-less activities on Al Shifa
+Hospital (Fahad: Sales Staff, Mangalore, Imaging, reports to Fazal —
+no relationship to Shruthi at all). Affects the Account and Project
+Activity tabs specifically; the Daily Activity Report already has its
+own separate, correct hierarchy filter and is unaffected. Proposed fix:
+replace the bypass with the same manager-chain check the Daily Activity
+Report already uses, built as a database rule so it covers every
+current and future screen, not just one. One open design question for
+whoever builds it: `MANAGER_NOTE` rows store the note's subject
+(`user_id`) and its actual author (`created_by`) as different people —
+needs a decision on whose chain governs visibility. Full detail:
+`docs/Backlog.md`'s "Activity log privacy hole" entry; full narrative:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-10 entry.
 
 **Three Dev bug fixes, promoted to UAT 2026-09-09 — plain `main` -> `uat`
 push (`dbfaea1`..`643256f`, 8 commits, no migrations involved):**

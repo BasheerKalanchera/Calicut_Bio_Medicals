@@ -38,22 +38,19 @@ kept only as a pointer; nothing left to pick up here.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
-- **Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
-  concerns — not yet renamed, no incident yet but one near-miss.**
-  `reference/service.py` and `master_data.py` each have their own private
-  `_TERRITORY_ADMIN_ROLES` constant, by deliberate convention (each module
-  keeps its own copy rather than sharing one) — but the two mean different
-  things: `reference/service.py`'s gates *editing the territory map*
-  (rightly Admin/GM-only, unrelated to any individual's own zone);
-  `master_data.py`'s gates *searching zones for hospital creation* (paired
-  with `account/service.py`'s `_ZONE_ASSIGNMENT_EXEMPT_ROLES`, which SBU
-  Manager was added to 2026-09-08, commit `c16b45a`). Same name, same
-  `{"Admin", "General Manager"}` shape, genuinely different intent —
-  confirmed only by reading each module's own comment before editing.
-  Worth a distinct name for at least one of them (e.g.
-  `_TERRITORY_MAP_ADMIN_ROLES` for `reference/service.py`'s) next time
-  either file is touched, so a future edit doesn't update the wrong one on
-  the strength of the name matching.
+- ~~**Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
+  concerns.**~~ — **DONE, 2026-09-10.** `reference/service.py` and
+  `master_data.py` each had their own private constant with the same
+  name but genuinely different meaning — territory map editing vs. zone
+  search for hospital creation. Renamed to `_TERRITORY_MAP_ADMIN_ROLES`
+  and `_ZONE_SEARCH_UNRESTRICTED_ROLES` respectively; also fixed a
+  comment in `account/service.py` that, on inspection, had been
+  referencing the wrong one of the two (its role set matched
+  `master_data.py`'s three-role set, not `reference/service.py`'s
+  two-role one). No behavior change, 740/740 backend tests pass, live
+  smoke test (Sales Staff/Area Manager scoped, Admin/GM/SBU Manager
+  unrestricted, Territory Map edit) confirmed both gates unaffected.
+  **Committed `4c1bf83`.**
 
 - ~~**Manager Note notification to the assigned rep.**~~ — **DONE.** Raised
   via phone call, Haroon to Basheer: when a manager logs a `MANAGER_NOTE`
@@ -332,35 +329,29 @@ kept only as a pointer; nothing left to pick up here.
   and a recommendation are laid out in the plan. Full design:
   `docs/Engagement-History-Generation-Implementation-Plan.md`.
 
-- **UAT's `rls_auto_enable()` event trigger — permanent fix needed, not just
-  another one-off disable.** UAT (not Dev) has an out-of-band Supabase event
-  trigger that auto-enables RLS on any newly created table with zero
-  policies — added outside the Alembic migration chain, first surfaced
-  2026-08-05 while regenerating `Physical-Schema.sql` and flagged then as
-  "reconciliation still open" (`docs/Progress-Archive-2026-08.md`). It has
-  now caused **three separate lockout incidents**: the original 18-table
-  UAT-wide lockout on 2026-08-03 (root-caused and fixed via `ALTER TABLE
-  ... DISABLE ROW LEVEL SECURITY` on those 18 tables — see that day's
-  entry), 2026-08-21 when migrations `0018`/`0019` created `user_zone` and
-  `zone_closure` — silently breaking Territory Map's coverage pills (reads
-  return empty, no error) and throwing a 500 on zone assignment saves
-  (which the browser misreports as a CORS error, since the failure
-  response skips CORS headers — not an actual CORS misconfiguration) — and
-  **2026-09-08, migration `0027`'s `gate_override_reason` table** (caught
-  *before* it broke anything this time, since the pending migrations were
-  read in advance during the UAT promotion pre-flight check — see
-  `docs/UAT-Migration-2026-09-08.md`). First two times fixed reactively,
-  per-table, after something broke; the third was fixed pre-emptively, but
-  the underlying trigger is still live and will hit the next migration
-  that creates a table too. **Needs a permanent fix:** either remove the
-  `rls_auto_enable()` trigger from UAT entirely (restoring parity with
-  Dev, which never had it), or add an explicit "check + disable RLS on any
-  new table" step to the migration workflow
-  (`Backend-Implementation-Standards.md`'s migration checklist) so it's
-  never missed again. Also applies to the eventual Prod promotion — see
-  Deployment-Topology.md's existing "Trap for Prod" note, which already
-  warns about the Supabase project-setup prompt but not about this
-  standing UAT-only trigger.
+- ~~**UAT's `rls_auto_enable()` event trigger — permanent fix.**~~ —
+  **DONE, 2026-09-10.** UAT (not Dev) had an out-of-band Supabase event
+  trigger (`ensure_rls`, calling function `rls_auto_enable()`) that
+  auto-enabled RLS with zero policies on any newly created table —
+  added outside the Alembic migration chain, first surfaced 2026-08-05.
+  Caused **three separate lockout incidents** before this fix: the
+  original 18-table UAT-wide lockout on 2026-08-03, 2026-08-21's
+  `user_zone`/`zone_closure` (silently broke Territory Map's coverage
+  pills, threw a misleading CORS-looking 500 on zone assignment saves),
+  and 2026-09-08's `gate_override_reason` table (caught pre-emptively
+  that time). **Fixed by Basheer, live on UAT: `DROP EVENT TRIGGER
+  ensure_rls;`** via Supabase's SQL Editor. Verified before and after —
+  `pg_event_trigger` confirmed `ensure_rls` was UAT-only (absent on Dev,
+  restoring the parity Dev already had) before dropping it, then
+  re-queried after to confirm only the six standard Supabase-managed
+  triggers remain, matching Dev exactly. UAT migrations now behave
+  exactly as authored — a table only gets RLS/policies if its own
+  migration adds them, same as Dev, no more silent third-party
+  override. **Still worth doing when Prod is set up:** decline
+  Supabase's "enable RLS for the whole database" project-setup prompt
+  (a related but separate footgun — see `docs/Progress-Archive-2026-08
+  .md`'s "Trap for Prod" note) and confirm Prod has no equivalent
+  out-of-band trigger of its own before assuming parity.
 
 - ~~**Opportunity Notes Privacy — Haroon agreed 2026-09-05, built, migrated
   (0039), all 8 verification steps passed live against Dev.**~~ —
@@ -636,23 +627,46 @@ kept only as a pointer; nothing left to pick up here.
   implementation plan; nothing implemented.
 
 - **Activity log privacy hole — some entries are visible to everyone in the
-  company, not just the rep's own manager chain.** Surfaced 2026-08-27 while
-  scoping Sales Development Activities (`docs/Discussion-Sales-Development-
-  Activities-2026-08.md`). Every activity a rep logs is supposed to be
-  visible only to that rep and their reporting chain (manager, GM, etc.) —
-  same as everything else in the app. But there's an existing bug in the
-  database-level rule that enforces this: for any activity that isn't
-  attached to a specific Opportunity, the rule doesn't restrict it at all —
-  it's visible to every logged-in user, any role, any zone. This bug already
-  exists today for some activity types. The new Sales Development Activities
-  (conferences, training, certifications) are designed to never be attached
-  to an Opportunity or even an Account, so every single one of them will
-  fall into this open bucket. Not urgent — nothing sensitive about customer
-  deals is exposed, just things like "so-and-so attended a training" — but
-  it's a real, growing gap worth fixing properly (correcting the underlying
-  database rule) rather than leaving it to spread further as more
-  unattached activity types get added. Needs Basheer's call on priority;
-  nothing implemented.
+  company, not just the rep's own manager chain. Confirmed live 2026-09-10
+  with a real example, awaiting Haroon's decision on approach.** Surfaced
+  2026-08-27 while scoping Sales Development Activities (`docs/Discussion-
+  Sales-Development-Activities-2026-08.md`). Every activity a rep logs is
+  supposed to be visible only to that rep and their reporting chain
+  (manager, GM, etc.) — same as everything else in the app. But there's an
+  existing bug in the database-level rule that enforces this
+  (`activity_tier_visibility`): for any activity that isn't attached to a
+  specific Opportunity, the rule doesn't restrict it at all — it's visible
+  to every logged-in user, any role, any zone, because of an unconditional
+  `opportunity_id IS NULL` clause in the policy's `OR` chain. The new Sales
+  Development Activities (conferences, training, certifications) are
+  designed to never be attached to an Opportunity or even an Account, so
+  every single one of them will fall into this open bucket.
+  **Confirmed live against Dev, 2026-09-10:** on Al Shifa Hospital's
+  Activity tab, Shruthi (Area Manager, Bangalore, Imaging SBU, reports to
+  Haroon) can see all 3 of Fahad's deal-less activities (Sales Staff,
+  Mangalore, Imaging SBU, reports to Fazal) — no relationship between them
+  at all in zone, SBU-tier, or reporting chain. Confirmed via direct query
+  (`activity.opportunity_id IS NULL` on all 3 rows). Two screens are
+  exposed today: the Account and Project activity tabs
+  (`activity/repository.py`'s `list_by_account`/`list_by_project`), which
+  rely solely on this RLS policy with no extra check of their own. The
+  Daily Activity Report is *not* affected — it has its own separate
+  hierarchy filter in application code (`_apply_daily_report_scope`,
+  mirroring `TEAM_SCOPE_BUILDERS`), independent of this RLS rule.
+  **Proposed fix, not yet built:** replace the `opportunity_id IS NULL`
+  bypass with the same manager-chain check `_apply_daily_report_scope`
+  already applies correctly, expressed as a database rule (not a
+  per-screen check) so it automatically covers every current and future
+  place that lists activities — consistent with this app's existing
+  "RLS first" architecture principle, and with how the `opportunity_id`-
+  linked branch of this same policy already works. **One open design
+  question to resolve before building:** for `MANAGER_NOTE` specifically,
+  `user_id` (who the note is about) and `created_by` (who wrote it) are
+  different people — needs a decision on which one's chain should govern
+  visibility for the fallback rule. **Basheer's call: discussing with
+  Haroon before deciding how to build this** — not urgent (nothing
+  customer-sensitive exposed in the confirmed example, but real internal
+  manager-coaching and personal remarks were), not yet scoped or built.
 
 - ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
   **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/
