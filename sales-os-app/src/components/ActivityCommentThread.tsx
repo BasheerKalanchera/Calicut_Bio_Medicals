@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, TextField } from "@mui/material";
 import { createActivityComment, listActivityComments } from "../services/activities";
@@ -22,11 +22,23 @@ function formatDate(iso: string) {
 export default function ActivityCommentThread({
   activityId,
   commentCount,
+  initiallyExpanded = false,
+  onInitialLoadSettled,
 }: {
   activityId: string;
   commentCount: number;
+  // Set when this Activity is the target of a comment notification the user
+  // just clicked through -- opens straight to the thread instead of making
+  // them find and click "Comments (N)" themselves on the very card they were
+  // just pointed at.
+  initiallyExpanded?: boolean;
+  // Fires once, after the auto-expanded thread's first fetch resolves --
+  // lets ActivityTimeline's scroll-to-highlight wait for this card's real
+  // final height instead of guessing at a fixed delay (see that effect's
+  // comment for the bug this replaced).
+  onInitialLoadSettled?: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initiallyExpanded);
   const [draft, setDraft] = useState("");
   const queryClient = useQueryClient();
   const queryKey = ["activity-comments", activityId];
@@ -36,6 +48,40 @@ export default function ActivityCommentThread({
     queryFn: () => listActivityComments(activityId),
     enabled: expanded,
   });
+
+  // initiallyExpanded only sets useState's value at first mount -- every
+  // Activity card in the list stays mounted for as long as the user keeps
+  // clicking different notifications on the same deal (the underlying list
+  // never unmounts, only which card is highlighted changes), so a card
+  // visited a second time needs to re-expand on that later prop change, not
+  // just at mount. Found live 2026-09-10 (Basheer): a card highlighted a
+  // second time scrolled into view correctly but its thread stayed
+  // collapsed. The re-expand itself is adjusted during render (React's
+  // documented pattern for syncing state to a prop change,
+  // https://react.dev/learn/you-might-not-need-an-effect) rather than in a
+  // useEffect -- `react-hooks/set-state-in-effect` correctly flagged the
+  // effect version of this as an avoidable extra render pass. Refs can't be
+  // written during render either (`react-hooks/refs`), so the parallel
+  // "only on a fresh highlight" tracking for onInitialLoadSettled below
+  // stays entirely inside its own effect instead.
+  const [prevInitiallyExpanded, setPrevInitiallyExpanded] = useState(initiallyExpanded);
+  if (initiallyExpanded !== prevInitiallyExpanded) {
+    setPrevInitiallyExpanded(initiallyExpanded);
+    if (initiallyExpanded) setExpanded(true);
+  }
+
+  const pendingSettleRef = useRef(initiallyExpanded);
+  const wasInitiallyExpandedRef = useRef(initiallyExpanded);
+  useEffect(() => {
+    if (initiallyExpanded && !wasInitiallyExpandedRef.current) {
+      pendingSettleRef.current = true;
+    }
+    wasInitiallyExpandedRef.current = initiallyExpanded;
+    if (pendingSettleRef.current && !isLoading) {
+      pendingSettleRef.current = false;
+      onInitialLoadSettled?.();
+    }
+  }, [initiallyExpanded, isLoading, onInitialLoadSettled]);
 
   const postComment = useMutation({
     mutationFn: (body: string) => createActivityComment(activityId, body),

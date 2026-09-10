@@ -2128,3 +2128,175 @@ found zero `Docker Desktop`/`com.docker.*` processes running. Fix holds.
 **Next step:** register the `-AtLogOn` scheduled task (command already
 in `.claude/active_progress.md`), then confirm the first logon-triggered
 run appears correctly in `backup_log.txt`.
+
+**`_TERRITORY_ADMIN_ROLES` naming clash — picked up from `docs/Backlog.md`,
+fixed.** Two unrelated private constants, same name, different meaning:
+`reference/service.py`'s gated *editing the territory map*
+(`{"Admin", "General Manager"}`); `master_data.py`'s gated *zone search
+for hospital creation* (`{"Admin", "General Manager", "SBU Manager"}`).
+Flagged as a near-miss risk 2026-09-08/09 (`docs/Progress-Archive-2026-09
+.md`'s 2026-09-08/09 entries), no incident yet. Renamed to
+`_TERRITORY_MAP_ADMIN_ROLES` (`reference/service.py`) and
+`_ZONE_SEARCH_UNRESTRICTED_ROLES` (`master_data.py`). While updating
+every comment that referenced either by name, found one in
+`account/service.py` that had actually been pointing at the wrong one
+all along -- its role set (`{"Admin", "General Manager", "SBU Manager"}`)
+matches `master_data.py`'s constant, not `reference/service.py`'s
+2-role one -- corrected to point at the right one. No behavior change,
+740/740 backend tests pass. Live smoke test: Sales Staff and Area
+Manager both correctly zone-scoped in the Add/Edit Hospital zone
+picker, Admin/GM/SBU Manager correctly unrestricted, Admin/GM Territory
+Map edit unaffected. **Committed `4c1bf83`.**
+
+**UAT's `rls_auto_enable()` event trigger — permanent fix, closed.**
+Picked up from `docs/Backlog.md`'s standing item (3 lockout incidents:
+2026-08-03, 2026-08-21, 2026-09-08). Identified the trigger's real name
+via a read-only `pg_event_trigger` lookup (Basheer, Supabase SQL
+Editor) -- `ensure_rls`, firing on `ddl_command_end`, calling function
+`rls_auto_enable()`. Confirmed live (read-only query via
+`.venv/Scripts/python.exe` against both `backend/.env` and
+`backend/.env.uat`, plain `DATABASE_URL`, no elevated connection
+needed since `pg_event_trigger` is a system catalog, not RLS-gated)
+that Dev has only the six standard Supabase-managed event triggers and
+never had `ensure_rls` -- matching the 2026-08-05 side-finding, now
+re-verified rather than taken on faith. Basheer ran `DROP EVENT TRIGGER
+ensure_rls;` live on UAT via Supabase's SQL Editor. Re-verified after:
+UAT now shows the same six standard triggers as Dev, nothing else --
+full parity restored. Going forward, a new table on UAT gets RLS/
+policies only if its own migration adds them, exactly as authored, the
+same as Dev already worked -- no more silent third-party override
+locking a table with zero policies before the migration's own
+`CREATE POLICY` statements run. **Still open, for whenever Prod is set
+up:** decline Supabase's "enable RLS for the whole database"
+project-setup prompt (a related but separate footgun, `docs/Progress-
+Archive-2026-08.md`'s "Trap for Prod" note) and confirm Prod has no
+event trigger of its own before assuming parity with Dev/UAT.
+
+## 2026-09-10 (later) — Activity comment notifications: no indication of which Activity, fixed with scroll+highlight+auto-expand; a real race bug found and fixed live during testing
+
+**Reported by Basheer via the `/demo` UI:** clicking an `ACTIVITY_COMMENT_ADDED`/
+`MANAGER_NOTE_ADDED` notification (e.g. "Basheer K commented on an activity")
+always lands on the deal's plain Activity tab, top of list -- with no
+indication which Activity the comment was actually on. Confirmed live with
+Al Shifa Hospital, which has comments on more than one Activity: two
+notifications ("Basheer K commented...", "Fazal commented...") both opened
+the same generic tab.
+
+Root cause: `NotificationService.notify_activity_comment_added`
+(`backend/app/domains/notification/service.py:115-137`) already stores
+`entity_id = activity_id` on the notification -- the data was there.
+`NotificationBell.tsx`'s click handler used that id only for the read-receipt
+call (`markNotificationRead`) and discarded it before calling
+`onSelectOpportunity`/`onSelectAccount`, which only ever received a tab name
+("activity"), never which Activity within that tab.
+
+Fix: threaded a new `highlightActivityId` parameter through
+`NotificationBell.tsx` → `UrgentNotificationDialog.tsx` (same code path,
+reached only by `MANAGER_NOTE_ADDED` since comments are never urgent) →
+`DemoApp.tsx`'s `handleSelectOpportunity`/`handleSelectAccount` → down as a
+prop through `OpportunityDetailScreen.tsx`/`Customer360Screen.tsx` into
+`ActivityTimeline.tsx`, which now scrolls to, highlights (blue border), and
+auto-expands the comment thread of the exact Activity the notification named
+(`ActivityCommentThread.tsx` gained an `initiallyExpanded` prop for this).
+All additive/optional-param changes -- no behavior change for callers that
+don't pass the new id. `tsc --noEmit` clean throughout.
+
+**Real bug found live during Basheer's own manual verification (not caught by
+the type-checker or the first round of browser testing):** the auto-scroll
+fired once, synchronously, `scrollIntoView({block:"center"})`, calculated
+against the target card's height *before* its auto-expanded comment thread
+had actually fetched and rendered. Once the comments arrived a moment later
+and the card grew taller, the already-computed scroll position no longer
+centered it -- for a card near the top of a short list, this pushed it
+almost entirely off-screen above the viewport (only a sliver of its bottom
+border visible under the tab bar). Basheer reproduced this by walking every
+"Basheer K" notification on the Al Shifa Hospital deal from oldest to
+newest; the 8-Sept-08:18pm Manager Note (3rd item in a 6-item list) showed
+it clearly, the others happened to land fine by coincidence of list
+position.
+
+First fix attempt: `ActivityTimeline.tsx`'s highlight effect watched the
+target card with a `ResizeObserver` and re-ran `scrollIntoView` on every
+size change for up to 2 seconds. **This did not hold up** -- Basheer asked
+for a live re-demo of every Basheer K notification and the 8-Sept-08:20pm
+note failed again, cut off exactly as before. Instrumented with a
+`console.log` in the scroll callback: it fired exactly once, meaning the
+`ResizeObserver` never caught a second resize. Root cause of *that*: the
+comment thread's height had already finished growing by the time
+`observer.observe()` ran (the query resolved faster than expected on this
+particular card), so there was no further "change" left to observe -- the
+single scroll call had already run against a stale, pre-load snapshot.
+
+Second fix attempt: replaced the `ResizeObserver` with a fixed retry
+schedule (`[0, 50, 150, 300, 600, 1000]` ms). This fixed the 08:20pm case
+but then failed on `08:09pm` ("Basheer K commented on an activity", the
+longest thread on the deal, 6+ comments) when clicked right after two other
+notifications with no page reload in between -- the auto-scroll never moved
+at all. **Root cause, the real one:** the comment fetch for a thread this
+size took longer than the 1000ms guess allowed for, so the schedule gave up
+before the card had grown to its final height. Fixed-delay retries were
+guessing at a number that depends on network/data size and can't be
+guessed reliably.
+
+**Actual fix:** removed the timing guess entirely. `ActivityCommentThread.tsx`
+gained an `onInitialLoadSettled` callback that fires once its own comment
+query genuinely finishes loading (not a delay -- a real signal). `ActivityTimeline.tsx`'s
+`scrollToHighlightTarget` is called once immediately (for snappiness) and
+again from that callback once the highlighted card's real, final height is
+known -- no more guessing how long a fetch might take.
+
+**A second, independent bug surfaced during this same fix**, again only
+visible when clicking several notifications on the same deal without
+reloading the page: every Activity card (and its `ActivityCommentThread`)
+stays mounted for as long as the user keeps clicking different
+notifications there, since the underlying list itself never unmounts --
+only the earlier reproduction happened to always go through a full page
+reload or a detour through Customer 360 first, which masked it. Two places
+used a plain one-shot ref/`useState` that only takes effect on first mount:
+(1) `ActivityCommentThread`'s `useState(initiallyExpanded)` -- a card
+revisited a second time scrolled into view correctly but its thread stayed
+collapsed, since React's initial-state argument is only read once, not on
+every prop change; (2) `ActivityTimeline`'s `hasScrolledToHighlightRef`
+boolean -- blocked the initial scroll attempt for every notification after
+the first one in the same mounted screen (masked in testing because the
+settle-callback fix above happened to cover for it). Fixed both: the
+comment thread now has an effect that calls `setExpanded(true)` whenever
+`initiallyExpanded` transitions to true (not just at mount), and the
+timeline ref now tracks *which* activity id was last handled instead of a
+bare boolean, so a new id always re-triggers the attempt.
+
+**Verified live, all 5 of Basheer K's notifications on the Al Shifa Hospital
+deal, clicked back-to-back with no page reloads in between** (the exact
+sequence that exposed both bugs above) -- oldest urgent manager note
+through newest, plus a repeat visit to two of them -- all land highlighted,
+fully visible, comments expanded where applicable, every time. `tsc
+--noEmit` clean throughout.
+
+**Lesson for next time a scroll/animation timing bug shows up:** don't
+reach for a delay or a `ResizeObserver` guess first -- find the actual
+completion signal (a query's `isLoading`, a promise, a mutation's
+`onSuccess`) and drive the corrective action from that instead. Every
+timing-based attempt here looked fixed in isolation and then failed under
+slightly different real conditions (a slower fetch, a revisited component).
+
+**Pre-commit lint blocked the commit** (`.githooks/pre-commit` runs `npm run
+lint`): `react-hooks/set-state-in-effect` correctly flagged the
+`ActivityCommentThread.tsx` fix above for calling `setExpanded(true)` inside
+a `useEffect` -- textbook "you might not need an effect" (deriving state
+from a prop). Moved the re-expand logic to run during render instead (React's
+documented pattern for adjusting state on a prop change), which then tripped
+`react-hooks/refs` for writing to a ref during that same render -- split the
+settle-tracking (which only touches refs, not state) into its own effect
+that has no state or ref writes during render at all. Also picked up one new
+`react-hooks/exhaustive-deps` warning on `scrollToHighlightTarget` in
+`ActivityTimeline.tsx`; wrapped it in `useCallback`, which exposed a further
+warning that `activities` (`data?.items ?? []`) creates a new array every
+render while loading -- switched that effect's dependency to
+`activities.length` instead. Verified the fix wasn't just "quieting the
+linter": stashed these changes, ran lint against unmodified `main`, and
+confirmed the same 245 warnings already existed there (identical text, only
+shifted line numbers) -- so today's changes land at exactly 245 problems, 0
+errors, the same count as before this session, with no accumulated
+technical debt. Re-verified live after these edits that the notification
+fix itself still works.
+

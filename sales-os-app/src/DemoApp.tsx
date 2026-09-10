@@ -102,6 +102,11 @@ export default function DemoApp() {
   // Opportunity Detail (e.g. the stakeholder bridge list) — reset to
   // undefined (defaults to Overview) on any fresh account open.
   const [customer360InitialTab, setCustomer360InitialTab] = useState<string | undefined>(undefined);
+  // Activity id to scroll to and highlight on whichever Activity tab opens
+  // next -- set by a comment/manager-note notification click, since both
+  // Opportunity Detail and Customer 360 route through the same two handlers
+  // below regardless of which one a notification targets.
+  const [highlightActivityId, setHighlightActivityId] = useState<string | undefined>(undefined);
   const [selectedProject, setSelectedProject]   = useState<{ id: string; name: string; account: { id: string; name: string } } | null>(null);
   const [accountSubTab, setAccountSubTab]       = useState("customers");
   const [projectDetailMode, setProjectDetailMode] = useState(false);
@@ -129,7 +134,7 @@ export default function DemoApp() {
     openLogActivityRef.current = () => setShowLogActivity(true);
   }, []);
 
-  function handleSelectAccount(account: { id: string; name: string }, initialTab?: string) {
+  function handleSelectAccount(account: { id: string; name: string }, initialTab?: string, highlightActivityId?: string) {
     // Only capture the return view when entering from elsewhere — Customer360Screen
     // also calls this internally for parent/child account links, and in that case
     // view is already "customer360", so capturing it would make Back a no-op.
@@ -138,6 +143,10 @@ export default function DemoApp() {
     // account) starts on Overview by default -- callers that need a specific
     // tab (e.g. a Manager Note notification landing on Activity) pass one.
     setCustomer360InitialTab(initialTab);
+    // Unconditional, same reasoning as handleSelectOpportunity's customer360Tab
+    // below -- a caller that doesn't pass one must clear a stale id left over
+    // from a previous notification click, not leave the old Activity highlighted.
+    setHighlightActivityId(highlightActivityId);
     setSelectedAccount(account);
     setView("customer360");
   }
@@ -159,8 +168,10 @@ export default function DemoApp() {
     opp: PipelineOpportunity | { id: string; name: string },
     detailTab?: string,
     customer360Tab?: string,
+    highlightActivityId?: string,
   ) {
     setUrgentDialogDismissedAt(Date.now());
+    setHighlightActivityId(highlightActivityId);
     // Only capture a *new* return view when not already on Opportunity Detail --
     // otherwise opening a second Opportunity from within the first one's detail
     // screen (e.g. picking another notification from the bell dropdown while
@@ -550,6 +561,7 @@ export default function DemoApp() {
               onSelectOpportunity={handleSelectOpportunity}
               onSelectProject={handleSelectProject}
               initialTab={customer360InitialTab}
+              highlightActivityId={highlightActivityId}
             />
           )}
 
@@ -594,6 +606,7 @@ export default function DemoApp() {
               onBack={handleBackToOpportunities}
               onOpportunityUpdate={setSelectedOpportunity}
               initialTab={selectedOpportunityInitialTab as any}
+              highlightActivityId={highlightActivityId}
             />
           )}
 

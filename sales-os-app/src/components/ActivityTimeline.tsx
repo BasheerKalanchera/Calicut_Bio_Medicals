@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button } from "@mui/material";
 import { listActivitiesByAccount, listActivitiesByOpportunity, listActivitiesByProject } from "../services/activities";
@@ -28,6 +29,13 @@ interface Props {
   // Defaults to true so opportunity-scoped callers (OpportunityDetailScreen.tsx),
   // which have no such parent-level query, keep fetching exactly as before.
   selfFetch?: boolean;
+  // Set when arriving here via an ACTIVITY_COMMENT_ADDED/MANAGER_NOTE_ADDED
+  // notification click -- the notification only ever says "commented on an
+  // activity" with no indication which one, so once the list loads we scroll
+  // straight to this Activity, highlight it, and auto-expand its comment
+  // thread instead of leaving the user to guess among a list that may have
+  // several commented-on entries.
+  highlightActivityId?: string;
 }
 
 function formatDate(iso: string) {
@@ -37,10 +45,29 @@ function formatDate(iso: string) {
   });
 }
 
-function ActivityItem({ activity }: { activity: ActivityResponse }) {
+function ActivityItem({
+  activity,
+  highlighted,
+  onHighlightedCommentsSettled,
+}: {
+  activity: ActivityResponse;
+  highlighted?: boolean;
+  onHighlightedCommentsSettled?: () => void;
+}) {
   const cfg = ACTIVITY_TYPE_CONFIG[activity.activity_type] ?? ACTIVITY_TYPE_CONFIG.NOTE;
   return (
-    <Box sx={{ bgcolor: "#fff", borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6", p: 2, display: "flex", gap: "0.75rem" }}>
+    <Box
+      data-activity-id={activity.id}
+      sx={{
+        bgcolor: highlighted ? "#eff6ff" : "#fff",
+        borderRadius: "1rem",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        border: highlighted ? "2px solid #2563eb" : "1px solid #f3f4f6",
+        p: 2,
+        display: "flex",
+        gap: "0.75rem",
+      }}
+    >
       <Box
         sx={{
           width: 32,
@@ -103,14 +130,28 @@ function ActivityItem({ activity }: { activity: ActivityResponse }) {
             {activity.notes}
           </Box>
         )}
-        <ActivityCommentThread activityId={activity.id} commentCount={activity.comment_count} />
+        <ActivityCommentThread
+          activityId={activity.id}
+          commentCount={activity.comment_count}
+          initiallyExpanded={highlighted}
+          onInitialLoadSettled={highlighted ? onHighlightedCommentsSettled : undefined}
+        />
       </Box>
     </Box>
   );
 }
 
-export default function ActivityTimeline({ accountId, opportunityId, projectId, onLogActivity, totalCount, selfFetch = true }: Props) {
+export default function ActivityTimeline({
+  accountId,
+  opportunityId,
+  projectId,
+  onLogActivity,
+  totalCount,
+  selfFetch = true,
+  highlightActivityId,
+}: Props) {
   const queryClient = useQueryClient();
+  const listRef = useRef<HTMLDivElement>(null);
 
   const queryKey = opportunityId
     ? ["activities", "opportunity", opportunityId]
@@ -132,6 +173,46 @@ export default function ActivityTimeline({ accountId, opportunityId, projectId, 
 
   const activities = data?.items ?? [];
   const total = totalCount ?? data?.total;
+
+  // Scroll to and land on the notified Activity once its card is actually in
+  // the DOM. If it's past the first page (pageSize=50 in
+  // services/activities.ts), it silently won't be found -- same known limit
+  // as the "Showing X of Y" truncation notice below, not something this
+  // fixes.
+  //
+  // Two earlier approaches here didn't hold up under live testing
+  // (2026-09-10, Basheer walking every notification on a deal): a single
+  // scrollIntoView call landed inconsistently because the highlighted card's
+  // comment thread auto-expands and fetches asynchronously, growing the card
+  // after the call already ran against its pre-load height -- and a
+  // ResizeObserver, then a fixed retry schedule guessing at how long that
+  // fetch takes, both still missed cards whose thread had more comments (and
+  // so took longer) than the guess accounted for. `scrollToHighlightTarget`
+  // is called an initial time here for snappiness, then called again by
+  // ActivityCommentThread's onInitialLoadSettled once that specific fetch has
+  // actually resolved -- no timing guess involved.
+  const scrollToHighlightTarget = useCallback(() => {
+    if (!highlightActivityId) return;
+    const container = listRef.current;
+    const target = container?.querySelector(`[data-activity-id="${highlightActivityId}"]`) as HTMLElement | null;
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightActivityId]);
+
+  // Tracks *which* id was last handled, not just whether one ever was -- this
+  // component (and every ActivityItem in it) stays mounted across repeated
+  // notification clicks on the same deal, so a plain one-shot boolean would
+  // silently stop firing this initial attempt from the second notification
+  // onward (the settle-callback above still covers correctness in that case,
+  // but this keeps the snappy early attempt working too).
+  const lastHandledHighlightIdRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!highlightActivityId || activities.length === 0 || lastHandledHighlightIdRef.current === highlightActivityId) return;
+    lastHandledHighlightIdRef.current = highlightActivityId;
+    scrollToHighlightTarget();
+    // activities.length, not activities -- `data?.items ?? []` makes a fresh
+    // array on every render while data is undefined, which would re-run this
+    // effect every render during loading if the array itself were a dep.
+  }, [highlightActivityId, activities.length, scrollToHighlightTarget]);
 
   function handleLogActivity() {
     onLogActivity?.();
@@ -188,9 +269,14 @@ export default function ActivityTimeline({ accountId, opportunityId, projectId, 
           No activities logged yet.
         </Box>
       ) : (
-        <Box sx={{ pt: 0.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box ref={listRef} sx={{ pt: 0.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
           {activities.map((a) => (
-            <ActivityItem key={a.id} activity={a} />
+            <ActivityItem
+              key={a.id}
+              activity={a}
+              highlighted={a.id === highlightActivityId}
+              onHighlightedCommentsSettled={scrollToHighlightTarget}
+            />
           ))}
           {(total ?? 0) > activities.length && (
             <Box sx={{ textAlign: "center", fontSize: "10px", color: "#9ca3af", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", pt: 1 }}>

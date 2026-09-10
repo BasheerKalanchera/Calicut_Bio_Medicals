@@ -74,6 +74,10 @@ interface Props {
   // Customer 360's stakeholder bridge list) so navigation doesn't always
   // land on Overview first.
   initialTab?: TabId;
+  // Set by a comment/manager-note notification click -- passed straight
+  // through to ActivityTimeline so it can scroll to and highlight the exact
+  // Activity the notification was about.
+  highlightActivityId?: string;
 }
 
 const TABS = [
@@ -1173,7 +1177,7 @@ function DocumentPreviewModal({
 // ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
-export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate, initialTab }: Props) {
+export default function OpportunityDetailScreen({ opportunityId, initialOpportunity, onBack, onOpportunityUpdate, initialTab, highlightActivityId }: Props) {
   const { userProfile }                           = useAuth();
   const queryClient                               = useQueryClient();
 
@@ -1696,7 +1700,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} accountId={opp.account.id} />}
         {activeTab === "documents"    && <DocumentsTab opportunityId={opp.id} />}
         {activeTab === "activity"     && (
-          <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} />
+          <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} highlightActivityId={highlightActivityId} />
         )}
         {activeTab === "next-actions" && <NextActionsTab opportunityId={opp.id} />}
       </Box>

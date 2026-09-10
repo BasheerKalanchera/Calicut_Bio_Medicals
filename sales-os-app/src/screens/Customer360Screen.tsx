@@ -94,6 +94,10 @@ interface Props {
   // stakeholder bridge list), so this screen reopens on the tab the user
   // actually came from instead of always defaulting to Overview.
   initialTab?: string;
+  // Set by a comment/manager-note notification click -- passed straight
+  // through to ActivityTimeline so it can scroll to and highlight the exact
+  // Activity the notification was about.
+  highlightActivityId?: string;
 }
 
 const TABS = [
@@ -592,7 +596,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab, highlightActivityId }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
   // BR-OP-12: only these roles may create an Opportunity outside their own SBU.
@@ -1519,7 +1523,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
-          <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} />
+          <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} highlightActivityId={highlightActivityId} />
         )}
       </Box>
 

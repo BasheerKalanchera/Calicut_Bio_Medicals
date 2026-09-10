@@ -41,11 +41,16 @@ export default function UrgentNotificationDialog({
   dismissedAt,
   onDismiss,
 }: {
-  onSelectOpportunity: (opportunity: { id: string; name: string }, detailTab?: string) => void;
+  onSelectOpportunity: (
+    opportunity: { id: string; name: string },
+    detailTab?: string,
+    customer360Tab?: string,
+    highlightActivityId?: string,
+  ) => void;
   // Only used by MANAGER_NOTE_ADDED when the note is Account-only (no
   // opportunity_id) -- every other urgent notification type navigates via
   // onSelectOpportunity instead.
-  onSelectAccount: (account: { id: string; name: string }, initialTab?: string) => void;
+  onSelectAccount: (account: { id: string; name: string }, initialTab?: string, highlightActivityId?: string) => void;
   // Epoch ms of the last dismissal -- compared against the urgent-unread
   // query's own dataUpdatedAt below, so the dialog stays hidden only until
   // the *next* poll actually lands (not silence-forever-able by accident).
@@ -96,9 +101,11 @@ export default function UrgentNotificationDialog({
         onSelectOpportunity(
           { id: n.opportunity_id, name: n.opportunity_name ?? "Opportunity" },
           "activity",
+          undefined,
+          n.entity_id,
         );
       } else if (n.account_id) {
-        onSelectAccount({ id: n.account_id, name: n.account_name ?? "Account" }, "activity");
+        onSelectAccount({ id: n.account_id, name: n.account_name ?? "Account" }, "activity", n.entity_id);
       }
     } else {
       onSelectOpportunity({ id: n.entity_id, name: n.opportunity_name ?? "Opportunity" });
