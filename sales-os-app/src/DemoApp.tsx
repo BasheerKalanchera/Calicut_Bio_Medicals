@@ -18,6 +18,7 @@ import LoginRemindersDialog from "./components/LoginRemindersDialog";
 import NotificationBell from "./components/NotificationBell";
 import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
+import InsightsDashboardScreen from "./screens/InsightsDashboardScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
@@ -37,6 +38,7 @@ const NAV_SECTIONS = [
       { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
       { id: "nextActions",   label: "Next Actions",       icon: "✅" },
       { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
+      { id: "insights", label: "Insights", icon: "📊" },
     ],
   },
   {
@@ -670,6 +672,18 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <DailyActivityReportScreen onSelectAccount={handleSelectAccount} onSelectOpportunity={handleSelectOpportunity} />
+          </Box>
+
+          {/* Insights — always mounted, hidden when not active; role-adaptive
+              inside the screen itself, no admin gate on visibility (see
+              docs/Insights-Dashboard-Implementation-Plan.md) */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "insights" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Insights
+              </Typography>
+            </Box>
+            <InsightsDashboardScreen />
           </Box>
         </ErrorBoundary>
       </Box>

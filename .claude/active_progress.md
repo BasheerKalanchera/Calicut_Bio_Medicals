@@ -27,10 +27,30 @@ _Session: 2026-08-21 → 2026-09-11_
    immutable on this project. Full detail: `docs/UAT-Migration-2026-09-
    11.md`; narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-11
    (later)" entry.
+3. **Insights Dashboard, Batch 1a -- 5 of 8 planned widgets built and
+   fully verified, no action pending.** New `backend/app/domains/
+   reporting/` domain (Pipeline Value, Weighted/Unweighted Forecast,
+   Overdue Actions, Activity Levels, Stagnant Deals) +
+   `InsightsDashboardScreen.tsx`. Product Performance Summary, High-
+   Priority Deals, and Opportunities On Hold deliberately deferred --
+   a separate, concurrent planning session was actively drafting
+   Product Performance Summary's own spec in the same plan doc, so this
+   pass backed out of that section and stuck to the 5 already-agreed
+   items. 27 new backend tests, 767/767 full suite, `tsc`/lint clean.
+   **Manual E2E, live on Dev, all three role tiers** (GM/unrestricted,
+   SBU Manager, Sales Staff) -- correct scoping and correct manager-tile
+   visibility confirmed at every tier, every total cross-checked
+   internally. Dev servers stopped after verification. Full narrative:
+   `docs/Progress-Archive-2026-09.md`'s "2026-09-11 (later still) --
+   Insights Dashboard" entry.
 
-**Next step:** none pending -- Haroon posted comments on UAT (Ullal
-Diagnostic Centre / Benaka Health Centre activities) and confirmed via
-Basheer that the feature looks good on mobile. UAT migration item closed.
+**Next step:** none pending from this session. Haroon posted comments on
+UAT (Ullal Diagnostic Centre / Benaka Health Centre activities) and
+confirmed via Basheer that the feature looks good on mobile -- UAT
+migration item closed. Insights Dashboard's remaining 3 widgets (Product
+Performance Summary, High-Priority Deals, Opportunities On Hold) are a
+follow-on batch once the other in-progress planning thread resolves --
+see `docs/Insights-Dashboard-Implementation-Plan.md`.
 
 ## 2026-09-10 session — three small fixes closed, no action pending
 

@@ -2532,3 +2532,100 @@ commit) is an ancestor of `df0a7cc`, the 2026-09-09 UAT-promotion
 close-out commit -- so it shipped two days earlier than the most recent
 2026-09-11 migration, in the promotion before that one. `Backlog.md`
 entry updated to DONE with the corrected ship date; no code change.
+
+## 2026-09-11 (later still) — Insights Dashboard, Batch 1a: 5 of 8 planned widgets built, backend + frontend, full role-by-role E2E pass on Dev
+
+**Scope decided first.** `docs/Insights-Dashboard-Implementation-Plan.md`
+(drafted 2026-08-25, never built) lists 8 target-independent widgets for
+Batch 1, but only 4 response shapes were ever fully spec'd out. Basheer
+asked for the 5 fully-spec'd items by name: Pipeline Value, Weighted/
+Unweighted Forecast (one endpoint), Overdue Actions, Activity Levels,
+Stagnant Deals. Asked to add a 6th, Product Performance Summary --
+investigated against the actual schema and PRD A.3.4, found two of its
+7 PRD metrics unbuildable as specified (Margin: no cost field anywhere
+on `product`/`opportunity_item`; Brand: only `oem_name` exists, no
+separate Brand field) -- Basheer chose to build the narrowed version
+(drop Margin/Brand, keep the rest) via `AskUserQuestion`. **Mid-edit,
+found a second concurrent Claude session actively drafting this exact
+same Product Performance Summary section in the plan doc** (a different,
+still-open framing: Product/SBU grouping only, Margin/Brand marked "not
+yet decided" rather than resolved) -- deliberately backed out of that
+section entirely and **narrowed this pass to the original 5 widgets**,
+leaving Product Performance Summary (and High-Priority Deals,
+Opportunities On Hold) to the other thread and a later follow-on.
+
+**Part 1 (plan).** Updated the plan doc's status/scope header to name
+this specific slice "Batch 1a" (5 widgets, 4 endpoints) and explicitly
+list what's deferred and why, without touching the other session's
+in-progress sections.
+
+**Part 2 (backend).** New domain `backend/app/domains/reporting/`
+(`schemas.py`, `repository.py`, `service.py`, `router.py`), registered
+in `main.py`. Reuses `TEAM_SCOPE_BUILDERS`/`UNRESTRICTED_ROLES`
+unchanged, same shape as `ActivityRepository._apply_daily_report_scope`.
+Two nuances worth remembering: (1) "open pipeline value" and "forecast"
+are *different populations* -- open = `NOT status.is_terminal` (Active +
+On-Hold), forecast = `status_code = 'ACTIVE'` only, per BR-OP-07; (2)
+Buyback line items net negative against Product lines (BR-FIN-03),
+mirrored server-side from `utils/opportunityItems.ts`'s existing
+frontend logic. `_has_team_to_roll_up()` gates Overdue Actions to an
+empty result (not a 403) for any role with no `TEAM_SCOPE_BUILDERS`
+entry, checked generically rather than by hardcoding "Sales Staff" as a
+string. 27 new tests (mocked-SQL-compilation scoping/aggregation
+assertions, mirroring `test_activity_repository.py`'s style, plus a
+service-level test for the team-rollup gate) -- all pass; full backend
+suite 767/767; `ruff` clean except the same B008 (`Query()` in argument
+defaults) pattern already present 36 times elsewhere in this codebase,
+left as-is for consistency rather than noqa'd only in the new file.
+Confirmed the 4 endpoints live in the app's own OpenAPI schema and that
+every SQL column label matches its Pydantic field name via a direct
+round-trip smoke test.
+
+**Part 3 (frontend).** `InsightsDashboardScreen.tsx` (new), `services/
+reporting.ts`, `types/reporting.ts`, nav entry added to `DemoApp.tsx`'s
+SALES EXECUTION section (not the legacy Tailwind `App.jsx`, which
+already had a stray "Insights" nav placeholder with no screen behind
+it -- irrelevant, `DemoApp.tsx` is the real MUI app served at `/demo`).
+Loaded the `dataviz` skill first, since this is the first chart shipped
+in this project -- used its validated reference palette's single
+sequential blue for a reusable inline `MiniBar` (magnitude comparison,
+thin, rounded ends, value always shown as visible text, native `title`
+as the hover layer) rather than inventing colors or reaching for a
+charting library; Stagnant Deals/Overdue Actions stayed plain lists,
+per the skill's own "sometimes the answer is not a chart" principle.
+`tsc --noEmit` and `npm run lint` both clean, zero new warnings.
+
+**Manual E2E, live on Dev, all three role tiers -- the gap flagged when
+Basheer asked "did you do full E2E verification?" after an initial
+single-role smoke pass.** Basheer logged in himself each time (local
+Dev credentials aren't something Claude has or would enter into a
+field regardless); Claude drove the browser and read the results:
+1. **Haroon (GM, unrestricted):** full org view, all 5 widgets, ₹514.6L
+   pipeline / 37 open deals. Switching Pipeline's group-by (Rep -> Stage)
+   re-grouped correctly and both groupings summed to the identical
+   ₹514.6L total. Stagnant-deals threshold toggle (180 -> 90 days)
+   re-fetched correctly (empty at both -- this Dev dataset genuinely has
+   none past either threshold). Overdue Actions' 8 per-rep rows summed
+   exactly to its own "24 total" header.
+2. **Basheer K (SBU Manager):** correctly narrowed to 4 reps / ₹452.0L
+   (a real subset of Haroon's 6 reps / ₹514.6L -- Haroon Sidheeq and
+   Nishad K V, outside his SBU, correctly excluded), still gets all the
+   manager-tier tiles. Overdue Actions narrowed to 15 (a subset of 24),
+   again summing exactly. One rep's 30-day activity count shifted by a
+   few between the two logins (real wall-clock time passing shifted the
+   rolling window) -- not a bug, flagged and understood as expected.
+3. **Fahad (Sales Staff):** sees *only* the Pipeline Value/Forecast
+   tiles -- Team Activity, Overdue Actions, and Stagnant Deals are
+   correctly absent, not just empty. ₹106.0L / 8 open deals, exactly
+   matching his own row from Haroon's team-wide view. Default grouping
+   is Stage, not Rep (Rep is meaningless when you only ever see
+   yourself).
+
+Every total cross-checked internally at every tier (by-rep sum ==
+by-stage sum == top-tile total), and every individual rep's number
+stayed identical across every login able to see it. Dev servers
+(backend `uvicorn`, frontend `vite`) stopped after verification.
+
+**Nothing pending from this thread.** Product Performance Summary,
+High-Priority Deals, and Opportunities On Hold remain queued as a
+follow-on batch once the other in-progress planning thread resolves.
