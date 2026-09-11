@@ -2370,3 +2370,165 @@ notifications" entry immediately above. No overlap or conflict with this
 entry's content; noted here only per the standing practice of checking
 `git status`/`git diff` before editing a file that might be in
 concurrent use.
+
+## 2026-09-11 — UAT login failure ("unable to verify your session"): Supabase pooler stuck from a platform incident, fixed by switching DATABASE_URL to transaction-mode pooling
+
+**Trigger:** Basheer reported the UAT login screen showing "We were unable
+to verify your session due to a connectivity issue" and asked for help
+diagnosing it live.
+
+**Path to root cause.** A pasted Render backend log looked completely
+healthy (build succeeded, every request 200 OK) -- it was just a snapshot
+from before the incident, not evidence either way. Reproduced live via
+browser automation against `/demo`: the frontend's repeated
+`GET /api/v1/auth/me` calls were all coming back **503**, and the
+console showed `AuthContext.tsx`'s retry-then-give-up path
+(`applySession()`) exhausting its retry budget. The backend's own
+`/api/v1/health` was answering fine the whole time -- it never touches
+the database (`app/api/routers/health.py`), so it couldn't have caught
+this; `/auth/me` does (`db.get(UserProfile, ...)` in
+`app/api/dependencies.py:24`), which is what actually failed.
+
+Checked the UAT Supabase project's Pooler logs (with Basheer's live
+go-ahead) and found a continuous stream of
+`ClientHandler: (EMAXCONNSESSION) max clients reached in session mode --
+max clients are limited to pool_size: 15`, recurring every ~30s with no
+gaps. A direct `SELECT ... FROM pg_stat_activity` (also asked first)
+showed only **13 total connections, all internal Supabase services --
+none belonging to the app**, and 47 of 60 direct-connection slots free.
+That combination -- the pooler's own session-slot count stuck at its
+ceiling while the real database had plenty of room and no app
+connections were actually attached -- meant the exhaustion was inside
+Supavisor's own bookkeeping, not real load.
+
+**Root cause: a genuine Supabase platform incident, not anything in this
+codebase.** `status.supabase.com` recorded free-tier ("Nano") projects
+"becoming unresponsive after a period of time, typically hours" from
+2026-09-10 15:26 UTC (20:56 IST) to a global fix rollout at 19:41 UTC
+(01:11 IST 2026-09-11) -- timing that matches almost exactly when the
+UAT project's pooler errors turned from occasional isolated blips (first
+seen ~15:19 UTC) into a continuous stream (~15:41 UTC onward). The
+pooler was still stuck hours after Supabase's own "resolved" timestamp,
+consistent with their own remediation advice for stragglers ("restart
+your project if still experiencing issues"). **A project restart
+(triggered by Basheer) did not visibly help** -- no gap appeared in the
+live error stream across the restart attempt.
+
+**Contributing factor, found along the way and fixed regardless of the
+outage:** `DATABASE_URL` was on Supavisor's **session-mode** pooler port
+(`5432`), whose free-tier client ceiling is a fixed 15 -- while
+`DB_POOL_SIZE=10` + `DB_MAX_OVERFLOW=20` meant a single backend instance
+alone could request up to 30 connections. That configuration was already
+one moderately-busy moment away from this exact failure mode even
+without Supabase's incident.
+
+**Fix: switched `DATABASE_URL` to Supavisor's transaction-mode pooler
+port (`6543`)**, in both `backend/.env.uat` (local reference copy) and
+the matching environment variable on the `Calicut_Bio_Medicals` Render
+service, followed by a redeploy. Confirmed safe before making the change:
+`set_rls_context()` (`app/db/session.py:54`) sets RLS context via
+`set_config(..., true)`, which is transaction-scoped (`SET LOCAL`
+semantics) -- correct and safe under transaction pooling, unlike a plain
+session-scoped `SET` would have been. **Deliberately left
+`ADMIN_DATABASE_URL` on the session-mode port (`5432`)** -- it's used
+only by Alembic migrations and `scripts/backup_uat.ps1`'s `pg_dump`, far
+too low-traffic to hit the session-mode ceiling, and this project's own
+2026-09-04 backup-approach entry above already established that the
+transaction pooler is not safe for `pg_dump`. Documented as a standing
+convention in `docs/Backend-Implementation-Standards.md` (§ Settings /
+Configuration) so this choice doesn't need re-discovering later.
+
+**Verified live, immediately:** `EMAXCONNSESSION` errors stopped
+appearing in the Pooler logs within the same minute the new deploy went
+live (last occurrence 08:52:38 UTC, clean afterward), and a live login
+against `/demo` succeeded with no banner, straight into the Pipeline
+view. No code changes, no migration, no commit -- purely an
+infrastructure/config fix (env var + redeploy). Nothing pending from
+this thread.
+
+**Unrelated finding surfaced during the same conversation, checked and
+closed:** a 10-days-prior Render email warning about 668/750 free
+instance-hours used turned out to be safe -- that count was from before
+the monthly reset; current-month usage was 219.62/750 (~29%), on a pace
+(~20 hrs/day across the workspace's 2 free services) that comfortably
+avoids hitting the cap before this month's reset. Worth re-checking
+toward month-end, but not an active risk and unrelated to this incident.
+
+## 2026-09-11 (later) — UAT migration: Activity Inline Comments + Audit Trail Extension promoted, 2 migrations applied
+
+**Same-day follow-on to the login-outage fix above, unrelated to it.**
+With the login issue closed, Basheer asked how far `uat` was behind
+`main` (10 commits, 0 the other direction -- clean fast-forward) and,
+given it was a lean-traffic morning window, decided to promote right
+away rather than wait for the usual evening deploy slot.
+
+**Scope:** Activity Inline Comments (Phases 1+2, migration `0040` --
+new `activity_comment` table, thread + notifications) and the Audit
+Trail Extension (migration `0041` -- `stakeholder`/`opportunity_item`/
+`split` change tracking), plus three smaller riders already on `main`
+(exact-Activity notification linking, a naming-clash refactor, the UAT
+backup script's Docker-shutdown fix). Full scope, execution log, and
+verification detail: `docs/UAT-Migration-2026-09-11.md`.
+
+**Before pushing, estimated the likely user-facing interruption** (asked
+directly: "how many minutes of interruption will users feel?") --
+reasoned from historical deploy durations (~1 min) and the free-tier
+single-instance caveat (no zero-downtime swap, unlike a paid instance)
+to a ~30s-2min estimate, with the two migrations themselves contributing
+negligible time (purely additive, no backfill, sub-second on a 13 MB
+database). Flagged one nuance found along the way: the UAT frontend is a
+PWA with a service worker (`registerSW.js`), so an already-open tab may
+keep showing the old version until refreshed -- not downtime, but worth
+telling the team.
+
+**Execution, in order:** fresh backup (`cabio_uat_2026-09-11.dump`,
+verified 361 TOC entries -- one blemish, Docker's graceful shutdown
+timed out and had to be forced, not investigated further) -> `git push
+origin main:uat` (`643256f..a28ac61`, fast-forward) -> both Render
+services confirmed Live on `a28ac61` (backend 58.7s, frontend 19.2s) ->
+Basheer ran `alembic upgrade head` (`0039 -> 0040 -> 0041`, clean) ->
+UI-only smoke test.
+
+**Smoke test deliberately stopped short of writing test data.**
+Mid-verification, caught (by Basheer) about to post a real comment on a
+live UAT Activity -- both Activity and comment rows are immutable on
+this project (no DELETE endpoint), so a test comment would have been
+permanent. Confirmed only that the Activity tab renders with no errors
+and that the new "Add comment" control appears correctly under a real
+Activity card. Actual comment-posting, notification fan-out, and the
+Audit Log's new trigger coverage are left for Haroon to verify -- he's
+the one who originally requested the comments feature.
+
+**No RLS-trigger gotcha this time** (unlike 2026-09-08's promotion) --
+UAT's `rls_auto_enable()` event trigger was permanently removed
+2026-09-10, one fewer thing to check for on every future promotion.
+
+**Nothing pending from this thread beyond Haroon's own verification
+pass**, tracked in `docs/UAT-Migration-2026-09-11.md`'s "Still open"
+section.
+
+**Follow-on, same day: backfilled the missing promotion records.**
+Basheer noticed only 2 of the (actual) 4 UAT promotions had a dedicated
+`docs/UAT-Migration-*.md` file -- the standalone-record habit had only
+ever been applied to 2026-09-08 and today, never written down anywhere
+as a standing rule. Backfilled `docs/UAT-Migration-2026-08-21.md` (from
+`docs/Progress-Archive-2026-08.md`'s 2026-08-21 entry -- two same-day
+pushes, 39+1 commits, migrations `0016`-`0023`) and `docs/UAT-Migration-
+2026-09-09.md` (from `active_progress.md`'s existing summary -- 8
+commits, no migrations) so all four promotions now have a consistent
+record. Both marked as backfilled, not live-session logs. `Demo-
+Narrative-UAT-Migration-2026-08-19.md` confirmed to be a different kind
+of document entirely (a leadership briefing, not a promotion record) --
+not renamed or touched.
+
+## 2026-09-11 (later still) — Duplicate hospital names confirmed live in UAT since 2026-09-09; Backlog corrected
+
+Basheer confirmed the duplicate/near-duplicate hospital-name warning
+(Option B, `pg_trgm` similarity check) is live and working in UAT.
+`docs/Backlog.md` had it listed as built and manually E2E-passed but
+still awaiting Haroon's ship/no-ship call -- stale. Verified via git
+rather than taking the claim at face value: `e86d49a` (the feature's
+commit) is an ancestor of `df0a7cc`, the 2026-09-09 UAT-promotion
+close-out commit -- so it shipped two days earlier than the most recent
+2026-09-11 migration, in the promotion before that one. `Backlog.md`
+entry updated to DONE with the corrected ship date; no code change.

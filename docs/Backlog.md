@@ -447,31 +447,24 @@ kept only as a pointer; nothing left to pick up here.
   finding — it's a false negative caused by the delete-and-reinsert
   pattern above, not evidence that no post-close edits ever happened.
 
-- **Duplicate hospital names in the Customer Directory — Option B built
-  and committed (`e86d49a`, 2026-08-31); not Haroon's decision status
-  below).** Account creation only blocked an exact-name match
-  (case-insensitive); a one-character-off name was allowed through, so
-  near-duplicate hospital records could pile up. Raised 2026-08-29
-  (extended sales team walkthrough); two options were written up for
-  Haroon's decision (restrict new-hospital creation to Admins only, or a
-  soft similarity-warning using Postgres `pg_trgm`). Option B was built
-  and validated as a working prototype 2026-08-30/31 — near-duplicate
+- ~~**Duplicate hospital names in the Customer Directory.**~~ — **DONE,
+  live in UAT since the 2026-09-09 promotion.** Option B (soft
+  similarity-warning using Postgres `pg_trgm`) — Haroon's decision,
+  resolved in favor of shipping it. Account creation used to only block
+  an exact-name match (case-insensitive); a one-character-off name was
+  allowed through, so near-duplicate hospital records could pile up.
+  Raised 2026-08-29 (extended sales team walkthrough); built and
+  validated 2026-08-30/31 (**committed `e86d49a`**) — near-duplicate
   warning on both create AND rename, a zone-branch lookup bug fix, and a
   rep-territory-scoped zone picker. Backend 644/644 passing, `tsc`/`lint`
-  clean. **Manual E2E status, 2026-09-01: Basheer reports the full
-  Groups A-G pass (`docs/BR-ACC-03-Manual-E2E-Test-Plan.md`) is now
-  complete, with several bugs found and fixed along the way — but none
-  of that was logged at the time, and the specifics aren't recoverable
-  from memory now.** No further detail exists beyond what's in this
-  entry; treat the feature as manually verified but its testing history
-  as undocumented. This gap is what prompted the new "Testing narration"
-  rule in `CLAUDE.md` (log bugs found/fixed during manual testing as they
-  happen, going forward). **Whether it actually ships is still Haroon's
-  call** per the original brief (Option A vs. B) — building it only
-  proved Option B works, it didn't make the decision. Full writeup:
-  `docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md`; build
-  narrative: `docs/Progress-Archive-2026-08.md`'s 2026-08-30 and
-  2026-08-31 entries.
+  clean. Manual E2E: full Groups A-G pass completed 2026-09-01
+  (`docs/BR-ACC-03-Manual-E2E-Test-Plan.md`), several bugs found and
+  fixed along the way but not logged at the time — this gap is what
+  prompted the "Testing narration" rule in `CLAUDE.md`. Confirmed live in
+  UAT: `e86d49a` is an ancestor of `df0a7cc` (2026-09-09 UAT promotion
+  close-out commit). Full writeup: `docs/Duplicate-Hospital-Decision-
+  Brief-2026-08-29.md`; build narrative: `docs/Progress-Archive-2026-08
+  .md`'s 2026-08-30 and 2026-08-31 entries.
 
 - ~~**Manager-Attested Stage-Gate Override for first-time fast-tracked deals.**~~
   — **DONE, 2026-08-27.**

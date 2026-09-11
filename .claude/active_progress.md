@@ -1,5 +1,36 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-10_
+_Session: 2026-08-21 → 2026-09-11_
+
+## 2026-09-11 session — UAT login outage fixed, then a UAT migration; one item left for Haroon
+
+1. **UAT login outage diagnosed and fixed, no action pending.** "Unable
+   to verify your session" on the UAT login screen -- root-caused live
+   to a Supabase platform incident (their free-tier pooler got stuck)
+   plus a pre-existing pooling-mode misconfiguration (`DATABASE_URL` on
+   session-mode port `5432`, whose 15-client ceiling ordinary app
+   traffic could exhaust on its own). Fixed by switching `DATABASE_URL`
+   to Supavisor's transaction-mode port `6543` (`backend/.env.uat` +
+   Render env var, redeployed) -- confirmed live, login works, no code
+   change or migration involved. `ADMIN_DATABASE_URL` deliberately left
+   on session mode (low-traffic, and `pg_dump` isn't safe under
+   transaction pooling). New standing convention documented in
+   `docs/Backend-Implementation-Standards.md`. Full narrative:
+   `docs/Progress-Archive-2026-09.md`'s 2026-09-11 entry.
+2. **UAT migration, same day** -- `main` -> `uat` (`643256f..a28ac61`,
+   10 commits, migrations `0040`-`0041`): Activity Inline Comments
+   (Phases 1+2) and the Audit Trail Extension
+   (`stakeholder`/`opportunity_item`/`split`), plus three smaller riders.
+   Backup taken first, fast-forward push, both Render services confirmed
+   Live, migrations applied clean. Smoke test deliberately stopped at
+   UI-only checks (Activity tab renders, "Add comment" control appears
+   correctly) -- no test comment/Activity posted, since both are
+   immutable on this project. Full detail: `docs/UAT-Migration-2026-09-
+   11.md`; narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-11
+   (later)" entry.
+
+**Next step:** none pending -- Haroon posted comments on UAT (Ullal
+Diagnostic Centre / Benaka Health Centre activities) and confirmed via
+Basheer that the feature looks good on mobile. UAT migration item closed.
 
 ## 2026-09-10 session — three small fixes closed, no action pending
 
@@ -281,19 +312,6 @@ Extension-Manual-E2E-Test-Plan.md`.
 which depends on this coverage. `target_plan`'s own audit-trail gap
 stays tracked separately in `docs/Backlog.md`, deferred until Target
 Planning itself is built.
-
-## Current task 1 — BR-ACC-03 (duplicate hospital): committed, manual E2E plan not yet confirmed complete
-
-Committed `e86d49a` on 2026-08-31. Full narrative: `docs/Progress-
-Archive-2026-08.md`'s 2026-08-30 and 2026-08-31 entries.
-
-**Still open:** the full manual E2E test plan (`docs/BR-ACC-03-Manual-
-E2E-Test-Plan.md`, Groups A-G) has not been explicitly confirmed
-complete end to end — Basheer exercised the create/edit UI live during
-the build session with no issues found, but that's not the same as a
-Groups A-G sign-off. Also still open: the Option A vs. B decision itself
-is Haroon's call, per `docs/Duplicate-Hospital-Decision-Brief-2026-08-
-29.md`; nothing here is live for the sales team regardless.
 
 ## Current task 2 — Auth Session Resilience: committed
 
