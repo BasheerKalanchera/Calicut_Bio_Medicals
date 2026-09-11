@@ -2629,3 +2629,73 @@ stayed identical across every login able to see it. Dev servers
 **Nothing pending from this thread.** Product Performance Summary,
 High-Priority Deals, and Opportunities On Hold remain queued as a
 follow-on batch once the other in-progress planning thread resolves.
+
+## 2026-09-11 (later still) — Insights Dashboard, Batch 1b: Dashboard-vs-Reports split acted on -- Stagnant Deals extracted, Product Performance Summary + Opportunities On Hold built as new report screens
+
+**Trigger:** once the other concurrent session's Dashboard-vs-Reports
+restructuring decision landed in `docs/Insights-Dashboard-Implementation-
+Plan.md`, Basheer asked which report screens were left to build and
+approved doing all 3 (extraction + 2 new reports) as one batch.
+
+**Scope check first.** Of the plan's 4 "becomes its own report" items,
+only 3 needed fresh work -- Stagnant Deals already existed (Batch 1a),
+just needed relocating. Of the 3, **High-Priority Deals stayed excluded**
+(still pending Cabio leadership confirmation, not this team's call to
+unblock). Checked Opportunities On Hold against the PRD (§5.13, not
+previously spec'd anywhere) and found it fully buildable with zero schema
+gaps -- unlike Pipeline Aging, "Days On Hold" doesn't need a new column:
+the existing Audit Trail (`trg_audit_opportunity`, migration `0030`)
+already timestamps every opportunity status change, so it's derivable
+from the most recent genuine transition into On-Hold. Wrote this up as a
+new spec section in the plan doc (Part 1) before building.
+
+**Part 2 (backend).** Two new `ReportingRepository` methods:
+`product_performance()` (grouped by Product/Brand/SBU; Brand reuses
+`product.oem_name`, case-normalized via `UPPER(TRIM(...))` since UAT data
+has the same brand spelled multiple ways) and `opportunities_on_hold()`
+(Days On Hold via a correlated `audit_log` subquery comparing JSONB
+`old_data`/`new_data` status_id, falling back to `updated_at` if no audit
+row exists). Two new endpoints (`/reporting/product-performance`,
+`/reporting/opportunities-on-hold`), same `TEAM_SCOPE_BUILDERS` reuse as
+every other query in this domain -- no new scoping logic written. 11 new
+tests (38 total in the domain now), full suite 778/778, `tsc`/lint/`ruff`
+all clean (same accepted B008 pattern as before, nothing new).
+
+**Part 3 (frontend).** Pulled the four dashboard-only helper components
+(`StatTile`, `SectionCard`, `LoadingOrEmpty`, `MiniBar`) out of
+`InsightsDashboardScreen.tsx` into a new shared `components/
+ReportingUI.tsx` (`formatLakhs` went to `utils/reporting.ts` instead, to
+avoid a Vite fast-refresh lint warning about mixing component and
+non-component exports in one file -- fixed immediately, zero new
+warnings survived). Three new/updated screens: `StagnantDealsReportScreen.
+tsx` (extracted, `InsightsDashboardScreen.tsx` no longer renders it),
+`OpportunitiesOnHoldReportScreen.tsx`, `ProductPerformanceReportScreen.tsx`
+(the only one of the three with multiple numeric columns per row --
+stayed with this app's established card-list visual language rather than
+introducing a `<Table>` component for the first time, since no screen in
+this codebase uses one). New **REPORTS** nav section in `DemoApp.tsx`,
+same "no role gate, backend scoping does the work" pattern as Insights
+and Daily Activity Report.
+
+**Manual smoke test, live on Dev, one role (Haroon/GM)** -- narrower than
+Batch 1a's full 3-tier pass, deliberately: this work reuses the exact
+same `_apply_owner_scope` helper already proven across all three tiers,
+so the real risk here was new query correctness and new UI rendering,
+not scoping. Confirmed: Stagnant Deals renders correctly as its own page
+(nav highlights correctly); Opportunities On Hold renders its empty state
+correctly (no On-Hold deals in this Dev dataset right now); Product
+Performance showed real, internally-consistent data across all three
+groupings -- **By Product** vs. **By Brand** for EDAN specifically proved
+the distinct-opportunity counting is correct (naive per-product sum was
+7, brand-level distinct count was 6 -- meaning one real deal carries two
+different EDAN products, correctly counted once at the brand level, not
+twice); **SonoScape** showed Qty Sold (Won)=1, Revenue=₹4.0L, Avg
+Selling Price=₹4.0L (4.0÷1, computed correctly), Opportunities=33 but
+Won=1/Lost=3 (correctly distinguishing total pipeline touches from
+actual outcomes); **By SBU** split (Critical Care 7 + Imaging 34 = 41)
+matched the total product-touched-opportunity count exactly. One
+unrelated hiccup mid-session: both dev servers got killed automatically
+by the OS for low memory -- restarted cleanly, not a code issue.
+
+**Nothing pending from this thread.** High-Priority Deals remains queued,
+blocked on Cabio leadership confirmation (not a technical blocker).

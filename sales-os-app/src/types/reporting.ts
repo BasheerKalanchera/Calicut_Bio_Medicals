@@ -52,6 +52,39 @@ export interface OverdueActionsResponse {
   total_overdue: number;
 }
 
+export type ProductPerformanceGroupBy = "product" | "brand" | "sbu";
+
+export interface ProductPerformanceRow {
+  group_id: string;
+  group_name: string;
+  quantity_sold: number;
+  revenue_lakhs: string;
+  avg_selling_price_lakhs: string;
+  opportunity_count: number;
+  won_count: number;
+  lost_count: number;
+}
+
+export interface ProductPerformanceResponse {
+  group_by: ProductPerformanceGroupBy;
+  rows: ProductPerformanceRow[];
+}
+
+export interface OpportunityOnHoldRow {
+  opportunity_id: string;
+  opportunity_name: string;
+  account_name: string;
+  owner_name: string;
+  stage_name: string;
+  hold_reason: string | null;
+  reactivation_date: string | null;
+  days_on_hold: number;
+}
+
+export interface OpportunitiesOnHoldResponse {
+  rows: OpportunityOnHoldRow[];
+}
+
 export interface ReportingFilters {
   sbu_id?: string;
   zone_id?: string;

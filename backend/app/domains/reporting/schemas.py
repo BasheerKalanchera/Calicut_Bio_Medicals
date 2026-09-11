@@ -66,3 +66,43 @@ class OverdueActionRow(BaseModel):
 class OverdueActionsResponse(BaseModel):
     rows: list[OverdueActionRow]
     total_overdue: int
+
+
+ProductPerformanceGroupBy = Literal["product", "brand", "sbu"]
+
+
+class ProductPerformanceRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    # str, not uuid.UUID -- "brand" grouping has no real id, just the
+    # normalized oem_name text itself (see repository.py).
+    group_id: str
+    group_name: str
+    quantity_sold: int
+    revenue_lakhs: Decimal
+    avg_selling_price_lakhs: Decimal
+    opportunity_count: int
+    won_count: int
+    lost_count: int
+
+
+class ProductPerformanceResponse(BaseModel):
+    group_by: ProductPerformanceGroupBy
+    rows: list[ProductPerformanceRow]
+
+
+class OpportunityOnHoldRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    opportunity_id: uuid.UUID
+    opportunity_name: str
+    account_name: str
+    owner_name: str
+    stage_name: str
+    hold_reason: str | None
+    reactivation_date: date | None
+    days_on_hold: int
+
+
+class OpportunitiesOnHoldResponse(BaseModel):
+    rows: list[OpportunityOnHoldRow]

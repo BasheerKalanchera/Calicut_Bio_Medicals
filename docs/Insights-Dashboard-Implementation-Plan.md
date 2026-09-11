@@ -1,8 +1,72 @@
 # Insights Dashboard / Reporting — Implementation Plan
 
-**Status:** Draft — planned, not yet built. Second Milestone 2 batch, proposed for next
-week's incremental deploy (after Target Planning), per `docs/Deployment-Topology.md`'s
-weekly-batch model.
+**Status:** Approved for build, 2026-09-11 — **Batch 1a**, a 5-widget slice of Batch 1
+below, chosen as the fully-spec'd subset ready to build now. Target Planning (this
+doc's original prerequisite) has **not** been built yet, checked directly against
+`backend/app/domains/` — confirmed not a blocker: none of Batch 1a's 5 widgets need
+fiscal-quarter resolution, only Batch 2 does. Build proceeds in three parts: **Part 1
+(this document)** — plan; Part 2 — backend (`reporting` domain, tests); Part 3 —
+frontend (`InsightsDashboardScreen.tsx` + nav).
+
+**Batch 1a scope (5 widgets, 4 endpoints):** Pipeline Value, Weighted/Unweighted
+Forecast (share one endpoint), Overdue Actions, Activity Levels, Stagnant Deals.
+**Deferred, still part of Batch 1 conceptually but not this build pass:** Product
+Performance Summary (actively being spec'd in a separate, concurrent planning
+session as of 2026-09-11 — see its section below, not yet final, don't build against
+it until that thread resolves), High-Priority Deals (rule proposed and data-derived
+2026-09-11, but pending Cabio leadership confirmation — see its section below,
+don't build against it until that confirmation lands), Opportunities On Hold (no
+concrete schema/endpoint spec'd out below at all yet). Pick up all three as a
+follow-on once Batch 1a ships.
+
+**Batch 1b, built and verified 2026-09-11 (same day, once the Dashboard-vs-Reports
+split above landed):** three report screens, all shipped. (1) **Stagnant Deals
+extracted** out of `InsightsDashboardScreen.tsx` into `StagnantDealsReportScreen.tsx`
+— backend/`StagnantDealsResponse` unchanged, frontend relocation only. (2)
+**Opportunities On Hold** — spec'd below (PRD §5.13), built as `GET /reporting/
+opportunities-on-hold` + `OpportunitiesOnHoldReportScreen.tsx`, no schema gaps. (3)
+**Product Performance Summary** — built as `GET /reporting/product-performance` +
+`ProductPerformanceReportScreen.tsx`, **except Gross Margin**, which stays blocked
+on the pending Pricing/Discount-Authority feature. New **REPORTS** nav section;
+shared tile/card helpers extracted to `components/ReportingUI.tsx`. 11 new backend
+tests (38 in the domain), full suite 778/778, `tsc`/lint/`ruff` clean, manually
+verified live on Dev. **High-Priority Deals stays excluded** — still pending Cabio
+leadership confirmation, not a technical blocker. Full narrative: `docs/Progress-
+Archive-2026-09.md`'s "2026-09-11 (later still) — Insights Dashboard, Batch 1b" entry.
+
+### Dashboard vs. Reports — restructuring decided 2026-09-11
+
+The PRD itself already draws this line — §5.3–5.5/Appendix A.2 ("Dashboards," small
+per-role KPI tiles) are a different kind of screen from §5.6/Appendix A.3
+("Reports," full standalone screens with filtering/grouping/drill-down). This plan
+originally bundled both kinds into one `InsightsDashboardScreen.tsx`. **Decided:
+split them.** Four of the eight Batch 1 items are single numbers or small
+per-rep comparisons — genuine dashboard tiles. The other four are each a table of
+specific records — genuine reports, and cramped as dashboard cards:
+
+| Stays a dashboard tile | Becomes its own report screen |
+|---|---|
+| Pipeline Value | Stagnant Deals |
+| Weighted/Unweighted Forecast | Product Performance Summary |
+| Overdue Actions (per-rep count) | High-Priority Deals |
+| Activity Levels (per-rep comparison) | Opportunities On Hold |
+
+**Stagnant Deals migration, not free:** this one already shipped as a dashboard tile
+in today's Batch 1a build. Moving it to its own report screen means relocating the
+existing frontend rendering to a new route/screen — the backend endpoint and
+`StagnantDealsResponse` shape don't need to change, only where it's rendered.
+**Done as part of Batch 1b, same day** — see status header above.
+
+**Related, found while researching this — not scoped, flagged for later:** PRD
+Appendix A.3.6, "No Activity Hospital Report" (same thing §5.7 calls "Exception
+Reports"), is a genuinely different report from both Daily Activity Report and
+Stagnant Deals — it's **account-level** (hospitals with zero activity in 3 months,
+even ones with no open deal at all), not deal-level. Spec: Customer, Last Activity
+Date, Account Manager, Opportunity Count, Installed Asset Count. Also worth knowing:
+PRD §5.8 "Weekly Follow-up Report" is a digest that bundles High-Priority Deals,
+deals ≥70% probability, Stagnant Deals, and Overdue Actions into one weekly view —
+directly overlaps with the reports being split out here. Neither is scoped or
+built; noted so they aren't rediscovered from scratch later.
 
 ## Context
 
@@ -125,16 +189,120 @@ closed-won revenue, not forecast).
   implementation of "quarter to date range") and stitching the query results into the
   response shape.
 - `router.py` — `GET /reporting/pipeline-summary`, `GET /reporting/stagnant-deals`,
-  `GET /reporting/activity-levels`, `GET /reporting/overdue-actions`. All take optional
+  `GET /reporting/activity-levels`, `GET /reporting/overdue-actions`,
+  `GET /reporting/product-performance`, `GET /reporting/opportunities-on-hold`.
+  All take optional
   `sbu_id`/`zone_id`/`user_id` filters (further narrowing on top of what
   `TEAM_SCOPE_BUILDERS` already scopes the caller to — same pattern as the Daily
   Activity Report's team-member dropdown); `stagnant-deals` additionally takes
   `threshold_days` (default 180); `overdue-actions` returns an empty result (or a
   clean 403 — decide at build time, consistent with how the rest of this domain
   handles a role with nothing to see) for Sales Staff, since it's team-rollup only.
+
+### Product Performance Summary — spec'd 2026-09-11, added as this plan's 6th tile
+
+Per PRD A.3.4 ("Product Performance Report"). Two of the PRD's metrics/groupings can't be
+built as specified — flagged rather than silently dropped:
+
+- `ProductPerformanceResponse` (per `product_id`, grouped by Product or SBU): **Quantity
+  Sold** and **Revenue** (`SUM(opportunity_item.quantity)` / `SUM(extended_value_lakhs)`,
+  WON opportunities only), **Average Selling Price** (Revenue ÷ Quantity Sold),
+  **Opportunity Count** (distinct opportunities with a line item for this product, any
+  status), **Won Opportunities** / **Lost Opportunities** (same, filtered by status).
+  Same `TEAM_SCOPE_BUILDERS` scoping as every other tile — a rep sees only products tied
+  to their own deals, a manager sees their team's.
+- **Gross Margin — renamed from "Margin," blocked on the pending Pricing/Discount-
+  Authority feature, not this build pass.** The PRD lists "Margin" as a metric, but no
+  cost field exists on `product` or `opportunity_item` anywhere in `Physical-Schema.sql`
+  today — there's no data to compute it from. **Deliberately renamed to Gross Margin**
+  (Basheer, 2026-09-11): this can only ever be Revenue minus the machine's acquisition
+  cost from the OEM — it excludes marketing, operations, and every other overhead cost,
+  which live only in Tally and aren't allocated per-product even there (Tally's Cost
+  Centres are SBU/Territory-level, per `docs/Discussion-Tally-SBU-Territory-
+  Accounting-2026-09.md`). Labeling it plainly as Gross Margin avoids leadership reading
+  it as full profitability. **Unblocks once `docs/Discussion-Pricing-Discount-
+  Authority-2026-09.md` ships** — that paper bundles in the same `unit_cost_lakhs`
+  field this metric needs (Admin/GM-visible only), so this tile is a fast-follow once
+  that feature lands, not a separate migration.
+- **Brand grouping — resolved 2026-09-11, ready to build.** PRD groups by
+  Product/Brand/OEM/SBU; the schema has no dedicated Brand field, but `product.oem_name`
+  already functions as brand in practice (confirmed against real UAT data — "SonoScape,"
+  "Edan," "Magnamed" are exactly what reps and customers call the brand). Group by
+  `oem_name`, case-insensitively (`UPPER(TRIM(oem_name))`) — UAT data has the same
+  brand spelled two ways in places (e.g. "Edan" vs "EDAN"), which a raw-text `GROUP BY`
+  would incorrectly split into two rows. A short list of stray `oem_name` values (a city
+  name, a value with "Refurbished" wrongly appended) was handed to Basheer for Cabio
+  leadership to correct in UAT directly — not this build's problem to work around.
+- **Relationship to the "quarterly reorder recommendation" Backlog item (Latheef Bhai's
+  idea):** this tile shows *historical* sell-through per product — a useful demand-trend
+  reference, but it is not the same calculation as that item's forward-looking
+  `MOQ_threshold - (current_stock - expected_units_from_pipeline)` formula, which still
+  needs stock-on-hand data and an MOQ field that don't exist yet (see `docs/Backlog.md`).
+  This tile can inform that future work but doesn't replace it.
 - Tests: aggregation correctness (known fixture data → known SUM/COUNT), and the same
   role-by-role scoping test shape used for Target Planning — a rep sees only their own
   numbers, an Area Manager sees their zone, etc.
+
+### High-Priority Deals — analysis done 2026-09-11, rule proposed, pending leadership confirmation
+
+PRD §3.9 just says "provide a High Priority flag" with no definition of how it's set —
+see `docs/Backlog.md`'s "Auto-computed High Priority flag" entry for the full framing
+(manual checkbox vs. automatic, feasibility check confirming no schema change is
+needed). Rather than asking Basheer to pick threshold numbers cold, pulled the real
+spread from UAT's 87 ACTIVE opportunities:
+
+- **Deal size, checked per-SBU because a flat cutoff would be unfair:** Critical Care's
+  typical open deal (₹2.5L median) is far smaller than Imaging's (₹18L median) — mixing
+  many small individual-item deals (monitors, pumps) in with occasional large hospital
+  packages. Top-quarter cutoffs: Imaging ₹28L, Critical Care ₹14L.
+  **Proposed, rounded: Imaging ≥₹30L, Critical Care ≥₹15L.**
+  **12 opportunities were excluded from this analysis as data outliers** — see
+  `docs/Backlog.md`'s new "Lakhs/Rupees unit-entry bug" entry; their values are
+  inflated ~100,000x by an apparent Rupees-typed-into-a-Lakhs-field mistake, not real.
+- **Urgency:** `expected_closure_date` is only gate-required from Negotiation stage
+  onward (BR-OP-01) — of the 87 ACTIVE deals, only 13 have reached Negotiation or
+  later, and 11 of those 13 have the date filled in as expected (the other 74 not
+  having it isn't a data gap, it's the gate working correctly). A 30-day window
+  barely discriminates within that group (catches 10 of 11 — almost everything that
+  far along the pipeline is already inside 30 days by nature). **Proposed: within 14
+  days, or already overdue** — catches 6 of 11, leaving the 18-50-day-out deals
+  correctly read as "in negotiation, not yet urgent."
+- **Proposed final rule:** flag an ACTIVE Opportunity as High Priority when it clears
+  its SBU's size cutoff (Imaging ≥₹30L, Critical Care ≥₹15L), OR its Expected Closure
+  Date is within 14 days or has passed — either condition alone qualifies, computed at
+  query time (no new column, no migration), same shape as the existing
+  `threshold_days` pattern (Stagnant Deals).
+- **Status: not approved.** Basheer is taking these numbers to Cabio leadership to
+  confirm before this gets scoped as a real `schemas.py`/`router.py` entry. Do not
+  build against this section until that confirmation lands — same caution the
+  Product Performance Summary section above already carries for its own open
+  questions.
+
+### Opportunities On Hold — spec'd 2026-09-11, ready to build
+
+Per PRD §5.13 ("Opportunity Hold Report"). Fully buildable, no schema gaps:
+
+- `OpportunitiesOnHoldResponse` rows: **Customer** (`Account.name`), **Opportunity**
+  (`Opportunity.name`), **Current Stage** (`OpportunityStage.stage_name`), **Hold
+  Reason** (`HoldReason.reason_name`, via `Opportunity.hold_reason_id`),
+  **Reactivation Date** (`Opportunity.reactivation_date`, already a real column),
+  **Days On Hold**.
+- **Days On Hold — computed from the Audit Trail, not a new column.** Unlike
+  Pipeline Aging (dropped, no stage-history table exists at all), `trg_audit_
+  opportunity` (migration `0030`) already fires on every `opportunity` UPDATE and
+  snapshots `old_data`/`new_data` with a `changed_at` timestamp. Days On Hold =
+  `now() - changed_at` of the most recent `audit_log` row for this opportunity
+  where `new_data->>'status_id'` matches the On-Hold status and differs from
+  `old_data->>'status_id'` (a genuine transition into Hold, not just any edit while
+  already on hold). Falls back to `opportunity.updated_at` only if no such audit
+  row exists (shouldn't happen for anything held after audit trail went live,
+  2026-09-02) -- same fallback shape as Stagnant Deals' `created_at` fallback.
+- Scoping: same `TEAM_SCOPE_BUILDERS`/`UNRESTRICTED_ROLES` pattern via
+  `Opportunity.owner_id`, filtered to `status_code = 'ON_HOLD'`.
+- New endpoint: `GET /reporting/opportunities-on-hold`, same optional
+  `sbu_id`/`zone_id`/`user_id` filters as the others.
+- Tests: same shape as the other reporting queries (role-scoping +
+  aggregation/join correctness via mocked-SQL-compilation assertions).
 
 ## Frontend
 

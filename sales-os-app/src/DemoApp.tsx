@@ -19,6 +19,9 @@ import NotificationBell from "./components/NotificationBell";
 import UrgentNotificationDialog from "./components/UrgentNotificationDialog";
 import DailyActivityReportScreen from "./screens/DailyActivityReportScreen";
 import InsightsDashboardScreen from "./screens/InsightsDashboardScreen";
+import StagnantDealsReportScreen from "./screens/StagnantDealsReportScreen";
+import OpportunitiesOnHoldReportScreen from "./screens/OpportunitiesOnHoldReportScreen";
+import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
@@ -37,8 +40,24 @@ const NAV_SECTIONS = [
       { id: "opportunities", label: "Pipeline",           icon: "📈" },
       { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
       { id: "nextActions",   label: "Next Actions",       icon: "✅" },
-      { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
       { id: "insights", label: "Insights", icon: "📊" },
+    ],
+  },
+  {
+    // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
+    // (2026-09-11): a Dashboard is small at-a-glance tiles (Insights, above);
+    // a Report is a full standalone screen of specific records -- Daily
+    // Activity Report fits this exactly (moved here 2026-09-11, previously
+    // sat under Sales Execution before the split existed). No role gate on
+    // any of these -- the backend's TEAM_SCOPE_BUILDERS scoping already
+    // produces the right per-role slice (a rep sees their own, a manager
+    // sees their team's).
+    title: "REPORTS",
+    items: [
+      { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
+      { id: "stagnantDeals", label: "Stagnant Deals", icon: "🥶" },
+      { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
+      { id: "productPerformance", label: "Product Performance", icon: "🏆" },
     ],
   },
   {
@@ -684,6 +703,35 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <InsightsDashboardScreen />
+          </Box>
+
+          {/* Reports — always mounted, hidden when not active; no admin
+              gate on visibility, same reasoning as Insights above */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "stagnantDeals" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Stagnant Deals
+              </Typography>
+            </Box>
+            <StagnantDealsReportScreen onSelectOpportunity={handleSelectOpportunity} />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "opportunitiesOnHold" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Opportunities On Hold
+              </Typography>
+            </Box>
+            <OpportunitiesOnHoldReportScreen onSelectOpportunity={handleSelectOpportunity} />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "productPerformance" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Product Performance
+              </Typography>
+            </Box>
+            <ProductPerformanceReportScreen />
           </Box>
         </ErrorBoundary>
       </Box>

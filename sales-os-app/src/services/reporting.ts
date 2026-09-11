@@ -1,8 +1,11 @@
 import api from "../lib/api";
 import type {
+  OpportunitiesOnHoldResponse,
   OverdueActionsResponse,
   PipelineGroupBy,
   PipelineSummaryResponse,
+  ProductPerformanceGroupBy,
+  ProductPerformanceResponse,
   RepActivityLevelResponse,
   ReportingFilters,
   StagnantDealsResponse,
@@ -41,5 +44,22 @@ export async function getActivityLevels(
 
 export async function getOverdueActions(filters: ReportingFilters = {}): Promise<OverdueActionsResponse> {
   const r = await api.get("/reporting/overdue-actions", { params: filters });
+  return r.data.data;
+}
+
+export async function getProductPerformance(
+  groupBy: ProductPerformanceGroupBy,
+  filters: ReportingFilters = {},
+): Promise<ProductPerformanceResponse> {
+  const r = await api.get("/reporting/product-performance", {
+    params: { group_by: groupBy, ...filters },
+  });
+  return r.data.data;
+}
+
+export async function getOpportunitiesOnHold(
+  filters: ReportingFilters = {},
+): Promise<OpportunitiesOnHoldResponse> {
+  const r = await api.get("/reporting/opportunities-on-hold", { params: filters });
   return r.data.data;
 }

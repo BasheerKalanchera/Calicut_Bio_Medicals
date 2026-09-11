@@ -43,14 +43,36 @@ _Session: 2026-08-21 → 2026-09-11_
    internally. Dev servers stopped after verification. Full narrative:
    `docs/Progress-Archive-2026-09.md`'s "2026-09-11 (later still) --
    Insights Dashboard" entry.
+4. **Insights Dashboard, Batch 1b -- Dashboard-vs-Reports split acted on,
+   no action pending.** Stagnant Deals extracted out of
+   `InsightsDashboardScreen.tsx` into its own `StagnantDealsReportScreen.
+   tsx` (backend unchanged); two new report screens built from scratch,
+   `ProductPerformanceReportScreen.tsx` (grouped by Product/Brand/SBU,
+   Gross Margin excluded -- still blocked on the pending pricing feature)
+   and `OpportunitiesOnHoldReportScreen.tsx` (newly spec'd against PRD
+   §5.13, Days On Hold derived from the existing Audit Trail, no schema
+   change). New **REPORTS** nav section, shared `components/
+   ReportingUI.tsx` extracted for the tile/card helpers all 4 screens
+   now use. 11 new backend tests (38 in the domain, 778/778 full suite),
+   `tsc`/lint/`ruff` clean. High-Priority Deals stays excluded -- still
+   pending Cabio leadership sign-off, not a technical blocker. Manual
+   smoke test, live on Dev (one role -- this reuses the exact scoping
+   already proven across all three tiers in Batch 1a, so the real risk
+   was new query correctness, not scoping): Product Performance's
+   By-Brand vs. By-Product grouping caught its own distinct-counting
+   correctness (EDAN: 6 distinct opportunities vs. 7 if naively summed
+   per-product -- proves one real deal carries two EDAN products,
+   correctly counted once). Full narrative: `docs/Progress-Archive-2026-
+   09.md`'s "2026-09-11 (later still) -- Insights Dashboard, Batch 1b"
+   entry.
 
 **Next step:** none pending from this session. Haroon posted comments on
 UAT (Ullal Diagnostic Centre / Benaka Health Centre activities) and
 confirmed via Basheer that the feature looks good on mobile -- UAT
-migration item closed. Insights Dashboard's remaining 3 widgets (Product
-Performance Summary, High-Priority Deals, Opportunities On Hold) are a
-follow-on batch once the other in-progress planning thread resolves --
-see `docs/Insights-Dashboard-Implementation-Plan.md`.
+migration item closed. Insights Dashboard's last remaining item, High-
+Priority Deals, is blocked on Cabio leadership confirmation, not a
+follow-on batch to schedule -- see `docs/Insights-Dashboard-
+Implementation-Plan.md`.
 
 ## 2026-09-10 session — three small fixes closed, no action pending
 

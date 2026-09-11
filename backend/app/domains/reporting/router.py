@@ -10,9 +10,12 @@ from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    OpportunitiesOnHoldResponse,
     OverdueActionsResponse,
     PipelineGroupBy,
     PipelineSummaryResponse,
+    ProductPerformanceGroupBy,
+    ProductPerformanceResponse,
     RepActivityLevelResponse,
     StagnantDealsResponse,
 )
@@ -81,3 +84,30 @@ def get_overdue_actions(
     service: ReportingService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[OverdueActionsResponse]:
     return APIResponse(data=service.overdue_actions(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id))
+
+
+@router.get("/product-performance")
+def get_product_performance(
+    group_by: ProductPerformanceGroupBy = Query("product"),
+    sbu_id: uuid.UUID | None = Query(None),
+    zone_id: uuid.UUID | None = Query(None),
+    user_id: uuid.UUID | None = Query(None),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ReportingService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[ProductPerformanceResponse]:
+    return APIResponse(
+        data=service.product_performance(current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
+    )
+
+
+@router.get("/opportunities-on-hold")
+def get_opportunities_on_hold(
+    sbu_id: uuid.UUID | None = Query(None),
+    zone_id: uuid.UUID | None = Query(None),
+    user_id: uuid.UUID | None = Query(None),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: ReportingService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[OpportunitiesOnHoldResponse]:
+    return APIResponse(
+        data=service.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
+    )

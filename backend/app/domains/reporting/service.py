@@ -1,16 +1,22 @@
 import uuid
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.reporting.repository import ReportingRepository
 from app.domains.reporting.schemas import (
+    OpportunitiesOnHoldResponse,
+    OpportunityOnHoldRow,
     OverdueActionRow,
     OverdueActionsResponse,
     PipelineGroupBy,
     PipelineSummaryResponse,
     PipelineSummaryRow,
+    ProductPerformanceGroupBy,
+    ProductPerformanceResponse,
+    ProductPerformanceRow,
     RepActivityLevelResponse,
     RepActivityLevelRow,
     StagnantDealRow,
@@ -112,3 +118,45 @@ class ReportingService:
         )
         parsed = [OverdueActionRow.model_validate(r) for r in rows]
         return OverdueActionsResponse(rows=parsed, total_overdue=sum(r.overdue_count for r in parsed))
+
+    def product_performance(
+        self,
+        current_user: UserProfile,
+        group_by: ProductPerformanceGroupBy,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> ProductPerformanceResponse:
+        rows = self.repository.product_performance(
+            current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
+        )
+        parsed = []
+        for r in rows:
+            # Average Selling Price isn't a SQL-level SUM -- computed here to
+            # avoid a division-by-zero case inside the query itself.
+            avg_price = (r.revenue_lakhs / r.quantity_sold) if r.quantity_sold else Decimal("0")
+            parsed.append(
+                ProductPerformanceRow(
+                    group_id=r.group_id,
+                    group_name=r.group_name,
+                    quantity_sold=r.quantity_sold,
+                    revenue_lakhs=r.revenue_lakhs,
+                    avg_selling_price_lakhs=avg_price,
+                    opportunity_count=r.opportunity_count,
+                    won_count=r.won_count,
+                    lost_count=r.lost_count,
+                )
+            )
+        return ProductPerformanceResponse(group_by=group_by, rows=parsed)
+
+    def opportunities_on_hold(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> OpportunitiesOnHoldResponse:
+        rows = self.repository.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
+        return OpportunitiesOnHoldResponse(rows=[OpportunityOnHoldRow.model_validate(r) for r in rows])

@@ -1,15 +1,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Row, case, func, or_, select
+from sqlalchemy import Row, String, case, cast, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.domains.account.models import Account
 from app.domains.activity.models import Activity, Reminder
+from app.domains.audit.models import AuditLog
 from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
-from app.domains.reference.models import SBU, OpportunityStage, OpportunityStatus, Zone
+from app.domains.product.models import Product
+from app.domains.reference.models import SBU, HoldReason, OpportunityStage, OpportunityStatus, Zone
 
 # Net line value: BR-FIN-03 nets BUYBACK lines against PRODUCT lines --
 # extended_value_lakhs itself always stores a plain positive amount, the
@@ -200,4 +202,122 @@ class ReportingRepository:
         if zone_id is not None:
             stmt = stmt.where(UserProfile.id.in_(select(UserZone.user_id).where(UserZone.zone_id == zone_id)))
         stmt = stmt.order_by(func.count(Reminder.id).desc())
+        return list(self.db.execute(stmt).all())
+
+    def product_performance(
+        self,
+        current_user: UserProfile,
+        group_by: str,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> list[Row]:
+        if group_by == "product":
+            group_id_col, group_name_col = cast(Product.id, String), Product.name
+        elif group_by == "sbu":
+            group_id_col, group_name_col = cast(SBU.id, String), SBU.name
+        else:
+            # "brand" -- product.oem_name doubles as brand in practice
+            # (confirmed against real UAT data), no dedicated Brand field.
+            # Normalized case-insensitive so "Edan"/"EDAN" don't split into
+            # two rows; no stable id exists for a brand, so the normalized
+            # text itself is both id and name.
+            brand_expr = func.coalesce(func.upper(func.trim(Product.oem_name)), "UNSPECIFIED")
+            group_id_col, group_name_col = brand_expr, brand_expr
+
+        is_won = OpportunityStatus.status_code == "WON"
+        is_lost = OpportunityStatus.status_code == "LOST"
+
+        stmt = (
+            select(
+                group_id_col.label("group_id"),
+                group_name_col.label("group_name"),
+                func.coalesce(func.sum(case((is_won, OpportunityItem.quantity), else_=0)), 0).label(
+                    "quantity_sold"
+                ),
+                func.coalesce(func.sum(case((is_won, OpportunityItem.extended_value_lakhs), else_=0)), 0).label(
+                    "revenue_lakhs"
+                ),
+                func.count(func.distinct(Opportunity.id)).label("opportunity_count"),
+                func.count(func.distinct(case((is_won, Opportunity.id)))).label("won_count"),
+                func.count(func.distinct(case((is_lost, Opportunity.id)))).label("lost_count"),
+            )
+            .select_from(OpportunityItem)
+            .join(Opportunity, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(Product, OpportunityItem.product_id == Product.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(SBU, Opportunity.sbu_id == SBU.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            # Buyback lines carry no product_id (schema validator requires a
+            # description instead) -- already excluded by the inner join to
+            # Product above, no extra filter needed.
+            .group_by(group_id_col, group_name_col)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(Account.zone_id == zone_id)
+        stmt = stmt.order_by(group_name_col)
+        return list(self.db.execute(stmt).all())
+
+    def opportunities_on_hold(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+    ) -> list[Row]:
+        on_hold_status_id = (
+            select(OpportunityStatus.id).where(OpportunityStatus.status_code == "ON_HOLD").scalar_subquery()
+        )
+        # Days On Hold, from the existing Audit Trail (trg_audit_opportunity,
+        # migration 0030) -- not a new column. Most recent audit row for this
+        # opportunity where the status genuinely transitioned into On-Hold
+        # (old != new), not just any edit made while already on hold.
+        last_hold_transition = (
+            select(func.max(AuditLog.changed_at))
+            .where(
+                AuditLog.table_name == "opportunity",
+                AuditLog.record_id == Opportunity.id,
+                AuditLog.new_data["status_id"].astext == cast(on_hold_status_id, String),
+                AuditLog.old_data["status_id"].astext != AuditLog.new_data["status_id"].astext,
+            )
+            .correlate(Opportunity)
+            .scalar_subquery()
+        )
+        # Fallback only if no such audit row exists -- shouldn't happen for
+        # anything held after the audit trail went live (2026-09-02), same
+        # fallback shape as Stagnant Deals' created_at fallback.
+        hold_started_at = func.coalesce(last_hold_transition, Opportunity.updated_at)
+        days_on_hold = func.extract("day", func.now() - hold_started_at)
+
+        stmt = (
+            select(
+                Opportunity.id.label("opportunity_id"),
+                Opportunity.name.label("opportunity_name"),
+                Account.name.label("account_name"),
+                UserProfile.display_name.label("owner_name"),
+                OpportunityStage.stage_name.label("stage_name"),
+                HoldReason.reason_name.label("hold_reason"),
+                Opportunity.reactivation_date.label("reactivation_date"),
+                days_on_hold.label("days_on_hold"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .outerjoin(HoldReason, Opportunity.hold_reason_id == HoldReason.id)
+            .where(OpportunityStatus.status_code == "ON_HOLD")
+        )
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(Account.zone_id == zone_id)
+        stmt = stmt.order_by(days_on_hold.desc())
         return list(self.db.execute(stmt).all())

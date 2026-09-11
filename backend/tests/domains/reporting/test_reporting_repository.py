@@ -169,3 +169,63 @@ class TestOverdueActions:
         current_user = _make_current_user("Area Manager")
         sql = _run("overdue_actions", current_user, END_OF_TODAY)
         assert _uuid_literal(current_user.id) in sql
+
+
+class TestProductPerformance:
+    def test_admin_is_unrestricted(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "product")
+        assert "user_profile.sbu_id" not in sql
+
+    def test_group_by_product_groups_on_product_name(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "product")
+        assert "product.name" in sql
+
+    def test_group_by_sbu_groups_on_sbu_name(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "sbu")
+        assert "sbu.name" in sql
+
+    def test_group_by_brand_normalizes_case_via_oem_name(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "brand")
+        assert "product.oem_name" in sql
+        assert "upper" in sql.lower()
+        assert "trim" in sql.lower()
+
+    def test_quantity_and_revenue_restricted_to_won(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "product")
+        assert "'WON'" in sql
+        assert "opportunity_item.quantity" in sql
+        assert "opportunity_item.extended_value_lakhs" in sql
+
+    def test_won_and_lost_counts_are_distinct_opportunity_counts(self):
+        sql = _run("product_performance", _make_current_user("Admin"), "product")
+        assert "'LOST'" in sql
+
+    def test_sbu_manager_scoped(self):
+        current_user = _make_current_user("SBU Manager")
+        sql = _run("product_performance", current_user, "product")
+        assert "user_profile.sbu_id" in sql
+        assert _uuid_literal(current_user.sbu_id) in sql
+
+
+class TestOpportunitiesOnHold:
+    def test_restricted_to_on_hold_status(self):
+        sql = _run("opportunities_on_hold", _make_current_user("Admin"))
+        assert "'ON_HOLD'" in sql
+
+    def test_days_on_hold_derived_from_audit_trail(self):
+        sql = _run("opportunities_on_hold", _make_current_user("Admin"))
+        assert "audit_log" in sql
+        assert "opportunity.updated_at" in sql  # the fallback
+
+    def test_hold_reason_is_outer_joined_not_required(self):
+        # A held opportunity's hold_reason_id shouldn't ever be NULL in
+        # practice (BR-OP gate requires it), but the join itself must stay
+        # an outer join, not silently drop rows if it ever were.
+        sql = _run("opportunities_on_hold", _make_current_user("Admin"))
+        assert "left outer join hold_reason" in sql.lower()
+
+    def test_sbu_manager_scoped(self):
+        current_user = _make_current_user("SBU Manager")
+        sql = _run("opportunities_on_hold", current_user)
+        assert "user_profile.sbu_id" in sql
+        assert _uuid_literal(current_user.sbu_id) in sql
