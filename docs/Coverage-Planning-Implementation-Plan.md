@@ -15,9 +15,16 @@ Planning in favor of this.
 
 Same starting condition as Target Planning: `coverage_plan`/`coverage_plan_entry` tables
 already exist in the live DB (`backend/app/domains/planning/models.py`, confirmed
-matching `Physical-Schema.sql`), never went through Alembic, and have **zero RLS**. This
-plan's migration is RLS-enable-and-policy only, same as Target Planning's — no
-`create_table` needed anywhere.
+matching `Physical-Schema.sql`), never went through Alembic, and have **zero RLS**. No
+`create_table` needed anywhere. **Originally scoped as RLS-enable-and-policy only —
+no longer true** once the approval workflow was decided (see Decisions, item 1): same
+correction as Target Planning's plan, this migration also adds `status`/`approved_by`/
+`approved_at` columns to `coverage_plan`.
+
+**Quarterly-only, confirmed 2026-09-11 (Basheer) — no schema change needed.**
+`coverage_plan.planning_period` already carries the exact same `CHECK` constraint as
+`target_plan` (`^\d{4}-Q[1-4]$`) — Coverage Planning was already quarterly-only by
+construction, this just confirms it's the intended cadence, not an accident to fix.
 
 ### Key structural fact: `BR-PL-03` is already half-enforced by the schema
 
@@ -38,16 +45,27 @@ says "an *approved* Target Plan," but the Constraint line and the actual schema 
 approval/status concept. Carries the same open decision from Target Planning's plan
 (#4) — resolve once, applies to both.
 
-### `account` has no RLS and no `sbu_id` — a real design constraint, not an oversight
+### `account` has no RLS and no `sbu_id` — real constraints on how territory-restriction gets built
 
 Checked: `account` table has `zone_id` but no `sbu_id`, and **no RLS policy at all** —
 accounts are globally visible to every authenticated user (visibility is enforced at
 Opportunity/Activity granularity elsewhere in this app, not at Account level — an
-established pattern, not new). Consequence: nothing in the data model stops a rep from
-adding an out-of-territory account to their Coverage Plan. Flagged as a design question
-below rather than inventing a new restriction unilaterally — the rest of the app doesn't
-restrict Account selection by zone either (e.g. Opportunity creation), so adding one here
-would be a new precedent, not a consistency fix.
+established pattern, not new).
+
+**Decided (Basheer, 2026-09-11): Account selection is restricted to the rep's own
+territory.** This is a genuinely new precedent — the rest of the app (e.g. Opportunity
+creation) never restricts Account choice by zone, so this is Coverage Planning
+introducing the app's first such restriction, not fixing an inconsistency with
+something else. **Only buildable via `zone_id`, not `sbu_id`** — since `account` has
+no SBU of its own, "the rep's own territory" can only mean zone-based matching: the
+account's `zone_id` must fall within the zones assigned to the plan's owner (via
+`user_zone`/`zone_closure`, same descendant-zone lookup already used throughout this
+app's RLS). Proposed to enforce this as a **service-layer check when an entry is
+added** (`add_entry`, a `BusinessRuleViolation` with a clear message if the chosen
+account is outside the rep's zones), not as an RLS policy on `coverage_plan_entry` —
+`account` itself still has no RLS at all (unchanged, out of scope here), so a clean
+error at the point of adding the entry is more useful than trying to bolt a zone check
+onto a table that isn't otherwise scoped.
 
 ### `BR-PL-04` — downstream link to Opportunity Pipeline, not built here
 
@@ -59,42 +77,62 @@ code change needed in the Opportunity domain for this pass; a rep just picks
 `COVERAGE_PLAN` as the Lead Source manually when creating an Opportunity that came from
 their coverage plan, same as any other Lead Source value today.
 
-## Decisions needed before building (Basheer's call)
+## Decisions needed before building — resolved 2026-09-11, one item still open
 
-1. **Who authors a Coverage Plan?** Proposed: **self-service** — the owning Sales Staff
-   rep creates/edits their own plan (opposite of Target Planning, where Sales Staff is
-   read-only and a manager sets the number). Managers (SBU Manager, Area Manager,
-   Admin/GM) can also create/edit on a subordinate's behalf (oversight/delegation), but
-   the default flow is the rep planning their own quarter against the target their
-   manager already set. Confirm this matches intent — it's the natural reading of
-   "planning" as a rep activity, but worth stating explicitly since it's the reverse
-   permission shape from Target Planning.
-2. **Account selection — territory-restricted or open?** Per the note above, nothing
-   else in the app restricts Account choice by zone/SBU. Proposed: leave it open (any
-   account the rep can see — which today is all of them) for this pass, rather than
-   inventing a new zone-matching rule with no precedent elsewhere. Flag if Cabio
-   actually wants coverage entries constrained to the rep's assigned zone(s).
-3. **`coverage_frequency` — free text or a controlled vocabulary?** `BR-PL-02` forbids
-   a numeric visit-count field but allows this nullable string(50). Proposed: a small
-   fixed picklist (e.g. Weekly / Bi-weekly / Monthly / Quarterly / As-needed) rather
-   than free text, for reporting consistency (Batch 2's Beat Plan Compliance metric
-   would otherwise have to parse free text). Confirm the exact label set with Basheer.
-4. **"Approved Target Plan" wording** — same open item as Target Planning's plan #4;
-   resolving that also resolves this one.
+1. **Who authors a Coverage Plan? DECIDED: self-service, approved by the rep's
+   manager — the same shape as Target Planning, not the "self-service + manager
+   delegation" originally proposed here.** The rep creates/edits their own plan; it
+   isn't final until their manager approves it. **Reuses Target Planning's exact
+   mechanism, not a parallel implementation:** the same generic, no-hardcoded-role-
+   name approver resolution (`get_approver_id` — whoever the plan owner's own
+   `manager_id` points to) and the same `status` (`PENDING_APPROVAL`/`APPROVED`/
+   `REJECTED`)/`approved_by`/`approved_at` column shape, added to `coverage_plan` this
+   time. **Manager create-on-behalf-of-a-subordinate (delegation) is dropped** to
+   match Target Planning's shape exactly — a manager's role here is approving, not
+   authoring someone else's plan.
+2. **Account selection — territory-restricted or open? DECIDED: restricted to the
+   rep's own territory.** Reverses the original "leave it open" proposal. See the
+   `account` has no RLS/`sbu_id` note above for how this actually gets enforced
+   (zone-based, at entry-creation time, service-layer check).
+3. ~~**`coverage_frequency` — free text or a controlled vocabulary?**~~ — **DECIDED:
+   a fixed picklist, label set confirmed (Basheer, 2026-09-11): Weekly / Bi-weekly /
+   Monthly / Quarterly / As-needed.** **Superseded by a live-editable reference table,
+   not a hardcoded picklist or free-text field** — see `docs/Reference-Data-
+   Management-Screen-Implementation-Plan.md`, raised the same session so Cabio staff
+   can add/rename/retire these labels themselves later. `coverage_plan_entry` gets
+   `coverage_frequency_id` (FK to the new `coverage_frequency` table), **not** the
+   plain `string(50)` column originally proposed here — that plan's own migration
+   creates and seeds the table; this plan just consumes it.
+4. ~~**"Approved Target Plan" wording**~~ — **RESOLVED via Target Planning's own
+   decision #4.** `target_plan` now has a real `status` column, so `BR-PL-03`'s "an
+   *approved* Target Plan must exist" is a literal, checkable condition
+   (`target_plan.status == 'APPROVED'`) — not just "does a row exist" as originally
+   scoped. See `create_coverage_plan` below for where this gets enforced.
 
 ## Backend
 
-### Migration — RLS only, `backend/alembic/versions/00XX_coverage_plan_rls.py`
+**No longer an RLS-only migration** — same correction as Target Planning's plan, for
+the same reason: the approval workflow (decision 1) needs real columns.
+
+### Migration, `backend/alembic/versions/00XX_coverage_plan_approval_and_rls.py`
 
 Both tables need policies. `coverage_plan` needs the full tier-visibility predicate
-(same shape as `target_plan`'s, adapted — see below); `coverage_plan_entry` just
+for reads (same shape as `target_plan`'s, adapted) plus the same self-insert /
+owner-or-approver-update write shape Target Planning uses; `coverage_plan_entry` just
 inherits through its parent, same idiom as `activity_tier_visibility`/
 `document_tier_visibility` (`coverage_plan_id IN (SELECT id FROM coverage_plan)`),
 since RLS on the parent already does the real filtering.
 
 ```sql
+ALTER TABLE coverage_plan ADD COLUMN status varchar(20) NOT NULL DEFAULT 'PENDING_APPROVAL';
+ALTER TABLE coverage_plan ADD COLUMN approved_by uuid REFERENCES user_profile(id);
+ALTER TABLE coverage_plan ADD COLUMN approved_at timestamptz;
+ALTER TABLE coverage_plan ADD CONSTRAINT ck_coverage_plan_status
+    CHECK (status IN ('PENDING_APPROVAL', 'APPROVED', 'REJECTED'));
+
 ALTER TABLE coverage_plan ENABLE ROW LEVEL SECURITY;
 
+-- Read: unchanged broad tier-based visibility.
 CREATE POLICY coverage_plan_read ON coverage_plan FOR SELECT USING (
     cabio_app_role_name() IN ('Admin', 'General Manager')
     OR user_id IN (
@@ -114,13 +152,36 @@ CREATE POLICY coverage_plan_read ON coverage_plan FOR SELECT USING (
     OR user_id = cabio_app_uid()
 );
 
--- Write policies (INSERT/UPDATE/DELETE): same predicate, but the final
--- "OR user_id = cabio_app_uid()" branch stays IN (unlike target_plan) --
--- self-authorship is the whole point of decision #1 above. Explicit WITH CHECK
--- on every write policy, not relying on the USING fallback -- same lesson as
--- Target Planning and the notification-feature RLS bugs: a manager creating a
--- plan for a subordinate is actor != row-subject, and the read-your-write
--- RETURNING check must be verified, not assumed.
+-- Insert: everyone inserts only their own plan — decision #1's self-service half.
+CREATE POLICY coverage_plan_write ON coverage_plan FOR INSERT WITH CHECK (
+    user_id = cabio_app_uid()
+);
+
+-- Update: the plan's own owner (revising it) OR that owner's direct manager
+-- (approving/rejecting it, resolved purely via manager_id — decision #1's approval
+-- half, same mechanism as target_plan) OR Admin/GM.
+CREATE POLICY coverage_plan_update ON coverage_plan FOR UPDATE
+    USING (
+        user_id = cabio_app_uid()
+        OR user_id IN (SELECT id FROM user_profile WHERE manager_id = cabio_app_uid())
+        OR cabio_app_role_name() IN ('Admin', 'General Manager')
+    )
+    WITH CHECK (
+        user_id = cabio_app_uid()
+        OR user_id IN (SELECT id FROM user_profile WHERE manager_id = cabio_app_uid())
+        OR cabio_app_role_name() IN ('Admin', 'General Manager')
+    );
+
+CREATE POLICY coverage_plan_delete ON coverage_plan FOR DELETE USING (
+    user_id = cabio_app_uid() OR cabio_app_role_name() IN ('Admin', 'General Manager')
+);
+-- Same split-role note as Target Planning: RLS can't tell an owner's revision apart
+-- from a manager's approval on the same UPDATE policy — that distinction (owner may
+-- change plan fields but not `status`; only the resolved approver may flip `status`)
+-- is enforced at the service layer, not here. Explicit WITH CHECK on every write
+-- policy, not relying on the USING fallback -- same lesson as Target Planning and the
+-- notification-feature RLS bugs: a manager approving a subordinate's plan is actor !=
+-- row-subject, and the read-your-write RETURNING check must be verified, not assumed.
 
 ALTER TABLE coverage_plan_entry ENABLE ROW LEVEL SECURITY;
 
@@ -138,51 +199,79 @@ through the owning `user_profile.sbu_id`, unlike `target_plan`'s direct column c
 
 ### Domain: `backend/app/domains/planning/` (extends the module Target Planning creates)
 
-- `schemas.py` — add `CoveragePlanCreate`/`Update`/`Response`,
-  `CoveragePlanEntryCreate`/`Update`/`Response` (nested `account` per the model's
-  `lazy="joined"`).
+- `models.py` — `CoveragePlan` needs the same three new columns as `TargetPlan`
+  (`status`, `approved_by`, `approved_at`).
+- `schemas.py` — add `CoveragePlanCreate`/`Update`/`Response` (plus `status`/
+  `approved_by`/`approved_at`), a separate `CoveragePlanApprovalDecision` (mirrors
+  `TargetPlanApprovalDecision`, kept distinct from `Update` for the same reason —
+  owner-editing and manager-approving are different request shapes), and
+  `CoveragePlanEntryCreate`/`Update`/`Response` (nested `account` and
+  `coverage_frequency` per the model's `lazy="joined"` — the latter now an FK
+  relationship, not a plain string field, per the Reference Data Management Screen
+  plan).
 - `repository.py` — add `CoveragePlanRepository`, `CoveragePlanEntryRepository`
   (one repository per aggregate root per `Backend-Implementation-Standards.md` — entry
   is a child of plan, so it's managed through `CoveragePlanRepository`, mirroring how
   `OpportunityItem` is managed through `OpportunityRepository`, not given its own
   standalone repository).
 - `service.py` — add `CoveragePlanService`:
-  - `create_coverage_plan`: validates the `BR-PL-03` consistency check described above
-    (`target_plan.user_id == coverage_plan.user_id` and
-    `target_plan.planning_period == coverage_plan.planning_period` for the referenced
-    `target_plan_id` — `BusinessRuleViolation` if mismatched), plus the same
-    role/scope authorization check pattern as `OpportunityService` (BR-OP-12) for the
-    self-vs-delegate authorship question (decision #1).
+  - **Reuses `TargetPlanService.get_approver_id`** rather than reimplementing it —
+    worth promoting that lookup to a shared location (e.g. `organization/service.py`,
+    alongside `TEAM_SCOPE_BUILDERS`) now that a second domain needs the identical
+    "who is this user's manager" resolution, instead of two copies of the same
+    one-line query.
+  - `create_coverage_plan`: any authenticated user creates their own plan
+    (`user_id = current_user.id`, enforced in the service even though RLS backs it up
+    too) — `status` defaults to `PENDING_APPROVAL`. Validates the `BR-PL-03`
+    consistency check described above (`target_plan.user_id ==
+    coverage_plan.user_id`, `target_plan.planning_period ==
+    coverage_plan.planning_period`, **and now also `target_plan.status ==
+    'APPROVED'`** per decision #4's resolution — `BusinessRuleViolation` if any of the
+    three don't hold).
+  - `approve_or_reject_coverage_plan`: same shape as Target Planning's
+    `approve_or_reject_target_plan` — raise `AuthorizationError` unless
+    `current_user.id == get_approver_id(coverage_plan.user_id)` or the caller is
+    Admin/GM.
   - `add_entry`/`update_entry`/`remove_entry`: enforces `BR-PL-02`'s mandatory
-    `strategic_objective` + `target_revenue_lakhs` per entry, and the
+    `strategic_objective` + `target_revenue_lakhs` per entry, the
     `coverage_plan_entry_unique (coverage_plan_id, account_id)` constraint (friendly
     `BusinessRuleViolation` instead of a raw DB uniqueness error, matching this
-    codebase's existing pre-insert-check convention).
+    codebase's existing pre-insert-check convention), **and decision #2's territory
+    restriction** — the chosen account's `zone_id` must fall within the plan owner's
+    assigned zones (`user_zone`/`zone_closure`, same descendant-zone lookup used in the
+    RLS above), `BusinessRuleViolation` with a clear message if it doesn't.
 - `router.py` — extend the same `planning` router Target Planning creates:
   `GET/POST /planning/coverage-plans`, `PATCH/DELETE /planning/coverage-plans/{id}`,
+  `POST /planning/coverage-plans/{id}/approve`, `POST /planning/coverage-plans/{id}/reject`,
   `POST/PATCH/DELETE /planning/coverage-plans/{id}/entries/{entry_id}`.
-- Tests: the `BR-PL-03` consistency check (mismatched user/period rejected), entry
-  uniqueness, and the same role-boundary test shape as Target Planning — including the
-  self-authorship path this time (Sales Staff creating their *own* plan should
-  succeed, unlike Target Planning where that path is explicitly forbidden).
+- Tests: the `BR-PL-03` consistency check (mismatched user/period/unapproved-target all
+  rejected), entry uniqueness, the territory-restriction rejection (out-of-zone account
+  on `add_entry`), and the same approval-boundary test shape as Target Planning
+  (self-authorship succeeds, a non-approver's approval attempt is rejected, the
+  resolved approver's approval succeeds and is read back immediately).
 
 ## Frontend
 
-- `sales-os-app/src/screens/CoveragePlanningScreen.tsx` (new) — Sales Staff-primary
-  screen (unlike Target Planning's manager-only gate): period picker, a list of the
-  rep's Coverage Plan Entries (Account, Strategic Objective, Target Revenue,
-  Frequency), an Account picker to add entries (reuse the existing Account
-  search/picker component already used elsewhere — check `Customer360Screen.tsx`'s
-  or `QuickLeadModal.tsx`'s Account picker before building a new one), inline edit via
-  `FormModal`. Managers viewing a subordinate's plan get the same screen in read view
-  (or edit, if decision #1 confirms delegation) with a rep selector, mirroring
-  Target Planning's manager-vs-rep view split.
-- `DemoApp.tsx` nav: add under **SALES EXECUTION** (self-service, not admin-gated) —
-  `{ id: "coveragePlanning", label: "Coverage Planning", icon: "🧭" }`. No new
-  gating tier needed (unlike Target Planning) — every role already has appropriate
-  RLS-scoped access, same reasoning as the Insights Dashboard nav placement.
-- `services/coveragePlanning.ts`, `types/coveragePlanning.ts` — typed, same convention
-  as the other two plans.
+- `sales-os-app/src/screens/CoveragePlanningScreen.tsx` (new) — **same
+  every-role-gets-it, approval-aware shape as `TargetPlanningScreen.tsx`**, not the
+  original "Sales Staff-primary, managers view/edit a subordinate's plan" design
+  (delegation was dropped per decision #1):
+  - Everyone sees their own plan for the selected quarter — a list of their Coverage
+    Plan Entries (Account, Strategic Objective, Target Revenue, Frequency), an Account
+    picker restricted to their own territory (decision #2 — reuse the existing Account
+    search/picker component, e.g. `Customer360Screen.tsx`'s or
+    `QuickLeadModal.tsx`'s, filtered server-side rather than building a new picker),
+    inline edit via `FormModal`, and a plainly-shown `status` (Pending Approval /
+    Approved / Rejected).
+  - Anyone who is someone else's resolved approver sees the same "Needs your approval"
+    section pattern as Target Planning, listing their direct reports' pending
+    Coverage Plans with Approve/Reject actions.
+- `DemoApp.tsx` nav: add under **SALES EXECUTION** — `{ id: "coveragePlanning", label:
+  "Coverage Planning", icon: "🧭" }`, no role gate on visibility. Unchanged from the
+  original plan on this point.
+- `services/coveragePlanning.ts` — add `approveCoveragePlan`/`rejectCoveragePlan`
+  alongside the existing CRUD methods, mirroring Target Planning's service shape.
+- `types/coveragePlanning.ts` — typed, same convention as the other two plans.
 
 ## Out of scope for this pass
 
@@ -191,17 +280,21 @@ through the owning `user_profile.sbu_id`, unlike `target_plan`'s direct column c
 - Beat Plan Compliance / Progress reporting (PRD A.2.1/A.2.2) — this is Reporting
   Batch 2 territory (`Insights-Dashboard-Implementation-Plan.md`), consumes this
   data, doesn't need to ship alongside it.
-- Approval/status workflow — same open item as Target Planning, resolve once.
+- Manager create-on-behalf-of-a-subordinate — deliberately dropped (decision #1), not
+  deferred; Coverage Plans are self-authored only, same as Target Plans.
 
 ## Verification
 
 - Backend: `pytest`, `ruff check app/domains/planning/`.
 - Frontend: `tsc --noEmit`, `npm run lint`.
-- Manual, role-by-role on Dev: Sales Staff creates and edits their own plan
-  successfully; the `BR-PL-03` mismatch case is rejected with a clear error, not a
-  500; a manager's delegate-create (if decision #1 confirms it) reads back
-  immediately (the `RETURNING`-vs-`WITH CHECK` check again); each role's read scope
-  matches the policy.
+- Manual, role-by-role on Dev: every role creates their own plan, confirms it reads
+  back immediately as `PENDING_APPROVAL`; a Sales Staff's Area Manager sees it in
+  their "Needs your approval" section and approves it; the `BR-PL-03` consistency
+  check is rejected with a clear error (not a 500) for a mismatched `target_plan_id`,
+  a mismatched period, *and* an unapproved `target_plan` (the newly-added third case);
+  adding an entry with an out-of-territory account is rejected with a clear error
+  (decision #2); each role's read scope matches the policy; someone who is *not* the
+  resolved approver attempts to approve a plan and gets a clean `AuthorizationError`.
 
 ---
 

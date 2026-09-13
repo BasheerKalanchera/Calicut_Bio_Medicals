@@ -2699,3 +2699,156 @@ by the OS for low memory -- restarted cleanly, not a code issue.
 
 **Nothing pending from this thread.** High-Priority Deals remains queued,
 blocked on Cabio leadership confirmation (not a technical blocker).
+
+## 2026-09-11 (later still) — Target Planning and Coverage Planning: all 9 open decisions resolved with Basheer; backfilled 2026-09-13, was never logged or synced to the Backlog at the time
+
+**Backfill note:** this design session happened 2026-09-11, in the same working
+session as the Insights Dashboard Batch 1a/1b entries above, but the resulting
+decisions were written only into the two plan documents themselves — never logged
+here, never rolled into `docs/Backlog.md`'s stale "5/4 open decisions" wording, and
+never committed to git. Surfaced 2026-09-13 when Basheer asked why the Backlog wasn't
+being kept current; reconstructed from the two plan docs' own diffs plus the
+untracked docs written the same day.
+
+**Target Planning — all 5 original decisions resolved, `docs/Target-Planning-
+Implementation-Plan.md` updated in place:**
+1. **Who sets a target — reversed.** Originally proposed manager-assigned,
+   Sales-Staff-read-only. **Decided: everyone self-sets their own row**, including
+   Sales Staff — paired with a real approval step so a self-set number isn't final on
+   its own.
+2. SBU Target as a computed rollup (not a stored row) — confirmed as originally
+   proposed.
+3. Annual as a sum of quarters, no annual storage — confirmed as originally proposed.
+4. **Approval workflow — decided, not the plain-CRUD original proposal.** A target
+   isn't final until the setter's own direct manager approves it. Built generically:
+   the approver is resolved by walking `user_profile.manager_id` for whoever set the
+   target, with no role-name check anywhere in the logic — today that's Area Manager
+   approved by GM (no SBU Manager currently holds that role tier), but the same code
+   would pick up an extra approval hop automatically if SBU Manager is ever populated,
+   with zero change needed. **Left 3 follow-on questions open**, not yet confirmed:
+   who approves the person at the very top of the chain (GM, whose `manager_id` is
+   `NULL` — proposed auto-approved); whether revising an already-approved number
+   resets it to pending (proposed yes); whether a still-pending target counts in
+   anything that reads target data, e.g. a future Attainment % tile (proposed no,
+   `APPROVED` only).
+5. No lock once Coverage Plans reference a Target Plan — confirmed as originally
+   proposed, with a new normal-workflow detail: a quarter's plan is expected to be
+   revised at quarter-end to match how execution actually went, treated as a normal
+   action, not an edge case.
+
+**Consequence for the migration:** decision 4 means this is **no longer an RLS-only
+migration** as originally scoped — `target_plan` needs three new real columns
+(`status`, `approved_by`, `approved_at`), combined into one migration with the RLS
+enable.
+
+**Coverage Planning — all 4 open decisions resolved same day, `docs/Coverage-
+Planning-Implementation-Plan.md` updated in place:**
+1. **Who authors a plan — narrowed from the original proposal.** Originally proposed
+   self-service *plus* manager delegation (a manager creating a plan on a
+   subordinate's behalf). **Decided: self-service only, approved by the rep's own
+   manager** — reuses Target Planning's exact approval mechanism (same generic
+   manager-chain resolution, same `status`/`approved_by`/`approved_at` shape) rather
+   than a second implementation. Delegation is dropped, not deferred — a manager's
+   role here is approving, not authoring.
+2. **Account selection — reversed from "leave it open."** **Decided: restricted to
+   the rep's own territory** — a genuinely new precedent for this app (nothing else
+   restricts Account choice by zone/SBU). Since `account` has no `sbu_id`, only
+   buildable zone-based: enforced as a service-layer check when an entry is added
+   (`add_entry`), not as an RLS policy, since `account` itself still carries no RLS at
+   all.
+3. **`coverage_frequency` — decided as a fixed picklist, then superseded hours later
+   the same day.** Label set confirmed (Weekly / Bi-weekly / Monthly / Quarterly /
+   As-needed), but once the Reference Data Management Screen idea came up (see next
+   entry), a hardcoded picklist was recognized as the wrong shape — ships instead as a
+   real `coverage_frequency` reference table with a `coverage_frequency_id` FK,
+   editable later through that new screen.
+4. "Approved Target Plan" wording gap — resolved as a side effect of Target
+   Planning's own decision 4: `BR-PL-03`'s "an approved Target Plan must exist" is now
+   a literal, checkable `target_plan.status == 'APPROVED'` condition.
+
+**Consequence for the migration:** same correction as Target Planning — decision 1's
+approval workflow means this is no longer RLS-only either; `coverage_plan` gets the
+same three new columns.
+
+**Spun out the same day: Reference Data Management Screen, fully scoped, not
+built.** Raised while resolving Coverage Planning decision 3 above — once a real
+editable list was needed for `coverage_frequency`, Basheer wanted the same
+self-service editing for every other short fixed-choice list already in the app
+(Hold Reasons, Loss Reasons, Fast-Track Override Reasons, Lead Sources, Project
+Statuses), rather than solving it once for just the new table. All 3 decisions made
+same session: Admin/GM only; **Add and Rename only, no deactivate/reactivate at all**
+(existing `is_active` columns stay as they are, retiring an option still only happens
+via a direct data change); `coverage_frequency` gets a `display_order` field (a
+frequency list reads naturally top-to-bottom, unlike e.g. Loss Reasons). Deliberately
+excludes `opportunity_stage`/`opportunity_status` (real behavioral weight —
+win-probability, terminal-status — not plain labels), `zone` (Territory Map already
+covers it), and `sbu`/`product`/`role` (structural entities). Also closes a real
+side gap: none of the six tables were covered by the existing ADR-017 audit trail —
+this build extends the same generic trigger to all six, so a mistaken rename doesn't
+go untraced. Full design: `docs/Reference-Data-Management-Screen-Implementation-
+Plan.md`. Nothing built yet for any of Target Planning, Coverage Planning, or this
+screen — all three still sitting as plan documents only, not yet committed as of this
+backfill entry.
+
+**Process note, logged so this doesn't repeat:** none of the above was written here
+or synced to `docs/Backlog.md` at the time it happened — the Backlog's Milestone 2
+entry sat stale (still describing the original open questions as unresolved) for two
+days until Basheer caught it directly. Corrected in the same session as this
+backfill entry.
+
+## 2026-09-12 — Opportunity Support Attribution: discussion paper drafted for Haroon/Latheef Bhai, core shape decided, one technical gap found; backfilled 2026-09-13, was never logged at the time
+
+**Backfill note:** written 2026-09-12, a day with no other archive entry at all —
+surfaced and reconstructed 2026-09-13 during the same Backlog reconciliation as the
+entry above.
+
+Raised on a leadership concall: Cabio has no way today to record that someone other
+than the deal owner helped close a sale (a colleague running the demo, a service
+engineer doing the installation/training) when that person isn't a formal co-owner
+via `split`. Finance currently resolves this by phoning the relevant manager every
+quarter-end to decide an incentive %; the ask is a structured, manager-reviewed
+report to hand Finance instead of automating that decision itself.
+
+**Checked against the schema first:** `split` is percentage-based formal
+co-ownership within the same BU, no concept of support type, assumes a Cabio sales
+user — wrong shape. `RELATIONSHIP_SUPPORT` (`BR-ACT-10`) is informal, no percentage,
+no approval, explicitly designed to stay disconnected from incentive calculation —
+reusing it here would conflict with its own rule. Application/Service Support staff
+aren't Cabio users at all and, per Basheer, don't need to be.
+
+**Proposed design, decided by Basheer:** two new tables, no new logins — a
+no-login `support_staff` reference list (name + Application/Service area) and an
+`opportunity_support` record (who helped, what type of support, a required
+description of what was actually done, mirroring `BR-ACT-09`'s reasoning that a
+credit with no description isn't useful). Workflow: the deal owner logs the entry
+with no percentage yet; it goes to **the owner's own manager** (not the support
+person's manager — the sales manager is the one close enough to the deal to judge
+whether the claimed support genuinely helped); approving requires entering a
+suggested incentive % in the same action, rejecting excludes it from everything
+downstream; the manager can revise the % any time up until that quarter's report
+generates. GM was meant to get automatic edit access to any entry, not just direct
+reports'. A quarterly report to Finance lists only `APPROVED` rows, joined out to
+account/product/stage/outcome — Sales OS never computes or stores an actual payout
+figure, same Finance-owns-Payment/Invoice/Collections boundary the PRD already draws
+(Appendix B.5). `split` stays completely untouched — a parallel, separate mechanism,
+both can exist on the same deal at once.
+
+**Real gap found while drafting, not yet decided:** "GM gets automatic edit access"
+assumed it could reuse the existing manager-visibility RLS pattern, but every
+existing policy checked (`activity`/`opportunity`) only ever checks one level up
+(`manager_id = cabio_app_uid()`) — direct reports only. If a GM sits two or more
+levels above a rep, today's pattern would not reach that rep's entries without new
+work. Two ways forward, neither picked yet: confirm Cabio's real org chart makes
+every GM a literal direct `manager_id` (no gap, if true), or build a genuinely new
+recursive up-the-chain RLS check (`WITH RECURSIVE` walk).
+
+**Smaller open questions, not yet decided:** the complete list of `support_type`
+values beyond Demo/Training/Installation; whether Finance gets an in-app screen or a
+periodic export (changes whether Finance needs any Cabio access at all); whether a
+rejected entry stays visible to the rep who logged it; whether the rep can edit or
+withdraw an entry before their manager reviews it.
+
+**Status: DRAFT**, prepared for a discussion with Haroon Sidheeq and Latheef Bhai —
+not scoped for build until that conversation happens. Full write-up:
+`docs/Discussion-Opportunity-Support-Attribution-2026-09.md`. Also tracked in
+`docs/Backlog.md`.

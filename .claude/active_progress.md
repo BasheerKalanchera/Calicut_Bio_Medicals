@@ -1,5 +1,23 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-11_
+_Session: 2026-08-21 → 2026-09-13_
+
+## 2026-09-13 session — Backlog reconciliation: two days of undocumented planning decisions (Target/Coverage Planning, Reference Data screen, Support Attribution paper) synced in
+
+Basheer flagged the Backlog as stale. Found `docs/Target-Planning-Implementation-
+Plan.md` and `docs/Coverage-Planning-Implementation-Plan.md` sitting with substantial
+uncommitted edits from 2026-09-11 (all 9 combined open decisions between the two
+resolved with Basheer that day) plus two new untracked docs
+(`docs/Reference-Data-Management-Screen-Implementation-Plan.md`, 2026-09-11, and
+`docs/Discussion-Opportunity-Support-Attribution-2026-09.md`, 2026-09-12) — none of
+it had been logged to `docs/Progress-Archive-2026-09.md`, synced to
+`docs/Backlog.md`, or committed. Backfilled a Progress-Archive entry for each of the
+two missing days, and rewrote Backlog's stale Milestone 2 Target/Coverage Planning
+entries plus added the two missing items. Full detail: `docs/Progress-Archive-
+2026-09.md`'s 2026-09-11 (later still) and 2026-09-12 backfill entries.
+
+**Next step:** commit all of the above (the two plan-doc corrections, the four new/
+updated docs, Backlog.md, this file, and the Progress-Archive backfill) as one
+handover-catchup commit.
 
 ## 2026-09-11 session — UAT login outage fixed, then a UAT migration; one item left for Haroon
 

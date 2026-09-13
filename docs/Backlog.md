@@ -90,6 +90,71 @@ kept only as a pointer; nothing left to pick up here.
   `80bef46`**. Full design: `docs/Activity-Comment-Implementation-Plan
   .md`; narrative: `docs/Progress-Archive-2026-09.md`'s
   2026-09-09 entries.
+- **Auto-computed "High Priority" deal flag — proposed 2026-09-11, not
+  decided, not scoped.** Raised while discussing the Insights Dashboard build order:
+  the PRD (§3.9 "Deal Prioritization") calls for a High Priority flag on Opportunities,
+  but only ever says "provide a High Priority flag" — no definition of how it's set, and
+  nothing exists on the Opportunity screen today. Two shapes were possible: a manual
+  checkbox a rep ticks themselves, or an automatic flag computed from the deal's own
+  data. **Checked feasibility of the automatic version: no schema change needed.**
+  Everything it would need already exists — deal size (`SUM(opportunity_item
+  .extended_value_lakhs)`, or `indicative_value` in Mode 1 per `Business-Rules.md`'s
+  value-calculation rule) and urgency (`opportunity.expected_closure_date`, days until
+  close). **Proposed rule, not yet approved:** flag an open Opportunity as High Priority
+  when its value clears a configurable Lakhs threshold, OR its expected closure date
+  falls within a configurable number of days — either condition alone qualifies it, same
+  shape as the existing `threshold_days` pattern (Stagnant Deals) and
+  `ACCOUNT_DUPLICATE_SIMILARITY_THRESHOLD` (tunable config, not hardcoded). Computed at
+  query time, not stored — no migration, no field to keep in sync.
+
+  **Actual thresholds derived from UAT data, 2026-09-11 — pending confirmation with
+  Cabio leadership, not yet approved.** Pulled all 87 ACTIVE opportunities from UAT and
+  looked at their real value/closing-date spread rather than guessing numbers cold:
+  - **Size, split by SBU (a flat company-wide cutoff would be unfair — Critical Care's
+    typical deal is far smaller than Imaging's):** Imaging median ₹18L, top-quarter
+    cutoff ₹28L → proposed **₹30L**. Critical Care median ₹2.5L, top-quarter cutoff
+    ₹14L → proposed **₹15L**. (12 outlier deals were excluded from this analysis — see
+    the new "Lakhs/Rupees unit-entry bug" Backlog entry below; their values are
+    corrupted, not real.)
+  - **Urgency:** Expected Closure Date is only gate-required from Negotiation stage
+    onward (BR-OP-01), so most of the 87 legitimately have it blank — not a data gap.
+    Restricting to the 13 Negotiation-or-later deals (11 of which have the date filled
+    in as expected): a 30-day window catches 10 of 11, barely discriminating since
+    almost everything that far along is already inside 30 days. **Proposed: within 14
+    days, or already overdue** — catches 6 of 11, leaving the 18-50-day-out deals as
+    "in negotiation, not yet urgent."
+  - **Proposed final rule:** High Priority if the deal clears its SBU's size cutoff
+    (Imaging ≥₹30L, Critical Care ≥₹15L), OR its Expected Closure Date is within 14
+    days or has passed. **Basheer taking this to Cabio leadership to confirm before
+    it's locked in and scoped as the missing "High-Priority Deals" Insights Dashboard
+    tile** (see the Milestone 2 entry's Real-gap note above) or surfaced as a badge on
+    the Opportunity screen/Kanban itself. Full derivation:
+    `docs/Insights-Dashboard-Implementation-Plan.md`'s "High-Priority Deals" section.
+- **Lakhs/Rupees unit-entry bug — 12 UAT opportunities with values inflated ~100,000x,
+  found 2026-09-11 while deriving High-Priority thresholds, not yet fixed.** All 12
+  values are suspiciously round multiples that divide cleanly by 100,000 into a
+  sensible equipment price (e.g. a SonoScape S70I reads ₹40,00,000 Lakhs — ₹400 Crore
+  for a portable ultrasound — instead of the ₹40L it almost certainly should be),
+  strongly suggesting the Rupee amount was typed directly into the Lakhs field rather
+  than converted. **Affected (opportunity — account — shown value — likely correct
+  value):** SonoScape S50-ELITE / Kanachur Institute of Medical Science / 4,200,000 /
+  42.00; SonoScape S70I / Ullal Diagnostic Centre / 4,000,000 / 40.00; SonoScape S70I /
+  Mangala Hospital Mangalore / 3,800,000 / 38.00; SonoScape S70I / Ambalpadi Diagnostic
+  Centre Udupi / 3,800,000 / 38.00; SonoScape S50-ELITE / Yenepoya Medical College
+  Hospital / 3,000,000 / 30.00; 30 Bed Hospital / NIMS Medicity, Neyyattinkara /
+  1,700,000 / 17.00; Critical care products / EMS Cooperative Hospital, Cherpulassery /
+  1,685,000 / 16.85; SonoScape S11PLUS / Dhanvantri Hospital / 1,300,000 / 13.00;
+  SonoScape E2 / Benaka Health Centre / 1,200,000 / 12.00; Anesthesia machine & iX
+  ETCO2 monitor / Malabar Medical College, Ulliyeri / 1,050,000 / 10.50; Magnamed
+  Oxymag / Tiruvalla Medical Mission Hospital / 800,000 / 8.00; SonoScape E1 Exp /
+  Pragathi Hospital, Puttur / 800,000 / 8.00. **Urgent because it's live now, not just
+  historical:** these 12 deals will badly distort the Pipeline Value and
+  Weighted/Unweighted Forecast tiles currently being built (Batch 1a, concurrent
+  session) unless corrected in UAT or excluded/capped before those tiles ship —
+  unbounded, an aggregate SUM across all 87 ACTIVE deals would show several lakh
+  Crore instead of the real pipeline figure. **Not yet fixed, not yet flagged to the
+  concurrent build session** — Basheer to decide whether to correct these 12 records in
+  UAT directly or route it through whoever owns that data entry.
 - **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
   decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
   each quarter's stock-purchasing decision (currently underway for EDAN
@@ -127,6 +192,36 @@ kept only as a pointer; nothing left to pick up here.
   earmarked) or double-counted; (4) MOQ threshold source — flat per
   product, or varies by SBU/zone/quarter, and where does it live (new
   `product` column vs. a config table).
+- **Standard quoting prices in the Product Catalogue — Area Manager suggestion
+  relayed by Basheer 2026-09-11, not decided, not scoped.** A new-staff onboarding
+  pain point: reps have to call their manager for pricing during a customer visit
+  instead of finding it in the app themselves. Proposed for USG (ultrasound) models
+  specifically, in two parts: (1) a standard quoting price for the usual 3-probe setup
+  (2 probes for portable models); (2) which probes are compatible with each model, each
+  priced individually (compatibility and price both vary model to model). **This needs
+  Haroon's and Latheef Bhai's call, not something I can raise with them directly —
+  logging it here so that conversation has a concrete write-up to work from.**
+  **Feasibility, checked against the schema:** not a quick add. `product` has no price
+  field of any kind today (checked `Physical-Schema.sql` — same gap already flagged for
+  the Margin/cost question above, but this is a different concept: a customer-facing
+  quoted price, not an internal cost). The probe side is more than one new column too —
+  "which probes fit which model, each priced separately" is a many-to-many relationship
+  (one USG model pairs with several probes, one probe may fit several models), closer
+  to a new child table (something like `product_probe_price`: model product, probe
+  product or name, price) than a field on `product` itself.
+  **Open policy question, not just an engineering one:** is this a single published
+  list price, or does it need to vary by zone/discount tier the way deal pricing
+  already can — and should every Sales Staff role see it, or does publishing an exact
+  number risk reps anchoring customers to it and losing negotiation room? Needs
+  Haroon/Latheef's decision before this is scoped.
+  **Grew into a full Discussion Brief, 2026-09-11**, once relaying this to Latheef
+  Bhai surfaced the real underlying process (a physical "Controlled Copy" rate sheet,
+  four pricing tiers: Quoting/Staff/Manager/CEO) and a bundled ask to also add the
+  still-missing product cost field. Open-policy question above is answered there.
+  Full write-up, industry comparison (Salesforce/Zoho/Dynamics), proposed data model,
+  and open questions for Haroon/Latheef Bhai: `docs/Discussion-Pricing-Discount-
+  Authority-2026-09.md`. **Status: DRAFT, awaiting their decision — supersedes this
+  entry's framing, not yet scoped or built.**
 - **Order-stage deals closing with zero Activity logged — candidate soft-
   warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
   data for pipeline-stage coaching guidance): of 96 real opportunities in
@@ -394,7 +489,11 @@ kept only as a pointer; nothing left to pick up here.
   2026-09-06 and 2026-09-10 entries.
 
 - **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,
-  found live 2026-09-05.** BR-OP-09 says historical WON/LOST records
+  found live 2026-09-05.** **Deliberately kept separate from the new Pricing/
+  Discount-Authority work (Basheer, 2026-09-11) rather than bundled in** —
+  revisit only if Cabio leadership specifically asks for it; see
+  `docs/Discussion-Pricing-Discount-Authority-2026-09.md` §6.5. BR-OP-09 says
+  historical WON/LOST records
   "remain immutable" and any administrative modification "must be
   captured in audit history," but today only the Status field itself is
   protected. Confirmed live: changed a product's price on an opportunity
@@ -446,6 +545,21 @@ kept only as a pointer; nothing left to pick up here.
   created_at` returns zero rows on UAT today, but that's not a clean
   finding — it's a false negative caused by the delete-and-reinsert
   pattern above, not evidence that no post-close edits ever happened.
+
+- **Payment Confirmation Gate before Won — proposed 2026-09-11, core shape decided by
+  Basheer, not yet scoped or built.** Raised alongside the Pricing/Discount-Authority
+  paper: Cabio has situations where a deal is delivered and won but payment hasn't
+  actually been received — reps shouldn't be able to mark Closed-Won until it has.
+  Today Won is settable from any stage with only PO Number + Product Details required;
+  no payment concept exists anywhere in the schema, matching the original PRD's
+  Finance-system-of-record boundary for Payment/Invoice/Collections. **Decided:**
+  visibility + an actual gate (not a cosmetic stage) — a new "Payment Pending" stage
+  after Delivery & Installation. Exact rule, decided 2026-09-11: **"Won cannot be set
+  if full payment is not collected"** — applies to every Opportunity with no
+  exceptions, including REPEAT_ORDER and Manager-Attested Fast-Track deals — confirmed
+  by self-attestation in-app (no Tally connection). Remaining open questions (stage
+  naming, timing against the concurrent Insights Dashboard build) and what this
+  deliberately doesn't do: `docs/Discussion-Payment-Confirmation-Gate-2026-09.md`.
 
 - ~~**Duplicate hospital names in the Customer Directory.**~~ — **DONE,
   live in UAT since the 2026-09-09 promotion.** Option B (soft
@@ -556,14 +670,27 @@ kept only as a pointer; nothing left to pick up here.
   features" reasoning that drove the 2-region weekly-deploy model
   (`docs/Deployment-Topology.md`). Decided rollout order:
   1. **Target Planning** — `docs/Target-Planning-Implementation-Plan.md`. Hard
-     prerequisite for Coverage Planning (`BR-PL-03`'s FK). RLS-enable-only migration —
-     `target_plan` already exists live, unprotected, never went through Alembic (a
-     pre-migration-baseline leftover, same category as the `rls_auto_enable()` item
-     above). **5 open decisions pending Basheer**, listed in the plan: who can set
-     targets (proposed: SBU Manager/Area Manager/Admin/GM write, Sales Staff read-only
-     own row), SBU Target as a computed rollup vs. a stored row, annual-as-sum-of-
-     quarters, no approval workflow, no edit-lock once Coverage Plans reference a
-     Target Plan.
+     prerequisite for Coverage Planning (`BR-PL-03`'s FK). **All 5 original decisions
+     resolved 2026-09-11 (Basheer) — 3 new follow-on questions still open, nothing
+     built yet.** Reverses the original proposal on who sets a target: **everyone
+     self-sets their own** (including Sales Staff, not manager-assigned as first
+     proposed), but a target isn't final until approved — a real, single-hop approval
+     step (the setter's own direct manager) resolved generically off the real
+     reporting line (`user_profile.manager_id`), not hardcoded to today's role names,
+     so an extra approval hop appears on its own if a currently-empty role tier (SBU
+     Manager) is ever populated. SBU Target stays a computed rollup (not stored),
+     annual stays a sum of quarters, no lock once Coverage Plans reference a Target
+     Plan — all three matched the original proposal as-is. **No longer an RLS-only
+     migration** — the approval decision adds three real columns
+     (`status`/`approved_by`/`approved_at`) to `target_plan`, combined into one
+     migration with the RLS enable. **3 follow-on questions from the approval design,
+     still open:** (1) who approves the target of whoever sits at the very top of the
+     chain (today: GM, `manager_id` is `NULL`) — proposed auto-approved, unconfirmed;
+     (2) does revising an already-approved target reset it back to pending, requiring
+     re-approval — proposed yes, unconfirmed; (3) does a still-pending target count in
+     anything that reads target data (e.g. a future Attainment % tile) — proposed no
+     (`APPROVED` only), unconfirmed. Full detail and the resolved backend/frontend
+     design: `docs/Target-Planning-Implementation-Plan.md`.
   2. **Insights Dashboard / Reporting Batch 1** — `docs/Insights-Dashboard-Implementation-Plan.md`.
      Zero dependency on Target or Coverage Planning — split out from the PRD's much
      larger Reporting & Review Module (§5) to the target-independent subset: Pipeline
@@ -577,27 +704,103 @@ kept only as a pointer; nothing left to pick up here.
      (`BR-OP-06`), with 90/~3-months (PRD §5.7) selectable as the alternate, rather
      than picking one; Overdue Actions tile is team-rollup only (Sales Staff don't get
      it — redundant with their own Reminders-on-Login bell — SBU Manager/Area
-     Manager/Admin/GM see their team's count broken out per rep). **Real gap still
-     open, not a decision, an incompleteness in the plan itself:** 3 of the 8 Batch 1
-     items — High-Priority Deals, Opportunities On Hold, Product Performance Summary —
-     are listed in the plan's scope table but have no `schemas.py`/`router.py` entry
-     spec'd yet; need fleshing out before build covers the full stated scope.
-  3. **Coverage Planning** — `docs/Coverage-Planning-Implementation-Plan.md`. Same
-     RLS-enable-only migration situation as Target Planning (`coverage_plan`/
-     `coverage_plan_entry` also live, unprotected, pre-Alembic). Permission shape is
-     the *reverse* of Target Planning — self-authored by the rep, not manager-set.
-     **4 open decisions**: who authors a plan (self vs. manager-delegated), whether
-     Account selection should be territory-restricted (nothing else in the app
-     restricts Account choice by zone/SBU today, so this would be a new precedent),
-     `coverage_frequency` as free text vs. a fixed picklist, and the same "approved
-     Target Plan" wording gap as Target Planning's decision.
+     Manager/Admin/GM see their team's count broken out per rep). **Product Performance
+     Summary spec'd and added as the plan's 6th Batch 1 tile, 2026-09-11** (raised
+     while discussing what to build after Target Planning) — `ProductPerformanceResponse`
+     (Quantity Sold, Revenue, Average Selling Price, Opportunity Count, Won/Lost counts,
+     grouped by Product/SBU) added to `docs/Insights-Dashboard-Implementation-Plan.md`'s
+     Domain section. **Two gaps found while spec'ing it, not yet resolved:** (1) the
+     PRD's Margin metric can't be computed — no product cost field exists anywhere in
+     `Physical-Schema.sql`, same category of gap as the missing stock-on-hand data
+     blocking the reorder-recommendation item below; dropped from this tile's scope
+     until a cost field exists. (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
+     the schema has no dedicated Brand field — only `product.oem_name` and
+     `product.category_name` — so Brand grouping is dropped too pending a decision on
+     whether `category_name` is meant to serve as Brand or a real field is needed.
+     **Real gap still open, not a decision, an incompleteness in the plan itself:** 2 of
+     the remaining 8 Batch 1 items — High-Priority Deals, Opportunities On Hold — are
+     still listed in the plan's scope table but have no `schemas.py`/`router.py` entry
+     spec'd yet; need fleshing out before build covers the full stated scope. **High
+     Priority itself also has an upstream gap:** PRD §3.9 just says "provide a High
+     Priority flag" with no definition of how it's set — raised 2026-09-11, see the
+     "Auto-computed High Priority flag" entry below for the concrete proposal now on the
+     table.
+  3. **Coverage Planning** — `docs/Coverage-Planning-Implementation-Plan.md`.
+     **All 4 open decisions resolved 2026-09-11 (Basheer), nothing built yet.** Who
+     authors a plan: **self-service, approved by the rep's own manager** — reverses
+     the original "self-service + manager delegation" proposal; a manager's role here
+     is approving, not authoring someone else's plan. Reuses Target Planning's exact
+     approval mechanism (same generic manager-chain resolution, same `status`/
+     `approved_by`/`approved_at` columns, added to `coverage_plan` this time — so
+     Coverage Planning's migration is **no longer RLS-only either**, same correction
+     as Target Planning's). Account selection: **restricted to the rep's own
+     territory** — reverses the original "leave it open" proposal; this is a genuinely
+     new precedent for the app (nothing else restricts Account choice by zone), and
+     since `account` has no `sbu_id`, it's enforced zone-based, as a service-layer
+     check when an entry is added, not an RLS policy. `coverage_frequency`: **not a
+     hardcoded picklist as decided same-day — superseded hours later** by the new
+     Reference Data Management Screen entry below, once that need was recognized as
+     bigger than just this one field; ships as a real `coverage_frequency` reference
+     table instead, editable through that new screen. The "approved Target Plan"
+     wording gap is resolved by Target Planning's own decision — `BR-PL-03` now checks
+     a literal `target_plan.status == 'APPROVED'`. Full detail:
+     `docs/Coverage-Planning-Implementation-Plan.md`.
   4. **Reporting Batch 2** (attainment %, Pipeline Coverage Ratio, Beat Plan
      Compliance) — needs both Target and Coverage Planning data to exist, necessarily
      last. Not separately scoped yet — fast-follow once #1 and #3 have real data.
 
   **Referral Credit Part 2 (was competing for the same queue slot) shipped
-  2026-08-27** — see that entry below. Target Planning is next in line for
-  this track, still gated on the 5 open decisions above; nothing built yet.
+  2026-08-27** — see that entry below. Target Planning is next in line for this
+  track — all open decisions resolved 2026-09-11 (see #1 above), nothing built yet.
+
+- **Reference Data Management Screen — spun out of Coverage Planning's
+  `coverage_frequency` decision, fully decided 2026-09-11, not yet built.** While
+  scoping Coverage Planning's "how often" dropdown, Basheer wanted Cabio staff to be
+  able to add/rename entries in short fixed-choice lists themselves (Hold Reasons,
+  Loss Reasons, Fast-Track Override Reasons, Lead Sources, Project Statuses,
+  Coverage Frequency) without a code deploy — one small generic screen rather than
+  six near-duplicate ones, config-driven off a registry. **All 3 decisions made same
+  day:** Admin/GM only (matches Territory Map/User Directory/Audit Log's existing
+  precedent); **Add and Rename only, deliberately no deactivate/reactivate** — a
+  known, explicit limitation, not an oversight (retiring an option still only happens
+  the old way, a direct data change); `coverage_frequency` gets a `display_order`
+  field since a frequency list reads naturally top-to-bottom, unlike e.g. Loss
+  Reasons. Deliberately excludes `opportunity_stage`/`opportunity_status` (their
+  fields carry real behavioral weight — win-probability, terminal-status — a generic
+  rename screen is the wrong tool), `zone` (already has Territory Map), and
+  `sbu`/`product`/`role` (structural entities, not label lists). Also closes a real
+  gap along the way: none of the six included tables are covered by the existing
+  audit trail today, so a mistaken rename would otherwise be untraceable — this build
+  extends the same ADR-017 trigger to all six. Full design:
+  `docs/Reference-Data-Management-Screen-Implementation-Plan.md`.
+
+- **Opportunity Support Attribution — discussion paper drafted 2026-09-12, core
+  shape decided by Basheer, one technical gap and several smaller questions still
+  open, awaiting a leadership discussion with Haroon/Latheef Bhai.** Raised on a
+  leadership concall: today there's no way to record that someone other than the
+  deal owner helped close a sale (a colleague running the demo, a service engineer
+  doing the installation/training) when that person isn't a formal co-owner
+  (`split`). Finance currently works this out by phoning the manager every
+  quarter-end — the ask is a structured, manager-reviewed report to hand Finance
+  instead, not to automate the incentive decision itself. **Proposed:** a new
+  no-login `support_staff` reference list (name + Application/Service area) and a new
+  `opportunity_support` record (who helped, what kind of support, a required note on
+  what was actually done) that the deal owner logs and the owner's own manager must
+  review — approving requires entering a suggested incentive %, rejecting excludes it
+  from everything downstream. A quarterly report to Finance lists only the approved
+  rows; Sales OS never computes or stores an actual payout figure, same Finance-owns
+  Payment/Invoice boundary the PRD already draws. **Real gap found while drafting,
+  needs a decision before this is scoped for build:** "GM gets automatic edit access
+  to any entry" was assumed to piggyback on the existing manager-visibility pattern,
+  but that pattern only ever checks one level up (`manager_id`) — if a GM sits two or
+  more levels above a rep, today's mechanism would **not** actually reach them
+  without new work (either confirm Cabio's real org chart makes every GM a direct
+  `manager_id`, or build a new recursive up-the-chain RLS check). **Smaller open
+  questions:** the exact fixed list of support types beyond Demo/Training/
+  Installation; whether Finance gets an in-app screen or a periodic export; whether a
+  rejected entry is visible to the rep who logged it; whether the rep can edit/
+  withdraw an entry before their manager reviews it. Full write-up:
+  `docs/Discussion-Opportunity-Support-Attribution-2026-09.md`.
 
 - **Annual Development-Activity KPI — a real manager-set target, tracked against
   Sales Development Activities.** Decided with Haroon 2026-08-27
