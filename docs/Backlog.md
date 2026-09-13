@@ -38,6 +38,53 @@ kept only as a pointer; nothing left to pick up here.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
+- **Account Directory / Pipeline filters — need Cabio leadership sign-off
+  before building anything.** Raised 2026-09-13 during the Phase 1
+  Delivery Scorecard review. `account.customer_type` and
+  `account.payer_behavior` already exist and could be exposed as filters
+  on the Account Directory screen; separately, each Opportunity already
+  links to its product(s) via `opportunity_item`, which could support a
+  product filter on the Pipeline board. Neither filter is built today —
+  the Account Directory screen currently filters only by Zone + a
+  hospital-name search box, and the Pipeline board only by Owner + Zone +
+  a deal-name/hospital-name search box. Two things to settle with Haroon/
+  Latheef Bhai before building either: (1) is this filtering actually
+  needed at all, or scope creep; (2) if needed, does every Sales Rep need
+  it as a day-to-day operational filter right on the Directory/Pipeline
+  screen, or is it only a manager/leadership planning need better served
+  by a report or dashboard tile instead (which should link into a
+  pre-filtered list rather than duplicating the filter UI a second time).
+  Note: no existing report already covers this — the Pipeline Value/
+  Forecast report only breaks down by Stage, Rep, SBU or Zone, and the
+  Product Performance report only shows won-deal revenue/quantity by
+  product/brand, not open pipeline value by product. So a "Pipeline
+  Analysis by Product" report, if leadership wants that route, would be
+  new work, not a filter relocated onto an existing screen.
+  **Basheer's steer (2026-09-13):** if a product filter is needed, it
+  belongs on a proper standalone **Pipeline Report** — which conveniently
+  is also a report PRD 5.6 (Core Reports) already asks for and that
+  doesn't exist yet today (only Product Performance is built from that
+  list of four; see the 11.1 row in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`). Building it would
+  close both gaps at once, rather than treating "add a Pipeline Report"
+  and "add a product filter" as two separate asks.
+  A related, still-open question from the same review: filtering Account
+  Directory by hospital class (A/B/C/D) or specialty depends on whether
+  Cabio decides that classification data is even required in the first
+  place — see the open item under Feature 5.1 in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`.
+
+- **Four more open questions for Haroon/Latheef Bhai, surfaced during the
+  same 2026-09-13 Phase 1 Delivery Scorecard review — none built, all
+  waiting on a "do we actually need this" answer before being scoped:**
+  (1) Feature 5.1, A/B/C/D hospital classification field — see above; (2)
+  Feature 5.1, Account Segmentation by size/specialty/revenue potential;
+  (3) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown); (4) Feature
+  1.3, letting the pipeline-stagnation time limit vary by product
+  category instead of one global 180-day threshold for everything. Full
+  detail and evidence for each: `docs/Signed-Requirements-to-PRD-
+  Traceability.md`, Module 1 and Module 3 tables.
+
 - ~~**Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
   concerns.**~~ — **DONE, 2026-09-10.** `reference/service.py` and
   `master_data.py` each had their own private constant with the same

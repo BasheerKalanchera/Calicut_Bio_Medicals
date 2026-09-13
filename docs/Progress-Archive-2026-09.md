@@ -2852,3 +2852,96 @@ withdraw an entry before their manager reviews it.
 not scoped for build until that conversation happens. Full write-up:
 `docs/Discussion-Opportunity-Support-Attribution-2026-09.md`. Also tracked in
 `docs/Backlog.md`.
+
+## 2026-09-13 (later) — Phase 1 Delivery Scorecard + signed-requirements traceability matrix built, then line-by-line verified against live code; ends at 18 Done / 18 Partial / 12 Not started of 48
+
+**Trigger:** Basheer wants to show Cabio leadership what's actually built against the
+Phase 1 signed-off requirements list, plus a "beyond contract" showcase of features
+built that were never asked for — for an upcoming leadership presentation.
+
+**First pass:** a research fork audited the codebase/schema/docs against all ~49
+lines of Basheer's pasted requirements list, module by module. Published as an
+Artifact, "Phase 1 Delivery Scorecard" (plain-language rows + evidence captions),
+with a "beyond the brief" section listing 15 built-but-unasked features.
+
+**Numbering mismatch found and root-caused:** Basheer's signed list numbers every
+requirement with a flat Feature ID (5.1 through 17.5) that doesn't restart per
+module; the PRD (`docs/Cabio Sales OS – Phase 1 - PRD.md`) reorganizes the same
+requirements into 7 modules with per-module numbering (1.1, 2.1, 3.1...). `git log
+--follow` on the PRD showed exactly one commit ever
+(`aeb70da "Finalized PRD reviews and prototype completion backlog v2"`) — the
+renumbering happened outside this repo's history, in whatever doc it was drafted in
+before being pasted in whole. One leftover heading, `### Feature 5.1 – Account
+Structure` inside PRD section 1.1, is the one surviving trace of the old scheme and
+confirmed the theory. Built `docs/Signed-Requirements-to-PRD-Traceability.md`
+mapping every signed Feature ID to its current PRD section, with one real
+placement mismatch flagged (Pre-Lead Scanning: signed doc files it under Activity
+Tracking, PRD keeps it under Opportunity Management) and a list of PRD sections
+that don't map to any signed line (elaboration, not scope creep).
+
+**Count correction:** the scorecard's first pass said 49 requirements (14/20/15);
+recounting Basheer's original pasted list by hand gives **48**, since one PRD
+line (Technical Architecture) bundles 4 signed Feature IDs — 15.1/15.2/16.1/16.2 —
+into a single requirement, which the scorecard had incorrectly split into two rows.
+Corrected everywhere.
+
+**Then walked the 20 "Partial" items one by one with Basheer, verifying each
+against the actual running code/schema, not just the fork's first-pass notes —
+several of the fork's original claims didn't hold up:**
+- **Moved to Done, 5 items:** 1.6 Sentiment (already captured at Stakeholder
+  level); 1.8 Feedback Collection (a Sales Rep can already log an Activity at
+  Account/Opportunity level for this — no dedicated field needed); 2.2/2.3/2.4
+  Product Catalog spec-linking/collateral/training-URLs (all covered by one
+  existing link mechanism on `ProductCatalogScreen.tsx` — a URL tagged
+  Brochure/Video/Image/Other per product; confirmed via
+  `backend/app/domains/document/schemas.py`'s own comment, "URL-only collateral
+  link today"); 3.11 Competitive Intelligence (the detailed spec defines this as
+  "captured as part of the interaction documentation" — already possible via a
+  free-text Activity note, no separate field required).
+- **Moved from Done to Partial, 1 item:** Pipeline filters by region/product/
+  salesperson — the original evidence cited the Reporting module's filters, not
+  the Pipeline board itself; the board only has Owner + Zone filters, no product
+  filter at all.
+- **Note corrected without a status change, several items:** 3.8 Kanban
+  "sorts by probability" was never actually true at the card level — checked
+  `OpportunityPipelineScreen.tsx` directly: stage columns are ordered (loosely
+  tracking probability via each stage's default), but cards within a column
+  aren't sorted by anything. 3.10 Lost Deal Intelligence and the Module 5
+  "Phase 1 analytics" row both got an explicit callout that no rolled-up loss
+  report exists anywhere (each loss just sits on its own deal record). 11.1
+  Core Reports' note expanded to spell out that of the four report types PRD 5.6
+  asks for (Sales/Pipeline/Product Performance/Margin), only Product Performance
+  actually exists.
+- **Reframed as open questions rather than flat gaps, on Basheer's steer:** 5.1
+  Account types (A/B/C/D class), 1.2 Account Segmentation, and 1.3 Customer
+  Tiering all now read "check with Haroon/Latheef Bhai whether this is
+  required" instead of a bare "not built" — same for the per-product-category
+  stagnation threshold under 3.3/3.4.
+
+**Final tally: 18 Done, 18 Partial, 12 Not started** of 48 signed requirements,
+plus the 15-item "Commitment beyond contract" list (renamed from "beyond the
+brief" per Basheer's wording) — item 13 (audit log) now names the exact 7 audited
+tables (`account`, `opportunity`, `opportunity_item`, `product`, `split`,
+`stakeholder`, `user_profile`, from `Physical-Schema.sql`'s `trg_audit_*`
+triggers), and item 14 (UAT environment) was reframed from generic "we have a
+test environment" (correctly challenged by Basheer as standard practice, not a
+feature) to the real reason it counts: the sales team is already entering live
+deals into UAT ahead of go-live, so that data — backed up, with copies on an
+external hard disk — carries straight into production rather than being
+re-entered from scratch.
+
+**New Backlog item opened:** whether Account Directory needs `customer_type`/
+`payer_behavior` filters and whether Pipeline needs a product filter — both
+depend on Cabio leadership confirming the need, and (Basheer's steer) if a
+product filter is wanted, it belongs on a proper standalone Pipeline Report
+(which conveniently is also a report PRD 5.6 already asks for and doesn't exist
+yet), not bolted onto the Kanban board. Logged in `docs/Backlog.md`.
+
+**All three artifacts kept in lockstep throughout** — every status/count change
+was applied to `docs/Signed-Requirements-to-PRD-Traceability.md`,
+`docs/Phase1-Delivery-Scorecard.md`, and the published HTML artifact (now at
+version 8) in the same pass, so none of the three could drift from the others.
+
+Full detail is in the two docs themselves, not repeated here:
+`docs/Signed-Requirements-to-PRD-Traceability.md` (the working reference) and
+`docs/Phase1-Delivery-Scorecard.md` (the leadership-facing summary, same tables).

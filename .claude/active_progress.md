@@ -1,6 +1,28 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-13_
 
+## 2026-09-13 session (later) — Phase 1 Delivery Scorecard + signed-requirements traceability matrix built and verified against live code
+
+Built for Basheer's upcoming Cabio leadership presentation: `docs/Signed-
+Requirements-to-PRD-Traceability.md` (maps every signed Feature ID to its PRD
+section and build status — the working reference) and `docs/Phase1-Delivery-
+Scorecard.md` (same data, leadership-facing summary), plus a matching published
+Artifact. Root-caused why the signed doc's numbering (Feature 5.1-17.5) doesn't
+match the PRD's own section numbers (one-time reorg, outside git history — see
+Progress Archive). Walked all 20 originally-"Partial" items one by one against
+the live schema/code, not just docs — corrected several the first-pass audit got
+wrong in both directions. Final tally: **18 Done, 18 Partial, 12 Not started**
+of 48 signed requirements, plus a 15-item "Commitment beyond contract" list.
+Full narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-13 (later)" entry.
+
+**Next step:** continue the Partial-item-by-item walkthrough with Basheer,
+starting at Module 4 (Activity Tracking) — Modules 1-3 and part of 5 are done.
+Separately, Basheer has a growing list of open questions to take to Haroon/
+Latheef Bhai before the leadership presentation is final: A/B/C/D hospital
+class, Account Segmentation, Customer Tiering, per-product-category stagnation
+threshold, and the Account Directory/Pipeline filter decision now in
+`docs/Backlog.md`.
+
 ## 2026-09-13 session — Backlog reconciliation: two days of undocumented planning decisions (Target/Coverage Planning, Reference Data screen, Support Attribution paper) synced in
 
 Basheer flagged the Backlog as stale. Found `docs/Target-Planning-Implementation-
