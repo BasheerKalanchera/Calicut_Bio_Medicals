@@ -1,5 +1,80 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-13_
+_Session: 2026-08-21 → 2026-09-14_
+
+## 2026-09-14 session — Partial-item walkthrough through Modules 4-7; tally now 23 Done / 15 Partial / 11 Not started of 49
+
+Continued the scorecard walkthrough through Modules 4, 5, and 6 (Governance
+& Admin). Several note corrections in Modules 4-5 (status unchanged, see
+Progress Archive for detail). In Module 6, Basheer flagged three items from
+memory as likely mis-scored — all three confirmed and flipped to Done:
+Territory/Zone Mapping (2.1 — PRD explicitly defers "Territory" to a future
+phase, so that wasn't a real gap; found a different real gap instead, PIN-
+code-to-Zone auto-mapping, which Basheer parked for Phase 2 in
+`docs/Backlog.md`), Product-Team Mapping (6.6 — SBU-scoped enforcement
+confirmed at the business-rule layer, BR-OP-11/12), and Workflow Rules/lead
+reassignment (13.1 — Opportunity Owner reassignment already scoped to a
+manager's own team; the Admin/GM approval half was optional in the original
+signed text anyway). All three artifacts (traceability doc, scorecard doc,
+published Artifact — now v11) updated in lockstep throughout. Full
+narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-14" entry.
+
+Also added a one-line note to Module 6b's Collateral Security row (4.1,
+still Not started, tally unchanged) — Basheer is planning to restrict
+Product Catalog access to Admin/GM only; confirmed live that today anyone of
+any role can view/edit the catalog, so there's no partial progress to
+credit yet, just a note that it's planned and will flip straight to Done
+once shipped. Then in Module 7, the "hybrid database" row (15.1/15.2/16.1/
+16.2) flipped Partial → Done — confirmed real PDF/JPG/PNG file uploads
+already exist at the Opportunity level (Supabase Storage, not just pasted
+links), which is what PRD 10's "structured + unstructured data" ask
+actually needed. Artifact now v13.
+
+**Walkthrough exercise closed out same session:** relabeled the scorecard's
+"Built, unasked" column to "New Features Added" (both docs + Artifact, now
+v14). Calculated real progress two ways: strictly-done is 23/49 = 46.9%;
+counting the 15 partly-done items as half-credit gives 62.2% — presented
+both, weighted one as the fairer "real progress" number.
+
+**Then built `docs/Phase1-Completion-Sprint-Plan.md`** — the 15 Partial rows
+(plus the Module 6b Collateral Security "Not started" row Basheer pulled in
+alongside them) sorted into: 8 items closeable **this week** (pure build
+work, no missing prerequisite), 4 items for **next week** (each needs a
+specific "Not started" row finished first — named per item), 4 items
+**blocked** on a Haroon/Latheef Bhai or leadership decision (not schedulable
+by engineering time), and 1 item (**Demo outcome tracking**) left as-is,
+confirmed acceptable for Phase 1. Full mapping of all 15 rows to their
+bucket is in that doc.
+
+**Then reconciled `docs/Backlog.md` against the scorecard's 26 pending
+rows** (full file read, 1,416 lines). Nothing stale from today's 4 Done-
+flips; the "blocked on decision" bucket was already well covered. 5 real
+gaps found (scorecard rows with no Backlog entry): Demo-to-sale conversion
+report, Exception report, Weekly Follow-up Report, Beat Planning, live-
+production-DB backup. **Basheer resolved 2 directly:** Beat Planning is the
+same build as Coverage Planning, not a second gap (confirmed field-for-field
+against the PRD text) — cross-referenced everywhere instead of duplicated;
+live-DB backup deferred to go-live (≥2 weeks out per Basheer), moved out of
+the Sprint Plan's "this week" into a new "Deferred to go-live" section, and
+parked in Backlog. **Added Backlog entries for the remaining 3** (Demo-to-
+sale conversion, Exception report, Weekly Follow-up Report — all "not
+blocked, just not built"). **Checked the Target Planning open question**
+Basheer asked about: confirmed via `Physical-Schema.sql` that `target_plan`
+has no product-category dimension at all (one row per user/SBU/quarter,
+single amount) — a real 4th open design question, not just a doc gap, added
+to the existing Target Planning Backlog entry, needs Basheer's call (fold
+into the upcoming migration vs. Phase 2 follow-on) before that feature ships.
+
+**Next step:** start on this week's 8 items from `docs/Phase1-Completion-
+Sprint-Plan.md`. Module 6's remaining "Not started" rows (Account Manager
+role, Target Management) and the rest of Module 7 (the RBAC/encryption/
+backup row) never got the closer re-verification pass the rest of the
+scorecard did — low priority now that the sprint plan exists, but worth a
+mention if Basheer asks why they weren't touched. Separately, Basheer's open
+questions for Haroon/Latheef Bhai before the leadership presentation is
+final are unchanged: A/B/C/D hospital class, Account Segmentation, Customer
+Tiering, per-product-category stagnation threshold, the Account Directory/
+Pipeline filter decision, Margin (product cost capture), and now the Target
+Planning product-category split question — all in `docs/Backlog.md`.
 
 ## 2026-09-13 session (later) — Phase 1 Delivery Scorecard + signed-requirements traceability matrix built and verified against live code
 
@@ -11,17 +86,10 @@ Artifact. Root-caused why the signed doc's numbering (Feature 5.1-17.5) doesn't
 match the PRD's own section numbers (one-time reorg, outside git history — see
 Progress Archive). Walked all 20 originally-"Partial" items one by one against
 the live schema/code, not just docs — corrected several the first-pass audit got
-wrong in both directions. Final tally: **18 Done, 18 Partial, 12 Not started**
-of 48 signed requirements, plus a 15-item "Commitment beyond contract" list.
-Full narrative: `docs/Progress-Archive-2026-09.md`'s "2026-09-13 (later)" entry.
-
-**Next step:** continue the Partial-item-by-item walkthrough with Basheer,
-starting at Module 4 (Activity Tracking) — Modules 1-3 and part of 5 are done.
-Separately, Basheer has a growing list of open questions to take to Haroon/
-Latheef Bhai before the leadership presentation is final: A/B/C/D hospital
-class, Account Segmentation, Customer Tiering, per-product-category stagnation
-threshold, and the Account Directory/Pipeline filter decision now in
-`docs/Backlog.md`.
+wrong in both directions. Final tally (superseded 2026-09-14, see above):
+18 Done, 18 Partial, 12 Not started of 48 signed requirements, plus a 15-item
+"Commitment beyond contract" list. Full narrative: `docs/Progress-Archive-2026-
+09.md`'s "2026-09-13 (later)" entry.
 
 ## 2026-09-13 session — Backlog reconciliation: two days of undocumented planning decisions (Target/Coverage Planning, Reference Data screen, Support Attribution paper) synced in
 

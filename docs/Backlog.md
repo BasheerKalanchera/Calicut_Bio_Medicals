@@ -21,7 +21,53 @@ preserved in `docs/Progress-Archive-2026-08.md` before that cleanup
 removed the narrative from the standards doc itself. This backlog section
 kept only as a pointer; nothing left to pick up here.
 
+### Live production database backup — deferred until go-live (2026-09-14)
+
+PRD 10 (System & Architecture Constraints → Security & Compliance) asks for a
+backup/DR routine on the live database; today a tested, working one exists
+only for UAT (`scripts/backup_uat.ps1`). Surfaced during the Phase 1
+Completion Sprint Plan prioritization, 2026-09-14. **Basheer's call: not
+urgent yet** — there's no production environment to back up until go-live,
+which is at least 2 weeks out. No code work needed now. **When it's time:**
+the UAT script's pattern (Docker-based `pg_dump`, self-starts/stops Docker,
+14-day local retention) is already built and verified — extending it to Prod
+is a fast follow, not new engineering.
+
+### PIN Code → Zone auto-mapping — parked for Phase 2 (2026-09-14)
+
+PRD 6.2 (Geographic Coverage & Ownership Mapping) asks for a hospital's Zone
+to be derived automatically from its PIN code. Today it's picked by hand
+when the account is created (`account.zone_id`, direct field, no PIN-code
+lookup anywhere). Found during the Phase 1 Delivery Scorecard walkthrough,
+2026-09-14. **Basheer's call: not for Phase 1** — minimal data entry is the
+priority, and building this would mean replicating the full Kerala/
+Karnataka postal-code-to-zone mapping table inside the system, which isn't
+worth it yet. Revisit if/when PIN-code coverage data becomes available or
+the manual picking becomes an actual pain point.
+
 ## Deferred / undecided items
+
+- **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
+  (Demo Management) asks for a report showing what share of demos actually
+  convert to a sale. Found missing during the Phase 1 Delivery Scorecard
+  walkthrough, 2026-09-14 (Signed Feature 6.1's own row in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`). Not blocked on a
+  decision — a demo happened if `demo_start_date` is set, and win/loss is
+  already tracked via `opportunity_status` — but not scoped or built yet.
+
+- **Exception report: zero lead activity over 3 months — not built, no
+  design started.** PRD 5.7 (Exception Reports) asks for a report flagging
+  accounts/leads with no logged Activity in the last 3 months, to catch a
+  relationship going quiet before it's lost. Found missing 2026-09-14. Not
+  blocked on a decision — the data (`activity.activity_date` per account) is
+  already there — just not scoped or built yet.
+
+- **Weekly Follow-up Report — not built, blocked on the High Priority flag.**
+  PRD 5.8 asks for a weekly report surfacing high-priority deals, deals over
+  70% likely to close, stagnant deals, and overdue reminders. Found missing
+  2026-09-14. Three of the four inputs already exist (win probability,
+  Stagnant Deals, Reminders); the fourth needs the "Auto-computed High
+  Priority flag" entry below built and leadership-confirmed first.
 
 - **Codify the searchable-account-picker pattern in
   `Frontend-Implementation-Standards.md` — not yet written down.** Four
@@ -738,6 +784,15 @@ kept only as a pointer; nothing left to pick up here.
      anything that reads target data (e.g. a future Attainment % tile) — proposed no
      (`APPROVED` only), unconfirmed. Full detail and the resolved backend/frontend
      design: `docs/Target-Planning-Implementation-Plan.md`.
+     **4th open question, found 2026-09-14, not just a doc gap — confirmed missing
+     from the actual design:** PRD 6.5 (Feature 3.1's other half) asks for target
+     splitting by product category, but `target_plan` as designed is one row per
+     (user, SBU, quarter) with a single `target_amount_lakhs` — no product-category
+     dimension anywhere in the schema or the 5 resolved decisions above. Needs
+     Basheer's call before the migration ships: fold a `product_category_id` (or
+     similar) into `target_plan` now, or treat per-category targets as a deliberate
+     Phase 2 follow-on, same shape as the Annual Development-Activity KPI's own
+     "own table, later" pattern below.
   2. **Insights Dashboard / Reporting Batch 1** — `docs/Insights-Dashboard-Implementation-Plan.md`.
      Zero dependency on Target or Coverage Planning — split out from the PRD's much
      larger Reporting & Review Module (§5) to the target-independent subset: Pipeline
@@ -772,7 +827,9 @@ kept only as a pointer; nothing left to pick up here.
      Priority flag" with no definition of how it's set — raised 2026-09-11, see the
      "Auto-computed High Priority flag" entry below for the concrete proposal now on the
      table.
-  3. **Coverage Planning** — `docs/Coverage-Planning-Implementation-Plan.md`.
+  3. **Coverage Planning** (also satisfies signed Feature *(untagged)*, PRD 6.1
+     "Beat Planning" — confirmed field-for-field match, 2026-09-14: not two
+     separate things, same build) — `docs/Coverage-Planning-Implementation-Plan.md`.
      **All 4 open decisions resolved 2026-09-11 (Basheer), nothing built yet.** Who
      authors a plan: **self-service, approved by the rep's own manager** — reverses
      the original "self-service + manager delegation" proposal; a manager's role here

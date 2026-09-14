@@ -34,7 +34,7 @@ actual backend/frontend code, not just documentation:
   missing or works differently than specified (see the Notes column).
 - **Not started** — no evidence of this in the schema or code yet.
 
-**Current tally: 18 Done · 18 Partial · 12 Not started** (48 signed lines
+**Current tally: 23 Done · 15 Partial · 11 Not started** (49 signed lines
 tracked below).
 
 ---
@@ -81,8 +81,8 @@ tracked below).
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | 1.2 | Pre-lead scanning (marketing visits, no active lead) | 3.2 Pre-Lead Scanning | Done | **Placement mismatch** — signed doc files this under Activity Tracking; PRD keeps it under Opportunity Management. Content matches; module placement doesn't. See Open Item below |
-| 6.1 | Demo outcome tracking + demo-to-sale conversion | 4.2 Demo Management | Partial | Demo dates and outcome gate exist; no conversion-rate report |
-| 6.2 | Field visit logging with purpose/outcome dropdowns | 4.1 Field Visit Management | Partial | Visits are logged, but purpose/outcome are free text, not dropdowns |
+| 6.1 | Demo outcome tracking + demo-to-sale conversion | 4.2 Demo Management | Partial | Demo Start/End Date is a proper field; outcome is only captured if the rep chooses to write it into the Activity note tied to the deal — no dedicated outcome field, and nothing blocks the deal from advancing if it's skipped. Conversion-rate reporting is now tracked separately in Module 5 (Reporting & Review) |
+| 6.2 | Field visit logging with purpose/outcome dropdowns | 4.1 Field Visit Management | Done | Rep picks the activity type (Visit, Call, Email, Meeting...) from a dropdown, then records purpose/outcome as free text within that entry — satisfies the PRD's "capture visit purpose, outcome, notes" ask without a second dropdown specifically for purpose/outcome |
 | 9.1 | Mandatory interaction summaries for completed deals | 4.3 Interaction Logging (also 4.6 Knowledge Repository) | Done | |
 | 13.1 | Automated follow-up reminders | 4.4 Workflow Automation | Done | |
 | 13.2 | Automated stagnant-deal alerts | 4.5 Pipeline Aging Alerts | Partial | A stagnant-deals report exists; no automated flip/notification when a deal goes stale — no scheduler exists yet |
@@ -91,9 +91,10 @@ tracked below).
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecast values calculated by team/region, not yet by month/quarter; 3x alert depends on Target Management, which isn't built yet (Module 6) |
+| 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecast values are calculated by stage, rep, SBU, and zone — never by month/quarter or by product, both of which the requirement asked for. The month/quarter gap also needs Target Management (Module 6), which isn't built yet |
 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Insights Dashboard live with role-based visibility; no GM-specific widgets yet |
-| 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Product-level revenue/quantity/price built; no brand grouping or margin, since product cost isn't stored |
+| 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Product-level revenue/quantity/price and brand grouping are both built and were verified live 2026-09-11 (Product Performance report's By-Brand option, `product.oem_name` used as brand); only Margin is missing, since product cost isn't stored anywhere in the system |
+| 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started | No report exists showing what share of demos actually convert to a sale. See 4.2 Demo Management (Module 4) for demo outcome capture status |
 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | PRD 5.6 asks for four report types (Sales, Pipeline, Product Performance, Margin). Only Product Performance exists as a named report. No standalone Pipeline Report exists — pipeline numbers only live inside the Insights Dashboard's "Pipeline Value" widget, broken down by Stage/Rep/SBU/Zone, not by product. No Sales Report exists as a distinct screen. No Margin Report exists — product cost isn't stored anywhere, so margin can't be calculated at all |
 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Not started | No such report exists |
 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion derivable from won/lost counts; pipeline aging deliberately deferred — no stage-history table. Also missing: a rolled-up loss report — there's no summary screen anywhere that would show, across all lost deals, "we lose most often to Siemens" or "our #1 loss reason is Price"; each loss just sits on its own deal record (see 3.10 Lost Deal Intelligence notes above) |
@@ -104,19 +105,19 @@ tracked below).
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Not started | Database tables exist; no API or screen built |
-| 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Partial | Nested zone hierarchy acts as territory; multi-rep ownership per account already works; no distinct "Territory" entity |
+| *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Not started | This is the same feature as "Coverage Planning" internally — PRD 6.1's ask (hospitals to cover, planned visits, strategic objective, expected revenue) matches `docs/Coverage-Planning-Implementation-Plan.md` field-for-field. Not a separate gap: already fully scoped, all decisions resolved 2026-09-11 (`docs/Backlog.md`, Milestone 2), just not built yet — queued behind Target Planning |
+| 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Done | Zone Management, User-to-Zone Assignment, Zone-based Reporting and Zone-based Visibility (all five things PRD 6.2 actually lists) are all built; multi-rep ownership per account already works too. PRD 6.2 itself defers a full "Territory" entity to a future phase, so its absence isn't a gap. One thing PRD 6.2 does ask for and isn't built — a hospital's Zone being derived automatically from its PIN code, rather than picked by hand — is a deliberate Phase 1 call (Basheer, 2026-09-14): minimal data entry over automation, and would need Kerala/Karnataka's full postal code table replicated in the system. Parked as a Phase 2 idea in `docs/Backlog.md` |
 | *(untagged, optional)* | Account Manager role per customer | 6.3 Account Manager Assignment | Not started | Not yet conceptualized; needs leadership sign-off before design starts, per plan |
 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Not started | Database table exists; no API or screen built |
 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Not started | Same dependency as Target Management |
-| 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Not started | No mapping table found |
-| 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Not started | No such workflow logic found |
+| 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Done | Enforced end-to-end at the business-rule layer (BR-OP-11/BR-OP-12): a rep's Opportunity is created in their own SBU by default, and a Product can only be added to an Opportunity if the product's own SBU matches — an Imaging rep's deal genuinely cannot take a Critical Care product, rejected server-side, not just hidden in the UI |
+| 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Done | A manager can already reassign an Opportunity's owner to anyone in their own visible team (the owner picker is tier-visibility-scoped, same restriction as Split participants) — covers the actual ask. The "Admin/GM approval" half was flagged as optional/"future phases" in Cabio's own signed requirement text, so its absence isn't counted as a gap |
 
 ## 6b. Admin (Power User): User Roles & Access Control
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Not started | Collateral isn't classified by type yet (Module 2), so there's nothing specific to restrict beyond general business-unit isolation. Same Feature ID (4.1) as the Product Structure requirements in Module 2 — the signed doc treats catalog structure and catalog security as one umbrella feature |
+| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Not started | Today, any logged-in user of any role can view and edit the Product Catalog — nothing restricts it beyond general business-unit isolation, so there's no partial progress to credit yet. **Planned (Basheer, 2026-09-14): restrict Product Catalog access to Admin/GM only** — a clean on/off gate, will flip straight to Done once shipped. Same Feature ID (4.1) as the Product Structure requirements in Module 2 — the signed doc treats catalog structure and catalog security as one umbrella feature |
 | 12.1, 12.2 | Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits | 7. User Roles & Access Control Module → Roles, Access Control | Done (exceeds spec) | Enforced at the database level via Row-Level Security, not just app-level checks — a stronger guarantee than asked for |
 
 ## 7. System & Architecture Constraints
@@ -124,7 +125,7 @@ tracked below).
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | 14.1, 14.2 | Responsive Web App (iOS/Android), simple UI minimizing manual entry | 10. System & Architecture Constraints → Mobility & UX | Done (exceeds spec) | Installable as a Progressive Web App, not just a responsive site |
-| 15.1, 15.2, 16.1, 16.2 | Cloud deployment, API-first architecture, multi-region scalability, hybrid database | 10. System & Architecture Constraints → Technical Architecture, Scalability Requirements, Database Design | Partial | Cloud/API-first/scalable foundation is done; the "hybrid database" half is limited — only `jsonb` fields for semi-structured data, no true document/blob store |
+| 15.1, 15.2, 16.1, 16.2 | Cloud deployment, API-first architecture, multi-region scalability, hybrid database | 10. System & Architecture Constraints → Technical Architecture, Scalability Requirements, Database Design | Done | Cloud/API-first/scalable foundation is done. The "hybrid database" half is also done — real PDF/JPEG/PNG files are uploaded into Supabase Storage at the Opportunity level (`document.storage_path`, 4MB limit, signed download URLs), not just pasted links, sitting alongside the structured Postgres tables — exactly what PRD 10's "Database Design: Structured data / Unstructured data" asks for |
 | 16.1, 16.2, 16.3, 16.4 | Cloud deployment; hybrid DB; role-based access, encryption, backup/DR frequency | 10. System & Architecture Constraints → Database Design, Security & Compliance | Partial | RBAC done thoroughly; encryption relies on the hosting provider's standard protections; a tested backup process exists for UAT only, not yet for the live day-to-day database |
 
 ---

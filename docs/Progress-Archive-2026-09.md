@@ -2945,3 +2945,186 @@ version 8) in the same pass, so none of the three could drift from the others.
 Full detail is in the two docs themselves, not repeated here:
 `docs/Signed-Requirements-to-PRD-Traceability.md` (the working reference) and
 `docs/Phase1-Delivery-Scorecard.md` (the leadership-facing summary, same tables).
+
+## 2026-09-14 — Partial-item walkthrough resumed at Module 4 (Activity Tracking); two corrections, tally now 19/17/13 of 49
+
+Continued the item-by-item verification with Basheer, picking up at Module 4
+per the prior session's handover. Field visits (6.2) and stagnant-deal alerts
+(13.2) checked out as already written. Demo tracking (6.1) did not: the
+scorecard had claimed an "outcome gate" existed alongside the demo dates, but
+`validators.py` explicitly documents the Demo → Clinical Evaluation gate as
+deferred and `demo_outcome` as not in schema — only `demo_start_date`/
+`demo_end_date` are real fields. A `demoOutcome` dropdown does exist, but only
+in the legacy pre-migration `App.jsx` prototype, disconnected from the live
+FastAPI backend, so it doesn't count.
+
+**Basheer made two calls on presenting this to leadership, both applied:**
+1. **6.2 (Field Visit, PRD 4.1) moved from Partial to Done.** His read: PRD
+   4.1 only asks that visit purpose/outcome/notes be *captured*, not that
+   purpose and outcome each get their own dropdown — and the rep already
+   picks the activity type (Visit, Call, Email, Meeting...) from a real
+   dropdown, then free-texts purpose/outcome underneath. That satisfies the
+   ask.
+2. **New row added to Module 5 (Reporting & Review):** "Demo-to-sale
+   conversion report" (Signed Feature 6.1, PRD 4.2), status **Not started** —
+   PRD 4.2 asks for this as its own deliverable ("track demo-to-sale
+   conversion metrics"), so it's pulled out of 6.1's note and given its own
+   line rather than being buried as an aside. 6.1 itself stays Partial, note
+   corrected to say outcome is only ever captured via a free-text Activity
+   note if the rep chooses to write one — no dedicated field, and nothing
+   enforces it before the deal moves forward.
+
+Tally: **19 Done, 17 Partial, 13 Not started** of **49** signed requirements
+(was 18/18/12 of 48). All three artifacts updated in the same pass —
+`docs/Signed-Requirements-to-PRD-Traceability.md`,
+`docs/Phase1-Delivery-Scorecard.md`, and the published Artifact (now version
+9, same URL as before).
+
+**Same session, continued into the remainder of Module 5 (Reporting &
+Review) — two more note corrections, no status/count changes.** Checked all
+six remaining Partial rows against the live code:
+- **Forecasting (2.5) — note was incomplete.** It only blamed "no month/
+  quarter breakdown"; the actual query (`ReportingRepository.pipeline_
+  summary`, `_GROUP_BY_COLUMNS` in `backend/app/domains/reporting/
+  repository.py`) groups by stage/rep/sbu/zone only — no product dimension
+  either, and the signed requirement explicitly asked for a product
+  breakdown too. Note corrected to name both gaps.
+- **Revenue per product/brand (4.3) — note was wrong, in the generous
+  direction.** It claimed brand grouping didn't exist; `ProductPerformance
+  GroupBy = Literal["product", "brand", "sbu"]` (schemas.py) and the
+  repository's `brand_expr` (using `product.oem_name` as brand, confirmed
+  against real UAT data) show it's built — and it was already verified live
+  2026-09-11 per that day's own Progress Archive entry (the By-Brand vs.
+  By-Product distinct-count check). Only Margin is genuinely missing, since
+  product cost isn't stored anywhere. Note corrected.
+- Dashboards (3.2), Core Reports (11.1), Phase 1 analytics (11.1), and
+  drill-down (11.2) all checked out exactly as already written — no changes.
+
+Status stayed Partial on both corrected rows; only the reasoning changed.
+Module 5 is now fully walked. All three artifacts updated again in the same
+pass (Artifact now version 10).
+
+**Same session, continued into Module 6 (Governance & Admin) — Basheer
+flagged three items from memory as likely mis-scored; all three confirmed,
+with one having a real, previously-unflagged gap underneath it. Tally now
+22 Done, 16 Partial, 11 Not started of 49.**
+- **Territory & Ownership Mapping (2.1, PRD 6.2) — Partial → Done, but the
+  original reasoning was wrong on both counts.** The existing note
+  complained about no distinct "Territory" entity beyond the zone
+  hierarchy; checking the PRD's own text (§6.2) shows Territory is
+  explicitly deferred to a *future* phase — never a Phase 1 ask — so that
+  was never a real gap. What the PRD *does* ask for and isn't built: a
+  hospital's Zone derived automatically from its PIN code (`account.
+  zone_id` is picked by hand, no PIN-code lookup exists anywhere).
+  **Basheer's call: park it for Phase 2** — minimal data entry is the
+  Phase 1 priority, and building it would mean replicating the full
+  Kerala/Karnataka postal-code table in the system. Logged in
+  `docs/Backlog.md`. Zone Management/User-to-Zone/Zone Reporting/Zone
+  Visibility (the five things PRD 6.2 actually lists) and multi-rep
+  ownership per account are all genuinely built, so Done is correct as
+  scoped for Phase 1.
+- **Product-Team Mapping (6.6) — Not started → Done.** Confirmed at the
+  business-rule layer, not just the UI: `opportunity/service.py`'s
+  BR-OP-11/BR-OP-12 — a rep's Opportunity defaults to their own SBU, and
+  `_validate_item_sbus` rejects adding any Product whose `sbu_id` doesn't
+  match the Opportunity's own. An Imaging rep's deal genuinely cannot take
+  a Critical Care product; the system rejects it server-side.
+- **Workflow Rules / lead reassignment (13.1, PRD 6.7) — Not started →
+  Done.** `Business-Rules.md` BR-ACT-06 confirms the Opportunity Owner
+  picker is tier-visibility-scoped (same restriction as Split
+  participants) — a manager can already hand a deal to anyone in their own
+  visible team. The "Admin/GM approval" half of the original ask was
+  already marked optional/"future phases" in Cabio's own signed
+  requirement text (Basheer pasted the raw wording to confirm), so its
+  absence doesn't count against this item.
+
+All three artifacts (traceability doc, scorecard doc, Artifact — now v11)
+updated in the same pass. Module 6 (all 7 rows) now fully walked.
+
+**Same session, Module 6b — Collateral Security (Feature 4.1, PRD 7)
+checked, stays Not started, note added.** Basheer's plan: restrict Product
+Catalog access to Admin/GM only, and asked whether that makes today's state
+"partly done." Confirmed live in the code first: `product_read_all` (RLS)
+is `USING (true)` — any logged-in user of any role can already view every
+product, and `product_insert/update/delete_sbu_scoped` only checks business
+unit, never role, so any Sales Staff can add/edit/delete catalog products
+today. Nothing toward "managers only" exists yet, so **Not started** stays
+correct — "Partial" is reserved for something already built toward the ask,
+and there's genuinely nothing here yet. Added a one-line "planned" note
+instead, flagging it as a clean on/off gate that will flip straight to Done
+once shipped, no partial state in between. Artifact now v12.
+
+**Same session, Module 7 — "hybrid database" (Feature 15.1/15.2/16.1/16.2,
+PRD 10) flipped Partial → Done.** Basheer pointed out that real PDF/JPG
+uploads already exist at the Opportunity level and asked if that counts as
+true document storage. Confirmed in `backend/app/domains/document/
+service.py`'s `upload_document`: real file bytes (PNG/JPEG/PDF, 4MB limit)
+go into Supabase Storage at `opportunity/{id}/...`, with signed download
+URLs and clean deletion — a genuinely different mechanism from the Product
+Catalog's URL-only collateral links (`_is_external_link` in the same file
+distinguishes the two). PRD 10's Database Design section literally asks for
+"Structured data / Unstructured data" — this satisfies the unstructured
+half. Since the row's other three sub-asks (cloud deployment, API-first,
+scalability) were already marked Done, the whole row moves to Done. A
+separate nearby row also mentioning "hybrid DB" (bundled with RBAC/
+encryption/backup) stays Partial — its real gap is the live production
+database still lacking a backup routine, unrelated to this point. Tally now
+**23 Done, 15 Partial, 11 Not started** of 49. All three artifacts updated
+(Artifact now v13).
+
+**Same session, closed out the scorecard exercise.** Renamed the "Built,
+unasked" column to "New Features Added" (both docs + Artifact, now v14).
+Calculated real progress two ways: strictly-done is 23/49 = 46.9%;
+half-credit for the 15 partly-done items gives (23 + 7.5)/49 = 62.2% — the
+fairer "real progress" figure. Then built a prioritized build order for the
+15 Partial rows, `docs/Phase1-Completion-Sprint-Plan.md`: 8 closeable this
+week with no missing prerequisite, 4 for next week each behind a specific
+"Not started" row (named per item — Manual High Priority toggle, Target
+Management, or a new stage-history table), 4 blocked on a Haroon/Latheef
+Bhai or leadership decision, and Demo outcome tracking left as-is per
+Basheer's earlier call. One correction along the way: Basheer initially
+read "Product hierarchy pick-list" (Feature 4.1, Module 2) as the same item
+as the Admin/GM catalog-access restriction (also Feature 4.1, but Module 6b)
+— the signed doc genuinely reuses Feature ID 4.1 for two unrelated
+requirements (already flagged in the traceability doc's own text); clarified
+the distinction, and on Basheer's call pulled the Module 6b row into this
+week's list too, even though it was never one of the 15 Partial rows (it's
+Not started).
+
+**Same session, closed with a Backlog.md ↔ scorecard reconciliation pass.**
+Read the full 1,416-line Backlog.md against the scorecard's 26 pending rows.
+Findings: nothing stale (none of today's 4 Done-flips left a contradicting
+Backlog entry); the "blocked on decision" bucket was already well covered
+(A/B/C/D class, Segmentation, Tiering, per-category stagnation, Pipeline
+product filter, High Priority flag, Account Manager). Five real gaps found —
+scorecard-pending rows with no Backlog entry at all: Demo-to-sale conversion
+report, Exception report (3-month zero activity), Weekly Follow-up Report,
+Beat Planning, and the live-production-DB backup.
+
+**Basheer resolved two on the spot:**
+1. **Beat Planning isn't a separate gap.** Checked PRD 6.1's exact text
+   ("hospitals to cover / planned visits / strategic objective / expected
+   revenue") against `docs/Coverage-Planning-Implementation-Plan.md` — exact
+   field-for-field match (`strategic_objective`, `target_revenue_lakhs`,
+   territory-scoped account selection, `coverage_frequency`). It's the same
+   build as the already-fully-scoped Coverage Planning (Milestone 2), just
+   different naming — cross-referenced everywhere (traceability doc,
+   scorecard, Artifact v16, Backlog's Milestone 2 entry) rather than treated
+   as two things.
+2. **Live production DB backup deferred to go-live** (Basheer: at least 2
+   weeks out, nothing to back up until Prod exists) — pulled out of the
+   Sprint Plan's "this week" list into a new "Deferred to go-live" section,
+   and logged as a parked Backlog item (the UAT script's pattern is already
+   built/tested, so it's a fast follow when the time comes, not new work).
+
+**Then added the 3 remaining missing Backlog entries** (Demo-to-sale
+conversion report, Exception report, Weekly Follow-up Report — all "not
+blocked, just not built yet," per the scorecard's own notes) **and checked
+the Target Planning open question:** confirmed via `Physical-Schema.sql`
+that `target_plan` is genuinely one row per (user, SBU, quarter) with a
+single `target_amount_lakhs` — no product-category dimension anywhere, and
+none of the 5 already-resolved Target Planning decisions address it either.
+This is a real 4th open question in the design, not just a missing Backlog
+line — added as such to the existing Target Planning entry, flagging it
+needs Basheer's call (fold into the upcoming migration vs. a deliberate
+Phase 2 follow-on) before that feature ships.
