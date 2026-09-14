@@ -1,7 +1,7 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-14_
 
-## 2026-09-14 session — Partial-item walkthrough through Modules 4-7; tally now 23 Done / 15 Partial / 11 Not started of 49
+## 2026-09-14 session — Partial-item walkthrough through Modules 4-7; tally now 23 Done / 15 Partial / 12 Not started of 50
 
 Continued the scorecard walkthrough through Modules 4, 5, and 6 (Governance
 & Admin). Several note corrections in Modules 4-5 (status unchanged, see
@@ -64,7 +64,65 @@ single amount) — a real 4th open design question, not just a doc gap, added
 to the existing Target Planning Backlog entry, needs Basheer's call (fold
 into the upcoming migration vs. Phase 2 follow-on) before that feature ships.
 
-**Next step:** start on this week's 8 items from `docs/Phase1-Completion-
+**Commit `ac96b8c`** covers everything through the Backlog reconciliation
+pass above.
+
+**Then split one more row out: Competitive Loss Report.** Basheer asked
+whether the "rolled-up loss report" mentioned in the Sprint Plan deserved
+its own scorecard line — checked the PRD, Appendix A.3.5 names it as its own
+deliverable, same shape as the earlier Demo-to-sale conversion report split.
+Added as Feature 1.4's second row in Module 5 (Not started), trimmed the
+now-redundant mentions out of two other rows, updated the Sprint Plan's item
+3 to reference it. Tally now **23 Done, 15 Partial, 12 Not started of 50**
+(was 49) — real progress recalculated: 46.0% strictly done, 61.0% weighted.
+Artifact now v17.
+
+**Then Pipeline product filter (Feature 2.2) resolved** — Basheer decided it
+belongs on the standalone Pipeline Report, not bolted onto the Kanban board;
+moved out of the Sprint Plan's "blocked" bucket into next week's Sales
+Report + Pipeline Report item, note corrected in all 3 scorecard artifacts
+(now v18) and in the Backlog entry (Pipeline half now decided; Account
+Directory hospital-class filter half stays open). **Not yet committed.**
+
+**Then Haroon confirmed both open questions from above.** Stagnant-deal
+thresholds: real per-stage numbers (Lead 14d, Qualified 7d, Demo 7d,
+Negotiation 5d, Order 2d, Delivery & Installation 30d), configurable per SBU,
+same for both today — turned out `Business-Rules.md`'s `BR-OP-06` already had
+this exact rule designed with a placeholder 180-day flat number; rewritten
+with the real thresholds + SBU-configurability. Resolves Feature 1.3
+(Module 3) and Feature 13.2 (Module 4) at once — same build, this week.
+Product cost: Haroon confirmed it can be added, Admin/GM-only; Basheer
+confirmed Margin (wherever shown) carries the same restriction. New rule
+**BR-CAT-04** added, cross-referenced from BR-CAT-01. Resolves Feature 4.3
+and 11.1's Margin Report half (both Module 5) — moved from "blocked" to a
+new "Product cost + Margin" item, next week. All 4 affected scorecard rows +
+Backlog (3 places) + Sprint Plan updated in the same pass. Artifact now v19.
+
+**Then Haroon confirmed the actual High Priority rule** — replacing, not
+refining, the earlier ₹30L/₹15L + 14-day proposal. New rule (BR-OP-15,
+`Business-Rules.md`): any deal past Demo stage is automatically High
+Priority (computed, no field); Lead/Qualified/Demo deals need a manual flag
+a person sets by hand (does need a new `opportunity` field). Updated Feature
+2.2's row across all 3 scorecard artifacts (now v20, still Not started, note
+now reflects the confirmed rule), the Sprint Plan's this-week item, the
+Weekly Follow-up Report Backlog entry (no longer blocked), and caught/fixed
+a stale "Opportunities On Hold unbuilt" claim in the Insights Dashboard gap
+note along the way (it shipped 2026-09-11).
+
+**Then A/B/C/D hospital class (Feature 5.1) resolved** — Haroon confirmed
+parked for Phase 2. Backlog's open-questions entry drops to two
+(Segmentation, Tiering); Account Directory filter cross-reference updated
+(A/B/C/D filter now moot too). Status stays Partial, note updated across all
+3 scorecard artifacts (now v21). Sprint Plan's "Blocked" bucket is now
+empty — replaced with a "Parked for Phase 2" section.
+
+**Nothing from this session is committed since `ac96b8c`** — everything from
+the Competitive Loss Report split onward (Pipeline filter resolution,
+stagnant-deal thresholds, product cost/Margin, High Priority rule, A/B/C/D
+class deferral) is still pending a commit.
+
+**Next step:** commit everything above, then start on this week's items from
+`docs/Phase1-Completion-
 Sprint-Plan.md`. Module 6's remaining "Not started" rows (Account Manager
 role, Target Management) and the rest of Module 7 (the RBAC/encryption/
 backup row) never got the closer re-verification pass the rest of the

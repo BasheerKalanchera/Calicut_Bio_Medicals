@@ -34,7 +34,7 @@ actual backend/frontend code, not just documentation:
   missing or works differently than specified (see the Notes column).
 - **Not started** — no evidence of this in the schema or code yet.
 
-**Current tally: 23 Done · 15 Partial · 11 Not started** (49 signed lines
+**Current tally: 23 Done · 15 Partial · 12 Not started** (50 signed lines
 tracked below).
 
 ---
@@ -43,7 +43,7 @@ tracked below).
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| 5.1 | Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers) | 1.1 Account Structure & Hierarchy | Partial | Hospital type and corporate grouping exist; A/B/C/D class field not built — check with Haroon/Latheef Bhai whether this is required |
+| 5.1 | Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers) | 1.1 Account Structure & Hierarchy | Partial | Hospital type and corporate grouping exist; A/B/C/D class field not built. **Resolved, Haroon confirmed 2026-09-14: parked for Phase 2**, not required for Phase 1 |
 | 5.1 | Account segmentation by size, specialty, revenue potential | 1.2 Account Segmentation | Not started | Check with Haroon/Latheef Bhai whether this is required |
 | 5.1 | Tier 1 / Tier 2 dropdown | 1.3 Customer Tiering | Not started | Check with Haroon/Latheef Bhai whether this is required |
 | 5.2 | Stakeholder phone, WhatsApp, email | 1.4 Customer Profile Management → Stakeholder Management | Done | |
@@ -66,13 +66,13 @@ tracked below).
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | 1.1 | Lead source, campaign, region capture | 3.1 Lead Capture | Done | |
-| 1.3 | Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category | 3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria | Partial | Stages and gates fully built; stagnation limit is one global threshold, not per product category. Please check with Haroon if that is fine |
+| 1.3 | Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category | 3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria | Partial | Stages and gates fully built; today's stagnation limit is still one flat 180-day global number. **Resolved, Haroon confirmed 2026-09-14:** real per-stage thresholds (Lead 14d, Qualified 7d, Demo 7d, Negotiation 5d, Order 2d, Delivery & Installation 30d — see `Business-Rules.md`'s BR-OP-06), configurable per SBU, seeded the same for Imaging and Critical Care today. Not built yet — scheduled this week, see `docs/Phase1-Completion-Sprint-Plan.md` |
 | 1.3 | Systematic + manual win probability | 3.7 Win Probability Management | Done | |
 | 1.3 | Mandatory closure date at Negotiation | 3.4 Stage Exit Criteria → Negotiation | Done | Sensibly exempted for repeat orders |
-| 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Partial | Loss reason and competitor name captured; no competitor-product field or rolled-up loss report |
+| 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Partial | Loss reason and competitor name captured; competitor-product field still missing. The rolled-up loss report gap is now tracked as its own row in Module 5 (Competitive Loss Report) |
 | 2.2 | Kanban pipeline sorted by probability/priority | 3.8 Pipeline Management | Partial | Stage columns are in a fixed order that loosely tracks probability (each stage has a default win probability), but deal cards within a column aren't sorted by anything — not probability, not priority |
-| 2.2 | Manual High Priority toggle | 3.9 Deal Prioritization | Not started | Raised 2026-09-11; a proposal is already with you for leadership |
-| 2.2 | Pipeline filters by region, product, salesperson | 3.8 Pipeline Management | Partial | Region (Zone) and salesperson (Owner) filters exist on the Pipeline board itself; product filtering does not — it's only available in the separate Reporting module. Now in `docs/Backlog.md` pending a leadership decision on whether it's needed and where it belongs |
+| 2.2 | Manual High Priority toggle | 3.9 Deal Prioritization | Not started | Raised 2026-09-11, resolved 2026-09-14 — Haroon confirmed the rule (see `Business-Rules.md`'s BR-OP-15): any deal past Demo stage is automatically High Priority; a manual flag covers Lead/Qualified/Demo deals that don't qualify yet. Not built, scheduled this week |
+| 2.2 | Pipeline filters by region, product, salesperson | 3.8 Pipeline Management | Partial | Region (Zone) and salesperson (Owner) filters exist on the Pipeline board itself. Product filtering deliberately won't be added to the board — Basheer's decision, 2026-09-14: it belongs on the standalone Pipeline Report (PRD 5.6 Core Reports, scheduled to build) instead of the Kanban filter bar |
 | 2.2 | Manager "Push Logging" | 3.12 Manager Push Logging | Done | |
 | 9.2 | Deal-level competitive intelligence | 3.11 Competitive Intelligence | Done | The detailed spec defines this as being "captured as part of the interaction documentation" — a Sales Rep can already record competitor intel as a free-text Activity note on the Opportunity; no separate structured field is required |
 
@@ -85,7 +85,7 @@ tracked below).
 | 6.2 | Field visit logging with purpose/outcome dropdowns | 4.1 Field Visit Management | Done | Rep picks the activity type (Visit, Call, Email, Meeting...) from a dropdown, then records purpose/outcome as free text within that entry — satisfies the PRD's "capture visit purpose, outcome, notes" ask without a second dropdown specifically for purpose/outcome |
 | 9.1 | Mandatory interaction summaries for completed deals | 4.3 Interaction Logging (also 4.6 Knowledge Repository) | Done | |
 | 13.1 | Automated follow-up reminders | 4.4 Workflow Automation | Done | |
-| 13.2 | Automated stagnant-deal alerts | 4.5 Pipeline Aging Alerts | Partial | A stagnant-deals report exists; no automated flip/notification when a deal goes stale — no scheduler exists yet |
+| 13.2 | Automated stagnant-deal alerts | 4.5 Pipeline Aging Alerts | Partial | A stagnant-deals report exists; no automated flip/notification when a deal goes stale — no scheduler exists yet. Exact rule now fully specified (BR-OP-06: per-stage/SBU thresholds, auto-flip to Stalled, notify the rep + their immediate manager) — ready to build, scheduled this week |
 
 ## 5. Reporting & Review
 
@@ -93,11 +93,12 @@ tracked below).
 | :--- | :--- | :--- | :--- | :--- |
 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecast values are calculated by stage, rep, SBU, and zone — never by month/quarter or by product, both of which the requirement asked for. The month/quarter gap also needs Target Management (Module 6), which isn't built yet |
 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Insights Dashboard live with role-based visibility; no GM-specific widgets yet |
-| 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Product-level revenue/quantity/price and brand grouping are both built and were verified live 2026-09-11 (Product Performance report's By-Brand option, `product.oem_name` used as brand); only Margin is missing, since product cost isn't stored anywhere in the system |
+| 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Product-level revenue/quantity/price and brand grouping are both built and were verified live 2026-09-11 (Product Performance report's By-Brand option, `product.oem_name` used as brand); Margin is still missing but no longer blocked — **Haroon confirmed 2026-09-14 that product cost can be added**, restricted strictly to Admin/GM (see `Business-Rules.md`'s BR-CAT-04), and Margin itself carries the same restriction wherever it's shown. Not built yet |
 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started | No report exists showing what share of demos actually convert to a sale. See 4.2 Demo Management (Module 4) for demo outcome capture status |
-| 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | PRD 5.6 asks for four report types (Sales, Pipeline, Product Performance, Margin). Only Product Performance exists as a named report. No standalone Pipeline Report exists — pipeline numbers only live inside the Insights Dashboard's "Pipeline Value" widget, broken down by Stage/Rep/SBU/Zone, not by product. No Sales Report exists as a distinct screen. No Margin Report exists — product cost isn't stored anywhere, so margin can't be calculated at all |
+| 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | PRD 5.6 asks for four report types (Sales, Pipeline, Product Performance, Margin). Only Product Performance exists as a named report. No standalone Pipeline Report exists — pipeline numbers only live inside the Insights Dashboard's "Pipeline Value" widget, broken down by Stage/Rep/SBU/Zone, not by product; product breakdown now scheduled via this report, see Feature 2.2's Pipeline filter row. No Sales Report exists as a distinct screen. No Margin Report exists yet, but the blocker is resolved — Haroon confirmed 2026-09-14 that product cost can be captured, Admin/GM-only (BR-CAT-04), and the Margin Report inherits that same restriction |
 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Not started | No such report exists |
-| 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion derivable from won/lost counts; pipeline aging deliberately deferred — no stage-history table. Also missing: a rolled-up loss report — there's no summary screen anywhere that would show, across all lost deals, "we lose most often to Siemens" or "our #1 loss reason is Price"; each loss just sits on its own deal record (see 3.10 Lost Deal Intelligence notes above) |
+| 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion derivable from won/lost counts; pipeline aging deliberately deferred — no stage-history table. The rolled-up loss report gap is now tracked as its own row below (Competitive Loss Report) |
+| 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started | No summary exists across all lost deals — no way to see, e.g., "we lose most often to Siemens" or "our #1 loss reason is Price"; each loss just sits on its own deal record. See 3.10 Lost Deal Intelligence (Module 3) for the underlying data already captured |
 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started | Also blocked on the missing High Priority field |
 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Partial | Reports filter by region/team/person; no dedicated drill-down UI |
 

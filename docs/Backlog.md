@@ -62,12 +62,12 @@ the manual picking becomes an actual pain point.
   blocked on a decision — the data (`activity.activity_date` per account) is
   already there — just not scoped or built yet.
 
-- **Weekly Follow-up Report — not built, blocked on the High Priority flag.**
-  PRD 5.8 asks for a weekly report surfacing high-priority deals, deals over
-  70% likely to close, stagnant deals, and overdue reminders. Found missing
-  2026-09-14. Three of the four inputs already exist (win probability,
-  Stagnant Deals, Reminders); the fourth needs the "Auto-computed High
-  Priority flag" entry below built and leadership-confirmed first.
+- **Weekly Follow-up Report — not built, no longer blocked.** PRD 5.8 asks
+  for a weekly report surfacing high-priority deals, deals over 70% likely to
+  close, stagnant deals, and overdue reminders. Found missing 2026-09-14.
+  All four inputs now exist or are rule-confirmed (win probability, Stagnant
+  Deals, Reminders, and the High Priority rule — see BR-OP-15,
+  `Business-Rules.md`) — just not built yet.
 
 - **Codify the searchable-account-picker pattern in
   `Frontend-Implementation-Standards.md` — not yet written down.** Four
@@ -84,8 +84,8 @@ the manual picking becomes an actual pain point.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
-- **Account Directory / Pipeline filters — need Cabio leadership sign-off
-  before building anything.** Raised 2026-09-13 during the Phase 1
+- **Account Directory / Pipeline filters — Pipeline half decided 2026-09-14,
+  Account Directory half still needs Cabio leadership sign-off.** Raised 2026-09-13 during the Phase 1
   Delivery Scorecard review. `account.customer_type` and
   `account.payer_behavior` already exist and could be exposed as filters
   on the Account Directory screen; separately, each Opportunity already
@@ -114,22 +114,37 @@ the manual picking becomes an actual pain point.
   `docs/Signed-Requirements-to-PRD-Traceability.md`). Building it would
   close both gaps at once, rather than treating "add a Pipeline Report"
   and "add a product filter" as two separate asks.
-  A related, still-open question from the same review: filtering Account
-  Directory by hospital class (A/B/C/D) or specialty depends on whether
-  Cabio decides that classification data is even required in the first
-  place — see the open item under Feature 5.1 in
-  `docs/Signed-Requirements-to-PRD-Traceability.md`.
+  **Decided, 2026-09-14 (Basheer):** going with this route — product
+  filtering will not be added to the Pipeline board itself; it's delivered
+  via the standalone Pipeline Report instead, scheduled in
+  `docs/Phase1-Completion-Sprint-Plan.md` alongside the Sales Report. No
+  longer waiting on a separate leadership sign-off for this half.
+  A related question from the same review, now resolved: filtering Account
+  Directory by hospital class (A/B/C/D) depends on that classification data
+  existing at all — Haroon confirmed 2026-09-14 that the A/B/C/D field itself
+  is parked for Phase 2 (see Feature 5.1 in `docs/Signed-Requirements-to-
+  PRD-Traceability.md`), so an A/B/C/D filter is moot for Phase 1 too, by the
+  same logic. Filtering by specialty stays a separate, still-open question.
 
-- **Four more open questions for Haroon/Latheef Bhai, surfaced during the
-  same 2026-09-13 Phase 1 Delivery Scorecard review — none built, all
+- **Two open questions for Haroon/Latheef Bhai, surfaced during the
+  same 2026-09-13 Phase 1 Delivery Scorecard review — none built, both
   waiting on a "do we actually need this" answer before being scoped:**
-  (1) Feature 5.1, A/B/C/D hospital classification field — see above; (2)
-  Feature 5.1, Account Segmentation by size/specialty/revenue potential;
-  (3) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown); (4) Feature
-  1.3, letting the pipeline-stagnation time limit vary by product
-  category instead of one global 180-day threshold for everything. Full
+  (1) Feature 5.1, Account Segmentation by size/specialty/revenue potential;
+  (2) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown). Full
   detail and evidence for each: `docs/Signed-Requirements-to-PRD-
-  Traceability.md`, Module 1 and Module 3 tables.
+  Traceability.md`, Module 1 table.
+  ~~(3) Feature 5.1, A/B/C/D hospital classification field~~ — **RESOLVED,
+  Haroon confirmed 2026-09-14: parked for Phase 2**, not required for
+  Phase 1.
+  ~~(4) Feature 1.3, letting the pipeline-stagnation time limit vary by
+  product category instead of one global 180-day threshold for
+  everything~~ — **RESOLVED, Haroon confirmed 2026-09-14.** Real per-stage
+  thresholds (Lead 14d, Qualified 7d, Demo 7d, Negotiation 5d, Order 2d,
+  Delivery & Installation 30d), configurable per SBU rather than a single
+  global number — seeded the same for Imaging and Critical Care today, can
+  diverge later without a code change. Written into `Business-Rules.md`'s
+  BR-OP-06. Not built yet — scheduled in `docs/Phase1-Completion-Sprint-
+  Plan.md`'s "This week" list.
 
 - ~~**Duplicate `_TERRITORY_ADMIN_ROLES` name used for two unrelated
   concerns.**~~ — **DONE, 2026-09-10.** `reference/service.py` and
@@ -216,13 +231,34 @@ the manual picking becomes an actual pain point.
     almost everything that far along is already inside 30 days. **Proposed: within 14
     days, or already overdue** — catches 6 of 11, leaving the 18-50-day-out deals as
     "in negotiation, not yet urgent."
-  - **Proposed final rule:** High Priority if the deal clears its SBU's size cutoff
-    (Imaging ≥₹30L, Critical Care ≥₹15L), OR its Expected Closure Date is within 14
-    days or has passed. **Basheer taking this to Cabio leadership to confirm before
-    it's locked in and scoped as the missing "High-Priority Deals" Insights Dashboard
-    tile** (see the Milestone 2 entry's Real-gap note above) or surfaced as a badge on
-    the Opportunity screen/Kanban itself. Full derivation:
-    `docs/Insights-Dashboard-Implementation-Plan.md`'s "High-Priority Deals" section.
+  - **Proposed final rule (superseded, see below):** High Priority if the deal clears
+    its SBU's size cutoff (Imaging ≥₹30L, Critical Care ≥₹15L), OR its Expected
+    Closure Date is within 14 days or has passed. This value/date-threshold version
+    was the one taken to Cabio leadership for confirmation. Full derivation still
+    useful as history: `docs/Insights-Dashboard-Implementation-Plan.md`'s
+    "High-Priority Deals" section.
+
+  **RESOLVED — Haroon confirmed a different, simpler rule, 2026-09-14.** Not the
+  value/date rule above — a stage-based rule instead:
+  - **Automatic:** any Opportunity that has moved past the Demo stage (i.e.
+    Clinical Evaluation, Negotiation, Order, or Delivery & Installation —
+    `opportunity_stage.display_order > 30`) is automatically treated as High
+    Priority. No manual action, no configurable threshold — computed at query
+    time from the stage alone, same "no schema change needed for the automatic
+    half" reasoning as before.
+  - **Manual:** for deals still in Lead, Qualified, or Demo stage
+    (`display_order` 10/20/30), Haroon wants an actual **High Priority flag** a
+    person can set by hand — these earlier-stage deals don't qualify
+    automatically, but someone should be able to mark one as high priority
+    early if it warrants it. This *does* need a schema change (a stored
+    boolean/flag on `opportunity`, unlike the automatic half), unlike the
+    original "computed at query time, no field to keep in sync" proposal.
+  Scoped as Feature 2.2's "Manual High Priority toggle" row (Module 3, PRD 3.9
+  Deal Prioritization) in `docs/Signed-Requirements-to-PRD-Traceability.md`,
+  and in `docs/Phase1-Completion-Sprint-Plan.md`'s this-week list. Still
+  unblocks the same downstream items the original proposal would have: the
+  Insights Dashboard's missing "High-Priority Deals" tile, Kanban
+  priority-sort (Feature 2.2's other row), and the Weekly Follow-up Report.
 - **Lakhs/Rupees unit-entry bug — 12 UAT opportunities with values inflated ~100,000x,
   found 2026-09-11 while deriving High-Priority thresholds, not yet fixed.** All 12
   values are suspiciously round multiples that divide cleanly by 100,000 into a
@@ -311,10 +347,15 @@ the manual picking becomes an actual pain point.
   Bhai surfaced the real underlying process (a physical "Controlled Copy" rate sheet,
   four pricing tiers: Quoting/Staff/Manager/CEO) and a bundled ask to also add the
   still-missing product cost field. Open-policy question above is answered there.
-  Full write-up, industry comparison (Salesforce/Zoho/Dynamics), proposed data model,
-  and open questions for Haroon/Latheef Bhai: `docs/Discussion-Pricing-Discount-
-  Authority-2026-09.md`. **Status: DRAFT, awaiting their decision — supersedes this
-  entry's framing, not yet scoped or built.**
+  **The bundled cost-field ask is now resolved separately, 2026-09-14** — Haroon
+  confirmed product cost can be added, visible strictly to Admin/GM (`Business-
+  Rules.md`'s BR-CAT-04); this is the internal cost Cabio pays, distinct from the
+  customer-facing quoting price this Discussion Brief is actually about, which
+  stays open. Full write-up, industry comparison (Salesforce/Zoho/Dynamics),
+  proposed data model, and open questions for Haroon/Latheef Bhai:
+  `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Status: DRAFT,
+  awaiting their decision on quoting price — supersedes this entry's framing,
+  not yet scoped or built.**
 - **Order-stage deals closing with zero Activity logged — candidate soft-
   warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
   data for pipeline-stage coaching guidance): of 96 real opportunities in
@@ -811,22 +852,26 @@ the manual picking becomes an actual pain point.
      while discussing what to build after Target Planning) — `ProductPerformanceResponse`
      (Quantity Sold, Revenue, Average Selling Price, Opportunity Count, Won/Lost counts,
      grouped by Product/SBU) added to `docs/Insights-Dashboard-Implementation-Plan.md`'s
-     Domain section. **Two gaps found while spec'ing it, not yet resolved:** (1) the
-     PRD's Margin metric can't be computed — no product cost field exists anywhere in
+     Domain section. **Two gaps found while spec'ing it, one now resolved:** (1) the
+     PRD's Margin metric couldn't be computed — no product cost field exists anywhere in
      `Physical-Schema.sql`, same category of gap as the missing stock-on-hand data
      blocking the reorder-recommendation item below; dropped from this tile's scope
-     until a cost field exists. (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
+     until a cost field exists. **Resolved 2026-09-14** — Haroon confirmed cost can be
+     added, visible strictly to Admin/GM (`Business-Rules.md`'s BR-CAT-04), with Margin
+     itself carrying the same restriction; still not built, so Margin stays out of this
+     tile's scope until then. (2) PRD grouping calls for Product/**Brand**/OEM/SBU, but
      the schema has no dedicated Brand field — only `product.oem_name` and
      `product.category_name` — so Brand grouping is dropped too pending a decision on
      whether `category_name` is meant to serve as Brand or a real field is needed.
      **Real gap still open, not a decision, an incompleteness in the plan itself:** 2 of
-     the remaining 8 Batch 1 items — High-Priority Deals, Opportunities On Hold — are
-     still listed in the plan's scope table but have no `schemas.py`/`router.py` entry
-     spec'd yet; need fleshing out before build covers the full stated scope. **High
-     Priority itself also has an upstream gap:** PRD §3.9 just says "provide a High
-     Priority flag" with no definition of how it's set — raised 2026-09-11, see the
-     "Auto-computed High Priority flag" entry below for the concrete proposal now on the
-     table.
+     the remaining Batch 1 item, High-Priority Deals, is still listed in the plan's
+     scope table but has no `schemas.py`/`router.py` entry spec'd yet (Opportunities On
+     Hold shipped since — Batch 1b, 2026-09-11); needs fleshing out before build covers
+     the full stated scope. **High Priority's upstream gap is now resolved:** PRD §3.9
+     just said "provide a High Priority flag" with no definition of how it's set —
+     raised 2026-09-11, resolved 2026-09-14 (Haroon) — see the "Auto-computed High
+     Priority flag" entry below and `Business-Rules.md`'s BR-OP-15 for the confirmed
+     rule.
   3. **Coverage Planning** (also satisfies signed Feature *(untagged)*, PRD 6.1
      "Beat Planning" — confirmed field-for-field match, 2026-09-14: not two
      separate things, same build) — `docs/Coverage-Planning-Implementation-Plan.md`.

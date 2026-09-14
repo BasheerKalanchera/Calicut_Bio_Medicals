@@ -18,24 +18,35 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
    2026-09-14). Any logged-in user of any role can currently view/edit the
    catalog; add the role gate.
 3. **Lost deal intelligence — competitor-product field + a rolled-up loss report**
-   (Feature 1.4, Module 3 → PRD 3.10). Also closes half of Feature 11.1's "Phase 1
-   analytics" gap (Appendix A.1) — same report serves both rows.
-4. **Automated stagnant-deal alerts** (Feature 13.2, Module 4 → PRD 4.5). Needs the
-   app's first background scheduler — biggest lift of this week's list.
+   (Feature 1.4, Module 3 → PRD 3.10, and Feature 1.4's own new "Competitive Loss
+   Report" row in Module 5 → PRD Appendix A.3.5, added 2026-09-14). Same build
+   closes both rows — the competitor-product field on the deal record, plus a new
+   summary report across all lost deals ("we lose most to Siemens," "price is our
+   #1 loss reason").
+4. **Automated stagnant-deal alerts** (Feature 13.2, Module 4 → PRD 4.5 — also
+   closes Feature 1.3's per-stage threshold question, Module 3). Needs the app's
+   first background scheduler — biggest lift of this week's list. Rule now fully
+   specified as `Business-Rules.md`'s BR-OP-06: per-stage thresholds (Lead 14d,
+   Qualified 7d, Demo 7d, Negotiation 5d, Order 2d, Delivery & Installation 30d),
+   configurable per SBU (Admin/GM editable — needs its own small admin screen or
+   an extension of the Reference Data Management Screen, not yet decided which),
+   seeded identically for both SBUs today. Auto-flip to Stalled, notify the rep
+   and their immediate manager, exclude from forecast.
 5. **GM-specific dashboard widgets** (Feature 3.2, Module 5 → PRD 5.3/5.4/5.5).
 6. **Report drill-down UI** (Feature 11.2, Module 5 → PRD 5.9). Click a summary row
    to see the underlying record list, instead of filter-only.
 7. **Forecast broken down by product** (Feature 2.5, Module 5 → PRD 5.1 — product
    half only). The month/quarter half is next week, see below.
-8. **Manual High Priority toggle** (Feature 2.2, Module 3 → PRD 3.9 Deal
-   Prioritization — currently "Not started," pulled into this week on Basheer's
-   call, 2026-09-14, so next week's Kanban-priority-sort item has something to
-   build on). **Caveat:** the exact rule is proposed but not yet leadership-
-   confirmed — Basheer taking "High Priority if the deal clears its SBU's size
-   cutoff (Imaging ≥₹30L, Critical Care ≥₹15L) OR its Expected Closure Date is
-   within 14 days or has passed" to Cabio leadership first (`docs/Backlog.md`,
-   2026-09-11 entry). Confirm that before building, or build the toggle itself
-   now and wire up the auto-computed rule once it's signed off.
+8. **High Priority flag** (Feature 2.2, Module 3 → PRD 3.9 Deal Prioritization —
+   currently "Not started," pulled into this week on Basheer's call, 2026-09-14,
+   so next week's Kanban-priority-sort item has something to build on). **Rule
+   confirmed by Haroon, 2026-09-14** (`Business-Rules.md`'s BR-OP-15), replacing
+   the earlier proposed value/closure-date threshold: any deal past Demo stage
+   (Clinical Evaluation, Negotiation, Order, Delivery & Installation) is
+   automatically High Priority, computed at query time, no stored field needed.
+   A deal still in Lead, Qualified, or Demo doesn't qualify automatically, but
+   needs a manual flag a person can set by hand — that half does need a new
+   field on `opportunity`.
 
 ## Next week — each needs a "Not started" prerequisite finished first
 
@@ -47,10 +58,23 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
    (Feature 3.1 → PRD 6.4, Not started) built first.
 3. **Sales Report + Pipeline Report** (Feature 11.1, Module 5 → PRD 5.6 Core
    Reports — 2 of the 4 report types). No hard blocker, just sizable — scheduled
-   for next week on effort, not a dependency.
+   for next week on effort, not a dependency. **Now also closes Feature 2.2's
+   Pipeline product filter** (was in the blocked bucket) — Basheer's call,
+   2026-09-14: a product breakdown belongs on this standalone Pipeline Report,
+   not as a filter bolted onto the Kanban board itself, so it's built here
+   rather than tracked as a separate ask.
 4. **Pipeline aging analysis** (Feature 11.1, Module 5 → PRD Appendix A.1 — the
    other half of "Phase 1 analytics"). Needs a new stage-history table (schema +
    migration) built first.
+5. **Product cost + Margin** (Feature 4.3 → Appendix A.1, and the Margin Report
+   half of Feature 11.1 → PRD 5.6 Core Reports). Unblocked 2026-09-14 — Haroon
+   confirmed cost can be captured. New `product` field, Admin/GM-only at the
+   field level (`Business-Rules.md`'s BR-CAT-04 — excluded from the API response
+   for every other role, not just hidden in the UI), feeds Margin into the
+   Product Performance report and the new Margin Report, both restricted the
+   same way. No hard dependency on another row, just sizable — scheduled next
+   week on effort and because it needs the same access-control care as the
+   Opportunity Notes Privacy work did.
 
 ## Deferred to go-live (not this week, not next week)
 
@@ -63,14 +87,14 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
 
 ## Blocked on someone else's decision — not schedulable by engineering time alone
 
-- **A/B/C/D hospital class** (Feature 5.1 → PRD 1.1) — Haroon/Latheef Bhai.
-- **Per-product-category stagnation threshold** (Feature 1.3 → PRD 3.3/3.4) —
-  Haroon/Latheef Bhai.
-- **Pipeline filter by product** (Feature 2.2 → PRD 3.8) — leadership decision,
-  tracked in `docs/Backlog.md`.
-- **Margin** — both Feature 4.3 (→ Appendix A.1) and the Margin Report half of
-  Feature 11.1 (→ PRD 5.6 Core Reports) — blocked on a decision about capturing
-  product cost at all, since it's sensitive data, not just a quick field add.
+*(empty — the last item here, A/B/C/D hospital class, was resolved 2026-09-14; see "Parked for Phase 2" below)*
+
+## Parked for Phase 2
+
+- **A/B/C/D hospital class** (Feature 5.1 → PRD 1.1). **Haroon confirmed,
+  2026-09-14: not required for Phase 1.** Hospital type and corporate
+  grouping already exist and cover the rest of this row; only the A/B/C/D
+  grading itself is deferred.
 
 ## Left as-is, no build planned
 

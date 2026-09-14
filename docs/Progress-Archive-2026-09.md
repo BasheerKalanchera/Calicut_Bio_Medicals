@@ -3128,3 +3128,107 @@ This is a real 4th open question in the design, not just a missing Backlog
 line — added as such to the existing Target Planning entry, flagging it
 needs Basheer's call (fold into the upcoming migration vs. a deliberate
 Phase 2 follow-on) before that feature ships.
+
+**Same session, one more real row added: Competitive Loss Report.** Basheer
+asked about the "rolled-up loss report" mention buried in a Sprint Plan item
+and whether it deserved its own line, since it wasn't obviously showing up
+as a Reporting & Review item. Checked the PRD directly: Appendix A.3.5 names
+it explicitly as its own deliverable ("Competitive Loss Report" — who we
+lose to most, why we lose most), also referenced as a GM Dashboard widget
+(§5.5, "Competitive Loss Analysis"). Same precedent as the Demo-to-sale
+conversion report split-out earlier today. Added Feature 1.4's second row to
+Module 5 (Not started), trimmed the same point out of the two rows that
+previously only mentioned it as a side-note (3.10 Lost Deal Intelligence,
+11.1 Phase 1 analytics), and updated the Sprint Plan's item 3 to name both
+rows it closes. Tally now **23 Done, 15 Partial, 12 Not started** of **50**
+signed requirements (was 49) — real-progress recalculated: 46.0% strictly
+done, 61.0% weighted. All three artifacts updated (Artifact now v17).
+
+**Same session, Haroon closed out two real open questions — both written into
+`docs/Business-Rules.md` as actual rules, not just tracking-doc notes.**
+
+1. **Stagnant-deal thresholds, per stage, per SBU.** Haroon confirmed the real
+   numbers: Lead 14 days, Qualified 7, Demo 7, Negotiation 5, Order 2, Delivery
+   & Installation 30 — configurable per SBU (Admin/GM editable), seeded the
+   same for Imaging and Critical Care today, can diverge later without a code
+   change. Turned out `Business-Rules.md` already had a fully-designed rule for
+   this (`BR-OP-06`, "Stalled Opportunity Detection") sitting with a placeholder
+   flat 180-day number and an unbuilt scheduler — this wasn't new scope, it was
+   finishing an already-written rule. BR-OP-06 rewritten with the real
+   thresholds, SBU-configurability, and the immediate-manager notification
+   clause it already specified. Resolves both Feature 1.3's per-category
+   question (Module 3) and Feature 13.2's automation gap (Module 4) — same
+   underlying build, scheduled this week.
+2. **Product cost, Admin/GM-only — including Margin wherever it's shown.**
+   Haroon confirmed cost can be captured on the catalog; Basheer confirmed
+   Margin (anywhere it's derived from cost — Product Performance's Margin
+   metric, the not-yet-built Margin Report) carries the same restriction, not
+   just the raw cost field. New rule **BR-CAT-04** added, cross-referenced from
+   BR-CAT-01 (whose "no pricing data" rationale for open catalog visibility no
+   longer fully holds). Flagged as field-level enforcement, not row-level —
+   Postgres RLS on `product` only governs rows, so cost/margin must be left out
+   of the API response for non-Admin/GM roles at the application layer, same
+   as every other server-enforced restriction in this app. Resolves Feature
+   4.3 and the Margin Report half of Feature 11.1 (both Module 5) — moved from
+   "blocked" to a new "Product cost + Margin" item, next week.
+
+**Same session, Haroon also confirmed the actual High Priority rule —
+replacing the earlier proposed value/closure-date threshold entirely, not
+refining it.** New rule, much simpler than the ₹30L/₹15L + 14-day-window
+proposal from 2026-09-11: any Opportunity past Demo stage (Clinical
+Evaluation, Negotiation, Order, Delivery & Installation) is automatically
+High Priority — no manual action, computed at query time from the stage
+alone. A deal still in Lead, Qualified, or Demo doesn't qualify
+automatically, but Haroon wants a manual flag a person can set by hand for
+those earlier-stage deals — that half needs an actual new field on
+`opportunity`, unlike the automatic half. Written up as new rule
+**BR-OP-15** in `Business-Rules.md`, explicitly noting it supersedes (not
+refines) the earlier value/date proposal, whose derivation stays in
+`docs/Backlog.md` as history. Updated: Feature 2.2's "Manual High Priority
+toggle" row (now "High Priority flag") across the traceability doc,
+scorecard doc, and Artifact (now v20) — still Not started, note reflects
+the confirmed rule instead of "pending leadership"; the Sprint Plan's
+matching this-week item; the Weekly Follow-up Report Backlog entry (no
+longer blocked, all four inputs now exist/are rule-confirmed); and the
+Insights Dashboard gap note (also caught it calling "Opportunities On
+Hold" unbuilt, stale since Batch 1b shipped 2026-09-11 — corrected in the
+same pass).
+
+**Same session, last item in the Sprint Plan's "Blocked" bucket resolved.**
+Haroon confirmed A/B/C/D hospital class (Feature 5.1) is parked for Phase 2,
+not required now — the Backlog's "three open questions for Haroon/Latheef
+Bhai" entry drops to two (Segmentation, Tiering stay open); the related
+Account Directory filter cross-reference updated (an A/B/C/D filter is moot
+too, by the same logic — specialty filtering stays open, tied to the
+still-open Segmentation question). Status stays Partial (hospital
+type/corporate grouping already built, only the grading itself deferred),
+note updated across the traceability doc, scorecard doc, and Artifact (now
+v21). Sprint Plan's "Blocked" bucket is now empty — added a new "Parked for
+Phase 2" section instead, same treatment as the earlier PIN-code-mapping and
+live-DB-backup deferrals.
+
+**All 4 affected scorecard rows updated** (1.3, 13.2, 4.3, 11.1 Core Reports)
+across the traceability doc, scorecard doc, and Artifact (now v19) — status
+unchanged on all four (still Partial, nothing built yet), only the reasoning
+changed from "open question" to "decided, ready to build." **Backlog.md**
+updated in three places: the "per-category stagnation" sub-question marked
+resolved (crossed out, in the "Four [now three] more open questions" entry),
+the Insights Dashboard Product Performance Summary gap note updated, and the
+Pricing/Discount-Authority entry's bundled cost-field mention clarified as
+resolved separately from that Discussion Brief's still-open quoting-price
+question. **Sprint Plan** updated: item 4 (stagnant-deal alerts) now carries
+the real BR-OP-06 spec; removed the now-resolved items from "Blocked"; added
+"Product cost + Margin" as a new next-week item.
+
+**Same session, Pipeline product filter (Feature 2.2) resolved.** Basheer
+decided the still-open half of the "Account Directory / Pipeline filters"
+Backlog question: a product filter should not be bolted onto the Pipeline
+Kanban board — it belongs on the standalone Pipeline Report instead (already
+scheduled next week alongside the Sales Report, per the Sprint Plan). Status
+stays Partial (region/salesperson filters already work on the board), note
+corrected in the traceability doc, scorecard doc, and Artifact (now v18) to
+say this is a deliberate design call, not an open leadership question
+anymore. Moved out of the Sprint Plan's "blocked" bucket into item 3 (Sales
+Report + Pipeline Report), and the Backlog entry updated to mark this half
+decided — the separate Account Directory hospital-class filter question
+(A/B/C/D, specialty) stays open, unrelated to this call.

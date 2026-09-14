@@ -89,11 +89,22 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **On-Hold Requirements:** See BR-OP-02.
 
 ### BR-OP-06: Stalled Opportunity Detection
-* **Rule:** An opportunity automatically transitions to the "Stalled" status if no activity (visit, call, email, meeting, note) is recorded against it for 180 consecutive days.
+* **Rule:** An opportunity automatically transitions to the "Stalled" status if no activity (visit, call, email, meeting, note) is recorded against it for longer than its current stage's stagnation threshold. Thresholds are set per stage, and are configurable per SBU (Admin/GM editable) rather than one global number — confirmed by Haroon, 2026-09-14, seeded identically for Imaging and Critical Care today (either SBU's thresholds can be changed independently later without a code change):
+
+  | Stage | Threshold |
+  | :--- | :--- |
+  | Lead | 14 days (2 weeks) |
+  | Qualified | 7 days (1 week) |
+  | Demo | 7 days (1 week) |
+  | Negotiation | 5 days |
+  | Order | 2 days |
+  | Delivery & Installation | 30 days (1 month) |
+
+  Clinical Evaluation has no threshold yet — that stage's own gate is still deferred (see the note in `backend/app/domains/opportunity/validators.py`).
 * **Exit Rule:** The Stalled status automatically reverts to Active when any activity is logged.
-* **Notifications:** The salesperson and their manager receive notifications when an opportunity becomes Stalled.
+* **Notifications:** The salesperson and their immediate manager (`user_profile.manager_id`, one hop up the reporting line — same pattern as BR-OP-14's gate-override approver) receive notifications when an opportunity becomes Stalled.
 * **Forecasting:** Stalled opportunities are excluded from committed pipeline forecasts.
-* **Implementation Note:** This rule is expected to be executed by a scheduled background process (OpportunityMonitoringJob / OpportunityLifecycleJob) rather than a user-initiated API operation.
+* **Implementation Note:** This rule is expected to be executed by a scheduled background process (OpportunityMonitoringJob / OpportunityLifecycleJob) rather than a user-initiated API operation — no scheduler exists in the codebase yet; this is the first one needed.
 
 ### BR-OP-07: Forecasting & Pipeline Inclusion
 * **Won:** Included as closed-won revenue.
@@ -158,13 +169,21 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`).
 * **Reference:** `docs/Discussion-FastTrack-Gate-Override-2026-08.md`, `docs/Manager-Attested-Gate-Override-Implementation-Plan.md`.
 
+### BR-OP-15: High Priority Deal Flag (2026-09-14)
+* **Rule:** An Opportunity is treated as High Priority in one of two ways:
+  1. **Automatic:** any Opportunity past the Demo stage — Clinical Evaluation, Negotiation, Order, or Delivery & Installation (`opportunity_stage.display_order > 30`) — is automatically High Priority. Computed at query time from the current stage; no stored field, nothing to keep in sync.
+  2. **Manual:** an Opportunity still in Lead, Qualified, or Demo stage (`display_order` 10/20/30) does not qualify automatically, but can be marked High Priority by hand via a flag a person sets explicitly.
+* **Rationale:** Confirmed by Haroon, 2026-09-14, replacing an earlier proposed value/closure-date threshold rule (₹30L Imaging / ₹15L Critical Care, within 14 days of Expected Closure Date) that was never approved — see `docs/Backlog.md`'s "Auto-computed High Priority deal flag" entry for that superseded derivation. A deal advancing past Demo already represents real, demonstrated commitment regardless of its size or exact closing date, which is a simpler and more defensible signal than a tunable Lakhs/day threshold.
+* **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
+* **Enforcement:** Not yet built — the automatic half needs no migration; the manual half needs a new field on `opportunity` to hold the flag. See `docs/Phase1-Completion-Sprint-Plan.md`.
+
 ---
 
 # 3a. Product Catalog Rules
 
 ### BR-CAT-01: Catalog Visibility Is Company-Wide (2026-08-01)
 * **Rule:** All authenticated users may view every Product in the catalog, regardless of their own SBU. The Product Catalog screen's SBU filter buttons (Imaging / Critical Care) are available to everyone, not just Admin/General Manager.
-* **Rationale:** Product records are reference data only (name, OEM, model number, category, description) — no pricing or customer-sensitive data — so there is no confidentiality reason to hide one SBU's catalog from another. Reps benefit from seeing the full company product line (cross-sell awareness, referring a lead to the other SBU) even though they can't transact against it directly — see BR-OP-11.
+* **Rationale:** Product records are reference data only (name, OEM, model number, category, description) — no pricing or customer-sensitive data — so there is no confidentiality reason to hide one SBU's catalog from another. Reps benefit from seeing the full company product line (cross-sell awareness, referring a lead to the other SBU) even though they can't transact against it directly — see BR-OP-11. **Qualified 2026-09-14:** this "no pricing" premise no longer holds once cost is added — see BR-CAT-04, a field-level exception layered on top of this row-level rule, not a reversal of it.
 * **Enforcement:** `product_read_all` RLS policy (migration `0014_product_rls_open_read`) — `SELECT` is unrestricted; `INSERT`/`UPDATE`/`DELETE` remain SBU-scoped to Admin/General Manager or the product's own SBU, unchanged from the original Phase 2E policy.
 
 ### BR-CAT-02: Product Classification (2026-08-07)
@@ -177,6 +196,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** Nobody knows the exact make/model/condition of a customer's used machine before the deal happens, so requiring it to be pre-catalogued as a `REFURBISHED` Product (the prior rule) didn't fit how trade-ins actually occur — see `docs/Discussion-Buyback-Freetext-2026-08.md`.
 * **Enforcement:** `OpportunityItemCreate` schema `model_validator` (description required when `line_type = BUYBACK`, `product_id` required otherwise) plus the relaxed `ck_opportunity_item_product_id_or_buyback` CHECK constraint (migration `0017`) — DB-level enforcement only requires `product_id IS NOT NULL OR line_type = 'BUYBACK'`, not `description IS NOT NULL`, since that's a new-write-only rule.
 * **Out of scope:** a separate post-close trade-in intake tracking workflow (refurbish / parts / discard) is still under discussion, not yet planned or built. The one settled fact so far: an intake queue row would be created only when the deal reaches Won, not when the Buyback line is added.
+
+### BR-CAT-04: Product Cost — Admin/General Manager Only (2026-09-14)
+* **Rule:** Product cost is confirmed as a new catalog field (Haroon, 2026-09-14) — what a product costs Cabio, distinct from any customer-facing quoted price (see the separate, still-open Pricing/Discount-Authority discussion). Only Admin/General Manager may ever see it; every other role (Sales Staff, Area Manager, SBU Manager) must not receive it in any API response. The same restriction extends to Margin wherever it's derived from cost — the Product Performance report's Margin metric and the not-yet-built Margin Report are Admin/GM-only too (Basheer, 2026-09-14), not just the raw cost figure.
+* **Rationale:** Cost is commercially sensitive, unlike the rest of the catalog — the opposite premise from BR-CAT-01's open-to-everyone default.
+* **Enforcement:** Field-level, not row-level. Postgres RLS on `product` only governs row visibility (BR-CAT-01's `product_read_all` stays unrestricted for everything else), so cost/margin must be excluded from the serialized response for non-Admin/GM roles at the application layer — same "never a frontend-only hide" posture as every other access restriction in this app.
+* **Not yet built:** the cost field itself doesn't exist in the schema yet — this rule records the confirmed decision ahead of that change.
 
 ---
 
