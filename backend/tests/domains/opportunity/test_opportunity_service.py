@@ -1196,14 +1196,18 @@ class TestReplaceSplits:
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
         with pytest.raises(NotFoundError, match="Opportunity"):
-            service.replace_splits(OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID)
+            service.replace_splits(
+                OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff"
+            )
 
     def test_empty_splits_list_passes_without_sum_check(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
-        service.replace_splits(OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID)
+        service.replace_splits(
+            OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff"
+        )
 
         repo.replace_splits.assert_called_once_with(OPP_ID, [])
 
@@ -1217,7 +1221,7 @@ class TestReplaceSplits:
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("30")),
         ])
         with pytest.raises(BusinessRuleViolation, match="100%"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
     def test_splits_summing_to_100_calls_repository(self):
         repo = _make_repo()
@@ -1229,7 +1233,7 @@ class TestReplaceSplits:
             SplitCreate(user_id=uid1, split_percentage=Decimal("70")),
             SplitCreate(user_id=uid2, split_percentage=Decimal("30")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         repo.replace_splits.assert_called_once()
         created_splits: list[Split] = repo.replace_splits.call_args[0][1]
@@ -1245,7 +1249,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
         repo.replace_splits.assert_called_once()
 
     def test_split_audit_fields_set(self):
@@ -1256,7 +1260,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         split: Split = repo.replace_splits.call_args[0][1][0]
         assert split.created_by == USER_ID
@@ -1273,7 +1277,7 @@ class TestReplaceSplits:
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=uid, split_percentage=Decimal("100"))])
         with pytest.raises(BusinessRuleViolation, match="SBU"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
 
         repo.replace_splits.assert_not_called()
 
@@ -1285,7 +1289,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(
             splits=[SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100"))]
         )
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
         repo.replace_splits.assert_called_once()
 
     def test_existing_cross_sbu_participant_is_grandfathered(self):
@@ -1307,8 +1311,98 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=legacy_user_id, split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID)
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
         repo.replace_splits.assert_called_once()
+
+    # -- BR-FIN-06 self-carve-out for Admin/GM (2026-09-14) --------------------
+
+    def test_admin_adding_self_bypasses_sbu_check(self):
+        """An Admin/GM has no real SBU (BR-OP-12) so never matches the Opportunity's
+        SBU -- except when adding themselves, which must be allowed."""
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        other_sbu = uuid.uuid4()
+        repo.get_user_sbu_ids.side_effect = lambda ids: {USER_ID: other_sbu}
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        repo.replace_splits.assert_called_once()
+
+    def test_admin_adding_someone_else_still_enforces_sbu_check(self):
+        """The self-carve-out is narrow -- an Admin/GM still can't add a *different*
+        cross-SBU participant just because they themselves are exempt."""
+        other_sbu = uuid.uuid4()
+        other_user_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        repo.get_user_sbu_ids.side_effect = lambda ids: {other_user_id: other_sbu}
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        data = SplitsBulkUpdate(
+            splits=[SplitCreate(user_id=other_user_id, split_percentage=Decimal("100"))]
+        )
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+    def test_non_admin_adding_self_still_enforces_sbu_check(self):
+        """The carve-out is Admin/GM-only -- a normal role adding themselves cross-SBU
+        (shouldn't normally be reachable via the picker, but the server must not rely
+        on that alone) still gets rejected."""
+        other_sbu = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        repo.get_user_sbu_ids.side_effect = lambda ids: {USER_ID: other_sbu}
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+
+    # -- split-added notification (2026-09-14) ---------------------------------
+
+    def test_new_participant_gets_notified(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        new_uid = uuid.uuid4()
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        data = SplitsBulkUpdate(splits=[SplitCreate(user_id=new_uid, split_percentage=Decimal("100"))])
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+
+        notification_service.notify_split_added.assert_called_once_with(
+            recipient_user_id=new_uid, opportunity_id=OPP_ID, actor_id=USER_ID
+        )
+
+    def test_self_add_does_not_notify(self):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+
+        notification_service.notify_split_added.assert_not_called()
+
+    def test_already_existing_participant_does_not_renotify(self):
+        """A percentage-only edit to an existing participant must not re-fire the
+        notification -- replace_splits re-submits the full list on every save."""
+        existing_user_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
+        repo.list_splits.return_value = [MagicMock(spec=Split, user_id=existing_user_id)]
+        notification_service = _make_notification_service()
+        service = OpportunityService(repository=repo, notification_service=notification_service)
+
+        data = SplitsBulkUpdate(
+            splits=[SplitCreate(user_id=existing_user_id, split_percentage=Decimal("100"))]
+        )
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+
+        notification_service.notify_split_added.assert_not_called()
 
 
 # ===========================================================================

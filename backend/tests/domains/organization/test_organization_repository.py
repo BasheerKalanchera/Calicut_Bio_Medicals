@@ -214,7 +214,24 @@ class TestListActive:
 
         sql = _compiled_where(mock_db)
         assert f"user_profile.sbu_id = '{current_user.sbu_id.hex}'" not in sql
-        assert f"user_profile.id = '{current_user.id.hex}'" not in sql
+        self._assert_excludes_unrestricted_roles(sql)
+
+    def test_scope_sbu_admin_can_still_pick_self(self):
+        """BR-FIN-06 self-carve-out (2026-09-14): an Admin/GM must be able to add
+        *themselves* as a split participant -- the blanket unrestricted-role
+        exclusion above would otherwise catch their own row too."""
+        current_user = _make_current_user("General Manager")
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.all.return_value = []
+
+        repo = UserRepository(mock_db)
+        repo.list_active(current_user, scope="sbu")
+
+        sql = _compiled_where(mock_db)
+        assert f"user_profile.id = '{current_user.id.hex}'" in sql
+        # Narrow, not a blanket re-inclusion of every unrestricted-role user --
+        # the NOT IN exclusion is still present, just OR'd with the self row.
         self._assert_excludes_unrestricted_roles(sql)
 
 

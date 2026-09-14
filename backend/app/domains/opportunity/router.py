@@ -220,7 +220,9 @@ def replace_splits(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[list[SplitResponse]]:
-    splits = service.replace_splits(opportunity_id, body, updated_by=current_user.id)
+    splits = service.replace_splits(
+        opportunity_id, body, updated_by=current_user.id, role_name=current_user.role.role_name
+    )
     return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
 
 
