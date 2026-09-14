@@ -64,7 +64,7 @@ function sbuChipSx(sbuName: string) {
     : { bgcolor: "#fff1f2", color: "#be123c", borderColor: "#fecdd3" };
 }
 
-function CollateralLinksCard({ productId }: { productId: string }) {
+function CollateralLinksCard({ productId, canEdit }: { productId: string; canEdit: boolean }) {
   const queryClient = useQueryClient();
   const [showAddLink, setShowAddLink] = useState(false);
   const [form, setForm] = useState(EMPTY_LINK_FORM);
@@ -117,12 +117,14 @@ function CollateralLinksCard({ productId }: { productId: string }) {
         <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 800, letterSpacing: "0.15em" }}>
           Collateral Links
         </Typography>
-        <Button size="small" onClick={() => setShowAddLink((v) => !v)}>
-          {showAddLink ? "Cancel" : "+ Add Link"}
-        </Button>
+        {canEdit && (
+          <Button size="small" onClick={() => setShowAddLink((v) => !v)}>
+            {showAddLink ? "Cancel" : "+ Add Link"}
+          </Button>
+        )}
       </Box>
 
-      {showAddLink && (
+      {canEdit && showAddLink && (
         <Box
           component="form"
           onSubmit={handleAddLink}
@@ -198,14 +200,16 @@ function CollateralLinksCard({ productId }: { productId: string }) {
                     {doc.file_name}
                   </Typography>
                 </Box>
-                <IconButton
-                  size="small"
-                  onClick={() => deleteLinkMutation.mutate(doc.id)}
-                  disabled={deleteLinkMutation.isPending && deleteLinkMutation.variables === doc.id}
-                  aria-label="Remove link"
-                >
-                  <ClearIcon fontSize="small" />
-                </IconButton>
+                {canEdit && (
+                  <IconButton
+                    size="small"
+                    onClick={() => deleteLinkMutation.mutate(doc.id)}
+                    disabled={deleteLinkMutation.isPending && deleteLinkMutation.variables === doc.id}
+                    aria-label="Remove link"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
             );
           })}
@@ -306,7 +310,7 @@ function ProductDetail({
           </Box>
         </Box>
 
-        <CollateralLinksCard productId={productId} />
+        <CollateralLinksCard productId={productId} canEdit={canEdit} />
       </Box>
     </Box>
   );

@@ -34,7 +34,7 @@ actual backend/frontend code, not just documentation:
   missing or works differently than specified (see the Notes column).
 - **Not started** — no evidence of this in the schema or code yet.
 
-**Current tally: 23 Done · 15 Partial · 12 Not started** (50 signed lines
+**Current tally: 24 Done · 15 Partial · 11 Not started** (50 signed lines
 tracked below).
 
 ---
@@ -118,7 +118,7 @@ tracked below).
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Not started | Today, any logged-in user of any role can view and edit the Product Catalog — nothing restricts it beyond general business-unit isolation, so there's no partial progress to credit yet. **Planned (Basheer, 2026-09-14): restrict Product Catalog access to Admin/GM only** — a clean on/off gate, will flip straight to Done once shipped. Same Feature ID (4.1) as the Product Structure requirements in Module 2 — the signed doc treats catalog structure and catalog security as one umbrella feature |
+| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Done | **Built and manually E2E-verified live 2026-09-14** (Haroon as GM, Vivek as Sales Staff) — `docs/Product-Catalog-Collateral-Security-Manual-E2E-Test-Plan.md`. Adding/removing a Collateral Link (brochure/photo/video on a product) is Admin/GM-only, on screen and on the server; *viewing and opening* an existing link stays open to every role — reps need the brochures to actually sell, caught live during testing when the first build over-restricted this to Admin/GM-only view too. General catalog browsing (product name/brand/model) also deliberately stays open to every role, preserving the 2026-08-01 cross-SBU visibility decision (`0014_product_rls_open_read.py`). Product record add/edit was already Admin/GM-only since 2026-08-07, unaffected by this change. Same Feature ID (4.1) as the Product Structure requirements in Module 2 — the signed doc treats catalog structure and catalog security as one umbrella feature |
 | 12.1, 12.2 | Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits | 7. User Roles & Access Control Module → Roles, Access Control | Done (exceeds spec) | Enforced at the database level via Row-Level Security, not just app-level checks — a stronger guarantee than asked for |
 
 ## 7. System & Architecture Constraints

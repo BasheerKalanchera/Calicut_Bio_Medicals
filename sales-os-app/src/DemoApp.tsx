@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Backdrop, Box, Button, IconButton, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAuth } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import QuickLeadModal from "./components/QuickLeadModal";
@@ -32,44 +33,66 @@ import type { PipelineOpportunity } from "./types/api-aliases";
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
 const MARKETING_ROLE = "Marketing User";
 
-const NAV_SECTIONS = [
-  {
-    title: "SALES EXECUTION",
-    items: [
-      { id: "customers",     label: "Account Management", icon: "🏥" },
-      { id: "opportunities", label: "Pipeline",           icon: "📈" },
-      { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
-      { id: "nextActions",   label: "Next Actions",       icon: "✅" },
-      { id: "insights", label: "Insights", icon: "📊" },
-    ],
-  },
-  {
-    // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
-    // (2026-09-11): a Dashboard is small at-a-glance tiles (Insights, above);
-    // a Report is a full standalone screen of specific records -- Daily
-    // Activity Report fits this exactly (moved here 2026-09-11, previously
-    // sat under Sales Execution before the split existed). No role gate on
-    // any of these -- the backend's TEAM_SCOPE_BUILDERS scoping already
-    // produces the right per-role slice (a rep sees their own, a manager
-    // sees their team's).
-    title: "REPORTS",
-    items: [
-      { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
-      { id: "stagnantDeals", label: "Stagnant Deals", icon: "🥶" },
-      { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
-      { id: "productPerformance", label: "Product Performance", icon: "🏆" },
-    ],
-  },
-  {
-    title: "ADMINISTRATION",
-    items: [
-      { id: "catalog",     label: "Product Catalog", icon: "📦" },
-      { id: "users",       label: "User Directory",  icon: "👥", adminOnly: true },
-      { id: "territories", label: "Territory Map",   icon: "🗺️", adminOnly: true },
-      { id: "auditLog",    label: "Audit Log",       icon: "📜", adminOnly: true },
-    ],
-  },
+const SIDEBAR_COLLAPSE_STORAGE_KEY = "cabio_sidebar_collapsed_sections";
+const DEFAULT_COLLAPSED_NAV_SECTIONS: Record<string, boolean> = { REPORTS: true, ADMINISTRATION: true };
+
+// Product Catalog sits in a different nav section depending on the role:
+// Admin/GM manage it (Administration, alongside the other admin screens),
+// everyone else only browses it (Sales Execution, a day-to-day activity) --
+// see getNavSections below.
+const CATALOG_NAV_ITEM = { id: "catalog", label: "Product Catalog", icon: "📦" };
+
+const SALES_EXECUTION_ITEMS = [
+  { id: "customers",     label: "Account Management", icon: "🏥" },
+  { id: "opportunities", label: "Pipeline",           icon: "📈" },
+  { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
+  { id: "nextActions",   label: "Next Actions",       icon: "✅" },
+  { id: "insights", label: "Insights", icon: "📊" },
 ];
+
+// Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
+// (2026-09-11): a Dashboard is small at-a-glance tiles (Insights, above);
+// a Report is a full standalone screen of specific records -- Daily
+// Activity Report fits this exactly (moved here 2026-09-11, previously
+// sat under Sales Execution before the split existed). No role gate on
+// any of these -- the backend's TEAM_SCOPE_BUILDERS scoping already
+// produces the right per-role slice (a rep sees their own, a manager
+// sees their team's).
+const REPORTS_SECTION = {
+  title: "REPORTS",
+  items: [
+    { id: "dailyActivity", label: "Daily Activity Report", icon: "📋" },
+    { id: "stagnantDeals", label: "Stagnant Deals", icon: "🥶" },
+    { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
+    { id: "productPerformance", label: "Product Performance", icon: "🏆" },
+  ],
+};
+
+// Admin/GM get an Administration section (Product Catalog management, plus
+// the other admin-only screens); every other role never sees this section
+// at all -- it would otherwise show up with only Product Catalog under it,
+// mislabeling a plain browse action as an "Administration" task.
+function getNavSections(isAdmin: boolean) {
+  if (isAdmin) {
+    return [
+      { title: "SALES EXECUTION", items: SALES_EXECUTION_ITEMS },
+      REPORTS_SECTION,
+      {
+        title: "ADMINISTRATION",
+        items: [
+          CATALOG_NAV_ITEM,
+          { id: "users",       label: "User Directory",  icon: "👥" },
+          { id: "territories", label: "Territory Map",   icon: "🗺️" },
+          { id: "auditLog",    label: "Audit Log",       icon: "📜" },
+        ],
+      },
+    ];
+  }
+  return [
+    { title: "SALES EXECUTION", items: [...SALES_EXECUTION_ITEMS, CATALOG_NAV_ITEM] },
+    REPORTS_SECTION,
+  ];
+}
 
 // Marketing User has zero pipeline visibility (docs/Lead-Management-
 // Implementation-Plan.md) -- rather than adding one nav item to the normal
@@ -80,7 +103,7 @@ const NAV_SECTIONS = [
 const MARKETING_NAV_SECTIONS = [
   {
     title: "MARKETING",
-    items: [{ id: "marketingLeads", label: "Marketing Leads", icon: "📥", adminOnly: false }],
+    items: [{ id: "marketingLeads", label: "Marketing Leads", icon: "📥" }],
   },
 ];
 
@@ -96,6 +119,26 @@ export default function DemoApp() {
   // Pipeline view before a later effect could correct it.
   const [view, setView] = useState(() => (isMarketingUser ? "marketingLeads" : "opportunities"));
   const [isSidebarOpen, setIsSidebarOpen]       = useState(false);
+  // Sidebar sections collapse independently -- Sales Execution open by
+  // default (daily-use), Reports/Administration start collapsed since most
+  // sessions don't touch them every visit. Remembered per-browser so a
+  // user's choice persists across logins.
+  const [collapsedNavSections, setCollapsedNavSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COLLAPSE_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : DEFAULT_COLLAPSED_NAV_SECTIONS;
+    } catch {
+      return DEFAULT_COLLAPSED_NAV_SECTIONS;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSE_STORAGE_KEY, JSON.stringify(collapsedNavSections));
+    } catch {
+      // Best-effort only -- a private window or blocked storage just means
+      // the collapse state resets next session, nothing breaks.
+    }
+  }, [collapsedNavSections]);
   const [selectedAccount, setSelectedAccount]   = useState<{ id: string; name: string } | null>(null);
   // Where to return to on Back — Customer360/OpportunityDetail now have more than
   // one entry point (Directory/Pipeline, or Next Actions via Reminder click-through).
@@ -308,46 +351,87 @@ export default function DemoApp() {
 
           {/* Navigation */}
           <Box sx={{ flex: 1, overflowY: "auto", p: 2, display: "flex", flexDirection: "column", gap: 3, minHeight: 0 }}>
-            {(isMarketingUser ? MARKETING_NAV_SECTIONS : NAV_SECTIONS).map((section) => (
-              <Box component="section" key={section.title}>
-                <Typography component="h3" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em", mb: 1, px: 1 }}>
-                  {section.title}
-                </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-                  {section.items
-                    .filter((item) => !item.adminOnly || ADMIN_ROLES.has(userProfile?.role_name))
-                    .map((item) => {
-                    const isActive =
-                      view === item.id ||
-                      (item.id === "customers"     && view === "customer360") ||
-                      (item.id === "opportunities" && view === "opportunityDetail");
-                    return (
-                      <Button
-                        key={item.id}
-                        onClick={() => navigate(item.id)}
+            {(isMarketingUser ? MARKETING_NAV_SECTIONS : getNavSections(ADMIN_ROLES.has((userProfile as any)?.role_name))).map((section) => {
+              // Marketing User only ever has the one section -- nothing to
+              // collapse, and doing so would just hide their only nav.
+              const isCollapsible = !isMarketingUser;
+              const isCollapsed = isCollapsible && !!collapsedNavSections[section.title];
+              return (
+                <Box component="section" key={section.title}>
+                  <Box
+                    component={isCollapsible ? "button" : "div"}
+                    type={isCollapsible ? "button" : undefined}
+                    onClick={
+                      isCollapsible
+                        ? () =>
+                            setCollapsedNavSections((prev) => ({ ...prev, [section.title]: !prev[section.title] }))
+                        : undefined
+                    }
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      mb: 1,
+                      px: 1,
+                      py: 0,
+                      bgcolor: "transparent",
+                      border: "none",
+                      cursor: isCollapsible ? "pointer" : "default",
+                      textAlign: "left",
+                    }}
+                  >
+                    <Typography component="h3" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
+                      {section.title}
+                    </Typography>
+                    {isCollapsible && (
+                      <ExpandMoreIcon
+                        aria-hidden="true"
                         sx={{
-                          width: "100%",
-                          justifyContent: "flex-start",
-                          gap: 1.5,
-                          px: 1.75,
-                          py: 1,
-                          fontWeight: 700,
-                          fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                          textTransform: "none",
-                          transition: "all 0.15s",
-                          ...(isActive
-                            ? { bgcolor: "#eff6ff", color: "#1d4ed8", boxShadow: SHADOW_SM }
-                            : { color: "#6b7280", "&:hover": { bgcolor: "#f9fafb" } }),
+                          fontSize: "1.125rem",
+                          color: "#6b7280",
+                          transform: isCollapsed ? "rotate(-90deg)" : "none",
+                          transition: "transform 0.15s",
                         }}
-                      >
-                        <Box component="span" sx={{ fontSize: "1.125rem" }}>{item.icon}</Box>
-                        {item.label}
-                      </Button>
-                    );
-                  })}
+                      />
+                    )}
+                  </Box>
+                  {!isCollapsed && (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                      {section.items.map((item) => {
+                        const isActive =
+                          view === item.id ||
+                          (item.id === "customers"     && view === "customer360") ||
+                          (item.id === "opportunities" && view === "opportunityDetail");
+                        return (
+                          <Button
+                            key={item.id}
+                            onClick={() => navigate(item.id)}
+                            sx={{
+                              width: "100%",
+                              justifyContent: "flex-start",
+                              gap: 1.5,
+                              px: 1.75,
+                              py: 1,
+                              fontWeight: 700,
+                              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                              textTransform: "none",
+                              transition: "all 0.15s",
+                              ...(isActive
+                                ? { bgcolor: "#eff6ff", color: "#1d4ed8", boxShadow: SHADOW_SM }
+                                : { color: "#6b7280", "&:hover": { bgcolor: "#f9fafb" } }),
+                            }}
+                          >
+                            <Box component="span" sx={{ fontSize: "1.125rem" }}>{item.icon}</Box>
+                            {item.label}
+                          </Button>
+                        );
+                      })}
+                    </Box>
+                  )}
                 </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Box>
 
           {/* Profile footer */}

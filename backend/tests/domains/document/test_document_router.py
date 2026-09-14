@@ -18,10 +18,13 @@ TEST_DOCUMENT_ID = uuid.UUID("dddddddd-dddd-dddd-dddd-dddddddddddd")
 TEST_OPPORTUNITY_ID = uuid.UUID("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee")
 
 
-def _mock_user() -> MagicMock:
+def _mock_user(role_name: str = "Admin") -> MagicMock:
     user = MagicMock(spec=UserProfile)
     user.id = TEST_USER_ID
     user.is_active = True
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
     return user
 
 
@@ -40,8 +43,8 @@ def _mock_document(**overrides) -> MagicMock:
     return obj
 
 
-def _setup_overrides(mock_db: MagicMock) -> None:
-    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+def _setup_overrides(mock_db: MagicMock, role_name: str = "Admin") -> None:
+    app.dependency_overrides[get_current_user] = lambda: _mock_user(role_name)
     app.dependency_overrides[get_db] = lambda: mock_db
 
 
@@ -83,6 +86,21 @@ class TestListProductDocuments:
         assert len(data) == 1
         assert data[0]["file_name"] == "Product Brochure 2026"
         assert data[0]["storage_path"] == "https://example.com/brochure.pdf"
+
+    def test_non_catalog_role_can_still_view(self, client: TestClient) -> None:
+        document = _mock_document()
+        mock_db = MagicMock()
+        mock_db.get.return_value = MagicMock(spec=Product)
+        mock_db.scalars.return_value.all.return_value = [document]
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.get(f"/api/v1/products/{TEST_PRODUCT_ID}/documents")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+        assert len(response.json()["data"]) == 1
 
 
 class TestCreateProductDocument:
@@ -139,6 +157,22 @@ class TestCreateProductDocument:
         assert data["storage_path"] == "https://example.com/brochure.pdf"
         mock_db.add.assert_called_once()
 
+    def test_non_catalog_role_returns_403(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.get.return_value = MagicMock(spec=Product)
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.post(
+                f"/api/v1/products/{TEST_PRODUCT_ID}/documents",
+                json={"file_name": "x", "file_type": "BROCHURE", "storage_path": "https://x.com"},
+            )
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+        mock_db.add.assert_not_called()
+
 
 class TestDeleteDocument:
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
@@ -163,6 +197,34 @@ class TestDeleteDocument:
         mock_db.get.return_value = document
 
         _setup_overrides(mock_db)
+        try:
+            response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 204
+        mock_db.delete.assert_called_once_with(document)
+
+    def test_non_catalog_role_blocked_for_product_scoped_document(self, client: TestClient) -> None:
+        document = _mock_document(product_id=TEST_PRODUCT_ID, opportunity_id=None)
+        mock_db = MagicMock()
+        mock_db.get.return_value = document
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+        mock_db.delete.assert_not_called()
+
+    def test_non_catalog_role_allowed_for_opportunity_scoped_document(self, client: TestClient) -> None:
+        document = _mock_document(product_id=None, opportunity_id=TEST_OPPORTUNITY_ID)
+        mock_db = MagicMock()
+        mock_db.get.return_value = document
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
         try:
             response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
         finally:

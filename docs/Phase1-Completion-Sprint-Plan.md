@@ -16,7 +16,15 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
    Collateral Security — a *different* row that happens to share the same signed
    Feature ID; currently "Not started," pulled into this week on Basheer's call,
    2026-09-14). Any logged-in user of any role can currently view/edit the
-   catalog; add the role gate.
+   catalog; add the role gate. **Built and manually E2E-verified live
+   2026-09-14** (Haroon as GM, Vivek as Sales Staff) — done. Only
+   adding/removing a Collateral Link (brochure/video on a product) is
+   Admin/GM-gated; viewing/opening an existing link, catalog browsing, and
+   product record add/edit (already Admin/GM-only since 2026-08-07) are all
+   unaffected, preserving the 2026-08-01 cross-SBU visibility decision. Scope
+   was corrected live mid-test — the first build over-restricted viewing too,
+   Basheer caught it testing as Vivek. Full pass:
+   `docs/Product-Catalog-Collateral-Security-Manual-E2E-Test-Plan.md`.
 3. **Lost deal intelligence — competitor-product field + a rolled-up loss report**
    (Feature 1.4, Module 3 → PRD 3.10, and Feature 1.4's own new "Competitive Loss
    Report" row in Module 5 → PRD Appendix A.3.5, added 2026-09-14). Same build

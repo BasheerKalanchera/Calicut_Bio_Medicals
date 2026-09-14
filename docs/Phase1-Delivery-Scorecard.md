@@ -7,15 +7,15 @@ Requirement rows below are pulled directly from `docs/Signed-Requirements-to-PRD
 
 ## Summary
 
-Of **50** signed requirements: **23 done, 15 partly done, 12 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
+Of **50** signed requirements: **24 done, 15 partly done, 11 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
 
 | Done | Partly done | Not started | New Features Added |
 | :---: | :---: | :---: | :---: |
-| 23 | 15 | 12 | 15 |
+| 24 | 15 | 11 | 15 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 23 of 50 = **46.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 15 items aren't zero — they're mid-flight): (23 + 15×0.5) ÷ 50 = **61.0%**
+- **Strictly done:** 24 of 50 = **48.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 15 items aren't zero — they're mid-flight): (24 + 15×0.5) ÷ 50 = **63.0%**
 
 ---
 
@@ -110,7 +110,7 @@ The management tools behind the scenes — targets, territories, roles, and who'
 
 | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Not started | Today, any logged-in user of any role can view and edit the Product Catalog — nothing restricts it beyond general business-unit isolation. **Planned: restrict Product Catalog access to Admin/GM only** — a clean on/off gate, will flip straight to Done once shipped |
+| 4.1 | Collateral access restricted to managers/authorized staff | 7. User Roles & Access Control Module → Collateral Security | Done | **Built and manually E2E-verified live 2026-09-14.** Adding/removing a Collateral Link is Admin/GM-only, on screen and on the server; viewing/opening an existing link stays open to every role so reps can still use the brochures to sell. Catalog browsing itself (product name/brand/model) also stays open to every role — preserves the 2026-08-01 cross-SBU visibility decision |
 | 12.1, 12.2 | Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits | 7. User Roles & Access Control Module → Roles, Access Control | Done (exceeds spec) | Enforced at the database level via Row-Level Security, not just app-level checks — a stronger guarantee than asked for |
 
 ## 7. Technical Foundation

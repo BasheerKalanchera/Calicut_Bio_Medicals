@@ -18,9 +18,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import UploadFile
 
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
 from app.domains.document.models import Document
 from app.domains.document.repository import DocumentRepository
+from app.domains.document.schemas import DocumentCreate
 from app.domains.document.service import (
     ALLOWED_CONTENT_TYPES,
     MAX_FILE_SIZE_BYTES,
@@ -28,13 +29,20 @@ from app.domains.document.service import (
 )
 
 OPPORTUNITY_ID = uuid.uuid4()
+PRODUCT_ID = uuid.uuid4()
 DOCUMENT_ID = uuid.uuid4()
 USER_ID = uuid.uuid4()
+
+# Non-exhaustive: any role outside {"Admin", "General Manager"} is blocked from
+# adding/removing Product Catalog collateral (viewing stays open to everyone) --
+# DocumentService._CATALOG_COLLATERAL_WRITE_ROLES.
+NON_CATALOG_ROLE = "Salesperson"
 
 
 def _make_repo() -> MagicMock:
     repo = MagicMock(spec=DocumentRepository)
     repo.opportunity_exists.return_value = True
+    repo.product_exists.return_value = True
     return repo
 
 
@@ -54,6 +62,7 @@ def _make_document(*, storage_path: str = "opportunity/xyz/abc-po.pdf", **overri
         "id": DOCUMENT_ID,
         "storage_path": storage_path,
         "opportunity_id": OPPORTUNITY_ID,
+        "product_id": None,
         "file_name": "po.pdf",
         "file_type": "application/pdf",
         "uploaded_at": datetime.now(UTC),
@@ -185,7 +194,7 @@ class TestDeleteDocument:
         service = DocumentService(repo)
 
         with pytest.raises(NotFoundError):
-            service.delete_document(DOCUMENT_ID)
+            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
 
     @patch("app.domains.document.service.storage")
     def test_deletes_storage_object_before_db_row_for_real_upload(self, mock_storage: MagicMock) -> None:
@@ -197,7 +206,7 @@ class TestDeleteDocument:
         repo.delete.side_effect = lambda _doc: call_order.append("db")
         service = DocumentService(repo)
 
-        service.delete_document(DOCUMENT_ID)
+        service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
 
         mock_storage.delete.assert_called_once_with("opportunity/xyz/abc-po.pdf")
         repo.delete.assert_called_once_with(document)
@@ -211,7 +220,7 @@ class TestDeleteDocument:
         service = DocumentService(repo)
 
         with pytest.raises(RuntimeError):
-            service.delete_document(DOCUMENT_ID)
+            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
 
         repo.delete.assert_not_called()
 
@@ -222,7 +231,85 @@ class TestDeleteDocument:
         repo.get_by_id.return_value = document
         service = DocumentService(repo)
 
-        service.delete_document(DOCUMENT_ID)
+        service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
 
         mock_storage.delete.assert_not_called()
         repo.delete.assert_called_once_with(document)
+
+    def test_product_scoped_document_blocked_for_non_catalog_role(self) -> None:
+        repo = _make_repo()
+        repo.get_by_id.return_value = _make_document(
+            storage_path="https://example.com/brochure.pdf", opportunity_id=None, product_id=PRODUCT_ID
+        )
+        service = DocumentService(repo)
+
+        with pytest.raises(AuthorizationError):
+            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+
+        repo.delete.assert_not_called()
+
+    def test_product_scoped_document_allowed_for_catalog_role(self) -> None:
+        repo = _make_repo()
+        document = _make_document(
+            storage_path="https://example.com/brochure.pdf", opportunity_id=None, product_id=PRODUCT_ID
+        )
+        repo.get_by_id.return_value = document
+        service = DocumentService(repo)
+
+        service.delete_document(DOCUMENT_ID, role_name="Admin")
+
+        repo.delete.assert_called_once_with(document)
+
+
+class TestListByProduct:
+    def test_open_to_non_catalog_role(self) -> None:
+        repo = _make_repo()
+        repo.list_by_product.return_value = [_make_document(product_id=PRODUCT_ID, opportunity_id=None)]
+        service = DocumentService(repo)
+
+        documents = service.list_by_product(PRODUCT_ID)
+
+        assert len(documents) == 1
+        repo.list_by_product.assert_called_once_with(PRODUCT_ID)
+
+    def test_product_not_found_raises(self) -> None:
+        repo = _make_repo()
+        repo.product_exists.return_value = False
+        service = DocumentService(repo)
+
+        with pytest.raises(NotFoundError):
+            service.list_by_product(PRODUCT_ID)
+
+
+class TestCreateProductDocument:
+    def _make_data(self) -> DocumentCreate:
+        return DocumentCreate(file_name="Brochure", file_type="BROCHURE", storage_path="https://example.com/b.pdf")
+
+    def test_blocked_for_non_catalog_role(self) -> None:
+        repo = _make_repo()
+        service = DocumentService(repo)
+
+        with pytest.raises(AuthorizationError):
+            service.create_document(PRODUCT_ID, self._make_data(), uploaded_by=USER_ID, role_name=NON_CATALOG_ROLE)
+
+        repo.create.assert_not_called()
+
+    def test_allowed_for_catalog_role(self) -> None:
+        repo = _make_repo()
+        repo.create.side_effect = lambda obj: obj
+        service = DocumentService(repo)
+
+        document = service.create_document(
+            PRODUCT_ID, self._make_data(), uploaded_by=USER_ID, role_name="Admin"
+        )
+
+        assert document.product_id == PRODUCT_ID
+        assert document.storage_path == "https://example.com/b.pdf"
+
+    def test_product_not_found_raises_for_catalog_role(self) -> None:
+        repo = _make_repo()
+        repo.product_exists.return_value = False
+        service = DocumentService(repo)
+
+        with pytest.raises(NotFoundError):
+            service.create_document(PRODUCT_ID, self._make_data(), uploaded_by=USER_ID, role_name="Admin")

@@ -3232,3 +3232,49 @@ anymore. Moved out of the Sprint Plan's "blocked" bucket into item 3 (Sales
 Report + Pipeline Report), and the Backlog entry updated to mark this half
 decided — the separate Account Directory hospital-class filter question
 (A/B/C/D, specialty) stays open, unrelated to this call.
+
+## 2026-09-14 (later) — Product Catalog Collateral Security (Feature 4.1, Module 6b): built, scope corrected live mid-test, full manual E2E pass — Done
+
+Sprint Plan item 2. Backend (`document/service.py`, `document/router.py`) and
+frontend (`ProductCatalogScreen.tsx`) both touched. First pass fully hid the
+Collateral Links box (brochures/photos/videos on a product) from non-Admin/GM
+roles, matching the signed requirement's literal text ("access restricted to
+managers/authorized staff"). Before writing code, flagged a real conflict to
+Basheer: a 2026-08-01 decision (`0014_product_rls_open_read.py`) deliberately
+opened Product Catalog *browsing* to every role for cross-SBU referral
+awareness — Basheer confirmed browsing stays open, only collateral gets
+locked down.
+
+**Live testing caught a second, narrower scope error the same session.**
+Basheer logged in as Haroon (GM) and drove Part A of the manual E2E plan
+himself while watching me drive the browser — confirmed add/delete/view all
+work for GM, including a real link (EDAN's own elite V5 product page) added
+and verified to actually open the correct page (a typo dropped a character
+mid-type on the first two attempts, caught and fixed both times by
+re-verifying the saved `href`, not just the label). Then Basheer logged in as
+Vivek (Sales Staff) and immediately caught it: reps need to *see and open*
+existing collateral to actually sell — the first build blocked that too, not
+just add/edit. Confirmed with Basheer via explicit question, then rebuilt:
+`DocumentService.list_by_product` no longer role-checks at all; only
+`create_document` and `delete_document` (product-scoped) stay Admin/GM-only.
+Frontend: `CollateralLinksCard` now always renders, but only shows the
+"+ Add Link" button and each link's ✕ delete button when `canEdit`. Backend
+tests updated to match (`TestListByProduct` no longer expects a block;
+router test renamed to `test_non_catalog_role_can_still_view`, asserts
+`200`). 796/796 backend tests pass, `tsc` clean.
+
+**Full A-E manual E2E pass completed live**, Basheer watching: Admin/GM
+add/view/delete (A), non-Admin/GM view-only — no add/edit, box still shows
+correctly on a zero-link product too (B), Opportunity-document
+upload/delete confirmed unaffected for Vivek (D, used a real test PDF via
+file upload), cross-SBU catalog browsing confirmed unaffected (E). Part C
+(raw API 403 check) was intentionally skipped live — Basheer agreed the
+automated router test already proves the same code path, rather than reading
+Vivek's session token out of browser storage for a live repeat. Full
+step-by-step results: `docs/Product-Catalog-Collateral-Security-Manual-E2E-
+Test-Plan.md`.
+
+Feature 4.1 (Module 6b) flipped **Partial → Done** in the traceability doc
+and scorecard (tally now 24 Done / 15 Partial / 11 Not started of 50); Sprint
+Plan item 2 marked done. Not yet committed — sitting on `main` alongside the
+rest of this session's uncommitted doc work.

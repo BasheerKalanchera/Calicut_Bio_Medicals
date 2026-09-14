@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi import UploadFile
 
 from app.core import storage
-from app.core.exceptions import BusinessRuleViolation, NotFoundError
+from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
 from app.domains.document.models import Document
 from app.domains.document.repository import DocumentRepository
 from app.domains.document.schemas import DocumentCreate, DocumentDownloadUrl
@@ -14,6 +14,13 @@ ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "application/pdf"}
 MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024
 
 _SIGNED_URL_EXPIRY_SECONDS = 300
+
+# Signed Feature 4.1 (Collateral Security) -- Product Catalog collateral links
+# are viewable by everyone (reps need them to actually sell), but adding or
+# removing one is Admin/General Manager only. Mirrors
+# ProductService._CATALOG_WRITE_ROLES; unrelated to Opportunity documents,
+# which stay open to whoever can already reach that Opportunity via RLS.
+_CATALOG_COLLATERAL_WRITE_ROLES = {"Admin", "General Manager"}
 
 
 def _is_external_link(document: Document) -> bool:
@@ -33,8 +40,10 @@ class DocumentService:
         return self.repository.list_by_product(product_id)
 
     def create_document(
-        self, product_id: uuid.UUID, data: DocumentCreate, *, uploaded_by: uuid.UUID
+        self, product_id: uuid.UUID, data: DocumentCreate, *, uploaded_by: uuid.UUID, role_name: str
     ) -> Document:
+        if role_name not in _CATALOG_COLLATERAL_WRITE_ROLES:
+            raise AuthorizationError("Only Admin/General Manager can add Product Catalog collateral")
         if not self.repository.product_exists(product_id):
             raise NotFoundError(f"Product {product_id} not found")
         document = Document(
@@ -96,10 +105,12 @@ class DocumentService:
         expires_at = datetime.now(UTC) + timedelta(seconds=_SIGNED_URL_EXPIRY_SECONDS)
         return DocumentDownloadUrl(url=url, expires_at=expires_at)
 
-    def delete_document(self, document_id: uuid.UUID) -> None:
+    def delete_document(self, document_id: uuid.UUID, *, role_name: str) -> None:
         document = self.repository.get_by_id(document_id)
         if document is None:
             raise NotFoundError(f"Document {document_id} not found")
+        if document.product_id is not None and role_name not in _CATALOG_COLLATERAL_WRITE_ROLES:
+            raise AuthorizationError("Only Admin/General Manager can remove Product Catalog collateral")
         # Delete the Storage object before the DB row: if Storage delete fails,
         # the DB row survives and the orphan is visible/retryable. The reverse
         # order could leave an orphaned file with no DB record pointing at it.

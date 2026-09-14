@@ -1,6 +1,90 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-14_
 
+## 2026-09-14 session (later still) — Product Catalog Collateral Security (Sprint Plan item 2): built, scope corrected live mid-test with Basheer driving, full E2E pass — Done, ready to commit
+
+Collateral Links (brochures/videos on a product) now Admin/GM-only to
+add/remove, on screen and on the server; viewing/opening an existing link
+stays open to everyone — first build over-restricted viewing too, Basheer
+caught it live testing as Vivek (Sales Staff) and had me rebuild before
+continuing. Full A-E manual E2E pass completed live (Haroon as GM, Vivek as
+Sales Staff), 796/796 backend tests pass, `tsc` clean. Feature 4.1 (Module
+6b) flipped Partial → Done (tally now 24/15/11 of 50). Full detail:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-14 (later)" entry; full test
+results: `docs/Product-Catalog-Collateral-Security-Manual-E2E-Test-Plan.md`.
+
+**Next step:** commit everything (backend + frontend code, tests, and the
+doc updates: traceability, scorecard, sprint plan, progress archive, this
+file, plus the new test-plan doc).
+
+## 2026-09-14 session (later) — Admin/GM split hotfix pushed straight to UAT, bypassing pending main commits; Basheer verifying live now
+
+**Bug found live in UAT last week:** Haroon (GM) added a Sales Staff member to
+a deal's split at 20%, then couldn't find his own name in the picker to take
+the remaining 80%. Root cause: BR-FIN-06's same-SBU split-eligibility check
+structurally excludes every Admin/GM user (they have no real SBU, only a
+NOT-NULL placeholder) from ever being a split candidate — including
+themselves, even as the caller. Confirmed in the live code
+(`organization/repository.py`'s `scope="sbu"` branch,
+`opportunity/service.py`'s `replace_splits`). Not a bug in the traditional
+sense — deliberate design that never anticipated a GM personally taking a
+split — but real enough that Haroon wants it fixed urgently.
+
+**Options discussed with Basheer:** (A) let Admin/GM add only themselves —
+narrow, mirrors the self-row carve-out normal users already get; (B) let
+anyone pick any Admin/GM into a split — wider, more misuse surface; (C) give
+Admin/GM a real SBU — rejected, reopens a decision made twice before.
+**Basheer chose A.** Separately, Basheer asked for a new feature: notify a
+rep when they're added to a split (didn't exist before at all).
+
+**Urgency + branching constraint:** Basheer wants this on UAT *now*, but
+`main` has 7 pending commits (Insights Dashboard Batch 1a/1b, several docs)
+he does NOT want promoted to UAT yet. Solution: branched
+`hotfix/admin-gm-split` off `origin/uat`'s tip (`a28ac61`), not off `main`,
+built the fix there, so it could only carry exactly this change.
+
+**Built on that branch** (8 files): the two eligibility carve-outs (picker +
+save-time check, both narrowly self-only), the new `notify_split_added`
+notification (reuses the existing generic `notification` table, no
+migration), frontend copy in `notificationDescribe.ts`, 14 new/updated
+backend tests, and `Business-Rules.md`'s BR-FIN-06 amended with both changes.
+747/747 backend tests pass, `ruff`/`tsc` clean (pre-existing warnings
+unrelated to this change).
+
+**Committed `7ddd439`, pushed straight to `origin/uat`** (`git push origin
+hotfix/admin-gm-split:uat`) — clean fast-forward, confirmed via `git log
+origin/main..origin/uat` that only this one commit landed, none of the 7
+pending main commits came along. Working tree returned to `main`, Basheer's
+stashed WIP (Product Catalog Admin/GM restriction + doc edits) restored
+exactly as left.
+
+**Verified live on UAT by Basheer, 2026-09-14 — working end to end.**
+Self-add succeeded, and the new `SPLIT_ADDED` notification fired correctly
+to the recipient. No further UAT-side action pending. Basheer told Haroon
+it's live and confirmed.
+
+**Synced onto `main` too, properly (merge, not cherry-pick).** Basheer asked
+the right question: a cherry-pick would have given the fix a *different*
+commit id on `main` than the one already on `uat` — harmless today, but it
+would have broken next week's routine `main` → `uat` fast-forward promotion
+(git would see two unrelated-looking commits with the same content, not one
+already-applied change, and refuse the fast-forward). Fixed by doing a real
+`git merge origin/uat` into `main` instead — brings the actual `7ddd439`
+commit into `main`'s own history so it's genuinely already-applied from
+git's point of view. Checked first for any real overlap with the 7 pending
+main-only commits: only one shared file (`Business-Rules.md`), confirmed to
+merge with zero conflicts (different sections of the doc). Merge commit
+`29dcd61`, 797/797 backend tests pass (the combined suite). **Committed and
+pushed to `origin/main`** (`e55a77f..29dcd61`). Confirmed via `git merge-base
+--is-ancestor 7ddd439 HEAD` that `uat`'s tip is now a genuine ancestor of
+`main` — next week's promotion will fast-forward cleanly, no special
+handling needed. Basheer's Product Catalog WIP untouched throughout (zero
+file overlap with any of this).
+
+**Next step:** none pending on this thread — fully resolved, both branches
+correctly related. Basheer continuing his own Product Catalog Collateral
+Security work on `main` next.
+
 ## 2026-09-14 session — Partial-item walkthrough through Modules 4-7; tally now 23 Done / 15 Partial / 12 Not started of 50
 
 Continued the scorecard walkthrough through Modules 4, 5, and 6 (Governance

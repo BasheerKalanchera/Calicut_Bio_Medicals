@@ -41,7 +41,9 @@ def create_product_document(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: DocumentService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[DocumentResponse]:
-    document = service.create_document(product_id, body, uploaded_by=current_user.id)
+    document = service.create_document(
+        product_id, body, uploaded_by=current_user.id, role_name=current_user.role.role_name
+    )
     return APIResponse(data=DocumentResponse.model_validate(document))
 
 
@@ -51,7 +53,7 @@ def delete_document(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: DocumentService = Depends(_get_service),  # noqa: B008
 ) -> None:
-    service.delete_document(document_id)
+    service.delete_document(document_id, role_name=current_user.role.role_name)
 
 
 @router.get("/documents/{document_id}/download-url")
