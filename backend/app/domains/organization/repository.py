@@ -97,7 +97,14 @@ class UserRepository(BaseRepository[UserProfile]):
                 # unrestricted overlay tier, so show every active, non-unrestricted
                 # user regardless of SBU -- BR-FIN-06 itself is still enforced
                 # server-side in replace_splits against the *opportunity's* sbu_id.
-                stmt = stmt.where(not_unrestricted)
+                # BR-FIN-06 self-carve-out (2026-09-14): an Admin/GM caller must
+                # still be able to pick *themselves* -- excluded by not_unrestricted
+                # like every other Admin/GM row, so OR their own row back in. Narrow
+                # on purpose: this doesn't let a caller add some *other* Admin/GM,
+                # only themselves, mirroring the self_row carve-out normal callers
+                # already get below.
+                self_row = UserProfile.id == current_user.id
+                stmt = stmt.where(or_(not_unrestricted, self_row))
             else:
                 self_row = UserProfile.id == current_user.id
                 same_sbu = UserProfile.sbu_id == current_user.sbu_id

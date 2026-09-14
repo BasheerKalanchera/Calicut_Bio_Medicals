@@ -451,6 +451,7 @@ class OpportunityService:
         data: SplitsBulkUpdate,
         *,
         updated_by: uuid.UUID,
+        role_name: str,
     ) -> list[Split]:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
@@ -475,7 +476,14 @@ class OpportunityService:
         if new_user_ids:
             sbu_by_user = self.repository.get_user_sbu_ids(new_user_ids)
             for user_id in new_user_ids:
-                if sbu_by_user.get(user_id) != opportunity.sbu_id:
+                # BR-FIN-06 self-carve-out (2026-09-14): Admin/GM have no real SBU
+                # (see the identical note in organization/repository.py's picker),
+                # so they can never pass the same-SBU check -- except when adding
+                # themselves, which is what the picker fix now allows through.
+                # Narrow: only the acting Admin/GM adding their own row, not a
+                # blanket exemption for any Admin/GM landing in the submitted list.
+                is_self_add = user_id == updated_by and role_name in _SBU_OVERRIDE_ROLES
+                if not is_self_add and sbu_by_user.get(user_id) != opportunity.sbu_id:
                     raise BusinessRuleViolation(
                         f"User {user_id} is not in this Opportunity's SBU; "
                         "split participants must belong to the same SBU as the Opportunity."
@@ -491,7 +499,22 @@ class OpportunityService:
             )
             for s in data.splits
         ]
-        return self.repository.replace_splits(opportunity_id, new_splits)
+        result = self.repository.replace_splits(opportunity_id, new_splits)
+
+        # Awareness notification for whoever's genuinely new to the split --
+        # skip a self-add (no point notifying yourself) and anyone already on
+        # the opportunity before this save (same new_user_ids set BR-FIN-06 just
+        # validated against, so an edit to existing participants' percentages
+        # alone never re-fires this).
+        for user_id in new_user_ids:
+            if user_id != updated_by:
+                self.notification_service.notify_split_added(
+                    recipient_user_id=user_id,
+                    opportunity_id=opportunity_id,
+                    actor_id=updated_by,
+                )
+
+        return result
 
     # ------------------------------------------------------------------
     # Stakeholders

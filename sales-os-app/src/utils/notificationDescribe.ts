@@ -35,5 +35,8 @@ export function describeNotification(n: NotificationResponse): string {
   if (n.type === "GATE_OVERRIDE_NAMED") {
     return `${who} named you as approving manager for ${what}`;
   }
+  if (n.type === "SPLIT_ADDED") {
+    return `${who} added you to the revenue split on ${what}`;
+  }
   return `${who} assigned you ${what}`;
 }

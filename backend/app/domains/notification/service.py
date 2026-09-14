@@ -88,6 +88,29 @@ class NotificationService:
         )
         return self.repository.create(notification)
 
+    def notify_split_added(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        opportunity_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # Awareness only, same posture as notify_gate_override_named -- a split
+        # is already in effect by the time this fires, nothing waits on the
+        # recipient acting on it. Caller (OpportunityService.replace_splits)
+        # is responsible for only calling this for genuinely new participants,
+        # not on every re-save, and for skipping it when someone adds
+        # themselves (no point notifying yourself).
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="SPLIT_ADDED",
+            entity_type="opportunity",
+            entity_id=opportunity_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)
+
     def notify_manager_note_added(
         self,
         *,
