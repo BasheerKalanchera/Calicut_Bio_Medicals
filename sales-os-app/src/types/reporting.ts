@@ -89,4 +89,28 @@ export interface ReportingFilters {
   sbu_id?: string;
   zone_id?: string;
   user_id?: string;
+  period_start?: string;
+  period_end?: string;
+}
+
+export type SalesGroupBy = "rep" | "sbu" | "zone" | "product";
+
+export interface SalesHeadline {
+  revenue_lakhs: string;
+  won_count: number;
+  lost_count: number;
+  win_rate: string;
+  avg_deal_size_lakhs: string;
+}
+
+export interface SalesSummaryRow {
+  group_id: string;
+  group_name: string;
+  revenue_lakhs: string;
+  won_count: number;
+}
+
+export interface SalesSummaryResponse {
+  group_by: SalesGroupBy;
+  rows: SalesSummaryRow[];
 }

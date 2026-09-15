@@ -23,6 +23,8 @@ import InsightsDashboardScreen from "./screens/InsightsDashboardScreen";
 import StagnantDealsReportScreen from "./screens/StagnantDealsReportScreen";
 import OpportunitiesOnHoldReportScreen from "./screens/OpportunitiesOnHoldReportScreen";
 import ProductPerformanceReportScreen from "./screens/ProductPerformanceReportScreen";
+import PipelineReportScreen from "./screens/PipelineReportScreen";
+import SalesReportScreen from "./screens/SalesReportScreen";
 import UserDirectoryScreen from "./screens/UserDirectoryScreen";
 import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
@@ -65,6 +67,8 @@ const REPORTS_SECTION = {
     { id: "stagnantDeals", label: "Stagnant Deals", icon: "🥶" },
     { id: "opportunitiesOnHold", label: "Opportunities On Hold", icon: "⏸️" },
     { id: "productPerformance", label: "Product Performance", icon: "🏆" },
+    { id: "pipelineReport", label: "Pipeline Report", icon: "🧭" },
+    { id: "salesReport", label: "Sales Report", icon: "💰" },
   ],
 };
 
@@ -816,6 +820,24 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <ProductPerformanceReportScreen />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "pipelineReport" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Pipeline Report
+              </Typography>
+            </Box>
+            <PipelineReportScreen />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "salesReport" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Sales Report
+              </Typography>
+            </Box>
+            <SalesReportScreen />
           </Box>
         </ErrorBoundary>
       </Box>

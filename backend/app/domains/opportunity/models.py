@@ -96,6 +96,7 @@ class Opportunity(AuditMixin, Base):
         UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
     )
     high_priority_manual: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")

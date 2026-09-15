@@ -254,3 +254,66 @@ class TestOpportunitiesOnHold:
         sql = _run("opportunities_on_hold", current_user)
         assert "user_profile.sbu_id" in sql
         assert _uuid_literal(current_user.sbu_id) in sql
+
+
+class TestSalesHeadline:
+    def test_restricted_to_won_or_lost(self):
+        sql = _run("sales_headline", _make_current_user("Admin"))
+        assert "'WON'" in sql
+        assert "'LOST'" in sql
+
+    def test_no_period_filter_when_not_given(self):
+        sql = _run("sales_headline", _make_current_user("Admin"))
+        assert "closed_at" not in sql
+
+    def test_period_filter_applied_when_given(self):
+        start = datetime(2026, 4, 1, tzinfo=UTC)
+        end = datetime(2026, 7, 1, tzinfo=UTC)
+        sql = _run("sales_headline", _make_current_user("Admin"), period_start=start, period_end=end)
+        assert "opportunity.closed_at >=" in sql
+        assert "opportunity.closed_at <" in sql
+
+    def test_admin_is_unrestricted(self):
+        sql = _run("sales_headline", _make_current_user("Admin"))
+        assert "user_profile.sbu_id" not in sql
+
+    def test_sbu_manager_scoped_to_own_sbu_and_self(self):
+        current_user = _make_current_user("SBU Manager")
+        sql = _run("sales_headline", current_user)
+        assert "user_profile.sbu_id" in sql
+        assert _uuid_literal(current_user.id) in sql
+
+
+class TestSalesSummary:
+    def test_group_by_rep_groups_on_display_name(self):
+        sql = _run("sales_summary", _make_current_user("Admin"), "rep")
+        assert "user_profile.display_name" in sql
+        assert "'WON'" in sql
+        assert "'LOST'" not in sql  # Sales Report's breakdown is Won-only, unlike the headline's win rate
+
+    def test_group_by_product_uses_outer_join_and_trade_in_bucket(self):
+        sql = _run("sales_summary", _make_current_user("Admin"), "product")
+        assert "LEFT OUTER JOIN product ON" in sql
+        assert "'trade-in'" in sql
+        assert "'Trade-Ins / Returns'" in sql
+
+    def test_group_by_zone_does_not_join_product(self):
+        sql = _run("sales_summary", _make_current_user("Admin"), "zone")
+        assert "JOIN product ON" not in sql
+
+    def test_period_filter_applied_when_given(self):
+        start = datetime(2026, 4, 1, tzinfo=UTC)
+        end = datetime(2026, 7, 1, tzinfo=UTC)
+        sql = _run(
+            "sales_summary", _make_current_user("Admin"), "rep", period_start=start, period_end=end
+        )
+        assert "opportunity.closed_at >=" in sql
+        assert "opportunity.closed_at <" in sql
+
+    def test_sbu_and_zone_filters_applied(self):
+        sbu_id, zone_id = uuid.uuid4(), uuid.uuid4()
+        sql = _run(
+            "sales_summary", _make_current_user("Admin"), "sbu", sbu_id=sbu_id, zone_id=zone_id
+        )
+        assert _uuid_literal(sbu_id) in sql
+        assert _uuid_literal(zone_id) in sql

@@ -109,3 +109,30 @@ class OpportunityOnHoldRow(BaseModel):
 
 class OpportunitiesOnHoldResponse(BaseModel):
     rows: list[OpportunityOnHoldRow]
+
+
+SalesGroupBy = Literal["rep", "sbu", "zone", "product"]
+
+
+class SalesHeadline(BaseModel):
+    revenue_lakhs: Decimal
+    won_count: int
+    lost_count: int
+    win_rate: Decimal
+    avg_deal_size_lakhs: Decimal
+
+
+class SalesSummaryRow(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    # str, not uuid.UUID -- same reasoning as PipelineSummaryRow.group_id:
+    # the "product" breakdown's Trade-Ins/Returns bucket has no real row.
+    group_id: str
+    group_name: str
+    revenue_lakhs: Decimal
+    won_count: int
+
+
+class SalesSummaryResponse(BaseModel):
+    group_by: SalesGroupBy
+    rows: list[SalesSummaryRow]

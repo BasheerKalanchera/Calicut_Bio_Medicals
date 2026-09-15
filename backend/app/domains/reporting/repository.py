@@ -117,6 +117,98 @@ class ReportingRepository:
         stmt = stmt.order_by(group_name_col)
         return list(self.db.execute(stmt).all())
 
+    def sales_headline(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> Row:
+        is_won = OpportunityStatus.status_code == "WON"
+        is_lost = OpportunityStatus.status_code == "LOST"
+
+        stmt = (
+            select(
+                func.coalesce(func.sum(case((is_won, _NET_VALUE), else_=0)), 0).label("revenue_lakhs"),
+                func.count(func.distinct(case((is_won, Opportunity.id)))).label("won_count"),
+                func.count(func.distinct(case((is_lost, Opportunity.id)))).label("lost_count"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .where(or_(is_won, is_lost))
+        )
+        # closed_at is only ever set once a deal reaches Won/Lost (see
+        # OpportunityService), so filtering on it here is safe and accurate --
+        # a deal touched by neither branch never reaches this WHERE at all.
+        if period_start is not None:
+            stmt = stmt.where(Opportunity.closed_at >= period_start)
+        if period_end is not None:
+            stmt = stmt.where(Opportunity.closed_at < period_end)
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(Account.zone_id == zone_id)
+        return self.db.execute(stmt).one()
+
+    def sales_summary(
+        self,
+        current_user: UserProfile,
+        group_by: str,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> list[Row]:
+        if group_by == "product":
+            group_id_col = func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID)
+            group_name_col = func.coalesce(Product.name, _TRADE_IN_GROUP_NAME)
+        else:
+            group_id_col, group_name_col = _GROUP_BY_COLUMNS[group_by]
+        is_won = OpportunityStatus.status_code == "WON"
+
+        stmt = (
+            select(
+                group_id_col.label("group_id"),
+                group_name_col.label("group_name"),
+                func.coalesce(func.sum(case((is_won, _NET_VALUE), else_=0)), 0).label("revenue_lakhs"),
+                func.count(func.distinct(case((is_won, Opportunity.id)))).label("won_count"),
+            )
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
+            .join(UserProfile, Opportunity.owner_id == UserProfile.id)
+            .join(SBU, Opportunity.sbu_id == SBU.id)
+            .join(Account, Opportunity.account_id == Account.id)
+            .join(Zone, Account.zone_id == Zone.id)
+            .where(is_won)
+        )
+        if group_by == "product":
+            # Outer join, same reasoning as pipeline_summary's -- a Buyback
+            # line on a Won deal still needs somewhere to go so this
+            # breakdown's rows reconcile to sales_headline's total revenue.
+            stmt = stmt.outerjoin(Product, OpportunityItem.product_id == Product.id)
+        if period_start is not None:
+            stmt = stmt.where(Opportunity.closed_at >= period_start)
+        if period_end is not None:
+            stmt = stmt.where(Opportunity.closed_at < period_end)
+        stmt = stmt.group_by(group_id_col, group_name_col)
+        stmt = self._apply_owner_scope(stmt, current_user, user_id)
+        if sbu_id is not None:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if zone_id is not None:
+            stmt = stmt.where(Account.zone_id == zone_id)
+        stmt = stmt.order_by(group_name_col)
+        return list(self.db.execute(stmt).all())
+
     def stagnant_deals(
         self,
         current_user: UserProfile,

@@ -8,6 +8,9 @@ import type {
   ProductPerformanceResponse,
   RepActivityLevelResponse,
   ReportingFilters,
+  SalesGroupBy,
+  SalesHeadline,
+  SalesSummaryResponse,
   StagnantDealsResponse,
 } from "../types/reporting";
 
@@ -61,5 +64,20 @@ export async function getOpportunitiesOnHold(
   filters: ReportingFilters = {},
 ): Promise<OpportunitiesOnHoldResponse> {
   const r = await api.get("/reporting/opportunities-on-hold", { params: filters });
+  return r.data.data;
+}
+
+export async function getSalesHeadline(filters: ReportingFilters = {}): Promise<SalesHeadline> {
+  const r = await api.get("/reporting/sales-headline", { params: filters });
+  return r.data.data;
+}
+
+export async function getSalesSummary(
+  groupBy: SalesGroupBy,
+  filters: ReportingFilters = {},
+): Promise<SalesSummaryResponse> {
+  const r = await api.get("/reporting/sales-summary", {
+    params: { group_by: groupBy, ...filters },
+  });
   return r.data.data;
 }

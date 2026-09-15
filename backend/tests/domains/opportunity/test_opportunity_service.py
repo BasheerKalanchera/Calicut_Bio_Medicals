@@ -297,6 +297,42 @@ class TestCreateOpportunity:
         with pytest.raises(BusinessRuleViolation, match="Loss Reason"):
             service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
 
+    def test_create_at_won_stamps_closed_at(self):
+        """A deal can be entered directly as Won (e.g. a historical sale) --
+        closed_at must be stamped here too, not just on the update path."""
+        repo = _make_repo()
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        data = _make_create_data(
+            status_id=STATUS_WON_ID,
+            po_number="PO-1001",
+            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        )
+        service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+
+        created_obj: Opportunity = repo.create.call_args[0][0]
+        assert created_obj.closed_at is not None
+
+    # No equivalent "create directly at Lost" test -- create_opportunity's
+    # validate_status_transition call hardcodes loss_reason_id/competitor_name/
+    # hold_reason_id/reactivation_date to None regardless of `data` (a
+    # pre-existing, unrelated gap, found while writing this test -- it means
+    # creating an Opportunity directly at Lost can never actually succeed
+    # today, since the Loss Reason check always sees None). Out of scope
+    # here; flagged separately rather than silently fixed alongside this
+    # feature.
+
+    def test_create_at_active_does_not_stamp_closed_at(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.create_opportunity(ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
+
+        created_obj: Opportunity = repo.create.call_args[0][0]
+        assert created_obj.closed_at is None
+
     def test_audit_fields_set_on_create(self):
         repo = _make_repo()
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
@@ -907,6 +943,60 @@ class TestUpdateOpportunity:
                 OpportunityUpdate(status_id=STATUS_LOST_ID),
                 updated_by=USER_ID,
             )
+
+    def test_transition_to_won_stamps_closed_at(self):
+        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.side_effect = [
+            _make_status("ACTIVE"),
+            _make_status("WON", is_terminal=True),
+        ]
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID), updated_by=USER_ID
+        )
+
+        assert opp.closed_at is not None
+
+    def test_transition_to_lost_stamps_closed_at(self):
+        opp = _make_opportunity(loss_reason_id=LOSS_REASON_PRICE_ID, closed_at=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.side_effect = [
+            _make_status("ACTIVE"),
+            _make_status("LOST", is_terminal=True),
+        ]
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(status_id=STATUS_LOST_ID), updated_by=USER_ID
+        )
+
+        assert opp.closed_at is not None
+
+    def test_non_terminal_transition_does_not_stamp_closed_at(self):
+        opp = _make_opportunity(
+            hold_reason_id=HOLD_REASON_ID, reactivation_date=TOMORROW, closed_at=None
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.side_effect = [
+            _make_status("ACTIVE"),
+            _make_status("ON_HOLD"),
+        ]
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
+        )
+
+        assert opp.closed_at is None
 
     def test_transition_to_on_hold_with_past_reactivation_date_raises(self):
         yesterday = date.today() - timedelta(days=1)

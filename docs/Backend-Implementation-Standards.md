@@ -416,9 +416,15 @@ Never modify existing migrations. Never run `alembic downgrade` in production.
 The last step is not optional. `Physical-Schema.sql` is hand-maintained-in-appearance
 only — nothing keeps it in sync with the Alembic chain automatically, and skipping
 this step is exactly how it went stale across 6 migrations (see
-`docs/Progress-Archive-2026-08.md`, 2026-08-03 entry). Regenerate it via
-`pg_dump --schema-only` against any fully-migrated environment (regen instructions
-are in the file's own header) and commit it in the same PR as the migration.
+`docs/Progress-Archive-2026-08.md`, 2026-08-03 entry). Regenerate it with
+`.\scripts\regen_physical_schema.ps1` (run against Dev) and commit it in the same
+PR as the migration. **Never run a raw `pg_dump --schema-only` command
+directly** — it always overwrites the file's hand-maintained header comment
+block from scratch (there is no `pg_dump` flag that preserves a preamble),
+which is exactly what kept happening before this script existed. The script
+rebuilds that header itself (regen date, which migration it's caught up to)
+as part of the same run, so there's no manual "restore the header afterward"
+step left to forget.
 
 ---
 

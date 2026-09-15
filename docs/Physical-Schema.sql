@@ -12,28 +12,27 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-09-15 from the Dev database (Postgres 17.6), catching up
--- migration 0042: one new column, opportunity.high_priority_manual (boolean,
--- default false) -- the manual half of the High Priority Deal Flag (BR-OP-15).
--- See docs/High-Priority-Deal-Flag-Implementation-Plan.md and
+-- migration 0043: one new column, opportunity.closed_at (timestamptz,
+-- nullable) -- stamped automatically the moment a deal's status first
+-- becomes terminal (Won or Lost), powering Sales Report's period filtering.
+-- See docs/Sales-And-Pipeline-Report-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
--- Regenerate with (any fully-migrated environment, Dev or UAT, is equivalent
--- since both run the same Alembic chain):
+-- Regenerate with: .\scripts\regen_physical_schema.ps1
 --
---   docker run --rm postgres:17 pg_dump "<ADMIN_DATABASE_URL>" \
---     --schema-only --no-owner --no-privileges --schema=public \
---     > docs/Physical-Schema.sql
---
--- (Use a postgres:<major> image matching the target server's actual version
--- — `SELECT version();` — pg_dump refuses to run against a newer server.)
+-- Never run a raw `pg_dump --schema-only` command directly — it always
+-- overwrites this header from scratch (no pg_dump flag preserves a
+-- preamble), which is exactly what kept happening before this script
+-- existed. The script rebuilds this header itself (regen date, which
+-- migration it's caught up to) as part of the same run.
 -- ==============================================================================
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict i62lbrTHOQcszvVOJ3IoPdIBiFAkfNaOhuU9JD42Lxik9GGitFGoeQa2Kk40rW8
+\restrict uQS5pmlgg8xCOt1xsHkIUS62SPwRw1AlLLCJjaUhp2DibDGqVLUjeQmME0NynSH
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -512,6 +511,7 @@ CREATE TABLE public.opportunity (
     gate_override_set_at timestamp with time zone,
     gate_override_set_by uuid,
     high_priority_manual boolean DEFAULT false NOT NULL,
+    closed_at timestamp with time zone,
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
     CONSTRAINT opportunity_win_probability_check CHECK (((win_probability >= (0)::numeric) AND (win_probability <= (100)::numeric)))
@@ -2671,5 +2671,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict i62lbrTHOQcszvVOJ3IoPdIBiFAkfNaOhuU9JD42Lxik9GGitFGoeQa2Kk40rW8
+\unrestrict uQS5pmlgg8xCOt1xsHkIUS62SPwRw1AlLLCJjaUhp2DibDGqVLUjeQmME0NynSH
 

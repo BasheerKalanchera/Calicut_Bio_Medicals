@@ -9,6 +9,7 @@ not a 403, just nothing to add.
 """
 
 import uuid
+from decimal import Decimal
 from unittest.mock import MagicMock
 
 from app.domains.organization.models import UserProfile
@@ -65,3 +66,45 @@ class TestOverdueActionsTeamGate:
         result = service.overdue_actions(_make_current_user("Admin"))
 
         assert result.total_overdue == 8
+
+
+class TestSalesHeadlineDerivedFields:
+    """win_rate and avg_deal_size_lakhs are computed here, not in SQL --
+    the repository only ever hands back the raw won_count/lost_count/
+    revenue_lakhs it can aggregate safely."""
+
+    def test_win_rate_and_avg_deal_size(self):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.sales_headline.return_value = MagicMock(
+            revenue_lakhs=Decimal("100.00"), won_count=4, lost_count=1
+        )
+        service = ReportingService(repository=mock_repo)
+
+        result = service.sales_headline(_make_current_user("Admin"))
+
+        assert result.win_rate == Decimal("0.8")  # 4 won / (4 won + 1 lost)
+        assert result.avg_deal_size_lakhs == Decimal("25.00")  # 100.00 / 4
+
+    def test_no_closed_deals_does_not_divide_by_zero(self):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.sales_headline.return_value = MagicMock(
+            revenue_lakhs=Decimal("0"), won_count=0, lost_count=0
+        )
+        service = ReportingService(repository=mock_repo)
+
+        result = service.sales_headline(_make_current_user("Admin"))
+
+        assert result.win_rate == Decimal(0)
+        assert result.avg_deal_size_lakhs == Decimal(0)
+
+    def test_all_lost_no_wins(self):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.sales_headline.return_value = MagicMock(
+            revenue_lakhs=Decimal("0"), won_count=0, lost_count=3
+        )
+        service = ReportingService(repository=mock_repo)
+
+        result = service.sales_headline(_make_current_user("Admin"))
+
+        assert result.win_rate == Decimal(0)
+        assert result.avg_deal_size_lakhs == Decimal(0)

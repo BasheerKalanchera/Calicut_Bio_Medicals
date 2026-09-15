@@ -186,6 +186,10 @@ class OpportunityService:
             gate_override_set_at=func.now() if data.gate_override_approver_id is not None else None,
             gate_override_set_by=created_by if data.gate_override_approver_id is not None else None,
             high_priority_manual=data.high_priority_manual,
+            # A deal can be created directly at a terminal status (e.g. entering
+            # a historical Won/Lost deal) -- same closed_at stamping rule as
+            # update_opportunity's transition path applies here too.
+            closed_at=func.now() if new_status.is_terminal else None,
             created_by=created_by,
             updated_by=created_by,
         )
@@ -377,6 +381,13 @@ class OpportunityService:
                 po_number=opportunity.po_number,
                 has_items=has_items,
             )
+
+            # Sales Report needs the real date a deal closed, not `updated_at`
+            # (which changes on any unrelated edit). Stamped once, exactly
+            # when the deal first becomes terminal -- BR-OP-09 above already
+            # forbids leaving a terminal status, so this can never re-fire.
+            if effective_status.is_terminal and opportunity.closed_at is None:
+                opportunity.closed_at = func.now()
 
         return self.repository.update(opportunity)
 

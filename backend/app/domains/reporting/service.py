@@ -19,6 +19,10 @@ from app.domains.reporting.schemas import (
     ProductPerformanceRow,
     RepActivityLevelResponse,
     RepActivityLevelRow,
+    SalesGroupBy,
+    SalesHeadline,
+    SalesSummaryResponse,
+    SalesSummaryRow,
     StagnantDealRow,
     StagnantDealsResponse,
 )
@@ -55,6 +59,60 @@ class ReportingService:
         return PipelineSummaryResponse(
             group_by=group_by,
             rows=[PipelineSummaryRow.model_validate(r) for r in rows],
+        )
+
+    def sales_headline(
+        self,
+        current_user: UserProfile,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> SalesHeadline:
+        row = self.repository.sales_headline(
+            current_user,
+            sbu_id=sbu_id,
+            zone_id=zone_id,
+            user_id=user_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
+        total_closed = row.won_count + row.lost_count
+        win_rate = Decimal(row.won_count) / total_closed if total_closed else Decimal(0)
+        avg_deal_size = row.revenue_lakhs / row.won_count if row.won_count else Decimal(0)
+        return SalesHeadline(
+            revenue_lakhs=row.revenue_lakhs,
+            won_count=row.won_count,
+            lost_count=row.lost_count,
+            win_rate=win_rate,
+            avg_deal_size_lakhs=avg_deal_size,
+        )
+
+    def sales_summary(
+        self,
+        current_user: UserProfile,
+        group_by: SalesGroupBy,
+        *,
+        sbu_id: uuid.UUID | None = None,
+        zone_id: uuid.UUID | None = None,
+        user_id: uuid.UUID | None = None,
+        period_start: datetime | None = None,
+        period_end: datetime | None = None,
+    ) -> SalesSummaryResponse:
+        rows = self.repository.sales_summary(
+            current_user,
+            group_by,
+            sbu_id=sbu_id,
+            zone_id=zone_id,
+            user_id=user_id,
+            period_start=period_start,
+            period_end=period_end,
+        )
+        return SalesSummaryResponse(
+            group_by=group_by,
+            rows=[SalesSummaryRow.model_validate(r) for r in rows],
         )
 
     def stagnant_deals(
