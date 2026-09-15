@@ -50,6 +50,8 @@ class OpportunityService:
         status_id: uuid.UUID | None = None,
         owner_id: uuid.UUID | None = None,
         zone_id: uuid.UUID | None = None,
+        sbu_id: uuid.UUID | None = None,
+        product_id: uuid.UUID | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Opportunity], int]:
@@ -60,6 +62,8 @@ class OpportunityService:
             status_id=status_id,
             owner_id=owner_id,
             zone_id=zone_id,
+            sbu_id=sbu_id,
+            product_id=product_id,
             offset=offset,
             limit=page_size,
         )
@@ -69,6 +73,8 @@ class OpportunityService:
             status_id=status_id,
             owner_id=owner_id,
             zone_id=zone_id,
+            sbu_id=sbu_id,
+            product_id=product_id,
         )
         return items, total
 

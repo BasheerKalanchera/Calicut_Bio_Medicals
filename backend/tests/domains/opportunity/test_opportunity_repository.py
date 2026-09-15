@@ -106,6 +106,67 @@ class TestListPipelineOrdering:
         assert "created_at" not in order_by
 
 
+class TestListPipelineFilters:
+    """Report Drill-down (Feature 11.2): list_pipeline's new sbu_id/
+    product_id filters, same compiled-SQL-assertion pattern as
+    TestListPipelineOrdering -- no real DB needed."""
+
+    def _compiled_list_pipeline(self, **kwargs) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        repo = OpportunityRepository(mock_db)
+        repo.list_pipeline(**kwargs)
+        stmt = mock_db.scalars.call_args.args[0]
+        return _compiled(stmt)
+
+    def test_sbu_id_filters_directly_on_opportunity(self):
+        sbu_id = uuid.uuid4()
+        sql = self._compiled_list_pipeline(sbu_id=sbu_id)
+        assert f"opportunity.sbu_id = '{str(sbu_id).replace('-', '')}'" in sql
+
+    def test_no_sbu_filter_when_not_passed(self):
+        sql = self._compiled_list_pipeline()
+        assert "opportunity.sbu_id =" not in sql
+
+    def test_product_id_uses_exists_style_subquery_not_a_join(self):
+        product_id = uuid.uuid4()
+        sql = self._compiled_list_pipeline(product_id=product_id)
+        # Must not be a plain join against opportunity_item -- that would
+        # duplicate a multi-product opportunity's parent row once per
+        # matching line item.
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id IN" in sql
+        assert f"opportunity_item.product_id = '{str(product_id).replace('-', '')}'" in sql
+
+    def test_no_product_filter_when_not_passed(self):
+        sql = self._compiled_list_pipeline()
+        assert "opportunity_item" not in sql
+
+
+class TestCountPipelineFilters:
+    """Same sbu_id/product_id filters, mirrored on count_pipeline."""
+
+    def _compiled_count_pipeline(self, **kwargs) -> str:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        repo = OpportunityRepository(mock_db)
+        repo.count_pipeline(**kwargs)
+        stmt = mock_db.scalar.call_args.args[0]
+        return _compiled(stmt)
+
+    def test_sbu_id_filters_directly_on_opportunity(self):
+        sbu_id = uuid.uuid4()
+        sql = self._compiled_count_pipeline(sbu_id=sbu_id)
+        assert f"opportunity.sbu_id = '{str(sbu_id).replace('-', '')}'" in sql
+
+    def test_product_id_uses_exists_style_subquery_not_a_join(self):
+        product_id = uuid.uuid4()
+        sql = self._compiled_count_pipeline(product_id=product_id)
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id IN" in sql
+        assert f"opportunity_item.product_id = '{str(product_id).replace('-', '')}'" in sql
+
+
 class TestCountOpportunitiesGroupedByStakeholderIds:
     def test_returns_empty_dict_for_empty_input(self):
         mock_db = MagicMock()

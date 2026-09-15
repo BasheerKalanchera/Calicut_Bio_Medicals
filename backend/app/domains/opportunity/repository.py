@@ -80,6 +80,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         status_id: uuid.UUID | None = None,
         owner_id: uuid.UUID | None = None,
         zone_id: uuid.UUID | None = None,
+        sbu_id: uuid.UUID | None = None,
+        product_id: uuid.UUID | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Opportunity]:
@@ -118,6 +120,19 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             stmt = stmt.where(Opportunity.status_id == status_id)
         if owner_id:
             stmt = stmt.where(Opportunity.owner_id == owner_id)
+        if sbu_id:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if product_id:
+            # Report drill-down (Feature 11.2): can't be a plain join like
+            # zone_id's account join -- an opportunity can have multiple
+            # OpportunityItem rows, so joining would duplicate the parent
+            # Opportunity once per matching line item. EXISTS-style subquery
+            # instead, applied only when product_id is passed.
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id).where(OpportunityItem.product_id == product_id)
+                )
+            )
         # BR-OP-15: High Priority deals first (automatic past-Demo or manual
         # flag), then by win probability -- Basheer's call, 2026-09-15.
         is_high_priority = case(
@@ -146,6 +161,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         status_id: uuid.UUID | None = None,
         owner_id: uuid.UUID | None = None,
         zone_id: uuid.UUID | None = None,
+        sbu_id: uuid.UUID | None = None,
+        product_id: uuid.UUID | None = None,
     ) -> int:
         stmt = select(func.count(Opportunity.id))
         if zone_id:
@@ -163,6 +180,14 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             stmt = stmt.where(Opportunity.status_id == status_id)
         if owner_id:
             stmt = stmt.where(Opportunity.owner_id == owner_id)
+        if sbu_id:
+            stmt = stmt.where(Opportunity.sbu_id == sbu_id)
+        if product_id:
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id).where(OpportunityItem.product_id == product_id)
+                )
+            )
         return self.db.scalar(stmt) or 0
 
     # ------------------------------------------------------------------

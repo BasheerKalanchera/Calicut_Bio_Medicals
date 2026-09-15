@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty } from "../components/ReportingUI";
 import { getProductPerformance } from "../services/reporting";
+import { listStatuses } from "../services/masterData";
 import type { ProductPerformanceGroupBy } from "../types/reporting";
 import { formatLakhs } from "../utils/reporting";
 
@@ -12,9 +13,15 @@ const GROUP_BY_OPTIONS: { value: ProductPerformanceGroupBy; label: string }[] = 
   { value: "sbu", label: "SBU" },
 ];
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, onClick }: { label: string; value: string; onClick?: () => void }) {
   return (
-    <Box sx={{ minWidth: 84 }}>
+    <Box
+      onClick={onClick}
+      sx={{
+        minWidth: 84,
+        ...(onClick && { cursor: "pointer", borderRadius: "0.5rem", mx: -0.5, px: 0.5, "&:hover": { bgcolor: "#f3f4f6" } }),
+      }}
+    >
       <Box sx={{ fontSize: "9px", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#9ca3af" }}>
         {label}
       </Box>
@@ -25,7 +32,13 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function ProductPerformanceReportScreen() {
+type DrillFilter = { productId?: string; sbuId?: string; statusId?: string; label: string };
+
+export default function ProductPerformanceReportScreen({
+  onDrillToPipeline,
+}: {
+  onDrillToPipeline?: (filter: Omit<DrillFilter, "label">, label: string) => void;
+}) {
   const [groupBy, setGroupBy] = useState<ProductPerformanceGroupBy>("product");
 
   const query = useQuery({
@@ -33,7 +46,20 @@ export default function ProductPerformanceReportScreen() {
     queryFn: () => getProductPerformance(groupBy),
   });
 
+  // Report Drill-down (Feature 11.2): Won/Lost drills need the real status
+  // id, same pattern as SalesReportScreen.
+  const { data: statuses = [] } = useQuery({
+    queryKey: ["statuses"],
+    queryFn: async () => (await listStatuses()) as { id: string; status_code: string }[],
+    staleTime: Infinity,
+  });
+  const wonStatusId = statuses.find((s) => s.status_code === "WON")?.id;
+  const lostStatusId = statuses.find((s) => s.status_code === "LOST")?.id;
+
   const rows = query.data?.rows ?? [];
+  // Brand cards stay non-clickable -- a brand (product.oem_name) spans many
+  // products, no single product_id represents it.
+  const drillKey: "productId" | "sbuId" | null = groupBy === "product" ? "productId" : groupBy === "sbu" ? "sbuId" : null;
 
   return (
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
@@ -69,8 +95,24 @@ export default function ProductPerformanceReportScreen() {
                   <Metric label="Revenue (Won)" value={formatLakhs(parseFloat(row.revenue_lakhs))} />
                   <Metric label="Avg Selling Price" value={formatLakhs(parseFloat(row.avg_selling_price_lakhs))} />
                   <Metric label="Opportunities" value={String(row.opportunity_count)} />
-                  <Metric label="Won" value={String(row.won_count)} />
-                  <Metric label="Lost" value={String(row.lost_count)} />
+                  <Metric
+                    label="Won"
+                    value={String(row.won_count)}
+                    onClick={
+                      onDrillToPipeline && drillKey && wonStatusId
+                        ? () => onDrillToPipeline({ [drillKey]: row.group_id, statusId: wonStatusId }, `${row.group_name}, Won`)
+                        : undefined
+                    }
+                  />
+                  <Metric
+                    label="Lost"
+                    value={String(row.lost_count)}
+                    onClick={
+                      onDrillToPipeline && drillKey && lostStatusId
+                        ? () => onDrillToPipeline({ [drillKey]: row.group_id, statusId: lostStatusId }, `${row.group_name}, Lost`)
+                        : undefined
+                    }
+                  />
                 </Box>
               </Box>
             ))}

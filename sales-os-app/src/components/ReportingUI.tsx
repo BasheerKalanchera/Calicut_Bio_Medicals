@@ -11,6 +11,7 @@ export function MiniBar({
   formatValue,
   secondaryValue,
   secondaryLabel = "weighted",
+  onClick,
 }: {
   label: string;
   value: number;
@@ -21,6 +22,11 @@ export function MiniBar({
   // affect the bar's width, which is still driven by `value` alone.
   secondaryValue?: number;
   secondaryLabel?: string;
+  // Report Drill-down (Feature 11.2): when present, the row becomes
+  // clickable (pointer cursor + hover background) -- clicking it should
+  // land on the Opportunities that make up this bar's number. Doesn't
+  // change the bar's layout or sizing at all.
+  onClick?: () => void;
 }) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
   const title =
@@ -28,7 +34,23 @@ export function MiniBar({
       ? `${label}: ${formatValue(value)}`
       : `${label}: ${formatValue(value)} (${formatValue(secondaryValue)} ${secondaryLabel})`;
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }} title={title}>
+    <Box
+      onClick={onClick}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        ...(onClick && {
+          cursor: "pointer",
+          borderRadius: "0.5rem",
+          mx: -1,
+          px: 1,
+          py: 0.25,
+          "&:hover": { bgcolor: "#f3f4f6" },
+        }),
+      }}
+      title={title}
+    >
       <Box
         sx={{
           flex: "0 0 38%",

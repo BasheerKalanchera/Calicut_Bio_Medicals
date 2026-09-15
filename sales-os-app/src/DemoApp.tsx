@@ -191,6 +191,15 @@ export default function DemoApp() {
   // NextActionsScreen to pre-filter to "due today or overdue" instead of
   // opening with no date filter applied.
   const [nextActionsInitialDueBefore, setNextActionsInitialDueBefore] = useState<string | undefined>(undefined);
+  // Report Drill-down (Feature 11.2): set when a bar/card in Pipeline
+  // Report, Sales Report, or Product Performance Report is clicked --
+  // consumed once by OpportunityPipelineScreen to pre-filter to exactly
+  // the deals behind that number, same one-shot pattern as
+  // nextActionsInitialDueBefore above.
+  const [pipelineInitialFilter, setPipelineInitialFilter] = useState<
+    | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; statusId?: string; stageId?: string; label: string }
+    | undefined
+  >(undefined);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
@@ -282,6 +291,20 @@ export default function DemoApp() {
       setProjectReturnView("customers");
       setView(target);
     }
+  }
+
+  // Report Drill-down (Feature 11.2): a bar/card click in a report screen
+  // calls this with the filter that identifies its slice, plus a plain
+  // label for the "Showing: <label>" banner. Lands on the Pipeline
+  // board's List view (a filtered table reads better than a filtered
+  // Kanban board), pre-scoped to exactly those deals.
+  function handleDrillToPipeline(
+    filter: Omit<NonNullable<typeof pipelineInitialFilter>, "label">,
+    label: string,
+  ) {
+    setPipelineInitialFilter({ ...filter, label });
+    setPipelineViewMode("list");
+    navigate("opportunities");
   }
 
   function navigate(viewId: string) {
@@ -704,7 +727,12 @@ export default function DemoApp() {
                 ))}
               </ToggleButtonGroup>
             </Box>
-            <OpportunityPipelineScreen onSelectOpportunity={handleSelectOpportunity} viewMode={pipelineViewMode} />
+            <OpportunityPipelineScreen
+              onSelectOpportunity={handleSelectOpportunity}
+              viewMode={pipelineViewMode}
+              initialFilter={pipelineInitialFilter}
+              onClearInitialFilter={() => setPipelineInitialFilter(undefined)}
+            />
           </Box>
 
           {/* Opportunity Detail — push navigation */}
@@ -819,7 +847,7 @@ export default function DemoApp() {
                 Product Performance
               </Typography>
             </Box>
-            <ProductPerformanceReportScreen />
+            <ProductPerformanceReportScreen onDrillToPipeline={handleDrillToPipeline} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "pipelineReport" ? "flex" : "none", flexDirection: "column" }}>
@@ -828,7 +856,7 @@ export default function DemoApp() {
                 Pipeline Report
               </Typography>
             </Box>
-            <PipelineReportScreen />
+            <PipelineReportScreen onDrillToPipeline={handleDrillToPipeline} />
           </Box>
 
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "salesReport" ? "flex" : "none", flexDirection: "column" }}>
@@ -837,7 +865,7 @@ export default function DemoApp() {
                 Sales Report
               </Typography>
             </Box>
-            <SalesReportScreen />
+            <SalesReportScreen onDrillToPipeline={handleDrillToPipeline} />
           </Box>
         </ErrorBoundary>
       </Box>

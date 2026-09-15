@@ -15,6 +15,8 @@ export interface PipelineParams {
   status_id?: string;
   owner_id?: string;
   zone_id?: string;
+  sbu_id?: string;
+  product_id?: string;
   page?: number;
   page_size?: number;
 }
@@ -29,6 +31,8 @@ export async function listPipeline(params: PipelineParams = {}): Promise<Pipelin
   if (params.status_id)  p.status_id  = params.status_id;
   if (params.owner_id)   p.owner_id   = params.owner_id;
   if (params.zone_id)    p.zone_id    = params.zone_id;
+  if (params.sbu_id)     p.sbu_id     = params.sbu_id;
+  if (params.product_id) p.product_id = params.product_id;
   const response = await api.get("/opportunities/pipeline", { params: p });
   return response.data.data;
 }

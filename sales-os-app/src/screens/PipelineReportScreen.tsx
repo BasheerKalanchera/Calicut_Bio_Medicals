@@ -14,7 +14,13 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "product", label: "Product" },
 ];
 
-export default function PipelineReportScreen() {
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; stageId?: string; label: string };
+
+export default function PipelineReportScreen({
+  onDrillToPipeline,
+}: {
+  onDrillToPipeline?: (filter: Omit<DrillFilter, "label">, label: string) => void;
+}) {
   const [groupBy, setGroupBy] = useState<PipelineGroupBy>("product");
 
   // Headline tiles always come from a fixed, Stage-grouped query, independent
@@ -72,17 +78,35 @@ export default function PipelineReportScreen() {
         />
         {rows.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {rows.map((row) => (
-              <MiniBar
-                key={row.group_id}
-                label={row.group_name}
-                value={parseFloat(row.total_value_lakhs)}
-                max={maxValue}
-                formatValue={formatLakhs}
-                secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
-                secondaryLabel="weighted"
-              />
-            ))}
+            {rows.map((row) => {
+              // The synthetic Trade-Ins/Returns bucket isn't a real product --
+              // no single product_id represents the mix of Buyback line items
+              // it aggregates, so it stays non-clickable.
+              const isTradeIns = groupBy === "product" && row.group_id === "trade-in";
+              const filterKey: keyof Omit<DrillFilter, "label"> | null =
+                groupBy === "rep" ? "ownerId" :
+                groupBy === "zone" ? "zoneId" :
+                groupBy === "sbu" ? "sbuId" :
+                groupBy === "product" && !isTradeIns ? "productId" :
+                groupBy === "stage" ? "stageId" :
+                null;
+              return (
+                <MiniBar
+                  key={row.group_id}
+                  label={row.group_name}
+                  value={parseFloat(row.total_value_lakhs)}
+                  max={maxValue}
+                  formatValue={formatLakhs}
+                  secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
+                  secondaryLabel="weighted"
+                  onClick={
+                    onDrillToPipeline && filterKey
+                      ? () => onDrillToPipeline({ [filterKey]: row.group_id }, row.group_name)
+                      : undefined
+                  }
+                />
+              );
+            })}
           </Box>
         )}
       </Box>

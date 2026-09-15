@@ -4,6 +4,7 @@ import { Box, MenuItem, TextField } from "@mui/material";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
+import { listStatuses } from "../services/masterData";
 import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
 import { formatLakhs, getFiscalQuarterBounds } from "../utils/reporting";
 
@@ -39,7 +40,13 @@ function formatPercent(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-export default function SalesReportScreen() {
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; statusId?: string; label: string };
+
+export default function SalesReportScreen({
+  onDrillToPipeline,
+}: {
+  onDrillToPipeline?: (filter: Omit<DrillFilter, "label">, label: string) => void;
+}) {
   const [period, setPeriod] = useState<Period>("quarter");
   const [groupBy, setGroupBy] = useState<SalesGroupBy>("rep");
   const filters = periodFilters(period);
@@ -53,6 +60,15 @@ export default function SalesReportScreen() {
     queryKey: ["reporting", "sales-summary", groupBy, period],
     queryFn: () => getSalesSummary(groupBy, filters),
   });
+
+  // Report Drill-down (Feature 11.2): every drill from this report lands
+  // on Won deals only, matching what the report itself counts.
+  const { data: statuses = [] } = useQuery({
+    queryKey: ["statuses"],
+    queryFn: async () => (await listStatuses()) as { id: string; status_code: string }[],
+    staleTime: Infinity,
+  });
+  const wonStatusId = statuses.find((s) => s.status_code === "WON")?.id;
 
   const headline = headlineQuery.data;
   const rows = breakdownQuery.data?.rows ?? [];
@@ -108,15 +124,31 @@ export default function SalesReportScreen() {
         />
         {rows.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {rows.map((row) => (
-              <MiniBar
-                key={row.group_id}
-                label={row.group_name}
-                value={parseFloat(row.revenue_lakhs)}
-                max={maxRevenue}
-                formatValue={formatLakhs}
-              />
-            ))}
+            {rows.map((row) => {
+              // Same exclusion as Pipeline Report: the synthetic Trade-Ins/
+              // Returns bucket isn't a real product.
+              const isTradeIns = groupBy === "product" && row.group_id === "trade-in";
+              const filterKey: keyof Omit<DrillFilter, "label" | "statusId"> | null =
+                groupBy === "rep" ? "ownerId" :
+                groupBy === "zone" ? "zoneId" :
+                groupBy === "sbu" ? "sbuId" :
+                groupBy === "product" && !isTradeIns ? "productId" :
+                null;
+              return (
+                <MiniBar
+                  key={row.group_id}
+                  label={row.group_name}
+                  value={parseFloat(row.revenue_lakhs)}
+                  max={maxRevenue}
+                  formatValue={formatLakhs}
+                  onClick={
+                    onDrillToPipeline && filterKey && wonStatusId
+                      ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: wonStatusId }, `${row.group_name}, Won`)
+                      : undefined
+                  }
+                />
+              );
+            })}
           </Box>
         )}
       </Box>

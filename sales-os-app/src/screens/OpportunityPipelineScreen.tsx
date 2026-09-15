@@ -21,6 +21,22 @@ import type { ZoneSearchResult } from "../services/masterData";
 interface Props {
   onSelectOpportunity: (opp: PipelineOpportunity) => void;
   viewMode: "kanban" | "list";
+  // Report Drill-down (Feature 11.2): a one-shot pre-filter set by a bar/
+  // card click on a report screen, mirroring NextActionsScreen's
+  // initialDueBefore pattern. Applied as extra query filters on top of
+  // (not merged into) the Owner/Zone dropdowns below -- shown via a
+  // dismissible banner instead, since these values (a rep/zone/SBU id
+  // from a report row) don't map onto the dropdown's own option shapes.
+  initialFilter?: {
+    ownerId?: string;
+    zoneId?: string;
+    sbuId?: string;
+    productId?: string;
+    statusId?: string;
+    stageId?: string;
+    label: string;
+  };
+  onClearInitialFilter?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +249,7 @@ function ListRow({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode }: Props) {
+export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode, initialFilter, onClearInitialFilter }: Props) {
   const [activeStageCode, setActiveStageCode] = useState<string>("LEAD");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
   const [zoneFilter, setZoneFilter]   = useState<ZoneSearchResult | null>(null);
@@ -244,8 +260,17 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   const kanbanRowRef = useRef<HTMLDivElement>(null);
 
   const { data: pipeline, isLoading } = useQuery({
-    queryKey: ["pipeline", ownerFilter, zoneFilter?.id],
-    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter?.id || undefined, page_size: 500 }),
+    queryKey: ["pipeline", ownerFilter, zoneFilter?.id, initialFilter],
+    queryFn: () =>
+      listPipeline({
+        owner_id: initialFilter?.ownerId ?? (ownerFilter || undefined),
+        zone_id: initialFilter?.zoneId ?? (zoneFilter?.id || undefined),
+        sbu_id: initialFilter?.sbuId,
+        product_id: initialFilter?.productId,
+        status_id: initialFilter?.statusId,
+        stage_id: initialFilter?.stageId,
+        page_size: 500,
+      }),
   });
 
   const { data: stages = [] } = useQuery({
@@ -318,6 +343,22 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
     <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", bgcolor: "background.default" }}>
       {/* Filter bar */}
       <Box sx={{ px: 2, pt: 2, pb: 1, bgcolor: "background.default", flexShrink: 0 }}>
+        {initialFilter && (
+          <Box
+            sx={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1,
+              mb: 1, px: 1.5, py: 1, borderRadius: "0.75rem",
+              bgcolor: "#eef2ff", border: "1px solid #c7d2fe",
+            }}
+          >
+            <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#3730a3" }}>
+              Showing: {initialFilter.label}
+            </Box>
+            <Button size="small" onClick={onClearInitialFilter} sx={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "none" }}>
+              Clear filter
+            </Button>
+          </Box>
+        )}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1, bgcolor: "#fff", p: 1.5, borderRadius: "1rem", boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: "1px solid #f3f4f6" }}>
           {/* Search */}
           <TextField
