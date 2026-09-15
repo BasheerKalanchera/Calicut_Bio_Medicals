@@ -1,7 +1,45 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-15 session (latest) — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): live manual E2E pass complete — Done, not yet committed
+## 2026-09-15 session (latest) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built and live E2E-verified — Done, not yet committed
+
+Picked up right after High Priority Deal Flag (below) was committed
+(`b000a09`), since it directly unblocks this item. Basheer's calls before
+building: sort key is High Priority first, *then* win probability (not a
+blended score); no recency tiebreaker; pipeline fetch cap raised from 100
+to 500 rather than removed outright (closed deals never drop out of this
+query, so true "no limit" would grow unbounded over years — 500 is
+generous headroom without that risk, confirmed against how other CRM
+Kanban tools actually get used: filters/search/reports, not scrolling
+hundreds of cards).
+
+**Backend-only change** (neither Kanban nor List sorts client-side, so no
+frontend logic needed): `OpportunityRepository.list_pipeline` joins
+`OpportunityStage` and orders by a `CASE` expression (`stage.display_order
+> 30 OR high_priority_manual`) descending, then `win_probability`
+descending. `page_size` ceiling raised in the router (`le=100` →`le=500`)
+and both frontend call sites. 819/819 backend tests pass (6 new, following
+the SQL-compile assertion pattern from `test_reporting_repository.py` — no
+real DB needed), `ruff`/`tsc` clean.
+
+**Live E2E pass, same session, as Haroon (GM):** verified both visually and
+by pulling the real API response and checking the sort invariant
+programmatically across all 53 Dev deals (zero violations). Live-flagged a
+5%-probability Lead-stage deal as manually High Priority — it jumped to
+rank 13 of 53, above 11 deals with much higher probability, proving
+priority genuinely outranks probability rather than blending with it — then
+reverted the flag immediately after. Filters (Owner) confirmed to compose
+correctly with the new sort; raised cap confirmed via stage-chip counts
+summing exactly to the API's total (53); badges/search unaffected. No bugs
+found. Full detail: `docs/Kanban-Priority-Sort-Manual-E2E-Test-Plan.md`'s
+sign-off. Traceability/scorecard/sprint-plan docs flipped to Done.
+
+**Not yet committed.**
+
+**Next step:** commit this (backend code + the three tracking docs + the
+new test-plan doc + this entry).
+
+## 2026-09-15 session (earlier still) — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): live manual E2E pass complete — Done, committed `b000a09`
 
 Full pass run live once the Forecast-by-Product thread wrapped up: Nishad K
 V (Area Manager) for Groups A-D (automatic past-Demo badge, manual flag
@@ -14,13 +52,11 @@ Priority Deal Flag" entry; sign-off:
 `docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md`.
 Traceability/scorecard/sprint-plan docs flipped to Done.
 
-**Not yet committed** — this is the other session's build (backend/frontend
-code untouched by this thread, per the file-overlap check when this
-started); only the three tracking docs, the test-plan doc, and this entry
-were touched here.
+**Committed `b000a09`** — all 18 files (backend/frontend code, migration,
+tests, and the tracking docs) in one commit.
 
-**Next step:** whichever session commits the High Priority Deal Flag code
-should include these doc updates in that same commit.
+**Next step:** none pending on this thread — see the Kanban priority-sort
+entry above, which built directly on this.
 
 ## 2026-09-15 session (earlier) — Forecast broken down by Product (Sprint Plan item 7, Feature 2.5): Done, committed
 

@@ -22,7 +22,7 @@ export interface PipelineParams {
 export async function listPipeline(params: PipelineParams = {}): Promise<PipelinePage> {
   const p: Record<string, string | number> = {
     page: params.page ?? 1,
-    page_size: params.page_size ?? 100,
+    page_size: params.page_size ?? 500,
   };
   if (params.account_id) p.account_id = params.account_id;
   if (params.stage_id)   p.stage_id   = params.stage_id;

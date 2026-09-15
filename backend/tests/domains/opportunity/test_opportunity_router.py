@@ -90,6 +90,35 @@ class TestListPipeline:
         response = client.get("/api/v1/opportunities/pipeline")
         assert response.status_code == 401
 
+    def test_page_size_up_to_500_is_accepted(self, client: TestClient) -> None:
+        # Raised from 100 -> 500, 2026-09-15 -- Won/Lost deals never drop out
+        # of the pipeline query, so the cap needs headroom well beyond
+        # today's live pipeline size, not just the active count.
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/opportunities/pipeline", params={"page_size": 500})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 200
+
+    def test_page_size_over_500_is_rejected(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 0
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+
+        _setup_overrides(mock_db)
+        try:
+            response = client.get("/api/v1/opportunities/pipeline", params={"page_size": 501})
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 422
+
     def test_project_and_lead_source_null_when_unset(self, client: TestClient) -> None:
         opp = _mock_opportunity()
         mock_db = MagicMock()

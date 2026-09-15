@@ -63,9 +63,10 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
 
 ## Next week — each needs a "Not started" prerequisite finished first
 
-1. **Kanban sorted by priority** (Feature 2.2, Module 3 → PRD 3.8). Needs the
-   Manual High Priority toggle (item 8 above, now scheduled this week) finished
-   first.
+1. **Kanban sorted by priority** (Feature 2.2, Module 3 → PRD 3.8). **Done,
+   2026-09-15** — built and manually E2E-verified live, ahead of schedule
+   (picked up early once the High Priority Deal Flag prerequisite landed);
+   see `docs/Kanban-Priority-Sort-Manual-E2E-Test-Plan.md`.
 2. **Forecast by month/quarter + the <3x-target pipeline alert** (Feature 2.5,
    Module 5 → PRD 5.1/5.2 — month/quarter half). Needs Target Management
    (Feature 3.1 → PRD 6.4, Not started) built first.

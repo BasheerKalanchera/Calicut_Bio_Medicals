@@ -59,7 +59,7 @@ def list_pipeline(
     owner_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = Query(50, ge=1, le=500),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[PipelineOpportunity]]:

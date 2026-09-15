@@ -3548,3 +3548,68 @@ session's build; leaving the commit to whichever session picks it up, per
 the file-overlap check from earlier — this thread only touched the three
 tracking docs plus this entry and the test-plan doc, not any of that
 session's code).
+
+## 2026-09-15 (even later) — Kanban/List sorted by High Priority, then win probability: built, live E2E-verified, Done
+
+Picked up right after High Priority Deal Flag was committed (`b000a09`),
+since the Sprint Plan's "Kanban sorted by priority" item was explicitly
+blocked on it. Two design calls made with Basheer before building: (1) sort
+key is High Priority first, *then* win probability descending — not a
+blended score, priority is the primary key and probability only breaks
+ties within the same priority standing; explicitly no recency tiebreaker
+beyond that, Basheer's call, to keep the design as simple as what was
+actually asked for. (2) The pipeline's fetch cap, separately flagged by
+Basheer as worth removing ("managers might not be able to see their full
+list") — found that closed (Won/Lost) deals never drop out of this query
+(no default status filter), so a true unbounded cap would grow forever as
+history piles up; raised from 100 to 500 instead (5x current total pipeline
+size) after confirming with Basheer that this matches how CRM Kanban tools
+actually get used in practice — search/filters/reports, not scrolling
+hundreds of cards, a point Basheer raised himself and which matched
+industry pattern (Salesforce/HubSpot/Pipedrive-style paginated columns).
+
+**Backend-only, per the plan:** `OpportunityRepository.list_pipeline` joins
+`OpportunityStage` and replaces its `order_by(created_at.desc())` with a
+`case()` expression (`stage.display_order > 30 OR high_priority_manual`)
+descending, then `win_probability` descending. `page_size` ceiling raised
+in the router (`le=100` → `le=500`) and both frontend call sites
+(`services/opportunities.ts`'s default, `OpportunityPipelineScreen.tsx`'s
+query). Neither Kanban nor List does its own client-side sorting today, so
+no frontend logic changes were needed beyond the two `page_size` numbers.
+New tests follow `test_reporting_repository.py`'s established SQL-compile-
+and-assert pattern (no real DB, matches this repo's existing convention for
+verifying query-building logic) — confirmed via a scratch script first that
+the actual compiled `ORDER BY` clause reads exactly `CASE WHEN
+(opportunity_stage.display_order > 30 OR opportunity.high_priority_manual)
+THEN 1 ELSE 0 END DESC, opportunity.win_probability DESC` before writing
+assertions against it. 819/819 backend tests pass (6 new: 4 on the
+ordering/join, 2 on the raised `page_size` ceiling), `ruff`/`tsc` clean.
+
+**Live E2E pass, same session, as Haroon (GM) against the real 53-deal Dev
+pipeline.** Rather than eyeballing Kanban card positions (win probability
+isn't shown on cards), pulled `GET /opportunities/pipeline` directly from
+the browser's own session (reusing its Supabase access token via
+`javascript_tool`) and validated the sort invariant programmatically across
+every item — zero violations, both before and after the live edit below.
+Live-flagged "New USG msg" (Lead stage, 5% win probability, ₹20L) as
+manually High Priority via the Overview tab's Edit modal — it ranked 13th
+of 53, above 11 non-High-Priority deals with materially higher win
+probability (75%, 60%, 35%, ...), proving priority genuinely wins over
+probability rather than the two blending into one score. Confirmed
+visually on both Kanban (card jumped to the top of Lead, badge showing) and
+List. **Flag reverted immediately after**, confirmed via a final
+screenshot showing "New USG msg" back to its original unflagged state and
+position. Owner filter (Fazal) confirmed to compose correctly with the new
+sort. Raised cap confirmed via Kanban's own stage-chip counts
+(33+3+4+1+7+5+0) summing exactly to the API's reported total of 53 — no
+truncation. Existing High Priority badge (automatic, "Test demo lead")
+and search both confirmed unaffected. No bugs found. Full sign-off:
+`docs/Kanban-Priority-Sort-Manual-E2E-Test-Plan.md`.
+
+Traceability/scorecard rows (`Signed-Requirements-to-PRD-Traceability.md`/
+`Phase1-Delivery-Scorecard.md`, "Kanban pipeline sorted by
+probability/priority") flipped Partial → Done; `Phase1-Completion-Sprint-
+Plan.md`'s "Kanban sorted by priority" item flipped to Done (built ahead of
+its originally-scheduled "next week" slot).
+
+Not yet committed.

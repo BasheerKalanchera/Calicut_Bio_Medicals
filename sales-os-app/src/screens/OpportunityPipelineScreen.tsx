@@ -245,7 +245,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
 
   const { data: pipeline, isLoading } = useQuery({
     queryKey: ["pipeline", ownerFilter, zoneFilter?.id],
-    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter?.id || undefined, page_size: 100 }),
+    queryFn: () => listPipeline({ owner_id: ownerFilter || undefined, zone_id: zoneFilter?.id || undefined, page_size: 500 }),
   });
 
   const { data: stages = [] } = useQuery({

@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -19,6 +19,12 @@ from app.domains.reference.models import (
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
+    # BR-OP-15: mirrors schemas.py's _HIGH_PRIORITY_STAGE_THRESHOLD -- kept as
+    # a separate local constant per this module's existing convention (each
+    # module owns its own underscore-prefixed thresholds rather than a shared
+    # import).
+    _HIGH_PRIORITY_STAGE_THRESHOLD = 30
+
     def __init__(self, db: Session):
         super().__init__(Opportunity, db)
 
@@ -112,7 +118,24 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             stmt = stmt.where(Opportunity.status_id == status_id)
         if owner_id:
             stmt = stmt.where(Opportunity.owner_id == owner_id)
-        stmt = stmt.order_by(Opportunity.created_at.desc()).offset(offset).limit(limit)
+        # BR-OP-15: High Priority deals first (automatic past-Demo or manual
+        # flag), then by win probability -- Basheer's call, 2026-09-15.
+        is_high_priority = case(
+            (
+                or_(
+                    OpportunityStage.display_order > self._HIGH_PRIORITY_STAGE_THRESHOLD,
+                    Opportunity.high_priority_manual,
+                ),
+                1,
+            ),
+            else_=0,
+        )
+        stmt = (
+            stmt.join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
+            .order_by(is_high_priority.desc(), Opportunity.win_probability.desc())
+            .offset(offset)
+            .limit(limit)
+        )
         return list(self.db.scalars(stmt).unique().all())
 
     def count_pipeline(

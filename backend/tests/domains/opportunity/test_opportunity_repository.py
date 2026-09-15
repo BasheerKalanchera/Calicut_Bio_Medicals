@@ -62,6 +62,50 @@ class TestListOpportunitiesForStakeholder:
         assert results == []
 
 
+def _compiled(stmt) -> str:
+    return str(stmt.compile(compile_kwargs={"literal_binds": True}))
+
+
+class TestListPipelineOrdering:
+    """BR-OP-15: High Priority first, then win probability (Basheer's call,
+    2026-09-15) -- no real DB needed, the generated statement is compiled to
+    a SQL string and asserted against, mirroring
+    tests/domains/reporting/test_reporting_repository.py's pattern.
+    """
+
+    def _compiled_list_pipeline(self, **kwargs) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        repo = OpportunityRepository(mock_db)
+        repo.list_pipeline(**kwargs)
+        stmt = mock_db.scalars.call_args.args[0]
+        return _compiled(stmt)
+
+    def test_joins_opportunity_stage(self):
+        sql = self._compiled_list_pipeline()
+        assert "JOIN opportunity_stage ON opportunity.stage_id = opportunity_stage.id" in sql
+
+    def test_orders_by_high_priority_before_win_probability(self):
+        sql = self._compiled_list_pipeline()
+        order_by = sql.split("ORDER BY", 1)[1]
+        high_priority_pos = order_by.find("CASE WHEN")
+        win_prob_pos = order_by.find("opportunity.win_probability")
+        assert high_priority_pos != -1
+        assert win_prob_pos != -1
+        assert high_priority_pos < win_prob_pos
+
+    def test_high_priority_condition_is_stage_or_manual_flag(self):
+        sql = self._compiled_list_pipeline()
+        assert "opportunity_stage.display_order > 30 OR opportunity.high_priority_manual" in sql
+
+    def test_no_created_at_tiebreaker(self):
+        # Basheer's explicit call, 2026-09-15 -- ties render in whatever
+        # order Postgres happens to return them, not pinned to recency.
+        sql = self._compiled_list_pipeline()
+        order_by = sql.split("ORDER BY", 1)[1].split("LIMIT", 1)[0]
+        assert "created_at" not in order_by
+
+
 class TestCountOpportunitiesGroupedByStakeholderIds:
     def test_returns_empty_dict_for_empty_input(self):
         mock_db = MagicMock()
