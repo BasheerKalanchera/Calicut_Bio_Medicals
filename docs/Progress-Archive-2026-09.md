@@ -3660,7 +3660,7 @@ Haroon/Latheef Bhai are literally "the client") in
 Confirmed the last shipped feature (Kanban priority sort, `90a752a`)
 reads correctly as Done across all three surfaces before committing this.
 
-## 2026-09-15 (later again) — Sales Report + Pipeline Report (Feature 11.1, Module 5 → PRD 5.6): built, full live E2E pass — Done, staged for commit
+## 2026-09-15 (later again) — Sales Report + Pipeline Report (Feature 11.1, Module 5 → PRD 5.6): built, full live E2E pass — Done, committed `44e6d8c`
 
 Picked as the next Sprint Plan item while the Kanban priority-sort work
 (above) was in flight in a parallel session — deliberately scoped to zero
@@ -3777,8 +3777,264 @@ the pre-existing Product Performance report — has ever exposed that as a
 user-facing filter; every reporting endpoint just shares the same
 underlying scoping helper. Corrected in the test plan doc directly.
 
-**Staged, not yet committed** — 20 files (backend + frontend code,
-migration, tests, the two new doc files, and the regen script). Commit
-message drafted and handed to Basheer to commit himself. Left `docs/
+**Committed `44e6d8c`** — 20 files (backend + frontend code, migration,
+tests, the two new doc files, and the regen script). Left `docs/
 Discussion-Pricing-Discount-Authority-2026-09.md` and `.scratch/`
 unstaged — unrelated to this feature.
+
+## 2026-09-15 (later again still) — Feature 11.1 tracking docs updated, Scorecard republished
+
+Basheer asked for the Traceability matrix to be checked and corrected for
+the 5 features shipped today (Forecast by Product, High Priority Deal
+Flag, Kanban priority sort, Pipeline filters via Pipeline Report, Sales/
+Pipeline Report itself). Feature 2.2's "Pipeline filters by region,
+product, salesperson" row flipped Partial → Done (Product delivered via
+Pipeline Report, per the 2026-09-14 decision). Feature 11.1's "Core
+reports" row stays Partial — Sales Report, Pipeline Report, and Product
+Performance are all now built, but Margin Report (the 4th PRD 5.6 type)
+still needs product cost capture, scheduled separately. Ran
+`scripts/generate_scorecard.py` to regenerate `Phase1-Delivery-
+Scorecard.md` and the client HTML from the corrected table — tally now
+27 Done / 13 Partial / 10 Not started of 50 (was 26/14/10). Republished
+to the existing "Phase 1 Delivery Scorecard" Artifact (version 7) — hit
+the tool's stale-version guard once (an old cached read from earlier in
+the session), resolved by re-reading the live version fresh before
+republishing.
+
+One stale cross-reference caught during the check, unrelated to the 5
+features themselves but caused by one of them: Feature 11.1's Weekly
+Follow-up Report row still said "Also blocked on the missing High
+Priority field" — that field (Feature 2.2's manual toggle) shipped
+earlier the same day. Fixed the note (all four of that report's inputs
+now exist; the report itself just isn't built yet), matching what
+`docs/Backlog.md`'s own entry already said. **Committed separately**,
+`d3abb45`, since it surfaced after the main tracking-doc commit
+(`30556b3`) had already landed.
+
+`docs/Backlog.md`'s "Account Directory / Pipeline filters" entry updated
+to mark the Pipeline half Built, leaving only the Account Directory half
+(still awaiting Cabio leadership sign-off) open. Its `closed_at`
+cross-reference (from the WON/LOST-immutability entry) updated to note
+the column now exists, built for Sales Report — though it only partially
+answers that entry's original question, since the audit-trail-extension
+half is still undecided and pre-existing Won/Lost deals have `closed_at
+= NULL`.
+
+## 2026-09-15 (later again, and again) — Report Drill-down (Feature 11.2, Module 5 → PRD 5.9): built, smoke-tested live, committed `6bb0d31` — full E2E pass still pending
+
+Picked up right after Sales Report + Pipeline Report shipped. Full plan:
+`docs/Report-Drilldown-Implementation-Plan.md`. PRD 5.9 asks for
+click-through drill-down, "Zone → Team → Individual." Checked every
+report screen against that ask before scoping anything: **Daily Activity
+Report, Stagnant Deals, and Opportunities On Hold were already flat
+lists** — each row is one deal, already clickable through to it, nothing
+to build. **Pipeline Report, Sales Report, and Product Performance
+Report** each show bars/cards summarizing many deals into one number,
+with no way to see which deals make it up — these three are what got
+built.
+
+**Design decisions, Basheer:** all three summary screens get drill-down,
+not just Product Performance (an earlier, narrower, never-built plan --
+`docs/Pipeline-Product-Filter-And-Report-Drilldown-Implementation-Plan.md`
+-- had only scoped Product Performance's Won/Lost cards, written before
+Sales Report and Pipeline Report existed as standalone screens). "Team"
+in the hierarchy means a manager's direct reports, matching every other
+scoping in the app. Drill-down means exactly one thing: click a bar/card,
+see the Opportunities that make it up — no aggregate-only leaf view, no
+separate "both" mode. Basheer pushed back twice during scoping on
+over-engineering this (a mis-scoped "Filters" test-plan section earlier
+in the day, then a three-option AskUserQuestion for the leaf behavior
+here) — both times the simpler, more obvious reading was correct.
+
+**Mechanism reuses the existing Pipeline board**, not a new screen:
+every drill lands on its List view carrying a one-shot pre-filter, the
+same pattern already shipped for the reminders-banner → Next Actions
+handoff (`nextActionsInitialDueBefore`). No permanent new filter dropdown
+added to the Kanban/List board's own filter bar. Checked `list_pipeline`/
+`count_pipeline` against every dimension the three reports break down
+by: Rep/Zone/Stage/Won-Lost filters already existed; only `sbu_id`
+(trivial, direct column) and `product_id` (needs an `EXISTS`-subquery
+against `OpportunityItem`, not a plain join, or a multi-product
+opportunity would get duplicated — fully designed already in the shelved
+plan above) needed adding.
+
+**Backend:** `sbu_id`/`product_id` added to `list_pipeline`/
+`count_pipeline` (repository → service → router), plus `PipelineParams`
+on the frontend. 5 new tests using the existing compiled-SQL-assertion
+pattern (`TestListPipelineFilters`/`TestCountPipelineFilters`) — confirm
+`sbu_id` compiles to a direct `WHERE`, `product_id` compiles to an `IN
+(SELECT ...)` subquery with no `JOIN opportunity_item` (the structural
+proof that a multi-product opportunity can't be duplicated). 843/843
+backend tests pass.
+
+**Frontend:** `MiniBar` and the Product Performance `Metric` component
+both gained an optional `onClick` (pointer cursor + hover background,
+no layout change). `DemoApp.tsx` carries a `pipelineInitialFilter` state
+(mirrors `nextActionsInitialDueBefore` exactly) and a
+`handleDrillToPipeline` helper that sets it, switches to List view, and
+navigates to the Pipeline board. `OpportunityPipelineScreen` merges the
+filter into its query and shows a dismissible "Showing: `<label>` — Clear
+filter" banner — deliberately not synced into the visible Owner/Zone
+dropdowns, since a drilled rep/zone/SBU/product id doesn't map cleanly
+onto those dropdowns' own option shapes. Sales Report and Product
+Performance's drills always include the Won/Lost `status_id` (looked up
+once via `listStatuses()`, same `status_code === "WON"` pattern used
+elsewhere), so a Sales Report drill can never show anything but Won
+deals. The synthetic Trade-Ins/Returns row and Brand-grouped cards stay
+non-clickable — neither maps to one real `product_id`. `tsc`/lint clean
+(pre-existing `any` warnings unrelated to this change).
+
+**Smoke-tested live as Haroon (GM), deliberately not a full pass given
+the hour:** Pipeline Report's "SonoScape E2" product bar (₹175.0L)
+drilled to a filtered List view; opened one resulting deal ("Test
+opportunity") and confirmed its Products tab shows SonoScape E2 as its
+only line item — proving the filter is genuinely correct, not just
+cosmetically narrower. Sales Report's "Basheer K" rep bar drilled to
+exactly one deal ("USG 2," ₹4.0L, WON), matching the report's own figure
+exactly. Product Performance: Siemens USG M/c's "Lost" count (1) drilled
+to exactly one LOST deal; separately, on the By-Brand grouping, SonoScape's
+Won/Lost values were clicked and confirmed to do nothing — no navigation,
+confirming the non-clickable exclusion actually holds at runtime, not
+just in the type signature. "Clear filter" confirmed working both times.
+One transient false alarm during this pass: the very first drill attempt
+showed no `product_id` in the network request at all — root-caused to a
+stale Vite bundle from before a hot-reload fully applied; a hard page
+reload fixed it immediately, not a real code defect.
+
+Full sign-off doc written: `docs/Report-Drilldown-Manual-E2E-Test-Plan.md`
+— 21 steps (A: Pipeline Report, B: Sales Report, C: Product Performance,
+D: banner/filter interaction, E: role scoping, F: regression). Only the
+smoke-test items above are checked off in the sign-off; the rest —
+Stage/Zone/SBU breakdown drills, Trade-Ins non-clickability, the
+period-picker interaction, banner composition with the Owner/Zone
+dropdowns, and rep-level scoping (needs a login like Nishad K V's, used
+for Feature 11.1's pass) — is explicitly flagged as not yet run.
+
+**Committed `6bb0d31`** — 13 files (backend + frontend code, tests, both
+new doc files). Left `docs/Discussion-Pricing-Discount-Authority-2026-09
+.md` unstaged, unrelated. Tracking-doc updates (Traceability/Scorecard/
+Backlog/Progress-Archive) for Feature 11.2 itself have **not** been done
+yet — this Progress-Archive entry is the extent of it so far; the
+Traceability row and Scorecard regen are still pending, along with the
+rest of the manual E2E pass.
+
+**Unrelated, same day:** Basheer separately committed `e9158c9` ("chore:
+add UAT data-quality check script") — not part of this session's threads.
+Full narrative below.
+
+## 2026-09-15 (even later) — UAT Data Quality Check: real RLS-context bug found live, fixed, committed
+
+Basheer asked to check UAT for data inconsistencies, then to add a check
+for Activities not following best practice on top. Built
+`scripts/uat_data_quality_check.py` — read-only, `backend/.env.uat`'s
+app-role connection (never `ADMIN_DATABASE_URL`), impersonating an active
+Admin/GM's RLS context for full company visibility rather than one role's
+own scoped view. 8 checks: duplicate account names, Lakhs/Rupees value
+mixups (the known past-bug pattern), dead accounts (zero Opportunity and
+zero Activity), Opportunities with zero Activity, splits not summing to
+100%, WON/LOST deals edited after close, Activities missing the mandatory
+next action (BR-ACT-04, via the `reminder` table), short/generic notes,
+and likely accidental double-submits.
+
+**First run: mostly "clean." Wrong, and Basheer caught it.** Asked to
+verify one specific row — "ALOHA HOSPITAL Kizshery," reported as a dead
+account (zero Opportunities) — actually has an opportunity. Confirmed he
+was right, then traced why: `set_config('app.current_user_id', ..., true)`
+sets the value **local to one transaction**. The script connected with
+`psycopg2`'s `conn.set_session(readonly=True, autocommit=True)`, so every
+`cur.execute()` after the one that set the context started a brand-new
+transaction — the impersonated Admin/GM identity was already gone before
+the very next query ran. `cabio_app_uid()` returned `NULL` for the rest of
+the session. The `opportunity` table's own RLS policy explicitly grants
+Admin/GM unrestricted access, but only once the identity resolves at all —
+with `uid = NULL`, the policy fell through to nothing, and a raw
+`SELECT COUNT(*) FROM opportunity` confirmed it: **0** visible, out of a
+real 128. Every check touching `opportunity` or `reminder` (2, 3, 4, 7a,
+7c, 8) had been silently computed against an empty table the whole time —
+not a subtle bias, a total blackout on two of the four core tables.
+
+Fixed by switching the third `set_config` argument from `true` to `false`
+(session-scoped instead of transaction-local, so it survives across every
+subsequent autocommit statement on the same connection) — same functional
+identity impersonation, different scope. The script now also runs
+`SELECT cabio_app_uid(), cabio_app_role_name()` immediately after setting
+context and aborts loudly if either doesn't resolve, instead of silently
+producing a "clean" report from an empty result set again. Also added a
+sanity-totals print (real row counts for `account`/`opportunity`/
+`activity`/`reminder`) at the top of every run, so a repeat of this class
+of bug would be visually obvious (e.g. `opportunities: 0`) before reading
+a single finding.
+
+**Corrected findings, night-and-day different from the first pass:**
+
+| Check | First (wrong) | Corrected |
+| :--- | :---: | :---: |
+| Lakhs/Rupees mixup | 0 | 24 |
+| Dead accounts | 81 (wrong basis — see below) | 34 |
+| Opportunities, zero Activity | 0 | 56 |
+| Missing next action (BR-ACT-04) | 22 | 82 |
+| Short/generic notes | 9 | 20 |
+| Likely double-submits | 0 | 14 candidates (see below) |
+| PO set, no Activity | 0 | 5 |
+
+The first run's "81 dead accounts" wasn't just incomplete — it was
+computed on a fundamentally different (wrong) basis: since `opportunity`
+was invisible to every account, the `NOT EXISTS (opportunity)` half of
+that check was trivially true for literally every account in the company,
+so the result set was actually just "accounts with zero visible Activity,"
+full stop, not genuinely zero-Opportunity accounts. The corrected 34 no
+longer includes ALOHA, exactly as Basheer's spot-check predicted.
+
+**Second, independent bug found while re-verifying the double-submit
+check:** the time-gap comparison (`a2.created_at - a1.created_at <
+interval '5 minutes'`) is also true whenever `a2` is *earlier* than `a1`
+by any amount at all — Postgres compares interval magnitude including
+sign, so a large negative interval still reads as "less than" a positive
+5 minutes. This matched activity pairs days or even weeks apart as if they
+were near-simultaneous: 122 false "double-submits." Fixed with
+`ABS(EXTRACT(EPOCH FROM (a2.created_at - a1.created_at))) < 300` — real
+count, 14.
+
+**Then a third correction, this time about interpretation, not code —
+Basheer's own follow-up question:** "it could also be a follow-up
+additional note from the call... without looking at the activity note,
+very difficult to conclude." Exactly right. Pulled the actual note text
+for all 14 candidate pairs. Only **4** were genuine likely duplicates — a
+bare "Done" or "Done the delivery" logged twice, seconds to a few minutes
+apart, zero new information the second time (3 of the 4 Haroon's, 1
+Fahad's near-identical reworded resubmission). The other 10 were real,
+substantive sequential updates — the clearest example, Fazal logging four
+distinct CALL notes about the same KIMS Hospital Koduvally installation
+across roughly two days ("installation done Saturday" → "application
+support also done" → "installation successfully completed"), each adding
+real new information, not a resubmission. Folded this permanently into the
+script: it now pulls note text for every 7c candidate and classifies by
+text-similarity (`difflib.SequenceMatcher` ratio > 0.85), printing only
+the likely-genuine matches by default, with an explicit comment
+acknowledging the threshold is a heuristic (a near-identical-but-reworded
+note can sit just under it) rather than a certainty.
+
+**Findings worth a conversation, not more engineering:**
+- **Haroon and Fazal account for 65 of the 82** missing-next-action
+  activities (40 and 25 respectively) — everyone else is in single digits.
+- **Om Hiremath owns 15 of the 56** zero-Activity Opportunities, all
+  identical "New USG Machine requirement" Leads created 2026-09-01/02 —
+  looks like a bulk import or batch-entry session that never got
+  individual follow-up logged, not 15 separate real gaps.
+- The 5 PO-set-no-Activity rows are the exact pattern Basheer had already
+  noticed and flagged from memory before this check ran — confirmed real,
+  not a false alarm.
+
+**Also discussed: should this become a live Administration-section report
+for Admin/GM to self-serve, instead of a script run on request?**
+Recommended holding off — every check built today needed a human judgment
+call somewhere (the Lakhs/Rupees threshold, the note-similarity cutoff,
+recognizing Om Hiremath's cluster as one bulk-import problem rather than
+15 individual gaps) — a live dashboard would either surface that same
+noise every time someone opens it, or need real product design work to
+filter it down first. Not a natural extension of the script as it stands.
+Closest existing precedent if revisited later: the Audit Log screen
+(Module 6b), same "built beyond signed scope" shape.
+
+Full findings (all rows, not just samples): `docs/UAT-Data-Quality-
+Findings-2026-09-15.md`. **Committed `e9158c9`** (script + findings doc).

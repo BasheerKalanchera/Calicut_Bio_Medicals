@@ -291,6 +291,26 @@ the manual picking becomes an actual pain point.
   Crore instead of the real pipeline figure. **Not yet fixed, not yet flagged to the
   concurrent build session** — Basheer to decide whether to correct these 12 records in
   UAT directly or route it through whoever owns that data entry.
+  **Grown to 24 as of 2026-09-15** (`scripts/uat_data_quality_check.py`'s check 2, full
+  list in `docs/UAT-Data-Quality-Findings-2026-09-15.md`) — still not fixed, and more
+  reps are hitting the same data-entry mistake, not just the original 12. Worth raising
+  as a training point (how to enter Lakhs values), not only a one-time data cleanup.
+- **Missing-next-action Activities concentrated in two people — not yet
+  raised with either.** UAT data-quality check, 2026-09-15
+  (`docs/UAT-Data-Quality-Findings-2026-09-15.md`): of 82 non-Manager-Note
+  Activities logged with no next-action reminder, **Haroon (40) and Fazal
+  (25) account for 65 of them (79%)** — everyone else is in single digits.
+  Worth a direct conversation rather than a system fix; the app already
+  supports setting a reminder on any Activity, this looks like a habit gap
+  for these two specifically, not a missing feature.
+- **Bulk-imported Leads with zero follow-up Activity — one rep, one
+  batch, not yet raised.** Same check: Om Hiremath owns 15 of 56
+  zero-Activity Opportunities, all identical "New USG Machine requirement"
+  Leads created 2026-09-01/02 — reads like a bulk import or batch-entry
+  session that never got individual follow-up logged, not 15 separate
+  real gaps. Worth confirming with Om Hiremath whether these are genuine
+  leads needing real follow-up or a data-entry exercise that should be
+  pruned.
 - **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
   decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
   each quarter's stock-purchasing decision (currently underway for EDAN

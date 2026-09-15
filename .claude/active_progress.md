@@ -1,7 +1,118 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-15 session (latest) — Sales Report + Pipeline Report (Feature 11.1, Module 5): built, full live E2E pass, staged for commit
+## 2026-09-15 session (latest) — Report Drill-down (Feature 11.2): built, smoke-tested, committed `6bb0d31` — full E2E pass pending
+
+Built same session, right after Sales Report + Pipeline Report shipped
+(below). Plan: `docs/Report-Drilldown-Implementation-Plan.md`. Every
+bar/card in Pipeline Report, Sales Report, and Product Performance that
+summarizes many deals into one number is now clickable — lands on the
+Pipeline board's List view, pre-filtered to exactly those deals, via a
+dismissible "Showing: X — Clear filter" banner. No permanent new filter
+dropdown added to the Kanban/List board itself. Checked every report
+screen first: Stagnant Deals, Opportunities On Hold, and Daily Activity
+Report were already flat deal lists with click-through — nothing needed
+there.
+
+Two new backend filters on `GET /opportunities/pipeline`: `sbu_id`
+(direct column) and `product_id` (EXISTS-subquery against
+`OpportunityItem`, avoids duplicating a multi-product opportunity — same
+approach as an earlier, never-built plan for this exact problem). Every
+other dimension (Rep/Zone/Stage/Won-Lost) reuses filters that already
+existed. Trade-Ins/Returns and Brand-grouped cards stay deliberately
+non-clickable — neither maps to one real `product_id`. 843/843 backend
+tests pass (5 new), `tsc`/lint clean.
+
+**Smoke-tested live as Haroon (GM), not a full pass:** Pipeline Report's
+Product breakdown ("SonoScape E2") drilled to exactly one deal, opened it,
+confirmed its Products tab really does show SonoScape E2 as its only line
+item. Sales Report's Rep breakdown ("Basheer K") drilled to exactly one
+Won deal matching the report's own ₹4.0L. Product Performance's Won and
+Lost counts drilled correctly and separately; Brand-grouped cards
+confirmed non-clickable (no navigation on click). "Clear filter" works.
+
+**Committed `6bb0d31`.** Full sign-off doc:
+`docs/Report-Drilldown-Manual-E2E-Test-Plan.md` — 21 steps across
+Pipeline/Sales/Product Performance drill-down, banner/filter interaction,
+role scoping, and regression. Only the smoke-test items above are
+checked off; the rest (Stage/Zone/SBU drills, Trade-Ins non-clickability,
+period-picker interaction, banner composition with Owner/Zone dropdowns,
+rep-level scoping) is **not yet run**.
+
+**Next step:** run the full A–F pass in the test plan above (needs a
+rep-level login for step E18, same as Feature 11.1's pass used Nishad K
+V), then flip Feature 11.2's Traceability/Scorecard row and log this in
+Progress-Archive. Tracking-doc updates for Feature 11.2 have not been
+done at all yet — Feature 11.1's are done (see below).
+
+## 2026-09-15 session (even later) — UAT Data Quality Check: built, real RLS bug found and fixed mid-session, committed `e9158c9`
+
+Basheer asked to check UAT for data inconsistencies, then to add an
+Activity best-practice check on top. Built `scripts/uat_data_quality_check
+.py` (read-only, app-role connection, RLS-impersonated as an active
+Admin/GM for full company visibility) covering 8 checks: duplicate
+accounts, Lakhs/Rupees value mixups, dead accounts (zero Opportunity/
+Activity), Opportunities with zero Activity, bad splits, WON/LOST deals
+edited after close, Activities missing the mandatory next action
+(BR-ACT-04), short/generic notes, and likely double-submits.
+
+**First run reported mostly clean — wrongly.** Basheer caught it directly:
+asked to verify "ALOHA HOSPITAL Kizshery" (reported as a dead account)
+actually had an opportunity. It did. Root cause: the script's RLS
+impersonation used `set_config(..., true)` (transaction-local), but the
+script ran under `psycopg2`'s `autocommit=True`, so every query after the
+first started a new transaction and the impersonated identity was already
+gone — `cabio_app_uid()` silently returned `NULL` for the rest of the run.
+Every check touching `opportunity` or `reminder` (2, 3, 4, 7a, 7c, 8) was
+built on zero real data, not just the one row Basheer caught. Fixed by
+switching to `false` (session-scoped); the script now also verifies
+`cabio_app_uid()` actually resolves before running anything and aborts
+loudly instead of silently reporting zeros.
+
+**Corrected findings, dramatically different from the first pass:** Lakhs/
+Rupees mixups 0→**24**, dead accounts 81→**34** (ALOHA correctly dropped),
+zero-Activity Opportunities 0→**56**, missing next-action 0→**82** (40 of
+them Haroon's own, 25 Fazal's), short/generic notes 9→**20**, PO-set-no-
+Activity 0→**5** (the exact pattern Basheer had flagged from memory,
+confirmed real).
+
+**Second bug found while re-verifying the double-submit check:** the time
+comparison (`a2.created_at - a1.created_at < interval '5 minutes'`)
+matched pairs *days or weeks* apart too, since a large negative interval
+still compares as "less than" 5 minutes — 122 false positives. Fixed with
+`ABS(EXTRACT(EPOCH FROM ...))`, corrected count: 14 candidates.
+
+**Then Basheer pushed back again, correctly:** timing alone can't tell an
+accidental duplicate from a rep logging two real updates in quick
+succession. Pulled the actual note text for all 14 pairs — only 4 were
+genuine (a bare "Done" or "Done the delivery" repeated verbatim, 3 of them
+Haroon's), the other 10 were real sequential updates (e.g. Fazal
+documenting each step of one KIMS Hospital Koduvally installation across
+several calls). Folded this into the script permanently: it now pulls note
+text for every 7c candidate and classifies by text-similarity (>0.85 ratio
+via `difflib`), not just elapsed time, printing only the likely-genuine
+ones by default.
+
+Full findings, all lists complete: `docs/UAT-Data-Quality-Findings-2026-09
+-15.md`. **Committed `e9158c9`** (script + findings doc).
+
+**Discussed, not building yet:** whether to turn this into a live
+Administration-section report for Admin/GM to self-serve. Recommended
+holding off — every check here has needed a human judgment call at some
+point (thresholds, the note-similarity cutoff, recognizing a bulk-import
+Lead cluster isn't the same problem as a genuinely stale deal); a
+dashboard would surface that same noise or need real product design work,
+not just wiring up the existing queries. Closest precedent if revisited:
+the Audit Log screen (Module 6b), same "built beyond signed scope" shape.
+
+**Next step:** two things worth a conversation with the team, not
+engineering follow-up — (1) Haroon/Fazal's concentration in the 82
+missing-next-action list (79% of the total between just the two of them),
+(2) Om Hiremath's 15-of-56 zero-Activity cluster (identical "New USG
+Machine requirement" Leads created 2026-09-01/02, looks like a bulk import
+that never got real follow-up).
+
+## 2026-09-15 session (earlier) — Sales Report + Pipeline Report (Feature 11.1, Module 5): built, full live E2E pass, committed `44e6d8c`
 
 Built while the Kanban priority-sort work (below) was in a parallel
 session — zero file overlap by design. Also closes Feature 2.2's Pipeline
@@ -34,13 +145,19 @@ correct for both tiers, no bugs found. SBU/Area Manager tier not tested
 "2026-09-15 (later again)" entry; sign-off: `docs/Sales-And-Pipeline-
 Report-Manual-E2E-Test-Plan.md`.
 
-**Staged, not yet committed** — 20 files. Commit message drafted and
-handed to Basheer to commit himself.
+**Committed `44e6d8c`** (feature) and `30556b3`/`d3abb45` (tracking-doc
+follow-ups). Feature 2.2's Pipeline filters row flipped to Done; Feature
+11.1's Core Reports row stays Partial (only Margin Report remains — needs
+product cost capture, scheduled separately). Scorecard regenerated (27
+Done/13 Partial/10 Not started of 50) and republished to the client
+Artifact (version 7). `docs/Backlog.md`'s Pipeline-filters entry closed;
+its `closed_at` cross-reference updated. One stale note caught and fixed
+along the way: Traceability's Weekly Follow-up Report row cited the
+High Priority field as a blocker after that field had already shipped —
+corrected.
 
-**Next step:** Basheer to commit when ready. Tracking docs (Traceability/
-Scorecard/Sprint-Plan) for Feature 11.1 not yet flipped to Done — pending,
-since the Scorecard tooling rebuild below is also mid-flight uncommitted
-on the same docs.
+**Next step:** none pending on this thread — fully wrapped and committed.
+See the Report Drill-down entry above, built directly on top of this.
 
 ## 2026-09-15 session (earlier) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built, live E2E-verified, committed `90a752a`
 
@@ -83,7 +200,7 @@ Owner filter, revert) with him watching throughout; identical result.
 test-plan doc, and this entry, all in one commit.
 
 **Follow-on same session — scorecard tooling rebuilt as single source of
-truth, not committed yet.** Basheer caught the Scorecard's summary tally
+truth, committed `8e55ac0`.** Basheer caught the Scorecard's summary tally
 not auto-updating when a row flips (hand-maintained, not a formula) — root
 cause led to a bigger ask: one file driving every status report, no more
 hand-typing the same status in three places. Built:
@@ -92,15 +209,23 @@ column (plain business language, Partial rows only — what Haroon/Latheef
 Bhai actually see) and the "Commitment beyond contract" table;
 `scripts/generate_scorecard.py` regenerates both `Phase1-Delivery-
 Scorecard.md` and the published client Artifact (`.scratch/phase1-
-scorecard.html`, same URL, now version 6) from it. Full design doc:
-`docs/Scorecard-Single-Source-Implementation-Plan.md`. Confirmed the
-Kanban feature above still reads correctly as Done across all three
-surfaces before staging this for commit.
+scorecard.html`, republished to the same Artifact URL, now version 6) from
+it. First design pass used three note tiers (internal/leadership/client);
+collapsed to two once Basheer clarified the Client Note *is* what
+Haroon/Latheef Bhai see, so a separate "leadership" tier was redundant.
+First pass at the client output was also a separate `Phase1-Client-
+Dashboard.md` markdown file — Basheer rejected the extra file, so the
+script was rewritten to update the existing published `phase1-
+scorecard.html` directly instead (same look, byte-checked against a
+hand-fixed reference before trusting the generator). Full design doc:
+`docs/Scorecard-Single-Source-Implementation-Plan.md`.
 
-**Next step:** commit the scorecard tooling (Traceability.md, Scorecard.md,
-generate_scorecard.py, the plan doc, this entry, Progress-Archive). Going
-forward: flip a Status/Client Note in Traceability.md, re-run the script,
-republish the Artifact — same workflow for every future feature.
+**Workflow going forward, for every future feature:** flip a Status/Client
+Note in Traceability.md, re-run `scripts/generate_scorecard.py`,
+republish `.scratch/phase1-scorecard.html` to the Artifact. Confirmed
+working live same session: the other (parallel) session used this exact
+flow unprompted for its own Sales/Pipeline Report tracking-doc update, no
+issues.
 
 ## 2026-09-15 session (earlier still) — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): live manual E2E pass complete — Done, committed `b000a09`
 
