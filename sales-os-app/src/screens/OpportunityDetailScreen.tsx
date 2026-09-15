@@ -1262,6 +1262,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editGateOverrideApproverId, setEditGateOverrideApproverId] = useState("");
   const [editGateOverrideReasonId, setEditGateOverrideReasonId]     = useState("");
   const [editGateOverrideNote, setEditGateOverrideNote]             = useState("");
+  // BR-OP-15: manual High Priority flag, only meaningful at/below Demo stage --
+  // past Demo, the deal is already automatically High Priority (see editStageOrder below).
+  const [editHighPriorityManual, setEditHighPriorityManual]         = useState(false);
 
   const handleTabChange = useCallback((tabId: TabId) => {
     setActiveTab(tabId);
@@ -1430,6 +1433,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditGateOverrideApproverId(opp.gate_override_approver_id ?? "");
     setEditGateOverrideReasonId(opp.gate_override_reason_id ?? "");
     setEditGateOverrideNote(opp.gate_override_note ?? "");
+    setEditHighPriorityManual(opp.high_priority_manual);
     setShowEditOpp(true);
   };
 
@@ -1504,6 +1508,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     payload.gate_override_approver_id = gateOverrideChecked ? (editGateOverrideApproverId || null) : null;
     payload.gate_override_reason_id   = (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideReasonId || null) : null;
     payload.gate_override_note        = (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideNote.trim() || null) : null;
+    // BR-OP-15: always sent explicitly -- unchecking the manual flag must
+    // actively clear it, not just hide the checkbox client-side.
+    payload.high_priority_manual = editHighPriorityManual;
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Reconstruct nested objects from loaded master data so header + strip +
@@ -1540,6 +1547,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       gate_override_note:        (gateOverrideChecked && editGateOverrideApproverId) ? (editGateOverrideNote.trim() || null) : null,
       gate_override_approver:    (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideApprover ? { id: newGateOverrideApprover.id, display_name: newGateOverrideApprover.display_name } : opp.gate_override_approver) : null,
       gate_override_reason:      (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideReason ? { id: newGateOverrideReason.id, reason_name: newGateOverrideReason.reason_name } : opp.gate_override_reason) : null,
+      high_priority_manual:      editHighPriorityManual,
+      is_high_priority:          (newStage ? newStage.display_order : opp.stage.display_order) > STAGE_ORDER_DEMO || editHighPriorityManual,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
@@ -1605,6 +1614,11 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
               {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
                 <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
                   Reactivation Overdue
+                </Box>
+              )}
+              {opp.is_high_priority && (
+                <Box component="span" sx={{ px: 1.25, py: 0.5, borderRadius: "0.5rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+                  High Priority
                 </Box>
               )}
             </Box>
@@ -1789,6 +1803,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             size="small"
             slotProps={{ htmlInput: { min: 0, step: "any" } }}
           />
+        )}
+        {editStageOrder <= STAGE_ORDER_DEMO ? (
+          <FormControlLabel
+            control={<Checkbox color="primary" checked={editHighPriorityManual} onChange={(e) => setEditHighPriorityManual(e.target.checked)} />}
+            label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>High Priority</Typography>}
+          />
+        ) : (
+          <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#c2410c" }}>
+            Automatically High Priority — this deal is past Demo stage
+          </Typography>
         )}
         <FormControlLabel
           control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}

@@ -3,7 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class OpportunityItemLineType(StrEnum):
@@ -246,6 +246,7 @@ class OpportunityCreate(BaseModel):
     gate_override_approver_id: uuid.UUID | None = None
     gate_override_reason_id: uuid.UUID | None = None
     gate_override_note: str | None = None
+    high_priority_manual: bool = False
     items: list[OpportunityItemCreate] = []
 
     @model_validator(mode="after")
@@ -284,6 +285,7 @@ class OpportunityUpdate(BaseModel):
     gate_override_approver_id: uuid.UUID | None = None
     gate_override_reason_id: uuid.UUID | None = None
     gate_override_note: str | None = None
+    high_priority_manual: bool | None = None
 
     @model_validator(mode="after")
     def _check_referral_not_both(self) -> "OpportunityUpdate":
@@ -332,11 +334,19 @@ class OpportunityResponse(BaseModel):
     gate_override_note: str | None
     gate_override_set_at: datetime | None
     gate_override_set_by: uuid.UUID | None
+    high_priority_manual: bool
     created_at: datetime
     updated_at: datetime
     sbu: SBUNested
     gate_override_approver: OwnerNested | None
     gate_override_reason: GateOverrideReasonNested | None
+
+
+# BR-OP-15: any Opportunity past Demo stage is automatically High Priority.
+# Mirrors validators.py's _ORDER_DEMO = 30 -- kept as a separate local
+# constant per this module's existing convention (each module owns its own
+# underscore-prefixed thresholds rather than sharing an import).
+_HIGH_PRIORITY_STAGE_THRESHOLD = 30
 
 
 class PipelineOpportunity(BaseModel):
@@ -362,6 +372,7 @@ class PipelineOpportunity(BaseModel):
     gate_override_note: str | None
     gate_override_set_at: datetime | None
     gate_override_set_by: uuid.UUID | None
+    high_priority_manual: bool
     created_at: datetime
     updated_at: datetime
     account: AccountNested
@@ -374,3 +385,8 @@ class PipelineOpportunity(BaseModel):
     referred_by: OwnerNested | None
     gate_override_approver: OwnerNested | None
     gate_override_reason: GateOverrideReasonNested | None
+
+    @computed_field
+    @property
+    def is_high_priority(self) -> bool:
+        return self.stage.display_order > _HIGH_PRIORITY_STAGE_THRESHOLD or self.high_priority_manual

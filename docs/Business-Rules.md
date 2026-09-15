@@ -175,7 +175,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   2. **Manual:** an Opportunity still in Lead, Qualified, or Demo stage (`display_order` 10/20/30) does not qualify automatically, but can be marked High Priority by hand via a flag a person sets explicitly.
 * **Rationale:** Confirmed by Haroon, 2026-09-14, replacing an earlier proposed value/closure-date threshold rule (₹30L Imaging / ₹15L Critical Care, within 14 days of Expected Closure Date) that was never approved — see `docs/Backlog.md`'s "Auto-computed High Priority deal flag" entry for that superseded derivation. A deal advancing past Demo already represents real, demonstrated commitment regardless of its size or exact closing date, which is a simpler and more defensible signal than a tunable Lakhs/day threshold.
 * **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
-* **Enforcement:** Not yet built — the automatic half needs no migration; the manual half needs a new field on `opportunity` to hold the flag. See `docs/Phase1-Completion-Sprint-Plan.md`.
+* **Enforcement:** `opportunity.high_priority_manual` (migration `0042`) holds the manual half; `PipelineOpportunity.is_high_priority` (`backend/app/domains/opportunity/schemas.py`) computes the effective flag as `stage.display_order > 30 OR high_priority_manual`, served on both `GET /opportunities/pipeline` and `GET /opportunities/{id}`. Badges/checkbox UI and the Kanban priority sort itself are still pending — see `docs/Phase1-Completion-Sprint-Plan.md`.
 
 ---
 

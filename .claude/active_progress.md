@@ -1,7 +1,28 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-15 session (latest) — Forecast broken down by Product (Sprint Plan item 7, Feature 2.5): Done, staged for commit
+## 2026-09-15 session (latest) — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): live manual E2E pass complete — Done, not yet committed
+
+Full pass run live once the Forecast-by-Product thread wrapped up: Nishad K
+V (Area Manager) for Groups A-D (automatic past-Demo badge, manual flag
+set/unset/persisted, flag becomes moot past Demo), Haroon (Admin/GM) plus a
+one-field live DB backdate (explicit go-ahead, reverted immediately after)
+for Group E's "both badges together" case, since no On-Hold/Reactivation-
+Overdue deal existed in Dev. No bugs found. Full detail:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-15 (later still) — High
+Priority Deal Flag" entry; sign-off:
+`docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md`.
+Traceability/scorecard/sprint-plan docs flipped to Done.
+
+**Not yet committed** — this is the other session's build (backend/frontend
+code untouched by this thread, per the file-overlap check when this
+started); only the three tracking docs, the test-plan doc, and this entry
+were touched here.
+
+**Next step:** whichever session commits the High Priority Deal Flag code
+should include these doc updates in that same commit.
+
+## 2026-09-15 session (earlier) — Forecast broken down by Product (Sprint Plan item 7, Feature 2.5): Done, committed
 
 Built, two real bugs found and fixed live (headline double-counting;
 a `group_id` type-widening fix that briefly broke every other breakdown),
@@ -13,14 +34,10 @@ Traceability/scorecard/sprint-plan docs updated, pass logged. Full detail:
 build/test detail: `docs/Forecast-By-Product-Implementation-Plan.md` and
 `docs/Forecast-By-Product-Manual-E2E-Test-Plan.md`.
 
-**Staged, not yet committed** — commit message drafted and handed to
-Basheer to commit himself.
+**Committed** — `34d0170`.
 
-**Next step:** none pending on this thread. Once the other session's High
-Priority Deal Flag manual E2E pass (paused for this thread, see below) is
-ready to resume, that's the next live-testing item; separately, the
-Product Performance drill-down plan below is still unbuilt and available to
-pick up next.
+**Next step:** none pending on this thread. The Product Performance
+drill-down plan below is still unbuilt and available to pick up next.
 
 ## 2026-09-15 session (earlier) — Pipeline product filter + Product Performance drill-down: implementation plan written and approved, not yet built
 
@@ -54,28 +71,6 @@ query params, no shared lines.
 then `sales-os-app/src/services/opportunities.ts`, then the `DemoApp.tsx`
 pre-filter state + `OpportunityPipelineScreen`/`ProductPerformanceReportScreen`
 wiring, per the plan doc above.
-
-## 2026-09-15 session — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): backend + frontend built and verified, manual E2E test plan written, live pass paused
-
-Backend and frontend both built per `docs/High-Priority-Deal-Flag-
-Implementation-Plan.md` and verified: migration `0042` applied to Dev,
-`Physical-Schema.sql` regenerated (both by Basheer), 809/809 backend tests
-pass, `tsc`/lint clean on the frontend. Badges live on Kanban card/List
-row/Detail header; manual-flag checkbox lives in the Detail screen's
-Overview tab (Edit modal), gated to Lead/Qualified/Demo stage. Full detail:
-`docs/Progress-Archive-2026-09.md`'s 2026-09-15 "High Priority Deal Flag"
-entry.
-
-`docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md` written (5 groups,
-14 steps). **Live pass paused on Basheer's call** — Insights Dashboard
-product filter testing (the other in-flight thread, see above) takes
-priority right now. Nothing from this thread committed yet.
-
-**Next step:** once the Insights Dashboard product filter testing wraps up,
-run the manual E2E pass together per the test plan doc above; then update
-`Signed-Requirements-to-PRD-Traceability.md`/`Phase1-Delivery-Scorecard.md`/
-`Phase1-Completion-Sprint-Plan.md` for Feature 2.2's High Priority row, log
-the pass in Progress-Archive, then commit.
 
 ## 2026-09-14 session (even later) — Latheef Bhai's voice message folded into the Pricing/Discount-Authority discussion paper
 

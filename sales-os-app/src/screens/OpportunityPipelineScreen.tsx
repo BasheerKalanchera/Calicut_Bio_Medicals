@@ -109,6 +109,11 @@ function DealCard({
           Reactivation Overdue
         </Box>
       )}
+      {opp.is_high_priority && (
+        <Box component="span" sx={{ alignSelf: "flex-start", px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "9px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+          High Priority
+        </Box>
+      )}
       <Box sx={{ fontSize: "9px", color: "#9ca3af", fontWeight: 500 }}>
         {opp.owner.display_name}
       </Box>
@@ -202,6 +207,11 @@ function ListRow({
             {isReactivationOverdue(opp.status.status_code, opp.reactivation_date) && (
               <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fecaca", bgcolor: "#fef2f2", color: "#dc2626" }}>
                 Reactivation Overdue
+              </Box>
+            )}
+            {opp.is_high_priority && (
+              <Box component="span" sx={{ px: 1, py: 0.25, borderRadius: "0.375rem", fontSize: "10px", fontWeight: 900, border: "1px solid #fed7aa", bgcolor: "#fff7ed", color: "#c2410c" }}>
+                High Priority
               </Box>
             )}
             {opp.indicative_value && (

@@ -11,12 +11,10 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-09 from the Dev database (Postgres 17.6), catching up
--- migration 0041 since the last regen (2026-09-09, which caught up through
--- 0040): three new audit triggers (trg_audit_stakeholder,
--- trg_audit_opportunity_item, trg_audit_split) on the existing
--- audit_log_row_change() function -- no new tables, no function change. See
--- docs/Audit-Trail-Extension-Implementation-Plan.md and
+-- Regenerated 2026-09-15 from the Dev database (Postgres 17.6), catching up
+-- migration 0042: one new column, opportunity.high_priority_manual (boolean,
+-- default false) -- the manual half of the High Priority Deal Flag (BR-OP-15).
+-- See docs/High-Priority-Deal-Flag-Implementation-Plan.md and
 -- docs/Backend-Implementation-Standards.md's migration workflow for the
 -- regen step required on every migration.
 --
@@ -35,7 +33,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict RKkKUuNtwxjyImDejfHiSTmdDr52PMePTJzEKPIEhcj8rRswWdXxGH4FWVpmehm
+\restrict i62lbrTHOQcszvVOJ3IoPdIBiFAkfNaOhuU9JD42Lxik9GGitFGoeQa2Kk40rW8
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -513,6 +511,7 @@ CREATE TABLE public.opportunity (
     gate_override_note text,
     gate_override_set_at timestamp with time zone,
     gate_override_set_by uuid,
+    high_priority_manual boolean DEFAULT false NOT NULL,
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
     CONSTRAINT opportunity_win_probability_check CHECK (((win_probability >= (0)::numeric) AND (win_probability <= (100)::numeric)))
@@ -2672,5 +2671,5 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 -- PostgreSQL database dump complete
 --
 
-\unrestrict RKkKUuNtwxjyImDejfHiSTmdDr52PMePTJzEKPIEhcj8rRswWdXxGH4FWVpmehm
+\unrestrict i62lbrTHOQcszvVOJ3IoPdIBiFAkfNaOhuU9JD42Lxik9GGitFGoeQa2Kk40rW8
 

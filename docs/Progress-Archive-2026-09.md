@@ -3504,9 +3504,47 @@ build detail and the bug write-ups: `docs/Forecast-By-Product-
 Implementation-Plan.md`. 813/813 backend tests, `ruff`/`tsc` clean.
 Feature 2.5's traceability/scorecard rows updated to reflect the product
 half done (row stays **Partial** overall — month/quarter half still needs
-Target Management). Not yet committed.
+Target Management). Committed as `34d0170`.
 
 **Process note:** briefly built ahead of an approved plan doc earlier in
 this thread (misread "Yes. Go ahead" as approval to code rather than to
 write the plan) — caught and corrected before continuing; see
 `.claude/active_progress.md` for the full account.
+
+## 2026-09-15 (later still) — High Priority Deal Flag (Sprint Plan item 8, Feature 2.2): live manual E2E pass — Done
+
+Resumed the paused pass (build detail in the earlier 2026-09-15 "High
+Priority Deal Flag" entry above) once the Forecast-by-Product thread
+wrapped up. Tested live as Nishad K V (Area Manager) for Groups A-D:
+"New ICU Monitor deal" (Negotiation, past Demo) proved the automatic half —
+badge on Kanban card, List row, and Detail header with nobody setting
+anything, and Edit correctly shows an explanatory note instead of a
+checkbox once a deal is past Demo. "Test demo lead" (Lead stage) proved the
+manual half — ticking/unticking the checkbox toggled the badge everywhere
+immediately, survived a hard refresh (proving the save actually persisted,
+not just a local UI update), and advancing its stage to Clinical Evaluation
+while the manual flag was off still flipped the badge on automatically
+(hit a pre-existing, unrelated gate — Demo Start Date required to advance
+past Demo — filled it in to proceed).
+
+**Group E's "both badges together" check needed a live workaround.** No
+deal in Nishad's visible scope (or the full ~50-deal Dev dataset checked as
+Haroon) currently has an On-Hold/Reactivation-Overdue status. Basheer put
+"New ICU Monitor deal" On-Hold live himself; the UI correctly refuses a
+past Reactivation Date (validation: "must be a future date"), so with his
+explicit go-ahead I backdated that one field on that one row directly in
+the Dev DB (`38f8924b-7111-4745-9390-b7081ac655dc`, `reactivation_date`
+2026-10-15 → 2026-09-01), confirmed High Priority and Reactivation Overdue
+render side by side cleanly on Kanban/List/Detail with no overlap, then
+reverted the field back to 2026-10-15 immediately after. A deal with
+neither badge (clean header, no leftover gap) closed out the pass.
+
+No bugs found — full detail and sign-off:
+`docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md`. Feature 2.2's High
+Priority row flipped Not started → Done in
+`Signed-Requirements-to-PRD-Traceability.md`/`Phase1-Delivery-Scorecard.md`/
+`Phase1-Completion-Sprint-Plan.md`. Not yet committed (this is the other
+session's build; leaving the commit to whichever session picks it up, per
+the file-overlap check from earlier — this thread only touched the three
+tracking docs plus this entry and the test-plan doc, not any of that
+session's code).

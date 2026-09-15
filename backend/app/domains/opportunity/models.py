@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     UUID,
+    Boolean,
     CheckConstraint,
     Computed,
     Date,
@@ -94,6 +95,7 @@ class Opportunity(AuditMixin, Base):
     gate_override_set_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
     )
+    high_priority_manual: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")

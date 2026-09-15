@@ -185,6 +185,7 @@ class OpportunityService:
             gate_override_note=data.gate_override_note,
             gate_override_set_at=func.now() if data.gate_override_approver_id is not None else None,
             gate_override_set_by=created_by if data.gate_override_approver_id is not None else None,
+            high_priority_manual=data.high_priority_manual,
             created_by=created_by,
             updated_by=created_by,
         )

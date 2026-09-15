@@ -57,7 +57,9 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
    automatically High Priority, computed at query time, no stored field needed.
    A deal still in Lead, Qualified, or Demo doesn't qualify automatically, but
    needs a manual flag a person can set by hand — that half does need a new
-   field on `opportunity`.
+   field on `opportunity`. **Done, 2026-09-15** — built and manually
+   E2E-verified live; see `docs/High-Priority-Deal-Flag-Implementation-Plan.md`
+   and `docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md`.
 
 ## Next week — each needs a "Not started" prerequisite finished first
 

@@ -1062,6 +1062,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/pipeline-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Pipeline Summary */
+        get: operations["get_pipeline_summary_api_v1_reporting_pipeline_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/stagnant-deals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Stagnant Deals */
+        get: operations["get_stagnant_deals_api_v1_reporting_stagnant_deals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/activity-levels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity Levels */
+        get: operations["get_activity_levels_api_v1_reporting_activity_levels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/overdue-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Overdue Actions */
+        get: operations["get_overdue_actions_api_v1_reporting_overdue_actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/product-performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Product Performance */
+        get: operations["get_product_performance_api_v1_reporting_product_performance_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/opportunities-on-hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Opportunities On Hold */
+        get: operations["get_opportunities_on_hold_api_v1_reporting_opportunities_on_hold_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketing-leads": {
         parameters: {
             query?: never;
@@ -1247,6 +1349,20 @@ export interface components {
             message: string;
             data: components["schemas"]["MarketingLeadResponse"];
         };
+        /** APIResponse[OpportunitiesOnHoldResponse] */
+        APIResponse_OpportunitiesOnHoldResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["OpportunitiesOnHoldResponse"];
+        };
         /** APIResponse[OpportunityItemResponse] */
         APIResponse_OpportunityItemResponse_: {
             /**
@@ -1274,6 +1390,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["OpportunityResponse"];
+        };
+        /** APIResponse[OverdueActionsResponse] */
+        APIResponse_OverdueActionsResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["OverdueActionsResponse"];
         };
         /** APIResponse[PaginatedResponse[AccountListResponse]] */
         APIResponse_PaginatedResponse_AccountListResponse__: {
@@ -1415,6 +1545,34 @@ export interface components {
             message: string;
             data: components["schemas"]["PipelineOpportunity"];
         };
+        /** APIResponse[PipelineSummaryResponse] */
+        APIResponse_PipelineSummaryResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["PipelineSummaryResponse"];
+        };
+        /** APIResponse[ProductPerformanceResponse] */
+        APIResponse_ProductPerformanceResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ProductPerformanceResponse"];
+        };
         /** APIResponse[ProductResponse] */
         APIResponse_ProductResponse_: {
             /**
@@ -1456,6 +1614,34 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["ReminderResponse"];
+        };
+        /** APIResponse[RepActivityLevelResponse] */
+        APIResponse_RepActivityLevelResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["RepActivityLevelResponse"];
+        };
+        /** APIResponse[StagnantDealsResponse] */
+        APIResponse_StagnantDealsResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["StagnantDealsResponse"];
         };
         /** APIResponse[StakeholderLinkResponse] */
         APIResponse_StakeholderLinkResponse_: {
@@ -2609,6 +2795,11 @@ export interface components {
             /** Opportunity Id */
             opportunity_id?: string | null;
         };
+        /** OpportunitiesOnHoldResponse */
+        OpportunitiesOnHoldResponse: {
+            /** Rows */
+            rows: components["schemas"]["OpportunityOnHoldRow"][];
+        };
         /** OpportunityCreate */
         OpportunityCreate: {
             /** Name */
@@ -2656,6 +2847,11 @@ export interface components {
             gate_override_reason_id?: string | null;
             /** Gate Override Note */
             gate_override_note?: string | null;
+            /**
+             * High Priority Manual
+             * @default false
+             */
+            high_priority_manual: boolean;
             /**
              * Items
              * @default []
@@ -2742,6 +2938,28 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** OpportunityOnHoldRow */
+        OpportunityOnHoldRow: {
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /** Opportunity Name */
+            opportunity_name: string;
+            /** Account Name */
+            account_name: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Hold Reason */
+            hold_reason: string | null;
+            /** Reactivation Date */
+            reactivation_date: string | null;
+            /** Days On Hold */
+            days_on_hold: number;
+        };
         /** OpportunityResponse */
         OpportunityResponse: {
             /**
@@ -2816,6 +3034,8 @@ export interface components {
             gate_override_set_at: string | null;
             /** Gate Override Set By */
             gate_override_set_by: string | null;
+            /** High Priority Manual */
+            high_priority_manual: boolean;
             /**
              * Created At
              * Format: date-time
@@ -2900,6 +3120,27 @@ export interface components {
             gate_override_reason_id?: string | null;
             /** Gate Override Note */
             gate_override_note?: string | null;
+            /** High Priority Manual */
+            high_priority_manual?: boolean | null;
+        };
+        /** OverdueActionRow */
+        OverdueActionRow: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Overdue Count */
+            overdue_count: number;
+        };
+        /** OverdueActionsResponse */
+        OverdueActionsResponse: {
+            /** Rows */
+            rows: components["schemas"]["OverdueActionRow"][];
+            /** Total Overdue */
+            total_overdue: number;
         };
         /** OwnerNested */
         OwnerNested: {
@@ -3077,6 +3318,8 @@ export interface components {
             gate_override_set_at: string | null;
             /** Gate Override Set By */
             gate_override_set_by: string | null;
+            /** High Priority Manual */
+            high_priority_manual: boolean;
             /**
              * Created At
              * Format: date-time
@@ -3097,6 +3340,36 @@ export interface components {
             referred_by: components["schemas"]["OwnerNested"] | null;
             gate_override_approver: components["schemas"]["OwnerNested"] | null;
             gate_override_reason: components["schemas"]["GateOverrideReasonNested"] | null;
+            /** Is High Priority */
+            readonly is_high_priority: boolean;
+        };
+        /** PipelineSummaryResponse */
+        PipelineSummaryResponse: {
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "stage" | "rep" | "sbu" | "zone" | "product";
+            /** Rows */
+            rows: components["schemas"]["PipelineSummaryRow"][];
+        };
+        /** PipelineSummaryRow */
+        PipelineSummaryRow: {
+            /**
+             * Group Id
+             * Format: uuid
+             */
+            group_id: string;
+            /** Group Name */
+            group_name: string;
+            /** Opportunity Count */
+            opportunity_count: number;
+            /** Total Value Lakhs */
+            total_value_lakhs: string;
+            /** Unweighted Forecast Lakhs */
+            unweighted_forecast_lakhs: string;
+            /** Weighted Forecast Lakhs */
+            weighted_forecast_lakhs: string;
         };
         /** ProductCreate */
         ProductCreate: {
@@ -3143,6 +3416,35 @@ export interface components {
             /** Is Active */
             is_active: boolean | null;
             sbu: components["schemas"]["SBUNested"];
+        };
+        /** ProductPerformanceResponse */
+        ProductPerformanceResponse: {
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "product" | "brand" | "sbu";
+            /** Rows */
+            rows: components["schemas"]["ProductPerformanceRow"][];
+        };
+        /** ProductPerformanceRow */
+        ProductPerformanceRow: {
+            /** Group Id */
+            group_id: string;
+            /** Group Name */
+            group_name: string;
+            /** Quantity Sold */
+            quantity_sold: number;
+            /** Revenue Lakhs */
+            revenue_lakhs: string;
+            /** Avg Selling Price Lakhs */
+            avg_selling_price_lakhs: string;
+            /** Opportunity Count */
+            opportunity_count: number;
+            /** Won Count */
+            won_count: number;
+            /** Lost Count */
+            lost_count: number;
         };
         /** ProductResponse */
         ProductResponse: {
@@ -3367,6 +3669,33 @@ export interface components {
             /** Next Action Owner Id */
             next_action_owner_id?: string | null;
         };
+        /** RepActivityLevelResponse */
+        RepActivityLevelResponse: {
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Rows */
+            rows: components["schemas"]["RepActivityLevelRow"][];
+        };
+        /** RepActivityLevelRow */
+        RepActivityLevelRow: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** Activity Count */
+            activity_count: number;
+        };
         /** SBUNested */
         SBUNested: {
             /**
@@ -3423,6 +3752,33 @@ export interface components {
             display_order: number;
             /** Default Win Probability */
             default_win_probability: string;
+        };
+        /** StagnantDealRow */
+        StagnantDealRow: {
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /** Opportunity Name */
+            opportunity_name: string;
+            /** Account Name */
+            account_name: string;
+            /** Owner Name */
+            owner_name: string;
+            /** Stage Name */
+            stage_name: string;
+            /** Last Activity Date */
+            last_activity_date: string | null;
+            /** Days Stagnant */
+            days_stagnant: number;
+        };
+        /** StagnantDealsResponse */
+        StagnantDealsResponse: {
+            /** Threshold Days */
+            threshold_days: number;
+            /** Rows */
+            rows: components["schemas"]["StagnantDealRow"][];
         };
         /** StakeholderCreate */
         StakeholderCreate: {
@@ -6799,6 +7155,221 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_PaginatedResponse_AuditLogResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pipeline_summary_api_v1_reporting_pipeline_summary_get: {
+        parameters: {
+            query?: {
+                group_by?: "stage" | "rep" | "sbu" | "zone" | "product";
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_PipelineSummaryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_stagnant_deals_api_v1_reporting_stagnant_deals_get: {
+        parameters: {
+            query?: {
+                threshold_days?: number;
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_StagnantDealsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_activity_levels_api_v1_reporting_activity_levels_get: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_RepActivityLevelResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_overdue_actions_api_v1_reporting_overdue_actions_get: {
+        parameters: {
+            query?: {
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_OverdueActionsResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_product_performance_api_v1_reporting_product_performance_get: {
+        parameters: {
+            query?: {
+                group_by?: "product" | "brand" | "sbu";
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ProductPerformanceResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_opportunities_on_hold_api_v1_reporting_opportunities_on_hold_get: {
+        parameters: {
+            query?: {
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_OpportunitiesOnHoldResponse_"];
                 };
             };
             /** @description Validation Error */

@@ -132,6 +132,7 @@ def _make_opportunity(**overrides) -> MagicMock:
         gate_override_note=None,
         gate_override_set_at=None,
         gate_override_set_by=None,
+        high_priority_manual=False,
     )
     defaults.update(overrides)
     opp = MagicMock(spec=Opportunity)
@@ -335,6 +336,26 @@ class TestCreateOpportunity:
         )
 
         notification_service.notify_opportunity_assigned.assert_not_called()
+
+    def test_create_defaults_high_priority_manual_to_false(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        assert result.high_priority_manual is False
+
+    def test_create_persists_high_priority_manual_true(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        result = service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(high_priority_manual=True), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        assert result.high_priority_manual is True
 
 
 # ===========================================================================
@@ -732,6 +753,20 @@ class TestUpdateOpportunity:
         )
 
         assert opp.referred_by_note == "Dr. Menon, referring physician"
+
+    def test_update_can_flip_high_priority_manual(self):
+        opp = _make_opportunity(high_priority_manual=False)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_status.return_value = _make_status("ACTIVE")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(high_priority_manual=True), updated_by=USER_ID
+        )
+
+        assert opp.high_priority_manual is True
 
     def test_update_with_both_referral_fields_raises_validation_error(self):
         with pytest.raises(ValidationError, match="not both"):
