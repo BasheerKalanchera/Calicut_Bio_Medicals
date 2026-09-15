@@ -3612,4 +3612,50 @@ probability/priority") flipped Partial → Done; `Phase1-Completion-Sprint-
 Plan.md`'s "Kanban sorted by priority" item flipped to Done (built ahead of
 its originally-scheduled "next week" slot).
 
-Not yet committed.
+**Basheer asked for the same live pass to be re-run on-screen afterward**
+(he hadn't watched the first one) — repeated the core case live: flagged
+"New USG msg" High Priority via the Overview tab's Edit modal, watched it
+jump to the top of both the Lead Kanban column and the flat List view
+despite its 5% win probability, confirmed it held up under the Owner
+(Fazal) filter, then reverted the flag. Same result as the first pass, this
+time watched directly. No new findings.
+
+**Committed `90a752a`** — backend code (`repository.py`/`router.py` +
+tests), the three tracking docs, and `docs/Kanban-Priority-Sort-Manual-E2E-
+Test-Plan.md`, all in one commit.
+
+**Follow-on, caught by Basheer:** flipping a row's own Status cell to Done
+doesn't recompute `Phase1-Delivery-Scorecard.md`'s summary banner — it's a
+separately hand-maintained tally, not a formula. Basheer spotted the
+banner still reading the pre-flip 25/15/10 after this row's flip; recounted
+the actual table (26 Done [23 + 3 "exceeds spec"] / 14 Partial / 10 Not
+started, still 50 total) and corrected the summary line, the 4-column
+table, and both progress percentages (52.0% strict / 66.0% half-credit).
+
+**Then Basheer asked for a real fix, not another band-aid: one file
+driving every status report.** Built `docs/Signed-Requirements-to-PRD-
+Traceability.md` into the actual single source — added a `Client Note`
+column (plain business language, Partial rows only, no internal names or
+jargon — what Haroon/Latheef Bhai see) alongside the existing internal
+`Notes` column, moved the "Commitment beyond contract" table in as a
+second section, fixed Traceability's own separately-stale header tally.
+`scripts/generate_scorecard.py` regenerates both
+`docs/Phase1-Delivery-Scorecard.md` and the published client HTML (the
+"Phase 1 Delivery Scorecard" Artifact) from that one table — no more
+hand-typed tallies or hand-copied rows.
+
+First pass at the client output was a separate `docs/Phase1-Client-
+Dashboard.md` markdown file; Basheer rejected the extra file and asked for
+the existing published `phase1-scorecard.html` to be updated directly
+instead — script rewritten to render that exact page (same CSS/layout,
+data-driven now) into `.scratch/phase1-scorecard.html`, republished to the
+same Artifact URL (version 6). Verified byte-for-byte against a hand-fixed
+reference version first (note count, row count, sidebar counts, stats,
+module tallies, the 6/6b section merge) before trusting the generator.
+Full design tradeoffs (three-tier notes considered and rejected in favor
+of two — Client Note doubles as what Scorecard shows too, since
+Haroon/Latheef Bhai are literally "the client") in
+`docs/Scorecard-Single-Source-Implementation-Plan.md`.
+
+Confirmed the last shipped feature (Kanban priority sort, `90a752a`)
+reads correctly as Done across all three surfaces before committing this.

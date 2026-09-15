@@ -1,7 +1,7 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-15 session (latest) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built and live E2E-verified — Done, not yet committed
+## 2026-09-15 session (latest) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built, live E2E-verified, committed `90a752a`
 
 Picked up right after High Priority Deal Flag (below) was committed
 (`b000a09`), since it directly unblocks this item. Basheer's calls before
@@ -32,12 +32,34 @@ reverted the flag immediately after. Filters (Owner) confirmed to compose
 correctly with the new sort; raised cap confirmed via stage-chip counts
 summing exactly to the API's total (53); badges/search unaffected. No bugs
 found. Full detail: `docs/Kanban-Priority-Sort-Manual-E2E-Test-Plan.md`'s
-sign-off. Traceability/scorecard/sprint-plan docs flipped to Done.
+sign-off. Traceability/scorecard/sprint-plan docs flipped to Done. Basheer
+asked for the same pass re-run live on-screen afterward (he hadn't watched
+the first run) — repeated the core case (flag "New USG msg" High Priority,
+watch it jump to the top of Lead/List despite 5% probability, confirm via
+Owner filter, revert) with him watching throughout; identical result.
 
-**Not yet committed.**
+**Committed `90a752a`** — backend code, the three tracking docs, the new
+test-plan doc, and this entry, all in one commit.
 
-**Next step:** commit this (backend code + the three tracking docs + the
-new test-plan doc + this entry).
+**Follow-on same session — scorecard tooling rebuilt as single source of
+truth, not committed yet.** Basheer caught the Scorecard's summary tally
+not auto-updating when a row flips (hand-maintained, not a formula) — root
+cause led to a bigger ask: one file driving every status report, no more
+hand-typing the same status in three places. Built:
+`Signed-Requirements-to-PRD-Traceability.md` now carries a `Client Note`
+column (plain business language, Partial rows only — what Haroon/Latheef
+Bhai actually see) and the "Commitment beyond contract" table;
+`scripts/generate_scorecard.py` regenerates both `Phase1-Delivery-
+Scorecard.md` and the published client Artifact (`.scratch/phase1-
+scorecard.html`, same URL, now version 6) from it. Full design doc:
+`docs/Scorecard-Single-Source-Implementation-Plan.md`. Confirmed the
+Kanban feature above still reads correctly as Done across all three
+surfaces before staging this for commit.
+
+**Next step:** commit the scorecard tooling (Traceability.md, Scorecard.md,
+generate_scorecard.py, the plan doc, this entry, Progress-Archive). Going
+forward: flip a Status/Client Note in Traceability.md, re-run the script,
+republish the Artifact — same workflow for every future feature.
 
 ## 2026-09-15 session (earlier still) — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): live manual E2E pass complete — Done, committed `b000a09`
 

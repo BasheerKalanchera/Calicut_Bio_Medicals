@@ -127,7 +127,8 @@ every item, not just spot-checked.
   throughout, untouched by this change. Search ("MRI") and the Owner filter
   both worked normally.
 
-No bugs found. The "Kanban sorted by priority" Sprint Plan item is ready to
-flip to **Done** — do that in `Phase1-Completion-Sprint-Plan.md`, plus the
-matching scorecard/traceability rows if they carry their own entry, log the
-pass in `docs/Progress-Archive-2026-09.md`, and commit.
+No bugs found. Re-run live on-screen for Basheer afterward (he hadn't
+watched the first pass) — same core case (Group B/C), same result.
+
+Traceability/scorecard/sprint-plan docs flipped to Done, pass logged in
+`docs/Progress-Archive-2026-09.md`. **Committed `90a752a`.**
