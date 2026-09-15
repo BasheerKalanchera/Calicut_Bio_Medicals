@@ -114,7 +114,7 @@ tracked below).
 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Not started | No such report exists | |
 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion derivable from won/lost counts; pipeline aging deliberately deferred — no stage-history table. The rolled-up loss report gap is now tracked as its own row below (Competitive Loss Report) | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started | No summary exists across all lost deals — no way to see, e.g., "we lose most often to Siemens" or "our #1 loss reason is Price"; each loss just sits on its own deal record. See 3.10 Lost Deal Intelligence (Module 3) for the underlying data already captured | |
-| 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started | Also blocked on the missing High Priority field | |
+| 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started | No longer blocked, 2026-09-15 — all four inputs it needs (win probability, Stagnant Deals, Reminders, and the High Priority rule, BR-OP-15) now exist; the report itself just hasn't been built yet | |
 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Partial | Reports filter by region/team/person; no dedicated drill-down UI | Reports can already be filtered by region, team, or person; a dedicated click-through drill-down view is not yet built. |
 
 ## 6. Admin (Power User): Organization & Sales Governance
