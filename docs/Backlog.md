@@ -84,8 +84,9 @@ the manual picking becomes an actual pain point.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
-- **Account Directory / Pipeline filters — Pipeline half decided 2026-09-14,
-  Account Directory half still needs Cabio leadership sign-off.** Raised 2026-09-13 during the Phase 1
+- **Account Directory / Pipeline filters — Pipeline half BUILT 2026-09-15
+  (Pipeline Report), Account Directory half still needs Cabio leadership
+  sign-off.** Raised 2026-09-13 during the Phase 1
   Delivery Scorecard review. `account.customer_type` and
   `account.payer_behavior` already exist and could be exposed as filters
   on the Account Directory screen; separately, each Opportunity already
@@ -119,6 +120,12 @@ the manual picking becomes an actual pain point.
   via the standalone Pipeline Report instead, scheduled in
   `docs/Phase1-Completion-Sprint-Plan.md` alongside the Sales Report. No
   longer waiting on a separate leadership sign-off for this half.
+  **Built, 2026-09-15:** Pipeline Report shipped (Feature 11.1, alongside
+  Sales Report) — standalone screen, open-deal breakdown by Stage/Rep/SBU/
+  Zone/Product, reusing the existing `pipeline_summary` engine. This half
+  of the entry is closed; only the Account Directory half (still awaiting
+  leadership sign-off) remains open below. See `docs/Sales-And-Pipeline-
+  Report-Implementation-Plan.md` and its manual E2E test plan.
   A related question from the same review, now resolved: filtering Account
   Directory by hospital class (A/B/C/D) depends on that classification data
   existing at all — Haroon confirmed 2026-09-14 that the A/B/C/D field itself
@@ -679,6 +686,15 @@ the manual picking becomes an actual pain point.
   created_at` returns zero rows on UAT today, but that's not a clean
   finding — it's a false negative caused by the delete-and-reinsert
   pattern above, not evidence that no post-close edits ever happened.
+  **Partially addressed, 2026-09-15:** `Opportunity.closed_at` (migration
+  `0043`) now exists, built for the Sales Report's period filtering, not
+  for this question — but it's the same field discussed here, stamped
+  once when a deal first goes Won/Lost. Comparing `opportunity_item.
+  updated_at > opportunity.closed_at` would answer "was this edited after
+  close" going forward from whenever `closed_at` started being populated.
+  The audit-trail-extension half of this entry is still undecided, and
+  existing pre-`0043` Won/Lost deals have `closed_at = NULL` so still
+  can't be checked retroactively.
 
 - **Payment Confirmation Gate before Won — proposed 2026-09-11, core shape decided by
   Basheer, not yet scoped or built.** Raised alongside the Pricing/Discount-Authority

@@ -1,7 +1,48 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-15 session (latest) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built, live E2E-verified, committed `90a752a`
+## 2026-09-15 session (latest) — Sales Report + Pipeline Report (Feature 11.1, Module 5): built, full live E2E pass, staged for commit
+
+Built while the Kanban priority-sort work (below) was in a parallel
+session — zero file overlap by design. Also closes Feature 2.2's Pipeline
+product filter row (2026-09-14 decision). **Pipeline Report** reuses the
+existing `pipeline_summary` engine as-is (zero new backend work). **Sales
+Report** is Won-deals-only: period picker (This Month/This Quarter/All
+Time, fiscal-year aware), 4 headline stats, Rep/Zone/SBU/Product
+breakdown — deliberately no leaderboard (Basheer's call: raw revenue
+comparison across reps isn't meaningful given differing territories/
+targets). Added a real `Opportunity.closed_at` column (migration `0043`),
+stamped once a deal first becomes terminal, so period filtering reflects
+actual close dates. 837/837 backend tests pass, `tsc` clean.
+
+**Two live incidents mid-build, both resolved:** Kanban board briefly 500'd
+(migration `0043` not yet applied to Dev — Basheer ran `alembic upgrade
+head`); `Physical-Schema.sql`'s header got clobbered by the raw `pg_dump`
+regen command for a second time, prompting Basheer to ask why this keeps
+happening — built `scripts/regen_physical_schema.ps1` to structurally fix
+it (rebuilds the header automatically, no more manual restore step).
+
+**Architecture question resolved live:** Insights Dashboard's "Pipeline by
+X" tile and the new Pipeline Report currently show identical data —
+Basheer's call was to **keep both** (Pipeline Report will grow a
+drill-down feature the dashboard tile won't have), not consolidate.
+
+**Full live E2E pass** as Haroon (GM) and Nishad K V (Sales Person) — every
+number cross-checked and reconciled exactly, role scoping confirmed
+correct for both tiers, no bugs found. SBU/Area Manager tier not tested
+(no login available). Full detail: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-15 (later again)" entry; sign-off: `docs/Sales-And-Pipeline-
+Report-Manual-E2E-Test-Plan.md`.
+
+**Staged, not yet committed** — 20 files. Commit message drafted and
+handed to Basheer to commit himself.
+
+**Next step:** Basheer to commit when ready. Tracking docs (Traceability/
+Scorecard/Sprint-Plan) for Feature 11.1 not yet flipped to Done — pending,
+since the Scorecard tooling rebuild below is also mid-flight uncommitted
+on the same docs.
+
+## 2026-09-15 session (earlier) — Kanban/List sorted by priority (Sprint Plan item, Feature 2.2): built, live E2E-verified, committed `90a752a`
 
 Picked up right after High Priority Deal Flag (below) was committed
 (`b000a09`), since it directly unblocks this item. Basheer's calls before

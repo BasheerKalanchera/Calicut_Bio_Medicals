@@ -3659,3 +3659,126 @@ Haroon/Latheef Bhai are literally "the client") in
 
 Confirmed the last shipped feature (Kanban priority sort, `90a752a`)
 reads correctly as Done across all three surfaces before committing this.
+
+## 2026-09-15 (later again) — Sales Report + Pipeline Report (Feature 11.1, Module 5 → PRD 5.6): built, full live E2E pass — Done, staged for commit
+
+Picked as the next Sprint Plan item while the Kanban priority-sort work
+(above) was in flight in a parallel session — deliberately scoped to zero
+file overlap (`opportunity/repository.py`, `router.py`,
+`OpportunityPipelineScreen.tsx` all avoided). Also closes Feature 2.2's
+Pipeline product filter row per Basheer's 2026-09-14 decision (product
+breakdown belongs on a standalone Pipeline Report, not the Kanban filter
+bar). Full plan: `docs/Sales-And-Pipeline-Report-Implementation-Plan.md`.
+
+**Pipeline Report** is the standalone-screen version of the breakdown
+already on the Insights Dashboard (Stage/Rep/SBU/Zone/Product) — reuses
+the existing `pipeline_summary` engine as-is, zero new backend work.
+
+**Sales Report** answers a different question — "what did we actually
+sell" — headline stats (revenue won, deals won, win rate, avg deal size)
+over a period, then a Rep/Zone/SBU/Product breakdown of Won deals.
+**Design decision, Basheer's call:** no rep leaderboard/ranking — raw
+revenue comparison across reps isn't meaningful at Cabio (different
+territories/targets aren't modeled), so Rep is just a fourth neutral
+breakdown option, same as Zone/SBU/Product. A real "how am I doing"
+comparison is a separate, later feature once Target Management exists.
+
+**Design decision, Basheer's call: added a real `closed_at` column**
+(migration `0043`) rather than approximating with `updated_at` (which
+changes on any unrelated edit) or shipping without period filtering.
+Stamped automatically and exactly once, the moment a deal's status first
+becomes terminal (Won or Lost) — idempotent by construction, since
+BR-OP-09 already forbids leaving a terminal status. Chose `closed_at` over
+`closed_on` (naming convention: `_at` for timestamps, `_date` for dates).
+Existing pre-feature Won/Lost deals in Dev have `closed_at = NULL` —
+correctly show under "All Time," correctly excluded from any period
+filter, which is accurate behavior, not a gap to backfill.
+
+**Found, not fixed, flagged separately:** `create_opportunity`'s call to
+`validate_status_transition` hardcodes `loss_reason_id=None` etc.
+regardless of `data`, so creating an Opportunity directly at LOST status
+can never actually succeed today — pre-existing, unrelated bug, out of
+scope for this plan.
+
+837/837 backend tests pass (18 new), `tsc` clean. New nav section entries
+under REPORTS: "Pipeline Report," "Sales Report."
+
+**Kanban board broke immediately after** ("pipeline not showing any
+opportunities," logged in as Haroon) — root-caused via `read_network_
+requests` to `GET /opportunities/pipeline` 500ing while `/reporting/
+pipeline-summary` stayed 200: migration `0043` (the new `closed_at`
+column) hadn't been applied to Dev yet, so the ORM's full-entity query
+broke. Fixed by Basheer running `alembic upgrade head` himself (a
+direct-DB action outside what the assistant can run).
+
+**`docs/Physical-Schema.sql`'s header clobbered again by the raw `pg_dump`
+regen command** — same recurring bug as a documented earlier incident.
+Manually restored, then Basheer asked directly why this keeps happening
+and what to fix, adding: "We are wasting unnecessary time with such admin
+things which should be done from get go without me having to point this
+out." Root cause is structural — `pg_dump --schema-only` always starts a
+brand-new file at its own banner line 1, no flag preserves a preamble —
+so built **`scripts/regen_physical_schema.ps1`** to rebuild the header
+(regen date, latest migration + its own docstring title) and prepend it
+automatically, eliminating the manual "remember to restore" step for
+good. Updated both `docs/Backend-Implementation-Standards.md` and
+`Physical-Schema.sql`'s own header to point at the script instead of the
+raw command. Saved as a durable feedback memory (fix recurring process
+friction proactively, don't wait to be asked a second time).
+
+**Architecture question, asked live after both reports were verified
+against real data:** "What is the difference between the insights
+dashboard and the pipeline report? Why do we need pipeline report type
+section in the Insights dashboard?" Honest answer: at the moment they
+show identical data (same engine, same 5 breakdown options, Product
+having been added to the dashboard tile earlier the same session) — the
+project's own "Dashboard vs Report" rule (small aggregate tiles vs. full
+standalone screens) was being stretched, not followed. **Basheer's
+resolution: keep both** — the Insights Dashboard tile stays as-is
+(3 headline StatTiles + its own "Pipeline by X" breakdown), and so does
+the standalone Pipeline Report screen, since Pipeline Report is expected
+to grow a drill-down feature later that the dashboard tile won't have. No
+code change resulted from this thread — the `onViewPipelineReport` prop
+briefly wired into `DemoApp.tsx`/`InsightsDashboardScreen.tsx` for a
+different resolution (replacing the dashboard's breakdown with a link)
+was reverted once Basheer changed his answer.
+
+**Full live E2E pass, 2026-09-15, as Haroon (GM) and Nishad K V (Sales
+Person) against the real Dev dataset.** Pipeline Report: headline
+(₹514.6L / 37 open deals) stayed fixed across every breakdown switch
+(Stage/Rep/SBU/Product); Product breakdown (including the "Trade-Ins /
+Returns" bucket, -₹11.5L) and Rep breakdown both summed to exactly
+₹514.6L; cross-checked against the Insights Dashboard's own tiles, exact
+match. Sales Report: "This Month"/"This Quarter" both correctly showed 0
+(the one existing Won deal predates `closed_at`); fiscal quarter bounds
+confirmed correct via the raw network request (`period_start=2026-07-01&
+period_end=2026-09-30` for September, fiscal Q2); "All Time" showed
+exactly ₹4.0L revenue, 1 deal, 25.0% win rate, ₹4.0L avg deal size,
+matching prior direct-DB verification; breakdown dropdown correctly omits
+"Stage," Rep breakdown renders as a plain neutral bar with no ranking
+styling. Role scoping confirmed correct: as Nishad, Pipeline Report
+showed exactly his own ₹37.6L/6-deal slice (matching the GM's Rep
+breakdown for him), Sales Report showed 0 Won deals across every period
+(Basheer's Won deal correctly excluded, no leaderboard leakage). One
+transient 500 turned up in the browser tab's long-accumulated network
+log; re-tested fresh with the log cleared and got a clean 200 both
+times — not a live/reproducible issue, just stale history from earlier in
+the session. SBU/Area Manager tier not tested this pass (no such login
+available) — flagged as low-risk since it shares the same scoping code as
+every other report. No bugs found. Full sign-off: `docs/Sales-And-
+Pipeline-Report-Manual-E2E-Test-Plan.md`.
+
+**Process note, not a product bug:** an earlier draft of the test plan's
+own "Filters" section wrongly assumed a separate SBU/Zone/Rep narrowing
+control existed beyond the breakdown dropdown, based on the backend
+endpoints accepting `sbu_id`/`zone_id`/`user_id` query parameters.
+Verified against the code that no report screen in this app — including
+the pre-existing Product Performance report — has ever exposed that as a
+user-facing filter; every reporting endpoint just shares the same
+underlying scoping helper. Corrected in the test plan doc directly.
+
+**Staged, not yet committed** — 20 files (backend + frontend code,
+migration, tests, the two new doc files, and the regen script). Commit
+message drafted and handed to Basheer to commit himself. Left `docs/
+Discussion-Pricing-Discount-Authority-2026-09.md` and `.scratch/`
+unstaged — unrelated to this feature.

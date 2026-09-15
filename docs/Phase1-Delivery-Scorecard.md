@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **26 done, 14 partly done, 10 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
+Of **50** signed requirements: **27 done, 13 partly done, 10 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
 
 | Done | Partly done | Not started | New Features Added |
 | :---: | :---: | :---: | :---: |
-| 26 | 14 | 10 | 15 |
+| 27 | 13 | 10 | 15 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 26 of 50 = **52.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 14 items aren't zero — they're mid-flight): (26 + 14×0.5) ÷ 50 = **66.0%**
+- **Strictly done:** 27 of 50 = **54.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 13 items aren't zero — they're mid-flight): (27 + 13×0.5) ÷ 50 = **67.0%**
 
 ---
 
@@ -56,7 +56,7 @@ Where every sales deal is tracked from first contact through to close.
 | 17 | 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Partial | Reasons and competitors are captured for every lost deal; a field for the specific competing product is still to be added. |
 | 18 | 2.2 | Kanban pipeline sorted by probability/priority | 3.8 Pipeline Management | Done |  |
 | 19 | 2.2 | Manual High Priority toggle | 3.9 Deal Prioritization | Done |  |
-| 20 | 2.2 | Pipeline filters by region, product, salesperson | 3.8 Pipeline Management | Partial | Region and salesperson filtering are live on the pipeline board today. Product filtering will be available on the upcoming Pipeline Report instead. |
+| 20 | 2.2 | Pipeline filters by region, product, salesperson | 3.8 Pipeline Management | Done |  |
 | 21 | 2.2 | Manager "Push Logging" | 3.12 Manager Push Logging | Done |  |
 | 22 | 9.2 | Deal-level competitive intelligence | 3.11 Competitive Intelligence | Done |  |
 
@@ -83,7 +83,7 @@ Where leadership and managers see how the business is doing.
 | 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Role-based dashboards are live today; a dedicated top-level leadership view is still to be added. |
 | 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
-| 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Product performance reporting is live today. Standalone Sales, Pipeline, and Margin reports are still to be built. |
+| 33 | 11.1 | Core reports: sales, pipeline, product qty/price/margin | 5.6 Core Reports | Partial | Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 34 | 11.1 | Exception report: zero lead activity over 3 months | 5.7 Exception Reports | Not started |  |
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
