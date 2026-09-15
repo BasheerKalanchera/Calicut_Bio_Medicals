@@ -84,6 +84,31 @@ class TestPipelineSummary:
         sql = _run("pipeline_summary", _make_current_user("Admin"), "zone")
         assert "zone.name" in sql
 
+    def test_group_by_product_groups_on_product_name(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "product")
+        assert "product.name" in sql
+        assert "JOIN product ON" in sql
+
+    def test_group_by_product_uses_outer_join_not_inner(self):
+        # Must be an OUTER join -- an INNER join would drop Buyback lines
+        # (product_id IS NULL) instead of bucketing them, which would make
+        # this breakdown's rows sum to less than every other breakdown's
+        # total instead of the same amount.
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "product")
+        assert "LEFT OUTER JOIN product ON" in sql
+
+    def test_group_by_product_buckets_null_product_as_trade_in(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "product")
+        assert "'trade-in'" in sql
+        assert "'Trade-Ins / Returns'" in sql
+
+    def test_group_by_stage_does_not_join_product(self):
+        # Product is only joined for the "product" breakdown -- joining it
+        # unconditionally would inner-join out Buyback lines (no product_id)
+        # from every other breakdown's forecast totals too.
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
+        assert "JOIN product ON" not in sql
+
     def test_buyback_lines_netted_negative(self):
         sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
         assert "'BUYBACK'" in sql

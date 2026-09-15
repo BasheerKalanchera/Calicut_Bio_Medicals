@@ -1,7 +1,99 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-14_
+_Session: 2026-08-21 → 2026-09-15_
 
-## 2026-09-14 session (later still) — Product Catalog Collateral Security (Sprint Plan item 2): built, scope corrected live mid-test with Basheer driving, full E2E pass — Done, ready to commit
+## 2026-09-15 session (latest) — Forecast broken down by Product (Sprint Plan item 7, Feature 2.5): Done, staged for commit
+
+Built, two real bugs found and fixed live (headline double-counting;
+a `group_id` type-widening fix that briefly broke every other breakdown),
+one design decision revised live (Buyback lines now bucket under a new
+"Trade-Ins / Returns" row instead of being dropped, so the product view
+reconciles to the page total), full manual E2E pass across three roles.
+Traceability/scorecard/sprint-plan docs updated, pass logged. Full detail:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-15 (later still)" entry;
+build/test detail: `docs/Forecast-By-Product-Implementation-Plan.md` and
+`docs/Forecast-By-Product-Manual-E2E-Test-Plan.md`.
+
+**Staged, not yet committed** — commit message drafted and handed to
+Basheer to commit himself.
+
+**Next step:** none pending on this thread. Once the other session's High
+Priority Deal Flag manual E2E pass (paused for this thread, see below) is
+ready to resume, that's the next live-testing item; separately, the
+Product Performance drill-down plan below is still unbuilt and available to
+pick up next.
+
+## 2026-09-15 session (earlier) — Pipeline product filter + Product Performance drill-down: implementation plan written and approved, not yet built
+
+Grew out of picking the next Sprint Plan item to work while the other
+session builds High Priority Deal Flag (item 8). Landed on Feature 11.2
+Drill-down Reporting (PRD 5.9), scoped to its first concrete case: Product
+Performance Report's "Won"/"Lost" cards are dead ends today, no way to see
+which deals they count. Checked the opportunity-list engine behind Kanban/
+List (`list_pipeline`) — it filters by account/stage/status/owner/zone, not
+product. Basheer connected this to the already-decided-but-unbuilt Pipeline
+product filter (`docs/Backlog.md`'s "Account Directory / Pipeline filters"
+entry, decided 2026-09-14: product filtering belongs on a future standalone
+Pipeline Report, not the Kanban filter bar) — same underlying capability
+serves both, so build it once now rather than twice across two weeks.
+
+Plan: `docs/Pipeline-Product-Filter-And-Report-Drilldown-Implementation-Plan.md`
+— add `product_id` to `list_pipeline`/`count_pipeline` via an `EXISTS`
+subquery (a plain join would duplicate opportunities with multiple line
+items), no migration, no schema field. Frontend: a `nextActionsInitialDueBefore`-
+style pre-filter passed into `OpportunityPipelineScreen` from a clicked
+Product Performance metric, shown as a dismissible banner rather than a new
+filter dropdown — Kanban board's filter bar stays Owner/Zone only, per the
+2026-09-14 decision. Checked for file overlap with the in-flight High
+Priority build first: none — that touches `models.py`/`schemas.py`/
+`create_opportunity`, this touches `list_pipeline`/`count_pipeline`/router
+query params, no shared lines.
+
+**Nothing built yet.**
+
+**Next step:** build backend first (repository → service → router → tests),
+then `sales-os-app/src/services/opportunities.ts`, then the `DemoApp.tsx`
+pre-filter state + `OpportunityPipelineScreen`/`ProductPerformanceReportScreen`
+wiring, per the plan doc above.
+
+## 2026-09-15 session — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): backend + frontend built and verified, manual E2E test plan written, live pass paused
+
+Backend and frontend both built per `docs/High-Priority-Deal-Flag-
+Implementation-Plan.md` and verified: migration `0042` applied to Dev,
+`Physical-Schema.sql` regenerated (both by Basheer), 809/809 backend tests
+pass, `tsc`/lint clean on the frontend. Badges live on Kanban card/List
+row/Detail header; manual-flag checkbox lives in the Detail screen's
+Overview tab (Edit modal), gated to Lead/Qualified/Demo stage. Full detail:
+`docs/Progress-Archive-2026-09.md`'s 2026-09-15 "High Priority Deal Flag"
+entry.
+
+`docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md` written (5 groups,
+14 steps). **Live pass paused on Basheer's call** — Insights Dashboard
+product filter testing (the other in-flight thread, see above) takes
+priority right now. Nothing from this thread committed yet.
+
+**Next step:** once the Insights Dashboard product filter testing wraps up,
+run the manual E2E pass together per the test plan doc above; then update
+`Signed-Requirements-to-PRD-Traceability.md`/`Phase1-Delivery-Scorecard.md`/
+`Phase1-Completion-Sprint-Plan.md` for Feature 2.2's High Priority row, log
+the pass in Progress-Archive, then commit.
+
+## 2026-09-14 session (even later) — Latheef Bhai's voice message folded into the Pricing/Discount-Authority discussion paper
+
+Relayed transcript added a second, separate problem to
+`docs/Discussion-Pricing-Discount-Authority-2026-09.md`: time-bound special
+pricing (e.g. a Dec year-end discount that should stop being honored once
+the window passes) — distinct from the existing four-tier discount ladder,
+which already matched his own restatement. New §5.1, new open question 6 in
+§6, cross-referenced from §1/§5/§7/§8. Proposed reusing `BR-OP-02`'s
+`reactivation_date`/"Reactivation Overdue" pattern rather than a new
+mechanism — not designed further, awaiting Haroon/Latheef Bhai's decision.
+Doc-only, no code. Full detail: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-14 (later still)" entry.
+
+**Next step:** none pending — the paper is ready for Haroon/Latheef Bhai's
+review whenever Basheer wants to send it.
+
+## 2026-09-14 session (later still) — Product Catalog Collateral Security (Sprint Plan item 2) + sidebar nav cleanup: built, scope corrected live mid-test with Basheer driving, full E2E pass — Done, staged for commit
 
 Collateral Links (brochures/videos on a product) now Admin/GM-only to
 add/remove, on screen and on the server; viewing/opening an existing link
@@ -9,13 +101,30 @@ stays open to everyone — first build over-restricted viewing too, Basheer
 caught it live testing as Vivek (Sales Staff) and had me rebuild before
 continuing. Full A-E manual E2E pass completed live (Haroon as GM, Vivek as
 Sales Staff), 796/796 backend tests pass, `tsc` clean. Feature 4.1 (Module
-6b) flipped Partial → Done (tally now 24/15/11 of 50). Full detail:
-`docs/Progress-Archive-2026-09.md`'s "2026-09-14 (later)" entry; full test
-results: `docs/Product-Catalog-Collateral-Security-Manual-E2E-Test-Plan.md`.
+6b) flipped Partial → Done (tally now 24/15/11 of 50).
 
-**Next step:** commit everything (backend + frontend code, tests, and the
-doc updates: traceability, scorecard, sprint plan, progress archive, this
-file, plus the new test-plan doc).
+**Same live pass, two follow-on nav fixes Basheer spotted:** (1) Product
+Catalog was sitting under an "ADMINISTRATION" sidebar section that, for
+every non-Admin/GM role, only ever showed that one item — moved to Sales
+Execution for those roles (Admin/GM keep it under Administration, unchanged,
+since they manage it); Administration now disappears entirely for everyone
+else instead of showing a misleading near-empty section. (2) The combined
+sidebar had grown to 13 items across 3 sections for Admin/GM — made all
+three sections independently collapsible (chevron toggle, `localStorage`-
+remembered, Sales Execution open by default, Reports/Administration start
+collapsed); first chevron glyph was too small to see, swapped for a proper
+MUI `ExpandMoreIcon`. All of it verified live as both Haroon and Vivek.
+
+Full detail: `docs/Progress-Archive-2026-09.md`'s "2026-09-14 (later)" and
+"2026-09-14 (even later)" entries; full E2E results:
+`docs/Product-Catalog-Collateral-Security-Manual-E2E-Test-Plan.md`.
+
+**Staged, not yet committed** (`git add`, 12 files — backend + frontend code,
+tests, and doc updates: traceability, scorecard, sprint plan, progress
+archive, this file, the new test-plan doc). Commit message drafted and
+handed to Basheer to commit himself.
+
+**Next step:** none pending on this thread — Basheer to commit when ready.
 
 ## 2026-09-14 session (later) — Admin/GM split hotfix pushed straight to UAT, bypassing pending main commits; Basheer verifying live now
 
@@ -564,6 +673,13 @@ unattended all day.
 New CLAUDE.md rule came out of this thread too (below). Full narrative:
 `docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05, 2026-09-06
 and 2026-09-10 entries.
+
+**2026-09-15: 2026-09-14's daily backup was missed** (still a manual
+process — the scheduled task above still isn't registered). Basheer asked
+for a catch-up run; script executed successfully with his explicit
+go-ahead (`cabio_uat_2026-09-15.dump`, 327 KB, 374 TOC entries verified).
+Reinforces that the scheduled-task registration above is still the real
+fix — a manual-only process will keep missing days.
 
 **CLAUDE.md — new UAT-access safety rule, uncommitted.** Never connect
 directly to the UAT Supabase project (`backend/.env.uat`), even

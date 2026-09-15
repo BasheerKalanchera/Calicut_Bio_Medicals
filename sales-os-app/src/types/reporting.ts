@@ -1,4 +1,4 @@
-export type PipelineGroupBy = "stage" | "rep" | "sbu" | "zone";
+export type PipelineGroupBy = "stage" | "rep" | "sbu" | "zone" | "product";
 
 export interface PipelineSummaryRow {
   group_id: string;

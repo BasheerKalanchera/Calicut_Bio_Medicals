@@ -21,6 +21,7 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "rep", label: "Rep" },
   { value: "sbu", label: "SBU" },
   { value: "zone", label: "Zone" },
+  { value: "product", label: "Product" },
 ];
 
 export default function InsightsDashboardScreen() {
@@ -38,6 +39,19 @@ export default function InsightsDashboardScreen() {
     queryFn: () => getPipelineSummary(groupBy),
   });
 
+  // Headline totals are fetched separately, always grouped by Stage --
+  // every deal has exactly one stage, so summing across these rows can
+  // never double-count. Deliberately independent of `groupBy`/`pipelineQuery`
+  // above: those exist to feed the "Pipeline by X" breakdown list, which
+  // Product doesn't share this 1:1 guarantee (a deal can carry more than one
+  // product), so reusing its rows here would misstate the headline numbers
+  // whenever "Product" is selected. Shares its cache with `pipelineQuery`
+  // when Stage is the selected breakdown, no duplicate request.
+  const headlineQuery = useQuery({
+    queryKey: ["reporting", "pipeline-summary", "stage"],
+    queryFn: () => getPipelineSummary("stage"),
+  });
+
   const activityQuery = useQuery({
     queryKey: ["reporting", "activity-levels", periodStart, periodEnd],
     queryFn: () => getActivityLevels(periodStart, periodEnd),
@@ -51,11 +65,13 @@ export default function InsightsDashboardScreen() {
   });
 
   const pipelineRows = pipelineQuery.data?.rows ?? [];
-  const totalValue = pipelineRows.reduce((s, r) => s + parseFloat(r.total_value_lakhs), 0);
-  const totalUnweighted = pipelineRows.reduce((s, r) => s + parseFloat(r.unweighted_forecast_lakhs), 0);
-  const totalWeighted = pipelineRows.reduce((s, r) => s + parseFloat(r.weighted_forecast_lakhs), 0);
-  const totalCount = pipelineRows.reduce((s, r) => s + r.opportunity_count, 0);
   const maxGroupValue = Math.max(1, ...pipelineRows.map((r) => parseFloat(r.total_value_lakhs)));
+
+  const headlineRows = headlineQuery.data?.rows ?? [];
+  const totalValue = headlineRows.reduce((s, r) => s + parseFloat(r.total_value_lakhs), 0);
+  const totalUnweighted = headlineRows.reduce((s, r) => s + parseFloat(r.unweighted_forecast_lakhs), 0);
+  const totalWeighted = headlineRows.reduce((s, r) => s + parseFloat(r.weighted_forecast_lakhs), 0);
+  const totalCount = headlineRows.reduce((s, r) => s + r.opportunity_count, 0);
 
   const activityRows = activityQuery.data?.rows ?? [];
   const maxActivityCount = Math.max(1, ...activityRows.map((r) => r.activity_count));
@@ -85,14 +101,22 @@ export default function InsightsDashboardScreen() {
             isLoading={pipelineQuery.isLoading}
             isError={pipelineQuery.isError}
             isEmpty={pipelineRows.length === 0}
-            emptyText="No open pipeline."
+            emptyText={isManagerTier ? "No open pipeline." : "You don't own any open deals yet."}
             errorText="Couldn't load pipeline summary."
             onRetry={() => pipelineQuery.refetch()}
           />
           {pipelineRows.length > 0 && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {pipelineRows.map((row) => (
-                <MiniBar key={row.group_id} label={row.group_name} value={parseFloat(row.total_value_lakhs)} max={maxGroupValue} formatValue={formatLakhs} />
+                <MiniBar
+                  key={row.group_id}
+                  label={row.group_name}
+                  value={parseFloat(row.total_value_lakhs)}
+                  max={maxGroupValue}
+                  formatValue={formatLakhs}
+                  secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
+                  secondaryLabel="weighted"
+                />
               ))}
             </Box>
           )}

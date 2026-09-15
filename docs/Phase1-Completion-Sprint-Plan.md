@@ -44,7 +44,10 @@ order, not a duplicate scorecard. Update both when an item here actually ships.
 6. **Report drill-down UI** (Feature 11.2, Module 5 → PRD 5.9). Click a summary row
    to see the underlying record list, instead of filter-only.
 7. **Forecast broken down by product** (Feature 2.5, Module 5 → PRD 5.1 — product
-   half only). The month/quarter half is next week, see below.
+   half only). The month/quarter half is next week, see below. **Done,
+   2026-09-15** — built, unit-tested, and manually E2E-verified across three
+   roles; see `docs/Forecast-By-Product-Implementation-Plan.md` and
+   `docs/Forecast-By-Product-Manual-E2E-Test-Plan.md`.
 8. **High Priority flag** (Feature 2.2, Module 3 → PRD 3.9 Deal Prioritization —
    currently "Not started," pulled into this week on Basheer's call, 2026-09-14,
    so next week's Kanban-priority-sort item has something to build on). **Rule

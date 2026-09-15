@@ -5,13 +5,16 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-PipelineGroupBy = Literal["stage", "rep", "sbu", "zone"]
+PipelineGroupBy = Literal["stage", "rep", "sbu", "zone", "product"]
 
 
 class PipelineSummaryRow(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    group_id: uuid.UUID
+    # str, not uuid.UUID -- the "product" breakdown's Trade-Ins/Returns
+    # bucket (see reporting/repository.py's _TRADE_IN_GROUP_ID) has no real
+    # underlying row, same reasoning as ProductPerformanceRow.group_id.
+    group_id: str
     group_name: str
     opportunity_count: int
     total_value_lakhs: Decimal

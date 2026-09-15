@@ -23,11 +23,25 @@ _NET_VALUE = case(
 )
 
 _GROUP_BY_COLUMNS = {
-    "stage": (OpportunityStage.id, OpportunityStage.stage_name),
-    "rep": (UserProfile.id, UserProfile.display_name),
-    "sbu": (SBU.id, SBU.name),
-    "zone": (Zone.id, Zone.name),
+    # Cast to String -- PipelineSummaryRow.group_id is now `str` (widened to
+    # fit the "product" breakdown's non-UUID Trade-Ins/Returns bucket below),
+    # so every branch must hand back a plain string, not a raw UUID.
+    "stage": (cast(OpportunityStage.id, String), OpportunityStage.stage_name),
+    "rep": (cast(UserProfile.id, String), UserProfile.display_name),
+    "sbu": (cast(SBU.id, String), SBU.name),
+    "zone": (cast(Zone.id, String), Zone.name),
 }
+
+# Buyback lines carry no product_id (schema validator requires a description
+# instead), so a plain join to Product would drop them from a by-product
+# breakdown entirely -- silently understating how much value that view
+# nets out, and overstating totals if this breakdown's rows are ever summed
+# and compared against another breakdown's total. Bucketed here instead,
+# same "no natural id" idea as product_performance's brand grouping (which
+# coalesces to "UNSPECIFIED"), so the by-product rows add back up to the
+# same total every other breakdown already produces.
+_TRADE_IN_GROUP_ID = "trade-in"
+_TRADE_IN_GROUP_NAME = "Trade-Ins / Returns"
 
 
 class ReportingRepository:
@@ -58,7 +72,11 @@ class ReportingRepository:
         zone_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
     ) -> list[Row]:
-        group_id_col, group_name_col = _GROUP_BY_COLUMNS[group_by]
+        if group_by == "product":
+            group_id_col = func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID)
+            group_name_col = func.coalesce(Product.name, _TRADE_IN_GROUP_NAME)
+        else:
+            group_id_col, group_name_col = _GROUP_BY_COLUMNS[group_by]
         is_open = OpportunityStatus.is_terminal == False  # noqa: E712
         is_active = OpportunityStatus.status_code == "ACTIVE"
 
@@ -83,8 +101,14 @@ class ReportingRepository:
             .join(SBU, Opportunity.sbu_id == SBU.id)
             .join(Account, Opportunity.account_id == Account.id)
             .join(Zone, Account.zone_id == Zone.id)
-            .group_by(group_id_col, group_name_col)
         )
+        if group_by == "product":
+            # Outer join -- a Buyback line's product_id is NULL, and it must
+            # still appear (bucketed under _TRADE_IN_GROUP_NAME above) rather
+            # than being dropped, so the by-product rows reconcile to the
+            # same total as every other breakdown.
+            stmt = stmt.outerjoin(Product, OpportunityItem.product_id == Product.id)
+        stmt = stmt.group_by(group_id_col, group_name_col)
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
         if sbu_id is not None:
             stmt = stmt.where(Opportunity.sbu_id == sbu_id)

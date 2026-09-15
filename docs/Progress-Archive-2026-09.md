@@ -3276,5 +3276,237 @@ Test-Plan.md`.
 
 Feature 4.1 (Module 6b) flipped **Partial → Done** in the traceability doc
 and scorecard (tally now 24 Done / 15 Partial / 11 Not started of 50); Sprint
-Plan item 2 marked done. Not yet committed — sitting on `main` alongside the
-rest of this session's uncommitted doc work.
+Plan item 2 marked done.
+
+## 2026-09-14 (even later) — Sidebar nav cleanup: Product Catalog relocated for non-Admin/GM, all sections made collapsible
+
+Two follow-on fixes Basheer spotted live while testing the Collateral
+Security pass above, same session, same file (`DemoApp.tsx`).
+
+**Product Catalog out of Administration for non-Admin/GM.** The
+"ADMINISTRATION" sidebar section previously always rendered for every role,
+but three of its four items (User Directory, Territory Map, Audit Log) are
+already Admin/GM-only, so any other role saw a section literally titled
+"Administration" holding just one item — Product Catalog — which they only
+ever browse, never administer. Basheer asked whether that made sense; agreed
+it didn't. Fixed by making section composition role-dependent:
+`getNavSections(isAdmin)` returns Product Catalog under Administration
+(alongside the other three) for Admin/GM exactly as before, or appended to
+Sales Execution for every other role, with Administration omitted from their
+sidebar entirely rather than rendered near-empty. Confirmed live both ways —
+Vivek (Sales Staff) sees Product Catalog under Sales Execution with no
+Administration section at all; Haroon (GM) sees the unchanged four-item
+Administration section.
+
+**Then: collapsible sidebar sections, prompted by "the sidebar for Admin/GM
+is very busy."** Admin/GM's combined nav had grown to 13 items across 3
+sections (Sales Execution 6, Reports 4, Administration 4), needing a scroll
+to reach Territory Map/Audit Log. Asked Basheer to choose between two
+patterns before building: collapsible accordion sections vs. nesting Reports
+as a flyout under Insights. Recommended accordion — flyouts rely on hover
+(this is a PWA meant to work on phones, already collapsing to a drawer on
+mobile; no hover there), hide 4 distinct standalone screens behind an
+unrelated-looking parent label, and would collapse the deliberate
+Dashboard-vs-Reports architectural split already on record in the file's own
+comments (Insights = at-a-glance tiles, Reports = full standalone screens,
+peers by design, not parent/child). Basheer agreed.
+
+Built: each of the three sections (Sales Execution/Reports/Administration)
+toggles independently via a clickable header, state kept in
+`collapsedNavSections` and persisted to `localStorage`
+(`cabio_sidebar_collapsed_sections`) so a user's choice survives across
+logins. Default: Sales Execution open, Reports and Administration collapsed
+(`DEFAULT_COLLAPSED_NAV_SECTIONS`). Marketing User's single-item sidebar
+stays non-collapsible (nothing to gain, would just hide their only nav
+item). Verified live: toggling both directions, and persistence confirmed
+by a full page reload after collapsing Sales Execution/expanding Reports —
+state came back exactly as left.
+
+**One live-caught polish fix in the same pass:** the first chevron
+(a small "▾" unicode glyph, `0.7rem`, light grey) was "almost invisible" per
+Basheer's direct feedback after trying it live. Swapped for MUI's
+`ExpandMoreIcon` at `1.125rem` in a darker grey (`#6b7280`), same rotate
+transform for the collapsed state — confirmed clearly visible live
+afterward, both roles.
+
+`tsc` clean throughout (no backend changes — this thread is frontend-only,
+`sales-os-app/src/DemoApp.tsx`). Not yet committed — staged alongside the
+Collateral Security changes above as one combined commit (drafted message
+handed to Basheer); see `.claude/active_progress.md` for the current staged
+file list.
+
+## 2026-09-14 (later still) — Latheef Bhai's voice message folded into the Pricing/Discount-Authority discussion paper: a second, separate problem
+
+Basheer relayed a transcript of a voice message from Latheef Bhai. Most of it
+confirmed the paper's existing four-tier ladder (§5) is already the right
+shape — his own restatement (Base Rate → First-Level → Manager-Level →
+CEO-Level → exceptional) matches what's already proposed, not a change —
+plus concrete real-world examples for the "beyond CEO floor" discretionary
+tier that weren't in the paper yet: countering a competitor in a high-stakes
+deal, retaining a customer Cabio can't afford to lose, KOL launch pricing for
+a new product. Folded into §5 as confirmation, not a new decision.
+
+**The genuinely new content is a second, separate problem — time-bound
+special pricing.** His example: a ₹10L machine special-priced at ₹8-9L for a
+December year-end push; the deal doesn't close in December, but the hospital
+keeps expecting that price months later with nothing but Haroon's memory of
+a phone call to say what was actually offered or for how long. Distinct from
+the ladder (which answers "how low can this role go," not "how long is this
+number still good for") — none of §4's four price fields have any time
+dimension at all. Added as new §5.1, explicitly not designed further —
+flagged as needing Haroon/Latheef Bhai's decision on shape, added as open
+question 6 in §6. **Found a strong existing precedent to point at rather
+than inventing something new:** `BR-OP-02` (On-Hold Status Discipline)
+already has the exact shape needed — a future `reactivation_date` that
+automatically flags as "Reactivation Overdue" once it passes — proposed
+reusing that pattern for a `special_price_offer`-type record (price,
+validity end date, who authorized it, why) rather than designing a new
+mechanism from scratch. §1, §5, §6, §7, and §8 all updated to cross-reference
+this consistently.
+
+## 2026-09-15 — High Priority Deal Flag (Sprint Plan item 8, BR-OP-15): backend + frontend built and verified, manual E2E test plan written, live pass paused
+
+Picked up from the approved plan (`docs/High-Priority-Deal-Flag-Implementation-Plan.md`,
+2026-09-14) — nothing had been built yet. Ran in parallel with a separate
+thread (Pipeline Product Filter / Forecast by Product, see above) on the
+same day; checked for file overlap before starting and confirmed none
+(this touches `models.py`/`schemas.py`/`create_opportunity`; the other
+touches `list_pipeline`/`count_pipeline`/router query params).
+
+**Backend, per the plan:** migration `0042_add_opportunity_high_priority_manual.py`
+(`opportunity.high_priority_manual BOOLEAN NOT NULL DEFAULT false`);
+`Opportunity` model gains the mapped column; `OpportunityCreate`/
+`OpportunityUpdate`/`OpportunityResponse` schemas updated;
+`PipelineOpportunity` gains a `@computed_field` `is_high_priority` property
+(`stage.display_order > 30 OR high_priority_manual`) — served on both
+`GET /opportunities/pipeline` and `GET /opportunities/{id}` since both
+already return that schema, no new query; `create_opportunity` passes the
+new field through (the existing `exclude_unset` update loop already
+handles the update path with no code change). New test file
+`backend/tests/domains/opportunity/test_schemas.py` (10 cases covering the
+computed field across every stage at both manual-flag values) plus two new
+`test_opportunity_service.py` cases (create persists the flag, update can
+flip it). 809/809 backend tests pass, `ruff` clean. `Business-Rules.md`'s
+BR-OP-15 enforcement bullet updated from "Not yet built" to the actual
+migration/field/computed-field references.
+
+**Direct-DB steps, run by Basheer** (blocked for the assistant under the
+auto-mode safety classifier, same as every prior migration): applied
+migration `0042` to Dev; regenerated `Physical-Schema.sql` via
+`docker run --rm postgres:17 pg_dump ...`. Two friction points along the
+way, both resolved: Basheer's first attempt used PowerShell-style backtick
+line continuation in a Git Bash shell (fixed to `\`), and lost track of
+which directory he was in partway through (`cd..` typo missing a space,
+then one `cd ..` too many landing a level above the repo) — walked through
+`pwd`-checking to get back on track. Final run left the placeholder text
+`<ADMIN_DATABASE_URL from backend/.env>` typed literally instead of the
+real value, which `pg_dump` read as no connection string and fell back to
+a local socket — fixed by pulling the value from the file into a shell
+variable (`export ADMIN_DATABASE_URL=$(grep ... | cut ...)`) instead of
+having Basheer paste the secret by hand. Regen succeeded; confirmed
+`high_priority_manual` present in the dumped DDL. One follow-on catch: the
+raw `pg_dump` output replaced the file's hand-maintained header comment
+block (source-of-truth note + regen instructions) since that text isn't
+part of `pg_dump`'s own output — restored and updated it in the same pass
+(diff dropped from 38 changed lines to the intended 15).
+
+**Frontend, per the plan:** `types/api.ts` regenerated against the running
+Dev backend; "High Priority" badge (amber/orange — `#fff7ed`/`#fed7aa`/
+`#c2410c`, deliberately distinct from the red Reactivation Overdue chip)
+added to `OpportunityPipelineScreen.tsx`'s `DealCard` and `ListRow`, and to
+`OpportunityDetailScreen.tsx`'s header badge row. Manual-flag checkbox
+added to the Overview tab's "Edit Opportunity" modal, gated on
+`editStageOrder <= STAGE_ORDER_DEMO` (reusing the screen's existing
+constant) — shows the checkbox at/below Demo stage, an "Automatically High
+Priority — this deal is past Demo stage" note otherwise. Save path sends
+`high_priority_manual` unconditionally (same pattern as the existing gate-
+override fields — unchecking must actively clear it, not just hide the
+control) and patches both `high_priority_manual` and a client-computed
+`is_high_priority` into the local/query cache so the badge appears
+immediately without a refetch. `tsc --noEmit` and `npm run lint` both
+clean, no new warnings on either touched screen file.
+
+**Live E2E test plan written, not yet run:**
+`docs/High-Priority-Deal-Flag-Manual-E2E-Test-Plan.md` — 5 groups (A:
+automatic past-Demo, B: manual flag set, C: manual flag cleared, D: flag
+transition when stage crosses Demo, E: regression/layout with Reactivation
+Overdue), 14 steps. **Paused on Basheer's call** — the Insights Dashboard
+product filter live testing (the other in-flight thread) takes priority
+right now; will run this pass once that wraps up.
+
+Nothing from this thread committed yet.
+
+## 2026-09-15 (later) — UAT backup catch-up run, missed day 2026-09-14
+
+Basheer noticed 2026-09-14's daily UAT backup never happened (still a
+manual step, the scheduled task from the 2026-09-06/2026-09-10 thread was
+never registered). Asked for a catch-up run; stated exactly what
+`scripts/backup_uat.ps1` would do against UAT per the standing CLAUDE.md
+safety rule (read-only, `ADMIN_DATABASE_URL` from `backend/.env.uat`) and
+got explicit go-ahead before running. Ran successfully — not blocked by the
+auto-mode classifier this time, unlike raw migrations/`pg_dump` schema
+regens. `cabio_uat_2026-09-15.dump` (327,224 bytes), `pg_restore --list`
+verified 374 TOC entries. Explained to Basheer that a fresh dump doesn't
+recover the missed day's exact snapshot, just closes the gap going
+forward — acceptable here since nothing gets deleted on UAT day-to-day, so
+today's dump almost certainly is a superset of what yesterday's would have
+held. No code change; reinforces that the scheduled-task registration
+(`docs/active_progress.md`'s "UAT backup/disaster-recovery" section,
+Basheer's outstanding to-do) is the real fix for this recurring gap.
+
+## 2026-09-15 (later still) — Forecast broken down by Product (Sprint Plan item 7, Feature 2.5): built, two live bugs found and fixed, full manual E2E pass — Done
+
+Picked as the next Sprint Plan item to work while the other session built
+High Priority Deal Flag. Landed on Feature 2.5's product half after first
+scoping the Product Performance drill-down (`docs/Pipeline-Product-Filter-
+And-Report-Drilldown-Implementation-Plan.md`, a related but separate
+opportunity-domain change, still just a plan, not built) and finding this
+one smaller: the Insights Dashboard's Pipeline/Forecast breakdown already
+aggregates from each deal's line items and already has a Stage/Rep/SBU/Zone
+dropdown — just needed "Product" added as a fifth option.
+
+**Two real bugs caught live, both fixed and re-verified:**
+1. The three headline stat tiles were being re-derived from whichever
+   breakdown's rows happened to be loaded — safe for Stage/Rep/SBU/Zone
+   (1:1 with a deal) but wrong for Product (a deal can carry more than one),
+   so switching the dropdown alone inflated the headline from ₹514.6L/37
+   deals to ₹526.1L/44 deals with no data actually changing. Fixed by
+   decoupling the headline into its own fixed, Stage-grouped query,
+   independent of whatever the dropdown shows.
+2. A follow-on fix — widening `PipelineSummaryRow.group_id` from `uuid.UUID`
+   to `str` so a synthetic "Trade-Ins / Returns" bucket could exist —
+   briefly broke every other breakdown too (Stage/Rep/SBU/Zone all started
+   500ing), since their id columns still returned raw UUID objects and
+   Pydantic's `str` field doesn't auto-stringify those. Caught immediately
+   from the live backend traceback, fixed by casting all id columns to
+   `String` in SQL.
+
+**One design decision revised live:** the first build excluded Buyback
+(trade-in/return) lines from the Product view entirely, mirroring the
+already-shipped Product Performance report's convention. Basheer caught
+that this meant the view's own rows didn't add up to its own total — a
+visible discrepancy, not just an internal one. Rebuilt to bucket Buyback
+lines under a new "Trade-Ins / Returns" row instead, so the by-product
+figures now reconcile exactly.
+
+**Two polish items added on request during the pass:** each row now shows
+its weighted forecast alongside pipeline value (previously only visible via
+the Network tab, despite the API already returning it); the empty state is
+now role-aware ("You don't own any open deals yet." for a self-scoped
+viewer instead of the generic "No open pipeline.", which read as a
+contradiction when Vivek could see other reps' deals on the Pipeline board
+while his own Insights view correctly showed zero).
+
+Full manual E2E pass, `docs/Forecast-By-Product-Manual-E2E-Test-Plan.md`,
+across three roles: Haroon Sidheeq (Admin/GM, unrestricted), Nishad K V
+(Area Manager, own scope), Vivek (Sales Staff, zero-deals edge case). Full
+build detail and the bug write-ups: `docs/Forecast-By-Product-
+Implementation-Plan.md`. 813/813 backend tests, `ruff`/`tsc` clean.
+Feature 2.5's traceability/scorecard rows updated to reflect the product
+half done (row stays **Partial** overall — month/quarter half still needs
+Target Management). Not yet committed.
+
+**Process note:** briefly built ahead of an approved plan doc earlier in
+this thread (misread "Yes. Go ahead" as approval to code rather than to
+write the plan) — caught and corrected before continuing; see
+`.claude/active_progress.md` for the full account.

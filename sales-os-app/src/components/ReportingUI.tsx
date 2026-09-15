@@ -9,15 +9,26 @@ export function MiniBar({
   value,
   max,
   formatValue,
+  secondaryValue,
+  secondaryLabel = "weighted",
 }: {
   label: string;
   value: number;
   max: number;
   formatValue: (v: number) => string;
+  // Optional second figure shown under the primary one (e.g. the same
+  // slice's weighted forecast next to its open pipeline value) -- doesn't
+  // affect the bar's width, which is still driven by `value` alone.
+  secondaryValue?: number;
+  secondaryLabel?: string;
 }) {
   const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
+  const title =
+    secondaryValue === undefined
+      ? `${label}: ${formatValue(value)}`
+      : `${label}: ${formatValue(value)} (${formatValue(secondaryValue)} ${secondaryLabel})`;
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }} title={`${label}: ${formatValue(value)}`}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }} title={title}>
       <Box
         sx={{
           flex: "0 0 38%",
@@ -34,18 +45,15 @@ export function MiniBar({
       <Box sx={{ flex: 1, height: 10, borderRadius: "5px", bgcolor: "#f3f4f6", overflow: "hidden" }}>
         <Box sx={{ width: `${pct}%`, height: "100%", borderRadius: "5px", bgcolor: "#2a78d6" }} />
       </Box>
-      <Box
-        sx={{
-          flex: "0 0 auto",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          color: "text.secondary",
-          minWidth: 64,
-          textAlign: "right",
-          fontVariantNumeric: "tabular-nums",
-        }}
-      >
-        {formatValue(value)}
+      <Box sx={{ flex: "0 0 auto", minWidth: secondaryValue === undefined ? 64 : 92, textAlign: "right" }}>
+        <Box sx={{ fontSize: "0.75rem", fontWeight: 700, color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
+          {formatValue(value)}
+        </Box>
+        {secondaryValue !== undefined && (
+          <Box sx={{ fontSize: "0.6875rem", color: "#9ca3af", fontVariantNumeric: "tabular-nums" }}>
+            {formatValue(secondaryValue)} {secondaryLabel}
+          </Box>
+        )}
       </Box>
     </Box>
   );
