@@ -31,7 +31,7 @@ if he asks again.
 Full detail: `docs/Progress-Archive-2026-09.md`'s "2026-09-16 — Scorecard
 tally fix..." entry.
 
-## 2026-09-16 session (latest) — Report Drill-down (Feature 11.2) full manual E2E pass: complete, two real bugs found and fixed, not yet committed
+## 2026-09-16 session (latest) — Report Drill-down (Feature 11.2) full manual E2E pass: complete, committed, Traceability flipped to Done, pushed
 
 Ran the full A–F test plan live with Basheer as Haroon, then Fazal (Area
 Manager) for role scoping. All steps PASS except two data-limited (not
@@ -57,13 +57,26 @@ role scoping.
 
 Also added a `## Post-commit checklist` section to `CLAUDE.md` (5-step
 habit: active_progress.md, Progress-Archive retro, Backlog check,
-Traceability+scorecard regen, `--check` + republish) — not yet used for
-real since nothing's been committed this session yet.
+Traceability+scorecard regen, `--check` + republish) — this thread was
+its first real run.
 
-**Next step:** commit the three code changes + doc updates (test plan,
-`CLAUDE.md`, this file, Progress-Archive), then run the post-commit
-checklist for real — including flipping Feature 11.2's Traceability row
-to Done (E2E now fully passed) and regenerating the scorecard.
+**Committed and pushed** in two commits: `9023965` (the three code
+fixes + test plan/Progress-Archive/this file) and `f61ef48` (Feature
+11.2 flipped to Done in Traceability.md, scorecard tally regenerated
+28/12/10, both `.scratch` client Artifacts republished — 7qRxCt4B... and
+VcwUvDNA...). Same commit also noted a forward dependency on Feature
+4.1 (Backlog.md: planned Product Catalog name-field change, pending
+Haroon).
+
+**Retro:** the checklist worked as designed — regenerating and
+`--check`ing the scorecard in the same breath as the status flip caught
+nothing amiss, and republishing right after meant the client view never
+sat stale. One real gotcha worth remembering: a parallel session was
+active in this same repo the whole time (untouched `backend/app/
+domains/planning/*` work) — `git status` before every stage/commit is
+what kept the two threads from getting tangled together.
+
+**Next step:** none pending on this thread.
 
 ## 2026-09-15 — Report Drill-down (Feature 11.2): built, smoke-tested, committed `6bb0d31`
 

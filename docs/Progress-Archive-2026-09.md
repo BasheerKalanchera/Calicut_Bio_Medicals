@@ -4203,3 +4203,59 @@ closing a signed requirement — amended before push (safe, not yet on
   parallel. No file overlap and no lost edits, but worth being deliberate
   about append-only edits (never a full-file rewrite) on shared log files
   when that's happening.
+
+## 2026-09-16 — Session retrospective: Report Drill-down E2E pass + first live run of the Post-commit checklist
+
+Basheer asked for a full-session retro, to close out the day. Summary:
+
+**What worked well:**
+- Live, collaborative testing (Basheer driving the browser as Haroon,
+  then Fazal, while Claude read code and reasoned about expected
+  behavior) caught two genuine bugs — no back-navigation after a
+  drill-down, and a stale Owner/Zone filter silently leaking across
+  drills — that automated tests wouldn't have surfaced. Both fixed
+  same-session.
+- The stale-filter fix reused an existing codebase convention
+  (`ActivityCommentThread.tsx`'s "adjust state during render" pattern)
+  instead of introducing a new one after a first `useEffect` attempt
+  tripped the project's own lint rule — kept the fix consistent and
+  lint-clean.
+- Discipline around the parallel session (Target Planning work, active
+  the whole evening) held: `git status` checked before every stage and
+  commit, nothing unrelated got swept in or disturbed.
+- Doc hygiene stayed tight — test plan, this file, Backlog, and the
+  Traceability matrix all updated in lockstep with the actual code
+  changes.
+- The `## Post-commit checklist` section added to `CLAUDE.md` earlier
+  this session got proven the same day it was written — a good sign
+  it's a usable habit, not just a paper rule.
+
+**Issues encountered, and how they were handled:**
+- First explanation of the stale-filter bug (a "sieve" analogy) didn't
+  land with Basheer; walking through the literal click sequence with
+  real names on the second attempt did. Lesson: lead with the concrete
+  sequence, not an abstract metaphor, when a first explanation misses.
+- Claude ran `generate_scorecard.py` before anything was even
+  committed — over-applying the newly-written Scorecard integrity rule
+  instead of rereading its actual trigger (a status *flip* at commit
+  time, not any Notes edit). Basheer caught it before it ran.
+- The first commit message undersold the work — read as a narrow
+  bug-fix commit when it should have led with "full E2E verification
+  completed," fixes as the *how*. Took two rounds of Basheer's feedback
+  to land on the right framing.
+- Found `CLAUDE.md`'s Post-commit checklist section already sitting in
+  git history before Claude had committed it — flagged as an anomaly
+  rather than silently ignored; most likely explained by the parallel
+  scorecard session (this same entry's author) touching the same file
+  around the same time.
+- Minor browser-automation friction (a few screenshot timeouts,
+  coordinate drift after a window resize) — cost some extra
+  round-trips, no real consequence.
+
+**What to improve:**
+- Apply freshly-written rules literally before acting on them,
+  especially right after writing them.
+- Default commit messages to the bigger-picture story first, not just
+  the mechanical diff — shouldn't need to be told twice.
+- Run `git status` as a start-of-session habit, not only right before
+  staging, so concurrent-session activity surfaces earlier.
