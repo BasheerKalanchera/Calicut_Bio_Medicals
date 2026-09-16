@@ -27,7 +27,7 @@ crashed session had only gotten as far as reading `territoryAdmin.ts`'s
 service/type pattern and searching for the shared `FormModal` component to
 reuse before it froze — no frontend file exists yet.
 
-**Committed `<hash>`** (backend only — no Traceability/Scorecard flip,
+**Committed `1d9d46a`** (backend only — no Traceability/Scorecard flip,
 since the feature isn't usable end-to-end until the screen exists).
 
 **Next step:** build the frontend piece per the plan doc's "Frontend
