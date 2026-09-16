@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import UUID, CheckConstraint, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -12,6 +13,9 @@ class TargetPlan(AuditMixin, Base):
     __table_args__ = (
         UniqueConstraint("user_id", "sbu_id", "planning_period", name="target_plan_unique"),
         CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_target_plan_planning_period"),
+        CheckConstraint(
+            "status IN ('PENDING_APPROVAL', 'APPROVED', 'REJECTED')", name="ck_target_plan_status"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -19,10 +23,16 @@ class TargetPlan(AuditMixin, Base):
     sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
     planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
     target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING_APPROVAL")
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     user: Mapped["UserProfile"] = relationship(
         back_populates="target_plans", foreign_keys=[user_id], lazy="joined"
     )
+    approver: Mapped["UserProfile | None"] = relationship(foreign_keys=[approved_by], lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="target_plans", lazy="joined")
     coverage_plans: Mapped[list["CoveragePlan"]] = relationship(back_populates="target_plan", lazy="select")
 

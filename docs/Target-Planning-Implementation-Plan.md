@@ -1,7 +1,9 @@
 # Target Planning — Implementation Plan
 
-**Status:** Draft — planned, not yet built. First Milestone 2 feature, targeted for this
-week's incremental deploy under the new 2-region Dev/Prod model (`docs/Deployment-Topology.md`).
+**Status:** All decisions resolved 2026-09-16 (Basheer) — building now. First Milestone 2
+feature, targeted for this week's incremental deploy under the new 2-region Dev/Prod model
+(`docs/Deployment-Topology.md`). Product-category splitting (PRD 6.5's other half) deferred
+to Phase 2 — this pass ships the flat user/SBU/quarter design as originally scoped.
 
 ## Context
 
@@ -64,19 +66,28 @@ is the template this plan reuses for `target_plan`.
    automatically, with zero code change** — the generic walk just finds one more link
    in the chain. Same reasoning `TEAM_SCOPE_BUILDERS`/RLS already uses `manager_id`
    for elsewhere in this codebase, applied to approval instead of visibility.
-   **Still open, needs Basheer's call:**
+   **Resolved 2026-09-16 (Basheer):**
    - **Who approves the target of whoever sits at the very top of the chain** (today:
-     GM, whose `manager_id` is `NULL`)? Proposed default: auto-approved, no approver
-     needed — matches the existing pattern of Admin/GM being an unrestricted overlay
-     tier elsewhere in this app. Needs confirmation, not assumed.
-   - **Does a quarter-end revision (decision 5) require re-approval,** or can the
-     owner freely adjust an already-approved number without it going back through
-     their manager? Proposed default: yes, re-approval required — otherwise the
-     approval step is meaningless after the first quarter. Needs confirmation.
+     GM, whose `manager_id` is `NULL`)? **DECIDED: must be a different person —
+     specifically the separate Admin account, never GM themselves.** Reverses the
+     proposed auto-approved default. Implemented as one small, general fix rather than
+     a GM-specific special case: the existing "Admin/GM can approve anything" override
+     (§ Backend changes below) gets an added `AND user_id != cabio_app_uid()` /
+     `current_user.id != target_plan.user_id` condition at both the RLS and service
+     layer — nobody may approve their own row, full stop. Since `get_approver_id`
+     returns `NULL` for GM (no `manager_id`), and the override now excludes self, the
+     only path left to approve GM's target is another Admin/GM user who isn't GM
+     themselves — in practice, the separate Admin account. No hardcoded "if this is
+     the GM" branch anywhere.
+   - **Does a quarter-end revision (decision 5) require re-approval?** **DECIDED: yes**
+     — matches the proposed default. Editing `target_amount_lakhs` after `APPROVED`
+     resets `status` to `PENDING_APPROVAL` and clears `approved_by`/`approved_at`.
    - **Does a target "count" while still pending approval** — visible/usable as-is to
-     anything that reads target data (e.g. a future Attainment % dashboard tile), or
-     invisible until approved? Needs confirmation before any reporting work builds on
-     top of this.
+     anything that reads target data (e.g. the SBU rollup below, or a future
+     Attainment % dashboard tile)? **DECIDED: yes, pending counts too** — reverses the
+     proposed "APPROVED only" default. The rollup and any future reporting sum every
+     row regardless of `status`, showing the full picture (drafts included), not just
+     committed numbers.
 5. **Editing after Coverage Plans exist / quarterly revision. DECIDED, and adds a
    normal-workflow detail beyond the original proposal.** No hard lock (matches the
    original proposal — Coverage Planning isn't built yet, so moot today either way).
@@ -135,17 +146,22 @@ CREATE POLICY target_plan_write ON target_plan FOR INSERT WITH CHECK (
 -- Update: the row's own owner (revising their number — decision #5), OR that owner's
 -- direct manager (approving/rejecting it — decision #4's single-hop design, resolved
 -- purely via manager_id, no role name check), OR Admin/GM as the unrestricted overlay
--- tier used everywhere else in this app.
+-- tier used everywhere else in this app -- EXCEPT on their own row: nobody may
+-- approve their own target, so the Admin/GM override explicitly excludes self. This
+-- is what forces GM's own target through the separate Admin account (resolved
+-- 2026-09-16) without a GM-specific special case: get_approver_id(GM) is NULL (no
+-- manager_id), and the override now skips GM approving GM, so only another Admin/GM
+-- user can act on it.
 CREATE POLICY target_plan_update ON target_plan FOR UPDATE
     USING (
         user_id = cabio_app_uid()
         OR user_id IN (SELECT id FROM user_profile WHERE manager_id = cabio_app_uid())
-        OR cabio_app_role_name() IN ('Admin', 'General Manager')
+        OR (cabio_app_role_name() IN ('Admin', 'General Manager') AND user_id != cabio_app_uid())
     )
     WITH CHECK (
         user_id = cabio_app_uid()
         OR user_id IN (SELECT id FROM user_profile WHERE manager_id = cabio_app_uid())
-        OR cabio_app_role_name() IN ('Admin', 'General Manager')
+        OR (cabio_app_role_name() IN ('Admin', 'General Manager') AND user_id != cabio_app_uid())
     );
 
 CREATE POLICY target_plan_delete ON target_plan FOR DELETE USING (
@@ -204,17 +220,19 @@ Planning batch rather than bundled here. Flagged, not silently left.
     (`user_id = current_user.id`, enforced in the service even though RLS backs it up
     too) — `status` defaults to `PENDING_APPROVAL`.
   - `update_target_plan` (owner revising their number, decision #5): raise
-    `AuthorizationError` unless `current_user.id == target_plan.user_id`. **Open
-    per decision #4's unresolved sub-question:** does this reset `status` back to
-    `PENDING_APPROVAL`, wiping a prior approval? Proposed yes, pending confirmation.
+    `AuthorizationError` unless `current_user.id == target_plan.user_id`. **Resolved:**
+    if the row's current `status == 'APPROVED'`, revising `target_amount_lakhs` resets
+    `status` to `PENDING_APPROVAL` and clears `approved_by`/`approved_at` — a revision
+    always needs a fresh sign-off.
   - `approve_or_reject_target_plan`: raise `AuthorizationError` unless
-    `current_user.id == get_approver_id(target_plan.user_id)` or the caller is
-    Admin/GM. Sets `status`, `approved_by = current_user.id`, `approved_at = now()`.
+    `current_user.id == get_approver_id(target_plan.user_id)` or (the caller is
+    Admin/GM **and** `current_user.id != target_plan.user_id` — resolved 2026-09-16,
+    nobody approves their own row). Sets `status`, `approved_by = current_user.id`,
+    `approved_at = now()`.
   - `get_sbu_rollup(sbu_id, planning_period)`: `SUM(target_amount_lakhs)` +
-    `COUNT(user_id)` for decision #2. **Open per decision #4's unresolved
-    sub-question:** does this sum only `APPROVED` rows, or every row regardless of
-    status? Proposed: `APPROVED` only, so the rollup reflects committed targets, not
-    drafts — pending confirmation, matters once the Reporting pillar reads from this.
+    `COUNT(user_id)` for decision #2. **Resolved:** sums every row regardless of
+    `status` — pending targets count too, so the rollup shows the full picture
+    including drafts, not just committed numbers.
   - All three mutating methods raise a clear `AuthorizationError` on a failed check
     rather than relying on RLS alone to silently return nothing — RLS is the DB-level
     backstop, the service layer is what gives the caller a real error message instead

@@ -26,6 +26,7 @@ from app.domains.audit import router as audit_router
 from app.domains.document import router as document_router
 from app.domains.notification import router as notification_router
 from app.domains.opportunity import router as opportunity_router
+from app.domains.planning import router as planning_router
 from app.domains.product import router as product_router
 from app.domains.project import router as project_router
 from app.domains.reference import router as reference_router
@@ -163,6 +164,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(audit_router.router, prefix="/api/v1")
     application.include_router(reporting_router.router, prefix="/api/v1")
     application.include_router(marketing_leads.router, prefix="/api/v1")
+    application.include_router(planning_router.router, prefix="/api/v1")
 
 
 app = create_app()

@@ -1,6 +1,40 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-16_
 
+## 2026-09-16 session (recovery) — Target Planning approval-workflow backend recovered from a crashed session, verified, committed
+
+A parallel session building Target Planning (owner sets a quarterly target,
+direct manager approves/rejects, nobody approves their own row, Admin/GM
+only steps in for someone else's) froze mid-session while doing frontend
+reconnaissance. Traced by reading that session's own saved transcript
+(`6a419dd4-2a70-49bf-a2ac-82627198c238.jsonl`, last activity 2026-09-16
+~21:17): the freeze came from a hung Docker Desktop shutdown command run
+right after `docs/Physical-Schema.sql` had already regenerated successfully
+— the schema step itself never failed, nothing was lost.
+
+**Backend confirmed complete and working:** `backend/app/domains/planning/`
+(models with new `status`/`approved_by`/`approved_at` columns, repository,
+service, router), migration `0044_target_plan_approval_and_rls.py` (already
+applied to Dev), RLS updated so nobody can approve their own row. 864/864
+backend tests pass (36 in the new planning tests), `ruff` clean.
+`docs/Target-Planning-Implementation-Plan.md`'s three previously-open
+decisions (GM's own approver, re-approval on revision, pending targets
+counting in the rollup) are resolved and match the code.
+
+**Not built yet:** the frontend screen — `TargetPlanningScreen.tsx`,
+`services/targetPlanning.ts`, `types/targetPlanning.ts`, nav entry. The
+crashed session had only gotten as far as reading `territoryAdmin.ts`'s
+service/type pattern and searching for the shared `FormModal` component to
+reuse before it froze — no frontend file exists yet.
+
+**Committed `<hash>`** (backend only — no Traceability/Scorecard flip,
+since the feature isn't usable end-to-end until the screen exists).
+
+**Next step:** build the frontend piece per the plan doc's "Frontend
+changes" section — start by confirming `FormModal` and following
+`services/territoryAdmin.ts`'s pattern, same place the crashed session
+was headed.
+
 ## 2026-09-16 session — Scorecard tally drift fixed, `--check` staleness guard added, third client view built: committed `40460ad`/`1b7a4c5`, pushed
 
 Basheer caught Traceability.md's own "Current tally" line (26/14) had

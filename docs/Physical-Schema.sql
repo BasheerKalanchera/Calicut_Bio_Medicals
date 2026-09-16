@@ -1,4 +1,4 @@
--- ==============================================================================
+﻿-- ==============================================================================
 -- CABIO SALES OS - PHYSICAL SCHEMA
 -- Target: PostgreSQL 17 / Supabase
 -- ==============================================================================
@@ -7,32 +7,22 @@
 --
 -- Source of truth for the schema is the Alembic migration chain
 -- (backend/alembic/versions/). This file is a read-only reference snapshot,
--- regenerated from a fully-migrated database via `pg_dump --schema-only` —
+-- regenerated from a fully-migrated database via `pg_dump --schema-only` --
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-15 from the Dev database (Postgres 17.6), catching up
--- migration 0043: one new column, opportunity.closed_at (timestamptz,
--- nullable) -- stamped automatically the moment a deal's status first
--- becomes terminal (Won or Lost), powering Sales Report's period filtering.
--- See docs/Sales-And-Pipeline-Report-Implementation-Plan.md and
--- docs/Backend-Implementation-Standards.md's migration workflow for the
--- regen step required on every migration.
+-- Regenerated 2026-09-16 from the Dev database, catching up migration
+-- 0044: target_plan approval workflow columns + RLS
+-- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
---
--- Never run a raw `pg_dump --schema-only` command directly — it always
--- overwrites this header from scratch (no pg_dump flag preserves a
--- preamble), which is exactly what kept happening before this script
--- existed. The script rebuilds this header itself (regen date, which
--- migration it's caught up to) as part of the same run.
+-- (never a raw pg_dump command -- see that script's own header for why)
 -- ==============================================================================
-
 --
 -- PostgreSQL database dump
 --
 
-\restrict uQS5pmlgg8xCOt1xsHkIUS62SPwRw1AlLLCJjaUhp2DibDGqVLUjeQmME0NynSH
+\restrict HQJQcVM3LV5WjkgVo1PmJVF7grx86Xkjb4zua43TazYLFGnsBsYNmRLCOLuuBbo
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -736,6 +726,10 @@ CREATE TABLE public.target_plan (
     updated_at timestamp with time zone DEFAULT now(),
     created_by uuid,
     updated_by uuid,
+    status character varying(20) DEFAULT 'PENDING_APPROVAL'::character varying NOT NULL,
+    approved_by uuid,
+    approved_at timestamp with time zone,
+    CONSTRAINT ck_target_plan_status CHECK (((status)::text = ANY ((ARRAY['PENDING_APPROVAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[]))),
     CONSTRAINT target_plan_planning_period_check CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
 
@@ -2314,6 +2308,14 @@ ALTER TABLE ONLY public.stakeholder
 
 
 --
+-- Name: target_plan target_plan_approved_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan
+    ADD CONSTRAINT target_plan_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: target_plan target_plan_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2668,8 +2670,55 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 
 
 --
+-- Name: target_plan; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.target_plan ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: target_plan target_plan_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_delete ON public.target_plan FOR DELETE USING (((user_id = public.cabio_app_uid()) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))));
+
+
+--
+-- Name: target_plan target_plan_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_read ON public.target_plan FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR (((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (user_id IN ( SELECT up.id
+   FROM (public.user_profile up
+     JOIN public.user_zone uz ON ((uz.user_id = up.id)))
+  WHERE (uz.zone_id IN ( SELECT zone_closure.descendant_zone_id
+           FROM public.zone_closure
+          WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
+                   FROM public.user_zone
+                  WHERE (user_zone.user_id = public.cabio_app_uid())))))))) OR (user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (user_id = public.cabio_app_uid())));
+
+
+--
+-- Name: target_plan target_plan_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_update ON public.target_plan FOR UPDATE USING (((user_id = public.cabio_app_uid()) OR (user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (user_id <> public.cabio_app_uid())))) WITH CHECK (((user_id = public.cabio_app_uid()) OR (user_id IN ( SELECT user_profile.id
+   FROM public.user_profile
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (user_id <> public.cabio_app_uid()))));
+
+
+--
+-- Name: target_plan target_plan_write; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((user_id = public.cabio_app_uid()));
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uQS5pmlgg8xCOt1xsHkIUS62SPwRw1AlLLCJjaUhp2DibDGqVLUjeQmME0NynSH
+\unrestrict HQJQcVM3LV5WjkgVo1PmJVF7grx86Xkjb4zua43TazYLFGnsBsYNmRLCOLuuBbo
 

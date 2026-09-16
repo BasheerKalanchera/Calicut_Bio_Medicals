@@ -111,7 +111,11 @@ def test_all_relationships_resolve():
     # 106, not 103: Activity Inline Comments (Phase 1, 0040_add_activity_
     # comment_table.py) added Activity.comments, ActivityComment.activity,
     # ActivityComment.author.
-    assert rel_count == 106, f"Expected 106 relationships, found {rel_count}"
+    # 107, not 106: Target Planning approval workflow (0044_target_plan_
+    # approval_and_rls.py) added TargetPlan.approver -- one-directional
+    # only (no back_populates on UserProfile), same reasoning as
+    # MarketingLead.assigned_to_user above.
+    assert rel_count == 107, f"Expected 107 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():
