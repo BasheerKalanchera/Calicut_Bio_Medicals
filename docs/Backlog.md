@@ -862,36 +862,37 @@ addition once Brand has a stable id instead of free text. Noted on
   features" reasoning that drove the 2-region weekly-deploy model
   (`docs/Deployment-Topology.md`). Decided rollout order:
   1. **Target Planning** — `docs/Target-Planning-Implementation-Plan.md`. Hard
-     prerequisite for Coverage Planning (`BR-PL-03`'s FK). **All 5 original decisions
-     resolved 2026-09-11 (Basheer) — 3 new follow-on questions still open, nothing
-     built yet.** Reverses the original proposal on who sets a target: **everyone
-     self-sets their own** (including Sales Staff, not manager-assigned as first
-     proposed), but a target isn't final until approved — a real, single-hop approval
-     step (the setter's own direct manager) resolved generically off the real
-     reporting line (`user_profile.manager_id`), not hardcoded to today's role names,
-     so an extra approval hop appears on its own if a currently-empty role tier (SBU
-     Manager) is ever populated. SBU Target stays a computed rollup (not stored),
-     annual stays a sum of quarters, no lock once Coverage Plans reference a Target
-     Plan — all three matched the original proposal as-is. **No longer an RLS-only
-     migration** — the approval decision adds three real columns
-     (`status`/`approved_by`/`approved_at`) to `target_plan`, combined into one
-     migration with the RLS enable. **3 follow-on questions from the approval design,
-     still open:** (1) who approves the target of whoever sits at the very top of the
-     chain (today: GM, `manager_id` is `NULL`) — proposed auto-approved, unconfirmed;
-     (2) does revising an already-approved target reset it back to pending, requiring
-     re-approval — proposed yes, unconfirmed; (3) does a still-pending target count in
-     anything that reads target data (e.g. a future Attainment % tile) — proposed no
-     (`APPROVED` only), unconfirmed. Full detail and the resolved backend/frontend
-     design: `docs/Target-Planning-Implementation-Plan.md`.
-     **4th open question, found 2026-09-14, not just a doc gap — confirmed missing
-     from the actual design:** PRD 6.5 (Feature 3.1's other half) asks for target
-     splitting by product category, but `target_plan` as designed is one row per
-     (user, SBU, quarter) with a single `target_amount_lakhs` — no product-category
-     dimension anywhere in the schema or the 5 resolved decisions above. Needs
-     Basheer's call before the migration ships: fold a `product_category_id` (or
-     similar) into `target_plan` now, or treat per-category targets as a deliberate
-     Phase 2 follow-on, same shape as the Annual Development-Activity KPI's own
-     "own table, later" pattern below.
+     prerequisite for Coverage Planning (`BR-PL-03`'s FK). **All decisions resolved,
+     backend built and verified 2026-09-16 — frontend screen still pending.**
+     Reverses the original proposal on who sets a target: **everyone self-sets their
+     own** (including Sales Staff, not manager-assigned as first proposed), but a
+     target isn't final until approved — a real, single-hop approval step (the
+     setter's own direct manager) resolved generically off the real reporting line
+     (`user_profile.manager_id`), not hardcoded to today's role names, so an extra
+     approval hop appears on its own if a currently-empty role tier (SBU Manager) is
+     ever populated. SBU Target stays a computed rollup (not stored), annual stays a
+     sum of quarters, no lock once Coverage Plans reference a Target Plan — all three
+     matched the original proposal as-is. **No longer an RLS-only migration** — the
+     approval decision adds three real columns (`status`/`approved_by`/`approved_at`)
+     to `target_plan`, combined into one migration with the RLS enable (`0044`,
+     applied to Dev). **4 follow-on questions from the approval design, all resolved
+     2026-09-16 (Basheer):** (1) who approves the target of whoever sits at the very
+     top of the chain (today: GM, `manager_id` is `NULL`) — **must be a different
+     person, never GM approving themselves**; implemented as a general "nobody
+     approves their own row" rule (RLS + service layer), not a GM-specific branch —
+     in practice routes GM's own target to the separate Admin account; (2) does
+     revising an already-approved target reset it back to pending, requiring
+     re-approval — **yes**; (3) does a still-pending target count in anything that
+     reads target data (e.g. a future Attainment % tile) — **yes, every row counts
+     regardless of status**, reversing the original "`APPROVED` only" proposal; (4)
+     PRD 6.5's product-category target split (found 2026-09-14, confirmed missing
+     from the schema) — **deferred to Phase 2**, this pass ships the flat
+     user/SBU/quarter design as originally scoped. Full detail and the as-built
+     design: `docs/Target-Planning-Implementation-Plan.md`. **Committed `1d9d46a`**
+     (backend only — models/repository/service/router, migration, 36 new tests,
+     864/864 backend suite passing). **Not yet built:** the frontend screen
+     (`TargetPlanningScreen.tsx`, service/type layer, nav entry) — next session's
+     starting point.
   2. **Insights Dashboard / Reporting Batch 1** — `docs/Insights-Dashboard-Implementation-Plan.md`.
      Zero dependency on Target or Coverage Planning — split out from the PRD's much
      larger Reporting & Review Module (§5) to the target-independent subset: Pipeline

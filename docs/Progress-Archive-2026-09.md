@@ -4259,3 +4259,61 @@ Basheer asked for a full-session retro, to close out the day. Summary:
   the mechanical diff — shouldn't need to be told twice.
 - Run `git status` as a start-of-session habit, not only right before
   staging, so concurrent-session activity surfaces earlier.
+
+## 2026-09-16 (later still) — Target Planning approval-workflow backend: crashed session recovered, verified, committed
+
+The parallel Target Planning session (building the approval workflow —
+owner self-sets a quarterly target, direct manager approves/rejects,
+nobody approves their own row) went unresponsive mid-session; Basheer's
+terminal showed nothing typed and no responses. He asked to "recover the
+previous session," specifically the actual saved conversation file, not
+the handover doc — a useful distinction, since the handover doc only
+records what a session *chose* to write down, not what actually happened
+moment to moment.
+
+**Recovery method:** listed session files under
+`.claude/projects/.../` sorted by modified time, matched the crashed one
+by content (`grep -c "planning"` across same-day candidates) to
+`6a419dd4-2a70-49bf-a2ac-82627198c238.jsonl`, then read its last ~100
+JSONL lines directly (not summarized) to reconstruct the actual sequence.
+**Root cause of the freeze:** `docs/Physical-Schema.sql` regeneration had
+already completed successfully (confirmed by the tool's own "OK,
+regenerated" message in the transcript); the very next command tried to
+gracefully close Docker Desktop, exceeded its 30-second timeout, and was
+silently moved to a background task — most likely what produced the
+unresponsive terminal. The session then continued unattended into
+frontend reconnaissance (reading `territoryAdmin.ts`'s service/type
+pattern, searching for a shared `FormModal` component) and the saved
+file simply stops mid-search, no response ever recorded for the last
+command. No frontend file exists on disk, confirming nothing was lost
+past that point.
+
+**Verification before trusting any of it:** re-ran the full backend
+suite (864/864 pass, 36 in the new planning tests), `ruff check` clean,
+confirmed migration `0044` already applied to Dev via a live
+`information_schema` query, and diffed `docs/Target-Planning-
+Implementation-Plan.md` against the actual code to confirm all
+previously-open design decisions matched what got built. Backend
+confirmed genuinely complete and working, not just present.
+
+**Committed** `1d9d46a` (backend feature), on top of `1f59b38` (unrelated
+doc catch-up: Report Drill-down retro + Pricing/Discount-Authority paper
+update, both finished earlier but never actually saved) and a small
+follow-up `e6abf0f` fixing a commit-hash placeholder left in the
+handover note. `docs/Backlog.md`'s Target Planning entry updated to
+match (all 4 follow-on questions resolved, status corrected from
+"nothing built" to "backend built, frontend pending"). Pushed to
+`origin/main` on Basheer's explicit go-ahead, after discussing that
+there was no real benefit to holding it back locally (self-contained,
+fully tested, nothing partially exposed).
+
+**Retro:**
+- What worked: reading the crashed session's raw saved transcript
+  directly, rather than trusting only the handover doc, surfaced the
+  real timeline (including the exact command that hung) that no summary
+  would have captured — worth doing whenever a session ends
+  abnormally, not just when asked.
+- What to improve: wrote the handover note's "Committed `<hash>`" line
+  *before* running the commit, requiring a follow-up fix commit just for
+  that placeholder. Get the commit hash first, then write the note
+  referencing it — not the other way around.
