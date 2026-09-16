@@ -45,6 +45,28 @@ Karnataka postal-code-to-zone mapping table inside the system, which isn't
 worth it yet. Revisit if/when PIN-code coverage data becomes available or
 the manual picking becomes an actual pain point.
 
+### Product Catalog: name field to become derived (Brand + Model + Category), not free text — waiting on Haroon (2026-09-16)
+
+Basheer: a change is coming where a product's name will no longer be
+directly enterable — it'll be built automatically from Brand, Model, and
+Category (possibly one more field), rather than free text. Not yet
+confirmed; waiting on Haroon before this is scoped or built. No code
+work now.
+
+**Why this matters for other work:** Signed Feature 4.1 in
+`docs/Signed-Requirements-to-PRD-Traceability.md` ("Strict product
+hierarchy: category → brand → model") is Partial today specifically
+because Category and Brand are free text, so naming varies between
+entries (e.g. "Edan" vs "EDAN"). Report Drill-down's Product Performance
+screen currently leaves Brand-grouped cards non-clickable for the same
+reason — there's no real `brand_id`, only a normalized
+`UPPER(TRIM(product.oem_name))` string
+(`backend/app/domains/reporting/repository.py:337-343`). **When 4.1 is
+built** (a real, fixed Brand field), also revisit wiring up Brand-level
+drill-down on Product Performance — it becomes a straightforward
+addition once Brand has a stable id instead of free text. Noted on
+4.1's own row in the Traceability matrix so this isn't missed.
+
 ## Deferred / undecided items
 
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2

@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **27 done, 13 partly done, 10 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
+Of **50** signed requirements: **28 done, 12 partly done, 10 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end).
 
 | Done | Partly done | Not started | New Features Added |
 | :---: | :---: | :---: | :---: |
-| 27 | 13 | 10 | 15 |
+| 28 | 12 | 10 | 15 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 27 of 50 = **54.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 13 items aren't zero — they're mid-flight): (27 + 13×0.5) ÷ 50 = **67.0%**
+- **Strictly done:** 28 of 50 = **56.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 12 items aren't zero — they're mid-flight): (28 + 12×0.5) ÷ 50 = **68.0%**
 
 ---
 
@@ -88,7 +88,7 @@ Where leadership and managers see how the business is doing.
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
 | 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started |  |
-| 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Partial | Reports can already be filtered by region, team, or person; a dedicated click-through drill-down view is not yet built. |
+| 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Done |  |
 
 ## 6. Governance & Admin
 
