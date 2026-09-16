@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Phase 1 Delivery Scorecard</title>
+<title>Phase 1 Delivery Scorecard — By Status</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -290,21 +290,17 @@
   <nav class="railwrap">
     <div class="rail" id="rail">
       <div class="rail-title">Modules</div>
-      <a href="#s1" data-n="1"><span>Customer Accounts</span><span class="n">8</span></a>
-      <a href="#s2" data-n="2"><span>Product Catalog</span><span class="n">4</span></a>
-      <a href="#s3" data-n="3"><span>Opportunity Mgmt</span><span class="n">10</span></a>
-      <a href="#s4" data-n="4"><span>Activity Tracking</span><span class="n">6</span></a>
-      <a href="#s5" data-n="5"><span>Reporting &amp; Review</span><span class="n">10</span></a>
-      <a href="#s6" data-n="6"><span>Governance &amp; Admin</span><span class="n">9</span></a>
-      <a href="#s7" data-n="7"><span>Technical Foundation</span><span class="n">3</span></a>
-      <a href="#bonus" data-n="+"><span>Beyond Contract</span><span class="n">15</span></a>
+      <a href="#done" data-n="done"><span>Done</span><span class="n">27</span></a>
+      <a href="#partial" data-n="partial"><span>Partial</span><span class="n">13</span></a>
+      <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">10</span></a>
+      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">15</span></a>
   </nav>
 
   <main>
     <header class="top">
       <div class="eyebrow"><span class="dot"></span>Cabio Sales OS &middot; Leadership Summary</div>
-      <h1 class="title">Phase 1 Delivery Scorecard</h1>
-      <p class="subtitle">A line-by-line check of every signed-off Phase&nbsp;1 requirement against what is actually built today &mdash; verified against the live database schema and the real backend/frontend code, not just documentation.</p>
+      <h1 class="title">Phase 1 Delivery Scorecard &mdash; By Status</h1>
+      <p class="subtitle">The same 50 signed requirements as the module-by-module scorecard, grouped here by delivery status first, then by the part of the app each one belongs to.</p>
       <div class="meta-line">SOURCE: Signed&#8209;Requirements&#8209;to&#8209;PRD&#8209;Traceability.md</div>
 
       <div class="vitals">
@@ -359,523 +355,461 @@
       </div>
     </header>
 
-    <section class="mod" id="s1">
+    <section class="mod" id="done">
       <div class="mod-head">
-        <h2><span class="idx">01</span> Customer Account Management</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>5 done</span>
-          <span><span class="swatch" style="background:var(--partial)"></span>1 partial</span>
-          <span><span class="swatch" style="background:var(--not-started)"></span>2 not started</span>
+        <h2>Done</h2>
+        <div class="tally"><span>27 of 50 requirements</span></div>
+      </div>
+
+      <div class="subgroup-label">Customer Account Management</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">1</div>
+          <div class="ids"><span class="idchip">5.2</span></div>
+          <div><div class="req">Stakeholder phone, WhatsApp, email</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">2</div>
+          <div class="ids"><span class="idchip">5.2</span></div>
+          <div><div class="req">Good Paymaster / Problematic Payer flag</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">3</div>
+          <div class="ids"><span class="idchip">5.2</span></div>
+          <div><div class="req">Promoter / Neutral / Detractor sentiment tagging</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">4</div>
+          <div class="ids"><span class="idchip">5.2</span></div>
+          <div><div class="req">Unified purchase history + installed equipment view</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">5</div>
+          <div class="ids"><span class="idchip">10.1</span></div>
+          <div><div class="req">Post-install / post-service feedback capture</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
         </div>
       </div>
-      <p class="mod-desc">Where every hospital, clinic and dealer account is set up, described and tracked.</p>
-
+      <div class="subgroup-label">Product Catalog Management</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">1</div>
+        <div class="row no-prd">
+          <div class="rn">6</div>
+          <div class="ids"><span class="idchip">4.1</span></div>
+          <div><div class="req">Spec/config linking from company website</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">7</div>
+          <div class="ids"><span class="idchip">4.1</span></div>
+          <div><div class="req">Collateral attachments (brochures, spec sheets, pricing guides, training videos)</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">8</div>
+          <div class="ids"><span class="idchip">17.5</span></div>
+          <div><div class="req">Training &amp; enablement URL/resource linking</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Opportunity Management</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">9</div>
+          <div class="ids"><span class="idchip">1.1</span></div>
+          <div><div class="req">Lead source, campaign, region capture</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">10</div>
+          <div class="ids"><span class="idchip">1.3</span></div>
+          <div><div class="req">Systematic + manual win probability</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">11</div>
+          <div class="ids"><span class="idchip">1.3</span></div>
+          <div><div class="req">Mandatory closure date at Negotiation</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">12</div>
+          <div class="ids"><span class="idchip">2.2</span></div>
+          <div><div class="req">Kanban pipeline sorted by probability/priority</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">13</div>
+          <div class="ids"><span class="idchip">2.2</span></div>
+          <div><div class="req">Manual High Priority toggle</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">14</div>
+          <div class="ids"><span class="idchip">2.2</span></div>
+          <div><div class="req">Pipeline filters by region, product, salesperson</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">15</div>
+          <div class="ids"><span class="idchip">2.2</span></div>
+          <div><div class="req">Manager "Push Logging"</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">16</div>
+          <div class="ids"><span class="idchip">9.2</span></div>
+          <div><div class="req">Deal-level competitive intelligence</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Activity Tracking &amp; Next Actions</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">17</div>
+          <div class="ids"><span class="idchip">1.2</span></div>
+          <div><div class="req">Pre-lead scanning (marketing visits, no active lead)</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">18</div>
+          <div class="ids"><span class="idchip">6.2</span></div>
+          <div><div class="req">Field visit logging with purpose/outcome dropdowns</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">19</div>
+          <div class="ids"><span class="idchip">9.1</span></div>
+          <div><div class="req">Mandatory interaction summaries for completed deals</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">20</div>
+          <div class="ids"><span class="idchip">13.1</span></div>
+          <div><div class="req">Automated follow-up reminders</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Governance &amp; Admin</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">21</div>
+          <div class="ids"><span class="idchip">2.1</span></div>
+          <div><div class="req">Territory &amp; Ownership Mapping; multiple reps owning separate opportunities at one hospital</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">22</div>
+          <div class="ids"><span class="idchip">4.2</span></div>
+          <div><div class="req">Product-team mapping (who's authorized to sell what)</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">23</div>
+          <div class="ids"><span class="idchip">13.1</span></div>
+          <div><div class="req">Automated lead reassignment workflow, manager/admin approval</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">24</div>
+          <div class="ids"><span class="idchip">4.1</span></div>
+          <div><div class="req">Collateral access restricted to managers/authorized staff</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">25</div>
+          <div class="ids"><span class="idchip">12.1</span><span class="idchip">12.2</span></div>
+          <div><div class="req">Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Technical Foundation</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">26</div>
+          <div class="ids"><span class="idchip">14.1</span><span class="idchip">14.2</span></div>
+          <div><div class="req">Responsive Web App (iOS/Android), simple UI minimizing manual entry</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">27</div>
+          <div class="ids"><span class="idchip">15.1</span><span class="idchip">15.2</span><span class="idchip">16.1</span><span class="idchip">16.2</span></div>
+          <div><div class="req">Cloud deployment, API-first architecture, multi-region scalability, hybrid database</div></div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mod" id="partial">
+      <div class="mod-head">
+        <h2>Partial</h2>
+        <div class="tally"><span>13 of 50 requirements</span></div>
+      </div>
+
+      <div class="subgroup-label">Customer Account Management</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">28</div>
           <div class="ids"><span class="idchip">5.1</span></div>
           <div>
             <div class="req">Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers)</div>
             <div class="note">Hospital records capture type and corporate grouping today; the A/B/C/D classification tier is parked for a later phase.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">1.1 Account Structure &amp; Hierarchy</div>
-        </div>
-        <div class="row">
-          <div class="rn">2</div>
-          <div class="ids"><span class="idchip">5.1</span></div>
-          <div><div class="req">Account segmentation by size, specialty, revenue potential</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">1.2 Account Segmentation</div>
-        </div>
-        <div class="row">
-          <div class="rn">3</div>
-          <div class="ids"><span class="idchip">5.1</span></div>
-          <div><div class="req">Tier 1 / Tier 2 dropdown</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">1.3 Customer Tiering</div>
-        </div>
-        <div class="row">
-          <div class="rn">4</div>
-          <div class="ids"><span class="idchip">5.2</span></div>
-          <div><div class="req">Stakeholder phone, WhatsApp, email</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">1.4 Customer Profile Management → Stakeholder Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">5</div>
-          <div class="ids"><span class="idchip">5.2</span></div>
-          <div><div class="req">Good Paymaster / Problematic Payer flag</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
-          <div class="col-prd">1.5 Financial Categorization</div>
-        </div>
-        <div class="row">
-          <div class="rn">6</div>
-          <div class="ids"><span class="idchip">5.2</span></div>
-          <div><div class="req">Promoter / Neutral / Detractor sentiment tagging</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">1.6 Customer Health &amp; Sentiment</div>
-        </div>
-        <div class="row">
-          <div class="rn">7</div>
-          <div class="ids"><span class="idchip">5.2</span></div>
-          <div><div class="req">Unified purchase history + installed equipment view</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">1.7 Customer Intelligence View</div>
-        </div>
-        <div class="row">
-          <div class="rn">8</div>
-          <div class="ids"><span class="idchip">10.1</span></div>
-          <div><div class="req">Post-install / post-service feedback capture</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">1.8 Feedback Collection</div>
         </div>
       </div>
-    </section>
-
-    <section class="mod" id="s2">
-      <div class="mod-head">
-        <h2><span class="idx">02</span> Product Catalog Management</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>3 done</span>
-          <span><span class="swatch" style="background:var(--partial)"></span>1 partial</span>
-        </div>
-      </div>
-      <p class="mod-desc">Where every machine Cabio sells is described, organised and backed with sales materials.</p>
-
+      <div class="subgroup-label">Product Catalog Management</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">9</div>
+        <div class="row no-prd">
+          <div class="rn">29</div>
           <div class="ids"><span class="idchip">4.1</span></div>
           <div>
             <div class="req">Strict product hierarchy: category → brand → model</div>
             <div class="note">Product categories and brands are captured today as free text rather than a fixed list, so naming can vary slightly between entries.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">2.1 Product Structure</div>
-        </div>
-        <div class="row">
-          <div class="rn">10</div>
-          <div class="ids"><span class="idchip">4.1</span></div>
-          <div><div class="req">Spec/config linking from company website</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">2.2 Product Information</div>
-        </div>
-        <div class="row">
-          <div class="rn">11</div>
-          <div class="ids"><span class="idchip">4.1</span></div>
-          <div><div class="req">Collateral attachments (brochures, spec sheets, pricing guides, training videos)</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">2.3 Sales Collateral Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">12</div>
-          <div class="ids"><span class="idchip">17.5</span></div>
-          <div><div class="req">Training &amp; enablement URL/resource linking</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">2.4 Training &amp; Enablement</div>
         </div>
       </div>
-    </section>
-
-    <section class="mod" id="s3">
-      <div class="mod-head">
-        <h2><span class="idx">03</span> Opportunity Management</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>8 done</span>
-          <span><span class="swatch" style="background:var(--partial)"></span>2 partial</span>
-        </div>
-      </div>
-      <p class="mod-desc">Where every sales deal is tracked from first contact through to close.</p>
-
+      <div class="subgroup-label">Opportunity Management</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">13</div>
-          <div class="ids"><span class="idchip">1.1</span></div>
-          <div><div class="req">Lead source, campaign, region capture</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.1 Lead Capture</div>
-        </div>
-        <div class="row">
-          <div class="rn">14</div>
+        <div class="row no-prd">
+          <div class="rn">30</div>
           <div class="ids"><span class="idchip">1.3</span></div>
           <div>
             <div class="req">Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category</div>
             <div class="note">Deal stages and approval checkpoints are fully in place. Stage-specific time limits, so a stalled deal gets flagged sooner, are defined and scheduled to go live shortly.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria</div>
         </div>
-        <div class="row">
-          <div class="rn">15</div>
-          <div class="ids"><span class="idchip">1.3</span></div>
-          <div><div class="req">Systematic + manual win probability</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.7 Win Probability Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">16</div>
-          <div class="ids"><span class="idchip">1.3</span></div>
-          <div><div class="req">Mandatory closure date at Negotiation</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.4 Stage Exit Criteria → Negotiation</div>
-        </div>
-        <div class="row">
-          <div class="rn">17</div>
+        <div class="row no-prd">
+          <div class="rn">31</div>
           <div class="ids"><span class="idchip">1.4</span></div>
           <div>
             <div class="req">Lost deal intelligence: messages, loss analysis, competitor tagging</div>
             <div class="note">Reasons and competitors are captured for every lost deal; a field for the specific competing product is still to be added.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">3.10 Lost Deal Intelligence</div>
-        </div>
-        <div class="row">
-          <div class="rn">18</div>
-          <div class="ids"><span class="idchip">2.2</span></div>
-          <div><div class="req">Kanban pipeline sorted by probability/priority</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.8 Pipeline Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">19</div>
-          <div class="ids"><span class="idchip">2.2</span></div>
-          <div><div class="req">Manual High Priority toggle</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.9 Deal Prioritization</div>
-        </div>
-        <div class="row">
-          <div class="rn">20</div>
-          <div class="ids"><span class="idchip">2.2</span></div>
-          <div><div class="req">Pipeline filters by region, product, salesperson</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.8 Pipeline Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">21</div>
-          <div class="ids"><span class="idchip">2.2</span></div>
-          <div><div class="req">Manager "Push Logging"</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.12 Manager Push Logging</div>
-        </div>
-        <div class="row">
-          <div class="rn">22</div>
-          <div class="ids"><span class="idchip">9.2</span></div>
-          <div><div class="req">Deal-level competitive intelligence</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.11 Competitive Intelligence</div>
         </div>
       </div>
-    </section>
-
-    <section class="mod" id="s4">
-      <div class="mod-head">
-        <h2><span class="idx">04</span> Activity Tracking &amp; Next Actions</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>4 done</span>
-          <span><span class="swatch" style="background:var(--partial)"></span>2 partial</span>
-        </div>
-      </div>
-      <p class="mod-desc">Where every visit, call and follow-up gets logged.</p>
-
+      <div class="subgroup-label">Activity Tracking &amp; Next Actions</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">23</div>
-          <div class="ids"><span class="idchip">1.2</span></div>
-          <div><div class="req">Pre-lead scanning (marketing visits, no active lead)</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">3.2 Pre-Lead Scanning</div>
-        </div>
-        <div class="row">
-          <div class="rn">24</div>
+        <div class="row no-prd">
+          <div class="rn">32</div>
           <div class="ids"><span class="idchip">6.1</span></div>
           <div>
             <div class="req">Demo outcome tracking + demo-to-sale conversion</div>
             <div class="note">Demo scheduling is fully tracked. Recording each demo's outcome is optional today rather than required, and there's no report yet showing what share of demos convert to a sale.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">4.2 Demo Management</div>
         </div>
-        <div class="row">
-          <div class="rn">25</div>
-          <div class="ids"><span class="idchip">6.2</span></div>
-          <div><div class="req">Field visit logging with purpose/outcome dropdowns</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">4.1 Field Visit Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">26</div>
-          <div class="ids"><span class="idchip">9.1</span></div>
-          <div><div class="req">Mandatory interaction summaries for completed deals</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">4.3 Interaction Logging (also 4.6 Knowledge Repository)</div>
-        </div>
-        <div class="row">
-          <div class="rn">27</div>
-          <div class="ids"><span class="idchip">13.1</span></div>
-          <div><div class="req">Automated follow-up reminders</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">4.4 Workflow Automation</div>
-        </div>
-        <div class="row">
-          <div class="rn">28</div>
+        <div class="row no-prd">
+          <div class="rn">33</div>
           <div class="ids"><span class="idchip">13.2</span></div>
           <div>
             <div class="req">Automated stagnant-deal alerts</div>
             <div class="note">A report already shows deals that have gone quiet. Automatic alerts to reps and managers the moment a deal stalls aren't live yet — scheduled shortly.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">4.5 Pipeline Aging Alerts</div>
         </div>
       </div>
-    </section>
-
-    <section class="mod" id="s5">
-      <div class="mod-head">
-        <h2><span class="idx">05</span> Reporting &amp; Review</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--partial)"></span>6 partial</span>
-          <span><span class="swatch" style="background:var(--not-started)"></span>4 not started</span>
-        </div>
-      </div>
-      <p class="mod-desc">Where leadership and managers see how the business is doing.</p>
-
+      <div class="subgroup-label">Reporting &amp; Review</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">29</div>
+        <div class="row no-prd">
+          <div class="rn">34</div>
           <div class="ids"><span class="idchip">2.5</span></div>
           <div>
             <div class="req">Weighted/unweighted forecasting by month/quarter/product; &lt;3x-target low-pipeline alert</div>
             <div class="note">Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are pending until Target Management is built.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">5.1 Forecasting + 5.2 Pipeline Coverage Monitoring</div>
         </div>
-        <div class="row">
-          <div class="rn">30</div>
+        <div class="row no-prd">
+          <div class="rn">35</div>
           <div class="ids"><span class="idchip">3.2</span></div>
           <div>
             <div class="req">Real-time actual-vs-target via role-specific dashboards</div>
             <div class="note">Role-based dashboards are live today; a dedicated top-level leadership view is still to be added.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">5.3/5.4/5.5 Salesperson/Manager/GM Dashboard</div>
         </div>
-        <div class="row">
-          <div class="rn">31</div>
+        <div class="row no-prd">
+          <div class="rn">36</div>
           <div class="ids"><span class="idchip">4.3</span></div>
           <div>
             <div class="req">Revenue per product/brand analytics</div>
             <div class="note">Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">Appendix A.1 Reporting Principles (also 5.6 Core Reports)</div>
         </div>
-        <div class="row">
-          <div class="rn">32</div>
-          <div class="ids"><span class="idchip">6.1</span></div>
-          <div><div class="req">Demo-to-sale conversion report</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">4.2 Demo Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">33</div>
+        <div class="row no-prd">
+          <div class="rn">37</div>
           <div class="ids"><span class="idchip">11.1</span></div>
           <div>
             <div class="req">Core reports: sales, pipeline, product qty/price/margin</div>
             <div class="note">Sales, Pipeline, and Product Performance reports are all live today. The Margin report (cost versus price) is approved and scheduled, restricted to senior roles only.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">5.6 Core Reports</div>
         </div>
-        <div class="row">
-          <div class="rn">34</div>
-          <div class="ids"><span class="idchip">11.1</span></div>
-          <div><div class="req">Exception report: zero lead activity over 3 months</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">5.7 Exception Reports</div>
-        </div>
-        <div class="row">
-          <div class="rn">35</div>
+        <div class="row no-prd">
+          <div class="rn">38</div>
           <div class="ids"><span class="idchip">11.1</span></div>
           <div>
             <div class="req">Phase 1 analytics: conversion, pipeline aging, salesperson performance</div>
             <div class="note">Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">Appendix A.1 Reporting Principles</div>
         </div>
-        <div class="row">
-          <div class="rn">36</div>
-          <div class="ids"><span class="idchip">1.4</span></div>
-          <div><div class="req">Competitive Loss Report</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard)</div>
-        </div>
-        <div class="row">
-          <div class="rn">37</div>
-          <div class="ids"><span class="idchip">11.1</span></div>
-          <div><div class="req">Weekly Follow-up Report</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">5.8 Weekly Follow-up Report</div>
-        </div>
-        <div class="row">
-          <div class="rn">38</div>
+        <div class="row no-prd">
+          <div class="rn">39</div>
           <div class="ids"><span class="idchip">11.2</span></div>
           <div>
             <div class="req">Region → Team → Individual drill-down</div>
             <div class="note">Reports can already be filtered by region, team, or person; a dedicated click-through drill-down view is not yet built.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">5.9 Drill-down Reporting</div>
         </div>
       </div>
-    </section>
-
-    <section class="mod" id="s6">
-      <div class="mod-head">
-        <h2><span class="idx">06</span> Governance &amp; Admin</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>5 done</span>
-          <span><span class="swatch" style="background:var(--not-started)"></span>4 not started</span>
-        </div>
-      </div>
-      <p class="mod-desc">The management tools behind the scenes — targets, territories, roles, and who's authorised to sell what.</p>
-
+      <div class="subgroup-label">Technical Foundation</div>
       <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
         </div>
-        <div class="row">
-          <div class="rn">39</div>
-          <div class="ids"><span class="idchip untagged">untagged</span></div>
-          <div><div class="req">Basic Beat Planning, upgradable to Google Maps tracking in Phase 2</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">6.1 Beat Planning</div>
-        </div>
-        <div class="row">
+        <div class="row no-prd">
           <div class="rn">40</div>
-          <div class="ids"><span class="idchip">2.1</span></div>
-          <div><div class="req">Territory &amp; Ownership Mapping; multiple reps owning separate opportunities at one hospital</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">6.2 Geographic Coverage &amp; Ownership Mapping</div>
-        </div>
-        <div class="row">
-          <div class="rn">41</div>
-          <div class="ids"><span class="idchip untagged">untagged, optional</span></div>
-          <div><div class="req">Account Manager role per customer</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">6.3 Account Manager Assignment</div>
-        </div>
-        <div class="row">
-          <div class="rn">42</div>
-          <div class="ids"><span class="idchip">3.1</span></div>
-          <div><div class="req">Sales target configuration: individual, team, regional</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">6.4 Target Management</div>
-        </div>
-        <div class="row">
-          <div class="rn">43</div>
-          <div class="ids"><span class="idchip">3.1</span></div>
-          <div><div class="req">Target splitting by product category, quarterly/annual tracking</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
-          <div class="col-prd">6.5 Product Category Targets</div>
-        </div>
-        <div class="row">
-          <div class="rn">44</div>
-          <div class="ids"><span class="idchip">4.2</span></div>
-          <div><div class="req">Product-team mapping (who's authorized to sell what)</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">6.6 Product-Team Mapping</div>
-        </div>
-        <div class="row">
-          <div class="rn">45</div>
-          <div class="ids"><span class="idchip">13.1</span></div>
-          <div><div class="req">Automated lead reassignment workflow, manager/admin approval</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">6.7 Workflow Rules</div>
-        </div>
-      </div>
-      <div class="subgroup-label">6b &middot; User Roles &amp; Access Control</div>
-      <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
-        </div>
-        <div class="row">
-          <div class="rn">46</div>
-          <div class="ids"><span class="idchip">4.1</span></div>
-          <div><div class="req">Collateral access restricted to managers/authorized staff</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">7. User Roles &amp; Access Control Module → Collateral Security</div>
-        </div>
-        <div class="row">
-          <div class="rn">47</div>
-          <div class="ids"><span class="idchip">12.1</span><span class="idchip">12.2</span></div>
-          <div><div class="req">Roles (Salesperson/Manager/GM/Admin); hierarchy-based and cross-region visibility limits</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
-          <div class="col-prd">7. User Roles &amp; Access Control Module → Roles, Access Control</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="mod" id="s7">
-      <div class="mod-head">
-        <h2><span class="idx">07</span> Technical Foundation</h2>
-        <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>2 done</span>
-          <span><span class="swatch" style="background:var(--partial)"></span>1 partial</span>
-        </div>
-      </div>
-      <p class="mod-desc">The plumbing underneath — hosting, security, and disaster recovery.</p>
-
-      <div class="rows">
-        <div class="row row-head">
-          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span><span>PRD&nbsp;Reference</span>
-        </div>
-        <div class="row">
-          <div class="rn">48</div>
-          <div class="ids"><span class="idchip">14.1</span><span class="idchip">14.2</span></div>
-          <div><div class="req">Responsive Web App (iOS/Android), simple UI minimizing manual entry</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span><span class="exceeds">exceeds spec</span></div>
-          <div class="col-prd">10. System &amp; Architecture Constraints → Mobility &amp; UX</div>
-        </div>
-        <div class="row">
-          <div class="rn">49</div>
-          <div class="ids"><span class="idchip">15.1</span><span class="idchip">15.2</span><span class="idchip">16.1</span><span class="idchip">16.2</span></div>
-          <div><div class="req">Cloud deployment, API-first architecture, multi-region scalability, hybrid database</div></div>
-          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
-          <div class="col-prd">10. System &amp; Architecture Constraints → Technical Architecture, Scalability Requirements, Database Design</div>
-        </div>
-        <div class="row">
-          <div class="rn">50</div>
           <div class="ids"><span class="idchip">16.1</span><span class="idchip">16.2</span><span class="idchip">16.3</span><span class="idchip">16.4</span></div>
           <div>
             <div class="req">Cloud deployment; hybrid DB; role-based access, encryption, backup/DR frequency</div>
             <div class="note">Access control is fully enforced today. Data encryption relies on the hosting provider's standard protections. A tested backup process is in place for the test environment; the live environment's backup process is still to be finalized.</div>
           </div>
           <div class="col-status"><span class="pill partial"><span class="d"></span>Partial</span></div>
-          <div class="col-prd">10. System &amp; Architecture Constraints → Database Design, Security &amp; Compliance</div>
         </div>
       </div>
     </section>
-    <section class="bonus" id="bonus">
+
+    <section class="mod" id="not-started">
+      <div class="mod-head">
+        <h2>Not Started</h2>
+        <div class="tally"><span>10 of 50 requirements</span></div>
+      </div>
+
+      <div class="subgroup-label">Customer Account Management</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">41</div>
+          <div class="ids"><span class="idchip">5.1</span></div>
+          <div><div class="req">Account segmentation by size, specialty, revenue potential</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">42</div>
+          <div class="ids"><span class="idchip">5.1</span></div>
+          <div><div class="req">Tier 1 / Tier 2 dropdown</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Reporting &amp; Review</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">43</div>
+          <div class="ids"><span class="idchip">6.1</span></div>
+          <div><div class="req">Demo-to-sale conversion report</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">44</div>
+          <div class="ids"><span class="idchip">11.1</span></div>
+          <div><div class="req">Exception report: zero lead activity over 3 months</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">45</div>
+          <div class="ids"><span class="idchip">1.4</span></div>
+          <div><div class="req">Competitive Loss Report</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">46</div>
+          <div class="ids"><span class="idchip">11.1</span></div>
+          <div><div class="req">Weekly Follow-up Report</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+      </div>
+      <div class="subgroup-label">Governance &amp; Admin</div>
+      <div class="rows">
+        <div class="row row-head no-prd">
+          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span><span>Status</span>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">47</div>
+          <div class="ids"><span class="idchip untagged">untagged</span></div>
+          <div><div class="req">Basic Beat Planning, upgradable to Google Maps tracking in Phase 2</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">48</div>
+          <div class="ids"><span class="idchip untagged">untagged, optional</span></div>
+          <div><div class="req">Account Manager role per customer</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">49</div>
+          <div class="ids"><span class="idchip">3.1</span></div>
+          <div><div class="req">Sales target configuration: individual, team, regional</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+        <div class="row no-prd">
+          <div class="rn">50</div>
+          <div class="ids"><span class="idchip">3.1</span></div>
+          <div><div class="req">Target splitting by product category, quarterly/annual tracking</div></div>
+          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+        </div>
+      </div>
+    </section>
+    <section class="bonus" id="new-features">
       <div class="bonus-head">
-        <h2>Commitment beyond contract</h2>
+        <h2>New Features Added</h2>
         <p class="bonus-desc">15 things built that Cabio leadership never signed off on asking for.</p>
       </div>
       <div class="bonus-list">
@@ -898,8 +832,8 @@
     </section>
 
     <footer class="foot">
-      <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard</span>
-      <span>50 requirements &middot; 27 done &middot; 13 partial &middot; 10 not started &middot; 15 bonus</span>
+      <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
+      <span>50 requirements &middot; 27 done &middot; 13 partial &middot; 10 not started &middot; 15 new features added</span>
     </footer>
     </div>
   </main>

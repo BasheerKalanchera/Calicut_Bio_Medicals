@@ -6,12 +6,18 @@ Regenerates:
   - docs/Signed-Requirements-to-PRD-Traceability.md's own "Current tally"
     line (between the TALLY:START/TALLY:END markers) -- the rest of that
     file is hand-edited as usual; only the tally sentence is derived.
-  - docs/Phase1-Delivery-Scorecard.md (internal, full Notes column)
-  - .scratch/phase1-scorecard.html (client-facing: what Haroon/Latheef Bhai
-    see -- Status + Client Note only, Partial rows only carry a note).
-    This is the same file published as the "Phase 1 Delivery Scorecard"
-    Artifact; after running this script, republish it from that path to
-    push the update live.
+  - docs/Phase1-Delivery-Scorecard.md (internal, full Notes column,
+    grouped by module)
+  - .scratch/phase1-scorecard.html (client-facing, grouped by module: what
+    Haroon/Latheef Bhai see -- Status + Client Note only, Partial rows
+    only carry a note). This is the same file published as the
+    "Phase 1 Delivery Scorecard" Artifact; after running this script,
+    republish it from that path to push the update live.
+  - .scratch/phase1-scorecard-by-status.html (client-facing, same 50 rows
+    regrouped Done / Partial / Not Started / New Features Added first,
+    then by module within each -- no PRD Section column, that's internal
+    engineering reference only). Republish separately if this is the view
+    being shared.
 
 Run this after any Status/Note edit to Traceability.md. Never hand-edit
 either generated file directly. This also rewrites the "Current tally"
@@ -34,6 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 TRACEABILITY = ROOT / "docs" / "Signed-Requirements-to-PRD-Traceability.md"
 SCORECARD = ROOT / "docs" / "Phase1-Delivery-Scorecard.md"
 CLIENT_HTML = ROOT / ".scratch" / "phase1-scorecard.html"
+CLIENT_HTML_BY_STATUS = ROOT / ".scratch" / "phase1-scorecard-by-status.html"
 
 MODULE_INTROS = {
     "1. Customer Account Management": "Where every hospital, clinic and dealer account is set up, described and tracked.",
@@ -504,6 +511,16 @@ HTML_HEAD = """<!doctype html><html><head><meta charset=utf8><meta name=viewport
   .exceeds{ font-size:10.5px; color:var(--ink-faint); font-family:"IBM Plex Mono"; }
   .col-prd{ font-size:12px; color:var(--ink-faint); line-height:1.5; }
 
+  .row.no-prd{ grid-template-columns: 34px 60px 1fr 160px; }
+  @media (max-width:1020px){ .row.no-prd{ grid-template-columns: 34px 60px 1fr 140px; } }
+  @media (max-width:760px){
+    .row.no-prd{ grid-template-columns: 26px 1fr; }
+    .row.no-prd .rn{ grid-column:1/2; }
+    .row.no-prd .ids{ grid-column:2/3; order:1; }
+    .row.no-prd > div:nth-child(3){ grid-column:2/3; order:2; }
+    .row.no-prd .col-status{ grid-column:2/3; order:3; }
+  }
+
   .subgroup-label{
     font-family:"IBM Plex Mono"; font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
     color:var(--ink-faint); margin:26px 0 0; padding-top:18px; border-top:1px dashed var(--border-strong);
@@ -566,6 +583,13 @@ ROW_HEAD = (
     "        </div>"
 )
 
+ROW_HEAD_NO_PRD = (
+    '        <div class="row row-head no-prd">\n'
+    "          <span>#</span><span>Feature&nbsp;ID</span><span>Requirement &amp; Notes</span>"
+    "<span>Status</span>\n"
+    "        </div>"
+)
+
 
 def esc(s: str) -> str:
     return html_lib.escape(s, quote=False)
@@ -588,7 +612,7 @@ def status_pill(status: str) -> tuple[str, str, bool]:
     raise ValueError(f"Unrecognised status: {status!r}")
 
 
-def render_html_row(row_num: int, r: dict) -> str:
+def render_html_row(row_num: int, r: dict, include_prd: bool = True) -> str:
     ids_html = "".join(
         f'<span class="idchip{" untagged" if untagged else ""}">{esc(text)}</span>'
         for text, untagged in parse_feature_ids(r["feature_id"])
@@ -605,13 +629,14 @@ def render_html_row(row_num: int, r: dict) -> str:
         body = f'<div><div class="req">{esc(r["requirement"])}</div></div>'
     cls, label, exceeds = status_pill(r["status"])
     exceeds_html = '<span class="exceeds">exceeds spec</span>' if exceeds else ""
+    row_cls = "row" if include_prd else "row no-prd"
+    prd_html = f'\n          <div class="col-prd">{esc(r["prd_section"])}</div>' if include_prd else ""
     return (
-        '        <div class="row">\n'
+        f'        <div class="{row_cls}">\n'
         f'          <div class="rn">{row_num}</div>\n'
         f'          <div class="ids">{ids_html}</div>\n'
         f"          {body}\n"
-        f'          <div class="col-status"><span class="pill {cls}"><span class="d"></span>{label}</span>{exceeds_html}</div>\n'
-        f'          <div class="col-prd">{esc(r["prd_section"])}</div>\n'
+        f'          <div class="col-status"><span class="pill {cls}"><span class="d"></span>{label}</span>{exceeds_html}</div>{prd_html}\n'
         "        </div>"
     )
 
@@ -802,6 +827,168 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
     )
 
 
+STATUS_FILTERS = [
+    ("done", "Done", lambda s: s.startswith("Done")),
+    ("partial", "Partial", lambda s: s == "Partial"),
+    ("not-started", "Not Started", lambda s: s == "Not started"),
+]
+
+
+def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: list[str]) -> str:
+    """Same 50 rows as render_client_html, regrouped by status first (Done /
+    Partial / Not Started / New Features Added) and by module second, with
+    the PRD Section column dropped -- that's internal engineering reference
+    only, not meaningful to a client reader."""
+    done, partial, not_started = compute_tally(modules)
+    total = done + partial + not_started
+    strict_pct = round(done / total * 100, 1)
+    half_credit_pct = round((done + partial * 0.5) / total * 100, 1)
+
+    def x_pos(pct: float) -> int:
+        return round(20 + pct / 100 * 860)
+
+    strict_x, weighted_x = x_pos(strict_pct), x_pos(half_credit_pct)
+
+    sections = group_sections(modules)
+    counts = {"done": done, "partial": partial, "not-started": not_started}
+
+    nav_lines = []
+    for anchor, label, _pred in STATUS_FILTERS:
+        nav_lines.append(
+            f'      <a href="#{anchor}" data-n="{anchor}"><span>{label}</span>'
+            f'<span class="n">{counts[anchor]}</span></a>'
+        )
+    nav_lines.append(
+        '      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">'
+        f'{len(beyond_items)}</span></a>'
+    )
+
+    body_parts = []
+    row_num = 0
+    for anchor, label, pred in STATUS_FILTERS:
+        body_parts.append(f'    <section class="mod" id="{anchor}">')
+        body_parts.append('      <div class="mod-head">')
+        body_parts.append(f'        <h2>{label}</h2>')
+        body_parts.append(
+            f'        <div class="tally"><span>{counts[anchor]} of {total} requirements</span></div>'
+        )
+        body_parts.append("      </div>")
+        body_parts.append("")
+        for s in sections:
+            meta = HTML_MODULE_META[s["title"]]
+            combined_rows = s["rows"] + (s["sub"][1] if s["sub"] else [])
+            matching = [r for r in combined_rows if pred(r["status"])]
+            if not matching:
+                continue
+            body_parts.append(f'      <div class="subgroup-label">{meta["heading"]}</div>')
+            body_parts.append('      <div class="rows">')
+            body_parts.append(ROW_HEAD_NO_PRD)
+            for r in matching:
+                row_num += 1
+                body_parts.append(render_html_row(row_num, r, include_prd=False))
+            body_parts.append("      </div>")
+        body_parts.append("    </section>")
+        body_parts.append("")
+
+    bonus_items_html = "\n".join(
+        f'        <div class="bitem"><div class="bnum">{i}</div><p>{esc(item)}</p></div>'
+        for i, item in enumerate(beyond_items, start=1)
+    )
+
+    header = f"""  </nav>
+
+  <main>
+    <header class="top">
+      <div class="eyebrow"><span class="dot"></span>Cabio Sales OS &middot; Leadership Summary</div>
+      <h1 class="title">Phase 1 Delivery Scorecard &mdash; By Status</h1>
+      <p class="subtitle">The same 50 signed requirements as the module-by-module scorecard, grouped here by delivery status first, then by the part of the app each one belongs to.</p>
+      <div class="meta-line">SOURCE: Signed&#8209;Requirements&#8209;to&#8209;PRD&#8209;Traceability.md</div>
+
+      <div class="vitals">
+        <div class="stat-row">
+          <div class="stat">
+            <div class="num" style="color:var(--done)">{done}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--done)"></span>Done</div>
+          </div>
+          <div class="stat">
+            <div class="num" style="color:var(--partial)">{partial}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--partial)"></span>Partly done</div>
+          </div>
+          <div class="stat">
+            <div class="num" style="color:var(--not-started)">{not_started}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--not-started)"></span>Not started</div>
+          </div>
+          <div class="stat">
+            <div class="num" style="color:var(--bonus)">{len(beyond_items)}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
+          </div>
+        </div>
+
+        <div class="traceblock">
+          <div class="trace-caption">
+            <span>Of <b>{total}</b> signed requirements &mdash; two honest reads of "done"</span>
+            <span><b style="color:var(--ink)">{strict_pct}%</b> strict &nbsp;&middot;&nbsp; <b style="color:var(--accent)">{half_credit_pct}%</b> counting partial as half&#8209;credit</span>
+          </div>
+          <svg class="trace" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Progress scale from 0 to 100 percent, marking {strict_pct} percent strict completion and {half_credit_pct} percent weighted completion">
+            <line class="axis" x1="20" y1="54" x2="880" y2="54"/>
+            <g class="tick">
+              <line x1="20" y1="49" x2="20" y2="59"/>
+              <line x1="235" y1="49" x2="235" y2="59"/>
+              <line x1="450" y1="49" x2="450" y2="59"/>
+              <line x1="665" y1="49" x2="665" y2="59"/>
+              <line x1="880" y1="49" x2="880" y2="59"/>
+            </g>
+            <g class="lbl-soft" text-anchor="middle">
+              <text x="20" y="76">0%</text>
+              <text x="235" y="76">25%</text>
+              <text x="450" y="76">50%</text>
+              <text x="665" y="76">75%</text>
+              <text x="880" y="76">100%</text>
+            </g>
+            <line x1="20" y1="54" x2="{strict_x}" y2="54" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" opacity="0.32"/>
+            <circle class="mark-strict" cx="{strict_x}" cy="54" r="6"/>
+            <text class="lbl-strong" x="{strict_x}" y="14" text-anchor="middle">{strict_pct}% strict</text>
+            <circle class="mark-weighted" cx="{weighted_x}" cy="54" r="6"/>
+            <text class="lbl-strong" x="{weighted_x}" y="30" text-anchor="middle" fill="var(--accent)">{half_credit_pct}% weighted</text>
+            <line x1="{strict_x}" y1="54" x2="{weighted_x}" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </header>
+
+"""
+
+    bonus_section = f"""    <section class="bonus" id="new-features">
+      <div class="bonus-head">
+        <h2>New Features Added</h2>
+        <p class="bonus-desc">{len(beyond_items)} things built that Cabio leadership never signed off on asking for.</p>
+      </div>
+      <div class="bonus-list">
+{bonus_items_html}
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
+      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} new features added</span>
+    </footer>
+"""
+
+    html = (
+        HTML_HEAD
+        + "\n".join(nav_lines)
+        + "\n"
+        + header
+        + "\n".join(body_parts)
+        + bonus_section
+        + HTML_TAIL
+    )
+    return html.replace(
+        "<title>Phase 1 Delivery Scorecard</title>",
+        "<title>Phase 1 Delivery Scorecard — By Status</title>",
+    )
+
+
 def main() -> None:
     check_mode = "--check" in sys.argv
 
@@ -814,11 +1001,13 @@ def main() -> None:
     )
     new_scorecard_text = render_scorecard(modules, beyond_items)
     new_html_text = render_client_html(modules, beyond_items)
+    new_by_status_html_text = render_by_status_html(modules, beyond_items)
 
     targets = [
         (TRACEABILITY, new_traceability_text),
         (SCORECARD, new_scorecard_text),
         (CLIENT_HTML, new_html_text),
+        (CLIENT_HTML_BY_STATUS, new_by_status_html_text),
     ]
 
     if check_mode:
@@ -840,9 +1029,13 @@ def main() -> None:
     SCORECARD.write_text(new_scorecard_text, encoding="utf-8")
     CLIENT_HTML.parent.mkdir(exist_ok=True)
     CLIENT_HTML.write_text(new_html_text, encoding="utf-8")
-    print(f"Wrote {TRACEABILITY.relative_to(ROOT)}, {SCORECARD.relative_to(ROOT)}, and {CLIENT_HTML.relative_to(ROOT)}")
+    CLIENT_HTML_BY_STATUS.write_text(new_by_status_html_text, encoding="utf-8")
+    print(
+        f"Wrote {TRACEABILITY.relative_to(ROOT)}, {SCORECARD.relative_to(ROOT)}, "
+        f"{CLIENT_HTML.relative_to(ROOT)}, and {CLIENT_HTML_BY_STATUS.relative_to(ROOT)}"
+    )
     print(f"Tally: {done} Done, {partial} Partial, {not_started} Not started, {len(beyond_items)} beyond-contract")
-    print("Republish .scratch/phase1-scorecard.html to the Artifact to push this live.")
+    print("Republish .scratch/phase1-scorecard.html and/or .scratch/phase1-scorecard-by-status.html to their Artifacts to push updates live.")
 
 
 if __name__ == "__main__":

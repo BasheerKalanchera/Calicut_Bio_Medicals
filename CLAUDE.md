@@ -58,6 +58,27 @@ code or changing structure. On any conflict, the document wins over this file.
   progress file, even temporarily.
 - Update active_progress.md as work advances, not only at session end.
 
+## Post-commit checklist
+Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by
+Claude Code, not from another tool — this is what lets the checklist below
+actually fire. If a feature commit is ever made outside a Claude Code
+session, Basheer will say so (e.g. "run the post-commit checklist") so it
+can be run retroactively.
+
+Immediately after such a commit is pushed to GitHub — before moving to
+other work — go through this checklist:
+1. Update `active_progress.md`.
+2. Add an entry to the current `docs/Progress-Archive-<year>-<month>.md`,
+   including a short retro line: what worked, what to improve, any
+   process/best-practice change.
+3. Check `docs/Backlog.md` for any newly-surfaced deferred idea from this
+   feature.
+4. If this feature closes/advances a signed requirement: update
+   `docs/Signed-Requirements-to-PRD-Traceability.md` and regenerate the
+   scorecard per "Scorecard integrity" below.
+5. Run `python scripts/generate_scorecard.py --check` before the docs
+   commit, and republish the client Artifact if the change is client-visible.
+
 ## Scorecard integrity
 - `docs/Signed-Requirements-to-PRD-Traceability.md` is the single source of
   truth for Phase 1 delivery status. `docs/Phase1-Delivery-Scorecard.md` and
