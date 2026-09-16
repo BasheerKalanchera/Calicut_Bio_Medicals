@@ -200,6 +200,10 @@ export default function DemoApp() {
     | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; statusId?: string; stageId?: string; label: string }
     | undefined
   >(undefined);
+  // Which report screen a drill-down came from, so the banner's back arrow
+  // (distinct from "Clear filter") can return there — same returnView
+  // pattern as accountReturnView/projectReturnView above.
+  const [pipelineReturnView, setPipelineReturnView] = useState<string | null>(null);
 
   const customerCreateRef        = useRef<(() => void) | null>(null);
   const projectCreateRef         = useRef<(() => void) | null>(null);
@@ -302,9 +306,16 @@ export default function DemoApp() {
     filter: Omit<NonNullable<typeof pipelineInitialFilter>, "label">,
     label: string,
   ) {
+    setPipelineReturnView(view);
     setPipelineInitialFilter({ ...filter, label });
     setPipelineViewMode("list");
     navigate("opportunities");
+  }
+
+  function handleBackFromPipelineDrill() {
+    setPipelineInitialFilter(undefined);
+    setView(pipelineReturnView ?? "opportunities");
+    setPipelineReturnView(null);
   }
 
   function navigate(viewId: string) {
@@ -731,7 +742,8 @@ export default function DemoApp() {
               onSelectOpportunity={handleSelectOpportunity}
               viewMode={pipelineViewMode}
               initialFilter={pipelineInitialFilter}
-              onClearInitialFilter={() => setPipelineInitialFilter(undefined)}
+              onClearInitialFilter={() => { setPipelineInitialFilter(undefined); setPipelineReturnView(null); }}
+              onBackToReport={pipelineReturnView ? handleBackFromPipelineDrill : undefined}
             />
           </Box>
 

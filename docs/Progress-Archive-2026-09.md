@@ -4038,3 +4038,168 @@ Closest existing precedent if revisited later: the Audit Log screen
 
 Full findings (all rows, not just samples): `docs/UAT-Data-Quality-
 Findings-2026-09-15.md`. **Committed `e9158c9`** (script + findings doc).
+
+## 2026-09-16 — Report Drill-down manual E2E, live with Haroon: found and fixed missing back-to-report arrow
+
+Mid-pass on `docs/Report-Drilldown-Manual-E2E-Test-Plan.md` (Basheer
+driving as Haroon, GM), a real gap surfaced: after drilling from a report
+into Pipeline's List view, there was no way back to the report screen
+except the browser's own Back button — and this app has no URL routing
+between screens at all (`DemoApp.tsx`'s `navigate()` is pure `setView()`
+state, no `history.pushState`), so browser Back doesn't rewind through
+app screens, it just reloads to the default Pipeline board. Basheer
+pointed out most Cabio staff use this as a phone/PWA app, where tapping
+an in-app back arrow — not a browser or OS back gesture — is the
+expected move, and that the app already has this exact "remember where
+I came from" pattern elsewhere (`accountReturnView`/`projectReturnView`
+for Customer 360 and Project detail).
+
+Fixed by adding the same pattern for drill-down: new `pipelineReturnView`
+state in `DemoApp.tsx`, set in `handleDrillToPipeline` to whatever report
+screen was active before the drill; a new `handleBackFromPipelineDrill`
+clears the filter and returns to it. `OpportunityPipelineScreen.tsx`'s
+banner now shows a back arrow (←) before "Showing: X" whenever a return
+view is set — distinct from "Clear filter," which still just clears the
+filter and stays put. `tsc`/lint both clean. Verified live from both
+Pipeline Report and Sales Report — each correctly returns to its own
+origin (not hardcoded to one screen), with that report's own state
+(breakdown dropdown / period picker) intact.
+
+Added test steps D2 (18–21) to the test plan for this, renumbering
+Role Scoping/Regression to 22–25. Continuing the rest of the A–F pass
+from here (Zone breakdown onward).
+
+### Second find same session: report drills silently inherited a stale Owner/Zone filter
+
+Continuing the pass (step 17, two drills back-to-back from different
+reports): drilled Pipeline Report → North Kerala, manually set the Owner
+dropdown to a rep with no North Kerala deals (reproduces regardless of
+which rep), then — without clearing anything — drilled Sales Report →
+SonoScape X3/Won from a different report entirely. The banner correctly
+updated to "Showing: SonoScape X3, Won," but the Owner dropdown stayed
+stuck on the earlier, unrelated rep and silently combined with the new
+drill. The one matching deal (USG 2, owned by Basheer K) got filtered out
+by the leftover Owner value, showing "No opportunities found" for a
+completely valid drill. Resetting Owner to "All Owners" by hand
+immediately surfaced the deal — confirming the drill logic itself was
+fine, only the dropdown state was stale.
+
+Basheer's call: a fresh drill-down should always start clean, since the
+Owner/Zone dropdown state has nothing to do with a brand-new question
+asked from a different report. Fixed in `OpportunityPipelineScreen.tsx`
+by tracking the previous `initialFilter` and resetting `ownerFilter`/
+`zoneFilter` to "All" whenever a new drill object arrives — adjusted
+during render (a `prevInitialFilter` comparison), not a `useEffect`,
+matching the existing convention in `ActivityCommentThread.tsx`
+(`react-hooks/set-state-in-effect` correctly flagged the first attempt).
+Verified live: the same North-Kerala-then-SonoScape-X3 sequence now
+resets Owner to "All Owners" automatically and shows USG 2 immediately.
+`tsc`/lint both clean (0 errors).
+
+### Third change same session: Product Performance's Opportunities count made clickable, on request
+
+Basheer asked, mid-pass, to extend the same drill-down to Product
+Performance's total "Opportunities" metric (previously deliberately
+non-clickable — only Won/Lost drilled). Confirmed the backend already
+supports this with no change needed: `GET /opportunities/pipeline`'s
+`status_id` filter in `repository.py` is only applied `if status_id`,
+so omitting it (as Won/Lost already do when passing one) returns every
+status for that product/SBU. Added the `onClick` in
+`ProductPerformanceReportScreen.tsx`, same pattern as Won/Lost minus
+`statusId`, plain `row.group_name` as the label (no ", Won"/", Lost"
+suffix). `tsc`/lint clean.
+
+Verified live as Fazal (Area Manager): SonoScape E2's Opportunities
+count (7) → banner "Showing: SonoScape E2," deals span multiple
+statuses (Order, Negotiation, Demo, Qualified) confirming no status
+filter applies, back arrow returns to Product Performance correctly.
+One result belonged to Basheer K, outside Fazal's usual team — checked
+this wasn't a scoping leak by searching for the same deal on Fazal's
+plain, undrilled Pipeline board: it's already visible there too, so
+this is existing zone/SBU-based visibility, not something this change
+introduced. Test plan addendum logged in
+`docs/Report-Drilldown-Manual-E2E-Test-Plan.md`.
+
+## 2026-09-16 — Scorecard tally fix, `--check` staleness guard, and a second client-facing view — the process gap this closes, and what to watch for next time
+
+Basheer asked for a review of `Phase1-Completion-Sprint-Plan.md`,
+`Phase1-Delivery-Scorecard.md`, the published HTML Artifact, and
+`Signed-Requirements-to-PRD-Traceability.md` for inconsistencies between
+them. Found two: (1) Traceability.md's own "Current tally" sentence (26
+Done · 14 Partial) had drifted from its own table underneath (actually 27
+Done · 13 Partial) — the two generated files were already correct, only
+the hand-typed source-file summary was stale. (2) Report Drill-down
+(Feature 11.2) shown Partial everywhere — confirmed correct, not a gap:
+built and committed (`6bb0d31`) but its full manual E2E pass genuinely
+hadn't run yet (see the entry directly above this one — that pass is now
+underway).
+
+**Root cause of (1):** the tally sentence was the one piece of the
+Traceability file `generate_scorecard.py` only *read*, never *wrote* —
+everything else in the pipeline was already generated, but that one
+summary line was still something a human had to recount by hand every
+time a row's status changed, and nobody had been doing that reliably.
+
+**Fix, in three parts, all approved by Basheer before building:**
+1. Wrapped the tally sentence in `<!-- TALLY:START/END -->` markers and
+   had the script rewrite it in place from the same row-count logic it
+   already used for the other two files — removes the class of bug
+   entirely rather than relying on someone remembering.
+2. Added `python scripts/generate_scorecard.py --check` — computes what
+   all three files *should* say and diffs against what's actually on
+   disk, exiting 1 and naming whichever file(s) are stale, without
+   writing anything. Caught a real staleness case live minutes after
+   being built (a title-tag fix to the new by-status HTML), proving the
+   guard actually works before it was ever relied on for real.
+3. Codified the workflow as a standing rule in `CLAUDE.md`'s new
+   "Scorecard integrity" section — a row only flips to Done once its full
+   manual E2E test plan is checked off (not "code merged"), and the
+   status flip + regeneration + republish happen as one step, not a
+   chore to remember later. Wrote a companion runbook,
+   `docs/Scorecard-Maintenance-Process.md`, and marked the old
+   `docs/Scorecard-Single-Source-Implementation-Plan.md` as superseded by
+   it rather than leaving two documents both claiming to describe current
+   behavior.
+
+**Committed `40460ad`.**
+
+**Second ask, same session:** Basheer wanted a client-shareable version
+organized differently — Done/Partial/Not Started/New Features Added
+first, then by app area within each, with the internal PRD-reference
+column removed (PRD numbering is engineering-only, not meaningful to
+Haroon/Latheef Bhai). Built as a fourth generated output,
+`.scratch/phase1-scorecard-by-status.html`, reusing `group_sections()`
+and `HTML_MODULE_META` from the existing module-based renderer and a new
+`render_html_row(..., include_prd=False)` path — same source data, same
+`--check` coverage, no new hand-maintained document. Published as its own
+Artifact. Basheer initially asked for rows sorted by Feature ID within
+each status group, then changed his mind mid-plan to module-grouping
+instead once he saw the tradeoff — no rebuild cost since nothing had been
+written yet at that point.
+
+**Committed, then amended:** first committed as `feat:`; Basheer correctly
+called it a `chore:` instead — it's scorecard tooling, not a feature
+closing a signed requirement — amended before push (safe, not yet on
+`origin/main` at that point) to `1b7a4c5`, then pushed.
+
+**Retro — what worked, what to watch:**
+- Making the tally *generated* rather than *validated* was the right
+  call over adding a linter that just complains — it structurally cannot
+  drift again, versus a check that can itself be skipped or ignored.
+- The `--check` mode earned its keep immediately (caught the title-tag
+  edit within the same session it was built), which is a good sign it'll
+  keep catching real drift rather than being a check nobody runs.
+- Watch item: `active_progress.md` is 1000+ lines of resolved-thread
+  history that should have rolled into Progress-Archive files per
+  `CLAUDE.md`'s own rule ("once a thread resolves, its detail moves
+  out") — it hasn't been trimmed in a while. Not touched this session
+  (out of scope, and a parallel session was actively appending to
+  Progress-Archive live during this same window), but worth a dedicated
+  cleanup pass soon before it grows further.
+- Also worth noting: this was a genuinely concurrent-session evening —
+  the Report Drill-down E2E pass (entry above) was landing edits to
+  `DemoApp.tsx`/`OpportunityPipelineScreen.tsx` and this same
+  Progress-Archive file while this scorecard work was happening in
+  parallel. No file overlap and no lost edits, but worth being deliberate
+  about append-only edits (never a full-file rewrite) on shared log files
+  when that's happening.

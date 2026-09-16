@@ -94,7 +94,15 @@ export default function ProductPerformanceReportScreen({
                   <Metric label="Qty Sold (Won)" value={String(row.quantity_sold)} />
                   <Metric label="Revenue (Won)" value={formatLakhs(parseFloat(row.revenue_lakhs))} />
                   <Metric label="Avg Selling Price" value={formatLakhs(parseFloat(row.avg_selling_price_lakhs))} />
-                  <Metric label="Opportunities" value={String(row.opportunity_count)} />
+                  <Metric
+                    label="Opportunities"
+                    value={String(row.opportunity_count)}
+                    onClick={
+                      onDrillToPipeline && drillKey
+                        ? () => onDrillToPipeline({ [drillKey]: row.group_id }, row.group_name)
+                        : undefined
+                    }
+                  />
                   <Metric
                     label="Won"
                     value={String(row.won_count)}

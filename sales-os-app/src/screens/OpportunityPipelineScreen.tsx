@@ -10,6 +10,7 @@ import {
   MenuItem,
   TextField,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listPipeline } from "../services/opportunities";
 import { listStages, listUsers } from "../services/masterData";
@@ -37,6 +38,11 @@ interface Props {
     label: string;
   };
   onClearInitialFilter?: () => void;
+  // Set only when the drill-down came from a report screen -- lets the
+  // banner offer a real "back to report" arrow (mobile users expect an
+  // in-app back arrow, not the browser's own Back button, which this SPA
+  // doesn't wire to screen navigation at all). Undefined hides the arrow.
+  onBackToReport?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -249,11 +255,30 @@ function ListRow({
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode, initialFilter, onClearInitialFilter }: Props) {
+export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMode, initialFilter, onClearInitialFilter, onBackToReport }: Props) {
   const [activeStageCode, setActiveStageCode] = useState<string>("LEAD");
   const [ownerFilter, setOwnerFilter] = useState<string>("");
   const [zoneFilter, setZoneFilter]   = useState<ZoneSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // A fresh drill-down should start clean, not silently inherit whatever
+  // Owner/Zone dropdown was left over from an earlier, unrelated visit to
+  // this screen -- that combination is invisible to the user and can make
+  // a real match look like "No opportunities found" (found 2026-09-16
+  // manual E2E: North Kerala drill + Owner=Fazal, then an unrelated Sales
+  // Report drill left Owner stuck on Fazal and hid a Basheer K-owned deal).
+  // Adjusted during render, same pattern as ActivityCommentThread's
+  // prevInitiallyExpanded -- every object DemoApp.tsx passes here for a new
+  // drill is a fresh reference, so this only fires on an actual new drill,
+  // not on a manual dropdown change while a drill is already active.
+  const [prevInitialFilter, setPrevInitialFilter] = useState(initialFilter);
+  if (initialFilter !== prevInitialFilter) {
+    setPrevInitialFilter(initialFilter);
+    if (initialFilter) {
+      setOwnerFilter("");
+      setZoneFilter(null);
+    }
+  }
 
   const columnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const pillBarRef = useRef<HTMLDivElement>(null);
@@ -351,8 +376,20 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
               bgcolor: "#eef2ff", border: "1px solid #c7d2fe",
             }}
           >
-            <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#3730a3" }}>
-              Showing: {initialFilter.label}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 0 }}>
+              {onBackToReport && (
+                <IconButton
+                  onClick={onBackToReport}
+                  aria-label="Back to report"
+                  size="small"
+                  sx={{ color: "#3730a3", flexShrink: 0, "&:hover": { bgcolor: "#e0e7ff" } }}
+                >
+                  <ArrowBackIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              )}
+              <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#3730a3" }}>
+                Showing: {initialFilter.label}
+              </Box>
             </Box>
             <Button size="small" onClick={onClearInitialFilter} sx={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "none" }}>
               Clear filter
