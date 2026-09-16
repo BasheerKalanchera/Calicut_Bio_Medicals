@@ -1,5 +1,9 @@
 # Scorecard Single Source of Truth — Implementation Plan
 
+**Superseded 2026-09-16 by `docs/Scorecard-Maintenance-Process.md`** — this
+file is kept for historical record of the original design decisions only;
+for how the system is actually operated day to day, see that file instead.
+
 **Status:** Draft, awaiting Basheer's review. **Problem:** feature status
 currently gets hand-typed in three places that have each drifted
 independently — `Signed-Requirements-to-PRD-Traceability.md`'s own header

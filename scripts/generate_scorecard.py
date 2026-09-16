@@ -3,6 +3,9 @@
 Single source of truth: docs/Signed-Requirements-to-PRD-Traceability.md.
 
 Regenerates:
+  - docs/Signed-Requirements-to-PRD-Traceability.md's own "Current tally"
+    line (between the TALLY:START/TALLY:END markers) -- the rest of that
+    file is hand-edited as usual; only the tally sentence is derived.
   - docs/Phase1-Delivery-Scorecard.md (internal, full Notes column)
   - .scratch/phase1-scorecard.html (client-facing: what Haroon/Latheef Bhai
     see -- Status + Client Note only, Partial rows only carry a note).
@@ -11,11 +14,20 @@ Regenerates:
     push the update live.
 
 Run this after any Status/Note edit to Traceability.md. Never hand-edit
-either generated file directly.
+either generated file directly. This also rewrites the "Current tally"
+line inside Traceability.md itself (between the TALLY:START/TALLY:END
+markers), so that line can never drift from the table above it.
+
+Run with --check to verify everything is in sync without writing
+anything: exits 1 and lists which file(s) are stale if Traceability.md's
+tally line, the Scorecard, or the HTML don't match what the table
+currently computes to. Useful right before a commit that touches any of
+these three files.
 """
 
 import html as html_lib
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -92,6 +104,30 @@ def parse_traceability() -> tuple[list[tuple[str, list[dict]]], list[str]]:
             beyond_items.append(cells[1])
 
     return modules, beyond_items
+
+
+TALLY_PATTERN = re.compile(
+    r"(<!-- TALLY:START.*?-->\n)(.*?)(\n<!-- TALLY:END -->)", re.DOTALL
+)
+
+
+def render_traceability_with_tally(
+    original_text: str, done: int, partial: int, not_started: int
+) -> str:
+    total = done + partial + not_started
+    replacement_body = (
+        f"**Current tally: {done} Done · {partial} Partial · {not_started} Not "
+        f"started** ({total} signed lines\ntracked below)."
+    )
+    new_text, count = TALLY_PATTERN.subn(
+        lambda m: m.group(1) + replacement_body + m.group(3), original_text
+    )
+    if count != 1:
+        raise ValueError(
+            f"Expected exactly one TALLY:START/TALLY:END block in "
+            f"{TRACEABILITY.name}, found {count}"
+        )
+    return new_text
 
 
 def compute_tally(modules: list[tuple[str, list[dict]]]) -> tuple[int, int, int]:
@@ -767,12 +803,44 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
 
 
 def main() -> None:
+    check_mode = "--check" in sys.argv
+
+    original_traceability_text = TRACEABILITY.read_text(encoding="utf-8")
     modules, beyond_items = parse_traceability()
-    SCORECARD.write_text(render_scorecard(modules, beyond_items), encoding="utf-8")
-    CLIENT_HTML.parent.mkdir(exist_ok=True)
-    CLIENT_HTML.write_text(render_client_html(modules, beyond_items), encoding="utf-8")
     done, partial, not_started = compute_tally(modules)
-    print(f"Wrote {SCORECARD.relative_to(ROOT)} and {CLIENT_HTML.relative_to(ROOT)}")
+
+    new_traceability_text = render_traceability_with_tally(
+        original_traceability_text, done, partial, not_started
+    )
+    new_scorecard_text = render_scorecard(modules, beyond_items)
+    new_html_text = render_client_html(modules, beyond_items)
+
+    targets = [
+        (TRACEABILITY, new_traceability_text),
+        (SCORECARD, new_scorecard_text),
+        (CLIENT_HTML, new_html_text),
+    ]
+
+    if check_mode:
+        stale = [
+            path.relative_to(ROOT)
+            for path, new_text in targets
+            if not path.exists() or path.read_text(encoding="utf-8") != new_text
+        ]
+        if stale:
+            print("STALE — out of sync with the Traceability table:")
+            for rel in stale:
+                print(f"  - {rel}")
+            print("Run `python scripts/generate_scorecard.py` (no --check) to fix.")
+            sys.exit(1)
+        print(f"OK — all files in sync ({done} Done, {partial} Partial, {not_started} Not started).")
+        return
+
+    TRACEABILITY.write_text(new_traceability_text, encoding="utf-8")
+    SCORECARD.write_text(new_scorecard_text, encoding="utf-8")
+    CLIENT_HTML.parent.mkdir(exist_ok=True)
+    CLIENT_HTML.write_text(new_html_text, encoding="utf-8")
+    print(f"Wrote {TRACEABILITY.relative_to(ROOT)}, {SCORECARD.relative_to(ROOT)}, and {CLIENT_HTML.relative_to(ROOT)}")
     print(f"Tally: {done} Done, {partial} Partial, {not_started} Not started, {len(beyond_items)} beyond-contract")
     print("Republish .scratch/phase1-scorecard.html to the Artifact to push this live.")
 

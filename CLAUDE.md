@@ -30,6 +30,9 @@ code or changing structure. On any conflict, the document wins over this file.
   and state transitions. Both backend and frontend must honor these.
 - Decisions & schema: ADRs in `docs/ADR.md`; `Physical-Schema.sql` is authoritative
   for all DB object names. Consult before any structural change.
+- Phase 1 scorecard process: `docs/Scorecard-Maintenance-Process.md` — the
+  ledger/photocopy lifecycle and commands behind the "Scorecard integrity"
+  rules below.
 
 ## Session handoff
 - `.claude/active_progress.md` is a live handover doc, not a log: the current task and
@@ -54,3 +57,26 @@ code or changing structure. On any conflict, the document wins over this file.
   governs that domain (see "Authoritative References" above) — never parked in a
   progress file, even temporarily.
 - Update active_progress.md as work advances, not only at session end.
+
+## Scorecard integrity
+- `docs/Signed-Requirements-to-PRD-Traceability.md` is the single source of
+  truth for Phase 1 delivery status. `docs/Phase1-Delivery-Scorecard.md` and
+  `.scratch/phase1-scorecard.html` (the published client Artifact) are both
+  generated from it by `scripts/generate_scorecard.py` — never hand-edit
+  either one, and never hand-edit the Traceability file's own "Current
+  tally" line (it's auto-written by the same script).
+- A row only moves to Done once its feature has been built **and** its
+  manual E2E test plan is fully checked off — not on "code is written" or
+  "smoke-tested." Until then it stays Partial/Not started with an honest
+  Note on what's outstanding, even if the code is already merged.
+- The commit that flips a row's status must, in the same commit: update the
+  Status/Notes/Client Note in Traceability.md, run
+  `python scripts/generate_scorecard.py` to regenerate the tally and both
+  derived files, and (if the change is client-visible) republish
+  `.scratch/phase1-scorecard.html` to the Artifact. Flipping the status and
+  propagating it are one step, not two.
+- Before committing any change that touches Traceability.md, the Scorecard,
+  or the HTML, run `python scripts/generate_scorecard.py --check` — it
+  exits non-zero and names whichever file(s) are stale relative to the
+  Traceability table without writing anything. Treat a non-zero exit as a
+  blocker, not a warning.
