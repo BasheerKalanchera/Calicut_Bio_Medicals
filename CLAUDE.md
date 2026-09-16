@@ -57,6 +57,31 @@ code or changing structure. On any conflict, the document wins over this file.
   governs that domain (see "Authoritative References" above) — never parked in a
   progress file, even temporarily.
 - Update active_progress.md as work advances, not only at session end.
+- Write handover notes **after the fact**, referencing real values (commit hashes,
+  exact test counts, etc.) — never a placeholder (`<hash>`) meant to be filled in
+  later. Get the real value first, then write the note.
+
+## Checkpoint commits
+- On any build expected to run long or largely unattended (a new domain, a
+  multi-file feature, a migration + code pair), commit as soon as each safe,
+  test-passing milestone is reached — e.g. once the backend compiles and its
+  tests pass, before moving on to the migration or the next layer. Don't wait
+  for the whole feature, or a whole day's plan, to be finished before saving
+  anything.
+- **Why:** a 2026-09-16 session built the Target Planning approval-workflow
+  backend start to finish — fully tested, migration applied to Dev — over
+  roughly three hours with zero commits, then froze at the very end (a hung
+  Docker Desktop shutdown command). The work was only recovered intact
+  because the next session read the crashed session's own saved transcript
+  directly; a less recoverable failure would have put three hours of
+  verified work at real risk for no reason.
+- A checkpoint commit doesn't need to be feature-complete or trigger the
+  Post-commit checklist below — say plainly that it's partial (e.g. a `feat:`
+  message noting what's still missing, as `1d9d46a` did: "Part 1, frontend
+  pending") so it's clear on review that it isn't the finished thing.
+- If a routine command (a test run, a lint pass) takes far longer to return
+  than normal, treat that as a signal, not something to silently wait out —
+  flag it rather than continuing as if nothing happened.
 
 ## Post-commit checklist
 Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by

@@ -4317,3 +4317,61 @@ fully tested, nothing partially exposed).
   *before* running the commit, requiring a follow-up fix commit just for
   that placeholder. Get the commit hash first, then write the note
   referencing it — not the other way around.
+
+## 2026-09-16 (end of day) — Full session retrospective, covering the crashed session and its recovery; two new standing rules added to CLAUDE.md
+
+Basheer asked for a proper close-of-day retrospective, specifically
+including a direct review of the crashed session's own saved transcript
+(`6a419dd4-2a70-49bf-a2ac-82627198c238.jsonl`), not just the summary
+above. That file turned out to be one continuous ~10.5-hour session
+(05:13-15:47 UTC) covering the morning's scorecard-consistency review and
+process fix, the third client-facing scorecard view, a UAT DB backup, and
+then the Target Planning backend build that ended in the freeze already
+diagnosed. Reviewing the whole arc surfaced two things the earlier,
+narrower recovery note had missed:
+
+1. **Three hours, zero commits.** From "Let's start working on the Target
+   Management feature next" (12:34 UTC) to the freeze (15:47 UTC), the
+   entire backend — models, schemas, repository, service, router, tests,
+   migration, RLS — was built and fully verified without a single
+   intermediate commit. All of it was recoverable only because the next
+   session happened to read the crashed session's raw transcript directly;
+   a less recoverable failure would have put three hours of good,
+   already-tested work at real risk for no structural reason.
+2. **A second, earlier, unexplained stall.** A routine
+   `pytest tests/domains/planning/` run — the kind that normally finishes
+   in a couple of seconds — was issued at 13:04 UTC and didn't return a
+   result until 15:22 UTC, over two hours later. Nothing in the transcript
+   explains the gap (no retry, no visible error); this is more likely the
+   actual moment the terminal first felt frozen to Basheer, distinct from
+   the Docker Desktop shutdown hang right at the end. Neither stall looks
+   like a reasoning error — both look environmental (machine sleep,
+   terminal/tool disconnect) — but a 2+ hour silent wait on a normally-
+   instant command should have been flagged rather than treated as normal.
+
+A smaller, unrelated miss from the same build: the first draft of the
+approval-authorization tests asserted the wrong exact exception-message
+text (`match="not authorized"` against code that actually raises
+`match="authorized"`), caught only when the tests were run, fixed with a
+one-line `sed` afterward.
+
+**Two standing rules added to `CLAUDE.md` as a direct result** (own
+section headers, not buried in a progress note, per the project's own
+"standing decisions" rule):
+- **"Checkpoint commits"** (new section) — commit at each safe,
+  test-passing milestone during any long or unattended build, rather than
+  waiting for the whole feature to be finished; a checkpoint commit doesn't
+  need to be feature-complete or trigger the Post-commit checklist, just
+  say plainly what's still missing. Also codifies: treat an unusually slow
+  routine command as a signal to flag, not something to silently wait out.
+- **Session handoff, new bullet** — write handover notes *after* the fact,
+  referencing real values (commit hashes, exact counts), never a
+  placeholder meant to be filled in later — directly from today's own
+  `<hash>` slip, which needed a follow-up fix commit just to correct.
+
+**Retro on the retro:** asking to read the actual saved session file,
+rather than accepting the handover-doc summary as complete, was the right
+call — it surfaced both the zero-commit exposure and the earlier stall,
+neither of which the narrower recovery note above had caught. Worth
+treating as the default whenever a session has ended abnormally, not an
+exception that has to be requested.
