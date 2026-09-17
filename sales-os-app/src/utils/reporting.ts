@@ -16,3 +16,26 @@ export function getFiscalQuarterBounds(date: dayjs.Dayjs = dayjs()): { start: st
   const quarterEnd = quarterStart.add(3, "month").subtract(1, "day");
   return { start: quarterStart.format("YYYY-MM-DD"), end: quarterEnd.format("YYYY-MM-DD") };
 }
+
+// Target Planning's planning_period format (Business-Rules.md: YYYY-Qn, Indian
+// FY April-March) -- the "YYYY" is the fiscal year's start calendar year, e.g.
+// October 2026 (FY2026 Q3) is "2026-Q3", not "2027-Q3".
+export function getCurrentPlanningPeriod(date: dayjs.Dayjs = dayjs()): string {
+  const fyStartYear = date.month() >= 3 ? date.year() : date.year() - 1;
+  const fyStart = dayjs(new Date(fyStartYear, 3, 1));
+  const quarterIndex = Math.floor(date.diff(fyStart, "month") / 3);
+  return `${fyStartYear}-Q${quarterIndex + 1}`;
+}
+
+// Steps a "YYYY-Qn" planning period forward/backward by `delta` quarters --
+// the quarter picker's prev/next arrows.
+export function shiftPlanningPeriod(period: string, delta: number): string {
+  const match = period.match(/^(\d{4})-Q([1-4])$/);
+  if (!match) return period;
+  const fyStartYear = parseInt(match[1], 10);
+  const quarterIndex = parseInt(match[2], 10) - 1;
+  const totalQuarters = fyStartYear * 4 + quarterIndex + delta;
+  const newFyStartYear = Math.floor(totalQuarters / 4);
+  const newQuarterIndex = ((totalQuarters % 4) + 4) % 4;
+  return `${newFyStartYear}-Q${newQuarterIndex + 1}`;
+}

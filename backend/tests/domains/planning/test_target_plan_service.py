@@ -238,6 +238,18 @@ class TestGetSbuRollup:
         repo.get_sbu_rollup.assert_called_once_with(SBU_ID, "2026-Q3")
 
 
+class TestListTeamTargets:
+    def test_delegates_to_repository(self):
+        rows = [_make_target_plan(), _make_target_plan()]
+        repo = _make_repo(list_by_sbu_and_period=MagicMock(return_value=rows))
+        service = TargetPlanService(repository=repo)
+
+        result = service.list_team_targets(SBU_ID, "2026-Q3")
+
+        assert result == rows
+        repo.list_by_sbu_and_period.assert_called_once_with(SBU_ID, "2026-Q3")
+
+
 class TestDeleteTargetPlan:
     def test_owner_can_delete_own(self):
         owner = _make_user("Sales Staff")

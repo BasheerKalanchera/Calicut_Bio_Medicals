@@ -30,6 +30,7 @@ import TerritoryAdminScreen from "./screens/TerritoryAdminScreen";
 import AuditLogScreen from "./screens/AuditLogScreen";
 import MarketingLeadEntryScreen from "./screens/MarketingLeadEntryScreen";
 import MarketingLeadReviewQueueScreen from "./screens/MarketingLeadReviewQueueScreen";
+import TargetPlanningScreen from "./screens/TargetPlanningScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
@@ -50,6 +51,7 @@ const SALES_EXECUTION_ITEMS = [
   { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
   { id: "nextActions",   label: "Next Actions",       icon: "✅" },
   { id: "insights", label: "Insights", icon: "📊" },
+  { id: "targetPlanning", label: "Target Planning", icon: "🎯" },
 ];
 
 // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
@@ -878,6 +880,15 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <SalesReportScreen onDrillToPipeline={handleDrillToPipeline} />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "targetPlanning" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Target Planning
+              </Typography>
+            </Box>
+            <TargetPlanningScreen />
           </Box>
         </ErrorBoundary>
       </Box>

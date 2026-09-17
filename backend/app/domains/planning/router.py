@@ -48,6 +48,20 @@ def list_pending_approval(
     return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
 
 
+@router.get("/team")
+def list_team_targets(
+    sbu_id: uuid.UUID = Query(...),  # noqa: B008
+    planning_period: str = Query(...),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: TargetPlanService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[TargetPlanResponse]]:
+    """Per-person breakdown behind the rollup banner -- RLS narrows this to
+    whatever the caller is actually allowed to see (own SBU, own reports, or
+    unrestricted for Admin/GM), same as every other list endpoint here."""
+    target_plans = service.list_team_targets(sbu_id, planning_period)
+    return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
+
+
 @router.get("/rollup")
 def get_sbu_rollup(
     sbu_id: uuid.UUID = Query(...),  # noqa: B008

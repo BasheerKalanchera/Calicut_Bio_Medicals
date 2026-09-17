@@ -35,6 +35,14 @@ class TargetPlanService:
     def list_pending_approval_for_approver(self, approver_id: uuid.UUID) -> list[TargetPlan]:
         return self.repository.list_pending_approval_for_approver(approver_id)
 
+    def list_team_targets(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
+        """Every target in the SBU for the period, all statuses -- the
+        per-person breakdown behind the rollup banner. RLS on target_plan_read
+        already narrows this to what the caller may see (their own SBU, their
+        own reports, or unrestricted for Admin/GM); this just adds the
+        sbu_id/planning_period filter on top, same shape as get_sbu_rollup."""
+        return self.repository.list_by_sbu_and_period(sbu_id, planning_period)
+
     def create_target_plan(self, data: TargetPlanCreate, *, current_user: UserProfile) -> TargetPlan:
         existing = self.repository.get_by_user_sbu_period(
             current_user.id, data.sbu_id, data.planning_period
