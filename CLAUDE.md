@@ -83,6 +83,20 @@ code or changing structure. On any conflict, the document wins over this file.
   than normal, treat that as a signal, not something to silently wait out —
   flag it rather than continuing as if nothing happened.
 
+## Pre-E2E code review
+- Before starting manual E2E verification on a feature, run `/code-review`
+  (medium effort by default; high for RLS/migration/approval-workflow-heavy
+  features) against that feature's commits and fix findings first. Catches
+  defects for free that would otherwise surface mid-testing as confusing
+  manual-test failures.
+- **Why:** a 2026-09-17 review of Target Planning's backend+frontend, run
+  right as its manual E2E pass was starting, caught two bugs that would
+  have blocked most of that pass outright (a wrong profile field breaking
+  every "Set Target" submission, and a silently-empty SBU rollup for two
+  roles) — plus two smaller correctness gaps and one RLS-scope question
+  worth confirming. Full findings:
+  `docs/Target-Planning-Code-Review-Findings-2026-09-17.md`.
+
 ## Post-commit checklist
 Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by
 Claude Code, not from another tool — this is what lets the checklist below
