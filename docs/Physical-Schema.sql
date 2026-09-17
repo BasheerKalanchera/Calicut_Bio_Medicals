@@ -12,7 +12,7 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-09-17 from the Dev database, catching up migration
--- 0045: target_plan decision_note column + target_plan_read RLS fix
+-- 0046: Close 4 RLS gaps found in a broader review, 2026-09-17
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict mQfU6GrdvC6YshaeVZHCLZTQSagCU3gvCQdeXMFEtCAUX7K8TNhQxG4smREUnrq
+\restrict 8ZTvkj1bbQoeXQKvXgFQLS2SQviekFnwm5gbRbF8gdaGtSwCrZwKLHHeahffY0n
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -2481,10 +2481,18 @@ CREATE POLICY activity_comment_select ON public.activity_comment FOR SELECT USIN
 
 
 --
--- Name: activity activity_tier_visibility; Type: POLICY; Schema: public; Owner: -
+-- Name: activity activity_insert; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY activity_tier_visibility ON public.activity USING (((opportunity_id IS NULL) OR (user_id = public.cabio_app_uid()) OR public.cabio_app_has_split(opportunity_id) OR public.cabio_app_assigned_reminder(opportunity_id) OR ((opportunity_id IN ( SELECT opportunity.id
+CREATE POLICY activity_insert ON public.activity FOR INSERT WITH CHECK (((opportunity_id IS NULL) OR ((account_id IS NOT NULL) AND public.cabio_app_opportunity_in_account(opportunity_id, account_id)) OR public.cabio_app_has_split(opportunity_id) OR public.cabio_app_assigned_reminder(opportunity_id) OR ((opportunity_id IN ( SELECT opportunity.id
+   FROM public.opportunity)) AND (NOT (((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['SBU Manager'::text, 'General Manager'::text, 'Admin'::text]))) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['General Manager'::text, 'Admin'::text]))))))));
+
+
+--
+-- Name: activity activity_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY activity_select ON public.activity FOR SELECT USING (((opportunity_id IS NULL) OR (user_id = public.cabio_app_uid()) OR public.cabio_app_has_split(opportunity_id) OR public.cabio_app_assigned_reminder(opportunity_id) OR ((opportunity_id IN ( SELECT opportunity.id
    FROM public.opportunity)) AND (NOT (((public.cabio_app_role_name() = 'Area Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['SBU Manager'::text, 'General Manager'::text, 'Admin'::text]))) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (public.cabio_app_user_role_name(user_id) = ANY (ARRAY['General Manager'::text, 'Admin'::text]))))))));
 
 
@@ -2508,10 +2516,27 @@ CREATE POLICY audit_log_admin_gm_read ON public.audit_log FOR SELECT USING ((pub
 ALTER TABLE public.document ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: document document_tier_visibility; Type: POLICY; Schema: public; Owner: -
+-- Name: document document_delete; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY document_tier_visibility ON public.document USING (((opportunity_id IS NULL) OR (opportunity_id IN ( SELECT opportunity.id
+CREATE POLICY document_delete ON public.document FOR DELETE USING ((((product_id IS NOT NULL) AND (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) OR ((opportunity_id IS NOT NULL) AND ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (opportunity_id IN ( SELECT opportunity.id
+   FROM public.opportunity
+  WHERE (opportunity.owner_id = public.cabio_app_uid())))))));
+
+
+--
+-- Name: document document_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY document_insert ON public.document FOR INSERT WITH CHECK (((opportunity_id IS NULL) OR (opportunity_id IN ( SELECT opportunity.id
+   FROM public.opportunity))));
+
+
+--
+-- Name: document document_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY document_select ON public.document FOR SELECT USING (((opportunity_id IS NULL) OR (opportunity_id IN ( SELECT opportunity.id
    FROM public.opportunity))));
 
 
@@ -2532,7 +2557,7 @@ CREATE POLICY marketing_lead_insert ON public.marketing_lead FOR INSERT WITH CHE
 -- Name: marketing_lead marketing_lead_select; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY marketing_lead_select ON public.marketing_lead FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (assigned_to_user_id IN ( SELECT user_profile.id
+CREATE POLICY marketing_lead_select ON public.marketing_lead FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (assigned_to_user_id IN ( SELECT user_profile.id
    FROM public.user_profile
   WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (assigned_to_user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid())));
 
@@ -2541,7 +2566,7 @@ CREATE POLICY marketing_lead_select ON public.marketing_lead FOR SELECT USING ((
 -- Name: marketing_lead marketing_lead_update; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY marketing_lead_update ON public.marketing_lead FOR UPDATE USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (assigned_to_user_id = public.cabio_app_uid()) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (assigned_to_user_id IN ( SELECT user_profile.id
+CREATE POLICY marketing_lead_update ON public.marketing_lead FOR UPDATE USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (assigned_to_user_id = public.cabio_app_uid()) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (assigned_to_user_id IN ( SELECT user_profile.id
    FROM public.user_profile
   WHERE (user_profile.manager_id = public.cabio_app_uid())))))) WITH CHECK (true);
 
@@ -2553,10 +2578,24 @@ CREATE POLICY marketing_lead_update ON public.marketing_lead FOR UPDATE USING ((
 ALTER TABLE public.notification ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: notification notification_own_only; Type: POLICY; Schema: public; Owner: -
+-- Name: notification notification_insert; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY notification_own_only ON public.notification USING (((recipient_user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid()))) WITH CHECK (((created_by = public.cabio_app_uid()) OR (recipient_user_id = public.cabio_app_uid())));
+CREATE POLICY notification_insert ON public.notification FOR INSERT WITH CHECK (((created_by = public.cabio_app_uid()) OR (recipient_user_id = public.cabio_app_uid())));
+
+
+--
+-- Name: notification notification_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY notification_select ON public.notification FOR SELECT USING (((recipient_user_id = public.cabio_app_uid()) OR (created_by = public.cabio_app_uid())));
+
+
+--
+-- Name: notification notification_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY notification_update ON public.notification FOR UPDATE USING ((recipient_user_id = public.cabio_app_uid())) WITH CHECK ((recipient_user_id = public.cabio_app_uid()));
 
 
 --
@@ -2649,10 +2688,27 @@ CREATE POLICY product_update_sbu_scoped ON public.product FOR UPDATE USING (((pu
 ALTER TABLE public.reminder ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: reminder reminder_via_activity; Type: POLICY; Schema: public; Owner: -
+-- Name: reminder reminder_insert; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY reminder_via_activity ON public.reminder USING ((activity_id IN ( SELECT activity.id
+CREATE POLICY reminder_insert ON public.reminder FOR INSERT WITH CHECK ((activity_id IN ( SELECT activity.id
+   FROM public.activity)));
+
+
+--
+-- Name: reminder reminder_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY reminder_select ON public.reminder FOR SELECT USING ((activity_id IN ( SELECT activity.id
+   FROM public.activity)));
+
+
+--
+-- Name: reminder reminder_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY reminder_update ON public.reminder FOR UPDATE USING ((activity_id IN ( SELECT activity.id
+   FROM public.activity))) WITH CHECK ((activity_id IN ( SELECT activity.id
    FROM public.activity)));
 
 
@@ -2721,5 +2777,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict mQfU6GrdvC6YshaeVZHCLZTQSagCU3gvCQdeXMFEtCAUX7K8TNhQxG4smREUnrq
+\unrestrict 8ZTvkj1bbQoeXQKvXgFQLS2SQviekFnwm5gbRbF8gdaGtSwCrZwKLHHeahffY0n
 

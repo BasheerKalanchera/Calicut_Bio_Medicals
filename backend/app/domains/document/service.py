@@ -8,6 +8,7 @@ from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFo
 from app.domains.document.models import Document
 from app.domains.document.repository import DocumentRepository
 from app.domains.document.schemas import DocumentCreate, DocumentDownloadUrl
+from app.domains.organization.models import UserProfile
 
 # BR-ACT-08 -- confirmed file type/size limits for real Opportunity document upload.
 ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "application/pdf"}
@@ -18,8 +19,10 @@ _SIGNED_URL_EXPIRY_SECONDS = 300
 # Signed Feature 4.1 (Collateral Security) -- Product Catalog collateral links
 # are viewable by everyone (reps need them to actually sell), but adding or
 # removing one is Admin/General Manager only. Mirrors
-# ProductService._CATALOG_WRITE_ROLES; unrelated to Opportunity documents,
-# which stay open to whoever can already reach that Opportunity via RLS.
+# ProductService._CATALOG_WRITE_ROLES. Reused below as the overlay tier for
+# deleting an Opportunity-linked document too (resolved 2026-09-17,
+# Basheer) -- that used to be deletable by anyone who could merely see the
+# deal via RLS; now it's the deal's owner or this same Admin/GM tier.
 _CATALOG_COLLATERAL_WRITE_ROLES = {"Admin", "General Manager"}
 
 
@@ -105,12 +108,18 @@ class DocumentService:
         expires_at = datetime.now(UTC) + timedelta(seconds=_SIGNED_URL_EXPIRY_SECONDS)
         return DocumentDownloadUrl(url=url, expires_at=expires_at)
 
-    def delete_document(self, document_id: uuid.UUID, *, role_name: str) -> None:
+    def delete_document(self, document_id: uuid.UUID, *, current_user: UserProfile) -> None:
         document = self.repository.get_by_id(document_id)
         if document is None:
             raise NotFoundError(f"Document {document_id} not found")
-        if document.product_id is not None and role_name not in _CATALOG_COLLATERAL_WRITE_ROLES:
-            raise AuthorizationError("Only Admin/General Manager can remove Product Catalog collateral")
+        role_name = current_user.role.role_name
+        if document.product_id is not None:
+            if role_name not in _CATALOG_COLLATERAL_WRITE_ROLES:
+                raise AuthorizationError("Only Admin/General Manager can remove Product Catalog collateral")
+        elif document.opportunity_id is not None:
+            is_owner = document.opportunity.owner_id == current_user.id
+            if not (is_owner or role_name in _CATALOG_COLLATERAL_WRITE_ROLES):
+                raise AuthorizationError("Only the deal's owner or Admin/General Manager can remove this document")
         # Delete the Storage object before the DB row: if Storage delete fails,
         # the DB row survives and the orphan is visible/retryable. The reverse
         # order could leave an orphaned file with no DB record pointing at it.

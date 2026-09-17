@@ -53,7 +53,7 @@ def delete_document(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: DocumentService = Depends(_get_service),  # noqa: B008
 ) -> None:
-    service.delete_document(document_id, role_name=current_user.role.role_name)
+    service.delete_document(document_id, current_user=current_user)
 
 
 @router.get("/documents/{document_id}/download-url")

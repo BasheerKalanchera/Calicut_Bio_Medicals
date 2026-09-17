@@ -28,7 +28,7 @@ def _mock_user(role_name: str = "Admin") -> MagicMock:
     return user
 
 
-def _mock_document(**overrides) -> MagicMock:
+def _mock_document(*, owner_id: uuid.UUID | None = None, **overrides) -> MagicMock:
     defaults = {
         "id": TEST_DOCUMENT_ID,
         "file_name": "Product Brochure 2026",
@@ -40,6 +40,10 @@ def _mock_document(**overrides) -> MagicMock:
     obj = MagicMock(spec=Document)
     for k, v in defaults.items():
         setattr(obj, k, v)
+    if owner_id is not None:
+        opportunity = MagicMock()
+        opportunity.owner_id = owner_id
+        obj.opportunity = opportunity
     return obj
 
 
@@ -219,12 +223,47 @@ class TestDeleteDocument:
         assert response.status_code == 403
         mock_db.delete.assert_not_called()
 
-    def test_non_catalog_role_allowed_for_opportunity_scoped_document(self, client: TestClient) -> None:
-        document = _mock_document(product_id=None, opportunity_id=TEST_OPPORTUNITY_ID)
+    def test_non_owner_non_catalog_role_blocked_for_opportunity_scoped_document(self, client: TestClient) -> None:
+        """Resolved 2026-09-17 (Basheer): this used to be open to anyone who
+        could merely see the deal via RLS -- now it's the deal's owner or
+        Admin/GM only."""
+        other_user_id = uuid.uuid4()
+        document = _mock_document(product_id=None, opportunity_id=TEST_OPPORTUNITY_ID, owner_id=other_user_id)
         mock_db = MagicMock()
         mock_db.get.return_value = document
 
         _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 403
+        mock_db.delete.assert_not_called()
+
+    def test_owner_allowed_for_opportunity_scoped_document(self, client: TestClient) -> None:
+        document = _mock_document(product_id=None, opportunity_id=TEST_OPPORTUNITY_ID, owner_id=TEST_USER_ID)
+        mock_db = MagicMock()
+        mock_db.get.return_value = document
+
+        _setup_overrides(mock_db, role_name="Sales Executive")
+        try:
+            response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
+        finally:
+            _teardown_overrides()
+
+        assert response.status_code == 204
+        mock_db.delete.assert_called_once_with(document)
+
+    def test_catalog_role_allowed_for_opportunity_scoped_document_even_if_not_owner(
+        self, client: TestClient
+    ) -> None:
+        other_user_id = uuid.uuid4()
+        document = _mock_document(product_id=None, opportunity_id=TEST_OPPORTUNITY_ID, owner_id=other_user_id)
+        mock_db = MagicMock()
+        mock_db.get.return_value = document
+
+        _setup_overrides(mock_db, role_name="General Manager")
         try:
             response = client.delete(f"/api/v1/documents/{TEST_DOCUMENT_ID}")
         finally:

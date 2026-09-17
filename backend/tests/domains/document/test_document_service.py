@@ -27,14 +27,17 @@ from app.domains.document.service import (
     MAX_FILE_SIZE_BYTES,
     DocumentService,
 )
+from app.domains.organization.models import UserProfile
 
 OPPORTUNITY_ID = uuid.uuid4()
 PRODUCT_ID = uuid.uuid4()
 DOCUMENT_ID = uuid.uuid4()
 USER_ID = uuid.uuid4()
+OWNER_ID = uuid.uuid4()
 
 # Non-exhaustive: any role outside {"Admin", "General Manager"} is blocked from
-# adding/removing Product Catalog collateral (viewing stays open to everyone) --
+# adding/removing Product Catalog collateral (viewing stays open to everyone),
+# and from deleting an Opportunity-linked document that isn't theirs --
 # DocumentService._CATALOG_COLLATERAL_WRITE_ROLES.
 NON_CATALOG_ROLE = "Salesperson"
 
@@ -44,6 +47,15 @@ def _make_repo() -> MagicMock:
     repo.opportunity_exists.return_value = True
     repo.product_exists.return_value = True
     return repo
+
+
+def _make_user(role_name: str, *, user_id: uuid.UUID = USER_ID) -> MagicMock:
+    user = MagicMock(spec=UserProfile)
+    user.id = user_id
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
+    return user
 
 
 def _make_upload_file(
@@ -57,7 +69,9 @@ def _make_upload_file(
     return upload
 
 
-def _make_document(*, storage_path: str = "opportunity/xyz/abc-po.pdf", **overrides) -> MagicMock:
+def _make_document(
+    *, storage_path: str = "opportunity/xyz/abc-po.pdf", owner_id: uuid.UUID = OWNER_ID, **overrides
+) -> MagicMock:
     defaults = {
         "id": DOCUMENT_ID,
         "storage_path": storage_path,
@@ -71,6 +85,9 @@ def _make_document(*, storage_path: str = "opportunity/xyz/abc-po.pdf", **overri
     doc = MagicMock(spec=Document)
     for k, v in defaults.items():
         setattr(doc, k, v)
+    opportunity = MagicMock()
+    opportunity.owner_id = owner_id
+    doc.opportunity = opportunity if defaults["opportunity_id"] is not None else None
     return doc
 
 
@@ -194,19 +211,19 @@ class TestDeleteDocument:
         service = DocumentService(repo)
 
         with pytest.raises(NotFoundError):
-            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+            service.delete_document(DOCUMENT_ID, current_user=_make_user("Admin"))
 
     @patch("app.domains.document.service.storage")
     def test_deletes_storage_object_before_db_row_for_real_upload(self, mock_storage: MagicMock) -> None:
         repo = _make_repo()
-        document = _make_document(storage_path="opportunity/xyz/abc-po.pdf")
+        document = _make_document(storage_path="opportunity/xyz/abc-po.pdf", owner_id=USER_ID)
         repo.get_by_id.return_value = document
         call_order: list[str] = []
         mock_storage.delete.side_effect = lambda _path: call_order.append("storage")
         repo.delete.side_effect = lambda _doc: call_order.append("db")
         service = DocumentService(repo)
 
-        service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+        service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE))
 
         mock_storage.delete.assert_called_once_with("opportunity/xyz/abc-po.pdf")
         repo.delete.assert_called_once_with(document)
@@ -215,23 +232,23 @@ class TestDeleteDocument:
     @patch("app.domains.document.service.storage")
     def test_db_row_survives_if_storage_delete_fails(self, mock_storage: MagicMock) -> None:
         repo = _make_repo()
-        repo.get_by_id.return_value = _make_document(storage_path="opportunity/xyz/abc-po.pdf")
+        repo.get_by_id.return_value = _make_document(storage_path="opportunity/xyz/abc-po.pdf", owner_id=USER_ID)
         mock_storage.delete.side_effect = RuntimeError("storage unavailable")
         service = DocumentService(repo)
 
         with pytest.raises(RuntimeError):
-            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+            service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE))
 
         repo.delete.assert_not_called()
 
     @patch("app.domains.document.service.storage")
     def test_external_link_document_skips_storage_delete(self, mock_storage: MagicMock) -> None:
         repo = _make_repo()
-        document = _make_document(storage_path="https://example.com/brochure.pdf")
+        document = _make_document(storage_path="https://example.com/brochure.pdf", owner_id=USER_ID)
         repo.get_by_id.return_value = document
         service = DocumentService(repo)
 
-        service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+        service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE))
 
         mock_storage.delete.assert_not_called()
         repo.delete.assert_called_once_with(document)
@@ -244,7 +261,7 @@ class TestDeleteDocument:
         service = DocumentService(repo)
 
         with pytest.raises(AuthorizationError):
-            service.delete_document(DOCUMENT_ID, role_name=NON_CATALOG_ROLE)
+            service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE))
 
         repo.delete.assert_not_called()
 
@@ -256,7 +273,42 @@ class TestDeleteDocument:
         repo.get_by_id.return_value = document
         service = DocumentService(repo)
 
-        service.delete_document(DOCUMENT_ID, role_name="Admin")
+        service.delete_document(DOCUMENT_ID, current_user=_make_user("Admin"))
+
+        repo.delete.assert_called_once_with(document)
+
+    def test_opportunity_scoped_document_blocked_for_non_owner_non_admin(self) -> None:
+        """Resolved 2026-09-17 (Basheer): this used to be open to anyone who
+        could merely see the deal via RLS -- now it's the deal's owner or
+        Admin/GM only, same overlay tier as Product Catalog collateral."""
+        repo = _make_repo()
+        repo.get_by_id.return_value = _make_document(
+            storage_path="https://example.com/quote.pdf", owner_id=OWNER_ID
+        )
+        service = DocumentService(repo)
+
+        with pytest.raises(AuthorizationError):
+            service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE, user_id=USER_ID))
+
+        repo.delete.assert_not_called()
+
+    def test_opportunity_scoped_document_allowed_for_owner(self) -> None:
+        repo = _make_repo()
+        document = _make_document(storage_path="https://example.com/quote.pdf", owner_id=OWNER_ID)
+        repo.get_by_id.return_value = document
+        service = DocumentService(repo)
+
+        service.delete_document(DOCUMENT_ID, current_user=_make_user(NON_CATALOG_ROLE, user_id=OWNER_ID))
+
+        repo.delete.assert_called_once_with(document)
+
+    def test_opportunity_scoped_document_allowed_for_admin_gm_non_owner(self) -> None:
+        repo = _make_repo()
+        document = _make_document(storage_path="https://example.com/quote.pdf", owner_id=OWNER_ID)
+        repo.get_by_id.return_value = document
+        service = DocumentService(repo)
+
+        service.delete_document(DOCUMENT_ID, current_user=_make_user("General Manager", user_id=USER_ID))
 
         repo.delete.assert_called_once_with(document)
 
