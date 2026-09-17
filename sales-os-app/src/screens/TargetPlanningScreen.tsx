@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Fragment, useState } from "react";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -14,6 +14,8 @@ import {
   TableRow,
   TableCell,
   Alert,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import FormModal from "../components/FormModal";
 import { useAuth } from "../contexts/AuthContext";
@@ -28,7 +30,13 @@ import {
   approveTargetPlan,
   rejectTargetPlan,
 } from "../services/targetPlanning";
-import { getCurrentPlanningPeriod, shiftPlanningPeriod, formatLakhs } from "../utils/reporting";
+import {
+  getCurrentPlanningPeriod,
+  shiftPlanningPeriod,
+  getFiscalYearOfPeriod,
+  getPlanningYearQuarters,
+  formatLakhs,
+} from "../utils/reporting";
 import type { TargetPlan, TargetPlanStatus } from "../types/targetPlanning";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
@@ -57,6 +65,18 @@ function StatusChip({ status }: { status: TargetPlanStatus }) {
   return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />;
 }
 
+function fiscalYearLabel(fyStartYear: number): string {
+  return `FY ${fyStartYear}-${String((fyStartYear + 1) % 100).padStart(2, "0")}`;
+}
+
+// One person's target amounts across a fiscal year's 4 quarters -- the
+// annual rollup's per-rep grouping (Group H's "grouped rows" layout).
+interface AnnualPerson {
+  user: TargetPlan["user"];
+  total: number;
+  byQuarter: Record<string, TargetPlan | undefined>;
+}
+
 export default function TargetPlanningScreen() {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
@@ -64,12 +84,20 @@ export default function TargetPlanningScreen() {
   const showRollup = !!roleName && ROLLUP_VISIBLE_ROLES.has(roleName);
   const showSbuPicker = !!roleName && SBU_PICKER_ROLES.has(roleName);
 
+  const [viewMode, setViewMode] = useState<"quarterly" | "annual">("quarterly");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+  const [editingPeriod, setEditingPeriod] = useState(period);
+  const [editingTarget, setEditingTarget] = useState<TargetPlan | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
   const [noteInput, setNoteInput] = useState("");
+
+  const fyStartYear = getFiscalYearOfPeriod(period);
+  const yearQuarters = getPlanningYearQuarters(fyStartYear);
+  const isAnnual = viewMode === "annual";
+  const periodLabel = isAnnual ? fiscalYearLabel(fyStartYear) : period;
 
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],
@@ -87,6 +115,12 @@ export default function TargetPlanningScreen() {
     queryFn: listTargetPlans,
   });
   const myTarget = myTargets.find((t) => t.planning_period === period) ?? null;
+  const myAnnualByQuarter: Record<string, TargetPlan | undefined> = {};
+  for (const q of yearQuarters) myAnnualByQuarter[q] = myTargets.find((t) => t.planning_period === q);
+  const myAnnualTotal = yearQuarters.reduce(
+    (sum, q) => sum + Number(myAnnualByQuarter[q]?.target_amount_lakhs ?? 0),
+    0
+  );
 
   const { data: pendingApproval = [] } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
@@ -96,21 +130,48 @@ export default function TargetPlanningScreen() {
   const { data: rollup } = useQuery({
     queryKey: ["target-plans", "rollup", rollupSbuId, period],
     queryFn: () => getSbuRollup(rollupSbuId as string, period),
-    enabled: showRollup && !!rollupSbuId,
+    enabled: showRollup && !isAnnual && !!rollupSbuId,
   });
 
   const { data: teamTargets = [] } = useQuery({
     queryKey: ["target-plans", "team", rollupSbuId, period],
     queryFn: () => listTeamTargets(rollupSbuId as string, period),
-    enabled: showRollup && !!rollupSbuId,
+    enabled: showRollup && !isAnnual && !!rollupSbuId,
   });
+
+  // Annual rollup has no dedicated backend endpoint (Target-Planning-
+  // Implementation-Plan.md's decision #3: "computed on read, not stored")
+  // -- fires the existing per-quarter team-targets call 4x in parallel and
+  // merges client-side, grouped per rep.
+  const annualTeamQueries = useQueries({
+    queries: yearQuarters.map((q) => ({
+      queryKey: ["target-plans", "team", rollupSbuId, q],
+      queryFn: () => listTeamTargets(rollupSbuId as string, q),
+      enabled: showRollup && isAnnual && !!rollupSbuId,
+    })),
+  });
+  const teamAnnualByUser = new Map<string, AnnualPerson>();
+  for (const q of annualTeamQueries) {
+    for (const t of q.data ?? []) {
+      if (!teamAnnualByUser.has(t.user_id)) {
+        teamAnnualByUser.set(t.user_id, { user: t.user, total: 0, byQuarter: {} });
+      }
+      const entry = teamAnnualByUser.get(t.user_id)!;
+      entry.total += Number(t.target_amount_lakhs);
+      entry.byQuarter[t.planning_period] = t;
+    }
+  }
+  const teamAnnualList = Array.from(teamAnnualByUser.values()).sort((a, b) => b.total - a.total);
+  const annualRollupTotal = teamAnnualList.reduce((sum, p) => sum + p.total, 0);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["target-plans"] });
   };
 
-  const openTargetDialog = () => {
-    setAmountInput(myTarget ? myTarget.target_amount_lakhs : "");
+  const openTargetDialog = (quarterPeriod: string, existing: TargetPlan | null) => {
+    setEditingPeriod(quarterPeriod);
+    setEditingTarget(existing);
+    setAmountInput(existing ? existing.target_amount_lakhs : "");
     setTargetDialogOpen(true);
   };
 
@@ -119,12 +180,12 @@ export default function TargetPlanningScreen() {
     if (!amountInput.trim() || Number.isNaN(amount) || amount <= 0) {
       throw new Error("Enter a target amount greater than zero");
     }
-    if (myTarget) {
-      await updateTargetPlan(myTarget.id, { target_amount_lakhs: amount });
+    if (editingTarget) {
+      await updateTargetPlan(editingTarget.id, { target_amount_lakhs: amount });
     } else {
       await createTargetPlan({
         sbu_id: userProfile.sbu_id,
-        planning_period: period,
+        planning_period: editingPeriod,
         target_amount_lakhs: amount,
       });
     }
@@ -149,31 +210,86 @@ export default function TargetPlanningScreen() {
 
   return (
     <Box sx={{ height: "100%", overflow: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton size="small" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -1))} title="Previous quarter">
-          <Box component="span">◀</Box>
-        </IconButton>
-        <Typography sx={{ fontWeight: 700, minWidth: "5rem", textAlign: "center" }}>{period}</Typography>
-        <IconButton size="small" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, 1))} title="Next quarter">
-          <Box component="span">▶</Box>
-        </IconButton>
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => setPeriod((p) => shiftPlanningPeriod(p, isAnnual ? -4 : -1))}
+            title={isAnnual ? "Previous fiscal year" : "Previous quarter"}
+          >
+            <Box component="span">◀</Box>
+          </IconButton>
+          <Typography sx={{ fontWeight: 700, minWidth: "6rem", textAlign: "center" }}>{periodLabel}</Typography>
+          <IconButton
+            size="small"
+            onClick={() => setPeriod((p) => shiftPlanningPeriod(p, isAnnual ? 4 : 1))}
+            title={isAnnual ? "Next fiscal year" : "Next quarter"}
+          >
+            <Box component="span">▶</Box>
+          </IconButton>
+        </Box>
+        <ToggleButtonGroup
+          size="small"
+          exclusive
+          value={viewMode}
+          onChange={(_e, v) => { if (v) setViewMode(v); }}
+        >
+          <ToggleButton value="quarterly">Quarterly</ToggleButton>
+          <ToggleButton value="annual">Annual</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
       <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Target</Typography>
-        {myTarget ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-            <Typography sx={{ fontSize: "1.25rem", fontWeight: 700 }}>
-              {formatLakhs(Number(myTarget.target_amount_lakhs))}
-            </Typography>
-            <StatusChip status={myTarget.status} />
-            <Button variant="outlined" size="small" onClick={openTargetDialog}>Revise</Button>
-          </Box>
+        {!isAnnual ? (
+          myTarget ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+              <Typography sx={{ fontSize: "1.25rem", fontWeight: 700 }}>
+                {formatLakhs(Number(myTarget.target_amount_lakhs))}
+              </Typography>
+              <StatusChip status={myTarget.status} />
+              <Button variant="outlined" size="small" onClick={() => openTargetDialog(period, myTarget)}>Revise</Button>
+            </Box>
+          ) : (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Typography color="text.secondary">No target set for {period} yet.</Typography>
+              <Button variant="contained" size="small" onClick={() => openTargetDialog(period, null)}>Set Target</Button>
+            </Box>
+          )
         ) : (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography color="text.secondary">No target set for {period} yet.</Typography>
-            <Button variant="contained" size="small" onClick={openTargetDialog}>Set Target</Button>
-          </Box>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Quarter</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow sx={{ "& td": { fontWeight: 700, borderBottom: "2px solid", borderColor: "divider" } }}>
+                <TableCell>Annual Total</TableCell>
+                <TableCell>{formatLakhs(myAnnualTotal)}</TableCell>
+                <TableCell />
+                <TableCell align="right" />
+              </TableRow>
+              {yearQuarters.map((q) => {
+                const t = myAnnualByQuarter[q];
+                return (
+                  <TableRow key={q}>
+                    <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                    <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                    <TableCell>
+                      {t ? <StatusChip status={t.status} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button size="small" onClick={() => openTargetDialog(q, t ?? null)}>{t ? "Revise" : "Set"}</Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
       </Box>
 
@@ -225,46 +341,97 @@ export default function TargetPlanningScreen() {
               </TextField>
             )}
           </Box>
-          {rollup && (
-            <Typography sx={{ mb: 1.5 }}>
-              Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
-              {rollup.user_count} target{rollup.user_count === 1 ? "" : "s"}
-            </Typography>
-          )}
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Rep</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {teamTargets.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>{t.user.display_name}</TableCell>
-                  <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                  <TableCell><StatusChip status={t.status} /></TableCell>
-                </TableRow>
-              ))}
-              {teamTargets.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={3}>
-                    <Typography color="text.secondary">No targets set for {period} yet.</Typography>
-                  </TableCell>
-                </TableRow>
+
+          {!isAnnual ? (
+            <>
+              {rollup && (
+                <Typography sx={{ mb: 1.5 }}>
+                  Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
+                  {rollup.user_count} target{rollup.user_count === 1 ? "" : "s"}
+                </Typography>
               )}
-            </TableBody>
-          </Table>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Rep</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {teamTargets.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell>{t.user.display_name}</TableCell>
+                      <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                      <TableCell><StatusChip status={t.status} /></TableCell>
+                    </TableRow>
+                  ))}
+                  {teamTargets.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography color="text.secondary">No targets set for {period} yet.</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </>
+          ) : (
+            <>
+              <Typography sx={{ mb: 1.5 }}>
+                Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length} rep
+                {teamAnnualList.length === 1 ? "" : "s"} for {periodLabel}
+              </Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Rep</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {teamAnnualList.map((p) => (
+                    <Fragment key={p.user.id}>
+                      <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
+                        <TableCell>{p.user.display_name}</TableCell>
+                        <TableCell>{formatLakhs(p.total)}</TableCell>
+                        <TableCell>Annual Total</TableCell>
+                      </TableRow>
+                      {yearQuarters.map((q) => {
+                        const t = p.byQuarter[q];
+                        return (
+                          <TableRow key={`${p.user.id}-${q}`}>
+                            <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                            <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                            <TableCell>
+                              {t ? <StatusChip status={t.status} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                  {teamAnnualList.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3}>
+                        <Typography color="text.secondary">No targets set for {periodLabel} yet.</Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </>
+          )}
         </Box>
       )}
 
       <FormModal
         isOpen={targetDialogOpen}
         onClose={() => setTargetDialogOpen(false)}
-        title={myTarget ? `Revise Target — ${period}` : `Set Target — ${period}`}
+        title={editingTarget ? `Revise Target — ${editingPeriod}` : `Set Target — ${editingPeriod}`}
         onSubmit={handleSaveTarget}
-        submitLabel={myTarget ? "Save" : "Create"}
+        submitLabel={editingTarget ? "Save" : "Create"}
       >
         <TextField
           label="Target Amount (₹ Lakhs) *"
@@ -275,7 +442,7 @@ export default function TargetPlanningScreen() {
           size="small"
           autoFocus
         />
-        {myTarget?.status === "APPROVED" && (
+        {editingTarget?.status === "APPROVED" && (
           <Alert severity="info">Revising an approved target sends it back for a fresh approval.</Alert>
         )}
       </FormModal>

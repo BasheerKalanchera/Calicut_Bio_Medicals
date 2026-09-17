@@ -27,8 +27,21 @@ export function getCurrentPlanningPeriod(date: dayjs.Dayjs = dayjs()): string {
   return `${fyStartYear}-Q${quarterIndex + 1}`;
 }
 
+// The fiscal year's start calendar year embedded in a "YYYY-Qn" period
+// string, e.g. "2026-Q3" -> 2026.
+export function getFiscalYearOfPeriod(period: string): number {
+  return parseInt(period.slice(0, 4), 10);
+}
+
+// The 4 planning_period strings making up one fiscal year, e.g. fyStartYear
+// 2026 -> ["2026-Q1", ..., "2026-Q4"] (Apr 2026 - Mar 2027).
+export function getPlanningYearQuarters(fyStartYear: number): string[] {
+  return [1, 2, 3, 4].map((q) => `${fyStartYear}-Q${q}`);
+}
+
 // Steps a "YYYY-Qn" planning period forward/backward by `delta` quarters --
-// the quarter picker's prev/next arrows.
+// the quarter picker's prev/next arrows. Annual view reuses this with
+// delta=+/-4 to step a full fiscal year at a time.
 export function shiftPlanningPeriod(period: string, delta: number): string {
   const match = period.match(/^(\d{4})-Q([1-4])$/);
   if (!match) return period;
