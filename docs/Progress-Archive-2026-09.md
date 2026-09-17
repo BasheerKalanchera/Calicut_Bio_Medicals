@@ -4498,3 +4498,99 @@ every edge case ("let's not take a chance") rather than stopping once the
 core paths were proven was specifically what surfaced both. Worth
 repeating: a code review and a live multi-role E2E pass catch different
 categories of bug, neither substitutes for the other.
+
+## 2026-09-17 (later still) — RLS gaps closed (activity, marketing_lead, document, notification): code-reviewed twice, one real regression caught and fixed, full live E2E pass, committed and pushed
+
+A separate code-review report (independent from the Target Planning one
+above) surfaced 4 pre-existing RLS gaps: `activity_insert` bypassing
+opportunity-visibility scoping via an unconditional "own subject"
+shortcut; `marketing_lead`'s Area Manager clause missing an SBU check
+(same operator-precedence shape as the target_plan bug above — `AND`
+binds tighter than `OR`); `document`/`reminder` policies not split by
+command; `notification_update` letting a sender's insert-time grant
+survive into later updates. Reviewed and agreed all four were real;
+Basheer: "Go ahead and fix all four."
+
+**Process, set explicitly by Basheer before building:** code review
+first, then write the E2E plan, then run it — in that order, every
+time a change like this is made. Migration `0046` drafted, first code
+review pass caught a real regression before it shipped: the first
+draft's `activity_insert` fix removed the `user_id = cabio_app_uid()`
+bypass entirely instead of replacing it with the narrow BR-ACT-10
+Relationship Support carve-out — would have silently broken logging a
+referral note against a deal outside your own SBU/zone. Root-caused by
+reading the original migration (`0029`) that built the feature, to find
+the real mechanism (`cabio_app_opportunity_in_account`) to replicate in
+RLS rather than guessing. Fixed by mirroring the service layer's own
+two-check logic exactly. **Re-reviewed per Basheer's explicit ask**
+("Run the review again to double-check") — clean.
+
+**Second review pass surfaced a genuinely separate, pre-existing gap:**
+deleting an opportunity-linked document required nothing beyond
+ordinary RLS visibility — any teammate who could see the deal could
+delete a colleague's upload. Asked Basheer for the industry-standard
+answer first (advisory, not implementation) — he decided: **"Lets go
+with opportunity owner and Admin/GM for now"** (not the uploader).
+Implemented symmetrically: `DocumentService.delete_document` now takes
+`current_user` instead of a bare `role_name` and checks owner-or-Admin/
+GM for opportunity-scoped documents; `document_delete`'s RLS carries
+the identical rule as a backstop. 5 new tests (mocking storage via an
+`https://` external-link `storage_path` to avoid real network calls).
+
+**Full live manual E2E pass**, `docs/RLS-Gaps-2026-09-17-Manual-E2E-Test-
+Plan.md`, across Vivek, Arun Adarsh, Nishad K V, Fazal, Basheer K, and
+Haroon:
+- **Group A/B** (activity) — PASS. Group B is the regression check the
+  whole plan exists for: Vivek logging Relationship Support against an
+  account outside his own zone, via the "Related Opportunity" dropdown
+  reached by picking that Type — confirmed live, saves and reads back
+  correctly. Also covered author≠subject (Arun logging an Urgent
+  Manager Note "for Vivek") — confirmed via Vivek's own Urgent
+  Notification dialog naming Arun as the author.
+- **Group C** (marketing_lead) — PASS on the reachable cases. Checked
+  the full org chart via User Directory first: every manager→report
+  pair in this dataset is same-SBU (Fazal→Fahad, Shruthi→Rudrappa,
+  Arun→Vivek) — so the actual cross-SBU bug case has no real data to
+  demonstrate it against, confirmed not reachable live, same limitation
+  the target_plan RLS fix's negative case hit earlier this session.
+  Basheer asked directly whether Fazal would be a better test candidate
+  than Arun/Nishad — checked and reported back no: Fazal's only report
+  (Fahad) has no lead in the queue at all, while Arun's report (Vivek)
+  already had a real one (`#B2D4D1`) sitting there, discarded — Arun/
+  Nishad was in fact the only combination with real data to test
+  against.
+- **Group D** (document delete) — PASS on all 5 steps, including the
+  actual gap: swapped the "owner" and "non-owner" logins live once it
+  became clear Vivek owns zero opportunities in this dataset (Fazal
+  substituted as owner; Basheer K substituted for Arun as the blocked
+  non-owner, since Arun's own SBU/zone couldn't see the Imaging-SBU
+  test deal at all — Basheer's own catch: "We need to login from the
+  same SBU"). Confirmed Basheer K (SBU Manager, not owner, not Admin/
+  GM) was blocked 3 times running, then Haroon (GM) succeeded
+  immediately on the same file. **One real UX gap found and logged
+  directly in the test plan itself, not Backlog (Basheer's explicit
+  call):** a blocked delete gives no error feedback at all — no toast,
+  no banner — silently doing nothing, which would read to a real user
+  as "my click didn't register," not "I lack permission."
+- **Group E/F/G** (reminder, notification, Pipeline/Insights regression)
+  — PASS. Group F's underlying PATCH request wasn't independently
+  confirmed at the network level — a session usage-limit hit while
+  digging through raw network logs, correctly abandoned in favor of the
+  UI-level evidence already in hand rather than continuing to burn
+  effort on a side-verification.
+
+876/876 backend tests pass (5 new). **Committed and pushed `6d333ef`**
+— migration `0046`, the document service/router change, both document
+test files, `Physical-Schema.sql`, and the test plan doc, all together.
+
+**Retro:** the "code review before the E2E plan, every time" process
+Basheer set this session earned its keep twice over — it caught a real
+regression before it ever reached the browser, and forced a second,
+harder look that surfaced the document-delete gap as a genuinely
+separate finding rather than something bundled into the original four
+and under-verified. What to improve: chasing a single non-blocking
+verification detail (Group F's PATCH network confirmation) through raw
+network-log dumps burned real effort for no signal — worth recognizing
+sooner when a check has stopped converging and switching to a
+lighter-weight signal (console errors, UI behavior) instead of grinding
+through the same tool again.

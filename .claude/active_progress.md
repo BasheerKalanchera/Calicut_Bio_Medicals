@@ -1,26 +1,52 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-17_
 
-## 2026-09-17 session (later) — Target Planning frontend built, code-reviewed, full multi-role manual E2E pass, 6 bugs found and fixed live — feature Done
+## 2026-09-17 session (latest) — RLS gaps (activity/marketing_lead/document/notification) fixed, full live manual E2E pass, committed and pushed
 
-Picked up the crashed-session recovery's "next step" below: built the
-missing frontend (`TargetPlanningScreen.tsx` + service/types + nav
-entry), reworked "My Target" mid-build into a per-SBU grouped view once
-Basheer clarified GM sells across both SBUs personally, added the
+Fixed 4 pre-existing RLS gaps (a 5th, document delete authorization,
+found separately while verifying #3) surfaced by a code-review pass:
+migration `0046` plus a matching `DocumentService.delete_document`
+change (owner or Admin/GM only). A code review before E2E caught a real
+regression in the first draft (BR-ACT-10 Relationship Support broken by
+removing the wrong bypass) — fixed and re-reviewed clean.
+
+Ran the full live manual E2E pass across Vivek, Arun Adarsh, Nishad K V,
+Fazal, Basheer K (swapped in for Arun on the document-delete negative
+case, since Arun's SBU couldn't see the Imaging-SBU test deal at all),
+and Haroon — every group PASS. Two real findings along the way, both
+resolved: the document owner-path steps needed a live swap (Vivek owns
+no opportunities in this dataset) to Fazal/Basheer K/Haroon; the
+marketing_lead cross-SBU case (step 10) confirmed **not reachable
+live** at all — every manager→report pair in the org is same-SBU — so
+it's accepted as code-verified only. One UX gap logged directly in the
+test plan (not Backlog, per Basheer's call): a blocked document delete
+gives no error toast/banner at all, silently doing nothing.
+
+Full results: `docs/RLS-Gaps-2026-09-17-Manual-E2E-Test-Plan.md`'s
+Sign-off section. **Committed and pushed `6d333ef`.**
+
+**Next step:** none pending on this thread — fully wrapped, committed,
+and pushed. Not a signed-requirement feature, so no Traceability/
+Scorecard flip needed. The delete-blocked-with-no-feedback UX fix is
+tracked in the test plan itself, not Backlog — pick it up from there
+whenever frontend polish is next in scope.
+
+## 2026-09-17 session (earlier) — Target Planning frontend built, code-reviewed, full multi-role manual E2E pass, 6 bugs found and fixed live — feature Done, post-commit checklist run
+
+Built the missing frontend (`TargetPlanningScreen.tsx` + service/types +
+nav entry), reworked "My Target" mid-build into a per-SBU grouped view
+once Basheer clarified GM sells across both SBUs personally, added the
 requested Annual view, ran the new Pre-E2E code review rule (caught 2
 blocking bugs + 3 smaller ones), then drove a full live manual E2E pass
 across every role (Basheer switching logins) per
 `docs/Target-Planning-Manual-E2E-Test-Plan.md` — which itself surfaced 2
 more real gaps (GM's own target could never reach anyone's approval
 queue; Admin was wrongly given a personal target). All fixed and
-verified live. **Committed and pushed `abaf8fa`, `4927502`, `f8213ee`.**
+verified live. Post-commit checklist run: Sign-off filled in, Feature
+3.1/6.4 flipped to Done in Traceability/Scorecard, Backlog updated.
+**Committed and pushed `abaf8fa`, `4927502`, `f8213ee`, `9e36c95`.**
 Full narrative and retro: `docs/Progress-Archive-2026-09.md`'s
 "2026-09-17" entry.
-
-**Next step:** post-commit checklist — fill in the test plan's Sign-off
-section, flip Target Planning's row in Traceability/Scorecard to Done,
-check `docs/Backlog.md` for newly-surfaced items (multi-SBU-assignment
-model question; the deliberate unused `DELETE` endpoint left as-is).
 
 ## 2026-09-17 session — Lead Follow-up Comments discussion paper written; scorecard tooling extended with a "Pending — proposed, not yet built" list
 

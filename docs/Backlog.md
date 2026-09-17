@@ -483,6 +483,19 @@ addition once Brand has a stable id instead of free text. Noted on
   any performance conversation built on them, same risk category as the
   WON-immutability concern.
 
+- **`document` not covered by the ADR-017 audit trail.** Raised
+  2026-09-17 while fixing the document-delete authorization gap (owner
+  or Admin/GM only, `docs/RLS-Gaps-2026-09-17-Manual-E2E-Test-Plan.md`).
+  Industry-standard practice for a permissioned delete is usually to
+  also record who did it — right now a document deletion isn't in the
+  `audit_log` trigger list at all (same Phase 1 scope gap as
+  `marketing_lead`/`target_plan` above), so there's no queryable history
+  of who removed a colleague's upload or a product's collateral link,
+  only the same `structlog` info-level line every other action gets.
+  Worth adding once there's a real incident or a client ask that needs
+  "who deleted this and when" answered — same generic trigger mechanism
+  extends to `document` with no new design work.
+
 - **Urgent-notification infrastructure — retained 2026-09-02, now back in
   active use via Manager Note (2026-09-08/09).** The IndiaMART 4-hour-SLA
   urgent path (`URGENT_LEAD_SOURCE_NAMES` computing `is_urgent` in
