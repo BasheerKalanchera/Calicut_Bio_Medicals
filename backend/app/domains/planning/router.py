@@ -44,7 +44,7 @@ def list_pending_approval(
 ) -> APIResponse[list[TargetPlanResponse]]:
     """The "Needs your approval" section -- empty for anyone who isn't
     currently someone's resolved approver, no role check involved."""
-    target_plans = service.list_pending_approval_for_approver(current_user.id)
+    target_plans = service.list_pending_approval_for_approver(current_user)
     return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
 
 
@@ -109,7 +109,7 @@ def approve_target_plan(
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
     target_plan = service.approve_or_reject_target_plan(
-        target_plan_id, status="APPROVED", current_user=current_user
+        target_plan_id, status="APPROVED", current_user=current_user, note=body.note
     )
     return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
 
@@ -122,7 +122,7 @@ def reject_target_plan(
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
     target_plan = service.approve_or_reject_target_plan(
-        target_plan_id, status="REJECTED", current_user=current_user
+        target_plan_id, status="REJECTED", current_user=current_user, note=body.note
     )
     return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
 

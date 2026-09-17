@@ -25,6 +25,7 @@ export interface TargetPlan {
   approved_by: string | null;
   approver: TargetPlanUser | null;
   approved_at: string | null;
+  decision_note: string | null;
   created_at: string;
   updated_at: string;
 }

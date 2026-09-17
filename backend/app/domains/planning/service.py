@@ -32,8 +32,15 @@ class TargetPlanService:
     def list_by_user(self, user_id: uuid.UUID) -> list[TargetPlan]:
         return self.repository.list_by_user(user_id)
 
-    def list_pending_approval_for_approver(self, approver_id: uuid.UUID) -> list[TargetPlan]:
-        return self.repository.list_pending_approval_for_approver(approver_id)
+    def list_pending_approval_for_approver(self, current_user: UserProfile) -> list[TargetPlan]:
+        """Admin/GM additionally see whoever has no manager at all (today,
+        only GM) -- the same overlay-override tier that's already allowed
+        to act on that row via approve_or_reject_target_plan below, now
+        actually able to find it in their own queue."""
+        is_overlay = current_user.role.role_name in _OVERLAY_ROLES
+        return self.repository.list_pending_approval_for_approver(
+            current_user.id, include_orphaned=is_overlay
+        )
 
     def list_team_targets(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
         """Every target in the SBU for the period, all statuses -- the
@@ -67,8 +74,10 @@ class TargetPlanService:
         self, target_plan_id: uuid.UUID, data: TargetPlanUpdate, *, current_user: UserProfile
     ) -> TargetPlan:
         """Owner revising their own number (decision #5). A revision to an
-        already-APPROVED target always needs a fresh sign-off -- resets
-        status back to PENDING_APPROVAL and clears the prior approval."""
+        already-decided (APPROVED or REJECTED) target always needs a fresh
+        sign-off -- resets status back to PENDING_APPROVAL and clears the
+        prior decision, so a corrected number reappears in the approver's
+        queue instead of staying stuck on the old decision."""
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
@@ -76,15 +85,21 @@ class TargetPlanService:
             raise AuthorizationError("You can only revise your own target.")
 
         target_plan.target_amount_lakhs = data.target_amount_lakhs
-        if target_plan.status == "APPROVED":
+        if target_plan.status in ("APPROVED", "REJECTED"):
             target_plan.status = "PENDING_APPROVAL"
             target_plan.approved_by = None
             target_plan.approved_at = None
+            target_plan.decision_note = None
         target_plan.updated_by = current_user.id
         return self.repository.update(target_plan)
 
     def approve_or_reject_target_plan(
-        self, target_plan_id: uuid.UUID, *, status: str, current_user: UserProfile
+        self,
+        target_plan_id: uuid.UUID,
+        *,
+        status: str,
+        current_user: UserProfile,
+        note: str | None = None,
     ) -> TargetPlan:
         """Nobody approves their own row, full stop -- not just a GM special
         case. The resolved approver is the owner's own manager
@@ -110,6 +125,7 @@ class TargetPlanService:
         target_plan.status = status
         target_plan.approved_by = current_user.id
         target_plan.approved_at = datetime.now(UTC)
+        target_plan.decision_note = note
         target_plan.updated_by = current_user.id
         return self.repository.update(target_plan)
 

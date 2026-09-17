@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UserNested(BaseModel):
@@ -23,7 +23,7 @@ class SBUNested(BaseModel):
 class TargetPlanCreate(BaseModel):
     sbu_id: uuid.UUID
     planning_period: str
-    target_amount_lakhs: Decimal
+    target_amount_lakhs: Decimal = Field(..., gt=0)
 
     @field_validator("planning_period")
     @classmethod
@@ -34,7 +34,7 @@ class TargetPlanCreate(BaseModel):
 
 
 class TargetPlanUpdate(BaseModel):
-    target_amount_lakhs: Decimal
+    target_amount_lakhs: Decimal = Field(..., gt=0)
 
 
 class TargetPlanApprovalDecision(BaseModel):
@@ -63,6 +63,7 @@ class TargetPlanResponse(BaseModel):
     approved_by: uuid.UUID | None
     approver: UserNested | None
     approved_at: datetime | None
+    decision_note: str | None
     created_at: datetime
     updated_at: datetime
 

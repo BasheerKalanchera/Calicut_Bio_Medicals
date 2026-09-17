@@ -45,6 +45,24 @@ class TestListPendingApprovalForApprover:
         sql = _compiled(stmt)
         assert f"user_profile.manager_id = '{_uuid_literal(APPROVER_ID)}'" in sql
         assert "target_plan.status = 'PENDING_APPROVAL'" in sql
+        assert "manager_id IS NULL" not in sql
+
+    def test_include_orphaned_also_matches_managerless_owners(self):
+        """The GM's own target (manager_id IS NULL) has to reach *someone's*
+        approval queue -- Admin/GM's overlay-override queue is that someone,
+        resolved 2026-09-17 (docs/Target-Planning-Code-Review-Findings-2026-
+        09-17.md, finding discovered live: the button to approve it existed,
+        but nothing ever listed it)."""
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.scalars.return_value.all.return_value = []
+
+        repo.list_pending_approval_for_approver(APPROVER_ID, include_orphaned=True)
+
+        stmt = repo.db.scalars.call_args[0][0]
+        sql = _compiled(stmt)
+        assert f"user_profile.manager_id = '{_uuid_literal(APPROVER_ID)}'" in sql
+        assert "user_profile.manager_id IS NULL" in sql
+        assert f"target_plan.user_id != '{_uuid_literal(APPROVER_ID)}'" in sql
 
 
 class TestListBySbuAndPeriod:

@@ -93,7 +93,14 @@ export default function FormModal({
           </Alert>
         )}
         <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* MUI removes DialogContent's own top padding whenever it directly
+              follows DialogTitle (its title's bottom padding is assumed to be
+              enough gap on its own) -- but an outlined TextField's floating
+              label pokes upward past its box, so with no error Alert above it
+              the first field's label sits nearly flush against the title.
+              pt here is padding on this Box, a plain child, so it's untouched
+              by that adjacent-sibling rule and always applies. */}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: "1rem", pt: 1.5 }}>
             {children}
           </Box>
         </DialogContent>

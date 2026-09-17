@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-16 from the Dev database, catching up migration
--- 0044: target_plan approval workflow columns + RLS
+-- Regenerated 2026-09-17 from the Dev database, catching up migration
+-- 0045: target_plan decision_note column + target_plan_read RLS fix
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict HQJQcVM3LV5WjkgVo1PmJVF7grx86Xkjb4zua43TazYLFGnsBsYNmRLCOLuuBbo
+\restrict mQfU6GrdvC6YshaeVZHCLZTQSagCU3gvCQdeXMFEtCAUX7K8TNhQxG4smREUnrq
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -729,6 +729,7 @@ CREATE TABLE public.target_plan (
     status character varying(20) DEFAULT 'PENDING_APPROVAL'::character varying NOT NULL,
     approved_by uuid,
     approved_at timestamp with time zone,
+    decision_note text,
     CONSTRAINT ck_target_plan_status CHECK (((status)::text = ANY ((ARRAY['PENDING_APPROVAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[]))),
     CONSTRAINT target_plan_planning_period_check CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
@@ -2686,16 +2687,16 @@ CREATE POLICY target_plan_delete ON public.target_plan FOR DELETE USING (((user_
 -- Name: target_plan target_plan_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY target_plan_read ON public.target_plan FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR (((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (user_id IN ( SELECT up.id
+CREATE POLICY target_plan_read ON public.target_plan FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((sbu_id = public.cabio_app_sbu_id()) AND ((user_id IN ( SELECT up.id
    FROM (public.user_profile up
      JOIN public.user_zone uz ON ((uz.user_id = up.id)))
   WHERE (uz.zone_id IN ( SELECT zone_closure.descendant_zone_id
            FROM public.zone_closure
           WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
                    FROM public.user_zone
-                  WHERE (user_zone.user_id = public.cabio_app_uid())))))))) OR (user_id IN ( SELECT user_profile.id
+                  WHERE (user_zone.user_id = public.cabio_app_uid()))))))) OR (user_id IN ( SELECT user_profile.id
    FROM public.user_profile
-  WHERE (user_profile.manager_id = public.cabio_app_uid())))) OR (user_id = public.cabio_app_uid())));
+  WHERE (user_profile.manager_id = public.cabio_app_uid()))))) OR (user_id = public.cabio_app_uid())));
 
 
 --
@@ -2720,5 +2721,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict HQJQcVM3LV5WjkgVo1PmJVF7grx86Xkjb4zua43TazYLFGnsBsYNmRLCOLuuBbo
+\unrestrict mQfU6GrdvC6YshaeVZHCLZTQSagCU3gvCQdeXMFEtCAUX7K8TNhQxG4smREUnrq
 

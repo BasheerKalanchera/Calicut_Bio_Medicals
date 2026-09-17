@@ -36,6 +36,7 @@ def _make_target_plan(**overrides) -> MagicMock:
         "status": "PENDING_APPROVAL",
         "approved_by": None,
         "approved_at": None,
+        "decision_note": None,
     }
     defaults.update(overrides)
     target_plan = MagicMock(spec=TargetPlan)
@@ -106,6 +107,27 @@ class TestUpdateTargetPlan:
         assert result.status == "PENDING_APPROVAL"
         assert result.approved_by is None
         assert result.approved_at is None
+
+    def test_revising_a_rejected_target_resets_to_pending(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(
+            user_id=owner.id,
+            status="REJECTED",
+            approved_by=uuid.uuid4(),
+            approved_at="2026-09-01",
+            decision_note="Too low for this territory",
+        )
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = TargetPlanService(repository=repo)
+
+        result = service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(target_amount_lakhs=Decimal("80")), current_user=owner
+        )
+
+        assert result.status == "PENDING_APPROVAL"
+        assert result.approved_by is None
+        assert result.approved_at is None
+        assert result.decision_note is None
 
     def test_non_owner_cannot_revise(self):
         owner = _make_user("Sales Staff")
@@ -224,6 +246,58 @@ class TestApproveOrRejectTargetPlan:
         )
 
         assert result.status == "REJECTED"
+
+    def test_reject_with_note_persists_it_on_the_row(self):
+        manager = _make_user("Area Manager")
+        subordinate = _make_user("Sales Staff", manager_id=manager.id)
+        target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = subordinate
+        service = TargetPlanService(repository=repo)
+
+        result = service.approve_or_reject_target_plan(
+            target_plan.id,
+            status="REJECTED",
+            current_user=manager,
+            note="Too low for this territory",
+        )
+
+        assert result.decision_note == "Too low for this territory"
+
+
+class TestListPendingApprovalForApprover:
+    def test_non_overlay_caller_does_not_request_orphaned_rows(self):
+        manager = _make_user("Area Manager")
+        repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
+        service = TargetPlanService(repository=repo)
+
+        service.list_pending_approval_for_approver(manager)
+
+        repo.list_pending_approval_for_approver.assert_called_once_with(
+            manager.id, include_orphaned=False
+        )
+
+    def test_admin_caller_requests_orphaned_rows_too(self):
+        admin = _make_user("Admin")
+        repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
+        service = TargetPlanService(repository=repo)
+
+        service.list_pending_approval_for_approver(admin)
+
+        repo.list_pending_approval_for_approver.assert_called_once_with(
+            admin.id, include_orphaned=True
+        )
+
+    def test_gm_caller_requests_orphaned_rows_too(self):
+        gm = _make_user("General Manager")
+        repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
+        service = TargetPlanService(repository=repo)
+
+        service.list_pending_approval_for_approver(gm)
+
+        repo.list_pending_approval_for_approver.assert_called_once_with(
+            gm.id, include_orphaned=True
+        )
 
 
 class TestGetSbuRollup:

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -28,6 +28,7 @@ class TargetPlan(AuditMixin, Base):
         UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
     )
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped["UserProfile"] = relationship(
         back_populates="target_plans", foreign_keys=[user_id], lazy="joined"

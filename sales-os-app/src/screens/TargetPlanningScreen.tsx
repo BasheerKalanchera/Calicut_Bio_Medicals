@@ -37,18 +37,24 @@ import {
   getPlanningYearQuarters,
   formatLakhs,
 } from "../utils/reporting";
-import type { TargetPlan, TargetPlanStatus } from "../types/targetPlanning";
+import type { TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
 // today (same TODO noted in MarketingLeadCreateModal.tsx et al.).
 interface SbuOption { id: string; name: string }
 
-// SBU Manager/Area Manager see the rollup for their own SBU; Admin/GM pick
-// one (they carry no real business SBU of their own -- see
-// Target-Planning-Implementation-Plan.md). Sales Staff never sees this
-// section at all.
+// Sales Staff never sees the team-wide rollup section at all -- everyone
+// else (SBU Manager/Area Manager/Admin/GM) does, scoped by RLS.
 const ROLLUP_VISIBLE_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
-const SBU_PICKER_ROLES = new Set(["Admin", "General Manager"]);
+
+// Admin is purely an oversight/approval account -- unlike GM, who sells
+// personally alongside running the company (Basheer's call, 2026-09-17),
+// Admin carries no personal sales quota, so "My Target" doesn't apply to
+// them at all. This can't be derived from userProfile.sbu being null --
+// GM's sbu is null for the exact same structural reason (no fixed home
+// SBU) but GM *does* get this section -- it's a real, deliberate business
+// exception, not a hierarchy generalization.
+const NO_PERSONAL_TARGET_ROLES = new Set(["Admin"]);
 
 const STATUS_LABEL: Record<TargetPlanStatus, string> = {
   PENDING_APPROVAL: "Pending Approval",
@@ -65,14 +71,38 @@ function StatusChip({ status }: { status: TargetPlanStatus }) {
   return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />;
 }
 
+// A resolved decision (Approved/Rejected) can carry the approver's note --
+// shown right under the chip so it isn't stored but invisible.
+function StatusWithNote({ target }: { target: TargetPlan }) {
+  return (
+    <Box>
+      <StatusChip status={target.status} />
+      {target.decision_note && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+          {target.decision_note}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
 function fiscalYearLabel(fyStartYear: number): string {
   return `FY ${fyStartYear}-${String((fyStartYear + 1) % 100).padStart(2, "0")}`;
 }
 
 // One person's target amounts across a fiscal year's 4 quarters -- the
-// annual rollup's per-rep grouping (Group H's "grouped rows" layout).
+// team rollup's per-rep grouping (Group H's "grouped rows" layout).
 interface AnnualPerson {
   user: TargetPlan["user"];
+  total: number;
+  byQuarter: Record<string, TargetPlan | undefined>;
+}
+
+// "My Target" grouped by SBU -- almost everyone belongs to exactly one SBU
+// (so this collapses to a single block), but Admin/GM belong to none and
+// may set a target in each, since they sell across every SBU personally.
+interface AnnualSbuBlock {
+  sbu: TargetPlanSbu;
   total: number;
   byQuarter: Record<string, TargetPlan | undefined>;
 }
@@ -82,13 +112,19 @@ export default function TargetPlanningScreen() {
   const queryClient = useQueryClient();
   const roleName: string | undefined = userProfile?.role_name;
   const showRollup = !!roleName && ROLLUP_VISIBLE_ROLES.has(roleName);
-  const showSbuPicker = !!roleName && SBU_PICKER_ROLES.has(roleName);
+  const showMyTarget = !roleName || !NO_PERSONAL_TARGET_ROLES.has(roleName);
+  // Data-driven, not role-driven: whoever has no fixed home SBU (today,
+  // that's Admin/GM -- they oversee every SBU rather than belonging to
+  // one) needs to choose which SBU a target/rollup applies to. Anyone with
+  // a real home SBU never sees a picker at all.
+  const needsSbuChoice = !userProfile?.sbu;
 
   const [viewMode, setViewMode] = useState<"quarterly" | "annual">("quarterly");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
   const [targetDialogOpen, setTargetDialogOpen] = useState(false);
   const [editingPeriod, setEditingPeriod] = useState(period);
+  const [editingSbuId, setEditingSbuId] = useState<string | null>(null);
   const [editingTarget, setEditingTarget] = useState<TargetPlan | null>(null);
   const [amountInput, setAmountInput] = useState("");
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
@@ -102,25 +138,40 @@ export default function TargetPlanningScreen() {
   const { data: sbus = [] } = useQuery({
     queryKey: ["sbus"],
     queryFn: () => listSbus() as Promise<SbuOption[]>,
-    enabled: showSbuPicker,
+    enabled: needsSbuChoice,
   });
 
-  // Admin/GM must pick an SBU explicitly (no natural default) -- derived
-  // from the loaded list rather than an effect, defaulting to the first one
-  // until the user picks a different one.
-  const rollupSbuId = showSbuPicker ? (selectedSbuId ?? sbus[0]?.id ?? null) : userProfile?.sbu_id ?? null;
+  // The SBU(s) relevant to "my own" targets -- one's own home SBU for
+  // almost everyone, or every SBU in the org for whoever has none.
+  const mySbus: TargetPlanSbu[] = userProfile?.sbu ? [userProfile.sbu] : sbus;
+
+  // Admin/GM must pick an SBU explicitly for the rollup below (no natural
+  // default) -- derived from the loaded list rather than an effect,
+  // defaulting to the first one until the user picks a different one.
+  const rollupSbuId = needsSbuChoice ? (selectedSbuId ?? sbus[0]?.id ?? null) : userProfile?.sbu?.id ?? null;
 
   const { data: myTargets = [] } = useQuery({
     queryKey: ["target-plans", "mine"],
     queryFn: listTargetPlans,
+    enabled: showMyTarget,
   });
-  const myTarget = myTargets.find((t) => t.planning_period === period) ?? null;
-  const myAnnualByQuarter: Record<string, TargetPlan | undefined> = {};
-  for (const q of yearQuarters) myAnnualByQuarter[q] = myTargets.find((t) => t.planning_period === q);
-  const myAnnualTotal = yearQuarters.reduce(
-    (sum, q) => sum + Number(myAnnualByQuarter[q]?.target_amount_lakhs ?? 0),
-    0
-  );
+
+  const myPeriodTargets = myTargets.filter((t) => t.planning_period === period);
+  const mySbuIdsWithTarget = new Set(myPeriodTargets.map((t) => t.sbu_id));
+  const myAvailableSbus = mySbus.filter((s) => !mySbuIdsWithTarget.has(s.id));
+  const myPeriodTotal = myPeriodTargets.reduce((sum, t) => sum + Number(t.target_amount_lakhs), 0);
+
+  const myAnnualBySbu: AnnualSbuBlock[] = mySbus.map((sbu) => {
+    const byQuarter: Record<string, TargetPlan | undefined> = {};
+    let total = 0;
+    for (const q of yearQuarters) {
+      const t = myTargets.find((x) => x.sbu_id === sbu.id && x.planning_period === q);
+      byQuarter[q] = t;
+      total += Number(t?.target_amount_lakhs ?? 0);
+    }
+    return { sbu, total, byQuarter };
+  });
+  const myAnnualGrandTotal = myAnnualBySbu.reduce((sum, b) => sum + b.total, 0);
 
   const { data: pendingApproval = [] } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
@@ -168,8 +219,9 @@ export default function TargetPlanningScreen() {
     queryClient.invalidateQueries({ queryKey: ["target-plans"] });
   };
 
-  const openTargetDialog = (quarterPeriod: string, existing: TargetPlan | null) => {
+  const openTargetDialog = (quarterPeriod: string, existing: TargetPlan | null, sbuId: string) => {
     setEditingPeriod(quarterPeriod);
+    setEditingSbuId(sbuId);
     setEditingTarget(existing);
     setAmountInput(existing ? existing.target_amount_lakhs : "");
     setTargetDialogOpen(true);
@@ -182,9 +234,9 @@ export default function TargetPlanningScreen() {
     }
     if (editingTarget) {
       await updateTargetPlan(editingTarget.id, { target_amount_lakhs: amount });
-    } else {
+    } else if (editingSbuId) {
       await createTargetPlan({
-        sbu_id: userProfile.sbu_id,
+        sbu_id: editingSbuId,
         planning_period: editingPeriod,
         target_amount_lakhs: amount,
       });
@@ -239,59 +291,98 @@ export default function TargetPlanningScreen() {
         </ToggleButtonGroup>
       </Box>
 
+      {showMyTarget && (
       <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Target</Typography>
         {!isAnnual ? (
-          myTarget ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-              <Typography sx={{ fontSize: "1.25rem", fontWeight: 700 }}>
-                {formatLakhs(Number(myTarget.target_amount_lakhs))}
+          <>
+            {mySbus.length > 1 && (
+              <Typography sx={{ mb: 1.5 }}>
+                Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
               </Typography>
-              <StatusChip status={myTarget.status} />
-              <Button variant="outlined" size="small" onClick={() => openTargetDialog(period, myTarget)}>Revise</Button>
-            </Box>
-          ) : (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Typography color="text.secondary">No target set for {period} yet.</Typography>
-              <Button variant="contained" size="small" onClick={() => openTargetDialog(period, null)}>Set Target</Button>
-            </Box>
-          )
-        ) : (
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Quarter</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow sx={{ "& td": { fontWeight: 700, borderBottom: "2px solid", borderColor: "divider" } }}>
-                <TableCell>Annual Total</TableCell>
-                <TableCell>{formatLakhs(myAnnualTotal)}</TableCell>
-                <TableCell />
-                <TableCell align="right" />
-              </TableRow>
-              {yearQuarters.map((q) => {
-                const t = myAnnualByQuarter[q];
-                return (
-                  <TableRow key={q}>
-                    <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
-                    <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
-                    <TableCell>
-                      {t ? <StatusChip status={t.status} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
-                    </TableCell>
+            )}
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>SBU</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {myPeriodTargets.map((t) => (
+                  <TableRow key={t.id}>
+                    <TableCell>{t.sbu.name}</TableCell>
+                    <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                    <TableCell><StatusWithNote target={t} /></TableCell>
                     <TableCell align="right">
-                      <Button size="small" onClick={() => openTargetDialog(q, t ?? null)}>{t ? "Revise" : "Set"}</Button>
+                      <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>Revise</Button>
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ))}
+                {myAvailableSbus.map((sbu) => (
+                  <TableRow key={sbu.id}>
+                    <TableCell>{sbu.name}</TableCell>
+                    <TableCell colSpan={2}>
+                      <Typography color="text.secondary">No target set for {period} yet.</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Set Target</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </>
+        ) : (
+          <>
+            {myAnnualBySbu.length > 1 && (
+              <Typography sx={{ mb: 1.5 }}>
+                Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
+              </Typography>
+            )}
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>SBU / Quarter</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {myAnnualBySbu.map((block) => (
+                  <Fragment key={block.sbu.id}>
+                    <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
+                      <TableCell>{block.sbu.name} — Annual Total</TableCell>
+                      <TableCell>{formatLakhs(block.total)}</TableCell>
+                      <TableCell />
+                      <TableCell align="right" />
+                    </TableRow>
+                    {yearQuarters.map((q) => {
+                      const t = block.byQuarter[q];
+                      return (
+                        <TableRow key={`${block.sbu.id}-${q}`}>
+                          <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                          <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                          <TableCell>
+                            {t ? <StatusWithNote target={t} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{t ? "Revise" : "Set"}</Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </Fragment>
+                ))}
+              </TableBody>
+            </Table>
+          </>
         )}
       </Box>
+      )}
 
       {pendingApproval.length > 0 && (
         <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
@@ -326,7 +417,7 @@ export default function TargetPlanningScreen() {
         <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target Rollup</Typography>
-            {showSbuPicker && (
+            {needsSbuChoice && (
               <TextField
                 select
                 size="small"
@@ -363,7 +454,7 @@ export default function TargetPlanningScreen() {
                     <TableRow key={t.id}>
                       <TableCell>{t.user.display_name}</TableCell>
                       <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                      <TableCell><StatusChip status={t.status} /></TableCell>
+                      <TableCell><StatusWithNote target={t} /></TableCell>
                     </TableRow>
                   ))}
                   {teamTargets.length === 0 && (
@@ -405,7 +496,7 @@ export default function TargetPlanningScreen() {
                             <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
                             <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
                             <TableCell>
-                              {t ? <StatusChip status={t.status} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                              {t ? <StatusWithNote target={t} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                             </TableCell>
                           </TableRow>
                         );
@@ -444,6 +535,9 @@ export default function TargetPlanningScreen() {
         />
         {editingTarget?.status === "APPROVED" && (
           <Alert severity="info">Revising an approved target sends it back for a fresh approval.</Alert>
+        )}
+        {editingTarget?.status === "REJECTED" && (
+          <Alert severity="info">Revising a rejected target sends it back for a fresh approval.</Alert>
         )}
       </FormModal>
 

@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
@@ -17,17 +17,33 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         stmt = select(TargetPlan).where(TargetPlan.user_id == user_id).order_by(TargetPlan.planning_period)
         return list(self.db.scalars(stmt).all())
 
-    def list_pending_approval_for_approver(self, approver_id: uuid.UUID) -> list[TargetPlan]:
+    def list_pending_approval_for_approver(
+        self, approver_id: uuid.UUID, *, include_orphaned: bool = False
+    ) -> list[TargetPlan]:
         """Every PENDING_APPROVAL row whose owner's manager_id is approver_id.
 
         RLS already narrows what this query can see to what the caller is
         allowed to read -- this just adds the "and it's actually mine to
         approve" filter on top, for the "Needs your approval" screen section.
+
+        `include_orphaned` additionally surfaces rows whose owner has no
+        manager at all (manager_id IS NULL -- today, only GM) and isn't the
+        caller themselves. Without this, whoever sits at the top of the
+        chain has a target that can never appear in *anyone's* approval
+        list, including Admin/GM's own overlay-override queue, even though
+        approve_or_reject_target_plan already lets that overlay act on it --
+        the button to do so just never showed up. Callers pass this only
+        when they're actually in the overlay-override tier (see service.py).
         """
+        conditions = [UserProfile.manager_id == approver_id]
+        if include_orphaned:
+            conditions.append(
+                (UserProfile.manager_id.is_(None)) & (TargetPlan.user_id != approver_id)
+            )
         stmt = (
             select(TargetPlan)
             .join(UserProfile, UserProfile.id == TargetPlan.user_id)
-            .where(UserProfile.manager_id == approver_id)
+            .where(or_(*conditions))
             .where(TargetPlan.status == "PENDING_APPROVAL")
             .order_by(TargetPlan.planning_period)
         )
