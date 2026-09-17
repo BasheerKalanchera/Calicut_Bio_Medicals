@@ -23,6 +23,8 @@
     --not-started-soft:#FBE9E5;
     --bonus:#5850A0;
     --bonus-soft:#ECEAF8;
+    --pending:#3D72B4;
+    --pending-soft:#E7EEF8;
     --shadow: 0 1px 2px rgba(20,32,29,0.06), 0 6px 20px -8px rgba(20,32,29,0.12);
   }
 
@@ -47,6 +49,8 @@
       --not-started-soft:#301A16;
       --bonus:#ACA5EE;
       --bonus-soft:#211E3B;
+      --pending:#7FB0EA;
+      --pending-soft:#1B2A3D;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
     }
   }
@@ -70,6 +74,8 @@
     --not-started-soft:#301A16;
     --bonus:#ACA5EE;
     --bonus-soft:#211E3B;
+    --pending:#7FB0EA;
+    --pending-soft:#1B2A3D;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
   }
 
@@ -160,7 +166,7 @@
   }
   .stat-row{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
     gap:18px;
   }
   @media (max-width:640px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
@@ -294,6 +300,7 @@
       <a href="#partial" data-n="partial"><span>Partial</span><span class="n">12</span></a>
       <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">10</span></a>
       <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">15</span></a>
+      <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">2</span></a>
   </nav>
 
   <main>
@@ -320,6 +327,10 @@
           <div class="stat">
             <div class="num" style="color:var(--bonus)">15</div>
             <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
+          </div>
+          <div class="stat">
+            <div class="num" style="color:var(--pending)">2</div>
+            <div class="lbl"><span class="swatch" style="background:var(--pending)"></span>Pending Decision</div>
           </div>
         </div>
 
@@ -834,9 +845,20 @@
       </div>
     </section>
 
+    <section class="bonus" id="pending">
+      <div class="bonus-head">
+        <h2>Pending &mdash; proposed, not yet built</h2>
+        <p class="bonus-desc">2 more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+      </div>
+      <div class="bonus-list">
+        <div class="bitem"><div class="bnum">1</div><div><p>Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let the marketing team nudge them for an update on the same thread.</p><p class="note" style="margin-top:4px">Awaiting Latheef Bhai's confirmation. `docs/Discussion-Lead-Followup-Comments-2026-09.md`.</p></div></div>
+        <div class="bitem"><div class="bnum">2</div><div><p>Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory.</p><p class="note" style="margin-top:4px">Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`.</p></div></div>
+      </div>
+    </section>
+
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>50 requirements &middot; 28 done &middot; 12 partial &middot; 10 not started &middot; 15 new features added</span>
+      <span>50 requirements &middot; 28 done &middot; 12 partial &middot; 10 not started &middot; 15 new features added &middot; 2 pending</span>
     </footer>
     </div>
   </main>

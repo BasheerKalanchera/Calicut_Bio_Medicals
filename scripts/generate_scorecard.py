@@ -19,6 +19,14 @@ Regenerates:
     engineering reference only). Republish separately if this is the view
     being shared.
 
+All three client-facing outputs also carry a separate "Pending -- proposed,
+not yet built" list, parsed from its own subsection under "Commitment
+beyond contract" in Traceability.md. Unlike "New Features Added" (things
+already delivered), these are ideas raised for leadership to decide on --
+kept in a visually distinct section/color so nothing there reads as
+shipped. Move an item from "Pending" into the main "Commitment beyond
+contract" table once it's actually built.
+
 Run this after any Status/Note edit to Traceability.md. Never hand-edit
 either generated file directly. This also rewrites the "Current tally"
 line inside Traceability.md itself (between the TALLY:START/TALLY:END
@@ -73,7 +81,7 @@ def split_row(line: str) -> list[str]:
     return [cell.strip() for cell in inner.split("|")]
 
 
-def parse_traceability() -> tuple[list[tuple[str, list[dict]]], list[str]]:
+def parse_traceability() -> tuple[list[tuple[str, list[dict]]], list[str], list[tuple[str, str]]]:
     text = TRACEABILITY.read_text(encoding="utf-8")
 
     # Module sections: "## N. Title" or "## Nb. Title" up to the next "## " or "---"
@@ -99,7 +107,7 @@ def parse_traceability() -> tuple[list[tuple[str, list[dict]]], list[str]]:
             )
         modules.append((title, rows))
 
-    # Commitment beyond contract table
+    # Commitment beyond contract table (already built, no Status column)
     beyond_match = re.search(
         r"## Commitment beyond contract\n\n.*?\n\n(\| # \|.*?)\n\n", text, re.DOTALL
     )
@@ -110,7 +118,18 @@ def parse_traceability() -> tuple[list[tuple[str, list[dict]]], list[str]]:
             cells = split_row(line)
             beyond_items.append(cells[1])
 
-    return modules, beyond_items
+    # Pending -- proposed, not yet built (separate table, has a Status column)
+    pending_match = re.search(
+        r"### Pending — proposed, not yet built\n\n.*?\n\n(\| # \|.*?)\n\n", text, re.DOTALL
+    )
+    pending_items: list[tuple[str, str]] = []
+    if pending_match:
+        lines = [l for l in pending_match.group(1).splitlines() if l.strip().startswith("|")]
+        for line in lines[2:]:
+            cells = split_row(line)
+            pending_items.append((cells[1], cells[2]))
+
+    return modules, beyond_items, pending_items
 
 
 TALLY_PATTERN = re.compile(
@@ -153,7 +172,11 @@ def compute_tally(modules: list[tuple[str, list[dict]]]) -> tuple[int, int, int]
     return done, partial, not_started
 
 
-def render_scorecard(modules: list[tuple[str, list[dict]]], beyond_items: list[str]) -> str:
+def render_scorecard(
+    modules: list[tuple[str, list[dict]]],
+    beyond_items: list[str],
+    pending_items: list[tuple[str, str]],
+) -> str:
     done, partial, not_started = compute_tally(modules)
     total = done + partial + not_started
     strict_pct = round(done / total * 100, 1)
@@ -172,7 +195,8 @@ def render_scorecard(modules: list[tuple[str, list[dict]]], beyond_items: list[s
         "",
         f"Of **{total}** signed requirements: **{done} done, {partial} partly done, {not_started} not "
         f"started** — plus **{len(beyond_items)} features built that weren't asked for at all** (see "
-        '"Commitment beyond contract" at the end).',
+        '"Commitment beyond contract" at the end), and **'
+        f'{len(pending_items)} more proposed but not yet decided** (see "Pending" below that).',
         "",
         "| Done | Partly done | Not started | New Features Added |",
         "| :---: | :---: | :---: | :---: |",
@@ -219,6 +243,20 @@ def render_scorecard(modules: list[tuple[str, list[dict]]], beyond_items: list[s
     for i, item in enumerate(beyond_items, start=1):
         lines.append(f"| {i} | {item} |")
     lines.append("")
+
+    if pending_items:
+        lines.append("### Pending — proposed, not yet built")
+        lines.append("")
+        lines.append(
+            "Proposed additions beyond the signed scope, not yet confirmed or built. "
+            'Moves into "What we built" above once it is.'
+        )
+        lines.append("")
+        lines.append("| # | What's proposed | Status |")
+        lines.append("| :---: | :--- | :--- |")
+        for i, (item, status) in enumerate(pending_items, start=1):
+            lines.append(f"| {i} | {item} | {status} |")
+        lines.append("")
 
     return "\n".join(lines)
 
@@ -283,6 +321,8 @@ HTML_HEAD = """<!doctype html><html><head><meta charset=utf8><meta name=viewport
     --not-started-soft:#FBE9E5;
     --bonus:#5850A0;
     --bonus-soft:#ECEAF8;
+    --pending:#3D72B4;
+    --pending-soft:#E7EEF8;
     --shadow: 0 1px 2px rgba(20,32,29,0.06), 0 6px 20px -8px rgba(20,32,29,0.12);
   }
 
@@ -307,6 +347,8 @@ HTML_HEAD = """<!doctype html><html><head><meta charset=utf8><meta name=viewport
       --not-started-soft:#301A16;
       --bonus:#ACA5EE;
       --bonus-soft:#211E3B;
+      --pending:#7FB0EA;
+      --pending-soft:#1B2A3D;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
     }
   }
@@ -330,6 +372,8 @@ HTML_HEAD = """<!doctype html><html><head><meta charset=utf8><meta name=viewport
     --not-started-soft:#301A16;
     --bonus:#ACA5EE;
     --bonus-soft:#211E3B;
+    --pending:#7FB0EA;
+    --pending-soft:#1B2A3D;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
   }
 
@@ -420,7 +464,7 @@ HTML_HEAD = """<!doctype html><html><head><meta charset=utf8><meta name=viewport
   }
   .stat-row{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
     gap:18px;
   }
   @media (max-width:640px){ .stat-row{ grid-template-columns:repeat(2,1fr); } }
@@ -674,7 +718,11 @@ def render_tally_spans(rows: list[dict]) -> str:
     return "\n          ".join(spans)
 
 
-def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list[str]) -> str:
+def render_client_html(
+    modules: list[tuple[str, list[dict]]],
+    beyond_items: list[str],
+    pending_items: list[tuple[str, str]],
+) -> str:
     done, partial, not_started = compute_tally(modules)
     total = done + partial + not_started
     strict_pct = round(done / total * 100, 1)
@@ -698,6 +746,8 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
         )
     nav_lines.append('      <a href="#bonus" data-n="+"><span>Beyond Contract</span><span class="n">'
                       f'{len(beyond_items)}</span></a>')
+    nav_lines.append('      <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">'
+                      f'{len(pending_items)}</span></a>')
 
     body_parts = []
     row_num = 0
@@ -764,6 +814,10 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
             <div class="num" style="color:var(--bonus)">{len(beyond_items)}</div>
             <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
           </div>
+          <div class="stat">
+            <div class="num" style="color:var(--pending)">{len(pending_items)}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--pending)"></span>Pending Decision</div>
+          </div>
         </div>
 
         <div class="traceblock">
@@ -810,9 +864,27 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
       </div>
     </section>
 
+"""
+
+    pending_items_html = "\n".join(
+        f'        <div class="bitem"><div class="bnum">{i}</div><div><p>{esc(item)}</p>'
+        f'<p class="note" style="margin-top:4px">{esc(status)}</p></div></div>'
+        for i, (item, status) in enumerate(pending_items, start=1)
+    )
+
+    pending_section = f"""    <section class="bonus" id="pending">
+      <div class="bonus-head">
+        <h2>Pending &mdash; proposed, not yet built</h2>
+        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+      </div>
+      <div class="bonus-list">
+{pending_items_html}
+      </div>
+    </section>
+
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard</span>
-      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} bonus</span>
+      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} bonus &middot; {len(pending_items)} pending</span>
     </footer>
 """
 
@@ -823,6 +895,7 @@ def render_client_html(modules: list[tuple[str, list[dict]]], beyond_items: list
         + header
         + "\n".join(body_parts)
         + bonus_section
+        + pending_section
         + HTML_TAIL
     )
 
@@ -834,7 +907,11 @@ STATUS_FILTERS = [
 ]
 
 
-def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: list[str]) -> str:
+def render_by_status_html(
+    modules: list[tuple[str, list[dict]]],
+    beyond_items: list[str],
+    pending_items: list[tuple[str, str]],
+) -> str:
     """Same 50 rows as render_client_html, regrouped by status first (Done /
     Partial / Not Started / New Features Added) and by module second, with
     the PRD Section column dropped -- that's internal engineering reference
@@ -861,6 +938,10 @@ def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: l
     nav_lines.append(
         '      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">'
         f'{len(beyond_items)}</span></a>'
+    )
+    nav_lines.append(
+        '      <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">'
+        f'{len(pending_items)}</span></a>'
     )
 
     body_parts = []
@@ -922,6 +1003,10 @@ def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: l
             <div class="num" style="color:var(--bonus)">{len(beyond_items)}</div>
             <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
           </div>
+          <div class="stat">
+            <div class="num" style="color:var(--pending)">{len(pending_items)}</div>
+            <div class="lbl"><span class="swatch" style="background:var(--pending)"></span>Pending Decision</div>
+          </div>
         </div>
 
         <div class="traceblock">
@@ -968,9 +1053,27 @@ def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: l
       </div>
     </section>
 
+"""
+
+    pending_items_html = "\n".join(
+        f'        <div class="bitem"><div class="bnum">{i}</div><div><p>{esc(item)}</p>'
+        f'<p class="note" style="margin-top:4px">{esc(status)}</p></div></div>'
+        for i, (item, status) in enumerate(pending_items, start=1)
+    )
+
+    pending_section = f"""    <section class="bonus" id="pending">
+      <div class="bonus-head">
+        <h2>Pending &mdash; proposed, not yet built</h2>
+        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+      </div>
+      <div class="bonus-list">
+{pending_items_html}
+      </div>
+    </section>
+
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} new features added</span>
+      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} new features added &middot; {len(pending_items)} pending</span>
     </footer>
 """
 
@@ -981,6 +1084,7 @@ def render_by_status_html(modules: list[tuple[str, list[dict]]], beyond_items: l
         + header
         + "\n".join(body_parts)
         + bonus_section
+        + pending_section
         + HTML_TAIL
     )
     return html.replace(
@@ -993,15 +1097,15 @@ def main() -> None:
     check_mode = "--check" in sys.argv
 
     original_traceability_text = TRACEABILITY.read_text(encoding="utf-8")
-    modules, beyond_items = parse_traceability()
+    modules, beyond_items, pending_items = parse_traceability()
     done, partial, not_started = compute_tally(modules)
 
     new_traceability_text = render_traceability_with_tally(
         original_traceability_text, done, partial, not_started
     )
-    new_scorecard_text = render_scorecard(modules, beyond_items)
-    new_html_text = render_client_html(modules, beyond_items)
-    new_by_status_html_text = render_by_status_html(modules, beyond_items)
+    new_scorecard_text = render_scorecard(modules, beyond_items, pending_items)
+    new_html_text = render_client_html(modules, beyond_items, pending_items)
+    new_by_status_html_text = render_by_status_html(modules, beyond_items, pending_items)
 
     targets = [
         (TRACEABILITY, new_traceability_text),
@@ -1034,7 +1138,10 @@ def main() -> None:
         f"Wrote {TRACEABILITY.relative_to(ROOT)}, {SCORECARD.relative_to(ROOT)}, "
         f"{CLIENT_HTML.relative_to(ROOT)}, and {CLIENT_HTML_BY_STATUS.relative_to(ROOT)}"
     )
-    print(f"Tally: {done} Done, {partial} Partial, {not_started} Not started, {len(beyond_items)} beyond-contract")
+    print(
+        f"Tally: {done} Done, {partial} Partial, {not_started} Not started, "
+        f"{len(beyond_items)} beyond-contract, {len(pending_items)} pending decision"
+    )
     print("Republish .scratch/phase1-scorecard.html and/or .scratch/phase1-scorecard-by-status.html to their Artifacts to push updates live.")
 
 

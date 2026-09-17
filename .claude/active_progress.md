@@ -1,5 +1,38 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-16_
+_Session: 2026-08-21 → 2026-09-17_
+
+## 2026-09-17 session — Lead Follow-up Comments discussion paper written; scorecard tooling extended with a "Pending — proposed, not yet built" list
+
+Basheer relayed a real incident (a lead assigned to Sruthi sat unopened for
+hours) that turned into two separate, resolved threads: the existing
+`marketing_lead` assignment notification/read-tracking was confirmed
+working as designed (bell-only, by intent — not a gap); the real gap is no
+way for a rep to report back what they did with a lead, or for Marketing
+to nudge them. Scoped by Basheer as a reuse of the existing Activity
+Comment pattern — explicitly **not** an IndiaMART status sync, **not** a
+new SMS/call alert. Written up:
+`docs/Discussion-Lead-Followup-Comments-2026-09.md` — awaiting Latheef
+Bhai's confirmation before an implementation plan is scoped.
+
+Basheer also asked for this, plus the existing Pricing/Discount-Authority
+paper, to be tracked to closure in the Traceability matrix. Since that
+matrix's "Commitment beyond contract" section feeds the client-facing
+scorecard verbatim as already-*built* features, added a new, separate
+"Pending — proposed, not yet built" subsection instead (own Status
+column, not counted in any Done/Partial/Not-started tally) so leadership
+sees these as open decisions, not delivered work. Required extending
+`scripts/generate_scorecard.py` to parse and render it (own color, own
+stat tile, own section) across `Phase1-Delivery-Scorecard.md` and both
+client HTML views. `--check` confirms all four generated files are in
+sync; both `.scratch` Artifacts republished.
+
+Also fixed a stale header found along the way:
+`docs/Lead-Management-Implementation-Plan.md` still said "Planned, not
+built" — the feature has actually been live since 2026-09-02.
+
+**Next step:** none pending on this thread — awaiting Basheer's
+conversation with Latheef Bhai on both pending items before either gets
+scoped into a real implementation plan.
 
 ## 2026-09-16 session (recovery) — Target Planning approval-workflow backend recovered from a crashed session, verified, committed
 

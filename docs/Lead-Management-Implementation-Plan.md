@@ -1,6 +1,8 @@
 # Lead Management for Marketing-Sourced Leads — Implementation Plan
 
-**Status:** Planned, not built.
+**Status:** Built and live (migrations `0031`–`0038`). One follow-on gap raised
+2026-09-17 — a lead follow-up comment thread between the assigned rep and Marketing —
+see `docs/Discussion-Lead-Followup-Comments-2026-09.md`.
 **Raised:** 2026-08-31, triggered by a real incident — a duplicate
 Opportunity ("CTG Machine @ Mount Zion Medical College," created by Abdul
 Latheef P, assigned to Vivek) turned out to duplicate a deal Vivek had

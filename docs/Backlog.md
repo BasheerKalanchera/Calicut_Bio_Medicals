@@ -404,7 +404,9 @@ addition once Brand has a stable id instead of free text. Noted on
   proposed data model, and open questions for Haroon/Latheef Bhai:
   `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Status: DRAFT,
   awaiting their decision on quoting price — supersedes this entry's framing,
-  not yet scoped or built.**
+  not yet scoped or built.** Now also tracked in `docs/Signed-Requirements-
+  to-PRD-Traceability.md`'s "Pending — proposed, not yet built" list
+  (added 2026-09-17), alongside the Lead Follow-up Comments paper above.
 - **Order-stage deals closing with zero Activity logged — candidate soft-
   warning rule, not built.** Raised 2026-09-03 (Basheer, reviewing UAT
   data for pipeline-stage coaching guidance): of 96 real opportunities in
@@ -578,6 +580,21 @@ addition once Brand has a stable id instead of free text. Noted on
   rights. Correct fix is a second, separate constant scoped to "roles
   that don't need a real SBU membership" (Admin, GM, Marketing User),
   leaving the authorization check untouched.
+
+- **Lead follow-up comments — discussion paper written, awaiting Latheef
+  Bhai's confirmation, not scoped or built.** Raised 2026-09-17: once a
+  rep opens a `marketing_lead` (assignment notification and read-tracking
+  already exist), there's no way for them to report back what they did
+  with it, or for the Marketing User who created it to nudge them for an
+  update. Proposed fix: reuse the existing Activity Comment feature's
+  shape as a two-way thread on `marketing_lead` instead of `Activity`.
+  Explicitly does **not** push any status back to IndiaMART's own site —
+  that stays Marketing's manual responsibility — and does **not** add a
+  new alert channel (SMS/call/push). Full write-up:
+  `docs/Discussion-Lead-Followup-Comments-2026-09.md`. Also logged in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`'s new "Pending —
+  proposed, not yet built" list, alongside the Pricing/Discount-Authority
+  paper below.
 
 - **Tally accounting alignment (SBU/Territory Cost Centre tagging) — a
   recommendation relayed to Latheef Bhai, not a decision or a build item.**

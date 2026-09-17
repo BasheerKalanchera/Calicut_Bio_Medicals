@@ -176,6 +176,18 @@ written in plain, external-safe language.
 | 14 | The sales team has already started entering real, live deals into the environment used for testing the system before go-live — so when it moves to production, that work carries straight over instead of being re-entered from scratch. Because real business data is at stake there already, it's backed up and its recoverability verified on the same schedule a live system would get, with copies kept on an external hard disk for disaster recovery — not treated as disposable test data. |
 | 15 | The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines. |
 
+### Pending — proposed, not yet built
+
+Following items are proposed additions beyond the signed scope, written up for
+discussion but not yet confirmed by Cabio leadership or built. Shown separately from
+the table above so nothing here is mistaken for already delivered — each moves up into
+"What we built" only once it actually is.
+
+| # | What's proposed | Status |
+| :---: | :--- | :--- |
+| 1 | Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let the marketing team nudge them for an update on the same thread. | Awaiting Latheef Bhai's confirmation. `docs/Discussion-Lead-Followup-Comments-2026-09.md`. |
+| 2 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |
+
 ---
 
 ## Open item to resolve
