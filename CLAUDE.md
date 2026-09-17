@@ -97,6 +97,19 @@ code or changing structure. On any conflict, the document wins over this file.
   worth confirming. Full findings:
   `docs/Target-Planning-Code-Review-Findings-2026-09-17.md`.
 
+## Token-intensive work
+- Before launching any large or expensive automated job (a full-repo or
+  multi-file /code-review pass, a broad retrospective audit, anything
+  likely to run long or spend heavily) — show the scope, what it's
+  checking for, and the expected cost/duration, and wait for go-ahead
+  before starting. A single feature's routine /code-review (the
+  "Pre-E2E code review" step above) doesn't need this — it's cheap and
+  already a standing rule; this is for anything bigger than that.
+- **Why:** 2026-09-17 — a retrospective RLS-policy audit across all 45
+  migrations was launched immediately on "let's do that high-risk
+  category right away," without first showing scope/cost, before
+  Basheer had a chance to review or adjust it.
+
 ## Post-commit checklist
 Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by
 Claude Code, not from another tool — this is what lets the checklist below
