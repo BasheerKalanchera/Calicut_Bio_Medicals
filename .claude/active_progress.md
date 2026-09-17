@@ -1,6 +1,27 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-17_
 
+## 2026-09-17 session (later) — Target Planning frontend built, code-reviewed, full multi-role manual E2E pass, 6 bugs found and fixed live — feature Done
+
+Picked up the crashed-session recovery's "next step" below: built the
+missing frontend (`TargetPlanningScreen.tsx` + service/types + nav
+entry), reworked "My Target" mid-build into a per-SBU grouped view once
+Basheer clarified GM sells across both SBUs personally, added the
+requested Annual view, ran the new Pre-E2E code review rule (caught 2
+blocking bugs + 3 smaller ones), then drove a full live manual E2E pass
+across every role (Basheer switching logins) per
+`docs/Target-Planning-Manual-E2E-Test-Plan.md` — which itself surfaced 2
+more real gaps (GM's own target could never reach anyone's approval
+queue; Admin was wrongly given a personal target). All fixed and
+verified live. **Committed and pushed `abaf8fa`, `4927502`, `f8213ee`.**
+Full narrative and retro: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-17" entry.
+
+**Next step:** post-commit checklist — fill in the test plan's Sign-off
+section, flip Target Planning's row in Traceability/Scorecard to Done,
+check `docs/Backlog.md` for newly-surfaced items (multi-SBU-assignment
+model question; the deliberate unused `DELETE` endpoint left as-is).
+
 ## 2026-09-17 session — Lead Follow-up Comments discussion paper written; scorecard tooling extended with a "Pending — proposed, not yet built" list
 
 Basheer relayed a real incident (a lead assigned to Sruthi sat unopened for

@@ -4375,3 +4375,126 @@ call — it surfaced both the zero-commit exposure and the earlier stall,
 neither of which the narrower recovery note above had caught. Worth
 treating as the default whenever a session has ended abnormally, not an
 exception that has to be requested.
+
+## 2026-09-17 — Target Planning frontend built, code-reviewed, and taken through a full multi-role manual E2E pass; 6 real bugs found and fixed live; feature Done
+
+Picked up the crashed-session recovery's "next step" from the day before:
+the backend (models/repository/service/router/migration `0044`, RLS) was
+already built and tested, but no frontend existed at all. Built
+`sales-os-app/src/screens/TargetPlanningScreen.tsx`,
+`services/targetPlanning.ts`, `types/targetPlanning.ts`, and a nav entry
+under Sales Execution, following `territoryAdmin.ts`'s service/type
+pattern and reusing the shared `FormModal`. **Committed `abaf8fa`.**
+
+**Two design questions resolved live with Basheer, both before any E2E
+testing started:**
+1. The implementation plan's SBU-rollup banner was originally scoped as
+   total-only (no per-person breakdown) — a real backend endpoint was
+   missing for that. Basheer chose to add it (`GET /planning/targets/team`,
+   reusing an already-written-but-never-routed repository method) rather
+   than ship the reduced version.
+2. Basheer clarified GM (Haroon) personally sells across *both* SBUs
+   (Imaging and Critical Care), not just approves — so "My Target" had
+   to support one target per SBU per person, not one target per person.
+   Rebuilt as a grouped-row UI (one block per SBU, matching the shape
+   already used for the team rollup's per-rep grouping) rather than a
+   single amount/status line. Confirmed with Basheer this doesn't
+   generalize to an ordinary rep being assigned two SBUs today —
+   `user_profile.sbu_id` is a single column, not a join table like
+   `user_zone` — but the same rendering approach would extend cleanly
+   once that relationship existed. Also added the requested Annual view
+   (Quarterly/Annual toggle; nested SBU→quarter rows in both "My Target"
+   and the team rollup). **Committed `4927502`**, along with
+   `docs/Target-Planning-Manual-E2E-Test-Plan.md`.
+
+**New standing rule exercised for the first time:** `CLAUDE.md`'s
+just-added "Pre-E2E code review" step (`/code-review high` before manual
+testing starts on RLS/approval-workflow-heavy features). It caught 2 bugs
+that would have blocked most of the E2E pass outright — `userProfile.
+sbu_id` used where the real field was `userProfile.sbu.id` (broke every
+first-time "Set Target" submit, for every role, not just Admin/GM); and
+`target_plan_read`'s RLS clause parenthesized so its direct-reports check
+wasn't actually scoped to the caller's own SBU (SQL `AND` binds tighter
+than `OR`) — silently emptied the SBU rollup for SBU Manager/Area
+Manager. Plus 3 smaller ones: an approver's note accepted by the API and
+discarded (no column existed for it); revising a *rejected* target never
+reset it to `PENDING_APPROVAL` (only `APPROVED` did); no server-side
+`gt=0` floor on `target_amount_lakhs`. Full findings:
+`docs/Target-Planning-Code-Review-Findings-2026-09-17.md`. The two
+blocking fixes were applied immediately, live, before E2E started; the
+RLS fix's exact scope needed a decision from Basheer (see below) so it
+and the other three were deferred to right after the first E2E pass.
+
+**Full live manual E2E pass, Claude driving the browser directly with
+Basheer switching logins on request** (a deliberate exception to the
+usual "Basheer tests, Claude verifies" split, per his explicit ask this
+session) — Haroon (GM), Vivek (Sales Staff, Critical Care), Arun Adarsh
+(Vivek's actual Area Manager), Nishad K V (a *different* Area Manager,
+same SBU as Vivek but a different zone — the negative-case check),
+Abdul Latheef (the separate Admin account). Every group in the test plan
+passed, including the harder edge cases Basheer specifically asked not
+to skip ("we may get some gotchas... let's not take a chance") — which
+paid off, surfacing 2 more real gaps that neither the code review nor the
+original test plan had anticipated:
+
+1. **GM's own target could never reach anyone's approval queue.**
+   `list_pending_approval_for_approver` filtered strictly on
+   `user_profile.manager_id == approver_id`. GM's `manager_id` is `NULL`
+   (top of the chain), so his own pending target never matched that
+   filter for *any* caller — including Admin, even though
+   `approve_or_reject_target_plan`'s own authorization check already
+   allowed Admin/GM's overlay-override tier to act on it. The Approve/
+   Reject buttons existed; nothing ever put the row in front of them.
+   Live-verified as the actual failure mode: Admin's "Needs Your
+   Approval" was empty while the SBU Rollup plainly showed Haroon's two
+   pending targets sitting there. Fixed by extending the repository
+   query (`include_orphaned` flag) to also surface manager-less rows to
+   Admin/GM callers specifically, mirroring the same overlay condition
+   already used for authorization.
+2. **Admin shouldn't have had a personal target at all.** Built
+   generically for "no fixed home SBU," which correctly covers GM (sells
+   personally, needed the multi-SBU screen) but wrongly swept in Admin
+   too (oversight/approval-only role, doesn't sell). Basheer's call,
+   raised when he noticed Admin's own "My Target" card during testing:
+   hide "My Target" for Admin specifically, keep it for GM.
+
+**Also fixed live, found by direct visual inspection, not the test
+plan:** the shared `FormModal` component's first field had its floating
+label crowded almost flush against the dialog title — MUI drops
+`DialogContent`'s own top padding whenever it directly follows
+`DialogTitle`, assuming the title's bottom padding is enough on its own;
+an outlined `TextField`'s label pokes upward past its own box just
+enough to make that assumption wrong. Fixed at the component level
+(`pt: 1.5` on the fields wrapper `Box`, not `DialogContent` itself, to
+sidestep the CSS specificity fight with MUI's adjacent-sibling rule) —
+this fixes every dialog built on `FormModal`, not just Target Planning's.
+
+**RLS fix's exact scope, decided with Basheer:** confirmed the
+"any manager, any tier, sees their own direct reports' targets" behavior
+*is* the intended rule (matches `get_approver_id`'s own generic
+`manager_id` walk, no role-name check) — but it must still be scoped to
+the same SBU, the backstop every other branch in the policy already has.
+Migration `0045` corrects this (drops the now-redundant
+`role_name = 'Area Manager'` check entirely, since the zone-descendant
+subquery and the SBU Manager/Admin-GM branches above already cover who
+reaches this far) and adds `target_plan.decision_note` in the same pass
+(closing the discarded-note bug above). **Committed and pushed `f8213ee`**
+— migration `0045`, the RLS fix, the note column wired through
+service/router, the reject-then-revise reset fix, the `gt=0` validators,
+the two live-discovered UI fixes, and the `FormModal` spacing fix, all
+together. 871/871 backend tests pass (7 new), `ruff` clean; `tsc`/lint
+clean.
+
+**Retro:** the pre-E2E code review earned its keep immediately — both
+blocking bugs it caught would otherwise have surfaced mid-pass as
+confusing failures with no obvious cause, exactly the scenario the new
+`CLAUDE.md` rule was written to prevent. But it wasn't a substitute for
+the live pass itself: the two most interesting bugs (GM's orphaned
+approval row, Admin's inappropriate personal quota) were structural/
+product gaps a static review of the diff was never going to catch —
+they only became visible by actually logging in as every role and
+clicking through the real workflow. Basheer's insistence on finishing
+every edge case ("let's not take a chance") rather than stopping once the
+core paths were proven was specifically what surfaced both. Worth
+repeating: a code review and a live multi-role E2E pass catch different
+categories of bug, neither substitutes for the other.

@@ -905,11 +905,36 @@ addition once Brand has a stable id instead of free text. Noted on
      PRD 6.5's product-category target split (found 2026-09-14, confirmed missing
      from the schema) — **deferred to Phase 2**, this pass ships the flat
      user/SBU/quarter design as originally scoped. Full detail and the as-built
-     design: `docs/Target-Planning-Implementation-Plan.md`. **Committed `1d9d46a`**
-     (backend only — models/repository/service/router, migration, 36 new tests,
-     864/864 backend suite passing). **Not yet built:** the frontend screen
-     (`TargetPlanningScreen.tsx`, service/type layer, nav entry) — next session's
-     starting point.
+     design: `docs/Target-Planning-Implementation-Plan.md`. **Fully built, code-
+     reviewed, and manually E2E-verified live across every role, 2026-09-17 —
+     `docs/Target-Planning-Manual-E2E-Test-Plan.md`. Traceability flipped to
+     Done.** Frontend rebuilt mid-build once Basheer clarified GM personally sells
+     across both SBUs, not just approves: "My Target" supports one target per SBU
+     per person (grouped-row UI), not one target per person — collapses to the
+     original single-target view for everyone else, since a regular rep only ever
+     has one SBU today. An Annual view was added on request (Quarterly/Annual
+     toggle, nested SBU→quarter rows). Two real gaps surfaced only by the live
+     pass, both fixed same day: GM's own target (no `manager_id`) could never
+     reach anyone's approval queue, including Admin's overlay-approval queue;
+     Admin was incorrectly given a personal target by the same "no fixed SBU"
+     logic that correctly applies to GM. Migration `0045` also corrected an RLS
+     parenthesization bug (`target_plan_read`'s direct-reports clause wasn't
+     actually scoped to the caller's own SBU) and added `decision_note` so an
+     approver's rejection/approval reason is actually kept. **Committed
+     `abaf8fa`/`4927502`/`f8213ee`.**
+     - **Open item, not blocking:** `user_profile.sbu_id` is a single column, not
+       a join table like `user_zone` — today only Admin/GM (who have none) can
+       set a target in more than one SBU. If an *ordinary* rep is ever genuinely
+       assigned to two SBUs, the same per-SBU screen logic extends cleanly, but
+       the underlying `user_sbu` many-to-many relationship would need to be
+       built first — it doesn't exist today.
+     - **Deliberate, accepted gap:** the backend has a working `DELETE
+       /planning/targets/{id}` (built in the original recovered session), but
+       `docs/API-Catalog.md` explicitly says targets should never be deletable,
+       only revised/rejected, and `target_plan` has no audit-trail coverage yet
+       (`BR-AUD-01`) — a delete today would leave zero trace. Basheer's call,
+       2026-09-17: leave the capability as unused dead code rather than remove
+       it now; no UI button was ever wired to it.
   2. **Insights Dashboard / Reporting Batch 1** — `docs/Insights-Dashboard-Implementation-Plan.md`.
      Zero dependency on Target or Coverage Planning — split out from the PRD's much
      larger Reporting & Review Module (§5) to the target-independent subset: Pipeline
@@ -1035,15 +1060,14 @@ addition once Brand has a stable id instead of free text. Noted on
   as the revenue target in Target Planning but for a count of development activities
   instead of money.
   **Architecture decision, made 2026-08-27:** this does **not** get bolted onto the
-  `target_plan` table Target Planning is building this week. That table is
-  revenue-only (a currency amount) and quarterly only, by design — forcing a
-  count-based, annual metric into the same row would complicate the very migration
-  currently shipping and produce a confusing half-currency/half-count table. Instead,
-  this gets its **own table** later (something like `annual_kpi_target`: user, SBU,
-  year, KPI type, target count), reusing the same manager/RLS scoping pattern Target
-  Planning establishes, once it exists to copy from.
-  **Sequencing:** deliberately last in line — needs both Target Planning (to copy the
-  scoping pattern from) and Sales Development Activities (to have real logged
+  `target_plan` table (Target Planning, now built and E2E-verified, 2026-09-17). That
+  table is revenue-only (a currency amount) and quarterly only, by design — forcing a
+  count-based, annual metric into the same row would complicate the migration and
+  produce a confusing half-currency/half-count table. Instead, this gets its **own
+  table** later (something like `annual_kpi_target`: user, SBU, year, KPI type, target
+  count), reusing the same manager/RLS scoping pattern Target Planning established.
+  **Sequencing:** deliberately last in line — Target Planning's scoping pattern now
+  exists to copy from; still needs Sales Development Activities (to have real logged
   activity counts to compare against) built first. Not yet scoped as a formal
   implementation plan; nothing implemented.
 

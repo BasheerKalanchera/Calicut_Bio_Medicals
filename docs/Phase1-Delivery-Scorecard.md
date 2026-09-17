@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **28 done, 12 partly done, 10 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **2 more proposed but not yet decided** (see "Pending" below that).
+Of **50** signed requirements: **29 done, 12 partly done, 9 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **2 more proposed but not yet decided** (see "Pending" below that).
 
 | Done | Partly done | Not started | New Features Added |
 | :---: | :---: | :---: | :---: |
-| 28 | 12 | 10 | 15 |
+| 29 | 12 | 9 | 15 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 28 of 50 = **56.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 12 items aren't zero — they're mid-flight): (28 + 12×0.5) ÷ 50 = **68.0%**
+- **Strictly done:** 29 of 50 = **58.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 12 items aren't zero — they're mid-flight): (29 + 12×0.5) ÷ 50 = **70.0%**
 
 ---
 
@@ -79,7 +79,7 @@ Where leadership and managers see how the business is doing.
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 29 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are pending until Target Management is built. |
+| 29 | 2.5 | Weighted/unweighted forecasting by month/quarter/product; <3x-target low-pipeline alert | 5.1 Forecasting + 5.2 Pipeline Coverage Monitoring | Partial | Forecasting broken down by product is live today. Forecasting by month/quarter, and an early-warning alert for a thin pipeline, are no longer blocked on Target Management but still not built. |
 | 30 | 3.2 | Real-time actual-vs-target via role-specific dashboards | 5.3/5.4/5.5 Salesperson/Manager/GM Dashboard | Partial | Role-based dashboards are live today; a dedicated top-level leadership view is still to be added. |
 | 31 | 4.3 | Revenue per product/brand analytics | Appendix A.1 Reporting Principles (also 5.6 Core Reports) | Partial | Revenue and brand-level reporting is live today. Margin reporting (cost versus price) is approved and scheduled, restricted to senior roles only. |
 | 32 | 6.1 | Demo-to-sale conversion report | 4.2 Demo Management | Not started |  |
@@ -99,7 +99,7 @@ The management tools behind the scenes — targets, territories, roles, and who'
 | 39 | *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Not started |  |
 | 40 | 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Done |  |
 | 41 | *(untagged, optional)* | Account Manager role per customer | 6.3 Account Manager Assignment | Not started |  |
-| 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Not started |  |
+| 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done |  |
 | 43 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Not started |  |
 | 44 | 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Done |  |
 | 45 | 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Done |  |

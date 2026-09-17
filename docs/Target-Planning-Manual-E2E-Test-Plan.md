@@ -207,13 +207,76 @@ data (there's no Delete UI anyway, see above).
 The authorization boundary itself — resolved-manager approval, the
 nobody-approves-their-own-row rule (including the GM/Admin top-of-chain
 case), non-owner revision rejection, and the SBU rollup's sum/count — has
-36 backend unit tests in `test_target_plan_service.py`/
-`test_target_plan_repository.py`, all passing (865/865 full suite). This
-live pass is about the screen's wiring (does the right section show to the
-right role, does a save round-trip actually persist, does the picker/nav
-behave), not re-proving the underlying rule.
+backend unit tests in `test_target_plan_service.py`/
+`test_target_plan_repository.py`, all passing (871/871 full suite as of
+the 2026-09-17 pass below). This live pass is about the screen's wiring
+(does the right section show to the right role, does a save round-trip
+actually persist, does the picker/nav behave), not re-proving the
+underlying rule.
 
 ## Sign-off
 
-*(Fill in after the live pass — date, who tested as which role, pass/fail
-per group, any bugs found and fixed.)*
+**Full pass, live, 2026-09-17.** Driven by Claude directly in the
+browser, with Basheer switching logins on request (a deliberate
+exception to the usual split, per his ask this session) — Haroon
+(General Manager), Vivek (Sales Staff, Critical Care), Arun Adarsh
+(Vivek's actual Area Manager), Nishad K V (a *different* Area Manager,
+same SBU as Vivek but a different zone — Group F's negative case), Abdul
+Latheef (the separate Admin account). All groups A–K pass. Two real bugs
+were found live and fixed before the pass was considered complete — see
+below; everything reported here reflects the *post-fix* behavior,
+re-verified.
+
+- **Group A/B (set/revise):** PASS — Vivek's single-SBU table showed
+  exactly one row (Critical Care), no Rollup/Needs-Approval sections for
+  Sales Staff. Set ₹50.0L, revised to ₹65.0L, both persisted through a
+  hard reload.
+- **Group C (approve):** PASS — Arun approved Vivek's ₹65.0L; status
+  flipped to Approved on Vivek's own screen immediately.
+- **Group D (reject with note):** PASS, and confirmed the note actually
+  persists and displays (code-review finding #3, fixed same pass) —
+  Arun rejected Vivek's original ₹50.0L with "Too low for this
+  territory"; Vivek saw the Rejected chip with that note underneath it.
+- **Group E (revise resets to pending):** PASS, extended beyond the
+  written plan to cover the REJECTED case specifically (code-review
+  finding #4, fixed same pass) — revising Vivek's rejected target
+  correctly reset it to Pending Approval and cleared the note; it
+  reappeared in Arun's queue at the new amount.
+- **Group F (who's not allowed to approve):** PASS, tested more
+  rigorously than originally written — Nishad (same SBU as Vivek,
+  different zone, not his manager) saw **zero** targets in his own SBU
+  Rollup for Critical Care, proving the RLS fix enforces the zone/
+  manager boundary and not just same-SBU visibility.
+- **Group G (GM's own target, Admin-only approval):** PASS, but only
+  after a real bug was found and fixed — see "Bugs found" below. Once
+  fixed: Haroon set targets in both Imaging and Critical Care himself;
+  neither appeared in his own Needs Your Approval; both appeared in
+  Abdul Latheef's queue and were approved there.
+- **Group H (SBU Rollup + team table):** PASS across GM, Area Manager,
+  and Admin logins, including the Admin SBU picker switching cleanly
+  between Imaging/Critical Care.
+- **Group I (quarter navigation):** PASS.
+- **Group J (Annual view):** PASS for both "My Target" (multi-SBU
+  grouped rows) and the team rollup, including Haroon's two-SBU case
+  (Imaging + Critical Care each with their own Annual Total and 4
+  quarterly rows).
+- **Group K (regression):** PASS — nav item present for every role
+  tested; Pipeline and Insights both loaded normally after Target
+  Planning.
+
+**Bugs found live and fixed before sign-off (not in the original code
+review or test plan):**
+1. GM's own target could never appear in *anyone's* "Needs Your
+   Approval" list, including Admin's — `list_pending_approval_for_
+   approver` filtered strictly on `manager_id`, which GM has none of.
+   Fixed by surfacing manager-less rows to Admin/GM callers specifically.
+2. Admin was incorrectly shown a personal "My Target" section (swept in
+   by GM's "no fixed home SBU" logic) — Admin doesn't sell personally,
+   unlike GM. Fixed: "My Target" now only renders for roles that
+   actually carry a personal quota.
+Both committed and pushed in `f8213ee`, alongside the code review's
+findings #3–#6. Full narrative: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-17" entry.
+
+No outstanding bugs. Target Planning is ready to flip from Partial to
+Done in `Signed-Requirements-to-PRD-Traceability.md`.
