@@ -3,8 +3,9 @@
 **Prepared for:** Basheer to confirm with Latheef Bhai before this is scoped into an
 implementation plan.
 **Prepared:** 2026-09-17.
-**Status:** DRAFT — scope decided by Basheer; awaiting Latheef Bhai's confirmation.
-Not yet scoped, not yet built.
+**Status:** Confirmed by Latheef Bhai, 2026-09-17 (relayed by Basheer, same day). All
+three open questions below resolved same day — see `docs/Lead-Followup-Comments-
+Implementation-Plan.md` for the full design. Not yet built.
 
 ---
 
@@ -70,20 +71,24 @@ thread, this time attached to a `marketing_lead` instead of an `Activity`:
   stage list) — comments are free text, matching how Activity Comments works today. See
   open question 1.
 
-## 5. Open questions — not yet decided
+## 5. Open questions — resolved 2026-09-17
 
-1. **Free text only, or a structured status too?** A Marketing User skimming many leads
-   may want an at-a-glance status (e.g. a short dropdown alongside the comment) rather
-   than reading every thread. Activity Comments has no precedent for this — it would be
-   new, not reused.
-2. **Scope: `marketing_lead` only, or the Opportunity "Lead" stage too?** Basheer's ask
-   was specifically about `marketing_lead`; whether a similar thread belongs on a
-   regular Opportunity sitting at Lead stage is a separate question, not assumed here.
-3. **Who can post as "the Marketing User side"?** Only the lead's original creator, or
-   any user holding the Marketing User role?
+1. **Free text only, or a structured status too?** **Resolved: free text only** —
+   matches Activity Comments exactly, nothing new to build or teach.
+2. **Scope: `marketing_lead` only, or the Opportunity "Lead" stage too?** **Resolved:
+   `marketing_lead` only** — matches what was actually asked for; extending to
+   Opportunities at Lead stage is a separate future ask, not assumed here.
+3. **Who can post as "the Marketing User side"?** **Resolved: visibility-based, not
+   role-based** — whoever can already see the `marketing_lead` row (per the existing
+   `marketing_lead_select` RLS policy: Admin/GM, the lead's SBU Manager, the assigned
+   rep's Area Manager, the assigned rep themself) can post on its thread. No new
+   role-name logic needed — same pattern Activity Comments already proved. Raised by
+   Basheer as a question ("is this doable, or too much to ask") and confirmed it's
+   actually *simpler* than a role restriction, not harder.
 
 ## 6. Reference
 
+- `docs/Lead-Followup-Comments-Implementation-Plan.md` — the full resolved design.
 - `docs/Activity-Comment-Phase1-Manual-E2E-Test-Plan.md`,
   `docs/Activity-Comment-Phase2-Notifications-Manual-E2E-Test-Plan.md` — the pattern
   being reused.
