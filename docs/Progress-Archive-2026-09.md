@@ -4713,3 +4713,142 @@ the RLS clause works end to end, not just on paper.
 **Not yet committed** — fix is in the working tree on top of `d899b15`.
 Manual E2E still in progress (notification fan-out and multi-login cases
 pending).
+
+## 2026-09-18 (even later) — Session retrospective: UAT selective-migration audit, `reporting.ts`→`formatter.ts` rename, Product Catalog name-derivation plan — requested directly by Basheer
+
+**What worked:**
+- **Verifying real state instead of reasoning from `main` alone caught two
+  of my own wrong calls before they became bad advice.** I initially
+  called Report Drill-down "embedded in an existing screen" (true only on
+  `main`; on `origin/uat`, none of the report screens exist yet, so it's
+  actually inert there) and called Target Planning fully independent of
+  the reporting work (false — its Annual view imports `utils/reporting.ts`,
+  a file created in the same commit as the reporting domain). Both were
+  caught by Basheer's direct follow-up questions ("the reports are new,
+  right?" / "so it's a naming mixup?"), not by me — but checking
+  `origin/uat`'s actual tree and the real import graph resolved both
+  cleanly once asked.
+- **Read-only reference checks before any destructive data decision.**
+  Before agreeing to delete "Magnamed Ventmeter" or merge the two
+  wall-mount-stand duplicates, ran targeted read-only UAT queries
+  (`opportunity_item`/`installed_asset`/`document` reference counts) each
+  time rather than assuming safety — both came back zero references, so
+  both decisions are now verified-safe, not just plausible.
+- **Migration-chain analysis by actual table overlap, not assumed
+  ordering.** Checking each Alembic migration's `down_revision` chain
+  *and* which tables each one touches (not just its position) showed all
+  5 recent migrations are mutually independent — reframing the original
+  "can we selectively hold back a feature from UAT" question from "risky
+  schema surgery" to "one-line chain repoint," backed by evidence instead
+  of a guess.
+- **Delegating heavy-context research to background agents** (backend/
+  frontend `product.name` usage scan, generated-column migration
+  mechanics) kept this session's own context lean while still producing a
+  complete, verified inventory (5 backend domains, ~15 frontend files) —
+  and every one of the agents' file/line claims checked out exactly when
+  spot-verified directly afterward.
+
+**Issues faced:**
+1. **Treated Claude Code's built-in plan-mode + `ExitPlanMode` flow as the
+   plan-review deliverable itself, instead of this project's actual
+   convention** (a `docs/*-Implementation-Plan.md` file, shown and
+   discussed directly — see `docs/High-Priority-Deal-Flag-Implementation-
+   Plan.md` etc. for precedent). Basheer rejected `ExitPlanMode` three
+   times — "You are deviating from the process" — before it was resolved.
+   The fix that worked: using `AskUserQuestion` (a separate tool from the
+   one being rejected) to get explicit consent framed as "unlock file
+   writes," not "approve the plan," then calling `ExitPlanMode` once more.
+   New memory saved: `cabio_feedback_implementation_plan_process`.
+2. Minor: a feature-sized scope (the Product Catalog name-derivation
+   change) grew organically out of a side conversation (UAT parking →
+   naming mixup → "let's fix this now" → real architecture decision)
+   without an explicit moment of naming the scope shift out loud — the
+   docs-plan-first process should have kicked in as soon as it became
+   clear this was a real feature, not only after the plan-mode friction
+   forced the issue.
+3. Small: wrote a generated `.xlsx` export directly into the repo root by
+   mistake instead of the scratch directory, needing a cleanup move.
+4. Small: burned a couple of tool calls discovering which Python
+   environment has which package (`backend/.venv` has `psycopg2` but not
+   `openpyxl`; system Python has the reverse) — no lasting cost, but
+   avoidable with a quick upfront check next time either is needed.
+
+**What to improve going forward:**
+- For any feature-sized change, write the `docs/*-Implementation-Plan.md`
+  file as the primary planning artifact from the moment scope becomes
+  real — don't start with, or rely on, the CLI's internal plan-mode gate
+  as if it were the review step. Now a standing memory, not just a
+  one-off correction.
+- When a conversation's scope visibly escalates from "quick question" to
+  "real architecture decision," say so explicitly in the moment, rather
+  than continuing conversationally until the process gap causes friction.
+- Default new generated/exported files to the session scratchpad
+  directory by explicit full path on first write, never a bare relative
+  filename that lands wherever the shell's cwd happens to be.
+
+## 2026-09-18 (later still) — Session retrospective: Lead Follow-up Comments build + manual E2E pass, requested directly by Basheer
+
+**What worked:**
+- **Mirroring a proven pattern (Activity Comments) made the build fast and
+  low-risk.** Backend + frontend built same-session, pre-E2E `/code-review`
+  came back clean on the first pass, and 896/896 backend tests held
+  throughout every follow-on fix.
+- **Live manual E2E with real role-switching (Nishad K V, Fahad, Haroon
+  Sidheeq) caught two real gaps a code review alone would have missed** —
+  the Marketing User creator had no Comments UI at all (TC-6), and lead
+  cards had no comment-count badge unlike Activity's own. Both fixed live,
+  re-verified, and documented in the same pass.
+- **Plan-then-approve held throughout**, even for small follow-on scope
+  (the TC-6 fix, the comment-count badge, the bell-gap triage) — each was
+  explained plainly and explicitly approved before building, not just the
+  original feature.
+- **Showing the exact diff before republishing the client-facing Scorecard
+  Artifact** (per the 2026-09-17 standing rule) worked as intended both
+  times it was touched today (the E2E-pass status flip, then the
+  Pending→Beyond-contract move) — no follow-up "what changed" questions.
+
+**Issues faced:**
+1. **Queried the live Dev database directly without explaining first.**
+   Read-only, but Basheer had to stop and ask "what are you doing?" —
+   should have stated intent before running it, same standard as any other
+   action, not just writes.
+2. **Browser automation coordinate-clicks missed after page reflow** (the
+   comment box appeared to accept text but the Post click landed on stale
+   coordinates) — cost a couple of retries. Also caused one confusing
+   screenshot (auto-scroll clipped the left edge of the page), prompting
+   Basheer to ask "why is the screen truncated?"
+3. **Ran the Scorecard/Traceability regeneration before the actual feature
+   commit had landed**, instead of after. Basheer caught it directly:
+   "Shouldn't we first commit and then run the post-commit checklist?"
+   This is the project's own established two-commit pattern from prior
+   sessions — a drift, not a missing rule.
+4. **TC-5's planned persona (Arun Adarsh, Vivek's manager) didn't match the
+   lead actually being tested on** (assigned to Nishad K V, a peer Area
+   Manager Arun has no standing over) — caught only once the wrong login
+   was already active, requiring a live substitution and explanation
+   mid-pass rather than catching it before starting.
+5. **Told Basheer the scorecard Artifacts were live and correct; he saw
+   stale content.** Turned out to be a stale browser tab on his end, not a
+   publish failure (re-read the live artifact directly and confirmed the
+   content was correct) — but worth a proactive "hard-refresh if this
+   looks old" note whenever republishing something he's likely to have
+   open already.
+
+**What to improve going forward:**
+- State intent before any investigative action, including read-only DB
+  queries — not just before writes or risky actions.
+- When mirroring an existing feature end-to-end, checklist every surface
+  the analog touches (notification bell coverage, list badges, every
+  screen a parallel role would expect it on) before finalizing scope,
+  rather than trimming items ad hoc as "not in the plan doc." New memory:
+  `cabio_feedback_mirror_feature_parity_check`.
+- Feature commit always lands first; the post-commit checklist (Backlog,
+  Traceability, Scorecard regen) is a separate, later commit — never
+  interleaved. New memory: `cabio_feedback_commit_before_checklist`.
+- Before executing a test case against a specific login, sanity-check that
+  the test plan's assumed role relationship actually matches the data
+  already in play, rather than assuming the original setup section still
+  applies once testing has moved on to a different record.
+- In browser automation, prefer `find`-returned element refs over
+  screenshot coordinates for clicks, especially right after an expand/
+  collapse action that can shift layout.
