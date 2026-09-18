@@ -14,7 +14,8 @@
 - Currency: all financial values in INR Lakhs, NUMERIC(15,2)
 - **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not local/disposable —
   never write test data through the live API without checking first. `Activity` rows are
-  immutable (no DELETE endpoint), so test writes there are permanent.
+  immutable (no DELETE endpoint), so test writes there are permanent. Investigative actions
+  (e.g. a read-only query) need announcing first too — see "Show before you act" below.
 - **Safety:** never connect directly to the UAT Supabase project (`backend/.env.uat`) —
   no queries, size checks, dumps, or scripts against it — without asking Basheer first,
   even read-only ones. Ask, state exactly what will run, and wait for explicit go-ahead.
@@ -60,6 +61,25 @@ code or changing structure. On any conflict, the document wins over this file.
 - Write handover notes **after the fact**, referencing real values (commit hashes,
   exact test counts, etc.) — never a placeholder (`<hash>`) meant to be filled in
   later. Get the real value first, then write the note.
+- A requested retrospective is written to Progress-Archive only after being shown in
+  chat first — see "Show before you act" below.
+- Default any new generated or exported file to the session scratchpad directory, by
+  its explicit full path, from the very first write — never a bare relative filename
+  that lands wherever the shell's current directory happens to be.
+
+## Feature planning
+- The moment a task's scope becomes feature-sized, write `docs/<Feature>-
+  Implementation-Plan.md` as the primary planning artifact and present its actual
+  content as chat text — don't rely on, or start with, the CLI's built-in plan-mode
+  file/`ExitPlanMode` review as if it were the review step. Matches this repo's
+  existing convention (`docs/Target-Planning-Implementation-Plan.md`, `docs/High-
+  Priority-Deal-Flag-Implementation-Plan.md`, etc.). **Why:** 2026-09-18, a plan was
+  written to the ephemeral plan-mode file and submitted via `ExitPlanMode`; Basheer:
+  "You are deviating from the process. First prepare an implementation plan and show
+  me the plan."
+- When a conversation's scope visibly escalates from a quick question into a real
+  architecture/feature decision, say so explicitly in the moment — don't keep going
+  conversationally until the missing plan doc causes friction on its own.
 
 ## Checkpoint commits
 - On any build expected to run long or largely unattended (a new domain, a
@@ -68,13 +88,10 @@ code or changing structure. On any conflict, the document wins over this file.
   tests pass, before moving on to the migration or the next layer. Don't wait
   for the whole feature, or a whole day's plan, to be finished before saving
   anything.
-- **Why:** a 2026-09-16 session built the Target Planning approval-workflow
-  backend start to finish — fully tested, migration applied to Dev — over
-  roughly three hours with zero commits, then froze at the very end (a hung
-  Docker Desktop shutdown command). The work was only recovered intact
-  because the next session read the crashed session's own saved transcript
-  directly; a less recoverable failure would have put three hours of
-  verified work at real risk for no reason.
+- **Why:** a 2026-09-16 session built Target Planning's backend fully tested
+  over ~3 hours with zero commits, then froze at the end (a hung Docker
+  shutdown). Recovered only by reading the crashed session's own transcript —
+  a less recoverable failure would have lost real verified work for no reason.
 - A checkpoint commit doesn't need to be feature-complete or trigger the
   Post-commit checklist below — say plainly that it's partial (e.g. a `feat:`
   message noting what's still missing, as `1d9d46a` did: "Part 1, frontend
@@ -89,33 +106,64 @@ code or changing structure. On any conflict, the document wins over this file.
   features) against that feature's commits and fix findings first. Catches
   defects for free that would otherwise surface mid-testing as confusing
   manual-test failures.
-- **Why:** a 2026-09-17 review of Target Planning's backend+frontend, run
-  right as its manual E2E pass was starting, caught two bugs that would
-  have blocked most of that pass outright (a wrong profile field breaking
-  every "Set Target" submission, and a silently-empty SBU rollup for two
-  roles) — plus two smaller correctness gaps and one RLS-scope question
-  worth confirming. Full findings:
-  `docs/Target-Planning-Code-Review-Findings-2026-09-17.md`.
+- **Why:** a 2026-09-17 review of Target Planning, run right as its manual
+  E2E pass was starting, caught two bugs that would have blocked most of
+  that pass outright — see `docs/Target-Planning-Code-Review-Findings-
+  2026-09-17.md` for the full findings.
 
-## Token-intensive work
-- Before launching any large or expensive automated job (a full-repo or
-  multi-file /code-review pass, a broad retrospective audit, anything
-  likely to run long or spend heavily) — show the scope, what it's
-  checking for, and the expected cost/duration, and wait for go-ahead
-  before starting. A single feature's routine /code-review (the
-  "Pre-E2E code review" step above) doesn't need this — it's cheap and
-  already a standing rule; this is for anything bigger than that.
-- **Why:** 2026-09-17 — a retrospective RLS-policy audit across all 45
-  migrations was launched immediately on "let's do that high-risk
-  category right away," without first showing scope/cost, before
-  Basheer had a chance to review or adjust it.
-- Before republishing anything client-visible (a scorecard Artifact, a
-  shared doc), show the exact diff of what will change — not just a
-  prose summary — before publishing.
-- **Why:** 2026-09-17 — a prose description of a scorecard change
-  prompted a follow-up question ("what are the changes?"); showing the
-  exact before/after diff for the next update let Basheer approve on
-  sight instead.
+## Mirroring an existing feature
+- When a feature is explicitly modeled on an existing one (e.g. Lead Follow-up
+  Comments mirroring Activity Comments), checklist every surface the original
+  touches — notification-bell coverage for every recipient role, list-view
+  badges/counts, every screen a parallel role would expect it on — before
+  finalizing scope. Don't drop an item reasoning "the plan doc doesn't mention
+  it, so it's scope creep"; check whether the analog feature already has it
+  first, and if leaving it out, say why (a real behavioral difference), not
+  just that it wasn't spelled out.
+- **Why:** 2026-09-18 — Lead Follow-up Comments initially dropped two things
+  Activity Comments already had (a comment-count badge, full notification-bell
+  coverage per role); both surfaced only once Basheer manually tested with
+  real role switches, one of them being the exact problem the feature was
+  built to solve for that role.
+
+## Manual E2E testing
+- Before executing a test case against a specific login, sanity-check that the
+  test plan's assumed role relationship actually matches the record currently
+  being tested — not just the plan's original setup section, if testing has
+  since moved to a different record. **Why:** 2026-09-18 — a planned persona
+  (a specific Area Manager) didn't manage the rep who owned the lead actually
+  under test; caught only after switching to the wrong login.
+- In browser automation, prefer `find`-returned element refs over screenshot
+  coordinates for clicks — especially right after an expand/collapse or any
+  layout-shifting action, where a stale coordinate can miss silently (the
+  click lands, but on the wrong element) rather than erroring.
+
+## Show before you act
+Same discipline across several situations: when an action is hard to undo,
+spends real time/cost, or is visible to Basheer, show him what's about to
+happen and wait for a reaction — don't act first and narrate afterward.
+
+- **Investigative actions, not just writes** — state what a query or check
+  will do, including a plain read-only one, before running it. UAT goes
+  further: ask and wait for explicit go-ahead, never just announce (see
+  Architecture's Safety bullets). **Why:** 2026-09-18, a live Dev DB query
+  ran with no explanation first — "what are you doing?"
+- **Token-intensive or expensive jobs** (a full-repo code-review pass, a
+  broad audit) — show scope, what it checks, and expected cost/duration,
+  then wait for go-ahead. A single feature's routine `/code-review` is
+  exempt (see "Pre-E2E code review" above). **Why:** 2026-09-17, a
+  45-migration RLS audit started immediately on "let's do that," before
+  scope or cost had been shown.
+- **Republishing anything client-visible** (a scorecard Artifact, a shared
+  doc) — show the exact diff, not a prose summary, before publishing.
+  **Why:** 2026-09-17, a prose description of a scorecard change prompted
+  "what are the changes?"; a real diff let the next update get approved on
+  sight.
+- **A requested retrospective or reflective summary** — show it in chat, as
+  its own turn, before writing it into Progress-Archive and committing.
+  Pasting it in the same message you commit it in isn't "showing" it.
+  **Why:** 2026-09-18, a retrospective was pasted and committed/pushed in
+  the same response — "Where is the retrospective? I have not seen it."
 
 ## Post-commit checklist
 Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by
@@ -123,6 +171,15 @@ Claude Code, not from another tool — this is what lets the checklist below
 actually fire. If a feature commit is ever made outside a Claude Code
 session, Basheer will say so (e.g. "run the post-commit checklist") so it
 can be run retroactively.
+
+**The feature/fix commit always lands first, as its own commit; this
+checklist runs after, as a separate commit** — never interleaved with or
+run before the feature commit itself. (This is about ordering *between*
+commits; Scorecard integrity's "one commit" rule below is about what
+belongs *inside* the checklist's own commit once you're running it — the
+two aren't in tension.) **Why:** 2026-09-18, Scorecard/Traceability
+regeneration started before the feature commit existed — "Shouldn't we
+first commit and then run the post-commit checklist?"
 
 Immediately after such a commit is pushed to GitHub — before moving to
 other work — go through this checklist:
@@ -154,7 +211,8 @@ other work — go through this checklist:
   `python scripts/generate_scorecard.py` to regenerate the tally and both
   derived files, and (if the change is client-visible) republish
   `.scratch/phase1-scorecard.html` to the Artifact. Flipping the status and
-  propagating it are one step, not two.
+  propagating it are one step, not two — this governs what's *inside* that
+  commit, same as the checklist commit described above.
 - Before committing any change that touches Traceability.md, the Scorecard,
   or the HTML, run `python scripts/generate_scorecard.py --check` — it
   exits non-zero and names whichever file(s) are stale relative to the
