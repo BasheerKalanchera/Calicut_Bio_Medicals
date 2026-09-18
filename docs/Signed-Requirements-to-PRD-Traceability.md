@@ -185,7 +185,7 @@ the table above so nothing here is mistaken for already delivered — each moves
 
 | # | What's proposed | Status |
 | :---: | :--- | :--- |
-| 1 | Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let anyone who can see the lead (their manager, GM, etc.) nudge them for an update on the same thread. | Confirmed by Latheef Bhai, design finalized 2026-09-17, not yet built. `docs/Lead-Followup-Comments-Implementation-Plan.md`. |
+| 1 | Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let anyone who can see the lead (their manager, GM, etc.) nudge them for an update on the same thread. | Confirmed by Latheef Bhai, 2026-09-17. Built and fully manually E2E-verified live, 2026-09-18 (19/19 cases pass) — `docs/Lead-Followup-Comments-Manual-E2E-Test-Plan.md`. Still listed here rather than moved into the main table above, since this was proposed scope beyond the original signed contract, not a signed requirement itself. |
 | 2 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |
 
 ---
