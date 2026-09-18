@@ -299,8 +299,8 @@
       <a href="#done" data-n="done"><span>Done</span><span class="n">29</span></a>
       <a href="#partial" data-n="partial"><span>Partial</span><span class="n">12</span></a>
       <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">9</span></a>
-      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">15</span></a>
-      <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">2</span></a>
+      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">16</span></a>
+      <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">1</span></a>
   </nav>
 
   <main>
@@ -325,11 +325,11 @@
             <div class="lbl"><span class="swatch" style="background:var(--not-started)"></span>Not started</div>
           </div>
           <div class="stat">
-            <div class="num" style="color:var(--bonus)">15</div>
+            <div class="num" style="color:var(--bonus)">16</div>
             <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
           </div>
           <div class="stat">
-            <div class="num" style="color:var(--pending)">2</div>
+            <div class="num" style="color:var(--pending)">1</div>
             <div class="lbl"><span class="swatch" style="background:var(--pending)"></span>Pending Decision</div>
           </div>
         </div>
@@ -824,7 +824,7 @@
     <section class="bonus" id="new-features">
       <div class="bonus-head">
         <h2>New Features Added</h2>
-        <p class="bonus-desc">15 things built that Cabio leadership never signed off on asking for.</p>
+        <p class="bonus-desc">16 things built that Cabio leadership never signed off on asking for.</p>
       </div>
       <div class="bonus-list">
         <div class="bitem"><div class="bnum">1</div><p>Access rules aren't just checked by the app — they're built into the database itself, so even a bug in the app code can't leak one region's data into another's.</p></div>
@@ -842,23 +842,23 @@
         <div class="bitem"><div class="bnum">13</div><p>An audit log screen was added to track every change or deletion made to key records in the system — customer accounts, sales deals, the products/line items on each deal, the product catalog, revenue splits between team members, contact people at each hospital, and staff user accounts. The signed requirement only asked that this history be recorded somewhere; a full screen was built so anyone authorised can search and read it themselves, without needing a developer to dig through the database. *(Covers the `account`, `opportunity`, `opportunity_item`, `product`, `split`, `stakeholder` and `user_profile` tables.)* **To fix:** uploaded files/documents aren't covered by this history yet — a deletion there isn't currently recorded. Tracked in `docs/Backlog.md`, planned as a follow-on extension of the same mechanism.</p></div>
         <div class="bitem"><div class="bnum">14</div><p>The sales team has already started entering real, live deals into the environment used for testing the system before go-live — so when it moves to production, that work carries straight over instead of being re-entered from scratch. Because real business data is at stake there already, it's backed up and its recoverability verified on the same schedule a live system would get, with copies kept on an external hard disk for disaster recovery — not treated as disposable test data.</p></div>
         <div class="bitem"><div class="bnum">15</div><p>The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines.</p></div>
+        <div class="bitem"><div class="bnum">16</div><p>A rep can report back directly on a marketing-sourced lead once they've followed up — what they did, what they're waiting on — and anyone who can see that lead (their manager, GM, etc.) can ask for an update on the same thread, instead of a separate conversation.</p></div>
       </div>
     </section>
 
     <section class="bonus" id="pending">
       <div class="bonus-head">
         <h2>Pending &mdash; proposed, not yet built</h2>
-        <p class="bonus-desc">2 more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+        <p class="bonus-desc">1 more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
       </div>
       <div class="bonus-list">
-        <div class="bitem"><div class="bnum">1</div><div><p>Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let anyone who can see the lead (their manager, GM, etc.) nudge them for an update on the same thread.</p><p class="note" style="margin-top:4px">Confirmed by Latheef Bhai, 2026-09-17. Built and fully manually E2E-verified live, 2026-09-18 (19/19 cases pass) — `docs/Lead-Followup-Comments-Manual-E2E-Test-Plan.md`. Still listed here rather than moved into the main table above, since this was proposed scope beyond the original signed contract, not a signed requirement itself.</p></div></div>
-        <div class="bitem"><div class="bnum">2</div><div><p>Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory.</p><p class="note" style="margin-top:4px">Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`.</p></div></div>
+        <div class="bitem"><div class="bnum">1</div><div><p>Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory.</p><p class="note" style="margin-top:4px">Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`.</p></div></div>
       </div>
     </section>
 
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>50 requirements &middot; 29 done &middot; 12 partial &middot; 9 not started &middot; 15 new features added &middot; 2 pending</span>
+      <span>50 requirements &middot; 29 done &middot; 12 partial &middot; 9 not started &middot; 16 new features added &middot; 1 pending</span>
     </footer>
     </div>
   </main>

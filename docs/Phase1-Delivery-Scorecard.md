@@ -5,11 +5,11 @@
 
 ## Summary
 
-Of **50** signed requirements: **29 done, 12 partly done, 9 not started** — plus **15 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **2 more proposed but not yet decided** (see "Pending" below that).
+Of **50** signed requirements: **29 done, 12 partly done, 9 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
 
 | Done | Partly done | Not started | New Features Added |
 | :---: | :---: | :---: | :---: |
-| 29 | 12 | 9 | 15 |
+| 29 | 12 | 9 | 16 |
 
 **Real progress, two honest ways to read it:**
 - **Strictly done:** 29 of 50 = **58.0%**
@@ -144,6 +144,7 @@ Following items were not part of the requirements that were signed off by Cabio 
 | 13 | An audit log screen was added to track every change or deletion made to key records in the system — customer accounts, sales deals, the products/line items on each deal, the product catalog, revenue splits between team members, contact people at each hospital, and staff user accounts. The signed requirement only asked that this history be recorded somewhere; a full screen was built so anyone authorised can search and read it themselves, without needing a developer to dig through the database. *(Covers the `account`, `opportunity`, `opportunity_item`, `product`, `split`, `stakeholder` and `user_profile` tables.)* **To fix:** uploaded files/documents aren't covered by this history yet — a deletion there isn't currently recorded. Tracked in `docs/Backlog.md`, planned as a follow-on extension of the same mechanism. |
 | 14 | The sales team has already started entering real, live deals into the environment used for testing the system before go-live — so when it moves to production, that work carries straight over instead of being re-entered from scratch. Because real business data is at stake there already, it's backed up and its recoverability verified on the same schedule a live system would get, with copies kept on an external hard disk for disaster recovery — not treated as disposable test data. |
 | 15 | The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines. |
+| 16 | A rep can report back directly on a marketing-sourced lead once they've followed up — what they did, what they're waiting on — and anyone who can see that lead (their manager, GM, etc.) can ask for an update on the same thread, instead of a separate conversation. |
 
 ### Pending — proposed, not yet built
 
@@ -151,5 +152,4 @@ Proposed additions beyond the signed scope, not yet confirmed or built. Moves in
 
 | # | What's proposed | Status |
 | :---: | :--- | :--- |
-| 1 | Let a salesperson reply on a marketing-sourced lead once they've opened it — what they did, what they're waiting on — and let anyone who can see the lead (their manager, GM, etc.) nudge them for an update on the same thread. | Confirmed by Latheef Bhai, 2026-09-17. Built and fully manually E2E-verified live, 2026-09-18 (19/19 cases pass) — `docs/Lead-Followup-Comments-Manual-E2E-Test-Plan.md`. Still listed here rather than moved into the main table above, since this was proposed scope beyond the original signed contract, not a signed requirement itself. |
-| 2 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |
+| 1 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |
