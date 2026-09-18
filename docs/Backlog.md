@@ -45,13 +45,20 @@ Karnataka postal-code-to-zone mapping table inside the system, which isn't
 worth it yet. Revisit if/when PIN-code coverage data becomes available or
 the manual picking becomes an actual pain point.
 
-### Product Catalog: name field to become derived (Brand + Model + Category), not free text — waiting on Haroon (2026-09-16)
+### Product Catalog: name field to become derived (Brand + Model + Category), not free text — confirmed, parked pending go-ahead (2026-09-18)
 
-Basheer: a change is coming where a product's name will no longer be
-directly enterable — it'll be built automatically from Brand, Model, and
-Category (possibly one more field), rather than free text. Not yet
-confirmed; waiting on Haroon before this is scoped or built. No code
-work now.
+**Confirmed by Haroon, 2026-09-18** (was: waiting on Haroon, 2026-09-16):
+a product's `name` will no longer be directly enterable — it's computed
+automatically from Brand + Model + Category (that exact order, confirmed
+by Basheer) via a database-generated column. Full implementation plan
+written: `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`.
+Two data-cleanup questions this surfaced are both resolved and verified
+against UAT (read-only checks, 2026-09-18): removing "Magnamed Ventmeter"
+is safe (zero references anywhere), and merging the two duplicate
+"wall mount stand" products into one is safe (zero references on
+either). **Parked, no code work yet** — waiting on Basheer's go-ahead to
+build, plus Haroon confirming the real Model value for the surviving
+wall-mount-stand product (currently blank).
 
 **Why this matters for other work:** Signed Feature 4.1 in
 `docs/Signed-Requirements-to-PRD-Traceability.md` ("Strict product
