@@ -64,8 +64,10 @@ def test_all_28_tables_registered():
     # count unchanged by the rename.
     # 32, not 31: Activity Inline Comments (Phase 1) added activity_comment
     # (0040_add_activity_comment_table.py).
+    # 33, not 32: Lead Follow-up Comments added marketing_lead_comment
+    # (0047_add_marketing_lead_comment_table.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 32, f"Expected 32 tables, found {table_count}"
+    assert table_count == 33, f"Expected 33 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -115,7 +117,10 @@ def test_all_relationships_resolve():
     # approval_and_rls.py) added TargetPlan.approver -- one-directional
     # only (no back_populates on UserProfile), same reasoning as
     # MarketingLead.assigned_to_user above.
-    assert rel_count == 107, f"Expected 107 relationships, found {rel_count}"
+    # 108, not 107: Lead Follow-up Comments (0047_add_marketing_lead_comment_
+    # table.py) added MarketingLeadComment.author -- one-directional only,
+    # same shape as ActivityComment.author.
+    assert rel_count == 108, f"Expected 108 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

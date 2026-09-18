@@ -1,5 +1,10 @@
 import api from "../lib/api";
-import type { MarketingLeadCreate, MarketingLeadDiscard, MarketingLeadResponse } from "../types/api-aliases";
+import type {
+  MarketingLeadCommentResponse,
+  MarketingLeadCreate,
+  MarketingLeadDiscard,
+  MarketingLeadResponse,
+} from "../types/api-aliases";
 
 export type MarketingLead = MarketingLeadResponse;
 
@@ -29,5 +34,18 @@ export async function reassignMarketingLead(leadId: string, newAssignedToUserId:
   const r = await api.patch(`/marketing-leads/${leadId}/reassign`, {
     new_assigned_to_user_id: newAssignedToUserId,
   });
+  return r.data.data;
+}
+
+export async function listMarketingLeadComments(leadId: string): Promise<MarketingLeadCommentResponse[]> {
+  const r = await api.get(`/marketing-leads/${leadId}/comments`);
+  return r.data.data;
+}
+
+export async function createMarketingLeadComment(
+  leadId: string,
+  body: string,
+): Promise<MarketingLeadCommentResponse> {
+  const r = await api.post(`/marketing-leads/${leadId}/comments`, { body });
   return r.data.data;
 }

@@ -6,16 +6,22 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse
 from app.db.session import get_db
-from app.domains.marketing_lead.repository import MarketingLeadRepository, MarketingLeadRow
+from app.domains.marketing_lead.repository import (
+    MarketingLeadCommentRepository,
+    MarketingLeadRepository,
+    MarketingLeadRow,
+)
 from app.domains.marketing_lead.schemas import (
     AssignedToNested,
+    MarketingLeadCommentCreate,
+    MarketingLeadCommentResponse,
     MarketingLeadCreate,
     MarketingLeadDiscard,
     MarketingLeadMarkConverted,
     MarketingLeadReassign,
     MarketingLeadResponse,
 )
-from app.domains.marketing_lead.service import MarketingLeadService
+from app.domains.marketing_lead.service import MarketingLeadCommentService, MarketingLeadService
 from app.domains.notification.repository import NotificationRepository
 from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
@@ -30,6 +36,13 @@ def _get_service(
     return MarketingLeadService(
         repository=MarketingLeadRepository(db),
         user_id=current_user.id,
+        notification_service=NotificationService(repository=NotificationRepository(db)),
+    )
+
+
+def _get_comment_service(db: Session = Depends(get_db)) -> MarketingLeadCommentService:  # noqa: B008
+    return MarketingLeadCommentService(
+        repository=MarketingLeadCommentRepository(db),
         notification_service=NotificationService(repository=NotificationRepository(db)),
     )
 
@@ -135,3 +148,24 @@ def reassign_marketing_lead(
     )
     row = service.repository.get_enriched_by_id(lead.id)
     return APIResponse(message="Marketing lead reassigned", data=_to_response(row))
+
+
+@router.get("/{lead_id}/comments")
+def list_marketing_lead_comments(
+    lead_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: MarketingLeadCommentService = Depends(_get_comment_service),  # noqa: B008
+) -> APIResponse[list[MarketingLeadCommentResponse]]:
+    items = service.list_for_lead(lead_id)
+    return APIResponse(data=[MarketingLeadCommentResponse.model_validate(c) for c in items])
+
+
+@router.post("/{lead_id}/comments", status_code=201)
+def create_marketing_lead_comment(
+    lead_id: uuid.UUID,
+    body: MarketingLeadCommentCreate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: MarketingLeadCommentService = Depends(_get_comment_service),  # noqa: B008
+) -> APIResponse[MarketingLeadCommentResponse]:
+    comment = service.create_comment(lead_id, body, author_id=current_user.id)
+    return APIResponse(data=MarketingLeadCommentResponse.model_validate(comment))

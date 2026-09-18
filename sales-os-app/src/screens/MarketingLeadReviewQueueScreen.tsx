@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Typography } from "@mui/material";
 import QuickLeadModal from "../components/QuickLeadModal";
+import MarketingLeadCommentThread from "../components/MarketingLeadCommentThread";
 import MarketingLeadDiscardModal, { REASONS as DISCARD_REASONS } from "../components/MarketingLeadDiscardModal";
 import MarketingLeadReassignModal from "../components/MarketingLeadReassignModal";
 import { listMarketingLeads, markMarketingLeadConverted, type MarketingLead } from "../services/marketingLeads";
@@ -145,6 +146,7 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
                     </Button>
                   )}
                 </Box>
+                <MarketingLeadCommentThread leadId={lead.id} />
               </Box>
             ))}
           </Box>
@@ -202,6 +204,7 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
                         </Button>
                       </Box>
                     )}
+                    <MarketingLeadCommentThread leadId={lead.id} />
                   </Box>
                 );
               })}

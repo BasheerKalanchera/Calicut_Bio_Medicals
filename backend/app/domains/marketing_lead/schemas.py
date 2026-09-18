@@ -58,3 +58,19 @@ class MarketingLeadResponse(BaseModel):
     account_name: str | None = None
     lead_source_name: str | None = None
     product_name: str | None = None
+
+
+class MarketingLeadCommentCreate(BaseModel):
+    body: str = Field(..., min_length=1)
+
+
+class MarketingLeadCommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    marketing_lead_id: uuid.UUID
+    body: str
+    created_at: datetime
+    # Same shape as MarketingLeadResponse.assigned_to_user -- reused rather
+    # than duplicated.
+    author: AssignedToNested

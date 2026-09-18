@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
-from app.domains.marketing_lead.models import MarketingLead
+from app.domains.marketing_lead.models import MarketingLead, MarketingLeadComment
 from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
 from app.domains.reference.models import LeadSource
@@ -76,3 +76,37 @@ class MarketingLeadRepository(BaseRepository[MarketingLead]):
         return (
             self.db.scalar(select(LeadSource.is_marketing_source).where(LeadSource.id == lead_source_id)) is True
         )
+
+
+class MarketingLeadCommentRepository(BaseRepository[MarketingLeadComment]):
+    def __init__(self, db: Session):
+        super().__init__(MarketingLeadComment, db)
+
+    def lead_exists(self, lead_id: uuid.UUID) -> bool:
+        return (self.db.scalar(select(1).where(MarketingLead.id == lead_id)) or 0) > 0
+
+    def get_lead_owner_id(self, lead_id: uuid.UUID) -> uuid.UUID | None:
+        # Feeds the notification fan-out, same shape as ActivityCommentRepository
+        # .get_activity_owner_id -- the lead's assigned_to_user_id, always
+        # included as a recipient so the very first comment still notifies
+        # someone, even before anyone else has commented.
+        return self.db.scalar(select(MarketingLead.assigned_to_user_id).where(MarketingLead.id == lead_id))
+
+    def list_for_lead(self, lead_id: uuid.UUID) -> list[MarketingLeadComment]:
+        stmt = (
+            select(MarketingLeadComment)
+            .where(MarketingLeadComment.marketing_lead_id == lead_id)
+            .order_by(MarketingLeadComment.created_at.asc())
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def list_distinct_commenter_ids(self, lead_id: uuid.UUID) -> list[uuid.UUID]:
+        # Same Decision-4-shaped fan-out as ActivityCommentRepository's own
+        # method -- called before the new comment is flushed, so it never
+        # includes the current poster's own not-yet-committed row.
+        stmt = (
+            select(MarketingLeadComment.created_by)
+            .where(MarketingLeadComment.marketing_lead_id == lead_id)
+            .distinct()
+        )
+        return list(self.db.scalars(stmt).all())

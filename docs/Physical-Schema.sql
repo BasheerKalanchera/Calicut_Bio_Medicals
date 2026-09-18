@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-17 from the Dev database, catching up migration
--- 0046: Close 4 RLS gaps found in a broader review, 2026-09-17
+-- Regenerated 2026-09-18 from the Dev database, catching up migration
+-- 0047: add marketing_lead_comment table
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8ZTvkj1bbQoeXQKvXgFQLS2SQviekFnwm5gbRbF8gdaGtSwCrZwKLHHeahffY0n
+\restrict ZhbfeRSZD1ui7cEsxciGeKRRe51qgqhdzOnEshHOjbEEXNMtlui5RphDp1frsOJ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -444,6 +444,19 @@ CREATE TABLE public.marketing_lead (
     first_viewed_at timestamp with time zone,
     CONSTRAINT ck_marketing_lead_discard_reason CHECK (((discard_reason IS NULL) OR ((discard_reason)::text = ANY ((ARRAY['DUPLICATE'::character varying, 'NOT_INTERESTED'::character varying, 'UNABLE_TO_CONTACT'::character varying, 'JUNK'::character varying])::text[])))),
     CONSTRAINT ck_marketing_lead_status CHECK (((status)::text = ANY ((ARRAY['NEW'::character varying, 'CONVERTED'::character varying, 'DISCARDED'::character varying])::text[])))
+);
+
+
+--
+-- Name: marketing_lead_comment; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.marketing_lead_comment (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    marketing_lead_id uuid NOT NULL,
+    body text NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    created_by uuid NOT NULL
 );
 
 
@@ -979,6 +992,14 @@ ALTER TABLE ONLY public.loss_reason
 
 
 --
+-- Name: marketing_lead_comment marketing_lead_comment_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_lead_comment
+    ADD CONSTRAINT marketing_lead_comment_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: marketing_lead marketing_lead_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1314,6 +1335,13 @@ CREATE INDEX idx_marketing_lead_assigned_pending ON public.marketing_lead USING 
 --
 
 CREATE INDEX idx_marketing_lead_assigned_to_user_id ON public.marketing_lead USING btree (assigned_to_user_id);
+
+
+--
+-- Name: idx_marketing_lead_comment_marketing_lead_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_marketing_lead_comment_marketing_lead_id ON public.marketing_lead_comment USING btree (marketing_lead_id);
 
 
 --
@@ -1898,6 +1926,22 @@ ALTER TABLE ONLY public.marketing_lead
 
 ALTER TABLE ONLY public.marketing_lead
     ADD CONSTRAINT marketing_lead_assigned_to_user_id_fkey FOREIGN KEY (assigned_to_user_id) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: marketing_lead_comment marketing_lead_comment_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_lead_comment
+    ADD CONSTRAINT marketing_lead_comment_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: marketing_lead_comment marketing_lead_comment_marketing_lead_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.marketing_lead_comment
+    ADD CONSTRAINT marketing_lead_comment_marketing_lead_id_fkey FOREIGN KEY (marketing_lead_id) REFERENCES public.marketing_lead(id);
 
 
 --
@@ -2547,6 +2591,28 @@ CREATE POLICY document_select ON public.document FOR SELECT USING (((opportunity
 ALTER TABLE public.marketing_lead ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: marketing_lead_comment; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.marketing_lead_comment ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: marketing_lead_comment marketing_lead_comment_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY marketing_lead_comment_insert ON public.marketing_lead_comment FOR INSERT WITH CHECK (((marketing_lead_id IN ( SELECT marketing_lead.id
+   FROM public.marketing_lead)) AND (created_by = public.cabio_app_uid())));
+
+
+--
+-- Name: marketing_lead_comment marketing_lead_comment_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY marketing_lead_comment_select ON public.marketing_lead_comment FOR SELECT USING ((marketing_lead_id IN ( SELECT marketing_lead.id
+   FROM public.marketing_lead)));
+
+
+--
 -- Name: marketing_lead marketing_lead_insert; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -2777,5 +2843,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8ZTvkj1bbQoeXQKvXgFQLS2SQviekFnwm5gbRbF8gdaGtSwCrZwKLHHeahffY0n
+\unrestrict ZhbfeRSZD1ui7cEsxciGeKRRe51qgqhdzOnEshHOjbEEXNMtlui5RphDp1frsOJ
 

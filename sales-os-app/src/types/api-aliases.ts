@@ -40,3 +40,4 @@ export type MarketingLeadResponse = components["schemas"]["MarketingLeadResponse
 export type MarketingLeadCreate = components["schemas"]["MarketingLeadCreate"];
 export type MarketingLeadDiscard = components["schemas"]["MarketingLeadDiscard"];
 export type MarketingLeadReassign = components["schemas"]["MarketingLeadReassign"];
+export type MarketingLeadCommentResponse = components["schemas"]["MarketingLeadCommentResponse"];

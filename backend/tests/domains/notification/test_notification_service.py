@@ -182,6 +182,36 @@ class TestNotifyActivityCommentAdded:
         assert notification.is_urgent is False
 
 
+class TestNotifyMarketingLeadCommentAdded:
+    def test_created_row_shape(self):
+        repo = _make_repo()
+        service = NotificationService(repository=repo)
+
+        service.notify_marketing_lead_comment_added(
+            recipient_user_id=RECIPIENT_ID,
+            marketing_lead_id=LEAD_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        created = repo.create.call_args[0][0]
+        assert created.recipient_user_id == RECIPIENT_ID
+        assert created.type == "MARKETING_LEAD_COMMENT_ADDED"
+        assert created.entity_type == "marketing_lead"
+        assert created.entity_id == LEAD_ID
+        assert created.created_by == ACTOR_ID
+
+    def test_is_never_urgent(self):
+        service = NotificationService(repository=_make_repo())
+
+        notification = service.notify_marketing_lead_comment_added(
+            recipient_user_id=RECIPIENT_ID,
+            marketing_lead_id=LEAD_ID,
+            actor_id=ACTOR_ID,
+        )
+
+        assert notification.is_urgent is False
+
+
 class TestPassThroughMethods:
     def test_list_for_user_delegates(self):
         repo = _make_repo()

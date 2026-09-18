@@ -4,9 +4,14 @@ from datetime import UTC, datetime
 import structlog
 
 from app.core.exceptions import AuthorizationError, BusinessRuleViolation, NotFoundError
-from app.domains.marketing_lead.models import MarketingLead
-from app.domains.marketing_lead.repository import MarketingLeadRepository, MarketingLeadRow
+from app.domains.marketing_lead.models import MarketingLead, MarketingLeadComment
+from app.domains.marketing_lead.repository import (
+    MarketingLeadCommentRepository,
+    MarketingLeadRepository,
+    MarketingLeadRow,
+)
 from app.domains.marketing_lead.schemas import (
+    MarketingLeadCommentCreate,
     MarketingLeadCreate,
     MarketingLeadDiscard,
     MarketingLeadMarkConverted,
@@ -261,3 +266,49 @@ class MarketingLeadService:
             user_id=str(self.user_id),
         )
         return lead
+
+
+class MarketingLeadCommentService:
+    def __init__(self, repository: MarketingLeadCommentRepository, notification_service: NotificationService):
+        self.repository = repository
+        self.notification_service = notification_service
+
+    def list_for_lead(self, lead_id: uuid.UUID) -> list[MarketingLeadComment]:
+        if not self.repository.lead_exists(lead_id):
+            raise NotFoundError(f"Marketing lead {lead_id} not found")
+        return self.repository.list_for_lead(lead_id)
+
+    def create_comment(
+        self,
+        lead_id: uuid.UUID,
+        data: MarketingLeadCommentCreate,
+        *,
+        author_id: uuid.UUID,
+    ) -> MarketingLeadComment:
+        if not self.repository.lead_exists(lead_id):
+            raise NotFoundError(f"Marketing lead {lead_id} not found")
+
+        # Same fan-out rule as ActivityCommentService.create_comment (Decision
+        # 4): the lead's assigned rep plus everyone who's already commented,
+        # minus whoever's posting right now -- computed before this comment
+        # is created so the poster's own new row can't leak into "prior
+        # commenters".
+        owner_id = self.repository.get_lead_owner_id(lead_id)
+        prior_commenter_ids = self.repository.list_distinct_commenter_ids(lead_id)
+        recipient_ids = {owner_id, *prior_commenter_ids} - {author_id, None}
+
+        comment = MarketingLeadComment(
+            marketing_lead_id=lead_id,
+            body=data.body,
+            created_by=author_id,
+        )
+        comment = self.repository.create(comment)
+
+        for recipient_id in recipient_ids:
+            self.notification_service.notify_marketing_lead_comment_added(
+                recipient_user_id=recipient_id,
+                marketing_lead_id=lead_id,
+                actor_id=author_id,
+            )
+
+        return comment

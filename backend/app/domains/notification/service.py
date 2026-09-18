@@ -178,3 +178,25 @@ class NotificationService:
             is_urgent=False,
         )
         return self.repository.create(notification)
+
+    def notify_marketing_lead_comment_added(
+        self,
+        *,
+        recipient_user_id: uuid.UUID,
+        marketing_lead_id: uuid.UUID,
+        actor_id: uuid.UUID,
+    ) -> Notification:
+        # Mirrors notify_activity_comment_added exactly (docs/Lead-Followup-
+        # Comments-Implementation-Plan.md) -- the caller
+        # (MarketingLeadCommentService.create_comment) works out who's in
+        # the thread and calls this once per recipient. Always non-urgent,
+        # same posture as every other marketing_lead notification.
+        notification = Notification(
+            recipient_user_id=recipient_user_id,
+            type="MARKETING_LEAD_COMMENT_ADDED",
+            entity_type="marketing_lead",
+            entity_id=marketing_lead_id,
+            created_by=actor_id,
+            is_urgent=False,
+        )
+        return self.repository.create(notification)

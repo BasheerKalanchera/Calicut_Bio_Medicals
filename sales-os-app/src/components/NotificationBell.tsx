@@ -58,10 +58,13 @@ export default function NotificationBell({
 
   function handleSelect(n: NotificationResponse) {
     setAnchorEl(null);
-    if (n.type === "MARKETING_LEAD_ASSIGNED") {
-      // No per-lead detail screen to open -- GET /marketing-leads (fired by
-      // the queue screen) bulk-marks all MARKETING_LEAD_ASSIGNED read on
-      // view, same read-receipt idea as opening an Opportunity below.
+    if (n.entity_type === "marketing_lead") {
+      // Covers both MARKETING_LEAD_ASSIGNED and MARKETING_LEAD_COMMENT_ADDED
+      // (docs/Lead-Followup-Comments-Implementation-Plan.md) -- no per-lead
+      // detail screen to open either way. GET /marketing-leads (fired by
+      // the queue screen) bulk-marks every unread notification with this
+      // entity_type read on view (mark_read_for_type), same read-receipt
+      // idea as opening an Opportunity below.
       onSelectMarketingLead();
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });

@@ -21,6 +21,9 @@ export function describeNotification(n: NotificationResponse): string {
     // 2026-09-03: keep this simple, don't build a live-status enrichment).
     return `${who} assigned you marketing lead ${marketingLeadRef(n.entity_id)}`;
   }
+  if (n.type === "MARKETING_LEAD_COMMENT_ADDED") {
+    return `${who} commented on marketing lead ${marketingLeadRef(n.entity_id)}`;
+  }
   if (n.type === "MANAGER_NOTE_ADDED") {
     return n.is_urgent
       ? `${who} left you an urgent manager note`

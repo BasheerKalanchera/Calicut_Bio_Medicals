@@ -1164,6 +1164,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/sales-headline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sales Headline */
+        get: operations["get_sales_headline_api_v1_reporting_sales_headline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/sales-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sales Summary */
+        get: operations["get_sales_summary_api_v1_reporting_sales_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/marketing-leads": {
         parameters: {
             query?: never;
@@ -1231,6 +1265,158 @@ export interface paths {
         head?: never;
         /** Reassign Marketing Lead */
         patch: operations["reassign_marketing_lead_api_v1_marketing_leads__lead_id__reassign_patch"];
+        trace?: never;
+    };
+    "/api/v1/marketing-leads/{lead_id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Marketing Lead Comments */
+        get: operations["list_marketing_lead_comments_api_v1_marketing_leads__lead_id__comments_get"];
+        put?: never;
+        /** Create Marketing Lead Comment */
+        post: operations["create_marketing_lead_comment_api_v1_marketing_leads__lead_id__comments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Target Plans
+         * @description Every role gets their own target(s) here -- RLS narrows further rows
+         *     (a manager's reports, an SBU's targets) automatically per caller.
+         */
+        get: operations["list_target_plans_api_v1_planning_targets_get"];
+        put?: never;
+        /** Create Target Plan */
+        post: operations["create_target_plan_api_v1_planning_targets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/pending-approval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Pending Approval
+         * @description The "Needs your approval" section -- empty for anyone who isn't
+         *     currently someone's resolved approver, no role check involved.
+         */
+        get: operations["list_pending_approval_api_v1_planning_targets_pending_approval_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Team Targets
+         * @description Per-person breakdown behind the rollup banner -- RLS narrows this to
+         *     whatever the caller is actually allowed to see (own SBU, own reports, or
+         *     unrestricted for Admin/GM), same as every other list endpoint here.
+         */
+        get: operations["list_team_targets_api_v1_planning_targets_team_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/rollup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Sbu Rollup */
+        get: operations["get_sbu_rollup_api_v1_planning_targets_rollup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/{target_plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Target Plan */
+        delete: operations["delete_target_plan_api_v1_planning_targets__target_plan_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Target Plan */
+        patch: operations["update_target_plan_api_v1_planning_targets__target_plan_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/planning/targets/{target_plan_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Target Plan */
+        post: operations["approve_target_plan_api_v1_planning_targets__target_plan_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/{target_plan_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Target Plan */
+        post: operations["reject_target_plan_api_v1_planning_targets__target_plan_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -1334,6 +1520,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["InstalledAssetResponse"];
+        };
+        /** APIResponse[MarketingLeadCommentResponse] */
+        APIResponse_MarketingLeadCommentResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["MarketingLeadCommentResponse"];
         };
         /** APIResponse[MarketingLeadResponse] */
         APIResponse_MarketingLeadResponse_: {
@@ -1629,6 +1829,48 @@ export interface components {
             message: string;
             data: components["schemas"]["RepActivityLevelResponse"];
         };
+        /** APIResponse[SBUTargetRollupResponse] */
+        APIResponse_SBUTargetRollupResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SBUTargetRollupResponse"];
+        };
+        /** APIResponse[SalesHeadline] */
+        APIResponse_SalesHeadline_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SalesHeadline"];
+        };
+        /** APIResponse[SalesSummaryResponse] */
+        APIResponse_SalesSummaryResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SalesSummaryResponse"];
+        };
         /** APIResponse[StagnantDealsResponse] */
         APIResponse_StagnantDealsResponse_: {
             /**
@@ -1670,6 +1912,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["StakeholderResponse"];
+        };
+        /** APIResponse[TargetPlanResponse] */
+        APIResponse_TargetPlanResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["TargetPlanResponse"];
         };
         /** APIResponse[UnreadCountResponse] */
         APIResponse_UnreadCountResponse_: {
@@ -1863,6 +2119,21 @@ export interface components {
             /** Data */
             data: components["schemas"]["DocumentResponse"][];
         };
+        /** APIResponse[list[MarketingLeadCommentResponse]] */
+        APIResponse_list_MarketingLeadCommentResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["MarketingLeadCommentResponse"][];
+        };
         /** APIResponse[list[MarketingLeadResponse]] */
         APIResponse_list_MarketingLeadResponse__: {
             /**
@@ -1982,6 +2253,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["StakeholderResponse"][];
+        };
+        /** APIResponse[list[TargetPlanResponse]] */
+        APIResponse_list_TargetPlanResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["TargetPlanResponse"][];
         };
         /** APIResponse[list[WorkspaceInstalledAsset]] */
         APIResponse_list_WorkspaceInstalledAsset__: {
@@ -2646,6 +2932,32 @@ export interface components {
              * Format: uuid
              */
             entity_id: string;
+        };
+        /** MarketingLeadCommentCreate */
+        MarketingLeadCommentCreate: {
+            /** Body */
+            body: string;
+        };
+        /** MarketingLeadCommentResponse */
+        MarketingLeadCommentResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Marketing Lead Id
+             * Format: uuid
+             */
+            marketing_lead_id: string;
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            author: components["schemas"]["AssignedToNested"];
         };
         /** MarketingLeadCreate */
         MarketingLeadCreate: {
@@ -3355,10 +3667,7 @@ export interface components {
         };
         /** PipelineSummaryRow */
         PipelineSummaryRow: {
-            /**
-             * Group Id
-             * Format: uuid
-             */
+            /** Group Id */
             group_id: string;
             /** Group Name */
             group_name: string;
@@ -3706,6 +4015,54 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** SBUTargetRollupResponse */
+        SBUTargetRollupResponse: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Total Target Amount Lakhs */
+            total_target_amount_lakhs: string;
+            /** User Count */
+            user_count: number;
+        };
+        /** SalesHeadline */
+        SalesHeadline: {
+            /** Revenue Lakhs */
+            revenue_lakhs: string;
+            /** Won Count */
+            won_count: number;
+            /** Lost Count */
+            lost_count: number;
+            /** Win Rate */
+            win_rate: string;
+            /** Avg Deal Size Lakhs */
+            avg_deal_size_lakhs: string;
+        };
+        /** SalesSummaryResponse */
+        SalesSummaryResponse: {
+            /**
+             * Group By
+             * @enum {string}
+             */
+            group_by: "rep" | "sbu" | "zone" | "product";
+            /** Rows */
+            rows: components["schemas"]["SalesSummaryRow"][];
+        };
+        /** SalesSummaryRow */
+        SalesSummaryRow: {
+            /** Group Id */
+            group_id: string;
+            /** Group Name */
+            group_name: string;
+            /** Revenue Lakhs */
+            revenue_lakhs: string;
+            /** Won Count */
+            won_count: number;
+        };
         /** SplitCreate */
         SplitCreate: {
             /**
@@ -3922,6 +4279,73 @@ export interface components {
             status_name: string;
             /** Is Terminal */
             is_terminal: boolean;
+        };
+        /** TargetPlanApprovalDecision */
+        TargetPlanApprovalDecision: {
+            /** Status */
+            status: string;
+            /** Note */
+            note?: string | null;
+        };
+        /** TargetPlanCreate */
+        TargetPlanCreate: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: number | string;
+        };
+        /** TargetPlanResponse */
+        TargetPlanResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            user: components["schemas"]["UserNested"];
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            sbu: components["schemas"]["SBUNested"];
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: string;
+            /** Status */
+            status: string;
+            /** Approved By */
+            approved_by: string | null;
+            approver: components["schemas"]["UserNested"] | null;
+            /** Approved At */
+            approved_at: string | null;
+            /** Decision Note */
+            decision_note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** TargetPlanUpdate */
+        TargetPlanUpdate: {
+            /** Target Amount Lakhs */
+            target_amount_lakhs: number | string;
         };
         /** UnreadCountResponse */
         UnreadCountResponse: {
@@ -5304,6 +5728,8 @@ export interface operations {
                 status_id?: string | null;
                 owner_id?: string | null;
                 zone_id?: string | null;
+                sbu_id?: string | null;
+                product_id?: string | null;
                 page?: number;
                 page_size?: number;
             };
@@ -7383,6 +7809,83 @@ export interface operations {
             };
         };
     };
+    get_sales_headline_api_v1_reporting_sales_headline_get: {
+        parameters: {
+            query?: {
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+                period_start?: string | null;
+                /** @description Inclusive */
+                period_end?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SalesHeadline_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sales_summary_api_v1_reporting_sales_summary_get: {
+        parameters: {
+            query?: {
+                group_by?: "rep" | "sbu" | "zone" | "product";
+                sbu_id?: string | null;
+                zone_id?: string | null;
+                user_id?: string | null;
+                period_start?: string | null;
+                /** @description Inclusive */
+                period_end?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SalesSummaryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_marketing_leads_api_v1_marketing_leads_get: {
         parameters: {
             query?: never;
@@ -7547,6 +8050,383 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_MarketingLeadResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_marketing_lead_comments_api_v1_marketing_leads__lead_id__comments_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_MarketingLeadCommentResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_marketing_lead_comment_api_v1_marketing_leads__lead_id__comments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketingLeadCommentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_MarketingLeadCommentResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_target_plans_api_v1_planning_targets_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_TargetPlanResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_target_plan_api_v1_planning_targets_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPlanCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetPlanResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_pending_approval_api_v1_planning_targets_pending_approval_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_TargetPlanResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_team_targets_api_v1_planning_targets_team_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_TargetPlanResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sbu_rollup_api_v1_planning_targets_rollup_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SBUTargetRollupResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_target_plan_api_v1_planning_targets__target_plan_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                target_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_target_plan_api_v1_planning_targets__target_plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                target_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPlanUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetPlanResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_target_plan_api_v1_planning_targets__target_plan_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                target_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPlanApprovalDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetPlanResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_target_plan_api_v1_planning_targets__target_plan_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                target_plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPlanApprovalDecision"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetPlanResponse_"];
                 };
             };
             /** @description Validation Error */

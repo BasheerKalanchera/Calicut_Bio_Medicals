@@ -61,3 +61,23 @@ class MarketingLead(Base):
     assigned_to_user: Mapped["UserProfile"] = relationship(
         foreign_keys=[assigned_to_user_id], lazy="joined"
     )
+
+
+class MarketingLeadComment(Base):
+    __tablename__ = "marketing_lead_comment"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    marketing_lead_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("marketing_lead.id"), nullable=False, index=True
+    )
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # No updated_at/edited flag -- post-only in v1, same immutability posture
+    # as activity_comment (docs/Lead-Followup-Comments-Implementation-Plan.md).
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=False
+    )
+
+    # Aliased to `author`, same naming as ActivityComment.author -- a comment
+    # has only one person to name here.
+    author: Mapped["UserProfile"] = relationship(foreign_keys=[created_by], lazy="joined")
