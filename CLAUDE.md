@@ -109,6 +109,13 @@ code or changing structure. On any conflict, the document wins over this file.
   migrations was launched immediately on "let's do that high-risk
   category right away," without first showing scope/cost, before
   Basheer had a chance to review or adjust it.
+- Before republishing anything client-visible (a scorecard Artifact, a
+  shared doc), show the exact diff of what will change — not just a
+  prose summary — before publishing.
+- **Why:** 2026-09-17 — a prose description of a scorecard change
+  prompted a follow-up question ("what are the changes?"); showing the
+  exact before/after diff for the next update let Basheer approve on
+  sight instead.
 
 ## Post-commit checklist
 Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by

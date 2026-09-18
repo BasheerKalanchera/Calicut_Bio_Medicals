@@ -1,7 +1,35 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-17_
+_Session: 2026-08-21 → 2026-09-18_
 
-## 2026-09-17 session (latest) — RLS gaps (activity/marketing_lead/document/notification) fixed, full live manual E2E pass, committed and pushed
+## 2026-09-18 session (latest) — UAT selective-migration audit; utils/reporting.ts renamed to utils/formatter.ts, committed and pushed
+
+Basheer asked how to selectively hold back a parked feature from an
+upcoming UAT sync (leadership reviewing the Delivery Dashboard's
+Partial/Not-started rows for Phase 2 parking). Audited the 38 commits
+on `main` not yet on `uat` (11 `feat:`, 3 `fix:`, rest docs/chore):
+confirmed none of the 5 new Alembic migrations (`0042`-`0046`) touch
+overlapping tables, so any one is mechanically excludable from a UAT
+sync with a one-line `down_revision` repoint; the harder blockers are
+UI-embedded changes (Kanban sort, Report Drill-down, Product Catalog
+gating) baked into already-shared screens, not schema.
+
+That audit surfaced a real naming mixup: `utils/reporting.ts` holds
+only generic fiscal-quarter/currency-formatting helpers (no reporting
+logic), but both Target Planning and the new Report screens import
+from it — collision was cosmetic, not a real coupling. Renamed to
+`utils/formatter.ts` (`git mv`, history preserved) and updated the 5
+importing screens. `tsc --noEmit` clean; live smoke-tested (Insights,
+Target Planning Quarterly+Annual, Pipeline/Sales/Product Performance
+Reports) — no console errors, all Lakhs/period formatting correct.
+Committed and pushed by Basheer directly, post-commit checklist run
+retroactively per his request. Commit `160736a`.
+
+**Next step:** none pending on this thread. Not a signed-requirement
+feature — no Traceability/Scorecard change needed. The UAT
+selective-migration decision itself is still open (leadership hasn't
+named which features to park yet) — pick this back up once they do.
+
+## 2026-09-17 session — RLS gaps (activity/marketing_lead/document/notification) fixed, full live manual E2E pass, committed and pushed
 
 Fixed 4 pre-existing RLS gaps (a 5th, document delete authorization,
 found separately while verifying #3) surfaced by a code-review pass:
