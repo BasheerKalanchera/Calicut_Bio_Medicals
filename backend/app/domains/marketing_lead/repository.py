@@ -10,19 +10,32 @@ from app.domains.organization.models import UserProfile
 from app.domains.product.models import Product
 from app.domains.reference.models import LeadSource
 
-# (MarketingLead, account name, lead source name, product name) -- outer-
-# joined and resolved at read time, no denormalization onto the row. Same
-# pattern as NotificationRepository's NotificationRow.
-MarketingLeadRow = tuple[MarketingLead, str | None, str | None, str | None]
+# (MarketingLead, account name, lead source name, product name, comment
+# count) -- outer-joined and resolved at read time, no denormalization onto
+# the row. Same pattern as NotificationRepository's NotificationRow.
+MarketingLeadRow = tuple[MarketingLead, str | None, str | None, str | None, int]
 
 
 class MarketingLeadRepository(BaseRepository[MarketingLead]):
     def __init__(self, db: Session):
         super().__init__(MarketingLead, db)
 
+    def _comment_count_column(self):
+        # Correlated scalar subquery, not a join -- one extra column on the
+        # existing list query instead of a separate per-row fetch, so the
+        # Review Queue / Marketing Leads screens can show "Comments (N)"
+        # without an N+1 request. Mirrors ActivityRepository's own
+        # _comment_count_column exactly.
+        return (
+            select(func.count(MarketingLeadComment.id))
+            .where(MarketingLeadComment.marketing_lead_id == MarketingLead.id)
+            .correlate(MarketingLead)
+            .scalar_subquery()
+        )
+
     def _enriched_select(self):
         return (
-            select(MarketingLead, Account.name, LeadSource.name, Product.name)
+            select(MarketingLead, Account.name, LeadSource.name, Product.name, self._comment_count_column())
             # outerjoin, not join -- account_id is nullable ("Not Sure Yet,"
             # 0034_make_marketing_lead_account_nullable.py). An inner join
             # here would silently drop every account_id IS NULL row from

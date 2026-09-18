@@ -14,7 +14,16 @@ function formatDate(iso: string) {
 // a flat, post-only thread against a single marketing_lead, modeled directly
 // on ActivityCommentThread.tsx. Collapsed and unfetched until expanded, so
 // opening the queue with many leads doesn't fire one query per lead.
-export default function MarketingLeadCommentThread({ leadId }: { leadId: string }) {
+export default function MarketingLeadCommentThread({
+  leadId,
+  commentCount,
+}: {
+  leadId: string;
+  // From MarketingLeadResponse.comment_count (correlated subquery, same
+  // pattern as Activity's own comment_count) -- drives the toggle label
+  // ("Comments (N)" vs a plain "Add comment" link) without an extra fetch.
+  commentCount: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState("");
   const queryClient = useQueryClient();
@@ -31,6 +40,10 @@ export default function MarketingLeadCommentThread({ leadId }: { leadId: string 
     onSuccess: () => {
       setDraft("");
       queryClient.invalidateQueries({ queryKey });
+      // Not `exact` -- matches both ["marketingLeads", "reviewQueue"] and
+      // ["marketingLeads", "mine"], so the new comment_count shows up on
+      // whichever screen posted it without a manual refresh.
+      queryClient.invalidateQueries({ queryKey: ["marketingLeads"] });
     },
   });
 
@@ -58,7 +71,31 @@ export default function MarketingLeadCommentThread({ leadId }: { leadId: string 
           "&:hover": { color: "#4b5563", bgcolor: "transparent" },
         }}
       >
-        {expanded ? "Hide comments" : "Comments"}
+        {expanded ? (
+          "Hide comments"
+        ) : commentCount > 0 ? (
+          <>
+            <Box component="span">Comments</Box>
+            <Box
+              component="span"
+              sx={{
+                bgcolor: "#fee2e2",
+                color: "#dc2626",
+                fontWeight: 900,
+                fontSize: "10px",
+                borderRadius: "999px",
+                px: 0.75,
+                py: 0.125,
+                lineHeight: 1.5,
+                letterSpacing: 0,
+              }}
+            >
+              {commentCount}
+            </Box>
+          </>
+        ) : (
+          "Add comment"
+        )}
       </Button>
 
       {expanded && (

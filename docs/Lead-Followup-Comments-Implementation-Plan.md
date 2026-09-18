@@ -74,16 +74,29 @@ lives inside the `activity` domain, not a new top-level domain):
   is posting right now — identical rule to Activity Comments' Decision 4, same
   reasoning (real threads here are small: the rep, their manager, the Marketing User
   who created it).
+- **`comment_count` on `MarketingLeadResponse`** — added 2026-09-18 during manual E2E
+  (Basheer noticed lead cards had no comment-count indicator, unlike Activity's own
+  "Comments (N)" badge). Correlated scalar subquery in
+  `MarketingLeadRepository._comment_count_column`, mirrors
+  `ActivityRepository._comment_count_column` exactly — query-time only, not a stored
+  column, no migration.
 
 ## Frontend
 
 - `MarketingLeadCommentThread.tsx` (new component, modeled directly on
   `ActivityCommentThread.tsx`): comment count/expand toggle + chronological thread +
   "Add a comment…" box.
-- Embedded inside `MarketingLeadReviewQueueScreen.tsx`'s existing lead card, next to
-  the Convert/Discard buttons — the screen where a rep already opens, converts, or
-  discards a lead. Lazy-loaded (`enabled: expanded`) so the queue list doesn't fire
-  one query per lead on load, same as Activity Comments.
+- Embedded inside **both** `MarketingLeadReviewQueueScreen.tsx`'s existing lead card
+  (next to the Convert/Discard buttons — the screen where a rep already opens,
+  converts, or discards a lead) **and** `MarketingLeadEntryScreen.tsx`'s own lead card
+  (the Marketing User's own created-leads list). Both are needed for Decision 3 to
+  actually hold: `marketing_lead_select`'s `created_by = cabio_app_uid()` clause
+  already grants the creator visibility/posting rights, but Marketing User has no nav
+  entry for the Review Queue screen — without the second embed, the creator would have
+  RLS access with no frontend surface to use it. Found live during manual E2E
+  (2026-09-18, `docs/Lead-Followup-Comments-Manual-E2E-Test-Plan.md`'s TC-6) and fixed
+  same session. Lazy-loaded (`enabled: expanded`) on both screens so the list doesn't
+  fire one query per lead on load, same as Activity Comments.
 - `services/marketingLeads.ts` gains `listMarketingLeadComments`/
   `createMarketingLeadComment`.
 - `NotificationBell.tsx`'s `describe()` gains a label for

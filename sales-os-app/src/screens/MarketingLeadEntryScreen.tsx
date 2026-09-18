@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Box, Button, Typography } from "@mui/material";
+import MarketingLeadCommentThread from "../components/MarketingLeadCommentThread";
 import MarketingLeadCreateModal from "../components/MarketingLeadCreateModal";
 import { REASONS as DISCARD_REASONS } from "../components/MarketingLeadDiscardModal";
 import { listMarketingLeads } from "../services/marketingLeads";
@@ -96,6 +97,7 @@ export default function MarketingLeadEntryScreen({ active }: { active: boolean }
                       {lead.discard_note ? ` — ${lead.discard_note}` : ""}
                     </Typography>
                   )}
+                  <MarketingLeadCommentThread leadId={lead.id} commentCount={lead.comment_count} />
                 </Box>
               );
             })}

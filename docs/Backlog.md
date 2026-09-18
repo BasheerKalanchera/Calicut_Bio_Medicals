@@ -69,6 +69,27 @@ addition once Brand has a stable id instead of free text. Noted on
 
 ## Deferred / undecided items
 
+- **Marketing User has no notification bell — can't be proactively nudged
+  about a comment on their own lead.** Found 2026-09-18 during Lead
+  Follow-up Comments manual E2E (`docs/Lead-Followup-Comments-Manual-E2E-
+  Test-Plan.md`, TC-14). `DemoApp.tsx:571` gates `<NotificationBell>`
+  behind `!isMarketingUser` — a deliberate 2026-09-02 decision, made back
+  when nothing could ever notify this role and the click-through was an
+  escape hatch into `OpportunityDetailScreen`. That's no longer fully true:
+  `MARKETING_LEAD_COMMENT_ADDED` can now target a Marketing User who
+  created the lead, and its click-through goes through
+  `onSelectMarketingLead()`, not the Opportunity path, so the original
+  escape-hatch risk doesn't directly apply. Not a total blocker — Fahad can
+  still open his own "Marketing Leads" screen and read the thread there
+  (fixed same session, see the Lead Follow-up Comments entry below) — he
+  just won't get a proactive nudge the way a rep or manager would.
+  **Basheer's call, 2026-09-18: leave as-is, not in scope for this
+  feature.** If revisited: the bell would need to show only
+  `entity_type === "marketing_lead"` notifications for this role (never
+  Opportunity/Activity types), and `onSelectMarketingLead()`'s target would
+  need a role-aware branch — the Review Queue for reps/managers,
+  `MarketingLeadEntryScreen` for Marketing User.
+
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
   (Demo Management) asks for a report showing what share of demos actually
   convert to a sale. Found missing during the Phase 1 Delivery Scorecard

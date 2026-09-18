@@ -1,6 +1,40 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-18_
 
+## 2026-09-18 session — Lead Follow-up Comments: built, full manual E2E pass (19/19), one real gap found and fixed live, comment-count badge added — ready to commit and push
+
+Built per `docs/Lead-Followup-Comments-Implementation-Plan.md`: two-way
+comment thread on `marketing_lead`, mirroring the existing Activity Comment
+pattern exactly (RLS select/insert policies, notification fan-out,
+`MarketingLeadCommentThread.tsx` modeled on `ActivityCommentThread.tsx`).
+Migration `0047` applied to Dev, `Physical-Schema.sql` regenerated. Pre-E2E
+`/code-review` (medium) came back clean. **Committed `d899b15`.**
+
+Ran the full 19-case manual E2E pass live against Dev as Nishad K V
+(assigned rep), Fahad (Marketing User, lead creator), and Haroon Sidheeq
+(GM) — full results in `docs/Lead-Followup-Comments-Manual-E2E-Test-
+Plan.md`. All 19 **Pass**. Two real findings, both resolved:
+1. The lead creator (Marketing User) had no Comments UI at all —
+   `MarketingLeadCommentThread` was only wired into the Review Queue
+   screen, which this role has no nav entry for. Fixed by embedding it
+   into `MarketingLeadEntryScreen.tsx` too.
+2. Marketing User has no notification bell at all (pre-existing,
+   deliberate 2026-09-02 decision) — can't be proactively nudged about a
+   reply. Basheer's call: leave as-is, logged in `docs/Backlog.md`.
+
+**UX follow-on after the pass:** Basheer noticed lead cards had no
+comment-count indicator, unlike Activity's own "Comments (N)" badge. Added
+a correlated `comment_count` subquery to `MarketingLeadRepository`
+(mirrors `ActivityRepository._comment_count_column` exactly), verified
+live — matches Activity's display precisely.
+
+896/896 backend tests pass, `tsc`/`eslint`/`ruff` clean throughout.
+
+**Next step:** commit everything (backend/frontend fixes, both doc
+updates, this file) and push. This feature's row lives in Traceability's
+separate "Pending — proposed, not yet built" table, not the main tally —
+update its Status text there, no scorecard regeneration needed.
+
 ## 2026-09-18 session (latest) — UAT selective-migration audit; utils/reporting.ts renamed to utils/formatter.ts, committed and pushed
 
 Basheer asked how to selectively hold back a parked feature from an

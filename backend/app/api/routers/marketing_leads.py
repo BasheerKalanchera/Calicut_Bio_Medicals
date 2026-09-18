@@ -48,7 +48,7 @@ def _get_comment_service(db: Session = Depends(get_db)) -> MarketingLeadCommentS
 
 
 def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
-    lead, account_name, lead_source_name, product_name = row
+    lead, account_name, lead_source_name, product_name, comment_count = row
     return MarketingLeadResponse(
         id=lead.id,
         account_id=lead.account_id,
@@ -71,6 +71,7 @@ def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
         account_name=account_name,
         lead_source_name=lead_source_name,
         product_name=product_name,
+        comment_count=comment_count,
     )
 
 

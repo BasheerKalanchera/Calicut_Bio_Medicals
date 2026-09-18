@@ -58,6 +58,11 @@ class MarketingLeadResponse(BaseModel):
     account_name: str | None = None
     lead_source_name: str | None = None
     product_name: str | None = None
+    # Query-time only, not a stored column -- populated by
+    # MarketingLeadRepository's correlated subquery, so the Review Queue and
+    # Marketing Leads screens can show "Comments (N)" without a separate
+    # per-row fetch. Same pattern as ActivityResponse.comment_count.
+    comment_count: int = 0
 
 
 class MarketingLeadCommentCreate(BaseModel):

@@ -3066,6 +3066,11 @@ export interface components {
             lead_source_name?: string | null;
             /** Product Name */
             product_name?: string | null;
+            /**
+             * Comment Count
+             * @default 0
+             */
+            comment_count: number;
         };
         /**
          * MasterDataEntity

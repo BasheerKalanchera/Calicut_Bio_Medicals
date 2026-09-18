@@ -4689,3 +4689,27 @@ bad recommendation. What to improve: when comparing two branches for
 what's safe to move, check against the actual target branch's file
 tree first, not just against `main`'s own commit history — the two
 gave different, contradictory answers here.
+
+## 2026-09-18 (later) — Lead Follow-up Comments manual E2E, in progress: a real gap found and fixed live (creator had no Comments UI at all)
+
+Started the manual E2E pass from `docs/Lead-Followup-Comments-Manual-E2E-
+Test-Plan.md` live against Dev. TC-1 through TC-4 (basic thread: collapsed
+by default, expands empty, posts correctly, persists) and TC-8 (no
+edit/delete) passed as Nishad K V.
+
+**Real gap found on TC-6:** logged in as Fahad (Marketing User, creator of
+lead #7450B3) to test the creator's own visibility/posting rights — his
+"Marketing Leads" screen (`MarketingLeadEntryScreen.tsx`) had no Comments
+UI at all. The implementation plan only named
+`MarketingLeadReviewQueueScreen.tsx` for the embed, and Marketing User has
+no nav entry for that screen, so the RLS-granted `created_by =
+cabio_app_uid()` visibility had no frontend surface — the exact problem
+this feature was meant to solve, unreachable for this one role. Fixed
+live: embedded the same `MarketingLeadCommentThread` component into
+`MarketingLeadEntryScreen.tsx` too (`tsc`/`eslint` clean). Re-verified:
+Fahad could then see Nishad's earlier comment and post his own, confirming
+the RLS clause works end to end, not just on paper.
+
+**Not yet committed** — fix is in the working tree on top of `d899b15`.
+Manual E2E still in progress (notification fan-out and multi-login cases
+pending).

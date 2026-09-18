@@ -146,7 +146,7 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
                     </Button>
                   )}
                 </Box>
-                <MarketingLeadCommentThread leadId={lead.id} />
+                <MarketingLeadCommentThread leadId={lead.id} commentCount={lead.comment_count} />
               </Box>
             ))}
           </Box>
@@ -204,7 +204,7 @@ export default function MarketingLeadReviewQueueScreen({ active }: { active: boo
                         </Button>
                       </Box>
                     )}
-                    <MarketingLeadCommentThread leadId={lead.id} />
+                    <MarketingLeadCommentThread leadId={lead.id} commentCount={lead.comment_count} />
                   </Box>
                 );
               })}

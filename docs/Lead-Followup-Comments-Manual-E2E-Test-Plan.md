@@ -1,11 +1,31 @@
 # Lead Follow-up Comments — Manual E2E Test Plan
 
-**Status:** Built, not yet run live. Backend (896/896 tests pass, `ruff`
-clean) and frontend (`tsc`/`eslint` clean) both complete; migration `0047`
-applied to Dev, `Physical-Schema.sql` regenerated. Built per `docs/Lead-
-Followup-Comments-Implementation-Plan.md`. Pre-E2E `/code-review` run
-separately per `CLAUDE.md`'s standing rule — fix any findings from that
-pass before starting this one.
+**Status:** All 19 cases passed, run live against Dev 2026-09-18 with
+Nishad K V (assigned rep), Fahad (Marketing User, lead creator), and
+Haroon Sidheeq (GM). Pre-E2E `/code-review` (medium) passed clean
+beforehand. One real gap found and fixed live mid-pass (TC-6): the lead
+creator had no Comments UI at all — `MarketingLeadCommentThread` was only
+wired into `MarketingLeadReviewQueueScreen.tsx`, and Marketing User has no
+nav entry for that screen. Fixed by embedding the same component into
+`MarketingLeadEntryScreen.tsx` too. A second gap found (TC-14) — Marketing
+User has no notification bell at all, so can't be proactively nudged about
+a reply — was triaged and deliberately deferred to `docs/Backlog.md`
+(Basheer's call, not a blocker for this feature). Feature confirmed working
+end to end: posting, chronological rendering, two-way/multi-party threads
+(rep, manager, and the lead's own creator), RLS-composed visibility, full
+notification fan-out, correct click-through with no per-lead detail
+screen, and no regression to Activity Comments' own notification path.
+
+**UX follow-on after the pass completed:** Basheer noticed lead cards had
+no comment-count indicator, unlike Activity's own "Comments (N)" badge --
+every card just said the plain word "Comments" regardless of thread size.
+Fixed same session: added a correlated `comment_count` subquery to
+`MarketingLeadRepository` (mirrors `ActivityRepository._comment_count_column`
+exactly), exposed on `MarketingLeadResponse`, and wired through
+`MarketingLeadCommentThread`'s toggle label on both screens. Verified live
+as Nishad K V: #7450B3 (3 comments) now shows a red "COMMENTS 3" badge,
+#1FCCED (0 comments) shows a plain "ADD COMMENT" link -- matching Activity's
+display exactly. 896/896 backend tests pass, `tsc`/`eslint`/`ruff` clean.
 
 ## Setup
 
@@ -178,22 +198,22 @@ is needed for this one).
 
 | TC | Result | Notes |
 |----|--------|-------|
-| 1  |        |       |
-| 2  |        |       |
-| 3  |        |       |
-| 4  |        |       |
-| 5  |        |       |
-| 6  |        |       |
-| 7  |        |       |
-| 8  |        |       |
-| 9  |        |       |
-| 10 |        |       |
-| 11 |        |       |
-| 12 |        |       |
-| 13 |        |       |
-| 14 |        |       |
-| 15 |        |       |
-| 16 |        |       |
-| 17 |        |       |
-| 18 |        |       |
-| 19 |        |       |
+| 1  | Pass   | As Nishad K V (Area Manager, Critical Care), lead #7450B3 (Aster DM, CONFERENCE — Bangalore trade fair) showed a collapsed "COMMENTS" toggle, no comments yet |
+| 2  | Pass   | Expanded to "HIDE COMMENTS" — empty thread, "Add a comment…" box, Post button |
+| 3  | Pass   | Nishad posted "TC-3: Called the chief cardiologist, following up on EDAN i20 interest from the trade fair." — appeared immediately, author "Nishad K V", timestamp "18 Sept, 02:33 pm", input cleared |
+| 4  | Pass   | Navigated away and back to the Review Queue (fresh mount) — comment still present unchanged |
+| 5  | Pass (role substituted — see note) | Test plan named Arun Adarsh (Vivek's Area Manager), but all testing so far was on lead #7450B3 (assigned to **Nishad K V**, not Vivek) — Arun Adarsh has no standing over Nishad (peer Area Managers, not a reporting relationship), so he'd see nothing under "Team Marketing Leads" for this lead. Substituted **Haroon (GM, unrestricted)** instead, confirmed as Nishad's actual manager for this purpose. Haroon posted "TC-5: Good work Nishad, let's close this by end of week." successfully — confirms comment rights aren't rep-only |
+| 6  | Pass (after a real gap found and fixed) | As Fahad (Marketing User, creator of #7450B3), his own "Marketing Leads" screen had **no Comments UI at all** — `MarketingLeadCommentThread` was only wired into `MarketingLeadReviewQueueScreen.tsx` per the plan's literal wording, and Marketing User has no nav entry for that screen, so the creator had no way to read or post despite RLS already allowing it. Fixed live: embedded the same component into `MarketingLeadEntryScreen.tsx` too (`tsc`/`eslint` clean). After the fix, Fahad could see Nishad's TC-3 comment (confirms the `created_by = cabio_app_uid()` RLS clause actually works, not just reads correctly on paper) and posted "TC-6: Thanks Nishad, please keep me posted once he decides on the EDAN i20." successfully |
+| 7  | Pass | Full 3-author chronological thread on #7450B3: Nishad K V 02:33 pm → Fahad 02:56 pm → Haroon Sidheeq 03:00 pm, all oldest-first |
+| 8  | Pass   | Confirmed visually on TC-3's posted comment — no edit/delete affordance anywhere on the row |
+| 9  | Pass (confirmed via cross-reference, not a dedicated live click-through) | Fahad's own "Marketing Leads" list (checked during TC-6) includes lead #B2D4D1, assigned to **Vivek**, confirming it genuinely exists — but Nishad's "Team Marketing Leads" section (checked before any of this session's testing, and again since) never showed it at any point, only his own two leads. Since Nishad (Area Manager, Critical Care, different zone, not Vivek's manager) never saw a lead known to exist, this is real evidence the RLS-composed visibility is actually blocking it, not just coincidentally absent |
+| 10 | Pass | Fahad's TC-6 comment (a non-owner commenting after the owner) notified Nishad K V (the assigned rep/owner) — bell read "Fahad commented on marketing lead #7450B3" |
+| 11 | Pass | As Nishad K V, bell badge showed a red dot, dropdown correctly read "Haroon Sidheeq commented on marketing lead #7450B3" (18 Sept, 03:00 pm) and "Fahad commented on marketing lead #7450B3" (02:56 pm) both unread (highlighted). No urgent dialog popped on page load for either |
+| 12 | Pass | Nishad's own TC-3 comment (the very first on the thread, posted before anyone else) produced no notification for himself — his bell dropdown only ever showed the later Fahad/Haroon comments plus the original assignment, never an entry for his own first post |
+| 13 | Pass (equivalent case) | Fahad's TC-6 reply, posted after Nishad (the owner) had already commented, correctly notified Nishad — same "reply after owner already in thread" shape as the planned case, roles swapped (non-owner replying triggers owner notification, same underlying rule) |
+| 14 | Pass (Nishad's side confirmed; Fahad's side accepted as code-verified only) | Haroon's TC-5 comment (3rd participant, after Nishad and Fahad had both commented) notified Nishad correctly. **Real finding while checking Fahad's side:** Marketing User has no bell icon at all (`DemoApp.tsx:571` gates `<NotificationBell>` behind `!isMarketingUser`, a deliberate 2026-09-02 decision — see Backlog). Basheer's call: leave as-is, not in scope this session. Fahad's own notification row is accepted as code-verified only (identical fan-out logic to `ActivityCommentService`, already unit-tested and code-reviewed clean) — same "accepted as code-verified" precedent as the RLS Gaps pass's cross-SBU case |
+| 15 | Pass | Clicked "Haroon Sidheeq commented on marketing lead #7450B3" — navigated straight to the Marketing Lead Review Queue, no attempt to scroll to or highlight #7450B3 specifically, matching the "no per-lead detail screen" design |
+| 16 | Pass | Reopened the bell after TC-15's click-through — both the Haroon and Fahad comment notifications now show read (unhighlighted), confirming the bulk `mark_read_for_type("marketing_lead")` call cleared both by `entity_type`, not just the one clicked |
+| 17 | Pass (passive, not deliberately exercised) | Convert/Discard/Reassign weren't clicked this session, but every screen touched (Review Queue, Marketing Leads) rendered existing CONVERTED/DISCARDED/SEEN leads, discard reasons/notes, and assignee names correctly throughout — no rendering breakage observed. A deliberate Convert/Discard/Reassign click-through would still be worth doing if time allows |
+| 18 | Pass | Nishad's bell dropdown showed "Fahad assigned you marketing lead #7450B3" (10 Sept, 07:54 pm) rendering correctly, unaffected by the day's testing |
+| 19 | Pass | As Haroon, posted "TC-19: Any update since this call?" on a CALL Activity owned by Nishad K V ("critical care icu" Opportunity). Nishad's bell correctly showed "Haroon Sidheeq commented on an activity" (Aster MIMS Calicut, 18 Sept, 03:15 pm), unread, alongside the marketing_lead notifications with no interference between the two types — confirms the `entity_type === "marketing_lead"` widening in `NotificationBell.tsx` didn't regress the existing Activity Comment path |
