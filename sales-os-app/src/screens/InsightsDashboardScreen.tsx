@@ -6,7 +6,7 @@ import { LoadingOrEmpty, MiniBar, SectionCard, StatTile } from "../components/Re
 import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
 import type { PipelineGroupBy } from "../types/reporting";
-import { formatLakhs } from "../utils/reporting";
+import { formatLakhs } from "../utils/formatter";
 
 // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
 // (2026-09-11): this screen stays tiles-only -- single numbers and per-rep

@@ -6,7 +6,7 @@ import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
-import { formatLakhs, getFiscalQuarterBounds } from "../utils/reporting";
+import { formatLakhs, getFiscalQuarterBounds } from "../utils/formatter";
 
 const GROUP_BY_OPTIONS: { value: SalesGroupBy; label: string }[] = [
   { value: "rep", label: "Rep" },

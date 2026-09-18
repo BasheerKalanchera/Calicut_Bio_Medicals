@@ -5,7 +5,7 @@ import { LoadingOrEmpty } from "../components/ReportingUI";
 import { getProductPerformance } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { ProductPerformanceGroupBy } from "../types/reporting";
-import { formatLakhs } from "../utils/reporting";
+import { formatLakhs } from "../utils/formatter";
 
 const GROUP_BY_OPTIONS: { value: ProductPerformanceGroupBy; label: string }[] = [
   { value: "product", label: "Product" },

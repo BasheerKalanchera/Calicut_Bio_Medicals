@@ -4,7 +4,7 @@ import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
 import { getPipelineSummary } from "../services/reporting";
 import type { PipelineGroupBy } from "../types/reporting";
-import { formatLakhs } from "../utils/reporting";
+import { formatLakhs } from "../utils/formatter";
 
 const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "stage", label: "Stage" },

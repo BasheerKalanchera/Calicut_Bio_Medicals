@@ -36,7 +36,7 @@ import {
   getFiscalYearOfPeriod,
   getPlanningYearQuarters,
   formatLakhs,
-} from "../utils/reporting";
+} from "../utils/formatter";
 import type { TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
