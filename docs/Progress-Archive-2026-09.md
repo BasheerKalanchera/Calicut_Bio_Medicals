@@ -4852,3 +4852,219 @@ pending).
 - In browser automation, prefer `find`-returned element refs over
   screenshot coordinates for clicks, especially right after an expand/
   collapse action that can shift layout.
+
+## 2026-09-19 — Scorecard label rename committed; external effort-negotiation review logged; Target-Planning-dependency list drawn up; corrected on planning process (Sprint Plan is deprecated, Traceability Matrix drives now)
+
+**Two small doc/tooling commits, both pushed to `origin/main`:**
+1. Renamed "New Features Added" to "Commitment beyond contract" everywhere
+   in the scorecard tooling (label + a softer one-line description, was
+   "things built that Cabio leadership never signed off on asking for").
+   `python scripts/generate_scorecard.py --check` caught
+   `.scratch/phase1-scorecard-by-status.html` as stale relative to the
+   script before committing — ran the generator (no `--check`) to
+   regenerate all four derived files properly, confirmed `--check` clean
+   after, diffed the client-facing HTML to confirm only the label changed
+   (no number changes) before committing. `scripts/generate_scorecard.py`,
+   `docs/Phase1-Delivery-Scorecard.md`, both `.scratch` HTML files.
+   **Committed `be98a00`.**
+2. Logged `docs/Review-Phase1-Effort-Beyond-Contract-Negotiation-2026-09.md`
+   — an external architecture review (tool: "Antigravity") of the earlier
+   `Discussion-Phase1-Effort-Beyond-Contract-Negotiation-2026-09.md`
+   discussion paper. Summarized for Basheer in plain language: agrees with
+   shipping the 16 pending `main` commits to UAT immediately (most are
+   already-signed work, not "extras"), disagrees with trading away Coverage
+   Planning to Phase 2 (calls it the architectural backbone of the Sales
+   OS), and proposes a 4-step playbook instead (ship the 16 commits →
+   finish a lean Coverage Planning → negotiate deferring only secondary
+   items like Margin Report → use the extras as Phase 2 goodwill). Flagged
+   explicitly to Basheer as one external reviewer's opinion/analysis, not
+   verified fact — its commit-to-feature mapping and effort sizing weren't
+   independently checked against the repo. Committed with a reference back
+   to the original discussion paper's commit (`1cef3bc`), per Basheer's
+   ask. **Committed `9e3147e`.**
+
+**Target-Planning-dependency review, on request:** walked the docs
+(`Phase1-Completion-Sprint-Plan.md`, `Backlog.md`, `Insights-Dashboard-
+Implementation-Plan.md`) for every feature that was genuinely blocked on
+Target Planning landing. List given: Coverage Planning (hard FK +
+approval-mechanism dependency, `BR-PL-03`), Forecast by month/quarter + the
+<3×-target pipeline alert (Feature 2.5's second half), the Batch 2 Insights
+Dashboard tiles (Revenue Target vs. Achieved, Achievement %, Team Revenue
+Target rollup), Beat Plan Compliance (needs both Target Planning *and*
+Coverage Planning), and the not-yet-scoped Annual KPI Target for Sales
+Development Activities (deliberately last in line, also needs Sales Dev
+Activities built first).
+
+**Prioritization discussed:** recommended the small Target-dependent
+reporting items first, Coverage Planning after — reporting needs no new rep
+behavior and pays off immediately on data already flowing in, while
+Coverage Planning is new rep data-entry that only pays off after adoption.
+This mirrors the reasoning already on record in `Backlog.md` for the
+original 2026-08-25 Milestone 2 sequencing decision, not a new argument.
+Flagged one real risk: Coverage Planning is signed scope (Feature 6.1) and,
+per the review just logged above, the architectural backbone Cabio is
+watching for — "small wins first" shouldn't be allowed to drift into
+indefinite deferral without a firm restart date.
+
+**Corrected by Basheer on two points, both real:**
+1. A small Target Planning fix is still pending, being built out in a
+   parallel session (a new untracked `Brand-Level-Target-Planning-
+   Implementation-Plan.md` appeared mid-session — left untouched, belongs
+   to that other thread, per the standing rule on parallel-session WIP).
+   Target-dependent features wait until Basheer confirms that fix has
+   landed.
+2. **`docs/Phase1-Completion-Sprint-Plan.md` has been deprecated as the
+   planning driver for about a week (since ~2026-09-12)** — I had proposed
+   drafting an updated build order into it, which was wrong. Phase 1
+   sequencing is now read directly off `Signed-Requirements-to-PRD-
+   Traceability.md`'s row statuses instead. New memory saved
+   (`cabio_traceability_drives_phase1`); the older
+   `cabio_feedback_sync_tracking_docs_on_commit` memory (which said
+   Scorecard/Traceability/Sprint-Plan get updated together) was annotated
+   to note the Sprint-Plan part no longer applies.
+
+## 2026-09-19 (later) — Brand-Level Target Planning scoped; surfaced a real prerequisite (Product Catalog's Brand/Category/Model still free text) — sequencing decided, nothing built yet
+
+Haroon and Latheef Bhai raised a real gap: Cabio's quarterly targets are
+actually handed down **by brand** (each vendor/principal gives its own
+number), currently for **Critical Care only** — Imaging is effectively
+one brand today. Haroon currently splits a brand's number across the team
+by hand, outside the system, and wants visibility into whether the team's
+own committed numbers add up to what each brand gave.
+
+**Design direction landed, `docs/Brand-Level-Target-Planning-
+Implementation-Plan.md` (draft):** stays bottom-up — no reversal of Target
+Planning's self-set, manager-approved design. Each person's existing
+quarterly target gets an optional brand breakdown that must sum to their
+total (**mandatory full split**, Basheer's call, chosen with Critical
+Care's multi-brand need in mind even though most Imaging rows will just be
+one 100% line today); a new comparison view (Admin/GM only, matching who
+actually receives the vendor's number) shows the vendor's brand target
+against the team's committed total and the gap. No cascade/push-down was
+built or planned — Haroon does the comparison himself, the system doesn't
+allocate.
+
+**Real prerequisite surfaced along the way:** grouping targets by brand
+only means something if "brand" is a stable, consistent value. Today
+`product.oem_name` is free text ("EDAN" vs "Edan" both exist live) — the
+already-approved Product Catalog fix (migration 0048,
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`) does **not**
+fix this; it only stops the separate `name` field from drifting away from
+Brand/Model/Category, explicitly leaving Brand/Category as free text
+(stated as out of scope in that plan). Turning Brand (and, per Signed
+Feature 4.1's "category → brand → model" hierarchy, Category and
+potentially Model) into real, fixed-list fields was previously just a
+`Backlog.md` idea with no owner or timeline.
+
+**Basheer's call: promote that idea to a real, scheduled "Part 2"**, done
+properly and landed **before** Brand-Level Target Planning is built — not
+worked around with a Target-Planning-only shortcut. Rationale (Basheer,
+verbatim intent): get Product Catalog's Brand/Category/Model onto a solid
+footing once, so there's no ongoing scope for naming-drift errors to keep
+creeping into Product Catalog (and by extension into anything downstream
+that groups by brand, including this feature and the existing Product
+Performance report's Brand-grouped drill-down, already known non-clickable
+for the same free-text reason).
+
+**Not yet done:** the actual Part 2 technical design (which fields become
+real tables, whether "Model" needs its own master table or is already
+effectively represented by each product row — genuinely open, not decided
+here) still needs to be written into
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md` as its own
+section, and reviewed with Basheer before building. `docs/Backlog.md`'s
+Product Catalog entry updated to reflect the new sequencing; `.claude/
+active_progress.md`'s current-session entry updated with this as the next
+step.
+
+**Nothing built yet on either thread** — this session so far is planning
+only (`Brand-Level-Target-Planning-Implementation-Plan.md` draft, this
+entry, and the two tracking-doc updates below).
+
+## 2026-09-19 (later still) — Session retrospective: Brand-Level Target Planning scoping, requested directly by Basheer
+
+**What worked:** checked the actual code/schema before making claims
+(`TargetPlan` model, `Product-Catalog-Name-Derivation-Implementation-
+Plan.md`, Traceability rows) rather than reasoning from memory — caught a
+real factual error early (the approved Product Catalog migration 0048
+does *not* create Brand/Category/Model tables, only stops `name` from
+drifting), which corrected a premise before planning got built on top of
+it. When Basheer proposed a bottom-up rollup instead of a top-down
+cascade, validated it against what the rollup code already does rather
+than just agreeing. Kept plain-language-first / technical-addendum-second
+throughout; used `AskUserQuestion` only for the two genuinely open
+decisions (mandatory vs. partial brand split, who enters the vendor
+number), not for anything answerable independently. Followed the
+written-plan-in-chat process (`Brand-Level-Target-Planning-Implementation-
+Plan.md` created and shown as chat text, not routed through plan-mode's
+own review screen). When Basheer suggested the new Brand table would also
+help the bigger Product Catalog rebuild, checked that claim rather than
+agreeing wholesale — confirmed it holds for Brand but not for
+Category/Model.
+
+**What didn't work:** the first explanation of the Product Catalog
+dependency was ambiguous about whether the clean-up needed to happen in
+Dev, UAT, or both — even though the answer (lands in Dev first, UAT picks
+it up later) was already sitting in the plan doc just read. That
+ambiguity cost a clarifying round-trip that shouldn't have been needed.
+Separately, a full top-down cascade was the working design assumption
+until Basheer proposed the simpler bottom-up rollup himself — the lighter
+option should have been surfaced as an explicit choice from the start,
+not left for Basheer to find.
+
+**Process change:** two new standing rules added to `CLAUDE.md`'s
+"Feature planning" section: (1) state which environment a dependency
+actually lands in, in the plain-language pass itself, not as a technical
+footnote; (2) when a feature has both an "obvious heavy version" and a
+lighter alternative that gets most of the value, present both as a real
+choice up front rather than defaulting to the heavier one.
+
+**Session retrospective, shown to Basheer in chat before being logged here:**
+
+**What worked:**
+- Checked real git state instead of guessing — looked up the actual commit
+  hash for the original discussion paper (`1cef3bc`) rather than assuming a
+  number when asked to cross-reference it.
+- Showed the actual diff, not a description, before each commit — both for
+  the label-rename commit and for the client-facing HTML that would
+  eventually be republished.
+- Kept the two commits separate as asked, rather than bundling the rename
+  and the new review doc together.
+- Caught a real inconsistency before committing: `generate_scorecard.py
+  --check` found `.scratch/phase1-scorecard-by-status.html` already out of
+  sync with the script, so it was regenerated properly instead of
+  committing a half-updated set.
+- Left the parallel session's file alone: `Brand-Level-Target-Planning-
+  Implementation-Plan.md` appeared mid-session from the other thread's
+  work — noticed, not touched, flagged back to Basheer rather than assumed
+  safe to ignore or merge in.
+
+**What didn't work:**
+- Recommended editing a planning document that's no longer in use. When
+  asked about prioritizing the Target-Planning follow-on features, offered
+  to update `Phase1-Completion-Sprint-Plan.md` with a new build order — but
+  that document stopped being the planning source about a week earlier;
+  Basheer had said so before ("remember?") and it wasn't retained.
+- Root cause is a memory gap, not a one-off slip: the decision to switch
+  from the Sprint Plan doc to the Traceability Matrix was made verbally
+  around 2026-09-12 and never written down anywhere — not in `CLAUDE.md`,
+  not in `Backlog.md`, not in memory. There was nothing to check even on a
+  careful pass.
+- Separately: `active_progress.md` has grown into a near-complete project
+  history (1,400+ lines, back to 2026-08-21) instead of staying a short
+  "what's happening right now" handover note, which is what `CLAUDE.md`'s
+  own "Session handoff" section says it should be. Not wrong, but slower to
+  scan for "what's next" versus "what happened three weeks ago."
+
+**Improvements put in place:**
+1. Standing process decisions get written down the moment they're made, not
+   after they cause friction — the Sprint-Plan-to-Traceability switch is
+   now recorded in `CLAUDE.md`'s "Session handoff" section (added
+   2026-09-19, same session as this retrospective).
+2. Before proposing next steps or edits to any tracking/planning doc, check
+   aloud whether that doc is still the live one, rather than assuming a doc
+   named "the plan" is automatically current just because it exists and
+   matches the topic.
+3. `active_progress.md` pruning was flagged as a good idea but deliberately
+   **not** done unprompted this session — Basheer hasn't asked for it, and
+   it's a structural change to a live handover doc, not part of what was
+   asked. Revisit only if he requests a cleanup pass.

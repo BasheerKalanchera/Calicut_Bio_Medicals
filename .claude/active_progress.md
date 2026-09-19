@@ -1,5 +1,54 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-18_
+_Session: 2026-08-21 → 2026-09-19_
+
+## 2026-09-19 session — Scorecard rename committed, external review doc logged; waiting on a parallel session's Target Planning fix before picking up Target-dependent features
+
+Two small commits landed and pushed to `origin/main`:
+1. **`be98a00`** — renamed "New Features Added" to "Commitment beyond
+   contract" across `scripts/generate_scorecard.py`,
+   `docs/Phase1-Delivery-Scorecard.md`, and both `.scratch` client HTML
+   files. `--check` caught one file stale before regenerating; confirmed
+   clean and diffed before committing — label/wording only, no tallies
+   changed.
+2. **`9e3147e`** — logged `docs/Review-Phase1-Effort-Beyond-Contract-
+   Negotiation-2026-09.md` (an external "Antigravity" tool's review of the
+   Phase 1 effort-negotiation discussion paper), cross-referencing the
+   original paper's commit `1cef3bc` in the message per Basheer's request.
+
+Walked the docs for which signed features were genuinely waiting on Target
+Planning (Coverage Planning, the Forecast month/quarter + <3×-target
+alert, the Batch 2 Insights Dashboard tiles, Beat Plan Compliance, the
+planned Annual KPI Target) and discussed sequencing. Full list and
+rationale: `docs/Progress-Archive-2026-09.md`'s "2026-09-19" entry.
+
+**Corrected on two points:** (1) a small Target Planning fix is still
+in progress in a parallel session (its WIP, `docs/Brand-Level-Target-
+Planning-Implementation-Plan.md`, appeared mid-session — left untouched);
+(2) **`docs/Phase1-Completion-Sprint-Plan.md` is deprecated as of
+~2026-09-12 — Phase 1 sequencing now comes from `Signed-Requirements-to-
+PRD-Traceability.md` directly, not the Sprint Plan doc.**
+
+**Separate thread, same day — Brand-Level Target Planning scoped, planning
+only, nothing built.** `docs/Brand-Level-Target-Planning-Implementation-
+Plan.md` drafted (bottom-up, mandatory per-brand split, Admin/GM-only
+vendor-target entry, no cascade). Surfaced a real prerequisite: brand
+grouping needs `product.oem_name` to stop being free text, which the
+already-approved Product Catalog fix (migration 0048) does **not** do.
+Basheer's call: promote that into a real "Part 2" of the Product Catalog
+clean-up (Brand/Category/possibly Model → real controlled tables) and land
+it **before** Brand-Level Target Planning is built. Full detail:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-19 (later)" entry;
+`docs/Backlog.md`'s Product Catalog entry updated with the same
+sequencing.
+
+**Next step:** two independent things to pick up — (1) wait for Basheer to
+confirm the other parallel session's Target Planning fix has landed, then
+pick the next item straight from the Traceability Matrix's Partial/
+Not-started rows; (2) write Part 2's actual technical design into
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md` (which
+fields become real tables — Model's shape is still an open question, not
+decided) and review it with Basheer before Brand-Level Target Planning can
+start.
 
 ## 2026-09-18 session — Lead Follow-up Comments: built, full manual E2E pass (19/19), one real gap found and fixed live, comment-count badge added — ready to commit and push
 

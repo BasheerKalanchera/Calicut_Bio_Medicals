@@ -74,6 +74,24 @@ drill-down on Product Performance — it becomes a straightforward
 addition once Brand has a stable id instead of free text. Noted on
 4.1's own row in the Traceability matrix so this isn't missed.
 
+**Part 2 — promoted from idea to scheduled prerequisite, 2026-09-19
+(Basheer):** turning Brand/Category (and possibly Model, per 4.1's
+category → brand → model hierarchy — open question, not yet decided) into
+real controlled-list tables, not just free text with a computed `name`.
+Raised by Brand-Level Target Planning
+(`docs/Brand-Level-Target-Planning-Implementation-Plan.md`) needing a
+stable brand to group targets by — Basheer's call was to fix this properly
+in Product Catalog itself, rather than work around it with a
+Target-Planning-only table, so naming-drift errors stop being able to
+creep into Product Catalog (and anything downstream grouping by brand,
+including the Product Performance drill-down gap noted above) going
+forward. **Sequencing: Part 2 must land before Brand-Level Target Planning
+is built.** Not yet designed — needs its own section added to
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md` (Part 1,
+above, stays as-is; Part 2 is additive) and review with Basheer before any
+code work starts. Full context: `docs/Progress-Archive-2026-09.md`'s
+"2026-09-19 (later)" entry.
+
 ## Deferred / undecided items
 
 - **Marketing User has no notification bell — can't be proactively nudged

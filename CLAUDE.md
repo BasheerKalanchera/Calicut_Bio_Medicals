@@ -53,6 +53,18 @@ code or changing structure. On any conflict, the document wins over this file.
   routine back-and-forth either.
 - **Backlog:** deferred/parked ideas and undecided product questions live in
   `docs/Backlog.md`, not active_progress.md.
+- **Phase 1 planning/sequencing:** `docs/Phase1-Completion-Sprint-Plan.md` is
+  deprecated as a planning source, as of ~2026-09-12 — it still exists in the
+  repo, but don't propose edits to it or treat its "this week/next week"
+  framing as current. Phase 1 build sequencing now comes directly from
+  `docs/Signed-Requirements-to-PRD-Traceability.md`'s Partial/Not-started
+  rows instead (its Status/Notes/Client Note columns are already the single
+  source of truth for delivery status — see "Scorecard integrity" below;
+  this extends the same file to sequencing, not just status). **Why:**
+  2026-09-19, a build-order update was offered against the Sprint Plan doc
+  before checking whether it was still the live planning artifact; Basheer
+  had already told me this once before ("remember?") and it had never been
+  written down anywhere authoritative.
 - **Standing decisions:** anything durable (a business rule, an architecture call, an
   API shape, a convention) gets written directly into whichever authoritative doc
   governs that domain (see "Authoritative References" above) — never parked in a
@@ -80,6 +92,20 @@ code or changing structure. On any conflict, the document wins over this file.
 - When a conversation's scope visibly escalates from a quick question into a real
   architecture/feature decision, say so explicitly in the moment — don't keep going
   conversationally until the missing plan doc causes friction on its own.
+- When flagging a dependency on another environment (Dev vs. UAT, or any other
+  system boundary), state up front which environment it actually lands in — in
+  the plain-language pass itself, not buried in a technical addendum to untangle
+  after confusion already shows up.
+- When a feature has both an "obvious heavy version" (e.g. a new cascade/push
+  mechanism) and a lighter version that gets most of the value (e.g. aggregating
+  what already exists), surface both as a real choice up front — don't default to
+  the heavier design and wait to be redirected to the lighter one.
+- **Why (both above):** 2026-09-19, Brand-Level Target Planning — the first pass
+  explained a Product Catalog dependency ambiguously about which environment it
+  applied to, costing a clarifying round-trip; separately, a full top-down
+  cascade was the working assumption until Basheer proposed a much simpler
+  bottom-up rollup comparison himself, which should have been offered as an
+  explicit option from the start.
 
 ## Checkpoint commits
 - On any build expected to run long or largely unattended (a new domain, a
