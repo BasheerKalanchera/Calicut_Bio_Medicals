@@ -7,7 +7,7 @@
 
 Of **50** signed requirements: **29 done, 12 partly done, 9 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
 
-| Done | Partly done | Not started | New Features Added |
+| Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
 | 29 | 12 | 9 | 16 |
 

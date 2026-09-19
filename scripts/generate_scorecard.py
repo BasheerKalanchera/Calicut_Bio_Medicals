@@ -14,15 +14,15 @@ Regenerates:
     "Phase 1 Delivery Scorecard" Artifact; after running this script,
     republish it from that path to push the update live.
   - .scratch/phase1-scorecard-by-status.html (client-facing, same 50 rows
-    regrouped Done / Partial / Not Started / New Features Added first,
+    regrouped Done / Partial / Not Started / Commitment beyond contract first,
     then by module within each -- no PRD Section column, that's internal
     engineering reference only). Republish separately if this is the view
     being shared.
 
 All three client-facing outputs also carry a separate "Pending -- proposed,
 not yet built" list, parsed from its own subsection under "Commitment
-beyond contract" in Traceability.md. Unlike "New Features Added" (things
-already delivered), these are ideas raised for leadership to decide on --
+beyond contract" in Traceability.md. Unlike "Commitment beyond contract"
+(things already delivered), these are ideas raised for leadership to decide on --
 kept in a visually distinct section/color so nothing there reads as
 shipped. Move an item from "Pending" into the main "Commitment beyond
 contract" table once it's actually built.
@@ -198,7 +198,7 @@ def render_scorecard(
         '"Commitment beyond contract" at the end), and **'
         f'{len(pending_items)} more proposed but not yet decided** (see "Pending" below that).',
         "",
-        "| Done | Partly done | Not started | New Features Added |",
+        "| Done | Partly done | Not started | Commitment beyond contract |",
         "| :---: | :---: | :---: | :---: |",
         f"| {done} | {partial} | {not_started} | {len(beyond_items)} |",
         "",
@@ -812,7 +812,7 @@ def render_client_html(
           </div>
           <div class="stat">
             <div class="num" style="color:var(--bonus)">{len(beyond_items)}</div>
-            <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
+            <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>Commitment beyond contract</div>
           </div>
           <div class="stat">
             <div class="num" style="color:var(--pending)">{len(pending_items)}</div>
@@ -857,7 +857,7 @@ def render_client_html(
     bonus_section = f"""    <section class="bonus" id="bonus">
       <div class="bonus-head">
         <h2>Commitment beyond contract</h2>
-        <p class="bonus-desc">{len(beyond_items)} things built that Cabio leadership never signed off on asking for.</p>
+        <p class="bonus-desc">Capabilities developed beyond the originally signed requirements.</p>
       </div>
       <div class="bonus-list">
 {bonus_items_html}
@@ -875,7 +875,7 @@ def render_client_html(
     pending_section = f"""    <section class="bonus" id="pending">
       <div class="bonus-head">
         <h2>Pending &mdash; proposed, not yet built</h2>
-        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "Commitment beyond contract" once delivered.</p>
       </div>
       <div class="bonus-list">
 {pending_items_html}
@@ -913,7 +913,7 @@ def render_by_status_html(
     pending_items: list[tuple[str, str]],
 ) -> str:
     """Same 50 rows as render_client_html, regrouped by status first (Done /
-    Partial / Not Started / New Features Added) and by module second, with
+    Partial / Not Started / Commitment beyond contract) and by module second, with
     the PRD Section column dropped -- that's internal engineering reference
     only, not meaningful to a client reader."""
     done, partial, not_started = compute_tally(modules)
@@ -936,7 +936,7 @@ def render_by_status_html(
             f'<span class="n">{counts[anchor]}</span></a>'
         )
     nav_lines.append(
-        '      <a href="#new-features" data-n="+"><span>New Features Added</span><span class="n">'
+        '      <a href="#new-features" data-n="+"><span>Commitment beyond contract</span><span class="n">'
         f'{len(beyond_items)}</span></a>'
     )
     nav_lines.append(
@@ -1001,7 +1001,7 @@ def render_by_status_html(
           </div>
           <div class="stat">
             <div class="num" style="color:var(--bonus)">{len(beyond_items)}</div>
-            <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>New Features Added</div>
+            <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>Commitment beyond contract</div>
           </div>
           <div class="stat">
             <div class="num" style="color:var(--pending)">{len(pending_items)}</div>
@@ -1045,8 +1045,8 @@ def render_by_status_html(
 
     bonus_section = f"""    <section class="bonus" id="new-features">
       <div class="bonus-head">
-        <h2>New Features Added</h2>
-        <p class="bonus-desc">{len(beyond_items)} things built that Cabio leadership never signed off on asking for.</p>
+        <h2>Commitment beyond contract</h2>
+        <p class="bonus-desc">Capabilities developed beyond the originally signed requirements.</p>
       </div>
       <div class="bonus-list">
 {bonus_items_html}
@@ -1064,7 +1064,7 @@ def render_by_status_html(
     pending_section = f"""    <section class="bonus" id="pending">
       <div class="bonus-head">
         <h2>Pending &mdash; proposed, not yet built</h2>
-        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "New Features Added" once delivered.</p>
+        <p class="bonus-desc">{len(pending_items)} more ideas raised, not yet confirmed or built &mdash; moves up into "Commitment beyond contract" once delivered.</p>
       </div>
       <div class="bonus-list">
 {pending_items_html}
@@ -1073,7 +1073,7 @@ def render_by_status_html(
 
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} new features added &middot; {len(pending_items)} pending</span>
+      <span>{total} requirements &middot; {done} done &middot; {partial} partial &middot; {not_started} not started &middot; {len(beyond_items)} bonus &middot; {len(pending_items)} pending</span>
     </footer>
 """
 
