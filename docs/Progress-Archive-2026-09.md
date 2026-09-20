@@ -5068,3 +5068,65 @@ choice up front rather than defaulting to the heavier one.
    **not** done unprompted this session — Basheer hasn't asked for it, and
    it's a structural change to a live handover doc, not part of what was
    asked. Revisit only if he requests a cleanup pass.
+
+## 2026-09-20 — UAT DB backup run
+
+Ran `scripts/backup_uat.ps1` (read-only pg_dump against UAT, per Basheer's
+go-ahead) after noticing the last backup on record was from 2026-09-17.
+`cabio_uat_2026-09-20.dump` created (361,714 bytes), TOC verified at 374
+entries, old `cabio_uat_2026-09-05.dump` pruned per the 14-day retention
+policy. No issues. Basheer separately backed up the whole local
+`C:\Backups\CabioUAT` folder to his Google Drive by hand (the script's own
+Google Drive copy step is still disabled pending Google Drive for Desktop
+setup).
+
+## 2026-09-20 — First UAT restore/disaster-recovery drill: restore verified, two real gaps surfaced
+
+Basheer flagged discomfort with the backup/recovery process and asked for
+a mock recovery drill to build confidence before ever needing it for real.
+Ran the drill entirely against disposable local resources — no connection
+to the real UAT or Dev Supabase projects at any point.
+
+**What was done:** spun up a throwaway `postgres:17` container on Docker,
+restored `cabio_uat_2026-09-20.dump` into it via `pg_restore`, and checked
+the result with plain SQL — table count, row counts per table, and joined
+queries across `opportunity` → `account` → `opportunity_stage` /
+`opportunity_status` to confirm foreign keys survived intact. All 34
+tables restored with real, relationally-correct UAT data (e.g. real
+account names, opportunities correctly showing Won as a *status* on the
+Order *stage*, matching ADR-028). Torn down cleanly afterward (containers,
+network, and Docker Desktop itself all removed/stopped — nothing left
+running or installed beyond the dump file that already existed).
+
+**Finding 1 — real gap, needs a decision:** the backup only dumps
+`--schema=public`, but the restore initially failed on 5 search indexes
+(`gin_trgm_ops`) because the `pg_trgm` Postgres feature they depend on
+lives outside that schema and isn't captured by the current backup. Had to
+manually enable it on the drill database to get a clean restore. **On a
+real disaster restore into a genuinely empty Supabase project, this same
+failure would very likely recur** — worth deciding whether to extend the
+backup's scope or document a "enable these extensions first" pre-restore
+step.
+
+**Finding 2 — unrelated to the backup process itself:** attempting to add
+a visual browser (Supabase Studio, ~300MB image) on top of the drill
+failed repeatedly — traced to sustained large downloads currently failing
+on Basheer's laptop/connection (confirmed via a plain 100MB browser
+download test failing the same way, even on his phone hotspot). Not a
+Docker or backup issue; worth revisiting once the connection is stable if
+a visual check is still wanted. The drill's actual goal (proving the
+backup restores usable data) was fully verified without it, via direct
+SQL queries.
+
+**Also noticed, unrelated to the drill:** one restored opportunity
+("SonoScape E2") has an indicative value of 1,500,000.00 versus everything
+else being single/double digits — values should be in INR Lakhs, so this
+looks like a likely source-data entry error in UAT, not a restore
+artifact. Flagged to Basheer as an FYI, not yet actioned.
+
+**Cross-check against live UAT (Basheer, via Supabase dashboard):** 34
+tables in UAT — exact match with the drill restore. Activities had grown
+from 604 to 605 (one new row added in UAT after the backup was taken) —
+expected drift, not a discrepancy, and if anything stronger confirmation
+that the restore is an accurate point-in-time snapshot. Drill considered
+fully validated.
