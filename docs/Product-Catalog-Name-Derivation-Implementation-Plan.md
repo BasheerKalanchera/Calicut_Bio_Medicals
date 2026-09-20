@@ -1,159 +1,316 @@
-# Product Catalog: Name Derivation — Implementation Plan
+# Product Catalog: Brand / Category / Model — Implementation Plan
 
-**Status:** Approved, ready to build — both open questions (Ventmeter
-removal safety, wall-mount-stand duplicate) resolved and verified
-2026-09-18. **Feature:** touches Signed Feature
-4.1 (Module 2, "Strict product hierarchy: category → brand → model").
-**Confirmed by Haroon**, 2026-09-18: stop entering a product's `name` by
-hand — compute it automatically from Brand + Model + Category instead.
-**Concatenation order confirmed by Basheer:** Brand + Model + Category
-(e.g. "EDAN iM70 Patient Monitoring"), not Category-first.
+**Status:** Approved design, not yet built. **Supersedes** this document's
+original "Part 1" (a `GENERATED ALWAYS AS (...)` column computing `name`
+from same-row free-text `oem_name`/`model_number`/`category_name`). Part 1
+is **not being built as originally written** — its goal (never hand-type
+`name`) is folded directly into this design instead, because Part 1's
+mechanism cannot survive Brand/Model/Category becoming separate tables (a
+Postgres generated column can only read columns on its own row, never
+another table). Building Part 1 first, then this, would mean building the
+same feature twice. **Decided in a working session with Basheer,
+2026-09-20** — see that session's chat log for the full reasoning behind
+each decision below; this doc records outcomes, not the debate.
+
+**Feature:** touches Signed Feature 4.1 (Module 2, "Strict product
+hierarchy: category → brand → model") — closes the row's core gap
+(`docs/Signed-Requirements-to-PRD-Traceability.md`: "Category and Brand are
+free-text entry — no controlled/enforced pick-list").
 
 ## Context
 
-The Product Catalog's `name` field is free text, entered independently of
-`oem_name` (Brand), `model_number`, and `category_name`. This lets a
-product's display name silently drift from its own Brand/Model/Category —
-the root cause behind Signed Feature 4.1 sitting at Partial in
-`docs/Signed-Requirements-to-PRD-Traceability.md`, and the exact
-inconsistency surfaced this session comparing the current UAT catalog
-against a corrected export Haroon shared (e.g. "EDAN" vs "Edan" brand
-casing, ~33 of 65 products with a blank Category).
+The Product Catalog's `name`, `oem_name` (Brand), `model_number`, and
+`category_name` are all independently-typed free text today. This lets a
+product's display name drift from its own Brand/Model/Category, and lets
+the same real brand/category be spelled multiple inconsistent ways across
+products (e.g. "EDAN" vs "Edan", ~33 of 65 products with a blank Category
+found in this session's audit). It also means Product Performance's
+Brand-grouped report cards have no stable id to group on — only a
+normalized text string (`backend/app/domains/reporting/repository.py:337-343`)
+— so that drill-down is currently non-clickable.
 
-## Chosen approach: database-computed column, not column removal
+## Chosen design: Brand, Category, and Model each become their own table
 
-Two ways exist to make `name` "always Brand+Model+Category, never
-hand-typed": delete the column entirely and rebuild the text in every
-place that reads it, or keep `name` as a real column but let Postgres
-compute it. This plan uses the second — a `GENERATED ALWAYS AS (...)
-STORED` column:
+**Why not just clean up the free text and leave it as text (rejected):**
+a one-time cleanup (even using Haroon's already-corrected data) fixes
+today's 65 products but does nothing to stop the next product added six
+months from now from drifting again — free text has no memory of what was
+typed before. That's the exact mechanism that produced "EDAN" vs "Edan" in
+the first place, and Signed Feature 4.1 is tracked as a standing gap, not a
+one-off data cleanup.
 
-- The database physically rejects any attempt to set `name` directly on
-  INSERT/UPDATE — stronger than an app-level "read-only field" convention.
-- Every existing reader of `product.name` keeps working completely
-  unchanged, since `name` remains a real, populated column. An inventory
-  this session found **5 backend domains** (product, reporting,
-  marketing_lead, opportunity, account) and **~15 frontend files**
-  (reports, opportunity item pickers, Customer 360, marketing lead
-  modals, audit log) reading `.name` read-only — none of them need to
-  change.
-- Rejected alternative (full column removal) would require rewriting the
-  concatenation logic separately in all ~20 of those read sites for the
-  same end result — much larger blast radius, no added benefit.
+**Why not just restrict editing to Admin/GM and keep free text (rejected):**
+restricting *who* can type something doesn't fix *what* gets typed — the
+original inconsistency was almost certainly entered by someone already
+trusted. Access control and data-integrity are different problems; this
+gap is a data-integrity problem.
 
-## Out of scope for this plan
+**Why three tables, not enforcing the Brand→Category rule purely in the
+`product` table (rejected):** Postgres cannot write a `CHECK` constraint
+that looks at another table or another row — cross-record rules can only
+be enforced through foreign keys (or triggers). Since "which categories a
+brand's models can belong to" is a maintained list, not a fixed rule, a
+real lookup table is the only mechanism available to enforce it
+declaratively. The alternative is hard-coding valid combinations into
+application code, which requires a code change and deploy every time
+Haroon adds a model — unworkable.
 
-- **Brand/Category free-text inconsistency itself** ("EDAN" vs "Edan",
-  "SonoScape" vs "Sonoscape") is not fixed by this change. This plan stops
-  a *fourth* free-text field (`name`) from independently drifting from
-  Brand/Model/Category — it does not convert Brand/Category into a
-  controlled list. That's a separate, larger piece of work already noted
-  in `docs/Backlog.md`.
-- **Promoting this migration to UAT.** This ships through the normal
-  main → Dev pipeline like any other migration; UAT picks it up whenever
-  migrations are next promoted there — a separate, already-tracked gap
-  (see this session's UAT selective-migration discussion).
+**On "isn't the very first entry of a new value still free text either
+way" (yes, and that's fine):** the design doesn't make the first-ever
+typing of "EDAN" error-proof — nothing can. What it changes is that "EDAN"
+only needs to be typed correctly **once**, at creation, instead of once
+per product forever. A mistake made at that one point is one row to
+review and fix, in a list of a few dozen rows; a mistake made on free text
+embedded in a product row is invisible until someone happens to compare it
+against another product's spelling.
 
-## Wall-mount-stand duplicate — resolved
+## Schema
 
-Two existing UAT products were the same physical item (a monitor
-wall-mount bracket) entered twice under slightly different names
-("Monitor Wall mount stand" `c9619bb5-...`0977e` / "Wall- Monitor Stand"
-`88bba781-...b2f7`), both with Brand, Category, and Model entirely blank.
-**Decision (Basheer, 2026-09-18): keep only one.** Verified 2026-09-18
-(read-only UAT check): both rows have zero references in
-`opportunity_item`, `installed_asset`, and `document` — safe to delete
-either with no repointing needed. Plan: keep `c9619bb5-...-0977e`
-("Monitor Wall mount stand"), give it Brand = "Accessories", Category =
-"Mounting Hardware" (or whatever Haroon's final term is), Model = a
-real value instead of blank; delete `88bba781-...-b2f7` outright.
-
-## Data-cleanup precondition (must land in Dev before migration 0048 runs)
-
-Apply Haroon's corrected `category_name`/`oem_name`/`model_number` values
-to the 65 existing products, **matched by `id`** (not by `name`, which is
-disappearing) — generated as reviewable `UPDATE ... WHERE id = ...`
-statements per product, shown before running, same as any other write to
-a shared dev/UAT database. Also, per this session's confirmed decisions:
-
-- Remove the "Magnamed Ventmeter" product (intentionally dropped, confirmed).
-  Verified 2026-09-18 (read-only UAT check): zero references in
-  `opportunity_item`, `installed_asset`, or `document` — safe to delete
-  outright, no deal or record depends on it.
-- Add "EDAN F9" (Maternal & Fetal Monitor) as a genuinely new product (confirmed).
-- Drop the 5 stray blank rows and trim leading/trailing whitespace from
-  Haroon's Category/Model values before using them as UPDATE source data.
-- Resolve the wall-mount-stand question above.
-
-If this data-fix runs before the schema migration, the generated `name`
-values are correct from day one; if skipped, `name` computes to `''` or
-an incomplete string for whichever products weren't corrected first.
-
-## Migration `backend/alembic/versions/0048_<slug>.py`
-
-Hand-write this migration (do not use `alembic revision --autogenerate`
-— it doesn't reliably diff `Computed()` column changes on an existing
-populated column). `down_revision = "0047"`.
-
-**Expression** (Brand + Model + Category, NULL-safe — all functions used
-are Postgres-immutable, legal in a generated column):
+Three new tables in the existing `reference` domain (same home/shape as
+`SBU`/`Zone`):
 
 ```sql
-TRIM(
-  COALESCE(oem_name || ' ', '') ||
-  COALESCE(model_number || ' ', '') ||
-  COALESCE(category_name, '')
-)
+CREATE TABLE brand (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sbu_id UUID NOT NULL REFERENCES sbu(id),
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    UNIQUE (sbu_id, name)
+);
+
+CREATE TABLE category (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sbu_id UUID NOT NULL REFERENCES sbu(id),
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    UNIQUE (sbu_id, name)
+);
+
+CREATE TABLE model (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    brand_id UUID NOT NULL REFERENCES brand(id),
+    category_id UUID NOT NULL REFERENCES category(id),
+    -- Denormalized from brand.sbu_id, kept in sync by trigger (below) --
+    -- lets RLS use the same flat sbu_id check as every other table
+    -- instead of a join through brand on every row-visibility check.
+    sbu_id UUID NOT NULL REFERENCES sbu(id),
+    name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    UNIQUE (brand_id, name)
+);
 ```
 
-**upgrade():**
-1. `op.drop_index("idx_product_name_trgm", table_name="product")` — must precede the column drop.
-2. `op.drop_column("product", "name")`.
-3. `op.add_column("product", sa.Column("name", sa.String(255), sa.Computed("TRIM(COALESCE(oem_name || ' ', '') || COALESCE(model_number || ' ', '') || COALESCE(category_name, ''))", persisted=True), nullable=False))`.
-4. `op.create_index("idx_product_name_trgm", "product", ["name"], postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"})` — identical definition to `0003_product_indexes.py`.
-5. No RLS changes — `0012_rls_product.py`/`0014_product_rls_open_read.py` policies key only on `sbu_id`, never `name`. State this explicitly in the migration docstring so a future reader doesn't have to re-verify it.
-6. Docstring must state: the data-cleanup precondition above, and that `docs/Physical-Schema.sql` needs regenerating after this runs (see below).
+**Why `model` carries both `brand_id` and `category_id`:** a specific
+model is inherently one type of product — "iM70" is always a Patient
+Monitor, never sometimes an Ultrasound machine. Tying Category to Model
+(not leaving Category as an independent pick on the product form) is what
+actually prevents an "EDAN + Ultrasound" mismatch — EDAN's models simply
+can't be tagged with a category EDAN doesn't make.
 
-**downgrade():** drop index → drop generated column → re-add plain `String(255) NOT NULL` column (temporary `server_default=""`, then drop the default) → recreate index. Docstring must state plainly that downgrading **irrecoverably loses** the original free-text `name` values — they're never captured anywhere once dropped in `upgrade()`.
+**`model.sbu_id` trigger** (`BEFORE INSERT OR UPDATE ON model`): sets
+`NEW.sbu_id := (SELECT sbu_id FROM brand WHERE id = NEW.brand_id)`. Keeps
+the denormalized column truthful without the app ever supplying it
+directly.
 
-## Backend code changes
+**`product` changes:**
+- Drop `oem_name`, `model_number`, `category_name` (free text).
+- Add `model_id UUID NOT NULL REFERENCES model(id)` — the only field a
+  person picks directly.
+- Add `brand_id UUID NOT NULL REFERENCES brand(id)` and
+  `category_id UUID NOT NULL REFERENCES category(id)` — **not picked by
+  the user**, auto-copied from the chosen model (see trigger below).
+  Kept as real columns (not computed at read-time via joins) so the ~20
+  existing consumers of `Product.oem_name`-equivalents and the reporting
+  brand drill-down can filter/join on `product.brand_id` directly, and so
+  RLS keeps its existing flat-`sbu_id`-check shape.
+- `name` stays a real column, populated the same way (see trigger below).
 
-- **`backend/app/domains/product/models.py`** L21: change `name: Mapped[str] = mapped_column(String(255), nullable=False)` to use `Computed(...)` with the *identical* expression string used in the migration (add `Computed` to the `sqlalchemy` import on L3). Cross-reference the migration file in a comment, and vice versa — nothing else keeps the two strings in sync.
-- **`backend/app/domains/product/schemas.py`**:
-  - `ProductCreate` (L14-21): remove `name: str` (L15); change `oem_name`, `model_number`, `category_name` from `str | None = None` to required `str` — required going forward is the whole point of computing `name` from them. `description` stays optional.
-  - `ProductUpdate` (L24-31): remove `name: str | None = None` (L25) only — leave the other three optional (partial-update semantics, unchanged).
-  - `ProductListResponse` / `ProductResponse`: no change — both keep `name: str`, populated transparently from the computed column.
-- **`backend/app/domains/product/service.py`** `create_product` (L46-62): remove the `name=data.name,` kwarg (L52). `update_product` needs no change — `name` can never appear in `ProductUpdate.model_dump(exclude_unset=True)` once removed from the schema.
-- **`backend/app/domains/product/router.py`**: no change — validation follows automatically from the schema change.
-- No changes needed in `reporting/repository.py`, `marketing_lead/repository.py`, `opportunity/schemas.py`, `account/workspace_schemas.py`, or `audit/repository.py` — all are read-only consumers of `Product.name`.
+**`product` trigger** (`BEFORE INSERT OR UPDATE OF model_id ON product`):
+```sql
+NEW.brand_id    := (SELECT brand_id FROM model WHERE id = NEW.model_id);
+NEW.category_id := (SELECT category_id FROM model WHERE id = NEW.model_id);
+NEW.sbu_id      := (SELECT sbu_id FROM model WHERE id = NEW.model_id);
+NEW.name        := (
+    SELECT b.name || ' ' || m.name || ' ' || c.name
+    FROM model m JOIN brand b ON b.id = m.brand_id
+                 JOIN category c ON c.id = m.category_id
+    WHERE m.id = NEW.model_id
+);
+```
+Concatenation order **Brand + Model + Category** (e.g. "EDAN iM70 Patient
+Monitoring") — confirmed by Basheer, unchanged from the original plan.
 
-## Frontend changes — `sales-os-app/src/screens/ProductCatalogScreen.tsx` only
+A lightweight service-layer check (does `model_id` belong to the SBU the
+product is being created for) gives a friendly error message before the
+trigger/FK would reject it — belt-and-suspenders, not the actual
+guarantee. The guarantee is the trigger + foreign keys.
 
-Every other file that displays `.name` (`OpportunityItemAddRow.tsx`, `OpportunityItemsList.tsx`, `OpportunityDetailScreen.tsx`, `ProjectDirectoryScreen.tsx`, `Customer360Screen.tsx`, `MarketingLeadCreateModal.tsx`, `MarketingLeadReviewQueueScreen.tsx`, the three report screens) needs **no change** — the API keeps returning a valid `name`.
+## Data cutover (blocking precondition — must happen before this ships)
 
-- `EMPTY_FORM` (L33-41): remove `name: ""` (L34).
-- `openEdit()` (L369-381): remove `name: product.name,` (L372).
-- `buildPayload()` (L385-393): remove `name: form.name.trim(),` (L386); change `oem_name`/`model_number`/`category_name` to send trimmed required strings instead of `... || null` (L388-390), consistent with them now being required.
-- `handleCreate()`/`handleUpdate()` (L402-415): replace the `if (!form.name.trim())` guards (L403, L411) with equivalent guards for `category_name`, `oem_name`, `model_number`.
-- `ProductFormFields` (L629-714): delete the "Product Name *" `TextField` block (L642-651) entirely. Add ` *` to the "OEM / Brand", "Model Number", and "Category" labels (L667, L675, L683) to signal the new requirement, matching the existing "SBU *" convention — label-only, no other required-field UI pattern exists in this form to mirror.
-- Detail header (L284) and catalog list rows (L556, L559): no change, pure reads.
+Source: `docs/Product-Catalog-UAT-Export-2026-09-18 - updated.xlsx`
+(Haroon's corrected list, already delivered).
 
-## Generated-type / schema-dump regen (both required, same PR)
+1. Parse the file into distinct Brand, Category, and Model rows (Model
+   rows carry their Brand + Category), per SBU. One-time seeding script —
+   run once, not through the product-add screen.
+2. Load `brand`, `category`, `model` from that parsed data.
+3. **A second reviewer (Haroon or Basheer) spot-checks the resulting
+   Brand/Category/Model lists once, before go-live** — cheap precisely
+   because it's a few dozen rows, not scattered across the catalog.
+4. Point the 65 existing `product` rows at the correct `model_id`,
+   **matched by `id`** (not by old free text), as reviewable
+   `UPDATE ... WHERE id = ...` statements shown before running, same
+   discipline as any other write to the shared dev database.
+5. Carried over unchanged from the original plan's resolved items:
+   - Remove "Magnamed Ventmeter" (verified 2026-09-18: zero references in
+     `opportunity_item`/`installed_asset`/`document` — safe to delete).
+   - Merge the wall-mount-stand duplicate: keep `c9619bb5-...-0977e`, give
+     it a real Brand ("Accessories" or Haroon's term)/Category ("Mounting
+     Hardware")/Model; delete `88bba781-...-b2f7` (verified zero
+     references).
+   - Add "EDAN F9" (Maternal & Fetal Monitor) as a genuinely new product.
 
-1. **`sales-os-app/src/types/api.ts`**: run `npm run generate:types` against a locally running backend that already has this migration applied — never hand-edit. Confirm `ProductCreate`/`ProductUpdate` no longer have `name` and the three fields are no longer optional.
-2. **`docs/Physical-Schema.sql`**: run `.\scripts\regen_physical_schema.ps1` after the migration is applied to Dev. Confirm the `product` table DDL shows `name character varying(255) GENERATED ALWAYS AS (...) STORED NOT NULL`.
+**Implementation note:** the backend venv doesn't currently have an xlsx
+reader (`openpyxl`/`pandas`) installed — confirm during implementation
+whether to add one as a dev-only dependency for this one-time script, or
+have Haroon re-export as CSV.
+
+## Backend changes
+
+- New `reference` domain additions: `Brand`, `Category`, `Model` ORM
+  models (`backend/app/domains/reference/models.py`); repository/service
+  per table, mirroring `ZoneAdminService`'s existing Admin/GM-write,
+  all-authenticated-read pattern; schemas; router endpoints:
+  - `GET /reference/brands`, `POST /reference/brands` (Admin/GM only)
+  - `GET /reference/categories`, `POST /reference/categories` (Admin/GM only)
+  - `GET /reference/models?brand_id=...` (cascading list), `POST /reference/models` (Admin/GM only — body includes `brand_id` + `category_id`)
+- RLS on all three new tables: same flat SBU policy shape as `product`
+  (`backend/alembic/versions/0012_rls_product.py`) for **read**; **write**
+  (insert/update/deactivate) restricted to Admin/GM role, matching the
+  precedent already set for the (now-superseded) Target-Planning brand
+  table draft.
+- `product/models.py`: replace `oem_name`/`model_number`/`category_name`
+  columns with `brand_id`/`model_id`/`category_id`; add the trigger above
+  via migration (triggers aren't expressed in the SQLAlchemy model layer —
+  document the trigger's existence in a model comment, same
+  cross-reference discipline the original plan used for the generated
+  column).
+- `product/schemas.py`: `ProductCreate`/`ProductUpdate` take `model_id`
+  only (not `brand_id`/`category_id` — those are server-derived and must
+  not be client-settable). `ProductResponse`/`ProductListResponse` keep
+  `name` (unchanged shape) and add `brand_id`/`model_id`/`category_id`
+  (or nested `BrandNested`/`ModelNested`/`CategoryNested`, matching the
+  existing `SBUNested` pattern in the same file) for display.
+- `product/service.py`: `create_product`/`update_product` validate the
+  supplied `model_id` resolves to a model in the caller's SBU (or
+  Admin/GM's target SBU) — the friendly-error check described above.
+- No changes needed in `marketing_lead/repository.py`, `opportunity/schemas.py`,
+  `account/workspace_schemas.py`, `audit/repository.py` — all remain
+  read-only consumers of `Product.name`.
+- `reporting/repository.py:337-343`: brand grouping changes from
+  `func.coalesce(func.upper(func.trim(Product.oem_name)), "UNSPECIFIED")`
+  to a direct `Product.brand_id`/`Brand.name` group — this is what makes
+  the Product Performance brand drill-down clickable (closes the gap
+  flagged in Signed Feature 4.1's Traceability note).
+
+## Frontend changes — `sales-os-app/src/screens/ProductCatalogScreen.tsx`
+
+- Brand field: `Autocomplete`, options from `GET /reference/brands`
+  (SBU-scoped), with an inline **"+ Add new brand"** option (Admin/GM
+  only) that opens a small inline creation step (name only) without
+  leaving the screen.
+- Model field: `Autocomplete`, options from
+  `GET /reference/models?brand_id=<selected>` — empty/disabled until a
+  Brand is picked. Inline **"+ Add new model"** option asks for the
+  model's name **and** its Category (the one place Category is ever
+  manually chosen, and only when a model is genuinely new) — Category
+  itself also offers "+ Add new category" inline if needed.
+- Category: **no longer a field on the product form at all** — shown
+  read-only, auto-populated the moment a Model is picked (comes from
+  `model.category_id`, returned by the API alongside the model).
+- Product Name field: removed entirely — displayed read-only elsewhere
+  (detail header, list rows), computed server-side.
+- Other consumers (`OpportunityItemAddRow.tsx`, `OpportunityItemsList.tsx`,
+  `OpportunityDetailScreen.tsx`, `ProjectDirectoryScreen.tsx`,
+  `Customer360Screen.tsx`, `MarketingLeadCreateModal.tsx`,
+  `MarketingLeadReviewQueueScreen.tsx`, the three report screens): no
+  change — all read `.name`, which keeps returning a valid computed value.
+
+## Generated-type / schema-dump regen (same PR)
+
+1. `sales-os-app/src/types/api.ts`: regenerate via `npm run generate:types`
+   against a locally running backend with this migration applied.
+2. `docs/Physical-Schema.sql`: regenerate via
+   `.\scripts\regen_physical_schema.ps1` after the migration lands on Dev.
+
+## Migrations
+
+Hand-write (not `alembic revision --autogenerate` — doesn't reliably diff
+triggers or `Computed()`-style changes). Current head: `0047`.
+
+- **`0048_brand_category_model_tables.py`**: create `brand`, `category`,
+  `model` tables; `model`'s `sbu_id`-sync trigger; RLS (read: flat SBU
+  check; write: Admin/GM only) on all three.
+- **`0049_product_brand_model_category_fk.py`**: add
+  `brand_id`/`model_id`/`category_id` columns to `product` (nullable
+  first); run the seeding + backfill from the Data Cutover section above;
+  set all three `NOT NULL`; drop `oem_name`/`model_number`/`category_name`;
+  drop and recreate `idx_product_name_trgm` (unchanged definition — `name`
+  is still a plain indexed text column, just trigger-populated instead of
+  hand-typed); add the `product` name/brand/category-sync trigger. RLS on
+  `product` itself is unaffected (`0012`/`0014` key only on `sbu_id`,
+  which still exists).
+
+**downgrade() for `0049`:** drop trigger → drop
+`brand_id`/`model_id`/`category_id` → re-add
+`oem_name`/`model_number`/`category_name` as plain nullable text. Docstring
+must state plainly that downgrading **loses** the Brand/Category/Model
+linkage — there's no automatic way back to free text with the original
+(pre-cutover) values once this runs forward.
 
 ## Tests to fix
 
-- `backend/tests/domains/product/test_product_service.py`: remove `"name": "SonoScape S50"` from `TestCreateProduct._data()`'s defaults (~L87-90, dead once `name` isn't an input field); change `ProductUpdate(name="New Name")` (L148, L160) to `ProductUpdate(category_name="New Category")` so the test still exercises a real field.
-- `test_product_repository.py`'s `_make_product()` mock defaults: no change (mocks a read-only ORM attribute).
-- `test_product_router.py`: check during implementation for any raw JSON request-body fixtures containing `"name"` (a `name=` grep won't catch a dict literal) and drop the key if found.
+- `backend/tests/domains/product/test_product_service.py`: replace
+  `oem_name`/`model_number`/`category_name` fixture fields with a
+  `model_id` referencing a seeded test `Model`; add coverage for the
+  "model_id doesn't belong to caller's SBU" rejection path.
+- New: `backend/tests/domains/reference/test_brand_service.py` /
+  `test_category_service.py` / `test_model_service.py` — CRUD +
+  Admin/GM-only write enforcement, mirroring existing `ZoneAdminService`
+  tests.
+- `test_product_router.py`: grep for any raw JSON fixtures still
+  containing `oem_name`/`model_number`/`category_name` and update.
 
 ## Verification
 
-1. `pytest backend/tests/domains/product/` plus the full suite (reporting/marketing_lead/audit tests read `Product.name` but never construct it — confirm none break).
-2. Migration dry run on a disposable DB copy: `alembic upgrade head`, spot-check `SELECT name, category_name, oem_name, model_number FROM product LIMIT 10;`, then `alembic downgrade -1` to confirm the downgrade path runs.
-3. `tsc`/frontend build clean after the `api.ts` regen and `ProductCatalogScreen.tsx` edits; grep `sales-os-app/src` for any other `ProductCreate`/`ProductUpdate` usage not already covered.
-4. **Manual smoke test (the one real gap in automated coverage — no existing test exercises real Postgres `Computed()`/`RETURNING` behavior):** create a product supplying only Brand/Model/Category, confirm the catalog list and detail view show the correct computed name immediately after save (no `db.refresh()` needed, per SQLAlchemy's `implicit_returning` default — confirm this holds); edit an existing product's Brand and confirm the displayed name updates.
-5. Manual check: one report screen (Product Performance or Pipeline Report) groups/displays correctly for both old and newly-created products; one opportunity item picker (`OpportunityItemAddRow`) shows correct labels.
-6. Spot-check an audit-log entry for a product edit shows a sensible diff including the derived `name` change.
+1. `pytest backend/tests/` full suite.
+2. Migration dry run on a disposable DB copy: seed → backfill → spot-check
+   `SELECT name, brand_id, model_id, category_id FROM product LIMIT 10;`
+   → `alembic downgrade -1` to confirm the downgrade path runs.
+3. `tsc`/frontend build clean after `api.ts` regen and
+   `ProductCatalogScreen.tsx` edits.
+4. Manual smoke test: add a product picking an existing Brand/Model,
+   confirm Category and Name appear automatically; use "+ Add new model"
+   for a brand-new model and confirm it requires a Category and then
+   behaves identically afterward; confirm an EDAN-branded Model cannot be
+   tagged with a Category that isn't one of EDAN's real categories via
+   this flow (there is no path to do so from the UI, but confirm a direct
+   bad-data attempt via the API is rejected too).
+5. Manual check: Product Performance's Brand-grouped view is now
+   clickable/drills down correctly; one opportunity item picker shows
+   correct labels.
+
+## Required follow-up edit (separate, not done yet)
+
+`docs/Brand-Level-Target-Planning-Implementation-Plan.md`'s "Decision
+still open" section currently recommends a **separate, throwaway** brand
+table specifically to avoid depending on this cleanup. Since this cleanup
+now lands first, that section needs rewriting: Target Planning should
+reference this `brand` table instead of creating a duplicate one.
+
+## Out of scope
+
+- Promoting this migration to UAT (normal main → Dev pipeline; UAT picks
+  it up whenever migrations are next promoted there — separate tracked
+  gap).
+- Any Product Performance report redesign beyond the brand drill-down fix.

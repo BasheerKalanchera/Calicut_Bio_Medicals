@@ -5169,3 +5169,114 @@ writing it speculatively first) is what surfaced both real bugs — neither
 would have been obvious from reading the code alone. Worth keeping this
 order (drill → build → re-verify) for any future backup/recovery tooling
 changes.
+
+## 2026-09-20 (session retrospective)
+
+**What worked:**
+- Testing the restore for real, not just writing the script and assuming
+  it works, caught both real bugs (the `pg_trgm` gap, the PowerShell
+  error-handling bug) before either could bite during an actual
+  emergency.
+- Everything stayed on disposable local copies throughout — the real UAT
+  database was never touched, even though the whole point was rehearsing
+  "what if UAT breaks."
+- Cross-checking the drill's numbers against the real UAT dashboard (via
+  Basheer's own login, not Claude's) gave independent confirmation the
+  backup is trustworthy without Claude ever connecting to UAT itself.
+- Commit discipline held: message and file list shown before each
+  commit, feature commit and checklist/docs commit kept separate.
+
+**What didn't work:**
+- Three separate attempts were made to download the large Supabase
+  Studio image before testing whether *any* large download would work on
+  the connection at all — the small-file diagnostic that actually found
+  the root cause (connection instability) should have come first, not
+  last.
+- The first explanation of the `pg_trgm` gap used jargon and needed a
+  "explain it simply" correction — despite plain-language-first already
+  being a standing rule, it wasn't applied on the first pass here.
+- The restore script needed two rounds of fixing after being written: a
+  bug in its own error-filtering logic, then a known PowerShell 5.1
+  gotcha (capturing a native command's stderr into a variable while
+  `$ErrorActionPreference = "Stop"` aborts immediately, before the
+  script's own error checks run) that should have been applied
+  proactively rather than discovered via a failed test run.
+
+**Improvements put in place:**
+1. `CLAUDE.md` updated with two new standing rules from this session:
+   isolate the variable with a small/fast test before retrying the same
+   large/slow operation on repeated failure, and account for
+   PowerShell's native-stderr-capture-plus-Stop-preference gotcha
+   proactively when writing any new script that captures command output.
+2. Plain-language-first recurrence noted but not re-documented — it's
+   already a standing global rule; the gap here was applying it
+   consistently, not a missing rule.
+
+## 2026-09-20 (later) — Product Catalog Brand/Category/Model design session retrospective
+
+**Requested directly by Basheer**, shown in chat before being logged here,
+per process. Covers the working session that finalized
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`'s replacement
+design (three real tables — Brand, Category, Model — instead of a
+same-row computed `name` column), updated `docs/Backlog.md` and
+`docs/Brand-Level-Target-Planning-Implementation-Plan.md` to match, and
+began the Haroon-export data cutover (matched 51 of 65 live UAT products
+by Model number, caught two silent matching collisions, surfaced 6 open
+questions — full detail in `.claude/active_progress.md`'s 2026-09-20
+(later) entry and this same date's earlier `active_progress.md` history).
+
+**What worked:**
+- Basheer pushed back on nearly every design decision in turn — nesting
+  vs. independent tables, the Model→Category dependency, why role
+  restriction doesn't replace a lookup table, and finally the missing-ID
+  problem in the actual export files — and each round of pushback
+  surfaced something real, not just preference. The final design (Model
+  carries both Brand and Category, no separate admin screens, inline
+  "+ Add new") is materially better than the first draft, and got there
+  through his questions.
+- Reading the actual data (both `.xlsx` files, then a fresh UAT pull)
+  caught things a docs-only review would have missed: Haroon's own
+  "corrected" file still has "Sonoscape"/"SonoScape" split, "Maquet
+  Refurbished" as a fake brand, and two matching collisions ("iX12" vs
+  "iX12 With IBP", "M3A" vs "M3A SpO2 NIBP") that automatic matching
+  would have silently gotten wrong.
+- Followed "show before you act" on the UAT read: stated the exact query,
+  waited for explicit go-ahead, and didn't try to route around the
+  auto-mode classifier when it still blocked the run — asked Basheer to
+  run it himself instead.
+- Once the sequencing contradiction between the Product Catalog plan and
+  the Brand-Level Target Planning plan surfaced, updated all three
+  affected docs (the plan itself, `Backlog.md`, and the Target Planning
+  plan) rather than just the one directly asked about.
+
+**What didn't work:**
+- Claimed the corrected `.xlsx` couldn't be read because the backend
+  Python environment lacked a library — conflating the project's own
+  runtime with Claude Code's separate spreadsheet skill, which had
+  already read the same file two days earlier. Basheer caught this
+  ("You already used python library couple days back. Now what
+  changed"), not a self-check.
+- Reviewed and drafted a full migration plan for the existing "Part 1"
+  document (a computed `name` column) as ready to build before the real
+  structural question — should Brand/Category/Model become tables at
+  all, and how do they relate — had even come up. Most of that first
+  technical draft became throwaway once "three independent tables" was
+  confirmed.
+- The follow-on structural questions (nesting, curation ownership,
+  cascading dropdowns, SBU scoping) surfaced one at a time across
+  separate rounds rather than together, even though they were facets of
+  one underlying schema decision — cost several avoidable round-trips.
+- The UAT read query was blocked by the auto-mode classifier even after
+  Basheer had approved it in chat, so he had to run the command himself —
+  a recurring friction point (also seen in an earlier session, per the
+  `cabio_uat_rls_silent_zero_rows` memory).
+
+**Improvements put in place:**
+1. `CLAUDE.md`'s Feature Planning section updated with two new standing
+   rules: check whether a plan's underlying structural scope is still
+   settled before drafting its technical mechanism, and batch
+   interlocking structural design questions into one round rather than
+   letting them surface sequentially.
+2. `CLAUDE.md`'s Troubleshooting & Scripting section updated: verify what
+   capability/tool is actually available (including tools/skills separate
+   from the project's own runtime) before asserting one is missing.

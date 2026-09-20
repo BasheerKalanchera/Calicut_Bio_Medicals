@@ -106,6 +106,22 @@ code or changing structure. On any conflict, the document wins over this file.
   cascade was the working assumption until Basheer proposed a much simpler
   bottom-up rollup comparison himself, which should have been offered as an
   explicit option from the start.
+- Before drafting or extending a technical mechanism for an already-"approved"
+  plan, check whether its underlying structural scope is still settled — don't
+  take the existing plan's framing at face value and start on the mechanism,
+  only to have a bigger structural question surface partway through that
+  invalidates most of the draft.
+- When a design has several interlocking structural questions (e.g. table
+  shape, hierarchy/nesting, cascading behavior, scoping), surface them
+  together in one round where possible, rather than letting each one emerge
+  only after the user pushes back on the previous answer.
+- **Why (both above):** 2026-09-20, Product Catalog Brand/Category/Model — the
+  existing "Part 1" plan (a computed `name` column) was reviewed and drafted
+  as ready to build before the real question (should Brand/Category/Model
+  become real tables at all, and how do they relate) came up; once it did,
+  the nesting question, the Model↔Category dependency, cascading dropdowns,
+  and SBU-scoping each surfaced one at a time across separate rounds instead
+  of together, and each answer invalidated part of the previous draft.
 
 ## Checkpoint commits
 - On any build expected to run long or largely unattended (a new domain, a
@@ -163,6 +179,34 @@ code or changing structure. On any conflict, the document wins over this file.
   coordinates for clicks — especially right after an expand/collapse or any
   layout-shifting action, where a stale coordinate can miss silently (the
   click lands, but on the wrong element) rather than erroring.
+
+## Troubleshooting & scripting
+- When something fails repeatedly for an unclear reason, isolate the
+  variable with a small/fast diagnostic before retrying the same
+  large/slow operation again — don't repeat the same attempt hoping for a
+  different result. **Why:** 2026-09-20, a ~300MB Docker image download
+  was retried three times before testing whether *any* large download
+  worked on the connection at all; a small test file would have found the
+  real cause (connection instability, not the image or Docker) in one
+  step.
+- When writing a new PowerShell script that captures a native command's
+  output via `2>&1` into a variable, account up front for the interpreter
+  aborting immediately on the first stderr line when
+  `$ErrorActionPreference = "Stop"` is set — before the script's own error
+  checks ever run. Toggle it to `"Continue"` around that specific call
+  instead. **Why:** 2026-09-20, `restore_uat.ps1` hit this exact gotcha
+  during testing (a successful restore looked like a crash) — a known
+  PowerShell 5.1 quirk that should be applied proactively when writing
+  new scripts, not discovered via a failed test run.
+- Before asserting a capability is missing (a library, a tool), check what's
+  actually available — including tools/skills separate from the project's
+  own runtime environment — rather than reasoning from the most obvious one.
+  **Why:** 2026-09-20, claimed the backend Python environment's missing
+  `openpyxl` meant a corrected Product Catalog `.xlsx` couldn't be read, when
+  the spreadsheet skill (already used two days earlier for the same file)
+  could read it directly — caught only after Basheer pointed out the
+  discrepancy ("You already used python library couple days back. Now what
+  changed").
 
 ## Show before you act
 Same discipline across several situations: when an action is hard to undo,

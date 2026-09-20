@@ -1,6 +1,47 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-20_
 
+## 2026-09-20 session (later) — Product Catalog Brand/Category/Model design finalized; data cutover in progress, stopped for the day mid-thread
+
+**Design finalized and written up**, superseding this doc's earlier
+"Part 1" plan: `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`
+(rewritten), `docs/Backlog.md`'s Product Catalog entry (rewritten), and
+`docs/Brand-Level-Target-Planning-Implementation-Plan.md` (its "Decision
+still open" section resolved — now consumes this feature's `brand` table
+instead of building its own). No code/migrations built yet.
+
+**Data cutover started, not finished.** Re-pulled the 65 live UAT products
+with their database `id`s (read-only, Basheer's go-ahead given) — saved to
+`docs/Product-Catalog-UAT-Export-2026-09-20-with-ids.csv`. Matched 51 of 65
+against Haroon's corrected Brand/Category/Model list
+(`docs/Product-Catalog-UAT-Export-2026-09-18 - updated.xlsx`) automatically
+by Model number; caught and hand-fixed 2 cases where two old products
+shared the same short Model number but belong to two different corrected
+entries ("iX12" vs "iX12 With IBP"; "M3A" vs "M3A SpO2 NIBP" — resolved
+using each old product's free-text name to disambiguate).
+
+**Next step — 6 open questions need answers (from Haroon and/or Basheer)
+before the seed data can be finalized:**
+1. "Kolkatta" as a Brand (for "Anesthesia Machine Basic / Boyils") — real
+   brand name or a mistake?
+2. The wall-mount-stand product to keep (`c9619bb5-...-0977e`): Haroon's
+   file still leaves its Model blank and puts a description ("Monitor Wall
+   mount stand") in the Category column — need a real Model value and a
+   real Category name.
+3. "EDAN elite V Series" (old id `dddddddd-...-09`) has no match in
+   Haroon's list — likely a redundant placeholder now that V5/V6/V8 exist
+   as separate products; confirm it should be retired.
+4. "EDAN i20" (old id `dddddddd-...-25`) has no match in Haroon's list at
+   all — dropped on purpose, or missed?
+5. Brand spelling still inconsistent inside Haroon's own corrected file:
+   "Sonoscape" vs "SonoScape" — pick one.
+6. "Maquet Refurbished" as a Brand conflates Brand with condition
+   (Refurbished is the existing `product_type` field) — should the Brand
+   just be "Maquet"?
+
+Once those are answered: finalize the seed data, then build migrations
+`0048`/`0049` per the plan doc.
+
 ## 2026-09-20 session — UAT backup taken, first restore/DR drill run and validated, restore script + runbook built and committed
 
 Commit **`e8de3f6`** (pushed) adds `scripts/restore_uat.ps1` and

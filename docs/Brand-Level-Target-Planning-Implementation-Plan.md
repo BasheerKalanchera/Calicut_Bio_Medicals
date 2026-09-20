@@ -1,6 +1,11 @@
 # Brand-Level Target Planning — Implementation Plan
 
-**Status:** Draft — one open decision below, everything else confirmed
+**Status:** Draft — the "where does `brand` come from" decision below is now
+**resolved** (2026-09-20, superseding the recommendation this doc originally
+made): this feature depends on and reuses the `brand` table being built by
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`, not a
+separate standalone one. **This feature cannot start until that Product
+Catalog work ships** (Basheer's call, 2026-09-19). Everything else confirmed
 2026-09-19 (Basheer). Builds on top of Target Planning (`docs/Target-Planning-
 Implementation-Plan.md`), already live. **Feature:** extends Module 6.4/PRD §6.5
 territory — a brand-level slice of §6.5 ("Product Category Targets"), not the
@@ -31,22 +36,24 @@ numbers can be checked against what each brand actually gave.
    compares the total against the brand's own number himself — the system
    doesn't allocate or push anything down.
 
-## Decision still open
+## Decision — resolved 2026-09-20 (was "still open")
 
-**Where does `brand` come from?** Recommended: a new, small, standalone
-reference list (see below) — Admin/GM-maintained, decoupled entirely from the
-Product Catalog's free-text `oem_name`. This sidesteps the Product Catalog
-name/brand clean-up (`docs/Product-Catalog-Name-Derivation-Implementation-
-Plan.md`) as a dependency altogether — that clean-up stays scoped to Product
-Catalog's own free-text mess and proceeds on its own timeline, unrelated to
-this feature. Needs Basheer's go-ahead before building; the alternative (wait
-for Product Catalog's own brand field to become a real controlled value) is
-not recommended — no such plan exists yet, no confirmed timeline, and it would
-block a Critical Care ask that's already live/needed.
+**Where does `brand` come from?** **Reuses the `brand` table built by
+`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`** — this
+doc's original recommendation (a separate, standalone, Target-Planning-only
+brand list, decoupled from Product Catalog) is **rejected**. Basheer's call,
+2026-09-19: fix Product Catalog's Brand/Category/Model properly first, and
+have every downstream feature — including this one — consume that single
+source of truth, rather than let a second, competing brand list exist.
+**Consequence: this feature is blocked on that Product Catalog work
+shipping first**, not independent of it as originally assumed here.
 
 ## Backend changes
 
-### New table: `brand` (domain: `reference`, same shape as `SBU`/`Zone`)
+### `brand` table — already exists, built by Product Catalog's plan
+
+No new table here. `docs/Product-Catalog-Name-Derivation-Implementation-
+Plan.md` already creates:
 
 ```sql
 CREATE TABLE brand (
@@ -58,14 +65,14 @@ CREATE TABLE brand (
 );
 ```
 
-Seeded directly by Admin/GM (a handful of rows for Critical Care to start —
-exact list from Haroon). `sbu_id` on the row prevents a Critical Care person
-from tagging a split against an Imaging-only brand, and vice versa.
+Seeded and maintained through Product Catalog's own inline "+ Add new
+brand" flow (Admin/GM only) — this feature only ever **reads** `brand`, it
+does not add its own creation/maintenance path. `sbu_id` on the row already
+prevents a Critical Care person from tagging a split against an
+Imaging-only brand, and vice versa — no change needed here.
 
-RLS: read open to all authenticated roles (same as `sbu`/`zone` today — needed
-by every role's Target Planning screen); write (insert/update/deactivate)
-restricted to Admin/GM, mirroring decision #2's "GM/Admin only" principle
-applied consistently to brand list maintenance too.
+RLS: already open-read/Admin-GM-write per Product Catalog's plan — nothing
+to add for this feature.
 
 ### `target_plan` — add the per-brand breakdown
 
@@ -113,8 +120,8 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
   (decision #1 — mandatory, no partial). Reject with a clear error otherwise,
   same "service layer gives a real error, RLS is just the backstop" pattern
   Target Planning already uses.
-- `BrandService` (new, `reference` domain or `planning` — same call as
-  `SBU`/`Zone`'s current home): CRUD for the `brand` list, Admin/GM only.
+- `BrandService`: **no new service** — Product Catalog's plan already builds
+  CRUD for `brand`, Admin/GM only. This feature just reads from it.
 - `TargetPlanService.get_brand_rollup(brand_id, planning_period)`: `SUM(
   split_amount_lakhs)` across every `target_plan_brand_split` row for that
   brand/period — the "what our people committed to" side of the comparison.
@@ -126,7 +133,8 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
 
 ### Router
 
-- `POST/GET/PATCH /reference/brands` (Admin/GM write, everyone read).
+- `/reference/brands` endpoints: **already built by Product Catalog's
+  plan** — this feature only calls the existing `GET`, no new endpoint.
 - `POST/GET /planning/brand-vendor-targets` (Admin/GM write, everyone read).
 - `GET /planning/targets/brand-rollup?brand_id=&planning_period=` → returns
   both numbers together: `{ committed_total, vendor_target, gap }` — this is

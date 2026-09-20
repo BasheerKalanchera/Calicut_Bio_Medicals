@@ -45,52 +45,42 @@ Karnataka postal-code-to-zone mapping table inside the system, which isn't
 worth it yet. Revisit if/when PIN-code coverage data becomes available or
 the manual picking becomes an actual pain point.
 
-### Product Catalog: name field to become derived (Brand + Model + Category), not free text — confirmed, parked pending go-ahead (2026-09-18)
+### Product Catalog: Brand/Category/Model become real controlled-list tables — design approved, parked pending go-ahead (2026-09-20)
 
-**Confirmed by Haroon, 2026-09-18** (was: waiting on Haroon, 2026-09-16):
-a product's `name` will no longer be directly enterable — it's computed
-automatically from Brand + Model + Category (that exact order, confirmed
-by Basheer) via a database-generated column. Full implementation plan
-written: `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`.
-Two data-cleanup questions this surfaced are both resolved and verified
-against UAT (read-only checks, 2026-09-18): removing "Magnamed Ventmeter"
-is safe (zero references anywhere), and merging the two duplicate
-"wall mount stand" products into one is safe (zero references on
-either). **Parked, no code work yet** — waiting on Basheer's go-ahead to
-build, plus Haroon confirming the real Model value for the surviving
-wall-mount-stand product (currently blank).
+**Design finalized in a working session with Basheer, 2026-09-20** — full
+plan: `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`
+(rewritten that day; supersedes its original "computed `name` column from
+same-row free text" mechanism, which is not being built — see that doc's
+header for why). Brand, Category, and Model each become their own table
+(`reference` domain, same shape as `SBU`/`Zone`); `model` carries both
+`brand_id` and `category_id` so a Brand/Category mismatch (e.g. tagging an
+EDAN product as Ultrasound) is structurally impossible, not just
+discouraged. `product` is reduced to picking only `model_id` — its
+`brand_id`/`category_id`/`name` are all auto-derived by a database
+trigger, never hand-typed. Adding a genuinely new Brand/Model/Category
+happens inline on the Product Catalog screen itself (Admin/GM only, no
+separate maintenance page) — the design deliberately does **not** require
+visiting the master lists to add something new. Haroon's already-corrected
+export (`docs/Product-Catalog-UAT-Export-2026-09-18 - updated.xlsx`) seeds
+the three tables and backfills the 65 existing products, matched by `id`;
+the wall-mount-stand duplicate merge and "Magnamed Ventmeter" removal
+(both verified safe, zero references) carry over unchanged.
 
-**Why this matters for other work:** Signed Feature 4.1 in
-`docs/Signed-Requirements-to-PRD-Traceability.md` ("Strict product
-hierarchy: category → brand → model") is Partial today specifically
-because Category and Brand are free text, so naming varies between
-entries (e.g. "Edan" vs "EDAN"). Report Drill-down's Product Performance
-screen currently leaves Brand-grouped cards non-clickable for the same
-reason — there's no real `brand_id`, only a normalized
-`UPPER(TRIM(product.oem_name))` string
-(`backend/app/domains/reporting/repository.py:337-343`). **When 4.1 is
-built** (a real, fixed Brand field), also revisit wiring up Brand-level
-drill-down on Product Performance — it becomes a straightforward
-addition once Brand has a stable id instead of free text. Noted on
-4.1's own row in the Traceability matrix so this isn't missed.
+**Parked, no code work yet** — waiting on Basheer's go-ahead to build.
 
-**Part 2 — promoted from idea to scheduled prerequisite, 2026-09-19
-(Basheer):** turning Brand/Category (and possibly Model, per 4.1's
-category → brand → model hierarchy — open question, not yet decided) into
-real controlled-list tables, not just free text with a computed `name`.
-Raised by Brand-Level Target Planning
-(`docs/Brand-Level-Target-Planning-Implementation-Plan.md`) needing a
-stable brand to group targets by — Basheer's call was to fix this properly
-in Product Catalog itself, rather than work around it with a
-Target-Planning-only table, so naming-drift errors stop being able to
-creep into Product Catalog (and anything downstream grouping by brand,
-including the Product Performance drill-down gap noted above) going
-forward. **Sequencing: Part 2 must land before Brand-Level Target Planning
-is built.** Not yet designed — needs its own section added to
-`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md` (Part 1,
-above, stays as-is; Part 2 is additive) and review with Basheer before any
-code work starts. Full context: `docs/Progress-Archive-2026-09.md`'s
-"2026-09-19 (later)" entry.
+**Why this matters for other work:** closes Signed Feature 4.1's core gap
+in `docs/Signed-Requirements-to-PRD-Traceability.md` ("Strict product
+hierarchy: category → brand → model" — currently Partial because Category
+and Brand are free text). Also fixes Product Performance's Brand-grouped
+drill-down, currently non-clickable because there's no stable `brand_id`
+(`backend/app/domains/reporting/repository.py:337-343`) — noted on 4.1's
+own Traceability row.
+
+**Sequencing: this must land before Brand-Level Target Planning is
+built** (Basheer's call, 2026-09-19) — Target Planning's own plan doc
+currently drafts a separate, throwaway brand table to avoid depending on
+this cleanup; that section needs rewriting to consume this `brand` table
+instead once this ships.
 
 ## Deferred / undecided items
 

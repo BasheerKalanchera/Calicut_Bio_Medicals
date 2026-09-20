@@ -1,0 +1,66 @@
+id,name,oem_name,category_name,model_number
+66e26e36-0b1d-4cf4-b4bd-08f50129afc5,Aeonmed 7200A Anesthesia Workstation,Aeonmed,,7200A
+a36ff85e-6dd8-45ee-b949-addddbd27aeb,Transnano B- Transport Incubator,AVI Health care,,Transnano
+0865612a-3908-4189-938f-b3b6c4128c49,Edan Colposcope,Edan,,C6A-HD
+53cf2293-d187-4efe-b430-9ec308026c2b,Edan CX12 Patient Monitor,Edan,,CX12
+de19794d-7f85-49c6-8148-46f401c0bb53,Edan F3,Edan,Monitor,F3
+cae0520f-93f8-41d2-9b76-30641498868e,Edan F6 CTG machine,Edan,,F6
+c82522b9-f71f-4644-84d3-62a1db8016bf,Edan H100B Handheld Pulseoxymeter,Edan,,H100B
+5db15cf0-d95c-4226-be32-aba3d71e7c35,Edan iX12 with IBP&ETCO2,Edan,,IX
+8d6046f6-7b46-42d4-bda9-24ddd03c8e0a,Edan iX Monitor with nelcore Technology,Edan,,IX Nelcore
+705b39ab-a552-41cc-9bd8-835d6d769231,Edan iX12 patient monitor,Edan,,iX12
+c70d83aa-c898-449c-aba5-9c5209e45a08,Edan iX12 With IBP Monitor,Edan,,iX12
+97bf1803-aff9-49d1-9ee6-6231f87a05cf,Edan M3A Pulseoxymeter,Edan,,M3A
+dd0fe268-22fc-4687-af06-17a265e44bee,Edan Sonotrax Fetal Doppler,Edan,,Sonotrax Basic
+74ba968e-3c4d-40e0-850a-814426d942a8,EDAN CX 10,EDAN,Patient Monitors,CX 10
+dddddddd-dddd-dddd-dddd-050000000009,EDAN elite V Series,EDAN,Patient Monitor,elite V Series
+dddddddd-dddd-dddd-dddd-050000000013,EDAN elite V5,EDAN,Patient Monitoring,elite V5
+dddddddd-dddd-dddd-dddd-050000000014,EDAN elite V6,EDAN,Patient Monitoring,elite V6
+dddddddd-dddd-dddd-dddd-050000000015,EDAN elite V8,EDAN,Patient Monitoring,elite V8
+dddddddd-dddd-dddd-dddd-050000000026,EDAN F15 Series,EDAN,Maternal & Fetal,F15
+040451ac-7b11-4b7f-ac86-d55ede82fd47,Edan H100B Pulseoxymeter,EDAN,,H100B
+dddddddd-dddd-dddd-dddd-050000000010,EDAN i15 Blood Gas,EDAN,POCT,i15
+dddddddd-dddd-dddd-dddd-050000000024,EDAN i15,EDAN,Blood Gas,i15
+dddddddd-dddd-dddd-dddd-050000000025,EDAN i20,EDAN,Blood Gas,i20
+dddddddd-dddd-dddd-dddd-050000000018,EDAN iM20,EDAN,Patient Monitoring,iM20
+dddddddd-dddd-dddd-dddd-050000000019,EDAN iM3,EDAN,Patient Monitoring,iM3
+a8e16a6f-0032-4aa1-a18c-57d34f8c8f65,EDAN iM50,EDAN,,iM50
+e08415f6-2983-4a9b-bb96-91594661416f,EDAN iM50 Nellcore,EDAN,,iM50 Nellcore
+dddddddd-dddd-dddd-dddd-050000000016,EDAN iM70,EDAN,Patient Monitoring,iM70
+dddddddd-dddd-dddd-dddd-050000000017,EDAN iM8,EDAN,Patient Monitoring,iM8
+25fbe571-bf30-431c-aec4-9022d0ba0909,Edan iV6 Modular Monitor,EDAN,,IV6
+47cce385-6ae0-49ac-ab18-ac3e95714b37,Edan M3A SpO2 NIBP Monitor,EDAN,,M3A
+29306f75-6f51-444d-aaed-e9a79bdbf0d1,EDAN SE-1515 SOFTWARE,EDAN,Software,SE- 1515
+dddddddd-dddd-dddd-dddd-050000000021,EDAN SE-1200 Express,EDAN,ECG,SE-1200 Express
+dddddddd-dddd-dddd-dddd-050000000022,EDAN SE-1202E,EDAN,ECG,SE-1202E
+dddddddd-dddd-dddd-dddd-050000000023,EDAN SE-310,EDAN,ECG,SE-310
+ed0eba5c-a390-4573-86b3-bdee40ece426,Edan SE3 ECG Machine,EDAN,,SE3
+dddddddd-dddd-dddd-dddd-050000000020,EDAN X12,EDAN,Patient Monitoring,X12
+eab7ed2b-05a3-4531-9ecf-db1a1a94bad9,BREATHE - i,ELECTROSCIENCE,Bubble CPAP & HFNC,BREATHE - i
+bfc28745-5de1-494b-a179-f43f8e092d59,Anesthesia Machine Basic Boyils,Kolkatta,,
+dddddddd-dddd-dddd-dddd-050000000006,Magnamed Fleximag Max,Magnamed,Ventilator,Fleximag Max
+dddddddd-dddd-dddd-dddd-050000000007,Magnamed OxyMag,Magnamed,Oxygen Therapy,OxyMag
+dddddddd-dddd-dddd-dddd-050000000008,Magnamed Ventmeter,Magnamed,Ventilator Testing,Ventmeter
+695007ae-6cf1-4e8d-aece-135f75f632a0,Maquet Servo i Ventilator,Maquet Refurbished,,Servo i
+3ce30ed4-4984-4b69-9a12-0591d8e3508e,Medion Infusion pump,Medion,,IP-100
+2e0a947e-ebc6-4b36-997c-423abf910c28,Medion Syringe pump,Medion,,SP101
+fde64726-343f-4a69-a8e3-f9d91f0e189d,Sonoscape E1,Sonoscape,,E1
+4a8f14d0-e5d9-4b4e-ade9-bd15ad53b4fb,Sonoscape E1 EXP,Sonoscape,,E1 EXP
+0e377ed7-1243-4458-a1e2-9e82e2a7a606,Sonoscape E10,Sonoscape,,E10
+c2ecc878-0951-4b95-a633-8ce92386dc9d,Sonoscape E3,Sonoscape,,E3
+f079c3d8-6d0c-4109-8a37-d55e89daf87a,Sonoscape P11elite,Sonoscape,,P11elite
+3cecfd72-db27-40c5-84ff-7b011dfe806b,Sonoscape P25 elite,Sonoscape,,P25 elite
+e535f16c-15a3-4467-b61a-05f54cf4c238,Sonoscape P25 elite CV,Sonoscape,,P25 elite CV
+553e0c82-311c-4530-a8b2-bf1a6d818992,Sonoscape P40elite,Sonoscape,,P40elite
+ec8fed06-d2ac-43ca-9c1c-f4f1bf7f4257,Sonoscape P9elite,Sonoscape,,P9 elite
+e775f3ae-e7e0-44ac-a332-4a6cba7ce673,Sonoscape S11plus,Sonoscape,,S11plus
+dcf4fa27-29c1-455c-8934-482cd22240ba,Sonoscape S70,Sonoscape,,S70
+dddddddd-dddd-dddd-dddd-050000000002,SonoScape E2,SonoScape,Ultrasound,E2
+dddddddd-dddd-dddd-dddd-050000000005,SonoScape HD-550,SonoScape,Endoscopy,HD-550
+dddddddd-dddd-dddd-dddd-050000000004,SonoScape P60 Exp,SonoScape,Ultrasound,P60 Exp
+dddddddd-dddd-dddd-dddd-050000000001,SonoScape S50 Elite,SonoScape,Ultrasound,S50 Elite
+dddddddd-dddd-dddd-dddd-050000000012,SonoScape S8 Exp,SonoScape,Ultrasound,S8 Exp
+dddddddd-dddd-dddd-dddd-050000000011,SonoScape S80,SonoScape,Ultrasound,S80
+dddddddd-dddd-dddd-dddd-050000000003,SonoScape X3,SonoScape,Ultrasound,X3
+88bba781-e6eb-4049-b1af-ebc1c9e1b2f7,Wall- Monitor Stand,,,
+c9619bb5-60cb-4fc2-a801-2eb7dec0977e,Monitor Wall mount stand,,,
