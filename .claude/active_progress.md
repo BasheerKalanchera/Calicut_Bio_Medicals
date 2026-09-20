@@ -1,5 +1,19 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-19_
+_Session: 2026-08-21 → 2026-09-20_
+
+## 2026-09-20 session — UAT backup taken, first restore/DR drill run and validated, restore script + runbook built and committed
+
+Commit **`e8de3f6`** (pushed) adds `scripts/restore_uat.ps1` and
+`docs/UAT-Disaster-Recovery-Runbook.md`. Full detail, including the two
+bugs found and fixed while building/testing the script (a `pg_trgm`
+extension gap on fresh restore targets, and a PowerShell stderr-capture
+bug that made a successful restore look like a failure), is in
+`docs/Progress-Archive-2026-09.md`'s "2026-09-20" entries.
+
+**Next step:** check `docs/Backlog.md` for the two open items the runbook
+flagged but didn't resolve — laptop as a single point of failure for
+local backups, and the Google Drive offsite copy being manual/irregular
+— add them if not already there. No other thread is in progress.
 
 ## 2026-09-19 session — Scorecard rename committed, external review doc logged; waiting on a parallel session's Target Planning fix before picking up Target-dependent features
 

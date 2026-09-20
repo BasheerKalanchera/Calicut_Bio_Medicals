@@ -5130,3 +5130,42 @@ from 604 to 605 (one new row added in UAT after the backup was taken) —
 expected drift, not a discrepancy, and if anything stronger confirmation
 that the restore is an accurate point-in-time snapshot. Drill considered
 fully validated.
+
+## 2026-09-20 (later) — Restore script + disaster recovery runbook built, tested, committed
+
+Off the back of the drill above, built `scripts/restore_uat.ps1`: a safe
+local-drill mode by default (spins up a throwaway Postgres in Docker,
+tears it down after), and a real-target mode (`-TargetUrl` /
+`-TargetEnvFile`) that requires typing `RESTORE` to confirm before
+touching anything, or an explicit `-Force` for Claude Code to use only
+after Basheer has already told it to proceed in chat — added specifically
+because the typed-confirmation prompt can't be answered through Claude
+Code's tool.
+
+Two real bugs surfaced and fixed while testing it against today's backup:
+1. A fresh/empty target database doesn't have `pg_trgm` (a Postgres
+   feature the schema's 5 name-search indexes depend on) enabled by
+   default — the script now always runs `CREATE EXTENSION IF NOT EXISTS
+   pg_trgm;` before restoring.
+2. The script's own error-handling was briefly broken twice during
+   testing: first, filtering logic treated pg_restore's harmless "schema
+   already exists" summary line as a real failure; then, capturing a
+   native command's stderr into a variable while
+   `$ErrorActionPreference = "Stop"` was set caused PowerShell to abort
+   immediately on the first stderr line, before the script's own error
+   checks ever ran — a known PowerShell 5.1 quirk, fixed by toggling
+   `$ErrorActionPreference` to `"Continue"` around each such call.
+
+Documented the full recovery process in
+`docs/UAT-Disaster-Recovery-Runbook.md`, including two open gaps flagged
+but not resolved: backups exist only on Basheer's laptop plus an
+irregular manual Google Drive copy (no automated offsite copy yet), and
+the local 14-day retention window means an older backup only survives if
+manually copied off before it ages out. Committed and pushed `e8de3f6`.
+Logged both gaps to `docs/Backlog.md`.
+
+**Retro:** running the drill before writing the script (rather than
+writing it speculatively first) is what surfaced both real bugs — neither
+would have been obvious from reading the code alone. Worth keeping this
+order (drill → build → re-verify) for any future backup/recovery tooling
+changes.

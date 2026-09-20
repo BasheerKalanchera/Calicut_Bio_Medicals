@@ -753,6 +753,16 @@ code work starts. Full context: `docs/Progress-Archive-2026-09.md`'s
   `docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05,
   2026-09-06 and 2026-09-10 entries.
 
+  **2026-09-20 update:** restore side built and drill-verified —
+  `scripts/restore_uat.ps1` (safe local-drill mode by default, real-target
+  mode requires typed confirmation or explicit `-Force`) and
+  `docs/UAT-Disaster-Recovery-Runbook.md`, committed `e8de3f6`. Two open
+  gaps surfaced, not yet decided: (1) backups exist **only** on Basheer's
+  laptop plus an irregular manual Google Drive copy — if the laptop is
+  lost at the same time as UAT, the newest usable backup could be well
+  older than the 14-day local retention; (2) no automated offsite copy
+  exists yet (the Google Drive mirror step above is still disabled).
+
 - **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,
   found live 2026-09-05.** **Deliberately kept separate from the new Pricing/
   Discount-Authority work (Basheer, 2026-09-11) rather than bundled in** —
