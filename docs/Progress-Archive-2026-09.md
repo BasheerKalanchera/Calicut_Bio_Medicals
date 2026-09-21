@@ -5327,6 +5327,32 @@ read-only `git fetch`/`git log` investigation only.
 promotion Basheer flagged for "the next couple of days," bringing over
 the 17 feat/fix commits above.
 
+**Retro (requested by Basheer, same session):**
+
+**What worked:**
+- The commit-gap question was answered with read-only `git fetch`/
+  `rev-list`/`log` only — no DB access, no risky calls.
+- Staged only the 2 doc files for commit despite 20+ files sitting
+  modified/untracked from the parallel session's Product Catalog work —
+  didn't sweep in unrelated WIP.
+- After Basheer said "commit done," verified via `git log --stat` rather
+  than taking it at face value — caught that the very next commit
+  (`cd0d8ab`) belonged to the parallel session, confirmed the two docs
+  landed as their own separate commit (`463e964`) with nothing lost.
+
+**What didn't work:**
+- Explaining why local `uat` differed from `origin/uat` took three rounds
+  ("still not clear why"). Led with the general git mechanism (local vs.
+  remote copies, push doesn't auto-sync other checkouts) before surfacing
+  the concrete cause — the Haroon emergency hotfix pushed straight to
+  `origin/uat` — which only came out after repeated pushback, even though
+  `git log` had it the whole time.
+
+**Improvement put in place:** `CLAUDE.md`'s Troubleshooting & Scripting
+section updated — when a local git branch is found behind its remote,
+pull the actual commit list/authorship for the gap immediately and lead
+the explanation with the concrete cause, not the general mechanism.
+
 ## 2026-09-21 session (later) — Product Catalog Brand/Category/Model built and shipped to Dev
 
 Picked up yesterday's stopped-mid-thread (`docs/Product-Catalog-Name-
@@ -5458,3 +5484,60 @@ in `.claude/active_progress.md`'s entry above.
 cleanup above. Then run the full manual E2E pass (`docs/Product-Catalog-
 Name-Derivation-Implementation-Plan.md`'s Verification section) before
 flipping Feature 4.1 to Done.
+
+## 2026-09-21 session (later still) — Product Catalog Brand/Category/Model build: session retrospective
+
+Requested by Basheer right after the build, shown in chat first per
+standing practice before being written here.
+
+**What worked:**
+- Picking up cleanly from yesterday's 6 open questions, then catching
+  two *more* duplicate pairs (H100B, i15) that weren't in that list —
+  found by cross-checking data rather than trusting the handover was
+  complete.
+- The migration design decision to match by product **name** instead of
+  hardcoded IDs. Discovering Dev's product table wasn't a mirror of
+  UAT's, before writing any migration, was the single most important
+  catch of the session — a naive id-based migration would have silently
+  duplicated real UAT data once promoted there.
+- The safety net actually worked: the first migration run failed
+  cleanly on a missed `marketing_lead` FK reference, rolled back with
+  zero damage, and named exactly what was missing.
+- Test/lint/verification discipline held throughout — 896/896 backend
+  tests, `ruff`/`tsc`/`eslint` clean, and an actual live browser check
+  with Basheer's own (Haroon) login before calling anything
+  "smoke-tested."
+- Stopping to ask rather than guess, several times: the wall-mount NOT
+  NULL question, the H100B/i15 duplicates, the Dev-vs-UAT mismatch, the
+  brand→SBU mapping (cross-checked against UAT too, only with explicit
+  go-ahead). None of those were silently assumed.
+
+**What didn't work:**
+- Wrote the migration-data generator script into `.claude/scratch/` —
+  inside the repo — instead of the actual session scratchpad directory.
+  Caught before committing, but exactly the mistake the scratchpad rule
+  exists to prevent.
+- The pre-migration reference check (before writing 0049) only looked
+  at 3 of the 4 tables that actually reference `product` — missed
+  `marketing_lead`. Found the authoritative list via `pg_constraint`
+  only *after* the migration failed, when it should have been pulled
+  first and the check built from it.
+- When Basheer asked about "34 old rows," the first instinct was to
+  reach for another SQL query instead of leading with a plain-language
+  answer — he had to stop that tool call himself. The plain-language-
+  first rule didn't fire when it should have.
+- The Dev/UAT mismatch was found somewhat by accident (fetching SBU
+  ids), not from a deliberate "does Dev even match what I've been
+  analyzing" check done earlier, before investing time in detailed
+  UAT-based reconciliation.
+
+**What to improve, now codified in `CLAUDE.md`'s Troubleshooting &
+scripting section:**
+1. Query `pg_constraint` for the real FK list before writing any
+   migration that deletes/retires rows — not after a failure.
+2. Do a cheap "does the target environment match my assumptions" sanity
+   check early, before deep analysis on one environment's data.
+3. Lead with a plain-language answer before reaching for a verification
+   query, even when the query feels like the obvious next step.
+4. Double-check scratch file paths land in the actual OS scratchpad,
+   not a repo-relative `.claude/` path.

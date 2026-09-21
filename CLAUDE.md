@@ -207,6 +207,47 @@ code or changing structure. On any conflict, the document wins over this file.
   could read it directly — caught only after Basheer pointed out the
   discrepancy ("You already used python library couple days back. Now what
   changed").
+- When a local git branch is found behind its remote counterpart, pull the
+  actual commit list and authorship for the gap immediately, not just the
+  commit count — lead with the concrete cause in the first answer instead
+  of the general git-mechanics explanation. **Why:** 2026-09-21, explaining
+  why local `uat` was behind `origin/uat` took three rounds ("still not
+  clear why") because the answer led with how `git push`/local branches
+  work in general before surfacing the actual cause (an emergency hotfix
+  pushed straight to `origin/uat`) — that detail was sitting in `git log`
+  the whole time and should have been pulled up front.
+- Before writing any migration that deletes, retires, or bulk-updates
+  rows, query `pg_constraint` for the authoritative list of every table
+  with a foreign key into the one being touched — don't rely on a
+  manually-assembled list of "the tables I know reference this."
+  **Why:** 2026-09-21, migration 0049's first run failed on a
+  `marketing_lead.product_id` FK that a manual reference check
+  (opportunity_item/installed_asset/document only) had missed — caught
+  safely by the migration's own transaction rollback, but the
+  authoritative `pg_constraint` lookup that actually found the gap only
+  happened after the failure, not before.
+- Before investing real time analyzing one environment's exported data
+  for a migration or data-cutover task, do a cheap check that the
+  *target* environment (where it will actually run first) matches what's
+  being analyzed — never assume Dev mirrors UAT (or vice versa) just
+  because they're both "the app's data." **Why:** 2026-09-21, a full
+  session's Product Catalog reconciliation was built entirely against a
+  UAT export before discovering Dev's `product` table was a completely
+  different, smaller set of rows — caught only by accident (fetching SBU
+  ids for seeding), not from a deliberate check done up front.
+- Session-generated throwaway scripts (a one-off data-matching or
+  migration-generator script) go in the session scratchpad directory,
+  never a path inside the repo like `.claude/scratch/` — double-check the
+  target path before the first `Write`. **Why:** 2026-09-21, a migration-
+  data generator script was written to `.claude/scratch/` inside this
+  repo and had to be cleaned up before committing.
+- When a question could be answered either with a plain-language
+  explanation or a verification query, give the plain-language answer
+  first — reach for the query as a "let me confirm precisely" follow-up,
+  not the first move. **Why:** 2026-09-21, asked whether there were "34
+  old rows" left behind, the first instinct was to run another SQL query
+  immediately; Basheer had to stop that tool call himself before getting
+  a plain-language-framed answer.
 
 ## Show before you act
 Same discipline across several situations: when an action is hard to undo,
