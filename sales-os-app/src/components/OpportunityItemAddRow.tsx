@@ -97,7 +97,7 @@ export default function OpportunityItemAddRow({
       {addMode === "product" ? (
         <Autocomplete
           options={modeOptions}
-          groupBy={(option) => option.category_name || "Other"}
+          groupBy={(option) => option.category?.name || "Other"}
           getOptionLabel={(option) => option.name}
           value={modeOptions.find((p) => p.id === addProdId) ?? null}
           onChange={(_e, newValue) => { setAddProdId(newValue?.id ?? ""); setAddItemError(null); }}

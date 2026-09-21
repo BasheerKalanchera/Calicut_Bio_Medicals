@@ -1045,6 +1045,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reference/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Brands */
+        get: operations["list_brands_api_v1_reference_brands_get"];
+        put?: never;
+        /** Create Brand */
+        post: operations["create_brand_api_v1_reference_brands_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reference/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Categories */
+        get: operations["list_categories_api_v1_reference_categories_get"];
+        put?: never;
+        /** Create Category */
+        post: operations["create_category_api_v1_reference_categories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reference/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Models */
+        get: operations["list_models_api_v1_reference_models_get"];
+        put?: never;
+        /** Create Model */
+        post: operations["create_model_api_v1_reference_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/audit-log": {
         parameters: {
             query?: never;
@@ -1479,6 +1533,34 @@ export interface components {
             message: string;
             data: components["schemas"]["ActivityResponse"];
         };
+        /** APIResponse[BrandResponse] */
+        APIResponse_BrandResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["BrandResponse"];
+        };
+        /** APIResponse[CategoryResponse] */
+        APIResponse_CategoryResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["CategoryResponse"];
+        };
         /** APIResponse[DocumentDownloadUrl] */
         APIResponse_DocumentDownloadUrl_: {
             /**
@@ -1548,6 +1630,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["MarketingLeadResponse"];
+        };
+        /** APIResponse[ModelResponse] */
+        APIResponse_ModelResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["ModelResponse"];
         };
         /** APIResponse[OpportunitiesOnHoldResponse] */
         APIResponse_OpportunitiesOnHoldResponse_: {
@@ -2104,6 +2200,36 @@ export interface components {
             /** Data */
             data: components["schemas"]["ActivityCommentResponse"][];
         };
+        /** APIResponse[list[BrandResponse]] */
+        APIResponse_list_BrandResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["BrandResponse"][];
+        };
+        /** APIResponse[list[CategoryResponse]] */
+        APIResponse_list_CategoryResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["CategoryResponse"][];
+        };
         /** APIResponse[list[DocumentResponse]] */
         APIResponse_list_DocumentResponse__: {
             /**
@@ -2148,6 +2274,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["MarketingLeadResponse"][];
+        };
+        /** APIResponse[list[ModelResponse]] */
+        APIResponse_list_ModelResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ModelResponse"][];
         };
         /** APIResponse[list[NotificationResponse]] */
         APIResponse_list_NotificationResponse__: {
@@ -2770,6 +2911,80 @@ export interface components {
             /** File */
             file: string;
         };
+        /** BrandCreate */
+        BrandCreate: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Name */
+            name: string;
+        };
+        /** BrandNested */
+        BrandNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** BrandResponse */
+        BrandResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Name */
+            name: string;
+            /** Is Active */
+            is_active: boolean;
+        };
+        /** CategoryCreate */
+        CategoryCreate: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Name */
+            name: string;
+        };
+        /** CategoryNested */
+        CategoryNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** CategoryResponse */
+        CategoryResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Name */
+            name: string;
+            /** Is Active */
+            is_active: boolean;
+        };
         /**
          * CustomerType
          * @description Institution nature — Cabio Sales OS Phase 1 PRD SS B.2.6.
@@ -3077,6 +3292,60 @@ export interface components {
          * @enum {string}
          */
         MasterDataEntity: "stages" | "statuses" | "project-statuses" | "lead-sources" | "loss-reasons" | "hold-reasons" | "gate-override-reasons" | "sbus" | "zones" | "roles";
+        /** ModelCreate */
+        ModelCreate: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /** Name */
+            name: string;
+        };
+        /** ModelNested */
+        ModelNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** ModelResponse */
+        ModelResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Name */
+            name: string;
+            /** Is Active */
+            is_active: boolean;
+            brand: components["schemas"]["BrandResponse"];
+            category: components["schemas"]["CategoryResponse"];
+        };
         /** NotificationResponse */
         NotificationResponse: {
             /**
@@ -3687,19 +3956,16 @@ export interface components {
         };
         /** ProductCreate */
         ProductCreate: {
-            /** Name */
-            name: string;
             /**
              * Sbu Id
              * Format: uuid
              */
             sbu_id: string;
-            /** Oem Name */
-            oem_name?: string | null;
-            /** Model Number */
-            model_number?: string | null;
-            /** Category Name */
-            category_name?: string | null;
+            /**
+             * Model Id
+             * Format: uuid
+             */
+            model_id: string;
             /** Description */
             description?: string | null;
             /** @default NEW_EQUIPMENT */
@@ -3719,17 +3985,29 @@ export interface components {
              * Format: uuid
              */
             sbu_id: string;
-            /** Oem Name */
-            oem_name: string | null;
-            /** Model Number */
-            model_number: string | null;
-            /** Category Name */
-            category_name: string | null;
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /**
+             * Model Id
+             * Format: uuid
+             */
+            model_id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
             /** Product Type */
             product_type: string;
             /** Is Active */
             is_active: boolean | null;
             sbu: components["schemas"]["SBUNested"];
+            brand: components["schemas"]["BrandNested"];
+            model: components["schemas"]["ModelNested"];
+            category: components["schemas"]["CategoryNested"];
         };
         /** ProductPerformanceResponse */
         ProductPerformanceResponse: {
@@ -3774,12 +4052,21 @@ export interface components {
              * Format: uuid
              */
             sbu_id: string;
-            /** Oem Name */
-            oem_name: string | null;
-            /** Model Number */
-            model_number: string | null;
-            /** Category Name */
-            category_name: string | null;
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /**
+             * Model Id
+             * Format: uuid
+             */
+            model_id: string;
+            /**
+             * Category Id
+             * Format: uuid
+             */
+            category_id: string;
             /** Description */
             description: string | null;
             /** Product Type */
@@ -3797,6 +4084,9 @@ export interface components {
              */
             updated_at: string;
             sbu: components["schemas"]["SBUNested"];
+            brand: components["schemas"]["BrandNested"];
+            model: components["schemas"]["ModelNested"];
+            category: components["schemas"]["CategoryNested"];
         };
         /**
          * ProductType
@@ -3805,16 +4095,10 @@ export interface components {
         ProductType: "NEW_EQUIPMENT" | "REFURBISHED" | "ACCESSORY";
         /** ProductUpdate */
         ProductUpdate: {
-            /** Name */
-            name?: string | null;
             /** Sbu Id */
             sbu_id?: string | null;
-            /** Oem Name */
-            oem_name?: string | null;
-            /** Model Number */
-            model_number?: string | null;
-            /** Category Name */
-            category_name?: string | null;
+            /** Model Id */
+            model_id?: string | null;
             /** Description */
             description?: string | null;
             product_type?: components["schemas"]["ProductType"] | null;
@@ -7548,6 +7832,210 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_brands_api_v1_reference_brands_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_BrandResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_brand_api_v1_reference_brands_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_BrandResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_categories_api_v1_reference_categories_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_CategoryResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_category_api_v1_reference_categories_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_CategoryResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_models_api_v1_reference_models_get: {
+        parameters: {
+            query: {
+                brand_id: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ModelResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_model_api_v1_reference_models_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_ModelResponse_"];
+                };
             };
             /** @description Validation Error */
             422: {

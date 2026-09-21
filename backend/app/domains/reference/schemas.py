@@ -61,6 +61,58 @@ class ZoneSearchResult(BaseModel):
     path: str
 
 
+# ------------------------------------------------------------------
+# Product Catalog hierarchy (Brand / Category / Model) -- Admin/GM-only
+# write, all-authenticated read, see reference/catalog_router.py
+# ------------------------------------------------------------------
+
+class BrandCreate(BaseModel):
+    sbu_id: uuid.UUID
+    name: str
+
+
+class CategoryCreate(BaseModel):
+    sbu_id: uuid.UUID
+    name: str
+
+
+class ModelCreate(BaseModel):
+    brand_id: uuid.UUID
+    category_id: uuid.UUID
+    name: str
+
+
+class BrandResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sbu_id: uuid.UUID
+    name: str
+    is_active: bool
+
+
+class CategoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sbu_id: uuid.UUID
+    name: str
+    is_active: bool
+
+
+class ModelResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    brand_id: uuid.UUID
+    category_id: uuid.UUID
+    sbu_id: uuid.UUID
+    name: str
+    is_active: bool
+    brand: BrandResponse
+    category: CategoryResponse
+
+
 class RoleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

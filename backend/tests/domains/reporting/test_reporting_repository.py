@@ -209,11 +209,10 @@ class TestProductPerformance:
         sql = _run("product_performance", _make_current_user("Admin"), "sbu")
         assert "sbu.name" in sql
 
-    def test_group_by_brand_normalizes_case_via_oem_name(self):
+    def test_group_by_brand_joins_brand_table(self):
         sql = _run("product_performance", _make_current_user("Admin"), "brand")
-        assert "product.oem_name" in sql
-        assert "upper" in sql.lower()
-        assert "trim" in sql.lower()
+        assert "brand.name" in sql.lower()
+        assert "product.brand_id = brand.id" in sql.lower() or "brand.id = product.brand_id" in sql.lower()
 
     def test_quantity_and_revenue_restricted_to_won(self):
         sql = _run("product_performance", _make_current_user("Admin"), "product")

@@ -15,6 +15,10 @@ class ProductRepository(BaseRepository[Product]):
         from app.domains.reference.models import SBU
         return self.db.get(SBU, sbu_id) is not None
 
+    def get_model_sbu_id(self, model_id: uuid.UUID) -> uuid.UUID | None:
+        from app.domains.reference.models import Model
+        return self.db.scalar(select(Model.sbu_id).where(Model.id == model_id))
+
     def _filters(
         self,
         *,
@@ -26,12 +30,16 @@ class ProductRepository(BaseRepository[Product]):
         if active_only:
             f.append(Product.is_active == True)  # noqa: E712
         if search:
-            from app.domains.reference.models import SBU
+            from app.domains.reference.models import SBU, Brand
             sbu_match = select(SBU.id).where(SBU.name.ilike(f"%{search}%")).scalar_subquery()
+            # Brand is no longer free text on product itself -- match via
+            # brand_id, same as name (which already embeds the brand name,
+            # trigger-computed) doubling the brand-name search.
+            brand_match = select(Brand.id).where(Brand.name.ilike(f"%{search}%")).scalar_subquery()
             f.append(
                 or_(
                     Product.name.ilike(f"%{search}%"),
-                    Product.oem_name.ilike(f"%{search}%"),
+                    Product.brand_id.in_(brand_match),
                     Product.sbu_id.in_(sbu_match),
                 )
             )

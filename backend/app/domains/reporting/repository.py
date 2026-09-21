@@ -11,7 +11,7 @@ from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.product.models import Product
-from app.domains.reference.models import SBU, HoldReason, OpportunityStage, OpportunityStatus, Zone
+from app.domains.reference.models import SBU, Brand, HoldReason, OpportunityStage, OpportunityStatus, Zone
 
 # Net line value: BR-FIN-03 nets BUYBACK lines against PRODUCT lines --
 # extended_value_lakhs itself always stores a plain positive amount, the
@@ -334,13 +334,12 @@ class ReportingRepository:
         elif group_by == "sbu":
             group_id_col, group_name_col = cast(SBU.id, String), SBU.name
         else:
-            # "brand" -- product.oem_name doubles as brand in practice
-            # (confirmed against real UAT data), no dedicated Brand field.
-            # Normalized case-insensitive so "Edan"/"EDAN" don't split into
-            # two rows; no stable id exists for a brand, so the normalized
-            # text itself is both id and name.
-            brand_expr = func.coalesce(func.upper(func.trim(Product.oem_name)), "UNSPECIFIED")
-            group_id_col, group_name_col = brand_expr, brand_expr
+            # "brand" -- now a real controlled table (docs/Product-Catalog-
+            # Name-Derivation-Implementation-Plan.md), joined below. Replaces
+            # the old normalized-oem_name-text grouping (no stable id, could
+            # split "EDAN"/"Edan" into two rows) -- this is what makes the
+            # Product Performance brand drill-down clickable.
+            group_id_col, group_name_col = cast(Brand.id, String), Brand.name
 
         is_won = OpportunityStatus.status_code == "WON"
         is_lost = OpportunityStatus.status_code == "LOST"
@@ -363,6 +362,7 @@ class ReportingRepository:
             .join(Opportunity, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
             .join(Product, OpportunityItem.product_id == Product.id)
+            .join(Brand, Product.brand_id == Brand.id)
             .join(UserProfile, Opportunity.owner_id == UserProfile.id)
             .join(SBU, Opportunity.sbu_id == SBU.id)
             .join(Account, Opportunity.account_id == Account.id)

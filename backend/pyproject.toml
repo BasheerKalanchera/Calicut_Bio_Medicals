@@ -51,6 +51,9 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "app/domains/*/models.py" = ["F821"]
+# Hand-written seed-data migrations: literal (id, ..., name) tuples read far
+# better as one row per line than wrapped across multiple.
+"alembic/versions/0049_product_brand_model_category_fk.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

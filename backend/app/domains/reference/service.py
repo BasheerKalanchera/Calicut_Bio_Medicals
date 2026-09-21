@@ -7,14 +7,67 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
-from app.domains.reference.models import Zone
-from app.domains.reference.repository import ZoneRepository
-from app.domains.reference.schemas import ZoneCreate, ZoneUpdate
+from app.domains.reference.models import Brand, Category, Model, Zone
+from app.domains.reference.repository import BrandRepository, CategoryRepository, ModelRepository, ZoneRepository
+from app.domains.reference.schemas import BrandCreate, CategoryCreate, ModelCreate, ZoneCreate, ZoneUpdate
 
 # Territory map edits are rare, deliberate admin actions (Discussion-Zone-
 # Hierarchy-2026-08.md) -- same role-gate shape as opportunity/service.py's
 # _SBU_OVERRIDE_ROLES, not a new authorization mechanism.
 _TERRITORY_MAP_ADMIN_ROLES = {"Admin", "General Manager"}
+
+# Same shape, reused for the Product Catalog hierarchy (docs/Product-Catalog-
+# Name-Derivation-Implementation-Plan.md) -- Brand/Category/Model edits are
+# rare, deliberate admin actions too.
+_CATALOG_ADMIN_ROLES = {"Admin", "General Manager"}
+
+
+class CatalogAdminService:
+    def __init__(self, *, brands: BrandRepository, categories: CategoryRepository, models: ModelRepository):
+        self.brands = brands
+        self.categories = categories
+        self.models = models
+
+    def _require_admin(self, role_name: str) -> None:
+        if role_name not in _CATALOG_ADMIN_ROLES:
+            raise AuthorizationError(
+                "Only Admin/General Manager can manage the product catalog's Brand/Category/Model lists"
+            )
+
+    def list_brands(self, *, sbu_id: uuid.UUID) -> list[Brand]:
+        return self.brands.list_active_for_sbu(sbu_id)
+
+    def list_categories(self, *, sbu_id: uuid.UUID) -> list[Category]:
+        return self.categories.list_active_for_sbu(sbu_id)
+
+    def list_models(self, *, brand_id: uuid.UUID) -> list[Model]:
+        return self.models.list_active_for_brand(brand_id)
+
+    def create_brand(self, data: BrandCreate, *, role_name: str) -> Brand:
+        self._require_admin(role_name)
+        if self.brands.exists_by_name(data.name, sbu_id=data.sbu_id):
+            raise ConflictError(f"A brand named '{data.name}' already exists")
+        return self.brands.create(Brand(sbu_id=data.sbu_id, name=data.name))
+
+    def create_category(self, data: CategoryCreate, *, role_name: str) -> Category:
+        self._require_admin(role_name)
+        if self.categories.exists_by_name(data.name, sbu_id=data.sbu_id):
+            raise ConflictError(f"A category named '{data.name}' already exists")
+        return self.categories.create(Category(sbu_id=data.sbu_id, name=data.name))
+
+    def create_model(self, data: ModelCreate, *, role_name: str) -> Model:
+        self._require_admin(role_name)
+        brand = self.brands.get_by_id(data.brand_id)
+        if brand is None:
+            raise NotFoundError(f"Brand {data.brand_id} not found")
+        if self.categories.get_by_id(data.category_id) is None:
+            raise NotFoundError(f"Category {data.category_id} not found")
+        if self.models.exists_by_name(data.name, brand_id=data.brand_id):
+            raise ConflictError(f"A model named '{data.name}' already exists for this brand")
+        # sbu_id is set by the trg_model_sync_sbu trigger (migration 0048),
+        # not supplied here -- always follows brand.sbu_id.
+        model = Model(brand_id=data.brand_id, category_id=data.category_id, name=data.name, sbu_id=brand.sbu_id)
+        return self.models.create(model)
 
 
 class ZoneAdminService:

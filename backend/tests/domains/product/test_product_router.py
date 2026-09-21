@@ -32,15 +32,28 @@ def _mock_sbu() -> MagicMock:
     return sbu
 
 
+def _mock_nested(name: str) -> MagicMock:
+    nested = MagicMock()
+    nested.id = uuid.uuid4()
+    nested.name = name
+    return nested
+
+
 def _mock_product(**overrides) -> MagicMock:
     now = datetime.now(UTC)
+    brand = _mock_nested("SonoScape")
+    model = _mock_nested("S50")
+    category = _mock_nested("Ultrasound")
     defaults = {
         "id": TEST_PRODUCT_ID,
         "sbu_id": TEST_SBU_ID,
-        "name": "SonoScape S50",
-        "oem_name": "SonoScape",
-        "model_number": "S50",
-        "category_name": "Ultrasound",
+        "name": "SonoScape S50 Ultrasound",
+        "brand_id": brand.id,
+        "model_id": model.id,
+        "category_id": category.id,
+        "brand": brand,
+        "model": model,
+        "category": category,
         "description": "Premium ultrasound system",
         "product_type": "NEW_EQUIPMENT",
         "is_active": True,
@@ -86,8 +99,9 @@ class TestListProducts:
         assert body["success"] is True
         data = body["data"]
         assert data["total"] == 1
-        assert data["items"][0]["name"] == "SonoScape S50"
+        assert data["items"][0]["name"] == "SonoScape S50 Ultrasound"
         assert data["items"][0]["sbu"]["name"] == "Imaging"
+        assert data["items"][0]["brand"]["name"] == "SonoScape"
 
     def test_search_filter(self, client: TestClient) -> None:
         mock_db = MagicMock()
@@ -166,9 +180,9 @@ class TestGetProduct:
         assert body["success"] is True
         data = body["data"]
         assert data["id"] == str(TEST_PRODUCT_ID)
-        assert data["name"] == "SonoScape S50"
-        assert data["oem_name"] == "SonoScape"
-        assert data["model_number"] == "S50"
+        assert data["name"] == "SonoScape S50 Ultrasound"
+        assert data["brand"]["name"] == "SonoScape"
+        assert data["model"]["name"] == "S50"
         assert data["description"] == "Premium ultrasound system"
         assert data["sbu"]["name"] == "Imaging"
 
@@ -186,8 +200,11 @@ class TestGetProduct:
 
 
 class TestCreateProduct:
+    def _body(self) -> dict:
+        return {"sbu_id": str(TEST_SBU_ID), "model_id": str(uuid.uuid4())}
+
     def test_unauthenticated_returns_401(self, client: TestClient) -> None:
-        response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+        response = client.post("/api/v1/products", json=self._body())
         assert response.status_code == 401
 
     def test_sales_executive_forbidden(self, client: TestClient) -> None:
@@ -195,7 +212,7 @@ class TestCreateProduct:
 
         _setup_overrides(mock_db, role_name="Sales Executive")
         try:
-            response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+            response = client.post("/api/v1/products", json=self._body())
         finally:
             _teardown_overrides()
 
@@ -206,7 +223,7 @@ class TestCreateProduct:
 
         _setup_overrides(mock_db, role_name="Sales Staff")
         try:
-            response = client.post("/api/v1/products", json={"name": "X", "sbu_id": str(TEST_SBU_ID)})
+            response = client.post("/api/v1/products", json=self._body())
         finally:
             _teardown_overrides()
 

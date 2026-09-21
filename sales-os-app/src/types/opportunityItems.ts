@@ -1,7 +1,7 @@
 export interface ProductOption {
   id: string;
   name: string;
-  category_name?: string | null;
+  category?: { id: string; name: string } | null;
   product_type: string;
 }
 

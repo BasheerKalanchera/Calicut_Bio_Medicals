@@ -10,6 +10,7 @@ import {
   Chip,
   Alert,
   InputAdornment,
+  Autocomplete,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -17,11 +18,12 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listProducts, countProducts, getProduct, createProduct, updateProduct } from "../services/products";
 import { listProductDocuments, createProductDocument, deleteDocument } from "../services/documents";
+import { listBrands, createBrand, listModels, createModel, listCategories, createCategory } from "../services/catalogHierarchy";
 import { listSbus } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
-import type { ProductListResponse, ProductResponse, DocumentResponse } from "../types/api-aliases";
+import type { ProductListResponse, ProductResponse, DocumentResponse, BrandResponse, CategoryResponse, ModelResponse } from "../types/api-aliases";
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
 
@@ -31,11 +33,9 @@ interface SbuOption {
 }
 
 const EMPTY_FORM = {
-  name: "",
   sbu_id: "",
-  oem_name: "",
-  model_number: "",
-  category_name: "",
+  brand_id: "",
+  model_id: "",
   description: "",
   product_type: "NEW_EQUIPMENT",
 };
@@ -262,9 +262,9 @@ function ProductDetail({
   }
 
   const fields = [
-    { label: "OEM / Brand", value: product.oem_name },
-    { label: "Model Number", value: product.model_number },
-    { label: "Category", value: product.category_name },
+    { label: "Brand", value: product.brand?.name },
+    { label: "Model", value: product.model?.name },
+    { label: "Category", value: product.category?.name },
     { label: "Product Type", value: PRODUCT_TYPES.find((t) => t.value === product.product_type)?.label ?? product.product_type },
     { label: "Description", value: product.description },
   ];
@@ -369,11 +369,9 @@ export default function ProductCatalogScreen() {
   const openEdit = (product: ProductResponse) => {
     setEditingProduct(product);
     setForm({
-      name: product.name,
       sbu_id: product.sbu_id,
-      oem_name: product.oem_name ?? "",
-      model_number: product.model_number ?? "",
-      category_name: product.category_name ?? "",
+      brand_id: product.brand_id,
+      model_id: product.model_id,
       description: product.description ?? "",
       product_type: product.product_type,
     });
@@ -383,11 +381,8 @@ export default function ProductCatalogScreen() {
   const closeDialog = () => setDialogMode(null);
 
   const buildPayload = () => ({
-    name: form.name.trim(),
     sbu_id: form.sbu_id,
-    oem_name: form.oem_name.trim() || null,
-    model_number: form.model_number.trim() || null,
-    category_name: form.category_name.trim() || null,
+    model_id: form.model_id,
     description: form.description.trim() || null,
     product_type: form.product_type,
   });
@@ -400,16 +395,16 @@ export default function ProductCatalogScreen() {
   };
 
   const handleCreate = async () => {
-    if (!form.name.trim()) throw new Error("Product name is required");
     if (!form.sbu_id) throw new Error("SBU is required");
+    if (!form.model_id) throw new Error("Model is required");
     await createProduct(buildPayload());
     handleSaved();
   };
 
   const handleUpdate = async () => {
     if (!editingProduct) return;
-    if (!form.name.trim()) throw new Error("Product name is required");
     if (!form.sbu_id) throw new Error("SBU is required");
+    if (!form.model_id) throw new Error("Model is required");
     await updateProduct(editingProduct.id, buildPayload());
     handleSaved();
   };
@@ -430,7 +425,7 @@ export default function ProductCatalogScreen() {
           onSubmit={handleUpdate}
           submitLabel="Save Changes"
         >
-          <ProductFormFields form={form} setForm={setForm} sbus={sbus} />
+          <ProductFormFields form={form} setForm={setForm} sbus={sbus} canManageCatalog={canEdit} />
         </FormModal>
       </>
     );
@@ -569,14 +564,14 @@ export default function ProductCatalogScreen() {
                             sx={{ height: 20, fontSize: "0.6875rem" }}
                           />
                         )}
-                        {product.oem_name && (
-                          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>{product.oem_name}</Typography>
+                        {product.brand?.name && (
+                          <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>{product.brand.name}</Typography>
                         )}
-                        {product.model_number && (
-                          <Typography variant="caption" color="text.secondary">{product.model_number}</Typography>
+                        {product.model?.name && (
+                          <Typography variant="caption" color="text.secondary">{product.model.name}</Typography>
                         )}
-                        {product.category_name && (
-                          <Chip label={product.category_name} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
+                        {product.category?.name && (
+                          <Chip label={product.category.name} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.6875rem" }} />
                         )}
                       </Box>
                     </Box>
@@ -620,7 +615,7 @@ export default function ProductCatalogScreen() {
         onSubmit={handleCreate}
         submitLabel="Add Product"
       >
-        <ProductFormFields form={form} setForm={setForm} sbus={sbus} />
+        <ProductFormFields form={form} setForm={setForm} sbus={sbus} canManageCatalog={canEdit} />
       </FormModal>
     </Box>
   );
@@ -630,32 +625,88 @@ function ProductFormFields({
   form,
   setForm,
   sbus,
+  canManageCatalog,
 }: {
   form: typeof EMPTY_FORM;
   setForm: Dispatch<SetStateAction<typeof EMPTY_FORM>>;
   sbus: SbuOption[];
+  canManageCatalog: boolean;
 }) {
+  const queryClient = useQueryClient();
   const set = (field: keyof typeof EMPTY_FORM, value: string) => setForm((f) => ({ ...f, [field]: value }));
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ["brands", form.sbu_id],
+    queryFn: () => listBrands(form.sbu_id) as Promise<BrandResponse[]>,
+    enabled: !!form.sbu_id,
+  });
+  const { data: models = [] } = useQuery({
+    queryKey: ["models", form.brand_id],
+    queryFn: () => listModels(form.brand_id) as Promise<ModelResponse[]>,
+    enabled: !!form.brand_id,
+  });
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories", form.sbu_id],
+    queryFn: () => listCategories(form.sbu_id) as Promise<CategoryResponse[]>,
+    enabled: !!form.sbu_id,
+  });
+
+  const selectedBrand = brands.find((b) => b.id === form.brand_id) ?? null;
+  const selectedModel = models.find((m) => m.id === form.model_id) ?? null;
+
+  const [addingBrand, setAddingBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const addBrandMutation = useMutation({
+    mutationFn: () => createBrand({ sbu_id: form.sbu_id, name: newBrandName.trim() }),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ["brands", form.sbu_id] });
+      const brand = created as BrandResponse;
+      setForm((f) => ({ ...f, brand_id: brand.id, model_id: "" }));
+      setNewBrandName("");
+      setAddingBrand(false);
+    },
+  });
+
+  const [addingModel, setAddingModel] = useState(false);
+  const [newModelName, setNewModelName] = useState("");
+  const [newModelCategoryId, setNewModelCategoryId] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const addCategoryMutation = useMutation({
+    mutationFn: () => createCategory({ sbu_id: form.sbu_id, name: newCategoryName.trim() }),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ["categories", form.sbu_id] });
+      const category = created as CategoryResponse;
+      setNewModelCategoryId(category.id);
+      setNewCategoryName("");
+      setAddingCategory(false);
+    },
+  });
+
+  const addModelMutation = useMutation({
+    mutationFn: () => createModel({ brand_id: form.brand_id, category_id: newModelCategoryId, name: newModelName.trim() }),
+    onSuccess: (created) => {
+      queryClient.invalidateQueries({ queryKey: ["models", form.brand_id] });
+      const model = created as ModelResponse;
+      setForm((f) => ({ ...f, model_id: model.id }));
+      setNewModelName("");
+      setNewModelCategoryId("");
+      setAddingModel(false);
+    },
+  });
 
   return (
     <>
       <TextField
-        label="Product Name *"
-        value={form.name}
-        onChange={(e) => set("name", e.target.value)}
-        placeholder="e.g. Ultrasound Scanner"
+        select
+        label="SBU *"
+        value={form.sbu_id}
+        onChange={(e) => setForm((f) => ({ ...f, sbu_id: e.target.value, brand_id: "", model_id: "" }))}
         fullWidth
         size="small"
         autoFocus
         sx={{ mt: 1.5 }}
-      />
-      <TextField
-        select
-        label="SBU *"
-        value={form.sbu_id}
-        onChange={(e) => set("sbu_id", e.target.value)}
-        fullWidth
-        size="small"
         slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
       >
         <MenuItem value="">Select SBU...</MenuItem>
@@ -663,30 +714,115 @@ function ProductFormFields({
           <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
         ))}
       </TextField>
-      <TextField
-        label="OEM / Brand"
-        value={form.oem_name}
-        onChange={(e) => set("oem_name", e.target.value)}
-        placeholder="e.g. Siemens"
-        fullWidth
-        size="small"
+
+      <Autocomplete
+        options={brands}
+        getOptionLabel={(b) => b.name}
+        isOptionEqualToValue={(a, b) => a.id === b.id}
+        value={selectedBrand}
+        disabled={!form.sbu_id}
+        onChange={(_e, newValue) => setForm((f) => ({ ...f, brand_id: newValue?.id ?? "", model_id: "" }))}
+        renderInput={(params) => <TextField {...params} label="Brand *" size="small" placeholder="Select a Brand..." />}
       />
-      <TextField
-        label="Model Number"
-        value={form.model_number}
-        onChange={(e) => set("model_number", e.target.value)}
-        placeholder="e.g. ACUSON-P500"
-        fullWidth
-        size="small"
+      {canManageCatalog && form.sbu_id && (
+        addingBrand ? (
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            <TextField
+              label="New brand name"
+              value={newBrandName}
+              onChange={(e) => setNewBrandName(e.target.value)}
+              size="small"
+              fullWidth
+              autoFocus
+            />
+            <Button size="small" variant="contained" disabled={!newBrandName.trim() || addBrandMutation.isPending} onClick={() => addBrandMutation.mutate()}>
+              Add
+            </Button>
+            <Button size="small" onClick={() => { setAddingBrand(false); setNewBrandName(""); }}>Cancel</Button>
+          </Box>
+        ) : (
+          <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingBrand(true)}>+ Add new brand</Button>
+        )
+      )}
+
+      <Autocomplete
+        options={models}
+        getOptionLabel={(m) => m.name}
+        isOptionEqualToValue={(a, b) => a.id === b.id}
+        value={selectedModel}
+        disabled={!form.brand_id}
+        onChange={(_e, newValue) => set("model_id", newValue?.id ?? "")}
+        renderInput={(params) => <TextField {...params} label="Model *" size="small" placeholder={form.brand_id ? "Select a Model..." : "Select a Brand first"} />}
       />
+      {canManageCatalog && form.brand_id && (
+        addingModel ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "#f9fafb", borderRadius: "0.75rem" }}>
+            <TextField
+              label="New model name"
+              value={newModelName}
+              onChange={(e) => setNewModelName(e.target.value)}
+              size="small"
+              fullWidth
+              autoFocus
+            />
+            <TextField
+              select
+              label="Category *"
+              value={newModelCategoryId}
+              onChange={(e) => setNewModelCategoryId(e.target.value)}
+              size="small"
+              fullWidth
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            >
+              <MenuItem value="">Select Category...</MenuItem>
+              {categories.map((c) => (
+                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+              ))}
+            </TextField>
+            {addingCategory ? (
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <TextField
+                  label="New category name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  size="small"
+                  fullWidth
+                />
+                <Button size="small" variant="contained" disabled={!newCategoryName.trim() || addCategoryMutation.isPending} onClick={() => addCategoryMutation.mutate()}>
+                  Add
+                </Button>
+                <Button size="small" onClick={() => { setAddingCategory(false); setNewCategoryName(""); }}>Cancel</Button>
+              </Box>
+            ) : (
+              <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingCategory(true)}>+ Add new category</Button>
+            )}
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                size="small"
+                variant="contained"
+                disabled={!newModelName.trim() || !newModelCategoryId || addModelMutation.isPending}
+                onClick={() => addModelMutation.mutate()}
+              >
+                Add Model
+              </Button>
+              <Button size="small" onClick={() => { setAddingModel(false); setNewModelName(""); setNewModelCategoryId(""); }}>Cancel</Button>
+            </Box>
+          </Box>
+        ) : (
+          <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingModel(true)}>+ Add new model</Button>
+        )
+      )}
+
       <TextField
         label="Category"
-        value={form.category_name}
-        onChange={(e) => set("category_name", e.target.value)}
-        placeholder="e.g. Diagnostics"
+        value={selectedModel?.category?.name ?? ""}
         fullWidth
         size="small"
+        disabled
+        slotProps={{ inputLabel: { shrink: true } }}
+        helperText="Set automatically from the selected Model"
       />
+
       <TextField
         select
         label="Product Type"

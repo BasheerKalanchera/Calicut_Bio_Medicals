@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-18 from the Dev database, catching up migration
--- 0047: add marketing_lead_comment table
+-- Regenerated 2026-09-21 from the Dev database, catching up migration
+-- 0049: product catalog: cut over product to brand/model/category FKs
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZhbfeRSZD1ui7cEsxciGeKRRe51qgqhdzOnEshHOjbEEXNMtlui5RphDp1frsOJ
+\restrict ylIEF7isaDBDeaG473sqLBActnfW1aJSYlf1InGcJaZjDAl4V2hasAlUuU6G8VT
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -200,6 +200,41 @@ CREATE FUNCTION public.cabio_app_user_role_name(p_user_id uuid) RETURNS text
 
 
 --
+-- Name: trg_model_sync_sbu_fn(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_model_sync_sbu_fn() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+        BEGIN
+            NEW.sbu_id := (SELECT sbu_id FROM brand WHERE id = NEW.brand_id);
+            RETURN NEW;
+        END;
+        $$;
+
+
+--
+-- Name: trg_product_sync_brand_category_name_fn(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.trg_product_sync_brand_category_name_fn() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+        BEGIN
+            NEW.brand_id := (SELECT brand_id FROM model WHERE id = NEW.model_id);
+            NEW.category_id := (SELECT category_id FROM model WHERE id = NEW.model_id);
+            NEW.name := (
+                SELECT b.name || ' ' || m.name || ' ' || c.name
+                FROM model m JOIN brand b ON b.id = m.brand_id
+                             JOIN category c ON c.id = m.category_id
+                WHERE m.id = NEW.model_id
+            );
+            RETURN NEW;
+        END;
+        $$;
+
+
+--
 -- Name: update_updated_at(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -293,6 +328,30 @@ CREATE TABLE public.audit_log (
     old_data jsonb,
     new_data jsonb,
     CONSTRAINT ck_audit_log_action CHECK ((action = ANY (ARRAY['UPDATE'::text, 'DELETE'::text])))
+);
+
+
+--
+-- Name: brand; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.brand (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    sbu_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+
+--
+-- Name: category; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.category (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    sbu_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
 );
 
 
@@ -461,6 +520,20 @@ CREATE TABLE public.marketing_lead_comment (
 
 
 --
+-- Name: model; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.model (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    brand_id uuid NOT NULL,
+    category_id uuid NOT NULL,
+    sbu_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
+
+
+--
 -- Name: notification; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -600,9 +673,6 @@ CREATE TABLE public.product (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     sbu_id uuid NOT NULL,
     name character varying(255) NOT NULL,
-    oem_name character varying(255),
-    model_number character varying(100),
-    category_name character varying(100),
     description text,
     is_active boolean DEFAULT true,
     created_at timestamp with time zone DEFAULT now(),
@@ -610,6 +680,9 @@ CREATE TABLE public.product (
     created_by uuid,
     updated_by uuid,
     product_type character varying(20) DEFAULT 'NEW_EQUIPMENT'::character varying NOT NULL,
+    brand_id uuid NOT NULL,
+    model_id uuid NOT NULL,
+    category_id uuid NOT NULL,
     CONSTRAINT ck_product_product_type CHECK (((product_type)::text = ANY ((ARRAY['NEW_EQUIPMENT'::character varying, 'REFURBISHED'::character varying, 'ACCESSORY'::character varying])::text[])))
 );
 
@@ -880,6 +953,22 @@ ALTER TABLE ONLY public.audit_log
 
 
 --
+-- Name: brand brand_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand
+    ADD CONSTRAINT brand_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: category category_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.category
+    ADD CONSTRAINT category_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: coverage_plan_entry coverage_plan_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1005,6 +1094,14 @@ ALTER TABLE ONLY public.marketing_lead_comment
 
 ALTER TABLE ONLY public.marketing_lead
     ADD CONSTRAINT marketing_lead_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: model model_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.model
+    ADD CONSTRAINT model_pkey PRIMARY KEY (id);
 
 
 --
@@ -1197,6 +1294,30 @@ ALTER TABLE ONLY public.target_plan
 
 ALTER TABLE ONLY public.target_plan
     ADD CONSTRAINT target_plan_unique UNIQUE (user_id, sbu_id, planning_period);
+
+
+--
+-- Name: brand uq_brand_sbu_name; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand
+    ADD CONSTRAINT uq_brand_sbu_name UNIQUE (sbu_id, name);
+
+
+--
+-- Name: category uq_category_sbu_name; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.category
+    ADD CONSTRAINT uq_category_sbu_name UNIQUE (sbu_id, name);
+
+
+--
+-- Name: model uq_model_brand_name; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.model
+    ADD CONSTRAINT uq_model_brand_name UNIQUE (brand_id, name);
 
 
 --
@@ -1506,10 +1627,38 @@ CREATE INDEX idx_zone_name_trgm ON public.zone USING gin (name public.gin_trgm_o
 
 
 --
--- Name: ix_product_oem_name; Type: INDEX; Schema: public; Owner: -
+-- Name: ix_brand_sbu_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX ix_product_oem_name ON public.product USING btree (oem_name);
+CREATE INDEX ix_brand_sbu_id ON public.brand USING btree (sbu_id);
+
+
+--
+-- Name: ix_category_sbu_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_category_sbu_id ON public.category USING btree (sbu_id);
+
+
+--
+-- Name: ix_model_brand_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_model_brand_id ON public.model USING btree (brand_id);
+
+
+--
+-- Name: ix_model_category_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_model_category_id ON public.model USING btree (category_id);
+
+
+--
+-- Name: ix_model_sbu_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_model_sbu_id ON public.model USING btree (sbu_id);
 
 
 --
@@ -1573,6 +1722,20 @@ CREATE TRIGGER trg_audit_stakeholder AFTER DELETE OR UPDATE ON public.stakeholde
 --
 
 CREATE TRIGGER trg_audit_user_profile AFTER DELETE OR UPDATE ON public.user_profile FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: model trg_model_sync_sbu; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_model_sync_sbu BEFORE INSERT OR UPDATE OF brand_id ON public.model FOR EACH ROW EXECUTE FUNCTION public.trg_model_sync_sbu_fn();
+
+
+--
+-- Name: product trg_product_sync_brand_category_name; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_product_sync_brand_category_name BEFORE INSERT OR UPDATE OF model_id ON public.product FOR EACH ROW EXECUTE FUNCTION public.trg_product_sync_brand_category_name_fn();
 
 
 --
@@ -1774,6 +1937,22 @@ ALTER TABLE ONLY public.activity
 
 ALTER TABLE ONLY public.audit_log
     ADD CONSTRAINT audit_log_changed_by_fkey FOREIGN KEY (changed_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: brand brand_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand
+    ADD CONSTRAINT brand_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
+-- Name: category category_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.category
+    ADD CONSTRAINT category_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
 
 
 --
@@ -1993,6 +2172,30 @@ ALTER TABLE ONLY public.marketing_lead
 
 
 --
+-- Name: model model_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.model
+    ADD CONSTRAINT model_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(id);
+
+
+--
+-- Name: model model_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.model
+    ADD CONSTRAINT model_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.category(id);
+
+
+--
+-- Name: model model_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.model
+    ADD CONSTRAINT model_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
 -- Name: notification notification_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2193,11 +2396,35 @@ ALTER TABLE ONLY public.opportunity
 
 
 --
+-- Name: product product_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product
+    ADD CONSTRAINT product_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(id);
+
+
+--
+-- Name: product product_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product
+    ADD CONSTRAINT product_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.category(id);
+
+
+--
 -- Name: product product_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.product
     ADD CONSTRAINT product_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: product product_model_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product
+    ADD CONSTRAINT product_model_id_fkey FOREIGN KEY (model_id) REFERENCES public.model(id);
 
 
 --
@@ -2554,6 +2781,60 @@ CREATE POLICY audit_log_admin_gm_read ON public.audit_log FOR SELECT USING ((pub
 
 
 --
+-- Name: brand; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.brand ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: brand brand_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_insert ON public.brand FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: brand brand_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_read ON public.brand FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+
+
+--
+-- Name: brand brand_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_update ON public.brand FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: category; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.category ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: category category_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY category_insert ON public.category FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: category category_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY category_read ON public.category FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+
+
+--
+-- Name: category category_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY category_update ON public.category FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
 -- Name: document; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -2635,6 +2916,33 @@ CREATE POLICY marketing_lead_select ON public.marketing_lead FOR SELECT USING ((
 CREATE POLICY marketing_lead_update ON public.marketing_lead FOR UPDATE USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (assigned_to_user_id = public.cabio_app_uid()) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id())) OR ((public.cabio_app_role_name() = 'Area Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()) AND (assigned_to_user_id IN ( SELECT user_profile.id
    FROM public.user_profile
   WHERE (user_profile.manager_id = public.cabio_app_uid())))))) WITH CHECK (true);
+
+
+--
+-- Name: model; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.model ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: model model_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY model_insert ON public.model FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: model model_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY model_read ON public.model FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+
+
+--
+-- Name: model model_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY model_update ON public.model FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
 
 
 --
@@ -2843,5 +3151,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZhbfeRSZD1ui7cEsxciGeKRRe51qgqhdzOnEshHOjbEEXNMtlui5RphDp1frsOJ
+\unrestrict ylIEF7isaDBDeaG473sqLBActnfW1aJSYlf1InGcJaZjDAl4V2hasAlUuU6G8VT
 

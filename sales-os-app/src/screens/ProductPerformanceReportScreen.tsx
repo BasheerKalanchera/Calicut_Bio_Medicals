@@ -57,8 +57,10 @@ export default function ProductPerformanceReportScreen({
   const lostStatusId = statuses.find((s) => s.status_code === "LOST")?.id;
 
   const rows = query.data?.rows ?? [];
-  // Brand cards stay non-clickable -- a brand (product.oem_name) spans many
-  // products, no single product_id represents it.
+  // Brand cards stay non-clickable -- group_id is now a real Brand id
+  // (docs/Product-Catalog-Name-Derivation-Implementation-Plan.md), but the
+  // pipeline endpoint has no brand_id filter yet (only product_id), so
+  // there's still nowhere to drill into. Backlog.md tracks wiring this up.
   const drillKey: "productId" | "sbuId" | null = groupBy === "product" ? "productId" : groupBy === "sbu" ? "sbuId" : null;
 
   return (

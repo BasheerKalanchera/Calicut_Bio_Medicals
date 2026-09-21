@@ -21,10 +21,10 @@ def _make_product(**overrides) -> MagicMock:
     defaults = {
         "id": uuid.uuid4(),
         "sbu_id": uuid.uuid4(),
-        "name": "SonoScape S50",
-        "oem_name": "SonoScape",
-        "model_number": "S50",
-        "category_name": "Ultrasound",
+        "name": "SonoScape S50 Ultrasound",
+        "brand_id": uuid.uuid4(),
+        "model_id": uuid.uuid4(),
+        "category_id": uuid.uuid4(),
         "description": "Premium ultrasound",
         "is_active": True,
     }
@@ -85,7 +85,7 @@ class TestListProducts:
 
 class TestCreateProduct:
     def _data(self, **overrides) -> ProductCreate:
-        defaults = {"name": "SonoScape S50", "sbu_id": uuid.uuid4()}
+        defaults = {"sbu_id": uuid.uuid4(), "model_id": uuid.uuid4()}
         defaults.update(overrides)
         return ProductCreate(**defaults)
 
@@ -95,9 +95,11 @@ class TestCreateProduct:
         repo = _make_repo()
         repo.sbu_exists.return_value = True
         repo.create.return_value = product
+        data = self._data()
+        repo.get_model_sbu_id.return_value = data.sbu_id
 
         service = ProductService(repository=repo)
-        result = service.create_product(self._data(), created_by=uuid.uuid4(), role_name=role_name)
+        result = service.create_product(data, created_by=uuid.uuid4(), role_name=role_name)
 
         assert result is product
         repo.create.assert_called_once()
@@ -116,9 +118,11 @@ class TestCreateProduct:
         repo = _make_repo()
         repo.sbu_exists.return_value = True
         repo.create.side_effect = lambda product: product
+        data = self._data()
+        repo.get_model_sbu_id.return_value = data.sbu_id
 
         service = ProductService(repository=repo)
-        result = service.create_product(self._data(), created_by=uuid.uuid4(), role_name="Admin")
+        result = service.create_product(data, created_by=uuid.uuid4(), role_name="Admin")
 
         assert result.product_type == "NEW_EQUIPMENT"
 
@@ -126,11 +130,11 @@ class TestCreateProduct:
         repo = _make_repo()
         repo.sbu_exists.return_value = True
         repo.create.side_effect = lambda product: product
+        data = self._data(product_type="REFURBISHED")
+        repo.get_model_sbu_id.return_value = data.sbu_id
 
         service = ProductService(repository=repo)
-        result = service.create_product(
-            self._data(product_type="REFURBISHED"), created_by=uuid.uuid4(), role_name="Admin"
-        )
+        result = service.create_product(data, created_by=uuid.uuid4(), role_name="Admin")
 
         assert result.product_type == "REFURBISHED"
 
@@ -145,7 +149,7 @@ class TestUpdateProduct:
 
         service = ProductService(repository=repo)
         result = service.update_product(
-            product.id, ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name=role_name
+            product.id, ProductUpdate(description="New Description"), updated_by=uuid.uuid4(), role_name=role_name
         )
 
         assert result is product
@@ -157,7 +161,10 @@ class TestUpdateProduct:
         service = ProductService(repository=repo)
         with pytest.raises(AuthorizationError):
             service.update_product(
-                uuid.uuid4(), ProductUpdate(name="New Name"), updated_by=uuid.uuid4(), role_name="Sales Staff"
+                uuid.uuid4(),
+                ProductUpdate(description="New Description"),
+                updated_by=uuid.uuid4(),
+                role_name="Sales Staff",
             )
 
         repo.get_by_id.assert_not_called()

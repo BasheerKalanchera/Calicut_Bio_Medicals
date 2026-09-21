@@ -12,26 +12,44 @@ class ProductType(StrEnum):
 
 
 class ProductCreate(BaseModel):
-    name: str
     sbu_id: uuid.UUID
-    oem_name: str | None = None
-    model_number: str | None = None
-    category_name: str | None = None
+    # brand_id/category_id are server-derived from model_id (trg_product_sync_
+    # brand_category_name, migration 0049) -- not client-settable, same for
+    # `name`, which is computed from all three.
+    model_id: uuid.UUID
     description: str | None = None
     product_type: ProductType = ProductType.NEW_EQUIPMENT
 
 
 class ProductUpdate(BaseModel):
-    name: str | None = None
     sbu_id: uuid.UUID | None = None
-    oem_name: str | None = None
-    model_number: str | None = None
-    category_name: str | None = None
+    model_id: uuid.UUID | None = None
     description: str | None = None
     product_type: ProductType | None = None
 
 
 class SBUNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class BrandNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class CategoryNested(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    name: str
+
+
+class ModelNested(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
@@ -44,12 +62,15 @@ class ProductListResponse(BaseModel):
     id: uuid.UUID
     name: str
     sbu_id: uuid.UUID
-    oem_name: str | None
-    model_number: str | None
-    category_name: str | None
+    brand_id: uuid.UUID
+    model_id: uuid.UUID
+    category_id: uuid.UUID
     product_type: str
     is_active: bool | None
     sbu: SBUNested
+    brand: BrandNested
+    model: ModelNested
+    category: CategoryNested
 
 
 class ProductResponse(BaseModel):
@@ -58,12 +79,15 @@ class ProductResponse(BaseModel):
     id: uuid.UUID
     name: str
     sbu_id: uuid.UUID
-    oem_name: str | None
-    model_number: str | None
-    category_name: str | None
+    brand_id: uuid.UUID
+    model_id: uuid.UUID
+    category_id: uuid.UUID
     description: str | None
     product_type: str
     is_active: bool | None
     created_at: datetime
     updated_at: datetime
     sbu: SBUNested
+    brand: BrandNested
+    model: ModelNested
+    category: CategoryNested

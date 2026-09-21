@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.base import BaseRepository, ReferenceRepository
 from app.domains.account.models import Account
 from app.domains.organization.models import UserZone
-from app.domains.reference.models import OpportunityStage, Zone, ZoneClosure
+from app.domains.reference.models import Brand, Category, Model, OpportunityStage, Zone, ZoneClosure
 
 
 class OpportunityStageRepository(ReferenceRepository[OpportunityStage]):
@@ -21,6 +21,57 @@ class OpportunityStageRepository(ReferenceRepository[OpportunityStage]):
             .order_by(OpportunityStage.display_order)
         )
         return list(self.db.scalars(stmt).all())
+
+
+class BrandRepository(ReferenceRepository[Brand]):
+    def __init__(self, db: Session):
+        super().__init__(Brand, db)
+
+    def list_active_for_sbu(self, sbu_id: uuid.UUID) -> list[Brand]:
+        stmt = (
+            select(Brand)
+            .where(Brand.sbu_id == sbu_id, Brand.is_active == True)  # noqa: E712
+            .order_by(Brand.name)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def exists_by_name(self, name: str, *, sbu_id: uuid.UUID) -> bool:
+        stmt = select(func.count()).where(Brand.sbu_id == sbu_id, func.lower(Brand.name) == func.lower(name))
+        return (self.db.scalar(stmt) or 0) > 0
+
+
+class CategoryRepository(ReferenceRepository[Category]):
+    def __init__(self, db: Session):
+        super().__init__(Category, db)
+
+    def list_active_for_sbu(self, sbu_id: uuid.UUID) -> list[Category]:
+        stmt = (
+            select(Category)
+            .where(Category.sbu_id == sbu_id, Category.is_active == True)  # noqa: E712
+            .order_by(Category.name)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def exists_by_name(self, name: str, *, sbu_id: uuid.UUID) -> bool:
+        stmt = select(func.count()).where(Category.sbu_id == sbu_id, func.lower(Category.name) == func.lower(name))
+        return (self.db.scalar(stmt) or 0) > 0
+
+
+class ModelRepository(ReferenceRepository[Model]):
+    def __init__(self, db: Session):
+        super().__init__(Model, db)
+
+    def list_active_for_brand(self, brand_id: uuid.UUID) -> list[Model]:
+        stmt = (
+            select(Model)
+            .where(Model.brand_id == brand_id, Model.is_active == True)  # noqa: E712
+            .order_by(Model.name)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def exists_by_name(self, name: str, *, brand_id: uuid.UUID) -> bool:
+        stmt = select(func.count()).where(Model.brand_id == brand_id, func.lower(Model.name) == func.lower(name))
+        return (self.db.scalar(stmt) or 0) > 0
 
 
 class ZoneRepository(BaseRepository[Zone]):

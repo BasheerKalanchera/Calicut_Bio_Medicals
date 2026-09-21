@@ -1,7 +1,18 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import UUID, Boolean, CheckConstraint, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import (
+    UUID,
+    Boolean,
+    CheckConstraint,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -89,6 +100,67 @@ class ZoneClosure(Base):
     descendant_zone_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("zone.id"), primary_key=True
     )
+
+
+class Brand(Base):
+    """Product Catalog hierarchy (docs/Product-Catalog-Name-Derivation-
+    Implementation-Plan.md). SBU-scoped -- a brand belongs to exactly one
+    SBU's catalog, same as Product itself."""
+
+    __tablename__ = "brand"
+    __table_args__ = (UniqueConstraint("sbu_id", "name", name="uq_brand_sbu_name"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+
+    models: Mapped[list["Model"]] = relationship(back_populates="brand", lazy="select")
+
+
+class Category(Base):
+    """Product Catalog hierarchy -- see Brand above. SBU-scoped for the same
+    reason (a Category name like "Ultrasound" is meaningful per-SBU, not a
+    single company-wide list)."""
+
+    __tablename__ = "category"
+    __table_args__ = (UniqueConstraint("sbu_id", "name", name="uq_category_sbu_name"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+
+    models: Mapped[list["Model"]] = relationship(back_populates="category", lazy="select")
+
+
+class Model(Base):
+    """Product Catalog hierarchy -- see Brand above. A Model is inherently
+    one Brand's product of one Category (e.g. "iM70" is always an EDAN
+    Patient Monitor) -- tying Category to Model, not to Product directly,
+    is what prevents a "EDAN + Ultrasound" mismatch.
+
+    `sbu_id` is denormalized from `brand.sbu_id`, kept in sync by a
+    database trigger (migration 0048, trg_model_sync_sbu) -- lets RLS use
+    the same flat sbu_id check as every other table instead of a join
+    through brand on every row-visibility check.
+    """
+
+    __tablename__ = "model"
+    __table_args__ = (UniqueConstraint("brand_id", "name", name="uq_model_brand_name"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    brand_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("brand.id"), nullable=False, index=True)
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("category.id"), nullable=False, index=True
+    )
+    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+
+    brand: Mapped["Brand"] = relationship(back_populates="models", lazy="joined")
+    category: Mapped["Category"] = relationship(back_populates="models", lazy="joined")
+    products: Mapped[list["Product"]] = relationship(back_populates="model", lazy="select")
 
 
 class LeadSource(Base):
