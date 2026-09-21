@@ -5280,3 +5280,49 @@ questions — full detail in `.claude/active_progress.md`'s 2026-09-20
 2. `CLAUDE.md`'s Troubleshooting & Scripting section updated: verify what
    capability/tool is actually available (including tools/skills separate
    from the project's own runtime) before asserting one is missing.
+
+## 2026-09-21 session — UAT-vs-main commit gap explained; local `uat` branch found stale, root cause traced to the 2026-09-14 emergency hotfix push — discussion only, nothing built or synced
+
+Basheer asked how many commits UAT is behind `main`, to know what's ready
+to showcase to Cabio Leadership but not yet promoted.
+
+**Answer: `origin/uat` is 53 commits behind `origin/main`** — 17 of them
+`feat:`/`fix:` (the rest docs/chore). Biggest unshown items: **Target
+Planning** (full approval workflow + Annual view), **Lead Follow-up
+Comments**, both **Insights Dashboard** batches, **Reports** (Sales/
+Pipeline/Drill-down), and **High Priority Deal Flag**. Full commit list
+given in chat, not duplicated here — see this session's transcript or
+re-run `git log origin/uat..origin/main --pretty=format:"%h %ad %s"
+--date=short | grep -Ei "(feat|fix):"` for the current gap.
+
+**Separately found: local `uat` branch (643256f, 2026-09-09) is 11
+commits behind `origin/uat` (7ddd439, 2026-09-14)** — not a divergence,
+just staleness (local `uat` never had a `git pull` run against it since
+09-09). Root cause walked through with Basheer: `git push` from any
+session updates the remote ref only, never other local checkouts, so a
+local branch not being pulled goes unnoticed until someone tries to push
+from it. All 11 missing commits are routine 09-09/09-10 UAT-promotion
+work (Activity Inline Comments Phases 1-2, Audit Trail Extension, a
+notification-routing fix, a Docker backup-script fix, etc.) **plus one
+real one: `7ddd439`, the Haroon Admin/GM split-participant emergency
+hotfix** (already documented in this file's "2026-09-14 session (later)"
+entry) — pushed straight to `origin/uat`, which is exactly why
+`origin/uat`'s tip moved without local `uat` knowing. Confirmed `7ddd439`
+is already merged onto `main` too (via `hotfix/admin-gm-split`), so
+nothing is stranded UAT-only.
+
+**Practical takeaway, not yet acted on:** local `uat` needs a `git pull`
+before (not after) the next push to `origin/uat` — whichever comes
+first, the planned main→uat promotion (Basheer's stated intent: "in the
+next couple of days") or another emergency hotfix. Confirmed a pull done
+right now would have the identical effect to doing it right before that
+push (fast-forward only, no push involved, zero risk) — **offered but not
+run**, Basheer chose to park the whole thread for tomorrow morning.
+
+**Nothing built, synced, or pushed this session** — discussion and one
+read-only `git fetch`/`git log` investigation only.
+
+**Next step:** tomorrow morning — (1) decide whether to `git pull` local
+`uat` now-ish or right before the sync, (2) carry out the main→uat
+promotion Basheer flagged for "the next couple of days," bringing over
+the 17 feat/fix commits above.

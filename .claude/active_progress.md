@@ -1,5 +1,16 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-20_
+_Session: 2026-08-21 → 2026-09-21_
+
+## 2026-09-21 session — UAT-vs-main commit gap explained (53 behind, 17 feat/fix); local `uat` branch found stale (root cause: 2026-09-14 emergency hotfix pushed straight to origin/uat) — parked for tomorrow, nothing built/synced
+
+Discussion only, no code/git changes made. Full detail:
+`docs/Progress-Archive-2026-09.md`'s "2026-09-21 session" entry.
+
+**Next step:** tomorrow morning — decide when to `git pull` local `uat`
+(now vs. right before the sync — either works, zero risk either way),
+then carry out the main→uat promotion Basheer flagged for "the next
+couple of days" (17 feat/fix commits, headlined by Target Planning, Lead
+Follow-up Comments, Insights Dashboard, Reports, High Priority Deal Flag).
 
 ## 2026-09-20 session (later) — Product Catalog Brand/Category/Model design finalized; data cutover in progress, stopped for the day mid-thread
 
