@@ -1,6 +1,72 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-21_
 
+## 2026-09-21 session (later) — Product Catalog Brand/Category/Model: built, migrated to Dev, smoke-tested live, committed and pushed — full manual E2E pass still pending
+
+Picked up yesterday's stopped-mid-thread: Basheer answered the 6 open
+data questions (keep "Kolkata"; leave wall-mount-stand out, he'll add it
+manually later; drop "EDAN elite V Series" and "EDAN i20"; standardize
+on "SonoScape"; brand is plain "Maquet"). Two more duplicate pairs
+(H100B, i15) surfaced while cross-checking and were resolved the same
+way. Finalized seed data: 59 active products across 9 brands/20
+categories.
+
+**Real environment mismatch found before writing any migration:**
+Dev's `product` table (30 rows) is not a mirror of UAT's 65 — it's
+leftover seed/test data, missing 35 real UAT products and carrying 4
+unrelated ones (ECG Cable, Heart-Lung Machine, Siemens USG M/c,
+Sonoscape Test). A migration hardcoding "update this UAT id in place"
+would have duplicated every real product once promoted to UAT later.
+Fixed by matching each of the 59 corrected products by its old `name`
+(unique in both environments) at migration runtime — updates in place
+if found, inserts fresh if not — so the same migration self-adapts to
+whichever environment it runs against. Brand→SBU assignment (SonoScape
+→ Imaging, everything else → Critical Care) cross-checked against both
+Dev's and UAT's live data before writing it in (Basheer's go-ahead given
+for both, including the UAT read).
+
+**Built and applied to Dev:** migrations `0048`/`0049` (new
+`brand`/`category`/`model` tables + RLS + triggers; `product` cut over
+to `brand_id`/`model_id`/`category_id`, retiring 7 old rows). Backend:
+new `reference/catalog_router.py` (Brand/Category/Model CRUD,
+Admin/GM-gated), `Product` schema/service/repository updated, reporting
+brand-grouping now joins the real `Brand` table. Frontend: Product
+Catalog's Add/Edit form now cascades SBU → Brand → Model (Category
+auto-fills), inline "+ Add new brand/model/category" for Admin/GM,
+Product Name field removed (server-computed). 896/896 backend tests
+pass, `tsc`/eslint clean, `Physical-Schema.sql` regenerated.
+
+**Smoke-tested live on Dev as Haroon** (list rendering, detail view,
+Add-form cascading pickers, SBU-scoped Brand options) — no full manual
+E2E pass yet. **Committed `cd0d8ab`, pushed to `origin/main`.**
+Post-commit checklist run: Traceability's Feature 4.1 row updated (stays
+Partial, not Done, until E2E passes), scorecard regenerated and
+`--check`-clean, `Backlog.md`'s Product Catalog entry replaced with the
+2 real remaining follow-ups (full E2E pass; Product Performance's brand
+cards still have no pipeline filter to drill into). Also caught and
+fixed a stale claim in the plan doc itself (it said the Target Planning
+brand-table edit was "not done yet" — checked directly, it was actually
+resolved 2026-09-20).
+
+**Also found while checking today's work, deferred to tomorrow morning
+per Basheer's call:** 5 old products (not 34 — most of the original ~30
+Dev rows were upgraded in place, not left behind) are now deactivated
+rather than deleted, because real Dev data still points at them:
+- **EDAN i15** (1 marketing lead) — clear fix: repoint to the real
+  survivor "EDAN i15 Blood Gas" (same analyzer, corrected entry), then
+  delete the old row. Basheer confirmed this one's obvious, do it first.
+- **EDAN elite V Series** (1 opportunity line), **EDAN i20** (1
+  marketing lead), **ECG Cable** (2 opportunity lines + 1 document),
+  **Siemens USG M/c** (3 opportunity lines) — no safe automatic
+  replacement (ambiguous which V-series model, a deliberately-dropped
+  model, or not in Haroon's corrected list at all). Needs Basheer's
+  actual decision on each, not a guess — walk through them one by one.
+
+**Next step (tomorrow morning, first thing):** the 5-product cleanup
+above. Then run the full manual E2E pass (`docs/Product-Catalog-Name-
+Derivation-Implementation-Plan.md`'s Verification section) before
+flipping Feature 4.1 to Done.
+
 ## 2026-09-21 session — UAT-vs-main commit gap explained (53 behind, 17 feat/fix); local `uat` branch found stale (root cause: 2026-09-14 emergency hotfix pushed straight to origin/uat) — parked for tomorrow, nothing built/synced
 
 Discussion only, no code/git changes made. Full detail:
@@ -11,47 +77,6 @@ Discussion only, no code/git changes made. Full detail:
 then carry out the main→uat promotion Basheer flagged for "the next
 couple of days" (17 feat/fix commits, headlined by Target Planning, Lead
 Follow-up Comments, Insights Dashboard, Reports, High Priority Deal Flag).
-
-## 2026-09-20 session (later) — Product Catalog Brand/Category/Model design finalized; data cutover in progress, stopped for the day mid-thread
-
-**Design finalized and written up**, superseding this doc's earlier
-"Part 1" plan: `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`
-(rewritten), `docs/Backlog.md`'s Product Catalog entry (rewritten), and
-`docs/Brand-Level-Target-Planning-Implementation-Plan.md` (its "Decision
-still open" section resolved — now consumes this feature's `brand` table
-instead of building its own). No code/migrations built yet.
-
-**Data cutover started, not finished.** Re-pulled the 65 live UAT products
-with their database `id`s (read-only, Basheer's go-ahead given) — saved to
-`docs/Product-Catalog-UAT-Export-2026-09-20-with-ids.csv`. Matched 51 of 65
-against Haroon's corrected Brand/Category/Model list
-(`docs/Product-Catalog-UAT-Export-2026-09-18 - updated.xlsx`) automatically
-by Model number; caught and hand-fixed 2 cases where two old products
-shared the same short Model number but belong to two different corrected
-entries ("iX12" vs "iX12 With IBP"; "M3A" vs "M3A SpO2 NIBP" — resolved
-using each old product's free-text name to disambiguate).
-
-**Next step — 6 open questions need answers (from Haroon and/or Basheer)
-before the seed data can be finalized:**
-1. "Kolkatta" as a Brand (for "Anesthesia Machine Basic / Boyils") — real
-   brand name or a mistake?
-2. The wall-mount-stand product to keep (`c9619bb5-...-0977e`): Haroon's
-   file still leaves its Model blank and puts a description ("Monitor Wall
-   mount stand") in the Category column — need a real Model value and a
-   real Category name.
-3. "EDAN elite V Series" (old id `dddddddd-...-09`) has no match in
-   Haroon's list — likely a redundant placeholder now that V5/V6/V8 exist
-   as separate products; confirm it should be retired.
-4. "EDAN i20" (old id `dddddddd-...-25`) has no match in Haroon's list at
-   all — dropped on purpose, or missed?
-5. Brand spelling still inconsistent inside Haroon's own corrected file:
-   "Sonoscape" vs "SonoScape" — pick one.
-6. "Maquet Refurbished" as a Brand conflates Brand with condition
-   (Refurbished is the existing `product_type` field) — should the Brand
-   just be "Maquet"?
-
-Once those are answered: finalize the seed data, then build migrations
-`0048`/`0049` per the plan doc.
 
 ## 2026-09-20 session — UAT backup taken, first restore/DR drill run and validated, restore script + runbook built and committed
 

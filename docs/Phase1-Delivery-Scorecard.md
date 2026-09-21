@@ -38,7 +38,7 @@ Where every machine Cabio sells is described, organised and backed with sales ma
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Partial | Product categories and brands are captured today as free text rather than a fixed list, so naming can vary slightly between entries. |
+| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Partial | Product categories and brands now come from a fixed, admin-managed list instead of free text — inconsistent naming (e.g. "GE" vs "GE Healthcare") is no longer possible. Full testing is still in progress. |
 | 10 | 4.1 | Spec/config linking from company website | 2.2 Product Information | Done |  |
 | 11 | 4.1 | Collateral attachments (brochures, spec sheets, pricing guides, training videos) | 2.3 Sales Collateral Management | Done |  |
 | 12 | 17.5 | Training & enablement URL/resource linking | 2.4 Training & Enablement | Done |  |

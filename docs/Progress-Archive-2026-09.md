@@ -5326,3 +5326,135 @@ read-only `git fetch`/`git log` investigation only.
 `uat` now-ish or right before the sync, (2) carry out the main→uat
 promotion Basheer flagged for "the next couple of days," bringing over
 the 17 feat/fix commits above.
+
+## 2026-09-21 session (later) — Product Catalog Brand/Category/Model built and shipped to Dev
+
+Picked up yesterday's stopped-mid-thread (`docs/Product-Catalog-Name-
+Derivation-Implementation-Plan.md`, approved design). Basheer answered
+the 6 open data questions from the handover, plus two more duplicate
+pairs (EDAN H100B, EDAN i15) found while cross-checking Haroon's
+corrected file against the old export — resolved the same way (pick the
+survivor, retire the other). Final seed data: 59 active products, 9
+brands, 20 categories.
+
+**Real finding before writing any migration:** Dev's `product` table
+(30 rows, checked read-only with Basheer's go-ahead) is not a mirror of
+UAT's 65 real products — it's leftover seed/test data, missing 35 of
+them and carrying 4 unrelated placeholder rows (ECG Cable, Heart-Lung
+Machine, Siemens USG M/c, Sonoscape Test). A migration that hardcoded
+"update this UAT product id in place" would have silently duplicated
+every real product the day this migration gets promoted to UAT, since
+UAT already has them under different, real, FK-referenced ids. Fixed by
+matching each of the 59 corrected products by its old `name` (unique in
+both environments) at migration runtime — UPDATE in place if a match
+exists, INSERT fresh if not — so the identical migration file adapts
+correctly to whichever environment runs it, no separate Dev/UAT variant
+needed. Retirement uses the same self-adapting shape: any product left
+without a `model_id` after the 59-product backfill is deleted if
+nothing references it, or deactivated and pointed at a small internal
+"Legacy Data" landing model if something does (only surfaced by actually
+running the migration once and hitting a real `marketing_lead.product_id`
+FK the first reference check had missed — caught cleanly by the
+migration's own transaction rollback, nothing corrupted).
+
+Brand→SBU assignment (SonoScape → Imaging, every other brand → Critical
+Care) was cross-checked against both Dev's and UAT's *live* product data
+before being written into the migration, rather than assumed — Basheer's
+explicit go-ahead given for the UAT read specifically, per the standing
+rule.
+
+**Built:** migrations `0048` (new `brand`/`category`/`model` tables, RLS,
+`model.sbu_id` sync trigger) and `0049` (the name-matched backfill above,
+`product` cut over to `brand_id`/`model_id`/`category_id`, old free-text
+columns dropped, `product.name` now trigger-computed). Backend: new
+`reference/catalog_router.py` (Brand/Category/Model CRUD, Admin/GM-only
+write, mirroring `ZoneAdminService`'s pattern), `Product` schema/service/
+repository updated, `reporting/repository.py`'s brand grouping now joins
+the real `Brand` table instead of normalizing free text. A read-only
+`oem_name`/`model_number` Python property was added to the `Product`
+model as a compat shim for `account/workspace_schemas.py`'s
+`ProductNested` (a real consumer the original plan's "no changes needed"
+claim missed) — found by grepping actual attribute access, not by
+re-reading the plan. Frontend: Product Catalog's Add/Edit form now
+cascades SBU → Brand → Model (Category auto-fills read-only), with
+inline "+ Add new brand/model/category" for Admin/GM; Product Name field
+removed (server-computed).
+
+Both migrations applied to Dev directly (table-owner connection, RLS
+bypassed as usual for migrations). 896/896 backend tests pass (fixture
+updates for the new `model_id`-based `ProductCreate`/`ProductUpdate`
+shape, `test_persistence.py`'s table/relationship counts bumped),
+`ruff`/`tsc`/`eslint` clean, `Physical-Schema.sql` regenerated once
+Docker Desktop was back up.
+
+**Smoke-tested live on Dev as Haroon** (GM): Product Catalog list shows
+real Brand/Model/Category chips per row, detail view resolves all three,
+Add-form's SBU→Brand→Model cascade works, Brand options are correctly
+SBU-scoped (only SonoScape under Imaging), Category auto-fills from the
+selected Model, and the inline "+ Add new model" mini-form (name +
+Category, with its own "+ Add new category") renders correctly. No
+console errors. **Not a full manual E2E pass** — dialog was cancelled
+before submitting, to avoid creating a live duplicate of an
+already-real product.
+
+**Committed `cd0d8ab`, pushed to `origin/main`.** Deliberately excluded
+`active_progress.md`/`Progress-Archive-2026-09.md` from that commit
+since a parallel session had uncommitted work on both at staging time
+(already committed separately as `463e964` before this push) — checked
+the diff first rather than assuming, per the standing rule on shared
+docs.
+
+**Post-commit checklist run as a separate step:** `active_progress.md`
+updated (the resolved 6-open-questions thread removed, not just
+appended over); this file's own entry (above); `Backlog.md`'s Product
+Catalog section replaced (it was still describing this as "parked,
+design only" — rewritten to the 2 real remaining follow-ups: the full
+E2E pass, and Product Performance's Brand cards still having no
+`brand_id` pipeline filter to drill into). Traceability's Feature 4.1
+row updated to describe what's built — **left at Partial, not flipped to
+Done**, since Scorecard integrity requires a completed manual E2E pass
+first, not just working code. Scorecard regenerated, `--check` clean,
+tally unchanged (29/12/9, since no status flipped) — not republished to
+the client Artifact since no client-visible status actually changed.
+
+**One stale-doc catch along the way:** `docs/Product-Catalog-Name-
+Derivation-Implementation-Plan.md` still had a "Required follow-up edit
+(separate, not done yet)" section claiming Target Planning's brand-table
+decision was unresolved. Checked `docs/Brand-Level-Target-Planning-
+Implementation-Plan.md` directly rather than trusting that note — it was
+actually resolved 2026-09-20 (own doc says so in its own heading).
+Corrected both docs rather than propagating the stale claim into today's
+Backlog update.
+
+**Retro:** the Dev-vs-UAT product-table mismatch was the real risk of
+this session — a plan written and approved against UAT export data
+would have quietly broken the moment it reached Dev, or worse,
+duplicated real UAT data the day it got promoted there, if the migration
+had been written the "obvious" way (hardcode matched ids). Checking
+Dev's actual live state before writing migration 0049, and designing it
+to self-adapt by name instead of by id, is what caught this before any
+data was touched. Second smaller lesson: a reference-check that misses
+one FK (`marketing_lead.product_id`, not covered by the checks used
+earlier in this same thread for the wall-mount-stand/Ventmeter
+decisions) is a real gap — but a migration that fails its transaction
+cleanly on a missed FK is a safety net working as intended, not a
+near-miss to be anxious about.
+
+**Follow-up raised by Basheer right after the commit:** don't forget the
+5 old products this migration deactivated rather than deleted, because
+real Dev data (opportunity lines, marketing leads, a document) still
+points at them — checked and confirmed it's exactly 5, not the "34 old
+rows" Basheer initially guessed from memory (most of the original ~30
+Dev rows were matched by name and upgraded in place, not left behind as
+duplicates). Of the 5, only one (EDAN i15 → its corrected survivor
+"EDAN i15 Blood Gas") has an unambiguous automatic fix; the other four
+(EDAN elite V Series, EDAN i20, ECG Cable, Siemens USG M/c) need
+Basheer's actual judgment call, not a guess, since none has a clean
+1:1 replacement in Haroon's corrected list. **Deferred to tomorrow
+morning, first thing** — full detail and the per-product breakdown is
+in `.claude/active_progress.md`'s entry above.
+
+**Next step:** tomorrow morning, first thing — the 5-product repoint/
+cleanup above. Then run the full manual E2E pass (`docs/Product-Catalog-
+Name-Derivation-Implementation-Plan.md`'s Verification section) before
+flipping Feature 4.1 to Done.

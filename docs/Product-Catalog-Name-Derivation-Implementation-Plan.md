@@ -300,13 +300,13 @@ linkage — there's no automatic way back to free text with the original
    clickable/drills down correctly; one opportunity item picker shows
    correct labels.
 
-## Required follow-up edit (separate, not done yet)
+## Required follow-up edit — already done, 2026-09-20
 
-`docs/Brand-Level-Target-Planning-Implementation-Plan.md`'s "Decision
-still open" section currently recommends a **separate, throwaway** brand
-table specifically to avoid depending on this cleanup. Since this cleanup
-now lands first, that section needs rewriting: Target Planning should
-reference this `brand` table instead of creating a duplicate one.
+`docs/Brand-Level-Target-Planning-Implementation-Plan.md`'s decision
+section was rewritten the same day this plan was finalized: Target
+Planning now references this `brand` table directly instead of building
+a separate, throwaway one. See that doc's "Decision — resolved
+2026-09-20" section.
 
 ## Out of scope
 
