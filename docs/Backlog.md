@@ -45,6 +45,32 @@ Karnataka postal-code-to-zone mapping table inside the system, which isn't
 worth it yet. Revisit if/when PIN-code coverage data becomes available or
 the manual picking becomes an actual pain point.
 
+### Reports never implement split-weighted attribution (ADR-003 vs. actual build) — found 2026-09-22
+
+`docs/ADR.md`'s original Split design (ADR-003) says explicitly: "A
+unified Opportunity with split credit prevents 'double-counting' in
+organizational rollups... Revenue rollups must calculate `Value ×
+Split%`." No reporting query actually does this — `reporting/repository.
+py`'s `_apply_owner_scope` (used by Product Performance, Pipeline Report,
+and Sales Report alike) filters strictly by `Opportunity.owner_id`'s team
+membership, never joins `Split`, never reads `split_percentage`. A deal
+someone holds a Split on is fully visible to them on the plain Pipeline
+board (RLS's `cabio_app_has_split()` carve-out, per ADR-013) but doesn't
+count toward their numbers on any report at all — not even partially.
+
+**Found while building Product Performance's Brand drill-down** (see
+`docs/Progress-Archive-2026-09.md`'s "2026-09-22" entry) — surfaced as a
+report-vs-drilled-list count mismatch, not from a report-accuracy
+complaint. **Deliberately not fixed** — Basheer's call was to keep the fix
+narrow (make the drilled list match its own report's existing count,
+`owner_team_only` in `opportunity/repository.py`) rather than build full
+split-weighted attribution into reporting now, which is a materially
+bigger, separate piece of work (every report's headline numbers, not just
+one filter). **Needs Basheer's/Haroon's call:** should reports actually
+implement `Value × Split%` per ADR-003's original intent, or was that
+design superseded and never formally revised? Either answer is a real
+decision, not an engineering default.
+
 ### Product Catalog Brand/Category/Model: built 2026-09-21, one follow-up still open
 
 **Built and committed** (`cd0d8ab`, migrations 0048/0049) — Brand,

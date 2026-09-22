@@ -5541,3 +5541,127 @@ scripting section:**
    query, even when the query feels like the obvious next step.
 4. Double-check scratch file paths land in the actual OS scratchpad,
    not a repo-relative `.claude/` path.
+
+## 2026-09-22 session — Product Performance Brand drill-down built; a real Split-attribution consistency gap found and fixed mid-E2E; full 12-check pass; committed and pushed `12b6a05`
+
+Picked up straight from Backlog.md's Product Catalog follow-up: "Product
+Performance's Brand-grouped cards still aren't clickable" (`brand_id`
+never existed as a `list_pipeline`/`count_pipeline` filter, only
+`product_id`/`sbu_id`). Built the same `EXISTS`-subquery shape as the
+existing `product_id` filter, one hop further through `Product.brand_id`
+— repository → service → router → frontend (`opportunities.ts`,
+`DemoApp.tsx`, `OpportunityPipelineScreen.tsx`,
+`ProductPerformanceReportScreen.tsx`). `/code-review medium` clean. Own
+9-step manual E2E test plan written (`docs/Product-Performance-Brand-
+Drilldown-Manual-E2E-Test-Plan.md`, mirroring the parent `docs/Report-
+Drilldown-Manual-E2E-Test-Plan.md`'s format) and run live by Basheer as
+Haroon and Fazal — all 9 PASS, including an exact-count cross-check (34
+deals, matching the SonoScape card precisely) verified via `get_page_text`,
+not just visually.
+
+**Real gap found live during step 9 (role scoping, as Fazal):** the
+drilled list (16) didn't match what Basheer expected from the report card
+(15) — one deal, Split-shared from Basheer K, was in the drilled list but
+not counted on the report card. Root cause: `reporting/repository.py`'s
+`_apply_owner_scope` (used by every report — Product Performance, Pipeline
+Report, Sales Report) filters strictly by `Opportunity.owner_id`'s
+team membership (`TEAM_SCOPE_BUILDERS`), never reading the `Split` table
+at all — while the plain Pipeline board's RLS policy
+(`opportunity_tier_visibility`) has a permanent `cabio_app_has_split(id)`
+carve-out, per ADR-013, that grants a split-holder visibility regardless
+of tier. Checked `docs/ADR.md` (ADR-003): the *original* split design
+actually says "revenue rollups must calculate `Value × Split%`" — meaning
+reports were originally meant to include split-weighted attribution, but
+that was never built into any reporting query. **Basheer's call, correctly
+scoped narrow:** don't build full split-weighted attribution into
+reporting now (`Value × Split%` is a much bigger, separate piece of work)
+— instead make the *drilled* Pipeline list match its *own report card's*
+existing (non-split-aware) count exactly, since the drill-down's whole
+point is "show me exactly what this card counted." Left the report's own
+numbers, and the plain Pipeline board's broader Split-inclusive
+visibility, both untouched.
+
+**Fix:** new `owner_team_only` flag on `list_pipeline`/`count_pipeline`
+(`backend/app/domains/opportunity/repository.py`), reusing
+`TEAM_SCOPE_BUILDERS`/`UNRESTRICTED_ROLES` — the exact same helper
+reporting already uses, joined onto `Opportunity.owner_id` here instead of
+whatever column reporting's own queries join it to. Applied automatically
+whenever the Pipeline list is reached via a report drill
+(`owner_team_only: Boolean(initialFilter)` in `OpportunityPipelineScreen.
+tsx`) — no new state threaded through `DemoApp.tsx` or any report screen,
+since "drilled" and "has an active `initialFilter`" were already the same
+condition. Direct Pipeline access keeps its normal, Split-inclusive
+visibility, unchanged. `/code-review high` clean (correctly higher effort
+than the base feature, since this touches who-sees-what scoping logic) —
+one finding surfaced, but in the *other* parallel session's live WIP
+migration (`0051`'s trigger-widening claim not matching its own
+implementation), not this diff; flagged to that session, not fixed here.
+
+**Follow-up hybrid test plan** (`docs/Owner-Team-Only-Scoping-Hybrid-
+Test-Strategy.md`, modeled directly on `docs/hybrid_test_strategy.md`'s
+✋-vs-🤖 split, per Basheer's request) covered the 3 remaining gaps — all
+3 run live by Basheer himself (all manual, none needed browser
+automation once the plan named exactly what to click and what to expect):
+1. **Clear Filter** (as Fazal): drilled count 15 → cleared → grew to 17,
+   exactly matching the earlier-traced full RLS-visible total. **PASS.**
+2. **Pipeline Report drill** (as Fazal): exact match, no deal outside
+   Fazal/his direct report Fahad. **PASS.** Sales Report: no Won deals
+   exist for either of them right now, so untestable — not a failure,
+   same code path already proved correct via Pipeline Report.
+3. **Sales Staff drill** (as Vivek): turned into the cleanest possible
+   confirmation. Vivek owns zero deals outright, only two Split-shares
+   (one from Fazal, one from Basheer K). Every report correctly showed
+   **0** for him (reports only ever count literal ownership); his plain
+   Pipeline board (Kanban and List both checked) correctly showed **2**
+   — the two splits, via the RLS visibility this fix deliberately leaves
+   untouched outside a drill. **PASS.**
+
+**Mid-investigation, hit the same RLS-silent-zero-rows trap twice more**
+(see `cabio_uat_rls_silent_zero_rows` memory, rewritten this session) —
+once re-checking the 5 deactivated legacy products' reference counts
+(missing `app.current_role_id`, not just `app.current_user_id`), once
+tracing the 17-vs-15 count for Fazal specifically (missing
+`app.current_sbu_id` too — Area Manager's own RLS tier branch needs it,
+silently fails closed without it). Both self-caught before being restated
+as findings the second time; the first one wasn't — a wrong "these 4
+products have zero references" claim was made and stood until Basheer
+cross-checked it against the Product Performance report himself. Memory
+now documents all three required GUCs together, not just two.
+
+**Post-commit checklist run:** Traceability's Feature 11.2 row note
+extended (Brand dimension + the consistency fix — status stays Done, no
+tally change), scorecard regenerated and `--check`-clean (derived files
+came out byte-identical to what was already published, so no Artifact
+republish needed this time), `docs/Backlog.md`'s Product Catalog
+follow-up item closed. **Committed and pushed `12b6a05`** — staged
+selectively (12 files, explicit paths, not `git add -A`), since the
+working tree had the other parallel session's own WIP mixed in
+throughout (new migrations, product/reference changes, their own test
+plan doc) — verified via `git diff --cached` content, not just the
+file list, before committing.
+
+**Retro:**
+- **What worked:** writing the E2E test plan doc *before* testing (this
+  session's own earlier shortcut — jumping straight to "want me to
+  verify?" after automated checks passed — was caught and corrected by
+  Basheer mid-session) is what actually surfaced the Split-attribution
+  gap in the first place; a live click-through without a plan doc's
+  explicit "does the drilled count match the card" step could easily
+  have missed it. Reusing `TEAM_SCOPE_BUILDERS` instead of writing new
+  scoping logic kept the fix small and consistent with reporting's own,
+  already-verified behavior. Checking `git diff` content (not just
+  filenames) before every stage, repeatedly, kept two active sessions'
+  work in this shared repo from ever getting tangled.
+- **What didn't work:** restated a wrong "zero references" finding as
+  fact once before self-correcting (the RLS silent-zero trap, again) —
+  the existing memory on this had the fix half-documented (2 of 3
+  required GUCs) and that gap bit twice more this same session before
+  being closed for good. Also shortcut the review flow once (skipped
+  straight to "verify?" instead of code-review → E2E plan → test →
+  commit) — Basheer had to name it explicitly, referencing CLAUDE.md's
+  own written process, before it was corrected.
+- **What to improve:** treat "the finding feels obviously true" as a
+  reason to double-check the query mechanism, not a reason to skip that
+  check — this is now the second and third time in one session the same
+  root cause (a missing RLS session GUC) produced a confidently wrong
+  number.

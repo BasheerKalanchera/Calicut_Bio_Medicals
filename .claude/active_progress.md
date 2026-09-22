@@ -1,5 +1,51 @@
 # Active Progress — Cabio Sales OS
-_Session: 2026-08-21 → 2026-09-21_
+_Session: 2026-08-21 → 2026-09-22_
+
+## 2026-09-22 session — Product Performance Brand drill-down + owner-team-only pipeline scoping: built, code-reviewed, full E2E (12/12 across two test plans), committed and pushed `12b6a05` — Done, post-commit checklist run
+
+Backlog item from Product Catalog's build ("Brand cards on Product
+Performance aren't clickable") — closed. `list_pipeline`/`count_pipeline`
+gained a `brand_id` filter, same `EXISTS`-subquery shape as the existing
+`product_id` one; Brand cards' Opportunities/Won/Lost now drill down like
+Product/SBU already do.
+
+**Real gap surfaced mid-E2E, fixed same session:** a drilled-into Pipeline
+list didn't always match its report card's own count — a Split-shared
+deal is RLS-visible on the plain Pipeline board but was never counted in
+any report's owner/team-based attribution (`reporting/repository.py`'s
+`_apply_owner_scope`). Fixed with a new `owner_team_only` flag on
+`list_pipeline`/`count_pipeline`, reusing the identical `TEAM_SCOPE_
+BUILDERS` scoping, applied automatically only when the Pipeline list is
+reached via a report drill (`Boolean(initialFilter)`) — direct Pipeline
+access keeps its normal, Split-inclusive visibility unchanged.
+
+`/code-review high` clean (one finding surfaced, in the other parallel
+session's WIP migration, not this diff — flagged to that session, not
+fixed here). 920/920 backend tests pass (5 new), `tsc`/`eslint` clean.
+
+**Full manual E2E, live, by Basheer:** `docs/Product-Performance-Brand-
+Drilldown-Manual-E2E-Test-Plan.md` (9/9 PASS) + `docs/Owner-Team-Only-
+Scoping-Hybrid-Test-Strategy.md` (3/3 follow-up checks PASS, including a
+clean edge case — a Sales Staff user with zero owned deals but two
+Split-shares: reports correctly showed 0, plain Pipeline correctly showed
+2). One real investigation mid-pass: a 17-vs-15 count that looked like a
+bug was actually a genuine deal with zero product line items, correctly
+excluded from any brand-scoped view — traced and confirmed via RLS-
+impersonated DB queries (see [[cabio_uat_rls_silent_zero_rows]] memory —
+this session hit and fixed that exact silent-zero trap twice more while
+investigating: once on the deactivated-products count, once on this
+Fazal-role-scoping check, missing `app.current_role_id` and
+`app.current_sbu_id` respectively).
+
+**Post-commit checklist run:** Traceability's Feature 11.2 row note
+extended (Brand dimension + the consistency fix, status stays Done — no
+tally change), scorecard regenerated and `--check`-clean (derived files
+came out byte-identical, so no Artifact republish needed), Backlog.md's
+Product Catalog follow-up item closed.
+
+**Next step:** none pending on this thread — fully wrapped, committed,
+pushed. Product Catalog Brand/Category/Model's own E2E pass (below) is
+still in progress in the other parallel session.
 
 ## 2026-09-21 session (later) — Product Catalog Brand/Category/Model: built, migrated to Dev, smoke-tested live, committed and pushed — full manual E2E pass still pending
 
