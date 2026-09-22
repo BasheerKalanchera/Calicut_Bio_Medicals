@@ -5793,3 +5793,82 @@ parallel session's own concurrent work in the same working tree.
 between Basheer (visual/manual checks) and Claude (API/inline-create
 checks). Confirm step 29's scope first — 3 of the 5 legacy products have
 since been manually repointed by Basheer.
+
+## 2026-09-22 session — full session retrospective
+
+Requested by Basheer at session end, shown in chat first per standing
+practice before being written here. Covers the whole thread: reviewing
+Brand-Level Target Planning's dependency on Product Catalog, investigating
+the 5 deactivated legacy products, building Product Performance's Brand
+drill-down, and the owner-team-only scoping fix that came out of it
+(entry above).
+
+**What worked:**
+- Cross-checking the Brand-Level Target Planning plan against the
+  actually-shipped code (found the `brand` table's RLS read policy was
+  SBU-scoped, not "open-read" as the plan doc claimed) instead of
+  trusting the doc at face value.
+- Checking for overlap with the parallel session before starting work,
+  every single time the shared repo was touched — caught real concurrent
+  WIP without ever stepping on it, and staged commits selectively
+  (never `git add -A`) with diff content verified, not just filenames,
+  even as the other session kept appending to the same shared docs
+  mid-session.
+- Writing the E2E test plan *before* testing, once corrected mid-session
+  — that discipline is what actually surfaced the Split-attribution gap.
+  A plain click-through with no explicit "does the count match" step
+  would likely have missed it.
+- Reusing existing patterns exactly (`TEAM_SCOPE_BUILDERS`, the
+  `product_id` filter's `EXISTS`-subquery shape) instead of inventing new
+  mechanisms for the Brand filter or the owner-team-only fix — kept both
+  small and easy to review.
+- Precise browser checks (`find`-based refs once adopted, `get_page_text`
+  exact counts) rather than eyeballing — caught the 17-vs-15 count
+  mismatch that a visual glance could easily have glossed over.
+- Splitting manual vs. automated testing once asked for it, modeled
+  directly on the other session's own `hybrid_test_strategy.md` sample —
+  Basheer ended up running all three follow-up checks himself, faster
+  than a browser-automation round-trip would have been for checks that
+  simple.
+
+**What didn't work:**
+- Made a confidently wrong claim early on — "4 of 5 deactivated products
+  have zero references" — stated as fact, not caveated, because of a
+  Postgres RLS trap (missing session context on a raw query). Basheer
+  caught it by independently checking the Product Performance report
+  himself.
+- Got the *fix* for that wrong too, the first time — added one missing
+  session setting, declared it corrected, and it was still wrong (a
+  second setting was also missing).
+- Hit the *same class* of mistake a third time later the same session (a
+  third missing setting, `app.current_sbu_id`, while investigating the
+  Fazal role-scoping check) — meaning even after "fixing" the lesson once
+  in memory, that memory was still incomplete, and the full requirement
+  wasn't re-derived before reusing the technique a second time.
+- Skipped the code-review → E2E-plan → test → commit → checklist sequence
+  once, jumping straight to "want me to verify?" right after automated
+  tests passed for the Brand `brand_id` filter — Basheer had to call it
+  out explicitly, quoting CLAUDE.md's own written process, even though
+  it's a standing rule that should have applied without being asked.
+- A few early browser clicks used raw screenshot coordinates and missed
+  their target before switching to `find`-based element references (this
+  project's own already-stated testing convention) — cost a couple of
+  wasted turns re-screenshotting to find the right pixel.
+- When the Split-attribution gap was found, described the problem and
+  its ADR conflict in full but didn't propose a fix shape alongside it —
+  Basheer proposed the actual "strict-on-drill, inclusive-direct" design
+  himself.
+
+**What to improve, now codified in `CLAUDE.md`:**
+1. Before any raw SQL check against this app's RLS-protected tables, set
+   and verify all three required session settings together (user, role,
+   *and* SBU) as one fixed checklist, sanity-checked with a single query
+   — not discovered incrementally through repeated wrong answers.
+   (Troubleshooting & scripting.)
+2. Follow the full written process (review → plan → test → commit →
+   checklist) as the default for every code change, including ones that
+   feel small or pattern-mirroring — that's exactly when the shortcut
+   temptation is strongest. (Pre-E2E code review.)
+3. When a bigger, adjacent design gap surfaces mid-task, lead with a
+   proposed narrowly-scoped fix alongside the problem description, not
+   just the problem on its own. (Feature planning.)

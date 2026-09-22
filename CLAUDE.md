@@ -122,6 +122,15 @@ code or changing structure. On any conflict, the document wins over this file.
   the nesting question, the Model↔Category dependency, cascading dropdowns,
   and SBU-scoping each surfaced one at a time across separate rounds instead
   of together, and each answer invalidated part of the previous draft.
+- When a bigger, adjacent design gap surfaces mid-task (an inconsistency
+  between two related mechanisms, a spec-vs-build mismatch), lead with a
+  proposed narrowly-scoped fix alongside the problem description — don't
+  just lay out the gap in full and wait to be told what to do about it.
+  **Why:** 2026-09-22, a Split-attribution inconsistency between reporting
+  and a report drill-down was described in full, including the underlying
+  ADR conflict, but the actual fix shape (keep the drill strict, leave
+  the report and plain-visibility both alone) was proposed by Basheer
+  himself, not offered up front alongside the finding.
 
 ## Checkpoint commits
 - On any build expected to run long or largely unattended (a new domain, a
@@ -152,6 +161,16 @@ code or changing structure. On any conflict, the document wins over this file.
   E2E pass was starting, caught two bugs that would have blocked most of
   that pass outright — see `docs/Target-Planning-Code-Review-Findings-
   2026-09-17.md` for the full findings.
+- This applies regardless of how small or pattern-mirroring a change
+  feels — a change that "just adds one more filter matching an existing
+  one" is exactly the size that tempts skipping straight to verification.
+  Follow the full standing sequence (code-review → written E2E plan →
+  test → commit → checklist) by default, without being asked. **Why:**
+  2026-09-22, after building a small `brand_id` filter mirroring an
+  already-shipped `product_id` one, went straight from "tests pass" to
+  asking whether to verify live, skipping the code-review and written
+  E2E-plan steps entirely. Basheer: "Why are you taking short cuts
+  inspite of detailed instructions in claude.md file?"
 
 ## Mirroring an existing feature
 - When a feature is explicitly modeled on an existing one (e.g. Lead Follow-up
@@ -248,6 +267,21 @@ code or changing structure. On any conflict, the document wins over this file.
   old rows" left behind, the first instinct was to run another SQL query
   immediately; Basheer had to stop that tool call himself before getting
   a plain-language-framed answer.
+- Before running any raw SQL check directly against this app's
+  RLS-protected tables (not through the API), set and verify **all
+  three** session settings together — `app.current_user_id`,
+  `app.current_role_id`, and `app.current_sbu_id` — never just one or
+  two, via `SELECT cabio_app_role_name(), cabio_app_uid(),
+  cabio_app_sbu_id()` before trusting any result that follows. Missing
+  any one of the three silently fails that query closed (zero or
+  undercounted rows), with no error — indistinguishable from "the data
+  genuinely isn't there." **Why:** 2026-09-22, hit this exact trap three
+  separate times in one session: a wrong "these products have zero
+  references" claim stated as fact (all three unset), a still-wrong
+  recount after fixing only one setting, and a third undercounted result
+  (missing the SBU one specifically, required for Area Manager/SBU
+  Manager tiers) while investigating an unrelated question. See the
+  `cabio-uat-rls-silent-zero-rows` memory for the full mechanism.
 
 ## Show before you act
 Same discipline across several situations: when an action is hard to undo,
