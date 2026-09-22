@@ -60,6 +60,8 @@ def list_pipeline(
     zone_id: uuid.UUID | None = Query(None),
     sbu_id: uuid.UUID | None = Query(None),
     product_id: uuid.UUID | None = Query(None),
+    brand_id: uuid.UUID | None = Query(None),
+    owner_team_only: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -73,6 +75,9 @@ def list_pipeline(
         zone_id=zone_id,
         sbu_id=sbu_id,
         product_id=product_id,
+        brand_id=brand_id,
+        owner_team_only=owner_team_only,
+        current_user=current_user,
         page=page,
         page_size=page_size,
     )

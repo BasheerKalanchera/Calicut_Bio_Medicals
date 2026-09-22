@@ -33,6 +33,7 @@ interface Props {
     zoneId?: string;
     sbuId?: string;
     productId?: string;
+    brandId?: string;
     statusId?: string;
     stageId?: string;
     label: string;
@@ -292,6 +293,15 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         zone_id: initialFilter?.zoneId ?? (zoneFilter?.id || undefined),
         sbu_id: initialFilter?.sbuId,
         product_id: initialFilter?.productId,
+        brand_id: initialFilter?.brandId,
+        // Report Drill-down: a drilled-into list must match the report
+        // card's own count exactly -- the report only attributes a deal to
+        // its literal owner/owner's team, never a Split participant, so
+        // this narrows the pipeline's normal (broader, Split-inclusive)
+        // visibility to match whenever we arrived via a drill (i.e.
+        // initialFilter is set at all). Direct Pipeline access (no
+        // initialFilter) stays on the normal, inclusive view.
+        owner_team_only: Boolean(initialFilter),
         status_id: initialFilter?.statusId,
         stage_id: initialFilter?.stageId,
         page_size: 500,

@@ -199,7 +199,7 @@ export default function DemoApp() {
   // the deals behind that number, same one-shot pattern as
   // nextActionsInitialDueBefore above.
   const [pipelineInitialFilter, setPipelineInitialFilter] = useState<
-    | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; statusId?: string; stageId?: string; label: string }
+    | { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; statusId?: string; stageId?: string; label: string }
     | undefined
   >(undefined);
   // Which report screen a drill-down came from, so the banner's back arrow

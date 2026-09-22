@@ -45,7 +45,7 @@ Karnataka postal-code-to-zone mapping table inside the system, which isn't
 worth it yet. Revisit if/when PIN-code coverage data becomes available or
 the manual picking becomes an actual pain point.
 
-### Product Catalog Brand/Category/Model: built 2026-09-21, three follow-ups still open
+### Product Catalog Brand/Category/Model: built 2026-09-21, one follow-up still open
 
 **Built and committed** (`cd0d8ab`, migrations 0048/0049) — Brand,
 Category, and Model are now real controlled tables (`reference` domain),
@@ -55,18 +55,15 @@ from Haroon's corrected list. Full design/build detail:
 Signed Feature 4.1's core gap (see that row's updated Traceability note)
 — still **Partial**, not Done, until the manual E2E pass below runs.
 
-Two real follow-ups this surfaced, neither done yet (a third —
-`docs/Brand-Level-Target-Planning-Implementation-Plan.md`'s brand-table
-decision — was already resolved 2026-09-20, confirmed by re-checking that
-doc directly rather than trusting this file's own stale note):
+Of the three follow-ups this surfaced, two are now resolved (the brand-table
+decision in `docs/Brand-Level-Target-Planning-Implementation-Plan.md` was
+already resolved 2026-09-20; Product Performance's Brand-grouped cards are
+now clickable, 2026-09-22 — `list_pipeline`/`count_pipeline` gained a
+`brand_id` filter, same `EXISTS`-subquery shape as the existing `product_id`
+one, `backend/app/domains/opportunity/repository.py`). One remains:
 1. **Full manual E2E pass** — only smoke-tested live on Dev so far (list/
    detail/add-form rendering). Run the plan doc's Verification section
    before flipping Feature 4.1 to Done.
-2. **Product Performance's Brand-grouped cards still aren't clickable** —
-   grouping now uses a real `brand_id` (no longer normalized free text),
-   but the pipeline endpoint (`list_pipeline`/`count_pipeline`) has no
-   `brand_id` filter to drill into yet, only `product_id`. Small, same
-   shape as the existing Report Drill-down feature.
 
 ## Deferred / undecided items
 

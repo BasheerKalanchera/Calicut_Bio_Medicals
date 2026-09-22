@@ -17,12 +17,14 @@ export interface PipelineParams {
   zone_id?: string;
   sbu_id?: string;
   product_id?: string;
+  brand_id?: string;
+  owner_team_only?: boolean;
   page?: number;
   page_size?: number;
 }
 
 export async function listPipeline(params: PipelineParams = {}): Promise<PipelinePage> {
-  const p: Record<string, string | number> = {
+  const p: Record<string, string | number | boolean> = {
     page: params.page ?? 1,
     page_size: params.page_size ?? 500,
   };
@@ -33,6 +35,8 @@ export async function listPipeline(params: PipelineParams = {}): Promise<Pipelin
   if (params.zone_id)    p.zone_id    = params.zone_id;
   if (params.sbu_id)     p.sbu_id     = params.sbu_id;
   if (params.product_id) p.product_id = params.product_id;
+  if (params.brand_id)   p.brand_id   = params.brand_id;
+  if (params.owner_team_only) p.owner_team_only = true;
   const response = await api.get("/opportunities/pipeline", { params: p });
   return response.data.data;
 }

@@ -3,6 +3,23 @@ from unittest.mock import MagicMock
 
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
+from app.domains.organization.models import UserProfile
+
+
+def _make_current_user(role_name: str, **overrides) -> MagicMock:
+    # Mirrors tests/domains/reporting/test_reporting_repository.py's helper
+    # exactly -- owner_team_only reuses that same TEAM_SCOPE_BUILDERS/
+    # UNRESTRICTED_ROLES scoping logic, applied here to whoever owns the
+    # Opportunity instead of whoever logged the Activity/owns the report row.
+    defaults = {"id": uuid.uuid4(), "sbu_id": uuid.uuid4(), "zone_id": uuid.uuid4(), "manager_id": None}
+    defaults.update(overrides)
+    user = MagicMock(spec=UserProfile)
+    for k, v in defaults.items():
+        setattr(user, k, v)
+    role = MagicMock()
+    role.role_name = role_name
+    user.role = role
+    return user
 
 
 def _make_opportunity(**overrides) -> MagicMock:
@@ -142,6 +159,44 @@ class TestListPipelineFilters:
         sql = self._compiled_list_pipeline()
         assert "opportunity_item" not in sql
 
+    def test_brand_id_uses_exists_style_subquery_not_a_join(self):
+        brand_id = uuid.uuid4()
+        sql = self._compiled_list_pipeline(brand_id=brand_id)
+        # Same reasoning as product_id -- must not be a plain top-level join,
+        # which would duplicate a multi-product opportunity's parent row.
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id IN" in sql
+        assert f"product.brand_id = '{str(brand_id).replace('-', '')}'" in sql
+
+    def test_no_brand_filter_when_not_passed(self):
+        sql = self._compiled_list_pipeline()
+        assert "opportunity_item" not in sql
+        assert "brand_id" not in sql
+
+    def test_owner_team_only_scopes_by_opportunity_owner_for_area_manager(self):
+        current_user = _make_current_user("Area Manager")
+        sql = self._compiled_list_pipeline(owner_team_only=True, current_user=current_user)
+        # Joined on owner_id, not filtered by the caller's own id directly --
+        # confirms the scope applies to whoever OWNS the opportunity, not the
+        # caller, same shape as reporting's _apply_owner_scope.
+        assert "opportunity.owner_id = user_profile.id" in sql
+        assert "user_profile.sbu_id" in sql
+
+    def test_owner_team_only_unrestricted_for_admin(self):
+        # Opportunity.owner is itself lazy="joined", so "user_profile" always
+        # appears in this query's SQL regardless -- assert on the specific
+        # extra join/predicate this scope would add, not bare presence.
+        current_user = _make_current_user("Admin")
+        sql = self._compiled_list_pipeline(owner_team_only=True, current_user=current_user)
+        assert "opportunity.owner_id = user_profile.id" not in sql
+
+    def test_owner_team_only_false_by_default(self):
+        current_user = _make_current_user("Area Manager")
+        sql = self._compiled_list_pipeline(current_user=current_user)
+        # Passing current_user alone must not narrow anything -- the flag is
+        # what turns this on, not the mere presence of a caller.
+        assert "opportunity.owner_id = user_profile.id" not in sql
+
 
 class TestCountPipelineFilters:
     """Same sbu_id/product_id filters, mirrored on count_pipeline."""
@@ -165,6 +220,24 @@ class TestCountPipelineFilters:
         assert "JOIN opportunity_item" not in sql
         assert "opportunity.id IN" in sql
         assert f"opportunity_item.product_id = '{str(product_id).replace('-', '')}'" in sql
+
+    def test_brand_id_uses_exists_style_subquery_not_a_join(self):
+        brand_id = uuid.uuid4()
+        sql = self._compiled_count_pipeline(brand_id=brand_id)
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id IN" in sql
+        assert f"product.brand_id = '{str(brand_id).replace('-', '')}'" in sql
+
+    def test_owner_team_only_scopes_by_opportunity_owner_for_area_manager(self):
+        current_user = _make_current_user("Area Manager")
+        sql = self._compiled_count_pipeline(owner_team_only=True, current_user=current_user)
+        assert "opportunity.owner_id = user_profile.id" in sql
+        assert "user_profile.sbu_id" in sql
+
+    def test_owner_team_only_unrestricted_for_admin(self):
+        current_user = _make_current_user("Admin")
+        sql = self._compiled_count_pipeline(owner_team_only=True, current_user=current_user)
+        assert "user_profile" not in sql
 
 
 class TestCountOpportunitiesGroupedByStakeholderIds:

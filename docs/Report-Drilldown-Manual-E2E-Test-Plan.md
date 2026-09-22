@@ -101,11 +101,14 @@ weren't touched by it.
 12. Switch to **By SBU** grouping, click a Won or Lost count.
     **Expected:** lands correctly filtered by SBU + status; deals shown
     may span multiple products, all within that one SBU.
-13. Switch to **By Brand** grouping.
-    **Expected:** Won/Lost values show no hover highlight or cursor
-    change, and clicking them does nothing — brand cards stay
-    non-clickable (confirmed structurally: no single `product_id`
-    represents a brand).
+13. **Superseded 2026-09-22** — Brand cards are no longer non-clickable.
+    A `brand_id` filter was added to `list_pipeline`/`count_pipeline`,
+    and By Brand now drills down the same as By Product/By SBU. See
+    `docs/Product-Performance-Brand-Drilldown-Manual-E2E-Test-Plan.md`
+    for this dimension's own test plan; the "no single `product_id`
+    represents a brand" reasoning below no longer applies now that the
+    filter joins through `Product.brand_id` directly instead of
+    `product_id`.
 14. Click **Opportunities** (the total count, not Won/Lost specifically)
     on any card. Added 2026-09-16, on request — was originally scoped
     as non-clickable, now drills the same as Won/Lost.

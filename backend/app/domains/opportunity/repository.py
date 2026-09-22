@@ -7,6 +7,7 @@ from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.organization.models import UserProfile
+from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.product.models import Product
 from app.domains.reference.models import (
     LeadSource,
@@ -72,6 +73,27 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     # Pipeline list (serves both Kanban and List views)
     # ------------------------------------------------------------------
 
+    def _apply_owner_team_scope(self, stmt, current_user: UserProfile):
+        # Report Drill-down (Feature 11.2), strict-attribution mode: mirrors
+        # reporting/repository.py's _apply_owner_scope exactly, applied to
+        # whoever owns the Opportunity. Deliberately narrower than this
+        # query's normal RLS-backed visibility, which also grants a Split
+        # participant standing access to a deal (ADR-013) without that deal
+        # counting toward the participant's own reporting numbers (ADR-003's
+        # "Value x Split%" attribution was never built into the reporting
+        # queries -- see docs/Report-Drilldown-Implementation-Plan.md). A
+        # drilled-into list must match the report card's own count exactly,
+        # so it applies the same narrower filter here, not the pipeline's
+        # normal broader one.
+        role_name = current_user.role.role_name
+        if role_name in UNRESTRICTED_ROLES:
+            return stmt
+        stmt = stmt.join(UserProfile, Opportunity.owner_id == UserProfile.id)
+        scope_builder = TEAM_SCOPE_BUILDERS.get(role_name)
+        self_row = UserProfile.id == current_user.id
+        visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
+        return stmt.where(visible)
+
     def list_pipeline(
         self,
         *,
@@ -82,6 +104,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         zone_id: uuid.UUID | None = None,
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
+        brand_id: uuid.UUID | None = None,
+        owner_team_only: bool = False,
+        current_user: UserProfile | None = None,
         offset: int = 0,
         limit: int = 50,
     ) -> list[Opportunity]:
@@ -133,6 +158,19 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     select(OpportunityItem.opportunity_id).where(OpportunityItem.product_id == product_id)
                 )
             )
+        if brand_id:
+            # Same EXISTS-style shape as product_id above, one hop further
+            # through Product.brand_id -- powers Product Performance's
+            # Brand-grouped drill-down (docs/Backlog.md).
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id)
+                    .join(Product, OpportunityItem.product_id == Product.id)
+                    .where(Product.brand_id == brand_id)
+                )
+            )
+        if owner_team_only and current_user is not None:
+            stmt = self._apply_owner_team_scope(stmt, current_user)
         # BR-OP-15: High Priority deals first (automatic past-Demo or manual
         # flag), then by win probability -- Basheer's call, 2026-09-15.
         is_high_priority = case(
@@ -163,6 +201,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         zone_id: uuid.UUID | None = None,
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
+        brand_id: uuid.UUID | None = None,
+        owner_team_only: bool = False,
+        current_user: UserProfile | None = None,
     ) -> int:
         stmt = select(func.count(Opportunity.id))
         if zone_id:
@@ -188,6 +229,16 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     select(OpportunityItem.opportunity_id).where(OpportunityItem.product_id == product_id)
                 )
             )
+        if brand_id:
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id)
+                    .join(Product, OpportunityItem.product_id == Product.id)
+                    .where(Product.brand_id == brand_id)
+                )
+            )
+        if owner_team_only and current_user is not None:
+            stmt = self._apply_owner_team_scope(stmt, current_user)
         return self.db.scalar(stmt) or 0
 
     # ------------------------------------------------------------------

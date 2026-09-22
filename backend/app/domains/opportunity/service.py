@@ -23,6 +23,7 @@ from app.domains.opportunity.schemas import (
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
+from app.domains.organization.models import UserProfile
 
 # BR-OP-12: only these roles may create an Opportunity outside their own SBU.
 _SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
@@ -52,6 +53,9 @@ class OpportunityService:
         zone_id: uuid.UUID | None = None,
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
+        brand_id: uuid.UUID | None = None,
+        owner_team_only: bool = False,
+        current_user: UserProfile | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[Opportunity], int]:
@@ -64,6 +68,9 @@ class OpportunityService:
             zone_id=zone_id,
             sbu_id=sbu_id,
             product_id=product_id,
+            brand_id=brand_id,
+            owner_team_only=owner_team_only,
+            current_user=current_user,
             offset=offset,
             limit=page_size,
         )
@@ -75,6 +82,9 @@ class OpportunityService:
             zone_id=zone_id,
             sbu_id=sbu_id,
             product_id=product_id,
+            brand_id=brand_id,
+            owner_team_only=owner_team_only,
+            current_user=current_user,
         )
         return items, total
 
