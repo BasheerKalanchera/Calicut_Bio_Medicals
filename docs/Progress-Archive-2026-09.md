@@ -5872,3 +5872,60 @@ drill-down, and the owner-team-only scoping fix that came out of it
 3. When a bigger, adjacent design gap surfaces mid-task, lead with a
    proposed narrowly-scoped fix alongside the problem description, not
    just the problem on its own. (Feature planning.)
+
+## 2026-09-22 session (later still) — Product Catalog E2E testing thread: full session retrospective
+
+Requested by Basheer at session end, shown in chat first per standing
+practice before being written here. Covers the whole thread: the 30-step
+test plan, three code-review passes, the two live bugs found and fixed,
+the UX debate over inline-add success feedback, and the parallel-session
+git coordination.
+
+**What worked:**
+- Front-loading code review before manual testing — three passes (medium,
+  medium, then a full `high`-effort pass covering the original build and
+  every fix together as one diff) caught 7 real bugs before a single
+  browser click.
+- Writing the test plan doc before testing, then actually using it as the
+  live source of truth once corrected for only tracking results in chat.
+- Verifying claims against real data instead of trusting a
+  plausible-sounding number — the UTC/IST timestamp check, the
+  22-repurposed/37-new reseed split, confirming which of two duplicate
+  rows was the original before deleting the other.
+- Git hygiene with a parallel session active in the same working tree —
+  kept a clean separation between this thread's 13 files and the other
+  session's own concurrent work across two separate commits, waited when
+  told to, never swept their WIP into mine.
+
+**What didn't work:**
+- Two real bugs (the product create/update crash, the missing
+  duplicate-Product-per-Model guard) escaped all three code-review passes
+  and were only found by actually clicking "Save" — both were
+  runtime/database-trigger behaviors invisible from reading the Python
+  source alone.
+- Got corrected on three separate factual/reasoning errors, none caught
+  first by me: a wrong claim about report scoping (retracted once
+  BR-OP-11 was actually checked), a wrong attribution of a code change to
+  "the other session's WIP" (it was this session's own, confirmed via
+  `git diff`), and a wrong precedent comparison (`AddHospitalModal`'s
+  modal-based "+ Add Hospital" isn't equivalent to an inline
+  same-screen "+ Add" that never leaves the form).
+- Test results sat in chat instead of the test plan doc until Basheer
+  directly asked whether they'd been documented — 18 steps' worth had to
+  be written up retroactively instead of as each one passed.
+- A mid-session edit to `ProductCatalogScreen.tsx` triggered a Vite
+  hot-reload that silently logged the browser back to a previous test
+  user (Fazal), losing the Admin/GM session needed to continue Section D
+  — not anticipated before making the edit.
+
+**What to improve, now codified in `CLAUDE.md`:**
+1. For any feature whose correctness depends on a database trigger or
+   other server-side write, treat "did a real save actually complete" as
+   its own explicit code-review checklist item — not something left for
+   manual E2E to discover by accident. (Pre-E2E code review.)
+2. Record Pass/Fail into the test plan doc the moment each step
+   completes, not retroactively from memory at session end. (Manual E2E
+   testing.)
+3. Flag the hot-reload/session-reset risk before editing frontend source
+   files mid-manual-test against the same dev server, not after it's
+   already happened. (Manual E2E testing.)

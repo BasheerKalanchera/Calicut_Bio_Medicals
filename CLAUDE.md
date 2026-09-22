@@ -171,6 +171,18 @@ code or changing structure. On any conflict, the document wins over this file.
   asking whether to verify live, skipping the code-review and written
   E2E-plan steps entirely. Basheer: "Why are you taking short cuts
   inspite of detailed instructions in claude.md file?"
+- For any feature whose correctness depends on a database trigger,
+  generated column, or other server-side write the ORM doesn't already
+  know how to re-read, add "did a real save actually complete, not just
+  render/validate" as its own explicit review item — a static read of
+  the Python source can't see a stale-in-memory-object problem like this.
+  **Why:** 2026-09-22, three `/code-review` passes on Product Catalog
+  Brand/Category/Model (one of them a full `high`-effort pass) all missed
+  that `ProductRepository.create()`/`update()` never refreshed the row
+  after `trg_product_sync_brand_category_name` populated `brand_id`/
+  `category_id`/`name` server-side — every real "Add Product" attempt
+  crashed with a 500, only caught by actually clicking Save during manual
+  E2E, not by any of the reviews.
 
 ## Mirroring an existing feature
 - When a feature is explicitly modeled on an existing one (e.g. Lead Follow-up
@@ -198,6 +210,19 @@ code or changing structure. On any conflict, the document wins over this file.
   coordinates for clicks — especially right after an expand/collapse or any
   layout-shifting action, where a stale coordinate can miss silently (the
   click lands, but on the wrong element) rather than erroring.
+- Record Pass/Fail into the test plan doc itself the moment each step
+  completes, not retroactively from memory at session end. **Why:**
+  2026-09-22, 18 steps of a Product Catalog E2E pass were tracked only in
+  chat; Basheer had to ask directly ("Have you documented the pass ones
+  in the test plan?") before results were actually written into the doc.
+- Editing frontend source files while a manual-test browser session is
+  open against the same dev server can trigger a hot-reload that resets
+  in-app state, including which user is logged in — flag this risk before
+  making live edits mid-test, not discover it after the session's already
+  reset. **Why:** 2026-09-22, a mid-session edit to `ProductCatalogScreen.tsx`
+  triggered Vite's hot-reload, which silently logged the browser back to a
+  previous test user (Fazal) and lost the Admin/GM session needed to
+  continue Section D.
 
 ## Troubleshooting & scripting
 - When something fails repeatedly for an unclear reason, isolate the
