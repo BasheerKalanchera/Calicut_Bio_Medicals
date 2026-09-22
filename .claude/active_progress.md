@@ -1,6 +1,58 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-22_
 
+## 2026-09-22 session (later still) — Product Catalog Brand/Category/Model manual E2E: 18/30 steps PASS, 2 real bugs found and fixed, committed and pushed `e1aaba4` — pass continues tomorrow morning
+
+Resumed yesterday's build (`cd0d8ab`, still Partial in Traceability pending
+this pass). Wrote the full 30-step test plan
+(`docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`) up
+front, then ran three `/code-review` passes before touching the browser —
+medium, medium, then a full `high`-effort pass covering the original build
+plus every fix together — which caught 7 real gaps ahead of manual
+testing (a cross-SBU catalog-view crash, a missing same-SBU Model/Category
+check, a duplicate-name safety gap in the reseed script, the "Legacy Data"
+placeholder being visible instead of hidden, a missing SBU-exists check on
+Brand/Category create, a silent-failure gap in the inline "+ Add new
+brand/model/category" forms, and an incomplete SBU-consistency check on
+product edits). All fixed before Section A even started (migrations
+`0050`/`0051`, service/repository fixes, 16 new `CatalogAdminService`
+tests).
+
+**Manual E2E itself surfaced 2 more real bugs, both fixed live:**
+1. Creating or editing *any* product crashed with a 500 —
+   `ProductRepository.create()`/`update()` never refreshed the row after
+   Postgres's trigger populated `brand_id`/`category_id`/`name`, so the
+   API tried to serialize stale (often `NULL`) values. This meant the
+   core "Add Product" flow had never actually been verified end-to-end
+   since the 2026-09-21 build — only the form-filling part was
+   smoke-tested, not a real save.
+2. Nothing stopped two active Products from pointing at the same Model —
+   found by accident while re-verifying fix #1 (created a genuine
+   duplicate of an already-existing "EDAN elite V6 Patient Monitor").
+   Fixed with migration `0052`, a partial unique index (active rows only,
+   so the 5 legacy-retired products can still share their placeholder
+   Model) plus a friendly rejection in the service layer.
+
+Also added an inline success confirmation ("Brand/Model/Category X
+added") for the "+ Add new..." forms — their own success signal (the
+mini-form just collapsing) was too easy to mistake for "nothing
+happened," per Basheer's live catch.
+
+**Tested live:** Section A-D and F-G, split across Fazal (Area Manager,
+non-Admin/GM) and Haroon (GM) — 18 of 30 steps PASS, zero bugs found in
+anything actually tested once the fixes above landed. Full per-step
+results recorded directly in the test plan doc (not just this file).
+**Committed and pushed `e1aaba4`.**
+
+**Next step (tomorrow morning, first thing):** finish the remaining 12
+steps — 9, 10 (partial), 13, 14, 21-23, 25-28, 30 (partial). Per
+`docs/hybrid_test_strategy.md`, split roughly: Basheer does 13, 14,
+25-28, 30 (visual/manual checks); hand 9, 10, 21-23 to Claude (inline
+create flows + API data-integrity checks). Step 29 (legacy deactivated
+products) needs a quick check with Basheer first — he's since manually
+repointed 3 of the 5 legacy products' opportunities, so the step's scope
+may have shrunk to just EDAN i15/EDAN i20.
+
 ## 2026-09-22 session — Product Performance Brand drill-down + owner-team-only pipeline scoping: built, code-reviewed, full E2E (12/12 across two test plans), committed and pushed `12b6a05` — Done, post-commit checklist run
 
 Backlog item from Product Catalog's build ("Brand cards on Product

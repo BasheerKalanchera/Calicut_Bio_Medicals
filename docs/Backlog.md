@@ -87,9 +87,12 @@ already resolved 2026-09-20; Product Performance's Brand-grouped cards are
 now clickable, 2026-09-22 — `list_pipeline`/`count_pipeline` gained a
 `brand_id` filter, same `EXISTS`-subquery shape as the existing `product_id`
 one, `backend/app/domains/opportunity/repository.py`). One remains:
-1. **Full manual E2E pass** — only smoke-tested live on Dev so far (list/
-   detail/add-form rendering). Run the plan doc's Verification section
-   before flipping Feature 4.1 to Done.
+1. **Full manual E2E pass** — in progress, 2026-09-22: 18 of 30 steps
+   PASS (`docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`
+   has per-step results). Surfaced and fixed 2 real bugs along the way (a
+   product-create/edit crash, and a missing duplicate-Product-per-Model
+   guard — migrations `0050`-`0052`, commit `e1aaba4`). Remaining 12 steps
+   continue tomorrow before Feature 4.1 flips to Done.
 
 ## Deferred / undecided items
 

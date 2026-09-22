@@ -5665,3 +5665,131 @@ file list, before committing.
   check — this is now the second and third time in one session the same
   root cause (a missing RLS session GUC) produced a confidently wrong
   number.
+
+## 2026-09-22 session (later still) — Product Catalog Brand/Category/Model manual E2E pass: 18/30 PASS, 2 real bugs found and fixed live
+
+Picked up the 2026-09-21 build (`cd0d8ab`), still Partial in Traceability
+pending this pass. Wrote the full 30-step test plan up front
+(`docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`),
+per Basheer's own reaction to seeing it ("30 steps is a pretty long test
+plan") split later into a manual/Claude hybrid via
+`docs/hybrid_test_strategy.md`.
+
+**Pre-E2E review found 7 real gaps before any browser testing started.**
+Ran `/code-review` three times: medium on the original commit `cd0d8ab`,
+medium again on the first round of fixes, then a full `high`-effort pass
+covering the original build and every fix together as one diff (base
+`463e964`). Findings, all fixed same session:
+1. **Cross-department catalog crash** — Brand/Category/Model had
+   SBU-scoped read access (migration `0048`) while `product` itself has
+   always been company-wide readable (BR-CAT-01); opening a product from
+   the other department crashed the page. Fixed: migration `0050`, opens
+   read access to match `product`'s own policy.
+2. A Model could be created pairing a Brand and Category from different
+   departments, with nothing to stop it. Fixed in `create_model`.
+3. The one-time reseed script's name-matching had no duplicate-match
+   safety check. Added one (migration `0049`).
+4. The "Legacy Data" placeholder (where the 5 retired legacy products
+   were meant to land, invisible) was actually visible and selectable —
+   the INSERT that created it never set `is_active=false`. Fixed:
+   migration `0051` (source script + a data-fix migration for Dev's
+   already-inserted rows).
+5. `create_brand`/`create_category` had no check that the SBU id was
+   real — a bad id crashed the server (500) instead of a clean 404.
+6. The inline "+ Add new brand/model/category" forms had zero error
+   handling — a failed create (e.g. duplicate name) failed completely
+   silently.
+7. `update_product` only re-validated Model/SBU consistency when
+   `model_id` was in the payload — an SBU-only edit could silently leave
+   a product's Brand/Model/Category pointed at the old department.
+   `CatalogAdminService` also had zero automated test coverage at all —
+   added 16 tests.
+
+**Manual E2E itself surfaced 2 more real bugs, both found and fixed
+live, not by review:**
+1. **Every single "Add Product" attempt crashed with a 500.**
+   `ProductRepository.create()`/`update()` called `flush()` but never
+   `refresh()`, so the in-memory object still held `None` for
+   `brand_id`/`category_id`/`name` — columns Postgres's own trigger
+   fills in, not the app. The API then tried to serialize that stale
+   object and crashed. This meant the feature's actual core action had
+   never been verified end-to-end since it was built — the 2026-09-21
+   smoke test only confirmed the form's pickers loaded correctly, not
+   that a save actually completed. Root-caused via the exact backend
+   traceback Basheer pasted from the running server's own console —
+   pydantic's validation error named all 5 stale fields directly.
+2. **Nothing stopped two active Products from pointing at the same
+   Model.** Found by accident: re-testing fix #1 via a direct API call
+   picked a Model ("EDAN elite V6") that already had a real product from
+   2026-06-28, creating a genuine duplicate with an identical name.
+   Basheer caught it immediately in the product list ("Now we have two...
+   How can system allow the same product to be added again"). Verified
+   the actual `created_at` timestamps (UTC, not IST — a real point of
+   confusion resolved by checking the raw value) to confirm which row
+   was original vs. the accidental duplicate before deleting the latter.
+   Fixed with migration `0052` — a *partial* unique index (active rows
+   only), not a full-table one like Brand/Category/Model use, because
+   the 5 legacy-retired products deliberately share one placeholder
+   Model and a full-table constraint would have broken that pattern.
+   Basheer specifically asked for real data to confirm the reseed's
+   claimed 22-repurposed/37-new split before trusting it — verified via
+   `created_at` date grouping, exact match.
+
+**UX gap also raised live and fixed:** the inline "+ Add new X" forms'
+only success signal was the mini-form collapsing — indistinguishable
+from just picking an existing value. Initially compared this to
+`AddHospitalModal`'s "+ Add Hospital" shortcut as an existing precedent;
+Basheer correctly rejected that comparison (a modal closing is a strong
+signal, a same-screen form collapsing isn't) before a fix was agreed on.
+Added an explicit "Brand/Model/Category 'X' added" confirmation,
+auto-clearing after a few seconds.
+
+**Tested live, roles split across two logins:** Fazal (Area Manager,
+non-Admin/GM, Imaging) covered Sections F/G/I's non-admin paths — cross-
+department product view (the single most important regression check in
+the whole plan), the server-side 403 gate, and adding a real product
+line to a live Opportunity. Haroon (GM) covered Sections A-D's admin
+paths — catalog browsing, the full Add/Edit Product flow (including
+discovering and fixing both live bugs above), and the inline creation
+flows. 18 of 30 steps PASS, zero bugs found in anything actually tested
+once the two live-found bugs were fixed. Full per-step results recorded
+directly in the test plan doc itself (not left in chat only — Basheer
+asked directly whether this had been done, since it hadn't yet).
+
+Session ended when a frontend hot-reload (triggered by mid-session file
+edits) reset the browser's logged-in session back to Fazal, losing the
+Haroon login needed to continue Section D. **Committed and pushed
+`e1aaba4`** — 13 files, deliberately excluding every file touched by the
+parallel session's own concurrent work in the same working tree.
+
+**Retro:**
+- **What worked:** writing the test plan doc before testing, then running
+  three code-review passes (including one deliberately covering the
+  *combined* diff, not just the newest delta) before ever opening the
+  browser, caught 7 real bugs for free — none of which would have been
+  fun to debug mid-manual-test. Verifying claims against real data before
+  trusting them (the UTC/IST timestamp check, the 22/37 repurposed-vs-new
+  split, confirming which of two duplicate rows was original) turned
+  three separate moments of user skepticism into quick, concrete
+  answers instead of back-and-forth.
+- **What didn't work:** two live bugs (the create/update crash, the
+  missing duplicate-Model guard) existed in code this session had
+  already reviewed three times and still missed — both were the kind of
+  runtime/data-shape issue that only a real save against the real
+  trigger-driven database would surface, not something readable from the
+  Python source alone. A precedent comparison (`AddHospitalModal` as
+  equivalent to the inline Brand/Model add) was offered too quickly and
+  had to be corrected by Basheer before the actual fix could be agreed.
+- **What to improve:** for any feature whose correctness depends on a
+  database trigger or generated column, treat "did a real save actually
+  complete, not just render the form" as a review checklist item, not
+  something manual E2E discovers by accident. Also: results only reported
+  in chat aren't the same as results recorded in the test plan doc — write
+  the Pass/Fail into the doc as each step completes, not retroactively at
+  session end.
+
+**Next step:** tomorrow morning — remaining 12 steps (9, 10 partial, 13,
+14, 21-23, 25-28, 30 partial), split per `docs/hybrid_test_strategy.md`
+between Basheer (visual/manual checks) and Claude (API/inline-create
+checks). Confirm step 29's scope first — 3 of the 5 legacy products have
+since been manually repointed by Basheer.
