@@ -1,0 +1,288 @@
+# Product Catalog Brand/Category/Model — Manual E2E Test Plan
+
+**Feature:** Signed Feature 4.1 core gap — Category/Brand as controlled
+pick-lists instead of free text (see `docs/Product-Catalog-Name-Derivation-
+Implementation-Plan.md`).
+
+**Scope built:** Product's Add/Edit form now cascades SBU → Brand → Model,
+with Category and the Product Name both auto-filled and read-only.
+Admin/GM can add a brand-new Brand/Model/Category inline without leaving
+the form. Reporting's brand-grouped view now joins the real `Brand` table
+instead of normalizing free text.
+
+**Now built (as of 2026-09-22, a parallel session, not yet committed):**
+clicking a Product Performance brand card now drills into its deals, same
+mechanism as the existing Product/SBU drill-downs (`list_pipeline`/
+`count_pipeline` gained a `brand_id` filter,
+`backend/app/domains/opportunity/repository.py`). This was previously
+"not in scope" for this feature — Section J below now tests it instead of
+confirming it stays non-clickable.
+
+**Fixed by three `/code-review` passes before this pass runs (2026-09-22,
+not yet committed):**
+- **Migration `0050`** — Brand/Model/Category could not be viewed by a
+  non-Admin/GM user browsing a product from the *other* SBU (RLS on those
+  three tables was SBU-scoped, while `product` itself has always been
+  company-wide readable per BR-CAT-01) — this crashed the product detail
+  page. Now open-read, matching `product`'s own policy exactly. Step F19
+  below is the direct regression test for this fix.
+- **`reference/service.py`'s `create_model`** — now rejects a Model whose
+  Brand and Category belong to different SBUs (previously silently
+  accepted). Step H21 below now expects a clean rejection, not an
+  undetermined outcome.
+- **Migration `0049`** — added a safety check so the one-time re-seed
+  script aborts instead of silently merging two products if an old product
+  name ever matches more than one row (relevant when this migration is
+  re-run against UAT).
+- **`reference/repository.py`** — Brand/Category/Model's three duplicate
+  `exists_by_name` checks now share one helper. No behavior change, not
+  something to specifically re-test.
+- **Migration `0051`** — the internal "Legacy Data" / "Retired /
+  Unclassified" placeholder (where old, retired products landed) was
+  visible as a normal, pickable Brand/Category/Model — now correctly
+  hidden. New regression check added as step 8 below.
+- **`reference/service.py`'s `create_brand`/`create_category`** — a
+  made-up department id used to crash the server (500); now returns a
+  clean "not found" (404), matching how the rest of the app already
+  handles this kind of input.
+- **`sales-os-app/src/screens/ProductCatalogScreen.tsx`** — the inline
+  "+ Add new brand/model/category" forms failed completely silently on
+  error (e.g. a duplicate name); they now show the real error message.
+  Step C11 below (already in this plan) is the direct test for this.
+- **`product/service.py` + migration `0051`'s widened DB trigger** — a
+  product's department could drift out of sync with its own Brand/Model
+  if only the department field was edited directly; now blocked both by
+  the application check and by the database itself.
+
+A third, full review covering the original build and every fix above
+together came back clean (no new findings).
+
+**Automated test coverage added, 2026-09-22:**
+`backend/tests/domains/reference/test_catalog_admin_service.py` — `Catalog
+AdminService` (Brand/Category/Model create) had zero test coverage until
+now; 16 new tests cover the Admin/GM-only gate and every rejection path,
+including the same-SBU Brand/Category check from `H21` above. (This was
+flagged as belonging to a different, actively-edited session's WIP — that
+was checked and was incorrect; the code lives entirely in this session's
+own changes, confirmed via `git diff`, so there was no collision risk in
+writing tests for it directly.)
+
+**Test users needed:** one Admin/GM login (e.g. Haroon), one non-Admin/GM
+login (e.g. Vivek or Nishad K V), ideally logins covering both Imaging and
+Critical Care to check SBU scoping.
+
+**Known state going in:** a parallel session is fixing the 5 legacy
+products left deactivated by the 2026-09-21 data cutover (EDAN i15, EDAN
+elite V Series, EDAN i20, ECG Cable, Siemens USG M/c) — step K below
+should be (re-)checked against whatever state that thread leaves things in,
+not assumed to still match the 2026-09-21 note.
+
+---
+
+## A — Admin/GM: catalog browsing renders correctly — PASSED live 2026-09-22
+
+Tested live as Haroon Sidheeq (General Manager).
+
+1. Log in as Admin/GM, open Product Catalog. — **PASS**
+2. Confirm the list shows Brand, Model, and Category chips per product,
+   and product names read as "Brand Model Category" for the reseeded
+   catalog. — **PASS**
+3. Filter by each SBU chip — confirm only that SBU's products show. —
+   **PASS** (Imaging chip showed only SonoScape products; Critical Care
+   showed EDAN/Aeonmed/etc.)
+
+## B — Admin/GM: Add Product, cascading pickers — PASSED live 2026-09-22
+
+Tested live as Haroon. Steps 4-7 initially hit a real bug (see
+`ProductRepository.create()` fix above) — retested clean after the fix.
+
+4. Click "+ Add", pick an SBU, then a Brand, then a Model. — **PASS**
+5. Confirm Category fills in automatically (read-only) the moment a Model
+   is picked, and confirm the old free-text Product Name field is gone
+   entirely. — **PASS**
+6. Save — confirm the new product appears in the list with the correct
+   auto-generated name. — **PASS** ("EDAN iM90 Test Patient Monitor"
+   appeared correctly after the create-path fix)
+7. Try saving with no Brand/Model picked — confirm it's blocked with a
+   clear message. — **PASS** ("SBU is required" / "Model is required")
+8. **Direct regression test for the migration `0051` fix:** in the Brand
+   dropdown, confirm "Legacy Data" does not appear as an option (Critical
+   Care) — and in the Model "+ Add new model" Category dropdown, confirm
+   "Retired / Unclassified" doesn't appear either. Neither should be
+   offered as a real choice; before the fix, both showed up normally. —
+   **PASS** (checked both dropdowns directly, neither placeholder listed)
+
+## C — Admin/GM: inline "+ Add new brand / model / category"
+
+9. In the Add form, use "+ Add new brand" for a brand that doesn't exist
+   yet — confirm it's selectable immediately after creation. — **Not yet
+   run** (only the duplicate-name path below was tested so far)
+10. Use "+ Add new model" under an existing brand, including "+ Add new
+    category" from inside that same flow — confirm the new model then
+    requires a category before it can be added, and behaves identically to
+    a pre-existing model afterward. — **Partially run:** "+ Add new model"
+    itself confirmed working live twice (iM90 Test, iM91 Test, both with
+    an existing Category picked) — the nested "+ Add new category" path
+    itself not yet exercised.
+11. **Direct regression test for the frontend error-handling fix:** try
+    adding a brand/category/model name that already exists for that
+    SBU/brand — confirm a clear, visible duplicate error appears on the
+    form, nothing created twice. Before the fix, this failed completely
+    silently with no message at all. — **PASS**, tested live: typing
+    "EDAN" into "+ Add new brand" showed "A brand named 'EDAN' already
+    exists" immediately, nothing created twice.
+
+## D — Admin/GM: Edit existing product
+
+12. Edit a product, change its Model to a different one under the same
+    Brand — confirm Category and Name both update to match. — **PASS**,
+    tested live: changed the test product's Model from iM90 Test to a
+    newly-added iM91 Test (Category ECG Machine) — title/Category updated
+    to "EDAN iM91 Test ECG Machine" correctly, no error (also confirms
+    `ProductRepository.update()`'s refresh fix works, not just `create()`).
+13. Change its Brand entirely (Model resets) — confirm you must re-pick a
+    Model before saving. — **Not yet run** (session ended here — an
+    unrelated frontend hot-reload reset the browser's logged-in user back
+    to Fazal before this step ran)
+
+## E — SBU scoping
+
+14. Start an Add-Product flow for Imaging — confirm only Imaging brands
+    appear. — **Not yet run**
+15. Repeat for Critical Care — confirm only Critical Care brands appear,
+    no cross-contamination either direction. — **PASS** (Critical Care
+    side confirmed live during Section B/D testing — Aeonmed/AVI/EDAN/etc
+    shown, no SonoScape; Imaging side not separately re-checked)
+
+## F — Non-Admin/GM role: read-only catalog — PASSED live 2026-09-22
+
+Tested live as Fazal (Area Manager, Kasaragod, SBU: Imaging).
+
+16. Log in as a non-Admin/GM user, open Product Catalog — confirm
+    browsing/filtering across both SBUs still works. — **PASS**
+17. Open a product detail — confirm no "Edit" button, Brand/Model/Category
+    still display correctly. — **PASS**
+18. There should be no way to reach an Add-Product form at all for this
+    role — confirm the "+ Add" button is absent. — **PASS**
+19. **Direct regression test for the migration `0050` fix:** as this same
+    non-Admin/GM user, open a product that belongs to the *other* SBU (the
+    one you don't belong to). **Expected:** the product detail page opens
+    normally, with correct Brand/Model/Category shown — before the fix,
+    this crashed. This is the single most important step in this test
+    plan; if it fails, stop and report it before continuing. — **PASS** —
+    opened "EDAN elite V5 Patient Monitor" (Critical Care) as Fazal
+    (Imaging); rendered correctly, Brand/Model/Category all shown, no
+    crash.
+
+## G — Server-side gate — PASSED live 2026-09-22
+
+20. As the non-Admin/GM user, attempt a direct `POST /reference/brands`
+    (and `/reference/categories`, `/reference/models`) via the browser's
+    dev tools or an API client, using that user's own session.
+    **Expected:** `403`, nothing created — confirm by re-listing
+    afterward. `backend/tests/domains/reference/test_catalog_admin_service.py`
+    (added 2026-09-22) now backs this gate at the unit level too — this
+    manual step confirms it end-to-end through the real router. — **PASS**
+    — tested live as Fazal: all three endpoints returned `403` with the
+    role-gate message, and a re-list of both SBUs' brands afterward
+    confirmed nothing was created.
+
+## H — Data-integrity edge cases, now fixed — confirm the fixes hold
+
+21. As Admin/GM, attempt to create a Model directly via the API with a
+    `brand_id` from one SBU and a `category_id` from the other SBU.
+    **Expected:** a clear rejection ("Category must belong to the same
+    SBU as the Brand"), nothing created — `create_model` was fixed
+    2026-09-22 to check this explicitly. If it's silently accepted
+    instead, that's a regression, report it immediately. — **Not yet run
+    live** (covered by the new automated test suite, `test_catalog_admin_service.py`'s
+    `test_rejects_category_from_a_different_sbu_than_brand`, but not
+    re-verified via a live API call this session)
+22. As Admin/GM, attempt to create a Brand or Category via the API with a
+    made-up department id. **Expected:** a clean "SBU ... not found" error
+    (404), not a server crash (500). — **Not yet run live** (also covered
+    by the new automated test suite's `test_rejects_nonexistent_sbu` tests,
+    not re-verified live)
+23. As Admin/GM, edit a product and change *only* its department (not its
+    Model) via the API, to a department its current Model doesn't belong
+    to. **Expected:** rejected with a clear error — before the fix, this
+    silently succeeded and left the product's Brand/Model/Category pointed
+    at the old department. — **Not yet run live**
+
+## I — Regression: every other screen that reads a product name
+
+24. Add a product line to an Opportunity — confirm the product picker and
+    the saved line both show the correct Brand/Model/Category-based name.
+    — **PASS**, tested live as Fazal on "Test opportunity": added
+    "SonoScape E2 Portable USG Machine" alongside the existing "SonoScape
+    HD-550 Endoscopy" line — picker was cleanly grouped by category, no
+    "Legacy Data" junk shown, both lines saved and displayed correctly,
+    total updated to ₹15.0L.
+25. Create/review a Marketing Lead with a product field — confirm the
+    same. — **Not yet run**
+26. Check Project Directory and Customer 360 screens wherever a product
+    name shows — confirm unaffected. — **Not yet run**
+27. Check Pipeline Report, Sales Report, and Product Performance Report's
+    *Product*-level breakdown (not the Brand cards, covered separately in
+    Section J below) — names and groupings still correct. — **Not yet
+    run**
+
+## J — Product Performance brand-grouped cards now drill down
+
+Built **and already fully E2E-tested** by a parallel session, 2026-09-22 —
+see `docs/Product-Performance-Brand-Drilldown-Manual-E2E-Test-Plan.md`
+(all 9 steps PASS, live pass against real Dev data, no bugs found). Don't
+re-run that pass here — just confirm the one thing specific to *this*
+feature's own scope:
+
+28. Confirm brand grouping reflects the real Brand table (no more "EDAN"
+    vs "Edan" style duplicates) — the actual drill-down mechanics are
+    already signed off in the doc above. — **Not yet run**
+
+## K — Data cutover: the legacy deactivated products
+
+29. Open the Opportunity / Marketing Lead / Document that each legacy
+    deactivated product is still attached to — confirm each screen
+    renders the old product name fine and doesn't error, even though the
+    product record itself is inactive. Cross-check the actual list of
+    still-deactivated products against whatever the parallel cleanup
+    session leaves behind, since that list may shrink before this step
+    runs. — **Not yet run.** Basheer has since manually repointed the
+    opportunities on 3 of the 5 legacy products (EDAN elite V Series, ECG
+    Cable, Siemens USG M/c per the original per-product reference list —
+    confirm exact identities before running this step), so this step's
+    scope needs re-confirming against current state before it's run: it
+    may now only apply to whichever of EDAN i15 / EDAN i20 still have live
+    references.
+
+## L — Regression: Collateral Links (2026-09-14 feature, same screen)
+
+30. On a product detail page, confirm Collateral Links still show/add/
+    remove exactly as before — nothing about the Brand/Model/Category
+    rework should have touched that box. — **Partially observed:** the
+    Collateral Links box rendered correctly (with "+ ADD LINK" for GM, "No
+    collateral links yet.") on the test product's detail page during
+    Section D testing, but no actual add/remove was performed — full check
+    still outstanding.
+
+---
+
+## Sign-off
+
+**Status as of 2026-09-22 (mid-pass, not complete):**
+- **PASS:** 1-12, 15 (partial — Critical Care side only), 16-20, 24 (18 of
+  30 steps)
+- **Not yet run:** 9 (full — only the duplicate-name path tested), 10
+  (partial — nested "+ Add new category" not exercised), 13, 14, 21-23,
+  25-28, 30 (partial)
+- **No bugs found in anything actually tested.** Two real bugs were found
+  and fixed *during* this pass, before the steps above could pass at all
+  (see the "Fixed by three `/code-review` passes" section up top): the
+  product-creation/edit crash (`ProductRepository.create`/`update` missing
+  a refresh after the DB trigger runs) and the missing duplicate-Product-
+  per-Model guard (migration `0052`).
+
+Record Pass/Fail per remaining step, who tested each role, and any live
+findings (fixed or deferred), same format as the other 2026-09 test plans.
+Feature 4.1 only flips to Done in Traceability once every section above
+passes.

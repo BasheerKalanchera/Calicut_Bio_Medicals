@@ -7,7 +7,22 @@ from sqlalchemy.orm import Session
 from app.db.base import BaseRepository, ReferenceRepository
 from app.domains.account.models import Account
 from app.domains.organization.models import UserZone
-from app.domains.reference.models import Brand, Category, Model, OpportunityStage, Zone, ZoneClosure
+from app.domains.reference.models import SBU, Brand, Category, Model, OpportunityStage, Zone, ZoneClosure
+
+
+def _exists_by_name_in_scope(db: Session, name_column, name: str, *, scope_column, scope_value: uuid.UUID) -> bool:
+    """Shared by Brand/Category/Model's exists_by_name -- each is a
+    case-insensitive name check scoped to one column (sbu_id or brand_id)."""
+    stmt = select(func.count()).where(scope_column == scope_value, func.lower(name_column) == func.lower(name))
+    return (db.scalar(stmt) or 0) > 0
+
+
+def _sbu_exists(db: Session, sbu_id: uuid.UUID) -> bool:
+    """Shared by Brand/Category's sbu_exists -- same check as
+    ProductRepository.sbu_exists, needed here so create_brand/create_category
+    can reject a made-up sbu_id with a clean 404 instead of a raw FK
+    IntegrityError (found by /code-review, 2026-09-22)."""
+    return db.get(SBU, sbu_id) is not None
 
 
 class OpportunityStageRepository(ReferenceRepository[OpportunityStage]):
@@ -36,8 +51,10 @@ class BrandRepository(ReferenceRepository[Brand]):
         return list(self.db.scalars(stmt).all())
 
     def exists_by_name(self, name: str, *, sbu_id: uuid.UUID) -> bool:
-        stmt = select(func.count()).where(Brand.sbu_id == sbu_id, func.lower(Brand.name) == func.lower(name))
-        return (self.db.scalar(stmt) or 0) > 0
+        return _exists_by_name_in_scope(self.db, Brand.name, name, scope_column=Brand.sbu_id, scope_value=sbu_id)
+
+    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
+        return _sbu_exists(self.db, sbu_id)
 
 
 class CategoryRepository(ReferenceRepository[Category]):
@@ -53,8 +70,10 @@ class CategoryRepository(ReferenceRepository[Category]):
         return list(self.db.scalars(stmt).all())
 
     def exists_by_name(self, name: str, *, sbu_id: uuid.UUID) -> bool:
-        stmt = select(func.count()).where(Category.sbu_id == sbu_id, func.lower(Category.name) == func.lower(name))
-        return (self.db.scalar(stmt) or 0) > 0
+        return _exists_by_name_in_scope(self.db, Category.name, name, scope_column=Category.sbu_id, scope_value=sbu_id)
+
+    def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
+        return _sbu_exists(self.db, sbu_id)
 
 
 class ModelRepository(ReferenceRepository[Model]):
@@ -70,8 +89,7 @@ class ModelRepository(ReferenceRepository[Model]):
         return list(self.db.scalars(stmt).all())
 
     def exists_by_name(self, name: str, *, brand_id: uuid.UUID) -> bool:
-        stmt = select(func.count()).where(Model.brand_id == brand_id, func.lower(Model.name) == func.lower(name))
-        return (self.db.scalar(stmt) or 0) > 0
+        return _exists_by_name_in_scope(self.db, Model.name, name, scope_column=Model.brand_id, scope_value=brand_id)
 
 
 class ZoneRepository(BaseRepository[Zone]):

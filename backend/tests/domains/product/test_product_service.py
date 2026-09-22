@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import AuthorizationError, NotFoundError
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.domains.product.models import Product
 from app.domains.product.repository import ProductRepository
 from app.domains.product.schemas import ProductCreate, ProductUpdate
@@ -94,6 +94,7 @@ class TestCreateProduct:
         product = _make_product()
         repo = _make_repo()
         repo.sbu_exists.return_value = True
+        repo.active_product_exists_for_model.return_value = False
         repo.create.return_value = product
         data = self._data()
         repo.get_model_sbu_id.return_value = data.sbu_id
@@ -114,9 +115,27 @@ class TestCreateProduct:
         repo.sbu_exists.assert_not_called()
         repo.create.assert_not_called()
 
+    def test_rejects_a_second_active_product_for_the_same_model(self):
+        """Found live, 2026-09-22: nothing stopped a duplicate catalog entry
+        for a Model that already had an active Product -- the screen would
+        silently create a second, identically-named row. Backed by the
+        uq_product_model_id_active partial index (migration 0052); this is
+        the friendly pre-check ahead of that DB constraint."""
+        repo = _make_repo()
+        repo.sbu_exists.return_value = True
+        repo.active_product_exists_for_model.return_value = True
+        data = self._data()
+        repo.get_model_sbu_id.return_value = data.sbu_id
+
+        service = ProductService(repository=repo)
+        with pytest.raises(ConflictError, match="already exists"):
+            service.create_product(data, created_by=uuid.uuid4(), role_name="Admin")
+        repo.create.assert_not_called()
+
     def test_defaults_product_type_to_new_equipment(self):
         repo = _make_repo()
         repo.sbu_exists.return_value = True
+        repo.active_product_exists_for_model.return_value = False
         repo.create.side_effect = lambda product: product
         data = self._data()
         repo.get_model_sbu_id.return_value = data.sbu_id
@@ -129,6 +148,7 @@ class TestCreateProduct:
     def test_passes_through_explicit_product_type(self):
         repo = _make_repo()
         repo.sbu_exists.return_value = True
+        repo.active_product_exists_for_model.return_value = False
         repo.create.side_effect = lambda product: product
         data = self._data(product_type="REFURBISHED")
         repo.get_model_sbu_id.return_value = data.sbu_id
@@ -169,3 +189,35 @@ class TestUpdateProduct:
 
         repo.get_by_id.assert_not_called()
         repo.update.assert_not_called()
+
+    def test_rejects_moving_to_a_model_another_active_product_already_uses(self):
+        product = _make_product()
+        new_model_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.get_model_sbu_id.return_value = product.sbu_id
+        repo.active_product_exists_for_model.return_value = True
+
+        service = ProductService(repository=repo)
+        with pytest.raises(ConflictError, match="already exists"):
+            service.update_product(
+                product.id, ProductUpdate(model_id=new_model_id), updated_by=uuid.uuid4(), role_name="Admin"
+            )
+        repo.active_product_exists_for_model.assert_called_once_with(new_model_id, exclude_id=product.id)
+        repo.update.assert_not_called()
+
+    def test_moving_to_the_products_own_current_model_is_not_a_conflict(self):
+        """A no-op model_id (re-saving the same value) must not trigger the
+        duplicate check against itself."""
+        product = _make_product()
+        repo = _make_repo()
+        repo.get_by_id.return_value = product
+        repo.get_model_sbu_id.return_value = product.sbu_id
+        repo.update.return_value = product
+
+        service = ProductService(repository=repo)
+        service.update_product(
+            product.id, ProductUpdate(model_id=product.model_id), updated_by=uuid.uuid4(), role_name="Admin"
+        )
+
+        repo.active_product_exists_for_model.assert_not_called()

@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-21 from the Dev database, catching up migration
--- 0049: product catalog: cut over product to brand/model/category FKs
+-- Regenerated 2026-09-22 from the Dev database, catching up migration
+-- 0052: product: only one active catalog entry per Model
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ylIEF7isaDBDeaG473sqLBActnfW1aJSYlf1InGcJaZjDAl4V2hasAlUuU6G8VT
+\restrict Ic2I5QUOBDP3SjbUjLfTDH9WtXOHKNPynYjBXdfci0ErM7TzBzThgxawPeNZCTn
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -1669,6 +1669,13 @@ CREATE INDEX ix_product_sbu_id ON public.product USING btree (sbu_id);
 
 
 --
+-- Name: uq_product_model_id_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_product_model_id_active ON public.product USING btree (model_id) WHERE (is_active = true);
+
+
+--
 -- Name: uq_zone_root_name; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1735,7 +1742,7 @@ CREATE TRIGGER trg_model_sync_sbu BEFORE INSERT OR UPDATE OF brand_id ON public.
 -- Name: product trg_product_sync_brand_category_name; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_product_sync_brand_category_name BEFORE INSERT OR UPDATE OF model_id ON public.product FOR EACH ROW EXECUTE FUNCTION public.trg_product_sync_brand_category_name_fn();
+CREATE TRIGGER trg_product_sync_brand_category_name BEFORE INSERT OR UPDATE OF model_id, sbu_id ON public.product FOR EACH ROW EXECUTE FUNCTION public.trg_product_sync_brand_category_name_fn();
 
 
 --
@@ -2797,7 +2804,7 @@ CREATE POLICY brand_insert ON public.brand FOR INSERT WITH CHECK ((public.cabio_
 -- Name: brand brand_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY brand_read ON public.brand FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+CREATE POLICY brand_read ON public.brand FOR SELECT USING (true);
 
 
 --
@@ -2824,7 +2831,7 @@ CREATE POLICY category_insert ON public.category FOR INSERT WITH CHECK ((public.
 -- Name: category category_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY category_read ON public.category FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+CREATE POLICY category_read ON public.category FOR SELECT USING (true);
 
 
 --
@@ -2935,7 +2942,7 @@ CREATE POLICY model_insert ON public.model FOR INSERT WITH CHECK ((public.cabio_
 -- Name: model model_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY model_read ON public.model FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR (sbu_id = public.cabio_app_sbu_id())));
+CREATE POLICY model_read ON public.model FOR SELECT USING (true);
 
 
 --
@@ -3151,5 +3158,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ylIEF7isaDBDeaG473sqLBActnfW1aJSYlf1InGcJaZjDAl4V2hasAlUuU6G8VT
+\unrestrict Ic2I5QUOBDP3SjbUjLfTDH9WtXOHKNPynYjBXdfci0ErM7TzBzThgxawPeNZCTn
 

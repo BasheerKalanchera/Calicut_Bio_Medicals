@@ -45,12 +45,16 @@ class CatalogAdminService:
 
     def create_brand(self, data: BrandCreate, *, role_name: str) -> Brand:
         self._require_admin(role_name)
+        if not self.brands.sbu_exists(data.sbu_id):
+            raise NotFoundError(f"SBU {data.sbu_id} not found")
         if self.brands.exists_by_name(data.name, sbu_id=data.sbu_id):
             raise ConflictError(f"A brand named '{data.name}' already exists")
         return self.brands.create(Brand(sbu_id=data.sbu_id, name=data.name))
 
     def create_category(self, data: CategoryCreate, *, role_name: str) -> Category:
         self._require_admin(role_name)
+        if not self.categories.sbu_exists(data.sbu_id):
+            raise NotFoundError(f"SBU {data.sbu_id} not found")
         if self.categories.exists_by_name(data.name, sbu_id=data.sbu_id):
             raise ConflictError(f"A category named '{data.name}' already exists")
         return self.categories.create(Category(sbu_id=data.sbu_id, name=data.name))
@@ -60,8 +64,11 @@ class CatalogAdminService:
         brand = self.brands.get_by_id(data.brand_id)
         if brand is None:
             raise NotFoundError(f"Brand {data.brand_id} not found")
-        if self.categories.get_by_id(data.category_id) is None:
+        category = self.categories.get_by_id(data.category_id)
+        if category is None:
             raise NotFoundError(f"Category {data.category_id} not found")
+        if category.sbu_id != brand.sbu_id:
+            raise BusinessRuleViolation("Category must belong to the same SBU as the Brand")
         if self.models.exists_by_name(data.name, brand_id=data.brand_id):
             raise ConflictError(f"A model named '{data.name}' already exists for this brand")
         # sbu_id is set by the trg_model_sync_sbu trigger (migration 0048),

@@ -228,6 +228,8 @@ PRODUCTS = [
 ]
 
 LEGACY_MODEL_ID = "86808779-3278-4cf6-9f94-fe2572282be7"
+LEGACY_BRAND_ID = "4a3ead75-882f-4e88-90d7-078351697f7e"
+LEGACY_CATEGORY_ID = "b76b8956-f2c6-46e5-8956-eb707b4413e6"
 
 
 def upgrade() -> None:
@@ -256,6 +258,15 @@ def upgrade() -> None:
             {"id": id_, "brand_id": brand_id, "category_id": category_id, "sbu_id": sbu_id, "name": name},
         )
 
+    # The Legacy Data / Retired-Unclassified / Legacy-Unclassified-Product
+    # landing spot above must never appear as a real pickable option (see
+    # this migration's own docstring) -- the INSERT loops above don't set
+    # is_active, so it silently defaulted to true. Fixed 2026-09-22
+    # (/code-review) -- deactivate all three explicitly.
+    bind.execute(text("UPDATE brand SET is_active = false WHERE id = :id"), {"id": LEGACY_BRAND_ID})
+    bind.execute(text("UPDATE category SET is_active = false WHERE id = :id"), {"id": LEGACY_CATEGORY_ID})
+    bind.execute(text("UPDATE model SET is_active = false WHERE id = :id"), {"id": LEGACY_MODEL_ID})
+
     for old_name, computed_name, model_id, sbu_id in PRODUCTS:
         updated = 0
         if old_name is not None:
@@ -270,6 +281,18 @@ def upgrade() -> None:
                 {"model_id": model_id, "computed_name": computed_name, "old_name": old_name},
             )
             updated = result.rowcount
+            # Safety check added 2026-09-22 (/code-review medium finding on
+            # cd0d8ab): this UPDATE assumes old_name is unique in the target
+            # database. If it isn't, this would silently rewrite two distinct
+            # products to the same brand/model/category/name, merging them.
+            # Abort the whole migration (transactional DDL rolls it back)
+            # rather than let that happen quietly.
+            if updated > 1:
+                raise RuntimeError(
+                    f"Old product name {old_name!r} matched {updated} rows, expected at most 1 -- "
+                    "aborting before it silently merges distinct products. Resolve the duplicate in "
+                    "the target database first."
+                )
         if updated == 0:
             bind.execute(
                 text(

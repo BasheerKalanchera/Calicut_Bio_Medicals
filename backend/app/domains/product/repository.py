@@ -11,9 +11,36 @@ class ProductRepository(BaseRepository[Product]):
     def __init__(self, db: Session):
         super().__init__(Product, db)
 
+    def create(self, obj: Product) -> Product:
+        """Overrides BaseRepository.create -- brand_id/category_id/name are
+        set server-side by trg_product_sync_brand_category_name (migration
+        0049), not by the app, so the in-memory object is stale after a
+        plain flush() and fails ProductResponse validation (found live,
+        2026-09-22). refresh() re-reads the trigger-computed values."""
+        self.db.add(obj)
+        self.db.flush()
+        self.db.refresh(obj)
+        return obj
+
+    def update(self, obj: Product) -> Product:
+        """Same reason as create() above -- an update touching model_id or
+        sbu_id re-runs the same trigger."""
+        self.db.flush()
+        self.db.refresh(obj)
+        return obj
+
     def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
         from app.domains.reference.models import SBU
         return self.db.get(SBU, sbu_id) is not None
+
+    def active_product_exists_for_model(self, model_id: uuid.UUID, *, exclude_id: uuid.UUID | None = None) -> bool:
+        """Backs the uq_product_model_id_active partial index (migration
+        0052) with a friendly pre-check -- found live, 2026-09-22: nothing
+        stopped a second active catalog entry for the same Model."""
+        stmt = select(func.count()).where(Product.model_id == model_id, Product.is_active == True)  # noqa: E712
+        if exclude_id is not None:
+            stmt = stmt.where(Product.id != exclude_id)
+        return (self.db.scalar(stmt) or 0) > 0
 
     def get_model_sbu_id(self, model_id: uuid.UUID) -> uuid.UUID | None:
         from app.domains.reference.models import Model

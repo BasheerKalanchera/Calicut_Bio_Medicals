@@ -27,6 +27,14 @@ import type { ProductListResponse, ProductResponse, DocumentResponse, BrandRespo
 
 const CATALOG_WRITE_ROLES = new Set(["General Manager", "Admin"]);
 
+// Shared by the inline "+ Add new brand/model/category" mutations below,
+// same shape as CollateralLinksCard.handleAddLink's inline catch -- surfaces
+// a duplicate-name 409 or an SBU-mismatch 422 instead of failing silently.
+function extractApiErrorMessage(err: unknown, fallback: string): string {
+  const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
+  return axiosErr.response?.data?.detail ?? axiosErr.message ?? fallback;
+}
+
 interface SbuOption {
   id: string;
   name: string;
@@ -654,8 +662,18 @@ function ProductFormFields({
   const selectedBrand = brands.find((b) => b.id === form.brand_id) ?? null;
   const selectedModel = models.find((m) => m.id === form.model_id) ?? null;
 
+  // "Just added" confirmations: the inline add forms below collapse back
+  // into the screen they're nested in (no modal closes), so a newly
+  // created value showing up selected is easy to mistake for one that was
+  // already there. A brief named confirmation, cleared after a few
+  // seconds, closes that gap without a full toast system (2026-09-22).
+  const [brandJustAdded, setBrandJustAdded] = useState<string | null>(null);
+  const [categoryJustAdded, setCategoryJustAdded] = useState<string | null>(null);
+  const [modelJustAdded, setModelJustAdded] = useState<string | null>(null);
+
   const [addingBrand, setAddingBrand] = useState(false);
   const [newBrandName, setNewBrandName] = useState("");
+  const [brandError, setBrandError] = useState<string | null>(null);
   const addBrandMutation = useMutation({
     mutationFn: () => createBrand({ sbu_id: form.sbu_id, name: newBrandName.trim() }),
     onSuccess: (created) => {
@@ -663,15 +681,21 @@ function ProductFormFields({
       const brand = created as BrandResponse;
       setForm((f) => ({ ...f, brand_id: brand.id, model_id: "" }));
       setNewBrandName("");
+      setBrandError(null);
       setAddingBrand(false);
+      setBrandJustAdded(brand.name);
+      setTimeout(() => setBrandJustAdded(null), 4000);
     },
+    onError: (err) => setBrandError(extractApiErrorMessage(err, "Failed to add brand")),
   });
 
   const [addingModel, setAddingModel] = useState(false);
   const [newModelName, setNewModelName] = useState("");
   const [newModelCategoryId, setNewModelCategoryId] = useState("");
+  const [modelError, setModelError] = useState<string | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState<string | null>(null);
 
   const addCategoryMutation = useMutation({
     mutationFn: () => createCategory({ sbu_id: form.sbu_id, name: newCategoryName.trim() }),
@@ -680,8 +704,12 @@ function ProductFormFields({
       const category = created as CategoryResponse;
       setNewModelCategoryId(category.id);
       setNewCategoryName("");
+      setCategoryError(null);
       setAddingCategory(false);
+      setCategoryJustAdded(category.name);
+      setTimeout(() => setCategoryJustAdded(null), 4000);
     },
+    onError: (err) => setCategoryError(extractApiErrorMessage(err, "Failed to add category")),
   });
 
   const addModelMutation = useMutation({
@@ -692,8 +720,12 @@ function ProductFormFields({
       setForm((f) => ({ ...f, model_id: model.id }));
       setNewModelName("");
       setNewModelCategoryId("");
+      setModelError(null);
       setAddingModel(false);
+      setModelJustAdded(model.name);
+      setTimeout(() => setModelJustAdded(null), 4000);
     },
+    onError: (err) => setModelError(extractApiErrorMessage(err, "Failed to add model")),
   });
 
   return (
@@ -726,23 +758,31 @@ function ProductFormFields({
       />
       {canManageCatalog && form.sbu_id && (
         addingBrand ? (
-          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-            <TextField
-              label="New brand name"
-              value={newBrandName}
-              onChange={(e) => setNewBrandName(e.target.value)}
-              size="small"
-              fullWidth
-              autoFocus
-            />
-            <Button size="small" variant="contained" disabled={!newBrandName.trim() || addBrandMutation.isPending} onClick={() => addBrandMutation.mutate()}>
-              Add
-            </Button>
-            <Button size="small" onClick={() => { setAddingBrand(false); setNewBrandName(""); }}>Cancel</Button>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {brandError && <Alert severity="error" onClose={() => setBrandError(null)}>{brandError}</Alert>}
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <TextField
+                label="New brand name"
+                value={newBrandName}
+                onChange={(e) => setNewBrandName(e.target.value)}
+                size="small"
+                fullWidth
+                autoFocus
+              />
+              <Button size="small" variant="contained" disabled={!newBrandName.trim() || addBrandMutation.isPending} onClick={() => addBrandMutation.mutate()}>
+                Add
+              </Button>
+              <Button size="small" onClick={() => { setAddingBrand(false); setNewBrandName(""); setBrandError(null); }}>Cancel</Button>
+            </Box>
           </Box>
         ) : (
           <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingBrand(true)}>+ Add new brand</Button>
         )
+      )}
+      {brandJustAdded && (
+        <Alert severity="success" onClose={() => setBrandJustAdded(null)}>
+          Brand "{brandJustAdded}" added
+        </Alert>
       )}
 
       <Autocomplete
@@ -757,6 +797,7 @@ function ProductFormFields({
       {canManageCatalog && form.brand_id && (
         addingModel ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, bgcolor: "#f9fafb", borderRadius: "0.75rem" }}>
+            {modelError && <Alert severity="error" onClose={() => setModelError(null)}>{modelError}</Alert>}
             <TextField
               label="New model name"
               value={newModelName}
@@ -780,21 +821,29 @@ function ProductFormFields({
               ))}
             </TextField>
             {addingCategory ? (
-              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                <TextField
-                  label="New category name"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  size="small"
-                  fullWidth
-                />
-                <Button size="small" variant="contained" disabled={!newCategoryName.trim() || addCategoryMutation.isPending} onClick={() => addCategoryMutation.mutate()}>
-                  Add
-                </Button>
-                <Button size="small" onClick={() => { setAddingCategory(false); setNewCategoryName(""); }}>Cancel</Button>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {categoryError && <Alert severity="error" onClose={() => setCategoryError(null)}>{categoryError}</Alert>}
+                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                  <TextField
+                    label="New category name"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    size="small"
+                    fullWidth
+                  />
+                  <Button size="small" variant="contained" disabled={!newCategoryName.trim() || addCategoryMutation.isPending} onClick={() => addCategoryMutation.mutate()}>
+                    Add
+                  </Button>
+                  <Button size="small" onClick={() => { setAddingCategory(false); setNewCategoryName(""); setCategoryError(null); }}>Cancel</Button>
+                </Box>
               </Box>
             ) : (
               <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingCategory(true)}>+ Add new category</Button>
+            )}
+            {categoryJustAdded && (
+              <Alert severity="success" onClose={() => setCategoryJustAdded(null)}>
+                Category "{categoryJustAdded}" added
+              </Alert>
             )}
             <Box sx={{ display: "flex", gap: 1 }}>
               <Button
@@ -805,12 +854,17 @@ function ProductFormFields({
               >
                 Add Model
               </Button>
-              <Button size="small" onClick={() => { setAddingModel(false); setNewModelName(""); setNewModelCategoryId(""); }}>Cancel</Button>
+              <Button size="small" onClick={() => { setAddingModel(false); setNewModelName(""); setNewModelCategoryId(""); setModelError(null); }}>Cancel</Button>
             </Box>
           </Box>
         ) : (
           <Button size="small" sx={{ alignSelf: "flex-start" }} onClick={() => setAddingModel(true)}>+ Add new model</Button>
         )
+      )}
+      {modelJustAdded && (
+        <Alert severity="success" onClose={() => setModelJustAdded(null)}>
+          Model "{modelJustAdded}" added
+        </Alert>
       )}
 
       <TextField
