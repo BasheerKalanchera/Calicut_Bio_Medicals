@@ -85,6 +85,28 @@ neither blocking:
    and product if one was saved), "iM90 Test"/"iM91 Test" models and the
    "EDAN iM91 Test ECG Machine" product. Deactivate when convenient.
 
+### Opportunity split editing: who may change a split — decided 2026-09-23, build queued right after Brand-Level Target Planning E2E
+
+Found during Brand-Level Target Planning E2E step 26. `replace_splits`
+(`opportunity/service.py:476`) has no owner/hierarchy check, and RLS
+`split_via_opportunity` is FOR ALL on opportunity visibility — so anyone
+who can *see* a deal can rewrite its splits, including a cross-SBU Next
+Action assignee (BR-ACT-06's `cabio_app_assigned_reminder()` carve-out,
+e.g. Vivek on Basheer K's Imaging "usg m/c"). BR-FIN-06 only checks
+*new* participants, so such a visitor can still reshuffle or remove
+existing ones.
+- **Basheer's call:** only the owner, anyone above the owner in the
+  hierarchy, and GM/Admin may change splits. **Lighter build chosen:**
+  service-layer check + hide the editor on screen; no RLS/migration change.
+- **Split participants may not edit** (Basheer agreed, 2026-09-23) — they
+  receive the credit, so they don't set it. Decision fully settled.
+- **Bundle with:** the BR-FIN-06 error message shows a raw user id
+  instead of the person's name (`service.py:516`); the split contributor
+  picker lists the *viewer's* SBU (`listUsers("sbu")`,
+  `OpportunityDetailScreen.tsx:526`) instead of the opportunity's.
+- Next: write the rule into `Business-Rules.md`, a short implementation
+  plan, `/code-review`, E2E.
+
 ## Deferred / undecided items
 
 - **Brand-Level Target Planning: "splits sum to the target" isn't enforced

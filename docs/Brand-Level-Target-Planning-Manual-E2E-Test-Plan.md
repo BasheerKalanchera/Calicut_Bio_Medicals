@@ -182,12 +182,12 @@ calls) are Claude's, driven in the browser.
     **Expected:** Nishad sees nothing for a target that isn't his own,
     his direct report's, or in his zone tree — before the `0054` fix, a
     user who happened to be *anyone's* `manager_id` (not necessarily
-    Vivek's) could read across SBU boundaries; confirm that's now closed.
+    Vivek's) could read across SBU boundaries; confirm that's now closed. — **PASS** (Claude, 2026-09-23). App layer, Nishad's own session: `/planning/targets`, `/pending-approval`, `/team` (Q2, Q3), `/rollup` (Q3) all `200` with zero rows / ₹0. Table layer, read-only direct query on `target_plan_brand_split` impersonating each user (all three RLS settings verified): Vivek (control) 2 rows; **Nishad 0**; Arun (Vivek's manager, must still see them) 2 of Vivek's, 4 total incl. his own.
 19. If a person in the **other** SBU (Imaging) is available, log in as
     them and attempt the same read against Vivek's (Critical Care)
     brand-split rows directly. **Expected:** nothing returned — the fixed
     policy's `sbu_id = cabio_app_sbu_id()` wrapper is what this step is
-    actually proving. — **PASS** (Claude, 2026-09-23). App layer, Nishad's own session: `/planning/targets`, `/pending-approval`, `/team` (Q2, Q3), `/rollup` (Q3) all `200` with zero rows / ₹0. Table layer, read-only direct query on `target_plan_brand_split` impersonating each user (all three RLS settings verified): Vivek (control) 2 rows; **Nishad 0**; Arun (Vivek's manager, must still see them) 2 of Vivek's, 4 total incl. his own. — **PASS** (Claude, same direct query): **Rudrappa (Sales Staff, Imaging) sees 0** of Vivek's split rows and 0 split rows in total — the `0054` SBU wrapper holds.
+    actually proving. — **PASS** (Claude, same direct query): **Rudrappa (Sales Staff, Imaging) sees 0** of Vivek's split rows and 0 split rows in total — the `0054` SBU wrapper holds.
 
 ## H — Imaging: single-brand SBU still works (Simple)
 
@@ -195,7 +195,7 @@ calls) are Claude's, driven in the browser.
     **Expected:** the Split by Brand section still appears (Imaging has 1
     active brand, per decision #1's "most Imaging users will just have
     one 100% row"), pre-filterable to that one brand at 100% of the
-    amount, saves cleanly.
+    amount, saves cleanly. — **PASS** (Basheer as Rudrappa: 2026-Q3 ₹10 = SonoScape 10, only brand offered, ₹0.00L green, saved Pending Approval, no flag)
 
 ## I — "Needs Brand Split" flag on a pre-existing target (Simple)
 
@@ -208,7 +208,7 @@ calls) are Claude's, driven in the browser.
     **Expected:** the same flag shows next to Vivek's row there too. — **PASS** (Basheer as Arun, `2026-Q2`)
 23. Click **Revise** on that target, add a valid split, Save. **Expected:**
     the flag disappears from both "My Target" and the SBU Rollup after a
-    refresh.
+    refresh. — **PASS** (Basheer as Vivek: `2026-Q2` ₹65 = EDAN 65, flag gone, back to Pending Approval; as Arun: flag gone from Vivek's SBU Rollup row)
 
 ## J — Validation edge cases (Complex, direct API)
 
@@ -216,12 +216,12 @@ calls) are Claude's, driven in the browser.
     with two split rows using the *same* `brand_id`. **Expected:** a
     clean rejection ("Each brand can only appear once in the split"), not
     a raw 500 — the UI itself already prevents this via its filtered
-    picker, so this is an API-level check only.
+    picker, so this is an API-level check only. — **PASS** (Claude, `PATCH` on Vivek's 2026-Q3 target, EDAN twice) → `400` "Each brand can only appear once in the split."; split unchanged afterwards (EDAN 30 / ELECTROSCIENCE 30).
 25. Attempt a save where the split sums to one cent off the total (e.g.
     total `50.00`, splits summing to `50.01`). **Expected:** rejected by
     the backend; separately confirm in the browser that the same mismatch
     is *also* caught client-side before the request is even sent (the
-    tolerance-consistency fix from `053c017`). — **PASS** (Claude, `PATCH` on Vivek's 2026-Q3 target, EDAN twice) → `400` "Each brand can only appear once in the split."; split unchanged afterwards (EDAN 30 / ELECTROSCIENCE 30). — **Backend half PASS** (Claude): EDAN 30.01 + ELECTROSCIENCE 30 vs total 60 → `400` "Brand splits must sum to exactly the target amount: splits total 60.01, target is 60."; split unchanged. Client-side half: **PASS** (Basheer) — indicator stayed amber and Save was blocked before any request. **Display bug found and fixed:** the indicator read "−₹0.0L" and the blocked message read "currently ₹60.0L of ₹60.0L" — both rounded to 1 decimal while the rule checks to the paisa. Now 2 decimals in the split editor only (`formatSplitLakhs`); **re-check PASS** (Basheer): "Remaining to allocate: ₹-0.01L", message "currently ₹60.01L of ₹60.00L".
+    tolerance-consistency fix from `053c017`). — **Backend half PASS** (Claude): EDAN 30.01 + ELECTROSCIENCE 30 vs total 60 → `400` "Brand splits must sum to exactly the target amount: splits total 60.01, target is 60."; split unchanged. Client-side half: **PASS** (Basheer) — indicator stayed amber and Save was blocked before any request. **Display bug found and fixed:** the indicator read "−₹0.0L" and the blocked message read "currently ₹60.0L of ₹60.0L" — both rounded to 1 decimal while the rule checks to the paisa. Now 2 decimals in the split editor only (`formatSplitLakhs`); **re-check PASS** (Basheer): "Remaining to allocate: ₹-0.01L", message "currently ₹60.01L of ₹60.00L".
 
 ## K — Regression: Opportunity Splits unaffected (Simple)
 
@@ -231,15 +231,15 @@ calls) are Claude's, driven in the browser.
     green/amber coloring behave identically to before this session's
     changes. **Expected:** no visible difference at all — only the
     underlying sum/balance-check code was shared with the new Brand split
-    feature, not the markup or styling.
+    feature, not the markup or styling. — **PASS** (Basheer as Basheer K on his own Imaging opportunity "usg m/c": amber over 100%, Save blocked, green at 100%, Cancel left it unchanged). First attempt as Vivek hit a pre-existing, unrelated gap — a cross-SBU Next Action assignee can open the split editor, the picker offers only their own SBU, and the error shows a raw user id; parked in `docs/Backlog.md` with Basheer's decision on who may edit splits.
 
 ## L — Regression: nav and unrelated screens (Simple)
 
 27. Confirm **Target Planning** and **Brand Target Tracking** (Admin/GM
     only) both appear correctly per role, same as Target Planning's own
-    Group K.
+    Group K. — Admin/GM half **PASS** (Basheer as Haroon: both items present); Vivek's lack of Brand Target Tracking already proven by step 14. Sales-Staff half **PASS** (Basheer as Rudrappa: Target Planning present, no Brand Target Tracking).
 28. Spot-check Pipeline and Insights still load normally after visiting
-    both screens. — Admin/GM half **PASS** (Basheer as Haroon: both items present); Vivek's lack of Brand Target Tracking already proven by step 14. Sales-Staff half (Target Planning present): pending.
+    both screens. — **PASS** (Basheer as Basheer K)
 
 ---
 
@@ -257,6 +257,31 @@ and the RLS boundary specifically (Section G), not re-proving the
 underlying rules those tests already cover.
 
 ## Sign-off
+
+**Result (2026-09-23): 28/28 PASS.** Run live against Dev. Simple steps by
+Basheer (as Vivek, Arun Adarsh, Haroon, Rudrappa, Basheer K); Complex
+steps 15, 18, 19, 24, 25 (backend half) by Claude — direct API calls in
+the user's own session, plus a read-only direct query on
+`target_plan_brand_split` impersonating each user for Section G.
+
+**Live findings:**
+- Pre-flight: `Physical-Schema.sql` never regenerated for `0053`/`0054`
+  — fixed `4fdd259`.
+- Step 11 — brand-rollup `422` (axios `brand_ids[]` format), screen hid
+  the error — fixed `188ac50`.
+- Step 25 — split editor rounded a ₹0.01L mismatch to "−₹0.0L" — fixed
+  `188ac50`.
+- Step 26 — pre-existing, unrelated: anyone who can see a deal can edit
+  its splits (incl. cross-SBU Next Action assignees). Basheer decided the
+  rule (owner, their hierarchy, GM/Admin only; not participants) and the
+  lighter build; parked in `docs/Backlog.md`, next up after this.
+- Section C retagged Complex → Simple (switching roles alone isn't
+  Complex).
+
+**Dev test data left behind:** Vivek 2026-Q3 ₹60 (EDAN 30 /
+ELECTROSCIENCE 30) and 2026-Q2 ₹65 (EDAN 65), Arun Adarsh 2026-Q3 ₹50
+(EDAN 25 / Magnamed 25), Rudrappa 2026-Q3 ₹10 (SonoScape 10) — all
+Pending Approval; EDAN vendor target 2026-Q3 ₹120.
 
 Record Pass/Fail per step, who tested each role, and any live findings
 (fixed or deferred), same format as Target Planning's and Product
