@@ -5967,3 +5967,25 @@ git coordination.
   VcwUvDNA… v11). By-status had been stale since 2026-09-18, so it also
   picked up the 2026-09-19 "New Features Added" → "Commitment beyond
   contract" rename — shown to Basheer as a separate diff before publishing.
+
+## 2026-09-23 — Brand-Level Target Planning manual E2E (testing notes)
+
+- **Pre-flight (read-only, Dev):** `alembic current` = `0054 (head)` —
+  both of this feature's migrations (`0053` tables, `0054` RLS fix) are
+  live on Dev. Clean test quarter chosen: `2026-Q3` (no targets for Vivek
+  or Arun, verified with all three RLS session settings set, impersonating
+  Haroon/GM with Critical Care SBU). Test-plan correction: Vivek's
+  pre-feature target for Section I is `2026-Q2` (₹65L, Approved, 0 split
+  rows), not `2026-Q3` as the plan says.
+- **Process gap found (Basheer's question):** `0053` was applied to Dev
+  without it ever being recorded — the backend commit `36385f2` said "not
+  yet applied", no later commit or handover note said it was; it was only
+  implied by `4185135` ("0054 … Applied to the live Dev DB"). And
+  `docs/Physical-Schema.sql` was never regenerated after either migration
+  (the last step of the migration workflow in
+  `Backend-Implementation-Standards.md`). Fixed: regenerated via
+  `scripts/regen_physical_schema.ps1` (needed Docker Desktop running);
+  diff is exactly the two new tables plus their keys, FKs, index,
+  triggers and RLS policies, nothing unrelated. The dumped
+  `target_plan_brand_split_read` policy confirms the `0054` SBU wrapper
+  is what's live.

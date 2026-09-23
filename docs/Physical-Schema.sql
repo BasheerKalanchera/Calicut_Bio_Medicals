@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-22 from the Dev database, catching up migration
--- 0052: product: only one active catalog entry per Model
+-- Regenerated 2026-09-23 from the Dev database, catching up migration
+-- 0054: migrations 0053 + 0054: target_plan_brand_split and brand_vendor_target tables (Brand-Level Target Planning), plus 0054's SBU-scoped fix to target_plan_brand_split_read RLS policy
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Ic2I5QUOBDP3SjbUjLfTDH9WtXOHKNPynYjBXdfci0ErM7TzBzThgxawPeNZCTn
+\restrict n2dh1pUUzwwb9l2YDCD9vqh8yfHkahtI67MCOVjBYwEPQQkITqy030bBU5b0XYp
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -340,6 +340,23 @@ CREATE TABLE public.brand (
     sbu_id uuid NOT NULL,
     name character varying(100) NOT NULL,
     is_active boolean DEFAULT true NOT NULL
+);
+
+
+--
+-- Name: brand_vendor_target; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.brand_vendor_target (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    brand_id uuid NOT NULL,
+    planning_period character varying(10) NOT NULL,
+    vendor_target_amount_lakhs numeric(15,2) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_brand_vendor_target_planning_period CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
 
 
@@ -822,6 +839,23 @@ CREATE TABLE public.target_plan (
 
 
 --
+-- Name: target_plan_brand_split; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.target_plan_brand_split (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    target_plan_id uuid NOT NULL,
+    brand_id uuid NOT NULL,
+    split_amount_lakhs numeric(15,2) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_target_plan_brand_split_nonneg CHECK ((split_amount_lakhs >= (0)::numeric))
+);
+
+
+--
 -- Name: user_profile; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -958,6 +992,14 @@ ALTER TABLE ONLY public.audit_log
 
 ALTER TABLE ONLY public.brand
     ADD CONSTRAINT brand_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_vendor_target
+    ADD CONSTRAINT brand_vendor_target_pkey PRIMARY KEY (id);
 
 
 --
@@ -1281,6 +1323,14 @@ ALTER TABLE ONLY public.stakeholder
 
 
 --
+-- Name: target_plan_brand_split target_plan_brand_split_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT target_plan_brand_split_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: target_plan target_plan_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1305,6 +1355,14 @@ ALTER TABLE ONLY public.brand
 
 
 --
+-- Name: brand_vendor_target uq_brand_vendor_target; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_vendor_target
+    ADD CONSTRAINT uq_brand_vendor_target UNIQUE (brand_id, planning_period);
+
+
+--
 -- Name: category uq_category_sbu_name; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1318,6 +1376,14 @@ ALTER TABLE ONLY public.category
 
 ALTER TABLE ONLY public.model
     ADD CONSTRAINT uq_model_brand_name UNIQUE (brand_id, name);
+
+
+--
+-- Name: target_plan_brand_split uq_target_plan_brand_split; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT uq_target_plan_brand_split UNIQUE (target_plan_id, brand_id);
 
 
 --
@@ -1669,6 +1735,13 @@ CREATE INDEX ix_product_sbu_id ON public.product USING btree (sbu_id);
 
 
 --
+-- Name: ix_target_plan_brand_split_target_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_target_plan_brand_split_target_plan_id ON public.target_plan_brand_split USING btree (target_plan_id);
+
+
+--
 -- Name: uq_product_model_id_active; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1753,6 +1826,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.account FOR EACH ROW EXECU
 
 
 --
+-- Name: brand_vendor_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.brand_vendor_target FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
 -- Name: coverage_plan trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1834,6 +1914,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.stakeholder FOR EACH ROW E
 --
 
 CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.target_plan FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
+-- Name: target_plan_brand_split trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.target_plan_brand_split FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 
 --
@@ -1952,6 +2039,30 @@ ALTER TABLE ONLY public.audit_log
 
 ALTER TABLE ONLY public.brand
     ADD CONSTRAINT brand_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_vendor_target
+    ADD CONSTRAINT brand_vendor_target_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(id);
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_vendor_target
+    ADD CONSTRAINT brand_vendor_target_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.brand_vendor_target
+    ADD CONSTRAINT brand_vendor_target_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2595,6 +2706,38 @@ ALTER TABLE ONLY public.target_plan
 
 
 --
+-- Name: target_plan_brand_split target_plan_brand_split_brand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT target_plan_brand_split_brand_id_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(id);
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT target_plan_brand_split_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_target_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT target_plan_brand_split_target_plan_id_fkey FOREIGN KEY (target_plan_id) REFERENCES public.target_plan(id) ON DELETE CASCADE;
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_brand_split
+    ADD CONSTRAINT target_plan_brand_split_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: target_plan target_plan_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2812,6 +2955,33 @@ CREATE POLICY brand_read ON public.brand FOR SELECT USING (true);
 --
 
 CREATE POLICY brand_update ON public.brand FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: brand_vendor_target; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.brand_vendor_target ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: brand_vendor_target brand_vendor_target_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_vendor_target_insert ON public.brand_vendor_target FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_vendor_target_read ON public.brand_vendor_target FOR SELECT USING (true);
+
+
+--
+-- Name: brand_vendor_target brand_vendor_target_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY brand_vendor_target_update ON public.brand_vendor_target FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
 
 
 --
@@ -3114,6 +3284,63 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 ALTER TABLE public.target_plan ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: target_plan_brand_split; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.target_plan_brand_split ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_brand_split_delete ON public.target_plan_brand_split FOR DELETE USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))))));
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_brand_split_read ON public.target_plan_brand_split FOR SELECT USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (target_plan.sbu_id = public.cabio_app_sbu_id())) OR ((target_plan.sbu_id = public.cabio_app_sbu_id()) AND ((target_plan.user_id IN ( SELECT up.id
+           FROM (public.user_profile up
+             JOIN public.user_zone uz ON ((uz.user_id = up.id)))
+          WHERE (uz.zone_id IN ( SELECT zone_closure.descendant_zone_id
+                   FROM public.zone_closure
+                  WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
+                           FROM public.user_zone
+                          WHERE (user_zone.user_id = public.cabio_app_uid()))))))) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))))) OR (target_plan.user_id = public.cabio_app_uid())))));
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_brand_split_update ON public.target_plan_brand_split FOR UPDATE USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (target_plan.user_id <> public.cabio_app_uid())))))) WITH CHECK ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (target_plan.user_id <> public.cabio_app_uid()))))));
+
+
+--
+-- Name: target_plan_brand_split target_plan_brand_split_write; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_brand_split_write ON public.target_plan_brand_split FOR INSERT WITH CHECK ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE (target_plan.user_id = public.cabio_app_uid()))));
+
+
+--
 -- Name: target_plan target_plan_delete; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -3158,5 +3385,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Ic2I5QUOBDP3SjbUjLfTDH9WtXOHKNPynYjBXdfci0ErM7TzBzThgxawPeNZCTn
+\unrestrict n2dh1pUUzwwb9l2YDCD9vqh8yfHkahtI67MCOVjBYwEPQQkITqy030bBU5b0XYp
 
