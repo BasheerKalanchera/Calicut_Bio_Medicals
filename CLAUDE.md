@@ -223,6 +223,24 @@ code or changing structure. On any conflict, the document wins over this file.
   triggered Vite's hot-reload, which silently logged the browser back to a
   previous test user (Fazal) and lost the Admin/GM session needed to
   continue Section D.
+- Screenshot only at meaningful checkpoints (after a screen/dialog loads,
+  before/after a save) — not after every click. Use `get_page_text` or
+  `find` to confirm a value/state changed instead of a screenshot when a
+  visual check isn't the point.
+- Before running a test plan, tag every individual step Simple or Complex
+  — not by section. **Simple** = a single click/type/verify-a-value action
+  where "pass" is unambiguous (e.g. field shows the right number, dropdown
+  lists the right options, a list filters correctly) — Basheer executes
+  these himself, told step-by-step what to do and what to check, and
+  reports the result back in chat. **Complex** = anything needing precise
+  element targeting after a layout shift, a multi-step or branching flow,
+  cross-screen/cross-role verification, or a genuine visual check — Claude
+  drives these directly with the browser tool. Every step still gets
+  executed and recorded Pass/Fail — the split changes only who drives the
+  browser, nothing is skipped. **Why:** 2026-09-23, a single day's browser
+  screenshots ran to roughly 300,000–700,000 tokens per session, dwarfing
+  everything else including `CLAUDE.md` itself — routing the unambiguous
+  steps through Basheer removes most of that cost without losing coverage.
 
 ## Troubleshooting & scripting
 - When something fails repeatedly for an unclear reason, isolate the

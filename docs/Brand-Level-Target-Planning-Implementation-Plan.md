@@ -5,8 +5,12 @@
 made): this feature depends on and reuses the `brand` table being built by
 `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`, not a
 separate standalone one. **This feature cannot start until that Product
-Catalog work ships** (Basheer's call, 2026-09-19). Everything else confirmed
-2026-09-19 (Basheer). Builds on top of Target Planning (`docs/Target-Planning-
+Catalog work ships** (Basheer's call, 2026-09-19) — **"ships" means
+`Signed-Requirements-to-PRD-Traceability.md` row 4.1 (Product Catalog
+Management) is marked Done, i.e. its full manual E2E pass is signed off, not
+merely that the code/schema is merged and Partial** (confirmed 2026-09-23,
+Basheer — that row was still Partial, E2E in progress, when this plan was
+reviewed). Everything else confirmed 2026-09-19 (Basheer). Builds on top of Target Planning (`docs/Target-Planning-
 Implementation-Plan.md`), already live. **Feature:** extends Module 6.4/PRD §6.5
 territory — a brand-level slice of §6.5 ("Product Category Targets"), not the
 full product-category split, which stays deferred to Phase 2 as originally scoped.
@@ -119,7 +123,13 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
   `target_amount_lakhs`; **validate the splits sum to exactly the total**
   (decision #1 — mandatory, no partial). Reject with a clear error otherwise,
   same "service layer gives a real error, RLS is just the backstop" pattern
-  Target Planning already uses.
+  Target Planning already uses. A brand-split change on an `APPROVED` plan
+  **must trigger the same `status` reset to `PENDING_APPROVAL`** (clearing
+  `approved_by`/`approved_at`) that a `target_amount_lakhs` change already
+  triggers (`Target-Planning-Implementation-Plan.md` decision #5) — the
+  split is part of what the manager approved, so re-shuffling it without
+  re-approval would let a rep quietly move credit between brands on an
+  already-approved plan. Confirmed 2026-09-23 (Basheer).
 - `BrandService`: **no new service** — Product Catalog's plan already builds
   CRUD for `brand`, Admin/GM only. This feature just reads from it.
 - `TargetPlanService.get_brand_rollup(brand_id, planning_period)`: `SUM(
@@ -152,10 +162,6 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
   rollup view) — Admin/GM only: per brand, per quarter, shows the vendor's
   number, the team's committed total, and the gap. This is the screen that
   answers Haroon's actual question.
-- Brand list maintenance: a small admin screen, or folded into the existing
-  SBU/Zone administration screen if one already exists (check
-  `Frontend-Implementation-Standards.md`'s reference-data admin pattern before
-  building a new screen from scratch).
 
 ## Out of scope for this pass
 
