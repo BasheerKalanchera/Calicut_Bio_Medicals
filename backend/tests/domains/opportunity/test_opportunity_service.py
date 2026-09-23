@@ -5,6 +5,7 @@ Repository is fully mocked — no DB required.  Tests cover:
   - create_opportunity: stage/status validation, NotFoundError on missing refs
   - update_opportunity: PATCH semantics, stage gate, status transition, terminal lock
   - replace_splits: BR-FIN-01 (100% sum), empty list passthrough
+  - split editing authority (BR-FIN-08): can_edit_splits and replace_splits agree
   - replace_items / replace_stakeholders: NotFoundError on missing opportunity
 """
 
@@ -166,6 +167,9 @@ def _make_repo(**overrides) -> MagicMock:
     # By default, assume any newly-referenced participant is in the opportunity's own
     # SBU -- tests exercising the ADR-037 cross-SBU rejection override this explicitly.
     repo.get_user_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
+    repo.get_user_display_names.side_effect = lambda ids: {i: f"User {i}" for i in ids}
+    # BR-FIN-08: an Area Manager's zones cover no account unless a test says so.
+    repo.account_in_user_zones.return_value = False
     # Same default for BR-OP-11 -- any referenced product is assumed to be in the
     # opportunity's own SBU unless a test overrides this to exercise the rejection.
     repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, SBU_ID)
@@ -1322,7 +1326,7 @@ class TestReplaceSplits:
 
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.replace_splits(
-                OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff"
+                OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID
             )
 
     def test_empty_splits_list_passes_without_sum_check(self):
@@ -1331,7 +1335,7 @@ class TestReplaceSplits:
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
         service.replace_splits(
-            OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff"
+            OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID
         )
 
         repo.replace_splits.assert_called_once_with(OPP_ID, [])
@@ -1346,7 +1350,7 @@ class TestReplaceSplits:
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("30")),
         ])
         with pytest.raises(BusinessRuleViolation, match="100%"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
     def test_splits_summing_to_100_calls_repository(self):
         repo = _make_repo()
@@ -1358,7 +1362,7 @@ class TestReplaceSplits:
             SplitCreate(user_id=uid1, split_percentage=Decimal("70")),
             SplitCreate(user_id=uid2, split_percentage=Decimal("30")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
         repo.replace_splits.assert_called_once()
         created_splits: list[Split] = repo.replace_splits.call_args[0][1]
@@ -1374,7 +1378,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
         repo.replace_splits.assert_called_once()
 
     def test_split_audit_fields_set(self):
@@ -1385,7 +1389,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
         split: Split = repo.replace_splits.call_args[0][1][0]
         assert split.created_by == USER_ID
@@ -1398,11 +1402,13 @@ class TestReplaceSplits:
         repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
         uid = uuid.uuid4()
         repo.get_user_sbu_ids.side_effect = lambda ids: {uid: other_sbu}
+        repo.get_user_display_names.side_effect = lambda ids: {uid: "Nishad K V"}
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=uid, split_percentage=Decimal("100"))])
-        with pytest.raises(BusinessRuleViolation, match="SBU"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        # Names the person, not their raw user id (found in the 2026-09-23 E2E).
+        with pytest.raises(BusinessRuleViolation, match=r"^Nishad K V is not in this Opportunity's SBU"):
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
         repo.replace_splits.assert_not_called()
 
@@ -1414,7 +1420,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(
             splits=[SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100"))]
         )
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
         repo.replace_splits.assert_called_once()
 
     def test_existing_cross_sbu_participant_is_grandfathered(self):
@@ -1436,7 +1442,7 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=legacy_user_id, split_percentage=Decimal("100")),
         ])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
         repo.replace_splits.assert_called_once()
 
     # -- BR-FIN-06 self-carve-out for Admin/GM (2026-09-14) --------------------
@@ -1451,7 +1457,7 @@ class TestReplaceSplits:
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager", user_sbu_id=SBU_ID)
 
         repo.replace_splits.assert_called_once()
 
@@ -1469,7 +1475,7 @@ class TestReplaceSplits:
             splits=[SplitCreate(user_id=other_user_id, split_percentage=Decimal("100"))]
         )
         with pytest.raises(BusinessRuleViolation, match="SBU"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager", user_sbu_id=SBU_ID)
 
     def test_non_admin_adding_self_still_enforces_sbu_check(self):
         """The carve-out is Admin/GM-only -- a normal role adding themselves cross-SBU
@@ -1483,7 +1489,7 @@ class TestReplaceSplits:
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
         with pytest.raises(BusinessRuleViolation, match="SBU"):
-            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+            service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
     # -- split-added notification (2026-09-14) ---------------------------------
 
@@ -1495,7 +1501,7 @@ class TestReplaceSplits:
         service = OpportunityService(repository=repo, notification_service=notification_service)
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=new_uid, split_percentage=Decimal("100"))])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
         notification_service.notify_split_added.assert_called_once_with(
             recipient_user_id=new_uid, opportunity_id=OPP_ID, actor_id=USER_ID
@@ -1508,7 +1514,7 @@ class TestReplaceSplits:
         service = OpportunityService(repository=repo, notification_service=notification_service)
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager", user_sbu_id=SBU_ID)
 
         notification_service.notify_split_added.assert_not_called()
 
@@ -1525,9 +1531,152 @@ class TestReplaceSplits:
         data = SplitsBulkUpdate(
             splits=[SplitCreate(user_id=existing_user_id, split_percentage=Decimal("100"))]
         )
-        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff")
+        service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
         notification_service.notify_split_added.assert_not_called()
+
+
+# ===========================================================================
+# Split editing authority (BR-FIN-08)
+# ===========================================================================
+
+OWNER_ID = uuid.uuid4()
+ACTOR_ID = uuid.uuid4()
+
+
+def _split_edit_service(status_code: str = "ACTIVE") -> tuple[OpportunityService, MagicMock]:
+    """An opportunity owned by OWNER_ID in SBU_ID; ACTOR_ID is the would-be editor."""
+    repo = _make_repo()
+    repo.get_for_update.return_value = _make_opportunity(owner_id=OWNER_ID)
+    repo.get_status.return_value = _make_status(status_code, is_terminal=status_code in {"WON", "LOST"})
+    repo.list_splits.return_value = [MagicMock(spec=Split, user_id=OWNER_ID)]
+    service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+    return service, repo
+
+
+def _owner_keeps_100() -> SplitsBulkUpdate:
+    return SplitsBulkUpdate(splits=[SplitCreate(user_id=OWNER_ID, split_percentage=Decimal("100"))])
+
+
+def _assert_allowed(service, repo, *, actor_id, role_name, user_sbu_id=SBU_ID):
+    assert service.can_edit_splits(OPP_ID, user_id=actor_id, role_name=role_name, user_sbu_id=user_sbu_id)
+    service.replace_splits(
+        OPP_ID, _owner_keeps_100(), updated_by=actor_id, role_name=role_name, user_sbu_id=user_sbu_id
+    )
+    repo.replace_splits.assert_called_once()
+
+
+def _assert_refused(service, repo, *, actor_id, role_name, user_sbu_id=SBU_ID, match="owner"):
+    assert not service.can_edit_splits(OPP_ID, user_id=actor_id, role_name=role_name, user_sbu_id=user_sbu_id)
+    with pytest.raises(AuthorizationError, match=match):
+        service.replace_splits(
+            OPP_ID, _owner_keeps_100(), updated_by=actor_id, role_name=role_name, user_sbu_id=user_sbu_id
+        )
+    repo.replace_splits.assert_not_called()
+
+
+class TestSplitEditAuthority:
+    """Every case checks can_edit_splits and replace_splits agree -- the screen's
+    Edit button and the server's lock come from the same method."""
+
+    # -- Active: who may edit ---------------------------------------------------
+
+    def test_owner_may_edit(self):
+        service, repo = _split_edit_service()
+        _assert_allowed(service, repo, actor_id=OWNER_ID, role_name="Sales Staff")
+
+    @pytest.mark.parametrize("role_name", ["Admin", "General Manager"])
+    def test_admin_and_gm_may_edit_any_deal(self, role_name):
+        service, repo = _split_edit_service()
+        _assert_allowed(service, repo, actor_id=ACTOR_ID, role_name=role_name, user_sbu_id=OTHER_SBU_ID)
+
+    def test_sbu_manager_same_sbu_may_edit(self):
+        service, repo = _split_edit_service()
+        _assert_allowed(service, repo, actor_id=ACTOR_ID, role_name="SBU Manager")
+
+    def test_sbu_manager_other_sbu_refused(self):
+        service, repo = _split_edit_service()
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="SBU Manager", user_sbu_id=OTHER_SBU_ID)
+
+    def test_area_manager_covering_account_zone_may_edit(self):
+        service, repo = _split_edit_service()
+        repo.account_in_user_zones.return_value = True
+        _assert_allowed(service, repo, actor_id=ACTOR_ID, role_name="Area Manager")
+        repo.account_in_user_zones.assert_called_with(ACCOUNT_ID, ACTOR_ID)
+
+    def test_area_manager_direct_manager_of_owner_may_edit(self):
+        service, repo = _split_edit_service()
+        repo.get_owner_manager_id.return_value = ACTOR_ID
+        _assert_allowed(service, repo, actor_id=ACTOR_ID, role_name="Area Manager")
+        repo.get_owner_manager_id.assert_called_with(OWNER_ID)
+
+    def test_area_manager_neither_zone_nor_manager_refused(self):
+        service, repo = _split_edit_service()
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="Area Manager")
+
+    def test_area_manager_zone_match_but_other_sbu_refused(self):
+        """Same SBU is required too -- mirrors opportunity_tier_visibility."""
+        service, repo = _split_edit_service()
+        repo.account_in_user_zones.return_value = True
+        repo.get_owner_manager_id.return_value = ACTOR_ID
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="Area Manager", user_sbu_id=OTHER_SBU_ID)
+
+    def test_split_participant_refused(self):
+        """On the split, so they can see it -- but they receive the credit, so
+        they don't set it."""
+        service, repo = _split_edit_service()
+        repo.list_splits.return_value = [
+            MagicMock(spec=Split, user_id=OWNER_ID),
+            MagicMock(spec=Split, user_id=ACTOR_ID),
+        ]
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="Sales Staff")
+
+    def test_cross_sbu_next_action_assignee_refused(self):
+        """BR-ACT-06 gives a follow-up assignee visibility only -- the E2E step 26
+        case (a Critical Care rep on an Imaging deal)."""
+        service, repo = _split_edit_service()
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="Sales Staff", user_sbu_id=OTHER_SBU_ID)
+
+    def test_on_hold_behaves_like_active(self):
+        service, repo = _split_edit_service("ON_HOLD")
+        _assert_allowed(service, repo, actor_id=OWNER_ID, role_name="Sales Staff")
+        service, repo = _split_edit_service("ON_HOLD")
+        _assert_refused(service, repo, actor_id=ACTOR_ID, role_name="Sales Staff")
+
+    # -- Won: General Manager only ------------------------------------------------
+
+    def test_won_gm_may_edit(self):
+        service, repo = _split_edit_service("WON")
+        _assert_allowed(service, repo, actor_id=ACTOR_ID, role_name="General Manager")
+
+    @pytest.mark.parametrize(
+        ("role_name", "is_owner"),
+        [("Admin", False), ("Sales Staff", True), ("SBU Manager", False), ("Area Manager", False)],
+    )
+    def test_won_everyone_else_refused(self, role_name, is_owner):
+        """Even people who'd pass on an Active deal (zone + direct-manager match set)."""
+        service, repo = _split_edit_service("WON")
+        repo.account_in_user_zones.return_value = True
+        repo.get_owner_manager_id.return_value = ACTOR_ID
+        actor_id = OWNER_ID if is_owner else ACTOR_ID
+        _assert_refused(service, repo, actor_id=actor_id, role_name=role_name, match="Won")
+
+    # -- Lost: locked for everyone ------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("role_name", "is_owner"),
+        [("General Manager", False), ("Admin", False), ("Sales Staff", True)],
+    )
+    def test_lost_everyone_refused(self, role_name, is_owner):
+        service, repo = _split_edit_service("LOST")
+        actor_id = OWNER_ID if is_owner else ACTOR_ID
+        _assert_refused(service, repo, actor_id=actor_id, role_name=role_name, match="Lost")
+
+    def test_can_edit_missing_opportunity_raises_not_found(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        with pytest.raises(NotFoundError, match="Opportunity"):
+            service.can_edit_splits(OPP_ID, user_id=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
 
 # ===========================================================================

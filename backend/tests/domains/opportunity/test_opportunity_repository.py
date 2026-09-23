@@ -425,3 +425,29 @@ class TestReplaceSplits:
         repo.replace_splits(opportunity_id, [resubmitted])
 
         assert existing_split.updated_by == original_actor
+
+
+class TestAccountInUserZones:
+    """BR-FIN-08: the Area Manager zone arm of opportunity_tier_visibility --
+    compiled-SQL check, same pattern as TestListPipelineOrdering."""
+
+    def test_matches_account_zone_against_user_zone_descendants(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        repo = OpportunityRepository(mock_db)
+        account_id, user_id = uuid.uuid4(), uuid.uuid4()
+
+        assert repo.account_in_user_zones(account_id, user_id) is True
+
+        sql = _compiled(mock_db.scalar.call_args.args[0])
+        assert f"account.id = '{account_id.hex}'" in sql
+        assert "account.zone_id IN (SELECT zone_closure.descendant_zone_id" in sql
+        assert "zone_closure.ancestor_zone_id IN (SELECT user_zone.zone_id" in sql
+        assert f"user_zone.user_id = '{user_id.hex}'" in sql
+
+    def test_no_row_means_not_in_zones(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = None
+        repo = OpportunityRepository(mock_db)
+
+        assert repo.account_in_user_zones(uuid.uuid4(), uuid.uuid4()) is False

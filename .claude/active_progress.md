@@ -10,19 +10,16 @@ Haroon's request); scorecard 31/11/8; both Artifacts republished (main
 v18, by-status v12). Detail: Progress-Archive 2026-09-23. Nothing left
 open on this thread.
 
-## NEXT — Opportunity split-editing permission (decided, not built)
+## IN PROGRESS — Opportunity split-editing permission (BR-FIN-08)
 
-Parked in `docs/Backlog.md` ("Opportunity split editing: who may change a
-split"). Decided 2026-09-23: only the owner, anyone above them in the
-hierarchy, and GM/Admin may change splits; not participants, not
-cross-SBU Next Action assignees. Lighter build (service check + hide the
-editor; no RLS/migration). Bundle the raw-user-id error message and the
-split picker listing the viewer's SBU instead of the opportunity's.
-Rule written as BR-FIN-08; plan drafted in
-`docs/Split-Editing-Permission-Implementation-Plan.md` (uncommitted).
-All decisions settled 2026-09-23 (Won = GM only, Lost = locked, Area
-Manager row as tabled, lighter build). **Next step:** Basheer approves the
-plan + docs commit; then build.
+Rule BR-FIN-08 + plan `docs/Split-Editing-Permission-Implementation-Plan.md`
+committed `050a7a7`, approved. **Backend built** (Part 1): service check
+`_split_edit_refusal` in `replace_splits` (403), `GET
+/opportunities/{id}/splits/can-edit`, BR-FIN-06 error now names the person.
+Full backend suite 969 passed. No migration.
+**Next step:** frontend — `SplitsTab` hides Edit / + Add when `can_edit`
+is false; regenerate `api.ts`. Then `/code-review` (medium) → written E2E
+plan → manual E2E → commit → checklist.
 
 ## 2026-09-23 — CLAUDE.md refactor: DONE (`c8eac23`)
 

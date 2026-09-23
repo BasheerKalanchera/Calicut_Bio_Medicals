@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, noload
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
-from app.domains.organization.models import UserProfile
+from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.product.models import Product
 from app.domains.reference.models import (
@@ -422,6 +422,28 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             select(UserProfile.id, UserProfile.sbu_id).where(UserProfile.id.in_(user_ids))
         ).all()
         return {row.id: row.sbu_id for row in rows}
+
+    def get_user_display_names(self, user_ids: set[uuid.UUID]) -> dict[uuid.UUID, str]:
+        if not user_ids:
+            return {}
+        rows = self.db.execute(
+            select(UserProfile.id, UserProfile.display_name).where(UserProfile.id.in_(user_ids))
+        ).all()
+        return {row.id: row.display_name for row in rows}
+
+    def account_in_user_zones(self, account_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        # BR-FIN-08: the Area Manager zone arm of opportunity_tier_visibility --
+        # the account's zone is a descendant (zone_closure has a self-row per
+        # zone) of any zone the user is responsible for via user_zone.
+        user_zone_descendants = select(ZoneClosure.descendant_zone_id).where(
+            ZoneClosure.ancestor_zone_id.in_(select(UserZone.zone_id).where(UserZone.user_id == user_id))
+        )
+        return (
+            self.db.scalar(
+                select(1).where(Account.id == account_id, Account.zone_id.in_(user_zone_descendants))
+            )
+            is not None
+        )
 
     def get_product_sbu_ids(self, product_ids: set[uuid.UUID]) -> dict[uuid.UUID, uuid.UUID]:
         if not product_ids:

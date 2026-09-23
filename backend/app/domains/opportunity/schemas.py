@@ -159,6 +159,12 @@ class SplitsBulkUpdate(BaseModel):
     splits: list[SplitCreate]
 
 
+class SplitEditPermission(BaseModel):
+    """BR-FIN-08: whether the current user may change this opportunity's split."""
+
+    can_edit: bool
+
+
 # ------------------------------------------------------------------
 # Opportunity stakeholders
 # ------------------------------------------------------------------

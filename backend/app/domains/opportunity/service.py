@@ -33,6 +33,13 @@ _SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
 _GATE_OVERRIDE_MANAGER_ROLE = "Area Manager"
 _GATE_OVERRIDE_ESCALATION_ROLE = "General Manager"
 
+# BR-FIN-08: who may change a split. Mirrors opportunity_tier_visibility minus
+# its two "visitor" arms (split participant, Next Action assignee) -- they can
+# see a deal's split but not change it.
+_SPLIT_EDIT_DENIED_MSG = "Only the deal's owner, their managers, or GM/Admin can change this split."
+_SPLIT_EDIT_WON_MSG = "This deal is Won — only the General Manager can change its split."
+_SPLIT_EDIT_LOST_MSG = "This deal is Lost — its split can no longer be changed."
+
 
 class OpportunityService:
     def __init__(self, repository: OpportunityRepository, notification_service: NotificationService):
@@ -473,6 +480,55 @@ class OpportunityService:
     def list_splits(self, opportunity_id: uuid.UUID) -> list[Split]:
         return self.repository.list_splits(opportunity_id)
 
+    def _split_edit_refusal(
+        self,
+        opportunity: Opportunity,
+        *,
+        user_id: uuid.UUID,
+        role_name: str,
+        user_sbu_id: uuid.UUID,
+    ) -> str | None:
+        """BR-FIN-08: the reason this user may not change this opportunity's
+        split, or None if they may. Single source for both replace_splits and
+        the can-edit endpoint, so the screen and the server never disagree."""
+        # Status first (ADR-028: Won/Lost are statuses, not stages).
+        status = self.repository.get_status(opportunity.status_id)
+        status_code = status.status_code if status else None
+        if status_code == "LOST":
+            return _SPLIT_EDIT_LOST_MSG
+        if status_code == "WON":
+            return None if role_name == "General Manager" else _SPLIT_EDIT_WON_MSG
+
+        # Active / On Hold: the owner, anyone above them, or GM/Admin.
+        if role_name in _SBU_OVERRIDE_ROLES or opportunity.owner_id == user_id:
+            return None
+        if role_name == "SBU Manager" and opportunity.sbu_id == user_sbu_id:
+            return None
+        if role_name == "Area Manager" and opportunity.sbu_id == user_sbu_id and (
+            self.repository.account_in_user_zones(opportunity.account_id, user_id)
+            or self.repository.get_owner_manager_id(opportunity.owner_id) == user_id
+        ):
+            return None
+        return _SPLIT_EDIT_DENIED_MSG
+
+    def can_edit_splits(
+        self,
+        opportunity_id: uuid.UUID,
+        *,
+        user_id: uuid.UUID,
+        role_name: str,
+        user_sbu_id: uuid.UUID,
+    ) -> bool:
+        opportunity = self.repository.get_for_update(opportunity_id)
+        if not opportunity:
+            raise NotFoundError(f"Opportunity {opportunity_id} not found")
+        return (
+            self._split_edit_refusal(
+                opportunity, user_id=user_id, role_name=role_name, user_sbu_id=user_sbu_id
+            )
+            is None
+        )
+
     def replace_splits(
         self,
         opportunity_id: uuid.UUID,
@@ -480,10 +536,17 @@ class OpportunityService:
         *,
         updated_by: uuid.UUID,
         role_name: str,
+        user_sbu_id: uuid.UUID,
     ) -> list[Split]:
         opportunity = self.repository.get_for_update(opportunity_id)
         if not opportunity:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
+
+        refusal = self._split_edit_refusal(
+            opportunity, user_id=updated_by, role_name=role_name, user_sbu_id=user_sbu_id
+        )
+        if refusal:
+            raise AuthorizationError(refusal)
 
         if data.splits:
             total = sum(s.split_percentage for s in data.splits)
@@ -512,8 +575,9 @@ class OpportunityService:
                 # blanket exemption for any Admin/GM landing in the submitted list.
                 is_self_add = user_id == updated_by and role_name in _SBU_OVERRIDE_ROLES
                 if not is_self_add and sbu_by_user.get(user_id) != opportunity.sbu_id:
+                    name = self.repository.get_user_display_names({user_id}).get(user_id, str(user_id))
                     raise BusinessRuleViolation(
-                        f"User {user_id} is not in this Opportunity's SBU; "
+                        f"{name} is not in this Opportunity's SBU; "
                         "split participants must belong to the same SBU as the Opportunity."
                     )
 

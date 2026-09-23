@@ -20,6 +20,7 @@ from app.domains.opportunity.schemas import (
     OpportunityResponse,
     OpportunityUpdate,
     PipelineOpportunity,
+    SplitEditPermission,
     SplitResponse,
     SplitsBulkUpdate,
     StakeholderLinkCreate,
@@ -222,6 +223,21 @@ def list_splits(
     return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
 
 
+@router.get("/opportunities/{opportunity_id}/splits/can-edit")
+def can_edit_splits(
+    opportunity_id: uuid.UUID,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: OpportunityService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[SplitEditPermission]:
+    can_edit = service.can_edit_splits(
+        opportunity_id,
+        user_id=current_user.id,
+        role_name=current_user.role.role_name,
+        user_sbu_id=current_user.sbu_id,
+    )
+    return APIResponse(data=SplitEditPermission(can_edit=can_edit))
+
+
 @router.put("/opportunities/{opportunity_id}/splits")
 def replace_splits(
     opportunity_id: uuid.UUID,
@@ -230,7 +246,11 @@ def replace_splits(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[list[SplitResponse]]:
     splits = service.replace_splits(
-        opportunity_id, body, updated_by=current_user.id, role_name=current_user.role.role_name
+        opportunity_id,
+        body,
+        updated_by=current_user.id,
+        role_name=current_user.role.role_name,
+        user_sbu_id=current_user.sbu_id,
     )
     return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
 

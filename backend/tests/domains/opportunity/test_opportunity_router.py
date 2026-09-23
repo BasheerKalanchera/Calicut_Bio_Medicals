@@ -325,3 +325,53 @@ class TestGetStakeholderOpportunityCounts:
 
         assert response.status_code == 200
         assert response.json()["data"] == {str(stakeholder_id): {"opportunity_count": 3}}
+
+
+class TestSplitEditAuthority:
+    """BR-FIN-08: the can-edit endpoint and the 403 on PUT /splits."""
+
+    def _user(self, role_name: str) -> MagicMock:
+        user = _mock_user()
+        user.sbu_id = uuid.uuid4()
+        user.role = _mock_nested(role_name=role_name)
+        return user
+
+    def _call(self, method: str, user: MagicMock, opp: MagicMock | None, status_code: str = "ACTIVE"):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = opp
+        mock_db.get.return_value = _mock_nested(status_code=status_code)
+        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[get_db] = lambda: mock_db
+        try:
+            client = TestClient(app)
+            if method == "GET":
+                return client.get(f"/api/v1/opportunities/{OPP_ID}/splits/can-edit")
+            return client.put(f"/api/v1/opportunities/{OPP_ID}/splits", json={"splits": []})
+        finally:
+            _teardown_overrides()
+
+    def test_can_edit_unauthenticated_returns_401(self, client: TestClient) -> None:
+        response = client.get(f"/api/v1/opportunities/{OPP_ID}/splits/can-edit")
+        assert response.status_code == 401
+
+    def test_can_edit_not_found_returns_404(self) -> None:
+        response = self._call("GET", self._user("Sales Staff"), None)
+        assert response.status_code == 404
+
+    def test_can_edit_true_for_owner(self) -> None:
+        opp = _mock_opportunity(owner_id=TEST_USER_ID, sbu_id=uuid.uuid4(), account_id=uuid.uuid4())
+        response = self._call("GET", self._user("Sales Staff"), opp)
+        assert response.status_code == 200
+        assert response.json()["data"] == {"can_edit": True}
+
+    def test_can_edit_false_for_non_owner_sales_staff(self) -> None:
+        opp = _mock_opportunity(owner_id=uuid.uuid4(), sbu_id=uuid.uuid4(), account_id=uuid.uuid4())
+        response = self._call("GET", self._user("Sales Staff"), opp)
+        assert response.status_code == 200
+        assert response.json()["data"] == {"can_edit": False}
+
+    def test_put_on_lost_deal_returns_403_with_reason(self) -> None:
+        opp = _mock_opportunity(owner_id=TEST_USER_ID, sbu_id=uuid.uuid4(), account_id=uuid.uuid4())
+        response = self._call("PUT", self._user("Sales Staff"), opp, status_code="LOST")
+        assert response.status_code == 403
+        assert response.json()["message"] == "This deal is Lost — its split can no longer be changed."
