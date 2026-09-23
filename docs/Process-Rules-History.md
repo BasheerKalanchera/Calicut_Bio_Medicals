@@ -45,6 +45,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** For any feature whose correctness depends on a database trigger, generated column, or other server-side write the ORM doesn't already know how to re-read, add "…
   **Why:** 2026-09-22, three `/code-review` passes on Product Catalog Brand/Category/Model (one of them a full `high`-effort pass) all missed that `ProductRepository.create()`/`update()` never refreshed the row after `trg_product_sync_brand_category_name` populated `brand_id`/ `category_id`/`name` server-side — every real "Add Product" attempt crashed with a 500, only caught by actually clicking Save during manual E2E, not by any of the reviews.
 
+- **Rule:** If the feature has migrations, confirm `alembic current` = head and `Physical-Schema.sql` regenerated before E2E starts. (Companion rules: CLAUDE.md Architecture › Migrations; skill "Every migration — completion checklist".)
+  **Why:** 2026-09-23, Brand-Level Target Planning — the backend commit `36385f2` said migration `0053` was "not yet applied"; it was later applied to Dev without any commit or handover note saying so (only implied by `4185135`'s "0054 … Applied to the live Dev DB"), and `docs/Physical-Schema.sql` was never regenerated after either migration, although that step is already in `Backend-Implementation-Standards.md`'s migration workflow. Basheer spotted it during manual E2E; fixed in `4fdd259`. The rule was in place but buried in a long standards doc that nothing makes you reopen when a migration is applied.
+
 ## Mirroring an existing feature
 
 - **Rule:** When mirroring a feature, checklist every surface the original touches.

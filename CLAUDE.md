@@ -26,6 +26,10 @@ Rule origins (the incident behind each dated tag) live in
 - **Raw SQL on RLS tables:** never trust a zero/low count until all three session
   settings (user, role, SBU) are set and verified — a missing one silently returns
   too few rows. Full recipe in the `cabio-db-and-scripting` skill. *(2026-09-22)*
+- **Migrations:** a migration isn't done until it's applied, the apply is recorded
+  ("applied to Dev, `alembic current` = …") in a commit or handover, and
+  `docs/Physical-Schema.sql` is regenerated and committed. Checklist in the
+  `cabio-db-and-scripting` skill. *(2026-09-23)*
 
 ## Authoritative References
 These documents are the source of truth. Consult the relevant one before writing
@@ -109,6 +113,9 @@ code or changing structure. On any conflict, the document wins over this file.
   write the ORM doesn't re-read, add "did a real save actually complete" as an
   explicit review item — static review can't see a stale in-memory object.
   *(2026-09-22)*
+- If the feature has migrations, confirm before E2E starts: Dev's `alembic current`
+  = head, and `docs/Physical-Schema.sql` has been regenerated since the last one.
+  *(2026-09-23)*
 
 ## Mirroring an existing feature
 - When a feature is modeled on an existing one, checklist every surface the

@@ -1,6 +1,6 @@
 ---
 name: cabio-db-and-scripting
-description: Cabio Sales OS checklist for raw SQL against the Dev or UAT database (especially RLS-protected tables), writing or running an Alembic migration that deletes/retires/bulk-updates rows, analysing exported data for a migration or cutover, writing a one-off Python or PowerShell script, diagnosing a repeated failure, or explaining why a local git branch is behind its remote. Load before any of these tasks.
+description: Cabio Sales OS checklist for raw SQL against the Dev or UAT database (especially RLS-protected tables), writing, applying or committing any Alembic migration (especially one that deletes/retires/bulk-updates rows), analysing exported data for a migration or cutover, writing a one-off Python or PowerShell script, diagnosing a repeated failure, or explaining why a local git branch is behind its remote. Load before any of these tasks.
 ---
 
 # Cabio — database, migration, scripting and git checklist
@@ -19,6 +19,20 @@ Origins of each rule: `docs/Process-Rules-History.md` (grep the date tag).
   tier-restricted user sees, use that user's own id/role/SBU.
 - Run it read-only (`SET TRANSACTION READ ONLY`) unless a write was approved.
 - UAT: ask Basheer first, even read-only (see CLAUDE.md Architecture › Safety).
+
+## Every migration — completion checklist *(2026-09-23)*
+A migration isn't done when the file is written. Right after `alembic upgrade`
+on Dev, before any other work:
+- Regenerate `docs/Physical-Schema.sql` with `scripts/regen_physical_schema.ps1`
+  (needs Docker Desktop running) — never a raw `pg_dump --schema-only`. Check
+  the diff is only the new migration's objects.
+- Record the apply explicitly, with the real value: "applied to Dev,
+  `alembic current` = `00NN (head)`" in the commit message or the handover
+  note. Never leave a "not yet applied" note as the last word.
+- Commit the migration and the regenerated schema together, or the schema in
+  the very next commit. A migration written but not yet applied goes in
+  `active_progress.md` as an open item until it is.
+- UAT is a separate apply with its own approval — record it separately.
 
 ## Migrations that delete, retire or bulk-update rows *(2026-09-21)*
 - Query `pg_constraint` for every table with a foreign key into the one being
