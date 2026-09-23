@@ -6013,3 +6013,26 @@ git coordination.
   Nishad 0, Rudrappa (Imaging) 0, Arun 2 of Vivek's (manager still sees,
   so the fix doesn't over-block). Steps 16-17 (rollup sums Vivek 30 +
   Arun 25 = EDAN ₹55L) PASS.
+- **Pass complete: 28/28 PASS** (`c0b3ced`). Traceability row 3.1 / PRD
+  6.5 ("Target splitting by product category") flipped Not started → Done
+  — Basheer's call: delivered as brand-wise splitting at Haroon's request,
+  category-wise left for later phases if required, and the client note
+  says so. First proposed instead as "Commitment beyond contract" #17 —
+  wrong: Basheer spotted it was already a signed requirement. Scorecard
+  now 31 Done / 11 Partial / 8 Not started. `generate_scorecard.py` now
+  shows Client Notes on Done rows too (was Partial-only), so a Done row
+  delivered differently from its signed wording can say so — three other
+  Done rows' notes (4.1, 11.2, 3.1 Target configuration) now show as a
+  side effect, shown to Basheer first. Both scorecard Artifacts
+  republished after he approved the exact diff (main v18, by-status v12).
+- **Retro:** worked — both live bugs sat in exactly what the code review
+  had changed (a batched request's shape, a shared rounding rule), and
+  Section G tested at the table layer, not just via the app, gave real
+  confidence in the RLS fix. Improve — (1) when a feature has a
+  migration, check `alembic current` and the schema regen *before*
+  E2E (now a CLAUDE.md rule); (2) before proposing where a finished
+  feature goes on the scorecard, grep Traceability for its PRD section
+  first — the implementation plan's own header already said "a slice
+  of §6.5"; (3) my plan-doc result-tagging helper appended to the wrong
+  step three times when steps weren't blank-line separated — anchor
+  edits on the step's own text instead.

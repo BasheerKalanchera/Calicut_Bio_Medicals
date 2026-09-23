@@ -317,7 +317,7 @@
       <div class="vitals">
         <div class="stat-row">
           <div class="stat">
-            <div class="num" style="color:var(--done)">30</div>
+            <div class="num" style="color:var(--done)">31</div>
             <div class="lbl"><span class="swatch" style="background:var(--done)"></span>Done</div>
           </div>
           <div class="stat">
@@ -325,7 +325,7 @@
             <div class="lbl"><span class="swatch" style="background:var(--partial)"></span>Partly done</div>
           </div>
           <div class="stat">
-            <div class="num" style="color:var(--not-started)">9</div>
+            <div class="num" style="color:var(--not-started)">8</div>
             <div class="lbl"><span class="swatch" style="background:var(--not-started)"></span>Not started</div>
           </div>
           <div class="stat">
@@ -341,9 +341,9 @@
         <div class="traceblock">
           <div class="trace-caption">
             <span>Of <b>50</b> signed requirements &mdash; two honest reads of "done"</span>
-            <span><b style="color:var(--ink)">60.0%</b> strict &nbsp;&middot;&nbsp; <b style="color:var(--accent)">71.0%</b> counting partial as half&#8209;credit</span>
+            <span><b style="color:var(--ink)">62.0%</b> strict &nbsp;&middot;&nbsp; <b style="color:var(--accent)">73.0%</b> counting partial as half&#8209;credit</span>
           </div>
-          <svg class="trace" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Progress scale from 0 to 100 percent, marking 60.0 percent strict completion and 71.0 percent weighted completion">
+          <svg class="trace" viewBox="0 0 900 92" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Progress scale from 0 to 100 percent, marking 62.0 percent strict completion and 73.0 percent weighted completion">
             <line class="axis" x1="20" y1="54" x2="880" y2="54"/>
             <g class="tick">
               <line x1="20" y1="49" x2="20" y2="59"/>
@@ -359,12 +359,12 @@
               <text x="665" y="76">75%</text>
               <text x="880" y="76">100%</text>
             </g>
-            <line x1="20" y1="54" x2="536" y2="54" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" opacity="0.32"/>
-            <circle class="mark-strict" cx="536" cy="54" r="6"/>
-            <text class="lbl-strong" x="536" y="14" text-anchor="middle">60.0% strict</text>
-            <circle class="mark-weighted" cx="631" cy="54" r="6"/>
-            <text class="lbl-strong" x="631" y="30" text-anchor="middle" fill="var(--accent)">71.0% weighted</text>
-            <line x1="536" y1="54" x2="631" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
+            <line x1="20" y1="54" x2="553" y2="54" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" opacity="0.32"/>
+            <circle class="mark-strict" cx="553" cy="54" r="6"/>
+            <text class="lbl-strong" x="553" y="14" text-anchor="middle">62.0% strict</text>
+            <circle class="mark-weighted" cx="648" cy="54" r="6"/>
+            <text class="lbl-strong" x="648" y="30" text-anchor="middle" fill="var(--accent)">73.0% weighted</text>
+            <line x1="553" y1="54" x2="648" y2="54" stroke="var(--accent)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"/>
           </svg>
         </div>
       </div>
@@ -463,7 +463,10 @@
         <div class="row">
           <div class="rn">9</div>
           <div class="ids"><span class="idchip">4.1</span></div>
-          <div><div class="req">Strict product hierarchy: category → brand → model</div></div>
+          <div>
+            <div class="req">Strict product hierarchy: category → brand → model</div>
+            <div class="note">Product categories, brands and models now come from a fixed, admin-managed list instead of free text — inconsistent naming (e.g. "GE" vs "GE Healthcare") is no longer possible. Fully tested.</div>
+          </div>
           <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
           <div class="col-prd">2.1 Product Structure</div>
         </div>
@@ -745,7 +748,10 @@
         <div class="row">
           <div class="rn">38</div>
           <div class="ids"><span class="idchip">11.2</span></div>
-          <div><div class="req">Region → Team → Individual drill-down</div></div>
+          <div>
+            <div class="req">Region → Team → Individual drill-down</div>
+            <div class="note">Clicking any number on a report — by region, team, person, product, brand, or stage — now takes you straight to the exact list of deals behind it, with a button to jump back to the report. That list is now guaranteed to match the report's own count exactly.</div>
+          </div>
           <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
           <div class="col-prd">5.9 Drill-down Reporting</div>
         </div>
@@ -756,8 +762,8 @@
       <div class="mod-head">
         <h2><span class="idx">06</span> Governance &amp; Admin</h2>
         <div class="tally">
-          <span><span class="swatch" style="background:var(--done)"></span>6 done</span>
-          <span><span class="swatch" style="background:var(--not-started)"></span>3 not started</span>
+          <span><span class="swatch" style="background:var(--done)"></span>7 done</span>
+          <span><span class="swatch" style="background:var(--not-started)"></span>2 not started</span>
         </div>
       </div>
       <p class="mod-desc">The management tools behind the scenes — targets, territories, roles, and who's authorised to sell what.</p>
@@ -790,15 +796,21 @@
         <div class="row">
           <div class="rn">42</div>
           <div class="ids"><span class="idchip">3.1</span></div>
-          <div><div class="req">Sales target configuration: individual, team, regional</div></div>
+          <div>
+            <div class="req">Sales target configuration: individual, team, regional</div>
+            <div class="note">Every salesperson can now set their own quarterly sales target, which their manager reviews and approves before it counts. Managers also see their whole team's targets rolled up in one place.</div>
+          </div>
           <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
           <div class="col-prd">6.4 Target Management</div>
         </div>
         <div class="row">
           <div class="rn">43</div>
           <div class="ids"><span class="idchip">3.1</span></div>
-          <div><div class="req">Target splitting by product category, quarterly/annual tracking</div></div>
-          <div class="col-status"><span class="pill not-started"><span class="d"></span>Not started</span></div>
+          <div>
+            <div class="req">Target splitting by product category, quarterly/annual tracking</div>
+            <div class="note">Instead of product category wise targets we have now gone with Brand wise targets, as per Haroon's request. Each person's quarterly target is split by brand, and management can record what each brand's vendor expects for the quarter, with the gap shown at a glance. Category wise target setting will be done in later phases if required.</div>
+          </div>
+          <div class="col-status"><span class="pill done"><span class="d"></span>Done</span></div>
           <div class="col-prd">6.5 Product Category Targets</div>
         </div>
         <div class="row">
@@ -915,7 +927,7 @@
 
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard</span>
-      <span>50 requirements &middot; 30 done &middot; 11 partial &middot; 9 not started &middot; 16 bonus &middot; 1 pending</span>
+      <span>50 requirements &middot; 31 done &middot; 11 partial &middot; 8 not started &middot; 16 bonus &middot; 1 pending</span>
     </footer>
     </div>
   </main>

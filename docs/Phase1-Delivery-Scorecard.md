@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **30 done, 11 partly done, 9 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
+Of **50** signed requirements: **31 done, 11 partly done, 8 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 30 | 11 | 9 | 16 |
+| 31 | 11 | 8 | 16 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 30 of 50 = **60.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (30 + 11×0.5) ÷ 50 = **71.0%**
+- **Strictly done:** 31 of 50 = **62.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (31 + 11×0.5) ÷ 50 = **73.0%**
 
 ---
 
@@ -38,7 +38,7 @@ Where every machine Cabio sells is described, organised and backed with sales ma
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Done |  |
+| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Done | Product categories, brands and models now come from a fixed, admin-managed list instead of free text — inconsistent naming (e.g. "GE" vs "GE Healthcare") is no longer possible. Fully tested. |
 | 10 | 4.1 | Spec/config linking from company website | 2.2 Product Information | Done |  |
 | 11 | 4.1 | Collateral attachments (brochures, spec sheets, pricing guides, training videos) | 2.3 Sales Collateral Management | Done |  |
 | 12 | 17.5 | Training & enablement URL/resource linking | 2.4 Training & Enablement | Done |  |
@@ -88,7 +88,7 @@ Where leadership and managers see how the business is doing.
 | 35 | 11.1 | Phase 1 analytics: conversion, pipeline aging, salesperson performance | Appendix A.1 Reporting Principles | Partial | Conversion figures are available today; pipeline-aging analysis (how long deals linger at each stage over time) is deferred to a later phase. |
 | 36 | 1.4 | Competitive Loss Report | Appendix A.3.5 Competitive Loss Report (also 5.5 GM Dashboard) | Not started |  |
 | 37 | 11.1 | Weekly Follow-up Report | 5.8 Weekly Follow-up Report | Not started |  |
-| 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Done |  |
+| 38 | 11.2 | Region → Team → Individual drill-down | 5.9 Drill-down Reporting | Done | Clicking any number on a report — by region, team, person, product, brand, or stage — now takes you straight to the exact list of deals behind it, with a button to jump back to the report. That list is now guaranteed to match the report's own count exactly. |
 
 ## 6. Governance & Admin
 
@@ -99,8 +99,8 @@ The management tools behind the scenes — targets, territories, roles, and who'
 | 39 | *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Not started |  |
 | 40 | 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Done |  |
 | 41 | *(untagged, optional)* | Account Manager role per customer | 6.3 Account Manager Assignment | Not started |  |
-| 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done |  |
-| 43 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Not started |  |
+| 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done | Every salesperson can now set their own quarterly sales target, which their manager reviews and approves before it counts. Managers also see their whole team's targets rolled up in one place. |
+| 43 | 3.1 | Target splitting by product category, quarterly/annual tracking | 6.5 Product Category Targets | Done | Instead of product category wise targets we have now gone with Brand wise targets, as per Haroon's request. Each person's quarterly target is split by brand, and management can record what each brand's vendor expects for the quarter, with the gap shown at a glance. Category wise target setting will be done in later phases if required. |
 | 44 | 4.2 | Product-team mapping (who's authorized to sell what) | 6.6 Product-Team Mapping | Done |  |
 | 45 | 13.1 | Automated lead reassignment workflow, manager/admin approval | 6.7 Workflow Rules | Done |  |
 

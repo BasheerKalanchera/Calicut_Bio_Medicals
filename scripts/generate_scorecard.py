@@ -9,8 +9,9 @@ Regenerates:
   - docs/Phase1-Delivery-Scorecard.md (internal, full Notes column,
     grouped by module)
   - .scratch/phase1-scorecard.html (client-facing, grouped by module: what
-    Haroon/Latheef Bhai see -- Status + Client Note only, Partial rows
-    only carry a note). This is the same file published as the
+    Haroon/Latheef Bhai see -- Status + Client Note only, Partial and Done
+    rows carry a note; Done since 2026-09-23, so a Done row delivered
+    differently from its signed wording can say so). This is the same file published as the
     "Phase 1 Delivery Scorecard" Artifact; after running this script,
     republish it from that path to push the update live.
   - .scratch/phase1-scorecard-by-status.html (client-facing, same 50 rows
@@ -74,6 +75,12 @@ SCORECARD_HEADINGS = {
     "7. System & Architecture Constraints": "7. Technical Foundation",
 }
 
+
+
+# Statuses whose Client Note is shown on the scorecards. Done was added
+# 2026-09-23 (Basheer): row 3.1/6.5 was delivered as brand-wise rather than
+# product-category target splitting, and the dashboard must say so.
+NOTE_STATUSES = {"Partial", "Done"}
 
 def split_row(line: str) -> list[str]:
     # Strip leading/trailing "|" then split on "|", trim each cell.
@@ -225,7 +232,7 @@ def render_scorecard(
         lines.append("| :---: | :--- | :--- | :--- | :--- | :--- |")
         for r in rows:
             row_num += 1
-            note = r["client_note"] if r["status"] == "Partial" else ""
+            note = r["client_note"] if r["status"] in NOTE_STATUSES else ""
             lines.append(
                 f"| {row_num} | {r['feature_id']} | {r['requirement']} | {r['prd_section']} | "
                 f"{r['status']} | {note} |"
@@ -661,7 +668,7 @@ def render_html_row(row_num: int, r: dict, include_prd: bool = True) -> str:
         f'<span class="idchip{" untagged" if untagged else ""}">{esc(text)}</span>'
         for text, untagged in parse_feature_ids(r["feature_id"])
     )
-    note = r["client_note"] if r["status"] == "Partial" else ""
+    note = r["client_note"] if r["status"] in NOTE_STATUSES else ""
     if note:
         body = (
             "<div>\n"

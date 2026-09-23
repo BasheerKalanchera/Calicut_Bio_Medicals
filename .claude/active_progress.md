@@ -1,28 +1,25 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-22_
 
-## 2026-09-23 (latest) — Brand-Level Target Planning: built, code-reviewed, test plan written — manual E2E not yet run
+## 2026-09-23 (latest) — Brand-Level Target Planning: DONE — 28/28 E2E PASS
 
-Built per `docs/Brand-Level-Target-Planning-Implementation-Plan.md`:
-backend (`36385f2`) + frontend (`9514655`). `/code-review high` found a
-real cross-SBU RLS leak on the new `target_plan_brand_split` table (fixed
-`4185135`, migration `0054`) plus 4 more findings — server-side mandatory-
-split enforcement, duplicate-brand rejection, brand-rollup Admin/GM gate +
-batching, frontend/backend split-sum tolerance mismatch — all fixed in
-`053c017`, alongside requested cleanup (api.ts regen, a shared
-`allocationSplit.ts` utility also adopted by Opportunity Splits, a "Needs
-Brand Split" flag for targets that predate this feature). One deferred
-item (a DB-level split-sum constraint — not needed today, no non-API write
-path exists) logged to Backlog (`f8606b4`). 941/941 backend tests pass,
-`tsc`/`eslint`/Tailwind-guard clean.
+Built `36385f2`/`9514655`, review fixes `4185135`/`053c017`, schema regen
+`4fdd259`, E2E fixes `188ac50`, E2E sign-off `c0b3ced`. Traceability row
+3.1/PRD 6.5 flipped to Done (brand-wise instead of category-wise, at
+Haroon's request); scorecard 31/11/8; both Artifacts republished (main
+v18, by-status v12). Detail: Progress-Archive 2026-09-23. Nothing left
+open on this thread.
 
-**Test plan written:** `docs/Brand-Level-Target-Planning-Manual-E2E-Test-
-Plan.md`, 28 steps, Simple/Complex tagged per the new CLAUDE.md rule.
+## NEXT — Opportunity split-editing permission (decided, not built)
 
-**Next step:** run the manual E2E pass. Section G (the RLS cross-SBU
-regression check) is the most important step. Test users: Vivek/Arun
-Adarsh/Nishad K V/Haroon/Abdul Latheef, reused from Target Planning's own
-cast for continuity.
+Parked in `docs/Backlog.md` ("Opportunity split editing: who may change a
+split"). Decided 2026-09-23: only the owner, anyone above them in the
+hierarchy, and GM/Admin may change splits; not participants, not
+cross-SBU Next Action assignees. Lighter build (service check + hide the
+editor; no RLS/migration). Bundle the raw-user-id error message and the
+split picker listing the viewer's SBU instead of the opportunity's.
+**Next step:** write the rule into `Business-Rules.md` + a short
+implementation plan, review with Basheer, then build.
 
 ## 2026-09-23 — CLAUDE.md refactor: DONE (`c8eac23`)
 
