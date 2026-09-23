@@ -1,14 +1,36 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-22_
 
-## In progress — CLAUDE.md refactor (applied 2026-09-23, awaiting commit approval)
+## 2026-09-23 (latest) — Brand-Level Target Planning: built, code-reviewed, test plan written — manual E2E not yet run
 
-Per `docs/CLAUDE-md-Refactor-Plan.md`: `CLAUDE.md` 4,134 → 1,600 words;
-backstories moved verbatim to `docs/Process-Rules-History.md`; Troubleshooting
-& scripting moved to skill `.claude/skills/cabio-db-and-scripting/`; scorecard
-process doc now names both client pages. Commit approval section folded in.
-**Next step:** Basheer approves the commit (files + message shown first); then
-next session, confirm the new skill appears in the skills list.
+Built per `docs/Brand-Level-Target-Planning-Implementation-Plan.md`:
+backend (`36385f2`) + frontend (`9514655`). `/code-review high` found a
+real cross-SBU RLS leak on the new `target_plan_brand_split` table (fixed
+`4185135`, migration `0054`) plus 4 more findings — server-side mandatory-
+split enforcement, duplicate-brand rejection, brand-rollup Admin/GM gate +
+batching, frontend/backend split-sum tolerance mismatch — all fixed in
+`053c017`, alongside requested cleanup (api.ts regen, a shared
+`allocationSplit.ts` utility also adopted by Opportunity Splits, a "Needs
+Brand Split" flag for targets that predate this feature). One deferred
+item (a DB-level split-sum constraint — not needed today, no non-API write
+path exists) logged to Backlog (`f8606b4`). 941/941 backend tests pass,
+`tsc`/`eslint`/Tailwind-guard clean.
+
+**Test plan written:** `docs/Brand-Level-Target-Planning-Manual-E2E-Test-
+Plan.md`, 28 steps, Simple/Complex tagged per the new CLAUDE.md rule.
+
+**Next step:** run the manual E2E pass. Section G (the RLS cross-SBU
+regression check) is the most important step. Test users: Vivek/Arun
+Adarsh/Nishad K V/Haroon/Abdul Latheef, reused from Target Planning's own
+cast for continuity.
+
+## 2026-09-23 — CLAUDE.md refactor: DONE (`c8eac23`)
+
+`CLAUDE.md` 4,134 → 1,600 words; backstories in `docs/Process-Rules-History.md`;
+skill `cabio-db-and-scripting` live (confirmed in the skills list). Memory
+cleanup done: 14 entries that only duplicated CLAUDE.md/skill rules removed
+(38 → 24 files); stale manual-E2E memory updated to the Simple/Complex split.
+Nothing left open on this thread.
 
 ## 2026-09-23 — Product Catalog Brand/Category/Model manual E2E: COMPLETE
 
