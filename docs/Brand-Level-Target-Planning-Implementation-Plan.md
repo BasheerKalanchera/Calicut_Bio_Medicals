@@ -161,6 +161,11 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
   own `sbu_id`) that must sum to the total before save — mirrors the existing
   `FormModal` pattern, with a running "remaining to allocate" indicator like
   other multi-line forms in this app (e.g. Opportunity split editing).
+  Confirmed 2026-09-23: the section is **mandatory whenever the person's SBU
+  has at least one active brand** (both SBUs today) — the dialog blocks save
+  until the splits sum to exactly the total. If a future SBU genuinely has
+  zero brands, the section is hidden and the target saves exactly as it
+  does today (no splits sent).
 - New `BrandTargetTrackingScreen.tsx` (or a section added to the existing
   rollup view) — Admin/GM only: per brand, per quarter, shows the vendor's
   number, the team's committed total, and the gap. This is the screen that
@@ -174,8 +179,14 @@ collectively aiming for); write restricted to Admin/GM (decision #2).
   built; see decision #3 above.
 - Reconciling the new `brand` table with Product Catalog's `oem_name` —
   separate, unrelated clean-up already tracked in `docs/Backlog.md`.
-- Imaging brand splits — schema supports it, but no seeded brand list there
-  yet; add rows if/when Imaging actually needs it.
+- ~~Imaging brand splits — schema supports it, but no seeded brand list
+  there yet~~ **Stale as of 2026-09-23**: Product Catalog's 2026-09-21
+  seeding gave Imaging 1 active brand (Critical Care has 9) — every SBU now
+  has at least one brand, confirmed live. The split section is mandatory
+  wherever the person's SBU has any brand at all (frontend rule, below),
+  which today means both SBUs; Imaging reps just add their one brand at
+  100% of the amount, matching decision #1's own "most Imaging users will
+  just have one 100% row" line.
 
 ## Verification
 

@@ -20,6 +20,7 @@ import {
 import FormModal from "../components/FormModal";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
+import { listBrands } from "../services/catalogHierarchy";
 import {
   listTargetPlans,
   listPendingApproval,
@@ -37,7 +38,15 @@ import {
   getPlanningYearQuarters,
   formatLakhs,
 } from "../utils/formatter";
-import type { TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
+import type { TargetPlan, TargetPlanSbu, TargetPlanStatus, BrandSplitEntry } from "../types/targetPlanning";
+import type { BrandResponse } from "../types/api-aliases";
+
+// The split section is mandatory whenever the target's SBU has at least one
+// active brand (both SBUs do today, confirmed 2026-09-23 -- Imaging has 1,
+// Critical Care has 9) -- docs/Brand-Level-Target-Planning-Implementation-
+// Plan.md decision #1. If a future SBU genuinely has none, the section
+// hides and a target saves exactly as it did before this feature.
+interface EditSplitRow { brand_id: string; amount: string }
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
 // today (same TODO noted in MarketingLeadCreateModal.tsx et al.).
@@ -127,6 +136,9 @@ export default function TargetPlanningScreen() {
   const [editingSbuId, setEditingSbuId] = useState<string | null>(null);
   const [editingTarget, setEditingTarget] = useState<TargetPlan | null>(null);
   const [amountInput, setAmountInput] = useState("");
+  const [editSplits, setEditSplits] = useState<EditSplitRow[]>([]);
+  const [addBrandId, setAddBrandId] = useState("");
+  const [addBrandAmount, setAddBrandAmount] = useState("");
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
   const [noteInput, setNoteInput] = useState("");
 
@@ -139,6 +151,15 @@ export default function TargetPlanningScreen() {
     queryKey: ["sbus"],
     queryFn: () => listSbus() as Promise<SbuOption[]>,
     enabled: needsSbuChoice,
+  });
+
+  // Only fetched while the dialog's open and an SBU is known -- drives
+  // whether the brand-split section shows at all (decision #1: mandatory
+  // whenever the SBU has any active brand, hidden otherwise).
+  const { data: dialogBrands = [] } = useQuery({
+    queryKey: ["brands", editingSbuId],
+    queryFn: () => listBrands(editingSbuId as string) as Promise<BrandResponse[]>,
+    enabled: targetDialogOpen && !!editingSbuId,
   });
 
   // The SBU(s) relevant to "my own" targets -- one's own home SBU for
@@ -224,21 +245,50 @@ export default function TargetPlanningScreen() {
     setEditingSbuId(sbuId);
     setEditingTarget(existing);
     setAmountInput(existing ? existing.target_amount_lakhs : "");
+    setEditSplits(
+      existing
+        ? existing.brand_splits.map((s) => ({ brand_id: s.brand_id, amount: s.split_amount_lakhs }))
+        : [],
+    );
+    setAddBrandId("");
+    setAddBrandAmount("");
     setTargetDialogOpen(true);
   };
+
+  const addBrandSplitRow = () => {
+    if (!addBrandId || !addBrandAmount) return;
+    if (editSplits.find((s) => s.brand_id === addBrandId)) return;
+    setEditSplits([...editSplits, { brand_id: addBrandId, amount: addBrandAmount }]);
+    setAddBrandId("");
+    setAddBrandAmount("");
+  };
+
+  const splitTotal = editSplits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
 
   const handleSaveTarget = async () => {
     const amount = Number(amountInput);
     if (!amountInput.trim() || Number.isNaN(amount) || amount <= 0) {
       throw new Error("Enter a target amount greater than zero");
     }
+
+    let brand_splits: BrandSplitEntry[] | undefined;
+    if (dialogBrands.length > 0) {
+      if (editSplits.length === 0 || Math.abs(splitTotal - amount) > 0.01) {
+        throw new Error(
+          `Brand splits must sum to exactly the target amount (currently ${formatLakhs(splitTotal)} of ${formatLakhs(amount)}).`,
+        );
+      }
+      brand_splits = editSplits.map((s) => ({ brand_id: s.brand_id, split_amount_lakhs: Number(s.amount) }));
+    }
+
     if (editingTarget) {
-      await updateTargetPlan(editingTarget.id, { target_amount_lakhs: amount });
+      await updateTargetPlan(editingTarget.id, { target_amount_lakhs: amount, brand_splits });
     } else if (editingSbuId) {
       await createTargetPlan({
         sbu_id: editingSbuId,
         planning_period: editingPeriod,
         target_amount_lakhs: amount,
+        brand_splits,
       });
     }
     invalidateAll();
@@ -538,6 +588,76 @@ export default function TargetPlanningScreen() {
         )}
         {editingTarget?.status === "REJECTED" && (
           <Alert severity="info">Revising a rejected target sends it back for a fresh approval.</Alert>
+        )}
+
+        {dialogBrands.length > 0 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Split by Brand *</Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 700,
+                  color: Math.abs(splitTotal - (Number(amountInput) || 0)) < 0.01 ? "success.main" : "warning.main",
+                }}
+              >
+                Remaining to allocate: {formatLakhs((Number(amountInput) || 0) - splitTotal)}
+              </Typography>
+            </Box>
+
+            {editSplits.map((s, i) => {
+              const brand = dialogBrands.find((b) => b.id === s.brand_id);
+              return (
+                <Box key={s.brand_id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography sx={{ flex: 1, fontSize: "0.875rem" }}>{brand?.name ?? s.brand_id}</Typography>
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={s.amount}
+                    onChange={(e) =>
+                      setEditSplits(editSplits.map((sp, j) => (j === i ? { ...sp, amount: e.target.value } : sp)))
+                    }
+                    slotProps={{ htmlInput: { min: 0, step: "any", style: { textAlign: "right" } } }}
+                    sx={{ width: "6rem" }}
+                  />
+                  <IconButton size="small" onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))}>
+                    <Box component="span" sx={{ fontWeight: 900, lineHeight: 1 }}>×</Box>
+                  </IconButton>
+                </Box>
+              );
+            })}
+
+            {dialogBrands.filter((b) => !editSplits.find((s) => s.brand_id === b.id)).length > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TextField
+                  select
+                  size="small"
+                  value={addBrandId}
+                  onChange={(e) => setAddBrandId(e.target.value)}
+                  sx={{ flex: 1 }}
+                  slotProps={{ select: { displayEmpty: true } }}
+                >
+                  <MenuItem value="">Select brand</MenuItem>
+                  {dialogBrands
+                    .filter((b) => !editSplits.find((s) => s.brand_id === b.id))
+                    .map((b) => (
+                      <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
+                    ))}
+                </TextField>
+                <TextField
+                  type="number"
+                  size="small"
+                  placeholder="Amount"
+                  value={addBrandAmount}
+                  onChange={(e) => setAddBrandAmount(e.target.value)}
+                  sx={{ width: "6rem" }}
+                />
+                <Button size="small" onClick={addBrandSplitRow} disabled={!addBrandId || !addBrandAmount}>
+                  Add
+                </Button>
+              </Box>
+            )}
+          </Box>
         )}
       </FormModal>
 

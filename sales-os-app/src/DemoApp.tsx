@@ -31,6 +31,7 @@ import AuditLogScreen from "./screens/AuditLogScreen";
 import MarketingLeadEntryScreen from "./screens/MarketingLeadEntryScreen";
 import MarketingLeadReviewQueueScreen from "./screens/MarketingLeadReviewQueueScreen";
 import TargetPlanningScreen from "./screens/TargetPlanningScreen";
+import BrandTargetTrackingScreen from "./screens/BrandTargetTrackingScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 
 const ADMIN_ROLES = new Set(["Admin", "General Manager"]);
@@ -90,6 +91,7 @@ function getNavSections(isAdmin: boolean) {
           { id: "users",       label: "User Directory",  icon: "👥" },
           { id: "territories", label: "Territory Map",   icon: "🗺️" },
           { id: "auditLog",    label: "Audit Log",       icon: "📜" },
+          { id: "brandTargetTracking", label: "Brand Target Tracking", icon: "🏷️" },
         ],
       },
     ];
@@ -889,6 +891,15 @@ export default function DemoApp() {
               </Typography>
             </Box>
             <TargetPlanningScreen />
+          </Box>
+
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "brandTargetTracking" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Brand Target Tracking
+              </Typography>
+            </Box>
+            <BrandTargetTrackingScreen />
           </Box>
         </ErrorBoundary>
       </Box>

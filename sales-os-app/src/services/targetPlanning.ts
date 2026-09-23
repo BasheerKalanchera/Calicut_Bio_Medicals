@@ -5,6 +5,9 @@ import type {
   TargetPlanUpdate,
   TargetPlanApprovalDecision,
   SbuTargetRollup,
+  BrandVendorTarget,
+  BrandVendorTargetSet,
+  BrandRollup,
 } from "../types/targetPlanning";
 
 export async function listTargetPlans(): Promise<TargetPlan[]> {
@@ -48,5 +51,24 @@ export async function approveTargetPlan(id: string, data: TargetPlanApprovalDeci
 
 export async function rejectTargetPlan(id: string, data: TargetPlanApprovalDecision): Promise<TargetPlan> {
   const response = await api.post(`/planning/targets/${id}/reject`, data);
+  return response.data.data;
+}
+
+export async function getBrandRollup(brandId: string, planningPeriod: string): Promise<BrandRollup> {
+  const response = await api.get("/planning/targets/brand-rollup", {
+    params: { brand_id: brandId, planning_period: planningPeriod },
+  });
+  return response.data.data;
+}
+
+export async function listBrandVendorTargets(planningPeriod: string): Promise<BrandVendorTarget[]> {
+  const response = await api.get("/planning/brand-vendor-targets", {
+    params: { planning_period: planningPeriod },
+  });
+  return response.data.data;
+}
+
+export async function setBrandVendorTarget(data: BrandVendorTargetSet): Promise<BrandVendorTarget> {
+  const response = await api.post("/planning/brand-vendor-targets", data);
   return response.data.data;
 }
