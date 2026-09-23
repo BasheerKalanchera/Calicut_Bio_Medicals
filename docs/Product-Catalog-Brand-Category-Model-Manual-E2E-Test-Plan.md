@@ -206,18 +206,25 @@ Tested live as Fazal (Area Manager, Kasaragod, SBU: Imaging).
     2026-09-22 to check this explicitly. If it's silently accepted
     instead, that's a regression, report it immediately. — **Not yet run
     live** (covered by the new automated test suite, `test_catalog_admin_service.py`'s
-    `test_rejects_category_from_a_different_sbu_than_brand`, but not
-    re-verified via a live API call this session)
+    `test_rejects_category_from_a_different_sbu_than_brand`) — **PASS**
+    live 2026-09-23 as Haroon (GM): SonoScape (Imaging) brand + Critical
+    Care category → `422` "Category must belong to the same SBU as the
+    Brand"; re-list of SonoScape models confirmed nothing created.
 22. As Admin/GM, attempt to create a Brand or Category via the API with a
     made-up department id. **Expected:** a clean "SBU ... not found" error
     (404), not a server crash (500). — **Not yet run live** (also covered
-    by the new automated test suite's `test_rejects_nonexistent_sbu` tests,
-    not re-verified live)
+    by the new automated test suite's `test_rejects_nonexistent_sbu`
+    tests) — **PASS** live 2026-09-23 as Haroon (GM): both
+    `POST /reference/brands` and `/categories` with a made-up SBU id →
+    `404` "SBU ... not found", no crash.
 23. As Admin/GM, edit a product and change *only* its department (not its
     Model) via the API, to a department its current Model doesn't belong
     to. **Expected:** rejected with a clear error — before the fix, this
     silently succeeded and left the product's Brand/Model/Category pointed
-    at the old department. — **Not yet run live**
+    at the old department. — **PASS** live 2026-09-23 as Haroon (GM):
+    `PUT /products/{id}` on "EDAN iM91 Test ECG Machine" (Critical Care)
+    with only `sbu_id` = Imaging → `400` "Model ... does not belong to
+    SBU ..."; re-read confirmed the product is still Critical Care.
 
 ## I — Regression: every other screen that reads a product name
 
@@ -229,13 +236,19 @@ Tested live as Fazal (Area Manager, Kasaragod, SBU: Imaging).
     "Legacy Data" junk shown, both lines saved and displayed correctly,
     total updated to ₹15.0L.
 25. Create/review a Marketing Lead with a product field — confirm the
-    same. — **Not yet run**
+    same. — **PASS**, tested live by Basheer as Admin/GM, 2026-09-23 —
+    product name shown correctly on the Marketing Lead.
 26. Check Project Directory and Customer 360 screens wherever a product
-    name shows — confirm unaffected. — **Not yet run**
+    name shows — confirm unaffected. — **PASS**, tested live by Basheer as
+    Admin/GM, 2026-09-23 — Customer 360 checked in both places it shows
+    product names (Installed Base cards: name/brand/model correct; product
+    picker in the installed-asset form: "Brand Model Category" names, no
+    "Legacy Data"). Project Directory: N/A — it shows no product names.
 27. Check Pipeline Report, Sales Report, and Product Performance Report's
     *Product*-level breakdown (not the Brand cards, covered separately in
-    Section J below) — names and groupings still correct. — **Not yet
-    run**
+    Section J below) — names and groupings still correct. — **PASS**,
+    tested live by Basheer as Admin/GM, 2026-09-23 — product names shown
+    correctly in all three reports' product views.
 
 ## J — Product Performance brand-grouped cards now drill down
 
@@ -271,6 +284,13 @@ feature's own scope:
     scope needs re-confirming against current state before it's run: it
     may now only apply to whichever of EDAN i15 / EDAN i20 still have live
     references.
+    **CLOSED 2026-09-23 (Basheer's call):** a read-only Dev check (as
+    Haroon, all three RLS settings verified) found no opportunity or
+    installed-asset still using any of the 5 inactive products. Only
+    leftovers: two Converted Marketing Leads (Aster DM — EDAN i15 "Cochin
+    Conference", EDAN i20 "Bangalore trade fair") and one product-only
+    Document ("Brochure" on ECG Cable). Accepted as-is; nothing left to
+    verify at the opportunity level.
 
 ## L — Regression: Collateral Links (2026-09-14 feature, same screen)
 
@@ -300,18 +320,20 @@ the Owner/Zone dropdowns it already cleared (`OpportunityPipelineScreen.tsx`).
 
 ## Sign-off
 
-**Status as of 2026-09-22 (mid-pass, not complete):**
-- **PASS:** 1-12, 15 (partial — Critical Care side only), 16-20, 24 (18 of
-  30 steps)
-- **Not yet run:** 9 (full — only the duplicate-name path tested), 10
-  (partial — nested "+ Add new category" not exercised), 13, 14, 21-23,
-  25-28, 30 (partial)
-- **No bugs found in anything actually tested.** Two real bugs were found
-  and fixed *during* this pass, before the steps above could pass at all
-  (see the "Fixed by three `/code-review` passes" section up top): the
-  product-creation/edit crash (`ProductRepository.create`/`update` missing
-  a refresh after the DB trigger runs) and the missing duplicate-Product-
-  per-Model guard (migration `0052`).
+**Status as of 2026-09-23 — COMPLETE, all 30 steps PASS (plus 31-32):**
+- 2026-09-22: 1-8, 11, 12, 16-20, 24 (Haroon as Admin/GM; Fazal as
+  non-Admin/GM), 15 Critical Care side.
+- 2026-09-23: 9, 10, 13, 14 (completing 15), 25-28, 30, 31, 32 by Basheer
+  live as Admin/GM; 21-23 as live API calls under Haroon's session; 29
+  closed on Basheer's call after a read-only Dev check (no opportunity or
+  installed asset still uses an inactive product).
+- **Bugs:** two found and fixed during the 2026-09-22 part of the pass
+  (see "Fixed by three `/code-review` passes" up top); one found and fixed
+  2026-09-23 — stale Pipeline search text across drill-downs (`bc460a4`,
+  Section M).
+- **Test data left in Dev:** "E2E Test Brand", "E2E Test Category" and
+  their model (and product, if one was saved), plus the "iM90 Test"/"iM91 Test" models and "EDAN
+  iM91 Test ECG Machine" product — deactivate when convenient.
 
 Record Pass/Fail per remaining step, who tested each role, and any live
 findings (fixed or deferred), same format as the other 2026-09 test plans.

@@ -5947,3 +5947,18 @@ git coordination.
   drill, not the search box (`OpportunityPipelineScreen.tsx:276-281`). Fixed
   by clearing the search box in the same reset; `/code-review` medium came
   back clean; new test-plan steps 31-32 PASS live (Basheer).
+- Remaining steps: 25-27 PASS (Basheer); 21-23 PASS as live API calls
+  under Haroon's session (422 / 404 / 400, nothing written — re-listed to
+  confirm); 29 closed on Basheer's call after a read-only Dev check found
+  no opportunity/installed asset still using any inactive product (only two
+  Converted leads and one orphaned brochure — brochure logged to Backlog).
+  **Pass complete: all 30 steps PASS, plus 31-32.** Fix committed and
+  pushed as `bc460a4`; Feature 4.1 flipped to Done in Traceability
+  (scorecard now 30 Done / 11 Partial / 9 Not started).
+- **Retro:** worked — splitting steps into "Basheer clicks / Claude drives"
+  cut browser-screenshot cost to near zero (only 21-23 needed the browser,
+  as text-only API calls), with every step still recorded as it passed.
+  Improve — the 2026-09-16 drill-down reset fix covered the dropdowns but
+  not the search box on the same screen; when fixing "stale state on
+  re-entry", list *every* piece of user-set state on that screen, not just
+  the one that caused the reported bug.

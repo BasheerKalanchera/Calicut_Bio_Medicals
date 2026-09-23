@@ -71,28 +71,19 @@ implement `Value × Split%` per ADR-003's original intent, or was that
 design superseded and never formally revised? Either answer is a real
 decision, not an engineering default.
 
-### Product Catalog Brand/Category/Model: built 2026-09-21, one follow-up still open
+### Product Catalog Brand/Category/Model: Done 2026-09-23, two minor clean-ups left
 
-**Built and committed** (`cd0d8ab`, migrations 0048/0049) — Brand,
-Category, and Model are now real controlled tables (`reference` domain),
-`product` picks only `model_id`, and the 59-product catalog was reseeded
-from Haroon's corrected list. Full design/build detail:
-`docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`. Closes
-Signed Feature 4.1's core gap (see that row's updated Traceability note)
-— still **Partial**, not Done, until the manual E2E pass below runs.
-
-Of the three follow-ups this surfaced, two are now resolved (the brand-table
-decision in `docs/Brand-Level-Target-Planning-Implementation-Plan.md` was
-already resolved 2026-09-20; Product Performance's Brand-grouped cards are
-now clickable, 2026-09-22 — `list_pipeline`/`count_pipeline` gained a
-`brand_id` filter, same `EXISTS`-subquery shape as the existing `product_id`
-one, `backend/app/domains/opportunity/repository.py`). One remains:
-1. **Full manual E2E pass** — in progress, 2026-09-22: 18 of 30 steps
-   PASS (`docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`
-   has per-step results). Surfaced and fixed 2 real bugs along the way (a
-   product-create/edit crash, and a missing duplicate-Product-per-Model
-   guard — migrations `0050`-`0052`, commit `e1aaba4`). Remaining 12 steps
-   continue tomorrow before Feature 4.1 flips to Done.
+Built `cd0d8ab`, full manual E2E pass complete 2026-09-23 (all 30 steps
+PASS, `docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`),
+bugs fixed in `e1aaba4`/`bc460a4` — Feature 4.1 flipped to Done. Left over,
+neither blocking:
+1. **Orphaned ECG Cable brochure** — the one Document ("Brochure") still
+   attached to the inactive ECG Cable product, and to no account/project/
+   opportunity, so no screen shows it any more. Decide: move it onto an
+   active product, or accept it as retired with the product.
+2. **E2E test data in Dev** — "E2E Test Brand"/"E2E Test Category" (+ model,
+   and product if one was saved), "iM90 Test"/"iM91 Test" models and the
+   "EDAN iM91 Test ECG Machine" product. Deactivate when convenient.
 
 ## Deferred / undecided items
 

@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **29 done, 12 partly done, 9 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
+Of **50** signed requirements: **30 done, 11 partly done, 9 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 29 | 12 | 9 | 16 |
+| 30 | 11 | 9 | 16 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 29 of 50 = **58.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 12 items aren't zero — they're mid-flight): (29 + 12×0.5) ÷ 50 = **70.0%**
+- **Strictly done:** 30 of 50 = **60.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (30 + 11×0.5) ÷ 50 = **71.0%**
 
 ---
 
@@ -38,7 +38,7 @@ Where every machine Cabio sells is described, organised and backed with sales ma
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Partial | Product categories and brands now come from a fixed, admin-managed list instead of free text — inconsistent naming (e.g. "GE" vs "GE Healthcare") is no longer possible. Full testing is still in progress. |
+| 9 | 4.1 | Strict product hierarchy: category → brand → model | 2.1 Product Structure | Done |  |
 | 10 | 4.1 | Spec/config linking from company website | 2.2 Product Information | Done |  |
 | 11 | 4.1 | Collateral attachments (brochures, spec sheets, pricing guides, training videos) | 2.3 Sales Collateral Management | Done |  |
 | 12 | 17.5 | Training & enablement URL/resource linking | 2.4 Training & Enablement | Done |  |
