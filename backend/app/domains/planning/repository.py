@@ -102,17 +102,23 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
             )
         self.db.flush()
 
-    def get_brand_rollup(self, brand_id: uuid.UUID, planning_period: str) -> Decimal:
-        """SUM of every TargetPlanBrandSplit row for this brand/period,
-        across all target_plan statuses -- same "count drafts too" shape as
-        get_sbu_rollup above."""
+    def get_brand_rollups(
+        self, brand_ids: list[uuid.UUID], planning_period: str
+    ) -> dict[uuid.UUID, Decimal]:
+        """SUM of every TargetPlanBrandSplit row per brand for this period,
+        across all target_plan statuses (same "count drafts too" shape as
+        get_sbu_rollup above), one GROUP BY for every brand at once instead
+        of a query per brand (/code-review 2026-09-23). A brand with no
+        splits yet is simply absent from the returned dict -- callers treat
+        a missing key as zero."""
         stmt = (
-            select(func.coalesce(func.sum(TargetPlanBrandSplit.split_amount_lakhs), 0))
+            select(TargetPlanBrandSplit.brand_id, func.sum(TargetPlanBrandSplit.split_amount_lakhs))
             .join(TargetPlan, TargetPlan.id == TargetPlanBrandSplit.target_plan_id)
-            .where(TargetPlanBrandSplit.brand_id == brand_id)
+            .where(TargetPlanBrandSplit.brand_id.in_(brand_ids))
             .where(TargetPlan.planning_period == planning_period)
+            .group_by(TargetPlanBrandSplit.brand_id)
         )
-        return Decimal(self.db.scalar(stmt) or 0)
+        return {brand_id: Decimal(total) for brand_id, total in self.db.execute(stmt).all()}
 
 
 class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):

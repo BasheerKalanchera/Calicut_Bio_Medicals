@@ -12,13 +12,20 @@ from app.domains.planning.schemas import (
     TargetPlanCreate,
     TargetPlanUpdate,
 )
+from app.domains.reference.repository import BrandRepository
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
 
 
+def _require_admin_or_gm(current_user: UserProfile) -> None:
+    if current_user.role.role_name not in _OVERLAY_ROLES:
+        raise AuthorizationError("Only Admin/GM may do this.")
+
+
 class TargetPlanService:
-    def __init__(self, repository: TargetPlanRepository):
+    def __init__(self, repository: TargetPlanRepository, brand_repository: BrandRepository):
         self.repository = repository
+        self.brand_repository = brand_repository
 
     def get_approver_id(self, user_id: uuid.UUID) -> uuid.UUID | None:
         """Resolved purely from the real reporting line -- no role-name check.
@@ -58,14 +65,25 @@ class TargetPlanService:
     def _apply_brand_splits(
         self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None
     ) -> None:
-        """Brand-Level Target Planning decision #1: splits are mandatory-if-
-        present and must sum to exactly the total, no partial/leftover. A
-        None `splits` argument means "caller didn't send a splits section at
-        all" (leave whatever's already stored alone) -- an empty list is a
-        deliberate "no brands" state and is rejected the same as a mismatch,
-        since decision #1 requires a full split, not none."""
-        if splits is None:
+        """Brand-Level Target Planning decision #1: splitting is mandatory,
+        enforced here (not just the frontend's dialogBrands.length gate, per
+        /code-review 2026-09-23 -- a non-UI caller, or a click that beat the
+        brand-list fetch, could previously bypass it entirely). If the SBU
+        has no active brand at all, this feature doesn't apply yet and any
+        `splits` argument is ignored. Otherwise splits are required on every
+        create/update call, not optional-once-set -- this also closes the
+        "amount changed, stale splits left behind" gap the same review
+        found, since a caller can no longer update the amount without
+        resending a matching split."""
+        if not self.brand_repository.has_active_brand(target_plan.sbu_id):
             return
+        if not splits:
+            raise ValidationError(
+                "This SBU has active brands -- a brand split is required and must sum to the target amount."
+            )
+        brand_ids = [s.brand_id for s in splits]
+        if len(brand_ids) != len(set(brand_ids)):
+            raise ValidationError("Each brand can only appear once in the split.")
         total = sum((s.split_amount_lakhs for s in splits), start=Decimal("0"))
         if total != target_plan.target_amount_lakhs:
             raise ValidationError(
@@ -175,24 +193,30 @@ class TargetPlanService:
             raise AuthorizationError("You can only delete your own target.")
         self.repository.delete(target_plan)
 
-    def get_brand_rollup(self, brand_id: uuid.UUID, planning_period: str) -> Decimal:
-        return self.repository.get_brand_rollup(brand_id, planning_period)
+    def get_brand_rollups(
+        self, brand_ids: list[uuid.UUID], planning_period: str, *, current_user: UserProfile
+    ) -> dict[uuid.UUID, Decimal]:
+        """Admin/GM only (/code-review 2026-09-23) -- committed_total is a
+        cross-person aggregate that's already narrowed by the caller's own
+        RLS visibility, not the true team total, so an unrestricted caller
+        would see a confidently-labeled but silently-partial number. The
+        Brand Target Tracking screen this feeds is Admin/GM-only for the
+        same reason. One GROUP-BY query for every brand at once (same
+        /code-review pass) instead of N single-brand round trips."""
+        _require_admin_or_gm(current_user)
+        return self.repository.get_brand_rollups(brand_ids, planning_period)
 
 
 class BrandVendorTargetService:
     def __init__(self, repository: BrandVendorTargetRepository):
         self.repository = repository
 
-    def _require_admin_or_gm(self, current_user: UserProfile) -> None:
-        if current_user.role.role_name not in _OVERLAY_ROLES:
-            raise AuthorizationError("Only Admin/GM may record a brand's vendor target.")
-
     def set_vendor_target(
         self, data: BrandVendorTargetSet, *, current_user: UserProfile
     ) -> BrandVendorTarget:
         """Upsert -- a brand's number for a quarter can be corrected, not
         just entered once (decision #2)."""
-        self._require_admin_or_gm(current_user)
+        _require_admin_or_gm(current_user)
         existing = self.repository.get_by_brand_period(data.brand_id, data.planning_period)
         if existing:
             existing.vendor_target_amount_lakhs = data.vendor_target_amount_lakhs

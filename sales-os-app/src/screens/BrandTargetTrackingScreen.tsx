@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
   Typography,
@@ -16,9 +16,8 @@ import {
 import FormModal from "../components/FormModal";
 import { listSbus } from "../services/masterData";
 import { listBrands } from "../services/catalogHierarchy";
-import { getBrandRollup, setBrandVendorTarget } from "../services/targetPlanning";
+import { getBrandRollups, setBrandVendorTarget } from "../services/targetPlanning";
 import { getCurrentPlanningPeriod, shiftPlanningPeriod, formatLakhs } from "../utils/formatter";
-import type { BrandRollup } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
 
 interface SbuOption { id: string; name: string }
@@ -45,18 +44,16 @@ export default function BrandTargetTrackingScreen() {
     enabled: !!activeSbuId,
   });
 
-  // One brand-rollup call per brand -- same "fire N in parallel, no
-  // dedicated multi-brand endpoint" shape as TargetPlanningScreen's annual
-  // rollup (there's genuinely one brand per row here, not per-quarter).
-  const rollupQueries = useQueries({
-    queries: brands.map((b) => ({
-      queryKey: ["brand-rollup", b.id, period],
-      queryFn: () => getBrandRollup(b.id, period),
-      enabled: !!activeSbuId,
-    })),
+  // One batched call for every brand in the SBU (/code-review 2026-09-23 --
+  // this used to fire one HTTP round trip per brand via useQueries).
+  const brandIds = brands.map((b) => b.id);
+  const { data: rollups = [] } = useQuery({
+    queryKey: ["brand-rollups", brandIds, period],
+    queryFn: () => getBrandRollups(brandIds, period),
+    enabled: brandIds.length > 0,
   });
 
-  const rows = brands.map((b, i) => ({ brand: b, rollup: rollupQueries[i]?.data as BrandRollup | undefined }));
+  const rows = brands.map((b) => ({ brand: b, rollup: rollups.find((r) => r.brand_id === b.id) }));
 
   const openEdit = (brand: BrandResponse, currentVendorTarget: string | null) => {
     setEditingBrand(brand);
@@ -74,7 +71,7 @@ export default function BrandTargetTrackingScreen() {
       planning_period: period,
       vendor_target_amount_lakhs: amount,
     });
-    await queryClient.invalidateQueries({ queryKey: ["brand-rollup"] });
+    await queryClient.invalidateQueries({ queryKey: ["brand-rollups"] });
   };
 
   return (

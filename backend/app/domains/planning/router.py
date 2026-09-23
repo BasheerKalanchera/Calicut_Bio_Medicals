@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -19,6 +20,7 @@ from app.domains.planning.schemas import (
     TargetPlanUpdate,
 )
 from app.domains.planning.service import BrandVendorTargetService, TargetPlanService
+from app.domains.reference.repository import BrandRepository
 
 router = APIRouter(prefix="/planning/targets", tags=["Target Planning"])
 brand_vendor_router = APIRouter(prefix="/planning/brand-vendor-targets", tags=["Target Planning"])
@@ -27,7 +29,7 @@ brand_vendor_router = APIRouter(prefix="/planning/brand-vendor-targets", tags=["
 def _get_service(
     db: Session = Depends(get_db),  # noqa: B008
 ) -> TargetPlanService:
-    return TargetPlanService(repository=TargetPlanRepository(db))
+    return TargetPlanService(repository=TargetPlanRepository(db), brand_repository=BrandRepository(db))
 
 
 def _get_brand_vendor_service(
@@ -146,29 +148,37 @@ def delete_target_plan(
     service.delete_target_plan(target_plan_id, current_user=current_user)
 
 
-@router.get("/brand-rollup")
-def get_brand_rollup(
-    brand_id: uuid.UUID = Query(...),  # noqa: B008
+@router.get("/brand-rollups")
+def get_brand_rollups(
+    brand_ids: list[uuid.UUID] = Query(...),  # noqa: B008
     planning_period: str = Query(...),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
     vendor_service: BrandVendorTargetService = Depends(_get_brand_vendor_service),  # noqa: B008
-) -> APIResponse[BrandRollupResponse]:
-    """The screen Haroon actually wants: the team's committed total next to
-    what the brand vendor promised, gap pre-computed server-side."""
-    committed_total = service.get_brand_rollup(brand_id, planning_period)
-    vendor_target = vendor_service.repository.get_by_brand_period(brand_id, planning_period)
-    vendor_amount = vendor_target.vendor_target_amount_lakhs if vendor_target else None
-    gap = (vendor_amount - committed_total) if vendor_amount is not None else None
-    return APIResponse(
-        data=BrandRollupResponse(
-            brand_id=brand_id,
-            planning_period=planning_period,
-            committed_total=committed_total,
-            vendor_target=vendor_amount,
-            gap=gap,
+) -> APIResponse[list[BrandRollupResponse]]:
+    """The screen Haroon actually wants: every brand's committed total next
+    to what its vendor promised, gap pre-computed server-side. One batched
+    call for every brand at once (/code-review 2026-09-23), not one round
+    trip per brand -- Admin/GM only, enforced in the service layer."""
+    committed_totals = service.get_brand_rollups(brand_ids, planning_period, current_user=current_user)
+    vendor_targets_by_brand = {
+        v.brand_id: v.vendor_target_amount_lakhs for v in vendor_service.list_by_period(planning_period)
+    }
+    rollups = []
+    for brand_id in brand_ids:
+        committed_total = committed_totals.get(brand_id, Decimal("0"))
+        vendor_amount = vendor_targets_by_brand.get(brand_id)
+        gap = (vendor_amount - committed_total) if vendor_amount is not None else None
+        rollups.append(
+            BrandRollupResponse(
+                brand_id=brand_id,
+                planning_period=planning_period,
+                committed_total=committed_total,
+                vendor_target=vendor_amount,
+                gap=gap,
+            )
         )
-    )
+    return APIResponse(data=rollups)
 
 
 @brand_vendor_router.get("")

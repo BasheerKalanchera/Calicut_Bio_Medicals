@@ -1473,6 +1473,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/planning/targets/brand-rollups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Brand Rollups
+         * @description The screen Haroon actually wants: every brand's committed total next
+         *     to what its vendor promised, gap pre-computed server-side. One batched
+         *     call for every brand at once (/code-review 2026-09-23), not one round
+         *     trip per brand -- Admin/GM only, enforced in the service layer.
+         */
+        get: operations["get_brand_rollups_api_v1_planning_targets_brand_rollups_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/brand-vendor-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Brand Vendor Targets
+         * @description Open read -- everyone should see the bar the team's collectively
+         *     aiming for (decision #2).
+         */
+        get: operations["list_brand_vendor_targets_api_v1_planning_brand_vendor_targets_get"];
+        put?: never;
+        /** Set Brand Vendor Target */
+        post: operations["set_brand_vendor_target_api_v1_planning_brand_vendor_targets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1546,6 +1591,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["BrandResponse"];
+        };
+        /** APIResponse[BrandVendorTargetResponse] */
+        APIResponse_BrandVendorTargetResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["BrandVendorTargetResponse"];
         };
         /** APIResponse[CategoryResponse] */
         APIResponse_CategoryResponse_: {
@@ -2214,6 +2273,36 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["BrandResponse"][];
+        };
+        /** APIResponse[list[BrandRollupResponse]] */
+        APIResponse_list_BrandRollupResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["BrandRollupResponse"][];
+        };
+        /** APIResponse[list[BrandVendorTargetResponse]] */
+        APIResponse_list_BrandVendorTargetResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["BrandVendorTargetResponse"][];
         };
         /** APIResponse[list[CategoryResponse]] */
         APIResponse_list_CategoryResponse__: {
@@ -2947,6 +3036,78 @@ export interface components {
             name: string;
             /** Is Active */
             is_active: boolean;
+        };
+        /** BrandRollupResponse */
+        BrandRollupResponse: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Committed Total */
+            committed_total: string;
+            /** Vendor Target */
+            vendor_target: string | null;
+            /** Gap */
+            gap: string | null;
+        };
+        /** BrandSplitEntry */
+        BrandSplitEntry: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Split Amount Lakhs */
+            split_amount_lakhs: number | string;
+        };
+        /** BrandSplitResponse */
+        BrandSplitResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            brand: components["schemas"]["BrandNested"];
+            /** Split Amount Lakhs */
+            split_amount_lakhs: string;
+        };
+        /** BrandVendorTargetResponse */
+        BrandVendorTargetResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            brand: components["schemas"]["BrandNested"];
+            /** Planning Period */
+            planning_period: string;
+            /** Vendor Target Amount Lakhs */
+            vendor_target_amount_lakhs: string;
+        };
+        /** BrandVendorTargetSet */
+        BrandVendorTargetSet: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Vendor Target Amount Lakhs */
+            vendor_target_amount_lakhs: number | string;
         };
         /** CategoryCreate */
         CategoryCreate: {
@@ -4587,6 +4748,8 @@ export interface components {
             planning_period: string;
             /** Target Amount Lakhs */
             target_amount_lakhs: number | string;
+            /** Brand Splits */
+            brand_splits?: components["schemas"]["BrandSplitEntry"][] | null;
         };
         /** TargetPlanResponse */
         TargetPlanResponse: {
@@ -4621,6 +4784,11 @@ export interface components {
             /** Decision Note */
             decision_note: string | null;
             /**
+             * Brand Splits
+             * @default []
+             */
+            brand_splits: components["schemas"]["BrandSplitResponse"][];
+            /**
              * Created At
              * Format: date-time
              */
@@ -4635,6 +4803,8 @@ export interface components {
         TargetPlanUpdate: {
             /** Target Amount Lakhs */
             target_amount_lakhs: number | string;
+            /** Brand Splits */
+            brand_splits?: components["schemas"]["BrandSplitEntry"][] | null;
         };
         /** UnreadCountResponse */
         UnreadCountResponse: {
@@ -6019,6 +6189,8 @@ export interface operations {
                 zone_id?: string | null;
                 sbu_id?: string | null;
                 product_id?: string | null;
+                brand_id?: string | null;
+                owner_team_only?: boolean;
                 page?: number;
                 page_size?: number;
             };
@@ -8920,6 +9092,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_TargetPlanResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_brand_rollups_api_v1_planning_targets_brand_rollups_get: {
+        parameters: {
+            query: {
+                brand_ids: string[];
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_BrandRollupResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_brand_vendor_targets_api_v1_planning_brand_vendor_targets_get: {
+        parameters: {
+            query: {
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_BrandVendorTargetResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_brand_vendor_target_api_v1_planning_brand_vendor_targets_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandVendorTargetSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_BrandVendorTargetResponse_"];
                 };
             };
             /** @description Validation Error */

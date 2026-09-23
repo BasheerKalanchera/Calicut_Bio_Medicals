@@ -40,6 +40,7 @@ import {
 } from "../utils/formatter";
 import type { TargetPlan, TargetPlanSbu, TargetPlanStatus, BrandSplitEntry } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
+import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 
 // The split section is mandatory whenever the target's SBU has at least one
 // active brand (both SBUs do today, confirmed 2026-09-23 -- Imaging has 1,
@@ -82,10 +83,19 @@ function StatusChip({ status }: { status: TargetPlanStatus }) {
 
 // A resolved decision (Approved/Rejected) can carry the approver's note --
 // shown right under the chip so it isn't stored but invisible.
-function StatusWithNote({ target }: { target: TargetPlan }) {
+//
+// sbuHasBrands: flags a target that predates Brand-Level Target Planning
+// (or otherwise has no split) once its SBU has an active brand -- splitting
+// is mandatory going forward, but existing targets from before 2026-09-23
+// were grandfathered in rather than retroactively blocked (Basheer's call).
+// This is the visible nudge back to the owner to go revise and split it.
+function StatusWithNote({ target, sbuHasBrands }: { target: TargetPlan; sbuHasBrands: boolean }) {
   return (
     <Box>
       <StatusChip status={target.status} />
+      {sbuHasBrands && target.brand_splits.length === 0 && (
+        <Chip label="Needs Brand Split" color="warning" variant="outlined" size="small" sx={{ ml: 0.5 }} />
+      )}
       {target.decision_note && (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
           {target.decision_note}
@@ -170,6 +180,27 @@ export default function TargetPlanningScreen() {
   // default) -- derived from the loaded list rather than an effect,
   // defaulting to the first one until the user picks a different one.
   const rollupSbuId = needsSbuChoice ? (selectedSbuId ?? sbus[0]?.id ?? null) : userProfile?.sbu?.id ?? null;
+
+  // Drives the "Needs Brand Split" nudge below -- a target is flagged once
+  // its SBU has an active brand, regardless of whether the target itself
+  // predates the feature. One brand-list fetch per SBU shown (mySbus is at
+  // most 2 today -- everyone else has a single home SBU).
+  const mySbuBrandQueries = useQueries({
+    queries: mySbus.map((sbu) => ({
+      queryKey: ["brands", sbu.id],
+      queryFn: () => listBrands(sbu.id) as Promise<BrandResponse[]>,
+    })),
+  });
+  const mySbuHasBrands = new Set(
+    mySbus.filter((_sbu, i) => (mySbuBrandQueries[i]?.data ?? []).length > 0).map((s) => s.id),
+  );
+
+  const { data: rollupSbuBrands = [] } = useQuery({
+    queryKey: ["brands", rollupSbuId],
+    queryFn: () => listBrands(rollupSbuId as string) as Promise<BrandResponse[]>,
+    enabled: showRollup && !!rollupSbuId,
+  });
+  const rollupSbuHasBrands = rollupSbuBrands.length > 0;
 
   const { data: myTargets = [] } = useQuery({
     queryKey: ["target-plans", "mine"],
@@ -263,7 +294,7 @@ export default function TargetPlanningScreen() {
     setAddBrandAmount("");
   };
 
-  const splitTotal = editSplits.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+  const splitTotal = sumAllocation(editSplits.map((s) => Number(s.amount)));
 
   const handleSaveTarget = async () => {
     const amount = Number(amountInput);
@@ -273,7 +304,11 @@ export default function TargetPlanningScreen() {
 
     let brand_splits: BrandSplitEntry[] | undefined;
     if (dialogBrands.length > 0) {
-      if (editSplits.length === 0 || Math.abs(splitTotal - amount) > 0.01) {
+      // Rounded to cents on both sides so this matches the backend's exact
+      // Decimal(15,2) equality check -- a looser tolerance here used to let
+      // a save that looked "done" on screen get rejected server-side with
+      // a confusing raw error (/code-review 2026-09-23).
+      if (editSplits.length === 0 || !isAllocationBalanced(splitTotal, amount, 2)) {
         throw new Error(
           `Brand splits must sum to exactly the target amount (currently ${formatLakhs(splitTotal)} of ${formatLakhs(amount)}).`,
         );
@@ -365,7 +400,7 @@ export default function TargetPlanningScreen() {
                   <TableRow key={t.id}>
                     <TableCell>{t.sbu.name}</TableCell>
                     <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                    <TableCell><StatusWithNote target={t} /></TableCell>
+                    <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
                     <TableCell align="right">
                       <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>Revise</Button>
                     </TableCell>
@@ -417,7 +452,7 @@ export default function TargetPlanningScreen() {
                           <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
                           <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
                           <TableCell>
-                            {t ? <StatusWithNote target={t} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                            {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                           </TableCell>
                           <TableCell align="right">
                             <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{t ? "Revise" : "Set"}</Button>
@@ -504,7 +539,7 @@ export default function TargetPlanningScreen() {
                     <TableRow key={t.id}>
                       <TableCell>{t.user.display_name}</TableCell>
                       <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                      <TableCell><StatusWithNote target={t} /></TableCell>
+                      <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
                     </TableRow>
                   ))}
                   {teamTargets.length === 0 && (
@@ -546,7 +581,7 @@ export default function TargetPlanningScreen() {
                             <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
                             <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
                             <TableCell>
-                              {t ? <StatusWithNote target={t} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                              {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                             </TableCell>
                           </TableRow>
                         );
@@ -598,7 +633,7 @@ export default function TargetPlanningScreen() {
                 variant="caption"
                 sx={{
                   fontWeight: 700,
-                  color: Math.abs(splitTotal - (Number(amountInput) || 0)) < 0.01 ? "success.main" : "warning.main",
+                  color: isAllocationBalanced(splitTotal, Number(amountInput) || 0, 2) ? "success.main" : "warning.main",
                 }}
               >
                 Remaining to allocate: {formatLakhs((Number(amountInput) || 0) - splitTotal)}

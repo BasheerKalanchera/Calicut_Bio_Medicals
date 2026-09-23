@@ -56,10 +56,24 @@ def _make_repo(**overrides) -> MagicMock:
     return repo
 
 
+def _make_brand_repo(*, has_brands: bool = False) -> MagicMock:
+    brand_repo = MagicMock()
+    brand_repo.has_active_brand.return_value = has_brands
+    return brand_repo
+
+
+def _make_service(repo: MagicMock, *, has_brands: bool = False) -> TargetPlanService:
+    """Tests that don't care about brand splits default to `has_brands=False`
+    -- _apply_brand_splits becomes a no-op, preserving pre-Brand-Level-
+    Target-Planning behavior for every unrelated test. Only TestBrandSplits
+    below passes has_brands=True."""
+    return TargetPlanService(repository=repo, brand_repository=_make_brand_repo(has_brands=has_brands))
+
+
 class TestCreateTargetPlan:
     def test_creates_pending_approval_row(self):
         repo = _make_repo()
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
         current_user = _make_user("Sales Staff")
         data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", target_amount_lakhs=Decimal("50"))
 
@@ -70,7 +84,7 @@ class TestCreateTargetPlan:
 
     def test_raises_conflict_when_already_set(self):
         repo = _make_repo(get_by_user_sbu_period=MagicMock(return_value=_make_target_plan()))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
         current_user = _make_user("Sales Staff")
         data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", target_amount_lakhs=Decimal("50"))
 
@@ -83,7 +97,7 @@ class TestUpdateTargetPlan:
         owner = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.update_target_plan(
             target_plan.id, TargetPlanUpdate(target_amount_lakhs=Decimal("75")), current_user=owner
@@ -98,7 +112,7 @@ class TestUpdateTargetPlan:
             user_id=owner.id, status="APPROVED", approved_by=uuid.uuid4(), approved_at="2026-09-01"
         )
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.update_target_plan(
             target_plan.id, TargetPlanUpdate(target_amount_lakhs=Decimal("80")), current_user=owner
@@ -118,7 +132,7 @@ class TestUpdateTargetPlan:
             decision_note="Too low for this territory",
         )
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.update_target_plan(
             target_plan.id, TargetPlanUpdate(target_amount_lakhs=Decimal("80")), current_user=owner
@@ -134,7 +148,7 @@ class TestUpdateTargetPlan:
         other = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id)
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="only revise your own"):
             service.update_target_plan(
@@ -143,7 +157,7 @@ class TestUpdateTargetPlan:
 
     def test_raises_not_found(self):
         repo = _make_repo(get_by_id=MagicMock(return_value=None))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="not found"):
             service.update_target_plan(
@@ -158,7 +172,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate  # get_approver_id looks up subordinate.manager_id
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(
             target_plan.id, status="APPROVED", current_user=manager
@@ -173,7 +187,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="authorized"):
             service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=peer)
@@ -184,7 +198,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="authorized"):
             service.approve_or_reject_target_plan(
@@ -197,7 +211,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=admin)
 
@@ -212,7 +226,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=gm.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = gm  # get_approver_id(gm.id) -> gm.manager_id -> None
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="authorized"):
             service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=gm)
@@ -226,7 +240,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=gm.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = gm
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=admin)
 
@@ -239,7 +253,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(
             target_plan.id, status="REJECTED", current_user=manager
@@ -253,7 +267,7 @@ class TestApproveOrRejectTargetPlan:
         target_plan = _make_target_plan(user_id=subordinate.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
         repo.db.get.return_value = subordinate
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(
             target_plan.id,
@@ -269,7 +283,7 @@ class TestListPendingApprovalForApprover:
     def test_non_overlay_caller_does_not_request_orphaned_rows(self):
         manager = _make_user("Area Manager")
         repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         service.list_pending_approval_for_approver(manager)
 
@@ -280,7 +294,7 @@ class TestListPendingApprovalForApprover:
     def test_admin_caller_requests_orphaned_rows_too(self):
         admin = _make_user("Admin")
         repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         service.list_pending_approval_for_approver(admin)
 
@@ -291,7 +305,7 @@ class TestListPendingApprovalForApprover:
     def test_gm_caller_requests_orphaned_rows_too(self):
         gm = _make_user("General Manager")
         repo = _make_repo(list_pending_approval_for_approver=MagicMock(return_value=[]))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         service.list_pending_approval_for_approver(gm)
 
@@ -303,7 +317,7 @@ class TestListPendingApprovalForApprover:
 class TestGetSbuRollup:
     def test_delegates_to_repository_and_includes_pending(self):
         repo = _make_repo(get_sbu_rollup=MagicMock(return_value=(Decimal("120.00"), 3)))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         total, count = service.get_sbu_rollup(SBU_ID, "2026-Q3")
 
@@ -312,11 +326,38 @@ class TestGetSbuRollup:
         repo.get_sbu_rollup.assert_called_once_with(SBU_ID, "2026-Q3")
 
 
+class TestGetBrandRollups:
+    """/code-review 2026-09-23: committed_total is already narrowed by the
+    caller's own RLS visibility, not the true team total, so this must stay
+    Admin/GM only -- matching the Brand Target Tracking screen it feeds."""
+
+    def test_admin_can_fetch_rollups(self):
+        brand_id = uuid.uuid4()
+        repo = _make_repo(get_brand_rollups=MagicMock(return_value={brand_id: Decimal("50")}))
+        service = _make_service(repo)
+        admin = _make_user("Admin")
+
+        totals = service.get_brand_rollups([brand_id], "2026-Q3", current_user=admin)
+
+        assert totals == {brand_id: Decimal("50")}
+        repo.get_brand_rollups.assert_called_once_with([brand_id], "2026-Q3")
+
+    def test_sales_staff_cannot_fetch_rollups(self):
+        repo = _make_repo()
+        service = _make_service(repo)
+        staff = _make_user("Sales Staff")
+
+        with pytest.raises(AuthorizationError, match="Admin/GM"):
+            service.get_brand_rollups([uuid.uuid4()], "2026-Q3", current_user=staff)
+
+        repo.get_brand_rollups.assert_not_called()
+
+
 class TestListTeamTargets:
     def test_delegates_to_repository(self):
         rows = [_make_target_plan(), _make_target_plan()]
         repo = _make_repo(list_by_sbu_and_period=MagicMock(return_value=rows))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         result = service.list_team_targets(SBU_ID, "2026-Q3")
 
@@ -329,7 +370,7 @@ class TestDeleteTargetPlan:
         owner = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id)
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         service.delete_target_plan(target_plan.id, current_user=owner)
 
@@ -340,7 +381,7 @@ class TestDeleteTargetPlan:
         other = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id)
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="only delete your own"):
             service.delete_target_plan(target_plan.id, current_user=other)
@@ -348,13 +389,15 @@ class TestDeleteTargetPlan:
 
 class TestBrandSplits:
     """docs/Brand-Level-Target-Planning-Implementation-Plan.md decisions #1
-    and #3 -- splits must sum to exactly the total, and a split-only
-    revision on an APPROVED plan resets approval the same as a total
-    change."""
+    and #3 -- splitting is mandatory whenever the SBU has an active brand
+    (enforced server-side, not just the frontend's dialog gate -- /code-
+    review 2026-09-23), splits must sum to exactly the total, and a
+    split-only revision on an APPROVED plan resets approval the same as a
+    total change."""
 
     def test_create_with_matching_split_sum_succeeds(self):
         repo = _make_repo()
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo, has_brands=True)
         current_user = _make_user("Sales Staff")
         brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
         data = TargetPlanCreate(
@@ -377,7 +420,7 @@ class TestBrandSplits:
 
     def test_create_with_mismatched_split_sum_raises(self):
         repo = _make_repo()
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo, has_brands=True)
         current_user = _make_user("Sales Staff")
         data = TargetPlanCreate(
             sbu_id=SBU_ID,
@@ -391,9 +434,47 @@ class TestBrandSplits:
 
         repo.replace_brand_splits.assert_not_called()
 
-    def test_create_without_splits_does_not_touch_split_table(self):
+    def test_create_with_no_splits_raises_when_sbu_has_brands(self):
+        """Server-side enforcement of decision #1 -- previously only the
+        frontend's dialogBrands.length gate stopped this; a direct API call
+        with no brand_splits used to silently skip the rule entirely."""
         repo = _make_repo()
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo, has_brands=True)
+        current_user = _make_user("Sales Staff")
+        data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", target_amount_lakhs=Decimal("50"))
+
+        with pytest.raises(ValidationError, match="brand split is required"):
+            service.create_target_plan(data, current_user=current_user)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_create_with_duplicate_brand_id_raises(self):
+        """Without this check, a duplicate brand_id would pass the sum
+        check and then crash replace_brand_splits with an unhandled
+        IntegrityError on the uq_target_plan_brand_split constraint
+        (/code-review 2026-09-23)."""
+        repo = _make_repo()
+        service = _make_service(repo, has_brands=True)
+        current_user = _make_user("Sales Staff")
+        brand_a = uuid.uuid4()
+        data = TargetPlanCreate(
+            sbu_id=SBU_ID,
+            planning_period="2026-Q3",
+            target_amount_lakhs=Decimal("50"),
+            brand_splits=[
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("25")),
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("25")),
+            ],
+        )
+
+        with pytest.raises(ValidationError, match="can only appear once"):
+            service.create_target_plan(data, current_user=current_user)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_create_without_splits_is_a_noop_when_sbu_has_no_active_brand(self):
+        repo = _make_repo()
+        service = _make_service(repo, has_brands=False)
         current_user = _make_user("Sales Staff")
         data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", target_amount_lakhs=Decimal("50"))
 
@@ -405,13 +486,30 @@ class TestBrandSplits:
         owner = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id, status="PENDING_APPROVAL")
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo, has_brands=True)
         data = TargetPlanUpdate(
             target_amount_lakhs=Decimal("75"),
             brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("74"))],
         )
 
         with pytest.raises(ValidationError, match="must sum to exactly the target amount"):
+            service.update_target_plan(target_plan.id, data, current_user=owner)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_update_that_changes_amount_without_resending_splits_raises(self):
+        """Closes the "stale splits after an amount-only revision" gap
+        (/code-review 2026-09-23) -- since splits are now mandatory on every
+        call for a brand-having SBU, an update can no longer change the
+        amount while silently leaving the old splits (now mismatched)
+        in place."""
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="PENDING_APPROVAL")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = _make_service(repo, has_brands=True)
+        data = TargetPlanUpdate(target_amount_lakhs=Decimal("75"))
+
+        with pytest.raises(ValidationError, match="brand split is required"):
             service.update_target_plan(target_plan.id, data, current_user=owner)
 
         repo.replace_brand_splits.assert_not_called()
@@ -429,7 +527,7 @@ class TestBrandSplits:
             target_amount_lakhs=Decimal("50"),
         )
         repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
-        service = TargetPlanService(repository=repo)
+        service = _make_service(repo, has_brands=True)
         brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
         data = TargetPlanUpdate(
             target_amount_lakhs=Decimal("50"),

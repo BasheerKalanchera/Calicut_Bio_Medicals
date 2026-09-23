@@ -56,6 +56,13 @@ class BrandRepository(ReferenceRepository[Brand]):
     def sbu_exists(self, sbu_id: uuid.UUID) -> bool:
         return _sbu_exists(self.db, sbu_id)
 
+    def has_active_brand(self, sbu_id: uuid.UUID) -> bool:
+        """Drives Brand-Level Target Planning decision #1 -- splitting is
+        mandatory whenever the SBU has at least one active brand, a no-op
+        otherwise (docs/Brand-Level-Target-Planning-Implementation-Plan.md)."""
+        stmt = select(func.count()).where(Brand.sbu_id == sbu_id, Brand.is_active == True)  # noqa: E712
+        return (self.db.scalar(stmt) or 0) > 0
+
 
 class CategoryRepository(ReferenceRepository[Category]):
     def __init__(self, db: Session):

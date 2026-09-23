@@ -68,8 +68,10 @@ def test_all_28_tables_registered():
     # (0047_add_marketing_lead_comment_table.py).
     # 36, not 33: Product Catalog Brand/Category/Model added brand, category,
     # model (0048_brand_category_model_tables.py).
+    # 38, not 36: Brand-Level Target Planning added target_plan_brand_split,
+    # brand_vendor_target (0053_target_plan_brand_split_and_vendor_target.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 36, f"Expected 36 tables, found {table_count}"
+    assert table_count == 38, f"Expected 38 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -125,7 +127,12 @@ def test_all_relationships_resolve():
     # 116, not 108: Product Catalog Brand/Category/Model (0048/0049) added
     # Brand.models, Category.models, Model.brand, Model.category,
     # Model.products, Product.brand, Product.model, Product.category.
-    assert rel_count == 116, f"Expected 116 relationships, found {rel_count}"
+    # 120, not 116: Brand-Level Target Planning (0053) added
+    # TargetPlan.brand_splits, TargetPlanBrandSplit.target_plan,
+    # TargetPlanBrandSplit.brand, BrandVendorTarget.brand -- both new
+    # relationships onto Brand are one-directional only, no back_populates
+    # added there, same reasoning as MarketingLead.assigned_to_user above.
+    assert rel_count == 120, f"Expected 120 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

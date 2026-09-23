@@ -130,26 +130,30 @@ class TestReplaceBrandSplits:
         repo.db.flush.assert_called_once()
 
 
-class TestGetBrandRollup:
-    def test_sums_splits_for_brand_and_period_across_target_plans(self):
+class TestGetBrandRollups:
+    def test_sums_splits_per_brand_for_period_in_one_query(self):
+        """One GROUP BY for every brand at once -- not a query per brand
+        (/code-review 2026-09-23)."""
+        other_brand_id = uuid.uuid4()
         repo = TargetPlanRepository(db=MagicMock())
-        repo.db.scalar.return_value = 50
+        repo.db.execute.return_value.all.return_value = [(BRAND_ID, Decimal("50"))]
 
-        total = repo.get_brand_rollup(BRAND_ID, "2026-Q3")
+        totals = repo.get_brand_rollups([BRAND_ID, other_brand_id], "2026-Q3")
 
-        stmt = repo.db.scalar.call_args[0][0]
+        stmt = repo.db.execute.call_args[0][0]
         sql = _compiled(stmt)
-        assert f"target_plan_brand_split.brand_id = '{_uuid_literal(BRAND_ID)}'" in sql
+        expected_in_clause = f"brand_id IN ('{_uuid_literal(BRAND_ID)}', '{_uuid_literal(other_brand_id)}')"
+        assert expected_in_clause in sql
         assert "target_plan.planning_period = '2026-Q3'" in sql
-        assert total == Decimal("50")
+        assert totals == {BRAND_ID: Decimal("50")}
 
-    def test_returns_zero_when_no_splits_exist(self):
+    def test_brand_with_no_splits_is_absent_from_the_result(self):
         repo = TargetPlanRepository(db=MagicMock())
-        repo.db.scalar.return_value = None
+        repo.db.execute.return_value.all.return_value = []
 
-        total = repo.get_brand_rollup(BRAND_ID, "2026-Q3")
+        totals = repo.get_brand_rollups([BRAND_ID], "2026-Q3")
 
-        assert total == Decimal("0")
+        assert totals == {}
 
 
 class TestBrandVendorTargetRepository:

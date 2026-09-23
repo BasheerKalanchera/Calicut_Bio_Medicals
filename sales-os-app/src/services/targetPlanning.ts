@@ -54,9 +54,10 @@ export async function rejectTargetPlan(id: string, data: TargetPlanApprovalDecis
   return response.data.data;
 }
 
-export async function getBrandRollup(brandId: string, planningPeriod: string): Promise<BrandRollup> {
-  const response = await api.get("/planning/targets/brand-rollup", {
-    params: { brand_id: brandId, planning_period: planningPeriod },
+export async function getBrandRollups(brandIds: string[], planningPeriod: string): Promise<BrandRollup[]> {
+  if (brandIds.length === 0) return [];
+  const response = await api.get("/planning/targets/brand-rollups", {
+    params: { brand_ids: brandIds, planning_period: planningPeriod },
   });
   return response.data.data;
 }

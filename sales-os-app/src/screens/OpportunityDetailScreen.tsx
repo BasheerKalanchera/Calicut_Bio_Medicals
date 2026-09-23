@@ -42,6 +42,7 @@ import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../typ
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue } from "../utils/opportunityStatus";
 import { itemsTotal } from "../utils/opportunityItems";
+import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
@@ -548,8 +549,8 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
   };
 
   const saveSplits = async () => {
-    const total = editSplits.reduce((s, sp) => s + sp.split_percentage, 0);
-    if (editSplits.length > 0 && Math.abs(total - 100) > 0.01) {
+    const total = sumAllocation(editSplits.map((sp) => sp.split_percentage));
+    if (editSplits.length > 0 && !isAllocationBalanced(total, 100, 2)) {
       setSaveError(`Splits must total 100% (currently ${total.toFixed(1)}%)`);
       return;
     }
@@ -571,7 +572,7 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
   if (isLoading) return <LoadingPlaceholder />;
 
   if (editing) {
-    const total = editSplits.reduce((s, sp) => s + sp.split_percentage, 0);
+    const total = sumAllocation(editSplits.map((sp) => sp.split_percentage));
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -579,7 +580,7 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
             <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
               Splits
             </Typography>
-            <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: Math.abs(total - 100) < 0.01 ? "#059669" : "#f59e0b" }}>
+            <Box component="span" sx={{ fontSize: "10px", fontWeight: 900, color: isAllocationBalanced(total, 100, 2) ? "#059669" : "#f59e0b" }}>
               {total.toFixed(0)}%
             </Box>
           </Box>
