@@ -87,6 +87,24 @@ neither blocking:
 
 ## Deferred / undecided items
 
+- **Brand-Level Target Planning: "splits sum to the target" isn't enforced
+  at the database layer.** Found by `/code-review` (high effort) on the
+  feature's commits, 2026-09-23. `target_plan_brand_split` rows summing to
+  `target_plan.target_amount_lakhs` is checked in
+  `TargetPlanService._apply_brand_splits` (Python) and, separately, in the
+  browser (`TargetPlanningScreen.tsx`) — nothing stops a write that reaches
+  the database by some other path (a future report job, a data-fix script,
+  a bulk migration) from leaving mismatched rows with no error. A DB-level
+  constraint trigger (the same class of mechanism already used elsewhere in
+  this schema, e.g. `trg_product_sync_brand_category_name`) would make this
+  structurally impossible instead of relying on every future caller
+  reimplementing the same sum check. Deliberately not built yet — matches
+  how this codebase already enforces the analogous rule elsewhere
+  (Opportunity contributor splits summing to 100% is also service/frontend-
+  layer only, not DB-enforced), so this isn't a regression, just consistent
+  with the existing pattern. Revisit if a non-API write path to
+  `target_plan_brand_split` is ever added.
+
 - **Marketing User has no notification bell — can't be proactively nudged
   about a comment on their own lead.** Found 2026-09-18 during Lead
   Follow-up Comments manual E2E (`docs/Lead-Followup-Comments-Manual-E2E-
