@@ -42,11 +42,15 @@ There is one ledger and two photocopies.
 4. **Verify before committing.** Run
    `python scripts/generate_scorecard.py --check` — read-only, compares
    what the ledger currently computes to against what's actually on disk
-   in all three files, and exits non-zero naming whichever file(s) are
+   in all four files, and exits non-zero naming whichever file(s) are
    stale. Treat a non-zero exit as a blocker, not a warning.
 5. **Republish if client-visible.** If the change affects what
-   Haroon/Latheef Bhai see, republish `.scratch/phase1-scorecard.html` to
-   its Artifact URL so the live page matches the ledger.
+   Haroon/Latheef Bhai see, republish **both** client pages to their
+   Artifact URLs so the live pages match the ledger:
+   `.scratch/phase1-scorecard.html`
+   (https://claude.ai/artifact/7qRxCt4BTooYDSzvvg1xPB) and
+   `.scratch/phase1-scorecard-by-status.html`
+   (https://claude.ai/artifact/VcwUvDNArFv22x2Aghvx3Z).
 
 ## Quick reference
 
@@ -55,7 +59,8 @@ There is one ledger and two photocopies.
 | `docs/Signed-Requirements-to-PRD-Traceability.md` | Source of truth | Hand-edit Status/Notes/Client Note cells only. Never hand-edit the tally line between the TALLY markers. |
 | `docs/Phase1-Delivery-Scorecard.md` | Internal scorecard | Generated only — never hand-edit. |
 | `.scratch/phase1-scorecard.html` | Client-facing Artifact | Generated only — never hand-edit. Republish after regenerating. |
-| `scripts/generate_scorecard.py` | The generator | `(no flag)` writes all three outputs. `--check` verifies without writing, exit 1 if stale. |
+| `.scratch/phase1-scorecard-by-status.html` | Client-facing Artifact (by status) | Generated only — never hand-edit. Republish after regenerating. |
+| `scripts/generate_scorecard.py` | The generator | `(no flag)` writes all four outputs. `--check` verifies without writing, exit 1 if stale. |
 
 This process is also codified as a standing rule in `CLAUDE.md`'s
 `## Scorecard integrity` section, so it applies automatically in every

@@ -1,28 +1,14 @@
 # Active Progress — Cabio Sales OS
 _Session: 2026-08-21 → 2026-09-22_
 
-## Next up tomorrow, first thing — CLAUDE.md refactor (parked, discussion only so far)
+## In progress — CLAUDE.md refactor (applied 2026-09-23, awaiting commit approval)
 
-`docs/claude_md_analysis.md` (external "Antigravity" tool) proposes moving
-~60% of `CLAUDE.md` into on-demand skills. Reviewed live with Basheer,
-2026-09-22 — **partial agreement, not a straight yes**: extraction is the
-right mechanism for `Troubleshooting & scripting` (mechanical, low-stakes
-if occasionally missed), but **not** for `Pre-E2E code review` or
-`Feature planning` — those are judgment-in-the-moment rules, and this
-same session had the Pre-E2E code review rule skipped once *while it was
-still directly in always-loaded `CLAUDE.md`* (Basheer had to quote the
-file back to catch it). Demoting it to a skill that needs self-recognition
-to trigger looks like it raises that risk, not lowers it. Also flagged:
-the analysis's "~144,000 tokens saved" estimate overstates the real
-benefit (doesn't account for prompt caching), and its line-number
-references are already stale (analyzed a 332-line snapshot; live file is
-now 390 lines). Full reasoning in this session's own transcript, not yet
-written to a doc.
-
-**Next step:** decide the actual section list to extract (leaning:
-`Troubleshooting & scripting` + the `find`-vs-coordinates part of `Manual
-E2E testing` only), then draft the skill file(s) and the trimmed
-`CLAUDE.md`, and show both before touching the live file.
+Per `docs/CLAUDE-md-Refactor-Plan.md`: `CLAUDE.md` 4,134 → 1,600 words;
+backstories moved verbatim to `docs/Process-Rules-History.md`; Troubleshooting
+& scripting moved to skill `.claude/skills/cabio-db-and-scripting/`; scorecard
+process doc now names both client pages. Commit approval section folded in.
+**Next step:** Basheer approves the commit (files + message shown first); then
+next session, confirm the new skill appears in the skills list.
 
 ## 2026-09-23 — Product Catalog Brand/Category/Model manual E2E: COMPLETE
 

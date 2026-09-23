@@ -1,5 +1,8 @@
 # Cabio Sales OS — Project Rules
 
+Rule origins (the incident behind each dated tag) live in
+`docs/Process-Rules-History.md` — grep it for the date.
+
 ## Product
 - This is a Sales OS, not a CRM — see PRD for the full definition.
 - Pipeline model: Target → Coverage → Opportunity → Revenue (see PRD and ADR-013).
@@ -12,13 +15,17 @@
 - Zones: North Kerala, South Kerala, Bangalore, Mangalore (Central Kerala deprecated 2026-08-21 — accounts moved to South Kerala, zone deactivated; see docs/Zone-Hierarchy-Territory-Data-2026-08.md)
 - Fiscal year: Indian FY April–March; period format YYYY-Qn
 - Currency: all financial values in INR Lakhs, NUMERIC(15,2)
-- **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not local/disposable —
-  never write test data through the live API without checking first. `Activity` rows are
-  immutable (no DELETE endpoint), so test writes there are permanent. Investigative actions
-  (e.g. a read-only query) need announcing first too — see "Show before you act" below.
-- **Safety:** never connect directly to the UAT Supabase project (`backend/.env.uat`) —
-  no queries, size checks, dumps, or scripts against it — without asking Basheer first,
-  even read-only ones. Ask, state exactly what will run, and wait for explicit go-ahead.
+- **Safety:** `backend/.env` points at a live, shared Supabase dev DB, not
+  local/disposable — never write test data through the live API without checking
+  first. `Activity` rows are immutable (no DELETE endpoint), so test writes there
+  are permanent. Investigative actions (e.g. a read-only query) need announcing
+  first too — see "Show before you act".
+- **Safety:** never connect directly to the UAT Supabase project (`backend/.env.uat`)
+  — no queries, size checks, dumps, or scripts, even read-only — without asking
+  Basheer first. State exactly what will run and wait for explicit go-ahead.
+- **Raw SQL on RLS tables:** never trust a zero/low count until all three session
+  settings (user, role, SBU) are set and verified — a missing one silently returns
+  too few rows. Full recipe in the `cabio-db-and-scripting` skill. *(2026-09-22)*
 
 ## Authoritative References
 These documents are the source of truth. Consult the relevant one before writing
@@ -31,378 +38,140 @@ code or changing structure. On any conflict, the document wins over this file.
   and state transitions. Both backend and frontend must honor these.
 - Decisions & schema: ADRs in `docs/ADR.md`; `Physical-Schema.sql` is authoritative
   for all DB object names. Consult before any structural change.
-- Phase 1 scorecard process: `docs/Scorecard-Maintenance-Process.md` — the
-  ledger/photocopy lifecycle and commands behind the "Scorecard integrity"
-  rules below.
+- Phase 1 scorecard process: `docs/Scorecard-Maintenance-Process.md`.
+- DB queries, migrations, scripts, git-branch gaps: the `cabio-db-and-scripting`
+  skill — load it before any of those tasks.
 
 ## Session handoff
-- `.claude/active_progress.md` is a live handover doc, not a log: the current task and
-  the immediate next step, nothing else. No narrative, no root-cause write-ups, no
-  standing decisions, no backlog — those have their own homes (below). Once a thread
-  resolves, its detail moves out; it doesn't linger here as history.
-- **Running commentary:** detailed write-ups (root causes, design debates, verification
-  results) are written directly to `docs/Progress-Archive-<year>-<month>.md` as the work
-  happens, not drafted in active_progress.md first. Roll to a new monthly file when the
-  month changes. Not loaded at session start; grep it for the detail behind a decision.
-  Exception: a thread actively in progress *this session* stays in active_progress.md
-  until it resolves — moving it mid-flight makes it harder to follow, not easier.
-- **Testing narration:** during manual/E2E testing, when a bug is found and fixed, or a
-  notable decision/finding comes up in discussion, log it to the current
-  Progress-Archive file promptly — a brief note, not a full write-up, so it doesn't
-  slow down the testing flow. Don't wait to be told to "write it down," but don't log
-  routine back-and-forth either.
-- **Backlog:** deferred/parked ideas and undecided product questions live in
-  `docs/Backlog.md`, not active_progress.md.
-- **Phase 1 planning/sequencing:** `docs/Phase1-Completion-Sprint-Plan.md` is
-  deprecated as a planning source, as of ~2026-09-12 — it still exists in the
-  repo, but don't propose edits to it or treat its "this week/next week"
-  framing as current. Phase 1 build sequencing now comes directly from
-  `docs/Signed-Requirements-to-PRD-Traceability.md`'s Partial/Not-started
-  rows instead (its Status/Notes/Client Note columns are already the single
-  source of truth for delivery status — see "Scorecard integrity" below;
-  this extends the same file to sequencing, not just status). **Why:**
-  2026-09-19, a build-order update was offered against the Sprint Plan doc
-  before checking whether it was still the live planning artifact; Basheer
-  had already told me this once before ("remember?") and it had never been
-  written down anywhere authoritative.
-- **Standing decisions:** anything durable (a business rule, an architecture call, an
-  API shape, a convention) gets written directly into whichever authoritative doc
-  governs that domain (see "Authoritative References" above) — never parked in a
-  progress file, even temporarily.
-- Update active_progress.md as work advances, not only at session end.
-- Write handover notes **after the fact**, referencing real values (commit hashes,
-  exact test counts, etc.) — never a placeholder (`<hash>`) meant to be filled in
-  later. Get the real value first, then write the note.
-- A requested retrospective is written to Progress-Archive only after being shown in
-  chat first — see "Show before you act" below.
-- Default any new generated or exported file to the session scratchpad directory, by
-  its explicit full path, from the very first write — never a bare relative filename
-  that lands wherever the shell's current directory happens to be.
+- `.claude/active_progress.md` is a live handover doc, not a log: the current task
+  and the immediate next step, nothing else. Once a thread resolves, its detail
+  moves out. Exception: a thread actively in progress *this session* stays until
+  it resolves. Update it as work advances, not only at session end.
+- **Running commentary** (root causes, design debates, verification results) goes
+  directly to `docs/Progress-Archive-<year>-<month>.md` as the work happens. Roll
+  to a new monthly file when the month changes.
+- **Testing narration:** during manual/E2E testing, log bugs found/fixed and
+  notable findings to Progress-Archive promptly — a brief note, unprompted, but
+  not routine back-and-forth.
+- **Backlog:** deferred ideas and undecided product questions live in `docs/Backlog.md`.
+- **Phase 1 sequencing** comes from `docs/Signed-Requirements-to-PRD-Traceability.md`'s
+  Partial/Not-started rows. `docs/Phase1-Completion-Sprint-Plan.md` is deprecated
+  (~2026-09-12) — don't propose edits to it or treat it as current. *(2026-09-19)*
+- **Standing decisions** (business rule, architecture call, API shape, convention)
+  go straight into the authoritative doc for that domain — never a progress file.
+- Write handover notes **after the fact** with real values (commit hashes, test
+  counts) — never a placeholder to fill in later.
+- New generated/exported files go to the session scratchpad by explicit full path
+  from the first write — never a bare relative filename.
 
 ## Feature planning
-- The moment a task's scope becomes feature-sized, write `docs/<Feature>-
-  Implementation-Plan.md` as the primary planning artifact and present its actual
-  content as chat text — don't rely on, or start with, the CLI's built-in plan-mode
-  file/`ExitPlanMode` review as if it were the review step. Matches this repo's
-  existing convention (`docs/Target-Planning-Implementation-Plan.md`, `docs/High-
-  Priority-Deal-Flag-Implementation-Plan.md`, etc.). **Why:** 2026-09-18, a plan was
-  written to the ephemeral plan-mode file and submitted via `ExitPlanMode`; Basheer:
-  "You are deviating from the process. First prepare an implementation plan and show
-  me the plan."
-- When a conversation's scope visibly escalates from a quick question into a real
-  architecture/feature decision, say so explicitly in the moment — don't keep going
-  conversationally until the missing plan doc causes friction on its own.
-- When flagging a dependency on another environment (Dev vs. UAT, or any other
-  system boundary), state up front which environment it actually lands in — in
-  the plain-language pass itself, not buried in a technical addendum to untangle
-  after confusion already shows up.
-- When a feature has both an "obvious heavy version" (e.g. a new cascade/push
-  mechanism) and a lighter version that gets most of the value (e.g. aggregating
-  what already exists), surface both as a real choice up front — don't default to
-  the heavier design and wait to be redirected to the lighter one.
-- **Why (both above):** 2026-09-19, Brand-Level Target Planning — the first pass
-  explained a Product Catalog dependency ambiguously about which environment it
-  applied to, costing a clarifying round-trip; separately, a full top-down
-  cascade was the working assumption until Basheer proposed a much simpler
-  bottom-up rollup comparison himself, which should have been offered as an
-  explicit option from the start.
-- Before drafting or extending a technical mechanism for an already-"approved"
-  plan, check whether its underlying structural scope is still settled — don't
-  take the existing plan's framing at face value and start on the mechanism,
-  only to have a bigger structural question surface partway through that
-  invalidates most of the draft.
-- When a design has several interlocking structural questions (e.g. table
-  shape, hierarchy/nesting, cascading behavior, scoping), surface them
-  together in one round where possible, rather than letting each one emerge
-  only after the user pushes back on the previous answer.
-- **Why (both above):** 2026-09-20, Product Catalog Brand/Category/Model — the
-  existing "Part 1" plan (a computed `name` column) was reviewed and drafted
-  as ready to build before the real question (should Brand/Category/Model
-  become real tables at all, and how do they relate) came up; once it did,
-  the nesting question, the Model↔Category dependency, cascading dropdowns,
-  and SBU-scoping each surfaced one at a time across separate rounds instead
-  of together, and each answer invalidated part of the previous draft.
-- When a bigger, adjacent design gap surfaces mid-task (an inconsistency
-  between two related mechanisms, a spec-vs-build mismatch), lead with a
-  proposed narrowly-scoped fix alongside the problem description — don't
-  just lay out the gap in full and wait to be told what to do about it.
-  **Why:** 2026-09-22, a Split-attribution inconsistency between reporting
-  and a report drill-down was described in full, including the underlying
-  ADR conflict, but the actual fix shape (keep the drill strict, leave
-  the report and plain-visibility both alone) was proposed by Basheer
-  himself, not offered up front alongside the finding.
+- The moment a task's scope becomes feature-sized, write
+  `docs/<Feature>-Implementation-Plan.md` and present its actual content as chat
+  text — not the CLI's plan-mode file/`ExitPlanMode`. *(2026-09-18)*
+- When a conversation escalates from a quick question into a real
+  architecture/feature decision, say so explicitly in the moment.
+- When a dependency crosses environments (Dev vs. UAT, any system boundary), say
+  which environment it lands in, in the plain-language pass itself. *(2026-09-19)*
+- When there's an obvious heavy design and a lighter one that gets most of the
+  value, offer both as a real choice up front. *(2026-09-19)*
+- Before building on an already-approved plan, check its structural scope is still
+  settled; surface interlocking structural questions (table shape, nesting,
+  cascading, scoping) together in one round. *(2026-09-20)*
+- When an adjacent design gap surfaces mid-task, lead with a proposed
+  narrowly-scoped fix alongside the problem — don't just describe it. *(2026-09-22)*
+
+## Commit approval
+- **Every commit needs its own explicit approval, shown first.** Before running
+  `git commit`, show the exact file list and full commit message as their own step
+  and wait for a yes to *that*. A "go ahead" to a plan that merely *mentions*
+  committing ("…then commit and push") approves the edits only, not the commit.
+- Applies to every commit: feature, fix, docs-only follow-ups, checklist commits,
+  checkpoint commits. No size exemption. *(2026-09-23)*
 
 ## Checkpoint commits
-- On any build expected to run long or largely unattended (a new domain, a
-  multi-file feature, a migration + code pair), commit as soon as each safe,
-  test-passing milestone is reached — e.g. once the backend compiles and its
-  tests pass, before moving on to the migration or the next layer. Don't wait
-  for the whole feature, or a whole day's plan, to be finished before saving
-  anything.
-- **Why:** a 2026-09-16 session built Target Planning's backend fully tested
-  over ~3 hours with zero commits, then froze at the end (a hung Docker
-  shutdown). Recovered only by reading the crashed session's own transcript —
-  a less recoverable failure would have lost real verified work for no reason.
-- A checkpoint commit doesn't need to be feature-complete or trigger the
-  Post-commit checklist below — say plainly that it's partial (e.g. a `feat:`
-  message noting what's still missing, as `1d9d46a` did: "Part 1, frontend
-  pending") so it's clear on review that it isn't the finished thing.
-- If a routine command (a test run, a lint pass) takes far longer to return
-  than normal, treat that as a signal, not something to silently wait out —
-  flag it rather than continuing as if nothing happened.
+- On a long or largely unattended build (new domain, multi-file feature,
+  migration + code pair), *propose* a commit at each safe, test-passing milestone
+  (e.g. backend compiles and tests pass) — per "Commit approval", never run it
+  unasked. Don't wait for the whole feature. *(2026-09-16)*
+- A checkpoint commit needn't be feature-complete or trigger the Post-commit
+  checklist — say plainly it's partial (e.g. "Part 1, frontend pending").
+- If a routine command (test run, lint) takes far longer than normal, flag it —
+  don't silently wait it out.
 
 ## Pre-E2E code review
-- Before starting manual E2E verification on a feature, run `/code-review`
-  (medium effort by default; high for RLS/migration/approval-workflow-heavy
-  features) against that feature's commits and fix findings first. Catches
-  defects for free that would otherwise surface mid-testing as confusing
-  manual-test failures.
-- **Why:** a 2026-09-17 review of Target Planning, run right as its manual
-  E2E pass was starting, caught two bugs that would have blocked most of
-  that pass outright — see `docs/Target-Planning-Code-Review-Findings-
-  2026-09-17.md` for the full findings.
-- This applies regardless of how small or pattern-mirroring a change
-  feels — a change that "just adds one more filter matching an existing
-  one" is exactly the size that tempts skipping straight to verification.
-  Follow the full standing sequence (code-review → written E2E plan →
-  test → commit → checklist) by default, without being asked. **Why:**
-  2026-09-22, after building a small `brand_id` filter mirroring an
-  already-shipped `product_id` one, went straight from "tests pass" to
-  asking whether to verify live, skipping the code-review and written
-  E2E-plan steps entirely. Basheer: "Why are you taking short cuts
-  inspite of detailed instructions in claude.md file?"
-- For any feature whose correctness depends on a database trigger,
-  generated column, or other server-side write the ORM doesn't already
-  know how to re-read, add "did a real save actually complete, not just
-  render/validate" as its own explicit review item — a static read of
-  the Python source can't see a stale-in-memory-object problem like this.
-  **Why:** 2026-09-22, three `/code-review` passes on Product Catalog
-  Brand/Category/Model (one of them a full `high`-effort pass) all missed
-  that `ProductRepository.create()`/`update()` never refreshed the row
-  after `trg_product_sync_brand_category_name` populated `brand_id`/
-  `category_id`/`name` server-side — every real "Add Product" attempt
-  crashed with a 500, only caught by actually clicking Save during manual
-  E2E, not by any of the reviews.
+- Before manual E2E on a feature, run `/code-review` (medium by default; high for
+  RLS/migration/approval-workflow-heavy features) on its commits and fix findings
+  first. *(2026-09-17)*
+- Applies however small or pattern-mirroring the change — follow the full sequence
+  (code-review → written E2E plan → test → commit → checklist) by default, without
+  being asked. *(2026-09-22)*
+- If correctness depends on a DB trigger, generated column, or other server-side
+  write the ORM doesn't re-read, add "did a real save actually complete" as an
+  explicit review item — static review can't see a stale in-memory object.
+  *(2026-09-22)*
 
 ## Mirroring an existing feature
-- When a feature is explicitly modeled on an existing one (e.g. Lead Follow-up
-  Comments mirroring Activity Comments), checklist every surface the original
-  touches — notification-bell coverage for every recipient role, list-view
-  badges/counts, every screen a parallel role would expect it on — before
-  finalizing scope. Don't drop an item reasoning "the plan doc doesn't mention
-  it, so it's scope creep"; check whether the analog feature already has it
-  first, and if leaving it out, say why (a real behavioral difference), not
-  just that it wasn't spelled out.
-- **Why:** 2026-09-18 — Lead Follow-up Comments initially dropped two things
-  Activity Comments already had (a comment-count badge, full notification-bell
-  coverage per role); both surfaced only once Basheer manually tested with
-  real role switches, one of them being the exact problem the feature was
-  built to solve for that role.
+- When a feature is modeled on an existing one, checklist every surface the
+  original touches — notification-bell coverage per recipient role, list-view
+  badges/counts, every screen a parallel role would expect — before finalizing
+  scope. If leaving one out, give a real behavioral reason, not "the plan didn't
+  mention it." *(2026-09-18)*
 
 ## Manual E2E testing
-- Before executing a test case against a specific login, sanity-check that the
-  test plan's assumed role relationship actually matches the record currently
-  being tested — not just the plan's original setup section, if testing has
-  since moved to a different record. **Why:** 2026-09-18 — a planned persona
-  (a specific Area Manager) didn't manage the rep who owned the lead actually
-  under test; caught only after switching to the wrong login.
-- In browser automation, prefer `find`-returned element refs over screenshot
-  coordinates for clicks — especially right after an expand/collapse or any
-  layout-shifting action, where a stale coordinate can miss silently (the
-  click lands, but on the wrong element) rather than erroring.
-- Record Pass/Fail into the test plan doc itself the moment each step
-  completes, not retroactively from memory at session end. **Why:**
-  2026-09-22, 18 steps of a Product Catalog E2E pass were tracked only in
-  chat; Basheer had to ask directly ("Have you documented the pass ones
-  in the test plan?") before results were actually written into the doc.
-- Editing frontend source files while a manual-test browser session is
-  open against the same dev server can trigger a hot-reload that resets
-  in-app state, including which user is logged in — flag this risk before
-  making live edits mid-test, not discover it after the session's already
-  reset. **Why:** 2026-09-22, a mid-session edit to `ProductCatalogScreen.tsx`
-  triggered Vite's hot-reload, which silently logged the browser back to a
-  previous test user (Fazal) and lost the Admin/GM session needed to
-  continue Section D.
-- Screenshot only at meaningful checkpoints (after a screen/dialog loads,
-  before/after a save) — not after every click. Use `get_page_text` or
-  `find` to confirm a value/state changed instead of a screenshot when a
-  visual check isn't the point.
-- Before running a test plan, tag every individual step Simple or Complex
-  — not by section. **Simple** = a single click/type/verify-a-value action
-  where "pass" is unambiguous (e.g. field shows the right number, dropdown
-  lists the right options, a list filters correctly) — Basheer executes
-  these himself, told step-by-step what to do and what to check, and
-  reports the result back in chat. **Complex** = anything needing precise
-  element targeting after a layout shift, a multi-step or branching flow,
-  cross-screen/cross-role verification, or a genuine visual check — Claude
-  drives these directly with the browser tool. Every step still gets
-  executed and recorded Pass/Fail — the split changes only who drives the
-  browser, nothing is skipped. **Why:** 2026-09-23, a single day's browser
-  screenshots ran to roughly 300,000–700,000 tokens per session, dwarfing
-  everything else including `CLAUDE.md` itself — routing the unambiguous
-  steps through Basheer removes most of that cost without losing coverage.
-
-## Troubleshooting & scripting
-- When something fails repeatedly for an unclear reason, isolate the
-  variable with a small/fast diagnostic before retrying the same
-  large/slow operation again — don't repeat the same attempt hoping for a
-  different result. **Why:** 2026-09-20, a ~300MB Docker image download
-  was retried three times before testing whether *any* large download
-  worked on the connection at all; a small test file would have found the
-  real cause (connection instability, not the image or Docker) in one
-  step.
-- When writing a new PowerShell script that captures a native command's
-  output via `2>&1` into a variable, account up front for the interpreter
-  aborting immediately on the first stderr line when
-  `$ErrorActionPreference = "Stop"` is set — before the script's own error
-  checks ever run. Toggle it to `"Continue"` around that specific call
-  instead. **Why:** 2026-09-20, `restore_uat.ps1` hit this exact gotcha
-  during testing (a successful restore looked like a crash) — a known
-  PowerShell 5.1 quirk that should be applied proactively when writing
-  new scripts, not discovered via a failed test run.
-- Before asserting a capability is missing (a library, a tool), check what's
-  actually available — including tools/skills separate from the project's
-  own runtime environment — rather than reasoning from the most obvious one.
-  **Why:** 2026-09-20, claimed the backend Python environment's missing
-  `openpyxl` meant a corrected Product Catalog `.xlsx` couldn't be read, when
-  the spreadsheet skill (already used two days earlier for the same file)
-  could read it directly — caught only after Basheer pointed out the
-  discrepancy ("You already used python library couple days back. Now what
-  changed").
-- When a local git branch is found behind its remote counterpart, pull the
-  actual commit list and authorship for the gap immediately, not just the
-  commit count — lead with the concrete cause in the first answer instead
-  of the general git-mechanics explanation. **Why:** 2026-09-21, explaining
-  why local `uat` was behind `origin/uat` took three rounds ("still not
-  clear why") because the answer led with how `git push`/local branches
-  work in general before surfacing the actual cause (an emergency hotfix
-  pushed straight to `origin/uat`) — that detail was sitting in `git log`
-  the whole time and should have been pulled up front.
-- Before writing any migration that deletes, retires, or bulk-updates
-  rows, query `pg_constraint` for the authoritative list of every table
-  with a foreign key into the one being touched — don't rely on a
-  manually-assembled list of "the tables I know reference this."
-  **Why:** 2026-09-21, migration 0049's first run failed on a
-  `marketing_lead.product_id` FK that a manual reference check
-  (opportunity_item/installed_asset/document only) had missed — caught
-  safely by the migration's own transaction rollback, but the
-  authoritative `pg_constraint` lookup that actually found the gap only
-  happened after the failure, not before.
-- Before investing real time analyzing one environment's exported data
-  for a migration or data-cutover task, do a cheap check that the
-  *target* environment (where it will actually run first) matches what's
-  being analyzed — never assume Dev mirrors UAT (or vice versa) just
-  because they're both "the app's data." **Why:** 2026-09-21, a full
-  session's Product Catalog reconciliation was built entirely against a
-  UAT export before discovering Dev's `product` table was a completely
-  different, smaller set of rows — caught only by accident (fetching SBU
-  ids for seeding), not from a deliberate check done up front.
-- Session-generated throwaway scripts (a one-off data-matching or
-  migration-generator script) go in the session scratchpad directory,
-  never a path inside the repo like `.claude/scratch/` — double-check the
-  target path before the first `Write`. **Why:** 2026-09-21, a migration-
-  data generator script was written to `.claude/scratch/` inside this
-  repo and had to be cleaned up before committing.
-- When a question could be answered either with a plain-language
-  explanation or a verification query, give the plain-language answer
-  first — reach for the query as a "let me confirm precisely" follow-up,
-  not the first move. **Why:** 2026-09-21, asked whether there were "34
-  old rows" left behind, the first instinct was to run another SQL query
-  immediately; Basheer had to stop that tool call himself before getting
-  a plain-language-framed answer.
-- Before running any raw SQL check directly against this app's
-  RLS-protected tables (not through the API), set and verify **all
-  three** session settings together — `app.current_user_id`,
-  `app.current_role_id`, and `app.current_sbu_id` — never just one or
-  two, via `SELECT cabio_app_role_name(), cabio_app_uid(),
-  cabio_app_sbu_id()` before trusting any result that follows. Missing
-  any one of the three silently fails that query closed (zero or
-  undercounted rows), with no error — indistinguishable from "the data
-  genuinely isn't there." **Why:** 2026-09-22, hit this exact trap three
-  separate times in one session: a wrong "these products have zero
-  references" claim stated as fact (all three unset), a still-wrong
-  recount after fixing only one setting, and a third undercounted result
-  (missing the SBU one specifically, required for Area Manager/SBU
-  Manager tiers) while investigating an unrelated question. See the
-  `cabio-uat-rls-silent-zero-rows` memory for the full mechanism.
+- Before each test case, check the plan's assumed role relationship matches the
+  record actually under test, not just the plan's original setup. *(2026-09-18)*
+- Tag every step Simple or Complex before running the plan. **Simple** = one
+  click/type/verify-a-value with an unambiguous pass — Basheer runs these, told
+  exactly what to do and check, and reports back. **Complex** = precise targeting
+  after a layout shift, multi-step/branching, cross-screen/cross-role, or a genuine
+  visual check — Claude drives these in the browser. Nothing is skipped; every step
+  is recorded. *(2026-09-23)*
+- Screenshot only at meaningful checkpoints; use `get_page_text`/`find` to confirm
+  a value when a visual check isn't the point. Prefer `find` element refs over
+  screenshot coordinates for clicks, especially after a layout shift.
+- Record Pass/Fail in the test plan doc the moment each step completes.
+  *(2026-09-22)*
+- Flag the hot-reload risk before editing frontend files while a test browser
+  session is open — it can silently reset the logged-in user. *(2026-09-22)*
 
 ## Show before you act
-Same discipline across several situations: when an action is hard to undo,
-spends real time/cost, or is visible to Basheer, show him what's about to
-happen and wait for a reaction — don't act first and narrate afterward.
-
-- **Investigative actions, not just writes** — state what a query or check
-  will do, including a plain read-only one, before running it. UAT goes
-  further: ask and wait for explicit go-ahead, never just announce (see
-  Architecture's Safety bullets). **Why:** 2026-09-18, a live Dev DB query
-  ran with no explanation first — "what are you doing?"
-- **Token-intensive or expensive jobs** (a full-repo code-review pass, a
-  broad audit) — show scope, what it checks, and expected cost/duration,
-  then wait for go-ahead. A single feature's routine `/code-review` is
-  exempt (see "Pre-E2E code review" above). **Why:** 2026-09-17, a
-  45-migration RLS audit started immediately on "let's do that," before
-  scope or cost had been shown.
-- **Republishing anything client-visible** (a scorecard Artifact, a shared
-  doc) — show the exact diff, not a prose summary, before publishing.
-  **Why:** 2026-09-17, a prose description of a scorecard change prompted
-  "what are the changes?"; a real diff let the next update get approved on
-  sight.
-- **A requested retrospective or reflective summary** — show it in chat, as
-  its own turn, before writing it into Progress-Archive and committing.
-  Pasting it in the same message you commit it in isn't "showing" it.
-  **Why:** 2026-09-18, a retrospective was pasted and committed/pushed in
-  the same response — "Where is the retrospective? I have not seen it."
+When an action is hard to undo, spends real time/cost, or is visible to Basheer,
+show what's about to happen and wait — don't act first and narrate afterward.
+- **Investigative actions, not just writes** — say what a query or check will do,
+  even read-only, before running it. UAT: ask and wait, never just announce.
+  *(2026-09-18)*
+- When a question can be answered in plain language or by a query, answer in plain
+  language first; offer the query as a follow-up. *(2026-09-21)*
+- **Expensive jobs** (full-repo review, broad audit) — show scope and expected
+  cost/duration, then wait. A single feature's routine `/code-review` is exempt.
+  *(2026-09-17)*
+- **Republishing anything client-visible** — show the exact diff, not a prose
+  summary, before publishing. *(2026-09-17)*
+- **A requested retrospective** — show it in chat as its own turn before writing it
+  to Progress-Archive and committing. *(2026-09-18)*
 
 ## Post-commit checklist
-Feature-work commits (`feat:`/`fix:`) should be committed **and pushed** by
-Claude Code, not from another tool — this is what lets the checklist below
-actually fire. If a feature commit is ever made outside a Claude Code
-session, Basheer will say so (e.g. "run the post-commit checklist") so it
-can be run retroactively.
+Feature commits (`feat:`/`fix:`) are committed **and pushed** by Claude Code so
+this checklist fires; if one is made elsewhere, Basheer will say "run the
+post-commit checklist." The feature/fix commit always lands first as its own
+commit; the checklist is a separate, later commit. *(2026-09-18)*
 
-**The feature/fix commit always lands first, as its own commit; this
-checklist runs after, as a separate commit** — never interleaved with or
-run before the feature commit itself. (This is about ordering *between*
-commits; Scorecard integrity's "one commit" rule below is about what
-belongs *inside* the checklist's own commit once you're running it — the
-two aren't in tension.) **Why:** 2026-09-18, Scorecard/Traceability
-regeneration started before the feature commit existed — "Shouldn't we
-first commit and then run the post-commit checklist?"
-
-Immediately after such a commit is pushed to GitHub — before moving to
-other work — go through this checklist:
+Right after the push, before other work:
 1. Update `active_progress.md`.
-2. Add an entry to the current `docs/Progress-Archive-<year>-<month>.md`,
-   including a short retro line: what worked, what to improve, any
-   process/best-practice change.
-3. Check `docs/Backlog.md` for any newly-surfaced deferred idea from this
-   feature.
-4. If this feature closes/advances a signed requirement: update
-   `docs/Signed-Requirements-to-PRD-Traceability.md` and regenerate the
-   scorecard per "Scorecard integrity" below.
-5. Run `python scripts/generate_scorecard.py --check` before the docs
-   commit, and republish the client Artifact if the change is client-visible.
+2. Add a Progress-Archive entry with a short retro line (what worked, what to
+   improve, any process change).
+3. Check `docs/Backlog.md` for newly-surfaced deferred ideas.
+4. If a signed requirement closes/advances: update Traceability and regenerate the
+   scorecard (see "Scorecard integrity").
+5. Run `python scripts/generate_scorecard.py --check`; republish the client
+   Artifacts if client-visible.
 
 ## Scorecard integrity
-- `docs/Signed-Requirements-to-PRD-Traceability.md` is the single source of
-  truth for Phase 1 delivery status. `docs/Phase1-Delivery-Scorecard.md` and
-  `.scratch/phase1-scorecard.html` (the published client Artifact) are both
-  generated from it by `scripts/generate_scorecard.py` — never hand-edit
-  either one, and never hand-edit the Traceability file's own "Current
-  tally" line (it's auto-written by the same script).
-- A row only moves to Done once its feature has been built **and** its
-  manual E2E test plan is fully checked off — not on "code is written" or
-  "smoke-tested." Until then it stays Partial/Not started with an honest
-  Note on what's outstanding, even if the code is already merged.
-- The commit that flips a row's status must, in the same commit: update the
-  Status/Notes/Client Note in Traceability.md, run
-  `python scripts/generate_scorecard.py` to regenerate the tally and both
-  derived files, and (if the change is client-visible) republish
-  `.scratch/phase1-scorecard.html` to the Artifact. Flipping the status and
-  propagating it are one step, not two — this governs what's *inside* that
-  commit, same as the checklist commit described above.
-- Before committing any change that touches Traceability.md, the Scorecard,
-  or the HTML, run `python scripts/generate_scorecard.py --check` — it
-  exits non-zero and names whichever file(s) are stale relative to the
-  Traceability table without writing anything. Treat a non-zero exit as a
-  blocker, not a warning.
+Full lifecycle: `docs/Scorecard-Maintenance-Process.md`. Hard rules:
+- Never hand-edit `docs/Phase1-Delivery-Scorecard.md`, the `.scratch/*.html`
+  scorecards, or Traceability's "Current tally" line — all generated by
+  `scripts/generate_scorecard.py`.
+- A row moves to Done only when built **and** its manual E2E plan is fully checked
+  off — flip it, regenerate, and (if client-visible) republish in the same commit.
+- `generate_scorecard.py --check` must pass before any commit touching
+  Traceability, the Scorecard, or the HTML — a non-zero exit is a blocker.
