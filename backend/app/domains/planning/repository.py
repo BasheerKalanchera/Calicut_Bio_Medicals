@@ -1,12 +1,12 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import TargetPlan
+from app.domains.planning.models import BrandVendorTarget, TargetPlan, TargetPlanBrandSplit
 
 
 class TargetPlanRepository(BaseRepository[TargetPlan]):
@@ -83,3 +83,49 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         )
         total, count = self.db.execute(stmt).one()
         return Decimal(total), count
+
+    def replace_brand_splits(
+        self, target_plan_id: uuid.UUID, splits: list[tuple[uuid.UUID, Decimal]]
+    ) -> None:
+        """Delete-and-recreate, not diffed in place -- target_plan has no
+        audit-trail trigger yet (BR-AUD-01), so there's no
+        OpportunityRepository.replace_items-style audit-noise reason to do
+        an in-place UPDATE-by-id instead."""
+        self.db.execute(
+            delete(TargetPlanBrandSplit).where(TargetPlanBrandSplit.target_plan_id == target_plan_id)
+        )
+        for brand_id, amount in splits:
+            self.db.add(
+                TargetPlanBrandSplit(
+                    target_plan_id=target_plan_id, brand_id=brand_id, split_amount_lakhs=amount
+                )
+            )
+        self.db.flush()
+
+    def get_brand_rollup(self, brand_id: uuid.UUID, planning_period: str) -> Decimal:
+        """SUM of every TargetPlanBrandSplit row for this brand/period,
+        across all target_plan statuses -- same "count drafts too" shape as
+        get_sbu_rollup above."""
+        stmt = (
+            select(func.coalesce(func.sum(TargetPlanBrandSplit.split_amount_lakhs), 0))
+            .join(TargetPlan, TargetPlan.id == TargetPlanBrandSplit.target_plan_id)
+            .where(TargetPlanBrandSplit.brand_id == brand_id)
+            .where(TargetPlan.planning_period == planning_period)
+        )
+        return Decimal(self.db.scalar(stmt) or 0)
+
+
+class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):
+    def __init__(self, db: Session):
+        super().__init__(BrandVendorTarget, db)
+
+    def get_by_brand_period(self, brand_id: uuid.UUID, planning_period: str) -> BrandVendorTarget | None:
+        stmt = select(BrandVendorTarget).where(
+            BrandVendorTarget.brand_id == brand_id,
+            BrandVendorTarget.planning_period == planning_period,
+        )
+        return self.db.scalars(stmt).first()
+
+    def list_by_period(self, planning_period: str) -> list[BrandVendorTarget]:
+        stmt = select(BrandVendorTarget).where(BrandVendorTarget.planning_period == planning_period)
+        return list(self.db.scalars(stmt).all())

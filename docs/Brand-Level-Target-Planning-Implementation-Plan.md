@@ -97,9 +97,12 @@ CREATE TABLE target_plan_brand_split (
 RLS: no separate policy needed if the service layer always writes/reads it
 scoped through its parent `target_plan_id` — but Backend-Implementation-
 Standards.md's own convention is every table gets RLS, so mirror
-`target_plan`'s four policies exactly, substituting a `target_plan_id IN
-(SELECT id FROM target_plan WHERE <same predicate>)` subquery for each one,
-same pattern already used for `coverage_plan_entry` → `coverage_plan`.
+`target_plan`'s own four live policies exactly, substituting a
+`target_plan_id IN (SELECT id FROM target_plan WHERE <same predicate>)`
+subquery for each one. (Not `coverage_plan_entry` → `coverage_plan` — that
+feature is still "Not started" per `Signed-Requirements-to-PRD-
+Traceability.md` row 6.1; its model code exists but was never migrated or
+given RLS, so it isn't a real precedent to copy. Corrected 2026-09-23.)
 
 ### New table: `brand_vendor_target` — the number GM/Admin records
 

@@ -2,11 +2,16 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import TargetPlan
-from app.domains.planning.repository import TargetPlanRepository
-from app.domains.planning.schemas import TargetPlanCreate, TargetPlanUpdate
+from app.domains.planning.models import BrandVendorTarget, TargetPlan
+from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
+from app.domains.planning.schemas import (
+    BrandSplitEntry,
+    BrandVendorTargetSet,
+    TargetPlanCreate,
+    TargetPlanUpdate,
+)
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
 
@@ -50,6 +55,27 @@ class TargetPlanService:
         sbu_id/planning_period filter on top, same shape as get_sbu_rollup."""
         return self.repository.list_by_sbu_and_period(sbu_id, planning_period)
 
+    def _apply_brand_splits(
+        self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None
+    ) -> None:
+        """Brand-Level Target Planning decision #1: splits are mandatory-if-
+        present and must sum to exactly the total, no partial/leftover. A
+        None `splits` argument means "caller didn't send a splits section at
+        all" (leave whatever's already stored alone) -- an empty list is a
+        deliberate "no brands" state and is rejected the same as a mismatch,
+        since decision #1 requires a full split, not none."""
+        if splits is None:
+            return
+        total = sum((s.split_amount_lakhs for s in splits), start=Decimal("0"))
+        if total != target_plan.target_amount_lakhs:
+            raise ValidationError(
+                f"Brand splits must sum to exactly the target amount: "
+                f"splits total {total}, target is {target_plan.target_amount_lakhs}."
+            )
+        self.repository.replace_brand_splits(
+            target_plan.id, [(s.brand_id, s.split_amount_lakhs) for s in splits]
+        )
+
     def create_target_plan(self, data: TargetPlanCreate, *, current_user: UserProfile) -> TargetPlan:
         existing = self.repository.get_by_user_sbu_period(
             current_user.id, data.sbu_id, data.planning_period
@@ -68,7 +94,9 @@ class TargetPlanService:
             created_by=current_user.id,
             updated_by=current_user.id,
         )
-        return self.repository.create(target_plan)
+        target_plan = self.repository.create(target_plan)
+        self._apply_brand_splits(target_plan, data.brand_splits)
+        return target_plan
 
     def update_target_plan(
         self, target_plan_id: uuid.UUID, data: TargetPlanUpdate, *, current_user: UserProfile
@@ -77,7 +105,12 @@ class TargetPlanService:
         already-decided (APPROVED or REJECTED) target always needs a fresh
         sign-off -- resets status back to PENDING_APPROVAL and clears the
         prior decision, so a corrected number reappears in the approver's
-        queue instead of staying stuck on the old decision."""
+        queue instead of staying stuck on the old decision. This reset fires
+        on every call to this method regardless of which fields actually
+        changed, so a brand-split-only revision (same total, re-shuffled
+        between brands) resets approval exactly the same as a total change --
+        confirmed 2026-09-23, since the split is part of what the manager
+        approved."""
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
@@ -91,7 +124,9 @@ class TargetPlanService:
             target_plan.approved_at = None
             target_plan.decision_note = None
         target_plan.updated_by = current_user.id
-        return self.repository.update(target_plan)
+        target_plan = self.repository.update(target_plan)
+        self._apply_brand_splits(target_plan, data.brand_splits)
+        return target_plan
 
     def approve_or_reject_target_plan(
         self,
@@ -139,3 +174,39 @@ class TargetPlanService:
         if target_plan.user_id != current_user.id and current_user.role.role_name not in _OVERLAY_ROLES:
             raise AuthorizationError("You can only delete your own target.")
         self.repository.delete(target_plan)
+
+    def get_brand_rollup(self, brand_id: uuid.UUID, planning_period: str) -> Decimal:
+        return self.repository.get_brand_rollup(brand_id, planning_period)
+
+
+class BrandVendorTargetService:
+    def __init__(self, repository: BrandVendorTargetRepository):
+        self.repository = repository
+
+    def _require_admin_or_gm(self, current_user: UserProfile) -> None:
+        if current_user.role.role_name not in _OVERLAY_ROLES:
+            raise AuthorizationError("Only Admin/GM may record a brand's vendor target.")
+
+    def set_vendor_target(
+        self, data: BrandVendorTargetSet, *, current_user: UserProfile
+    ) -> BrandVendorTarget:
+        """Upsert -- a brand's number for a quarter can be corrected, not
+        just entered once (decision #2)."""
+        self._require_admin_or_gm(current_user)
+        existing = self.repository.get_by_brand_period(data.brand_id, data.planning_period)
+        if existing:
+            existing.vendor_target_amount_lakhs = data.vendor_target_amount_lakhs
+            existing.updated_by = current_user.id
+            return self.repository.update(existing)
+
+        vendor_target = BrandVendorTarget(
+            brand_id=data.brand_id,
+            planning_period=data.planning_period,
+            vendor_target_amount_lakhs=data.vendor_target_amount_lakhs,
+            created_by=current_user.id,
+            updated_by=current_user.id,
+        )
+        return self.repository.create(vendor_target)
+
+    def list_by_period(self, planning_period: str) -> list[BrandVendorTarget]:
+        return self.repository.list_by_period(planning_period)

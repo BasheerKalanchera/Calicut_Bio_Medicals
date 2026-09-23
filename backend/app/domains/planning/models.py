@@ -36,6 +36,53 @@ class TargetPlan(AuditMixin, Base):
     approver: Mapped["UserProfile | None"] = relationship(foreign_keys=[approved_by], lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="target_plans", lazy="joined")
     coverage_plans: Mapped[list["CoveragePlan"]] = relationship(back_populates="target_plan", lazy="select")
+    brand_splits: Mapped[list["TargetPlanBrandSplit"]] = relationship(
+        back_populates="target_plan", lazy="select", cascade="all, delete-orphan"
+    )
+
+
+class TargetPlanBrandSplit(AuditMixin, Base):
+    """Per-brand breakdown of a TargetPlan's one quarterly number
+    (docs/Brand-Level-Target-Planning-Implementation-Plan.md). Rows are
+    always replaced wholesale on revision, not diffed in place -- target_plan
+    has no audit-trail trigger yet (BR-AUD-01), so there's no
+    OpportunityRepository.replace_items-style audit-noise concern here."""
+
+    __tablename__ = "target_plan_brand_split"
+    __table_args__ = (
+        UniqueConstraint("target_plan_id", "brand_id", name="uq_target_plan_brand_split"),
+        CheckConstraint("split_amount_lakhs >= 0", name="ck_target_plan_brand_split_nonneg"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    target_plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("target_plan.id", ondelete="CASCADE"), nullable=False
+    )
+    brand_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("brand.id"), nullable=False)
+    split_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+
+    target_plan: Mapped["TargetPlan"] = relationship(back_populates="brand_splits", lazy="select")
+    brand: Mapped["Brand"] = relationship(lazy="joined")
+
+
+class BrandVendorTarget(AuditMixin, Base):
+    """The number a brand/vendor actually promised Cabio for a quarter --
+    Admin/GM only (docs/Brand-Level-Target-Planning-Implementation-Plan.md
+    decision #2). Compared against the SUM of TargetPlanBrandSplit rows for
+    the same brand/period to show the committed-vs-vendor gap."""
+
+    __tablename__ = "brand_vendor_target"
+    __table_args__ = (
+        UniqueConstraint("brand_id", "planning_period", name="uq_brand_vendor_target"),
+        CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_brand_vendor_target_planning_period"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    brand_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("brand.id"), nullable=False)
+    planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
+    vendor_target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+
+    brand: Mapped["Brand"] = relationship(lazy="joined")
 
 
 class CoveragePlan(AuditMixin, Base):

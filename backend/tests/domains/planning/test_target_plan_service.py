@@ -4,12 +4,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
+from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import TargetPlan
-from app.domains.planning.repository import TargetPlanRepository
-from app.domains.planning.schemas import TargetPlanCreate, TargetPlanUpdate
-from app.domains.planning.service import TargetPlanService
+from app.domains.planning.models import BrandVendorTarget, TargetPlan
+from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
+from app.domains.planning.schemas import BrandSplitEntry, BrandVendorTargetSet, TargetPlanCreate, TargetPlanUpdate
+from app.domains.planning.service import BrandVendorTargetService, TargetPlanService
 
 SBU_ID = uuid.uuid4()
 
@@ -344,3 +344,169 @@ class TestDeleteTargetPlan:
 
         with pytest.raises(AuthorizationError, match="only delete your own"):
             service.delete_target_plan(target_plan.id, current_user=other)
+
+
+class TestBrandSplits:
+    """docs/Brand-Level-Target-Planning-Implementation-Plan.md decisions #1
+    and #3 -- splits must sum to exactly the total, and a split-only
+    revision on an APPROVED plan resets approval the same as a total
+    change."""
+
+    def test_create_with_matching_split_sum_succeeds(self):
+        repo = _make_repo()
+        service = TargetPlanService(repository=repo)
+        current_user = _make_user("Sales Staff")
+        brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
+        data = TargetPlanCreate(
+            sbu_id=SBU_ID,
+            planning_period="2026-Q3",
+            target_amount_lakhs=Decimal("50"),
+            brand_splits=[
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("30")),
+                BrandSplitEntry(brand_id=brand_b, split_amount_lakhs=Decimal("20")),
+            ],
+        )
+
+        service.create_target_plan(data, current_user=current_user)
+
+        repo.replace_brand_splits.assert_called_once()
+        _called_target_plan_id, called_splits = repo.replace_brand_splits.call_args[0]
+        assert sorted(called_splits) == sorted(
+            [(brand_a, Decimal("30")), (brand_b, Decimal("20"))]
+        )
+
+    def test_create_with_mismatched_split_sum_raises(self):
+        repo = _make_repo()
+        service = TargetPlanService(repository=repo)
+        current_user = _make_user("Sales Staff")
+        data = TargetPlanCreate(
+            sbu_id=SBU_ID,
+            planning_period="2026-Q3",
+            target_amount_lakhs=Decimal("50"),
+            brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("30"))],
+        )
+
+        with pytest.raises(ValidationError, match="must sum to exactly the target amount"):
+            service.create_target_plan(data, current_user=current_user)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_create_without_splits_does_not_touch_split_table(self):
+        repo = _make_repo()
+        service = TargetPlanService(repository=repo)
+        current_user = _make_user("Sales Staff")
+        data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", target_amount_lakhs=Decimal("50"))
+
+        service.create_target_plan(data, current_user=current_user)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_update_with_mismatched_split_sum_raises_and_does_not_replace(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="PENDING_APPROVAL")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = TargetPlanService(repository=repo)
+        data = TargetPlanUpdate(
+            target_amount_lakhs=Decimal("75"),
+            brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("74"))],
+        )
+
+        with pytest.raises(ValidationError, match="must sum to exactly the target amount"):
+            service.update_target_plan(target_plan.id, data, current_user=owner)
+
+        repo.replace_brand_splits.assert_not_called()
+
+    def test_split_only_revision_on_approved_plan_resets_to_pending(self):
+        """Same total, re-shuffled split -- must still reset approval,
+        confirmed 2026-09-23: the split is part of what the manager
+        approved."""
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(
+            user_id=owner.id,
+            status="APPROVED",
+            approved_by=uuid.uuid4(),
+            approved_at="2026-09-01",
+            target_amount_lakhs=Decimal("50"),
+        )
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = TargetPlanService(repository=repo)
+        brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
+        data = TargetPlanUpdate(
+            target_amount_lakhs=Decimal("50"),
+            brand_splits=[
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("10")),
+                BrandSplitEntry(brand_id=brand_b, split_amount_lakhs=Decimal("40")),
+            ],
+        )
+
+        result = service.update_target_plan(target_plan.id, data, current_user=owner)
+
+        assert result.status == "PENDING_APPROVAL"
+        assert result.approved_by is None
+        assert result.approved_at is None
+        repo.replace_brand_splits.assert_called_once()
+
+
+def _make_brand_vendor_target(**overrides) -> MagicMock:
+    defaults = {
+        "id": uuid.uuid4(),
+        "brand_id": uuid.uuid4(),
+        "planning_period": "2026-Q3",
+        "vendor_target_amount_lakhs": Decimal("100.00"),
+    }
+    defaults.update(overrides)
+    vendor_target = MagicMock(spec=BrandVendorTarget)
+    for k, v in defaults.items():
+        setattr(vendor_target, k, v)
+    return vendor_target
+
+
+class TestBrandVendorTargetService:
+    """docs/Brand-Level-Target-Planning-Implementation-Plan.md decision #2
+    -- only Admin/GM record the vendor's own brand target."""
+
+    def test_admin_can_set_vendor_target(self):
+        repo = MagicMock(spec=BrandVendorTargetRepository)
+        repo.get_by_brand_period.return_value = None
+        repo.create.side_effect = lambda obj: obj
+        service = BrandVendorTargetService(repository=repo)
+        admin = _make_user("Admin")
+        data = BrandVendorTargetSet(
+            brand_id=uuid.uuid4(), planning_period="2026-Q3", vendor_target_amount_lakhs=Decimal("100")
+        )
+
+        result = service.set_vendor_target(data, current_user=admin)
+
+        assert result.vendor_target_amount_lakhs == Decimal("100")
+
+    def test_sales_staff_cannot_set_vendor_target(self):
+        repo = MagicMock(spec=BrandVendorTargetRepository)
+        service = BrandVendorTargetService(repository=repo)
+        staff = _make_user("Sales Staff")
+        data = BrandVendorTargetSet(
+            brand_id=uuid.uuid4(), planning_period="2026-Q3", vendor_target_amount_lakhs=Decimal("100")
+        )
+
+        with pytest.raises(AuthorizationError, match="Admin/GM"):
+            service.set_vendor_target(data, current_user=staff)
+
+        repo.create.assert_not_called()
+
+    def test_setting_an_existing_period_upserts_instead_of_duplicating(self):
+        existing = _make_brand_vendor_target(vendor_target_amount_lakhs=Decimal("80"))
+        repo = MagicMock(spec=BrandVendorTargetRepository)
+        repo.get_by_brand_period.return_value = existing
+        repo.update.side_effect = lambda obj: obj
+        service = BrandVendorTargetService(repository=repo)
+        gm = _make_user("General Manager")
+        data = BrandVendorTargetSet(
+            brand_id=existing.brand_id,
+            planning_period=existing.planning_period,
+            vendor_target_amount_lakhs=Decimal("120"),
+        )
+
+        result = service.set_vendor_target(data, current_user=gm)
+
+        assert result.vendor_target_amount_lakhs == Decimal("120")
+        repo.create.assert_not_called()
+        repo.update.assert_called_once_with(existing)
