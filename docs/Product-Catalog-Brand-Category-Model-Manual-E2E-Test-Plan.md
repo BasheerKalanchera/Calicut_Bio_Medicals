@@ -115,15 +115,20 @@ Tested live as Haroon. Steps 4-7 initially hit a real bug (see
 ## C — Admin/GM: inline "+ Add new brand / model / category"
 
 9. In the Add form, use "+ Add new brand" for a brand that doesn't exist
-   yet — confirm it's selectable immediately after creation. — **Not yet
-   run** (only the duplicate-name path below was tested so far)
+   yet — confirm it's selectable immediately after creation. — **PASS**,
+   tested live by Basheer as Admin/GM, 2026-09-23 — "E2E Test Brand"
+   created and selectable immediately (permanent test row in Dev,
+   deactivate after the pass)
 10. Use "+ Add new model" under an existing brand, including "+ Add new
     category" from inside that same flow — confirm the new model then
     requires a category before it can be added, and behaves identically to
-    a pre-existing model afterward. — **Partially run:** "+ Add new model"
-    itself confirmed working live twice (iM90 Test, iM91 Test, both with
-    an existing Category picked) — the nested "+ Add new category" path
-    itself not yet exercised.
+    a pre-existing model afterward. — **PASS**: "+ Add new model"
+    confirmed live twice on 2026-09-22 (iM90 Test, iM91 Test, existing
+    Category); nested "+ Add new category" path confirmed live by Basheer
+    as Admin/GM, 2026-09-23 — "E2E Test Category" created from inside the
+    new-model flow under "E2E Test Brand", model required a category
+    before it could be added, then behaved like any existing model
+    (permanent test rows in Dev, deactivate after the pass).
 11. **Direct regression test for the frontend error-handling fix:** try
     adding a brand/category/model name that already exists for that
     SBU/brand — confirm a clear, visible duplicate error appears on the
@@ -141,18 +146,23 @@ Tested live as Haroon. Steps 4-7 initially hit a real bug (see
     to "EDAN iM91 Test ECG Machine" correctly, no error (also confirms
     `ProductRepository.update()`'s refresh fix works, not just `create()`).
 13. Change its Brand entirely (Model resets) — confirm you must re-pick a
-    Model before saving. — **Not yet run** (session ended here — an
-    unrelated frontend hot-reload reset the browser's logged-in user back
-    to Fazal before this step ran)
+    Model before saving. — **PASS**, tested live by Basheer as Admin/GM,
+    2026-09-23 — Model cleared on Brand change, save blocked until a new
+    Model was picked. Bonus confirmation: re-picking Aeonmed 7200A (a Model
+    that already has its own product) was correctly refused with "A product
+    for this Model already exists in the catalog" — the migration `0052`
+    one-product-per-Model guard working as designed on the Edit path.
 
 ## E — SBU scoping
 
 14. Start an Add-Product flow for Imaging — confirm only Imaging brands
-    appear. — **Not yet run**
+    appear. — **PASS**, tested live by Basheer as Admin/GM, 2026-09-23 —
+    only Imaging brands listed, nothing saved.
 15. Repeat for Critical Care — confirm only Critical Care brands appear,
     no cross-contamination either direction. — **PASS** (Critical Care
     side confirmed live during Section B/D testing — Aeonmed/AVI/EDAN/etc
-    shown, no SonoScape; Imaging side not separately re-checked)
+    shown, no SonoScape; Imaging side now confirmed by step 14,
+    2026-09-23 — full PASS both directions)
 
 ## F — Non-Admin/GM role: read-only catalog — PASSED live 2026-09-22
 
@@ -237,7 +247,14 @@ feature's own scope:
 
 28. Confirm brand grouping reflects the real Brand table (no more "EDAN"
     vs "Edan" style duplicates) — the actual drill-down mechanics are
-    already signed off in the doc above. — **Not yet run**
+    already signed off in the doc above. — **PASS**, tested live by
+    Basheer as Admin/GM, 2026-09-23 — one EDAN card, no case-variant
+    duplicates. Side observation, not a bug: By Product showed 7 EDAN
+    opportunities vs By Brand's 6 — one opportunity carries two different
+    EDAN products, so it's counted once per product row but once overall
+    at brand level (Basheer confirmed). Separate finding logged during
+    this step: stale Pipeline drill-down filter carried across drills
+    (see Progress-Archive 2026-09-23).
 
 ## K — Data cutover: the legacy deactivated products
 
@@ -259,11 +276,25 @@ feature's own scope:
 
 30. On a product detail page, confirm Collateral Links still show/add/
     remove exactly as before — nothing about the Brand/Model/Category
-    rework should have touched that box. — **Partially observed:** the
-    Collateral Links box rendered correctly (with "+ ADD LINK" for GM, "No
-    collateral links yet.") on the test product's detail page during
-    Section D testing, but no actual add/remove was performed — full check
-    still outstanding.
+    rework should have touched that box. — **PASS**, tested live by
+    Basheer as Admin/GM, 2026-09-23 — link added and removed normally
+    (box rendering itself also observed during Section D on 2026-09-22).
+
+## M — Fix found during this pass: stale search text across drill-downs
+
+Found live 2026-09-23 during step 28 (Basheer): text typed into the Pipeline
+list view's search box on one report drill-down stayed applied on the next,
+unrelated drill. Fix: a new drill now clears the search box too, alongside
+the Owner/Zone dropdowns it already cleared (`OpportunityPipelineScreen.tsx`).
+
+31. Product Performance → By Brand → click an Opportunities count. In the
+    Pipeline list, type "marketing" into the search box (list narrows).
+    Go back, switch to By Product, click any Opportunities count.
+    **Expected:** search box is empty, full drilled list shown. — **PASS**,
+    tested live by Basheer as Admin/GM, 2026-09-23
+32. Within a single drill, type into the search box — confirm it still
+    filters normally (the fix must only clear on a *new* drill). — **PASS**,
+    tested live by Basheer as Admin/GM, 2026-09-23
 
 ---
 

@@ -272,12 +272,15 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
   // prevInitiallyExpanded -- every object DemoApp.tsx passes here for a new
   // drill is a fresh reference, so this only fires on an actual new drill,
   // not on a manual dropdown change while a drill is already active.
+  // Search text too (found 2026-09-23 manual E2E: "marketing" typed on a
+  // By Brand drill was still applied to a later, unrelated By Product drill).
   const [prevInitialFilter, setPrevInitialFilter] = useState(initialFilter);
   if (initialFilter !== prevInitialFilter) {
     setPrevInitialFilter(initialFilter);
     if (initialFilter) {
       setOwnerFilter("");
       setZoneFilter(null);
+      setSearchQuery("");
     }
   }
 

@@ -5929,3 +5929,21 @@ git coordination.
 3. Flag the hot-reload/session-reset risk before editing frontend source
    files mid-manual-test against the same dev server, not after it's
    already happened. (Manual E2E testing.)
+
+## 2026-09-23 — Product Catalog Brand/Category/Model manual E2E, continued (testing notes)
+
+- Steps 9, 10, 13, 14 (completing 15), 28, 30 PASS — Basheer testing live as
+  Admin/GM, results recorded in the test plan as each completed.
+- Step 13 side confirmation: re-picking a Model that already has a product
+  (Aeonmed 7200A) was refused with "A product for this Model already exists"
+  — migration `0052` guard works on Edit too. Expected, not a bug.
+- Step 28 side observation, not a bug: Product Performance showed 7 EDAN
+  opportunities By Product vs 6 By Brand — one opportunity carries two EDAN
+  products, counted once per product row but once overall per brand.
+- **Bug found and fixed:** Pipeline drill-down leaves the search box text behind
+  across separate drills — "marketing" typed into the search box (Basheer confirmed) on a By Brand drill, went
+  back, drilled from By Product, and the old search was still applied. The
+  2026-09-16 fix (`9023965`) only clears the Owner/Zone dropdowns on a new
+  drill, not the search box (`OpportunityPipelineScreen.tsx:276-281`). Fixed
+  by clearing the search box in the same reset; `/code-review` medium came
+  back clean; new test-plan steps 31-32 PASS live (Basheer).
