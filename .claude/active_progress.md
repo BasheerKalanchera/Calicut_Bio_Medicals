@@ -17,9 +17,42 @@ committed `050a7a7`, approved. **Backend built** (Part 1): service check
 `_split_edit_refusal` in `replace_splits` (403), `GET
 /opportunities/{id}/splits/can-edit`, BR-FIN-06 error now names the person.
 Full backend suite 969 passed. No migration.
-**Next step:** frontend — `SplitsTab` hides Edit / + Add when `can_edit`
-is false; regenerate `api.ts`. Then `/code-review` (medium) → written E2E
-plan → manual E2E → commit → checklist.
+**Frontend built, uncommitted on purpose** (commits after E2E):
+`OpportunityDetailScreen.tsx` `SplitsTab` hides Edit / + Add unless
+`can_edit`, query keyed on status + owner; `services/opportunities.ts`,
+`types/api-aliases.ts`, `types/api.ts` (regenerated). `tsc` clean.
+`/code-review` (medium) done: 1 Low finding (owner reassignment didn't
+re-ask can-edit), fixed. E2E plan
+`docs/Split-Editing-Permission-Manual-E2E-Test-Plan.md` (22 steps, A–G)
+written; starting splits checked read-only (usg m/c 80/20 Basheer K/Fazal;
+New USG m/c 50/50 Basheer K/Vivek).
+**Next step:** Basheer runs step 1 as Basheer K (usg m/c → Splits: 80/20,
+Edit shown), then step 2. Then commit frontend → post-commit checklist.
+
+## 2026-09-23 — Production handover & support options: internal draft written — Basheer reviewing 2026-09-24
+
+The customer asked what their post-deployment support options are. The draft
+covers: why an in-house developer is realistic, 7 gaps to close first
+(accounts, laptop-only backups, Prod not yet set up, no CI, RLS
+specialisation, no customer product owner, single point of failure),
+Options A/B/C (recommends C: in-house + capped Basheer support contract for
+6–12 months), a 4-phase handover plan, and 5 open questions for Basheer.
+**Not customer-facing yet, and deliberately kept out of the repo**, since the
+customer will inherit the repo.
+- Online (editable): https://claude.ai/code/artifact/dda07fb3-ba85-4073-9ad7-caadc579559d
+- Offline copy: `C:\Users\Basheer\Downloads\Production-Handover-Support-Options-DRAFT-2026-09-23.html`
+
+**Next step:** Basheer reviews and answers the open questions, then write the
+customer-facing version.
+
+## 2026-09-23 — New rule for database changes: DONE (commit `9b27bec`)
+
+During Brand-Level Target Planning testing, Basheer noticed two database
+changes had been made to Dev without being written down anywhere, and the
+schema file (the document describing the database structure) wasn't
+updated until later. New rule added to CLAUDE.md and the database
+checklist: a database change isn't finished until it's recorded and the
+schema file is updated; also checked before testing starts. Nothing left open.
 
 ## 2026-09-23 — CLAUDE.md refactor: DONE (`c8eac23`)
 
