@@ -29,7 +29,9 @@ E2E testing` only), then draft the skill file(s) and the trimmed
 All 30 steps PASS (plus 31-32 for a Pipeline search-box drill-down fix,
 `bc460a4`). Feature 4.1 is Done in Traceability; scorecard regenerated (30
 Done / 11 Partial / 9 Not started). Detail in Progress-Archive 2026-09-23.
-**Next step:** republish both scorecard Artifacts; two minor clean-ups
+Both scorecard Artifacts republished 2026-09-23 (main v17, by-status v11 —
+by-status also picked up the 2026-09-19 "Commitment beyond contract" rename
+it had missed). **Nothing left open on this thread**; two minor clean-ups
 (orphaned ECG Cable brochure, Dev test data) parked in `docs/Backlog.md`.
 
 ## 2026-09-22 session (later still) — Product Catalog Brand/Category/Model manual E2E: 18/30 steps PASS, 2 real bugs found and fixed, committed and pushed `e1aaba4` — pass continues tomorrow morning

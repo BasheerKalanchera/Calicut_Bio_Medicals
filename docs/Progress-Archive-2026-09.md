@@ -5962,3 +5962,8 @@ git coordination.
   not the search box on the same screen; when fixing "stale state on
   re-entry", list *every* piece of user-set state on that screen, not just
   the one that caused the reported bug.
+- Checklist commit `a19e873` pushed; both scorecard Artifacts republished
+  after Basheer approved the exact diff (main 7qRxCt4B… v17, by-status
+  VcwUvDNA… v11). By-status had been stale since 2026-09-18, so it also
+  picked up the 2026-09-19 "New Features Added" → "Commitment beyond
+  contract" rename — shown to Basheer as a separate diff before publishing.
