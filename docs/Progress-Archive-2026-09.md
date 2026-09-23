@@ -6036,3 +6036,18 @@ git coordination.
   of §6.5"; (3) my plan-doc result-tagging helper appended to the wrong
   step three times when steps weren't blank-line separated — anchor
   edits on the step's own text instead.
+
+## 2026-09-23 — Split editing authority (BR-FIN-08): build + code review
+
+- Backend committed `584d218` (part 1): `_split_edit_refusal` in
+  `OpportunityService.replace_splits` (403), `GET
+  /opportunities/{id}/splits/can-edit`, BR-FIN-06 error names the person.
+  Backend suite 969 passed. No migration.
+- Frontend (uncommitted): `SplitsTab` hides Edit / + Add unless `can_edit`;
+  `api.ts` regenerated (only the new endpoint + schema). `tsc` clean.
+- `/code-review` (medium): 1 Low finding, fixed — the can-edit answer was
+  re-fetched on a Won/Lost change but not on an owner reassignment made on
+  the same screen, so the old owner would still see Edit and hit a 403 on
+  save. Query key now includes the owner id. Review otherwise confirmed the
+  check mirrors `opportunity_tier_visibility`'s management arms exactly and
+  `replace_splits` has no other caller.
