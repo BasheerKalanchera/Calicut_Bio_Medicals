@@ -238,7 +238,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Reference:** ADR-026 (Opportunity Value Model — Dual-Mode Valuation).
 
 ### BR-FIN-04: Split Governance
-* **Rule:** Contributor splits may be modified only while an Opportunity remains open.
+* **Rule:** Contributor splits may be modified only while an Opportunity remains open. **Unenforced until BR-FIN-08 (decided 2026-09-23, not yet built), which refines it:** Won — General Manager only; Lost — locked; Active/On Hold — BR-FIN-08's owner/hierarchy/GM/Admin rule.
 * **Constraint:** Split changes must preserve the 100% allocation rule.
 * **Audit Requirement:** All split changes must be captured in audit history.
 
@@ -262,6 +262,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Tied to Lead Source, not independently persistent.** If an Opportunity's `lead_source_id` is edited away from `Referral` to any other value, both `referred_by_user_id` and `referred_by_note` are cleared (set to `null`) as part of that same save — the credit record doesn't outlive the Lead Source value it depends on. Enforced client-side (all 3 edit forms explicitly send `null` for both fields whenever the effective Lead Source isn't Referral, rather than omitting them and relying on PATCH semantics to leave the old value untouched).
 * **Enforcement:** schema-level `model_validator` (mutual exclusivity) on both `OpportunityCreate`/`OpportunityUpdate` for a clean `422`, backed by a DB `CHECK` constraint (`ck_opportunity_referral_not_both`) as the last-resort guard.
 * **Reference:** `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`, ADR-013 (revenue rollups this does not feed), BR-ACT-06 (shared eligibility rule for the colleague picker).
+
+### BR-FIN-08: Split Editing Authority (2026-09-23)
+* **Rule (Active / On Hold Opportunities):** the contributor split may be changed only by its **owner**, anyone **above the owner in the hierarchy**, or **Admin/General Manager**. Split participants and Next Action assignees (BR-ACT-06) may *see* the split but not change it — participants receive the credit, so they don't set it; an assignee's access exists only to complete a follow-up task.
+* **"Above the owner" = the existing management reach** used for Opportunity visibility (`opportunity_tier_visibility`), minus its two visitor routes (split participant, Next Action assignee): SBU Manager — Opportunities in their own SBU; Area Manager — Opportunities in their own SBU whose account is in their zone tree, or whose owner reports directly to them. Someone matching more than one route gets the most permissive.
+* **Closed Opportunities (settles BR-FIN-04):** **Won** — only the **General Manager** may change the split (not Admin, not the owner or their managers); anyone needing a correction asks the GM outside the app. Chosen over a request-and-approve workflow; the Audit Log already records every split change. **Lost** — locked for everyone (no revenue, so the split affects no figures).
+* **Enforcement:** server-side, in the single split-write path (`OpportunityService.replace_splits`) — a refused change returns `403` and saves nothing. The screen hides the split editor for anyone not allowed, using the same server-side check, so the two cannot disagree. No RLS change (lighter build, Basheer's call): the `split` RLS policy still follows Opportunity visibility.
+* **Not affected:** Opportunity/split visibility; the automatic 100% split created with a new Opportunity (BR-FIN-05); new-participant SBU eligibility (BR-FIN-06), which still applies on top of this rule.
+* **Origin:** Brand-Level Target Planning manual E2E, 2026-09-23 — a cross-SBU Next Action assignee could open, and partly edit, another SBU's deal split. **Decided by Basheer, 2026-09-23; not yet built** — `docs/Split-Editing-Permission-Implementation-Plan.md`. Closed-deal handling decided the same day (above).
 
 ---
 

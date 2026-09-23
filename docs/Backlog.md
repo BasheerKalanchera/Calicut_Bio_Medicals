@@ -104,8 +104,9 @@ existing ones.
   instead of the person's name (`service.py:516`); the split contributor
   picker lists the *viewer's* SBU (`listUsers("sbu")`,
   `OpportunityDetailScreen.tsx:526`) instead of the opportunity's.
-- Next: write the rule into `Business-Rules.md`, a short implementation
-  plan, `/code-review`, E2E.
+- **2026-09-23:** rule written as BR-FIN-08; plan drafted in
+  `docs/Split-Editing-Permission-Implementation-Plan.md` (proposes dropping
+  the picker fix as redundant; two open questions), awaiting Basheer's review.
 
 ## Deferred / undecided items
 

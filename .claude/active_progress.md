@@ -18,8 +18,11 @@ hierarchy, and GM/Admin may change splits; not participants, not
 cross-SBU Next Action assignees. Lighter build (service check + hide the
 editor; no RLS/migration). Bundle the raw-user-id error message and the
 split picker listing the viewer's SBU instead of the opportunity's.
-**Next step:** write the rule into `Business-Rules.md` + a short
-implementation plan, review with Basheer, then build.
+Rule written as BR-FIN-08; plan drafted in
+`docs/Split-Editing-Permission-Implementation-Plan.md` (uncommitted).
+All decisions settled 2026-09-23 (Won = GM only, Lost = locked, Area
+Manager row as tabled, lighter build). **Next step:** Basheer approves the
+plan + docs commit; then build.
 
 ## 2026-09-23 — CLAUDE.md refactor: DONE (`c8eac23`)
 
