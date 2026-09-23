@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Alert,
   Box,
   Typography,
   Button,
@@ -47,7 +48,7 @@ export default function BrandTargetTrackingScreen() {
   // One batched call for every brand in the SBU (/code-review 2026-09-23 --
   // this used to fire one HTTP round trip per brand via useQueries).
   const brandIds = brands.map((b) => b.id);
-  const { data: rollups = [] } = useQuery({
+  const { data: rollups = [], isError: rollupsFailed } = useQuery({
     queryKey: ["brand-rollups", brandIds, period],
     queryFn: () => getBrandRollups(brandIds, period),
     enabled: brandIds.length > 0,
@@ -102,6 +103,11 @@ export default function BrandTargetTrackingScreen() {
 
       <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Brand vs. Committed</Typography>
+        {rollupsFailed && (
+          <Alert severity="error" sx={{ mb: 1.5 }}>
+            Couldn't load brand totals — the figures below are incomplete. Try refreshing.
+          </Alert>
+        )}
         <Table size="small">
           <TableHead>
             <TableRow>

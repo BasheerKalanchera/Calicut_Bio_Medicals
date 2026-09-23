@@ -58,6 +58,9 @@ export async function getBrandRollups(brandIds: string[], planningPeriod: string
   if (brandIds.length === 0) return [];
   const response = await api.get("/planning/targets/brand-rollups", {
     params: { brand_ids: brandIds, planning_period: planningPeriod },
+    // FastAPI reads a list query param as repeated `brand_ids=a&brand_ids=b`;
+    // axios's default `brand_ids[]=a` is rejected with a 422 (E2E 2026-09-23).
+    paramsSerializer: { indexes: null },
   });
   return response.data.data;
 }

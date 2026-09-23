@@ -79,7 +79,8 @@ sum.
 **Setup:** pick a quarter nobody has already set a target for, for Vivek
 and Arun, in Critical Care (Group C's own note about clean starting state
 still applies — no Delete UI exists). For Section I, reuse a target from
-Target Planning's own 2026-09-17 pass (e.g. Vivek's `2026-Q3` target, set
+Target Planning's own 2026-09-17 pass (Vivek's `2026-Q2` target, ₹65L,
+Approved, 0 split rows — corrected 2026-09-23 from `2026-Q3`, set
 before this feature existed) as the "predates the feature" case.
 
 **Simple vs. Complex, per CLAUDE.md's Manual E2E testing rule:** tagged
@@ -93,82 +94,82 @@ calls) are Claude's, driven in the browser.
 
 1. Log in as Vivek (Sales Staff, Critical Care), open Target Planning, the
    clean test quarter. **Expected:** "My Target" reads "No target set,"
-   **Set Target** button present.
+   **Set Target** button present. — **PASS** (2026-09-23, quarter `2026-Q3`, Basheer)
 2. Click **Set Target**, enter an amount (e.g. `60`). **Expected:** a
    "Split by Brand \*" section appears below the amount field, with a
    "Remaining to allocate" indicator reading the full amount (`₹60.0L`) in
-   warning color, since no brand is picked yet.
+   warning color, since no brand is picked yet. — **PASS** (Basheer)
 3. Add one brand at `40` and a second at `20` (any two of Critical Care's
    9). **Expected:** the remaining-to-allocate indicator updates live as
    each row is added, turning green and reading `₹0.0L` once both rows are
-   in.
+   in. — **PASS** (EDAN ₹40L + Magnamed ₹20L; first-picked brand correctly absent from second row's picker)
 4. Try to Save with only one brand added (e.g. `40` of `60`, leaving `20`
    unallocated). **Expected:** blocked with a clear message naming the
-   current split total vs. the target amount — nothing saved.
+   current split total vs. the target amount — nothing saved. — **PASS**
 5. Add the second brand's row, Save. **Expected:** modal closes; "My
    Target" shows the amount, **Pending Approval** chip, no "Needs Brand
-   Split" flag (see Section I) since a real split now exists.
+   Split" flag (see Section I) since a real split now exists. — **PASS**
 6. Hard-refresh, reopen Target Planning, click **Revise** on this target.
    **Expected:** both brand rows reappear pre-filled with their saved
    amounts — confirms the split persisted server-side, not just a local
-   screen update.
+   screen update. — **PASS** (EDAN ₹40 + Magnamed ₹20 re-loaded after hard refresh)
 
 ## B — Revising the split without changing the total (Simple)
 
 7. Still as Vivek, **Revise** the same target. Remove one brand row, add a
    different brand instead, keeping amounts so the total still sums to the
    same `₹60.0L`. Save. **Expected:** saves cleanly, no error — the total
-   didn't change, only which brands carry it.
+   didn't change, only which brands carry it. — **PASS** (Magnamed → ELECTROSIENCE ₹20; EDAN ₹40 kept)
 
-## C — Split-only revision on an APPROVED target resets approval (Complex)
+## C — Split-only revision on an APPROVED target resets approval (Simple — retagged 2026-09-23 from Complex: each step is one action with an unambiguous check; switching roles alone doesn't make a step Complex)
 
 8. As Arun (Vivek's Area Manager), approve Vivek's target from Group A/B.
    **Expected:** works exactly as Target Planning's own Group C — status
-   flips to **Approved** on Vivek's screen.
+   flips to **Approved** on Vivek's screen. — **PASS** (Basheer as Arun)
 9. As Vivek, **Revise** the approved target — change only the brand split
    (re-shuffle amounts between the same two brands), leave the total
    amount field untouched, Save. **Expected:** the info banner about
    revising an approved target still shows; after saving, status flips
    back to **Pending Approval** — confirms a split-only change (same
    total) resets approval exactly like a total change does, per the
-   2026-09-23 decision this plan's own commit `053c017` codified.
+   2026-09-23 decision this plan's own commit `053c017` codified. — **PASS** (EDAN 40/ELECTROSIENCE 20 → 30/30, total 60 unchanged; Approved → Pending Approval)
 
 ## D — GM records a brand's vendor target (Simple)
 
 10. Log in as Haroon (GM), open **Brand Target Tracking** (under
     Administration). **Expected:** the nav item is present; screen shows a
     quarter picker, an SBU picker, and a table of that SBU's brands with
-    Vendor Target / Team Committed / Gap / Actions columns.
+    Vendor Target / Team Committed / Gap / Actions columns. — **PASS** (Basheer as Haroon)
 11. Pick Critical Care, the same quarter used in Groups A-C. **Expected:**
     the brand(s) Vivek split against show a non-zero "Team Committed"
-    figure already (from Groups A/B/C), "Vendor Target" reading "Not set."
+    figure already (from Groups A/B/C), "Vendor Target" reading "Not set." — **FAIL** (2026-09-23): every brand showed Team Committed "—". The screen's batched brand-rollup request is rejected by the backend with `422` — axios sends the list as `brand_ids[]=…`, FastAPI expects repeated `brand_ids=…`. Introduced by `053c017`'s batching fix; backend tests call the endpoint in FastAPI's own format so they couldn't catch it. The screen also hides the failure (shows "—", no error). **Fixed live:** `paramsSerializer: { indexes: null }` on `getBrandRollups` (request now `200`), plus a visible error Alert on the screen if the rollup fetch ever fails. **Re-run — PASS** (Claude as Haroon): EDAN ₹30.0L, ELECTROSCIENCE ₹30.0L, other 7 brands ₹0.0L, all Vendor Target "Not set". The new error Alert was not exercised live (would need a forced failure) — `tsc`/`eslint` clean.
 12. Click **Set Target** on one of those brands, enter an amount (e.g.
     `100`), Save. **Expected:** row updates to show `₹100.0L` as Vendor
-    Target and a computed Gap (`vendor − committed`).
+    Target and a computed Gap (`vendor − committed`). — **PASS** (EDAN ₹100.0L, Gap ₹70.0L; Basheer as Haroon)
 13. Click **Revise** on the same brand, change the amount, Save.
     **Expected:** updates in place (upsert) — confirms decision #2's "can
-    be corrected, not just entered once."
+    be corrected, not just entered once." — **PASS** (EDAN → ₹120.0L, Gap ₹90.0L, same row)
 
 ## E — Non-Admin/GM cannot see or touch Brand Target Tracking (Complex)
 
 14. As Vivek (Sales Staff), check the sidebar. **Expected:** no
     Administration section at all, so no path to Brand Target Tracking —
-    same as every other admin-only screen.
+    same as every other admin-only screen. — **PASS** (Basheer)
 15. As Vivek, attempt `GET /planning/targets/brand-rollups` and
     `POST /planning/brand-vendor-targets` directly (dev tools or an API
     client, Vivek's own session). **Expected:** both `403`, matching the
     `_require_admin_or_gm` gate added in `053c017` — re-check via
     `GET /planning/brand-vendor-targets` (open read) that nothing was
-    created.
+    created. — **PASS** (Claude, Vivek's own session via `fetch`, 2026-09-23). Actual paths: `GET /api/v1/planning/targets/brand-rollups` → `403` "Only Admin/GM may do this."; `POST /api/v1/planning/brand-vendor-targets` (Kolkatta, 2026-Q3, ₹1) → `403`; `GET /api/v1/planning/brand-vendor-targets?planning_period=2026-Q3` → `200`, only EDAN ₹120 — nothing created.
 
 ## F — Brand rollup adds up correctly across people (Simple, needs a second Critical Care person)
 
 16. Have a second Critical Care person set a target with a split against
-    the *same* brand Vivek split against in Group A (any amount).
+    the *same* brand Vivek split against in Group A (any amount). — **PASS** (Basheer as Arun Adarsh: 2026-Q3 ₹50 = EDAN 25 + Magnamed 25, Pending Approval)
 17. As Haroon, reopen Brand Target Tracking for that brand/quarter.
     **Expected:** "Team Committed" equals Vivek's split amount for that
     brand plus the second person's — confirms the rollup sums across
-    people, not just showing one person's row.
+    people, not just showing one person's row. — **PASS** (Basheer as Haroon: EDAN ₹55.0L = Vivek 30 + Arun 25, Gap ₹65.0L; Magnamed ₹25.0L)
 
 ## G — Cross-SBU RLS boundary on the new brand-split table (Complex) — **direct regression test for the 0054 fix, most important step**
 
@@ -186,7 +187,7 @@ calls) are Claude's, driven in the browser.
     them and attempt the same read against Vivek's (Critical Care)
     brand-split rows directly. **Expected:** nothing returned — the fixed
     policy's `sbu_id = cabio_app_sbu_id()` wrapper is what this step is
-    actually proving.
+    actually proving. — **PASS** (Claude, 2026-09-23). App layer, Nishad's own session: `/planning/targets`, `/pending-approval`, `/team` (Q2, Q3), `/rollup` (Q3) all `200` with zero rows / ₹0. Table layer, read-only direct query on `target_plan_brand_split` impersonating each user (all three RLS settings verified): Vivek (control) 2 rows; **Nishad 0**; Arun (Vivek's manager, must still see them) 2 of Vivek's, 4 total incl. his own. — **PASS** (Claude, same direct query): **Rudrappa (Sales Staff, Imaging) sees 0** of Vivek's split rows and 0 split rows in total — the `0054` SBU wrapper holds.
 
 ## H — Imaging: single-brand SBU still works (Simple)
 
@@ -198,13 +199,13 @@ calls) are Claude's, driven in the browser.
 
 ## I — "Needs Brand Split" flag on a pre-existing target (Simple)
 
-21. As Vivek, navigate to `2026-Q3` (or whichever quarter has a target set
+21. As Vivek, navigate to `2026-Q2` (or whichever quarter has a target set
     from Target Planning's own 2026-09-17 pass, before this feature
     existed). **Expected:** a **"Needs Brand Split"** warning chip shows
     next to the status chip, since that target has zero split rows and
-    Critical Care now has active brands.
+    Critical Care now has active brands. — **PASS** (Basheer, `2026-Q2` ₹65 target)
 22. As Arun or Haroon, check the SBU Rollup table for that same quarter.
-    **Expected:** the same flag shows next to Vivek's row there too.
+    **Expected:** the same flag shows next to Vivek's row there too. — **PASS** (Basheer as Arun, `2026-Q2`)
 23. Click **Revise** on that target, add a valid split, Save. **Expected:**
     the flag disappears from both "My Target" and the SBU Rollup after a
     refresh.
@@ -220,7 +221,7 @@ calls) are Claude's, driven in the browser.
     total `50.00`, splits summing to `50.01`). **Expected:** rejected by
     the backend; separately confirm in the browser that the same mismatch
     is *also* caught client-side before the request is even sent (the
-    tolerance-consistency fix from `053c017`).
+    tolerance-consistency fix from `053c017`). — **PASS** (Claude, `PATCH` on Vivek's 2026-Q3 target, EDAN twice) → `400` "Each brand can only appear once in the split."; split unchanged afterwards (EDAN 30 / ELECTROSCIENCE 30). — **Backend half PASS** (Claude): EDAN 30.01 + ELECTROSCIENCE 30 vs total 60 → `400` "Brand splits must sum to exactly the target amount: splits total 60.01, target is 60."; split unchanged. Client-side half: **PASS** (Basheer) — indicator stayed amber and Save was blocked before any request. **Display bug found and fixed:** the indicator read "−₹0.0L" and the blocked message read "currently ₹60.0L of ₹60.0L" — both rounded to 1 decimal while the rule checks to the paisa. Now 2 decimals in the split editor only (`formatSplitLakhs`); **re-check PASS** (Basheer): "Remaining to allocate: ₹-0.01L", message "currently ₹60.01L of ₹60.00L".
 
 ## K — Regression: Opportunity Splits unaffected (Simple)
 
@@ -238,7 +239,7 @@ calls) are Claude's, driven in the browser.
     only) both appear correctly per role, same as Target Planning's own
     Group K.
 28. Spot-check Pipeline and Insights still load normally after visiting
-    both screens.
+    both screens. — Admin/GM half **PASS** (Basheer as Haroon: both items present); Vivek's lack of Brand Target Tracking already proven by step 14. Sales-Staff half (Target Planning present): pending.
 
 ---
 

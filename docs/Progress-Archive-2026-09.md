@@ -5989,3 +5989,27 @@ git coordination.
   triggers and RLS policies, nothing unrelated. The dumped
   `target_plan_brand_split_read` policy confirms the `0054` SBU wrapper
   is what's live.
+- **Bug found at step 11 (fixed live):** Brand Target Tracking showed "—"
+  for every brand's Team Committed. The batched brand-rollup call added by
+  `053c017`'s /code-review fix sent `brand_ids[]=…` (axios default); FastAPI
+  wants repeated `brand_ids=…` → `422`. Backend tests used FastAPI's own
+  format and `tsc` can't see query-string shape, so only a live click
+  caught it. Fixed with `paramsSerializer: { indexes: null }` — the app's
+  first list-valued query param, so no prior convention existed. Adjacent
+  gap also fixed (Basheer approved both): the screen swallowed the error
+  silently; it now shows an error Alert. Verified live: `200`, EDAN/
+  ELECTROSCIENCE ₹30.0L each. Lesson: when a review fix changes a
+  request's shape, the E2E pass is the only thing that proves it.
+- **Display bug at step 25 (fixed live):** a ₹0.01L split mismatch showed
+  as "Remaining to allocate: −₹0.0L" (amber) and the blocked-save message
+  read "currently ₹60.0L of ₹60.0L" — `formatLakhs` rounds to 1 decimal
+  while `isAllocationBalanced` checks to 2. The rule was right, only the
+  label was misleading (Basheer spotted it). Fixed with a local 2-decimal
+  formatter for the split editor's figures only; app-wide `formatLakhs`
+  unchanged. Steps 15, 21, 24, 25 PASS.
+- **Section G (RLS, the 0054 regression) PASS**, tested at both layers:
+  app endpoints as Nishad all empty; direct read-only query on
+  `target_plan_brand_split` impersonating each user — Vivek 2 (control),
+  Nishad 0, Rudrappa (Imaging) 0, Arun 2 of Vivek's (manager still sees,
+  so the fix doesn't over-block). Steps 16-17 (rollup sums Vivek 30 +
+  Arun 25 = EDAN ₹55L) PASS.

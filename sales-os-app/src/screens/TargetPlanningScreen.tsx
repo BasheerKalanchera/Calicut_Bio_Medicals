@@ -77,6 +77,13 @@ const STATUS_COLOR: Record<TargetPlanStatus, "warning" | "success" | "error"> = 
   REJECTED: "error",
 };
 
+// The split editor's own figures show 2 decimals, matching the paisa-level
+// isAllocationBalanced(..., 2) rule -- formatLakhs' 1 decimal rounded a real
+// ₹0.01L mismatch to "−₹0.0L" next to an amber warning (E2E 2026-09-23).
+function formatSplitLakhs(v: number) {
+  return `₹${v.toFixed(2)}L`;
+}
+
 function StatusChip({ status }: { status: TargetPlanStatus }) {
   return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />;
 }
@@ -310,7 +317,7 @@ export default function TargetPlanningScreen() {
       // a confusing raw error (/code-review 2026-09-23).
       if (editSplits.length === 0 || !isAllocationBalanced(splitTotal, amount, 2)) {
         throw new Error(
-          `Brand splits must sum to exactly the target amount (currently ${formatLakhs(splitTotal)} of ${formatLakhs(amount)}).`,
+          `Brand splits must sum to exactly the target amount (currently ${formatSplitLakhs(splitTotal)} of ${formatSplitLakhs(amount)}).`,
         );
       }
       brand_splits = editSplits.map((s) => ({ brand_id: s.brand_id, split_amount_lakhs: Number(s.amount) }));
@@ -636,7 +643,7 @@ export default function TargetPlanningScreen() {
                   color: isAllocationBalanced(splitTotal, Number(amountInput) || 0, 2) ? "success.main" : "warning.main",
                 }}
               >
-                Remaining to allocate: {formatLakhs((Number(amountInput) || 0) - splitTotal)}
+                Remaining to allocate: {formatSplitLakhs((Number(amountInput) || 0) - splitTotal)}
               </Typography>
             </Box>
 
