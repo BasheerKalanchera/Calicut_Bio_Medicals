@@ -10,7 +10,7 @@ Rule origins (the incident behind each dated tag) live in
 
 ## Architecture
 - Stack: PostgreSQL 17 (Supabase) · FastAPI · React + Vite + TypeScript
-- UI framework: Material UI (MUI) is the sole styling/component framework (ADR-031). Tailwind is being removed — do not add Tailwind classes to any component. Legacy Tailwind screens are mid-migration; see docs/Frontend-Implementation-Standards.md for the tracking list.
+- UI framework: Material UI (MUI) is the sole styling/component framework (ADR-031). Tailwind is being removed — do not add Tailwind classes to any component. Legacy Tailwind screens are mid-migration; see docs/Frontend-Implementation-Standards.md for the tracking list. Keep the full per-file migration ritual (property-diff, honest tracker updates) — it has repeatedly caught real bugs. *(2026-07-05)*
 - SBUs: Imaging, Critical Care (also RLS security boundaries)
 - Zones: North Kerala, South Kerala, Bangalore, Mangalore (Central Kerala deprecated 2026-08-21 — accounts moved to South Kerala, zone deactivated; see docs/Zone-Hierarchy-Territory-Data-2026-08.md)
 - Fiscal year: Indian FY April–March; period format YYYY-Qn
@@ -51,8 +51,10 @@ code or changing structure. On any conflict, the document wins over this file.
   is a handover note, not a log: the task actively in progress and its
   immediate next step, nothing else. Waiting-on-someone items go to
   Progress-Archive; unstarted work to Backlog. Once a thread resolves, its
-  detail moves out. Update it as work advances, not only at session end.
-  Hard limit 150 lines — the SessionStart hook (`.claude/hooks/session-start.sh`)
+  detail moves out. Update it as work advances, not only at session end —
+  Basheer restarts sessions every 3–4 hours, so keep it current at every pause.
+  Before writing or trusting any commit-status claim in it, check `git log` /
+  `git status`. Hard limit 150 lines — the SessionStart hook (`.claude/hooks/session-start.sh`)
   warns above that; prune before any other work. *(2026-09-24)*
 - **Documentation homes:** each kind of fact lives in one doc. Everywhere else
   links to it and never restates it. Feature status → Traceability; E2E
@@ -101,6 +103,17 @@ code or changing structure. On any conflict, the document wins over this file.
   cascading, scoping) together in one round. *(2026-09-20)*
 - When an adjacent design gap surfaces mid-task, lead with a proposed
   narrowly-scoped fix alongside the problem — don't just describe it. *(2026-09-22)*
+- Don't add a design case just for symmetry; each case must add something that
+  would otherwise be lost. *(2026-08-31)*
+- When the same avoidable problem happens a second time, build the structural
+  fix then — don't wait to be asked. *(2026-09-15)*
+
+## Parallel sessions
+- Before editing any file, run `git status` / `git diff` on it — another session
+  may be mid-edit, whatever a plan's file list says. *(2026-08-18)*
+- Before committing a shared file (e.g. Progress-Archive), check the staged
+  *content* (`git diff --cached`), not just file names, and leave out anything
+  another session wrote. *(2026-09-10)*
 
 ## Commit approval
 - **Every commit needs its own explicit approval, shown first.** Before running
@@ -109,6 +122,9 @@ code or changing structure. On any conflict, the document wins over this file.
   committing ("…then commit and push") approves the edits only, not the commit.
 - Applies to every commit: feature, fix, docs-only follow-ups, checklist commits,
   checkpoint commits. No size exemption. *(2026-09-23)*
+- A bare "yes" to an either/or offer means the plan-first option; otherwise ask.
+  If a reply answers only part of a multi-part question, the rest is still
+  open. *(2026-09-15, 2026-09-17)*
 
 ## Checkpoint commits
 - On a long or largely unattended build (new domain, multi-file feature,
@@ -134,6 +150,10 @@ code or changing structure. On any conflict, the document wins over this file.
 - If the feature has migrations, confirm before E2E starts: Dev's `alembic current`
   = head, and `docs/Physical-Schema.sql` has been regenerated since the last one.
   *(2026-09-23)*
+- Before manual E2E, run pytest, ruff, tsc and lint and report plainly, noting
+  any failures that already existed. *(2026-07-03)*
+- Suggest `/ultrareview` only for higher-risk changes (security, untested hotfix,
+  large unreviewed change), not routine commits. *(2026-09-15)*
 
 ## Mirroring an existing feature
 - When a feature is modeled on an existing one, checklist every surface the
@@ -164,11 +184,13 @@ When an action is hard to undo, spends real time/cost, or is visible to Basheer,
 show what's about to happen and wait — don't act first and narrate afterward.
 - **Investigative actions, not just writes** — say what a query or check will do,
   even read-only, before running it. UAT: ask and wait, never just announce.
+  *(2026-09-18)*
 - Before asking Basheer a factual question, search the archive, docs and git;
   ask only what they can't answer. *(2026-09-24)*
 - When work is pending, end with one status line — done and saved / done, not
   saved / not started — instead of repeated commit reminders. *(2026-09-24)*
-  *(2026-09-18)*
+- State a risk once. If Basheer decides otherwise, do what he asked without
+  repeating the warning. *(2026-07-06)*
 - When a question can be answered in plain language or by a query, answer in plain
   language first; offer the query as a follow-up. *(2026-09-21)*
 - **Expensive jobs** (full-repo review, broad audit) — show scope and expected

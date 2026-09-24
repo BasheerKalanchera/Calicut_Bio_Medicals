@@ -29,6 +29,11 @@ whether that gap is acceptable before proceeding.
   Taken daily, prompted by the Claude session-start reminder
   (`.claude/hooks/session-start.sh`) whenever no dump is dated today
   (since 2026-09-24).
+  The script's 14-day prune deletes **every** `cabio_uat_*.dump` older than
+  14 days, including hand-saved snapshots (e.g. `…-pre-migration
+  snapshot.dump`). Basheer keeps those in Google Drive and declined a script
+  change (2026-09-24). Before each run, list the whole folder and tell him
+  exactly which files the prune will remove.
 - **Secondary (offsite):** Basheer's Google Drive, updated manually and
   irregularly as of 2026-09-20 (the backup script's own Google Drive
   step is disabled pending Google Drive for Desktop setup). Use this

@@ -42,6 +42,9 @@ on Dev, before any other work:
 - Before investing time in one environment's export, do a cheap check that the
   *target* environment (where it runs first) matches it. Never assume Dev
   mirrors UAT or vice versa.
+- UAT's schema deliberately lags `main` (see Backlog "main → UAT promotion").
+  If a table, column or feature looks missing on UAT, compare against
+  `backend/alembic/versions/` before calling it a bug. *(2026-08-31)*
 
 ## Scripts
 - Throwaway scripts (one-off data matching, migration generators) go in the

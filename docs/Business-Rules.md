@@ -588,6 +588,15 @@ Lead Source values are managed in the **LeadSource master entity** (`lead_source
 
 > **Note:** `COVERAGE_PLAN` must be used for Coverage Plan-originated Opportunities. A direct FK from Opportunity to Coverage Plan Entry is not implemented in Phase 1 (ADR-020).
 
+> **IndiaMART leads (confirmed by Basheer 2026-09-17):** IndiaMART credits
+> Cabio for a buylead only if it's answered within 4 hours, and it asks Cabio
+> to log engagement statuses on IndiaMART's own site. Both are **Marketing's
+> manual job on IndiaMART's platform**. Sales OS pushes nothing back to
+> IndiaMART and has no urgent-notification tier for IndiaMART leads (the
+> earlier `URGENT_LEAD_SOURCE_NAMES` logic was retired when Lead Management
+> shipped, 2026-09-02). Marketing's visibility into what reps did with a lead
+> comes from Lead Follow-up Comments on `marketing_lead`.
+
 ## Hold Reason Values
 
 The system shall support the following Hold Reason values:

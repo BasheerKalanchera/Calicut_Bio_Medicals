@@ -9,6 +9,16 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### Basheer's own task: allow read-only commands without permission prompts (2026-09-24)
+
+Basheer plans to do this himself, so Claude shouldn't do it unasked; mention
+it when permission prompts come up again. Add look-only commands (`git
+diff/log/show/status`, `grep`, `ls`, `cat`) to the approved list so read-only
+work such as the background `/code-review` agent stops prompting. Anything
+that changes files, databases or git history keeps prompting. Routes: run
+`/fewer-permission-prompts`, or edit `.claude/settings.local.json` (personal),
+not the shared `.claude/settings.json`.
+
 ### UAT data-quality check — recurring, every alternate day (2026-09-24)
 
 Basheer's call: run `scripts/uat_data_quality_check.py` against UAT every
