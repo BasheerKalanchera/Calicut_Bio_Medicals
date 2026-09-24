@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@mui/material";
 import FormModal from "../components/FormModal";
+import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
 import { listBrands } from "../services/catalogHierarchy";
 import { getBrandRollups, setBrandVendorTarget } from "../services/targetPlanning";
@@ -25,9 +26,17 @@ interface SbuOption { id: string; name: string }
 
 // Admin/GM only (docs/Brand-Level-Target-Planning-Implementation-Plan.md
 // decision #2) -- gated at the nav level in DemoApp.tsx, same as the other
-// ADMINISTRATION-section screens.
+// ADMINISTRATION-section screens. Mirrors the backend's own gate on
+// /planning/targets/brand-rollups. This screen is always mounted in the
+// background (DemoApp.tsx) regardless of who's logged in, so without this the
+// rollup query fires for every non-admin user and gets a 403 -- same fix as
+// AuditLogScreen.
+const BRAND_TRACKING_ADMIN_ROLES = new Set(["Admin", "General Manager"]);
+
 export default function BrandTargetTrackingScreen() {
   const queryClient = useQueryClient();
+  const { userProfile } = useAuth();
+  const isAdmin = BRAND_TRACKING_ADMIN_ROLES.has((userProfile as any)?.role_name);
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [sbuId, setSbuId] = useState<string | null>(null);
   const [editingBrand, setEditingBrand] = useState<BrandResponse | null>(null);
@@ -51,7 +60,7 @@ export default function BrandTargetTrackingScreen() {
   const { data: rollups = [], isError: rollupsFailed } = useQuery({
     queryKey: ["brand-rollups", brandIds, period],
     queryFn: () => getBrandRollups(brandIds, period),
-    enabled: brandIds.length > 0,
+    enabled: isAdmin && brandIds.length > 0,
   });
 
   const rows = brands.map((b) => ({ brand: b, rollup: rollups.find((r) => r.brand_id === b.id) }));
@@ -74,6 +83,8 @@ export default function BrandTargetTrackingScreen() {
     });
     await queryClient.invalidateQueries({ queryKey: ["brand-rollups"] });
   };
+
+  if (!isAdmin) return null;
 
   return (
     <Box sx={{ height: "100%", overflow: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
