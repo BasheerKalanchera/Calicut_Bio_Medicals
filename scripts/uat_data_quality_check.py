@@ -9,6 +9,7 @@ denials on an unauthenticated connection.
 import difflib
 import sys
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 
 import psycopg2
@@ -16,6 +17,10 @@ import psycopg2.extras
 
 sys.stdout.reconfigure(encoding="utf-8")
 ENV_FILE = Path(__file__).resolve().parent.parent / "backend" / ".env.uat"
+# One line per completed run, next to backup_log.txt. The SessionStart hook in
+# .claude/settings.json reads the last line to remind when a run is due
+# (every alternate day, run under Basheer's supervision).
+RUN_LOG = Path(r"C:\Backups\CabioUAT\data_quality_log.txt")
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -96,9 +101,12 @@ def main() -> None:
     def section(title: str) -> None:
         print(f"\n{'=' * 70}\n{title}\n{'=' * 70}")
 
+    counts: list[tuple[str, int]] = []
+
     def run(sql: str, label: str, limit: int = 40) -> list[dict]:
         cur.execute(sql)
         rows = cur.fetchall()
+        counts.append((label, len(rows)))
         print(f"\n-- {label} ({len(rows)} found)")
         for r in rows[:limit]:
             print(f"   {dict(r)}")
@@ -254,7 +262,12 @@ def main() -> None:
 
     cur.close()
     conn.close()
-    print("\nDone.")
+
+    RUN_LOG.parent.mkdir(parents=True, exist_ok=True)
+    summary = "; ".join(f"{label}={n}" for label, n in counts)
+    with RUN_LOG.open("a", encoding="utf-8") as f:
+        f.write(f"{datetime.now():%Y-%m-%d %H:%M} | {summary}\n")
+    print(f"\nDone. Run logged to {RUN_LOG}")
 
 
 if __name__ == "__main__":

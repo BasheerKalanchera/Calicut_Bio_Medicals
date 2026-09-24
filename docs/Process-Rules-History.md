@@ -13,6 +13,12 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** `active_progress.md` hard limit of 150 lines, enforced by a SessionStart hook warning; post-commit checklist step 1 removes the finished thread rather than adding a "DONE" summary.
   **Why:** 2026-09-24 — the prose rule failed twice. First failure: a "~1000 lines" size limit, ignored as the file reached 1,887 lines by 2026-07-27; pruned to 51 on 2026-07-30 (`7d7155d`), and the limit replaced with "current task and next step only". Second failure: that rule held through August (50–110 lines), then from ~2026-09-05 every finished thread was left in place as a dated "DONE" entry, reaching 1,722 lines by 2026-09-23. The file's top entry was a thread marked "Nothing left open". The post-commit checklist's bare "Update `active_progress.md`" step (added 2026-09-16, `1b7a4c5`) invited appending, and the 2026-09-23 CLAUDE.md shortening (`c8eac23`) dropped the "no narrative… doesn't linger as history" wording. Side effect found by an external review: Claude Code truncates large SessionStart output to a ~2 KB preview, so everything below the preview was invisible at startup. Two failed prose rules led to a mechanical guard instead of a third rewording.
 
+- **Rule:** Handover file renamed `active_progress.md` → `session-handover.md`; it holds only the task actively in progress (waiting items → Progress-Archive, unstarted work → Backlog).
+  **Why:** 2026-09-24, same review — Basheer: the name "active progress" invites logging progress, which is exactly how the file grew twice. The SessionStart hook also warns if the old filename reappears (a session started before the rename still has the old name in its instructions).
+
+- **Rule:** UAT data-quality check every alternate day, run by Claude under Basheer's supervision; SessionStart hook reminds when due, based on the script's own run log (`C:\Backups\CabioUAT\data_quality_log.txt`).
+  **Why:** 2026-09-24 — Basheer wants recurring data-quality monitoring of UAT. He chose supervised runs over running it himself, and chose not to grant a standing UAT exception. A startup check against the real last-run date can't be forgotten; a session-scoped timer would die at each 3–4 hour restart.
+
 ## Feature planning
 
 - **Rule:** The moment a task's scope becomes feature-sized, write `docs/<Feature>- Implementation-Plan.md` as the primary planning artifact and present its actual content …

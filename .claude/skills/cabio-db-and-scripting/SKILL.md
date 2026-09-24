@@ -31,7 +31,7 @@ on Dev, before any other work:
   note. Never leave a "not yet applied" note as the last word.
 - Commit the migration and the regenerated schema together, or the schema in
   the very next commit. A migration written but not yet applied goes in
-  `active_progress.md` as an open item until it is.
+  `.claude/session-handover.md` as an open item until it is.
 - UAT is a separate apply with its own approval — record it separately.
 
 ## Migrations that delete, retire or bulk-update rows *(2026-09-21)*

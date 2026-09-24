@@ -172,8 +172,11 @@ reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than l
 ## Open Items (not yet done)
 
 **One-time promotion (UAT → Prod):**
-- [ ] Prove out RLS (Phase 2E) on UAT with the Cabio Star Sales team, and get sign-off
-      from the extended team's rollout (still gated — see `.claude/active_progress.md`)
+- [ ] Prove out RLS (Phase 2E) on UAT and get sign-off at the end of the extended
+      team's UAT period. Star Sales had access by 2026-08-24; the extended
+      sales team has had access since their walkthrough on 2026-08-29 (Basheer's call
+      to proceed without waiting for Star Sales sign-off). See
+      `docs/Progress-Archive-2026-08.md`'s 2026-08-24 and 2026-08-29 entries.
 - [ ] Promote the existing UAT Supabase project to be Prod — relabel only, same
       connection URL/keys/project ref, no dump/restore, no new project created
 - [ ] **Decide:** rename the `uat` branch to `prod`, or cut `prod` fresh from `uat` at
@@ -209,4 +212,5 @@ reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than l
 - `Phase-2E-Security-Architecture.md` — RLS implementation, landed on Dev 2026-07-27
 - `Prototype-Production-Parity-Audit.md` §6 — Milestone 1/2 scoping
 - `CLAUDE.md` — current Dev Supabase project is live/shared, not disposable
-- `.claude/active_progress.md` — session-to-session handoff status
+- `.claude/session-handover.md` — session-to-session handoff (renamed from
+  `active_progress.md` 2026-09-24)

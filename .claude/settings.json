@@ -3,7 +3,7 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "f=.claude/active_progress.md; [ -f \"$f\" ] || exit 0; n=$(wc -l < \"$f\"); if [ \"$n\" -gt 150 ]; then echo \"!!! WARNING: active_progress.md is $n lines (limit 150). Before any other work, move finished threads to docs/Progress-Archive-<year>-<month>.md per CLAUDE.md Session handoff, and tell Basheer. !!!\"; echo; fi; cat \"$f\"" }
+          { "type": "command", "command": "sh .claude/hooks/session-start.sh" }
         ]
       }
     ]

@@ -7751,3 +7751,23 @@ connection string bypasses RLS and gives the real count, but using it
 trips the classifier even for a plain read-only SELECT, so it has to be
 run by Basheer directly. Takeaway: never trust a low/zero count from the
 normal connection on an RLS-protected table without cross-checking.
+
+## 2026-09-24 — Handover file renamed to `.claude/session-handover.md`; waiting items moved out
+
+Renamed from `active_progress.md` because the old name invited progress
+logging (see Process-Rules-History 2026-09-24). Per Basheer, the file now
+holds only the task actively in progress and its next step; waiting items
+moved out:
+- **Production handover & support options draft** (waiting on Basheer's
+  review, written 2026-09-23). Internal only, kept out of the repo since the
+  customer inherits it. Recommends Option C (in-house developer + capped
+  Basheer support contract for 6–12 months); 7 gaps to close first; 5 open
+  questions for Basheer. Online:
+  https://claude.ai/code/artifact/dda07fb3-ba85-4073-9ad7-caadc579559d ·
+  offline: `C:\Users\Basheer\Downloads\Production-Handover-Support-Options-DRAFT-2026-09-23.html`.
+  Next: Basheer answers the open questions, then the customer-facing version.
+- **main → UAT promotion** and the **UAT data-quality routine** moved to
+  `docs/Backlog.md`.
+- **Lead Management Group G** confirmed run and passed by Basheer; recorded
+  in the test plan with the provisional date 2026-09-03 (last recorded E2E
+  date, `c7b90db` — the actual run date was never written down).

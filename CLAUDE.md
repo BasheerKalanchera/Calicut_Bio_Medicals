@@ -47,12 +47,25 @@ code or changing structure. On any conflict, the document wins over this file.
   skill — load it before any of those tasks.
 
 ## Session handoff
-- `.claude/active_progress.md` is a live handover doc, not a log: the current task
-  and the immediate next step, nothing else. Once a thread resolves, its detail
-  moves out. Exception: a thread actively in progress *this session* stays until
-  it resolves. Update it as work advances, not only at session end.
-  Hard limit 150 lines — the SessionStart hook warns above that; prune
-  before any other work. *(2026-09-24)*
+- `.claude/session-handover.md` (renamed from `active_progress.md` 2026-09-24)
+  is a handover note, not a log: the task actively in progress and its
+  immediate next step, nothing else. Waiting-on-someone items go to
+  Progress-Archive; unstarted work to Backlog. Once a thread resolves, its
+  detail moves out. Update it as work advances, not only at session end.
+  Hard limit 150 lines — the SessionStart hook (`.claude/hooks/session-start.sh`)
+  warns above that; prune before any other work. *(2026-09-24)*
+- **Documentation homes:** each kind of fact lives in one doc. Everywhere else
+  links to it and never restates it. Feature status → Traceability; E2E
+  result → that feature's test plan; environments/rollout/UAT→Prod gates →
+  `docs/Deployment-Topology.md`; open or deferred work → Backlog; rules and
+  decisions → Business-Rules / ADR; history → Progress-Archive; current task
+  → `session-handover.md`. Claude memory holds how Basheer works, not project
+  status. *(2026-09-24)*
+- **Daily documentation tidy-up:** when the SessionStart hook says it's due,
+  load the `doc-integrity-sweep` skill and offer to run it. *(2026-09-24)*
+- **UAT data-quality check:** every alternate day, run by Claude under
+  Basheer's supervision (still ask first, per the UAT rule). The SessionStart
+  hook reminds when it's due. *(2026-09-24)*
 - **Running commentary** (root causes, design debates, verification results) goes
   directly to `docs/Progress-Archive-<year>-<month>.md` as the work happens. Roll
   to a new monthly file when the month changes.
@@ -166,7 +179,7 @@ post-commit checklist." The feature/fix commit always lands first as its own
 commit; the checklist is a separate, later commit. *(2026-09-18)*
 
 Right after the push, before other work:
-1. Update `active_progress.md`: remove the finished thread (its detail goes
+1. Update `session-handover.md`: remove the finished thread (its detail goes
    to Progress-Archive) — don't add a "DONE" summary. *(2026-09-24)*
 2. Add a Progress-Archive entry with a short retro line (what worked, what to
    improve, any process change).

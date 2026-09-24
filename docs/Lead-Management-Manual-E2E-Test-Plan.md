@@ -9,8 +9,11 @@ flows, restricted Marketing User nav) are built, unit-tested, wired into
 bare word "Lead" collided with the existing Opportunity Stage "Lead";
 see `docs/Lead-Management-Implementation-Plan.md`'s RLS section and
 migration `0032_rename_lead_to_marketing_lead.py` for the full reasoning.
-**Manual E2E in progress** — Group A passed (see `docs/Progress-Archive-
-2026-09.md`'s 2026-09-02 entries), Group B onward next.
+~~**Manual E2E in progress** — Group A passed (see `docs/Progress-Archive-
+2026-09.md`'s 2026-09-02 entries), Group B onward next.~~
+**Manual E2E complete — Groups A–G all passed.** A–F recorded
+2026-09-02/03; Group G confirmed run and passed by Basheer on 2026-09-24
+(see Group G below for the date caveat).
 
 **Added 2026-09-03, E2E-confirmed working:** the assigned rep now gets a
 bell notification ("MARKETING_LEAD_ASSIGNED") the moment a Marketing User
@@ -333,3 +336,8 @@ Manager/Admin/GM unaffected, already unrestricted or SBU-wide.
    Sales OS).
 3. Spot-check a non-IndiaMART, non-Conference Opportunity assignment still
    creates a normal (non-urgent) notification, unchanged from before.
+
+**Result: PASS (steps 1–3), 2026-09-03 (provisional).** Basheer confirmed on
+2026-09-24 that Group G was run and passed. The actual run date was never
+written down. 2026-09-03 is the last recorded E2E date for this feature
+(commit `c7b90db`, Groups C–F), used until a better date turns up.

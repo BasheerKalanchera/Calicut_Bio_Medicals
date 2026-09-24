@@ -26,6 +26,9 @@ whether that gap is acceptable before proceeding.
 
 - **Primary:** `C:\Backups\CabioUAT` on Basheer's laptop — the last 14
   days of daily/weekly dumps, produced by `scripts/backup_uat.ps1`.
+  Taken daily, prompted by the Claude session-start reminder
+  (`.claude/hooks/session-start.sh`) whenever no dump is dated today
+  (since 2026-09-24).
 - **Secondary (offsite):** Basheer's Google Drive, updated manually and
   irregularly as of 2026-09-20 (the backup script's own Google Drive
   step is disabled pending Google Drive for Desktop setup). Use this

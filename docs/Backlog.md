@@ -1,13 +1,38 @@
 # Backlog
 
 Deferred/parked work and undecided product questions — not scheduled, not
-part of the current task. See `.claude/active_progress.md` for what's
+part of the current task. See `.claude/session-handover.md` for what's
 actively being worked on right now. Items here move out once picked up
 (into the active task) or once formally decided (into the relevant
 authoritative doc — ADR, Business-Rules, a standards doc — per CLAUDE.md's
 Session Handoff rule).
 
 ## Parked initiatives
+
+### UAT data-quality check — recurring, every alternate day (2026-09-24)
+
+Basheer's call: run `scripts/uat_data_quality_check.py` against UAT every
+alternate day, **by Claude under Basheer's supervision** (ask first each time,
+per the UAT rule). Each run appends a dated one-line summary of counts to
+`C:\Backups\CabioUAT\data_quality_log.txt`; the SessionStart hook
+(`.claude/hooks/session-start.sh`) reminds when the last run is ≥2 days old.
+After each run, compare against the previous log line and raise anything new.
+Open talking points from the first run (2026-09-15) are under "Deferred /
+undecided items" below: Lakhs/Rupees mix-ups, missing next-actions
+concentrated in two people, one bulk-import Lead cluster with no follow-up.
+Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
+
+### main → UAT promotion — waiting on leadership's park list (since 2026-09-18)
+
+As of 2026-09-24, `origin/uat` is 83 commits behind `origin/main` (27
+feat/fix), including Target Planning, Lead Follow-up Comments, Insights
+Dashboard, Reports, High Priority Deal Flag, and Product Catalog
+Brand/Category/Model. On hold because leadership was reviewing which
+Partial/Not-started features to park for Phase 2, so some could be held back
+from UAT. No list has been given yet. Before promoting: refresh the local `uat`
+branch (stale since the 2026-09-14 hotfix went straight to `origin/uat`),
+then follow the selective-migration audit (Progress-Archive 2026-09-18 and
+2026-09-21 entries).
 
 ### ~~MUI migration backlog (§9 of Frontend-Implementation-Standards.md)~~ — DONE, 2026-08-18
 
