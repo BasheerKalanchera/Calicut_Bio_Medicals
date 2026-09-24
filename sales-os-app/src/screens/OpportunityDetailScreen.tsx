@@ -25,6 +25,7 @@ import {
   getOpportunity,
   listOpportunityItems,
   listOpportunitySplits,
+  canEditOpportunitySplits,
   listOpportunityStakeholders,
   patchOpportunity,
   replaceOpportunityItems,
@@ -504,13 +505,23 @@ function ProductsTab({
 // ---------------------------------------------------------------------------
 // Splits tab
 // ---------------------------------------------------------------------------
-function SplitsTab({ opportunityId }: { opportunityId: string }) {
+function SplitsTab({ opportunityId, statusCode, ownerId }: { opportunityId: string; statusCode: string; ownerId: string }) {
   const queryClient = useQueryClient();
   const { data: splits, isLoading } = useQuery({
     queryKey: ["opp-splits", opportunityId],
     queryFn:  () => listOpportunitySplits(opportunityId),
     staleTime: 5 * 60 * 1000,
   });
+  // BR-FIN-08: the server decides who may change a split (owner, their
+  // managers, GM/Admin; Won = GM only; Lost = nobody). Keyed on status and
+  // owner so a Won/Lost change or a reassignment on this screen re-asks.
+  // Hidden until answered -- a failed check just leaves the split read-only;
+  // the server still guards saves.
+  const { data: editPermission } = useQuery({
+    queryKey: ["opp-splits-can-edit", opportunityId, statusCode, ownerId],
+    queryFn:  () => canEditOpportunitySplits(opportunityId),
+  });
+  const canEdit = editPermission?.can_edit ?? false;
 
   const [editing, setEditing]       = useState(false);
   const [editSplits, setEditSplits] = useState<any[]>([]);
@@ -677,13 +688,15 @@ function SplitsTab({ opportunityId }: { opportunityId: string }) {
         <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
           Splits ({splits?.length ?? 0})
         </Typography>
-        <Button
-          onClick={openEdit}
-          disableRipple
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
-        >
-          {splits?.length ? "Edit" : "+ Add"}
-        </Button>
+        {canEdit && (
+          <Button
+            onClick={openEdit}
+            disableRipple
+            sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" } }}
+          >
+            {splits?.length ? "Edit" : "+ Add"}
+          </Button>
+        )}
       </Box>
       {!splits?.length ? (
         <EmptyPlaceholder message="No contributor splits defined." />
@@ -1711,7 +1724,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             onIndicativeValueChange={(v) => applyOppPatch({ indicative_value: v })}
           />
         )}
-        {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} />}
+        {activeTab === "splits"       && <SplitsTab opportunityId={opp.id} statusCode={opp.status.status_code} ownerId={opp.owner.id} />}
         {activeTab === "stakeholders" && <StakeholdersTab opportunityId={opp.id} accountId={opp.account.id} />}
         {activeTab === "documents"    && <DocumentsTab opportunityId={opp.id} />}
         {activeTab === "activity"     && (

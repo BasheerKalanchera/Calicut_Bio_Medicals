@@ -3,6 +3,7 @@ import type {
   PipelinePage,
   PipelineOpportunity,
   SplitResponse,
+  SplitEditPermission,
   StakeholderLinkResponse,
   OpportunityItemResponse,
   OpportunityForStakeholder,
@@ -69,6 +70,12 @@ export async function replaceOpportunityItems(
 
 export async function listOpportunitySplits(opportunityId: string): Promise<SplitResponse[]> {
   const response = await api.get(`/opportunities/${opportunityId}/splits`);
+  return response.data.data;
+}
+
+// BR-FIN-08: whether the current user may change this opportunity's split.
+export async function canEditOpportunitySplits(opportunityId: string): Promise<SplitEditPermission> {
+  const response = await api.get(`/opportunities/${opportunityId}/splits/can-edit`);
   return response.data.data;
 }
 

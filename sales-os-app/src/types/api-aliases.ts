@@ -10,6 +10,7 @@ import type { components } from "./api";
 export type PipelineOpportunity = components["schemas"]["PipelineOpportunity"];
 export type PipelinePage = components["schemas"]["PaginatedResponse_PipelineOpportunity_"];
 export type SplitResponse = components["schemas"]["SplitResponse"];
+export type SplitEditPermission = components["schemas"]["SplitEditPermission"];
 export type StakeholderLinkResponse = components["schemas"]["StakeholderLinkResponse"];
 export type OpportunityItemResponse = components["schemas"]["OpportunityItemResponse"];
 export type ReminderResponse = components["schemas"]["ReminderResponse"];

@@ -491,6 +491,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/opportunities/{opportunity_id}/splits/can-edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Can Edit Splits */
+        get: operations["can_edit_splits_api_v1_opportunities__opportunity_id__splits_can_edit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/opportunities/{opportunity_id}/stakeholders": {
         parameters: {
             query?: never;
@@ -2025,6 +2042,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["SalesSummaryResponse"];
+        };
+        /** APIResponse[SplitEditPermission] */
+        APIResponse_SplitEditPermission_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SplitEditPermission"];
         };
         /** APIResponse[StagnantDealsResponse] */
         APIResponse_StagnantDealsResponse_: {
@@ -4523,6 +4554,14 @@ export interface components {
             /** Split Percentage */
             split_percentage: number | string;
         };
+        /**
+         * SplitEditPermission
+         * @description BR-FIN-08: whether the current user may change this opportunity's split.
+         */
+        SplitEditPermission: {
+            /** Can Edit */
+            can_edit: boolean;
+        };
         /** SplitResponse */
         SplitResponse: {
             /**
@@ -6557,6 +6596,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_list_SplitResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    can_edit_splits_api_v1_opportunities__opportunity_id__splits_can_edit_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SplitEditPermission_"];
                 };
             };
             /** @description Validation Error */
