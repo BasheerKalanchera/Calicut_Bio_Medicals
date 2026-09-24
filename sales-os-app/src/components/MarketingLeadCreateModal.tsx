@@ -15,8 +15,8 @@ interface MarketingLeadCreateModalProps {
 }
 
 // Local stopgap types -- masterData.ts's listSbus/listLeadSources return
-// Promise<unknown> today (same TODO as QuickLeadModal.tsx's own local
-// option interfaces -- see that file's comment).
+// Promise<unknown> today -- see docs/Backlog.md "Type the shared frontend
+// service functions properly".
 interface AccountOption { id: string; name: string }
 interface SbuOption { id: string; name: string }
 interface LeadSourceOption { id: string; name: string; is_marketing_source: boolean }

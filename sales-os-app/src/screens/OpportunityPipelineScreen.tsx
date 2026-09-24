@@ -61,7 +61,7 @@ const PIPELINE_STAGE_CODES = [
 
 // Local stopgap types — listStages/listUsers return Promise<unknown> today.
 // TODO(fix-at-service-layer): give these functions real return types; see
-// active_progress.md deferred list. Remove these once fixed.
+// docs/Backlog.md \"Type the shared frontend service functions properly\". Remove these once fixed.
 interface StageOption { stage_code: string; stage_name: string; display_order: number }
 interface UserOption { id: string; display_name: string; is_active?: boolean | null }
 

@@ -184,8 +184,6 @@ export default function DemoApp() {
   const [projectDetailMode, setProjectDetailMode] = useState(false);
   const [showQuickLead, setShowQuickLead]       = useState(false);
   const [showLogActivity, setShowLogActivity]   = useState(false);
-  // Spike (2026-08-01): Help button only wired up for Pipeline so far — see
-  // HelpDrawer.tsx and active_progress.md for the plan to generalize this.
   const [showHelp, setShowHelp]                 = useState(false);
   // Lifted out of OpportunityPipelineScreen so the Kanban/List toggle can sit
   // in this header row next to the "Pipeline" title, freeing the filter row

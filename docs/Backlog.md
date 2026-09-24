@@ -1414,7 +1414,10 @@ existing ones.
   `updateOpportunity` (services/accounts.ts) — and likely their siblings —
   return `Promise<unknown>` instead of a typed shape, forcing callers to use
   `any[]`/local inline types. Cascades — consumed by Customer360Screen.tsx,
-  CustomerDirectoryScreen.jsx, QuickLeadModal.tsx, LogActivityModal.tsx.
+  CustomerDirectoryScreen.jsx, QuickLeadModal.tsx, LogActivityModal.tsx,
+  OpportunityDetailScreen.tsx, OpportunityPipelineScreen.tsx,
+  MarketingLeadCreateModal.tsx, TargetPlanningScreen.tsx (the last six carry
+  a stopgap-type note pointing here; remove them once fixed).
   Deferred because it's a shared-service-layer change, not part of any
   single file's migration. Post-migration, medium priority.
 - **Next Actions screen: show everything + search/filter bar (by account/hospital

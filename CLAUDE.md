@@ -60,7 +60,9 @@ code or changing structure. On any conflict, the document wins over this file.
   `docs/Deployment-Topology.md`; open or deferred work → Backlog; rules and
   decisions → Business-Rules / ADR; history → Progress-Archive; current task
   → `session-handover.md`. Claude memory holds how Basheer works, not project
-  status. *(2026-09-24)*
+  status. A `TODO`/`FIXME` note in code is only a short pointer to an open
+  Backlog entry (e.g. `see docs/Backlog.md "<entry title>"`); the details
+  live in the Backlog. *(2026-09-24)*
 - **Daily documentation tidy-up:** when the SessionStart hook says it's due,
   load the `doc-integrity-sweep` skill and offer to run it. *(2026-09-24)*
 - **UAT data-quality check:** every alternate day, run by Claude under

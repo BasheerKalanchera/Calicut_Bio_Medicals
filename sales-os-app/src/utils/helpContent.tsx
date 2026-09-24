@@ -2,9 +2,7 @@ import type { ReactNode } from "react";
 
 // Content dictionary for HelpDrawer.tsx, keyed by DemoApp.tsx's `view` state
 // values. Hand-copied from docs/UAT-User-Manual.md, kept in sync manually —
-// not fetched/parsed from that file. See active_progress.md for the plan to
-// revisit this (e.g. role-aware content, generated from the manual itself)
-// once the UI has stabilized past the current MUI migration.
+// not fetched/parsed from that file.
 export interface HelpSection {
   heading: string;
   body: ReactNode;

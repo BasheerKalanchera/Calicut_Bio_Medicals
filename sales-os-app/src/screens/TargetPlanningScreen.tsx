@@ -50,7 +50,8 @@ import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 interface EditSplitRow { brand_id: string; amount: string }
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
-// today (same TODO noted in MarketingLeadCreateModal.tsx et al.).
+// today -- see docs/Backlog.md "Type the shared frontend service functions
+// properly".
 interface SbuOption { id: string; name: string }
 
 // Sales Staff never sees the team-wide rollup section at all -- everyone

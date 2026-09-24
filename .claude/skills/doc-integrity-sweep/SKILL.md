@@ -27,6 +27,10 @@ and log it as partial.
    rotating slice (check 5). Record the TOTAL in the log so the trend shows.
    Old plan docs pointing at files that were renamed later are expected
    until Part 2 labels historical docs; don't chase them all at once.
+   Also check code notes:
+   `grep -rnE 'TODO|FIXME' sales-os-app/src backend/app --include=*.ts --include=*.tsx --include=*.py`.
+   Each note must name an open Backlog entry. If the work is done, remove the
+   note; if it has no entry, add one or remove the note (ask Basheer which).
 2. **Commits since the last sweep:** `git log --since=<last date> --oneline`.
    For each feature or fix, check that its home docs agree with git (see
    CLAUDE.md "Documentation homes"):
