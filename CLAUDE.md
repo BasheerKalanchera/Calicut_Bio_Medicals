@@ -51,6 +51,8 @@ code or changing structure. On any conflict, the document wins over this file.
   and the immediate next step, nothing else. Once a thread resolves, its detail
   moves out. Exception: a thread actively in progress *this session* stays until
   it resolves. Update it as work advances, not only at session end.
+  Hard limit 150 lines — the SessionStart hook warns above that; prune
+  before any other work. *(2026-09-24)*
 - **Running commentary** (root causes, design debates, verification results) goes
   directly to `docs/Progress-Archive-<year>-<month>.md` as the work happens. Roll
   to a new monthly file when the month changes.
@@ -164,7 +166,8 @@ post-commit checklist." The feature/fix commit always lands first as its own
 commit; the checklist is a separate, later commit. *(2026-09-18)*
 
 Right after the push, before other work:
-1. Update `active_progress.md`.
+1. Update `active_progress.md`: remove the finished thread (its detail goes
+   to Progress-Archive) — don't add a "DONE" summary. *(2026-09-24)*
 2. Add a Progress-Archive entry with a short retro line (what worked, what to
    improve, any process change).
 3. Check `docs/Backlog.md` for newly-surfaced deferred ideas.
