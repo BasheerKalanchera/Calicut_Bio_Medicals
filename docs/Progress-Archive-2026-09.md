@@ -6052,6 +6052,14 @@ git coordination.
   check mirrors `opportunity_tier_visibility`'s management arms exactly and
   `replace_splits` has no other caller.
 
+## 2026-09-24 — Customer Tiering: draft plan committed
+
+Customer Tiering — draft plan committed `5b26889`
+(`docs/Customer-Tiering-Implementation-Plan.md`), waiting on Latheef
+Bhai/Haroon's answers to the 4 questions (Size vs A/B/C/D, tier per account
+or per SBU, group vs branch, who can see/set it). Origin: Latheef Bhai's
+2026-09-24 voice messages. Not approved to build.
+
 ## 2026-09-24 — active_progress.md pruned: sections moved here verbatim
 
 The handover file had grown to 1,722 lines against the "current task and
