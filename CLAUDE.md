@@ -59,8 +59,9 @@ code or changing structure. On any conflict, the document wins over this file.
   result → that feature's test plan; environments/rollout/UAT→Prod gates →
   `docs/Deployment-Topology.md`; open or deferred work → Backlog; rules and
   decisions → Business-Rules / ADR; history → Progress-Archive; current task
-  → `session-handover.md`. Claude memory holds how Basheer works, not project
-  status. A `TODO`/`FIXME` note in code is only a short pointer to an open
+  → `session-handover.md`. Rules for how Claude works go in CLAUDE.md, not
+  Claude memory; memory holds only short-lived context, never project status
+  or standing rules. A `TODO`/`FIXME` note in code is only a short pointer to an open
   Backlog entry (e.g. `see docs/Backlog.md "<entry title>"`); the details
   live in the Backlog. *(2026-09-24)*
 - **Daily documentation tidy-up:** when the SessionStart hook says it's due,
@@ -163,6 +164,10 @@ When an action is hard to undo, spends real time/cost, or is visible to Basheer,
 show what's about to happen and wait — don't act first and narrate afterward.
 - **Investigative actions, not just writes** — say what a query or check will do,
   even read-only, before running it. UAT: ask and wait, never just announce.
+- Before asking Basheer a factual question, search the archive, docs and git;
+  ask only what they can't answer. *(2026-09-24)*
+- When work is pending, end with one status line — done and saved / done, not
+  saved / not started — instead of repeated commit reminders. *(2026-09-24)*
   *(2026-09-18)*
 - When a question can be answered in plain language or by a query, answer in plain
   language first; offer the query as a follow-up. *(2026-09-21)*

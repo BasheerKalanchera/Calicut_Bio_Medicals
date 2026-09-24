@@ -7798,3 +7798,37 @@ came in worked well. **To improve:** before writing a test plan, check the
 real data and pick-lists (who owns what, who can pick whom) rather than
 assuming them. Two of the three hiccups came from that.
 
+
+## 2026-09-24 — Harness-engineering review session: retrospective
+
+Session reviewed an external "harness engineering" assessment, then fixed the
+documentation-sync failures it surfaced. Commits: `2cf6198` (handover pruned
+1,722 → 50 lines, 150-line alarm), `6c8ef15` (rename to `session-handover.md`;
+startup reminders for handover size, old filename, UAT data-quality check,
+UAT backup, documentation tidy-up; tidy-up Part 1), `b2999db` (code TODO notes
+point to Backlog; stale Help-button notes removed).
+
+**What worked:** checking the external review against the repo before acting
+(it was right on the big point, rules not enforced, but wrong on three facts);
+tracing the handover rule through git, which showed it failed twice rather than
+being dropped, so the fix became alarms instead of a third rewording;
+machine-checked reminders tested in every case; Basheer's pushback improved
+each step (rename, Group G, before→after tables, code-note rule); checking git
+before each commit kept a parallel session's work intact.
+
+**What didn't:** Claude asked a factual question the archive already answered
+(extended-team rollout), trusting a stale memory note; the first handover trim
+kept "waiting" items; 8 fixes were applied after an outline-only approval; the
+documentation plan was presented in full technical detail and overwhelmed
+Basheer; repeated commit reminders blurred what was finished; several small
+slips (test path, log arithmetic, an unverified date) caught before saving.
+
+**Process changes:** CLAUDE.md "Show before you act": search records before
+asking a factual question, and end with one status line when work is pending.
+"Simple version first" was already a rule in Basheer's personal CLAUDE.md, so
+nothing was added. **Correction made at retro time:** Claude first proposed
+saving these lessons to its memory; Basheer challenged it. Working rules go in
+CLAUDE.md (visible, in git, checkable), not memory, and CLAUDE.md
+"Documentation homes" was changed to say so. Success measure: the daily tidy-up
+tally (`docs/Doc-Integrity-Sweep-Log.md`, baseline 35 found / 8 fixed / 27
+deferred) should fall over the next two weeks.
