@@ -7832,3 +7832,40 @@ CLAUDE.md (visible, in git, checkable), not memory, and CLAUDE.md
 "Documentation homes" was changed to say so. Success measure: the daily tidy-up
 tally (`docs/Doc-Integrity-Sweep-Log.md`, baseline 35 found / 8 fixed / 27
 deferred) should fall over the next two weeks.
+
+## 2026-09-24 — Tiering / demo / split-editing E2E / data-quality session: retrospective
+
+Session covered: Customer Tiering evaluation and draft plan (`5b26889`,
+`6f5c589`); UAT backup run; demo script, PDF and slide deck for Latheef
+Bhai/Haroon; Split Editing E2E 22/22 and ship (`6280964`, `2ebae43`);
+Brand Target 403 fix (`d41248c`); UAT data-quality check and a shareable
+team report (`UAT-Data-Quality-Report-2026-09-24.pdf`).
+
+**What worked:** voice notes to evaluated recommendation to committed plan in
+under an hour; demo material ready before 2 pm, with the script re-synced to
+Basheer's own slide edits; Simple/Complex testing and recording each result
+at once, with all Dev data restored; the Brand Target 403 parked inside the
+test plan (not lost), then fixed, reviewed and verified live; every commit
+listed its exact files, so the parallel session's staged work was never swept
+in; the data-quality report held back a finding the faulty check would have
+wrongly pinned on people.
+
+**What didn't (Claude's mistakes):** said only one backup would be pruned,
+but four went, including two hand-saved migration snapshots (only the newest
+files had been listed; copies were in Google Drive); the test plan assumed
+data it never checked (USG 2's split, Fazal's owner picker); the classifier
+blocked Claude's Dev saves three times, and step 16 needed a repeat because
+recording started too late; cut-off data-quality output forced a second UAT
+run; small slips: a wrong file path, "5 commits to push" (really 3), two
+unverified lines on the slides; saved project rules to memory instead of
+CLAUDE.md (Basheer caught it).
+
+**Process changes:** CLAUDE.md "Manual E2E testing": check a plan's data and
+pick-lists against live records when writing it; plan shared-DB write steps
+as "Basheer clicks, Claude watches", recording started first.
+`cabio-db-and-scripting`: never cut off output, save it to a file first.
+Backlog: the missing-next-action count is flagged unreliable until check 7a
+is fixed. The backup-prune rule and Basheer's approved-commands task were
+already moved from memory to the DR runbook and Backlog by the parallel
+session (`295b8f0`), so nothing was duplicated.
+

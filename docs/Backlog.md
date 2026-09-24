@@ -440,6 +440,16 @@ existing ones.
   Worth a direct conversation rather than a system fix; the app already
   supports setting a reminder on any Activity, this looks like a habit gap
   for these two specifically, not a missing feature.
+  **Caution, 2026-09-24 — the count itself is unreliable; don't raise it with
+  anyone until the check is fixed.** Section 7a of
+  `scripts/uat_data_quality_check.py` only excludes `MANAGER_NOTE`, but
+  BR-ACT-04 also exempts the six BR-ACT-09 development types (e.g.
+  `CONFERENCE_EXPO`) and `RELATIONSHIP_SUPPORT`, and the app blocks saving
+  most other Activities without a next action. The 2026-09-24 run showed 108
+  (Haroon 49, Fazal 30), which was left out of the team report for this
+  reason. **Narrow fix:** exclude the exempt types in the 7a query, then
+  sample a few remaining rows to see whether they're real misses or a
+  different gap (e.g. reminders linked some other way).
 - **Bulk-imported Leads with zero follow-up Activity — one rep, one
   batch, not yet raised.** Same check: Om Hiremath owns 15 of 56
   zero-Activity Opportunities, all identical "New USG Machine requirement"

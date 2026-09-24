@@ -76,6 +76,12 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Before running a test plan, tag every individual step Simple or Complex — not by section. **Simple** = a single click/type/verify-a-value action where "pass" is…
   **Why:** 2026-09-23, a single day's browser screenshots ran to roughly 300,000–700,000 tokens per session, dwarfing everything else including `CLAUDE.md` itself — routing the unambiguous steps through Basheer removes most of that cost without losing coverage.
 
+- **Rule:** When writing a test plan, check its assumed data read-only against the live records — existing splits/values and what each picker actually offers — not just role relationships.
+  **Why:** 2026-09-24, Split Editing Permission E2E: two steps rested on unchecked assumptions — USG 2 was assumed to have a split (it had none), and step 16 had Fazal hand a deal to Rudrappa, who isn't in Fazal's tier-scoped owner picker. Both cost time mid-test and needed the plan corrected live.
+
+- **Rule:** Steps that save to the shared Dev DB: plan them as "Basheer clicks, Claude watches" from the start, and start request recording in the tab before he acts.
+  **Why:** 2026-09-24, the auto-mode classifier blocked Claude's direct saves three times (steps 7, 15, 16), each switched to Basheer mid-step. Step 16 then had to be repeated because Claude's network recording wasn't live when Basheer acted, and Claude wrongly suggested he'd used a different tab.
+
 ## Troubleshooting & scripting
 
 - **Rule:** When something fails repeatedly for an unclear reason, isolate the variable with a small/fast diagnostic before retrying the same large/slow operation again — d…
@@ -104,6 +110,9 @@ file for that date to find the story. Not loaded at session start.
 
 - **Rule:** Before running any raw SQL check directly against this app's RLS-protected tables (not through the API), set and verify **all three** session settings together …
   **Why:** 2026-09-22, hit this exact trap three separate times in one session: a wrong "these products have zero references" claim stated as fact (all three unset), a still-wrong recount after fixing only one setting, and a third undercounted result (missing the SBU one specifically, required for Area Manager/SBU Manager tiers) while investigating an unrelated question. See the `cabio-uat-rls-silent-zero-rows` memory for the full mechanism.
+
+- **Rule:** Never cut off a query's or check script's output; save it in full to a scratchpad file, then read from the file.
+  **Why:** 2026-09-24, the first UAT data-quality run was piped through `head -300`; section 7c (double-submits) fell past line 300 and was discarded, forcing a second approved UAT connection to recover it.
 
 ## Show before you act
 

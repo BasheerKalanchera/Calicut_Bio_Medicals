@@ -54,8 +54,12 @@ on Dev, before any other work:
   variable under `$ErrorActionPreference = "Stop"`, the first stderr line aborts
   the script before its own error checks run. Toggle to `"Continue"` around that
   call. *(2026-09-20)*
-- On Basheer's machine, call `.venv/Scripts/python.exe` directly; Git Bash venv
-  activation mis-resolves PATH.
+- On Basheer's machine, call `backend/.venv/Scripts/python.exe` directly; Git
+  Bash venv activation mis-resolves PATH.
+- Never cut off a query's or check script's output (`| head`, `| tail`). Save
+  the full output to a file in the scratchpad, then read from the file — a
+  discarded section means re-running against the database, and on UAT that's
+  another approved connection. *(2026-09-24)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable
