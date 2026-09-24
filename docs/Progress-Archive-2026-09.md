@@ -7771,3 +7771,30 @@ moved out:
 - **Lead Management Group G** confirmed run and passed by Basheer; recorded
   in the test plan with the provisional date 2026-09-03 (last recorded E2E
   date, `c7b90db` — the actual run date was never written down).
+
+## 2026-09-24 — Split editing (BR-FIN-08): manual E2E 22/22 PASS, shipped
+
+- Frontend committed `6280964` (backend was `584d218`); pushed. Manual E2E
+  `docs/Split-Editing-Permission-Manual-E2E-Test-Plan.md`: 22/22 PASS on
+  Dev. End state checked read-only: `usg m/c` 80/20 Basheer K/Fazal, `New
+  USG m/c` owner Fazal, 50/50 Basheer K/Vivek, both as they started.
+- Two plan errors corrected live: USG 2 has no split rows (steps 4/19
+  expect **+ Add**, not Edit); Rudrappa isn't in Fazal's owner picker (it's
+  tier-scoped, `scope=scoped`), so step 16 was adapted to Fahad and back.
+  The "Edit disappears on reassignment" case wasn't exercised live.
+- The auto-mode classifier blocked Claude's direct test saves (steps 7, 15,
+  16). Basheer did them (DevTools console for step 7) and Claude verified
+  via read-only calls and live request timing in the page.
+- Found during the pass: every non-Admin/GM login fired `GET
+  /planning/targets/brand-rollups` → 403 (the screen is always mounted).
+  Parked until the pass was done, then fixed in `d41248c`, mirroring
+  `AuditLogScreen`. `/code-review` (medium) found nothing; verified live
+  (GM 200, Vivek no call, no 4xx).
+- Vivek's 50% on `New USG m/c` is a pre-ADR-037 (2026-07-30) cross-SBU
+  split, kept by BR-FIN-06's grandfathering. Not a data error.
+
+**Retro:** the Simple/Complex split and recording each result the moment it
+came in worked well. **To improve:** before writing a test plan, check the
+real data and pick-lists (who owns what, who can pick whom) rather than
+assuming them. Two of the three hiccups came from that.
+
