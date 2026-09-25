@@ -30,10 +30,14 @@ Haroon/Latheef Bhai").
   planning, `docs/Backlog.md`). That design is still open. This plan covers
   only the rating itself.
 
-Still open: questions 1–4 below (size vs A/B/C/D, one rating per customer or
-per SBU, hospital groups, who can see and set it). Question 2 matters more
-now: a hospital's potential for Imaging and for Critical Care can differ,
-and targets are set per SBU. Also to confirm: whether the draft's separate
+**Question 2 answered (Basheer, 2026-09-25): one Business Potential rating
+per hospital**, not per SBU; revisit if hospitals turn up whose potential
+differs a lot between SBUs. See
+`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, decision 5.
+
+Still open: questions 1, 3 and 4 below (size vs A/B/C/D, hospital groups,
+who can see and set it). Question 4 is also question 1 of the hospital-wise
+planning discussion, where it has become urgent. Also to confirm: whether the draft's separate
 "what to do next" field is still wanted alongside the notes.
 
 ## The idea, in plain terms
