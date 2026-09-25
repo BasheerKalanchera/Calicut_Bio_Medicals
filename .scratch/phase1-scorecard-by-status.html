@@ -23,6 +23,7 @@
     --not-started-soft:#FBE9E5;
     --bonus:#5850A0;
     --bonus-soft:#ECEAF8;
+    --requested:#9A5B13;
     --pending:#3D72B4;
     --pending-soft:#E7EEF8;
     --shadow: 0 1px 2px rgba(20,32,29,0.06), 0 6px 20px -8px rgba(20,32,29,0.12);
@@ -49,6 +50,7 @@
       --not-started-soft:#301A16;
       --bonus:#ACA5EE;
       --bonus-soft:#211E3B;
+      --requested:#E0A263;
       --pending:#7FB0EA;
       --pending-soft:#1B2A3D;
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
@@ -74,6 +76,7 @@
     --not-started-soft:#301A16;
     --bonus:#ACA5EE;
     --bonus-soft:#211E3B;
+    --requested:#E0A263;
     --pending:#7FB0EA;
     --pending-soft:#1B2A3D;
     --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 28px -10px rgba(0,0,0,0.5);
@@ -300,6 +303,7 @@
       <a href="#partial" data-n="partial"><span>Partial</span><span class="n">11</span></a>
       <a href="#not-started" data-n="not-started"><span>Not Started</span><span class="n">8</span></a>
       <a href="#new-features" data-n="+"><span>Commitment beyond contract</span><span class="n">16</span></a>
+      <a href="#requested" data-n="!"><span>Requested</span><span class="n">2</span></a>
       <a href="#pending" data-n="?"><span>Pending Decision</span><span class="n">1</span></a>
   </nav>
 
@@ -327,6 +331,10 @@
           <div class="stat">
             <div class="num" style="color:var(--bonus)">16</div>
             <div class="lbl"><span class="swatch" style="background:var(--bonus)"></span>Commitment beyond contract</div>
+          </div>
+          <div class="stat">
+            <div class="num" style="color:var(--requested)">2</div>
+            <div class="lbl"><span class="swatch" style="background:var(--requested)"></span>Requested, pending to build</div>
           </div>
           <div class="stat">
             <div class="num" style="color:var(--pending)">1</div>
@@ -849,6 +857,17 @@
       </div>
     </section>
 
+    <section class="bonus" id="requested">
+      <div class="bonus-head">
+        <h2>Requested by Cabio leadership &mdash; to be built</h2>
+        <p class="bonus-desc">2 more asked for by Cabio leadership and confirmed, pending to build &mdash; moves up into "Commitment beyond contract" once delivered.</p>
+      </div>
+      <div class="bonus-list">
+        <div class="bitem"><div class="bnum">1</div><div><p>Marketing staff get the same notification bell as everyone else, so they're alerted when a salesperson replies on one of their leads instead of having to check the Marketing Leads screen.</p><p class="note" style="margin-top:4px">Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built.</p></div></div>
+        <div class="bitem"><div class="bnum">2</div><div><p>The Opportunities screen shows only open deals by default; won, lost and other closed deals appear on demand with a button.</p><p class="note" style="margin-top:4px">Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built.</p></div></div>
+      </div>
+    </section>
+
     <section class="bonus" id="pending">
       <div class="bonus-head">
         <h2>Pending &mdash; proposed, not yet built</h2>
@@ -861,7 +880,7 @@
 
     <footer class="foot">
       <span>Cabio Sales OS &middot; Phase 1 Delivery Scorecard &mdash; By Status</span>
-      <span>50 requirements &middot; 31 done &middot; 11 partial &middot; 8 not started &middot; 16 bonus &middot; 1 pending</span>
+      <span>50 requirements &middot; 31 done &middot; 11 partial &middot; 8 not started &middot; 16 bonus &middot; 2 requested &middot; 1 pending</span>
     </footer>
     </div>
   </main>

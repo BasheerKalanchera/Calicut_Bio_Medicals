@@ -7869,3 +7869,29 @@ is fixed. The backup-prune rule and Basheer's approved-commands task were
 already moved from memory to the DR runbook and Backlog by the parallel
 session (`295b8f0`), so nothing was duplicated.
 
+
+## 2026-09-25 — Demo follow-up: leadership requests recorded
+
+The 2026-09-24 demo to Latheef Bhai and Haroon went well. Their requests
+(from Basheer's meeting notes), and where each one is now recorded:
+
+- **Notification bell for Marketing users.** Reverses Basheer's 2026-09-18
+  "leave as-is" call. Backlog entry updated; client-visible Pending item 2.
+- **Opportunities screen shows open deals only, closed ones on demand via
+  a button.** New Backlog entry; client-visible Pending item 3.
+- **Business Potential (High/Medium/Low) replaces Tier 1/2/3**, plus a
+  Business Potential Notes field for the reason; payment reliability stays
+  on the existing payer-behaviour field (Basheer confirmed 2026-09-25).
+  Recorded in `docs/Customer-Tiering-Implementation-Plan.md`; Traceability
+  rows 1.2 and 1.3 annotated (revenue-potential segmentation now confirmed
+  required).
+- **Hospital-wise target planning:** each person's quarterly target divided
+  among their coverage-area hospitals by Business Potential, rolled up to
+  Zone/SBU/company, with actual-vs-target on the Insights Dashboard
+  (Haroon). Open design, including how it reconciles with the brand-wise
+  split built 2026-09-23. Backlog entry "Hospital-wise target planning"
+  lists the five open questions; Traceability rows 6.1 and 3.2 annotated;
+  Coverage Planning plan flagged for revisiting.
+
+No row statuses changed. Next: design discussion with Basheer on
+hospital-wise planning.

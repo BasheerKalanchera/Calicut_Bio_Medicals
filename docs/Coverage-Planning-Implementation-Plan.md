@@ -3,6 +3,16 @@
 **Status:** Draft — planned, not yet built. Third Milestone 2 batch — see sequencing
 recommendation below.
 
+> **Scope expanded 2026-09-24 (demo to Haroon/Latheef Bhai) — this plan needs
+> revisiting before build.** Each salesperson's quarterly target is now to be
+> divided among the hospitals in their coverage area by each hospital's Business
+> Potential (High/Medium/Low), alongside visit frequency; hospital-wise targets
+> roll up to Zone/SBU/company, with actual-vs-target shown on the Insights
+> Dashboard. This plan's per-entry `target_revenue_lakhs` is the natural home for
+> the hospital-wise number, but nothing here requires those entries to add up to
+> the Target Plan, and the reconciliation with the brand-wise split is undecided.
+> Open questions: `docs/Backlog.md`, "Hospital-wise target planning".
+
 ## Context
 
 Third pillar of `implementation_plan.md`'s Milestone 2 scope, and the middle link in

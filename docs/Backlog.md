@@ -164,7 +164,10 @@ existing ones.
   `target_plan_brand_split` is ever added.
 
 - **Marketing User has no notification bell — can't be proactively nudged
-  about a comment on their own lead.** Found 2026-09-18 during Lead
+  about a comment on their own lead.** **Now requested by Haroon and
+  Latheef Bhai at the 2026-09-24 demo — reverses the 2026-09-18 "leave
+  as-is" call below; queued to build.** Listed as client-visible Pending
+  item 2 in `docs/Signed-Requirements-to-PRD-Traceability.md`. Found 2026-09-18 during Lead
   Follow-up Comments manual E2E (`docs/Lead-Followup-Comments-Manual-E2E-
   Test-Plan.md`, TC-14). `DemoApp.tsx:571` gates `<NotificationBell>`
   behind `!isMarketingUser` — a deliberate 2026-09-02 decision, made back
@@ -183,6 +186,47 @@ existing ones.
   Opportunity/Activity types), and `onSelectMarketingLead()`'s target would
   need a role-aware branch — the Review Queue for reps/managers,
   `MarketingLeadEntryScreen` for Marketing User.
+
+- **Opportunities screen: show only open deals by default, closed ones on
+  demand.** Requested by Haroon and Latheef Bhai at the 2026-09-24 demo;
+  client-visible Pending item 3 in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`. Today
+  `OpportunityPipelineScreen.tsx` lists every status (WON/LOST/ON_HOLD
+  included). Ask: active deals only by default, plus a button that brings
+  the non-active ones into view. Small; not yet scoped. To confirm at build
+  time: whether On Hold counts as "active" (it isn't closed, but isn't
+  moving either), and whether the report drill-down lists (which open this
+  same screen pre-filtered) should keep showing Won/Lost when the report
+  card counted them.
+
+- **Hospital-wise target planning — design not started (raised at the
+  2026-09-24 demo).** Haroon/Latheef Bhai's ask: during coverage planning,
+  each salesperson divides their quarterly target among the hospitals in
+  their coverage area according to each hospital's Business Potential
+  (High/Medium/Low — see `docs/Customer-Tiering-Implementation-Plan.md`),
+  alongside visit frequency. Hospital-wise targets roll up to Zone, SBU and
+  company level, and each salesperson's actuals are tracked against them on
+  the Insights Dashboard (Haroon). Intent: a quarterly target built from
+  real customers, not a number handed down by the manager. Traceability rows
+  touched: 6.1 Beat Planning (Not started), 3.2 actual-vs-target dashboards
+  (Partial), 1.2 Account Segmentation / 1.3 Customer Tiering (Not started).
+  Open design questions, to settle together before any build:
+  1. How the hospital-wise split reconciles with the brand-wise split built
+     2026-09-23 (`docs/Brand-Level-Target-Planning-Implementation-Plan.md`):
+     two independent splits of the same total, or one hospital × brand grid.
+  2. Direction: does the quarterly target become the sum of the hospital
+     targets (bottom-up), or stay typed-in with hospitals required to add up
+     to it (today's brand-split pattern)?
+  3. What Business Potential does to the numbers: a suggested split only,
+     or a rule (e.g. a minimum share for High-potential hospitals)?
+  4. Whether target planning and coverage planning stay two screens with two
+     approvals, or merge into one quarterly plan with one approval.
+  5. How "actuals" are attributed to a hospital and a person (won deal value
+     by account; how contributor splits are treated — see the
+     "Reports never implement split-weighted attribution" entry above).
+  `docs/Coverage-Planning-Implementation-Plan.md` (2026-09-11) predates this
+  and needs revisiting; it already carries a per-hospital
+  `target_revenue_lakhs` but nothing requires those to add up to the target.
 
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
   (Demo Management) asks for a report showing what share of demos actually

@@ -1,8 +1,9 @@
 # Customer Tiering & Size Classification — Implementation Plan
 
-**Status:** DRAFT, 2026-09-24. Not approved to build. Four structural
-questions (see "Open questions") are with Latheef Bhai and Haroon; Basheer
-is discussing them today. The build shape depends on their answers.
+**Status:** DRAFT, 2026-09-24; updated 2026-09-25 after the demo (see
+"Decided at the 2026-09-24 demo"). Not approved to build. Four structural
+questions (see "Open questions") are still with Latheef Bhai and Haroon.
+The build shape depends on their answers.
 **Scorecard rows:** Feature 5.1 "Tier 1 / Tier 2 dropdown" (1.3 Customer
 Tiering, Not started) and Feature 5.1 "Account types … A/B/C/D class"
 (1.1 Account Structure & Hierarchy, Partial; A/B/C/D parked for Phase 2 by
@@ -11,6 +12,29 @@ Module 1 table.
 **Origin:** two voice messages from Latheef Bhai to Basheer, 2026-09-24.
 They answer open question (2) in `docs/Backlog.md` ("Two open questions for
 Haroon/Latheef Bhai").
+
+## Decided at the 2026-09-24 demo (Haroon, Latheef Bhai; confirmed by Basheer 2026-09-25)
+
+- **"Tier" is renamed "Business Potential"**, with three values: **High,
+  Medium, Low** (plus Not Classified until someone rates the customer). The
+  name says what the field is for: how much business the customer can
+  bring us. Everywhere below that says "Tier 1/2/3", read "Business
+  Potential High/Medium/Low".
+- **A Business Potential Notes field** records why the customer was given
+  that rating. It replaces the "why this tier" reason in the draft.
+- **Payment reliability is not part of this rating.** The existing payer
+  behaviour field (Good / Average / Problematic / Unknown) already records
+  it, so Olympus-style "payment trouble" cases stay on that field.
+- **New use:** Business Potential will guide how each salesperson divides
+  their quarterly target among their hospitals (hospital-wise target
+  planning, `docs/Backlog.md`). That design is still open. This plan covers
+  only the rating itself.
+
+Still open: questions 1–4 below (size vs A/B/C/D, one rating per customer or
+per SBU, hospital groups, who can see and set it). Question 2 matters more
+now: a hospital's potential for Imaging and for Critical Care can differ,
+and targets are set per SBU. Also to confirm: whether the draft's separate
+"what to do next" field is still wanted alongside the notes.
 
 ## The idea, in plain terms
 
@@ -140,6 +164,12 @@ scoring questions and their weights (needed for Option B).
   `parent_account_id` (corporate grouping). It has no size or tier
   columns. The Olympus "payment trouble" case is already capturable via
   `payer_behavior`.
+- **Naming, per the 2026-09-24 demo decision:** the `tier*` columns below
+  become `business_potential` (HIGH / MEDIUM / LOW / NOT_CLASSIFIED) and
+  `business_potential_notes` (text, replaces `tier_reason`), with
+  `business_potential_set_by` / `_set_at`. `tier_action` pending
+  confirmation. Same for the per-SBU table variant. The column sketches
+  below keep the draft's names until the plan is rewritten for build.
 - **Option A, if Q2 = one tier per account:** add nullable columns to
   `account`:
   `size_class` (LARGE / MEDIUM / SMALL / CLINIC),

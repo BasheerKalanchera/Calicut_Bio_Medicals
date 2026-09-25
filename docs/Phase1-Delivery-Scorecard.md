@@ -5,7 +5,7 @@
 
 ## Summary
 
-Of **50** signed requirements: **31 done, 11 partly done, 8 not started** — plus **16 features built that weren't asked for at all** (see "Commitment beyond contract" at the end), and **1 more proposed but not yet decided** (see "Pending" below that).
+Of **50** signed requirements: **31 done, 11 partly done, 8 not started** — plus **16 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **2 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
@@ -145,6 +145,15 @@ Following items were not part of the requirements that were signed off by Cabio 
 | 14 | The sales team has already started entering real, live deals into the environment used for testing the system before go-live — so when it moves to production, that work carries straight over instead of being re-entered from scratch. Because real business data is at stake there already, it's backed up and its recoverability verified on the same schedule a live system would get, with copies kept on an external hard disk for disaster recovery — not treated as disposable test data. |
 | 15 | The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines. |
 | 16 | A rep can report back directly on a marketing-sourced lead once they've followed up — what they did, what they're waiting on — and anyone who can see that lead (their manager, GM, etc.) can ask for an update on the same thread, instead of a separate conversation. |
+
+### Requested by Cabio leadership — to be built
+
+Asked for by Cabio leadership beyond the signed scope and confirmed to build; not built yet. Moves into "What we built" above once it is.
+
+| # | What's requested | Status |
+| :---: | :--- | :--- |
+| 1 | Marketing staff get the same notification bell as everyone else, so they're alerted when a salesperson replies on one of their leads instead of having to check the Marketing Leads screen. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built. |
+| 2 | The Opportunities screen shows only open deals by default; won, lost and other closed deals appear on demand with a button. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built. |
 
 ### Pending — proposed, not yet built
 
