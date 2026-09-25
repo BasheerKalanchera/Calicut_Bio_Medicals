@@ -19,6 +19,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** UAT data-quality check every alternate day, run by Claude under Basheer's supervision; SessionStart hook reminds when due, based on the script's own run log (`C:\Backups\CabioUAT\data_quality_log.txt`).
   **Why:** 2026-09-24 — Basheer wants recurring data-quality monitoring of UAT. He chose supervised runs over running it himself, and chose not to grant a standing UAT exception. A startup check against the real last-run date can't be forgotten; a session-scoped timer would die at each 3–4 hour restart.
 
+- **Rule:** Surfacing hook reminders — when the SessionStart hook reports something due, the session's first reply opens with a "Due today" list, asking whether to run each item.
+  **Why:** 2026-09-25 — the hook flagged the UAT backup and doc tidy-up as due, but Basheer saw nothing: SessionStart output reaches only Claude's context, not the terminal. He had assumed the reminders appeared on screen at startup. Claude mentioned them only at the end of a reply about something else, where they read as an afterthought, since no rule said where to put them. Basheer declined a terminal banner (via the hook's `systemMessage`); top-of-first-reply was enough.
+
 ## Feature planning
 
 - **Rule:** The moment a task's scope becomes feature-sized, write `docs/<Feature>- Implementation-Plan.md` as the primary planning artifact and present its actual content …
