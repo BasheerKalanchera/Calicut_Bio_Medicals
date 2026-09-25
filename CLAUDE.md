@@ -71,6 +71,11 @@ code or changing structure. On any conflict, the document wins over this file.
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
   hook reminds when it's due. *(2026-09-24)*
+- **Surfacing hook reminders:** Basheer never sees SessionStart hook output —
+  only Claude does. Whenever it reports something due, the first reply of the
+  session opens with a short "Due today" list, asking whether to run each item,
+  before answering anything else — even if his first message is unrelated.
+  *(2026-09-25)*
 - **Running commentary** (root causes, design debates, verification results) goes
   directly to `docs/Progress-Archive-<year>-<month>.md` as the work happens. Roll
   to a new monthly file when the month changes.
