@@ -14,5 +14,3 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** Basheer answers the 6 open questions in section 5 (who rates
   Business Potential is the most urgent), then write
   `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
-- Pending once another session's `docs/Backlog.md` edits are committed: point
-  the Backlog entry "Hospital-wise target planning" at the discussion doc.

@@ -199,8 +199,11 @@ existing ones.
   same screen pre-filtered) should keep showing Won/Lost when the report
   card counted them.
 
-- **Hospital-wise target planning — design not started (raised at the
-  2026-09-24 demo).** Haroon/Latheef Bhai's ask: during coverage planning,
+- **Hospital-wise target planning — direction decided 2026-09-25 (Design C:
+  hospital amounts add up to the quarterly target, brand split on top, one
+  approval); raised at the 2026-09-24 demo.** Current design, decisions and
+  remaining open questions: `docs/Discussion-Hospital-Wise-Target-Planning-
+  2026-09.md` (supersedes the question list below). Haroon/Latheef Bhai's ask: during coverage planning,
   each salesperson divides their quarterly target among the hospitals in
   their coverage area according to each hospital's Business Potential
   (High/Medium/Low — see `docs/Customer-Tiering-Implementation-Plan.md`),
