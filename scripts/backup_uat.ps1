@@ -1,6 +1,7 @@
 # UAT backup: pg_dump (schema public only) via a throwaway postgres:17
 # Docker container, matching the live UAT server's actual version (17.6) so
-# pg_dump/pg_restore stay compatible. Keeps 14 days locally. Read-only against
+# pg_dump/pg_restore stay compatible. Keeps the newest 14 dumps locally
+# (count-based, not a day window, so missed days don't shrink the set). Read-only against
 # UAT. Starts Docker Desktop if it isn't already running, and stops it again
 # afterwards if this script was the one that started it.
 
@@ -10,7 +11,7 @@ $RepoRoot        = Split-Path -Parent $PSScriptRoot
 $EnvFile         = Join-Path $RepoRoot "backend\.env.uat"
 $BackupDir       = "C:\Backups\CabioUAT"
 $LogFile         = Join-Path $BackupDir "backup_log.txt"
-$RetentionDays   = 14
+$KeepCount       = 14
 $GoogleDrivePath = "G:\My Drive\CabioUATBackups"  # adjust once Google Drive for Desktop is installed
 $DockerDesktopExe    = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
 $DockerStartTimeoutSec = 90
@@ -140,9 +141,9 @@ try {
     }
     Write-Log "Verify: TOC has $tocCount entries"
 
-    $cutoff = (Get-Date).AddDays(-$RetentionDays)
     Get-ChildItem -Path $BackupDir -Filter "cabio_uat_*.dump" |
-        Where-Object { $_.LastWriteTime -lt $cutoff } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -Skip $KeepCount |
         ForEach-Object {
             Remove-Item $_.FullName -Force
             Write-Log "Pruned old dump: $($_.Name)"

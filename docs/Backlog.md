@@ -65,7 +65,7 @@ Completion Sprint Plan prioritization, 2026-09-14. **Basheer's call: not
 urgent yet** — there's no production environment to back up until go-live,
 which is at least 2 weeks out. No code work needed now. **When it's time:**
 the UAT script's pattern (Docker-based `pg_dump`, self-starts/stops Docker,
-14-day local retention) is already built and verified — extending it to Prod
+keeps the 14 newest dumps locally) is already built and verified — extending it to Prod
 is a fast follow, not new engineering.
 
 ### PIN Code → Zone auto-mapping — parked for Phase 2 (2026-09-14)
@@ -883,7 +883,7 @@ existing ones.
   gaps surfaced, not yet decided: (1) backups exist **only** on Basheer's
   laptop plus an irregular manual Google Drive copy — if the laptop is
   lost at the same time as UAT, the newest usable backup could be well
-  older than the 14-day local retention; (2) no automated offsite copy
+  older than the local ones (14 newest dumps kept); (2) no automated offsite copy
   exists yet (the Google Drive mirror step above is still disabled).
 
 - **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,

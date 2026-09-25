@@ -32,7 +32,7 @@ BK_DIR=/c/Backups/CabioUAT
 last=$(ls "$BK_DIR"/cabio_uat_*.dump 2>/dev/null | sed 's#.*/cabio_uat_\([0-9-]\{10\}\).*#\1#' | sort | tail -n 1)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  [ "$days" -ge 1 ] && echo "REMINDER: UAT backup is due (newest dump $last, $days day(s) old). Ask Basheer before running scripts/backup_uat.ps1 (UAT rule); first list the full backup folder and name every file the 14-day prune will delete." && echo
+  [ "$days" -ge 1 ] && echo "REMINDER: UAT backup is due (newest dump $last, $days day(s) old). Ask Basheer before running scripts/backup_uat.ps1 (UAT rule); first list the full backup folder and name every file the keep-newest-14 prune will delete." && echo
 else
   echo "REMINDER: no UAT backup found in $BK_DIR. Ask Basheer before running scripts/backup_uat.ps1 (UAT rule)."
   echo

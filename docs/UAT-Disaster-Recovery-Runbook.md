@@ -24,15 +24,17 @@ whether that gap is acceptable before proceeding.
 
 ## Where backups live
 
-- **Primary:** `C:\Backups\CabioUAT` on Basheer's laptop — the last 14
-  days of daily/weekly dumps, produced by `scripts/backup_uat.ps1`.
+- **Primary:** `C:\Backups\CabioUAT` on Basheer's laptop — the 14 newest
+  dumps, produced by `scripts/backup_uat.ps1`.
   Taken daily, prompted by the Claude session-start reminder
   (`.claude/hooks/session-start.sh`) whenever no dump is dated today
   (since 2026-09-24).
-  The script's 14-day prune deletes **every** `cabio_uat_*.dump` older than
-  14 days, including hand-saved snapshots (e.g. `…-pre-migration
-  snapshot.dump`). Basheer keeps those in Google Drive and declined a script
-  change (2026-09-24). Before each run, list the whole folder and tell him
+  The script keeps the 14 newest `cabio_uat_*.dump` files and deletes the
+  rest — count-based since 2026-09-25 (was a 14-day window), so missed days
+  never shrink the set. Hand-saved snapshots (e.g. `…-pre-migration
+  snapshot.dump`) count toward the 14 and are pruned like any other dump;
+  Basheer keeps those in Google Drive and declined a script change
+  (2026-09-24). Before each run, list the whole folder and tell him
   exactly which files the prune will remove.
 - **Secondary (offsite):** Basheer's Google Drive, updated manually and
   irregularly as of 2026-09-20 (the backup script's own Google Drive
@@ -107,7 +109,7 @@ process needs to change as a result.
 - **Single point of failure:** primary backups live only on Basheer's
   laptop; the offsite (Google Drive) copy is manual and irregular. If the
   laptop is lost at the same time as UAT, the most recent usable backup
-  may be older than 14 days.
-- **Local-only retention:** the local 14-day window means a backup older
-  than that only survives if it was separately copied to Google Drive
-  before it aged out.
+  may be much older than the newest local one.
+- **Local-only retention:** only the 14 newest dumps are kept locally, so
+  an older backup only survives if it was separately copied to Google
+  Drive before it was pruned.
