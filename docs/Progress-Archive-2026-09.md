@@ -7895,3 +7895,23 @@ The 2026-09-24 demo to Latheef Bhai and Haroon went well. Their requests
 
 No row statuses changed. Next: design discussion with Basheer on
 hospital-wise planning.
+
+
+## 2026-09-25 — Hook reminders surfaced; UAT backup keeps the newest 14
+
+- **Hook reminders:** Basheer never saw the SessionStart reminders (UAT
+  backup, doc tidy-up) — hook output reaches only Claude, and Claude
+  mentioned them at the end of an unrelated reply. New CLAUDE.md rule: the
+  session's first reply opens with a "Due today" list (`b7004a4`; origin
+  in Process-Rules-History, `66ad6bb`). Terminal banner offered, declined.
+- **Backup retention:** Basheer spotted that the 14-day prune shrinks the
+  backup set whenever daily runs are missed. `scripts/backup_uat.ps1` now
+  keeps the 14 newest dumps instead (`0b03a92`); runbook, Backlog and hook
+  wording updated. Dry run against the real folder: 9 dumps, 0 would be
+  pruned. The commit first landed as `253bf55` without its `fix:` title
+  line; reworded at Basheer's request and force-pushed (with lease) as
+  `0b03a92`.
+- **Retro:** worked — pre-run folder listing made the prune's cost visible,
+  which prompted the better rule. Improve — surface due reminders first
+  (now a rule); after Basheer commits by hand, check the message landed
+  intact before pushing.
