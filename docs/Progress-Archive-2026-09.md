@@ -8071,3 +8071,36 @@ generating from it. Commit-frequency review parked in Backlog, decide
   report counts only the account's own zone); (2) Sales period cut-offs use
   the server clock, not IST — the report and its list use the same rule,
   so they still agree. Raised with Basheer; proposed for the Backlog.
+
+## 2026-09-26 — Session retro (Brand breakdown session)
+
+**What worked:** "why no Brand?" answered from git and docs (a timing gap,
+not a decision); Dev data checked read-only before testing, and every
+predicted number matched on screen (527 → 507 L, SonoScape 30, 7
+trade-ins); asking "does Active include On Hold?" before building surfaced
+BR-OP-07, which turned the change into a bug fix against an existing rule;
+four `/code-review` rounds, with no bugs in new code and three gaps that
+existed before this change found; Simple/Complex split held; findings
+logged as they happened.
+
+**What didn't (Claude's mistakes):** a made-up example presented as Dev
+data ("SonoScape ₹4 L this quarter…"). Basheer couldn't reproduce it and
+asked "Are you hallucinating now?" This is the second unverified claim in
+a week, after 2026-09-25's retro. Scope grew four times in one session
+(Brand → trade-ins → Active-only → period fix and label), with Claude
+recommending "fix now" each time, so E2E restarted twice, never finished,
+and the day ended with a partial staged commit. Gaps that existed before
+this change arrived one per review round, stacking either/or questions on
+Basheer. Browser work was slow (failed menu clicks, one extension
+disconnect, unbatched single clicks). Slips: an edit dropped two spaces,
+caught by the formatter; the first pytest run used the wrong venv. Quality
+dropped late in the session; Basheer: "I think you are tired."
+
+**What should be fixed (proposed, not adopted; Basheer asked for the
+archive entry only):** (1) every example is real data or labelled "made-up
+example", and a gap known only from the code is said to be so up front;
+(2) during E2E, gaps that existed before the change go to the Backlog by
+default unless they make the new feature give wrong numbers, and after one
+mid-test addition, finish and commit first; (3) collect such gaps into one
+list at the end of testing; (4) load the scripting checklist (venv path)
+before any test run.
