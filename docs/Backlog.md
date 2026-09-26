@@ -34,6 +34,11 @@ Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
 
 ### main → UAT promotion — waiting on leadership's park list (since 2026-09-18)
 
+> **Approved 2026-09-26:** Basheer — everything demoed 2026-09-24 goes to
+> UAT, nothing held back. Date not finalised yet; most likely Sunday
+> 2026-09-27. Plan: `docs/UAT-Promotion-2026-09-Plan.md`. This entry is
+> removed once the promotion is done.
+
 As of 2026-09-24, `origin/uat` is 83 commits behind `origin/main` (27
 feat/fix), including Target Planning, Lead Follow-up Comments, Insights
 Dashboard, Reports, High Priority Deal Flag, and Product Catalog
@@ -119,6 +124,37 @@ neither blocking:
 2. **E2E test data in Dev** — "E2E Test Brand"/"E2E Test Category" (+ model,
    and product if one was saved), "iM90 Test"/"iM91 Test" models and the
    "EDAN iM91 Test ECG Machine" product. Deactivate when convenient.
+
+### Vendor pipeline report — "Export to Excel" for Admin/GM (requested 2026-09-26)
+
+Haroon: brand vendors ask Cabio, as their distributor, for a quarterly
+pipeline report in their own Excel layout. SonoScape first; EDAN and others
+to follow, possibly in different layouts. Sample layout (headers only):
+`docs/Master List for Q4 2026- Cabio Kerala.xlsx` — one row per product
+line on a deal: SN, Distributor, City, Customer Name, Customer Type I,
+Customer Type II, Purchase Type III, Decision Maker & Contact, Area, Model,
+Qty, Total Amount, Order Status, Estimate Close Time, Last Visit Date, Next
+Follow-up, Main Competitor, Won with PI No., Lost with Reason.
+- **Q4 2026 (SonoScape):** one-off script against UAT, Basheer running it.
+  Needs first: (1) the inflated SonoScape deal amounts in UAT corrected
+  (Lakhs/Rupees entry bug, UAT data-quality report 2026-09-26);
+  (2) `docs/UAT-Promotion-2026-09-Plan.md` done — brand/model only exist as
+  proper lists after the catalog cutover; (3) Haroon's answers: meaning of
+  Customer Type I/II and Purchase Type III, City vs zone, which deals go in,
+  PI vs PO number, Rupees vs Lakhs.
+- **Going forward:** an "Export to Excel" button for Admin/GM, pick vendor
+  (brand) + quarter. Options: **lighter** — one fixed export with all the
+  standard deal columns, rearranged by hand per vendor; **heavier** — a
+  saved column layout per vendor, file comes out ready to send.
+  Recommendation: decide once a second vendor's format (EDAN) is in hand.
+- **Column coverage today:** filled from existing data — Customer Name,
+  Customer Type I (if it's `account.customer_type`), Area (zone), Model,
+  Qty, Total Amount, Order Status, Estimate Close Time, Last Visit, Next
+  Follow-up, Lost with Reason. Partly — Decision Maker (only if linked to
+  the deal with a decision role), Main Competitor (mostly recorded only on
+  Lost), Won with PI No. (only a PO number is stored). Missing — City,
+  Customer Type II, Purchase Type III. No export feature exists anywhere in
+  the app yet.
 
 ## Deferred / undecided items
 

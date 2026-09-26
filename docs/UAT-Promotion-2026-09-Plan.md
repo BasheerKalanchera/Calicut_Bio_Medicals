@@ -170,6 +170,7 @@ Basheer's call, on the day.
 
 ## 6. Open before the day
 
-- **When:** Basheer picks a quiet slot (weekend or evening).
+- **When:** not finalised; most likely Sunday 2026-09-27 (Basheer,
+  2026-09-26).
 - Post-move check script (step 6): Claude writes it in advance; shown
   before use.

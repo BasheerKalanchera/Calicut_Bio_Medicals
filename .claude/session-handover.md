@@ -5,10 +5,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## UAT promotion (main → uat) — plan drafted (2026-09-26)
 
-- Plan: `docs/UAT-Promotion-2026-09-Plan.md` (not yet committed). Basheer
+- Plan: `docs/UAT-Promotion-2026-09-Plan.md` (`a8ee2d9`). Basheer
   cleared everything demoed 2026-09-24 for UAT. UAT at `0041`; runs
   `0042`–`0054`. Read-only product check 2026-09-26 clean → no rehearsal.
-- **Next:** Basheer reviews the plan and picks a quiet slot; Claude writes
+- **Next:** date not final, most likely Sunday 2026-09-27; Claude writes
   the step-6 post-move check script in advance.
 - Unblocks the SonoScape vendor report (also waiting on Haroon: inflated
   amounts corrected + column meanings).
