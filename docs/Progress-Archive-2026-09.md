@@ -7948,3 +7948,38 @@ hospital-wise planning.
   having the report read the script's output directly — one rule, one
   place. Testing the script against known answers before sending is what
   caught it.
+
+## 2026-09-26 — Vendor pipeline report: trial run on UAT (Imaging)
+
+Haroon's filled sample (`docs/Master List for sample.xlsx`) plus his answers
+settled most of the layout: all Active/open deals, no amounts (so Total
+Amount, PI No. and Lost Reason stay blank); Customer Type I = Private /
+Government; City = the hospital's district; Model = brand + model. Three
+columns ask for data the app doesn't record: Area (the hospital department,
+e.g. GI / Cardiac), Customer Type II (New / Replacement) and Main Competitor
+on open deals (only captured as a field on Lost; otherwise in visit notes).
+
+Trial: one read-only UAT run (Basheer approved), all open Imaging deals
+rather than SonoScape only, because UAT still has the pre-cutover
+hand-typed product names. 70 deals, 71 rows; file on Basheer's desktop for
+Haroon's review (real customer data, not committed). Competitor found by
+keyword search of each deal's notes (8 rows, flagged "please check");
+Replacement only where the deal has a trade-in line (1 row); Area left
+blank — the contact-designation hint tried first gave roles ("Managing
+Director"), not departments.
+
+**Findings (data, not the report):**
+- **31 of 70 open Imaging deals have no product line** (mostly Lead stage)
+  — a vendor report can't show them as SonoScape pipeline. Kept in the
+  trial so Haroon sees them.
+- **8 hospitals filed at region level ("North Kerala")**, not a district,
+  so City shows the region for them.
+- **Contacts rarely linked to deals:** Decision Maker filled on 5 of 71.
+- Estimated close date on 18 of 71 (only mandatory from Negotiation); last
+  visit / next follow-up logged against the deal on about half.
+- Formatting: Haroon's template is only pre-formatted to ~row 45; the
+  script now copies row 2's style onto every row.
+
+**Next:** Haroon reviews the trial; re-run after the 27 Sep UAT promotion,
+SonoScape only, with the clean Brand/Model names. Backlog entry "Vendor
+pipeline report" to be updated with his answers and the three gaps.
