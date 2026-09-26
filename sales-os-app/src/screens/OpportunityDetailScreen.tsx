@@ -96,7 +96,7 @@ type TabId = typeof TABS[number]["id"];
 
 // Local stopgap types — these services return Promise<unknown> today.
 // TODO(fix-at-service-layer): give these functions real return types; see
-// docs/Backlog.md \"Type the shared frontend service functions properly\". Remove these once fixed.
+// docs/Backlog.md "Type the shared frontend service functions properly". Remove these once fixed.
 interface StageOption { id: string; stage_name: string; stage_code: string; display_order: number; default_win_probability: string }
 interface StatusOption { id: string; status_code: string; status_name: string; is_terminal?: boolean }
 interface UserOption { id: string; display_name: string }

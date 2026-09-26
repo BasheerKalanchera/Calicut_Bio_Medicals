@@ -11,7 +11,9 @@ recommendation below.
 > Dashboard. This plan's per-entry `target_revenue_lakhs` is the natural home for
 > the hospital-wise number, but nothing here requires those entries to add up to
 > the Target Plan, and the reconciliation with the brand-wise split is undecided.
-> Open questions: `docs/Backlog.md`, "Hospital-wise target planning".
+> **Superseded 2026-09-25 by Design C** — see
+> `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, section 7, for
+> what's kept and what's dropped.
 
 ## Context
 

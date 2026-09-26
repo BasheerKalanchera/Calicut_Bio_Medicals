@@ -12,7 +12,7 @@ people who only see the deal through a follow-up task are read-only.
 - `584d218` — backend: the check in `replace_splits` (403 with a reason),
   `GET /opportunities/{id}/splits/can-edit`, and the "not in this
   Opportunity's SBU" error now names the person instead of their user id.
-- Frontend (committed after this pass): the Splits tab hides **Edit** /
+- Frontend `6280964` (committed after this pass): the Splits tab hides **Edit** /
   **+ Add** unless the server says yes; re-asks when the deal's status or
   owner changes.
 
@@ -81,7 +81,7 @@ gate. Harmless (server refuses, nothing shown) but a red console error for
 every Sales Staff / Area/SBU Manager. Pre-existing from Brand-Level Target
 Planning (`9514655`), unrelated to split editing. Approved fix: mirror
 `AuditLogScreen.tsx:147–172` — `enabled: isAdmin && …`, `return null` for
-non-Admin/GM. Verify: Vivek login, no 403 in the console.
+non-Admin/GM. Verify: Vivek login, no 403 in the console. **Fixed `d41248c`, 2026-09-24.**
 
 ---
 

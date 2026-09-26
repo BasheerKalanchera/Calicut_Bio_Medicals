@@ -1,7 +1,8 @@
 # Split Editing Permission — Implementation Plan
 
-**Status:** All decisions settled by Basheer, 2026-09-23 (see "Decided");
-ready to build once this plan is approved.
+**Status:** All decisions settled by Basheer, 2026-09-23 (see "Decided").
+Built (`584d218` backend, `6280964` frontend) and manually E2E-verified
+22/22 PASS, 2026-09-24 — see the test plan.
 **Business rule:** `docs/Business-Rules.md` BR-FIN-08 (written alongside
 this plan).
 **Origin:** found during Brand-Level Target Planning manual E2E, step 26

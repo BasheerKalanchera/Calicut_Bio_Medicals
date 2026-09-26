@@ -48,7 +48,7 @@ const SALES_DEVELOPMENT_ACTIVITY_TYPES = new Set<ActivityType>([
 
 // Local stopgap type — listUsers returns Promise<unknown> today.
 // TODO(fix-at-service-layer): give this function a real return type; see
-// docs/Backlog.md \"Type the shared frontend service functions properly\". Remove once fixed.
+// docs/Backlog.md "Type the shared frontend service functions properly". Remove once fixed.
 interface UserOption { id: string; display_name: string }
 interface AccountOption { id: string; name: string }
 
