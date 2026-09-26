@@ -7915,3 +7915,36 @@ hospital-wise planning.
   which prompted the better rule. Improve — surface due reminders first
   (now a rule); after Basheer commits by hand, check the message landed
   intact before pushing.
+
+
+## 2026-09-26 — UAT data-quality check; folder split; two checks tightened
+
+- **Run (06:18) vs 24 Sep:** Lakhs/Rupees value errors 31 → 14 (Fahad
+  corrected several on 24 Sep, after the 24 Sep report); other counts
+  flat. Report sent to Cabio leadership:
+  `C:\Backups\CabioUAT\data_consistency_reports\UAT-Data-Quality-Report-2026-09-26.pdf`.
+- **Folders (`fc76145`):** `C:\Backups\CabioUAT` split into `DB_Backups`
+  (dumps, backup/restore logs) and `data_consistency_reports` (run log,
+  reports); backup/restore scripts, SessionStart hook and DR runbook
+  updated.
+- **Short-notes check (script 7b / report §4) tightened (`fc76145`):** 27
+  of the 28 flagged short notes were closing a next action (BR-ACT-05),
+  where "Done" is a fair answer if the next action is specific. Now flags
+  only empty/no-word notes, generic standalone notes, or short answers to
+  a vague "Follow up". 28 → 9 (Haroon 6, all on or before 14 Sep).
+  Guidance to the team: word next actions specifically, not longer notes.
+- **Closed-deal edits check (script 6) tightened (`fc76145`):** the old
+  check flagged any Won/Lost deal whose items were ever edited; it now
+  compares with close time (`opportunity.closed_at`, not yet on UAT, so
+  the audit trail is used there). 5 → 2, both legitimate: Fahad's unit
+  fix on SonoScape S70I, and Basheer's 16 Sep amount correction on EDAN
+  Products (Nyle Hospital) at Arun Adarsh's request, after Arun had marked
+  it Won without updating the amounts agreed with the client. Another
+  real case for Backlog "WON/LOST opportunities are not actually
+  immutable — BR-OP-09 gap".
+- **Retro:** the first rebuilt report said 8 notes; the script said 9. The
+  one-off query missed a completely empty note (`length(NULL)` is not
+  `< 15`), and the report builder held its own copy of the rule. Fixed by
+  having the report read the script's output directly — one rule, one
+  place. Testing the script against known answers before sending is what
+  caught it.
