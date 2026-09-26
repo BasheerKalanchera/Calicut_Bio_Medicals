@@ -109,8 +109,12 @@ the auto-mode classifier blocks Claude's UAT access, and that's the right
 default.
 
 1. **(B) Tell the team** UAT will be unavailable for ~15 minutes.
-2. **(C) Re-run the product check** (read-only). Proceed only if it matches
-   section 3 exactly. Anything new → stop and review.
+2. **(C) Re-run the product check, then save the "before" snapshot**
+   (both read-only; scripts in `C:\Users\Basheer\AppData\Local\Temp\claude\
+   C--Users-Basheer-GitHub-Calicut-Bio-Medicals\b77f7022-d573-40ab-afa8-9c35d7c41815\scratchpad\`):
+   `uat_product_check.py`, then `uat_promotion_check.py pre`. Proceed only
+   if the product check matches section 3 exactly and UAT is at `0041`.
+   Anything new → stop and review.
 3. **(C) Fresh UAT backup** — `scripts\backup_uat.ps1` (now writes to
    `C:\Backups\CabioUAT\DB_Backups`). Confirm the new dump and its TOC count.
    This is the rollback point at revision `0041`.
@@ -128,13 +132,16 @@ default.
    ```
    If `0049` aborts, the whole migration rolls back on its own (single
    transaction) — stop, don't retry, and share the error.
-6. **(C) Post-move checks** (read-only script, written before the day):
+6. **(C) Post-move checks** — `uat_promotion_check.py post` (read-only,
+   same folder as step 2; prints OK/XX per line and "ALL CHECKS PASSED"):
    - `alembic_version` = `0054`.
    - Products: 61 rows, 59 active; the 2 stands inactive under Legacy; EDAN
-     F9 present; every active product has brand/category/model set.
+     F9 present; every active product has brand/category/model set; no model
+     with more than one active product.
    - Brands 10 (9 active), categories 21 (20 active), models 60 (59 active).
-   - Deal lines and deal totals unchanged vs. the step-2 run (same count of
-     `opportunity_item`, same sum of `extended_value_lakhs`).
+   - Deal data unchanged vs. the step-2 snapshot: opportunity count and
+     value total, deal-line count / quantity / price totals, every deal line
+     still pointing at the same product record, activity and hospital counts.
    - Every new table: RLS on **and** policies present (the `rls_auto_enable`
      check).
 7. **(B) Smoke test**, 3 logins (rep / manager / Admin), per
@@ -172,5 +179,5 @@ Basheer's call, on the day.
 
 - **When:** not finalised; most likely Sunday 2026-09-27 (Basheer,
   2026-09-26).
-- Post-move check script (step 6): Claude writes it in advance; shown
-  before use.
+- Post-move check script: written 2026-09-26 (`uat_promotion_check.py`,
+  `pre`/`post` modes); Basheer reviews it before step 2.
