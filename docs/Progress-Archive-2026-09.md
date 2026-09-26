@@ -7993,3 +7993,38 @@ pipeline report" to be updated with his answers and the three gaps.
   script is written, so a recurring one starts in `scripts/`; and check a
   template's formatting range before filling past it (the row-45 font
   change). No process change.
+
+## 2026-09-26 — Session retrospective: backup, doc tidy-up, UAT promotion plan, vendor report
+
+Session covered: UAT backup; daily doc tidy-up (8 fixes, `ab5cbf2`) and two
+new CLAUDE.md rules (`d7a830a`); UAT promotion plan (`a8ee2d9`, check
+scripts `3d525da`) after a clean read-only UAT product check; vendor
+pipeline report — Backlog entry, client-visible "Requested" #3 and
+republish (`1108a63`), Imaging trial on UAT, script moved into the repo
+(`de48ca6`).
+
+**What worked:** due-today items surfaced first; the backup prune listed
+before running (none deleted); the tidy-up's second-occurrence gap turned
+into two structural rules that were used again the same day; one read-only
+UAT check replaced a dress rehearsal with evidence; a real-data trial plus
+Haroon's filled sample settled more than another round of questions; the
+client pages were diffed and checked for outside edits before
+republishing; a parallel session's hunks in a shared file were left
+unstaged.
+
+**What didn't (Claude's mistakes):** risks stated without reading the code
+— `0043` "backfills" (it doesn't) and `0052` "could fail" (it can't), both
+corrected only after Basheer pushed back (second occurrence after
+2026-09-24's slides); the handover recorded an assumed outcome (trial "sent
+to Haroon"); a recurring script started in the scratchpad; the template's
+formatting range and the designation-as-department idea weren't checked
+before generating; the tidy-up missed the product-name plan's stale status
+line; many hand-offs to Basheer (11 commits to paste, two blocked UAT
+reads, two /add-dir steps).
+
+**Process changes:** CLAUDE.md "Show before you act" gains **Verify before
+claiming** (origin in Process-Rules-History). Also noted, no new rule: the
+handover holds only facts seen, never an assumed outcome; decide one-off vs
+recurring before writing a script; check a template/sample before
+generating from it. Commit-frequency review parked in Backlog, decide
+~2026-10-03.

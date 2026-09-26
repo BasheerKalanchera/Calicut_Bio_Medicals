@@ -202,6 +202,9 @@ show what's about to happen and wait — don't act first and narrate afterward.
   *(2026-09-18)*
 - Before asking Basheer a factual question, search the archive, docs and git;
   ask only what they can't answer. *(2026-09-24)*
+- **Verify before claiming:** before stating what a migration, script or
+  feature does or risks, read its code — never describe behaviour from its
+  name or memory. *(2026-09-26)*
 - When work is pending, end with one status line — done and saved / done, not
   saved / not started — instead of repeated commit reminders. *(2026-09-24)*
 - State a risk once. If Basheer decides otherwise, do what he asked without

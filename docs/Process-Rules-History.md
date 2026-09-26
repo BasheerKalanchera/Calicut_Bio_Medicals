@@ -134,6 +134,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** **A requested retrospective or reflective summary** — show it in chat, as its own turn, before writing it into Progress-Archive and committing. Pasting it in th…
   **Why:** 2026-09-18, a retrospective was pasted and committed/pushed in the same response — "Where is the retrospective? I have not seen it."
 
+- **Rule:** **Verify before claiming** — read a migration's, script's or feature's code before stating what it does or risks.
+  **Why:** 2026-09-26, planning the UAT promotion: Claude said migration `0043` backfills `opportunity.closed_at` (its docstring says "no backfill") and that `0052`'s one-active-product-per-model index could fail on UAT (`0049`'s list maps 59 products to 59 distinct models, so it can't). Both were corrected only after Basheer questioned them. Second occurrence — 2026-09-24's slides also carried two unverified lines.
+
 ## Post-commit checklist
 
 - **Rule:** **The feature/fix commit always lands first, as its own commit; this checklist runs after, as a separate commit** — never interleaved with or run before the fea…
