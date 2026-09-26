@@ -16,7 +16,7 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Handover file renamed `active_progress.md` → `session-handover.md`; it holds only the task actively in progress (waiting items → Progress-Archive, unstarted work → Backlog).
   **Why:** 2026-09-24, same review — Basheer: the name "active progress" invites logging progress, which is exactly how the file grew twice. The SessionStart hook also warns if the old filename reappears (a session started before the rename still has the old name in its instructions).
 
-- **Rule:** UAT data-quality check every alternate day, run by Claude under Basheer's supervision; SessionStart hook reminds when due, based on the script's own run log (`C:\Backups\CabioUAT\data_quality_log.txt`).
+- **Rule:** UAT data-quality check every alternate day, run by Claude under Basheer's supervision; SessionStart hook reminds when due, based on the script's own run log (`C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt`).
   **Why:** 2026-09-24 — Basheer wants recurring data-quality monitoring of UAT. He chose supervised runs over running it himself, and chose not to grant a standing UAT exception. A startup check against the real last-run date can't be forgotten; a session-scoped timer would die at each 3–4 hour restart.
 
 - **Rule:** Surfacing hook reminders — when the SessionStart hook reports something due, the session's first reply opens with a "Due today" list, asking whether to run each item.

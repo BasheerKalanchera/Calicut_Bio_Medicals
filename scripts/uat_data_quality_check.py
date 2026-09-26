@@ -20,7 +20,7 @@ ENV_FILE = Path(__file__).resolve().parent.parent / "backend" / ".env.uat"
 # One line per completed run, next to backup_log.txt. The SessionStart hook in
 # .claude/settings.json reads the last line to remind when a run is due
 # (every alternate day, run under Basheer's supervision).
-RUN_LOG = Path(r"C:\Backups\CabioUAT\data_quality_log.txt")
+RUN_LOG = Path(r"C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt")
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -164,16 +164,52 @@ def main() -> None:
         HAVING SUM(s.split_percentage) <> 100
     """, "Bad splits")
 
-    # 6. WON/LOST opportunities edited after close (opportunity_item audit trail as the signal)
-    section("6. WON/LOST opportunities with line-item audit history (edited after close)")
-    run("""
-        SELECT DISTINCT o.id, o.name, os.status_code
-        FROM opportunity o
-        JOIN opportunity_status os ON os.id = o.status_id
-        JOIN opportunity_item oi ON oi.opportunity_id = o.id
-        JOIN audit_log al ON al.record_id = oi.id AND al.table_name = 'opportunity_item'
-        WHERE os.status_code IN ('WON', 'LOST')
-    """, "Terminal deals with post-close item edits")
+    # 6. WON/LOST opportunities whose line items changed *after* the deal
+    # closed. Edits made before closing are normal and ignored. Close time
+    # is opportunity.closed_at where that column exists (not yet on UAT as of
+    # 2026-09-26), else the latest audit_log row that moved the deal to its
+    # current status. Deals with no knowable close time are listed separately
+    # as information, not as problems.
+    cur.execute("""
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'opportunity' AND column_name = 'closed_at'
+    """)
+    audit_close = """(SELECT MAX(al.changed_at) FROM audit_log al
+                      WHERE al.table_name = 'opportunity' AND al.record_id = o.id
+                        AND al.new_data->>'status_id' = o.status_id::text
+                        AND al.old_data->>'status_id' IS DISTINCT FROM al.new_data->>'status_id')"""
+    close_expr = f"COALESCE(o.closed_at, {audit_close})" if cur.fetchone() else audit_close
+    edits_6 = f"""
+        WITH closed AS (
+            SELECT o.id, o.name, a.name AS account_name, os.status_code, {close_expr} AS closed_at
+            FROM opportunity o
+            JOIN opportunity_status os ON os.id = o.status_id
+            JOIN account a ON a.id = o.account_id
+            WHERE os.status_code IN ('WON', 'LOST')
+        ), edits AS (
+            SELECT c.*, al.changed_at AS edited_at, al.changed_by AS edited_by
+            FROM closed c
+            JOIN opportunity_item oi ON oi.opportunity_id = c.id
+            JOIN audit_log al ON al.record_id = oi.id AND al.table_name = 'opportunity_item'
+            UNION ALL
+            SELECT c.*, oi.created_at, oi.created_by
+            FROM closed c
+            JOIN opportunity_item oi ON oi.opportunity_id = c.id
+            WHERE oi.created_at > c.closed_at
+        )
+        SELECT e.name, e.account_name, e.status_code, e.closed_at::date AS closed,
+               COUNT(*) AS edits, MAX(e.edited_at)::date AS last_edit,
+               string_agg(DISTINCT up.display_name, ', ') AS edited_by
+        FROM edits e
+        LEFT JOIN user_profile up ON up.id = e.edited_by
+        WHERE {{cond}}
+        GROUP BY e.name, e.account_name, e.status_code, e.closed_at
+        ORDER BY last_edit DESC
+    """
+    section("6. WON/LOST opportunities with line items changed after the deal closed")
+    run(edits_6.format(cond="e.edited_at > e.closed_at"), "Closed deals edited after closing")
+    run(edits_6.format(cond="e.closed_at IS NULL"),
+        "Closed deals with item edits, close time unknown (information only)")
 
     # 7. Activities not following best practice
     section("7a. Non-Manager-Note Activities missing a mandatory next action (BR-ACT-04, via reminder table)")
@@ -191,15 +227,36 @@ def main() -> None:
         by_rep = Counter(r["rep"] for r in rows_7a)
         print(f"\n   By rep: {dict(by_rep.most_common())}")
 
-    section("7b. Very short / generic Activity notes")
+    # A short note is fine when it closes a clearly worded next action
+    # ("PO follow up" -> "Done"): the next action carries the context
+    # (BR-ACT-05). Flag only notes that leave a reader with nothing: no real
+    # words at all, a generic standalone note, or a short answer to a vague
+    # next action ("Follow up" -> "Done"). Reviewed with Basheer 2026-09-26.
+    section("7b. Activity notes that don't say what happened")
     run("""
-        SELECT up.display_name AS rep, act.activity_type, act.notes, act.created_at::date AS logged
-        FROM activity act
-        JOIN user_profile up ON up.id = act.user_id
-        WHERE length(trim(act.notes)) < 15
-           OR lower(trim(act.notes)) IN ('done', 'ok', 'okay', 'visited', 'called', 'follow up', 'followed up')
-        ORDER BY act.created_at DESC
-    """, "Short/generic notes", limit=50)
+        WITH n AS (
+            SELECT act.id, act.user_id, act.account_id, act.activity_type, act.notes, act.created_at,
+                   r.reminder_text AS closes_next_action,
+                   lower(regexp_replace(trim(act.notes), '[.!]+$', '')) IN
+                       ('done', 'ok', 'okay', 'finished', 'completed', 'visited', 'called',
+                        'follow up', 'followed up', 'follow up done', 'done follow up',
+                        'done meeting') AS is_generic,
+                   length(trim(act.notes)) < 15 AS is_short,
+                   length(regexp_replace(coalesce(act.notes, ''), '[^A-Za-z]', '', 'g')) < 3 AS no_words,
+                   lower(trim(r.reminder_text)) ~ '^fol+(ow)?([ -]?up)?\\.?$' AS vague_next_action
+            FROM activity act
+            LEFT JOIN reminder r ON r.closing_activity_id = act.id
+        )
+        SELECT up.display_name AS rep, a.name AS account_name, n.activity_type, n.notes,
+               n.closes_next_action, n.created_at::date AS logged
+        FROM n
+        JOIN user_profile up ON up.id = n.user_id
+        LEFT JOIN account a ON a.id = n.account_id
+        WHERE n.no_words
+           OR (n.closes_next_action IS NULL AND n.is_generic)
+           OR (n.vague_next_action AND (n.is_short OR n.is_generic))
+        ORDER BY n.created_at DESC
+    """, "Notes that don't say what happened", limit=50)
 
     section("7c. Likely accidental double-submits (same opportunity, <5 min apart, same type)")
     cur.execute("""

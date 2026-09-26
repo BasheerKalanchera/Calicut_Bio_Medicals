@@ -24,7 +24,7 @@ not the shared `.claude/settings.json`.
 Basheer's call: run `scripts/uat_data_quality_check.py` against UAT every
 alternate day, **by Claude under Basheer's supervision** (ask first each time,
 per the UAT rule). Each run appends a dated one-line summary of counts to
-`C:\Backups\CabioUAT\data_quality_log.txt`; the SessionStart hook
+`C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt`; the SessionStart hook
 (`.claude/hooks/session-start.sh`) reminds when the last run is ≥2 days old.
 After each run, compare against the previous log line and raise anything new.
 Open talking points from the first run (2026-09-15) are under "Deferred /

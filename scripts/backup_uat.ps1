@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 
 $RepoRoot        = Split-Path -Parent $PSScriptRoot
 $EnvFile         = Join-Path $RepoRoot "backend\.env.uat"
-$BackupDir       = "C:\Backups\CabioUAT"
+$BackupDir       = "C:\Backups\CabioUAT\DB_Backups"
 $LogFile         = Join-Path $BackupDir "backup_log.txt"
 $KeepCount       = 14
 $GoogleDrivePath = "G:\My Drive\CabioUATBackups"  # adjust once Google Drive for Desktop is installed

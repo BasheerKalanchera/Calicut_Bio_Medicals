@@ -24,7 +24,7 @@ whether that gap is acceptable before proceeding.
 
 ## Where backups live
 
-- **Primary:** `C:\Backups\CabioUAT` on Basheer's laptop — the 14 newest
+- **Primary:** `C:\Backups\CabioUAT\DB_Backups` on Basheer's laptop — the 14 newest
   dumps, produced by `scripts/backup_uat.ps1`.
   Taken daily, prompted by the Claude session-start reminder
   (`.claude/hooks/session-start.sh`) whenever no dump is dated today
@@ -49,7 +49,7 @@ added since the backup — don't reach for it as a first response to every
 anomaly.
 
 ### 2. Choose the backup to restore
-Pick the most recent dump file from `C:\Backups\CabioUAT` (or Google
+Pick the most recent dump file from `C:\Backups\CabioUAT\DB_Backups` (or Google
 Drive, if the laptop is the thing that's down). Note its date — this is
 the exact point in time you're restoring to.
 
@@ -78,10 +78,10 @@ What happens, in order:
    the 2026-09-20 drill — a fresh/empty target doesn't have this on by
    default), and prints back table/row counts as immediate proof of what
    landed.
-6. Everything is logged to `C:\Backups\CabioUAT\restore_log.txt`.
+6. Everything is logged to `C:\Backups\CabioUAT\DB_Backups\restore_log.txt`.
 
 To specify a particular backup file instead of the newest one, add
-`-DumpFile "C:\Backups\CabioUAT\cabio_uat_<date>.dump"`.
+`-DumpFile "C:\Backups\CabioUAT\DB_Backups\cabio_uat_<date>.dump"`.
 
 **If Claude Code is running this on Basheer's behalf:** the interactive
 `Type RESTORE` prompt can't be answered through that tool. Only after

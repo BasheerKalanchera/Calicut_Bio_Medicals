@@ -31,7 +31,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $RepoRoot        = Split-Path -Parent $PSScriptRoot
-$BackupDir       = "C:\Backups\CabioUAT"
+$BackupDir       = "C:\Backups\CabioUAT\DB_Backups"
 $LogFile         = Join-Path $BackupDir "restore_log.txt"
 $DockerDesktopExe = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
 $DockerStartTimeoutSec = 90

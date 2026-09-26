@@ -5,7 +5,7 @@
 
 H=.claude/session-handover.md
 OLD=.claude/active_progress.md
-DQ_LOG=/c/Backups/CabioUAT/data_quality_log.txt
+DQ_LOG=/c/Backups/CabioUAT/data_consistency_reports/data_quality_log.txt
 
 # 1. Old handover name reappeared (e.g. a session started before the
 #    2026-09-24 rename wrote to it).
@@ -28,7 +28,7 @@ fi
 #     scripts/backup_uat.ps1 writes cabio_uat_YYYY-MM-DD.dump to BK_DIR).
 #     Dated from the newest dump's filename, not backup_log.txt: a failed run
 #     still writes a log line but produces no dump.
-BK_DIR=/c/Backups/CabioUAT
+BK_DIR=/c/Backups/CabioUAT/DB_Backups
 last=$(ls "$BK_DIR"/cabio_uat_*.dump 2>/dev/null | sed 's#.*/cabio_uat_\([0-9-]\{10\}\).*#\1#' | sort | tail -n 1)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
