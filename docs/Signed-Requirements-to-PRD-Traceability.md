@@ -188,6 +188,7 @@ decided on yet.
 | :---: | :--- | :--- |
 | 1 | Marketing staff get the same notification bell as everyone else, so they're alerted when a salesperson replies on one of their leads instead of having to check the Marketing Leads screen. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built. |
 | 2 | The Opportunities screen shows only open deals by default; won, lost and other closed deals appear on demand with a button. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built. |
+| 3 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
 
 ### Pending — proposed, not yet built
 

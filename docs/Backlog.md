@@ -135,6 +135,11 @@ line on a deal: SN, Distributor, City, Customer Name, Customer Type I,
 Customer Type II, Purchase Type III, Decision Maker & Contact, Area, Model,
 Qty, Total Amount, Order Status, Estimate Close Time, Last Visit Date, Next
 Follow-up, Main Competitor, Won with PI No., Lost with Reason.
+- **Scope:** not in the signed Phase 1 requirements; closest future-phase
+  item is 17.3 "Vendor/OEM Mgmt" (Contracts folder, "Cabio Sales OS
+  Requirements list - backlog grouped.pdf": installation base report,
+  target vs actuals, …). Client-visible as Traceability "Requested by
+  Cabio leadership — to be built" #3.
 - **Q4 2026 (SonoScape):** one-off script against UAT, Basheer running it.
   Needs first: (1) the inflated SonoScape deal amounts in UAT corrected
   (Lakhs/Rupees entry bug, UAT data-quality report 2026-09-26);
