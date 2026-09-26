@@ -109,19 +109,35 @@ class TestPipelineSummary:
         sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
         assert "JOIN product ON" not in sql
 
+    def test_group_by_brand_groups_on_brand_name_via_outer_joins(self):
+        # Both hops outer -- Buyback lines have no product, so no brand
+        # either; an inner join on either would drop them from the total.
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "brand")
+        assert "brand.name" in sql
+        assert "LEFT OUTER JOIN product ON" in sql
+        assert "LEFT OUTER JOIN brand ON" in sql
+
+    def test_group_by_brand_buckets_null_brand_as_trade_in(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "brand")
+        assert "'trade-in'" in sql
+        assert "'Trade-Ins / Returns'" in sql
+
+    def test_group_by_product_does_not_join_brand(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "product")
+        assert "JOIN brand ON" not in sql
+
     def test_buyback_lines_netted_negative(self):
         sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
         assert "'BUYBACK'" in sql
         assert "-opportunity_item.extended_value_lakhs" in sql
 
-    def test_open_population_excludes_terminal_statuses(self):
+    def test_whole_population_restricted_to_active(self):
+        # BR-OP-07: On Hold is excluded from pipeline, not just from the
+        # forecast -- so the filter is a WHERE on the whole query, and no
+        # "non-terminal" (Active + On Hold) population remains.
         sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
-        assert "opportunity_status.is_terminal" in sql
-
-    def test_forecast_population_restricted_to_active(self):
-        sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
-        assert "opportunity_status.status_code" in sql
-        assert "'ACTIVE'" in sql
+        assert "WHERE opportunity_status.status_code = 'ACTIVE'" in sql
+        assert "is_terminal" not in sql
 
     def test_weighted_forecast_multiplies_by_win_probability(self):
         sql = _run("pipeline_summary", _make_current_user("Admin"), "stage")
@@ -296,9 +312,18 @@ class TestSalesSummary:
         assert "'trade-in'" in sql
         assert "'Trade-Ins / Returns'" in sql
 
+    def test_group_by_brand_uses_outer_joins_and_trade_in_bucket(self):
+        sql = _run("sales_summary", _make_current_user("Admin"), "brand")
+        assert "brand.name" in sql
+        assert "LEFT OUTER JOIN product ON" in sql
+        assert "LEFT OUTER JOIN brand ON" in sql
+        assert "'trade-in'" in sql
+        assert "'Trade-Ins / Returns'" in sql
+
     def test_group_by_zone_does_not_join_product(self):
         sql = _run("sales_summary", _make_current_user("Admin"), "zone")
         assert "JOIN product ON" not in sql
+        assert "JOIN brand ON" not in sql
 
     def test_period_filter_applied_when_given(self):
         start = datetime(2026, 4, 1, tzinfo=UTC)

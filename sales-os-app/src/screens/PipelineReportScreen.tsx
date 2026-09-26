@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
 import { getPipelineSummary } from "../services/reporting";
+import { listStatuses } from "../services/masterData";
 import type { PipelineGroupBy } from "../types/reporting";
 import { formatLakhs } from "../utils/formatter";
 
@@ -12,9 +13,10 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "sbu", label: "SBU" },
   { value: "zone", label: "Zone" },
   { value: "product", label: "Product" },
+  { value: "brand", label: "Brand" },
 ];
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; stageId?: string; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; stageId?: string; statusId?: string; label: string };
 
 export default function PipelineReportScreen({
   onDrillToPipeline,
@@ -39,9 +41,21 @@ export default function PipelineReportScreen({
     queryFn: () => getPipelineSummary(groupBy),
   });
 
+  // BR-OP-07: the report counts Active deals only (On Hold excluded), so
+  // every drill carries the Active status too -- otherwise the drilled list
+  // would also show On Hold/Won/Lost deals the bar never counted. Same
+  // lookup as SalesReportScreen's wonStatusId.
+  const { data: statuses = [] } = useQuery({
+    queryKey: ["statuses"],
+    queryFn: async () => (await listStatuses()) as { id: string; status_code: string }[],
+    staleTime: Infinity,
+  });
+  const activeStatusId = statuses.find((s) => s.status_code === "ACTIVE")?.id;
+
   const headlineRows = headlineQuery.data?.rows ?? [];
+  // total_value == unweighted forecast now that both are Active-only, so
+  // the old separate "Unweighted Forecast" tile was merged into this one.
   const totalValue = headlineRows.reduce((s, r) => s + parseFloat(r.total_value_lakhs), 0);
-  const totalUnweighted = headlineRows.reduce((s, r) => s + parseFloat(r.unweighted_forecast_lakhs), 0);
   const totalWeighted = headlineRows.reduce((s, r) => s + parseFloat(r.weighted_forecast_lakhs), 0);
   const totalCount = headlineRows.reduce((s, r) => s + r.opportunity_count, 0);
 
@@ -51,8 +65,7 @@ export default function PipelineReportScreen({
   return (
     <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <StatTile label="Open Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} open deals`} />
-        <StatTile label="Unweighted Forecast" value={formatLakhs(totalUnweighted)} sublabel="Active deals, full value" />
+        <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
         <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
       </Box>
 
@@ -72,22 +85,22 @@ export default function PipelineReportScreen({
           isLoading={breakdownQuery.isLoading}
           isError={breakdownQuery.isError}
           isEmpty={rows.length === 0}
-          emptyText="No open pipeline."
+          emptyText="No active pipeline."
           errorText="Couldn't load pipeline summary."
           onRetry={() => breakdownQuery.refetch()}
         />
         {rows.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {rows.map((row) => {
-              // The synthetic Trade-Ins/Returns bucket isn't a real product --
-              // no single product_id represents the mix of Buyback line items
-              // it aggregates, so it stays non-clickable.
-              const isTradeIns = groupBy === "product" && row.group_id === "trade-in";
-              const filterKey: keyof Omit<DrillFilter, "label"> | null =
+              // The synthetic Trade-Ins/Returns bucket isn't a real product
+              // or brand -- it drills to every deal carrying a Buyback line.
+              const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
+              const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "statusId"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
                 groupBy === "product" && !isTradeIns ? "productId" :
+                groupBy === "brand" && !isTradeIns ? "brandId" :
                 groupBy === "stage" ? "stageId" :
                 null;
               return (
@@ -100,9 +113,10 @@ export default function PipelineReportScreen({
                   secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
                   secondaryLabel="weighted"
                   onClick={
-                    onDrillToPipeline && filterKey
-                      ? () => onDrillToPipeline({ [filterKey]: row.group_id }, row.group_name)
-                      : undefined
+                    !onDrillToPipeline || !activeStatusId ? undefined
+                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, statusId: activeStatusId }, row.group_name)
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: activeStatusId }, row.group_name)
+                    : undefined
                   }
                 />
               );

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import func
@@ -61,6 +62,9 @@ class OpportunityService:
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
         brand_id: uuid.UUID | None = None,
+        has_trade_in: bool = False,
+        closed_after: datetime | None = None,
+        closed_before: datetime | None = None,
         owner_team_only: bool = False,
         current_user: UserProfile | None = None,
         page: int = 1,
@@ -76,6 +80,9 @@ class OpportunityService:
             sbu_id=sbu_id,
             product_id=product_id,
             brand_id=brand_id,
+            has_trade_in=has_trade_in,
+            closed_after=closed_after,
+            closed_before=closed_before,
             owner_team_only=owner_team_only,
             current_user=current_user,
             offset=offset,
@@ -90,6 +97,9 @@ class OpportunityService:
             sbu_id=sbu_id,
             product_id=product_id,
             brand_id=brand_id,
+            has_trade_in=has_trade_in,
+            closed_after=closed_after,
+            closed_before=closed_before,
             owner_team_only=owner_team_only,
             current_user=current_user,
         )

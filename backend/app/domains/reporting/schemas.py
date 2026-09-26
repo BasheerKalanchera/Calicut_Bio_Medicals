@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-PipelineGroupBy = Literal["stage", "rep", "sbu", "zone", "product"]
+PipelineGroupBy = Literal["stage", "rep", "sbu", "zone", "product", "brand"]
 
 
 class PipelineSummaryRow(BaseModel):
@@ -111,7 +111,7 @@ class OpportunitiesOnHoldResponse(BaseModel):
     rows: list[OpportunityOnHoldRow]
 
 
-SalesGroupBy = Literal["rep", "sbu", "zone", "product"]
+SalesGroupBy = Literal["rep", "sbu", "zone", "product", "brand"]
 
 
 class SalesHeadline(BaseModel):

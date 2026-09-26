@@ -19,6 +19,9 @@ export interface PipelineParams {
   sbu_id?: string;
   product_id?: string;
   brand_id?: string;
+  has_trade_in?: boolean;
+  closed_from?: string;
+  closed_to?: string;
   owner_team_only?: boolean;
   page?: number;
   page_size?: number;
@@ -37,6 +40,9 @@ export async function listPipeline(params: PipelineParams = {}): Promise<Pipelin
   if (params.sbu_id)     p.sbu_id     = params.sbu_id;
   if (params.product_id) p.product_id = params.product_id;
   if (params.brand_id)   p.brand_id   = params.brand_id;
+  if (params.has_trade_in) p.has_trade_in = true;
+  if (params.closed_from) p.closed_from = params.closed_from;
+  if (params.closed_to)   p.closed_to   = params.closed_to;
   if (params.owner_team_only) p.owner_team_only = true;
   const response = await api.get("/opportunities/pipeline", { params: p });
   return response.data.data;

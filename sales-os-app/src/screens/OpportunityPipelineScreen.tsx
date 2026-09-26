@@ -34,6 +34,9 @@ interface Props {
     sbuId?: string;
     productId?: string;
     brandId?: string;
+    tradeInsOnly?: boolean;
+    closedFrom?: string;
+    closedTo?: string;
     statusId?: string;
     stageId?: string;
     label: string;
@@ -297,6 +300,9 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         sbu_id: initialFilter?.sbuId,
         product_id: initialFilter?.productId,
         brand_id: initialFilter?.brandId,
+        has_trade_in: initialFilter?.tradeInsOnly,
+        closed_from: initialFilter?.closedFrom,
+        closed_to: initialFilter?.closedTo,
         // Report Drill-down: a drilled-into list must match the report
         // card's own count exactly -- the report only attributes a deal to
         // its literal owner/owner's team, never a Split participant, so

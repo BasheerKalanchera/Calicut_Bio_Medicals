@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import case, delete, func, or_, select
 from sqlalchemy.orm import Session, noload
@@ -105,6 +106,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
         brand_id: uuid.UUID | None = None,
+        has_trade_in: bool = False,
+        closed_after: datetime | None = None,
+        closed_before: datetime | None = None,
         owner_team_only: bool = False,
         current_user: UserProfile | None = None,
         offset: int = 0,
@@ -169,6 +173,21 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     .where(Product.brand_id == brand_id)
                 )
             )
+        if has_trade_in:
+            # Drill-down from a report's "Trade-Ins / Returns" row -- Buyback
+            # lines carry no product, so match on line type instead.
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id).where(OpportunityItem.line_type == "BUYBACK")
+                )
+            )
+        # Sales Report drill-down: the report's period filters on closed_at,
+        # so the drilled list has to as well (half-open, same as
+        # reporting's sales_summary).
+        if closed_after is not None:
+            stmt = stmt.where(Opportunity.closed_at >= closed_after)
+        if closed_before is not None:
+            stmt = stmt.where(Opportunity.closed_at < closed_before)
         if owner_team_only and current_user is not None:
             stmt = self._apply_owner_team_scope(stmt, current_user)
         # BR-OP-15: High Priority deals first (automatic past-Demo or manual
@@ -202,6 +221,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         sbu_id: uuid.UUID | None = None,
         product_id: uuid.UUID | None = None,
         brand_id: uuid.UUID | None = None,
+        has_trade_in: bool = False,
+        closed_after: datetime | None = None,
+        closed_before: datetime | None = None,
         owner_team_only: bool = False,
         current_user: UserProfile | None = None,
     ) -> int:
@@ -237,6 +259,19 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     .where(Product.brand_id == brand_id)
                 )
             )
+        if has_trade_in:
+            stmt = stmt.where(
+                Opportunity.id.in_(
+                    select(OpportunityItem.opportunity_id).where(OpportunityItem.line_type == "BUYBACK")
+                )
+            )
+        # Sales Report drill-down: the report's period filters on closed_at,
+        # so the drilled list has to as well (half-open, same as
+        # reporting's sales_summary).
+        if closed_after is not None:
+            stmt = stmt.where(Opportunity.closed_at >= closed_after)
+        if closed_before is not None:
+            stmt = stmt.where(Opportunity.closed_at < closed_before)
         if owner_team_only and current_user is not None:
             stmt = self._apply_owner_team_scope(stmt, current_user)
         return self.db.scalar(stmt) or 0

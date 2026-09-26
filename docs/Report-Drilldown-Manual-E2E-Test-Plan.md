@@ -16,7 +16,8 @@ build reasoning is in `docs/Report-Drilldown-Implementation-Plan.md`.
 - Deliberately **not clickable**: the synthetic "Trade-Ins / Returns"
   bucket (Pipeline Report and Sales Report's Product breakdown) and
   Brand-grouped cards (Product Performance) — neither maps to a single
-  real product.
+  real product. *(Both now clickable — Brand 2026-09-22, Trade-Ins
+  2026-09-26 via `docs/Brand-Breakdown-In-Pipeline-And-Sales-Reports-Implementation-Plan.md`.)*
 
 **Not in scope for this pass:** Stagnant Deals, Opportunities On Hold,
 and Daily Activity Report — these were already flat deal lists with

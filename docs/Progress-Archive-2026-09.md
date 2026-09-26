@@ -8028,3 +8028,46 @@ handover holds only facts seen, never an assumed outcome; decide one-off vs
 recurring before writing a script; check a template/sample before
 generating from it. Commit-frequency review parked in Backlog, decide
 ~2026-10-03.
+
+## 2026-09-26 — Brand option in Pipeline/Sales Report + Dashboard: E2E notes
+
+- Basheer asked why the Pipeline Report had no Brand option: a timing gap,
+  not a decision — the reports were built 2026-09-15, when brand was still
+  free text; Brand became a controlled table 2026-09-22/23 and only
+  Product Performance got "By Brand". Brand added to Pipeline Report,
+  Sales Report and the Insights Dashboard card.
+- Mid-E2E, Basheer asked why the "Trade-Ins / Returns" row wasn't
+  clickable. Root cause: the 2026-09-15 drill-down had nothing to filter
+  on (a trade-in line has no product). Added a `has_trade_in` filter; the
+  row now opens every deal with a Buyback line. Verified on Dev: 7 deals,
+  on both Product and Brand breakdowns.
+- **Found (existed before this change, flagged by `/code-review`, confirmed on Dev):**
+  Pipeline Report drill-downs include Won and Lost deals, though the
+  report counts only open ones — SonoScape shows 30 on the bar, 34 in the
+  list. Affects every Pipeline Report bar, not just Brand.
+- **Decision (Basheer):** the Pipeline Report and the Insights Dashboard
+  count **Active deals only**. That is what BR-OP-07 already said
+  ("On-Hold: Excluded from committed pipeline/forecasts"); the reports had
+  broken it since 2026-09-15 by counting every non-closed deal. On Hold is
+  now excluded from the bars, the headline and the drill-down. "Open
+  Pipeline Value" and "Unweighted Forecast" became identical and were
+  merged into one "Active Pipeline Value" tile. Dev total: 527 → 507 L.
+- Third `/code-review` (after the Active-only change): no bugs. **Found (existed before this change):**
+  Sales Report drill-downs ignore the selected period — "This Quarter" →
+  click a bar lists Won deals from all time. Raised with Basheer.
+- Basheer asked why Product Performance still shows SonoScape 34 vs the
+  Pipeline Report's 30: correct by design — it counts every deal ever
+  (PRD A.3.4), beside Won/Lost. Relabelled "All Opportunities".
+- Sales Report period gap fixed on Basheer's call: bar clicks now carry the
+  period's closed-date window. **Claude's mistake:** when explaining it,
+  presented a made-up example ("SonoScape ₹4 L this quarter, list shows
+  older deals") as if it were Dev data. Basheer couldn't reproduce it and
+  asked "Are you hallucinating now?" Dev has one Won deal, so the gap was
+  never visible. It was known only from reading the code, and should have
+  been labelled that way from the start.
+- Fourth `/code-review`: no bugs. Two more gaps that existed before this change, both
+  checked against the code: (1) a Zone bar click also lists deals in zones
+  *beneath* that zone (the deal list filter includes sub-zones, but the
+  report counts only the account's own zone); (2) Sales period cut-offs use
+  the server clock, not IST — the report and its list use the same rule,
+  so they still agree. Raised with Basheer; proposed for the Backlog.

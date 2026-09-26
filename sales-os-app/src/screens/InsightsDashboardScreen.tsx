@@ -22,6 +22,7 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "sbu", label: "SBU" },
   { value: "zone", label: "Zone" },
   { value: "product", label: "Product" },
+  { value: "brand", label: "Brand" },
 ];
 
 export default function InsightsDashboardScreen() {
@@ -69,7 +70,6 @@ export default function InsightsDashboardScreen() {
 
   const headlineRows = headlineQuery.data?.rows ?? [];
   const totalValue = headlineRows.reduce((s, r) => s + parseFloat(r.total_value_lakhs), 0);
-  const totalUnweighted = headlineRows.reduce((s, r) => s + parseFloat(r.unweighted_forecast_lakhs), 0);
   const totalWeighted = headlineRows.reduce((s, r) => s + parseFloat(r.weighted_forecast_lakhs), 0);
   const totalCount = headlineRows.reduce((s, r) => s + r.opportunity_count, 0);
 
@@ -82,8 +82,7 @@ export default function InsightsDashboardScreen() {
     <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-          <StatTile label="Open Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} open deals`} />
-          <StatTile label="Unweighted Forecast" value={formatLakhs(totalUnweighted)} sublabel="Active deals, full value" />
+          <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
           <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
         </Box>
 
@@ -101,7 +100,7 @@ export default function InsightsDashboardScreen() {
             isLoading={pipelineQuery.isLoading}
             isError={pipelineQuery.isError}
             isEmpty={pipelineRows.length === 0}
-            emptyText={isManagerTier ? "No open pipeline." : "You don't own any open deals yet."}
+            emptyText={isManagerTier ? "No active pipeline." : "You don't own any active deals yet."}
             errorText="Couldn't load pipeline summary."
             onRetry={() => pipelineQuery.refetch()}
           />

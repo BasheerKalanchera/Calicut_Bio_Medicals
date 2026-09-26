@@ -43,6 +43,36 @@ _GROUP_BY_COLUMNS = {
 _TRADE_IN_GROUP_ID = "trade-in"
 _TRADE_IN_GROUP_NAME = "Trade-Ins / Returns"
 
+# Line-level breakdowns: a deal can carry more than one product/brand, so
+# these group per OpportunityItem, not per deal. Brand is one hop further
+# than Product (Product.brand_id) and gets the same Trade-Ins bucket.
+_LINE_GROUP_COLUMNS = {
+    "product": (
+        func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID),
+        func.coalesce(Product.name, _TRADE_IN_GROUP_NAME),
+    ),
+    "brand": (
+        func.coalesce(cast(Brand.id, String), _TRADE_IN_GROUP_ID),
+        func.coalesce(Brand.name, _TRADE_IN_GROUP_NAME),
+    ),
+}
+
+
+def _group_columns(group_by: str):
+    return _LINE_GROUP_COLUMNS.get(group_by) or _GROUP_BY_COLUMNS[group_by]
+
+
+def _outerjoin_line_dimension(stmt, group_by: str):
+    # Outer joins -- a Buyback line's product_id is NULL, and it must still
+    # appear (bucketed under _TRADE_IN_GROUP_NAME) rather than being dropped,
+    # so the line-level rows reconcile to the same total as every other
+    # breakdown.
+    if group_by in _LINE_GROUP_COLUMNS:
+        stmt = stmt.outerjoin(Product, OpportunityItem.product_id == Product.id)
+    if group_by == "brand":
+        stmt = stmt.outerjoin(Brand, Product.brand_id == Brand.id)
+    return stmt
+
 
 class ReportingRepository:
     def __init__(self, db: Session):
@@ -72,26 +102,24 @@ class ReportingRepository:
         zone_id: uuid.UUID | None = None,
         user_id: uuid.UUID | None = None,
     ) -> list[Row]:
-        if group_by == "product":
-            group_id_col = func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID)
-            group_name_col = func.coalesce(Product.name, _TRADE_IN_GROUP_NAME)
-        else:
-            group_id_col, group_name_col = _GROUP_BY_COLUMNS[group_by]
-        is_open = OpportunityStatus.is_terminal == False  # noqa: E712
+        group_id_col, group_name_col = _group_columns(group_by)
+        # BR-OP-07: only Active deals count as pipeline -- On Hold, Stalled,
+        # Won and Lost are all excluded (Basheer, 2026-09-26; previously
+        # every non-terminal status, i.e. On Hold was counted too).
+        # total_value_lakhs and unweighted_forecast_lakhs are therefore the
+        # same figure; both kept so the response shape doesn't change.
         is_active = OpportunityStatus.status_code == "ACTIVE"
 
         stmt = (
             select(
                 group_id_col.label("group_id"),
                 group_name_col.label("group_name"),
-                func.count(func.distinct(case((is_open, Opportunity.id)))).label("opportunity_count"),
-                func.coalesce(func.sum(case((is_open, _NET_VALUE), else_=0)), 0).label("total_value_lakhs"),
-                func.coalesce(func.sum(case((is_active, _NET_VALUE), else_=0)), 0).label(
-                    "unweighted_forecast_lakhs"
+                func.count(func.distinct(Opportunity.id)).label("opportunity_count"),
+                func.coalesce(func.sum(_NET_VALUE), 0).label("total_value_lakhs"),
+                func.coalesce(func.sum(_NET_VALUE), 0).label("unweighted_forecast_lakhs"),
+                func.coalesce(func.sum(_NET_VALUE * Opportunity.win_probability / 100), 0).label(
+                    "weighted_forecast_lakhs"
                 ),
-                func.coalesce(
-                    func.sum(case((is_active, _NET_VALUE * Opportunity.win_probability / 100), else_=0)), 0
-                ).label("weighted_forecast_lakhs"),
             )
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
@@ -101,13 +129,9 @@ class ReportingRepository:
             .join(SBU, Opportunity.sbu_id == SBU.id)
             .join(Account, Opportunity.account_id == Account.id)
             .join(Zone, Account.zone_id == Zone.id)
+            .where(is_active)
         )
-        if group_by == "product":
-            # Outer join -- a Buyback line's product_id is NULL, and it must
-            # still appear (bucketed under _TRADE_IN_GROUP_NAME above) rather
-            # than being dropped, so the by-product rows reconcile to the
-            # same total as every other breakdown.
-            stmt = stmt.outerjoin(Product, OpportunityItem.product_id == Product.id)
+        stmt = _outerjoin_line_dimension(stmt, group_by)
         stmt = stmt.group_by(group_id_col, group_name_col)
         stmt = self._apply_owner_scope(stmt, current_user, user_id)
         if sbu_id is not None:
@@ -168,11 +192,7 @@ class ReportingRepository:
         period_start: datetime | None = None,
         period_end: datetime | None = None,
     ) -> list[Row]:
-        if group_by == "product":
-            group_id_col = func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID)
-            group_name_col = func.coalesce(Product.name, _TRADE_IN_GROUP_NAME)
-        else:
-            group_id_col, group_name_col = _GROUP_BY_COLUMNS[group_by]
+        group_id_col, group_name_col = _group_columns(group_by)
         is_won = OpportunityStatus.status_code == "WON"
 
         stmt = (
@@ -191,11 +211,9 @@ class ReportingRepository:
             .join(Zone, Account.zone_id == Zone.id)
             .where(is_won)
         )
-        if group_by == "product":
-            # Outer join, same reasoning as pipeline_summary's -- a Buyback
-            # line on a Won deal still needs somewhere to go so this
-            # breakdown's rows reconcile to sales_headline's total revenue.
-            stmt = stmt.outerjoin(Product, OpportunityItem.product_id == Product.id)
+        # A Buyback line on a Won deal still needs somewhere to go so this
+        # breakdown's rows reconcile to sales_headline's total revenue.
+        stmt = _outerjoin_line_dimension(stmt, group_by)
         if period_start is not None:
             stmt = stmt.where(Opportunity.closed_at >= period_start)
         if period_end is not None:

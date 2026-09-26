@@ -1,4 +1,4 @@
-export type PipelineGroupBy = "stage" | "rep" | "sbu" | "zone" | "product";
+export type PipelineGroupBy = "stage" | "rep" | "sbu" | "zone" | "product" | "brand";
 
 export interface PipelineSummaryRow {
   group_id: string;
@@ -93,7 +93,7 @@ export interface ReportingFilters {
   period_end?: string;
 }
 
-export type SalesGroupBy = "rep" | "sbu" | "zone" | "product";
+export type SalesGroupBy = "rep" | "sbu" | "zone" | "product" | "brand";
 
 export interface SalesHeadline {
   revenue_lakhs: string;

@@ -13,6 +13,7 @@ const GROUP_BY_OPTIONS: { value: SalesGroupBy; label: string }[] = [
   { value: "zone", label: "Zone" },
   { value: "sbu", label: "SBU" },
   { value: "product", label: "Product" },
+  { value: "brand", label: "Brand" },
 ];
 
 type Period = "month" | "quarter" | "all";
@@ -40,7 +41,7 @@ function formatPercent(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; statusId?: string; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; label: string };
 
 export default function SalesReportScreen({
   onDrillToPipeline,
@@ -69,6 +70,11 @@ export default function SalesReportScreen({
     staleTime: Infinity,
   });
   const wonStatusId = statuses.find((s) => s.status_code === "WON")?.id;
+  // Every drill carries the selected period too (closed_at window), so the
+  // drilled list is the same Won deals the bar counted -- not all-time.
+  const drillBase = { statusId: wonStatusId, closedFrom: filters.period_start, closedTo: filters.period_end };
+  const periodLabel = PERIOD_OPTIONS.find((o) => o.value === period)?.label;
+  const drillLabel = (name: string) => (period === "all" ? `${name}, Won` : `${name}, Won, ${periodLabel}`);
 
   const headline = headlineQuery.data;
   const rows = breakdownQuery.data?.rows ?? [];
@@ -125,14 +131,15 @@ export default function SalesReportScreen({
         {rows.length > 0 && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {rows.map((row) => {
-              // Same exclusion as Pipeline Report: the synthetic Trade-Ins/
-              // Returns bucket isn't a real product.
-              const isTradeIns = groupBy === "product" && row.group_id === "trade-in";
-              const filterKey: keyof Omit<DrillFilter, "label" | "statusId"> | null =
+              // Same as Pipeline Report: the synthetic Trade-Ins/Returns
+              // bucket drills to every Won deal carrying a Buyback line.
+              const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
+              const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "closedFrom" | "closedTo"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
                 groupBy === "product" && !isTradeIns ? "productId" :
+                groupBy === "brand" && !isTradeIns ? "brandId" :
                 null;
               return (
                 <MiniBar
@@ -142,9 +149,10 @@ export default function SalesReportScreen({
                   max={maxRevenue}
                   formatValue={formatLakhs}
                   onClick={
-                    onDrillToPipeline && filterKey && wonStatusId
-                      ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: wonStatusId }, `${row.group_name}, Won`)
-                      : undefined
+                    !onDrillToPipeline || !wonStatusId ? undefined
+                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, ...drillBase }, drillLabel(row.group_name))
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, ...drillBase }, drillLabel(row.group_name))
+                    : undefined
                   }
                 />
               );

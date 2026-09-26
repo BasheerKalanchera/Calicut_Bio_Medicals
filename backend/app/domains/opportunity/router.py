@@ -1,5 +1,6 @@
 import math
 import uuid
+from datetime import date, datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -62,12 +63,20 @@ def list_pipeline(
     sbu_id: uuid.UUID | None = Query(None),
     product_id: uuid.UUID | None = Query(None),
     brand_id: uuid.UUID | None = Query(None),
+    has_trade_in: bool = Query(False),
+    closed_from: date | None = Query(None),
+    closed_to: date | None = Query(None, description="Inclusive"),
     owner_team_only: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[PipelineOpportunity]]:
+    # Sales Report drill-down: same inclusive-date handling as reporting's
+    # _period_bounds -- closed_to is a calendar date, closed_at a timestamp,
+    # so the upper bound is the start of the next day.
+    closed_after = datetime.combine(closed_from, time.min) if closed_from else None
+    closed_before = datetime.combine(closed_to + timedelta(days=1), time.min) if closed_to else None
     items, total = service.list_pipeline(
         account_id=account_id,
         stage_id=stage_id,
@@ -77,6 +86,9 @@ def list_pipeline(
         sbu_id=sbu_id,
         product_id=product_id,
         brand_id=brand_id,
+        has_trade_in=has_trade_in,
+        closed_after=closed_after,
+        closed_before=closed_before,
         owner_team_only=owner_team_only,
         current_user=current_user,
         page=page,

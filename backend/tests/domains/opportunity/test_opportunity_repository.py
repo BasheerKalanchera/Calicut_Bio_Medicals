@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from unittest.mock import MagicMock
 
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
@@ -173,6 +174,29 @@ class TestListPipelineFilters:
         assert "opportunity_item" not in sql
         assert "brand_id" not in sql
 
+    def test_has_trade_in_matches_buyback_lines_via_subquery(self):
+        sql = self._compiled_list_pipeline(has_trade_in=True)
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id IN" in sql
+        assert "opportunity_item.line_type = 'BUYBACK'" in sql
+
+    def test_no_trade_in_filter_by_default(self):
+        sql = self._compiled_list_pipeline()
+        assert "BUYBACK" not in sql
+
+    def test_closed_window_filters_on_closed_at_half_open(self):
+        sql = self._compiled_list_pipeline(
+            closed_after=datetime(2026, 7, 1), closed_before=datetime(2026, 10, 1)
+        )
+        assert "opportunity.closed_at >= '2026-07-01" in sql
+        assert "opportunity.closed_at < '2026-10-01" in sql
+
+    def test_no_closed_window_by_default(self):
+        sql = self._compiled_list_pipeline()
+        # closed_at is always a selected column -- check for the predicates.
+        assert "opportunity.closed_at >=" not in sql
+        assert "opportunity.closed_at <" not in sql
+
     def test_owner_team_only_scopes_by_opportunity_owner_for_area_manager(self):
         current_user = _make_current_user("Area Manager")
         sql = self._compiled_list_pipeline(owner_team_only=True, current_user=current_user)
@@ -227,6 +251,18 @@ class TestCountPipelineFilters:
         assert "JOIN opportunity_item" not in sql
         assert "opportunity.id IN" in sql
         assert f"product.brand_id = '{str(brand_id).replace('-', '')}'" in sql
+
+    def test_has_trade_in_matches_buyback_lines_via_subquery(self):
+        sql = self._compiled_count_pipeline(has_trade_in=True)
+        assert "opportunity.id IN" in sql
+        assert "opportunity_item.line_type = 'BUYBACK'" in sql
+
+    def test_closed_window_filters_on_closed_at_half_open(self):
+        sql = self._compiled_count_pipeline(
+            closed_after=datetime(2026, 7, 1), closed_before=datetime(2026, 10, 1)
+        )
+        assert "opportunity.closed_at >= '2026-07-01" in sql
+        assert "opportunity.closed_at < '2026-10-01" in sql
 
     def test_owner_team_only_scopes_by_opportunity_owner_for_area_manager(self):
         current_user = _make_current_user("Area Manager")

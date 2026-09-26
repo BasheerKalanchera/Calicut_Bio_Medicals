@@ -122,6 +122,8 @@ by the shelved plan for `product_id`; `sbu_id` is new but simpler.
    The synthetic **"Trade-Ins / Returns" row stays non-clickable** — its
    `group_id` (`"trade-in"`) isn't a real product, and no single
    `product_id` represents the mix of Buyback line items it aggregates.
+   *(Superseded 2026-09-26: now drills to every deal with a Buyback line —
+   see `docs/Brand-Breakdown-In-Pipeline-And-Sales-Reports-Implementation-Plan.md`.)*
 5. **`sales-os-app/src/screens/SalesReportScreen.tsx`** — same wiring,
    but every drill always includes the Won `status_id` (fetched once via
    the existing `listStatuses()` + `status_code === "WON"` lookup pattern
