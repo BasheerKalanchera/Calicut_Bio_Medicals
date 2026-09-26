@@ -7983,3 +7983,13 @@ Director"), not departments.
 **Next:** Haroon reviews the trial; re-run after the 27 Sep UAT promotion,
 SonoScape only, with the clean Brand/Model names. Backlog entry "Vendor
 pipeline report" to be updated with his answers and the three gaps.
+- **Script moved into the repo (`de48ca6`):** the trial script started in
+  the session scratchpad as a one-off; once it was clear the report is
+  quarterly and per-vendor, it moved to `scripts/vendor_pipeline_report.py`
+  (`--brand` / `--sbu`, Sales Owner column, Desktop output, refuses paths
+  inside the repo). **Retro:** worked — a real-data trial answered more in
+  one run than another round of questions; Haroon's filled sample settled
+  most columns at once. Improve — decide "one-off or recurring?" before a
+  script is written, so a recurring one starts in `scripts/`; and check a
+  template's formatting range before filling past it (the row-45 font
+  change). No process change.
