@@ -22,6 +22,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Surfacing hook reminders — when the SessionStart hook reports something due, the session's first reply opens with a "Due today" list, asking whether to run each item.
   **Why:** 2026-09-25 — the hook flagged the UAT backup and doc tidy-up as due, but Basheer saw nothing: SessionStart output reaches only Claude's context, not the terminal. He had assumed the reminders appeared on screen at startup. Claude mentioned them only at the end of a reply about something else, where they read as an afterthought, since no rule said where to put them. Basheer declined a terminal banner (via the hook's `systemMessage`); top-of-first-reply was enough.
 
+- **Rule:** Post-commit checklist step 3 (close the feature's paperwork) and "When a fact or decision changes" (update every living-doc hit).
+  **Why:** 2026-09-26 doc tidy-up — 7 of 8 fixes were stale claims. Split editing shipped 2026-09-24 (`6280964`, E2E 22/22) but its plan still said "ready to build" and its Backlog entry "awaiting review"; the Lead Management test plan had the same "in progress" gap on 2026-09-24 (second occurrence). The backup rule change (`0b03a92`) updated one of two Backlog mentions; Design C (2026-09-25) updated the Backlog but not the Coverage plan or Traceability 6.1.
+
 ## Feature planning
 
 - **Rule:** The moment a task's scope becomes feature-sized, write `docs/<Feature>- Implementation-Plan.md` as the primary planning artifact and present its actual content …
