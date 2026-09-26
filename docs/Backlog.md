@@ -140,26 +140,35 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Requirements list - backlog grouped.pdf": installation base report,
   target vs actuals, …). Client-visible as Traceability "Requested by
   Cabio leadership — to be built" #3.
-- **Q4 2026 (SonoScape):** one-off script against UAT, Basheer running it.
-  Needs first: (1) the inflated SonoScape deal amounts in UAT corrected
-  (Lakhs/Rupees entry bug, UAT data-quality report 2026-09-26);
-  (2) `docs/UAT-Promotion-2026-09-Plan.md` done — brand/model only exist as
-  proper lists after the catalog cutover; (3) Haroon's answers: meaning of
-  Customer Type I/II and Purchase Type III, City vs zone, which deals go in,
-  PI vs PO number, Rupees vs Lakhs.
+- **Until the button exists:** `scripts/vendor_pipeline_report.py
+  --brand SonoScape` (read-only UAT, ask Basheer first; writes to the
+  Desktop, refuses to write inside the repo). `--sbu Imaging` before the
+  catalog cutover reaches UAT (`docs/UAT-Promotion-2026-09-Plan.md`). Adds
+  a Sales Owner column (vendor asked, 2026-09-26).
+- **Haroon's answers (2026-09-26, filled sample
+  `docs/Master List for sample.xlsx`):** all open deals; no amounts (Total
+  Amount, PI No., Lost Reason blank); Customer Type I = Private/Government;
+  City = district; Area = hospital department (GI, Cardiac, …); Customer
+  Type II = New/Replacement; Purchase Type III optional (e.g. Expansion).
+  Still open: medical colleges — Private or Government?
 - **Going forward:** an "Export to Excel" button for Admin/GM, pick vendor
   (brand) + quarter. Options: **lighter** — one fixed export with all the
   standard deal columns, rearranged by hand per vendor; **heavier** — a
   saved column layout per vendor, file comes out ready to send.
   Recommendation: decide once a second vendor's format (EDAN) is in hand.
-- **Column coverage today:** filled from existing data — Customer Name,
-  Customer Type I (if it's `account.customer_type`), Area (zone), Model,
-  Qty, Total Amount, Order Status, Estimate Close Time, Last Visit, Next
-  Follow-up, Lost with Reason. Partly — Decision Maker (only if linked to
-  the deal with a decision role), Main Competitor (mostly recorded only on
-  Lost), Won with PI No. (only a PO number is stored). Missing — City,
-  Customer Type II, Purchase Type III. No export feature exists anywhere in
-  the app yet.
+- **Column coverage today:** filled from existing data — City (the
+  hospital's district zone), Customer Name, Customer Type I (from
+  `account.customer_type`), Model, Qty, Order Status, Estimate Close Time,
+  Last Visit, Next Follow-up, Sales Owner. Partly — Decision Maker (only
+  if a contact is linked to the deal), Customer Type II ("Replacement"
+  only where the deal has a trade-in line), Main Competitor (keyword search
+  of visit notes; a field exists only on Lost). Not recorded anywhere —
+  Area (department), New/Replacement in general, Purchase Type III.
+  **Decision needed (Haroon):** add these as deal fields, or fill by hand
+  per report; a proper Competitors field on open deals. Trial findings
+  (31 of 70 open Imaging deals with no product, etc.): Progress-Archive
+  2026-09-26 "Vendor pipeline report: trial run". No export feature exists
+  anywhere in the app yet.
 
 ## Deferred / undecided items
 

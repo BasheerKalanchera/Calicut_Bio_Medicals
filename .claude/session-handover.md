@@ -10,8 +10,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `0042`–`0054`. Read-only product check 2026-09-26 clean → no rehearsal.
 - **Next:** date not final, most likely Sunday 2026-09-27; Claude writes
   the step-6 post-move check script in advance.
-- Unblocks the SonoScape vendor report (also waiting on Haroon: inflated
-  amounts corrected + column meanings).
+- Then run the SonoScape vendor report (UAT read — ask Basheer first):
+  `python scripts/vendor_pipeline_report.py --brand SonoScape` (writes to
+  the Desktop; includes the Sales Owner column). The 2026-09-26
+  Imaging trial was NOT sent — Basheer sends Haroon the SonoScape version
+  after the move, with the gap note drafted in chat. Findings:
+  Progress-Archive 2026-09-26 "Vendor pipeline report: trial run".
 
 ## Hospital-wise target planning — design in discussion (2026-09-25)
 
