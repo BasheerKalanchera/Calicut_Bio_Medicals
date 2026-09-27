@@ -43,18 +43,29 @@ _GROUP_BY_COLUMNS = {
 _TRADE_IN_GROUP_ID = "trade-in"
 _TRADE_IN_GROUP_NAME = "Trade-Ins / Returns"
 
+# An Active deal with no line items at all (nothing entered yet) still
+# counts in the Pipeline Report -- 1 deal, 0 value (Basheer, 2026-09-27).
+# pipeline_summary outer-joins OpportunityItem for this, so on the line-level
+# breakdowns such a deal arrives with no item row and gets its own bucket.
+# Checked on the item id, not product_id: a Buyback line also has a NULL
+# product_id and must stay in the Trade-Ins bucket.
+_NO_ITEMS_GROUP_ID = "no-products"
+_NO_ITEMS_GROUP_NAME = "No products yet"
+
 # Line-level breakdowns: a deal can carry more than one product/brand, so
 # these group per OpportunityItem, not per deal. Brand is one hop further
 # than Product (Product.brand_id) and gets the same Trade-Ins bucket.
+def _line_group(id_col, name_col):
+    no_items = OpportunityItem.id.is_(None)
+    return (
+        case((no_items, _NO_ITEMS_GROUP_ID), else_=func.coalesce(cast(id_col, String), _TRADE_IN_GROUP_ID)),
+        case((no_items, _NO_ITEMS_GROUP_NAME), else_=func.coalesce(name_col, _TRADE_IN_GROUP_NAME)),
+    )
+
+
 _LINE_GROUP_COLUMNS = {
-    "product": (
-        func.coalesce(cast(Product.id, String), _TRADE_IN_GROUP_ID),
-        func.coalesce(Product.name, _TRADE_IN_GROUP_NAME),
-    ),
-    "brand": (
-        func.coalesce(cast(Brand.id, String), _TRADE_IN_GROUP_ID),
-        func.coalesce(Brand.name, _TRADE_IN_GROUP_NAME),
-    ),
+    "product": _line_group(Product.id, Product.name),
+    "brand": _line_group(Brand.id, Brand.name),
 }
 
 
@@ -122,7 +133,9 @@ class ReportingRepository:
                 ),
             )
             .select_from(Opportunity)
-            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            # Outer join: a deal with no line items still counts (1 deal,
+            # 0 value) -- see _NO_ITEMS_GROUP_ID.
+            .outerjoin(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, Opportunity.status_id == OpportunityStatus.id)
             .join(OpportunityStage, Opportunity.stage_id == OpportunityStage.id)
             .join(UserProfile, Opportunity.owner_id == UserProfile.id)

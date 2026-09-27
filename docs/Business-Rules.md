@@ -112,6 +112,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **On-Hold:** Excluded from committed pipeline/forecasts.
 * **Stalled:** Excluded from committed pipeline/forecasts.
 * **Lost:** Excluded entirely.
+* **Active deal with no products entered yet:** still counts in the Pipeline Report and Insights Dashboard — 1 deal, ₹0 value — in the headline deal count and the Stage/Rep/SBU/Zone breakdowns. The Product and Brand breakdowns show such deals in their own "No products yet" row, which drills to them. *(Basheer, 2026-09-27)*
 
 ### BR-OP-08: Win Probability Rules
 * Opportunity.win_probability defaults to OpportunityStage.default_win_probability when an Opportunity is created.

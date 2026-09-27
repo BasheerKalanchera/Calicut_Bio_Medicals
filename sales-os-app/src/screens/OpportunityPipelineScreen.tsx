@@ -35,10 +35,14 @@ interface Props {
     productId?: string;
     brandId?: string;
     tradeInsOnly?: boolean;
+    noProductsOnly?: boolean;
     closedFrom?: string;
     closedTo?: string;
     statusId?: string;
     stageId?: string;
+    // The report bar's own deal count -- shown in the banner at once,
+    // replaced by the list's total when it loads (normally identical).
+    expectedCount?: number;
     label: string;
   };
   onClearInitialFilter?: () => void;
@@ -301,6 +305,7 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
         product_id: initialFilter?.productId,
         brand_id: initialFilter?.brandId,
         has_trade_in: initialFilter?.tradeInsOnly,
+        has_no_items: initialFilter?.noProductsOnly,
         closed_from: initialFilter?.closedFrom,
         closed_to: initialFilter?.closedTo,
         // Report Drill-down: a drilled-into list must match the report
@@ -408,6 +413,12 @@ export default function OpportunityPipelineScreen({ onSelectOpportunity, viewMod
               )}
               <Box sx={{ fontSize: "0.8125rem", fontWeight: 600, color: "#3730a3" }}>
                 Showing: {initialFilter.label}
+                {/* The bar's count straight away, then the list's own server total
+                    once loaded (not the search-narrowed list). */}
+                {(() => {
+                  const n = pipeline?.total ?? initialFilter.expectedCount;
+                  return n === undefined ? null : ` · ${n} ${n === 1 ? "deal" : "deals"}`;
+                })()}
               </Box>
             </Box>
             <Button size="small" onClick={onClearInitialFilter} sx={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "none" }}>

@@ -110,6 +110,25 @@ Expected on Dev: EDAN drops from 43.00 / 6 deals to **23.00 / 5** (its
 13. **(S)** Pipeline Report → **Product**, click a product bar.
     **Expected:** drill-down still works as before (regression).
 
+## E — Deal counts and "No products yet" (scope addition, 2026-09-27)
+
+21. **(S)** Pipeline Report, as Haroon: every bar shows "N deals" under
+    its name; the top tile's deal count now includes Active deals with no
+    products (so it can rise above 37). Click a Stage bar and a Brand bar.
+    **Expected:** the banner reads "Showing: `<name>` · N deals" and N
+    equals the bar's count.
+22. **(S)** Sales Report, All Time, Brand: SonoScape shows "1 deal"; click
+    it. **Expected:** banner "Showing: SonoScape, Won · 1 deal".
+23. **(S)** Pipeline Report → Brand (and Product): a **"No products yet"**
+    row with ₹0 and a deal count; click it. **Expected:** the list shows
+    only Active deals with no products, count = the row's. As Rudrappa:
+    the tile reads 1 active deal, ₹0, and Brand shows only "No products
+    yet — 1 deal".
+24. **(S)** Click any Pipeline Report bar, then a Sales Report bar.
+    **Expected:** the banner's "· N deals" appears at once (the bar's
+    count), not after the list loads; it stays the same once the list
+    appears.
+
 ---
 
 ## Results
@@ -128,3 +147,18 @@ Expected on Dev: EDAN drops from 43.00 / 6 deals to **23.00 / 5** (its
 | 15 | Pass | Brand: EDAN ₹23.0L, SonoScape 490, Maquet 5, Magnamed 0.5, Trade-Ins −11.5 (Basheer) |
 | 16 | Pass | SonoScape → 30 deals, all Active (was 34 incl. 1 Won + 3 Lost); EDAN → 5 Active, On Hold "New ICU Monitor deal" gone (Claude) |
 | 17 | Pass | Trade-Ins → 7 Active. Stage view bars 2.5 + 52 + 245.5 + 98 + 59 + 50 = 507 = tile; Negotiation ₹98.0L → 6 Active deals summing to 98.0, On Hold deal absent (Claude) |
+| 18 | Pass | Insights Dashboard: two tiles, Active Pipeline Value ₹507.0L and Weighted Forecast; no Unweighted tile (Basheer) |
+| 7 | Pass | Sales Report dropdown: Rep, Zone, SBU, Product, Brand (Basheer) |
+| 10 | Pass | Brand + This Quarter: no bars; SonoScape shows only under All Time (Basheer). Checked read-only on Dev: the only Won deal, "USG 2" (created 2026-06-28), has `closed_at` NULL — Won before `0043` added the column, no backfill by design — so it belongs in All Time only. Dev has no deal Won since `0043`, so "a recent win appears in This Quarter" can't be shown here (same limit as step 19) |
+| 20 | Pass | Product Performance label reads "All Opportunities"; SonoScape 34 (Basheer) |
+| 8 | Pass | Sales Report, All Time, Brand: one bar SonoScape ₹4.0L = Revenue tile ₹4.0L (Basheer) |
+| 9 | Pass | SonoScape bar → banner "Showing: SonoScape, Won"; one deal, "USG 2", Won (Basheer) |
+| 11 | Pass | Dashboard "Pipeline by…" → Brand: EDAN 23.0, SonoScape 490.0, Maquet 5.0, Magnamed 0.5, Trade-Ins −11.5 — matches Pipeline Report (Basheer) |
+| 13 | Pass | Pipeline Report → Product, bar click opens List view with "Showing: `<product>`" banner (Basheer). Count not checkable by eye — neither the bar nor the list shows a deal count; fixed by the deal-count scope addition (steps 21–22) |
+| 12 | Pass | Plan's rep (Fahad) is a Marketing User, not a rep — replaced. Rudrappa (Sales Staff): nothing from other owners shows; his only Active deal has no product lines so the report is empty (see finding below). Fazal (Area Manager): ₹247L, 15 SonoScape deals (his 8 + Fahad's 7, team scope); Brand bars total = Stage bars total = tile (Basheer). Brand and Stage share one scoping path (`reporting/repository.py` `_apply_owner_scope`), so no role change needed |
+| — | Finding | A deal with no product lines is left out of the Pipeline Report entirely (tile count and every bar) — the report's inner join on line items drops it. Existed before this change. Basheer's call 2026-09-27: count it (tile + Stage/Rep/SBU/Zone) and add a clickable "No products yet" row to Product/Brand — built as a scope addition with the deal counts |
+| 19 | Pass (partial) | All Time half only: Sales Report → Brand → SonoScape, banner "Showing: SonoScape, Won" (Basheer, as Haroon). Request capture missed (Claude's recording tab didn't see the click); "no date params on All Time" confirmed from code instead — `SalesReportScreen.tsx:28` returns no period for "all", `services/opportunities.ts:44-45` only sends `closed_from`/`closed_to` when set. This Quarter half not exercisable on Dev: no deal Won since `0043`, so no bar to click |
+| 21 | Pass | Tile now 48 active deals (was 37): +11 Active deals with no products (Rudrappa 1, Fazal 1, Nishad 1, Shruthi 4, Basheer K 4 — matches the 2026-09-27 read-only owner query). Stage bars' counts add up to 48; banner "· N deals" matches the bar on Stage and Brand drills (Basheer). Banner count appears when the list finishes loading — it comes from the list's own response |
+| 22 | Pass | Sales Report, All Time, Brand: SonoScape "1 deal"; banner "Showing: SonoScape, Won · 1 deal" (Basheer) |
+| 23 | Pass | "No products yet" row on Brand and Product, ₹0, drills to only product-less deals, count matches; Rudrappa: 1 active deal ₹0, Brand shows only "No products yet — 1 deal" (Basheer) |
+| 24 | Pass | Banner "· N deals" appears at once on Pipeline Report and Sales Report drills and stays the same once the list loads (Basheer) |

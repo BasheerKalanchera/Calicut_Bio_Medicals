@@ -184,6 +184,15 @@ class TestListPipelineFilters:
         sql = self._compiled_list_pipeline()
         assert "BUYBACK" not in sql
 
+    def test_has_no_items_matches_deals_without_any_line(self):
+        sql = self._compiled_list_pipeline(has_no_items=True)
+        assert "JOIN opportunity_item" not in sql
+        assert "opportunity.id NOT IN" in sql
+
+    def test_no_items_filter_off_by_default(self):
+        sql = self._compiled_list_pipeline()
+        assert "NOT IN" not in sql
+
     def test_closed_window_filters_on_closed_at_half_open(self):
         sql = self._compiled_list_pipeline(
             closed_after=datetime(2026, 7, 1), closed_before=datetime(2026, 10, 1)
@@ -256,6 +265,10 @@ class TestCountPipelineFilters:
         sql = self._compiled_count_pipeline(has_trade_in=True)
         assert "opportunity.id IN" in sql
         assert "opportunity_item.line_type = 'BUYBACK'" in sql
+
+    def test_has_no_items_matches_deals_without_any_line(self):
+        sql = self._compiled_count_pipeline(has_no_items=True)
+        assert "opportunity.id NOT IN" in sql
 
     def test_closed_window_filters_on_closed_at_half_open(self):
         sql = self._compiled_count_pipeline(

@@ -16,7 +16,7 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "brand", label: "Brand" },
 ];
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; stageId?: string; statusId?: string; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; stageId?: string; statusId?: string; expectedCount?: number; label: string };
 
 export default function PipelineReportScreen({
   onDrillToPipeline,
@@ -95,12 +95,15 @@ export default function PipelineReportScreen({
               // The synthetic Trade-Ins/Returns bucket isn't a real product
               // or brand -- it drills to every deal carrying a Buyback line.
               const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
-              const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "statusId"> | null =
+              // Active deals with no products entered yet (BR-OP-07) --
+              // their own bucket on the line-level breakdowns.
+              const isNoProducts = (groupBy === "product" || groupBy === "brand") && row.group_id === "no-products";
+              const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "noProductsOnly" | "statusId" | "expectedCount"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
-                groupBy === "product" && !isTradeIns ? "productId" :
-                groupBy === "brand" && !isTradeIns ? "brandId" :
+                groupBy === "product" && !isTradeIns && !isNoProducts ? "productId" :
+                groupBy === "brand" && !isTradeIns && !isNoProducts ? "brandId" :
                 groupBy === "stage" ? "stageId" :
                 null;
               return (
@@ -112,10 +115,12 @@ export default function PipelineReportScreen({
                   formatValue={formatLakhs}
                   secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
                   secondaryLabel="weighted"
+                  count={row.opportunity_count}
                   onClick={
                     !onDrillToPipeline || !activeStatusId ? undefined
-                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, statusId: activeStatusId }, row.group_name)
-                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: activeStatusId }, row.group_name)
+                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
+                    : isNoProducts ? () => onDrillToPipeline({ noProductsOnly: true, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
                     : undefined
                   }
                 />

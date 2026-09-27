@@ -11,6 +11,7 @@ export function MiniBar({
   formatValue,
   secondaryValue,
   secondaryLabel = "weighted",
+  count,
   onClick,
 }: {
   label: string;
@@ -22,6 +23,9 @@ export function MiniBar({
   // affect the bar's width, which is still driven by `value` alone.
   secondaryValue?: number;
   secondaryLabel?: string;
+  // How many deals make up this bar -- shown under the label so a bar can
+  // be checked against the list it drills into.
+  count?: number;
   // Report Drill-down (Feature 11.2): when present, the row becomes
   // clickable (pointer cursor + hover background) -- clicking it should
   // land on the Opportunities that make up this bar's number. Doesn't
@@ -51,18 +55,24 @@ export function MiniBar({
       }}
       title={title}
     >
-      <Box
-        sx={{
-          flex: "0 0 38%",
-          fontSize: "0.8125rem",
-          fontWeight: 600,
-          color: "text.primary",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {label}
+      <Box sx={{ flex: "0 0 38%", minWidth: 0 }}>
+        <Box
+          sx={{
+            fontSize: "0.8125rem",
+            fontWeight: 600,
+            color: "text.primary",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {label}
+        </Box>
+        {count !== undefined && (
+          <Box sx={{ fontSize: "0.6875rem", color: "text.secondary" }}>
+            {count} {count === 1 ? "deal" : "deals"}
+          </Box>
+        )}
       </Box>
       <Box sx={{ flex: 1, height: 10, borderRadius: "5px", bgcolor: "#f3f4f6", overflow: "hidden" }}>
         <Box sx={{ width: `${pct}%`, height: "100%", borderRadius: "5px", bgcolor: "#2a78d6" }} />

@@ -149,6 +149,28 @@ class TestPipelineSummary:
         assert _uuid_literal(sbu_id) in sql
         assert _uuid_literal(zone_id) in sql
 
+    def test_line_items_outer_joined_so_deal_without_items_still_counts(self):
+        # An Active deal with no line items yet counts as 1 deal, 0 value
+        # (Basheer, 2026-09-27) -- an INNER join would drop it from the
+        # headline tile and every breakdown.
+        for group_by in ("stage", "rep", "sbu", "zone", "product", "brand"):
+            sql = _run("pipeline_summary", _make_current_user("Admin"), group_by)
+            assert "LEFT OUTER JOIN opportunity_item ON" in sql, group_by
+
+    def test_group_by_product_buckets_deal_without_items_as_no_products(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "product")
+        assert "opportunity_item.id IS NULL" in sql
+        assert "'no-products'" in sql
+        assert "'No products yet'" in sql
+        # Buyback lines (item present, product NULL) keep their own bucket.
+        assert "'trade-in'" in sql
+
+    def test_group_by_brand_buckets_deal_without_items_as_no_products(self):
+        sql = _run("pipeline_summary", _make_current_user("Admin"), "brand")
+        assert "opportunity_item.id IS NULL" in sql
+        assert "'no-products'" in sql
+        assert "'trade-in'" in sql
+
 
 class TestStagnantDeals:
     def test_threshold_days_applied(self):
@@ -324,6 +346,13 @@ class TestSalesSummary:
         sql = _run("sales_summary", _make_current_user("Admin"), "zone")
         assert "JOIN product ON" not in sql
         assert "JOIN brand ON" not in sql
+
+    def test_line_items_stay_inner_joined(self):
+        # Won requires product details, so Sales never needs the
+        # Pipeline Report's "No products yet" handling.
+        sql = _run("sales_summary", _make_current_user("Admin"), "brand")
+        assert "LEFT OUTER JOIN opportunity_item" not in sql
+        assert "JOIN opportunity_item ON" in sql
 
     def test_period_filter_applied_when_given(self):
         start = datetime(2026, 4, 1, tzinfo=UTC)

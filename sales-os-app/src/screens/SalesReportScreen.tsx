@@ -41,7 +41,7 @@ function formatPercent(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; expectedCount?: number; label: string };
 
 export default function SalesReportScreen({
   onDrillToPipeline,
@@ -134,7 +134,7 @@ export default function SalesReportScreen({
               // Same as Pipeline Report: the synthetic Trade-Ins/Returns
               // bucket drills to every Won deal carrying a Buyback line.
               const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
-              const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "closedFrom" | "closedTo"> | null =
+              const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "closedFrom" | "closedTo" | "expectedCount"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
@@ -148,10 +148,11 @@ export default function SalesReportScreen({
                   value={parseFloat(row.revenue_lakhs)}
                   max={maxRevenue}
                   formatValue={formatLakhs}
+                  count={row.won_count}
                   onClick={
                     !onDrillToPipeline || !wonStatusId ? undefined
-                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, ...drillBase }, drillLabel(row.group_name))
-                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, ...drillBase }, drillLabel(row.group_name))
+                    : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, ...drillBase, expectedCount: row.won_count }, drillLabel(row.group_name))
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, ...drillBase, expectedCount: row.won_count }, drillLabel(row.group_name))
                     : undefined
                   }
                 />

@@ -98,6 +98,39 @@ No migration, no new endpoint, no RLS change.
   `opportunity/repository.py` filters on it (built for Product
   Performance's brand drill-down).
 
+## Scope addition 2026-09-27 — deal counts and "No products yet"
+
+Found in E2E: neither the report bars nor the drilled list show how many
+deals they cover, so nobody can check a bar against its list without
+counting by hand; and an Active deal with no products entered is left out
+of the Pipeline Report entirely. Basheer's call (fuller option): show the
+counts, count such deals (BR-OP-07), and give them their own row.
+
+**Backend**
+- `reporting/repository.py` `pipeline_summary` — `OpportunityItem` is now
+  outer-joined, so a deal with no lines counts (1 deal, 0 value). Product
+  and Brand group columns go through `_line_group`: no item row →
+  `no-products` / "No products yet"; item with no product (Buyback) →
+  trade-in bucket as before. `sales_summary` keeps its inner join (Won
+  requires product details).
+- Opportunity list/count (`router.py`, `service.py`, `repository.py`) gain
+  `has_no_items: bool` — `opportunity.id NOT IN (subquery on
+  opportunity_item)`.
+- Tests: both repository test files.
+
+**Frontend**
+- `ReportingUI.tsx` `MiniBar` — optional `count`, shown as "N deals" under
+  the label. Passed from Pipeline Report and Dashboard
+  (`opportunity_count`) and Sales Report (`won_count`).
+- `PipelineReportScreen.tsx` — the `no-products` row drills with
+  `noProductsOnly`; `DemoApp.tsx`, `OpportunityPipelineScreen.tsx`,
+  `services/opportunities.ts` carry it → `has_no_items`.
+- `OpportunityPipelineScreen.tsx` — the "Showing:" banner adds the
+  drilled list's total ("· N deals").
+- Banner timing (Basheer, 2026-09-27): each drill also passes the bar's
+  count (`expectedCount`), shown at once; the list's own `total` replaces
+  it when loaded — normally the same number.
+
 ## Known consequence (not a bug)
 
 Brand drill-down uses the same "deal has at least one line of this brand"

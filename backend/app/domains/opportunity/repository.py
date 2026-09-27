@@ -107,6 +107,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         product_id: uuid.UUID | None = None,
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
+        has_no_items: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
         owner_team_only: bool = False,
@@ -181,6 +182,11 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     select(OpportunityItem.opportunity_id).where(OpportunityItem.line_type == "BUYBACK")
                 )
             )
+        if has_no_items:
+            # Drill-down from the Pipeline Report's "No products yet" row --
+            # an Active deal with no line items at all still counts in the
+            # report (Basheer, 2026-09-27), so it needs its own filter.
+            stmt = stmt.where(~Opportunity.id.in_(select(OpportunityItem.opportunity_id)))
         # Sales Report drill-down: the report's period filters on closed_at,
         # so the drilled list has to as well (half-open, same as
         # reporting's sales_summary).
@@ -222,6 +228,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         product_id: uuid.UUID | None = None,
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
+        has_no_items: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
         owner_team_only: bool = False,
@@ -265,6 +272,8 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                     select(OpportunityItem.opportunity_id).where(OpportunityItem.line_type == "BUYBACK")
                 )
             )
+        if has_no_items:
+            stmt = stmt.where(~Opportunity.id.in_(select(OpportunityItem.opportunity_id)))
         # Sales Report drill-down: the report's period filters on closed_at,
         # so the drilled list has to as well (half-open, same as
         # reporting's sales_summary).

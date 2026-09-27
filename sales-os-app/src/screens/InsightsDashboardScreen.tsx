@@ -115,6 +115,7 @@ export default function InsightsDashboardScreen() {
                   formatValue={formatLakhs}
                   secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
                   secondaryLabel="weighted"
+                  count={row.opportunity_count}
                 />
               ))}
             </Box>
