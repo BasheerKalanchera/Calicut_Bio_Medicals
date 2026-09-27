@@ -24,6 +24,24 @@ with the next move; then the Render Build Command can go back to
 build also jumped FastAPI, Starlette and others to versions never tested
 here. Details: Progress-Archive 2026-09-27 "UAT move".
 
+### Pin one Python version everywhere, then upgrade to 3.13 — after 2 Oct (raised 2026-09-27)
+
+The local Dev venv is Python 3.11.9 only because that's what it was built
+with; `backend/pyproject.toml` says `requires-python = ">=3.11"` (a
+minimum, not a pin) and ruff targets `py311`. Nothing in the repo pins the
+servers' version — no `.python-version`, `runtime.txt` or `render.yaml`,
+and `docs/Deployment-Topology.md` doesn't mention it — so Render Dev/UAT
+likely run Render's own default, possibly newer than the laptop. That's the
+same class of laptop-vs-fresh-server mismatch as the SQLAlchemy 2.1 crash
+above. Pinning one version everywhere matters more than which version.
+**To do:** (1) check which Python the Render Dev and UAT services actually
+run (Render dashboard); (2) pick a version — 3.13 suggested (mature package
+support; 3.14 needs a compatibility check first, `psycopg2-binary` wheels
+especially); (3) rebuild the local venv, run pytest/ruff/tsc/lint; (4) pin
+it on Render (`PYTHON_VERSION` or a `.python-version` file), in
+`pyproject.toml` and ruff's `target-version`, and record it in
+`docs/Deployment-Topology.md`. Do it in its own window, not mid-feature.
+
 ### UAT backup file names clash within a day (found 2026-09-27)
 
 `scripts/backup_uat.ps1` names each dump `cabio_uat_<date>.dump`, so a

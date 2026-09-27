@@ -8405,3 +8405,47 @@ per step, filled in when the plan is written ("regression only" vs "proves
 the fix"), joining the template fields from the afternoon retro. Item 1 is a
 watch item: if it repeats, proposals get a required "Where else is this
 concept used?" line.
+
+## 2026-09-27 — Hospital-wise target planning: Part 1 steps 1–2 (evening)
+
+**Step 1 — schema (`e55c112`).** Migration `0055`: Business Potential on
+`account` (+ Admin/GM-only notes, set-by/set-at), `target_plan.change_note`
+and `DRAFT` status, new `target_plan_account` with RLS copied from the
+post-`0054` brand-split policies, `cabio_app_plan_overlap()` (SECURITY
+DEFINER), and the never-used `coverage_plan`/`coverage_plan_entry` dropped
+(checked first: both empty, only FK between the two). Claude's
+`alembic upgrade head` was blocked by the auto-mode classifier (it flags
+table drops); Basheer ran it. Applied to Dev, `alembic current` = `0055
+(head)`, objects verified read-only; `Physical-Schema.sql` regenerated.
+`test_persistence` counts updated (37 tables, 115 relationships).
+
+**Hook fix (`89779d1`).** The stash guard-rail hook used a relative path,
+so after a `cd backend` it failed with "No such file or directory" and
+silently didn't run. Both hooks now use `$CLAUDE_PROJECT_DIR`. Not yet
+verified — takes effect on the next session start.
+
+**Step 2 — backend (`04c5e87`).** Plan endpoints take hospitals (target =
+sum, > 0, no duplicates, territory check), drafts, change note, non-blocking
+warnings (HIGH at ₹0, same-SBU overlap), picker/overlap/zone-rollup
+endpoints, Admin/GM rating endpoint with notes redacted for everyone else.
+pytest 1039 passed.
+- *Deviation from plan, recorded in its section 8:* the territory exemption
+  is by role (Admin/GM/SBU Manager, matching the existing
+  `_ZONE_ASSIGNMENT_EXEMPT_ROLES` convention), not "has no `user_zone`
+  rows" — the plan's rule would have let an unassigned salesperson plan
+  every hospital.
+- *Found by a failing test:* a new account's rating was only filled at
+  flush time; `create_account` now sets `NOT_CLASSIFIED` explicitly.
+- *Verification limit:* the suite is mock-based, with no RLS tests. Every
+  new query was run read-only on Dev under real RLS as Sales Staff (Vivek),
+  Area Manager (Fazal) and GM (Haroon) — all ran; territory check matched
+  the picker exactly. RLS isolation on `target_plan_account` goes in the
+  E2E plan. Backlog entry added for real-database RLS tests.
+- *For the E2E plan:* Vivek has 0 eligible hospitals on Dev (none of the 31
+  are in his districts); Fazal has 7. Choose test users by what each step
+  needs; ask before adding any test hospital.
+
+**Also raised:** Python version — nothing pins it on the servers; Backlog
+entry added (pin one version everywhere, then 3.13, after 2 Oct). The note
+from the reporting session (reuse `_period_bounds`, `22eb298`) is in the
+plan's Part 2 section.
