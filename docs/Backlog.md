@@ -9,6 +9,30 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### Cap SQLAlchemy below 2.1 in `backend/pyproject.toml` — urgent (found 2026-09-27)
+
+`pyproject.toml` has `sqlalchemy>=2.0.0` with no upper bound. SQLAlchemy
+2.1 makes a plain `postgresql://` URL use the psycopg 3 driver, which isn't
+installed (only `psycopg2-binary`), so the app crashes at startup:
+`ModuleNotFoundError: No module named 'psycopg'`. Hit on the UAT backend's
+fresh Render build during the 2026-09-27 move; worked around by changing
+that service's Build Command to `pip install . "sqlalchemy>=2.0,<2.1"`.
+Local Dev venv is on 2.0.51, so Dev only breaks on a fresh install.
+**To do:** add the `<2.1` cap in `pyproject.toml` on `main` (rides to UAT
+with the next move; then the Render Build Command can go back to
+`pip install .`), and review the other open-ended dependencies — the same
+build also jumped FastAPI, Starlette and others to versions never tested
+here. Details: Progress-Archive 2026-09-27 "UAT move".
+
+### UAT backup file names clash within a day (found 2026-09-27)
+
+`scripts/backup_uat.ps1` names each dump `cabio_uat_<date>.dump`, so a
+second run on the same day silently overwrites the first. During a
+migration that would replace the pre-migration rollback point with an
+already-migrated copy (worked around on 2026-09-27 with a renamed copy).
+**To do:** add the time to the file name (`cabio_uat_<date>_<HHmm>.dump`);
+the keep-14-newest pruning already works by count, so it's unaffected.
+
 ### Review commit frequency — decide ~2026-10-03 (raised 2026-09-26)
 
 65 commits in the week to 2026-09-26, only 15 feat/fix; each needs
@@ -51,9 +75,10 @@ Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
 ### main → UAT promotion — waiting on leadership's park list (since 2026-09-18)
 
 > **Approved 2026-09-26:** Basheer — everything demoed 2026-09-24 goes to
-> UAT, nothing held back. Date not finalised yet; most likely Sunday
-> 2026-09-27. Plan: `docs/UAT-Promotion-2026-09-Plan.md`. This entry is
-> removed once the promotion is done.
+> UAT, nothing held back. Plan: `docs/UAT-Promotion-2026-09-Plan.md`.
+> **2026-09-27:** moved to `143c78e`, steps 1–9 done, UAT live; step 10
+> (Haroon's spot-check, team told) pending. This entry is removed once
+> step 10 and the plan's paperwork are done.
 
 As of 2026-09-24, `origin/uat` is 83 commits behind `origin/main` (27
 feat/fix), including Target Planning, Lead Follow-up Comments, Insights
@@ -158,9 +183,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Cabio leadership — to be built" #3.
 - **Until the button exists:** `scripts/vendor_pipeline_report.py
   --brand SonoScape` (read-only UAT, ask Basheer first; writes to the
-  Desktop, refuses to write inside the repo). `--sbu Imaging` before the
-  catalog cutover reaches UAT (`docs/UAT-Promotion-2026-09-Plan.md`). Adds
-  a Sales Owner column (vendor asked, 2026-09-26).
+  Desktop, refuses to write inside the repo). The catalog cutover is on
+  UAT since 2026-09-27; `--sbu Imaging` also lists open deals with no
+  product. Adds a Sales Owner column (vendor asked, 2026-09-26). First
+  SonoScape run 2026-09-27: 39 deals, 40 rows (Progress-Archive
+  2026-09-27 "UAT move").
 - **Haroon's answers (2026-09-26, filled sample
   `docs/Master List for sample.xlsx`):** all open deals; no amounts (Total
   Amount, PI No., Lost Reason blank); Customer Type I = Private/Government;

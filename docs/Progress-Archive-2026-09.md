@@ -8197,3 +8197,70 @@ direct file-edit tool, then scan for damaged characters (scripting
 checklist skill). (B) Summaries of a report for others are drafted from the
 finished report itself, never its raw data (extends "Verify before
 claiming"). No new rule for (2): the rule exists, it wasn't followed.
+
+## 2026-09-27 — UAT move (main → uat, `143c78e`): steps 1–9 done
+
+Plan: `docs/UAT-Promotion-2026-09-Plan.md`. Zone-tree E2E paused at step 1
+(not yet run) to start the move.
+
+- **Steps 1–2 (Basheer):** team told (1 hour); both Render services
+  suspended.
+- **Step 3 (read-only):** `uat_product_check.py` output identical to
+  2026-09-26 (65 products, all active, 0 changed since 2026-09-21; same 5
+  to delete, same 2 stands to deactivate); UAT at `0041`. Before-snapshot:
+  151 deals, value sum 2,044,910.30, 123 deal lines (qty 165), 788
+  activities, 411 accounts.
+- **Step 4:** `scripts\backup_uat.ps1` at 15:23 — 414,797 bytes, 374 TOC
+  entries. Rollback copy saved as
+  `cabio_uat_2026-09-27_pre-move-0041.dump`. **Gap found:** the script
+  names dumps by date only, so a second run the same day overwrites the
+  first — after the migration that would have replaced the rollback point.
+  Worked around with the renamed copy (Basheer had already renamed the
+  06:46 dump to `… morning.dump`).
+- **Step 5 (Basheer):** `alembic upgrade head` ran `0042` → `0054`
+  cleanly; applied to UAT, `alembic current` = `0054 (head)`.
+- **Step 6 (read-only):** `uat_promotion_check.py post` — ALL CHECKS
+  PASSED. Deal data identical to the snapshot (incl. the deal-line →
+  product fingerprint); products 61 / 59 active, brands 10 / 9, categories
+  21 / 20, models 60 / 59; EDAN F9 present; both stands inactive under
+  Legacy; all 6 new tables have RLS on with policies. The check script's
+  catalog-CSV path pointed at a stale session folder; fixed in a copy in
+  this session's scratchpad before the run.
+- **Step 7 (Basheer):** catalog listing reviewed — looks right. Seven odd
+  spellings ("Kolkatta", "Boyils", "Vital Signe Monitor", "IX Nelcore" vs
+  "iM50 Nellcore", "SE- 1515", "CX 10") are verbatim from Haroon's
+  corrected sheet (`docs/Product-Catalog-UAT-Export-2026-09-18 -
+  updated.xlsx`), not introduced by the move; for Haroon to confirm in
+  step 10 and rename in Product Catalog if wrong.
+- **Step 8:** `git push origin 143c78e:uat` OK (`origin/uat` = `143c78e`).
+  Resume restarted the backend on the old commit, as the plan expected;
+  the manual deploy of `143c78e` then **failed at startup**:
+  `ModuleNotFoundError: No module named 'psycopg'`. **Root cause:**
+  `backend/pyproject.toml` has `sqlalchemy>=2.0.0` with no upper bound;
+  the fresh Render build pulled SQLAlchemy 2.1.1, where a plain
+  `postgresql://` URL defaults to the psycopg 3 driver, but only
+  `psycopg2-binary` is installed (local venv is on 2.0.51). Not caused by
+  the move's code. **Fix:** Render backend Build Command changed from
+  `pip install .` to `pip install . "sqlalchemy>=2.0,<2.1"`; saving it
+  auto-deployed. Both services Live on `143c78e`. The permanent fix (cap
+  in `pyproject.toml`, review other open-ended dependencies) is still to
+  do. Any fresh Dev install or Prod build would hit the same failure.
+- **Step 9 (Basheer, look-only):** all checks passed.
+- **Pipeline Report shows 69 open deals vs. the 70 in the 2026-09-26
+  trial:** not a loss (deal data identical before/after). Different
+  measures: 70 = open Imaging deals incl. 31 with no product; the UAT
+  Pipeline Report (`143c78e`) leaves out deals with no line items (fixed
+  in `ae248f8`, not in this move). Until the next move, UAT's Pipeline
+  Report undercounts product-less deals. Not confirmed by query (offered,
+  not run).
+- **SonoScape vendor report (read-only UAT, Basheer asked):**
+  `vendor_pipeline_report.py --brand SonoScape` → 39 open deals, 40 rows,
+  clean model names, on Basheer's Desktop. 39 = 70 − 31 exactly,
+  confirming no deal lost. The inflated-amount issue doesn't affect it (no
+  amounts in the report). Covering note to Haroon drafted in chat. Also an
+  all-open-Imaging version (`--sbu Imaging`: 70 deals, 71 rows) with the
+  31 no-product rows shaded and noted, on the Desktop for internal
+  follow-up; 16 of the 31 are Om Hiremath's.
+- **Remaining:** step 10 (Haroon's spot-check including the seven names,
+  then the team announcement); plan's after-move paperwork (section 5);
+  commit.
