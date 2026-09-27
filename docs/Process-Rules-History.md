@@ -88,6 +88,12 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Steps that save to the shared Dev DB: plan them as "Basheer clicks, Claude watches" from the start, and start request recording in the tab before he acts.
   **Why:** 2026-09-24, the auto-mode classifier blocked Claude's direct saves three times (steps 7, 15, 16), each switched to Basheer mid-step. Step 16 then had to be repeated because Claude's network recording wasn't live when Basheer acted, and Claude wrongly suggested he'd used a different tab.
 
+- **Rule:** Before the first step of any manual E2E run, have the Dev backend restarted (or confirm it restarted after the feature's last backend change).
+  **Why:** 2026-09-27, Zone Tree E2E step 1 showed a flat list. The Dev uvicorn `--reload` worker had last restarted at 10:52; the zone-tree backend files were saved 13:17–13:22, so the server was still on pre-`ff33408` code while Vite served the new frontend. pytest and `/code-review` passed because neither runs against the live server. Cost one round trip of diagnosis; Basheer restarted it and all 8 steps passed.
+
+- **Rule:** Fresh-install check before every UAT/Prod promotion (lives in `docs/Deployment-Topology.md`, "Promotion flow").
+  **Why:** 2026-09-27 UAT move, step 8: the backend's fresh Render build pulled SQLAlchemy 2.1.1 (`pyproject.toml` has no upper bound), which defaults a plain `postgresql://` URL to psycopg 3 — not installed — so the app crashed at startup with `ModuleNotFoundError: No module named 'psycopg'` while UAT was suspended. The laptop's venv (2.0.51) never re-fetches, so nothing before the day could show it. Worked around with a Render Build Command pin; the permanent cap is in Backlog.
+
 ## Troubleshooting & scripting
 
 - **Rule:** When something fails repeatedly for an unclear reason, isolate the variable with a small/fast diagnostic before retrying the same large/slow operation again — d…

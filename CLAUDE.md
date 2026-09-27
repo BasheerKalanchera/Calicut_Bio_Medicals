@@ -186,6 +186,9 @@ code or changing structure. On any conflict, the document wins over this file.
   *(2026-09-22)*
 - Flag the hot-reload risk before editing frontend files while a test browser
   session is open — it can silently reset the logged-in user. *(2026-09-22)*
+- Before the first step of any manual E2E run, have the Dev backend restarted
+  (or confirm it restarted after the feature's last backend change) — its
+  auto-reload can silently stop, leaving the screen on old code. *(2026-09-27)*
 - When writing a test plan, check its assumed data read-only against the live
   records — existing splits/values, and who each picker actually offers (owner,
   split, assignee) — not just role relationships. *(2026-09-24)*

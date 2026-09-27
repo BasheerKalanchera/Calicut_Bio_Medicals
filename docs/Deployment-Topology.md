@@ -145,6 +145,14 @@ fails the app at startup (psycopg 3 default driver). Revert to `pip install .` o
 - `prod` — the promoted former-UAT branch. Render's Prod service tracks this branch;
   nothing reaches Prod except what's merged here.
 
+**Fresh-install check (before every UAT/Prod promotion, 2026-09-27):** the day
+before, Claude builds the backend from scratch in a throwaway environment on the
+laptop, exactly as Render will — new venv, `pip install .` from `backend/`, start
+the app, check `/api/v1/health`. It must start cleanly before the move goes ahead.
+Why: Render always fetches the newest versions of the app's dependencies; on
+2026-09-27 a new SQLAlchemy release stopped the UAT server mid-move, which a laptop
+that never re-fetches couldn't have shown.
+
 **Weekly batch promotion**
 1. Feature work happens on `main` — unchanged.
 2. Before merge, run an RLS/role smoke-test pass in Dev: a handful of test accounts
