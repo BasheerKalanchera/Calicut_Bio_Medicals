@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import dayjs from "dayjs";
-import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getSalesHeadline, getSalesSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { ReportingFilters, SalesGroupBy } from "../types/reporting";
@@ -41,7 +41,7 @@ function formatPercent(v: number) {
   return `${(v * 100).toFixed(1)}%`;
 }
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; expectedCount?: number; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; zoneExact?: boolean; closedFrom?: string; closedTo?: string; statusId?: string; expectedCount?: number; label: string };
 
 export default function SalesReportScreen({
   onDrillToPipeline,
@@ -134,7 +134,7 @@ export default function SalesReportScreen({
               // Same as Pipeline Report: the synthetic Trade-Ins/Returns
               // bucket drills to every Won deal carrying a Buyback line.
               const isTradeIns = (groupBy === "product" || groupBy === "brand") && row.group_id === "trade-in";
-              const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "closedFrom" | "closedTo" | "expectedCount"> | null =
+              const filterKey: keyof Omit<DrillFilter, "label" | "statusId" | "tradeInsOnly" | "zoneExact" | "closedFrom" | "closedTo" | "expectedCount"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
@@ -143,16 +143,17 @@ export default function SalesReportScreen({
                 null;
               return (
                 <MiniBar
-                  key={row.group_id}
+                  key={`${row.group_id}${row.zone_exact ? "-exact" : ""}`}
                   label={row.group_name}
                   value={parseFloat(row.revenue_lakhs)}
                   max={maxRevenue}
                   formatValue={formatLakhs}
                   count={row.won_count}
+                  indent={row.depth ?? 0}
                   onClick={
                     !onDrillToPipeline || !wonStatusId ? undefined
                     : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, ...drillBase, expectedCount: row.won_count }, drillLabel(row.group_name))
-                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, ...drillBase, expectedCount: row.won_count }, drillLabel(row.group_name))
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, ...drillBase, expectedCount: row.won_count, ...(row.zone_exact && { zoneExact: true }) }, drillLabel(row.group_name))
                     : undefined
                   }
                 />
@@ -160,6 +161,7 @@ export default function SalesReportScreen({
             })}
           </Box>
         )}
+        {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
       </Box>
     </Box>
   );

@@ -1,6 +1,6 @@
 # Zone Tree in Reports — Implementation Plan
 
-**Status:** Draft 2026-09-27, awaiting Basheer's approval.
+**Status:** Approved 2026-09-27 (Basheer); building.
 
 ## What this is (plain terms)
 
@@ -18,7 +18,7 @@ Kerala                      48 deals   ₹507.0L
    North Kerala             35 deals   ₹300.0L
       Malappuram            12 deals   ₹ 90.0L
       Kannur                 8 deals   ₹ 60.0L
-      North Kerala – not in a sub-zone   2 deals ₹10.0L
+      North Kerala (not in a sub-zone)   2 deals ₹10.0L
    South Kerala             …
 Karnataka                   …
    Bangalore                …
@@ -30,8 +30,13 @@ Karnataka                   …
 - Each row's count and amount **include everything beneath it**.
 - If some hospitals are tagged directly to a zone that has sub-zones
   (e.g. to "North Kerala" rather than a district), they get their own
-  "`<zone>` – not in a sub-zone" line, so the lines under a parent always
-  add up to the parent. The line appears only when such hospitals exist.
+  "`<zone>` (not in a sub-zone)" line, so the lines under a parent always
+  add up to the parent. The line appears only when such hospitals exist
+  *and* the zone also has sub-zones with deals — if all of a zone's deals
+  are tagged to it directly (Bangalore on Dev today), the line would only
+  repeat the parent, so it's left out. One general rule, no zone named in
+  code; the line appears by itself once a sub-zone gets a deal. *(Basheer
+  confirmed, 2026-09-27, along with the "(not in a sub-zone)" wording.)*
 - Only zones that actually have deals (and the zones above them) are shown.
 - The top rows (Kerala, Karnataka) add up to the report's headline total.
 - Clicking any row opens that zone and everything inside it — which is
@@ -55,8 +60,8 @@ all three places.
   the service.
 - `reporting/service.py` — new `_zone_tree_rows()`: loads the zone tree
   (`zone.parent_zone_id`), rolls each exact-zone row up to every ancestor
-  (counts, value, weighted / revenue, won count), adds a "not in a
-  sub-zone" row where a parent has hospitals tagged directly to it, drops
+  (counts, value, weighted / revenue, won count), adds a "(not in a
+  sub-zone)" row where a parent has hospitals tagged directly to it, drops
   zones with no deals, and returns rows in tree order (siblings in the same
   order as today — alphabetical).
 - `reporting/schemas.py` — `PipelineSummaryRow` / `SalesSummaryRow` gain

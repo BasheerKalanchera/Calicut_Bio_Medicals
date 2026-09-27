@@ -7,6 +7,10 @@ export interface PipelineSummaryRow {
   total_value_lakhs: string;
   unweighted_forecast_lakhs: string;
   weighted_forecast_lakhs: string;
+  // Zone breakdown only: tree indent level; true on a "<zone> (not in a
+  // sub-zone)" row, which drills to that exact zone rather than its subtree.
+  depth?: number | null;
+  zone_exact?: boolean | null;
 }
 
 export interface PipelineSummaryResponse {
@@ -108,6 +112,8 @@ export interface SalesSummaryRow {
   group_name: string;
   revenue_lakhs: string;
   won_count: number;
+  depth?: number | null;
+  zone_exact?: boolean | null;
 }
 
 export interface SalesSummaryResponse {

@@ -113,6 +113,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Stalled:** Excluded from committed pipeline/forecasts.
 * **Lost:** Excluded entirely.
 * **Active deal with no products entered yet:** still counts in the Pipeline Report and Insights Dashboard — 1 deal, ₹0 value — in the headline deal count and the Stage/Rep/SBU/Zone breakdowns. The Product and Brand breakdowns show such deals in their own "No products yet" row, which drills to them. *(Basheer, 2026-09-27)*
+* **Zone breakdowns roll up the zone tree:** in the Pipeline Report, Sales Report and Insights Dashboard, a zone's count and value include every zone beneath it; the Zone view is shown as the full tree from the top (Kerala, Karnataka) down. Deals at hospitals tagged directly to a zone that also has sub-zones with deals appear in a "`<zone>` (not in a sub-zone)" row, so each level adds up to its parent. *(Basheer, 2026-09-27)*
 
 ### BR-OP-08: Win Probability Rules
 * Opportunity.win_probability defaults to OpportunityStage.default_win_probability when an Opportunity is created.

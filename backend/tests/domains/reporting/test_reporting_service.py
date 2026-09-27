@@ -10,6 +10,7 @@ not a 403, just nothing to add.
 
 import uuid
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from app.domains.organization.models import UserProfile
@@ -108,3 +109,101 @@ class TestSalesHeadlineDerivedFields:
 
         assert result.win_rate == Decimal(0)
         assert result.avg_deal_size_lakhs == Decimal(0)
+
+
+# --- Zone tree (docs/Zone-Tree-In-Reports-Implementation-Plan.md) ---------
+
+
+_KERALA, _NORTH, _SOUTH, _MALAPPURAM, _KANNUR, _ERNAKULAM, _KARNATAKA, _BANGALORE, _EMPTY = (
+    uuid.uuid4() for _ in range(9)
+)
+_ZONES = [
+    SimpleNamespace(id=_KERALA, name="Kerala", parent_zone_id=None),
+    SimpleNamespace(id=_NORTH, name="North Kerala", parent_zone_id=_KERALA),
+    SimpleNamespace(id=_SOUTH, name="South Kerala", parent_zone_id=_KERALA),
+    SimpleNamespace(id=_MALAPPURAM, name="Malappuram", parent_zone_id=_NORTH),
+    SimpleNamespace(id=_KANNUR, name="Kannur", parent_zone_id=_NORTH),
+    SimpleNamespace(id=_ERNAKULAM, name="Ernakulam", parent_zone_id=_SOUTH),
+    SimpleNamespace(id=_KARNATAKA, name="Karnataka", parent_zone_id=None),
+    SimpleNamespace(id=_BANGALORE, name="Bangalore", parent_zone_id=_KARNATAKA),
+    SimpleNamespace(id=_EMPTY, name="Cluster 1", parent_zone_id=_BANGALORE),
+]
+
+
+def _prow(zone_id, count, value):
+    v = Decimal(value)
+    return SimpleNamespace(
+        group_id=str(zone_id), group_name="(ignored)", opportunity_count=count,
+        total_value_lakhs=v, unweighted_forecast_lakhs=v, weighted_forecast_lakhs=v / 2,
+    )
+
+
+def _pipeline_zone_rows(repo_rows):
+    mock_repo = MagicMock(spec=ReportingRepository)
+    mock_repo.pipeline_summary.return_value = list(repo_rows)
+    mock_repo.zone_tree.return_value = _ZONES
+    service = ReportingService(repository=mock_repo)
+    return service.pipeline_summary(_make_current_user("Admin"), "zone").rows
+
+
+class TestZoneTree:
+    # Mirrors Dev's shape on 2026-09-27: deals tagged to North/South Kerala
+    # directly as well as to districts; Bangalore's deals all direct.
+    REPO_ROWS = (
+        _prow(_NORTH, 24, "263"), _prow(_MALAPPURAM, 10, "129"), _prow(_KANNUR, 1, "5"),
+        _prow(_SOUTH, 2, "24"), _prow(_ERNAKULAM, 5, "7"), _prow(_BANGALORE, 6, "79"),
+    )
+
+    def _as_tuples(self, rows):
+        return [(r.depth, r.group_name, r.opportunity_count, r.total_value_lakhs, bool(r.zone_exact)) for r in rows]
+
+    def test_rolls_up_and_orders_as_a_tree(self):
+        rows = _pipeline_zone_rows(self.REPO_ROWS)
+        assert self._as_tuples(rows) == [
+            (0, "Karnataka", 6, Decimal("79"), False),
+            (1, "Bangalore", 6, Decimal("79"), False),
+            (0, "Kerala", 42, Decimal("428"), False),
+            (1, "North Kerala", 35, Decimal("397"), False),
+            (2, "Kannur", 1, Decimal("5"), False),
+            (2, "Malappuram", 10, Decimal("129"), False),
+            (2, "North Kerala (not in a sub-zone)", 24, Decimal("263"), True),
+            (1, "South Kerala", 7, Decimal("31"), False),
+            (2, "Ernakulam", 5, Decimal("7"), False),
+            (2, "South Kerala (not in a sub-zone)", 2, Decimal("24"), True),
+        ]
+
+    def test_top_level_rows_add_up_to_the_whole(self):
+        rows = _pipeline_zone_rows(self.REPO_ROWS)
+        top = [r for r in rows if r.depth == 0]
+        assert sum(r.opportunity_count for r in top) == 48
+        assert sum(r.total_value_lakhs for r in top) == Decimal("507")
+        assert sum(r.weighted_forecast_lakhs for r in top) == Decimal("253.5")
+
+    def test_not_in_sub_zone_row_keeps_the_zone_id_for_an_exact_drill(self):
+        rows = _pipeline_zone_rows(self.REPO_ROWS)
+        exact = [r for r in rows if r.zone_exact]
+        assert {r.group_id for r in exact} == {str(_NORTH), str(_SOUTH)}
+
+    def test_no_not_in_sub_zone_row_when_all_deals_are_direct(self):
+        # Bangalore has a sub-zone (Cluster 1) but no deals there.
+        rows = _pipeline_zone_rows(self.REPO_ROWS)
+        assert not any(r.group_name.startswith("Bangalore (") for r in rows)
+        assert not any(r.group_name == "Cluster 1" for r in rows)
+
+    def test_other_breakdowns_untouched(self):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.pipeline_summary.return_value = []
+        ReportingService(repository=mock_repo).pipeline_summary(_make_current_user("Admin"), "stage")
+        mock_repo.zone_tree.assert_not_called()
+
+    def test_sales_summary_rolls_up_won_count_and_revenue(self):
+        mock_repo = MagicMock(spec=ReportingRepository)
+        mock_repo.sales_summary.return_value = [
+            SimpleNamespace(group_id=str(_NORTH), group_name="x", revenue_lakhs=Decimal("4"), won_count=1),
+        ]
+        mock_repo.zone_tree.return_value = _ZONES
+        rows = ReportingService(repository=mock_repo).sales_summary(_make_current_user("Admin"), "zone").rows
+        assert [(r.depth, r.group_name, r.won_count, r.revenue_lakhs) for r in rows] == [
+            (0, "Kerala", 1, Decimal("4")),
+            (1, "North Kerala", 1, Decimal("4")),
+        ]

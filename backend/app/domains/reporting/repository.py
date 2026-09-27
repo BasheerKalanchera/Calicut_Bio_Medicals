@@ -104,6 +104,11 @@ class ReportingRepository:
             stmt = stmt.where(UserProfile.id == user_id)
         return stmt
 
+    def zone_tree(self) -> list[Row]:
+        # Every zone (reference data, not RLS-scoped) -- the service rolls
+        # each zone's exact-match figures up into its ancestors.
+        return list(self.db.execute(select(Zone.id, Zone.name, Zone.parent_zone_id)).all())
+
     def pipeline_summary(
         self,
         current_user: UserProfile,

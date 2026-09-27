@@ -20,6 +20,11 @@ class PipelineSummaryRow(BaseModel):
     total_value_lakhs: Decimal
     unweighted_forecast_lakhs: Decimal
     weighted_forecast_lakhs: Decimal
+    # Zone breakdown only (docs/Zone-Tree-In-Reports-Implementation-Plan.md):
+    # tree indent level, and true on a "<zone> (not in a sub-zone)" row,
+    # whose drill must match that zone exactly rather than zone + subtree.
+    depth: int | None = None
+    zone_exact: bool | None = None
 
 
 class PipelineSummaryResponse(BaseModel):
@@ -131,6 +136,9 @@ class SalesSummaryRow(BaseModel):
     group_name: str
     revenue_lakhs: Decimal
     won_count: int
+    # Zone breakdown only -- see PipelineSummaryRow.
+    depth: int | None = None
+    zone_exact: bool | None = None
 
 
 class SalesSummaryResponse(BaseModel):

@@ -108,6 +108,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
         has_no_items: bool = False,
+        zone_exact: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
         owner_team_only: bool = False,
@@ -136,11 +137,13 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             # exactly as cheap as it is today. Matches the zone itself plus every
             # zone beneath it (e.g. picking "Kerala" also returns opportunities
             # for accounts tagged Kozhikode, Kottayam, etc.)
+            # zone_exact: a report's "<zone> (not in a sub-zone)" row drills
+            # to hospitals tagged with exactly this zone, not its subtree.
             descendant_ids = select(ZoneClosure.descendant_zone_id).where(
                 ZoneClosure.ancestor_zone_id == zone_id
             )
             stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(
-                Account.zone_id.in_(descendant_ids)
+                Account.zone_id == zone_id if zone_exact else Account.zone_id.in_(descendant_ids)
             )
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)
@@ -229,6 +232,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         brand_id: uuid.UUID | None = None,
         has_trade_in: bool = False,
         has_no_items: bool = False,
+        zone_exact: bool = False,
         closed_after: datetime | None = None,
         closed_before: datetime | None = None,
         owner_team_only: bool = False,
@@ -236,11 +240,13 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     ) -> int:
         stmt = select(func.count(Opportunity.id))
         if zone_id:
+            # zone_exact: a report's "<zone> (not in a sub-zone)" row drills
+            # to hospitals tagged with exactly this zone, not its subtree.
             descendant_ids = select(ZoneClosure.descendant_zone_id).where(
                 ZoneClosure.ancestor_zone_id == zone_id
             )
             stmt = stmt.join(Account, Opportunity.account_id == Account.id).where(
-                Account.zone_id.in_(descendant_ids)
+                Account.zone_id == zone_id if zone_exact else Account.zone_id.in_(descendant_ids)
             )
         if account_id:
             stmt = stmt.where(Opportunity.account_id == account_id)

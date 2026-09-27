@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import dayjs from "dayjs";
-import { LoadingOrEmpty, MiniBar, SectionCard, StatTile } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
 import type { PipelineGroupBy } from "../types/reporting";
@@ -108,7 +108,7 @@ export default function InsightsDashboardScreen() {
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {pipelineRows.map((row) => (
                 <MiniBar
-                  key={row.group_id}
+                  key={`${row.group_id}${row.zone_exact ? "-exact" : ""}`}
                   label={row.group_name}
                   value={parseFloat(row.total_value_lakhs)}
                   max={maxGroupValue}
@@ -116,10 +116,12 @@ export default function InsightsDashboardScreen() {
                   secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
                   secondaryLabel="weighted"
                   count={row.opportunity_count}
+                  indent={row.depth ?? 0}
                 />
               ))}
             </Box>
           )}
+          {groupBy === "zone" && pipelineRows.length > 0 && <ZoneTreeNote />}
         </SectionCard>
       </Box>
 

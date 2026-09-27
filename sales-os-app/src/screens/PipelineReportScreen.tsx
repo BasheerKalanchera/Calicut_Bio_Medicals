@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
-import { LoadingOrEmpty, MiniBar, StatTile } from "../components/ReportingUI";
+import { LoadingOrEmpty, MiniBar, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import { getPipelineSummary } from "../services/reporting";
 import { listStatuses } from "../services/masterData";
 import type { PipelineGroupBy } from "../types/reporting";
@@ -16,7 +16,7 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "brand", label: "Brand" },
 ];
 
-type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; stageId?: string; statusId?: string; expectedCount?: number; label: string };
+type DrillFilter = { ownerId?: string; zoneId?: string; sbuId?: string; productId?: string; brandId?: string; tradeInsOnly?: boolean; noProductsOnly?: boolean; zoneExact?: boolean; stageId?: string; statusId?: string; expectedCount?: number; label: string };
 
 export default function PipelineReportScreen({
   onDrillToPipeline,
@@ -98,7 +98,7 @@ export default function PipelineReportScreen({
               // Active deals with no products entered yet (BR-OP-07) --
               // their own bucket on the line-level breakdowns.
               const isNoProducts = (groupBy === "product" || groupBy === "brand") && row.group_id === "no-products";
-              const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "noProductsOnly" | "statusId" | "expectedCount"> | null =
+              const filterKey: keyof Omit<DrillFilter, "label" | "tradeInsOnly" | "noProductsOnly" | "zoneExact" | "statusId" | "expectedCount"> | null =
                 groupBy === "rep" ? "ownerId" :
                 groupBy === "zone" ? "zoneId" :
                 groupBy === "sbu" ? "sbuId" :
@@ -108,7 +108,7 @@ export default function PipelineReportScreen({
                 null;
               return (
                 <MiniBar
-                  key={row.group_id}
+                  key={`${row.group_id}${row.zone_exact ? "-exact" : ""}`}
                   label={row.group_name}
                   value={parseFloat(row.total_value_lakhs)}
                   max={maxValue}
@@ -116,11 +116,12 @@ export default function PipelineReportScreen({
                   secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
                   secondaryLabel="weighted"
                   count={row.opportunity_count}
+                  indent={row.depth ?? 0}
                   onClick={
                     !onDrillToPipeline || !activeStatusId ? undefined
                     : isTradeIns ? () => onDrillToPipeline({ tradeInsOnly: true, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
                     : isNoProducts ? () => onDrillToPipeline({ noProductsOnly: true, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
-                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: activeStatusId, expectedCount: row.opportunity_count }, row.group_name)
+                    : filterKey ? () => onDrillToPipeline({ [filterKey]: row.group_id, statusId: activeStatusId, expectedCount: row.opportunity_count, ...(row.zone_exact && { zoneExact: true }) }, row.group_name)
                     : undefined
                   }
                 />
@@ -128,6 +129,7 @@ export default function PipelineReportScreen({
             })}
           </Box>
         )}
+        {groupBy === "zone" && rows.length > 0 && <ZoneTreeNote />}
       </Box>
     </Box>
   );

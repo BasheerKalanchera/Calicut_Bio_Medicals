@@ -193,6 +193,16 @@ class TestListPipelineFilters:
         sql = self._compiled_list_pipeline()
         assert "NOT IN" not in sql
 
+    def test_zone_filter_includes_sub_zones_by_default(self):
+        sql = self._compiled_list_pipeline(zone_id=uuid.uuid4())
+        assert "zone_closure" in sql
+
+    def test_zone_exact_matches_only_that_zone(self):
+        zone_id = uuid.uuid4()
+        sql = self._compiled_list_pipeline(zone_id=zone_id, zone_exact=True)
+        assert "zone_closure" not in sql
+        assert f"account.zone_id = '{zone_id.hex}'" in sql
+
     def test_closed_window_filters_on_closed_at_half_open(self):
         sql = self._compiled_list_pipeline(
             closed_after=datetime(2026, 7, 1), closed_before=datetime(2026, 10, 1)
@@ -269,6 +279,10 @@ class TestCountPipelineFilters:
     def test_has_no_items_matches_deals_without_any_line(self):
         sql = self._compiled_count_pipeline(has_no_items=True)
         assert "opportunity.id NOT IN" in sql
+
+    def test_zone_exact_matches_only_that_zone(self):
+        sql = self._compiled_count_pipeline(zone_id=uuid.uuid4(), zone_exact=True)
+        assert "zone_closure" not in sql
 
     def test_closed_window_filters_on_closed_at_half_open(self):
         sql = self._compiled_count_pipeline(

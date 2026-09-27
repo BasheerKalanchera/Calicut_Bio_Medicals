@@ -21,6 +21,7 @@ export interface PipelineParams {
   brand_id?: string;
   has_trade_in?: boolean;
   has_no_items?: boolean;
+  zone_exact?: boolean;
   closed_from?: string;
   closed_to?: string;
   owner_team_only?: boolean;
@@ -43,6 +44,7 @@ export async function listPipeline(params: PipelineParams = {}): Promise<Pipelin
   if (params.brand_id)   p.brand_id   = params.brand_id;
   if (params.has_trade_in) p.has_trade_in = true;
   if (params.has_no_items) p.has_no_items = true;
+  if (params.zone_exact) p.zone_exact = true;
   if (params.closed_from) p.closed_from = params.closed_from;
   if (params.closed_to)   p.closed_to   = params.closed_to;
   if (params.owner_team_only) p.owner_team_only = true;

@@ -3,16 +3,18 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-## Zone tree in reports — plan drafted (2026-09-27)
+## Zone tree in reports — built, E2E not started (2026-09-27)
 
-- Plan: `docs/Zone-Tree-In-Reports-Implementation-Plan.md` (draft, not yet
-  approved). Basheer's decisions: tree from Kerala/Karnataka down, always
-  shown, "not in a sub-zone" lines so levels roll up, Pipeline Report +
-  Sales Report + Dashboard.
-- **Next:** Basheer approves the plan; Claude checks Dev zone data
-  read-only, writes the E2E test plan, builds. Not in the current UAT move
-  unless Basheer says so.
-
+- Plan `docs/Zone-Tree-In-Reports-Implementation-Plan.md` (approved; both
+  small choices confirmed). Test plan `…-Manual-E2E-Test-Plan.md` has Dev's
+  real numbers (checked read-only as Haroon). Checkpoint commit — see
+  `git log`. pytest 994 pass, tsc clean, lint 0 errors, `/code-review`
+  medium: no findings.
+- **Next:** Basheer runs E2E steps 1–8 (all Simple, start as Haroon);
+  Claude records results, then feature commit + post-commit checklist.
+- End-of-testing list (existed before, from the review): reports' own
+  zone filter is exact-zone (unused by any screen); Sales breakdown would
+  drop a Won deal with no products (Won requires products).
 ## UAT promotion (main → uat) — starts today ~3 pm (2026-09-27)
 
 - Plan: `docs/UAT-Promotion-2026-09-Plan.md`, revised 2026-09-27; its

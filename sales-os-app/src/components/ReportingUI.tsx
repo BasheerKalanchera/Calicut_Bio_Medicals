@@ -12,6 +12,7 @@ export function MiniBar({
   secondaryValue,
   secondaryLabel = "weighted",
   count,
+  indent = 0,
   onClick,
 }: {
   label: string;
@@ -26,6 +27,9 @@ export function MiniBar({
   // How many deals make up this bar -- shown under the label so a bar can
   // be checked against the list it drills into.
   count?: number;
+  // Tree depth (Zone breakdown) -- indents the label only; the bar still
+  // scales against the same max as every other row.
+  indent?: number;
   // Report Drill-down (Feature 11.2): when present, the row becomes
   // clickable (pointer cursor + hover background) -- clicking it should
   // land on the Opportunities that make up this bar's number. Doesn't
@@ -55,7 +59,7 @@ export function MiniBar({
       }}
       title={title}
     >
-      <Box sx={{ flex: "0 0 38%", minWidth: 0 }}>
+      <Box sx={{ flex: "0 0 38%", minWidth: 0, pl: indent * 1.5 }}>
         <Box
           sx={{
             fontSize: "0.8125rem",
@@ -168,4 +172,14 @@ export function LoadingOrEmpty({
     );
   }
   return null;
+}
+
+// Shown under a Zone breakdown -- its rows are a tree, so only the
+// top-level rows add up to the report total.
+export function ZoneTreeNote() {
+  return (
+    <Box sx={{ fontSize: "0.6875rem", color: "text.secondary", mt: 1 }}>
+      Each zone includes the zones indented beneath it.
+    </Box>
+  );
 }

@@ -40,6 +40,71 @@ def _has_team_to_roll_up(current_user: UserProfile) -> bool:
     return role_name in UNRESTRICTED_ROLES or TEAM_SCOPE_BUILDERS.get(role_name) is not None
 
 
+_NOT_IN_SUB_ZONE = "{} (not in a sub-zone)"
+
+
+def _zone_tree_rows(rows, zones, count_field: str, sum_fields: tuple[str, ...]) -> list[dict]:
+    """Roll exact-zone report rows up the zone tree.
+
+    The repository groups each deal under its account's own zone -- one zone
+    per deal, so child totals can simply be added into every ancestor. Output
+    is in tree order (siblings alphabetical), each row carrying its depth.
+    Zones with no deals are dropped. Where a zone has deals tagged directly
+    to it *and* sub-zones with deals, its direct deals get their own
+    "<zone> (not in a sub-zone)" row, so the rows under a parent add up to
+    the parent. (No such row when all of a zone's deals are direct -- it
+    would just repeat the parent.) docs/Zone-Tree-In-Reports-Implementation-Plan.md
+    """
+    fields = (count_field, *sum_fields)
+    zero = {count_field: 0, **{f: Decimal(0) for f in sum_fields}}
+    direct = {r.group_id: {f: getattr(r, f) for f in fields} for r in rows}
+    names = {str(z.id): z.name for z in zones}
+    children: dict[str | None, list[str]] = {}
+    for z in zones:
+        parent = str(z.parent_zone_id) if z.parent_zone_id else None
+        children.setdefault(parent, []).append(str(z.id))
+
+    totals: dict[str, dict] = {}
+
+    def total(zone_id: str) -> dict:
+        t = dict(direct.get(zone_id, zero))
+        for child in children.get(zone_id, []):
+            ct = total(child)
+            for f in fields:
+                t[f] += ct[f]
+        totals[zone_id] = t
+        return t
+
+    for root in children.get(None, []):
+        total(root)
+
+    out: list[dict] = []
+
+    def emit(zone_id: str, depth: int) -> None:
+        if totals[zone_id][count_field] == 0:
+            return
+        out.append({"group_id": zone_id, "group_name": names[zone_id], "depth": depth, **totals[zone_id]})
+        kids = sorted(
+            (c for c in children.get(zone_id, []) if totals[c][count_field] > 0),
+            key=lambda c: names[c],
+        )
+        for child in kids:
+            emit(child, depth + 1)
+        own = direct.get(zone_id)
+        if kids and own and own[count_field] > 0:
+            out.append({
+                "group_id": zone_id,
+                "group_name": _NOT_IN_SUB_ZONE.format(names[zone_id]),
+                "depth": depth + 1,
+                "zone_exact": True,
+                **own,
+            })
+
+    for root in sorted(children.get(None, []), key=lambda z: names[z]):
+        emit(root, 0)
+    return out
+
+
 class ReportingService:
     def __init__(self, repository: ReportingRepository):
         self.repository = repository
@@ -56,6 +121,13 @@ class ReportingService:
         rows = self.repository.pipeline_summary(
             current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id
         )
+        if group_by == "zone":
+            rows = _zone_tree_rows(
+                rows,
+                self.repository.zone_tree(),
+                "opportunity_count",
+                ("total_value_lakhs", "unweighted_forecast_lakhs", "weighted_forecast_lakhs"),
+            )
         return PipelineSummaryResponse(
             group_by=group_by,
             rows=[PipelineSummaryRow.model_validate(r) for r in rows],
@@ -110,6 +182,8 @@ class ReportingService:
             period_start=period_start,
             period_end=period_end,
         )
+        if group_by == "zone":
+            rows = _zone_tree_rows(rows, self.repository.zone_tree(), "won_count", ("revenue_lakhs",))
         return SalesSummaryResponse(
             group_by=group_by,
             rows=[SalesSummaryRow.model_validate(r) for r in rows],
