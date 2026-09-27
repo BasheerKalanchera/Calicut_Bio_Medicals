@@ -276,8 +276,8 @@ linkage — there's no automatic way back to free text with the original
   `oem_name`/`model_number`/`category_name` fixture fields with a
   `model_id` referencing a seeded test `Model`; add coverage for the
   "model_id doesn't belong to caller's SBU" rejection path.
-- New: `backend/tests/domains/reference/test_brand_service.py` /
-  `test_category_service.py` / `test_model_service.py` — CRUD +
+- Built as one file, `backend/tests/domains/reference/test_catalog_admin_service.py`
+  — CRUD +
   Admin/GM-only write enforcement, mirroring existing `ZoneAdminService`
   tests.
 - `test_product_router.py`: grep for any raw JSON fixtures still

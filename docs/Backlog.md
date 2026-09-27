@@ -898,9 +898,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   narrative: `docs/Progress-Archive-2026-09.md`'s 2026-09-04 and
   2026-09-05 entries.
 
-- **UAT backup/disaster-recovery — script verified working end to end
-  2026-09-10 (including the Docker shutdown path), scheduled Task
-  Scheduler entry not yet registered.** Raised 2026-09-04 (Latheef
+- **UAT backup/disaster-recovery — offsite copy still open. Script
+  verified working end to end 2026-09-10 (including the Docker shutdown
+  path); runs daily via the SessionStart reminder under Basheer's
+  supervision (automatic scheduled task dropped 2026-09-27 — it would
+  reach UAT without asking first).** Raised 2026-09-04 (Latheef
   Bhai's autonomous-agent-data-loss article prompted the question).
   Free-tier Supabase has no automatic backups; first manual dump taken
   and verified 2026-09-05. `scripts/backup_uat.ps1` starts Docker
@@ -913,12 +915,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `7931491`**, then re-verified live with a genuine cold start — zero
   Docker processes left running afterward. Google Drive mirror step is
   commented out for now (Google Drive for Desktop not installed);
-  manual weekly external-disk copy stays as-is regardless. Trigger
-  design changed from a fixed daily 07:30 IST time to `-AtLogOn`, so the
-  script's own Docker start/stop covers it without needing Docker
-  running unattended all day. **Remaining step:** register the
-  logon-triggered scheduled task and confirm the first run — exact
-  command in `.claude/active_progress.md`. Full narrative:
+  manual weekly external-disk copy stays as-is regardless. Full narrative:
   `docs/Progress-Archive-2026-09.md`'s 2026-09-04, 2026-09-05,
   2026-09-06 and 2026-09-10 entries.
 
@@ -1584,21 +1581,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   If real brand filtering is ever needed, add it to
   `ProductService.list_products`/`ProductRepository.list_products` and add
   a genuine test for it then — not before.
-- ~~Reminders-on-login feature is DEFERRED behind the migration — not
-  lost, not current.~~ — **BUILT 2026-08-22, revised 2026-08-23, not yet
-  verified.** GM Haroon requested a login notification; implemented as
-  this same deferred feature (each user sees their own due/overdue Next
-  Actions on login, plus a date-range filter on the Next Actions
-  screen). Committed `dc826b2` as an inline banner 2026-08-22; changed
-  to an overlay `Dialog` 2026-08-23 per Basheer's UX call, which also
-  surfaced and fixed a pre-existing ~500-700ms latency (count now rides
-  free on the `/auth/me` response already fetched at login, instead of a
-  separate round trip). **Manual E2E: partially done** — remaining
-  checklist items are now bundled with the Opportunity-Assignment-
-  Notifications feature's manual pass (both surface in the app header)
-  — see `active_progress.md`. Full design in
-  `docs/Reminders-on-Login-Implementation-Plan.md`; narrative in
-  `docs/Progress-Archive-2026-08.md`'s 2026-08-22 and 2026-08-23 entries.
 - **Opportunity-Assignment Notifications — three pieces deliberately
   deferred, not built.** Built 2026-08-24 (`b772416`, plan in
   `docs/Opportunity-Assignment-Notifications-Implementation-Plan.md`):

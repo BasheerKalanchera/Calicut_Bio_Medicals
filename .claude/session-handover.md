@@ -6,8 +6,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Brand option in Pipeline/Sales Report + Dashboard — E2E paused (2026-09-26)
 
 - Plan: `docs/Brand-Breakdown-In-Pipeline-And-Sales-Reports-Implementation-Plan.md`;
-  test plan `…-Manual-E2E-Test-Plan.md` (results table there). Staged as a
-  partial checkpoint for Basheer to commit; check `git log` for the hash.
+  test plan `…-Manual-E2E-Test-Plan.md` (results table there). Partial
+  checkpoint committed `b4d6f18` (2026-09-26).
 - Scope grew mid-E2E on Basheer's calls: Trade-Ins row clickable;
   Pipeline Report + Dashboard Active-only (BR-OP-07), tiles merged; Sales
   Report clicks keep the period; Product Performance "All Opportunities".

@@ -50,9 +50,10 @@ team beforehand.
   2026-09-26, `origin/uat` `7ddd439` → `origin/main` `fc76145`. Clean
   fast-forward: UAT has no commits of its own (`origin/main..origin/uat` = 0).
   Re-check the count on the day — `main` keeps moving.
-- **No dependency or settings changes:** `backend/requirements.txt`,
-  `sales-os-app/package.json` and backend config are identical between the
-  two branches. No new env vars on Render.
+- **No dependency or settings changes:** `backend/pyproject.toml`'s
+  dependency list, `sales-os-app/package.json` and backend config are
+  identical between the two branches (`pyproject.toml` differs only by a
+  3-line lint exception for migration 0049, from `cd0d8ab`). No new env vars on Render.
 - **Database:** UAT `alembic current` = `0041` (read 2026-09-26). Runs
   `0042` → `0054`:
 

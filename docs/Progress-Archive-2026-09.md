@@ -8104,3 +8104,16 @@ default unless they make the new feature give wrong numbers, and after one
 mid-test addition, finish and commit first; (3) collect such gaps into one
 list at the end of testing; (4) load the scripting checklist (venv path)
 before any test run.
+
+## 2026-09-27 — Automatic UAT backup task dropped
+
+Basheer decided the daily SessionStart reminder (Claude asks, he approves)
+stays the backup method; the logon scheduled task, pending since
+2026-09-10, won't be registered because it would reach UAT without asking
+first. Backlog entry trimmed to the open offsite-copy gap.
+
+## 2026-09-27 — Reminders on login closed out
+
+Basheer confirmed it is fully built and tested; plan status now shows
+`dc826b2`/`cfe3ddc`, and its Backlog entry (which still said "not yet
+verified" and pointed at the retired handover file) is removed.

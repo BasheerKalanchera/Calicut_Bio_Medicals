@@ -1,6 +1,6 @@
 # Brand Breakdown in Pipeline Report, Sales Report and Insights Dashboard — Implementation Plan
 
-**Status:** Approved 2026-09-26, building.
+**Status:** Approved 2026-09-26; partial checkpoint committed `b4d6f18`, E2E in progress.
 
 ## What this is (plain terms)
 

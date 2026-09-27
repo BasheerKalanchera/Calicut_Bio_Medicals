@@ -4,7 +4,7 @@
 — adds **Brand** to the breakdown dropdown on Pipeline Report, Sales
 Report and the Insights Dashboard's "Pipeline by…" card.
 
-**Built:** not yet committed.
+**Built:** partial checkpoint `b4d6f18` (2026-09-26); E2E in progress.
 
 **Environment:** Dev. Read-only — no step saves anything.
 

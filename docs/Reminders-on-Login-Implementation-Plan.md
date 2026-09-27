@@ -1,6 +1,6 @@
 # Reminders-on-Login + Next Actions Date-Range Filter — Implementation Plan
 
-**Status:** Planned, not yet implemented
+**Status:** Built and tested — `dc826b2` (2026-08-22), overlay dialog + latency fix `cfe3ddc` (2026-08-23). Manual testing confirmed complete by Basheer, 2026-09-27.
 **Date:** 2026-08-22
 **Origin:** GM Haroon requested "a notification note when a user logs in."
 Clarified with Basheer this is the previously-deferred **Reminders-on-login**
