@@ -33,6 +33,9 @@ on Dev, before any other work:
   the very next commit. A migration written but not yet applied goes in
   `.claude/session-handover.md` as an open item until it is.
 - UAT is a separate apply with its own approval — record it separately.
+- A migration that drops tables: say upfront, in the plan's approval
+  request, that Basheer will run `alembic upgrade head` himself — the
+  auto-mode classifier blocks Claude's own run of it. *(2026-09-27)*
 
 ## Migrations that delete, retire or bulk-update rows *(2026-09-21)*
 - Query `pg_constraint` for every table with a foreign key into the one being
@@ -66,6 +69,14 @@ on Dev, before any other work:
   script failed to run, and a `\b` became an invisible backspace in the
   handover note. After any scripted text edit, scan the changed file for
   control characters before staging. *(2026-09-27)*
+- Never `cd` in a Bash command — the shell stays wherever it's left, which
+  broke the project's hooks (relative paths) and a command Basheer ran.
+  Use absolute paths, or run the tool with its full path. Commands given to
+  Basheer to run (`! …`) use full paths too. *(2026-09-27)*
+- After any scripted bulk edit (regex or search-and-replace across a
+  file), search the diff for unintended matches before running tests —
+  e.g. a pattern for `target_amount_lakhs=` also hit
+  `vendor_target_amount_lakhs=`. *(2026-09-27)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

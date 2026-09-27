@@ -129,6 +129,15 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Windows paths in edited text → Edit tool, then scan for control characters (scripting skill).
   **Why:** 2026-09-27 — scripted doc edits through a Bash heredoc mangled Windows paths twice in one session: two runs failed with Python escape errors, and a `\b` in a folder path became an invisible backspace in the handover note, caught only when reviewing the staged diff.
 
+- **Rule:** A migration that drops tables — say upfront that Basheer will run `alembic upgrade head` himself (scripting skill).
+  **Why:** 2026-09-27 — migration `0055` (hospital-wise target planning) dropped two unused tables; Claude's `alembic upgrade head` was blocked by the auto-mode classifier as a mass delete, and Basheer had to step in mid-task. The block was foreseeable; the approval request should have said so.
+
+- **Rule:** Never `cd` in a Bash command; commands given to Basheer use full paths (scripting skill).
+  **Why:** 2026-09-27 — `cd backend` in Claude's commands left the shell there; the project's hooks used relative paths, so the ask-before-stash guard rail failed with "No such file or directory" and silently didn't run for several commands (fixed structurally in `89779d1`), and Basheer's own `! cd backend; …` then failed because the shell was already inside `backend`.
+
+- **Rule:** After any scripted bulk edit, search the diff for unintended matches before running tests (scripting skill).
+  **Why:** 2026-09-27 — a regex meant for `target_amount_lakhs=Decimal(...)` in the planning service tests also rewrote four `vendor_target_amount_lakhs=` lines in the unrelated vendor-target tests; caught by the test run, not before it.
+
 ## Show before you act
 
 - **Rule:** **Investigative actions, not just writes** — state what a query or check will do, including a plain read-only one, before running it. UAT goes further: ask and …
