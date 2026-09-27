@@ -4,7 +4,7 @@
 view in Pipeline Report, Sales Report and the Insights Dashboard becomes a
 rolled-up tree.
 
-**Built:** not yet committed.
+**Built:** `ff33408`, `76f9a0a`.
 
 **Environment:** Dev. Read-only — no step saves anything.
 

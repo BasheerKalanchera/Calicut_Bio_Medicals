@@ -275,6 +275,17 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
   around 2 Oct for Oct–Dec planning.
 
+- **Report edge cases left by the zone tree — low priority, no screen
+  affected (found in `/code-review`, 2026-09-27).** (1) The reporting
+  endpoints' own `zone_id` filter matches the exact zone only
+  (`Account.zone_id == zone_id` in `reporting/repository.py`), unlike the
+  zone tree and the Opportunity list's drill, which include sub-zones; no
+  screen sends it today. Make it subtree-aware if a screen ever filters a
+  report by zone. (2) `sales_summary` inner-joins `OpportunityItem`, so a
+  Won deal with no product lines would be missing from the Sales Report;
+  can't happen today because Won requires products (Business-Rules), but
+  worth an outer join if that rule ever loosens.
+
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
   (Demo Management) asks for a report showing what share of demos actually
   convert to a sale. Found missing during the Phase 1 Delivery Scorecard

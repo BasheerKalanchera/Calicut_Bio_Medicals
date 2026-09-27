@@ -1,6 +1,7 @@
 # Zone Tree in Reports — Implementation Plan
 
-**Status:** Approved 2026-09-27 (Basheer); building.
+**Status:** Done 2026-09-27 — `ff33408` (build) + `76f9a0a` (E2E complete,
+note reworded); manual E2E 8/8 pass on Dev.
 
 ## What this is (plain terms)
 

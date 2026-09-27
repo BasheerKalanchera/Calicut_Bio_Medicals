@@ -8292,3 +8292,33 @@ Plan: `docs/UAT-Promotion-2026-09-Plan.md`. Zone-tree E2E paused at step 1
   start-up check on the laptop (new venv, `pip install .` from `backend`,
   start the app) so a dependency surprise shows up before the day, not
   mid-move. To add to the next promotion plan's pre-flight.
+
+## 2026-09-27 — Zone tree E2E: stale Dev backend before step 1
+
+Step 1 first showed a flat Zone list. Not a code bug: the Dev uvicorn
+`--reload` worker had last restarted at 10:52, and the zone-tree backend
+files were saved 13:17–13:22, so the server was still on pre-`ff33408`
+code (no `depth`, no roll-up rows) while Vite served the new frontend.
+Basheer restarted the backend; the tree then showed. pytest and
+`/code-review` can't see this. **Lesson:** before a manual E2E run, check
+the backend worker restarted after the feature's last backend edit (or
+just restart it).
+
+## 2026-09-27 — Zone tree in reports shipped (`ff33408` + `76f9a0a`)
+
+Pipeline Report, Sales Report and Insights Dashboard show the Zone view as
+a rolled-up tree (Kerala / Karnataka → regions → districts), with a
+"<zone> (not in a sub-zone)" row where needed. Manual E2E 8/8 pass on Dev
+(Haroon and Fazal; Fazal's top rows = his tile, 16 deals / ₹247.0L). One
+change during E2E: the note under the Zone view reworded by Basheer to
+"Each zone's figures include the zones listed under it." Two low-priority
+report edge cases from the review went to Backlog ("Report edge cases left
+by the zone tree"). No signed requirement closes, so Traceability and the
+scorecard are unchanged.
+
+**Retro:** worked — the test plan's real Dev numbers (checked read-only
+beforehand) made every step a quick yes/no, and the Fazal step proved the
+roll-up adds up for a restricted user. Improve — the stale Dev backend cost
+a round trip before step 1 (above). **Process change proposed:** add
+"restart the Dev backend" as the first line of every manual E2E plan's
+setup.
