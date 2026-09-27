@@ -1,5 +1,6 @@
 import uuid
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -24,6 +25,12 @@ from app.domains.reporting.schemas import (
 )
 from app.domains.reporting.service import ReportingService
 
+_IST = ZoneInfo("Asia/Kolkata")
+
+
+def _ist_midnight(d: date) -> datetime:
+    return datetime(d.year, d.month, d.day, tzinfo=_IST)
+
 
 def _period_bounds(
     period_start: date | None, period_end: date | None
@@ -32,8 +39,10 @@ def _period_bounds(
     # last day of this quarter") -- closed_at is a timestamp, so the upper
     # bound has to be the start of the *next* day, not midnight of
     # period_end itself, or that whole last day would be excluded.
-    start_dt = datetime.combine(period_start, time.min) if period_start else None
-    end_dt = datetime.combine(period_end + timedelta(days=1), time.min) if period_end else None
+    # Midnight in IST, not the DB session's UTC -- a naive bound put every
+    # period boundary at 05:30 IST (Backlog, found 2026-09-27).
+    start_dt = _ist_midnight(period_start) if period_start else None
+    end_dt = _ist_midnight(period_end + timedelta(days=1)) if period_end else None
     return start_dt, end_dt
 
 router = APIRouter(prefix="/reporting", tags=["Reporting"])

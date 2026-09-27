@@ -203,17 +203,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
-- **Report periods cut over at 05:30 IST, not midnight — found 2026-09-27,
-  not yet built.** Sales Report periods (and the drilled list's
-  `closed_from`/`closed_to`) are built as naive midnight datetimes
-  (`reporting/router.py` `_period_bounds`, `opportunity/router.py`), which
-  Postgres reads in the session time zone (UTC on Supabase). So a deal Won
-  between 00:00 and 05:30 IST on the first day of a month/quarter counts in
-  the previous period. Report and list use the same rule, so they still
-  agree. Fix: IST-aware bounds (`timezone(timedelta(hours=5, minutes=30))`)
-  in both places plus tests. Small; Basheer to decide when (possibly before
-  a UAT move).
-
 - **Brand-Level Target Planning: "splits sum to the target" isn't enforced
   at the database layer.** Found by `/code-review` (high effort) on the
   feature's commits, 2026-09-23. `target_plan_brand_split` rows summing to

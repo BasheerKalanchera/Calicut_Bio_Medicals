@@ -12,7 +12,12 @@ from decimal import Decimal
 import pytest
 
 from app.core.exceptions import BusinessRuleViolation
-from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
+from app.domains.opportunity import validators
+from app.domains.opportunity.validators import (
+    _today_ist,
+    validate_stage_transition,
+    validate_status_transition,
+)
 
 # Stage display_orders (must match Seed-Data.sql)
 LEAD = 10
@@ -30,8 +35,8 @@ HOLD_REASON_ID = uuid.uuid4()
 DEMO_DATE = date.today()
 CLOSURE_DATE = date.today()
 PO = "PO-2026-001"
-TOMORROW = date.today() + timedelta(days=1)
-YESTERDAY = date.today() - timedelta(days=1)
+TOMORROW = _today_ist() + timedelta(days=1)
+YESTERDAY = _today_ist() - timedelta(days=1)
 
 
 def _stage_ctx(**overrides):
@@ -617,7 +622,7 @@ class TestTransitionToOnHold:
                 loss_reason_code=None,
                 competitor_name=None,
                 hold_reason_id=HOLD_REASON_ID,
-                reactivation_date=date.today(),
+                reactivation_date=_today_ist(),
                 po_number=None,
                 has_items=False,
             )
@@ -682,3 +687,19 @@ class TestSystemStatusTransitions:
             po_number=None,
             has_items=False,
         )
+
+
+class TestTodayIsIndianDate:
+    def test_early_morning_ist_is_already_the_new_day(self, monkeypatch):
+        # 30 Sep 20:00 UTC = 1 Oct 01:30 IST -- the server's UTC date is
+        # still 30 Sep, but for a user in India it is 1 Oct.
+        from datetime import UTC
+        from datetime import datetime as real_datetime
+
+        class _Clock(real_datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return real_datetime(2026, 9, 30, 20, 0, tzinfo=UTC).astimezone(tz)
+
+        monkeypatch.setattr(validators, "datetime", _Clock)
+        assert validators._today_ist() == date(2026, 10, 1)

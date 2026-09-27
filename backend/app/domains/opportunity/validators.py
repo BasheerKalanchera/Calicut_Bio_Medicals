@@ -4,10 +4,18 @@ validators.  Pure functions — no DB access.  The service loads reference data 
 """
 
 import uuid
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from app.core.exceptions import BusinessRuleViolation
+
+
+def _today_ist() -> date:
+    # "Today" for a user in India -- the server's own date is UTC, so from
+    # 00:00 to 05:30 IST it would still be yesterday.
+    return datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
 
 # Loss reason code that mandates competitor_name
 _COMPETITOR_WON = "COMPETITOR_WON"
@@ -170,7 +178,7 @@ def validate_status_transition(
             raise BusinessRuleViolation(
                 "Reactivation Date is required to put an opportunity On-Hold."
             )
-        if reactivation_date <= date.today():
+        if reactivation_date <= _today_ist():
             raise BusinessRuleViolation(
                 "Reactivation Date must be a future date."
             )

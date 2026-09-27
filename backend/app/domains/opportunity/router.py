@@ -1,6 +1,7 @@
 import math
 import uuid
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -34,6 +35,24 @@ from app.domains.opportunity.service import OpportunityService
 from app.domains.organization.models import UserProfile
 
 router = APIRouter(tags=["Opportunities"])
+
+
+_IST = ZoneInfo("Asia/Kolkata")
+
+
+def _ist_midnight(d: date) -> datetime:
+    return datetime(d.year, d.month, d.day, tzinfo=_IST)
+
+
+def _closed_bounds(
+    closed_from: date | None, closed_to: date | None
+) -> tuple[datetime | None, datetime | None]:
+    # Sales Report drill-down: same inclusive-date handling as reporting's
+    # _period_bounds -- closed_to is a calendar date, closed_at a timestamp,
+    # so the upper bound is the start of the next day, at midnight IST.
+    after = _ist_midnight(closed_from) if closed_from else None
+    before = _ist_midnight(closed_to + timedelta(days=1)) if closed_to else None
+    return after, before
 
 
 def _get_service(
@@ -74,11 +93,7 @@ def list_pipeline(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[PaginatedResponse[PipelineOpportunity]]:
-    # Sales Report drill-down: same inclusive-date handling as reporting's
-    # _period_bounds -- closed_to is a calendar date, closed_at a timestamp,
-    # so the upper bound is the start of the next day.
-    closed_after = datetime.combine(closed_from, time.min) if closed_from else None
-    closed_before = datetime.combine(closed_to + timedelta(days=1), time.min) if closed_to else None
+    closed_after, closed_before = _closed_bounds(closed_from, closed_to)
     items, total = service.list_pipeline(
         account_id=account_id,
         stage_id=stage_id,

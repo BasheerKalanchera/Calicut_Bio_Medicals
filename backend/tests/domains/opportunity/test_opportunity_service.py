@@ -38,6 +38,7 @@ from app.domains.opportunity.schemas import (
     StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
+from app.domains.opportunity.validators import _today_ist
 from app.domains.reference.models import LeadSource, LossReason, OpportunityStage, OpportunityStatus
 
 # ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ SBU_ID = uuid.uuid4()
 OTHER_SBU_ID = uuid.uuid4()
 OPP_ID = uuid.uuid4()
 LEAD_SOURCE_ID = uuid.uuid4()
-TOMORROW = date.today() + timedelta(days=1)
+TOMORROW = _today_ist() + timedelta(days=1)
 
 
 # ---------------------------------------------------------------------------
@@ -1003,7 +1004,7 @@ class TestUpdateOpportunity:
         assert opp.closed_at is None
 
     def test_transition_to_on_hold_with_past_reactivation_date_raises(self):
-        yesterday = date.today() - timedelta(days=1)
+        yesterday = _today_ist() - timedelta(days=1)
         opp = _make_opportunity(hold_reason_id=HOLD_REASON_ID, reactivation_date=yesterday)
         repo = _make_repo()
         repo.get_for_update.return_value = opp
