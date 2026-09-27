@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .claude/hooks/session-start.sh"
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\""
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh .claude/hooks/ask-before-git-stash.sh"
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/ask-before-git-stash.sh\""
           }
         ]
       }
