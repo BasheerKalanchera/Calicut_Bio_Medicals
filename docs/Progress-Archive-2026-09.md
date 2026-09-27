@@ -8117,3 +8117,27 @@ first. Backlog entry trimmed to the open offsite-copy gap.
 Basheer confirmed it is fully built and tested; plan status now shows
 `dc826b2`/`cfe3ddc`, and its Backlog entry (which still said "not yet
 verified" and pointed at the retired handover file) is removed.
+
+## 2026-09-27 — Brand breakdown shipped (`b4d6f18` + `ae248f8`)
+
+Manual E2E finished: all 24 steps pass on Dev. Scope added today on
+Basheer's calls, found during testing:
+- Report bars show deal counts, and the drilled list's banner shows the
+  count (the bar's count at once, replaced by the list's total on load).
+- Active deals with no products entered now count in the Pipeline Report
+  (1 deal, ₹0) and get a clickable "No products yet" row on Product/Brand
+  (BR-OP-07 addition). Dev tile went 37 → 48 active deals (+11 such deals).
+- Step 12's rep (Fahad) turned out to be a Marketing User; replaced by
+  Rudrappa (Sales Staff) + Fazal (Area Manager).
+- The two earlier gaps: the Zone one became a design change — Basheer
+  proposed a rolled-up zone tree (`docs/Zone-Tree-In-Reports-Implementation-Plan.md`);
+  the IST period cut-over went to the Backlog.
+
+**Retro:** what worked — Basheer's runs caught two real UX gaps (no deal
+counts; product-less deals silently missing), fixed inside the feature;
+Basheer's zone-tree idea beat Claude's narrower "exact zone" fix. What to
+improve (Claude) — check a test plan's user against their role before
+testing; start request recording before Basheer clicks (step 19's first
+try was missed); never `git stash` the whole tree while another session
+has uncommitted work; describe a time-zone gap precisely before calling it
+(first said "last day of the quarter", it's the first 5½ hours of the next).

@@ -3,21 +3,15 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-## Brand option in Pipeline/Sales Report + Dashboard — E2E paused (2026-09-26)
+## Zone tree in reports — plan drafted (2026-09-27)
 
-- Plan: `docs/Brand-Breakdown-In-Pipeline-And-Sales-Reports-Implementation-Plan.md`;
-  test plan `…-Manual-E2E-Test-Plan.md` (results table there). Partial
-  checkpoint committed `b4d6f18` (2026-09-26).
-- Scope grew mid-E2E on Basheer's calls: Trade-Ins row clickable;
-  Pipeline Report + Dashboard Active-only (BR-OP-07), tiles merged; Sales
-  Report clicks keep the period; Product Performance "All Opportunities".
-  4 `/code-review` passes, no findings; pytest 978 pass, tsc/lint clean.
-- Passed: 1–6, 6b, 14–17. **Next:** Basheer runs 18, 7, 10, 20; Claude
-  runs 8, 9, 19, 11–13 (12 = Fahad login). Then post-commit checklist.
-- **Open question for Basheer:** park in Backlog (Claude recommends) two
-  gaps that existed before this change: Zone bar click includes sub-zone deals;
-  Sales period cut-off uses server clock, not IST (Progress-Archive
-  2026-09-26).
+- Plan: `docs/Zone-Tree-In-Reports-Implementation-Plan.md` (draft, not yet
+  approved). Basheer's decisions: tree from Kerala/Karnataka down, always
+  shown, "not in a sub-zone" lines so levels roll up, Pipeline Report +
+  Sales Report + Dashboard.
+- **Next:** Basheer approves the plan; Claude checks Dev zone data
+  read-only, writes the E2E test plan, builds. Not in the current UAT move
+  unless Basheer says so.
 
 ## UAT promotion (main → uat) — plan drafted (2026-09-26)
 
