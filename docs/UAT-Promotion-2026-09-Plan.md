@@ -1,7 +1,8 @@
 # UAT Promotion — September 2026 — Plan
 
-**Status:** Draft, 2026-09-26. Not started — nothing has touched UAT yet
-except one read-only product check (below).
+**Status:** Revised 2026-09-27 (target commit, time window, smoke test,
+catalog listing). Not started — nothing has touched UAT yet except
+read-only checks.
 **Decision:** Basheer, 2026-09-26 — everything demoed to Latheef Bhai and
 Haroon on 2026-09-24 is cleared for UAT; no features held back. This closes
 the Backlog entry "main → UAT promotion — waiting on leadership's park list".
@@ -38,18 +39,22 @@ Two things happen:
 UAT is restored from it. No full dress rehearsal — decided unnecessary
 because the product check came back clean (see section 3).
 
-**Downtime:** a few minutes between the code update and the database update
-when parts of the app will show errors. Do it at a quiet time and tell the
-team beforehand.
+**Downtime:** the code and database updates themselves take about 10
+minutes, but checking the catalog properly and leaving room to roll back
+needs more. Tell the team **one hour** (Basheer, 2026-09-27); it will
+likely be back sooner. Both Render services are **suspended** for the whole
+move, so nobody can save anything while it runs (Basheer, 2026-09-27).
 
 ---
 
 ## 2. Scope
 
-- **Code:** `origin/main` → `origin/uat`, 104 commits (30 feat/fix) as of
-  2026-09-26, `origin/uat` `7ddd439` → `origin/main` `fc76145`. Clean
-  fast-forward: UAT has no commits of its own (`origin/main..origin/uat` = 0).
-  Re-check the count on the day — `main` keeps moving.
+- **Code:** `origin/uat` `7ddd439` → **`143c78e`** (Basheer, 2026-09-27),
+  the last commit before the Brand-report work (`b4d6f18` onwards), which
+  is still mid-testing and follows in a later move. `fc76145` → `143c78e`
+  adds only docs and the vendor report script (`de48ca6`, run by Claude,
+  not used by the app); no new migrations. Clean fast-forward: UAT has no
+  commits of its own (`origin/main..origin/uat` = 0, re-checked 2026-09-27).
 - **No dependency or settings changes:** `backend/pyproject.toml`'s
   dependency list, `sales-os-app/package.json` and backend config are
   identical between the two branches (`pyproject.toml` differs only by a
@@ -107,59 +112,59 @@ Read-only product check against UAT (Basheer approved; script
 Each step waits for the previous one. **(B)** = Basheer runs it; **(C)** =
 Claude runs it after Basheer's go-ahead. UAT-writing steps are Basheer's —
 the auto-mode classifier blocks Claude's UAT access, and that's the right
-default.
+default. Check scripts are in
+`C:\Users\Basheer\AppData\Local\Temp\claude\C--Users-Basheer-GitHub-Calicut-Bio-Medicals\b77f7022-d573-40ab-afa8-9c35d7c41815\scratchpad\`.
 
-1. **(B) Tell the team** UAT will be unavailable for ~15 minutes.
-2. **(C) Re-run the product check, then save the "before" snapshot**
-   (both read-only; scripts in `C:\Users\Basheer\AppData\Local\Temp\claude\
-   C--Users-Basheer-GitHub-Calicut-Bio-Medicals\b77f7022-d573-40ab-afa8-9c35d7c41815\scratchpad\`):
-   `uat_product_check.py`, then `uat_promotion_check.py pre`. Proceed only
-   if the product check matches section 3 exactly and UAT is at `0041`.
-   Anything new → stop and review.
-3. **(C) Fresh UAT backup** — `scripts\backup_uat.ps1` (now writes to
-   `C:\Backups\CabioUAT\DB_Backups`). Confirm the new dump and its TOC count.
-   This is the rollback point at revision `0041`.
-4. **(B) Push the code:** `git push origin main:uat`. Wait until Render shows
-   both `calicut-bio-medicals` (backend) and `cabio-sales-os-uat-frontend`
-   Live. From here until step 5 finishes, catalog and target screens will
-   error — expected.
-5. **(B) Run the 13 database changes** (Git Bash, from the repo root):
-   ```bash
-   set -a; source backend/.env.uat; set +a
-   unset CORS_ORIGINS        # 2026-09-08 gotcha: pydantic rejects the non-JSON value
-   cd backend
-   .venv/Scripts/python.exe -m alembic upgrade head
-   .venv/Scripts/python.exe -m alembic current     # expect: 0054 (head)
-   ```
-   If `0049` aborts, the whole migration rolls back on its own (single
-   transaction) — stop, don't retry, and share the error.
-6. **(C) Post-move checks** — `uat_promotion_check.py post` (read-only,
-   same folder as step 2; prints OK/XX per line and "ALL CHECKS PASSED"):
-   - `alembic_version` = `0054`.
-   - Products: 61 rows, 59 active; the 2 stands inactive under Legacy; EDAN
-     F9 present; every active product has brand/category/model set; no model
-     with more than one active product.
-   - Brands 10 (9 active), categories 21 (20 active), models 60 (59 active).
-   - Deal data unchanged vs. the step-2 snapshot: opportunity count and
-     value total, deal-line count / quantity / price totals, every deal line
-     still pointing at the same product record, activity and hospital counts.
-   - Every new table: RLS on **and** policies present (the `rls_auto_enable`
-     check).
-7. **(B) Smoke test**, 3 logins (rep / manager / Admin), per
-   `docs/Deployment-Topology.md`:
-   - Rep: open a deal, add a product line — brand → model pickers work.
-     Open Target Planning, see own quarter.
-   - Manager: approve/return a target plan; Pipeline and Sales reports load.
-   - Admin: Product Catalog lists brand/category/model; Brand Target
-     Tracking loads; Product Performance → By Brand drill-down works.
-8. **(B) Haroon spot-checks** the Brand / Category / Model lists (plan's
-   "second reviewer" step).
-9. **(B) Tell the team** UAT is back, with a short what's-new list.
+| # | Who | Step | Time |
+|---|---|---|---|
+| 1 | B | **Tell the team** UAT will be unavailable for about **1 hour**. | — |
+| 2 | B | **Suspend both Render services:** `calicut-bio-medicals` (backend) and `cabio-sales-os-uat-frontend`, each via Settings → **Suspend Service**. From here nobody can save anything; the app shows "unavailable". | 2 min |
+| 3 | C | **Check first (read-only):** `uat_product_check.py` must match section 3 exactly (65 products, the same 5 to delete, the same 2 stands to switch off) and UAT must be at `0041`; then `uat_promotion_check.py pre` saves the "before" snapshot. **Anything unexpected → stop** (resume both services; nothing has changed). | 2 min |
+| 4 | C | **Fresh backup:** `scripts\backup_uat.ps1`; confirm the new dump and its TOC count. Rollback point at `0041`, taken with the data frozen. | 2 min |
+| 5 | B | **Run the 13 database changes** (commands below; they go straight to the database, so they work with the services suspended). If `0049` aborts, it rolls back on its own (single transaction) — stop, don't retry, share the error. | 1 min |
+| 6 | C | **Automatic checks (read-only):** `uat_promotion_check.py post` — prints OK/XX per line and "ALL CHECKS PASSED" (details below). Also saves the full catalog listing to `uat_catalog_after_move.csv` (this session's scratchpad). | 2 min |
+| 7 | B | **Catalog review:** read the listing line by line for any wrong brand, category, model or product name. Anything wrong → decide: fix forward, or roll back (below). | 10–15 min |
+| 8 | B | **Update the code and resume:** `git push origin 143c78e:uat`, then **Resume Service** on both. Confirm in Render that both are Live on `143c78e`; if either still shows the old commit, **Manual Deploy → Deploy latest commit**. | 5–10 min |
+| 9 | B | **Smoke test — look only, nothing saved** (UAT is live data): rep — open a deal, click Add product, check the brand → model pickers, then **Cancel**; open Target Planning. Manager — Pipeline and Sales reports load. Admin — Product Catalog shows brand/category/model; Brand Target Tracking loads; Product Performance → By Brand drill-down works. | 10 min |
+| 10 | B | **Haroon spot-checks** the Brand / Category / Model lists, then **tell the team** UAT is back, with a short what's-new list (Claude drafts). | his time |
 
-**Rollback** (only if step 5 or 6 fails in a way that can't be fixed
-forward): restore the step-3 dump with `scripts\restore_uat.ps1`, then
-`git push --force origin 7ddd439:uat` to put the old code back. Both
-Basheer's call, on the day.
+**Step 5 commands** (Git Bash, from the repo root):
+```bash
+set -a; source backend/.env.uat; set +a
+unset CORS_ORIGINS        # 2026-09-08 gotcha: pydantic rejects the non-JSON value
+cd backend
+.venv/Scripts/python.exe -m alembic upgrade head
+.venv/Scripts/python.exe -m alembic current     # expect: 0054 (head)
+```
+
+**Step 6 checks:**
+- `alembic_version` = `0054`.
+- Products: 61 rows, 59 active; the 2 stands inactive under Legacy; EDAN F9
+  present; every active product has brand/category/model set; no model with
+  more than one active product.
+- Brands 10 (9 active), categories 21 (20 active), models 60 (59 active).
+- Deal data unchanged vs. the step-2 snapshot: opportunity count and value
+  total, deal-line count / quantity / price totals, every deal line still
+  pointing at the same product record, activity and hospital counts.
+- Every new table: RLS on **and** policies present (the `rls_auto_enable`
+  check).
+
+**Why the smoke test changed (2026-09-27):** the earlier version said "add
+a product line" and "approve/return a target plan" — on UAT those write to
+real deals and plans. Every step now looks and cancels instead.
+
+**Why the services are suspended (2026-09-27):** with the backend
+running, anyone with the app open could save mid-move, and step 6 would
+flag their edit as a false alarm. Suspended, the snapshot, the backup and
+the after-move check all see the same frozen data. Suspending only the
+frontend isn't enough: an already-open page talks to the backend directly.
+
+**Rollback** (only if step 5, 6 or 7 finds a problem that can't be fixed
+forward): the new code hasn't gone live yet, so restore the step-4 dump
+with `scripts\restore_uat.ps1` and **resume both services on the old
+code**; no force-push needed. If a problem only shows after step 8, also
+`git push --force origin 7ddd439:uat` to put the old code back. Basheer's
+call, on the day.
 
 ---
 
@@ -178,7 +183,7 @@ Basheer's call, on the day.
 
 ## 6. Open before the day
 
-- **When:** not finalised; most likely Sunday 2026-09-27 (Basheer,
-  2026-09-26).
-- Post-move check script: written 2026-09-26 (`uat_promotion_check.py`,
-  `pre`/`post` modes); Basheer reviews it before step 2.
+- **When:** Sunday 2026-09-27, starting around **3 pm** (Basheer), leaving
+  the rest of the afternoon to recover if anything goes wrong.
+- Check scripts read by Claude 2026-09-27; `uat_promotion_check.py` gained
+  the catalog listing for step 7 the same day.

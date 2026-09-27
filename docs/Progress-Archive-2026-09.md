@@ -8141,3 +8141,29 @@ testing; start request recording before Basheer clicks (step 19's first
 try was missed); never `git stash` the whole tree while another session
 has uncommitted work; describe a time-zone gap precisely before calling it
 (first said "last day of the quarter", it's the first 5½ hours of the next).
+
+## 2026-09-27 — Hospital-wise plan approved; data-quality report to managers; UAT move plan revised
+
+**Hospital-wise target planning:** Basheer answered all six open questions
+(discussion doc section 5) and the plan's four build choices (drafts: yes;
+visit frequency: fixed list of five; Rate Hospitals list screen; no
+notification bell for now). Plan approved; build starts after the UAT move
+(which includes the catalog clean-up). The Backlog entry still listed the
+answered questions as open (missed when the answers came in) — replaced with
+a pointer to the plan.
+
+**Data-quality report:** the 26 Sep report went to the managers' group with a
+covering note (Latheef Bhai's request). Lesson: the first draft of the note
+was built from the raw check log, not the finished report, and got two
+things wrong. It included "112 activities missing a next action", which the
+report leaves out, and treated "closed deals edited after closing" as an
+action item when the report marks it "Reviewed, OK". Always draft from the
+report itself.
+
+**UAT move plan revised before starting:** move only up to `143c78e`
+(Brand-report work stays behind); team told one hour, not 15 minutes; both
+Render services suspended for the whole move, so no one can save mid-move
+and the before/after comparison can't raise false alarms; the smoke test no
+longer saves anything (the old version would have added a product line and
+approved a plan in live data); the after-move check now exports the full
+catalog as a spreadsheet for a line-by-line review. Starting around 3 pm.

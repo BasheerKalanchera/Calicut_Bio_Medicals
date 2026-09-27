@@ -13,13 +13,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   read-only, writes the E2E test plan, builds. Not in the current UAT move
   unless Basheer says so.
 
-## UAT promotion (main → uat) — plan drafted (2026-09-26)
+## UAT promotion (main → uat) — starts today ~3 pm (2026-09-27)
 
-- Plan: `docs/UAT-Promotion-2026-09-Plan.md` (`a8ee2d9`). Basheer
-  cleared everything demoed 2026-09-24 for UAT. UAT at `0041`; runs
-  `0042`–`0054`. Read-only product check 2026-09-26 clean → no rehearsal.
-- **Next:** date not final, most likely Sunday 2026-09-27; Claude writes
-  the step-6 post-move check script in advance.
+- Plan: `docs/UAT-Promotion-2026-09-Plan.md`, revised 2026-09-27; its
+  after-move record is added once the move is done. Moves UAT to `143c78e`
+  only (Brand-report work stays behind); runs `0042`–`0054`; both Render
+  services suspended for the whole move; team told 1 hour.
+- Check scripts (read, catalog CSV export added): old session scratchpad
+  folder b77f7022-d573-40ab-afa8-9c35d7c41815 (full path in the
+  plan, section 4).
+- **Next:** at ~3 pm, follow section 4's table exactly — step 1 (Basheer
+  tells team), step 2 (Basheer suspends both services), then step 3.
 - Then run the SonoScape vendor report (UAT read — ask Basheer first):
   `python scripts/vendor_pipeline_report.py --brand SonoScape` (writes to
   the Desktop; includes the Sales Owner column). The 2026-09-26
@@ -35,4 +39,4 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (approved 2026-09-27, choices answered in section 3).
 - **Deadline:** on UAT around 2 Oct 2026; fallback decision around 29 Sep.
 - **Next:** build Part 1 (plan section 4 order) — only after the main → UAT
-  move and the Product Catalog clean-up (Basheer, 2026-09-27).
+  move, which includes the catalog clean-up (Basheer, 2026-09-27).

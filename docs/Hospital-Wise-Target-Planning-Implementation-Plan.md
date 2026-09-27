@@ -2,7 +2,8 @@
 
 **Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Build starts after the main → UAT move
-(`docs/UAT-Promotion-2026-09-Plan.md`) and the Product Catalog clean-up.
+(`docs/UAT-Promotion-2026-09-Plan.md`), which includes the Product Catalog
+clean-up.
 **Design and decisions:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
 (Design C; decisions 1–6 in section 4, answers to the open questions in
 section 5). This plan doesn't repeat them; it says how to build them.

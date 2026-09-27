@@ -253,37 +253,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   same screen pre-filtered) should keep showing Won/Lost when the report
   card counted them.
 
-- **Hospital-wise target planning — direction decided 2026-09-25 (Design C:
-  hospital amounts add up to the quarterly target, brand split on top, one
-  approval); raised at the 2026-09-24 demo.** Current design, decisions and
-  remaining open questions: `docs/Discussion-Hospital-Wise-Target-Planning-
-  2026-09.md` (supersedes the question list below). Haroon/Latheef Bhai's ask: during coverage planning,
-  each salesperson divides their quarterly target among the hospitals in
-  their coverage area according to each hospital's Business Potential
-  (High/Medium/Low — see `docs/Customer-Tiering-Implementation-Plan.md`),
-  alongside visit frequency. Hospital-wise targets roll up to Zone, SBU and
-  company level, and each salesperson's actuals are tracked against them on
-  the Insights Dashboard (Haroon). Intent: a quarterly target built from
-  real customers, not a number handed down by the manager. Traceability rows
-  touched: 6.1 Beat Planning (Not started), 3.2 actual-vs-target dashboards
-  (Partial), 1.2 Account Segmentation / 1.3 Customer Tiering (Not started).
-  Open design questions, to settle together before any build:
-  1. How the hospital-wise split reconciles with the brand-wise split built
-     2026-09-23 (`docs/Brand-Level-Target-Planning-Implementation-Plan.md`):
-     two independent splits of the same total, or one hospital × brand grid.
-  2. Direction: does the quarterly target become the sum of the hospital
-     targets (bottom-up), or stay typed-in with hospitals required to add up
-     to it (today's brand-split pattern)?
-  3. What Business Potential does to the numbers: a suggested split only,
-     or a rule (e.g. a minimum share for High-potential hospitals)?
-  4. Whether target planning and coverage planning stay two screens with two
-     approvals, or merge into one quarterly plan with one approval.
-  5. How "actuals" are attributed to a hospital and a person (won deal value
-     by account; how contributor splits are treated — see the
-     "Reports never implement split-weighted attribution" entry above).
-  `docs/Coverage-Planning-Implementation-Plan.md` (2026-09-11) predates this
-  and needs revisiting; it already carries a per-hospital
-  `target_revenue_lakhs` but nothing requires those to add up to the target.
+- **Hospital-wise target planning — plan approved 2026-09-27, build not
+  started.** Raised at the 2026-09-24 demo; all design questions answered
+  (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
+  Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. Build
+  starts after the main → UAT move; target: in use on UAT around 2 Oct for
+  Oct–Dec planning.
 
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
   (Demo Management) asks for a report showing what share of demos actually
