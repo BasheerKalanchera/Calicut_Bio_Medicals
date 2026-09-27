@@ -179,7 +179,7 @@ export function LoadingOrEmpty({
 export function ZoneTreeNote() {
   return (
     <Box sx={{ fontSize: "0.6875rem", color: "text.secondary", mt: 1 }}>
-      Each zone includes the zones indented beneath it.
+      Each zone's figures include the zones listed under it.
     </Box>
   );
 }

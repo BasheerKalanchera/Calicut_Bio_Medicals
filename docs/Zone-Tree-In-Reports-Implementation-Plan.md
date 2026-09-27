@@ -84,8 +84,8 @@ all three places.
   "not in a sub-zone" row drills with `zoneExact`; `DemoApp.tsx`,
   `OpportunityPipelineScreen.tsx`, `services/opportunities.ts` carry it →
   `zone_exact`.
-- A one-line note under the Zone view: "Each zone includes the zones
-  indented beneath it."
+- A one-line note under the Zone view: "Each zone's figures include the
+  zones listed under it." (reworded by Basheer during E2E, 2026-09-27).
 
 **Docs**
 - `Business-Rules.md` — reporting rule: a zone's report figures include
