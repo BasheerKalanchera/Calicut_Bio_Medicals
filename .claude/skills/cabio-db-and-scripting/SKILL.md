@@ -60,6 +60,12 @@ on Dev, before any other work:
   the full output to a file in the scratchpad, then read from the file — a
   discarded section means re-running against the database, and on UAT that's
   another approved connection. *(2026-09-24)*
+- Text containing Windows paths (backslashes): change it with the Edit tool,
+  never a script written through a Bash heredoc. Twice on 2026-09-27 the
+  backslashes were collapsed on the way in, then read as escape codes: a
+  script failed to run, and a `\b` became an invisible backspace in the
+  handover note. After any scripted text edit, scan the changed file for
+  control characters before staging. *(2026-09-27)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

@@ -8167,3 +8167,33 @@ and the before/after comparison can't raise false alarms; the smoke test no
 longer saves anything (the old version would have added a product line and
 approved a plan in live data); the after-move check now exports the full
 catalog as a spreadsheet for a line-by-line review. Starting around 3 pm.
+
+## 2026-09-27 — Session retrospective (morning: backup, doc tidy-up, hospital-wise plan, UAT move prep)
+
+**Done:** UAT backup (374 TOC entries, same as the last three); doc tidy-up,
+8 found / 9 fixed (`8e6c2ed`); hospital-wise open questions and build
+choices answered, plan approved (`ee7ab9c`); data-quality report sent to the
+managers' group; UAT move plan revised and committed (`a7a383e`), move
+starts ~3 pm.
+
+**Worked well:** reviewing the UAT plan before starting caught three real
+problems (smoke test writing into live deals; 15 minutes unrealistic,
+Basheer's catch; `main` had moved on with half-tested work). Basheer's
+suspend-the-app idea also made the before/after comparison reliable and
+simplified rollback. Parallel-session work stayed clean: the other
+session's test results and code were kept out of every commit.
+
+**Went wrong (Claude):** (1) the data-quality covering note was first
+drafted from the raw check log, not the finished report, and got two items
+wrong; should have asked for folder access first. (2) Backlog missed when
+the hospital-wise decisions came in, despite the 2026-09-26 "update every
+living-doc hit" rule. (3) "UAT move and the Product Catalog clean-up" read
+as two things, leading to a question about the wrong clean-up. (4) Scripted
+file edits mangled Windows folder paths twice (two failed runs, one garbled
+path in the handover note, caught before commit).
+
+**Process changes proposed:** (A) Windows paths in edited text: use the
+direct file-edit tool, then scan for damaged characters (scripting
+checklist skill). (B) Summaries of a report for others are drafted from the
+finished report itself, never its raw data (extends "Verify before
+claiming"). No new rule for (2): the rule exists, it wasn't followed.

@@ -120,6 +120,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Never cut off a query's or check script's output; save it in full to a scratchpad file, then read from the file.
   **Why:** 2026-09-24, the first UAT data-quality run was piped through `head -300`; section 7c (double-submits) fell past line 300 and was discarded, forcing a second approved UAT connection to recover it.
 
+- **Rule:** Windows paths in edited text → Edit tool, then scan for control characters (scripting skill).
+  **Why:** 2026-09-27 — scripted doc edits through a Bash heredoc mangled Windows paths twice in one session: two runs failed with Python escape errors, and a `\b` in a folder path became an invisible backspace in the handover note, caught only when reviewing the staged diff.
+
 ## Show before you act
 
 - **Rule:** **Investigative actions, not just writes** — state what a query or check will do, including a plain read-only one, before running it. UAT goes further: ask and …
@@ -136,6 +139,9 @@ file for that date to find the story. Not loaded at session start.
 
 - **Rule:** **Verify before claiming** — read a migration's, script's or feature's code before stating what it does or risks.
   **Why:** 2026-09-26, planning the UAT promotion: Claude said migration `0043` backfills `opportunity.closed_at` (its docstring says "no backfill") and that `0052`'s one-active-product-per-model index could fail on UAT (`0049`'s list maps 59 products to 59 distinct models, so it can't). Both were corrected only after Basheer questioned them. Second occurrence — 2026-09-24's slides also carried two unverified lines.
+
+- **Rule:** "Verify before claiming" extended to report summaries (CLAUDE.md).
+  **Why:** 2026-09-27 — the covering note for the UAT data-quality report was first drafted from the check script's raw log because the PDF was outside the allowed folders. It included a "112 activities missing a next action" count the report doesn't contain, and treated "closed deals edited after closing" as an action item when the report marks it "Reviewed, OK".
 
 ## Post-commit checklist
 
