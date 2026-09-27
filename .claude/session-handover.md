@@ -16,24 +16,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - End-of-testing list (existed before, from the review): reports' own
   zone filter is exact-zone (unused by any screen); Sales breakdown would
   drop a Won deal with no products (Won requires products).
-## UAT promotion (main → uat) — steps 1–9 done, UAT live (2026-09-27)
-
-- Plan: `docs/UAT-Promotion-2026-09-Plan.md`. Full record of steps 1–9:
-  Progress-Archive 2026-09-27 "UAT move (main → uat, `143c78e`)".
-- **Done:** UAT database applied, `alembic current` = `0054 (head)`; all
-  after-move checks passed; both Render services Live on `143c78e`
-  (backend Build Command now pins SQLAlchemy below 2.1 — see Backlog
-  "Cap SQLAlchemy below 2.1"); look-only smoke test passed. Rollback
-  point: `C:\Backups\CabioUAT\DB_Backups\cabio_uat_2026-09-27_pre-move-0041.dump`.
-- SonoScape report (39 deals, 40 rows) and an all-open-Imaging version
-  (70 deals, 31 no-product rows shaded) are on Basheer's Desktop; covering
-  note to Haroon drafted in chat. Basheer sends.
-- **Next:** step 10 — Haroon spot-checks Brand/Category/Model lists and
-  the seven odd names (Progress-Archive entry lists them); then Claude
-  drafts the team's what's-new message (mention: UAT Pipeline Report
-  leaves out deals with no products until the next move). Then section 5
-  paperwork (plan outcome, remove Backlog "main → UAT promotion" entry,
-  product-name plan Status → "on UAT") and commit.
 
 ## Hospital-wise target planning — plan approved (2026-09-27)
 

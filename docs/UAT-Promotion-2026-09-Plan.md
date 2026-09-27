@@ -1,8 +1,11 @@
 # UAT Promotion — September 2026 — Plan
 
-**Status:** Revised 2026-09-27 (target commit, time window, smoke test,
-catalog listing). Not started — nothing has touched UAT yet except
-read-only checks.
+**Status:** **Done 2026-09-27.** UAT on `143c78e`, `alembic current` =
+`0054 (head)`; all after-move checks and the smoke test passed; team told.
+One unplanned fix: the backend's Render Build Command now pins SQLAlchemy
+below 2.1. Haroon's catalog spot-check (step 10) still pending, tracked in
+Backlog. Execution log and retro: Progress-Archive 2026-09-27 "UAT move
+(main → uat, `143c78e`)".
 **Decision:** Basheer, 2026-09-26 — everything demoed to Latheef Bhai and
 Haroon on 2026-09-24 is cleared for UAT; no features held back. This closes
 the Backlog entry "main → UAT promotion — waiting on leadership's park list".

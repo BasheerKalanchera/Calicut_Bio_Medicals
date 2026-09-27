@@ -72,24 +72,6 @@ undecided items" below: Lakhs/Rupees mix-ups, missing next-actions
 concentrated in two people, one bulk-import Lead cluster with no follow-up.
 Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
 
-### main → UAT promotion — waiting on leadership's park list (since 2026-09-18)
-
-> **Approved 2026-09-26:** Basheer — everything demoed 2026-09-24 goes to
-> UAT, nothing held back. Plan: `docs/UAT-Promotion-2026-09-Plan.md`.
-> **2026-09-27:** moved to `143c78e`, steps 1–9 done, UAT live; step 10
-> (Haroon's spot-check, team told) pending. This entry is removed once
-> step 10 and the plan's paperwork are done.
-
-As of 2026-09-24, `origin/uat` is 83 commits behind `origin/main` (27
-feat/fix), including Target Planning, Lead Follow-up Comments, Insights
-Dashboard, Reports, High Priority Deal Flag, and Product Catalog
-Brand/Category/Model. On hold because leadership was reviewing which
-Partial/Not-started features to park for Phase 2, so some could be held back
-from UAT. No list has been given yet. Before promoting: refresh the local `uat`
-branch (stale since the 2026-09-14 hotfix went straight to `origin/uat`),
-then follow the selective-migration audit (Progress-Archive 2026-09-18 and
-2026-09-21 entries).
-
 ### ~~MUI migration backlog (§9 of Frontend-Implementation-Standards.md)~~ — DONE, 2026-08-18
 
 **Fully complete.** `ProjectDirectoryScreen.tsx` (`1d51b6d`) was the last
@@ -152,17 +134,23 @@ implement `Value × Split%` per ADR-003's original intent, or was that
 design superseded and never formally revised? Either answer is a real
 decision, not an engineering default.
 
-### Product Catalog Brand/Category/Model: Done 2026-09-23, two minor clean-ups left
+### Product Catalog Brand/Category/Model: Done 2026-09-23, three minor clean-ups left
 
 Built `cd0d8ab`, full manual E2E pass complete 2026-09-23 (all 30 steps
 PASS, `docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`),
-bugs fixed in `e1aaba4`/`bc460a4` — Feature 4.1 flipped to Done. Left over,
-neither blocking:
-1. **Orphaned ECG Cable brochure** — the one Document ("Brochure") still
+bugs fixed in `e1aaba4`/`bc460a4` — Feature 4.1 flipped to Done. On UAT
+since 2026-09-27. Left over, none blocking:
+1. **Haroon's spot-check of the UAT catalog — waiting on Haroon.** He
+   reviews the Brand/Category/Model lists and confirms or corrects seven
+   names copied verbatim from his own corrected sheet: "Kolkatta",
+   "Boyils", "Vital Signe Monitor", "IX Nelcore" vs "iM50 Nellcore",
+   "SE- 1515", "CX 10". Any fix is a rename in Product Catalog (Admin), no
+   migration.
+2. **Orphaned ECG Cable brochure** — the one Document ("Brochure") still
    attached to the inactive ECG Cable product, and to no account/project/
    opportunity, so no screen shows it any more. Decide: move it onto an
    active product, or accept it as retired with the product.
-2. **E2E test data in Dev** — "E2E Test Brand"/"E2E Test Category" (+ model,
+3. **E2E test data in Dev** — "E2E Test Brand"/"E2E Test Category" (+ model,
    and product if one was saved), "iM90 Test"/"iM91 Test" models and the
    "EDAN iM91 Test ECG Machine" product. Deactivate when convenient.
 
@@ -283,9 +271,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Hospital-wise target planning — plan approved 2026-09-27, build not
   started.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
-  Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. Build
-  starts after the main → UAT move; target: in use on UAT around 2 Oct for
-  Oct–Dec planning.
+  Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+  Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
+  around 2 Oct for Oct–Dec planning.
 
 - **Demo-to-sale conversion report — not built, no design started.** PRD 4.2
   (Demo Management) asks for a report showing what share of demos actually

@@ -1,7 +1,7 @@
 # Product Catalog: Brand / Category / Model — Implementation Plan
 
 **Status:** Built and tested on Dev (`cd0d8ab`, E2E fixes `e1aaba4`/`bc460a4`,
-21–22 Sep 2026); goes to UAT with `docs/UAT-Promotion-2026-09-Plan.md`.
+21–22 Sep 2026); **on UAT since 2026-09-27** (`docs/UAT-Promotion-2026-09-Plan.md`).
 **Supersedes** this document's
 original "Part 1" (a `GENERATED ALWAYS AS (...)` column computing `name`
 from same-row free-text `oem_name`/`model_number`/`category_name`). Part 1

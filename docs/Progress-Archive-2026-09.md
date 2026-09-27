@@ -8264,3 +8264,31 @@ Plan: `docs/UAT-Promotion-2026-09-Plan.md`. Zone-tree E2E paused at step 1
 - **Remaining:** step 10 (Haroon's spot-check including the seven names,
   then the team announcement); plan's after-move paperwork (section 5);
   commit.
+
+## 2026-09-27 — UAT move closed; retro
+
+- **Step 10:** what's-new message sent to the team by Basheer (drafted from
+  the 2026-09-24 demo deck; asks reps to add products to deals that have
+  none). Haroon's catalog spot-check not done yet — tracked as item 1 of
+  Backlog "Product Catalog Brand/Category/Model". SonoScape report and
+  covering note given to Basheer to send Haroon.
+- **Paperwork:** promotion plan Status → Done; Product Catalog plan Status
+  → on UAT; Backlog promotion entry removed; hospital-wise plan and
+  Backlog line marked unblocked.
+- **Retro — worked:** suspending both services plus the before/after
+  snapshot gave a certain result (deal data byte-identical, fingerprint
+  included); re-running the 26 Sep product check before touching anything
+  confirmed nothing had drifted; Basheer's catalog review took minutes
+  with the exported listing.
+- **Retro — went wrong (Claude):** (1) the plan assumed the Render build
+  would reproduce the old one; open-ended dependency ranges pulled
+  SQLAlchemy 2.1 and the backend failed at startup — nothing beforehand
+  tested a fresh install. (2) Progress wasn't recorded as steps finished
+  until Basheer asked, despite the "record as it happens" rule. (3) The
+  first what's-new draft came from the plan's one-line summary, not the
+  demo deck, and was incomplete (Basheer's catch) — a "Verify before
+  claiming" miss.
+- **Process change proposed:** before the next UAT move, a fresh-install
+  start-up check on the laptop (new venv, `pip install .` from `backend`,
+  start the app) so a dependency surprise shows up before the day, not
+  mid-move. To add to the next promotion plan's pre-flight.
