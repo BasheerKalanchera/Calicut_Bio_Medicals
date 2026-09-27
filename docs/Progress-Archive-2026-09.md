@@ -8357,3 +8357,21 @@ for the next plans written: test plans carry "Claude: start recording now"
 step lines and a "Test users: name, role, checked on" line; implementation
 plans carry a "Decisions (proposed / Basheer, date)" list. A failure that
 repeats after this gets a guard rail where possible.
+
+## 2026-09-27 — IST period fix shipped (`22eb298`)
+
+Sales Report periods and their drill-down list now start at midnight IST
+(were 05:30 IST — naive bounds read as UTC by the DB); the On-Hold
+reactivation-date check uses India's date. A system-wide check found no
+other server-clock boundary issue: Target Planning stores quarter labels
+only, and the activity report, login reminders and Next Actions filter were
+already IST. Verified on the Dev DB (read-only): a 02:00 IST win on 1 Jul is
+excluded by the old bound, included by the new. Hospital-wise target
+planning should reuse `_period_bounds` when comparing targets with won
+revenue (note passed to that session via Basheer).
+
+**Retro:** worked — Basheer's "how can we be sure?" pushed the proof onto
+the real database instead of stopping at unit tests. Improve (Claude) — the
+first DB probe compared text, not a real timestamp, and gave a meaningless
+answer; caught before reporting, but a probe must use the same data type as
+the real column.
