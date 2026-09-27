@@ -8375,3 +8375,33 @@ the real database instead of stopping at unit tests. Improve (Claude) — the
 first DB probe compared text, not a real timestamp, and gave a meaningless
 answer; caught before reporting, but a probe must use the same data type as
 the real column.
+
+## 2026-09-27 — Session retrospective (late afternoon: guard rail, Zone tree close-out, IST fix)
+
+**Done:** ask-before-stash guard rail and reworded startup reminders
+(`14e21ec`); Zone tree closed (`76f9a0a` + `b9cf214`, 8/8); IST period fix
+shipped (`22eb298`, checklist `15a53de`) with a note passed to the
+hospital-wise planning session.
+
+**Worked well:** Basheer's questions widened the fix at the right moment —
+"used anywhere else?" turned a Sales-Report-only fix into a system-wide
+check (found the reactivation-date bug, cleared Target Planning), and "how
+can we be sure?" moved the proof onto the real database. Parallel sessions
+stayed clean: the other session was mid-build with failing tests; the review
+was scoped to this session's 5 files and every commit held only this
+session's work. The guard rail stopped a command and asked Basheer on its
+first day, as designed.
+
+**Went wrong (Claude):** (1) proposed the fix before checking the rest of
+the system — for a problem rooted in a shared concept (time zones, dates,
+currency) the scan should come before the proposal; (2) called the Dev check
+a test without saying it only proved nothing broke, not that the fix worked;
+(3) first DB probe compared the wrong type (already recorded in the IST
+entry); (4) put the stash command's name in a commit message right after
+warning the guard rail would catch it — an extra approval round.
+
+**Process change (structural):** test plans get a "What this proves" line
+per step, filled in when the plan is written ("regression only" vs "proves
+the fix"), joining the template fields from the afternoon retro. Item 1 is a
+watch item: if it repeats, proposals get a required "Where else is this
+concept used?" line.
