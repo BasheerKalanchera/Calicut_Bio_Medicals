@@ -68,16 +68,19 @@ class TestListPendingApprovalForApprover:
 
 
 class TestListBySbuAndPeriod:
-    def test_filters_by_sbu_and_period(self):
+    def test_filters_by_sbu_and_period_and_hides_other_peoples_drafts(self):
         repo = TargetPlanRepository(db=MagicMock())
         repo.db.scalars.return_value.all.return_value = []
 
-        repo.list_by_sbu_and_period(SBU_ID, "2026-Q3")
+        repo.list_by_sbu_and_period(SBU_ID, "2026-Q3", viewer_id=USER_ID)
 
         stmt = repo.db.scalars.call_args[0][0]
         sql = _compiled(stmt)
         assert f"target_plan.sbu_id = '{_uuid_literal(SBU_ID)}'" in sql
         assert "target_plan.planning_period = '2026-Q3'" in sql
+        assert (
+            f"target_plan.status != 'DRAFT' OR target_plan.user_id = '{_uuid_literal(USER_ID)}'" in sql
+        )
 
 
 class TestGetByUserSbuPeriod:
@@ -95,10 +98,10 @@ class TestGetByUserSbuPeriod:
 
 
 class TestGetSbuRollup:
-    def test_sums_regardless_of_status(self):
-        """Resolved 2026-09-16: pending targets count in the rollup too --
-        this query has no status filter at all, unlike the pending-approval
-        query above which deliberately does."""
+    def test_sums_every_submitted_status_but_not_drafts(self):
+        """Resolved 2026-09-16: pending targets count in the rollup too.
+        DRAFT rows don't (Hospital-Wise Target Planning, 2026-09-27) --
+        they're unsubmitted and private to their owner."""
         repo = TargetPlanRepository(db=MagicMock())
         repo.db.execute.return_value.one.return_value = (150, 4)
 
@@ -108,7 +111,8 @@ class TestGetSbuRollup:
         sql = _compiled(stmt)
         assert f"target_plan.sbu_id = '{_uuid_literal(SBU_ID)}'" in sql
         assert "target_plan.planning_period = '2026-Q3'" in sql
-        assert "status" not in sql
+        assert "target_plan.status != 'DRAFT'" in sql
+        assert "PENDING_APPROVAL" not in sql
         assert total == 150
         assert count == 4
 
@@ -145,6 +149,7 @@ class TestGetBrandRollups:
         expected_in_clause = f"brand_id IN ('{_uuid_literal(BRAND_ID)}', '{_uuid_literal(other_brand_id)}')"
         assert expected_in_clause in sql
         assert "target_plan.planning_period = '2026-Q3'" in sql
+        assert "target_plan.status != 'DRAFT'" in sql
         assert totals == {BRAND_ID: Decimal("50")}
 
     def test_brand_with_no_splits_is_absent_from_the_result(self):
@@ -177,3 +182,106 @@ class TestBrandVendorTargetRepository:
         stmt = repo.db.scalars.call_args[0][0]
         sql = _compiled(stmt)
         assert "brand_vendor_target.planning_period = '2026-Q3'" in sql
+
+
+class TestReplaceAccounts:
+    def test_deletes_existing_inserts_each_and_expires_the_collection(self):
+        target_plan = MagicMock()
+        target_plan.id = uuid.uuid4()
+        acc_a, acc_b = uuid.uuid4(), uuid.uuid4()
+        repo = TargetPlanRepository(db=MagicMock())
+
+        repo.replace_accounts(
+            target_plan,
+            [(acc_a, Decimal("30"), "WEEKLY", None), (acc_b, Decimal("0"), "MONTHLY", "Visits only")],
+            user_id=USER_ID,
+        )
+
+        delete_stmt = repo.db.execute.call_args_list[0][0][0]
+        sql = _compiled(delete_stmt)
+        assert f"target_plan_account.target_plan_id = '{_uuid_literal(target_plan.id)}'" in sql
+        assert repo.db.add.call_count == 2
+        repo.db.flush.assert_called_once()
+        repo.db.expire.assert_called_once_with(target_plan, ["accounts"])
+
+
+class TestAccountIdsOutsideZones:
+    def test_returns_ids_not_under_any_zone(self):
+        inside, outside = uuid.uuid4(), uuid.uuid4()
+        zone_id = uuid.uuid4()
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.scalars.return_value.all.return_value = [inside]
+
+        result = repo.account_ids_outside_zones([inside, outside], [zone_id])
+
+        stmt = repo.db.scalars.call_args[0][0]
+        sql = _compiled(stmt)
+        assert "zone_closure.ancestor_zone_id IN" in sql
+        assert zone_id.hex in sql
+        assert result == {outside}
+
+
+class TestListEligibleAccounts:
+    def test_empty_territory_returns_nothing_without_querying(self):
+        repo = TargetPlanRepository(db=MagicMock())
+
+        assert repo.list_eligible_accounts(search=None, zone_ids=[]) == []
+        repo.db.scalars.assert_not_called()
+
+    def test_unrestricted_has_no_zone_filter(self):
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.scalars.return_value.unique.return_value.all.return_value = []
+
+        repo.list_eligible_accounts(search="shifa", zone_ids=None)
+
+        sql = _compiled(repo.db.scalars.call_args[0][0])
+        assert "zone_closure" not in sql
+        assert "lower(account.name) LIKE lower('%shifa%')" in sql
+
+    def test_restricted_filters_by_zone_closure(self):
+        zone_id = uuid.uuid4()
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.scalars.return_value.unique.return_value.all.return_value = []
+
+        repo.list_eligible_accounts(search=None, zone_ids=[zone_id])
+
+        sql = _compiled(repo.db.scalars.call_args[0][0])
+        assert "zone_closure.ancestor_zone_id IN" in sql
+        assert zone_id.hex in sql
+
+
+class TestFindOverlaps:
+    def test_no_accounts_skips_the_query(self):
+        repo = TargetPlanRepository(db=MagicMock())
+
+        assert repo.find_overlaps([], SBU_ID, "2026-Q3") == []
+        repo.db.execute.assert_not_called()
+
+    def test_calls_the_security_definer_function(self):
+        account_id = uuid.uuid4()
+        row = MagicMock(account_id=account_id, display_name="Anil")
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.execute.return_value.all.return_value = [row]
+
+        result = repo.find_overlaps([account_id], SBU_ID, "2026-Q3")
+
+        sql_text, params = repo.db.execute.call_args[0]
+        assert "cabio_app_plan_overlap" in str(sql_text)
+        assert params == {"ids": [str(account_id)], "sbu_id": str(SBU_ID), "period": "2026-Q3"}
+        assert result == [(account_id, "Anil")]
+
+
+class TestGetZoneRollup:
+    def test_groups_submitted_plans_by_zone_level_ancestor(self):
+        zone_id = uuid.uuid4()
+        repo = TargetPlanRepository(db=MagicMock())
+        repo.db.execute.return_value.all.return_value = [(zone_id, "North Kerala", 120, 5, 2)]
+
+        rows = repo.get_zone_rollup(SBU_ID, "2026-Q3")
+
+        sql = _compiled(repo.db.execute.call_args[0][0])
+        assert "zone_1.zone_level = 'ZONE'" in sql or "zone_level = 'ZONE'" in sql
+        assert "LEFT OUTER JOIN" in sql
+        assert "target_plan.status != 'DRAFT'" in sql
+        assert f"target_plan.sbu_id = '{_uuid_literal(SBU_ID)}'" in sql
+        assert rows == [(zone_id, "North Kerala", Decimal("120"), 5, 2)]

@@ -3,18 +3,36 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
 from app.domains.planning.models import BrandVendorTarget, TargetPlan
 from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
 from app.domains.planning.schemas import (
     BrandSplitEntry,
     BrandVendorTargetSet,
+    PlanAccountEntry,
+    PlanWarning,
+    PlanWarningKind,
     TargetPlanCreate,
     TargetPlanUpdate,
 )
 from app.domains.reference.repository import BrandRepository
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
+
+# Who may plan any hospital, not just their own territory. Same role set as
+# account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES and master_data.py's
+# _ZONE_SEARCH_UNRESTRICTED_ROLES (each module keeps its own copy, per
+# existing convention). Everyone else is limited to hospitals under their
+# user_zone rows; with none, they can't plan any hospital.
+_TERRITORY_UNRESTRICTED_ROLES = {"Admin", "General Manager", "SBU Manager"}
+
+
+def _territory_zone_ids(current_user: UserProfile) -> list[uuid.UUID] | None:
+    """None = unrestricted; otherwise the caller's assigned zones (possibly empty)."""
+    if current_user.role.role_name in _TERRITORY_UNRESTRICTED_ROLES:
+        return None
+    return [uz.zone_id for uz in current_user.zones]
 
 
 def _require_admin_or_gm(current_user: UserProfile) -> None:
@@ -54,13 +72,104 @@ class TargetPlanService:
             current_user.id, include_orphaned=is_overlay
         )
 
-    def list_team_targets(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
-        """Every target in the SBU for the period, all statuses -- the
-        per-person breakdown behind the rollup banner. RLS on target_plan_read
-        already narrows this to what the caller may see (their own SBU, their
-        own reports, or unrestricted for Admin/GM); this just adds the
-        sbu_id/planning_period filter on top, same shape as get_sbu_rollup."""
-        return self.repository.list_by_sbu_and_period(sbu_id, planning_period)
+    def list_team_targets(
+        self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
+    ) -> list[TargetPlan]:
+        """Every submitted target in the SBU for the period -- the per-person
+        breakdown behind the rollup banner. RLS on target_plan_read already
+        narrows this to what the caller may see (their own SBU, their own
+        reports, or unrestricted for Admin/GM); this adds the
+        sbu_id/planning_period filter on top, and hides other people's DRAFTs
+        (RLS would let a manager read them)."""
+        return self.repository.list_by_sbu_and_period(sbu_id, planning_period, viewer_id=current_user.id)
+
+    def list_eligible_accounts(self, search: str | None, *, current_user: UserProfile) -> list[Account]:
+        return self.repository.list_eligible_accounts(search=search, zone_ids=_territory_zone_ids(current_user))
+
+    def get_zone_rollup(self, sbu_id: uuid.UUID, planning_period: str):
+        return self.repository.get_zone_rollup(sbu_id, planning_period)
+
+    def check_overlaps(
+        self, account_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str
+    ) -> list[PlanWarning]:
+        """Live same-SBU overlap check for the plan dialog, before saving."""
+        accounts_by_id = {a.id: a for a in self.repository.get_accounts_by_ids(account_ids)}
+        return self._overlap_warnings(accounts_by_id, sbu_id, planning_period)
+
+    def _validate_accounts(
+        self, entries: list[PlanAccountEntry], *, current_user: UserProfile
+    ) -> tuple[Decimal, dict[uuid.UUID, Account]]:
+        """Hospital-Wise Target Planning rules, checked before anything is
+        written: no duplicate hospital, every hospital exists, every hospital
+        is in the caller's territory (unless unrestricted), and the total
+        (= the target) is above zero. Individual amounts may be zero -- a
+        hospital can be on the plan for visits only."""
+        account_ids = [e.account_id for e in entries]
+        if len(account_ids) != len(set(account_ids)):
+            raise ValidationError("Each hospital can only appear once in the plan.")
+
+        accounts_by_id = {a.id: a for a in self.repository.get_accounts_by_ids(account_ids)}
+        missing = set(account_ids) - set(accounts_by_id)
+        if missing:
+            raise ValidationError(f"{len(missing)} hospital(s) in the plan don't exist.")
+
+        zone_ids = _territory_zone_ids(current_user)
+        if zone_ids is not None:
+            outside = (
+                self.repository.account_ids_outside_zones(account_ids, zone_ids) if zone_ids else set(account_ids)
+            )
+            if outside:
+                names = ", ".join(sorted(accounts_by_id[i].name for i in outside))
+                raise ValidationError(f"These hospitals are outside your territory: {names}.")
+
+        total = sum((e.planned_amount_lakhs for e in entries), start=Decimal("0"))
+        if total <= 0:
+            raise ValidationError("The plan's total must be above zero -- enter an amount for at least one hospital.")
+        return total, accounts_by_id
+
+    def _overlap_warnings(
+        self, accounts_by_id: dict[uuid.UUID, Account], sbu_id: uuid.UUID, planning_period: str
+    ) -> list[PlanWarning]:
+        overlaps = self.repository.find_overlaps(list(accounts_by_id), sbu_id, planning_period)
+        return [
+            PlanWarning(
+                kind=PlanWarningKind.SAME_SBU_OVERLAP,
+                account_id=account_id,
+                account_name=accounts_by_id[account_id].name,
+                colleague_name=colleague,
+            )
+            for account_id, colleague in overlaps
+            if account_id in accounts_by_id
+        ]
+
+    def _build_warnings(
+        self,
+        entries: list[PlanAccountEntry],
+        accounts_by_id: dict[uuid.UUID, Account],
+        target_plan: TargetPlan,
+    ) -> list[PlanWarning]:
+        """Non-blocking: a High-potential hospital planned at zero, and any
+        hospital a same-SBU colleague has also planned this period."""
+        warnings = [
+            PlanWarning(
+                kind=PlanWarningKind.HIGH_POTENTIAL_ZERO,
+                account_id=e.account_id,
+                account_name=accounts_by_id[e.account_id].name,
+            )
+            for e in entries
+            if e.planned_amount_lakhs == 0 and accounts_by_id[e.account_id].business_potential == "HIGH"
+        ]
+        warnings += self._overlap_warnings(accounts_by_id, target_plan.sbu_id, target_plan.planning_period)
+        return warnings
+
+    def _replace_accounts(
+        self, target_plan: TargetPlan, entries: list[PlanAccountEntry], *, current_user: UserProfile
+    ) -> None:
+        self.repository.replace_accounts(
+            target_plan,
+            [(e.account_id, e.planned_amount_lakhs, e.visit_frequency.value, e.strategic_objective) for e in entries],
+            user_id=current_user.id,
+        )
 
     def _apply_brand_splits(
         self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None
@@ -94,7 +203,11 @@ class TargetPlanService:
             target_plan.id, [(s.brand_id, s.split_amount_lakhs) for s in splits]
         )
 
-    def create_target_plan(self, data: TargetPlanCreate, *, current_user: UserProfile) -> TargetPlan:
+    def create_target_plan(
+        self, data: TargetPlanCreate, *, current_user: UserProfile
+    ) -> tuple[TargetPlan, list[PlanWarning]]:
+        """The target is the SUM of the hospitals' planned amounts. submit=False
+        saves a DRAFT that stays private to its owner until submitted."""
         existing = self.repository.get_by_user_sbu_period(
             current_user.id, data.sbu_id, data.planning_period
         )
@@ -102,49 +215,66 @@ class TargetPlanService:
             raise ConflictError(
                 f"You already have a target set for {data.planning_period} in this SBU."
             )
+        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user)
 
         target_plan = TargetPlan(
             user_id=current_user.id,
             sbu_id=data.sbu_id,
             planning_period=data.planning_period,
-            target_amount_lakhs=data.target_amount_lakhs,
-            status="PENDING_APPROVAL",
+            target_amount_lakhs=total,
+            status="PENDING_APPROVAL" if data.submit else "DRAFT",
             created_by=current_user.id,
             updated_by=current_user.id,
         )
         target_plan = self.repository.create(target_plan)
+        self._replace_accounts(target_plan, data.accounts, current_user=current_user)
         self._apply_brand_splits(target_plan, data.brand_splits)
-        return target_plan
+        return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def update_target_plan(
         self, target_plan_id: uuid.UUID, data: TargetPlanUpdate, *, current_user: UserProfile
-    ) -> TargetPlan:
-        """Owner revising their own number (decision #5). A revision to an
+    ) -> tuple[TargetPlan, list[PlanWarning]]:
+        """Owner revising their own plan (decision #5). A revision to an
         already-decided (APPROVED or REJECTED) target always needs a fresh
         sign-off -- resets status back to PENDING_APPROVAL and clears the
-        prior decision, so a corrected number reappears in the approver's
+        prior decision, so a corrected plan reappears in the approver's
         queue instead of staying stuck on the old decision. This reset fires
         on every call to this method regardless of which fields actually
-        changed, so a brand-split-only revision (same total, re-shuffled
-        between brands) resets approval exactly the same as a total change --
-        confirmed 2026-09-23, since the split is part of what the manager
-        approved."""
+        changed, so a hospital- or brand-split-only revision (same total)
+        resets approval exactly the same as a total change -- confirmed
+        2026-09-23, since the split is part of what the manager approved.
+
+        Drafts (Hospital-Wise Target Planning): editing a DRAFT needs no
+        change note, and submit=False keeps it a DRAFT. Once a plan has been
+        submitted, every revision needs a change note, and it can't go back
+        to DRAFT."""
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
         if target_plan.user_id != current_user.id:
             raise AuthorizationError("You can only revise your own target.")
 
-        target_plan.target_amount_lakhs = data.target_amount_lakhs
-        if target_plan.status in ("APPROVED", "REJECTED"):
+        was_draft = target_plan.status == "DRAFT"
+        change_note = (data.change_note or "").strip() or None
+        if not was_draft and not data.submit:
+            raise ValidationError("A submitted plan can't be turned back into a draft.")
+        if not was_draft and change_note is None:
+            raise ValidationError("Please add a short note saying why the plan changed.")
+        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user)
+
+        target_plan.target_amount_lakhs = total
+        if change_note is not None:
+            target_plan.change_note = change_note
+        if data.submit and target_plan.status in ("APPROVED", "REJECTED", "DRAFT"):
             target_plan.status = "PENDING_APPROVAL"
             target_plan.approved_by = None
             target_plan.approved_at = None
             target_plan.decision_note = None
         target_plan.updated_by = current_user.id
         target_plan = self.repository.update(target_plan)
+        self._replace_accounts(target_plan, data.accounts, current_user=current_user)
         self._apply_brand_splits(target_plan, data.brand_splits)
-        return target_plan
+        return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def approve_or_reject_target_plan(
         self,
@@ -165,6 +295,8 @@ class TargetPlanService:
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
+        if target_plan.status == "DRAFT":
+            raise ValidationError("This plan is still a draft -- it can't be approved or rejected until submitted.")
 
         is_self = current_user.id == target_plan.user_id
         is_resolved_approver = current_user.id == self.get_approver_id(target_plan.user_id)

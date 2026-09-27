@@ -15,6 +15,9 @@ from app.domains.account.schemas import (
     AccountRef,
     AccountResponse,
     AccountUpdate,
+    BusinessPotential,
+    BusinessPotentialUpdate,
+    redact_business_potential_notes,
 )
 from app.domains.account.service import AccountService
 from app.domains.account.workspace_schemas import WorkspaceResponse
@@ -40,6 +43,7 @@ def _get_workspace_service(
 def list_accounts(
     search: str | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),  # noqa: B008
+    business_potential: BusinessPotential | None = Query(None),  # noqa: B008
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
@@ -51,12 +55,16 @@ def list_accounts(
         limit=page_size,
         search=search,
         zone_id=zone_id,
+        business_potential=business_potential.value if business_potential else None,
     )
     total_pages = (total + page_size - 1) // page_size
+    role_name = current_user.role.role_name
 
     return APIResponse(
         data=PaginatedResponse(
-            items=[AccountListResponse.model_validate(a) for a in accounts],
+            items=[
+                redact_business_potential_notes(AccountListResponse.model_validate(a), role_name) for a in accounts
+            ],
             total=total,
             page=page,
             page_size=page_size,
@@ -84,7 +92,9 @@ def get_account(
 ) -> APIResponse[AccountDetailResponse]:
     account, counts = service.get_account_with_counts(account_id)
     children = service.list_children(account_id)
-    base = AccountResponse.model_validate(account).model_dump()
+    base = redact_business_potential_notes(
+        AccountResponse.model_validate(account), current_user.role.role_name
+    ).model_dump()
     base.update({
         "stakeholder_count": counts.stakeholder_count,
         "project_count": counts.project_count,
@@ -108,7 +118,9 @@ def create_account(
         role_name=current_user.role.role_name,
         default_zone_id=current_user.zone_id,
     )
-    return APIResponse(data=AccountResponse.model_validate(account))
+    return APIResponse(
+        data=redact_business_potential_notes(AccountResponse.model_validate(account), current_user.role.role_name)
+    )
 
 
 @router.put("/{account_id}")
@@ -119,7 +131,25 @@ def update_account(
     service: AccountService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[AccountResponse]:
     account = service.update_account(account_id, body, updated_by=current_user.id)
-    return APIResponse(data=AccountResponse.model_validate(account))
+    return APIResponse(
+        data=redact_business_potential_notes(AccountResponse.model_validate(account), current_user.role.role_name)
+    )
+
+
+@router.patch("/{account_id}/business-potential")
+def set_business_potential(
+    account_id: uuid.UUID,
+    body: BusinessPotentialUpdate,
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: AccountService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[AccountResponse]:
+    """Rate Hospitals screen -- Admin/GM only, enforced in the service."""
+    account = service.set_business_potential(
+        account_id, body, user_id=current_user.id, role_name=current_user.role.role_name
+    )
+    return APIResponse(
+        data=redact_business_potential_notes(AccountResponse.model_validate(account), current_user.role.role_name)
+    )
 
 
 @router.get("/{account_id}/workspace")

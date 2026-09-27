@@ -15,10 +15,12 @@ TEST_ACCOUNT_ID = uuid.UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 TEST_ZONE_ID = uuid.UUID("33333333-3333-3333-3333-333333333333")
 
 
-def _mock_user() -> MagicMock:
+def _mock_user(role_name: str = "Sales Staff") -> MagicMock:
     user = MagicMock(spec=UserProfile)
     user.id = TEST_USER_ID
     user.is_active = True
+    user.role = MagicMock()
+    user.role.role_name = role_name
     return user
 
 
@@ -38,6 +40,10 @@ def _mock_account(**overrides) -> MagicMock:
         "zone_id": TEST_ZONE_ID,
         "payer_behavior": "GOOD",
         "customer_type": None,
+        "business_potential": "HIGH",
+        "business_potential_notes": "Big cath-lab expansion planned",
+        "business_potential_set_by": TEST_USER_ID,
+        "business_potential_set_at": now,
         "created_at": now,
         "updated_at": now,
         "zone": _mock_zone(),
@@ -50,8 +56,8 @@ def _mock_account(**overrides) -> MagicMock:
     return account
 
 
-def _setup_overrides(mock_db: MagicMock) -> None:
-    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+def _setup_overrides(mock_db: MagicMock, role_name: str = "Sales Staff") -> None:
+    app.dependency_overrides[get_current_user] = lambda: _mock_user(role_name)
     app.dependency_overrides[get_db] = lambda: mock_db
 
 
@@ -457,4 +463,69 @@ class TestUpdateAccount:
         finally:
             _teardown_overrides()
 
+        assert response.status_code == 422
+
+
+class TestBusinessPotentialVisibility:
+    """Everyone sees the rating; only Admin/GM see the notes and who set it
+    (Hospital-Wise Target Planning). account has no RLS, so the response
+    schema is the only thing hiding the notes."""
+
+    def _get(self, client: TestClient, role_name: str) -> dict:
+        account = _mock_account()
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        mock_db.scalars.return_value.unique.return_value.all.return_value = [account]
+        _setup_overrides(mock_db, role_name)
+        try:
+            response = client.get("/api/v1/accounts")
+        finally:
+            _teardown_overrides()
+        assert response.status_code == 200
+        return response.json()["data"]["items"][0]
+
+    def test_sales_staff_sees_rating_but_not_notes(self, client: TestClient) -> None:
+        item = self._get(client, "Sales Staff")
+        assert item["business_potential"] == "HIGH"
+        assert item["business_potential_notes"] is None
+        assert item["business_potential_set_by"] is None
+        assert item["business_potential_set_at"] is None
+
+    def test_area_manager_does_not_see_notes(self, client: TestClient) -> None:
+        item = self._get(client, "Area Manager")
+        assert item["business_potential_notes"] is None
+
+    def test_gm_sees_notes(self, client: TestClient) -> None:
+        item = self._get(client, "General Manager")
+        assert item["business_potential_notes"] == "Big cath-lab expansion planned"
+        assert item["business_potential_set_by"] == str(TEST_USER_ID)
+
+    def test_admin_sees_notes(self, client: TestClient) -> None:
+        item = self._get(client, "Admin")
+        assert item["business_potential_notes"] == "Big cath-lab expansion planned"
+
+
+class TestSetBusinessPotential:
+    def test_sales_staff_is_refused(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        _setup_overrides(mock_db, "Sales Staff")
+        try:
+            response = client.patch(
+                f"/api/v1/accounts/{TEST_ACCOUNT_ID}/business-potential",
+                json={"business_potential": "HIGH"},
+            )
+        finally:
+            _teardown_overrides()
+        assert response.status_code == 403
+
+    def test_invalid_rating_is_rejected(self, client: TestClient) -> None:
+        mock_db = MagicMock()
+        _setup_overrides(mock_db, "Admin")
+        try:
+            response = client.patch(
+                f"/api/v1/accounts/{TEST_ACCOUNT_ID}/business-potential",
+                json={"business_potential": "VERY_HIGH"},
+            )
+        finally:
+            _teardown_overrides()
         assert response.status_code == 422

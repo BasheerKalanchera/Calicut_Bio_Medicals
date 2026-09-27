@@ -33,6 +33,28 @@ already-migrated copy (worked around on 2026-09-27 with a renamed copy).
 **To do:** add the time to the file name (`cabio_uat_<date>_<HHmm>.dump`);
 the keep-14-newest pruning already works by count, so it's unaffected.
 
+### Automatic tests for the privacy (RLS) rules against a real test database — after 2 Oct (raised 2026-09-27)
+
+The backend suite (1,039 tests, ~17 s) runs against a mocked database, so
+it can't check the row-level security policies that live in Postgres —
+"a salesperson can't read a colleague's plan", "a manager can read their
+reports' rows but not across SBUs". Today these are checked only by
+`/code-review`, manual E2E, and ad-hoc read-only queries on Dev. The
+cross-SBU leak fixed in `0054` was caught by code review, not by a test.
+Basheer's question on 2026-09-27 ("is 1,000+ tests too many?") concluded:
+don't cut tests; the gap is this missing kind.
+**To do:** a small suite (roughly 20–40 tests) against a disposable local
+Postgres in Docker (Docker Desktop is already installed for
+`scripts/regen_physical_schema.ps1`, which only borrows the Postgres image
+for `pg_dump`; a throwaway database container would be new), migrated
+to head, impersonating each role via the three `app.current_*` settings. Start with `target_plan`,
+`target_plan_brand_split`, `target_plan_account` and the opportunity/
+activity policies. Must never point at the shared Dev or UAT database.
+Side note: `tests/test_persistence.py`'s fixed table/relationship counts
+break on every schema change; consider replacing them with a check that
+every model maps and every relationship resolves, without a hard-coded
+total.
+
 ### Review commit frequency — decide ~2026-10-03 (raised 2026-09-26)
 
 65 commits in the week to 2026-09-26, only 15 feat/fix; each needs

@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from enum import StrEnum
+from typing import TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,6 +24,15 @@ class CustomerType(StrEnum):
     MEDICAL_COLLEGE_HOSPITAL = "MEDICAL_COLLEGE_HOSPITAL"
     GOVERNMENT_HOSPITAL = "GOVERNMENT_HOSPITAL"
     OTHER = "OTHER"
+
+
+class BusinessPotential(StrEnum):
+    """Customer Tiering (Hospital-Wise Target Planning) -- set by Admin/GM only."""
+
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+    NOT_CLASSIFIED = "NOT_CLASSIFIED"
 
 
 class AccountBase(BaseModel):
@@ -49,6 +59,11 @@ class AccountUpdate(BaseModel):
     # and confirmed this is genuinely a different hospital -- mirrors
     # AccountCreate.force_create, see AccountService.update_account.
     force_create: bool = False
+
+
+class BusinessPotentialUpdate(BaseModel):
+    business_potential: BusinessPotential
+    business_potential_notes: str | None = Field(None, max_length=2000)
 
 
 class ZoneNested(BaseModel):
@@ -79,6 +94,12 @@ class AccountListResponse(BaseModel):
     zone_id: uuid.UUID
     payer_behavior: str | None
     customer_type: str | None
+    business_potential: str
+    # The three fields below are Admin/GM-only -- always pass the response
+    # through redact_business_potential_notes() before returning it.
+    business_potential_notes: str | None = None
+    business_potential_set_by: uuid.UUID | None = None
+    business_potential_set_at: datetime | None = None
     zone: ZoneNested
     parent_account: AccountRef | None = None
 
@@ -92,6 +113,11 @@ class AccountResponse(BaseModel):
     zone_id: uuid.UUID
     payer_behavior: str | None
     customer_type: str | None
+    business_potential: str
+    # Admin/GM-only -- see redact_business_potential_notes().
+    business_potential_notes: str | None = None
+    business_potential_set_by: uuid.UUID | None = None
+    business_potential_set_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     zone: ZoneNested
@@ -112,3 +138,22 @@ class AccountCountsEntry(BaseModel):
     project_count: int
     opportunity_count: int
     asset_count: int
+
+
+_RATING_NOTES_ROLES = {"Admin", "General Manager"}
+
+_RATING_PRIVATE_FIELDS = ("business_potential_notes", "business_potential_set_by", "business_potential_set_at")
+
+
+_AccountOut = TypeVar("_AccountOut", AccountListResponse, AccountResponse)
+
+
+def redact_business_potential_notes(response: _AccountOut, role_name: str) -> _AccountOut:
+    """Everyone sees a hospital's Business Potential; only Admin/GM see the
+    notes behind it and who set it. `account` has no RLS, so this is the
+    enforcement point -- role_name must come from the authenticated
+    current_user, never from a client-supplied value."""
+    if role_name not in _RATING_NOTES_ROLES:
+        for field in _RATING_PRIVATE_FIELDS:
+            setattr(response, field, None)
+    return response

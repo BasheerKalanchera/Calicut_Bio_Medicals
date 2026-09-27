@@ -1,7 +1,9 @@
 import uuid
+from datetime import UTC, datetime
 
 from app.core.config import settings
 from app.core.exceptions import (
+    AuthorizationError,
     BusinessRuleViolation,
     ConflictError,
     NotFoundError,
@@ -11,7 +13,7 @@ from app.core.exceptions import (
 from app.core.logging import logger
 from app.domains.account.models import Account
 from app.domains.account.repository import AccountRepository
-from app.domains.account.schemas import AccountCreate, AccountUpdate
+from app.domains.account.schemas import AccountCreate, AccountUpdate, BusinessPotentialUpdate
 
 # BR-ACC-03 follow-up: a rep with no territory assigned can't add a hospital
 # at all -- same role-gate shape as master_data.py's
@@ -21,6 +23,9 @@ from app.domains.account.schemas import AccountCreate, AccountUpdate
 # already SBU-wide, not zone-based (see organization/repository.py's
 # TEAM_SCOPE_BUILDERS["SBU Manager"]), so it was never correctly gated here.
 _ZONE_ASSIGNMENT_EXEMPT_ROLES = {"Admin", "General Manager", "SBU Manager"}
+
+# Hospital-Wise Target Planning: only Admin/GM rate a hospital's Business Potential.
+_BUSINESS_POTENTIAL_RATER_ROLES = {"Admin", "General Manager"}
 
 
 class AccountService:
@@ -52,12 +57,14 @@ class AccountService:
         limit: int = 50,
         search: str | None = None,
         zone_id: uuid.UUID | None = None,
+        business_potential: str | None = None,
     ) -> tuple[list[Account], int]:
         return self.repository.list_accounts(
             offset=offset,
             limit=limit,
             search=search,
             zone_id=zone_id,
+            business_potential=business_potential,
         )
 
     def _validate_references(
@@ -173,6 +180,9 @@ class AccountService:
             zone_id=zone_id,
             payer_behavior=data.payer_behavior,
             customer_type=data.customer_type,
+            # Explicit rather than relying on the column default, which only
+            # lands on the object at flush time.
+            business_potential="NOT_CLASSIFIED",
             created_by=created_by,
             updated_by=created_by,
         )
@@ -237,4 +247,18 @@ class AccountService:
             setattr(account, field, value)
 
         account.updated_by = updated_by
+        return self.repository.update(account)
+
+    def set_business_potential(
+        self, account_id: uuid.UUID, data: BusinessPotentialUpdate, *, user_id: uuid.UUID, role_name: str
+    ) -> Account:
+        """Admin/GM only; stamps who set the rating and when."""
+        if role_name not in _BUSINESS_POTENTIAL_RATER_ROLES:
+            raise AuthorizationError("Only Admin/GM may rate a hospital's Business Potential.")
+        account = self.get_account(account_id)
+        account.business_potential = data.business_potential.value
+        account.business_potential_notes = (data.business_potential_notes or "").strip() or None
+        account.business_potential_set_by = user_id
+        account.business_potential_set_at = datetime.now(UTC)
+        account.updated_by = user_id
         return self.repository.update(account)

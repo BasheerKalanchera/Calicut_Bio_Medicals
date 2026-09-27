@@ -135,6 +135,15 @@ company), per hospital:
 Plus one "Unplanned" line for deals won at hospitals outside the plan
 (decision 3). A short plan of its own will be written once Part 1 is on UAT.
 
+**Quarter date range (note from the reporting session, 2026-09-27):** a
+quarter must start at midnight Indian time, not 5:30 am (the database runs
+on UTC). Don't build a date range from "YYYY-Qn" by hand. Turn the quarter
+into its first and last calendar dates, then reuse `_period_bounds(period_start,
+period_end)` in `backend/app/domains/reporting/router.py` (fixed in `22eb298`).
+It returns IST-aware start/end datetimes, the end being midnight of the day
+after, for `closed_at >= start AND closed_at < end`. Verified on Dev: a deal
+Won at 02:00 IST on 1 July falls in Jul–Sep.
+
 ## 6. Not in this plan (with reasons)
 
 - **Splitting each hospital's amount by brand** (Design B). Rejected in the
@@ -183,9 +192,11 @@ Plus one "Unplanned" line for deals won at hospitals outside the plan
   drop, query `pg_constraint` for every FK into both tables (skill rule).
   Downgrade recreates them empty.
 - Overlap lookup: a narrow `SECURITY DEFINER` function
-  `cabio_plan_overlap(p_account_ids uuid[], p_sbu_id uuid, p_period text)`
+  `cabio_app_plan_overlap(p_account_ids uuid[], p_sbu_id uuid, p_period text)`
+  (built with the `cabio_app_` prefix, matching the existing functions)
   returning `(account_id, display_name)` for other users' non-draft plans in
-  the same SBU and period. It's needed because `target_plan` RLS hides
+  the same SBU and period. As built, it also answers only for the caller's
+  own session SBU unless the caller is Admin/GM. It's needed because `target_plan` RLS hides
   colleagues' plans from a Sales Staff caller. It exposes only the
   colleague's name per hospital, which is the warning's whole point.
 
@@ -199,16 +210,20 @@ Plus one "Unplanned" line for deals won at hospitals outside the plan
   `accounts: list[PlanAccountEntry]` (min 1) instead of
   `target_amount_lakhs`; `TargetPlanUpdate.change_note` required unless
   the plan is still a draft; response adds `accounts`, `change_note`
-  and `overlap_warnings`. `AccountResponse`/`AccountListResponse`
+  and `warnings` (both kinds: High hospital at ₹0, same-SBU overlap;
+  filled on create/update responses only). `AccountResponse`/`AccountListResponse`
   add `business_potential`; `business_potential_notes` is populated only
   when the caller is Admin/GM (built in the router from `current_user`,
   never from a client flag).
 - **Service** (`TargetPlanService`): `_apply_accounts()` replaces rows
   wholesale (same pattern as `_apply_brand_splits`). Checks: no duplicate
   hospital; territory, meaning `account.zone_id` must be in the `zone_closure`
-  descendants of the caller's `user_zone` rows, while callers with no
-  `user_zone` rows (GM, SBU Manager today; checked on Dev 2026-09-27) may
-  pick any hospital; sets `target_amount_lakhs = SUM(planned_amount_lakhs)`,
+  descendants of the caller's `user_zone` rows. As built (2026-09-27), the
+  exemption is by role, not by "has no `user_zone` rows": Admin, GM and
+  SBU Manager may pick any hospital (the same role set as
+  `_ZONE_ASSIGNMENT_EXEMPT_ROLES` and `_ZONE_SEARCH_UNRESTRICTED_ROLES`);
+  anyone else with no zones can't plan any hospital, so an unassigned
+  salesperson never gets the whole list; sets `target_amount_lakhs = SUM(planned_amount_lakhs)`,
   must be > 0; then `_apply_brand_splits` validates against that total,
   unchanged. `update_target_plan` keeps its existing reset-to-pending
   behaviour and stores `change_note`. Drafts: `create`/`update` with
@@ -222,11 +237,19 @@ Plus one "Unplanned" line for deals won at hospitals outside the plan
   meaning the sum of `planned_amount_lakhs` grouped by each account's
   `ZONE`-level ancestor (same walk-up as
   `AccountRepository.find_similar_by_name`), under the caller's RLS. The
-  existing per-person `/team` endpoint returns `accounts` too.
+  existing per-person `/team` endpoint returns `accounts` too, and hides
+  other people's drafts.
+- **Also built for the plan dialog:** `GET /planning/targets/eligible-accounts?search=`
+  (the territory-limited hospital picker, with each rating) and
+  `GET /planning/targets/overlaps?sbu_id&planning_period&account_ids=`
+  (a live overlap check before saving).
 - **Tests:** service rules (territory, sum, zero-total, duplicate, change
-  note, draft transitions, self-approval still blocked), RLS on
-  `target_plan_account` (Sales Staff can't read a peer's rows; Area Manager
-  can read their reports'), overlap function, notes hidden from non-Admin/GM.
+  note, draft transitions, self-approval still blocked), overlap function,
+  notes hidden from non-Admin/GM. The test suite is mock-based and has no
+  RLS tests, so RLS on `target_plan_account` (Sales Staff can't read a
+  peer's rows; Area Manager can read their reports') is checked against
+  live Dev in the E2E plan instead. Every new query was also run read-only
+  on Dev under real RLS as Sales Staff, Area Manager and GM (2026-09-27).
 
 ### Frontend
 - `TargetPlanningScreen.tsx`: the Set/Revise dialog becomes a full-width

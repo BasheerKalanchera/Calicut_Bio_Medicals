@@ -13,11 +13,14 @@ from app.domains.planning.schemas import (
     BrandRollupResponse,
     BrandVendorTargetResponse,
     BrandVendorTargetSet,
+    EligibleAccountResponse,
+    PlanWarning,
     SBUTargetRollupResponse,
     TargetPlanApprovalDecision,
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
+    ZoneRollupEntry,
 )
 from app.domains.planning.service import BrandVendorTargetService, TargetPlanService
 from app.domains.reference.repository import BrandRepository
@@ -70,8 +73,56 @@ def list_team_targets(
     """Per-person breakdown behind the rollup banner -- RLS narrows this to
     whatever the caller is actually allowed to see (own SBU, own reports, or
     unrestricted for Admin/GM), same as every other list endpoint here."""
-    target_plans = service.list_team_targets(sbu_id, planning_period)
+    target_plans = service.list_team_targets(sbu_id, planning_period, current_user=current_user)
     return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
+
+
+@router.get("/zone-rollup")
+def get_zone_rollup(
+    sbu_id: uuid.UUID = Query(...),  # noqa: B008
+    planning_period: str = Query(...),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: TargetPlanService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[ZoneRollupEntry]]:
+    """Planned amounts per zone (North Kerala, South Kerala, ...) across the
+    submitted plans the caller can see under RLS -- same visibility as /team."""
+    rows = service.get_zone_rollup(sbu_id, planning_period)
+    return APIResponse(
+        data=[
+            ZoneRollupEntry(
+                zone_id=zone_id,
+                zone_name=zone_name,
+                planned_amount_lakhs=amount,
+                hospital_count=hospitals,
+                person_count=people,
+            )
+            for zone_id, zone_name, amount, hospitals, people in rows
+        ]
+    )
+
+
+@router.get("/eligible-accounts")
+def list_eligible_accounts(
+    search: str | None = Query(None),
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: TargetPlanService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[EligibleAccountResponse]]:
+    """The plan dialog's hospital picker -- only hospitals in the caller's
+    own territory (Admin/GM/SBU Manager: any hospital)."""
+    accounts = service.list_eligible_accounts(search, current_user=current_user)
+    return APIResponse(data=[EligibleAccountResponse.model_validate(a) for a in accounts])
+
+
+@router.get("/overlaps")
+def check_overlaps(
+    sbu_id: uuid.UUID = Query(...),  # noqa: B008
+    planning_period: str = Query(...),
+    account_ids: list[uuid.UUID] = Query(...),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
+    service: TargetPlanService = Depends(_get_service),  # noqa: B008
+) -> APIResponse[list[PlanWarning]]:
+    """Live same-SBU overlap warnings while the plan is being edited."""
+    return APIResponse(data=service.check_overlaps(account_ids, sbu_id, planning_period))
 
 
 @router.get("/rollup")
@@ -98,8 +149,10 @@ def create_target_plan(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
-    target_plan = service.create_target_plan(body, current_user=current_user)
-    return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
+    target_plan, warnings = service.create_target_plan(body, current_user=current_user)
+    response = TargetPlanResponse.model_validate(target_plan)
+    response.warnings = warnings
+    return APIResponse(data=response)
 
 
 @router.patch("/{target_plan_id}")
@@ -109,8 +162,10 @@ def update_target_plan(
     current_user: UserProfile = Depends(get_current_user),  # noqa: B008
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
-    target_plan = service.update_target_plan(target_plan_id, body, current_user=current_user)
-    return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
+    target_plan, warnings = service.update_target_plan(target_plan_id, body, current_user=current_user)
+    response = TargetPlanResponse.model_validate(target_plan)
+    response.warnings = warnings
+    return APIResponse(data=response)
 
 
 @router.post("/{target_plan_id}/approve")

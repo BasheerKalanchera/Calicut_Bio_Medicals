@@ -1,12 +1,27 @@
 import uuid
 from decimal import Decimal
 
-from sqlalchemy import delete, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy.orm import Session, aliased, noload
 
 from app.db.base import BaseRepository
+from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import BrandVendorTarget, TargetPlan, TargetPlanBrandSplit
+from app.domains.planning.models import BrandVendorTarget, TargetPlan, TargetPlanAccount, TargetPlanBrandSplit
+from app.domains.reference.models import Zone, ZoneClosure
+
+# Account has several lazy="select" collections; none are needed for the
+# planner's picker or territory checks (same reasoning as
+# AccountRepository.list_accounts's noload() list).
+_ACCOUNT_NOLOADS = (
+    noload(Account.stakeholders),
+    noload(Account.projects),
+    noload(Account.opportunities),
+    noload(Account.activities),
+    noload(Account.installed_assets),
+    noload(Account.documents),
+    noload(Account.child_accounts),
+)
 
 
 class TargetPlanRepository(BaseRepository[TargetPlan]):
@@ -49,11 +64,16 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         )
         return list(self.db.scalars(stmt).all())
 
-    def list_by_sbu_and_period(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
+    def list_by_sbu_and_period(
+        self, sbu_id: uuid.UUID, planning_period: str, *, viewer_id: uuid.UUID
+    ) -> list[TargetPlan]:
+        """Drafts are private to their owner: RLS lets a manager read a
+        report's DRAFT row, so it's excluded here except for the viewer's own."""
         stmt = (
             select(TargetPlan)
             .where(TargetPlan.sbu_id == sbu_id)
             .where(TargetPlan.planning_period == planning_period)
+            .where(or_(TargetPlan.status != "DRAFT", TargetPlan.user_id == viewer_id))
             .order_by(TargetPlan.target_amount_lakhs.desc())
         )
         return list(self.db.scalars(stmt).all())
@@ -70,9 +90,10 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         return self.db.scalars(stmt).first()
 
     def get_sbu_rollup(self, sbu_id: uuid.UUID, planning_period: str) -> tuple[Decimal, int]:
-        """SUM + COUNT across every row regardless of status -- pending targets
-        count too (resolved 2026-09-16), so the rollup shows the full picture
-        including drafts, not just committed numbers."""
+        """SUM + COUNT across every submitted row -- pending targets count too
+        (resolved 2026-09-16), so the rollup shows the full picture, not just
+        approved numbers. DRAFT rows are excluded: they're unsubmitted and
+        private to their owner (Hospital-Wise Target Planning, 2026-09-27)."""
         stmt = (
             select(
                 func.coalesce(func.sum(TargetPlan.target_amount_lakhs), 0),
@@ -80,6 +101,7 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
             )
             .where(TargetPlan.sbu_id == sbu_id)
             .where(TargetPlan.planning_period == planning_period)
+            .where(TargetPlan.status != "DRAFT")
         )
         total, count = self.db.execute(stmt).one()
         return Decimal(total), count
@@ -106,7 +128,7 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         self, brand_ids: list[uuid.UUID], planning_period: str
     ) -> dict[uuid.UUID, Decimal]:
         """SUM of every TargetPlanBrandSplit row per brand for this period,
-        across all target_plan statuses (same "count drafts too" shape as
+        across all submitted target_plan statuses (DRAFT excluded, same as
         get_sbu_rollup above), one GROUP BY for every brand at once instead
         of a query per brand (/code-review 2026-09-23). A brand with no
         splits yet is simply absent from the returned dict -- callers treat
@@ -116,9 +138,127 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
             .join(TargetPlan, TargetPlan.id == TargetPlanBrandSplit.target_plan_id)
             .where(TargetPlanBrandSplit.brand_id.in_(brand_ids))
             .where(TargetPlan.planning_period == planning_period)
+            .where(TargetPlan.status != "DRAFT")
             .group_by(TargetPlanBrandSplit.brand_id)
         )
         return {brand_id: Decimal(total) for brand_id, total in self.db.execute(stmt).all()}
+
+
+    def replace_accounts(
+        self,
+        target_plan: TargetPlan,
+        entries: list[tuple[uuid.UUID, Decimal, str, str | None]],
+        *,
+        user_id: uuid.UUID,
+    ) -> None:
+        """Delete-and-recreate, same reasoning as replace_brand_splits. The
+        bulk DELETE bypasses the ORM, so the plan's `accounts` collection is
+        expired afterwards -- otherwise a collection loaded earlier in the
+        session would still show the old rows in the response."""
+        self.db.execute(delete(TargetPlanAccount).where(TargetPlanAccount.target_plan_id == target_plan.id))
+        for account_id, amount, visit_frequency, objective in entries:
+            self.db.add(
+                TargetPlanAccount(
+                    target_plan_id=target_plan.id,
+                    account_id=account_id,
+                    planned_amount_lakhs=amount,
+                    visit_frequency=visit_frequency,
+                    strategic_objective=objective,
+                    created_by=user_id,
+                    updated_by=user_id,
+                )
+            )
+        self.db.flush()
+        self.db.expire(target_plan, ["accounts"])
+
+    def get_accounts_by_ids(self, account_ids: list[uuid.UUID]) -> list[Account]:
+        stmt = select(Account).options(*_ACCOUNT_NOLOADS).where(Account.id.in_(account_ids))
+        return list(self.db.scalars(stmt).unique().all())
+
+    def account_ids_outside_zones(
+        self, account_ids: list[uuid.UUID], zone_ids: list[uuid.UUID]
+    ) -> set[uuid.UUID]:
+        """Which of account_ids are NOT filed under any of zone_ids (or a
+        zone beneath one of them), via zone_closure."""
+        in_territory = select(ZoneClosure.descendant_zone_id).where(ZoneClosure.ancestor_zone_id.in_(zone_ids))
+        stmt = select(Account.id).where(Account.id.in_(account_ids)).where(Account.zone_id.in_(in_territory))
+        inside = set(self.db.scalars(stmt).all())
+        return set(account_ids) - inside
+
+    def list_eligible_accounts(
+        self, *, search: str | None, zone_ids: list[uuid.UUID] | None, limit: int = 50
+    ) -> list[Account]:
+        """The plan dialog's hospital picker. zone_ids=None means unrestricted
+        (Admin/GM/SBU Manager); an empty list means no territory, so nothing."""
+        if zone_ids is not None and not zone_ids:
+            return []
+        stmt = select(Account).options(*_ACCOUNT_NOLOADS)
+        if zone_ids is not None:
+            in_territory = select(ZoneClosure.descendant_zone_id).where(ZoneClosure.ancestor_zone_id.in_(zone_ids))
+            stmt = stmt.where(Account.zone_id.in_(in_territory))
+        if search:
+            stmt = stmt.where(Account.name.ilike(f"%{search}%"))
+        stmt = stmt.order_by(Account.name).limit(limit)
+        return list(self.db.scalars(stmt).unique().all())
+
+    def find_overlaps(
+        self, account_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str
+    ) -> list[tuple[uuid.UUID, str]]:
+        """Other people's submitted plans in the same SBU/period that include
+        any of account_ids. Goes through cabio_app_plan_overlap() (SECURITY
+        DEFINER, migration 0055) because target_plan RLS hides colleagues'
+        plans from a Sales Staff caller."""
+        if not account_ids:
+            return []
+        rows = self.db.execute(
+            text(
+                "SELECT account_id, display_name FROM "
+                "cabio_app_plan_overlap(CAST(:ids AS uuid[]), CAST(:sbu_id AS uuid), :period)"
+            ),
+            {"ids": [str(i) for i in account_ids], "sbu_id": str(sbu_id), "period": planning_period},
+        ).all()
+        return [(row.account_id, row.display_name) for row in rows]
+
+    def get_zone_rollup(
+        self, sbu_id: uuid.UUID, planning_period: str
+    ) -> list[tuple[uuid.UUID | None, str | None, Decimal, int, int]]:
+        """Planned amounts per ZONE-level ancestor of each hospital's zone
+        (same walk-up as AccountRepository.find_similar_by_name), submitted
+        plans only, under the caller's RLS. Returns (zone_id, zone_name,
+        amount, hospital_count, person_count)."""
+        zone_anc = aliased(Zone)
+        zone_ancestor = (
+            select(
+                ZoneClosure.descendant_zone_id.label("zone_id"),
+                zone_anc.id.label("anc_id"),
+                zone_anc.name.label("anc_name"),
+            )
+            .join(zone_anc, zone_anc.id == ZoneClosure.ancestor_zone_id)
+            .where(zone_anc.zone_level == "ZONE")
+            .subquery()
+        )
+        stmt = (
+            select(
+                zone_ancestor.c.anc_id,
+                zone_ancestor.c.anc_name,
+                func.coalesce(func.sum(TargetPlanAccount.planned_amount_lakhs), 0),
+                func.count(func.distinct(TargetPlanAccount.account_id)),
+                func.count(func.distinct(TargetPlan.user_id)),
+            )
+            .select_from(TargetPlanAccount)
+            .join(TargetPlan, TargetPlan.id == TargetPlanAccount.target_plan_id)
+            .join(Account, Account.id == TargetPlanAccount.account_id)
+            .outerjoin(zone_ancestor, zone_ancestor.c.zone_id == Account.zone_id)
+            .where(TargetPlan.sbu_id == sbu_id)
+            .where(TargetPlan.planning_period == planning_period)
+            .where(TargetPlan.status != "DRAFT")
+            .group_by(zone_ancestor.c.anc_id, zone_ancestor.c.anc_name)
+            .order_by(zone_ancestor.c.anc_name)
+        )
+        return [
+            (zone_id, zone_name, Decimal(amount), hospitals, people)
+            for zone_id, zone_name, amount, hospitals, people in self.db.execute(stmt).all()
+        ]
 
 
 class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):

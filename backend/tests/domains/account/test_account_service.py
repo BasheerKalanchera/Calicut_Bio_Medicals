@@ -77,7 +77,7 @@ class TestListAccounts:
         _results, total = service.list_accounts(offset=0, limit=10, search="test")
 
         repo.list_accounts.assert_called_once_with(
-            offset=0, limit=10, search="test", zone_id=None
+            offset=0, limit=10, search="test", zone_id=None, business_potential=None
         )
         assert total == 0
 

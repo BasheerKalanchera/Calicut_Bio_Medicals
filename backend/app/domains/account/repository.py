@@ -24,6 +24,7 @@ class AccountRepository(BaseRepository[Account]):
         limit: int = 50,
         search: str | None = None,
         zone_id: uuid.UUID | None = None,
+        business_potential: str | None = None,
     ) -> tuple[list[Account], int]:
         # For the directory listing we only need name + zone + payer_behavior.
         # The Account model has 7 lazy="selectin" relationships which each fire a separate
@@ -51,6 +52,8 @@ class AccountRepository(BaseRepository[Account]):
                 ZoneClosure.ancestor_zone_id == zone_id
             )
             stmt = stmt.where(Account.zone_id.in_(descendant_ids))
+        if business_potential:
+            stmt = stmt.where(Account.business_potential == business_potential)
 
         stmt = stmt.order_by(Account.name)
 
