@@ -14,7 +14,7 @@ class TargetPlan(AuditMixin, Base):
         UniqueConstraint("user_id", "sbu_id", "planning_period", name="target_plan_unique"),
         CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_target_plan_planning_period"),
         CheckConstraint(
-            "status IN ('PENDING_APPROVAL', 'APPROVED', 'REJECTED')", name="ck_target_plan_status"
+            "status IN ('DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED')", name="ck_target_plan_status"
         ),
     )
 
@@ -29,14 +29,17 @@ class TargetPlan(AuditMixin, Base):
     )
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    change_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped["UserProfile"] = relationship(
         back_populates="target_plans", foreign_keys=[user_id], lazy="joined"
     )
     approver: Mapped["UserProfile | None"] = relationship(foreign_keys=[approved_by], lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="target_plans", lazy="joined")
-    coverage_plans: Mapped[list["CoveragePlan"]] = relationship(back_populates="target_plan", lazy="select")
     brand_splits: Mapped[list["TargetPlanBrandSplit"]] = relationship(
+        back_populates="target_plan", lazy="select", cascade="all, delete-orphan"
+    )
+    accounts: Mapped[list["TargetPlanAccount"]] = relationship(
         back_populates="target_plan", lazy="select", cascade="all, delete-orphan"
     )
 
@@ -65,6 +68,35 @@ class TargetPlanBrandSplit(AuditMixin, Base):
     brand: Mapped["Brand"] = relationship(lazy="joined")
 
 
+class TargetPlanAccount(AuditMixin, Base):
+    """One hospital on a TargetPlan (docs/Hospital-Wise-Target-Planning-Implementation-Plan.md).
+    The plan's target_amount_lakhs is the SUM of planned_amount_lakhs,
+    enforced at the service layer. Replaced wholesale on revision, same as
+    TargetPlanBrandSplit."""
+
+    __tablename__ = "target_plan_account"
+    __table_args__ = (
+        UniqueConstraint("target_plan_id", "account_id", name="uq_target_plan_account"),
+        CheckConstraint("planned_amount_lakhs >= 0", name="ck_target_plan_account_nonneg"),
+        CheckConstraint(
+            "visit_frequency IN ('WEEKLY', 'BI_WEEKLY', 'MONTHLY', 'QUARTERLY', 'AS_NEEDED')",
+            name="ck_target_plan_account_visit_frequency",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    target_plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("target_plan.id", ondelete="CASCADE"), nullable=False
+    )
+    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("account.id"), nullable=False)
+    planned_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+    visit_frequency: Mapped[str] = mapped_column(String(20), nullable=False)
+    strategic_objective: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    target_plan: Mapped["TargetPlan"] = relationship(back_populates="accounts", lazy="select")
+    account: Mapped["Account"] = relationship(lazy="joined")
+
+
 class BrandVendorTarget(AuditMixin, Base):
     """The number a brand/vendor actually promised Cabio for a quarter --
     Admin/GM only (docs/Brand-Level-Target-Planning-Implementation-Plan.md
@@ -83,43 +115,3 @@ class BrandVendorTarget(AuditMixin, Base):
     vendor_target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
 
     brand: Mapped["Brand"] = relationship(lazy="joined")
-
-
-class CoveragePlan(AuditMixin, Base):
-    __tablename__ = "coverage_plan"
-    __table_args__ = (
-        UniqueConstraint("user_id", "planning_period", name="coverage_plan_unique"),
-        CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_coverage_plan_planning_period"),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=False)
-    target_plan_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("target_plan.id"), nullable=False
-    )
-    planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
-
-    user: Mapped["UserProfile"] = relationship(
-        back_populates="coverage_plans", foreign_keys=[user_id], lazy="joined"
-    )
-    target_plan: Mapped["TargetPlan"] = relationship(back_populates="coverage_plans", lazy="joined")
-    entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="coverage_plan", lazy="select")
-
-
-class CoveragePlanEntry(AuditMixin, Base):
-    __tablename__ = "coverage_plan_entry"
-    __table_args__ = (
-        UniqueConstraint("coverage_plan_id", "account_id", name="coverage_plan_entry_unique"),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    coverage_plan_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("coverage_plan.id"), nullable=False
-    )
-    account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("account.id"), nullable=False)
-    strategic_objective: Mapped[str] = mapped_column(String, nullable=False)
-    target_revenue_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
-    coverage_frequency: Mapped[str | None] = mapped_column(String(50), nullable=True)
-
-    coverage_plan: Mapped["CoveragePlan"] = relationship(back_populates="entries", lazy="joined")
-    account: Mapped["Account"] = relationship(back_populates="coverage_plan_entries", lazy="joined")

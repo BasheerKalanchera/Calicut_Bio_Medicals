@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-23 from the Dev database, catching up migration
--- 0054: migrations 0053 + 0054: target_plan_brand_split and brand_vendor_target tables (Brand-Level Target Planning), plus 0054's SBU-scoped fix to target_plan_brand_split_read RLS policy
+-- Regenerated 2026-09-27 from the Dev database, catching up migration
+-- 0055: 0055: account.business_potential*, target_plan.change_note + DRAFT, target_plan_account (+RLS), cabio_app_plan_overlap(); coverage_plan/coverage_plan_entry dropped
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict n2dh1pUUzwwb9l2YDCD9vqh8yfHkahtI67MCOVjBYwEPQQkITqy030bBU5b0XYp
+\restrict TNnt5Cg6c4d4zizaRAcR1AC5x4h53zswlpxSnwS21iuu35m5RxZ1IY8WexhkutC
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -151,6 +151,31 @@ CREATE FUNCTION public.cabio_app_opportunity_in_account(p_opportunity_id uuid, p
 
 
 --
+-- Name: cabio_app_plan_overlap(uuid[], uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.cabio_app_plan_overlap(p_account_ids uuid[], p_sbu_id uuid, p_period text) RETURNS TABLE(account_id uuid, display_name text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+            SELECT tpa.account_id, up.display_name::text
+            FROM target_plan_account tpa
+            JOIN target_plan tp ON tp.id = tpa.target_plan_id
+            JOIN user_profile up ON up.id = tp.user_id
+            WHERE tpa.account_id = ANY (p_account_ids)
+              AND tp.sbu_id = p_sbu_id
+              AND tp.planning_period = p_period
+              AND tp.status <> 'DRAFT'
+              AND tp.user_id <> cabio_app_uid()
+              AND (
+                  p_sbu_id = cabio_app_sbu_id()
+                  OR cabio_app_role_name() IN ('Admin', 'General Manager')
+              )
+            ORDER BY up.display_name
+        $$;
+
+
+--
 -- Name: cabio_app_role_id(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -267,7 +292,12 @@ CREATE TABLE public.account (
     updated_by uuid,
     zone_id uuid NOT NULL,
     customer_type character varying(50),
+    business_potential character varying(20) DEFAULT 'NOT_CLASSIFIED'::character varying NOT NULL,
+    business_potential_notes text,
+    business_potential_set_by uuid,
+    business_potential_set_at timestamp with time zone,
     CONSTRAINT account_payer_behavior_check CHECK (((payer_behavior)::text = ANY ((ARRAY['GOOD'::character varying, 'AVERAGE'::character varying, 'PROBLEMATIC'::character varying, 'UNKNOWN'::character varying])::text[]))),
+    CONSTRAINT ck_account_business_potential CHECK (((business_potential)::text = ANY ((ARRAY['HIGH'::character varying, 'MEDIUM'::character varying, 'LOW'::character varying, 'NOT_CLASSIFIED'::character varying])::text[]))),
     CONSTRAINT ck_account_customer_type CHECK (((customer_type)::text = ANY ((ARRAY['MULTISPECIALITY_HOSPITAL'::character varying, 'SPECIALTY_HOSPITAL'::character varying, 'DIAGNOSTIC_CENTER'::character varying, 'CLINIC'::character varying, 'DEALER'::character varying, 'MEDICAL_COLLEGE_HOSPITAL'::character varying, 'GOVERNMENT_HOSPITAL'::character varying, 'OTHER'::character varying])::text[])))
 );
 
@@ -369,41 +399,6 @@ CREATE TABLE public.category (
     sbu_id uuid NOT NULL,
     name character varying(100) NOT NULL,
     is_active boolean DEFAULT true NOT NULL
-);
-
-
---
--- Name: coverage_plan; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.coverage_plan (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    user_id uuid NOT NULL,
-    target_plan_id uuid NOT NULL,
-    planning_period character varying(10) NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    created_by uuid,
-    updated_by uuid,
-    CONSTRAINT coverage_plan_planning_period_check CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
-);
-
-
---
--- Name: coverage_plan_entry; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.coverage_plan_entry (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    coverage_plan_id uuid NOT NULL,
-    account_id uuid NOT NULL,
-    strategic_objective text NOT NULL,
-    target_revenue_lakhs numeric(15,2) NOT NULL,
-    coverage_frequency character varying(50),
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    created_by uuid,
-    updated_by uuid
 );
 
 
@@ -833,8 +828,29 @@ CREATE TABLE public.target_plan (
     approved_by uuid,
     approved_at timestamp with time zone,
     decision_note text,
-    CONSTRAINT ck_target_plan_status CHECK (((status)::text = ANY ((ARRAY['PENDING_APPROVAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[]))),
+    change_note text,
+    CONSTRAINT ck_target_plan_status CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[]))),
     CONSTRAINT target_plan_planning_period_check CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
+);
+
+
+--
+-- Name: target_plan_account; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.target_plan_account (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    target_plan_id uuid NOT NULL,
+    account_id uuid NOT NULL,
+    planned_amount_lakhs numeric(15,2) NOT NULL,
+    visit_frequency character varying(20) NOT NULL,
+    strategic_objective text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_target_plan_account_nonneg CHECK ((planned_amount_lakhs >= (0)::numeric)),
+    CONSTRAINT ck_target_plan_account_visit_frequency CHECK (((visit_frequency)::text = ANY ((ARRAY['WEEKLY'::character varying, 'BI_WEEKLY'::character varying, 'MONTHLY'::character varying, 'QUARTERLY'::character varying, 'AS_NEEDED'::character varying])::text[])))
 );
 
 
@@ -1008,38 +1024,6 @@ ALTER TABLE ONLY public.brand_vendor_target
 
 ALTER TABLE ONLY public.category
     ADD CONSTRAINT category_pkey PRIMARY KEY (id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_pkey PRIMARY KEY (id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_unique UNIQUE (coverage_plan_id, account_id);
-
-
---
--- Name: coverage_plan coverage_plan_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_pkey PRIMARY KEY (id);
-
-
---
--- Name: coverage_plan coverage_plan_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_unique UNIQUE (user_id, planning_period);
 
 
 --
@@ -1323,6 +1307,14 @@ ALTER TABLE ONLY public.stakeholder
 
 
 --
+-- Name: target_plan_account target_plan_account_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT target_plan_account_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: target_plan_brand_split target_plan_brand_split_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1376,6 +1368,14 @@ ALTER TABLE ONLY public.category
 
 ALTER TABLE ONLY public.model
     ADD CONSTRAINT uq_model_brand_name UNIQUE (brand_id, name);
+
+
+--
+-- Name: target_plan_account uq_target_plan_account; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT uq_target_plan_account UNIQUE (target_plan_id, account_id);
 
 
 --
@@ -1735,6 +1735,20 @@ CREATE INDEX ix_product_sbu_id ON public.product USING btree (sbu_id);
 
 
 --
+-- Name: ix_target_plan_account_account_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_target_plan_account_account_id ON public.target_plan_account USING btree (account_id);
+
+
+--
+-- Name: ix_target_plan_account_target_plan_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_target_plan_account_target_plan_id ON public.target_plan_account USING btree (target_plan_id);
+
+
+--
 -- Name: ix_target_plan_brand_split_target_plan_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1833,20 +1847,6 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.brand_vendor_target FOR EA
 
 
 --
--- Name: coverage_plan trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.coverage_plan FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
-
-
---
--- Name: coverage_plan_entry trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.coverage_plan_entry FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
-
-
---
 -- Name: installed_asset trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1917,6 +1917,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.target_plan FOR EACH ROW E
 
 
 --
+-- Name: target_plan_account trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.target_plan_account FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
 -- Name: target_plan_brand_split trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1935,6 +1942,14 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.user_profile FOR EACH ROW 
 --
 
 CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.user_zone FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
+-- Name: account account_business_potential_set_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.account
+    ADD CONSTRAINT account_business_potential_set_by_fkey FOREIGN KEY (business_potential_set_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -2071,70 +2086,6 @@ ALTER TABLE ONLY public.brand_vendor_target
 
 ALTER TABLE ONLY public.category
     ADD CONSTRAINT category_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
-
-
---
--- Name: coverage_plan coverage_plan_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_coverage_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_coverage_plan_id_fkey FOREIGN KEY (coverage_plan_id) REFERENCES public.coverage_plan(id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
-
-
---
--- Name: coverage_plan_entry coverage_plan_entry_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan_entry
-    ADD CONSTRAINT coverage_plan_entry_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
-
-
---
--- Name: coverage_plan coverage_plan_target_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_target_plan_id_fkey FOREIGN KEY (target_plan_id) REFERENCES public.target_plan(id);
-
-
---
--- Name: coverage_plan coverage_plan_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
-
-
---
--- Name: coverage_plan coverage_plan_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.coverage_plan
-    ADD CONSTRAINT coverage_plan_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profile(id);
 
 
 --
@@ -2695,6 +2646,38 @@ ALTER TABLE ONLY public.stakeholder
 
 ALTER TABLE ONLY public.stakeholder
     ADD CONSTRAINT stakeholder_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: target_plan_account target_plan_account_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT target_plan_account_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.account(id);
+
+
+--
+-- Name: target_plan_account target_plan_account_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT target_plan_account_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: target_plan_account target_plan_account_target_plan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT target_plan_account_target_plan_id_fkey FOREIGN KEY (target_plan_id) REFERENCES public.target_plan(id) ON DELETE CASCADE;
+
+
+--
+-- Name: target_plan_account target_plan_account_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.target_plan_account
+    ADD CONSTRAINT target_plan_account_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
 
 
 --
@@ -3284,6 +3267,63 @@ CREATE POLICY split_via_opportunity ON public.split USING ((opportunity_id IN ( 
 ALTER TABLE public.target_plan ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: target_plan_account; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.target_plan_account ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: target_plan_account target_plan_account_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_account_delete ON public.target_plan_account FOR DELETE USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))))));
+
+
+--
+-- Name: target_plan_account target_plan_account_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_account_read ON public.target_plan_account FOR SELECT USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (target_plan.sbu_id = public.cabio_app_sbu_id())) OR ((target_plan.sbu_id = public.cabio_app_sbu_id()) AND ((target_plan.user_id IN ( SELECT up.id
+           FROM (public.user_profile up
+             JOIN public.user_zone uz ON ((uz.user_id = up.id)))
+          WHERE (uz.zone_id IN ( SELECT zone_closure.descendant_zone_id
+                   FROM public.zone_closure
+                  WHERE (zone_closure.ancestor_zone_id IN ( SELECT user_zone.zone_id
+                           FROM public.user_zone
+                          WHERE (user_zone.user_id = public.cabio_app_uid()))))))) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))))) OR (target_plan.user_id = public.cabio_app_uid())))));
+
+
+--
+-- Name: target_plan_account target_plan_account_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_account_update ON public.target_plan_account FOR UPDATE USING ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (target_plan.user_id <> public.cabio_app_uid())))))) WITH CHECK ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE ((target_plan.user_id = public.cabio_app_uid()) OR (target_plan.user_id IN ( SELECT user_profile.id
+           FROM public.user_profile
+          WHERE (user_profile.manager_id = public.cabio_app_uid()))) OR ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) AND (target_plan.user_id <> public.cabio_app_uid()))))));
+
+
+--
+-- Name: target_plan_account target_plan_account_write; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY target_plan_account_write ON public.target_plan_account FOR INSERT WITH CHECK ((target_plan_id IN ( SELECT target_plan.id
+   FROM public.target_plan
+  WHERE (target_plan.user_id = public.cabio_app_uid()))));
+
+
+--
 -- Name: target_plan_brand_split; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -3385,5 +3425,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict n2dh1pUUzwwb9l2YDCD9vqh8yfHkahtI67MCOVjBYwEPQQkITqy030bBU5b0XYp
+\unrestrict TNnt5Cg6c4d4zizaRAcR1AC5x4h53zswlpxSnwS21iuu35m5RxZ1IY8WexhkutC
 

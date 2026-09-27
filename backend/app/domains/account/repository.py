@@ -38,7 +38,6 @@ class AccountRepository(BaseRepository[Account]):
                 noload(Account.activities),
                 noload(Account.installed_assets),
                 noload(Account.documents),
-                noload(Account.coverage_plan_entries),
                 noload(Account.child_accounts),
             )
         )
@@ -74,7 +73,6 @@ class AccountRepository(BaseRepository[Account]):
                 noload(Account.activities),
                 noload(Account.installed_assets),
                 noload(Account.documents),
-                noload(Account.coverage_plan_entries),
                 noload(Account.child_accounts),
             )
             .order_by(Account.name)
@@ -179,7 +177,6 @@ class AccountRepository(BaseRepository[Account]):
                 noload(Account.activities),
                 noload(Account.installed_assets),
                 noload(Account.documents),
-                noload(Account.coverage_plan_entries),
                 noload(Account.child_accounts),
             )
         )
@@ -271,7 +268,6 @@ class AccountRepository(BaseRepository[Account]):
                 noload(Account.activities),
                 noload(Account.installed_assets),
                 noload(Account.documents),
-                noload(Account.coverage_plan_entries),
             )
         )
 
@@ -286,7 +282,6 @@ class AccountRepository(BaseRepository[Account]):
                 selectinload(Account.installed_assets),
                 noload(Account.activities),
                 noload(Account.documents),
-                noload(Account.coverage_plan_entries),
                 noload(Account.child_accounts),
             )
         )

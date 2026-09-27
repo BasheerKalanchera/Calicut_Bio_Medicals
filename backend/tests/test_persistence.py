@@ -70,8 +70,11 @@ def test_all_28_tables_registered():
     # model (0048_brand_category_model_tables.py).
     # 38, not 36: Brand-Level Target Planning added target_plan_brand_split,
     # brand_vendor_target (0053_target_plan_brand_split_and_vendor_target.py).
+    # 37, not 38: Hospital-Wise Target Planning added target_plan_account and
+    # dropped the never-used coverage_plan, coverage_plan_entry
+    # (0055_hospital_wise_target_planning.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 38, f"Expected 38 tables, found {table_count}"
+    assert table_count == 37, f"Expected 37 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -132,7 +135,14 @@ def test_all_relationships_resolve():
     # TargetPlanBrandSplit.brand, BrandVendorTarget.brand -- both new
     # relationships onto Brand are one-directional only, no back_populates
     # added there, same reasoning as MarketingLead.assigned_to_user above.
-    assert rel_count == 120, f"Expected 120 relationships, found {rel_count}"
+    # 115, not 120: Hospital-Wise Target Planning (0055) added
+    # TargetPlan.accounts, TargetPlanAccount.target_plan,
+    # TargetPlanAccount.account (one-directional onto Account) and removed the
+    # 8 relationships of the dropped CoveragePlan/CoveragePlanEntry models
+    # (CoveragePlan.user/.target_plan/.entries, CoveragePlanEntry.coverage_plan/
+    # .account, UserProfile.coverage_plans, TargetPlan.coverage_plans,
+    # Account.coverage_plan_entries).
+    assert rel_count == 115, f"Expected 115 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

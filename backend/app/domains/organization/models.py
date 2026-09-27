@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from app.domains.activity.models import Activity, Reminder
     from app.domains.document.models import Document
     from app.domains.opportunity.models import Opportunity, Split
-    from app.domains.planning.models import CoveragePlan, TargetPlan
+    from app.domains.planning.models import TargetPlan
     from app.domains.project.models import Project
     from app.domains.reference.models import SBU, Role, Zone
 
@@ -43,9 +43,6 @@ class UserProfile(AuditMixin, Base):
 
     target_plans: Mapped[list[TargetPlan]] = relationship(
         back_populates="user", foreign_keys="[TargetPlan.user_id]", lazy="select"
-    )
-    coverage_plans: Mapped[list[CoveragePlan]] = relationship(
-        back_populates="user", foreign_keys="[CoveragePlan.user_id]", lazy="select"
     )
     owned_projects: Mapped[list[Project]] = relationship(
         back_populates="owner", foreign_keys="[Project.owner_id]", lazy="select"

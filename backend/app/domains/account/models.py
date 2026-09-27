@@ -1,7 +1,8 @@
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, CheckConstraint, ForeignKey, Index, Integer, String
+from sqlalchemy import UUID, CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import AuditMixin, Base
@@ -11,7 +12,6 @@ if TYPE_CHECKING:
     from app.domains.asset.models import InstalledAsset
     from app.domains.document.models import Document
     from app.domains.opportunity.models import Opportunity, OpportunityStakeholder
-    from app.domains.planning.models import CoveragePlanEntry
     from app.domains.project.models import Project
     from app.domains.reference.models import Zone
 
@@ -29,6 +29,10 @@ class Account(AuditMixin, Base):
             "'GOVERNMENT_HOSPITAL', 'OTHER')",
             name="ck_account_customer_type",
         ),
+        CheckConstraint(
+            "business_potential IN ('HIGH', 'MEDIUM', 'LOW', 'NOT_CLASSIFIED')",
+            name="ck_account_business_potential",
+        ),
         Index("idx_account_name_trgm", "name", postgresql_using="gin", postgresql_ops={"name": "gin_trgm_ops"}),
     )
 
@@ -42,6 +46,16 @@ class Account(AuditMixin, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     payer_behavior: Mapped[str | None] = mapped_column(String(50), nullable=True)
     customer_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Business Potential rating (Customer Tiering) -- set by Admin/GM only; the
+    # notes are returned only to Admin/GM callers (response schema, not RLS).
+    business_potential: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="NOT_CLASSIFIED", server_default="NOT_CLASSIFIED"
+    )
+    business_potential_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    business_potential_set_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
+    business_potential_set_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     parent_account: Mapped["Account | None"] = relationship(
         back_populates="child_accounts", remote_side="Account.id", lazy="joined"
@@ -55,7 +69,6 @@ class Account(AuditMixin, Base):
     activities: Mapped[list["Activity"]] = relationship(back_populates="account", lazy="select")
     installed_assets: Mapped[list["InstalledAsset"]] = relationship(back_populates="account", lazy="select")
     documents: Mapped[list["Document"]] = relationship(back_populates="account", lazy="select")
-    coverage_plan_entries: Mapped[list["CoveragePlanEntry"]] = relationship(back_populates="account", lazy="select")
 
 
 class Stakeholder(AuditMixin, Base):
