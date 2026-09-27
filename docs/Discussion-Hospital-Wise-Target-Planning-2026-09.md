@@ -1,8 +1,8 @@
 # Discussion: Hospital-Wise Target Planning — 2026-09-25
 
-**Status:** Design direction decided (Design C, below). Some questions are
-still open (section 5). Not yet a build plan: once section 5 is settled, this
-becomes `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+**Status:** Design direction decided (Design C, below). Section 5's
+questions were settled by Basheer on 2026-09-27. Next:
+`docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
 **Participants:** Basheer (decisions), Claude (options and analysis).
 **Origin:** the 2026-09-24 demo to Latheef Bhai and Haroon (Progress-Archive
 entry "2026-09-25 — Demo follow-up: leadership requests recorded").
@@ -75,49 +75,37 @@ do the two relate?
    about a week (around 2 Oct 2026), so Oct–Dec (FY quarter 2026-Q3) planning
    happens in the system.
 
-## 5. Still open
+## 5. Decisions on the open questions (Basheer, 2026-09-27)
 
-Each of these changes what gets built, so they should be answered together:
-
-1. **Who rates Business Potential, and who can see the notes?** The Customer
-   Tiering plan assumed Latheef Bhai sets it. But under Design C a salesperson
-   needs a rating on every hospital before planning, and there are 100–300
-   hospitals to rate within the week. Options: (a) Latheef Bhai/management
-   only; (b) the salesperson proposes, management confirms; (c) anyone in that
-   zone can set it. Also: can salespeople read the notes? They may contain
-   sensitive remarks. *Suggestion:* (b), with Not Classified hospitals still
-   plannable, so planning isn't blocked while ratings are pending.
-2. **People without their own hospitals.** Admin and GM set per-SBU targets
-   today, and SBU and Area Managers may not personally cover hospitals. Do
-   they keep a typed target, or is theirs simply the roll-up of their team's
-   plans? *Suggestion:* managers and above see a roll-up and don't type a
-   number. Anyone who also sells personally plans their own hospitals like a
-   salesperson.
-3. **The same hospital in two plans.** Two people can plan the same hospital:
-   one Imaging and one Critical Care rep (fine), or two reps of the same SBU
-   (e.g. a shared account). Does the roll-up double-count, or should the
-   second person be blocked or warned? *Suggestion:* allow it with a warning
-   for the same SBU, since the existing rule already allows several reps to
-   own separate deals at one hospital.
-4. **What counts as "actuals" for a hospital.** Suggested: the value of deals
-   won at that hospital during the quarter, credited to the deal owner, the
-   same way the current Sales Report counts. A deal whose revenue is split
-   between people follows whatever the reports settle on (Backlog entry
+1. **Only Admin/GM rate Business Potential, and only Admin/GM see the
+   notes.** Everyone sees the rating itself, since it guides planning
+   (decision 2). Unrated (Not Classified) hospitals can still be planned, so
+   planning is never blocked waiting for ratings.
+2. **GM, SBU Managers and Area Managers do their own sales rounds.** Each
+   plans their own hospitals like a salesperson, and also sees their team's
+   plans rolled up. Admin has no personal target and sees the roll-ups
+   only. The GM's own plan is approved by another Admin/GM user, as Target
+   Planning already works.
+3. **The same hospital in two plans:** reps from different SBUs is normal
+   and allowed. Two reps from the same SBU (e.g. both Imaging) is allowed
+   with a warning.
+4. **Progress against the plan:** "achieved" is the value of deals won at
+   that hospital during the quarter, credited to the deal owner, as the
+   Sales Report counts. Active deals' weighted value is shown alongside, not
+   added in: *Won so far* + *Expected from active deals* = *Likely finish*.
+   Split-shared deals follow whatever the reports settle on (Backlog
    "Reports never implement split-weighted attribution").
-5. **Is the strategic objective per hospital still required?** The 2026-09-11
-   Coverage Planning design requires a written objective for every hospital.
-   With 20–40 hospitals per person, that's a lot of writing in week one.
-   *Suggestion:* optional.
-6. **Can a plan change mid-quarter?** For example, adding a hospital after a
-   surprise enquiry. *Suggestion:* yes, and any change sends the plan back
-   for re-approval, the same as Target Planning today.
+5. **The per-hospital strategic objective is optional.**
+6. **Plans can change mid-quarter.** Every change needs a written note
+   explaining it, and goes back to the manager for re-approval.
 
 ## 6. Delivering within a week — suggested phasing
 
 The one-week window is tight. Beyond the new build, rolling out to UAT
 depends on promoting a large backlog of already-built work (`origin/uat` was
-83 commits behind `main` on 2026-09-24, on hold waiting for leadership's list
-of features to park — `docs/Backlog.md`, "main → UAT promotion").
+115 commits behind `main` on 2026-09-27; the move was approved 2026-09-26 with
+nothing held back — `docs/UAT-Promotion-2026-09-Plan.md`). This feature itself
+needs a second, later move once built.
 
 **Needed by about 2 Oct, so planning can start:**
 - A Business Potential rating and notes on each hospital record.
@@ -153,8 +141,8 @@ finished feature goes to UAT, where the team does real planning.
   quarterly cadence. Dropped: a separate coverage approval.
 - **Customer Tiering plan:** narrows to the Business Potential rating plus
   notes, one per hospital (decision 5). Its other open questions (size vs
-  A/B/C/D, hospital groups, who sets and sees it) remain; the last is
-  question 1 above.
+  A/B/C/D, hospital groups) remain; who sets and sees it is settled
+  (section 5, item 1).
 - **Business rules:** BR-PL-02 and BR-PL-03 need rewording once this is
   final (a coverage plan no longer follows an approved target; they're one
   plan).
@@ -180,12 +168,15 @@ finished feature goes to UAT, where the team does real planning.
   (HIGH/MEDIUM/LOW/NOT_CLASSIFIED, CHECK constraint) and
   `business_potential_notes`, plus set-by/set-at. One per account
   (decision 5). `account` has no RLS today; note visibility is handled in
-  the response schema if restricted (question 1).
+  the response schema: notes are returned only to Admin/GM (section 5,
+  item 1).
 - **Territory restriction:** the account's `zone_id` must fall within the
   planner's `user_zone` descendants via `zone_closure` (decided 2026-09-11),
   checked in the service.
 - **Actuals:** won opportunities by `account_id` within the quarter's
-  `closed_at` range, owner-attributed. Unplanned accounts are grouped
+  `closed_at` range, owner-attributed. Active deals' weighted value
+  (Active status only, as on the Pipeline Report) is shown alongside, never
+  added into achieved (section 5, item 4). Unplanned accounts are grouped
   separately (decision 3).
 - **Process:** migration applied to Dev with `alembic current` recorded,
   `Physical-Schema.sql` regenerated, `/code-review` at high (approval

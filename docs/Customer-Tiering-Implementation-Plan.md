@@ -1,8 +1,8 @@
 # Customer Tiering & Size Classification — Implementation Plan
 
 **Status:** DRAFT, 2026-09-24; updated 2026-09-25 after the demo (see
-"Decided at the 2026-09-24 demo"). Not approved to build. Four structural
-questions (see "Open questions") are still with Latheef Bhai and Haroon.
+"Decided at the 2026-09-24 demo"). Not approved to build. Two structural
+questions (see "Open questions", 1 and 3) are still with Latheef Bhai and Haroon.
 The build shape depends on their answers.
 **Scorecard rows:** Feature 5.1 "Tier 1 / Tier 2 dropdown" (1.3 Customer
 Tiering, Not started) and Feature 5.1 "Account types … A/B/C/D class"
@@ -35,9 +35,11 @@ per hospital**, not per SBU; revisit if hospitals turn up whose potential
 differs a lot between SBUs. See
 `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, decision 5.
 
-Still open: questions 1, 3 and 4 below (size vs A/B/C/D, hospital groups,
-who can see and set it). Question 4 is also question 1 of the hospital-wise
-planning discussion, where it has become urgent. Also to confirm: whether the draft's separate
+**Question 4 answered (Basheer, 2026-09-27): only Admin/GM set the rating,
+and only Admin/GM see the notes**; everyone sees the rating itself. See
+`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, section 5, item 1.
+
+Still open: questions 1 and 3 below (size vs A/B/C/D, hospital groups). Also to confirm: whether the draft's separate
 "what to do next" field is still wanted alongside the notes.
 
 ## The idea, in plain terms
@@ -76,8 +78,9 @@ Tier 1, and what to do with them*, a new joiner can read it on day one. So a
 tier needs a written **reason** and a **next step** stored alongside it, not
 just the label.
 
-**Who does the work:** Latheef Bhai classifies customers himself; there are
-only about 100–300 of them. He'll review new accounts each week with the
+**Who does the work:** Admin/GM set the rating (Basheer, 2026-09-27;
+originally Latheef Bhai alone); there are
+only about 100–300 of them. Latheef Bhai will review new accounts each week with the
 salesperson who entered them, and re-review every tier once a year. Accounts
 without enough information stay **Not Classified** until there is.
 
@@ -140,7 +143,7 @@ These affect each other, so they should be answered together:
 4. **Who can see it?** Can salespeople see the tier and the written reason?
    A note like "Problematic payer, 100% upfront only" is sensitive. Who
    besides Latheef Bhai can *set* a tier (GM, Admin, SBU Manager, Area
-   Manager)?
+   Manager)? *(Answered 2026-09-27, see above.)*
 
 Also pending, but not blocking Option A: Latheef Bhai drafts the 5–6
 scoring questions and their weights (needed for Option B).

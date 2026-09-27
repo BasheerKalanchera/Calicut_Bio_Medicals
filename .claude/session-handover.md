@@ -33,14 +33,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   after the move, with the gap note drafted in chat. Findings:
   Progress-Archive 2026-09-26 "Vendor pipeline report: trial run".
 
-## Hospital-wise target planning — design in discussion (2026-09-25)
+## Hospital-wise target planning — plan approved (2026-09-27)
 
-- Discussion doc: `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`.
-  Design C chosen (hospital amounts add up to the quarterly target, brand
-  split on top, one approval); decisions 1–6 recorded there.
-- **Deadline:** roll out Target + Coverage Planning to UAT around 2 Oct 2026
-  so Oct–Dec (2026-Q3) planning happens in the system. Fallback decision
-  point around 29 Sep (see doc section 6).
-- **Next:** Basheer answers the 6 open questions in section 5 (who rates
-  Business Potential is the most urgent), then write
-  `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+- Discussion doc: `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
+  (Design C; all open questions answered 2026-09-27, section 5).
+- Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`
+  (approved 2026-09-27, choices answered in section 3).
+- **Deadline:** on UAT around 2 Oct 2026; fallback decision around 29 Sep.
+- **Next:** build Part 1 (plan section 4 order) — only after the main → UAT
+  move and the Product Catalog clean-up (Basheer, 2026-09-27).
