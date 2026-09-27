@@ -3,7 +3,21 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "sh .claude/hooks/session-start.sh" }
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/ask-before-git-stash.sh"
+          }
         ]
       }
     ]
