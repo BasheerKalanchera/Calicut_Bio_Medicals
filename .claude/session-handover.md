@@ -23,17 +23,27 @@ items go to Progress-Archive; unstarted work goes to Backlog._
     new `utils/businessPotential.ts`, `components/BusinessPotentialChip.tsx`,
     `screens/RateHospitalsScreen.tsx` (Admin/GM nav entry in `DemoApp.tsx`),
     rating chip + Admin/GM notes on `Customer360Screen.tsx`.
-  - **Next:** (b) plan dialog in `TargetPlanningScreen.tsx` (hospital
-    table, live total, warnings, brand split vs live total, change note,
-    Save draft / Submit; `FormModal` gains optional `maxWidth` +
-    secondary button). Then (c) approver expandable rows + team rows +
-    By Zone table. Then plan steps 4–7.
+  - (b) done, tsc/lint clean: new `components/TargetPlanDialog.tsx`
+    (hospital picker, rows, live total, High-at-₹0 + overlap warnings,
+    brand split vs live total, change note, Save draft / Submit),
+    `FormModal` `maxWidth` + `secondaryAction`, planning types/services,
+    old single-amount dialog removed from `TargetPlanningScreen.tsx`.
+  - Draft rule (Basheer, 2026-09-28): balanced brand split and total >
+    ₹0 enforced on Submit only, not Save draft -- backend service + 6 tests
+    (1045 pass) and the dialog both changed.
+  - Screen renamed **Target & Coverage Planning** (Basheer, 2026-09-28;
+    signed req. 6.1 "Basic Beat Planning" = coverage planning). Menu +
+    header + dialog title done; living docs that name the *screen*
+    (UI-Inventory, UAT user manual, Traceability 6.1) get updated in plan
+    step 4.
+  - **Next:** (c) approver expandable rows + team rows + By Zone table.
+    Then plan steps 4–7.
 - **API as built** (differs slightly from the plan's first draft): create/
   update body `{accounts[], brand_splits, submit, change_note}`; response
   field is `warnings` (kinds `HIGH_POTENTIAL_ZERO`, `SAME_SBU_OVERLAP`);
   new `GET /planning/targets/eligible-accounts`, `/overlaps`,
   `/zone-rollup`; `PATCH /accounts/{id}/business-potential`.
-- **Known gap:** Dev Target Planning screen can't save targets until step
-  3 lands (accepted by Basheer).
+- **Known gap closed by (b):** Target Planning on Dev saves hospital-wise
+  plans again (not yet clicked through; E2E is plan step 6).
 - **First thing next session:** confirm the stash guard-rail hook no longer
   errors after a `cd backend` (fix `89779d1` applies from session start).

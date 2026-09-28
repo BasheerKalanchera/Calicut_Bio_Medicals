@@ -53,7 +53,7 @@ const SALES_EXECUTION_ITEMS = [
   { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
   { id: "nextActions",   label: "Next Actions",       icon: "✅" },
   { id: "insights", label: "Insights", icon: "📊" },
-  { id: "targetPlanning", label: "Target Planning", icon: "🎯" },
+  { id: "targetPlanning", label: "Target & Coverage Planning", icon: "🎯" },
 ];
 
 // Insights-Dashboard-Implementation-Plan.md's Dashboard-vs-Reports split
@@ -898,7 +898,7 @@ export default function DemoApp() {
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "targetPlanning" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
               <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
-                Target Planning
+                Target & Coverage Planning
               </Typography>
             </Box>
             <TargetPlanningScreen />

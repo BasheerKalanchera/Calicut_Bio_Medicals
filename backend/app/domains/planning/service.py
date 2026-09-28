@@ -97,13 +97,15 @@ class TargetPlanService:
         return self._overlap_warnings(accounts_by_id, sbu_id, planning_period)
 
     def _validate_accounts(
-        self, entries: list[PlanAccountEntry], *, current_user: UserProfile
+        self, entries: list[PlanAccountEntry], *, current_user: UserProfile, submit: bool
     ) -> tuple[Decimal, dict[uuid.UUID, Account]]:
         """Hospital-Wise Target Planning rules, checked before anything is
         written: no duplicate hospital, every hospital exists, every hospital
-        is in the caller's territory (unless unrestricted), and the total
-        (= the target) is above zero. Individual amounts may be zero -- a
-        hospital can be on the plan for visits only."""
+        is in the caller's territory (unless unrestricted), and -- on submit
+        only -- the total (= the target) is above zero. A draft may still be
+        at zero while its amounts are being filled in (Basheer, 2026-09-28).
+        Individual amounts may be zero -- a hospital can be on the plan for
+        visits only."""
         account_ids = [e.account_id for e in entries]
         if len(account_ids) != len(set(account_ids)):
             raise ValidationError("Each hospital can only appear once in the plan.")
@@ -123,7 +125,7 @@ class TargetPlanService:
                 raise ValidationError(f"These hospitals are outside your territory: {names}.")
 
         total = sum((e.planned_amount_lakhs for e in entries), start=Decimal("0"))
-        if total <= 0:
+        if submit and total <= 0:
             raise ValidationError("The plan's total must be above zero -- enter an amount for at least one hospital.")
         return total, accounts_by_id
 
@@ -171,8 +173,14 @@ class TargetPlanService:
             user_id=current_user.id,
         )
 
+    @staticmethod
+    def _check_no_duplicate_brands(splits: list[BrandSplitEntry]) -> None:
+        brand_ids = [s.brand_id for s in splits]
+        if len(brand_ids) != len(set(brand_ids)):
+            raise ValidationError("Each brand can only appear once in the split.")
+
     def _apply_brand_splits(
-        self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None
+        self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None, *, submit: bool
     ) -> None:
         """Brand-Level Target Planning decision #1: splitting is mandatory,
         enforced here (not just the frontend's dialogBrands.length gate, per
@@ -186,13 +194,20 @@ class TargetPlanService:
         resending a matching split."""
         if not self.brand_repository.has_active_brand(target_plan.sbu_id):
             return
+        if not submit:
+            # A draft keeps whatever split has been entered so far, balanced
+            # or not (even none) -- the full rule below applies on submit, so
+            # an approver never sees an unbalanced split (Basheer, 2026-09-28).
+            self._check_no_duplicate_brands(splits or [])
+            self.repository.replace_brand_splits(
+                target_plan.id, [(s.brand_id, s.split_amount_lakhs) for s in splits or []]
+            )
+            return
         if not splits:
             raise ValidationError(
                 "This SBU has active brands -- a brand split is required and must sum to the target amount."
             )
-        brand_ids = [s.brand_id for s in splits]
-        if len(brand_ids) != len(set(brand_ids)):
-            raise ValidationError("Each brand can only appear once in the split.")
+        self._check_no_duplicate_brands(splits)
         total = sum((s.split_amount_lakhs for s in splits), start=Decimal("0"))
         if total != target_plan.target_amount_lakhs:
             raise ValidationError(
@@ -215,7 +230,7 @@ class TargetPlanService:
             raise ConflictError(
                 f"You already have a target set for {data.planning_period} in this SBU."
             )
-        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user)
+        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user, submit=data.submit)
 
         target_plan = TargetPlan(
             user_id=current_user.id,
@@ -228,7 +243,7 @@ class TargetPlanService:
         )
         target_plan = self.repository.create(target_plan)
         self._replace_accounts(target_plan, data.accounts, current_user=current_user)
-        self._apply_brand_splits(target_plan, data.brand_splits)
+        self._apply_brand_splits(target_plan, data.brand_splits, submit=data.submit)
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def update_target_plan(
@@ -260,7 +275,7 @@ class TargetPlanService:
             raise ValidationError("A submitted plan can't be turned back into a draft.")
         if not was_draft and change_note is None:
             raise ValidationError("Please add a short note saying why the plan changed.")
-        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user)
+        total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user, submit=data.submit)
 
         target_plan.target_amount_lakhs = total
         if change_note is not None:
@@ -273,7 +288,7 @@ class TargetPlanService:
         target_plan.updated_by = current_user.id
         target_plan = self.repository.update(target_plan)
         self._replace_accounts(target_plan, data.accounts, current_user=current_user)
-        self._apply_brand_splits(target_plan, data.brand_splits)
+        self._apply_brand_splits(target_plan, data.brand_splits, submit=data.submit)
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def approve_or_reject_target_plan(

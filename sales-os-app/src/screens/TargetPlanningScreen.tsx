@@ -13,11 +13,11 @@ import {
   TableBody,
   TableRow,
   TableCell,
-  Alert,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
 import FormModal from "../components/FormModal";
+import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
 import { listBrands } from "../services/catalogHierarchy";
@@ -26,8 +26,6 @@ import {
   listPendingApproval,
   listTeamTargets,
   getSbuRollup,
-  createTargetPlan,
-  updateTargetPlan,
   approveTargetPlan,
   rejectTargetPlan,
 } from "../services/targetPlanning";
@@ -38,16 +36,8 @@ import {
   getPlanningYearQuarters,
   formatLakhs,
 } from "../utils/formatter";
-import type { TargetPlan, TargetPlanSbu, TargetPlanStatus, BrandSplitEntry } from "../types/targetPlanning";
+import type { TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
-import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
-
-// The split section is mandatory whenever the target's SBU has at least one
-// active brand (both SBUs do today, confirmed 2026-09-23 -- Imaging has 1,
-// Critical Care has 9) -- docs/Brand-Level-Target-Planning-Implementation-
-// Plan.md decision #1. If a future SBU genuinely has none, the section
-// hides and a target saves exactly as it did before this feature.
-interface EditSplitRow { brand_id: string; amount: string }
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
 // today -- see docs/Backlog.md "Type the shared frontend service functions
@@ -68,22 +58,17 @@ const ROLLUP_VISIBLE_ROLES = new Set(["Admin", "General Manager", "SBU Manager",
 const NO_PERSONAL_TARGET_ROLES = new Set(["Admin"]);
 
 const STATUS_LABEL: Record<TargetPlanStatus, string> = {
+  DRAFT: "Draft",
   PENDING_APPROVAL: "Pending Approval",
   APPROVED: "Approved",
   REJECTED: "Rejected",
 };
-const STATUS_COLOR: Record<TargetPlanStatus, "warning" | "success" | "error"> = {
+const STATUS_COLOR: Record<TargetPlanStatus, "default" | "warning" | "success" | "error"> = {
+  DRAFT: "default",
   PENDING_APPROVAL: "warning",
   APPROVED: "success",
   REJECTED: "error",
 };
-
-// The split editor's own figures show 2 decimals, matching the paisa-level
-// isAllocationBalanced(..., 2) rule -- formatLakhs' 1 decimal rounded a real
-// ₹0.01L mismatch to "−₹0.0L" next to an amber warning (E2E 2026-09-23).
-function formatSplitLakhs(v: number) {
-  return `₹${v.toFixed(2)}L`;
-}
 
 function StatusChip({ status }: { status: TargetPlanStatus }) {
   return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />;
@@ -149,14 +134,9 @@ export default function TargetPlanningScreen() {
   const [viewMode, setViewMode] = useState<"quarterly" | "annual">("quarterly");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
-  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
-  const [editingPeriod, setEditingPeriod] = useState(period);
-  const [editingSbuId, setEditingSbuId] = useState<string | null>(null);
-  const [editingTarget, setEditingTarget] = useState<TargetPlan | null>(null);
-  const [amountInput, setAmountInput] = useState("");
-  const [editSplits, setEditSplits] = useState<EditSplitRow[]>([]);
-  const [addBrandId, setAddBrandId] = useState("");
-  const [addBrandAmount, setAddBrandAmount] = useState("");
+  // The plan dialog mounts only while this is set, so each opening starts
+  // fresh from the chosen target (Frontend Standards 6.2).
+  const [planDialog, setPlanDialog] = useState<{ period: string; sbuId: string; existing: TargetPlan | null } | null>(null);
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
   const [noteInput, setNoteInput] = useState("");
 
@@ -169,15 +149,6 @@ export default function TargetPlanningScreen() {
     queryKey: ["sbus"],
     queryFn: () => listSbus() as Promise<SbuOption[]>,
     enabled: needsSbuChoice,
-  });
-
-  // Only fetched while the dialog's open and an SBU is known -- drives
-  // whether the brand-split section shows at all (decision #1: mandatory
-  // whenever the SBU has any active brand, hidden otherwise).
-  const { data: dialogBrands = [] } = useQuery({
-    queryKey: ["brands", editingSbuId],
-    queryFn: () => listBrands(editingSbuId as string) as Promise<BrandResponse[]>,
-    enabled: targetDialogOpen && !!editingSbuId,
   });
 
   // The SBU(s) relevant to "my own" targets -- one's own home SBU for
@@ -280,61 +251,7 @@ export default function TargetPlanningScreen() {
   };
 
   const openTargetDialog = (quarterPeriod: string, existing: TargetPlan | null, sbuId: string) => {
-    setEditingPeriod(quarterPeriod);
-    setEditingSbuId(sbuId);
-    setEditingTarget(existing);
-    setAmountInput(existing ? existing.target_amount_lakhs : "");
-    setEditSplits(
-      existing
-        ? existing.brand_splits.map((s) => ({ brand_id: s.brand_id, amount: s.split_amount_lakhs }))
-        : [],
-    );
-    setAddBrandId("");
-    setAddBrandAmount("");
-    setTargetDialogOpen(true);
-  };
-
-  const addBrandSplitRow = () => {
-    if (!addBrandId || !addBrandAmount) return;
-    if (editSplits.find((s) => s.brand_id === addBrandId)) return;
-    setEditSplits([...editSplits, { brand_id: addBrandId, amount: addBrandAmount }]);
-    setAddBrandId("");
-    setAddBrandAmount("");
-  };
-
-  const splitTotal = sumAllocation(editSplits.map((s) => Number(s.amount)));
-
-  const handleSaveTarget = async () => {
-    const amount = Number(amountInput);
-    if (!amountInput.trim() || Number.isNaN(amount) || amount <= 0) {
-      throw new Error("Enter a target amount greater than zero");
-    }
-
-    let brand_splits: BrandSplitEntry[] | undefined;
-    if (dialogBrands.length > 0) {
-      // Rounded to cents on both sides so this matches the backend's exact
-      // Decimal(15,2) equality check -- a looser tolerance here used to let
-      // a save that looked "done" on screen get rejected server-side with
-      // a confusing raw error (/code-review 2026-09-23).
-      if (editSplits.length === 0 || !isAllocationBalanced(splitTotal, amount, 2)) {
-        throw new Error(
-          `Brand splits must sum to exactly the target amount (currently ${formatSplitLakhs(splitTotal)} of ${formatSplitLakhs(amount)}).`,
-        );
-      }
-      brand_splits = editSplits.map((s) => ({ brand_id: s.brand_id, split_amount_lakhs: Number(s.amount) }));
-    }
-
-    if (editingTarget) {
-      await updateTargetPlan(editingTarget.id, { target_amount_lakhs: amount, brand_splits });
-    } else if (editingSbuId) {
-      await createTargetPlan({
-        sbu_id: editingSbuId,
-        planning_period: editingPeriod,
-        target_amount_lakhs: amount,
-        brand_splits,
-      });
-    }
-    invalidateAll();
+    setPlanDialog({ period: quarterPeriod, sbuId, existing });
   };
 
   const openDecision = (targetPlan: TargetPlan, status: "APPROVED" | "REJECTED") => {
@@ -410,7 +327,7 @@ export default function TargetPlanningScreen() {
                     <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
                     <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
                     <TableCell align="right">
-                      <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>Revise</Button>
+                      <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -421,7 +338,7 @@ export default function TargetPlanningScreen() {
                       <Typography color="text.secondary">No target set for {period} yet.</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Set Target</Button>
+                      <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan Target</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -463,7 +380,7 @@ export default function TargetPlanningScreen() {
                             {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                           </TableCell>
                           <TableCell align="right">
-                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{t ? "Revise" : "Set"}</Button>
+                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -610,99 +527,15 @@ export default function TargetPlanningScreen() {
         </Box>
       )}
 
-      <FormModal
-        isOpen={targetDialogOpen}
-        onClose={() => setTargetDialogOpen(false)}
-        title={editingTarget ? `Revise Target — ${editingPeriod}` : `Set Target — ${editingPeriod}`}
-        onSubmit={handleSaveTarget}
-        submitLabel={editingTarget ? "Save" : "Create"}
-      >
-        <TextField
-          label="Target Amount (₹ Lakhs) *"
-          type="number"
-          value={amountInput}
-          onChange={(e) => setAmountInput(e.target.value)}
-          fullWidth
-          size="small"
-          autoFocus
+      {planDialog && (
+        <TargetPlanDialog
+          sbuId={planDialog.sbuId}
+          period={planDialog.period}
+          existing={planDialog.existing}
+          onClose={() => setPlanDialog(null)}
+          onSaved={invalidateAll}
         />
-        {editingTarget?.status === "APPROVED" && (
-          <Alert severity="info">Revising an approved target sends it back for a fresh approval.</Alert>
-        )}
-        {editingTarget?.status === "REJECTED" && (
-          <Alert severity="info">Revising a rejected target sends it back for a fresh approval.</Alert>
-        )}
-
-        {dialogBrands.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Split by Brand *</Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 700,
-                  color: isAllocationBalanced(splitTotal, Number(amountInput) || 0, 2) ? "success.main" : "warning.main",
-                }}
-              >
-                Remaining to allocate: {formatSplitLakhs((Number(amountInput) || 0) - splitTotal)}
-              </Typography>
-            </Box>
-
-            {editSplits.map((s, i) => {
-              const brand = dialogBrands.find((b) => b.id === s.brand_id);
-              return (
-                <Box key={s.brand_id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ flex: 1, fontSize: "0.875rem" }}>{brand?.name ?? s.brand_id}</Typography>
-                  <TextField
-                    type="number"
-                    size="small"
-                    value={s.amount}
-                    onChange={(e) =>
-                      setEditSplits(editSplits.map((sp, j) => (j === i ? { ...sp, amount: e.target.value } : sp)))
-                    }
-                    slotProps={{ htmlInput: { min: 0, step: "any", style: { textAlign: "right" } } }}
-                    sx={{ width: "6rem" }}
-                  />
-                  <IconButton size="small" onClick={() => setEditSplits(editSplits.filter((_, j) => j !== i))}>
-                    <Box component="span" sx={{ fontWeight: 900, lineHeight: 1 }}>×</Box>
-                  </IconButton>
-                </Box>
-              );
-            })}
-
-            {dialogBrands.filter((b) => !editSplits.find((s) => s.brand_id === b.id)).length > 0 && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <TextField
-                  select
-                  size="small"
-                  value={addBrandId}
-                  onChange={(e) => setAddBrandId(e.target.value)}
-                  sx={{ flex: 1 }}
-                  slotProps={{ select: { displayEmpty: true } }}
-                >
-                  <MenuItem value="">Select brand</MenuItem>
-                  {dialogBrands
-                    .filter((b) => !editSplits.find((s) => s.brand_id === b.id))
-                    .map((b) => (
-                      <MenuItem key={b.id} value={b.id}>{b.name}</MenuItem>
-                    ))}
-                </TextField>
-                <TextField
-                  type="number"
-                  size="small"
-                  placeholder="Amount"
-                  value={addBrandAmount}
-                  onChange={(e) => setAddBrandAmount(e.target.value)}
-                  sx={{ width: "6rem" }}
-                />
-                <Button size="small" onClick={addBrandSplitRow} disabled={!addBrandId || !addBrandAmount}>
-                  Add
-                </Button>
-              </Box>
-            )}
-          </Box>
-        )}
-      </FormModal>
+      )}
 
       <FormModal
         isOpen={decision !== null}

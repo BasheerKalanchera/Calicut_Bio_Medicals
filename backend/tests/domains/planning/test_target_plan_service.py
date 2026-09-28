@@ -799,6 +799,88 @@ class TestDrafts:
 
         assert result.status == "PENDING_APPROVAL"
 
+    def test_draft_may_have_a_zero_total(self):
+        """Basheer, 2026-09-28: a half-finished draft may not have amounts
+        yet -- the above-zero rule applies on submit only."""
+        repo = _make_repo()
+        service = _make_service(repo)
+        data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("0", "0"), submit=False)
+
+        result, _warnings = service.create_target_plan(data, current_user=_make_user("Sales Staff"))
+
+        assert result.status == "DRAFT"
+        assert result.target_amount_lakhs == Decimal("0")
+
+    def test_draft_keeps_an_unbalanced_brand_split(self):
+        repo = _make_repo()
+        service = _make_service(repo, has_brands=True)
+        brand_a = uuid.uuid4()
+        data = TargetPlanCreate(
+            sbu_id=SBU_ID,
+            planning_period="2026-Q3",
+            accounts=_entries("50"),
+            brand_splits=[BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("30"))],
+            submit=False,
+        )
+
+        result, _warnings = service.create_target_plan(data, current_user=_make_user("Sales Staff"))
+
+        assert result.status == "DRAFT"
+        _plan_id, called_splits = repo.replace_brand_splits.call_args[0]
+        assert called_splits == [(brand_a, Decimal("30"))]
+
+    def test_draft_may_have_no_brand_split_yet(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="DRAFT")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = _make_service(repo, has_brands=True)
+
+        result, _warnings = service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("20"), submit=False), current_user=owner
+        )
+
+        assert result.status == "DRAFT"
+        _plan_id, called_splits = repo.replace_brand_splits.call_args[0]
+        assert called_splits == []
+
+    def test_draft_still_refuses_a_duplicate_brand(self):
+        repo = _make_repo()
+        service = _make_service(repo, has_brands=True)
+        brand_a = uuid.uuid4()
+        data = TargetPlanCreate(
+            sbu_id=SBU_ID,
+            planning_period="2026-Q3",
+            accounts=_entries("50"),
+            brand_splits=[
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("10")),
+                BrandSplitEntry(brand_id=brand_a, split_amount_lakhs=Decimal("10")),
+            ],
+            submit=False,
+        )
+
+        with pytest.raises(ValidationError, match="can only appear once"):
+            service.create_target_plan(data, current_user=_make_user("Sales Staff"))
+
+    @pytest.mark.parametrize(
+        ("amount", "split", "message"),
+        [
+            ("20", "5", "must sum to exactly the target amount"),
+            ("0", "0", "total must be above zero"),
+        ],
+    )
+    def test_submitting_a_draft_enforces_the_brand_split_and_total(self, amount, split, message):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="DRAFT")
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = _make_service(repo, has_brands=True)
+        data = TargetPlanUpdate(
+            accounts=_entries(amount),
+            brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal(split))],
+        )
+
+        with pytest.raises(ValidationError, match=message):
+            service.update_target_plan(target_plan.id, data, current_user=owner)
+
     def test_submitted_plan_cannot_go_back_to_draft(self):
         owner = _make_user("Sales Staff")
         target_plan = _make_target_plan(user_id=owner.id, status="APPROVED")

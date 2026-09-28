@@ -11,7 +11,8 @@ export interface TargetPlanSbu {
   name: string;
 }
 
-export type TargetPlanStatus = "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+// DRAFT (Hospital-Wise Target Planning): private to its owner until submitted.
+export type TargetPlanStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
 
 export interface BrandNested {
   id: string;
@@ -30,6 +31,56 @@ export interface BrandSplitResponse {
   split_amount_lakhs: string;
 }
 
+// Fixed list (Hospital-Wise Target Planning plan, choice 2) -- matches the
+// backend VisitFrequency enum and the CHECK constraint in migration 0055.
+export type VisitFrequency = "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "QUARTERLY" | "AS_NEEDED";
+
+export interface PlanZone {
+  id: string;
+  name: string;
+}
+
+// A hospital as the plan dialog's picker returns it (territory-limited).
+export interface EligibleAccount {
+  id: string;
+  name: string;
+  business_potential: string;
+  zone: PlanZone;
+}
+
+export interface PlanAccount {
+  id: string;
+  account_id: string;
+  account: EligibleAccount;
+  planned_amount_lakhs: string;
+  visit_frequency: VisitFrequency;
+  strategic_objective: string | null;
+}
+
+export interface PlanAccountEntry {
+  account_id: string;
+  planned_amount_lakhs: number;
+  visit_frequency: VisitFrequency;
+  strategic_objective?: string | null;
+}
+
+export type PlanWarningKind = "HIGH_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
+
+export interface PlanWarning {
+  kind: PlanWarningKind;
+  account_id: string;
+  account_name: string;
+  colleague_name: string | null;
+}
+
+export interface ZoneRollupEntry {
+  zone_id: string | null;
+  zone_name: string | null;
+  planned_amount_lakhs: string;
+  hospital_count: number;
+  person_count: number;
+}
+
 export interface TargetPlan {
   id: string;
   user_id: string;
@@ -43,21 +94,32 @@ export interface TargetPlan {
   approver: TargetPlanUser | null;
   approved_at: string | null;
   decision_note: string | null;
+  // The owner's latest "why it changed" note on a revision.
+  change_note: string | null;
   brand_splits: BrandSplitResponse[];
+  accounts: PlanAccount[];
+  // Filled on create/update responses only.
+  warnings: PlanWarning[];
   created_at: string;
   updated_at: string;
 }
 
+// The target amount is never sent -- the server sets it to the sum of the
+// hospitals' planned amounts. submit=false saves (or keeps) a DRAFT.
 export interface TargetPlanCreate {
   sbu_id: string;
   planning_period: string;
-  target_amount_lakhs: number;
+  accounts: PlanAccountEntry[];
   brand_splits?: BrandSplitEntry[];
+  submit: boolean;
 }
 
+// change_note is required once the plan has been submitted (server-checked).
 export interface TargetPlanUpdate {
-  target_amount_lakhs: number;
+  accounts: PlanAccountEntry[];
   brand_splits?: BrandSplitEntry[];
+  change_note?: string | null;
+  submit: boolean;
 }
 
 export interface TargetPlanApprovalDecision {

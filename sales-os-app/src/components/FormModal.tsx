@@ -23,6 +23,12 @@ interface FormModalProps {
   // dialog's inputs after each keystroke. Pass true while the nested dialog is open
   // to stand this dialog's trap down; MUI's own documented fix for nested modals.
   disableEnforceFocus?: boolean;
+  // Paper max width; defaults to the standard narrow form. The hospital-wise
+  // target plan dialog passes a wider one for its hospital list.
+  maxWidth?: string;
+  // An optional second action beside the main one (e.g. "Save draft"). Runs
+  // through the same saving/error handling as onSubmit, and closes on success.
+  secondaryAction?: { label: string; onClick: () => Promise<void> };
 }
 
 export default function FormModal({
@@ -33,6 +39,8 @@ export default function FormModal({
   submitLabel = "Save",
   children,
   disableEnforceFocus,
+  maxWidth = "28rem",
+  secondaryAction,
 }: FormModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +49,11 @@ export default function FormModal({
     if (isOpen) setError(null);
   }, [isOpen]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const runAction = async (action: () => Promise<void>) => {
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit();
+      await action();
       onClose();
     } catch (err) {
       if (!(err instanceof SilentModalError)) {
@@ -58,6 +65,11 @@ export default function FormModal({
     }
   };
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void runAction(onSubmit);
+  };
+
   return (
     <Dialog
       open={isOpen}
@@ -65,7 +77,7 @@ export default function FormModal({
       fullWidth
       maxWidth={false}
       disableEnforceFocus={disableEnforceFocus}
-      slotProps={{ paper: { sx: { maxWidth: "28rem" } } }}
+      slotProps={{ paper: { sx: { maxWidth } } }}
     >
       <Box
         component="form"
@@ -108,6 +120,11 @@ export default function FormModal({
           <Button type="button" onClick={onClose} disabled={submitting} color="inherit">
             Cancel
           </Button>
+          {secondaryAction && (
+            <Button type="button" variant="outlined" onClick={() => void runAction(secondaryAction.onClick)} disabled={submitting}>
+              {secondaryAction.label}
+            </Button>
+          )}
           <Button type="submit" variant="contained" disabled={submitting}>
             {submitting ? "Saving..." : submitLabel}
           </Button>
