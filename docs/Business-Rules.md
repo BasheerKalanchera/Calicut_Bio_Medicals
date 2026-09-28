@@ -177,7 +177,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   2. **Manual:** an Opportunity still in Lead, Qualified, or Demo stage (`display_order` 10/20/30) does not qualify automatically, but can be marked High Priority by hand via a flag a person sets explicitly.
 * **Rationale:** Confirmed by Haroon, 2026-09-14, replacing an earlier proposed value/closure-date threshold rule (₹30L Imaging / ₹15L Critical Care, within 14 days of Expected Closure Date) that was never approved — see `docs/Backlog.md`'s "Auto-computed High Priority deal flag" entry for that superseded derivation. A deal advancing past Demo already represents real, demonstrated commitment regardless of its size or exact closing date, which is a simpler and more defensible signal than a tunable Lakhs/day threshold.
 * **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
-* **Enforcement:** `opportunity.high_priority_manual` (migration `0042`) holds the manual half; `PipelineOpportunity.is_high_priority` (`backend/app/domains/opportunity/schemas.py`) computes the effective flag as `stage.display_order > 30 OR high_priority_manual`, served on both `GET /opportunities/pipeline` and `GET /opportunities/{id}`. Badges/checkbox UI and the Kanban priority sort itself are still pending — see `docs/Phase1-Completion-Sprint-Plan.md`.
+* **Enforcement:** `opportunity.high_priority_manual` (migration `0042`) holds the manual half; `PipelineOpportunity.is_high_priority` (`backend/app/domains/opportunity/schemas.py`) computes the effective flag as `stage.display_order > 30 OR high_priority_manual`, served on both `GET /opportunities/pipeline` and `GET /opportunities/{id}`. The badge and checkbox UI (`b000a09`) and the Kanban/List priority sort (`90a752a`) shipped 2026-09-15.
 
 ---
 
@@ -240,7 +240,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Reference:** ADR-026 (Opportunity Value Model — Dual-Mode Valuation).
 
 ### BR-FIN-04: Split Governance
-* **Rule:** Contributor splits may be modified only while an Opportunity remains open. **Unenforced until BR-FIN-08 (decided 2026-09-23, not yet built), which refines it:** Won — General Manager only; Lost — locked; Active/On Hold — BR-FIN-08's owner/hierarchy/GM/Admin rule.
+* **Rule:** Contributor splits may be modified only while an Opportunity remains open. **Enforced through BR-FIN-08 (decided 2026-09-23, built 2026-09-24), which refines it:** Won — General Manager only; Lost — locked; Active/On Hold — BR-FIN-08's owner/hierarchy/GM/Admin rule.
 * **Constraint:** Split changes must preserve the 100% allocation rule.
 * **Audit Requirement:** All split changes must be captured in audit history.
 
@@ -271,7 +271,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Closed Opportunities (settles BR-FIN-04):** **Won** — only the **General Manager** may change the split (not Admin, not the owner or their managers); anyone needing a correction asks the GM outside the app. Chosen over a request-and-approve workflow; the Audit Log already records every split change. **Lost** — locked for everyone (no revenue, so the split affects no figures).
 * **Enforcement:** server-side, in the single split-write path (`OpportunityService.replace_splits`) — a refused change returns `403` and saves nothing. The screen hides the split editor for anyone not allowed, using the same server-side check, so the two cannot disagree. No RLS change (lighter build, Basheer's call): the `split` RLS policy still follows Opportunity visibility.
 * **Not affected:** Opportunity/split visibility; the automatic 100% split created with a new Opportunity (BR-FIN-05); new-participant SBU eligibility (BR-FIN-06), which still applies on top of this rule.
-* **Origin:** Brand-Level Target Planning manual E2E, 2026-09-23 — a cross-SBU Next Action assignee could open, and partly edit, another SBU's deal split. **Decided by Basheer, 2026-09-23; not yet built** — `docs/Split-Editing-Permission-Implementation-Plan.md`. Closed-deal handling decided the same day (above).
+* **Origin:** Brand-Level Target Planning manual E2E, 2026-09-23 — a cross-SBU Next Action assignee could open, and partly edit, another SBU's deal split. **Decided by Basheer, 2026-09-23; built 2026-09-24 (`584d218`, `6280964`)** — `docs/Split-Editing-Permission-Implementation-Plan.md`. Closed-deal handling decided the same day (above).
 
 ---
 

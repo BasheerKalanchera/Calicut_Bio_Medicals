@@ -298,8 +298,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   same screen pre-filtered) should keep showing Won/Lost when the report
   card counted them.
 
-- **Hospital-wise target planning — plan approved 2026-09-27, build not
-  started.** Raised at the 2026-09-24 demo; all design questions answered
+- **Hospital-wise target planning — plan approved 2026-09-27; steps 1–2
+  (schema `e55c112`, backend `04c5e87`) built, step 3 (frontend) next.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
   Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
   Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
@@ -474,8 +474,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `80bef46`**. Full design: `docs/Activity-Comment-Implementation-Plan
   .md`; narrative: `docs/Progress-Archive-2026-09.md`'s
   2026-09-09 entries.
-- **Auto-computed "High Priority" deal flag — proposed 2026-09-11, not
-  decided, not scoped.** Raised while discussing the Insights Dashboard build order:
+- **Auto-computed "High Priority" deal flag — decided 2026-09-14
+  (BR-OP-15), built 2026-09-15; kept only as the record of the rejected
+  threshold idea.** Raised while discussing the Insights Dashboard build order:
   the PRD (§3.9 "Deal Prioritization") calls for a High Priority flag on Opportunities,
   but only ever says "provide a High Priority flag" — no definition of how it's set, and
   nothing exists on the Opportunity screen today. Two shapes were possible: a manual
