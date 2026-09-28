@@ -4,17 +4,33 @@ import type { AccountListPage, AccountResponse, AccountCountsEntry } from "../ty
 type Params = Record<string, string | number | boolean>;
 
 export async function listAccounts(
-  { search, zone_id, page = 1, page_size = 50 }: { search?: string; zone_id?: string; page?: number; page_size?: number } = {}
+  {
+    search,
+    zone_id,
+    business_potential,
+    page = 1,
+    page_size = 50,
+  }: { search?: string; zone_id?: string; business_potential?: string; page?: number; page_size?: number } = {}
 ): Promise<AccountListPage> {
   const params: Params = { page, page_size };
   if (search) params.search = search;
   if (zone_id) params.zone_id = zone_id;
+  if (business_potential) params.business_potential = business_potential;
   const response = await api.get("/accounts", { params });
   return response.data.data;
 }
 
 export async function getAccount(accountId: string): Promise<AccountResponse> {
   const response = await api.get(`/accounts/${accountId}`);
+  return response.data.data;
+}
+
+// Admin/GM only (enforced server-side) -- the Rate Hospitals screen.
+export async function setBusinessPotential(
+  accountId: string,
+  data: { business_potential: string; business_potential_notes: string | null },
+): Promise<AccountResponse> {
+  const response = await api.patch(`/accounts/${accountId}/business-potential`, data);
   return response.data.data;
 }
 

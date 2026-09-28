@@ -38,6 +38,7 @@ import {
   createInstalledAsset,
   updateInstalledAsset,
 } from "../services/accounts";
+import BusinessPotentialChip from "../components/BusinessPotentialChip";
 import {
   listOpportunityItems,
   getStakeholderOpportunityCounts,
@@ -193,6 +194,20 @@ function OverviewTab({
     { label: "Account Name", value: account.name },
     { label: "Zone", value: account.zone?.name || "—" },
     { label: "Payer Behavior", value: <PayerBadge behavior={account.payer_behavior} /> },
+    {
+      label: "Business Potential",
+      // The server returns the notes only to Admin/GM -- no role check needed here.
+      value: (
+        <Box>
+          <BusinessPotentialChip value={account.business_potential} />
+          {account.business_potential_notes && (
+            <Box sx={{ fontSize: "0.75rem", color: "#6b7280", mt: 0.75, whiteSpace: "pre-wrap" }}>
+              {account.business_potential_notes}
+            </Box>
+          )}
+        </Box>
+      ),
+    },
     { label: "Customer Type", value: formatEnumLabel(account.customer_type) || "—" },
     {
       label: "Parent Customer",
@@ -1456,6 +1471,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
                 </Box>
               )}
               <PayerBadge behavior={account.payer_behavior} />
+              <BusinessPotentialChip value={account.business_potential} />
             </Box>
           </Box>
         </Box>

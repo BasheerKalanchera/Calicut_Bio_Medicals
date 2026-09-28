@@ -14,14 +14,20 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Done: step 1 schema `e55c112` (Dev at `0055 (head)`), step 2 backend
   `04c5e87`. Both pushed. Detail: Progress-Archive 2026-09-27 "Part 1
   steps 1–2".
-- **Next (resume here, 2026-09-28):** step 3, the frontend. First read
-  `docs/Frontend-Implementation-Standards.md`, then show Basheer a
-  plain-language plan and wait for approval before editing. Scope (plan
-  section 8 "Frontend"): new plan dialog in `TargetPlanningScreen.tsx`
-  (hospital table, live total, warnings, brand split, change note, Save
-  draft / Submit), approver view showing hospitals + change note,
-  team/zone view, new `RateHospitalsScreen.tsx` (Admin/GM), rating chip
-  on `Customer360Screen.tsx`. MUI only.
+- **Step 3 (frontend) in progress, plan approved by Basheer 2026-09-28**,
+  split into three parts (a) (b) (c):
+  - (a) done, tsc clean, committed + pushed as the "step 3a" checkpoint
+    (`git log --grep "step 3a"`): `types/api.ts` regenerated
+    (offline from `app.openapi()`, backend wasn't running),
+    `services/accounts.ts` (rating filter + `setBusinessPotential`),
+    new `utils/businessPotential.ts`, `components/BusinessPotentialChip.tsx`,
+    `screens/RateHospitalsScreen.tsx` (Admin/GM nav entry in `DemoApp.tsx`),
+    rating chip + Admin/GM notes on `Customer360Screen.tsx`.
+  - **Next:** (b) plan dialog in `TargetPlanningScreen.tsx` (hospital
+    table, live total, warnings, brand split vs live total, change note,
+    Save draft / Submit; `FormModal` gains optional `maxWidth` +
+    secondary button). Then (c) approver expandable rows + team rows +
+    By Zone table. Then plan steps 4–7.
 - **API as built** (differs slightly from the plan's first draft): create/
   update body `{accounts[], brand_splits, submit, change_note}`; response
   field is `warnings` (kinds `HIGH_POTENTIAL_ZERO`, `SAME_SBU_OVERLAP`);

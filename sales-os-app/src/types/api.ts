@@ -245,6 +245,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounts/{account_id}/business-potential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set Business Potential
+         * @description Rate Hospitals screen -- Admin/GM only, enforced in the service.
+         */
+        patch: operations["set_business_potential_api_v1_accounts__account_id__business_potential_patch"];
+        trace?: never;
+    };
     "/api/v1/accounts/{account_id}/workspace": {
         parameters: {
             query?: never;
@@ -1421,6 +1441,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/planning/targets/zone-rollup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Zone Rollup
+         * @description Planned amounts per zone (North Kerala, South Kerala, ...) across the
+         *     submitted plans the caller can see under RLS -- same visibility as /team.
+         */
+        get: operations["get_zone_rollup_api_v1_planning_targets_zone_rollup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/eligible-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Eligible Accounts
+         * @description The plan dialog's hospital picker -- only hospitals in the caller's
+         *     own territory (Admin/GM/SBU Manager: any hospital).
+         */
+        get: operations["list_eligible_accounts_api_v1_planning_targets_eligible_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/overlaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check Overlaps
+         * @description Live same-SBU overlap warnings while the plan is being edited.
+         */
+        get: operations["check_overlaps_api_v1_planning_targets_overlaps_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/planning/targets/rollup": {
         parameters: {
             query?: never;
@@ -2365,6 +2447,21 @@ export interface components {
             /** Data */
             data: components["schemas"]["DocumentResponse"][];
         };
+        /** APIResponse[list[EligibleAccountResponse]] */
+        APIResponse_list_EligibleAccountResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["EligibleAccountResponse"][];
+        };
         /** APIResponse[list[MarketingLeadCommentResponse]] */
         APIResponse_list_MarketingLeadCommentResponse__: {
             /**
@@ -2469,6 +2566,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["OpportunityLookup"][];
+        };
+        /** APIResponse[list[PlanWarning]] */
+        APIResponse_list_PlanWarning__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["PlanWarning"][];
         };
         /** APIResponse[list[SplitResponse]] */
         APIResponse_list_SplitResponse__: {
@@ -2590,6 +2702,21 @@ export interface components {
             /** Data */
             data: components["schemas"]["ZoneNameMatch"][];
         };
+        /** APIResponse[list[ZoneRollupEntry]] */
+        APIResponse_list_ZoneRollupEntry__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["ZoneRollupEntry"][];
+        };
         /** APIResponse[list[ZoneSearchResult]] */
         APIResponse_list_ZoneSearchResult__: {
             /**
@@ -2670,6 +2797,14 @@ export interface components {
             payer_behavior: string | null;
             /** Customer Type */
             customer_type: string | null;
+            /** Business Potential */
+            business_potential: string;
+            /** Business Potential Notes */
+            business_potential_notes?: string | null;
+            /** Business Potential Set By */
+            business_potential_set_by?: string | null;
+            /** Business Potential Set At */
+            business_potential_set_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -2718,6 +2853,14 @@ export interface components {
             payer_behavior: string | null;
             /** Customer Type */
             customer_type: string | null;
+            /** Business Potential */
+            business_potential: string;
+            /** Business Potential Notes */
+            business_potential_notes?: string | null;
+            /** Business Potential Set By */
+            business_potential_set_by?: string | null;
+            /** Business Potential Set At */
+            business_potential_set_at?: string | null;
             zone: components["schemas"]["ZoneNested"];
             parent_account?: components["schemas"]["AccountRef"] | null;
         };
@@ -2767,6 +2910,14 @@ export interface components {
             payer_behavior: string | null;
             /** Customer Type */
             customer_type: string | null;
+            /** Business Potential */
+            business_potential: string;
+            /** Business Potential Notes */
+            business_potential_notes?: string | null;
+            /** Business Potential Set By */
+            business_potential_set_by?: string | null;
+            /** Business Potential Set At */
+            business_potential_set_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -3140,6 +3291,18 @@ export interface components {
             /** Vendor Target Amount Lakhs */
             vendor_target_amount_lakhs: number | string;
         };
+        /**
+         * BusinessPotential
+         * @description Customer Tiering (Hospital-Wise Target Planning) -- set by Admin/GM only.
+         * @enum {string}
+         */
+        BusinessPotential: "HIGH" | "MEDIUM" | "LOW" | "NOT_CLASSIFIED";
+        /** BusinessPotentialUpdate */
+        BusinessPotentialUpdate: {
+            business_potential: components["schemas"]["BusinessPotential"];
+            /** Business Potential Notes */
+            business_potential_notes?: string | null;
+        };
         /** CategoryCreate */
         CategoryCreate: {
             /**
@@ -3220,6 +3383,22 @@ export interface components {
              * Format: date-time
              */
             uploaded_at: string;
+        };
+        /**
+         * EligibleAccountResponse
+         * @description One row of the plan dialog's hospital picker.
+         */
+        EligibleAccountResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Business Potential */
+            business_potential: string;
+            zone: components["schemas"]["PlanAccountZoneNested"];
         };
         /** GateOverrideReasonNested */
         GateOverrideReasonNested: {
@@ -4127,7 +4306,7 @@ export interface components {
              * Group By
              * @enum {string}
              */
-            group_by: "stage" | "rep" | "sbu" | "zone" | "product";
+            group_by: "stage" | "rep" | "sbu" | "zone" | "product" | "brand";
             /** Rows */
             rows: components["schemas"]["PipelineSummaryRow"][];
         };
@@ -4145,7 +4324,88 @@ export interface components {
             unweighted_forecast_lakhs: string;
             /** Weighted Forecast Lakhs */
             weighted_forecast_lakhs: string;
+            /** Depth */
+            depth?: number | null;
+            /** Zone Exact */
+            zone_exact?: boolean | null;
         };
+        /** PlanAccountAccountNested */
+        PlanAccountAccountNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Business Potential */
+            business_potential: string;
+            zone: components["schemas"]["PlanAccountZoneNested"];
+        };
+        /** PlanAccountEntry */
+        PlanAccountEntry: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Planned Amount Lakhs */
+            planned_amount_lakhs: number | string;
+            visit_frequency: components["schemas"]["VisitFrequency"];
+            /** Strategic Objective */
+            strategic_objective?: string | null;
+        };
+        /** PlanAccountResponse */
+        PlanAccountResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            account: components["schemas"]["PlanAccountAccountNested"];
+            /** Planned Amount Lakhs */
+            planned_amount_lakhs: string;
+            /** Visit Frequency */
+            visit_frequency: string;
+            /** Strategic Objective */
+            strategic_objective: string | null;
+        };
+        /** PlanAccountZoneNested */
+        PlanAccountZoneNested: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * PlanWarning
+         * @description Non-blocking -- shown to the planner, never stops a save.
+         */
+        PlanWarning: {
+            kind: components["schemas"]["PlanWarningKind"];
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /** Colleague Name */
+            colleague_name?: string | null;
+        };
+        /**
+         * PlanWarningKind
+         * @enum {string}
+         */
+        PlanWarningKind: "HIGH_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
         /** ProductCreate */
         ProductCreate: {
             /**
@@ -4529,7 +4789,7 @@ export interface components {
              * Group By
              * @enum {string}
              */
-            group_by: "rep" | "sbu" | "zone" | "product";
+            group_by: "rep" | "sbu" | "zone" | "product" | "brand";
             /** Rows */
             rows: components["schemas"]["SalesSummaryRow"][];
         };
@@ -4543,6 +4803,10 @@ export interface components {
             revenue_lakhs: string;
             /** Won Count */
             won_count: number;
+            /** Depth */
+            depth?: number | null;
+            /** Zone Exact */
+            zone_exact?: boolean | null;
         };
         /** SplitCreate */
         SplitCreate: {
@@ -4776,7 +5040,12 @@ export interface components {
             /** Note */
             note?: string | null;
         };
-        /** TargetPlanCreate */
+        /**
+         * TargetPlanCreate
+         * @description The target amount isn't sent -- it's the SUM of the hospitals'
+         *     planned amounts, computed server-side (TargetPlanService._apply_accounts).
+         *     `submit=False` saves a DRAFT visible only to its owner.
+         */
         TargetPlanCreate: {
             /**
              * Sbu Id
@@ -4785,10 +5054,15 @@ export interface components {
             sbu_id: string;
             /** Planning Period */
             planning_period: string;
-            /** Target Amount Lakhs */
-            target_amount_lakhs: number | string;
+            /** Accounts */
+            accounts: components["schemas"]["PlanAccountEntry"][];
             /** Brand Splits */
             brand_splits?: components["schemas"]["BrandSplitEntry"][] | null;
+            /**
+             * Submit
+             * @default true
+             */
+            submit: boolean;
         };
         /** TargetPlanResponse */
         TargetPlanResponse: {
@@ -4822,11 +5096,23 @@ export interface components {
             approved_at: string | null;
             /** Decision Note */
             decision_note: string | null;
+            /** Change Note */
+            change_note?: string | null;
             /**
              * Brand Splits
              * @default []
              */
             brand_splits: components["schemas"]["BrandSplitResponse"][];
+            /**
+             * Accounts
+             * @default []
+             */
+            accounts: components["schemas"]["PlanAccountResponse"][];
+            /**
+             * Warnings
+             * @default []
+             */
+            warnings: components["schemas"]["PlanWarning"][];
             /**
              * Created At
              * Format: date-time
@@ -4838,12 +5124,23 @@ export interface components {
              */
             updated_at: string;
         };
-        /** TargetPlanUpdate */
+        /**
+         * TargetPlanUpdate
+         * @description `change_note` is required once the plan has left DRAFT (enforced in
+         *     TargetPlanService.update_target_plan, which knows the current status).
+         */
         TargetPlanUpdate: {
-            /** Target Amount Lakhs */
-            target_amount_lakhs: number | string;
+            /** Accounts */
+            accounts: components["schemas"]["PlanAccountEntry"][];
             /** Brand Splits */
             brand_splits?: components["schemas"]["BrandSplitEntry"][] | null;
+            /** Change Note */
+            change_note?: string | null;
+            /**
+             * Submit
+             * @default true
+             */
+            submit: boolean;
         };
         /** UnreadCountResponse */
         UnreadCountResponse: {
@@ -4990,6 +5287,13 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * VisitFrequency
+         * @description Fixed list (Hospital-Wise Target Planning plan, choice 2 = lighter).
+         *     Changing it means a code release plus a migration to the CHECK in 0055.
+         * @enum {string}
+         */
+        VisitFrequency: "WEEKLY" | "BI_WEEKLY" | "MONTHLY" | "QUARTERLY" | "AS_NEEDED";
         /** WorkspaceAccount */
         WorkspaceAccount: {
             /**
@@ -5196,6 +5500,24 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /**
+         * ZoneRollupEntry
+         * @description Planned amounts summed by each hospital's ZONE-level ancestor. A
+         *     hospital filed above zone level (e.g. at bare "Kerala") has no such
+         *     ancestor -- zone_id/zone_name are None for that bucket.
+         */
+        ZoneRollupEntry: {
+            /** Zone Id */
+            zone_id: string | null;
+            /** Zone Name */
+            zone_name: string | null;
+            /** Planned Amount Lakhs */
+            planned_amount_lakhs: string;
+            /** Hospital Count */
+            hospital_count: number;
+            /** Person Count */
+            person_count: number;
         };
         /** ZoneSearchResult */
         ZoneSearchResult: {
@@ -5659,6 +5981,7 @@ export interface operations {
             query?: {
                 search?: string | null;
                 zone_id?: string | null;
+                business_potential?: components["schemas"]["BusinessPotential"] | null;
                 page?: number;
                 page_size?: number;
             };
@@ -5806,6 +6129,43 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AccountUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_AccountResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_business_potential_api_v1_accounts__account_id__business_potential_patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BusinessPotentialUpdate"];
             };
         };
         responses: {
@@ -6229,6 +6589,12 @@ export interface operations {
                 sbu_id?: string | null;
                 product_id?: string | null;
                 brand_id?: string | null;
+                has_trade_in?: boolean;
+                has_no_items?: boolean;
+                zone_exact?: boolean;
+                closed_from?: string | null;
+                /** @description Inclusive */
+                closed_to?: string | null;
                 owner_team_only?: boolean;
                 page?: number;
                 page_size?: number;
@@ -8334,7 +8700,7 @@ export interface operations {
     get_pipeline_summary_api_v1_reporting_pipeline_summary_get: {
         parameters: {
             query?: {
-                group_by?: "stage" | "rep" | "sbu" | "zone" | "product";
+                group_by?: "stage" | "rep" | "sbu" | "zone" | "product" | "brand";
                 sbu_id?: string | null;
                 zone_id?: string | null;
                 user_id?: string | null;
@@ -8587,7 +8953,7 @@ export interface operations {
     get_sales_summary_api_v1_reporting_sales_summary_get: {
         parameters: {
             query?: {
-                group_by?: "rep" | "sbu" | "zone" | "product";
+                group_by?: "rep" | "sbu" | "zone" | "product" | "brand";
                 sbu_id?: string | null;
                 zone_id?: string | null;
                 user_id?: string | null;
@@ -8988,6 +9354,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_list_TargetPlanResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_zone_rollup_api_v1_planning_targets_zone_rollup_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_ZoneRollupEntry__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_eligible_accounts_api_v1_planning_targets_eligible_accounts_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_EligibleAccountResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_overlaps_api_v1_planning_targets_overlaps_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+                account_ids: string[];
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_PlanWarning__"];
                 };
             };
             /** @description Validation Error */

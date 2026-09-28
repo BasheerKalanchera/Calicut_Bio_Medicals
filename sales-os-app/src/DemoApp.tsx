@@ -31,6 +31,7 @@ import AuditLogScreen from "./screens/AuditLogScreen";
 import MarketingLeadEntryScreen from "./screens/MarketingLeadEntryScreen";
 import MarketingLeadReviewQueueScreen from "./screens/MarketingLeadReviewQueueScreen";
 import TargetPlanningScreen from "./screens/TargetPlanningScreen";
+import RateHospitalsScreen from "./screens/RateHospitalsScreen";
 import BrandTargetTrackingScreen from "./screens/BrandTargetTrackingScreen";
 import type { PipelineOpportunity } from "./types/api-aliases";
 
@@ -91,6 +92,7 @@ function getNavSections(isAdmin: boolean) {
           { id: "users",       label: "User Directory",  icon: "👥" },
           { id: "territories", label: "Territory Map",   icon: "🗺️" },
           { id: "auditLog",    label: "Audit Log",       icon: "📜" },
+          { id: "rateHospitals", label: "Rate Hospitals", icon: "⭐" },
           { id: "brandTargetTracking", label: "Brand Target Tracking", icon: "🏷️" },
         ],
       },
@@ -779,6 +781,17 @@ export default function DemoApp() {
           {/* Audit Log — always mounted, hidden when not active; nav entry is Admin/GM-gated */}
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "auditLog" ? "flex" : "none", flexDirection: "column" }}>
             <AuditLogScreen onSelectOpportunity={handleSelectOpportunity} onSelectAccount={handleSelectAccount} />
+          </Box>
+
+          {/* Rate Hospitals — always mounted, hidden when not active; nav entry is Admin/GM-gated.
+              active gates its query so it doesn't fetch in the background. */}
+          <Box sx={{ flex: 1, overflow: "hidden", display: view === "rateHospitals" ? "flex" : "none", flexDirection: "column" }}>
+            <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
+              <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
+                Rate Hospitals
+              </Typography>
+            </Box>
+            <RateHospitalsScreen active={view === "rateHospitals"} />
           </Box>
 
           {/* Marketing Leads — Marketing User's entry screen, always mounted (for every
