@@ -8505,3 +8505,30 @@ line.
   of the pre-move copy) and restored `cabio_uat_2026-09-27 morning.dump` from
   the Recycle Bin. The pre-move copy moved to `DB_Backups\keep\`, outside
   the keep-14 prune (it doesn't recurse); runbook "Where backups live" updated.
+
+## 2026-09-28 — Stash guard rail rewritten (reads the action, not the word)
+
+**Problem, both ways.** The 2026-09-27 guard rail matched the text "git
+stash" anywhere in a command. It prompted Basheer for harmless things
+(listing stashes; commit messages, greps and notes that only mention the
+word) and missed the real risk: Claude's push step used
+`git pull --rebase --autostash` twice today (`72564dc`, `467dee8`), which
+sets aside the folder's uncommitted work without the word "git stash"
+appearing. Both times the other session's unsaved edits (Backlog,
+scorecard, Traceability, two discussion docs) were stashed and restored
+cleanly; nothing was lost, but it was exactly what the guard exists to
+stop.
+
+**Fix (structural).** New `.claude/hooks/stash_guard.py`, called by the
+existing `ask-before-git-stash.sh`. It strips quoted text, heredocs and
+PowerShell here-strings (but checks `sh -c "..."`/`-Command '...'`
+contents), splits the command into its parts, and asks only for: a real
+`git stash` (anything but `list`/`show`), `--autostash` on
+pull/rebase/merge, and turning `rebase.autoStash`/`merge.autoStash` on.
+If the checker can't run, the wrapper asks whenever the command mentions
+"stash" — a broken guard never goes silent (the 2026-09-27 `cd backend`
+failure mode). Checked end-to-end through the real hook against 27 sample
+commands (12 harmless, 13 real stashes including today's miss, 2
+fail-safe), all as expected. `rebase.autoStash` isn't set in this repo.
+Claude's own push routine no longer uses `--autostash`: push directly,
+and if GitHub has newer commits, stop and tell Basheer.
