@@ -308,6 +308,15 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
   around 2 Oct for Oct–Dec planning.
 
+- **UAT: fill in missing "date closed" on closed deals.** Sales Report's
+  This Month / This Quarter miss all 37 deals closed before 2026-09-27
+  (they have no `closed_at`). 14 (10 Won, 4 Lost) can take their real
+  close time from the change history — fix ready to plan (small script,
+  not a migration: UAT can't take `0055` yet). 23 (20 Won, 3 Lost) closed
+  before the history began on 2026-09-08 — waiting on the team's actual
+  close dates via Haroon. Detail: Progress-Archive 2026-09-28 "UAT Sales
+  Report: This Month / This Quarter empty".
+
 - **Report edge cases left by the zone tree — low priority, no screen
   affected (found in `/code-review`, 2026-09-27).** (1) The reporting
   endpoints' own `zone_id` filter matches the exact zone only

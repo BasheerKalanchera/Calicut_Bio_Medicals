@@ -8532,3 +8532,21 @@ commands (12 harmless, 13 real stashes including today's miss, 2
 fail-safe), all as expected. `rebase.autoStash` isn't set in this repo.
 Claude's own push routine no longer uses `--autostash`: push directly,
 and if GitHub has newer commits, stop and tell Basheer.
+
+## 2026-09-28 — UAT Sales Report: This Month / This Quarter empty
+
+- **Reported:** 30 Won deals in the Sales Report's All Time view on UAT,
+  none in This Month or This Quarter, though all were closed this quarter.
+- **Cause:** the "date closed" stamp (`closed_at`, migration `0043`) reached
+  UAT in the 2026-09-27 upgrade with no backfill, so none of UAT's 37
+  closed deals (30 Won, 7 Lost) has one; period views filter on it, All
+  Time doesn't. Deals closed from 2026-09-27 on are stamped automatically.
+- **Read-only UAT check:** 14 (10 Won, 4 Lost) have a real close time in
+  the `audit_log` change history (all September); 23 (20 Won, 3 Lost)
+  closed before the history began on 2026-09-08 (entered: 16 Won + 3 Lost
+  in August, 4 Won in September).
+- **Separate, minor:** UAT's period boundaries start at 05:30 IST; fixed on
+  main in `22eb298`, reaches UAT with the next upgrade.
+- **Decided (Basheer):** the 14 with history can be fixed from it when
+  scheduled; the 23 wait for real dates from the team (via Haroon). Backlog:
+  "UAT: fill in missing "date closed" on closed deals".

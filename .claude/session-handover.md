@@ -47,3 +47,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   plans again (not yet clicked through; E2E is plan step 6).
 - **First thing next session:** confirm the stash guard-rail hook no longer
   errors after a `cd backend` (fix `89779d1` applies from session start).
+
+## Customer 360 open-deals filter — discussion in progress (parallel session)
+
+- Doc: `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` (committed `135df42`).
+- Next: Basheer picks (a) decide points 1–5 himself, or (b) take 1–3 to Haroon.
+  Point 3 revised to "remember while going into a deal and back, reset on
+  leaving the customer". Points 4 (heading shows "3 open · 12 closed") and 5
+  (empty state "No open deals — show N closed") still to be added to the doc.
