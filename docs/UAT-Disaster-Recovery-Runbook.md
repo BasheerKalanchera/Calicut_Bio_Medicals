@@ -36,6 +36,10 @@ whether that gap is acceptable before proceeding.
   Basheer keeps those in Google Drive and declined a script change
   (2026-09-24). Before each run, list the whole folder and tell him
   exactly which files the prune will remove.
+- **Kept copies:** `C:\Backups\CabioUAT\DB_Backups\keep` — hand-picked dumps
+  the keep-14 prune never touches (it doesn't look in sub-folders). Holds
+  `cabio_uat_2026-09-27_pre-move-0041.dump`, UAT at `0041` just before the
+  2026-09-27 upgrade to `0054`.
 - **Secondary (offsite):** Basheer's Google Drive, updated manually and
   irregularly as of 2026-09-20 (the backup script's own Google Drive
   step is disabled pending Google Drive for Desktop setup). Use this

@@ -8485,3 +8485,23 @@ search the diff after scripted bulk edits. Origins in
 `docs/Process-Rules-History.md`. Item 3 is a watch item: if it repeats,
 plans get a required "business-rule change found mid-build → stop and ask"
 line.
+
+## 2026-09-28 — UAT backup; before/after-upgrade comparison; keep folder
+
+- **Backup:** `scripts\backup_uat.ps1` at 06:12 — `cabio_uat_2026-09-28.dump`,
+  469,463 bytes, 472 TOC entries, nothing pruned (13 dumps before the run).
+  Slow: ~5 min vs ~1.5 min on 2026-09-27 — Docker start (log says "up after
+  20s" but 2m43s elapsed from the start line) and the verify step (29s vs 2s).
+  Watch item: look into it if it repeats.
+- **Growth check:** 374 → 472 TOC entries looked like an unexpected change.
+  Compared `pg_restore --list` of `cabio_uat_2026-09-27_pre-move-0041.dump`
+  and today's dump locally (throwaway `postgres:17`, folder mounted
+  read-only; no UAT connection). Every difference maps to the planned
+  2026-09-27 upgrade `0042` → `0054` (brand/category/model, marketing lead
+  comments, brand split and vendor targets, `0046` per-command RLS policies
+  replacing the four `*_tier_visibility`/`own_only`/`via_activity` ones).
+  No `0055` objects — UAT still at `0054`, as expected.
+- **Housekeeping (Basheer):** deleted `cabio_uat_2026-09-27.dump` (a duplicate
+  of the pre-move copy) and restored `cabio_uat_2026-09-27 morning.dump` from
+  the Recycle Bin. The pre-move copy moved to `DB_Backups\keep\`, outside
+  the keep-14 prune (it doesn't recurse); runbook "Where backups live" updated.
