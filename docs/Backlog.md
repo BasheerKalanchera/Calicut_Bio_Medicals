@@ -261,10 +261,13 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   with the existing pattern. Revisit if a non-API write path to
   `target_plan_brand_split` is ever added.
 
-- **Marketing User has no notification bell — can't be proactively nudged
-  about a comment on their own lead.** **Now requested by Haroon and
-  Latheef Bhai at the 2026-09-24 demo — reverses the 2026-09-18 "leave
-  as-is" call below; queued to build.** Listed as item 1 under "Requested
+- **Marketing User can't see which of their leads have new comments.**
+  **Requested by Haroon and Latheef Bhai at the 2026-09-24 demo (as a
+  highlight on the lead; a bell was considered and dropped). Parked until
+  about 12 Oct 2026: the team uses lead comments (on UAT since 2026-09-27)
+  for 1–2 weeks, then a UAT usage check decides whether to build the
+  highlight — `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`.**
+  Listed as item 1 under "Requested
   by Cabio leadership — to be built" in
   `docs/Signed-Requirements-to-PRD-Traceability.md`. Found 2026-09-18 during Lead
   Follow-up Comments manual E2E (`docs/Lead-Followup-Comments-Manual-E2E-
