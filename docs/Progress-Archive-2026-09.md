@@ -8550,3 +8550,48 @@ and if GitHub has newer commits, stop and tell Basheer.
 - **Decided (Basheer):** the 14 with history can be fixed from it when
   scheduled; the 23 wait for real dates from the team (via Haroon). Backlog:
   "UAT: fill in missing "date closed" on closed deals".
+
+## 2026-09-28 — Session retrospective (evening: planning scope check, Remote Control outage)
+
+**Done:** reviewed the stalled planning session's piece (c) work (three
+files on disk, main screen untouched, uncommitted). Checked the
+hospital-wise plan against the discussion paper, PRD 6.1 and Traceability
+6.1/3.2: its Part 1 "By Zone table" was in neither, because Claude added it to
+the plan's wording and never put it to Basheer as a choice. Basheer decided
+to drop it from Part 1 (zone totals come in Part 2 with actuals); the plan
+corrections and finishing (c) are parked to 29 Sep in the handover note.
+Outage traced: the laptop went into standby at 15:12 IST and slept until
+18:54, so Remote Control reached neither session. After waking, only the
+planning session (frozen mid-command for ~4 hours) refused every
+edit ("classifier gave no verdict"), while the other session worked in the
+same minute. So it was a fault in that session, not the network. Bug report
+drafted via `/feedback`.
+
+**Worked well:** reviewing the old session's work and dry-running its edit
+script before changing anything; line-by-line comparison of the plan with
+its sources caught the unagreed zone table before it was built; session
+logs plus the Windows system log gave a firm timeline instead of guesses.
+
+**Went wrong (Claude):** (1) first described the zone table as "in the plan
+you approved" without tracing where it came from; Basheer had to push twice.
+This **repeats** the 2026-09-27 afternoon retro's item 7 (undecided choices
+written into a plan as decided); that retro's fix, a "Decisions (proposed /
+Basheer, date)" list in plans, was never built into anything. (2) Suggested
+a Backlog entry for PRD reports that aren't in Traceability. Basheer: Phase
+1 scope is exactly the Traceability matrix; the Backlog is only for other
+work still needing tracking. (3) Offered to run the old session's
+workaround script instead of editing normally. (4) Said "seven edits" when
+there were six plus the handover note.
+
+**Process change:** no new CLAUDE.md lines. Per the 2026-09-27 agreement
+(written rules fail at the moment of action; a repeat gets a guard rail),
+item 1 gets a guard rail. Options put to Basheer: lighter, a plan template
+with a required Decisions section, checked by the daily doc tidy-up; heavier
+(recommended), the same plus a check on saving a plan that refuses "Approved"
+while any decision is still "proposed". **Parked to 29 Sep morning at
+Basheer's request** (reminder in the handover note). Item 2 is a watch item:
+if it repeats, the doc tidy-up checks the Backlog against Traceability.
+**Tips for Basheer, not rules:** with Remote Control on, keep the laptop
+plugged in, with sleep set to "Never" and lid-close to "Do nothing" when
+plugged in; if a session refuses every edit with "no verdict" after one
+retry, restart it.
