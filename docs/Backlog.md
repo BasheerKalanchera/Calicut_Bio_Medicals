@@ -264,8 +264,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Marketing User has no notification bell — can't be proactively nudged
   about a comment on their own lead.** **Now requested by Haroon and
   Latheef Bhai at the 2026-09-24 demo — reverses the 2026-09-18 "leave
-  as-is" call below; queued to build.** Listed as client-visible Pending
-  item 2 in `docs/Signed-Requirements-to-PRD-Traceability.md`. Found 2026-09-18 during Lead
+  as-is" call below; queued to build.** Listed as item 1 under "Requested
+  by Cabio leadership — to be built" in
+  `docs/Signed-Requirements-to-PRD-Traceability.md`. Found 2026-09-18 during Lead
   Follow-up Comments manual E2E (`docs/Lead-Followup-Comments-Manual-E2E-
   Test-Plan.md`, TC-14). `DemoApp.tsx:571` gates `<NotificationBell>`
   behind `!isMarketingUser` — a deliberate 2026-09-02 decision, made back
@@ -287,7 +288,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 - **Opportunities screen: show only open deals by default, closed ones on
   demand.** Requested by Haroon and Latheef Bhai at the 2026-09-24 demo;
-  client-visible Pending item 3 in
+  item 2 under "Requested by Cabio leadership — to be built" in
   `docs/Signed-Requirements-to-PRD-Traceability.md`. Today
   `OpportunityPipelineScreen.tsx` lists every status (WON/LOST/ON_HOLD
   included). Ask: active deals only by default, plus a button that brings
