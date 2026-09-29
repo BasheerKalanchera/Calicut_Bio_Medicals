@@ -96,6 +96,9 @@ export interface TargetPlan {
   decision_note: string | null;
   // The owner's latest "why it changed" note on a revision.
   change_note: string | null;
+  // BR-PL-05: the last approved total, kept while a revision of an approved
+  // plan is in flight; cleared when that revision is approved.
+  previous_approved_total_lakhs: string | null;
   brand_splits: BrandSplitResponse[];
   accounts: PlanAccount[];
   // Filled on create/update responses only.

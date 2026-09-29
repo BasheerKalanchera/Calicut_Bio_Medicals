@@ -22,6 +22,17 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
         </Alert>
       )}
 
+      {target.previous_approved_total_lakhs != null && (
+        <Typography variant="body2">
+          <strong>Last approved target:</strong> {lakhs2(target.previous_approved_total_lakhs)}
+          {Number(target.target_amount_lakhs) < Number(target.previous_approved_total_lakhs) && (
+            <Box component="span" sx={{ color: "warning.main", fontWeight: 700 }}>
+              {" "}— this revision is {lakhs2(Number(target.previous_approved_total_lakhs) - Number(target.target_amount_lakhs))} below it
+            </Box>
+          )}
+        </Typography>
+      )}
+
       {accounts.length === 0 ? (
         <Typography variant="body2" color="text.secondary">
           No hospitals on this plan — it was set before hospital-wise planning.

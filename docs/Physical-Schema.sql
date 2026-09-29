@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-27 from the Dev database, catching up migration
--- 0055: 0055: account.business_potential*, target_plan.change_note + DRAFT, target_plan_account (+RLS), cabio_app_plan_overlap(); coverage_plan/coverage_plan_entry dropped
+-- Regenerated 2026-09-29 from the Dev database, catching up migration
+-- 0056: BR-PL-05: remember the last approved total when an approved plan is revised
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TNnt5Cg6c4d4zizaRAcR1AC5x4h53zswlpxSnwS21iuu35m5RxZ1IY8WexhkutC
+\restrict NZPfsIIUYfarhULrWLkTaJ4863CONIDJjDuGe1rkImyuVzVVjLoAmTUfy4UNoYn
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -829,6 +829,7 @@ CREATE TABLE public.target_plan (
     approved_at timestamp with time zone,
     decision_note text,
     change_note text,
+    previous_approved_total_lakhs numeric(15,2),
     CONSTRAINT ck_target_plan_status CHECK (((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PENDING_APPROVAL'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying])::text[]))),
     CONSTRAINT target_plan_planning_period_check CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
@@ -3425,5 +3426,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TNnt5Cg6c4d4zizaRAcR1AC5x4h53zswlpxSnwS21iuu35m5RxZ1IY8WexhkutC
+\unrestrict NZPfsIIUYfarhULrWLkTaJ4863CONIDJjDuGe1rkImyuVzVVjLoAmTUfy4UNoYn
 

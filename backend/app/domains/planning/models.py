@@ -30,6 +30,8 @@ class TargetPlan(AuditMixin, Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     change_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # BR-PL-05: the approved total an in-flight revision is measured against.
+    previous_approved_total_lakhs: Mapped[Decimal | None] = mapped_column(Numeric(15, 2), nullable=True)
 
     user: Mapped["UserProfile"] = relationship(
         back_populates="target_plans", foreign_keys=[user_id], lazy="joined"

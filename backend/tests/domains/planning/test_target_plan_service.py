@@ -65,6 +65,7 @@ def _make_target_plan(**overrides) -> MagicMock:
         "approved_by": None,
         "approved_at": None,
         "decision_note": None,
+        "previous_approved_total_lakhs": None,
     }
     defaults.update(overrides)
     target_plan = MagicMock(spec=TargetPlan)
@@ -997,3 +998,77 @@ class TestWarnings:
         warnings = service.check_overlaps([account_id], SBU_ID, "2026-Q3")
 
         assert warnings[0].colleague_name == "Anil K"
+
+
+class TestPreviousApprovedTotal:
+    """BR-PL-05: the last approved total is kept while a revision is in
+    flight, so the screen can warn when the revised plan is below it."""
+
+    def _approver_setup(self, target_plan, owner):
+        manager = _make_user("Area Manager")
+        owner.manager_id = manager.id
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        return _make_service(repo), manager
+
+    def test_revising_an_approved_plan_remembers_the_approved_total(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="APPROVED", target_amount_lakhs=Decimal("40"))
+        service = _make_service(_make_repo(get_by_id=MagicMock(return_value=target_plan)))
+
+        result, _warnings = service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("32"), change_note="Lost a hospital"), current_user=owner
+        )
+
+        assert result.target_amount_lakhs == Decimal("32")
+        assert result.previous_approved_total_lakhs == Decimal("40")
+
+    @pytest.mark.parametrize("status", ["PENDING_APPROVAL", "REJECTED"])
+    def test_second_revision_keeps_the_benchmark_from_the_last_approval(self, status):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(
+            user_id=owner.id,
+            status=status,
+            target_amount_lakhs=Decimal("32"),
+            previous_approved_total_lakhs=Decimal("40"),
+        )
+        service = _make_service(_make_repo(get_by_id=MagicMock(return_value=target_plan)))
+
+        result, _warnings = service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("35"), change_note="Added one"), current_user=owner
+        )
+
+        assert result.previous_approved_total_lakhs == Decimal("40")
+
+    def test_editing_a_draft_never_sets_it(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id, status="DRAFT", target_amount_lakhs=Decimal("40"))
+        service = _make_service(_make_repo(get_by_id=MagicMock(return_value=target_plan)))
+
+        result, _warnings = service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("10"), submit=False), current_user=owner
+        )
+
+        assert result.previous_approved_total_lakhs is None
+
+    def test_approving_clears_it(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(
+            user_id=owner.id, status="PENDING_APPROVAL", previous_approved_total_lakhs=Decimal("40")
+        )
+        service, manager = self._approver_setup(target_plan, owner)
+
+        result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=manager)
+
+        assert result.previous_approved_total_lakhs is None
+
+    def test_rejecting_keeps_it(self):
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(
+            user_id=owner.id, status="PENDING_APPROVAL", previous_approved_total_lakhs=Decimal("40")
+        )
+        service, manager = self._approver_setup(target_plan, owner)
+
+        result = service.approve_or_reject_target_plan(target_plan.id, status="REJECTED", current_user=manager)
+
+        assert result.previous_approved_total_lakhs == Decimal("40")

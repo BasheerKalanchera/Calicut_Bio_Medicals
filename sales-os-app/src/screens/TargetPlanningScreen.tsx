@@ -16,7 +16,10 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
+import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
@@ -98,6 +101,20 @@ function StatusWithNote({ target, sbuHasBrands }: { target: TargetPlan; sbuHasBr
   );
 }
 
+// Chevron that opens a plan row's hospital/brand detail underneath it.
+function ExpandToggle({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return (
+    <IconButton size="small" onClick={onClick} aria-expanded={open} aria-label={open ? "Hide plan details" : "Show plan details"}>
+      {open ? <KeyboardArrowDownIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+    </IconButton>
+  );
+}
+
+// Hospital count is counted live from the plan's rows, not stored.
+function hospitalCount(t: TargetPlan): string {
+  return t.accounts.length === 0 ? "—" : String(t.accounts.length);
+}
+
 function fiscalYearLabel(fyStartYear: number): string {
   return `FY ${fyStartYear}-${String((fyStartYear + 1) % 100).padStart(2, "0")}`;
 }
@@ -139,6 +156,15 @@ export default function TargetPlanningScreen() {
   const [planDialog, setPlanDialog] = useState<{ period: string; sbuId: string; existing: TargetPlan | null } | null>(null);
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
   const [noteInput, setNoteInput] = useState("");
+  // Plan rows (approval queue and team list) whose detail panel is open.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  const toggleExpanded = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const fyStartYear = getFiscalYearOfPeriod(period);
   const yearQuarters = getPlanningYearQuarters(fyStartYear);
@@ -400,24 +426,58 @@ export default function TargetPlanningScreen() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox" />
                 <TableCell>Rep</TableCell>
                 <TableCell>Period</TableCell>
+                <TableCell align="right">Hospitals</TableCell>
                 <TableCell>Amount</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {pendingApproval.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>{t.user.display_name}</TableCell>
-                  <TableCell>{t.planning_period}</TableCell>
-                  <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                  <TableCell align="right">
-                    <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
-                    <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {pendingApproval.map((t) => {
+                const open = expanded.has(t.id);
+                const wasApproved = t.previous_approved_total_lakhs != null ? Number(t.previous_approved_total_lakhs) : null;
+                const belowApproved = wasApproved !== null && Number(t.target_amount_lakhs) < wasApproved;
+                return (
+                  <Fragment key={t.id}>
+                    <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
+                      <TableCell padding="checkbox">
+                        <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                      </TableCell>
+                      <TableCell>
+                        {t.user.display_name}
+                        {/* Approval queue only: the note outlives the approval,
+                            so in the team list this tag would never go away. */}
+                        {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
+                      </TableCell>
+                      <TableCell>{t.planning_period}</TableCell>
+                      <TableCell align="right">{hospitalCount(t)}</TableCell>
+                      <TableCell>
+                        <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
+                          {formatLakhs(Number(t.target_amount_lakhs))}
+                        </Box>
+                        {wasApproved !== null && (
+                          <Typography component="span" variant="body2" sx={{ color: belowApproved ? "warning.main" : "text.secondary" }}>
+                            {" "}(was {formatLakhs(wasApproved)})
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
+                        <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
+                      </TableCell>
+                    </TableRow>
+                    {open && (
+                      <TableRow>
+                        <TableCell colSpan={6}>
+                          <TargetPlanDetails target={t} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         </Box>
@@ -454,22 +514,40 @@ export default function TargetPlanningScreen() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox" />
                     <TableCell>Rep</TableCell>
+                    <TableCell align="right">Hospitals</TableCell>
                     <TableCell>Amount</TableCell>
                     <TableCell>Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {teamTargets.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>{t.user.display_name}</TableCell>
-                      <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                      <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
-                    </TableRow>
-                  ))}
+                  {teamTargets.map((t) => {
+                    const open = expanded.has(t.id);
+                    return (
+                      <Fragment key={t.id}>
+                        <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
+                          <TableCell padding="checkbox">
+                            <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                          </TableCell>
+                          <TableCell>{t.user.display_name}</TableCell>
+                          <TableCell align="right">{hospitalCount(t)}</TableCell>
+                          <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                          <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
+                        </TableRow>
+                        {open && (
+                          <TableRow>
+                            <TableCell colSpan={5}>
+                              <TargetPlanDetails target={t} />
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                   {teamTargets.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3}>
+                      <TableCell colSpan={5}>
                         <Typography color="text.secondary">No targets set for {period} yet.</Typography>
                       </TableCell>
                     </TableRow>

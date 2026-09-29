@@ -5098,6 +5098,8 @@ export interface components {
             decision_note: string | null;
             /** Change Note */
             change_note?: string | null;
+            /** Previous Approved Total Lakhs */
+            previous_approved_total_lakhs?: string | null;
             /**
              * Brand Splits
              * @default []

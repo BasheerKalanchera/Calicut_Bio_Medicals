@@ -159,6 +159,7 @@ class TargetPlanResponse(BaseModel):
     approved_at: datetime | None
     decision_note: str | None
     change_note: str | None = None
+    previous_approved_total_lakhs: Decimal | None = None
     brand_splits: list[BrandSplitResponse] = []
     accounts: list[PlanAccountResponse] = []
     # Filled only on create/update responses (and the overlap check endpoint);

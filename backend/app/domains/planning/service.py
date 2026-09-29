@@ -277,6 +277,11 @@ class TargetPlanService:
             raise ValidationError("Please add a short note saying why the plan changed.")
         total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user, submit=data.submit)
 
+        # BR-PL-05: remember what the approver last signed off, before the
+        # total is overwritten. Only an APPROVED plan sets it -- re-revising a
+        # PENDING/REJECTED plan keeps the benchmark from the last approval.
+        if target_plan.status == "APPROVED":
+            target_plan.previous_approved_total_lakhs = target_plan.target_amount_lakhs
         target_plan.target_amount_lakhs = total
         if change_note is not None:
             target_plan.change_note = change_note
@@ -326,6 +331,10 @@ class TargetPlanService:
         target_plan.approved_by = current_user.id
         target_plan.approved_at = datetime.now(UTC)
         target_plan.decision_note = note
+        if status == "APPROVED":
+            # BR-PL-05: the new approval is now the benchmark; a rejection
+            # keeps the old one for the next revision.
+            target_plan.previous_approved_total_lakhs = None
         target_plan.updated_by = current_user.id
         return self.repository.update(target_plan)
 

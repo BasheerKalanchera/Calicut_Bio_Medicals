@@ -117,6 +117,14 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
   );
 
   const total = roundToPrecision(sumAllocation(rows.map((r) => Number(r.amount))), 2);
+  // BR-PL-05: an approved plan is its own benchmark; a revision still in
+  // flight carries the last approved total. Drafts have none.
+  const approvedBenchmark =
+    existing?.status === "APPROVED"
+      ? Number(existing.target_amount_lakhs)
+      : existing?.previous_approved_total_lakhs != null
+        ? Number(existing.previous_approved_total_lakhs)
+        : null;
   const splitTotal = sumAllocation(editSplits.map((s) => Number(s.amount)));
   const splitBalanced = isAllocationBalanced(splitTotal, total, 2);
 
@@ -303,6 +311,14 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
           <Typography sx={{ fontWeight: 800 }}>Target: {formatLakhs2(total)}</Typography>
         </Box>
       </Box>
+
+      {approvedBenchmark !== null && total < approvedBenchmark && (
+        <Alert severity="warning">
+          {formatLakhs2(total)} is {formatLakhs2(approvedBenchmark - total)} below your approved target of{" "}
+          {formatLakhs2(approvedBenchmark)} — add hospitals or raise amounts to close the gap. You can still submit;
+          your manager will see both figures.
+        </Alert>
+      )}
 
       {(highAtZero.length > 0 || liveOverlaps.length > 0) && (
         <Alert severity="warning">

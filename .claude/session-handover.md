@@ -12,92 +12,37 @@ Progress-Archive 2026-09-28 "Session retrospective (evening…)". Remove
 this block once decided.
 
 
-## Hospital-wise target planning — Part 1, step 3 (c) and 3d
+## Hospital-wise target planning — Part 1, plan steps 4–7
 
 - Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`
   (approved 2026-09-27; section 8 updated to as-built). Design:
   `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`.
-- **Decided 2026-09-29 (Basheer), written into the plan's Status line:**
-  checkpoint on track, no fallback; **no UAT move until Part 2 is also
-  finished** (team plans Oct–Dec in the brand-wise screen meanwhile); By
-  Zone table → Part 2 (`/zone-rollup` backend kept as Part 2 work done
-  early); keep "Revised" label + live hospital count (counted on screen,
-  not stored); new rule **BR-PL-05** (option A: warn when a revised plan
-  is below its last approved total, approver sees both) → step 3d.
-- Done + pushed: step 1 schema `e55c112` (Dev at `0055 (head)`), step 2
-  backend `04c5e87`, step 3a `72564dc`, step 3b `467dee8`.
-- 29 Sep decisions committed + pushed `d200818`.
-- **Next: build plan for (c) + 3d shown to Basheer 2026-09-29, awaiting his
-  "start"** (paused, he's travelling to Calicut):
-  - **(c)**, screen only: "Needs Your Approval" rows get a chevron →
-    expanded row renders `TargetPlanDetails` (hospitals, brand split, change
-    note); "Hospitals" count column (`t.accounts.length`, not stored);
-    outlined "Revised" chip when `t.change_note` — **approval queue only**
-    (the note persists after approval, so in the team list it would stick
-    forever). Team list, quarterly view: chevron + count; annual view
-    unchanged. No `getZoneRollup` query. `expanded: Set<string>` state,
-    `IconButton` with `aria-expanded`, `colSpan` detail row.
-  - **3d (BR-PL-05)**: migration `0056` adds
-    `target_plan.previous_approved_total_lakhs NUMERIC(15,2) NULL` (Dev
-    only; UAT with the Part 1+2 move). `update_target_plan`: *before*
-    overwriting the total, `if status == "APPROVED"` store the old total;
-    re-revising a PENDING/REJECTED plan keeps it. Approve clears it; reject
-    keeps it; drafts never get it. Add to `TargetPlanResponse`, regenerate
-    `types/api.ts`. 3 service tests (set on revise, kept on second revise,
-    cleared on approve / kept on reject). No backend warning kind: the
-    dialog computes the benchmark live (`existing.status === "APPROVED" ?
-    target_amount_lakhs : previous_approved_total_lakhs`) and shows a
-    yellow Alert "₹X L below your approved target of ₹Y L — add hospitals";
-    Submit still allowed. Approval row shows "₹32 L (was ₹40 L)" in warning
-    colour; `TargetPlanDetails` shows "Last approved target".
-  - Order: 3d backend (migration applied to Dev + recorded,
-    Physical-Schema regenerated, tests) → frontend (c) + 3d → pytest, ruff,
-    tsc, lint → **propose checkpoint commit** → plan steps 4–7
-    (`/code-review` high, E2E plan, E2E). About a day for the first three.
-- **Part (c) on disk, uncommitted, reviewed 2026-09-28:** new
-  `components/TargetPlanDetails.tsx` (expanded-row panel), new
-  `utils/visitFrequency.ts`, `TargetPlanDialog.tsx` imports it.
-  `TargetPlanningScreen.tsx` untouched. The previous session's
-  `edit_part_c.py` (its scratchpad `0312416c-…`) is a reference only —
-  drop its By Zone table; keep its Revised chip and count. tsc not yet
-  run on the on-disk changes.
+- **Decided 2026-09-29 (Basheer), in the plan's Status line:** no UAT move
+  until Part 2 is also finished; By Zone table → Part 2 (`/zone-rollup`
+  backend kept); "Revised" label + live hospital count; **BR-PL-05**
+  (warn when a revised plan is below its last approved total).
+- Done: step 1 `e55c112`, step 2 `04c5e87`, step 3a `72564dc`, step 3b
+  `467dee8`, step 3 (c) + 3d checkpoint (`git log --grep "3 (c) + 3d"`).
+  Migration `0056` (`target_plan.previous_approved_total_lakhs`) applied
+  to Dev 2026-09-29, `alembic current` = `0056 (head)`; Physical-Schema
+  regenerated. UAT gets 0055 + 0056 with the Part 1+2 move.
+- 1051 pytest pass; tsc + lint clean; ruff clean on changed files (62
+  older errors in untouched files: old migrations, `opportunity/router.py`,
+  `reporting/router.py`, `asset/service.py`, `opportunity/validators.py`).
+- Screen not yet clicked through on Dev.
+- **Next: plan step 4** (living docs that name the screen — UI-Inventory,
+  UAT user manual, Traceability 6.1 — renamed **Target & Coverage
+  Planning**; BR-PL-05 wording check), then `/code-review` high on the
+  Part 1 commits, written E2E plan, E2E (restart Dev backend first).
+- **API as built:** create/update body `{accounts[], brand_splits, submit,
+  change_note}`; response `warnings` (`HIGH_POTENTIAL_ZERO`,
+  `SAME_SBU_OVERLAP`) and `previous_approved_total_lakhs`; `GET
+  /planning/targets/eligible-accounts`, `/overlaps`, `/zone-rollup`;
+  `PATCH /accounts/{id}/business-potential`.
 - **Part 2 note:** zone = hospital's zone (as `/zone-rollup` groups) or
   the planner's zone — decide when writing Part 2's plan.
 - Proposed, not decided: a CLAUDE.md line "Backlog holds only work outside
-  the Traceability matrix". Visit-compliance reports (PRD A.3.1 etc.) are
-  not in Traceability → out of scope, no Backlog entry (Basheer).
-- **Step 3 (frontend) in progress, plan approved by Basheer 2026-09-28**,
-  split into three parts (a) (b) (c):
-  - (a) done, tsc clean, committed + pushed as the "step 3a" checkpoint
-    (`git log --grep "step 3a"`): `types/api.ts` regenerated
-    (offline from `app.openapi()`, backend wasn't running),
-    `services/accounts.ts` (rating filter + `setBusinessPotential`),
-    new `utils/businessPotential.ts`, `components/BusinessPotentialChip.tsx`,
-    `screens/RateHospitalsScreen.tsx` (Admin/GM nav entry in `DemoApp.tsx`),
-    rating chip + Admin/GM notes on `Customer360Screen.tsx`.
-  - (b) done, tsc/lint clean: new `components/TargetPlanDialog.tsx`
-    (hospital picker, rows, live total, High-at-₹0 + overlap warnings,
-    brand split vs live total, change note, Save draft / Submit),
-    `FormModal` `maxWidth` + `secondaryAction`, planning types/services,
-    old single-amount dialog removed from `TargetPlanningScreen.tsx`.
-  - Draft rule (Basheer, 2026-09-28): balanced brand split and total >
-    ₹0 enforced on Submit only, not Save draft -- backend service + 6 tests
-    (1045 pass) and the dialog both changed.
-  - Screen renamed **Target & Coverage Planning** (Basheer, 2026-09-28;
-    signed req. 6.1 "Basic Beat Planning" = coverage planning). Menu +
-    header + dialog title done; living docs that name the *screen*
-    (UI-Inventory, UAT user manual, Traceability 6.1) get updated in plan
-    step 4.
-  - **Next:** (c) and 3d — see "Next" above. Then plan steps 4–7.
-- **API as built** (differs slightly from the plan's first draft): create/
-  update body `{accounts[], brand_splits, submit, change_note}`; response
-  field is `warnings` (kinds `HIGH_POTENTIAL_ZERO`, `SAME_SBU_OVERLAP`);
-  new `GET /planning/targets/eligible-accounts`, `/overlaps`,
-  `/zone-rollup`; `PATCH /accounts/{id}/business-potential`.
-- **Known gap closed by (b):** Target Planning on Dev saves hospital-wise
-  plans again (not yet clicked through; E2E is plan step 6).
-- **First thing next session:** confirm the stash guard-rail hook no longer
-  errors after a `cd backend` (fix `89779d1` applies from session start).
+  the Traceability matrix".
 
 ## Customer 360 open-deals filter — discussion in progress (parallel session)
 
