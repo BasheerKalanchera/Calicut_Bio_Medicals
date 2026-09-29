@@ -4,8 +4,12 @@ connection from backend/.env.uat -- never ADMIN_DATABASE_URL. Impersonates
 a real Admin/GM user's RLS context (session-local, not a real login) so
 results reflect full company-wide data rather than silently-empty RLS
 denials on an unauthenticated connection.
+
+`--env dev` runs the same checks against Dev (backend/.env) as a trial
+before a UAT run; it doesn't write the UAT run log.
 """
 
+import argparse
 import difflib
 import sys
 from collections import Counter
@@ -16,7 +20,14 @@ import psycopg2
 import psycopg2.extras
 
 sys.stdout.reconfigure(encoding="utf-8")
-ENV_FILE = Path(__file__).resolve().parent.parent / "backend" / ".env.uat"
+ENV_FILES = {
+    "uat": Path(__file__).resolve().parent.parent / "backend" / ".env.uat",
+    "dev": Path(__file__).resolve().parent.parent / "backend" / ".env",
+}
+# Above ₹20 Cr for one person's quarter (or one brand's vendor target) is
+# almost certainly a Rupees-for-Lakhs slip; the largest real annual brand
+# target is ~₹14 Cr (Basheer, 2026-09-29).
+TARGET_LIMIT_LAKHS = 2000
 # One line per completed run, next to backup_log.txt. The SessionStart hook in
 # .claude/settings.json reads the last line to remind when a run is due
 # (every alternate day, run under Basheer's supervision).
@@ -35,7 +46,12 @@ def load_env(path: Path) -> dict[str, str]:
 
 
 def main() -> None:
-    env = load_env(ENV_FILE)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--env", choices=["uat", "dev"], default="uat")
+    args = parser.parse_args()
+    print(f"Environment: {args.env.upper()}\n")
+
+    env = load_env(ENV_FILES[args.env])
     dsn = env["DATABASE_URL"]
 
     conn = psycopg2.connect(dsn)
@@ -94,7 +110,10 @@ def main() -> None:
         SELECT (SELECT COUNT(*) FROM account) AS accounts,
                (SELECT COUNT(*) FROM opportunity) AS opportunities,
                (SELECT COUNT(*) FROM activity) AS activities,
-               (SELECT COUNT(*) FROM reminder) AS reminders
+               (SELECT COUNT(*) FROM reminder) AS reminders,
+               (SELECT COUNT(*) FROM target_plan) AS target_plans,
+               (SELECT COUNT(*) FROM product) AS products,
+               (SELECT COUNT(*) FROM marketing_lead_comment) AS lead_comments
     """)
     print(f"Sanity totals (should all be >0 and match known scale): {cur.fetchone()}")
 
@@ -166,8 +185,9 @@ def main() -> None:
 
     # 6. WON/LOST opportunities whose line items changed *after* the deal
     # closed. Edits made before closing are normal and ignored. Close time
-    # is opportunity.closed_at where that column exists (not yet on UAT as of
-    # 2026-09-26), else the latest audit_log row that moved the deal to its
+    # is opportunity.closed_at where that column exists (on UAT since
+    # 2026-09-27, but empty for deals closed before then -- see section 15),
+    # else the latest audit_log row that moved the deal to its
     # current status. Deals with no knowable close time are listed separately
     # as information, not as problems.
     cur.execute("""
@@ -317,9 +337,114 @@ def main() -> None:
         ORDER BY o.created_at DESC
     """, "PO set, no Activity logged")
 
+    # 9-15 cover what reached UAT in the 2026-09-27 move
+    # (docs/UAT-Promotion-2026-09-Plan.md, migrations 0042-0054). Exact
+    # duplicates (one target per person/SBU/quarter, one brand/category/model
+    # name) are already blocked by unique constraints, so aren't checked.
+    section("9. Target amounts that look wrong (Lakhs/Rupees mixup, or ₹0 submitted)")
+    run(f"""
+        SELECT up.display_name AS planner, tp.planning_period, tp.status, tp.target_amount_lakhs
+        FROM target_plan tp JOIN user_profile up ON up.id = tp.user_id
+        WHERE tp.target_amount_lakhs > {TARGET_LIMIT_LAKHS}
+           OR (tp.target_amount_lakhs = 0 AND tp.status <> 'DRAFT')
+        ORDER BY tp.planning_period DESC, up.display_name
+    """, f"Targets above {TARGET_LIMIT_LAKHS} Lakhs or submitted at 0")
+    run(f"""
+        SELECT b.name AS brand, bvt.planning_period, bvt.vendor_target_amount_lakhs
+        FROM brand_vendor_target bvt JOIN brand b ON b.id = bvt.brand_id
+        WHERE bvt.vendor_target_amount_lakhs > {TARGET_LIMIT_LAKHS}
+        ORDER BY bvt.planning_period DESC, b.name
+    """, f"Brand vendor targets above {TARGET_LIMIT_LAKHS} Lakhs")
+
+    section("10. Submitted/approved targets whose brand split doesn't add up to the total")
+    run("""
+        SELECT up.display_name AS planner, tp.planning_period, tp.status,
+               tp.target_amount_lakhs, SUM(s.split_amount_lakhs) AS brand_split_total
+        FROM target_plan tp
+        JOIN target_plan_brand_split s ON s.target_plan_id = tp.id
+        JOIN user_profile up ON up.id = tp.user_id
+        WHERE tp.status IN ('PENDING_APPROVAL', 'APPROVED')
+        GROUP BY tp.id, up.display_name, tp.planning_period, tp.status, tp.target_amount_lakhs
+        HAVING SUM(s.split_amount_lakhs) <> tp.target_amount_lakhs
+        ORDER BY tp.planning_period DESC, up.display_name
+    """, "Brand split total differs from target")
+
+    # planning_period "YYYY-Qn": YYYY is the fiscal year's start year, so Q1
+    # starts 1 April YYYY and Q4 starts 1 January YYYY+1
+    # (sales-os-app/src/utils/formatter.ts getCurrentPlanningPeriod).
+    section("11. Targets still pending approval after their quarter began")
+    run("""
+        SELECT up.display_name AS planner, tp.planning_period, tp.target_amount_lakhs,
+               tp.updated_at::date AS last_changed
+        FROM target_plan tp JOIN user_profile up ON up.id = tp.user_id
+        WHERE tp.status = 'PENDING_APPROVAL'
+          AND make_date(left(tp.planning_period, 4)::int, 4, 1)
+              + (right(tp.planning_period, 1)::int - 1) * interval '3 months' <= current_date
+        ORDER BY tp.planning_period, up.display_name
+    """, "Pending after quarter start")
+
+    section("12. Catalogue names that differ only in capitals or spaces")
+    run("""
+        SELECT 'brand' AS kind, s.name AS scope, array_agg(b.name ORDER BY b.name) AS names
+        FROM brand b JOIN sbu s ON s.id = b.sbu_id
+        GROUP BY s.name, lower(regexp_replace(b.name, '\\s+', '', 'g')) HAVING COUNT(*) > 1
+        UNION ALL
+        SELECT 'category', s.name, array_agg(c.name ORDER BY c.name)
+        FROM category c JOIN sbu s ON s.id = c.sbu_id
+        GROUP BY s.name, lower(regexp_replace(c.name, '\\s+', '', 'g')) HAVING COUNT(*) > 1
+        UNION ALL
+        SELECT 'model', b.name, array_agg(m.name ORDER BY m.name)
+        FROM model m JOIN brand b ON b.id = m.brand_id
+        GROUP BY b.name, lower(regexp_replace(m.name, '\\s+', '', 'g')) HAVING COUNT(*) > 1
+    """, "Look-alike catalogue names")
+
+    section("13. Active products under a switched-off brand or model")
+    run("""
+        SELECT p.name AS product, b.name AS brand, b.is_active AS brand_active,
+               m.name AS model, m.is_active AS model_active
+        FROM product p
+        JOIN brand b ON b.id = p.brand_id
+        JOIN model m ON m.id = p.model_id
+        WHERE p.is_active AND (NOT b.is_active OR NOT m.is_active)
+        ORDER BY b.name, p.name
+    """, "Active product, inactive brand/model")
+
+    section("14. Marketing-lead comments with no real words")
+    run("""
+        SELECT up.display_name AS author, c.body, c.created_at::date AS written
+        FROM marketing_lead_comment c JOIN user_profile up ON up.id = c.created_by
+        WHERE length(regexp_replace(c.body, '[^A-Za-z]', '', 'g')) < 3
+        ORDER BY c.created_at DESC
+    """, "Empty-ish lead comments")
+
+    # Before 2026-09-27 closed_at didn't exist on UAT: a known gap with a fix
+    # planned (docs/Backlog.md "UAT: fill in missing \"date closed\" on closed
+    # deals"). From then on the app stamps it on closing, so a deal the change
+    # history shows closing on/after 27 Sep with no closed_at is an app fault.
+    # Split by when the deal closed (audit_log, as in section 6), not when it
+    # was last edited -- a pre-27-Sep close edited later is still the known gap.
+    missing_close = f"""
+        SELECT o.name, a.name AS account_name, os.status_code,
+               ({audit_close})::date AS closed_per_history
+        FROM opportunity o
+        JOIN account a ON a.id = o.account_id
+        JOIN opportunity_status os ON os.id = o.status_id
+        WHERE os.status_code IN ('WON', 'LOST') AND o.closed_at IS NULL
+          AND {{cond}}
+        ORDER BY o.name
+    """
+    section("15. Closed (Won/Lost) deals with no close date")
+    run(missing_close.format(cond=f"COALESCE({audit_close}, '2000-01-01') < '2026-09-27'"),
+        "No close date, closed before 27 Sep or before history began (known gap)", limit=10)
+    run(missing_close.format(cond=f"{audit_close} >= '2026-09-27'"),
+        "No close date, closed on/after 27 Sep (app fault?)")
+
     cur.close()
     conn.close()
 
+    if args.env != "uat":
+        print(f"\nDone ({args.env.upper()} trial -- UAT run log not written).")
+        return
     RUN_LOG.parent.mkdir(parents=True, exist_ok=True)
     summary = "; ".join(f"{label}={n}" for label, n in counts)
     with RUN_LOG.open("a", encoding="utf-8") as f:

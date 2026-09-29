@@ -8595,3 +8595,17 @@ if it repeats, the doc tidy-up checks the Backlog against Traceability.
 plugged in, with sleep set to "Never" and lid-close to "Do nothing" when
 plugged in; if a session refuses every edit with "no verdict" after one
 retry, restart it.
+
+
+## 2026-09-29 — UAT data-quality check; seven new checks
+
+- **Script:** `uat_data_quality_check.py` gained checks 9–15 for data from
+  the 27 Sep UAT move (target amounts, brand splits, targets pending after
+  quarter start, catalogue look-alike names, active products under a
+  switched-off brand/model, empty lead comments, closed deals with no close
+  date), plus `--env dev` for trial runs. Trialled on Dev, then run on UAT.
+- **Results vs 26 Sep:** rupees-for-lakhs values 14 → 0; missing next action
+  112 → 121. New: Fahad and Vivek targets in 2026-Q2 look like annual
+  figures (Basheer), still pending approval; 37 closed deals with no close
+  date = exactly the known Backlog gap, none since 27 Sep.
+- **Report:** `C:\Backups\CabioUAT\data_consistency_reports\UAT-Data-Quality-Report-2026-09-29.pdf`.

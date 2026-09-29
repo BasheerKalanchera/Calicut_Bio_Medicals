@@ -11,13 +11,6 @@ refusing "Approved" while any decision is "proposed"). Background:
 Progress-Archive 2026-09-28 "Session retrospective (evening…)". Remove
 this block once decided.
 
-REMINDER (Basheer, 2026-09-28): **the UAT data-quality check script needs
-updating.** The 2026-09-27 UAT move brought more tables that users can get
-wrong; the check must also surface inconsistencies in those, alongside the
-usual checks. Raise this when the UAT data-quality check next comes up as
-due; before proposing changes, list which tables reached UAT in that move
-(`docs/UAT-Promotion-2026-09-Plan.md`) and what the script covers today.
-
 
 ## Hospital-wise target planning — Part 1, step 3 (c) and 3d
 
