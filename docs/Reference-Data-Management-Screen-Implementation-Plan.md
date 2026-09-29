@@ -4,6 +4,11 @@
 Planning's `coverage_frequency` picklist; grew into its own standalone feature since
 the need (a live-editable label list, no deploy required) applies to several existing
 tables, not just the new one.
+**Update 2026-09-27:** the `coverage_frequency` need that started this plan is
+gone — Hospital-wise planning uses a **fixed list of five** visit
+frequencies instead (Basheer's choice 2), and Coverage Planning itself was
+replaced (`docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`). The
+other tables' need is unchanged.
 
 ## Context
 

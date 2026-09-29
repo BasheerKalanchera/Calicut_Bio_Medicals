@@ -5,7 +5,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 
 
-## Hospital-wise target planning — Part 1, plan steps 4–7
+## Hospital-wise target planning — Part 1, plan steps 5–7
 
 - Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`
   (approved 2026-09-27; section 8 updated to as-built). Design:
@@ -19,20 +19,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Migration `0056` (`target_plan.previous_approved_total_lakhs`) applied
   to Dev 2026-09-29, `alembic current` = `0056 (head)`; Physical-Schema
   regenerated. UAT gets 0055 + 0056 with the Part 1+2 move.
-- 1051 pytest pass; tsc + lint clean; ruff clean on changed files (62
-  older errors in untouched files: old migrations, `opportunity/router.py`,
-  `reporting/router.py`, `asset/service.py`, `opportunity/validators.py`).
+- ₹0 warning follow-up `bfeef46` (BR-PL-06, `RATED_POTENTIAL_ZERO`);
+  BR-PL-02/03 marked replaced `6a2c9ed`. 1054 pytest pass; tsc + lint
+  clean; ruff clean on changed files (62 older errors in untouched files).
+- Step 4 (rules and records) done 2026-09-29: BR-PL-07/08/09 + BR-ACC-04,
+  matrix, ADR-013/002 notes, EDM, UI-Inventory, Backlog + older plans'
+  pointers, Traceability notes for 6.1 and 5.1. **Traceability status
+  stays as is until E2E passes, then straight to Done (Basheer option a)**
+  — one client republish. UAT user manual has no section for this screen;
+  write one with the Part 1+2 UAT move.
 - Screen not yet clicked through on Dev.
-- ₹0 warning follow-up on `70e41e1` built 2026-09-29 (new rule BR-PL-06,
-  warning kind `RATED_POTENTIAL_ZERO`; 1054 pytest pass). BR-PL-02/03
-  marked "Replaced by Hospital-wise planning (2026-09)" (Basheer), also in
-  the rule-implementation matrix; step 4 still to fix the other living
-  references (`Enterprise-Data-Model.md` Coverage Plan entity,
-  `Backlog.md` Coverage Planning entries ~l.1178/1291).
-- **Next: plan step 4** (living docs that name the screen — UI-Inventory,
-  UAT user manual, Traceability 6.1 — renamed **Target & Coverage
-  Planning**; BR-PL-05 wording check), then `/code-review` high on the
-  Part 1 commits, written E2E plan, E2E (restart Dev backend first).
+- **Next: plan step 5** — `/code-review` high on the Part 1 commits
+  (`e55c112`..`bfeef46`), fix findings; then written E2E plan (checked
+  against live Dev data), E2E (restart Dev backend first).
 - **API as built:** create/update body `{accounts[], brand_splits, submit,
   change_note}`; response `warnings` (`HIGH_POTENTIAL_ZERO`,
   `SAME_SBU_OVERLAP`) and `previous_approved_total_lakhs`; `GET

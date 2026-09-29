@@ -77,22 +77,16 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 * **Target Plan**
   * *Description:* High-level quota definition for a user, SBU, and planning period.
   * *Relationships:* User (Many:1), SBU (Many:1).
-  * *Key Attributes:* `target_amount_lakhs`, `sbu_id` (FK → SBU), `planning_period` (VARCHAR, YYYY-Qn format, e.g., `2026-Q1`).
+  * *Key Attributes:* `target_amount_lakhs` (the sum of its hospital amounts — BR-PL-07), `sbu_id` (FK → SBU), `planning_period` (VARCHAR, YYYY-Qn format, e.g., `2026-Q1`), `status` (DRAFT / PENDING_APPROVAL / APPROVED / REJECTED), `change_note` (why the latest revision was made — BR-PL-08), `previous_approved_total_lakhs` (last approved total while a revision is in flight — BR-PL-05).
   * *Cardinality:* 1 User has M Target Plans across SBUs and planning periods. A user cannot have two overlapping target plans for the same SBU in the same planning period.
-  * *Reference:* ADR-018 (Organizational Structure Entities), ADR-019 (Planning Calendar Model).
+  * *Reference:* ADR-018 (Organizational Structure Entities), ADR-019 (Planning Calendar Model), ADR-013 (2026-09 update: Target and Coverage are one plan).
 
-* **Coverage Plan**
-  * *Description:* The quarterly strategy for which accounts to "cover."
-  * *Relationships:* User (Many:1), Target Plan (Many:1), Coverage Plan Entries (1:Many).
-  * *Key Attributes:* `target_plan_id` (FK → Target Plan), `planning_period` (VARCHAR, YYYY-Qn).
-  * *Cardinality:* 1 User has M Coverage Plans; 1 Coverage Plan contains M Coverage Plan Entries. Every Coverage Plan must trace back to a Target Plan.
-  * *Reference:* ADR-013 (Planning Hierarchy), BR-PL-03 (Coverage Plan Traceability).
-
-* **Coverage Plan Entry**
-  * *Description:* Coverage assignment for a specific Account within a Coverage Plan.
-  * *Relationships:* Coverage Plan (Many:1), Account (Many:1).
-  * *Attributes:* Coverage Frequency, Strategic Objective, Target Revenue (Lakhs).
-  * *Cardinality:* 1 Coverage Plan Entry belongs to 1 Coverage Plan and references 1 Account.
+* **Target Plan Account** *(2026-09, Hospital-wise planning — replaces the former Coverage Plan and Coverage Plan Entry entities, dropped in migration 0055)*
+  * *Description:* One hospital on a Target Plan — the coverage part of the plan.
+  * *Relationships:* Target Plan (Many:1), Account (Many:1).
+  * *Attributes:* Visit Frequency (fixed list of five), Planned Amount (Lakhs, ≥ 0), Strategic Objective (optional).
+  * *Cardinality:* 1 Target Plan has 1..M Target Plan Accounts; each Account appears at most once per plan.
+  * *Reference:* BR-PL-07, ADR-002 (2026-09 update).
 
 ---
 
@@ -182,7 +176,7 @@ The Enterprise Data Model (EDM) serves as the structural foundation for the Cabi
 * **Account**
   * *Description:* Central entity for all sales activity.
   * *Relationships:* Parent Account (Many:1, self-referencing hierarchy), Zone (Many:1), Stakeholders (1:Many), Projects (1:Many), Activities (1:Many), Installed Assets (1:Many).
-  * *Key Attributes:* `zone_id` (FK → Zone, required), `payer_behavior` (enum, nullable), `customer_type` (enum, nullable — institution nature, PRD §B.2.6; fixed enum, not a master entity — see ADR-036), `parent_account_id` (FK → Account, nullable).
+  * *Key Attributes:* `zone_id` (FK → Zone, required), `payer_behavior` (enum, nullable), `customer_type` (enum, nullable — institution nature, PRD §B.2.6; fixed enum, not a master entity — see ADR-036), `parent_account_id` (FK → Account, nullable), `business_potential` (HIGH / MEDIUM / LOW / NOT_CLASSIFIED, default NOT_CLASSIFIED — BR-ACC-04) with `business_potential_notes` / `_set_by` / `_set_at` (visible to Admin/GM only).
   * *Security Note:* `managing_sbu_id` — the field this note previously described — was dropped and replaced by `zone_id` in migration `0001` (2026-06-26). ADR-009's RLS isolation is not implemented via any column on `Account`, and — unlike `opportunity`/`split`/`opportunity_item`/`opportunity_stakeholder`/`activity`/`document`/`reminder`/`product` — the `account` table itself was never given `ENABLE ROW LEVEL SECURITY` in any Phase 2E migration (`0008`-`0012`, see `docs/Phase-2E-Security-Architecture.md`). `set_rls_context()` (`backend/app/db/session.py`) is fully implemented and live since 2026-07-27, not a no-op — it's just that no policy on `account` reads it. Accounts remain globally readable/writable by any authenticated user; `zone_id` is referenced inside the Area Manager's `opportunity` RLS policy (as a subquery filter) but carries no access control of its own on `Account` rows.
 
 * **Stakeholder**

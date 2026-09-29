@@ -71,6 +71,41 @@ This document defines the core business logic, validation rules, and state-trans
 * **Origin:** Basheer, 2026-09-29 (before this, only High at ₹0 warned, in
   yellow). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
 
+### BR-PL-07: A Target Is Built From Hospitals
+* **Rule:** a quarterly target plan lists the hospitals the salesperson will
+  cover. Each hospital has a visit frequency (fixed list: Weekly, Bi-weekly,
+  Monthly, Quarterly, As needed), an expected amount (₹0 or more) and
+  an optional objective. The plan's target is the **sum of the hospital
+  amounts** — it is never typed in separately. The brand split (Brand-Level
+  Target Planning) is made on top of that total.
+* **Constraints:** at least one hospital; each hospital at most once per
+  plan; only hospitals in the salesperson's own area (their zones), except
+  Admin, General Manager and SBU Manager, who may plan any hospital.
+* **Drafts:** a plan may be saved as a draft and finished later. A draft is
+  visible only to its owner and never reaches the approver. On **Submit**
+  the total must be above ₹0 and the brand split must add up to it exactly;
+  a draft may be unfinished on both.
+* **Origin:** signed requirement 6.1 (Basic Beat Planning) and the
+  2026-09-24 demo; Design C chosen 2026-09-25, choices 2026-09-27/28
+  (Basheer). Replaces BR-PL-02/03. Build:
+  `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+
+### BR-PL-08: A Revised Plan Needs a Reason and a Fresh Approval
+* **Rule:** once a plan has been submitted, it can't go back to draft, and
+  every revision needs a short note saying why it changed. Any revision —
+  hospitals, amounts or brand split, even with the same total — sends the
+  plan back to the approver for a fresh decision. The approver sees the
+  latest note (and, under BR-PL-05, the last approved total).
+* **Origin:** Hospital-wise planning decisions, 2026-09-27; "any change
+  resets approval" confirmed 2026-09-23. Build: same plan.
+
+### BR-PL-09: Same-SBU Hospital Overlap Warning
+* **Rule:** when a salesperson plans a hospital that a colleague in the same
+  SBU has also planned for the same quarter (in a submitted plan, not a
+  draft), the plan dialog names the colleague. **Warning only** — both may
+  keep the hospital. Colleagues in a different SBU don't trigger it.
+* **Origin:** Hospital-wise planning decisions, 2026-09-27. Build: same plan.
+
 ---
 
 # 3. Opportunity Management & Stage Gates
@@ -327,6 +362,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Enforcement:** `AccountRepository.find_similar_by_name` / `AccountService.create_account` (`force_create` on `AccountCreate`, `PossibleDuplicateError` → `409 POSSIBLE_DUPLICATE`); UI confirmation in `CustomerDirectoryScreen.tsx`'s "New Customer" modal only — no other screen creates Accounts. Threshold is `ACCOUNT_DUPLICATE_SIMILARITY_THRESHOLD` (config, default `0.5`), tunable without a redeploy since real-world tuning was expected from the outset. Every warning and every override is logged (`account_possible_duplicate_warned` / `account_duplicate_override_confirmed`) to support that tuning.
 * **Frontend plumbing bug, found and fixed same day (2026-08-30):** the rich multi-candidate warning UI never actually rendered — `lib/api.ts`'s global axios response interceptor flattens *every* API error into a plain `ApiError {message, status}` before it reaches calling code, silently dropping `error.response.data` (and with it, `error_code`/`candidates`). The frontend's duplicate-check was reading a field on an object that no longer existed, so it always fell through to displaying the backend's raw single-candidate message text as a plain error string. Fixed by extending `ApiError` itself to carry `errorCode`/`candidates` through, since that's the object every caller actually receives.
 * **Reference:** `docs/Duplicate-Hospital-Decision-Brief-2026-08-29.md`.
+
+### BR-ACC-04: Hospital Business Potential Rating
+* **Rule:** every hospital carries a Business Potential rating — **High**,
+  **Medium**, **Low** or **Not rated** (the default). Everyone sees the
+  rating. Only **Admin and General Manager** may set it, with optional
+  notes saying why; only they see those notes and who set the rating.
+* **Used by:** target planning (BR-PL-06's ₹0 warnings).
+* **Origin:** signed requirement 5.1 (Tier 1 / Tier 2), renamed "Business
+  Potential" at the 2026-09-24 demo; who sets it decided 2026-09-27
+  (Basheer). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
 
 ---
 

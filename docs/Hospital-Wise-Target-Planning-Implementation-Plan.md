@@ -3,7 +3,7 @@
 **Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
-Steps 1–2 built: `e55c112` (schema), `04c5e87` (backend); step 3 (frontend) in progress — 3a `72564dc` and 3b `467dee8` built, 3c next.
+Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29; step 5 (`/code-review` high) next.
 **Changes 2026-09-29 (Basheer):** (1) the 29 Sep checkpoint found the build
 on track, so the fallback wasn't needed; (2) **no UAT move until Part 2 is
 also finished** — meanwhile the team sets Oct–Dec targets in the brand-wise

@@ -1175,7 +1175,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   features" reasoning that drove the 2-region weekly-deploy model
   (`docs/Deployment-Topology.md`). Decided rollout order:
   1. **Target Planning** — `docs/Target-Planning-Implementation-Plan.md`. Hard
-     prerequisite for Coverage Planning (`BR-PL-03`'s FK). **All decisions resolved,
+     prerequisite for Coverage Planning (`BR-PL-03`'s FK — both replaced by
+     Hospital-wise planning, 2026-09; see item 3). **All decisions resolved,
      backend built and verified 2026-09-16 — frontend screen still pending.**
      Reverses the original proposal on who sets a target: **everyone self-sets their
      own** (including Sales Staff, not manager-assigned as first proposed), but a
@@ -1269,7 +1270,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
      raised 2026-09-11, resolved 2026-09-14 (Haroon) — see the "Auto-computed High
      Priority flag" entry below and `Business-Rules.md`'s BR-OP-15 for the confirmed
      rule.
-  3. **Coverage Planning** (also satisfies signed Feature *(untagged)*, PRD 6.1
+  3. **Replaced by Hospital-wise planning (2026-09)** — coverage is now part of
+     the target plan; see `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+     The 2026-09-11 design below is kept for history only.
+     **Coverage Planning** (also satisfies signed Feature *(untagged)*, PRD 6.1
      "Beat Planning" — confirmed field-for-field match, 2026-09-14: not two
      separate things, same build) — `docs/Coverage-Planning-Implementation-Plan.md`.
      **All 4 open decisions resolved 2026-09-11 (Basheer), nothing built yet.** Who

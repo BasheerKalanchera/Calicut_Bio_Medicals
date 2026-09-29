@@ -4,6 +4,11 @@
 "Decided at the 2026-09-24 demo"). Not approved to build. Two structural
 questions (see "Open questions", 1 and 3) are still with Latheef Bhai and Haroon.
 The build shape depends on their answers.
+**Update 2026-09-28:** the **Business Potential** rating (High / Medium /
+Low / Not rated, Admin/GM set it, notes Admin/GM only — BR-ACC-04) was built
+as part of Hospital-wise planning (step 3a `72564dc`; schema `e55c112`),
+see `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. The
+remaining open questions here are unchanged.
 **Scorecard rows:** Feature 5.1 "Tier 1 / Tier 2 dropdown" (1.3 Customer
 Tiering, Not started) and Feature 5.1 "Account types … A/B/C/D class"
 (1.1 Account Structure & Hierarchy, Partial; A/B/C/D parked for Phase 2 by

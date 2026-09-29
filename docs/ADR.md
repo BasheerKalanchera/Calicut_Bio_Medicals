@@ -22,6 +22,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 * **Rationale:** Revenue outcomes should be driven by planned targets and strategic account coverage rather than reactive opportunity management. This hierarchy aligns sales execution activities with business growth objectives.
 * **Impact:** Coverage Plans must carry a `target_plan_id` FK to link back to the originating Target Plan, enforcing the Target → Coverage traceability. Opportunity traceability to Coverage Plans is maintained through the Lead Source classification model (ADR-020). Revenue performance must be traceable to Opportunities. Dashboards, forecasts, and management reviews must align with this hierarchy.
 * **Affected Modules:** Target Planning, Coverage Planning, Opportunity Pipeline, Reporting, Forecasting, Performance Insights.
+* **Update (2026-09, Hospital-wise planning):** Target and Coverage are now **one approved plan per person, per SBU, per quarter** — the plan lists the hospitals to cover, and its target is the sum of their amounts (BR-PL-07). There is no separate Coverage Plan and no `target_plan_id` FK to enforce; the `coverage_plan` / `coverage_plan_entry` tables were dropped in migration 0055 (BR-PL-02/03 marked replaced). The Target → Coverage → Opportunity → Revenue chain is unchanged in meaning. See `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
 
 ---
 
@@ -33,6 +34,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 *   **Rationale:** Capital equipment sales cycles are long and strategic. Counting daily visits creates false productivity metrics. The focus must remain on strategic account penetration.
 *   **Impact:** Removes `plannedVisitCount` and calendar routing logic. Replaces with `target_revenue` and `strategic_objective` mapping at the account level.
 *   **Affected Modules:** Sales Planning, Account Management.
+*   **Update (2026-09, Hospital-wise planning):** each hospital on a quarterly plan now carries a planned **visit frequency** from a fixed list (Weekly … As needed) — signed requirement 6.1 "Basic Beat Planning", choice made by Basheer 2026-09-27. This is a planned cadence per hospital, not a visit count or route; daily/weekly route mapping stays out of scope. The strategic objective and expected amount per hospital remain. See BR-PL-07.
 
 ### ADR-003: Multi-SBU Contributor Splits (100% Rule)
 *   **Decision:** Opportunities support shared ownership across Strategic Business Units (SBUs) via a strict 100% split model.

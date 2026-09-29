@@ -1,7 +1,11 @@
 # Coverage Planning — Implementation Plan
 
-**Status:** Draft — planned, not yet built. Third Milestone 2 batch — see sequencing
-recommendation below.
+**Status:** **Replaced by Hospital-wise planning (2026-09)** — never built;
+coverage is now part of the target plan (Design C, 2026-09-25), and the
+unused `coverage_plan` tables were dropped in migration 0055. See
+`docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. Kept for
+history only. *(Previously: Draft — planned, not yet built. Third
+Milestone 2 batch.)*
 
 > **Scope expanded 2026-09-24 (demo to Haroon/Latheef Bhai) — this plan needs
 > revisiting before build.** Each salesperson's quarterly target is now to be

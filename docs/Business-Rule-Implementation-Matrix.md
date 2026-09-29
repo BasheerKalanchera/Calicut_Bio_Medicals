@@ -8,6 +8,11 @@
 | BR-PL-02 | Coverage Plan Strategy | — | — | Replaced by Hospital-wise planning (2026-09); `coverage_plan_entry` dropped in migration 0055. |
 | BR-PL-03 | Coverage Plan Traceability | — | — | Replaced by Hospital-wise planning (2026-09); `coverage_plan` dropped in migration 0055. |
 | BR-PL-04 | Opportunity Origination Classification | Service Layer | `OpportunityService` | Business logic must map coverage deals to the correct `lead_source_id`. |
+| BR-PL-05 | Revised Plan Below Approved Target | Service Layer + Frontend | `TargetPlanService`, `TargetPlanDialog` | Service keeps `target_plan.previous_approved_total_lakhs`; dialog warns live, approver row shows both totals. Warn only. |
+| BR-PL-06 | Hospital at ₹0 Warning by Rating | Service Layer + Frontend | `TargetPlanService._build_warnings`, `TargetPlanDialog` | `HIGH_POTENTIAL_ZERO` / `RATED_POTENTIAL_ZERO` warnings; dialog shows red / yellow. Warn only. |
+| BR-PL-07 | Target Built From Hospitals | Service Layer + Database Constraint | `TargetPlanService._validate_accounts`, `target_plan_account` table | Sum of hospital amounts, territory check, submit-only total/split checks; `planned_amount_lakhs >= 0` and visit-frequency CHECKs. |
+| BR-PL-08 | Revision Needs a Reason and Fresh Approval | Service Layer | `TargetPlanService.update_target_plan` | Change note required once submitted; any revision resets to PENDING_APPROVAL. |
+| BR-PL-09 | Same-SBU Hospital Overlap Warning | Database Function + Service Layer | `cabio_app_plan_overlap()`, `TargetPlanService` | SECURITY DEFINER lookup, since plan RLS hides colleagues' plans. Warn only. |
 | BR-OP-00 | Opportunity Creation Flexibility | Service Layer | `OpportunityService` | Business logic validating historical stage requirements on creation. |
 | BR-OP-01 | Stage Transition Exit Criteria | Service Layer | `OpportunityService` | Workflow logic validating payload completeness based on target stage exit criteria. |
 | BR-OP-02 | "On-Hold" Status Discipline | Service Layer | `OpportunityService` | Cross-field business validation (Hold Reason, Reactivation Date) during status change. |
@@ -27,6 +32,7 @@
 | BR-FIN-05 | Default Opportunity Split Assignment | Service Layer | `SplitService` | Business logic automation auto-generating 100% split to the deal creator. |
 | BR-ACC-01 | Stakeholder Sentiment | Repository Layer | `AccountRepository` | Account Health calculated dynamically via aggregated stakeholder NPS at query time. |
 | BR-ACC-02 | Payer Behavior | Database Constraint | `account` table | Enforced structurally via `CHECK IN` constraint. |
+| BR-ACC-04 | Hospital Business Potential Rating | Service Layer + Response Schema | `AccountService.set_business_potential`, `redact_business_potential_notes` | Admin/GM only to set; notes redacted for everyone else (`account` has no RLS). |
 | BR-ACT-01 | Activity Account Requirement | Database Constraint | `activity` table | Enforced via `account_id NOT NULL` constraint. |
 | BR-ACT-02 | Manager Push (Logging) | Supabase RLS | `ActivityRLSPolicy` | Prevents Sales Executive owner from updating/deleting manager notes. |
 | BR-ACT-03 | Activity Account Database Enforcement | Database Constraint | `activity` table | Redundant structural database enforcement for BR-ACT-01. |
@@ -71,8 +77,8 @@
 **AccountService**
 *   *(No rules assigned exclusively to Service Layer. Handled via Repository Layer logic: BR-ACC-01)*
 
-**CoveragePlanService**
-*   *(No rules assigned exclusively to Service Layer. Handled via DB constraints)*
+**TargetPlanService** *(replaces CoveragePlanService, 2026-09 — coverage is part of the target plan)*
+*   BR-PL-05, BR-PL-06, BR-PL-07, BR-PL-08, BR-PL-09
 
 **ActivityService**
 *   *(No rules assigned exclusively to Service Layer. Handled via DB constraints & RLS)*
