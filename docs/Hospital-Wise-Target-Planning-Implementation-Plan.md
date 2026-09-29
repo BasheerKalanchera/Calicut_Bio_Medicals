@@ -177,15 +177,15 @@ company), per hospital:
 > finish ₹Y+Z**
 
 Plus one "Unplanned" line for deals won at hospitals outside the plan
-(decision 3). A short plan of its own will be written once Part 1 is built
-on Dev (changed 2026-09-29: Parts 1 and 2 go to UAT together).
+(decision 3). **Part 2's own plan, approved 2026-09-29:**
+`docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md` (Parts 1
+and 2 go to UAT together).
 
 **Already done for Part 2:** the zone roll-up backend,
 `GET /planning/targets/zone-rollup` (`04c5e87`, 2026-09-27) — planned
 amounts, hospital and person counts per zone, submitted plans only. It
-groups by the **hospital's** zone; whether Part 2 wants the hospital's
-zone or the planner's zone is still to be decided when writing Part 2's
-plan. Left for Part 2: the By Zone screen, then actuals beside it.
+groups by the **hospital's** zone, which Part 2 keeps (Basheer,
+2026-09-29). Left for Part 2: the By Zone screen, then actuals beside it.
 
 **Quarter date range (note from the reporting session, 2026-09-27):** a
 quarter must start at midnight Indian time, not 5:30 am (the database runs

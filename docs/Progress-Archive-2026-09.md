@@ -8642,3 +8642,31 @@ fail-open design and the fast path before any code was written. Improve —
 the Decisions list was proposed on 27 Sep but built into nothing, which let
 the repeat happen. Suggestion for Basheer (not a rule): a retro's process
 fix gets built the same day, or parked in the handover with a date.
+
+## 2026-09-29 — Hospital-wise planning Part 2 plan approved; closing-date rule
+
+Part 2 (plan versus actual) planned and approved:
+`docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`, the
+first plan written from the new template. Lighter build (~3 days, no DB
+change). Basheer's calls: hospital's zone; "Expected this quarter" counted
+by closing date; no-plan people shown at ₹0 planned; brand planned vs won
+for both SBUs (Imaging has only SonoScape today).
+- **Closing dates that have passed:** there was no rule, and no report
+  flagged them. Compared Salesforce (no alert; overdue open deals silently
+  drop out of forward reports), Dynamics (forecast counts deals dated on
+  or before the period end; reminders added via automation) and Zoho
+  (admins count how often a date is pushed back). New **BR-OP-16**: flag
+  only, never blocks; such a deal counts in the current quarter's
+  Expected. Weekly Follow-up Report gets a section for it; "pushed back N
+  times" idea added to the Backlog.
+- **Split credit:** scorecard follows the reports (owner gets full
+  credit); question sent to Haroon (Backlog "Reports never implement
+  split-weighted attribution").
+
+**Retro:** worked — the Decisions list made every open choice visible, and
+the guard rail refused nothing because none was written in as decided.
+Improve (Claude) — (1) used competitor brands (GE, Mindray) in an example
+instead of Cabio's own catalogue; (2) said the brand tracking screen covers
+brand actuals when it tracks targets only — checked neither before saying
+it; (3) some explanations needed a second pass to be plain enough
+("deals with no closing date", "no plan" rows, split credit).

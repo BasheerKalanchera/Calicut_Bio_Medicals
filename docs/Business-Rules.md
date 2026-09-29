@@ -246,6 +246,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
 * **Enforcement:** `opportunity.high_priority_manual` (migration `0042`) holds the manual half; `PipelineOpportunity.is_high_priority` (`backend/app/domains/opportunity/schemas.py`) computes the effective flag as `stage.display_order > 30 OR high_priority_manual`, served on both `GET /opportunities/pipeline` and `GET /opportunities/{id}`. The badge and checkbox UI (`b000a09`) and the Kanban/List priority sort (`90a752a`) shipped 2026-09-15.
 
+### BR-OP-16: Closing Date Passed (2026-09-29)
+* **Rule:** An Active opportunity whose Expected Closure Date is before today (India time) is flagged "Closing date passed".
+* **Effect:** Flag only — it never blocks saving, stage moves or closing. The owner either closes the deal (Won/Lost) or enters a realistic new date; managers use the flag to raise it with the owner.
+* **Where shown:** the Plan vs Actual scorecard (hospital-wise planning Part 2); later, a section of the Weekly Follow-up Report.
+* **Forecast effect:** in plan-versus-actual, a flagged deal counts in the current quarter's Expected, not in the past quarter its date points to.
+* **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such deals from forward-looking reports is what this avoids.
+* **Enforcement:** not built yet — `docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`.
+
 ---
 
 # 3a. Product Catalog Rules

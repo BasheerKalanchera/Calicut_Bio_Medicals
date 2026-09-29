@@ -172,7 +172,9 @@ bigger, separate piece of work (every report's headline numbers, not just
 one filter). **Needs Basheer's/Haroon's call:** should reports actually
 implement `Value × Split%` per ADR-003's original intent, or was that
 design superseded and never formally revised? Either answer is a real
-decision, not an engineering default.
+decision, not an engineering default. **Asked Haroon 2026-09-29** (Basheer,
+while approving hospital-wise planning Part 2, whose scorecard follows
+whatever the reports do).
 
 ### Product Catalog Brand/Category/Model: Done 2026-09-23, three minor clean-ups left
 
@@ -348,7 +350,16 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   close, stagnant deals, and overdue reminders. Found missing 2026-09-14.
   All four inputs now exist or are rule-confirmed (win probability, Stagnant
   Deals, Reminders, and the High Priority rule — see BR-OP-15,
-  `Business-Rules.md`) — just not built yet.
+  `Business-Rules.md`) — just not built yet. Also include a "Closing date
+  passed" section (BR-OP-16), decided 2026-09-29.
+
+- **Count how often a deal's closing date is pushed back — idea, 2026-09-29
+  (Basheer).** From Zoho practice: a deal whose Expected Closure Date keeps
+  slipping ("pushed back 3 times") is often in more trouble than one that's
+  simply overdue. Show the count on the deal and in the Weekly Follow-up
+  Report. Needs a record of past closing dates (the audit trail may already
+  hold it — check first). Not in Traceability; Phase 2 candidate unless
+  Basheer pulls it in.
 
 - **Codify the searchable-account-picker pattern in
   `Frontend-Implementation-Standards.md` — not yet written down.** Four

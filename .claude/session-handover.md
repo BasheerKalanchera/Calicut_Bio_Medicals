@@ -37,10 +37,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `SAME_SBU_OVERLAP`) and `previous_approved_total_lakhs`; `GET
   /planning/targets/eligible-accounts`, `/overlaps`, `/zone-rollup`;
   `PATCH /accounts/{id}/business-potential`.
-- **Part 2 note:** zone = hospital's zone (as `/zone-rollup` groups) or
-  the planner's zone — decide when writing Part 2's plan.
 - Proposed, not decided: a CLAUDE.md line "Backlog holds only work outside
   the Traceability matrix".
+
+## Hospital-wise target planning — Part 2 (plan versus actual)
+
+- Plan approved 2026-09-29: `docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`
+  (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
+  Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
+- **Next:** build step 1 (backend endpoint + tests) once Basheer says start;
+  Part 1's steps 5–7 run in parallel in the other session.
 
 ## Customer 360 open-deals filter — discussion in progress (parallel session)
 
