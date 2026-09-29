@@ -1,8 +1,8 @@
 # Sales Report + Pipeline Report — Implementation Plan
 
-**Status:** Approved, ready to build. **Feature:** 11.1, Module 5 → PRD 5.6
+**Status:** Built `44e6d8c` (2026-09-15); manual E2E passed the same day (`docs/Sales-And-Pipeline-Report-Manual-E2E-Test-Plan.md`). **Feature:** 11.1, Module 5 → PRD 5.6
 Core Reports (2 of its 4 report types — Product Performance already exists,
-Margin is next week per `docs/Phase1-Completion-Sprint-Plan.md`). Also
+Margin still to be built — see Traceability 11.1). Also
 closes Feature 2.2's Pipeline product filter row — Basheer's 2026-09-14
 decision was that a product breakdown belongs on this standalone Pipeline
 Report, not bolted onto the Kanban filter bar; this plan is that report.
@@ -109,7 +109,7 @@ peer-ranking would have been the wrong substitute for that.
 
 ## Frontend
 
-1. **`sales-os-app/src/utils/reporting.ts`** — a small
+1. **`sales-os-app/src/utils/formatter.ts`** (named `reporting.ts` until its 2026-09-18 rename, `160736a`) — a small
    `getFiscalQuarterBounds(date)` helper (Cabio's FY is April–March, so
    "This Quarter" is not a calendar quarter) — computed client-side, sent
    to the backend as plain `period_start`/`period_end` dates. "This Month"

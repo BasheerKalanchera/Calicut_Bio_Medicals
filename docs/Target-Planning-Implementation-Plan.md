@@ -1,6 +1,6 @@
 # Target Planning — Implementation Plan
 
-**Status:** All decisions resolved 2026-09-16 (Basheer) — building now. First Milestone 2
+**Status:** Built and Done 2026-09-17 — backend `1d9d46a`, frontend `abaf8fa`/`4927502`, E2E fixes `f8213ee`, checklist `9e36c95`. Being extended by `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. All decisions resolved 2026-09-16 (Basheer). First Milestone 2
 feature, targeted for this week's incremental deploy under the new 2-region Dev/Prod model
 (`docs/Deployment-Topology.md`). Product-category splitting (PRD 6.5's other half) deferred
 to Phase 2 — this pass ships the flat user/SBU/quarter design as originally scoped.

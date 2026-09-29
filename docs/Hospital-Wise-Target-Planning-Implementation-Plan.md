@@ -3,7 +3,7 @@
 **Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
-Steps 1–2 built: `e55c112` (schema), `04c5e87` (backend); step 3 (frontend) next.
+Steps 1–2 built: `e55c112` (schema), `04c5e87` (backend); step 3 (frontend) in progress — 3a `72564dc` and 3b `467dee8` built, 3c next.
 **Design and decisions:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
 (Design C; decisions 1–6 in section 4, answers to the open questions in
 section 5). This plan doesn't repeat them; it says how to build them.

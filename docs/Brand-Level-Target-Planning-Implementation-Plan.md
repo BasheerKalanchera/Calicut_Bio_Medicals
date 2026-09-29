@@ -1,6 +1,6 @@
 # Brand-Level Target Planning — Implementation Plan
 
-**Status:** Draft — the "where does `brand` come from" decision below is now
+**Status:** Built and Done 2026-09-23 — backend `36385f2`, frontend `9514655`, fixes `053c017`/`188ac50`, manual E2E 28/28 PASS `c0b3ced`, Traceability 6.5 Done `35a83d0`. Pre-build record follows: Draft — the "where does `brand` come from" decision below is now
 **resolved** (2026-09-20, superseding the recommendation this doc originally
 made): this feature depends on and reuses the `brand` table being built by
 `docs/Product-Catalog-Name-Derivation-Implementation-Plan.md`, not a

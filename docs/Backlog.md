@@ -301,8 +301,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   same screen pre-filtered) should keep showing Won/Lost when the report
   card counted them.
 
-- **Hospital-wise target planning — plan approved 2026-09-27; steps 1–2
-  (schema `e55c112`, backend `04c5e87`) built, step 3 (frontend) next.** Raised at the 2026-09-24 demo; all design questions answered
+- **Hospital-wise target planning — plan approved 2026-09-27; build in progress — current step: the plan's Status line.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
   Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
   Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
