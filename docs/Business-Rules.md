@@ -22,12 +22,16 @@ This document defines the core business logic, validation rules, and state-trans
 *   **Reference:** ADR-019 (Planning Calendar Model).
 
 ### BR-PL-02: Coverage Plan Strategy (Replaces Beat Planning)
+> **Replaced by Hospital-wise planning (2026-09)** — the coverage-plan tables were removed; hospitals, visit frequency and amounts now live on the target plan. See `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+
 *   **Rule:** Coverage Plans focus on **Strategic Objectives** and **Target Revenue**, not visit frequency.
 *   **Constraint:** The `planned_visit_count` field is strictly forbidden. 
 *   **Constraint:** A Coverage Plan must map to at least one Account.
 *   **Constraint:** Each account in a Coverage Plan must have a defined `strategic_objective` (text) and `target_revenue_lakhs` (numeric).
 
 ### BR-PL-03: Coverage Plan Traceability
+> **Replaced by Hospital-wise planning (2026-09)** — coverage is now part of the target plan itself, so there is no separate plan to link. See `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+
 * **Rule:** Every Coverage Plan must be associated with an approved Target Plan.
 * **Constraint:** Coverage Plans cannot be created unless a Target Plan exists for the same User, SBU, and Planning Period.
 * **Purpose:** Maintains the Target → Coverage → Opportunity → Revenue planning hierarchy.

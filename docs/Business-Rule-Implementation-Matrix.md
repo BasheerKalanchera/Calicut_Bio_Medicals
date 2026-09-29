@@ -5,8 +5,8 @@
 | Rule ID | Rule Description | Implementation Layer | Component | Justification |
 | :--- | :--- | :--- | :--- | :--- |
 | BR-PL-01 | Quota Hierarchy | Database Constraint | `target_plan` table | Enforced via unique composite key (user_id, sbu_id, planning_period) and regex checks. |
-| BR-PL-02 | Coverage Plan Strategy | Database Constraint | `coverage_plan_entry` table | Enforced via NOT NULL constraints on strategic objective and target revenue fields. |
-| BR-PL-03 | Coverage Plan Traceability | Database Constraint | `coverage_plan` table | Enforced via NOT NULL FK to `target_plan_id`. |
+| BR-PL-02 | Coverage Plan Strategy | — | — | Replaced by Hospital-wise planning (2026-09); `coverage_plan_entry` dropped in migration 0055. |
+| BR-PL-03 | Coverage Plan Traceability | — | — | Replaced by Hospital-wise planning (2026-09); `coverage_plan` dropped in migration 0055. |
 | BR-PL-04 | Opportunity Origination Classification | Service Layer | `OpportunityService` | Business logic must map coverage deals to the correct `lead_source_id`. |
 | BR-OP-00 | Opportunity Creation Flexibility | Service Layer | `OpportunityService` | Business logic validating historical stage requirements on creation. |
 | BR-OP-01 | Stage Transition Exit Criteria | Service Layer | `OpportunityService` | Workflow logic validating payload completeness based on target stage exit criteria. |
@@ -38,8 +38,6 @@
 
 **Implemented via Constraints & Views:**
 *   **BR-PL-01:** `UNIQUE (user_id, sbu_id, planning_period)` and `CHECK (planning_period ~ '^\d{4}-Q[1-4]$')` on `target_plan`
-*   **BR-PL-02:** `NOT NULL` constraints on `strategic_objective` and `target_revenue_lakhs` in `coverage_plan_entry`
-*   **BR-PL-03:** `NOT NULL` FK constraint on `target_plan_id` in `coverage_plan`
 *   **BR-OP-04:** `NULLABLE` FK constraint on `project_id` in `opportunity`
 *   **BR-FIN-02:** `NUMERIC(15,2)` precision on all financial columns
 *   **BR-FIN-03:** `vw_opportunities_with_value` view

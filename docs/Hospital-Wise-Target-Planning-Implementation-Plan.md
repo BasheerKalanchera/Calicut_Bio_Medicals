@@ -211,9 +211,12 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
 
 ## 7. Business rules and records to update (same commit as the build)
 
-- `docs/Business-Rules.md`: rewrite BR-PL-02 and BR-PL-03. There's no longer a
-  separate coverage plan that must follow an approved target; the hospitals
-  are part of the one target plan. Add the rules: target = sum of hospitals,
+- `docs/Business-Rules.md`: BR-PL-02 and BR-PL-03 marked "Replaced by
+  Hospital-wise planning (2026-09)" with a pointer here (Basheer,
+  2026-09-29 — marked, not rewritten; also in the rule-implementation
+  matrix). There's no longer a separate coverage plan that must follow an
+  approved target; the hospitals are part of the one target plan. Still to
+  add (step 4): the rules target = sum of hospitals,
   territory restriction, change note required on revision, same-SBU overlap
   warning, rating and notes Admin/GM only.
 - `docs/ADR.md`: a dated note on ADR-013 (planning hierarchy). Target and
