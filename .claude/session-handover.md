@@ -28,8 +28,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   marked "Replaced by Hospital-wise planning (2026-09)" (Basheer), also in
   the rule-implementation matrix; step 4 still to fix the other living
   references (`Enterprise-Data-Model.md` Coverage Plan entity,
-  `Backlog.md` Coverage Planning entries ~l.1178/1291). Open:
-  `*.tsbuildinfo` `.gitignore` line (asked, not yet answered).
+  `Backlog.md` Coverage Planning entries ~l.1178/1291).
 - **Next: plan step 4** (living docs that name the screen — UI-Inventory,
   UAT user manual, Traceability 6.1 — renamed **Target & Coverage
   Planning**; BR-PL-05 wording check), then `/code-review` high on the
