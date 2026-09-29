@@ -4405,7 +4405,7 @@ export interface components {
          * PlanWarningKind
          * @enum {string}
          */
-        PlanWarningKind: "HIGH_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
+        PlanWarningKind: "HIGH_POTENTIAL_ZERO" | "RATED_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
         /** ProductCreate */
         ProductCreate: {
             /**

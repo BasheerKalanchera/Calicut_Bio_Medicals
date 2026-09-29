@@ -30,6 +30,7 @@ import type {
 import type { BrandResponse } from "../types/api-aliases";
 import { sumAllocation, isAllocationBalanced, roundToPrecision } from "../utils/allocationSplit";
 import { VISIT_FREQUENCY_LABEL, VISIT_FREQUENCIES } from "../utils/visitFrequency";
+import { BUSINESS_POTENTIAL_LABEL, toBusinessPotential } from "../utils/businessPotential";
 
 const DEFAULT_VISIT_FREQUENCY: VisitFrequency = "MONTHLY";
 
@@ -112,9 +113,11 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
   });
   // A hospital removed since the last check shouldn't keep its warning.
   const liveOverlaps = overlaps.filter((w) => addedIds.has(w.account_id));
-  const highAtZero = rows.filter(
-    (r) => r.account.business_potential === "HIGH" && isValidAmount(r.amount) && Number(r.amount) === 0,
-  );
+  // BR-PL-06: a rated hospital at ₹0 -- High in red, Medium/Low in yellow,
+  // Not rated no warning. Neither blocks Save draft or Submit.
+  const atZero = rows.filter((r) => isValidAmount(r.amount) && Number(r.amount) === 0);
+  const highAtZero = atZero.filter((r) => r.account.business_potential === "HIGH");
+  const mediumLowAtZero = atZero.filter((r) => ["MEDIUM", "LOW"].includes(r.account.business_potential));
 
   const total = roundToPrecision(sumAllocation(rows.map((r) => Number(r.amount))), 2);
   // BR-PL-05: an approved plan is its own benchmark; a revision still in
@@ -320,11 +323,24 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
         </Alert>
       )}
 
-      {(highAtZero.length > 0 || liveOverlaps.length > 0) && (
-        <Alert severity="warning">
+      {highAtZero.length > 0 && (
+        <Alert severity="error">
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             {highAtZero.map((r) => (
               <li key={`hz-${r.account.id}`}>{r.account.name} is rated High potential but planned at ₹0.</li>
+            ))}
+          </Box>
+          <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>A reminder only — you can still save.</Typography>
+        </Alert>
+      )}
+
+      {(mediumLowAtZero.length > 0 || liveOverlaps.length > 0) && (
+        <Alert severity="warning">
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {mediumLowAtZero.map((r) => (
+              <li key={`rz-${r.account.id}`}>
+                {r.account.name} is rated {BUSINESS_POTENTIAL_LABEL[toBusinessPotential(r.account.business_potential)]} potential but planned at ₹0.
+              </li>
             ))}
             {liveOverlaps.map((w) => (
               <li key={`ov-${w.account_id}-${w.colleague_name}`}>

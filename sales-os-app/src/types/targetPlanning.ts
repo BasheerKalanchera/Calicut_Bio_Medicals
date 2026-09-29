@@ -64,7 +64,7 @@ export interface PlanAccountEntry {
   strategic_objective?: string | null;
 }
 
-export type PlanWarningKind = "HIGH_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
+export type PlanWarningKind = "HIGH_POTENTIAL_ZERO" | "RATED_POTENTIAL_ZERO" | "SAME_SBU_OVERLAP";
 
 export interface PlanWarning {
   kind: PlanWarningKind;

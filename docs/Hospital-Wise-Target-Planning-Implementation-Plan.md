@@ -50,7 +50,8 @@ this change, they build the number from their hospitals instead:
 2. For each hospital, choose how often they'll visit and enter the amount they
    expect from it. A short objective can be added but isn't required.
 3. The amounts add up to their target, shown live at the bottom. Warnings
-   appear, without blocking anything, when a High hospital has ₹0, or when
+   appear, without blocking anything, when a rated hospital has ₹0 (red
+   for High, yellow for Medium/Low — BR-PL-06), or when
    a colleague from the same SBU has also planned that hospital.
 4. Split that total by brand, exactly as today.
 5. Submit. It goes to their manager, who sees the hospitals, the amounts and
@@ -261,7 +262,8 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
   `accounts: list[PlanAccountEntry]` (min 1) instead of
   `target_amount_lakhs`; `TargetPlanUpdate.change_note` required unless
   the plan is still a draft; response adds `accounts`, `change_note`
-  and `warnings` (both kinds: High hospital at ₹0, same-SBU overlap;
+  and `warnings` (kinds: `HIGH_POTENTIAL_ZERO`, `RATED_POTENTIAL_ZERO` for
+  Medium/Low at ₹0 — added 2026-09-29, BR-PL-06 — and same-SBU overlap;
   filled on create/update responses only). `AccountResponse`/`AccountListResponse`
   add `business_potential`; `business_potential_notes` is populated only
   when the caller is Admin/GM (built in the router from `current_user`,

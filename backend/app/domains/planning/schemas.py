@@ -90,6 +90,8 @@ class PlanAccountResponse(BaseModel):
 
 class PlanWarningKind(StrEnum):
     HIGH_POTENTIAL_ZERO = "HIGH_POTENTIAL_ZERO"
+    # BR-PL-06: Medium/Low hospital at zero -- a milder warning than High.
+    RATED_POTENTIAL_ZERO = "RATED_POTENTIAL_ZERO"
     SAME_SBU_OVERLAP = "SAME_SBU_OVERLAP"
 
 

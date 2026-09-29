@@ -939,24 +939,36 @@ class TestChangeNote:
 
 
 class TestWarnings:
-    def test_high_potential_hospital_at_zero_is_warned(self):
-        high_id, medium_id = uuid.uuid4(), uuid.uuid4()
+    @pytest.mark.parametrize(
+        "potential, expected_kind",
+        [
+            ("HIGH", PlanWarningKind.HIGH_POTENTIAL_ZERO),
+            ("MEDIUM", PlanWarningKind.RATED_POTENTIAL_ZERO),
+            ("LOW", PlanWarningKind.RATED_POTENTIAL_ZERO),
+            ("NOT_CLASSIFIED", None),
+        ],
+    )
+    def test_hospital_at_zero_is_warned_by_its_rating(self, potential, expected_kind):
+        """BR-PL-06: High -> the strong warning, Medium/Low -> the mild one,
+        Not rated -> none. A non-zero hospital of the same rating never warns."""
+        zero_id, paid_id = uuid.uuid4(), uuid.uuid4()
         accounts = {
-            high_id: _make_account(high_id, potential="HIGH", name="Aster MIMS"),
-            medium_id: _make_account(medium_id, potential="MEDIUM"),
+            zero_id: _make_account(zero_id, potential=potential, name="Aster MIMS"),
+            paid_id: _make_account(paid_id, potential=potential),
         }
         repo = _make_repo()
         repo.get_accounts_by_ids.side_effect = lambda ids: [accounts[i] for i in ids]
         service = _make_service(repo)
         data = TargetPlanCreate(
-            sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("0", "10", account_ids=[high_id, medium_id])
+            sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("0", "10", account_ids=[zero_id, paid_id])
         )
 
         _plan, warnings = service.create_target_plan(data, current_user=_make_user("Sales Staff"))
 
-        assert len(warnings) == 1
-        assert warnings[0].kind == PlanWarningKind.HIGH_POTENTIAL_ZERO
-        assert warnings[0].account_name == "Aster MIMS"
+        if expected_kind is None:
+            assert warnings == []
+        else:
+            assert [(w.kind, w.account_name) for w in warnings] == [(expected_kind, "Aster MIMS")]
 
     def test_same_sbu_overlap_is_warned_with_colleague_name(self):
         account_id = uuid.uuid4()

@@ -23,6 +23,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   older errors in untouched files: old migrations, `opportunity/router.py`,
   `reporting/router.py`, `asset/service.py`, `opportunity/validators.py`).
 - Screen not yet clicked through on Dev.
+- ₹0 warning follow-up on `70e41e1` built 2026-09-29 (new rule BR-PL-06,
+  warning kind `RATED_POTENTIAL_ZERO`; 1054 pytest pass). BR-PL-02/03
+  marked "Replaced by Hospital-wise planning (2026-09)" (Basheer), also in
+  the rule-implementation matrix; step 4 still to fix the other living
+  references (`Enterprise-Data-Model.md` Coverage Plan entity,
+  `Backlog.md` Coverage Planning entries ~l.1178/1291). Open:
+  `*.tsbuildinfo` `.gitignore` line (asked, not yet answered).
 - **Next: plan step 4** (living docs that name the screen — UI-Inventory,
   UAT user manual, Traceability 6.1 — renamed **Target & Coverage
   Planning**; BR-PL-05 wording check), then `/code-review` high on the

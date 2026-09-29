@@ -27,6 +27,14 @@ _OVERLAY_ROLES = ("Admin", "General Manager")
 # user_zone rows; with none, they can't plan any hospital.
 _TERRITORY_UNRESTRICTED_ROLES = {"Admin", "General Manager", "SBU Manager"}
 
+# BR-PL-06: which warning a hospital planned at zero gets, by its Business
+# Potential. NOT_CLASSIFIED is absent on purpose -- no warning.
+_ZERO_WARNING_BY_POTENTIAL = {
+    "HIGH": PlanWarningKind.HIGH_POTENTIAL_ZERO,
+    "MEDIUM": PlanWarningKind.RATED_POTENTIAL_ZERO,
+    "LOW": PlanWarningKind.RATED_POTENTIAL_ZERO,
+}
+
 
 def _territory_zone_ids(current_user: UserProfile) -> list[uuid.UUID] | None:
     """None = unrestricted; otherwise the caller's assigned zones (possibly empty)."""
@@ -150,16 +158,18 @@ class TargetPlanService:
         accounts_by_id: dict[uuid.UUID, Account],
         target_plan: TargetPlan,
     ) -> list[PlanWarning]:
-        """Non-blocking: a High-potential hospital planned at zero, and any
-        hospital a same-SBU colleague has also planned this period."""
+        """Non-blocking: a rated hospital planned at zero (BR-PL-06 -- High is
+        the stronger kind, Medium/Low the milder one, Not rated none), and
+        any hospital a same-SBU colleague has also planned this period."""
         warnings = [
             PlanWarning(
-                kind=PlanWarningKind.HIGH_POTENTIAL_ZERO,
+                kind=_ZERO_WARNING_BY_POTENTIAL[potential],
                 account_id=e.account_id,
                 account_name=accounts_by_id[e.account_id].name,
             )
             for e in entries
-            if e.planned_amount_lakhs == 0 and accounts_by_id[e.account_id].business_potential == "HIGH"
+            if e.planned_amount_lakhs == 0
+            and (potential := accounts_by_id[e.account_id].business_potential) in _ZERO_WARNING_BY_POTENTIAL
         ]
         warnings += self._overlap_warnings(accounts_by_id, target_plan.sbu_id, target_plan.planning_period)
         return warnings

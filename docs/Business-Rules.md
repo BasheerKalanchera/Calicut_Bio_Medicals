@@ -57,6 +57,16 @@ This document defines the core business logic, validation rules, and state-trans
   Submit"). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`,
   step 3d.
 
+### BR-PL-06: A Hospital Planned at ₹0 Gets a Warning by Its Rating
+* **Rule:** A hospital may be on a plan at ₹0 (visits only), but a rated
+  hospital at ₹0 is flagged so the salesperson looks again.
+* **Enforcement (warn only):** by the hospital's Business Potential —
+  **High** → red warning; **Medium** or **Low** → yellow warning; **Not
+  rated** → no warning. None of them block Save draft or Submit. The plan's
+  total must still be above ₹0 on Submit.
+* **Origin:** Basheer, 2026-09-29 (before this, only High at ₹0 warned, in
+  yellow). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+
 ---
 
 # 3. Opportunity Management & Stage Gates
