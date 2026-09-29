@@ -13,6 +13,10 @@ Fails open: if this script errors, the sh wrapper lets the save through, so
 a bug here can never block plan editing. The daily doc tidy-up runs the same
 check over all plans (`--scan`) as the backstop, which also covers edits
 made outside Claude's Write/Edit tools.
+
+Known gap (2026-09-29): an edit made by a script (python/sed via Bash)
+never reaches this hook. Edit plan files with Write/Edit only; the daily
+`--scan` is the backstop. Extend the hook to scripted edits if it recurs.
 """
 
 import json

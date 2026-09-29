@@ -361,6 +361,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   hold it — check first). Not in Traceability; Phase 2 candidate unless
   Basheer pulls it in.
 
+- **Rules-to-code table missing BR-OP-11 to BR-OP-15 — found 2026-09-29.**
+  `docs/Business-Rule-Implementation-Matrix.md` jumps from BR-OP-10 to
+  BR-OP-16; the five rules exist in `docs/Business-Rules.md` with their
+  enforcement written there. Add a row each (copy the enforcement line) at
+  the next daily doc tidy-up.
+
 - **Codify the searchable-account-picker pattern in
   `Frontend-Implementation-Standards.md` — not yet written down.** Four
   separate account pickers (`LogActivityModal.tsx`, `QuickLeadModal.tsx`,

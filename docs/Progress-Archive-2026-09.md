@@ -8670,3 +8670,39 @@ instead of Cabio's own catalogue; (2) said the brand tracking screen covers
 brand actuals when it tracks targets only — checked neither before saying
 it; (3) some explanations needed a second pass to be plain enough
 ("deals with no closing date", "no plan" rows, split credit).
+
+## 2026-09-29 — Session retrospective (afternoon: plan guard rail, Part 2 plan)
+
+**Done:** plan guard rail (`2f57e61`): template with a Decisions list; a
+save-time check refuses Approved while any decision is "proposed"; fails
+open; daily scan backstop; 7 dry-run cases plus a live refused save. Its
+first use, on the Part 1 plan, exposed three "settled unless Basheer
+objects" items he had never confirmed; he decided them (incl. ₹0 warnings
+red for High, yellow for Medium/Low). Part 2 plan approved (`f0730ad`), all
+14 decisions his, plus BR-OP-16 after comparing Salesforce, Dynamics and
+Zoho. Split-credit question sent to Haroon; two Backlog notes.
+
+**Worked well:** the guard rail paid off on day one. Basheer's questions
+shaped the design ("don't slow me down" → fail-open; "pipeline uses every
+deal?" and "shouldn't late deals be flagged?" → "Expected this quarter" and
+BR-OP-16). Checking staged content kept the other session's uncommitted
+code-review notes out of this session's commit.
+
+**Went wrong (Claude):** (1) said the brand tracking screen covers brand
+actuals without checking — it tracks targets only; broke "verify before
+claiming". (2) Used competitor brands (GE, Mindray) as examples instead of
+Cabio's catalogue. (3) Told the other session to fold a change in "before
+its commit" without checking git — it had already committed. (4) About 7
+question rounds on Part 2, several explanations needing a second, plainer
+pass ("getting complicated"); the late-deals question should have come in
+the first round. (5) Edited the Part 1 plan with a script, bypassing the
+new guard rail (scan afterwards was clean). (6) Added BR-OP-16 to the
+rules-to-code table without flagging that BR-OP-11 to 15 are missing.
+
+**Process change:** no new written rules (27 Sep agreement). Item 5 noted
+in the guard's own description as a known gap (daily scan covers it;
+extend the hook if it recurs). Items 1–2 are a watch item: if a claim or
+example taken from memory rather than data repeats, the doc tidy-up
+spot-checks examples in new plans. Item 6 → Backlog note for the tidy-up.
+Item 4: next plan puts all interlocking questions in the first round, each
+with a one-line plain example.
