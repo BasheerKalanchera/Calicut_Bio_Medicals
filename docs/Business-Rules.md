@@ -39,6 +39,24 @@ This document defines the core business logic, validation rules, and state-trans
 * **Purpose:** Maintains traceability between Coverage Planning and Pipeline Generation through the Lead Source classification model.
 * **Reference:** ADR-020 (LeadSource Master Entity).
 
+### BR-PL-05: A Revised Plan Should Not Fall Below Its Approved Target
+* **Rule:** Once a target plan is approved, that total is the goal. When the
+  salesperson revises the plan (for example, adding hospitals to a plan first
+  made in the brand-wise screen), their hospital amounts are expected to reach
+  it by planning **more hospitals**, not by lowering the target. Going above it
+  is fine.
+* **Enforcement (warn, manager decides):** while the revised hospital total is
+  below the last approved total, the plan dialog shows how far short it is.
+  Submitting is still allowed. The approver sees the last approved total next
+  to the new one, and rejects the revision if the drop isn't justified. A
+  genuine reduction (e.g. a hospital closed) is possible only with the
+  manager's approval.
+* **Not enforced by software:** inflating one hospital's amount to make the sum
+  fit — the approver checks this in the expanded hospital rows.
+* **Origin:** Basheer, 2026-09-29 (option A "warn" chosen over B "block
+  Submit"). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`,
+  step 3d.
+
 ---
 
 # 3. Opportunity Management & Stage Gates

@@ -4,14 +4,24 @@
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
 Steps 1–2 built: `e55c112` (schema), `04c5e87` (backend); step 3 (frontend) in progress — 3a `72564dc` and 3b `467dee8` built, 3c next.
+**Changes 2026-09-29 (Basheer):** (1) the 29 Sep checkpoint found the build
+on track, so the fallback wasn't needed; (2) **no UAT move until Part 2 is
+also finished** — meanwhile the team sets Oct–Dec targets in the brand-wise
+Target Planning screen already on UAT, then revises them with hospitals once
+this reaches UAT; (3) the **By Zone table moves to Part 2** — earlier "totals
+per zone" wording in Part 1 was Claude's addition, never put to Basheer as a
+choice; its backend (`/zone-rollup`, `04c5e87`) is already built and counts
+as Part 2 work done early; (4) new rule **BR-PL-05**: a revised plan below
+its last approved total gets a warning and the approver sees both totals
+(step 3d).
 **Design and decisions:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
 (Design C; decisions 1–6 in section 4, answers to the open questions in
 section 5). This plan doesn't repeat them; it says how to build them.
 **Traceability rows:** 6.1 Beat Planning, 3.2 actual-vs-target dashboards,
 1.3 Customer Tiering (Business Potential part only).
-**Deadline:** in use on UAT around 2 Oct 2026, so Oct–Dec (2026-Q3)
-planning happens in the system. Fallback decision point around 29 Sep
-(discussion doc, section 6).
+**Deadline:** ~~in use on UAT around 2 Oct 2026~~ — changed 2026-09-29:
+Parts 1 and 2 go to UAT together, once Part 2 is finished (during October).
+The fallback decision (29 Sep) found the build on track.
 
 ## 1. In plain terms
 
@@ -35,25 +45,32 @@ this change, they build the number from their hospitals instead:
 Admin and GM rate each hospital's Business Potential on a new **Rate
 Hospitals** screen, one row per hospital, with notes that only Admin and GM
 can see. Managers keep the team view they have today, which can now also
-show each person's hospitals and the totals per zone.
+show each person's hospitals. (Totals per zone come in Part 2 — changed
+2026-09-29.)
+
+If someone revises an approved plan and their hospitals add up to less than
+the approved target, they see how far short they are, and the manager sees
+the old and new totals before re-approving (BR-PL-05). The expected fix is
+more hospitals, not a lower target.
 
 **In two parts:**
-- **Part 1, by about 2 Oct:** ratings, the new planning screen and the
-  managers' view of plans. This is what's needed to start planning.
+- **Part 1:** ratings, the new planning screen and the managers' view of
+  plans.
 - **Part 2, during October:** plan-versus-actual on the Insights Dashboard
-  ("won so far", "expected from active deals", "likely finish"). Sales only
-  start coming in once the quarter begins, so this isn't needed on day one.
+  ("won so far", "expected from active deals", "likely finish"), and the
+  totals per zone.
 
-**Environments:** built and tested on Dev first. It reaches UAT in a second
-move, after the move already planned for this weekend
-(`docs/UAT-Promotion-2026-09-Plan.md`).
+**Environments:** built and tested on Dev first. Parts 1 and 2 reach UAT
+together in one move, once Part 2 is finished (Basheer, 2026-09-29). Until
+then, Oct–Dec targets are set in the brand-wise Target Planning screen
+already on UAT; people add hospitals by revising those plans after the move.
 
 ## 2. What changes for each person
 
 | Who | What they see and do |
 |---|---|
 | Sales Staff | Plans their own hospitals, but only ones in their own area. No team view (same as today). |
-| Area Manager | Plans their own hospitals from their own area, and approves their team's plans. Team view: their people, each person's hospitals, and totals per zone. |
+| Area Manager | Plans their own hospitals from their own area, and approves their team's plans. Team view: their people and each person's hospitals (totals per zone in Part 2). |
 | SBU Manager, GM | Plan their own hospitals and can pick any hospital (neither has a fixed area). Team view as above; the GM sees every SBU. The GM's own plan is approved by the Admin account, as today. |
 | Admin | No personal target (as today). Sees every plan, approves the GM's. Rates hospitals. |
 | Everyone | Sees each hospital's rating. Only Admin/GM see the notes behind it. |
@@ -100,7 +117,9 @@ The options as offered:
 - **Hospital amounts can be ₹0.** A hospital may be on the plan for visits
   only. The total must still be above ₹0.
 - **Existing Dev test targets** (6 rows, no hospitals) remain readable.
-  Revising one requires adding hospitals. UAT has no targets yet.
+  Revising one requires adding hospitals. UAT had no targets at the time of
+  writing; the brand-wise Oct–Dec targets set there before the move
+  (2026-09-29 change) follow the same rule, and BR-PL-05 applies.
 - **The old, never-used coverage-plan tables are removed.** They're empty on
   Dev (checked 2026-09-27), and no screen or API ever used them. UAT will be
   checked for emptiness before the move.
@@ -111,18 +130,25 @@ The options as offered:
    table, change note, draft status if chosen, old tables removed). Apply to
    Dev, regenerate `docs/Physical-Schema.sql`.
 2. Backend: rating endpoints, plan endpoints taking hospitals, rules and
-   warnings, team/zone roll-ups. Tests. Checkpoint commit (backend only).
+   warnings, team/zone roll-ups (the zone roll-up is Part 2 work, built
+   early). Tests. Checkpoint commit (backend only).
 3. Frontend: Rate Hospitals screen, new plan dialog, approver view,
-   team/zone view, rating chip on the hospital page.
+   team view, rating chip on the hospital page. Part (c) = expandable
+   approval and team rows, with a "Revised" label and a live hospital count
+   (no By Zone table — Part 2).
+   **3d (added 2026-09-29):** BR-PL-05 — store the last approved total when
+   an approved plan is revised (migration `0056`), warn in the dialog when
+   the hospital total is below it, show both totals to the approver.
 4. Business Rules / ADR updates (section 7).
 5. `/code-review` at **high** (approval workflow plus RLS), fix findings.
 6. Written manual E2E test plan, checked against live Dev data; run it.
-7. Commit, post-commit checklist, then the second UAT move.
+7. Commit, post-commit checklist. The UAT move waits for Part 2
+   (2026-09-29).
 
 **Honest timing:** steps 1–3 are about 2½–3 working days, and steps 5–6
-about one more. That puts it ready on Dev around 30 Sep–1 Oct, and on UAT
-around 1–2 Oct, with no slack. If step 3 isn't well under way by 29 Sep,
-use the fallback in the discussion doc.
+about one more. ~~On UAT around 1–2 Oct; fallback if step 3 isn't well
+under way by 29 Sep.~~ Checkpoint 29 Sep: on track, fallback not needed.
+UAT date now follows Part 2.
 
 ## 5. Part 2 (October): plan versus actual
 
@@ -133,7 +159,15 @@ company), per hospital:
 > finish ₹Y+Z**
 
 Plus one "Unplanned" line for deals won at hospitals outside the plan
-(decision 3). A short plan of its own will be written once Part 1 is on UAT.
+(decision 3). A short plan of its own will be written once Part 1 is built
+on Dev (changed 2026-09-29: Parts 1 and 2 go to UAT together).
+
+**Already done for Part 2:** the zone roll-up backend,
+`GET /planning/targets/zone-rollup` (`04c5e87`, 2026-09-27) — planned
+amounts, hospital and person counts per zone, submitted plans only. It
+groups by the **hospital's** zone; whether Part 2 wants the hospital's
+zone or the planner's zone is still to be decided when writing Part 2's
+plan. Left for Part 2: the By Zone screen, then actuals beside it.
 
 **Quarter date range (note from the reporting session, 2026-09-27):** a
 quarter must start at midnight Indian time, not 5:30 am (the database runs
@@ -236,7 +270,8 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
 - **Roll-ups:** `GET /planning/targets/zone-rollup?sbu_id&planning_period`,
   meaning the sum of `planned_amount_lakhs` grouped by each account's
   `ZONE`-level ancestor (same walk-up as
-  `AccountRepository.find_similar_by_name`), under the caller's RLS. The
+  `AccountRepository.find_similar_by_name`), under the caller's RLS.
+  Built `04c5e87`; unused until Part 2 (2026-09-29). The
   existing per-person `/team` endpoint returns `accounts` too, and hides
   other people's drafts.
 - **Also built for the plan dialog:** `GET /planning/targets/eligible-accounts?search=`
@@ -258,8 +293,16 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
   Amount, Objective), live total, non-blocking warnings, the existing brand
   split section validated against the live total, change note (shown
   when revising), Save draft / Submit. "Needs Your Approval" rows expand
-  to show hospitals and the change note. Team section: expandable rows per
-  person, plus a By Zone table.
+  to show hospitals and the change note, with a "Revised" label when a
+  change note is present and a hospital count computed on screen
+  (`accounts.length`, nothing stored). Team section: expandable rows per
+  person. (By Zone table moved to Part 2, 2026-09-29.)
+- **Step 3d (BR-PL-05):** migration `0056` adds
+  `target_plan.previous_approved_total_lakhs NUMERIC(15,2) NULL`, set when
+  an APPROVED plan is first edited, cleared on approve. Needed because the
+  total is overwritten in place and `target_plan*` has no audit-trail
+  trigger (BR-AUD-01). Dialog warns when the live total is below it;
+  approver rows show both totals.
 - New `RateHospitalsScreen.tsx` (Admin/GM only, if choice 3 = fuller):
   MUI table, zone and "Not rated" filters, inline rating select and notes.
 - `Customer360Screen.tsx`: a rating chip in the header; notes shown only

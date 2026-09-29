@@ -73,7 +73,10 @@ do the two relate?
    Critical Care. (This answers open question 2 in the Customer Tiering plan.)
 6. **Target date:** roll out Target and Coverage Planning to the team within
    about a week (around 2 Oct 2026), so Oct–Dec (FY quarter 2026-Q3) planning
-   happens in the system.
+   happens in the system. **Changed 2026-09-29 (Basheer):** Parts 1 and 2 go
+   to UAT together once Part 2 is finished; meanwhile Oct–Dec targets are set
+   in the brand-wise screen already on UAT and revised with hospitals after
+   the move (implementation plan, Status line).
 
 ## 5. Decisions on the open questions (Basheer, 2026-09-27)
 
@@ -125,6 +128,10 @@ brand split as-is for Oct–Dec, and add the hospital layer later in the
 quarter. The catch: people would type a total first and then have to make
 their hospital amounts match it, which is the opposite of Design C's
 "hospitals first". Decide this by around 29 Sep if the build isn't on track.
+**Checkpoint 29 Sep:** on track, fallback not needed. Separately, Basheer
+chose to hold the UAT move until Part 2 is finished; the brand-wise screen
+already on UAT bridges Oct–Dec planning, and a revised plan below its
+approved target triggers a warning (BR-PL-05).
 
 **Environments:** everything is built and tested on Dev first. Only the
 finished feature goes to UAT, where the team does real planning.

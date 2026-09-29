@@ -65,7 +65,8 @@ same customer, should the tab remember it?**
 - **Timing:** the change sits in the customer 360 page, which another session
   is changing right now for hospital-wise target planning (the Business
   Potential rating chip). Plan now; build after that session has committed.
-  Target planning keeps priority for the ~2 Oct UAT date.
+  Target planning keeps priority (its UAT move now waits for its Part 2,
+  changed 2026-09-29).
 - **Size:** frontend-only — no migration, no API change.
 - **Environment:** built and tested on Dev first; reaches UAT with the next
   main → UAT move.

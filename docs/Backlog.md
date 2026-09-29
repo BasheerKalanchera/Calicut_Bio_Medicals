@@ -304,8 +304,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Hospital-wise target planning — plan approved 2026-09-27; build in progress — current step: the plan's Status line.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
   Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
-  Unblocked by the main → UAT move (done 2026-09-27); target: in use on UAT
-  around 2 Oct for Oct–Dec planning.
+  Unblocked by the main → UAT move (done 2026-09-27). Changed 2026-09-29:
+  reaches UAT together with Part 2 (during October); Oct–Dec targets are set
+  in the brand-wise screen meanwhile.
 
 - **UAT: fill in missing "date closed" on closed deals.** Sales Report's
   This Month / This Quarter miss all 37 deals closed before 2026-09-27
