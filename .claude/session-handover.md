@@ -33,11 +33,34 @@ due; before proposing changes, list which tables reached UAT in that move
   is below its last approved total, approver sees both) → step 3d.
 - Done + pushed: step 1 schema `e55c112` (Dev at `0055 (head)`), step 2
   backend `04c5e87`, step 3a `72564dc`, step 3b `467dee8`.
-- **Next:** (1) Basheer approves the doc commit for the 29 Sep decisions;
-  (2) show a build plan for (c) expandable approval + team rows with
-  Revised label and count, and 3d (migration `0056`
-  `previous_approved_total_lakhs`, backend, dialog warning, approver
-  totals); then build.
+- 29 Sep decisions committed + pushed `d200818`.
+- **Next: build plan for (c) + 3d shown to Basheer 2026-09-29, awaiting his
+  "start"** (paused, he's travelling to Calicut):
+  - **(c)**, screen only: "Needs Your Approval" rows get a chevron →
+    expanded row renders `TargetPlanDetails` (hospitals, brand split, change
+    note); "Hospitals" count column (`t.accounts.length`, not stored);
+    outlined "Revised" chip when `t.change_note` — **approval queue only**
+    (the note persists after approval, so in the team list it would stick
+    forever). Team list, quarterly view: chevron + count; annual view
+    unchanged. No `getZoneRollup` query. `expanded: Set<string>` state,
+    `IconButton` with `aria-expanded`, `colSpan` detail row.
+  - **3d (BR-PL-05)**: migration `0056` adds
+    `target_plan.previous_approved_total_lakhs NUMERIC(15,2) NULL` (Dev
+    only; UAT with the Part 1+2 move). `update_target_plan`: *before*
+    overwriting the total, `if status == "APPROVED"` store the old total;
+    re-revising a PENDING/REJECTED plan keeps it. Approve clears it; reject
+    keeps it; drafts never get it. Add to `TargetPlanResponse`, regenerate
+    `types/api.ts`. 3 service tests (set on revise, kept on second revise,
+    cleared on approve / kept on reject). No backend warning kind: the
+    dialog computes the benchmark live (`existing.status === "APPROVED" ?
+    target_amount_lakhs : previous_approved_total_lakhs`) and shows a
+    yellow Alert "₹X L below your approved target of ₹Y L — add hospitals";
+    Submit still allowed. Approval row shows "₹32 L (was ₹40 L)" in warning
+    colour; `TargetPlanDetails` shows "Last approved target".
+  - Order: 3d backend (migration applied to Dev + recorded,
+    Physical-Schema regenerated, tests) → frontend (c) + 3d → pytest, ruff,
+    tsc, lint → **propose checkpoint commit** → plan steps 4–7
+    (`/code-review` high, E2E plan, E2E). About a day for the first three.
 - **Part (c) on disk, uncommitted, reviewed 2026-09-28:** new
   `components/TargetPlanDetails.tsx` (expanded-row panel), new
   `utils/visitFrequency.ts`, `TargetPlanDialog.tsx` imports it.

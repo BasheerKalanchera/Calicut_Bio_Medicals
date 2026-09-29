@@ -29,16 +29,8 @@ import type {
 } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
 import { sumAllocation, isAllocationBalanced, roundToPrecision } from "../utils/allocationSplit";
+import { VISIT_FREQUENCY_LABEL, VISIT_FREQUENCIES } from "../utils/visitFrequency";
 
-// Fixed list (Hospital-Wise Target Planning plan, choice 2).
-const VISIT_FREQUENCY_LABEL: Record<VisitFrequency, string> = {
-  WEEKLY: "Weekly",
-  BI_WEEKLY: "Bi-weekly",
-  MONTHLY: "Monthly",
-  QUARTERLY: "Quarterly",
-  AS_NEEDED: "As needed",
-};
-const VISIT_FREQUENCIES = Object.keys(VISIT_FREQUENCY_LABEL) as VisitFrequency[];
 const DEFAULT_VISIT_FREQUENCY: VisitFrequency = "MONTHLY";
 
 interface PlanRow {
