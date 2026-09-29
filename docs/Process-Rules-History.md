@@ -39,6 +39,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** When a bigger, adjacent design gap surfaces mid-task (an inconsistency between two related mechanisms, a spec-vs-build mismatch), lead with a proposed narrowly-…
   **Why:** 2026-09-22, a Split-attribution inconsistency between reporting and a report drill-down was described in full, including the underlying ADR conflict, but the actual fix shape (keep the drill strict, leave the report and plain-visibility both alone) was proposed by Basheer himself, not offered up front alongside the finding.
 
+- **Rule:** Plans start from `docs/templates/Implementation-Plan-Template.md` with a Decisions list (each line "— proposed" or "— Basheer, date"); a PreToolUse hook (`.claude/hooks/plan-decisions-guard.sh` → `plan_decisions_guard.py`) refuses saving a plan whose Status says Approved while any decision is proposed; the daily doc tidy-up re-checks all plans (`--scan`).
+  **Why:** 2026-09-29 — undecided choices were written into plans as decided twice: 2026-09-27 (the Zone plan) and 2026-09-28 (the "By Zone table" in the hospital-wise plan, described to Basheer as "in the plan you approved"). The 2026-09-27 retro had proposed a Decisions list but built it into nothing, so it didn't stop the repeat. Per that retro's agreement (a repeat gets a guard rail, not another written rule), Basheer chose the heavier option — template plus save-time check — over template plus daily check only. The hook fails open (an error lets the save through) so a bug in it can't block plan editing, a risk Basheer raised about slowing work down.
+
 ## Commit approval
 
 - **Rule:** Every commit needs its own explicit approval, shown first (file list + message).

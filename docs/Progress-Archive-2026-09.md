@@ -8609,3 +8609,36 @@ retry, restart it.
   figures (Basheer), still pending approval; 37 closed deals with no close
   date = exactly the known Backlog gap, none since 27 Sep.
 - **Report:** `C:\Backups\CabioUAT\data_consistency_reports\UAT-Data-Quality-Report-2026-09-29.pdf`.
+
+## 2026-09-29 — Plan-decisions guard rail built
+
+Closes the 2026-09-28 evening retro's item 1 (undecided choices written into
+a plan as decided — a repeat of 27 Sep). Basheer chose the heavier option
+after asking about the risk of slowing work down.
+- **Template:** `docs/templates/Implementation-Plan-Template.md`, with a
+  Decisions list; each line ends "— proposed" or "— Basheer, date".
+- **Save-time check:** `.claude/hooks/plan-decisions-guard.sh` →
+  `plan_decisions_guard.py` (PreToolUse, Write/Edit/MultiEdit) refuses a
+  `*-Implementation-Plan.md` save whose Status says Approved while any
+  decision is proposed. Non-plan saves skip Python (text check in the
+  shell); fails open on any error.
+- **Daily backstop:** doc tidy-up check 6 runs `--scan` over all plans
+  (catches edits made outside Claude's Write/Edit). First scan: 0 plans
+  failing — existing plans have no Decisions list, so none are affected
+  until next edited.
+- **Verified:** 7 dry-run cases (approved+proposed blocked, both Write and
+  Edit; decided / draft / non-plan / broken input allowed; a "proposed" line
+  outside the Decisions section ignored). A plan save adds ~0.3 s.
+- **First use:** the hospital-wise plan got its Decisions list (13 lines).
+  Drafting it found three "settled unless Basheer objects" items he had never
+  confirmed; he decided them: ₹0 on a rated hospital warns (red for High,
+  yellow for Medium/Low, none for Not rated, never blocks), old Dev test
+  targets need hospitals to revise, and the old coverage-plan tables stay
+  dropped (Dev in `0055`; UAT at the move). The ₹0 warning change goes to the
+  planning session as a follow-up to `70e41e1`.
+
+**Retro:** worked — Basheer's "don't slow me down" question shaped the
+fail-open design and the fast path before any code was written. Improve —
+the Decisions list was proposed on 27 Sep but built into nothing, which let
+the repeat happen. Suggestion for Basheer (not a rule): a retro's process
+fix gets built the same day, or parked in the handover with a date.

@@ -20,7 +20,7 @@ and log it as partial.
 2. Read the last line of `docs/Doc-Integrity-Sweep-Log.md` for the date of
    the previous sweep. Everything below covers **changes since that date**.
 
-## The five checks
+## The six checks
 
 1. **Broken file pointers:** run `sh scripts/find_broken_doc_links.sh`. Fix
    the ones in (a) files changed since the last sweep and (b) today's
@@ -47,6 +47,12 @@ and log it as partial.
    which were covered). For each statement of current status, check it
    against its home doc. Memory notes holding project status: propose
    deleting them or cutting them to a pointer.
+6. **Plans approved with undecided choices:** run
+   `python .claude/hooks/plan_decisions_guard.py --scan`. Any plan it lists
+   says Approved while a Decisions line is still "proposed" — a needs-Basheer
+   finding (he decides the item, or the Status goes back to Draft). This
+   backs up the save-time guard rail, which only sees Claude's own
+   Write/Edit saves.
 
 ## Reporting and fixing
 

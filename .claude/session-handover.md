@@ -3,13 +3,6 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-DUE TODAY (from 2026-09-29 morning, Basheer asked): **guard-rail setup for
-implementation plans**. Put it in the 'Due today' list in your first reply
-and wait for Basheer's answer. Choose lighter (plan template + Decisions
-section, checked by the doc tidy-up) or heavier (plus a save-time check
-refusing "Approved" while any decision is "proposed"). Background:
-Progress-Archive 2026-09-28 "Session retrospective (evening…)". Remove
-this block once decided.
 
 
 ## Hospital-wise target planning — Part 1, plan steps 4–7

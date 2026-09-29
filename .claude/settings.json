@@ -19,6 +19,15 @@
             "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/ask-before-git-stash.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-decisions-guard.sh\""
+          }
+        ]
       }
     ]
   }

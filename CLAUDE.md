@@ -100,6 +100,9 @@ code or changing structure. On any conflict, the document wins over this file.
 - The moment a task's scope becomes feature-sized, write
   `docs/<Feature>-Implementation-Plan.md` and present its actual content as chat
   text — not the CLI's plan-mode file/`ExitPlanMode`. *(2026-09-18)*
+- Start new plans from `docs/templates/Implementation-Plan-Template.md`; every
+  choice goes in its Decisions list as "proposed" until Basheer answers. A
+  save-time hook refuses Approved while any is proposed. *(2026-09-29)*
 - When a conversation escalates from a quick question into a real
   architecture/feature decision, say so explicitly in the moment.
 - When a dependency crosses environments (Dev vs. UAT, any system boundary), say

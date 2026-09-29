@@ -23,6 +23,22 @@ section 5). This plan doesn't repeat them; it says how to build them.
 Parts 1 and 2 go to UAT together, once Part 2 is finished (during October).
 The fallback decision (29 Sep) found the build on track.
 
+## Decisions
+
+- Save draft button (plans can be finished over several sittings) — Basheer, 2026-09-27
+- Visit frequency is a fixed list of five — Basheer, 2026-09-27
+- Rate Hospitals table for Admin/GM; rating stored on the hospital record — Basheer, 2026-09-27
+- No bell notification for plan submit/approve for now — Basheer, 2026-09-27
+- Balanced brand split and total > ₹0 enforced on Submit only, not Save draft — Basheer, 2026-09-28
+- Screen renamed "Target & Coverage Planning" — Basheer, 2026-09-28
+- No UAT move until Part 2 is also finished; By Zone table moves to Part 2 — Basheer, 2026-09-29
+- Keep the "Revised" label and live hospital count — Basheer, 2026-09-29
+- BR-PL-05: warn when a revised plan is below its last approved total — Basheer, 2026-09-29
+- Hospital amounts can be ₹0; High at ₹0 gets a red warning, Medium/Low a yellow one, Not rated none; none block Submit — Basheer, 2026-09-29
+- Old Dev test targets stay readable; revising one requires hospitals — Basheer, 2026-09-29
+- Old coverage-plan tables removed (Dev done in 0055; UAT checked empty before the move) — Basheer, 2026-09-29
+- "Was ₹X L" figure: cleared when a revision is approved, kept when rejected — Basheer, 2026-09-29
+
 ## 1. In plain terms
 
 Today a salesperson types one quarterly number and splits it by brand. After
@@ -113,9 +129,10 @@ The options as offered:
      and back to the salesperson when it's approved or rejected. About half a
      day; can be added in October without redoing anything.
 
-**Also settled by this plan, unless Basheer objects:**
+**Also settled (Basheer, 2026-09-29):**
 - **Hospital amounts can be ₹0.** A hospital may be on the plan for visits
-  only. The total must still be above ₹0.
+  only. The total must still be above ₹0. A rated hospital at ₹0 gets a
+  warning (red for High, yellow for Medium/Low); neither blocks Submit.
 - **Existing Dev test targets** (6 rows, no hospitals) remain readable.
   Revising one requires adding hospitals. UAT had no targets at the time of
   writing; the brand-wise Oct–Dec targets set there before the move
