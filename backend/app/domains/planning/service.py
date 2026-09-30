@@ -2,6 +2,8 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from sqlalchemy import func
+
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
 from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
@@ -98,9 +100,20 @@ class TargetPlanService:
         return self.repository.get_zone_rollup(sbu_id, planning_period)
 
     def check_overlaps(
-        self, account_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str
+        self, account_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
     ) -> list[PlanWarning]:
-        """Live same-SBU overlap check for the plan dialog, before saving."""
+        """Live same-SBU overlap check for the plan dialog, before saving.
+        Only hospitals the caller could actually plan are checked, so this
+        can't be used to find out who covers hospitals outside their own
+        territory (/code-review 2026-09-29)."""
+        zone_ids = _territory_zone_ids(current_user)
+        if zone_ids is not None:
+            if not zone_ids:
+                return []
+            outside = self.repository.account_ids_outside_zones(account_ids, zone_ids)
+            account_ids = [i for i in account_ids if i not in outside]
+            if not account_ids:
+                return []
         accounts_by_id = {a.id: a for a in self.repository.get_accounts_by_ids(account_ids)}
         return self._overlap_warnings(accounts_by_id, sbu_id, planning_period)
 
@@ -233,6 +246,8 @@ class TargetPlanService:
     ) -> tuple[TargetPlan, list[PlanWarning]]:
         """The target is the SUM of the hospitals' planned amounts. submit=False
         saves a DRAFT that stays private to its owner until submitted."""
+        if current_user.role.role_name not in _OVERLAY_ROLES and data.sbu_id != current_user.sbu_id:
+            raise AuthorizationError("You can only set a target for your own SBU.")
         existing = self.repository.get_by_user_sbu_period(
             current_user.id, data.sbu_id, data.planning_period
         )
@@ -301,7 +316,12 @@ class TargetPlanService:
             target_plan.approved_at = None
             target_plan.decision_note = None
         target_plan.updated_by = current_user.id
+        # Set explicitly (AuditMixin has no onupdate): a hospital-only or
+        # split-only revision changes no plan column, but the approver's
+        # stale-version check below still has to see it as a new version.
+        target_plan.updated_at = func.now()
         target_plan = self.repository.update(target_plan)
+        self.repository.db.refresh(target_plan, ["updated_at"])
         self._replace_accounts(target_plan, data.accounts, current_user=current_user)
         self._apply_brand_splits(target_plan, data.brand_splits, submit=data.submit)
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
@@ -312,6 +332,7 @@ class TargetPlanService:
         *,
         status: str,
         current_user: UserProfile,
+        expected_updated_at: datetime,
         note: str | None = None,
     ) -> TargetPlan:
         """Nobody approves their own row, full stop -- not just a GM special
@@ -321,7 +342,13 @@ class TargetPlanService:
         target. Since get_approver_id returns None for whoever sits at the
         top of the chain (no manager_id), the only path left to approve that
         person's target is another Admin/GM user who isn't them -- in
-        practice, the separate Admin account."""
+        practice, the separate Admin account.
+
+        The approver decides only on the version they were shown, and only
+        while it's waiting for approval (BR-PL-08, /code-review 2026-09-29):
+        `expected_updated_at` is the plan's updated_at as the approver's
+        screen loaded it; if the rep has saved since, this refuses with a
+        409 so the screen can reload the latest version."""
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
@@ -335,6 +362,16 @@ class TargetPlanService:
         if is_self or not (is_resolved_approver or is_overlay_override):
             raise AuthorizationError(
                 "You aren't authorized to approve or reject this target."
+            )
+        if target_plan.status != "PENDING_APPROVAL":
+            raise ConflictError(
+                "This plan is no longer waiting for approval -- it has already been decided. "
+                "Here is the latest version."
+            )
+        if target_plan.updated_at != expected_updated_at:
+            raise ConflictError(
+                "The rep changed this plan while you were reviewing it. "
+                "Here is the latest version. Please review again."
             )
 
         target_plan.status = status

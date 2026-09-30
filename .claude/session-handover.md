@@ -37,12 +37,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   — one client republish. UAT user manual has no section for this screen;
   write one with the Part 1+2 UAT move.
 - Screen not yet clicked through on Dev.
-- **Step 5 — fix list agreed 2026-09-30, not yet built.** `/code-review`
-  high ran 2026-09-29. Basheer answered all 4 questions; the agreed fixes
-  (no database change) are in the plan's section 4, step 5, and its
-  Decisions list. Deferred items went to Backlog. **Basheer said go
-  2026-09-30; code fixes not started yet (paused for a break).**
-- **After fixes:** pytest/ruff/tsc/lint → propose commit → written E2E plan
+- **Step 5 fixes built 2026-09-30, committed by Basheer** (`git log --grep
+  "step 5 — code review fixes"`; plan section 4, step 5): stale-approval 409 (`expected_updated_at`), Rate Hospitals per-row
+  Save, change-note label by status, own-SBU on create, overlaps limited
+  to own territory, 2-decimal amounts, `selectinload` on list queries;
+  BR-PL-07/08/09 updated. 1068 pytest pass; ruff clean on planning; tsc
+  clean; lint 0 errors (247 older warnings). `src/types/api.ts` not
+  regenerated (Dev backend was down; screen uses its own types).
+- **Next:** optional medium `/code-review` of that commit (Basheer to
+  decide) → written E2E plan
   (checked against live Dev data, Simple/Complex tags) → E2E (restart Dev
   backend first) → Traceability 6.1/5.1 straight to Done (option a) →
   post-commit checklist.

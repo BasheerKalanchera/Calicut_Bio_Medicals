@@ -30,7 +30,7 @@ class BrandNested(BaseModel):
 
 class BrandSplitEntry(BaseModel):
     brand_id: uuid.UUID
-    split_amount_lakhs: Decimal = Field(..., ge=0)
+    split_amount_lakhs: Decimal = Field(..., ge=0, decimal_places=2)
 
 
 class BrandSplitResponse(BaseModel):
@@ -56,7 +56,7 @@ class VisitFrequency(StrEnum):
 class PlanAccountEntry(BaseModel):
     account_id: uuid.UUID
     # >= 0: a hospital may be on the plan for visits only (plan section 3).
-    planned_amount_lakhs: Decimal = Field(..., ge=0)
+    planned_amount_lakhs: Decimal = Field(..., ge=0, decimal_places=2)
     visit_frequency: VisitFrequency
     strategic_objective: str | None = Field(None, max_length=1000)
 
@@ -134,8 +134,12 @@ class TargetPlanUpdate(BaseModel):
 
 
 class TargetPlanApprovalDecision(BaseModel):
+    """`expected_updated_at` is the plan's updated_at as the approver's
+    screen showed it -- a mismatch means the rep saved since (409)."""
+
     status: str
     note: str | None = None
+    expected_updated_at: datetime
 
     @field_validator("status")
     @classmethod

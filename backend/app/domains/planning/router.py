@@ -122,7 +122,9 @@ def check_overlaps(
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[list[PlanWarning]]:
     """Live same-SBU overlap warnings while the plan is being edited."""
-    return APIResponse(data=service.check_overlaps(account_ids, sbu_id, planning_period))
+    return APIResponse(
+        data=service.check_overlaps(account_ids, sbu_id, planning_period, current_user=current_user)
+    )
 
 
 @router.get("/rollup")
@@ -176,7 +178,11 @@ def approve_target_plan(
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
     target_plan = service.approve_or_reject_target_plan(
-        target_plan_id, status="APPROVED", current_user=current_user, note=body.note
+        target_plan_id,
+        status="APPROVED",
+        current_user=current_user,
+        expected_updated_at=body.expected_updated_at,
+        note=body.note,
     )
     return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
 
@@ -189,7 +195,11 @@ def reject_target_plan(
     service: TargetPlanService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[TargetPlanResponse]:
     target_plan = service.approve_or_reject_target_plan(
-        target_plan_id, status="REJECTED", current_user=current_user, note=body.note
+        target_plan_id,
+        status="REJECTED",
+        current_user=current_user,
+        expected_updated_at=body.expected_updated_at,
+        note=body.note,
     )
     return APIResponse(data=TargetPlanResponse.model_validate(target_plan))
 

@@ -2,7 +2,7 @@ import uuid
 from decimal import Decimal
 
 from sqlalchemy import delete, func, or_, select, text
-from sqlalchemy.orm import Session, aliased, noload
+from sqlalchemy.orm import Session, aliased, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
@@ -23,13 +23,22 @@ _ACCOUNT_NOLOADS = (
     noload(Account.child_accounts),
 )
 
+# The list endpoints return every plan's hospitals and brand split; load
+# them in one query each instead of one per plan (/code-review 2026-09-29).
+_PLAN_CHILDREN = (selectinload(TargetPlan.accounts), selectinload(TargetPlan.brand_splits))
+
 
 class TargetPlanRepository(BaseRepository[TargetPlan]):
     def __init__(self, db: Session):
         super().__init__(TargetPlan, db)
 
     def list_by_user(self, user_id: uuid.UUID) -> list[TargetPlan]:
-        stmt = select(TargetPlan).where(TargetPlan.user_id == user_id).order_by(TargetPlan.planning_period)
+        stmt = (
+            select(TargetPlan)
+            .options(*_PLAN_CHILDREN)
+            .where(TargetPlan.user_id == user_id)
+            .order_by(TargetPlan.planning_period)
+        )
         return list(self.db.scalars(stmt).all())
 
     def list_pending_approval_for_approver(
@@ -57,6 +66,7 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
             )
         stmt = (
             select(TargetPlan)
+            .options(*_PLAN_CHILDREN)
             .join(UserProfile, UserProfile.id == TargetPlan.user_id)
             .where(or_(*conditions))
             .where(TargetPlan.status == "PENDING_APPROVAL")
@@ -71,6 +81,7 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         report's DRAFT row, so it's excluded here except for the viewer's own."""
         stmt = (
             select(TargetPlan)
+            .options(*_PLAN_CHILDREN)
             .where(TargetPlan.sbu_id == sbu_id)
             .where(TargetPlan.planning_period == planning_period)
             .where(or_(TargetPlan.status != "DRAFT", TargetPlan.user_id == viewer_id))

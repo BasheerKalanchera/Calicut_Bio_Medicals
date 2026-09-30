@@ -125,9 +125,12 @@ export interface TargetPlanUpdate {
   submit: boolean;
 }
 
+// expected_updated_at: the plan's updated_at as the approver's screen loaded
+// it -- the server refuses (409) if the rep has saved since (BR-PL-08).
 export interface TargetPlanApprovalDecision {
   status: "APPROVED" | "REJECTED";
   note?: string | null;
+  expected_updated_at: string;
 }
 
 export interface SbuTargetRollup {

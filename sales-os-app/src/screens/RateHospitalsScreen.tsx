@@ -98,6 +98,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
               <TableCell>Zone</TableCell>
               <TableCell sx={{ width: "10rem" }}>Business Potential</TableCell>
               <TableCell>Notes (Admin/GM only)</TableCell>
+              <TableCell sx={{ width: "6rem" }} />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -106,7 +107,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
             ))}
             {!isLoading && accounts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <Typography color="text.secondary">
                     {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
                   </Typography>
@@ -115,7 +116,7 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
             )}
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={4}><Typography color="text.secondary">Loading...</Typography></TableCell>
+                <TableCell colSpan={5}><Typography color="text.secondary">Loading...</Typography></TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -133,13 +134,15 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
   );
 }
 
-// One hospital. The rating saves the moment it's picked; the note saves when
-// the field loses focus, and only if it actually changed. Both send the
-// row's current rating + note together (the PATCH replaces both).
+// One hospital. Rating and note are edited locally and saved together by the
+// row's own Save button -- nothing saves on pick or on blur, so a half-typed
+// note never goes out with a rating (Basheer, 2026-09-30).
 function RatingRow({ account }: { account: AccountListResponse }) {
   const queryClient = useQueryClient();
-  const [notes, setNotes] = useState(account.business_potential_notes ?? "");
-  const potential = toBusinessPotential(account.business_potential);
+  const savedPotential = toBusinessPotential(account.business_potential);
+  const savedNotes = account.business_potential_notes ?? null;
+  const [potential, setPotential] = useState<BusinessPotential>(savedPotential);
+  const [notes, setNotes] = useState(savedNotes ?? "");
 
   const save = useMutation({
     mutationFn: (body: { business_potential: string; business_potential_notes: string | null }) =>
@@ -152,6 +155,7 @@ function RatingRow({ account }: { account: AccountListResponse }) {
   });
 
   const trimmedNotes = notes.trim() || null;
+  const dirty = potential !== savedPotential || trimmedNotes !== savedNotes;
 
   return (
     <TableRow>
@@ -164,7 +168,7 @@ function RatingRow({ account }: { account: AccountListResponse }) {
           fullWidth
           value={potential}
           disabled={save.isPending}
-          onChange={(e) => save.mutate({ business_potential: e.target.value, business_potential_notes: trimmedNotes })}
+          onChange={(e) => setPotential(e.target.value as BusinessPotential)}
         >
           {BUSINESS_POTENTIAL_OPTIONS.map((p) => (
             <MenuItem key={p} value={p}>{BUSINESS_POTENTIAL_LABEL[p]}</MenuItem>
@@ -181,16 +185,21 @@ function RatingRow({ account }: { account: AccountListResponse }) {
           value={notes}
           disabled={save.isPending}
           onChange={(e) => setNotes(e.target.value)}
-          onBlur={() => {
-            if (trimmedNotes !== (account.business_potential_notes ?? null)) {
-              save.mutate({ business_potential: potential, business_potential_notes: trimmedNotes });
-            }
-          }}
           slotProps={{ htmlInput: { maxLength: 2000 } }}
         />
         {save.isError && (
           <Typography variant="caption" color="error">Couldn't save — try again.</Typography>
         )}
+      </TableCell>
+      <TableCell>
+        <Button
+          size="small"
+          variant="contained"
+          disabled={!dirty || save.isPending}
+          onClick={() => save.mutate({ business_potential: potential, business_potential_notes: trimmedNotes })}
+        >
+          {save.isPending ? "Saving..." : "Save"}
+        </Button>
       </TableCell>
     </TableRow>
   );

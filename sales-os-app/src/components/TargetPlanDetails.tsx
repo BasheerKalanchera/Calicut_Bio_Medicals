@@ -7,6 +7,12 @@ function lakhs2(v: string | number) {
   return `₹${Number(v).toFixed(2)}L`;
 }
 
+const CHANGE_NOTE_LABEL: Record<string, string> = {
+  PENDING_APPROVAL: "Why it changed:",
+  APPROVED: "Last change (approved):",
+  REJECTED: "Last change (rejected):",
+};
+
 // What an approver (or a manager in the team view) sees when a plan row is
 // expanded: the latest change note, each hospital, and the brand split
 // (Hospital-Wise Target Planning plan, section 8 "Frontend").
@@ -18,7 +24,10 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, py: 1 }}>
       {target.change_note && (
         <Alert severity="info" sx={{ whiteSpace: "pre-wrap" }}>
-          <strong>Why it changed:</strong> {target.change_note}
+          {/* The note is kept after approval, so only call it the reason for
+              *this* change while the manager is still deciding. */}
+          <strong>{CHANGE_NOTE_LABEL[target.status] ?? "Why it changed:"}</strong>{" "}
+          {target.change_note}
         </Alert>
       )}
 

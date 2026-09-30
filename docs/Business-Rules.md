@@ -80,7 +80,9 @@ This document defines the core business logic, validation rules, and state-trans
   Target Planning) is made on top of that total.
 * **Constraints:** at least one hospital; each hospital at most once per
   plan; only hospitals in the salesperson's own area (their zones), except
-  Admin, General Manager and SBU Manager, who may plan any hospital.
+  Admin, General Manager and SBU Manager, who may plan any hospital. A plan
+  is only for the salesperson's own SBU; Admin and General Manager may
+  plan in any SBU (Basheer, 2026-09-30). Amounts have at most 2 decimals.
 * **Drafts:** a plan may be saved as a draft and finished later. A draft is
   visible only to its owner and never reaches the approver. On **Submit**
   the total must be above ₹0 and the brand split must add up to it exactly;
@@ -96,15 +98,25 @@ This document defines the core business logic, validation rules, and state-trans
   hospitals, amounts or brand split, even with the same total — sends the
   plan back to the approver for a fresh decision. The approver sees the
   latest note (and, under BR-PL-05, the last approved total).
+* **The approver decides only on the latest version, and only while it's
+  waiting for approval.** If the salesperson saved a change after the
+  approver opened the plan, or someone already decided it, Approve/Reject
+  is refused with "The rep changed this plan while you were reviewing it.
+  Here is the latest version. Please review again." and the screen reloads
+  it. No "being edited" lock.
 * **Origin:** Hospital-wise planning decisions, 2026-09-27; "any change
-  resets approval" confirmed 2026-09-23. Build: same plan.
+  resets approval" confirmed 2026-09-23; latest-version check from the
+  `/code-review` fix list, Basheer 2026-09-30. Build: same plan.
 
 ### BR-PL-09: Same-SBU Hospital Overlap Warning
 * **Rule:** when a salesperson plans a hospital that a colleague in the same
   SBU has also planned for the same quarter (in a submitted plan, not a
   draft), the plan dialog names the colleague. **Warning only** — both may
-  keep the hospital. Colleagues in a different SBU don't trigger it.
-* **Origin:** Hospital-wise planning decisions, 2026-09-27. Build: same plan.
+  keep the hospital. Colleagues in a different SBU don't trigger it. The
+  check only covers hospitals the salesperson may plan (BR-PL-07's own
+  area), so it can't reveal who covers hospitals elsewhere.
+* **Origin:** Hospital-wise planning decisions, 2026-09-27; own-area limit
+  Basheer 2026-09-30. Build: same plan.
 
 ---
 

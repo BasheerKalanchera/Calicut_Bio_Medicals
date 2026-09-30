@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Alert,
   Box,
   Typography,
   Button,
@@ -22,6 +23,7 @@ import FormModal from "../components/FormModal";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
+import { ApiError } from "../lib/api";
 import { listSbus } from "../services/masterData";
 import { listBrands } from "../services/catalogHierarchy";
 import {
@@ -156,6 +158,9 @@ export default function TargetPlanningScreen() {
   const [planDialog, setPlanDialog] = useState<{ period: string; sbuId: string; existing: TargetPlan | null } | null>(null);
   const [decision, setDecision] = useState<{ targetPlan: TargetPlan; status: "APPROVED" | "REJECTED" } | null>(null);
   const [noteInput, setNoteInput] = useState("");
+  // Set when an approve/reject was refused because the plan changed (or was
+  // already decided) after the approver opened it -- BR-PL-08.
+  const [staleNotice, setStaleNotice] = useState<string | null>(null);
   // Plan rows (approval queue and team list) whose detail panel is open.
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const toggleExpanded = (id: string) =>
@@ -287,11 +292,24 @@ export default function TargetPlanningScreen() {
 
   const handleDecision = async () => {
     if (!decision) return;
-    const body = { status: decision.status, note: noteInput.trim() || null };
-    if (decision.status === "APPROVED") {
-      await approveTargetPlan(decision.targetPlan.id, body);
-    } else {
-      await rejectTargetPlan(decision.targetPlan.id, body);
+    // The server refuses (409) unless this is still the version on screen.
+    const body = {
+      status: decision.status,
+      note: noteInput.trim() || null,
+      expected_updated_at: decision.targetPlan.updated_at,
+    };
+    setStaleNotice(null);
+    try {
+      if (decision.status === "APPROVED") {
+        await approveTargetPlan(decision.targetPlan.id, body);
+      } else {
+        await rejectTargetPlan(decision.targetPlan.id, body);
+      }
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 409)) throw err;
+      // Returning normally closes the dialog; the refetch below brings in
+      // the latest version for the approver to review again.
+      setStaleNotice(err.message);
     }
     invalidateAll();
   };
@@ -418,6 +436,12 @@ export default function TargetPlanningScreen() {
           </>
         )}
       </Box>
+      )}
+
+      {staleNotice && (
+        <Alert severity="warning" onClose={() => setStaleNotice(null)}>
+          {staleNotice}
+        </Alert>
       )}
 
       {pendingApproval.length > 0 && (

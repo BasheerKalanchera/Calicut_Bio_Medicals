@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock
 
@@ -21,6 +22,8 @@ from app.domains.planning.service import BrandVendorTargetService, TargetPlanSer
 
 SBU_ID = uuid.uuid4()
 ZONE_ID = uuid.uuid4()
+# The version of a plan the approver's screen loaded (stale-approval check).
+PLAN_UPDATED_AT = datetime(2026, 9, 30, 10, 0, tzinfo=UTC)
 
 
 def _entries(*amounts: str, account_ids: list[uuid.UUID] | None = None) -> list[PlanAccountEntry]:
@@ -43,7 +46,7 @@ def _make_account(account_id: uuid.UUID, *, potential: str = "MEDIUM", name: str
 def _make_user(role_name: str, **overrides) -> MagicMock:
     zone = MagicMock()
     zone.zone_id = ZONE_ID
-    defaults = {"id": uuid.uuid4(), "manager_id": None, "zones": [zone]}
+    defaults = {"id": uuid.uuid4(), "manager_id": None, "zones": [zone], "sbu_id": SBU_ID}
     defaults.update(overrides)
     user = MagicMock(spec=UserProfile)
     for k, v in defaults.items():
@@ -66,6 +69,7 @@ def _make_target_plan(**overrides) -> MagicMock:
         "approved_at": None,
         "decision_note": None,
         "previous_approved_total_lakhs": None,
+        "updated_at": PLAN_UPDATED_AT,
     }
     defaults.update(overrides)
     target_plan = MagicMock(spec=TargetPlan)
@@ -211,7 +215,7 @@ class TestApproveOrRejectTargetPlan:
         service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(
-            target_plan.id, status="APPROVED", current_user=manager
+            target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
         )
 
         assert result.status == "APPROVED"
@@ -226,7 +230,9 @@ class TestApproveOrRejectTargetPlan:
         service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="authorized"):
-            service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=peer)
+            service.approve_or_reject_target_plan(
+                target_plan.id, status="APPROVED", current_user=peer, expected_updated_at=PLAN_UPDATED_AT
+            )
 
     def test_sales_staff_cannot_approve_a_peer(self):
         subordinate = _make_user("Sales Staff", manager_id=uuid.uuid4())
@@ -238,7 +244,7 @@ class TestApproveOrRejectTargetPlan:
 
         with pytest.raises(AuthorizationError, match="authorized"):
             service.approve_or_reject_target_plan(
-                target_plan.id, status="APPROVED", current_user=another_staff
+                target_plan.id, status="APPROVED", current_user=another_staff, expected_updated_at=PLAN_UPDATED_AT
             )
 
     def test_admin_can_approve_a_subordinate_target(self):
@@ -249,7 +255,9 @@ class TestApproveOrRejectTargetPlan:
         repo.db.get.return_value = subordinate
         service = _make_service(repo)
 
-        result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=admin)
+        result = service.approve_or_reject_target_plan(
+            target_plan.id, status="APPROVED", current_user=admin, expected_updated_at=PLAN_UPDATED_AT
+        )
 
         assert result.status == "APPROVED"
         assert result.approved_by == admin.id
@@ -265,7 +273,9 @@ class TestApproveOrRejectTargetPlan:
         service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="authorized"):
-            service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=gm)
+            service.approve_or_reject_target_plan(
+                target_plan.id, status="APPROVED", current_user=gm, expected_updated_at=PLAN_UPDATED_AT
+            )
 
     def test_admin_can_approve_the_gms_own_target(self):
         """The other half of the top-of-chain case: since GM can't approve
@@ -278,7 +288,9 @@ class TestApproveOrRejectTargetPlan:
         repo.db.get.return_value = gm
         service = _make_service(repo)
 
-        result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=admin)
+        result = service.approve_or_reject_target_plan(
+            target_plan.id, status="APPROVED", current_user=admin, expected_updated_at=PLAN_UPDATED_AT
+        )
 
         assert result.status == "APPROVED"
         assert result.approved_by == admin.id
@@ -292,7 +304,7 @@ class TestApproveOrRejectTargetPlan:
         service = _make_service(repo)
 
         result = service.approve_or_reject_target_plan(
-            target_plan.id, status="REJECTED", current_user=manager
+            target_plan.id, status="REJECTED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
         )
 
         assert result.status == "REJECTED"
@@ -310,9 +322,101 @@ class TestApproveOrRejectTargetPlan:
             status="REJECTED",
             current_user=manager,
             note="Too low for this territory",
+            expected_updated_at=PLAN_UPDATED_AT,
         )
 
         assert result.decision_note == "Too low for this territory"
+
+
+class TestStaleApproval:
+    """BR-PL-08: the approver decides only on the latest version, and only
+    while it's waiting for approval (/code-review 2026-09-29)."""
+
+    def _setup(self, **plan_overrides):
+        manager = _make_user("Area Manager")
+        owner = _make_user("Sales Staff", manager_id=manager.id)
+        target_plan = _make_target_plan(user_id=owner.id, **plan_overrides)
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        return _make_service(repo), repo, target_plan, manager
+
+    @pytest.mark.parametrize("status", ["APPROVED", "REJECTED"])
+    def test_changed_since_loaded_is_refused(self, status):
+        service, repo, target_plan, manager = self._setup(updated_at=PLAN_UPDATED_AT + timedelta(minutes=5))
+
+        with pytest.raises(ConflictError, match="changed this plan while you were reviewing"):
+            service.approve_or_reject_target_plan(
+                target_plan.id, status=status, current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+            )
+        repo.update.assert_not_called()
+
+    @pytest.mark.parametrize("current_status", ["APPROVED", "REJECTED"])
+    def test_already_decided_is_refused(self, current_status):
+        service, repo, target_plan, manager = self._setup(status=current_status)
+
+        with pytest.raises(ConflictError, match="no longer waiting for approval"):
+            service.approve_or_reject_target_plan(
+                target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+            )
+        repo.update.assert_not_called()
+
+    def test_same_moment_in_indian_time_is_accepted(self):
+        service, _repo, target_plan, manager = self._setup()
+        ist = PLAN_UPDATED_AT.astimezone(timezone(timedelta(hours=5, minutes=30)))
+
+        result = service.approve_or_reject_target_plan(
+            target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=ist
+        )
+
+        assert result.status == "APPROVED"
+
+    def test_every_revision_moves_updated_at(self):
+        """A hospital-only edit changes no plan column, so updated_at must be
+        set explicitly or the approver's check would miss it."""
+        owner = _make_user("Sales Staff")
+        target_plan = _make_target_plan(user_id=owner.id)
+        repo = _make_repo(get_by_id=MagicMock(return_value=target_plan))
+        service = _make_service(repo)
+
+        service.update_target_plan(
+            target_plan.id,
+            TargetPlanUpdate(accounts=_entries("50"), change_note="Swapped a hospital"),
+            current_user=owner,
+        )
+
+        assert target_plan.updated_at is not PLAN_UPDATED_AT
+        repo.db.refresh.assert_called_once_with(target_plan, ["updated_at"])
+
+
+class TestOwnSbu:
+    def test_sales_staff_cannot_plan_another_sbu(self):
+        repo = _make_repo()
+        service = _make_service(repo)
+        data = TargetPlanCreate(sbu_id=uuid.uuid4(), planning_period="2026-Q3", accounts=_entries("10"))
+
+        with pytest.raises(AuthorizationError, match="your own SBU"):
+            service.create_target_plan(data, current_user=_make_user("Sales Staff"))
+        repo.create.assert_not_called()
+
+    @pytest.mark.parametrize("role_name", ["Admin", "General Manager"])
+    def test_admin_and_gm_may_plan_any_sbu(self, role_name):
+        repo = _make_repo()
+        service = _make_service(repo)
+        data = TargetPlanCreate(sbu_id=uuid.uuid4(), planning_period="2026-Q3", accounts=_entries("10"))
+
+        result, _warnings = service.create_target_plan(data, current_user=_make_user(role_name, sbu_id=None))
+
+        assert result.status == "PENDING_APPROVAL"
+
+
+class TestAmountPrecision:
+    def test_hospital_amount_with_three_decimals_is_refused(self):
+        with pytest.raises(ValueError):
+            _entries("1.005")
+
+    def test_brand_split_with_three_decimals_is_refused(self):
+        with pytest.raises(ValueError):
+            BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("1.005"))
 
 
 class TestListPendingApprovalForApprover:
@@ -904,7 +1008,9 @@ class TestDrafts:
         service = _make_service(repo)
 
         with pytest.raises(ValidationError, match="still a draft"):
-            service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=manager)
+            service.approve_or_reject_target_plan(
+                target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+            )
         repo.update.assert_not_called()
 
 
@@ -1007,9 +1113,39 @@ class TestWarnings:
         repo = _make_repo(find_overlaps=MagicMock(return_value=[(account_id, "Anil K")]))
         service = _make_service(repo)
 
-        warnings = service.check_overlaps([account_id], SBU_ID, "2026-Q3")
+        warnings = service.check_overlaps([account_id], SBU_ID, "2026-Q3", current_user=_make_user("Sales Staff"))
 
         assert warnings[0].colleague_name == "Anil K"
+
+    def test_live_overlap_check_skips_hospitals_outside_the_callers_territory(self):
+        inside_id, outside_id = uuid.uuid4(), uuid.uuid4()
+        repo = _make_repo(account_ids_outside_zones=MagicMock(return_value={outside_id}))
+        service = _make_service(repo)
+
+        service.check_overlaps([inside_id, outside_id], SBU_ID, "2026-Q3", current_user=_make_user("Sales Staff"))
+
+        repo.find_overlaps.assert_called_once_with([inside_id], SBU_ID, "2026-Q3")
+
+    def test_live_overlap_check_returns_nothing_without_a_territory(self):
+        repo = _make_repo()
+        service = _make_service(repo)
+
+        warnings = service.check_overlaps(
+            [uuid.uuid4()], SBU_ID, "2026-Q3", current_user=_make_user("Sales Staff", zones=[])
+        )
+
+        assert warnings == []
+        repo.find_overlaps.assert_not_called()
+
+    def test_live_overlap_check_unrestricted_for_sbu_manager(self):
+        account_id = uuid.uuid4()
+        repo = _make_repo()
+        service = _make_service(repo)
+
+        service.check_overlaps([account_id], SBU_ID, "2026-Q3", current_user=_make_user("SBU Manager"))
+
+        repo.account_ids_outside_zones.assert_not_called()
+        repo.find_overlaps.assert_called_once_with([account_id], SBU_ID, "2026-Q3")
 
 
 class TestPreviousApprovedTotal:
@@ -1070,7 +1206,9 @@ class TestPreviousApprovedTotal:
         )
         service, manager = self._approver_setup(target_plan, owner)
 
-        result = service.approve_or_reject_target_plan(target_plan.id, status="APPROVED", current_user=manager)
+        result = service.approve_or_reject_target_plan(
+            target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+        )
 
         assert result.previous_approved_total_lakhs is None
 
@@ -1081,6 +1219,8 @@ class TestPreviousApprovedTotal:
         )
         service, manager = self._approver_setup(target_plan, owner)
 
-        result = service.approve_or_reject_target_plan(target_plan.id, status="REJECTED", current_user=manager)
+        result = service.approve_or_reject_target_plan(
+            target_plan.id, status="REJECTED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+        )
 
         assert result.previous_approved_total_lakhs == Decimal("40")
