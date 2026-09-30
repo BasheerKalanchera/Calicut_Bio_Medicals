@@ -32,6 +32,19 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
     def __init__(self, db: Session):
         super().__init__(TargetPlan, db)
 
+    def get_by_id_for_update(self, target_plan_id: uuid.UUID) -> TargetPlan | None:
+        """Row-locked read for approve/reject and revise, so the two can't
+        both pass their checks at the same instant (/code-review 2026-09-30).
+        `of=TargetPlan` locks only this table's row: the joined `approver`
+        is an outer join, which Postgres refuses to lock."""
+        stmt = (
+            select(TargetPlan)
+            .where(TargetPlan.id == target_plan_id)
+            .with_for_update(of=TargetPlan)
+            .execution_options(populate_existing=True)
+        )
+        return self.db.scalars(stmt).first()
+
     def list_by_user(self, user_id: uuid.UUID) -> list[TargetPlan]:
         stmt = (
             select(TargetPlan)

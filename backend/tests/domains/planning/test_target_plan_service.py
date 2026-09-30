@@ -91,6 +91,10 @@ def _make_repo(**overrides) -> MagicMock:
     repo.find_overlaps.return_value = []
     for k, v in overrides.items():
         setattr(repo, k, v)
+    # Revise and approve/reject read through the row-locked variant; tests
+    # that stub get_by_id get the same plan back from it.
+    if "get_by_id" in overrides and "get_by_id_for_update" not in overrides:
+        repo.get_by_id_for_update = overrides["get_by_id"]
     return repo
 
 
@@ -386,6 +390,27 @@ class TestStaleApproval:
 
         assert target_plan.updated_at is not PLAN_UPDATED_AT
         repo.db.refresh.assert_called_once_with(target_plan, ["updated_at"])
+
+    def test_revise_and_decide_both_take_the_row_lock(self):
+        """So a save and an approval landing at the same instant can't both
+        pass their checks (/code-review 2026-09-30)."""
+        manager = _make_user("Area Manager")
+        owner = _make_user("Sales Staff", manager_id=manager.id)
+        target_plan = _make_target_plan(user_id=owner.id)
+        repo = _make_repo(get_by_id_for_update=MagicMock(return_value=target_plan))
+        repo.db.get.return_value = owner
+        service = _make_service(repo)
+
+        service.update_target_plan(
+            target_plan.id, TargetPlanUpdate(accounts=_entries("50"), change_note="Added one"), current_user=owner
+        )
+        target_plan.updated_at = PLAN_UPDATED_AT
+        service.approve_or_reject_target_plan(
+            target_plan.id, status="APPROVED", current_user=manager, expected_updated_at=PLAN_UPDATED_AT
+        )
+
+        assert repo.get_by_id_for_update.call_count == 2
+        repo.get_by_id.assert_not_called()
 
 
 class TestOwnSbu:

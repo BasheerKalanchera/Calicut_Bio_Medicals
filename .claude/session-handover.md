@@ -44,8 +44,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   BR-PL-07/08/09 updated. 1068 pytest pass; ruff clean on planning; tsc
   clean; lint 0 errors (247 older warnings). `src/types/api.ts` not
   regenerated (Dev backend was down; screen uses its own types).
-- **Next:** optional medium `/code-review` of that commit (Basheer to
-  decide) → written E2E plan
+- Medium `/code-review` of `1a4843a` (2026-09-30): 1 finding, a save and
+  an approval at the same instant could both pass. Fixed with a row lock
+  (`get_by_id_for_update`, `FOR UPDATE OF target_plan`) on revise and
+  approve/reject; dry-run on Dev confirmed Postgres accepts it (plain
+  `FOR UPDATE` is refused, outer join). 1069 pytest pass; ruff clean.
+  Committed by Basheer (`git log --grep "row lock on revise"`).
+- **Next:** written E2E plan
   (checked against live Dev data, Simple/Complex tags) → E2E (restart Dev
   backend first) → Traceability 6.1/5.1 straight to Done (option a) →
   post-commit checklist.

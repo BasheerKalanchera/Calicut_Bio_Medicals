@@ -288,7 +288,7 @@ class TargetPlanService:
         change note, and submit=False keeps it a DRAFT. Once a plan has been
         submitted, every revision needs a change note, and it can't go back
         to DRAFT."""
-        target_plan = self.repository.get_by_id(target_plan_id)
+        target_plan = self.repository.get_by_id_for_update(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
         if target_plan.user_id != current_user.id:
@@ -349,7 +349,7 @@ class TargetPlanService:
         `expected_updated_at` is the plan's updated_at as the approver's
         screen loaded it; if the rep has saved since, this refuses with a
         409 so the screen can reload the latest version."""
-        target_plan = self.repository.get_by_id(target_plan_id)
+        target_plan = self.repository.get_by_id_for_update(target_plan_id)
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
         if target_plan.status == "DRAFT":
