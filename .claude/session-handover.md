@@ -37,23 +37,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   — one client republish. UAT user manual has no section for this screen;
   write one with the Part 1+2 UAT move.
 - Screen not yet clicked through on Dev.
-- **Step 5 fixes built 2026-09-30, committed by Basheer** (`git log --grep
-  "step 5 — code review fixes"`; plan section 4, step 5): stale-approval 409 (`expected_updated_at`), Rate Hospitals per-row
-  Save, change-note label by status, own-SBU on create, overlaps limited
-  to own territory, 2-decimal amounts, `selectinload` on list queries;
-  BR-PL-07/08/09 updated. 1068 pytest pass; ruff clean on planning; tsc
-  clean; lint 0 errors (247 older warnings). `src/types/api.ts` not
-  regenerated (Dev backend was down; screen uses its own types).
-- Medium `/code-review` of `1a4843a` (2026-09-30): 1 finding, a save and
-  an approval at the same instant could both pass. Fixed with a row lock
-  (`get_by_id_for_update`, `FOR UPDATE OF target_plan`) on revise and
-  approve/reject; dry-run on Dev confirmed Postgres accepts it (plain
-  `FOR UPDATE` is refused, outer join). 1069 pytest pass; ruff clean.
-  Committed by Basheer (`git log --grep "row lock on revise"`).
-- **Next:** written E2E plan
-  (checked against live Dev data, Simple/Complex tags) → E2E (restart Dev
-  backend first) → Traceability 6.1/5.1 straight to Done (option a) →
-  post-commit checklist.
+- **Step 5 done 2026-09-30:** fix list `1a4843a`; medium `/code-review`
+  of it found one race, fixed with a row lock `3907b88` (both pushed).
+  1069 pytest pass; ruff/tsc clean; lint 0 errors. `src/types/api.ts`
+  not regenerated (Dev backend was down; screen uses its own types).
+- **Step 6 — E2E plan committed** (`git log --grep "E2E test plan"`):
+  `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`, 38 steps
+  in 2026-Q4, kept as written (Basheer). Dev check found Vivek's and
+  Rudrappa's areas contain 0 hospitals (filed at zone level, above their
+  districts). **Still open:** Basheer's OK for setup step S1 (re-file 3
+  hospitals into Vivek's districts), and whether to add a read-only check
+  of how UAT hospitals are filed to the UAT move.
+- **Then:** E2E run (restart Dev backend first) → Traceability 6.1/5.1
+  straight to Done (option a) → post-commit checklist.
 - **API as built:** create/update body `{accounts[], brand_splits, submit,
   change_note}`; response `warnings` (`HIGH_POTENTIAL_ZERO`,
   `SAME_SBU_OVERLAP`) and `previous_approved_total_lakhs`; `GET

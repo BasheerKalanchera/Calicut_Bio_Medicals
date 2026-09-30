@@ -3,7 +3,7 @@
 **Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
-Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29. Step 5: `/code-review` high ran 2026-09-29; fix list agreed 2026-09-30 (section 4, step 5), not yet built.
+Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29. Step 5 done: `/code-review` high ran 2026-09-29; fix list built `1a4843a`; a medium `/code-review` of that commit found one race, fixed with a row lock `3907b88` (2026-09-30). Step 6: E2E plan written 2026-09-30 (`docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`), not yet run.
 **Changes 2026-09-29 (Basheer):** (1) the 29 Sep checkpoint found the build
 on track, so the fallback wasn't needed; (2) **no UAT move until Part 2 is
 also finished** — meanwhile the team sets Oct–Dec targets in the brand-wise
@@ -164,7 +164,8 @@ The options as offered:
    the hospital total is below it, show both totals to the approver.
 4. Business Rules / ADR updates (section 7).
 5. `/code-review` at **high** (approval workflow plus RLS), fix findings.
-   **Fix list agreed 2026-09-30 (not yet built; no database change):**
+   **Fix list agreed 2026-09-30, built `1a4843a` (no database change);
+   follow-up row lock `3907b88`:**
    - **Stale approval:** `TargetPlanApprovalDecision` gets required
      `expected_updated_at`; `approve_or_reject_target_plan` requires
      `PENDING_APPROVAL` and raises `ConflictError` (409) on a mismatch —
