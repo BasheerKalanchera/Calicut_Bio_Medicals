@@ -8746,3 +8746,50 @@ guard rail: a PreToolUse hook that stops a Bash command starting with
 `cd `. Item 5 → a structural check instead of a rule: the doc tidy-up (or
 a test) flags any migration that creates a SECURITY DEFINER function
 without a `REVOKE EXECUTE`. Items 2–4: watch items, no new rules.
+
+## 2026-09-30 — UAT backup
+
+`scripts/backup_uat.ps1` run with Basheer's go-ahead: `cabio_uat_2026-09-30.dump`
+(493,064 bytes), restore listing 472 entries (same as 29 Sep). 14 dumps now
+kept, none pruned.
+
+## 2026-09-30 — UAT bug: deal edit with products and stage change together (parked)
+
+**Report:** rep video from UAT — Customer 360 → Malabar Medical College
+ulliyeri (MMC) → Opportunities → EDIT "Edan F6 CTG machine single fhr";
+Lead → Order, Active → Won, Fast-Track, PO 126, added EDAN F6 at ₹1.40;
+Save → "At least one product must be added to advance to Qualified stage".
+
+**Root cause (from code, confirmed on `origin/uat` and `main`; UAT DB not
+touched):** Customer 360's edit form saves the deal first and posts new
+products afterwards; the server's product gate reads products from the DB,
+so it sees none. Project Directory's form does the same. Nothing was saved.
+Fast-Track waives only the demo-date gate, never the product gates. The
+deal page is immune: Products and the Edit window are separate panels with
+their own Save/Cancel. Also found: product add/delete failures on those two
+forms are silently swallowed.
+
+**How the approach moved:** (1) lighter "save products first" vs heavier
+"one package, all or nothing" → Basheer picked heavier, wanted it as an
+emergency UAT fix like 14 Sep. (2) Basheer's point: products and
+stage/status are two separate edits — the all-or-nothing concern dropped;
+the workaround is simply the right order. (3) Basheer: open the deal page
+from EDIT instead, one edit path everywhere → agreed. Checking that turned
+up that the deal page's Edit window has no Project field; changing a
+deal's project is possible only in Customer 360's edit form, and no screen
+can detach a deal from a project.
+
+**Correction:** I first said the project page's form also had a "Bid
+submission date" the deal page lacked — wrong; it's a project field, edited
+in the project's own form. Came from a grep that mixed the project form
+with the deal form.
+
+**Parked by Basheer** before the four approach decisions were answered.
+Rep told to do it in two saves or via the pipeline/deal page. Plan:
+`docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`. Backlog: the bug
+entry and "Front-end consistency audit" (Basheer's concern about duplicated
+screen code before hand-over to the customer's IT team).
+
+**Went wrong (Claude):** used `cd` in Bash again (repeat of 27/29 Sep —
+the proposed PreToolUse guard is still awaiting Basheer); the Bid-date
+over-claim above.

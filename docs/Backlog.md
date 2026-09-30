@@ -9,6 +9,43 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### UAT bug: deal edit from customer/project page fails when products and stage change together — parked (found 2026-09-30)
+
+A rep edited a deal from a customer's Opportunities tab (EDIT), added a
+product, moved Lead → Order and Active → Won in the same edit, and Save
+failed with "At least one product must be added to advance to Qualified
+stage". The form sends the stage change before the product. Project
+Directory's edit form has the same flaw; the deal page does not.
+- **Workaround (given to the rep by Basheer, 2026-09-30):** save the
+  product first, then edit again for stage/status; or open the deal from
+  the pipeline and use the deal page (Products Save first, then Edit).
+- **Plan:** `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md` — EDIT
+  opens the deal page, old forms removed, Project field added to the deal
+  page. Four decisions still "proposed"; to go to UAT as an emergency fix
+  once answered.
+
+### Front-end consistency audit — parked, undecided (raised 2026-09-30)
+
+The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
+form exists in about four separate copies (Customer 360, Project Directory,
+Opportunity Detail, QuickLeadModal — e.g. Fast-Track, PO Number, Loss/Hold
+Reason each built 3–4 times), so fixes and fields reach one copy and not
+the others (the Project field exists only on Customer 360's copy). The
+three largest screens are ~1,400–2,000 lines each. Server-side rules are in
+one place and well tested; the problem is in the screens. Basheer's concern:
+maintainability once handed to the customer's IT team.
+- **Prevention (proposed):** one shared edit form per business object; a
+  "never copy a form" rule in `docs/Frontend-Implementation-Standards.md`
+  checked at code review; an automatic check flagging the same form field
+  in more than one screen.
+- **Options (not chosen):** *Lighter (recommended)* — focused audit of
+  the screens for duplicated forms/logic (~half a day), ranked findings,
+  fixes in batches of ~1–2 days, deal forms first. *Heavier* — full
+  consistency review of server and screens against all standards docs,
+  several days before fixing starts.
+- **Order (proposed):** the deal-edit hotfix above first (it already
+  removes two copies), then the rule and check, then the audit.
+
 ### Cap SQLAlchemy below 2.1 in `backend/pyproject.toml` — urgent (found 2026-09-27)
 
 `pyproject.toml` has `sqlalchemy>=2.0.0` with no upper bound. SQLAlchemy

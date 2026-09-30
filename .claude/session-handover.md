@@ -5,6 +5,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 
 
+## Deal edit from customer/project page — UAT bug, parked 2026-09-30
+
+- Parked by Basheer (wants a break). Plan with 4 open decisions:
+  `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`; Backlog entries
+  for the bug and "Front-end consistency audit". Rep has the workaround.
+- **Next:** when Basheer returns to it, get the 4 decisions, then build as
+  a hotfix off `origin/uat`.
+- Still due today: documentation tidy-up (not started).
+
 ## Hospital-wise target planning — Part 1, plan steps 5–7
 
 - Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`
