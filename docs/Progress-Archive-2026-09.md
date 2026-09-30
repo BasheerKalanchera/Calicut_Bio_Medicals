@@ -8829,3 +8829,31 @@ template's bug-fix section). Items 2, 3, 5: watch items.
 First check in a fresh session: `cd` in Bash and `Set-Location` in
 PowerShell were both refused by the PreToolUse hook with its explanatory
 message. Guard rail confirmed working; handover reminder removed.
+
+## 2026-09-30 — UAT audit log review → Audit Trail Redesign planned
+
+Basheer noticed catalogue changes from 29 Sep missing from the UAT Audit
+Log. Read-only UAT read (approved; UAT at `0054`): 14 audit rows that
+day. Findings:
+- **Product switch half-recorded.** Basheer repointed 3 deals from the
+  old wall-mount stand to Equipwell Wall Mount Stand: the 3 old-line
+  DELETEs were logged; the 3 new lines left nothing, because the trigger
+  never logs INSERT (2026-08-31 decision, meant for new top-level
+  records, also swallowed lines added to existing deals).
+- **Four product renames** (17:23–17:30) were direct Supabase dashboard
+  edits by Basheer — `changed_by = NULL` is correct. But each product's
+  own `updated_by` still named the last app editor (Haroon ×3, Basheer
+  ×1) because `update_updated_at()` refreshes `updated_at` only.
+- **Claude misread (Claude):** trusted the stale `updated_by` over the
+  audit log and called it a "missing user on product edits" bug, even
+  putting a fix step in the draft plan. Basheer corrected it. Lesson:
+  when a record's own "last changed by" and the audit log disagree, ask
+  how the change was made before calling either one a bug.
+- Coverage gaps: only 7 of 38 tables tracked; four save paths still
+  wipe-and-rewrite their lines.
+
+Outcome: `docs/Audit-Trail-Redesign-Implementation-Plan.md` (draft,
+lighter option A) — child-line and document additions to existing
+records logged, creation of top-level records still not, noise columns
+ignored, broader coverage, direct edits clear `updated_by`. Several
+decisions still proposed.
