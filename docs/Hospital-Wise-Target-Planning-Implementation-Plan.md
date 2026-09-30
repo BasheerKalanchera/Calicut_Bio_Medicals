@@ -3,7 +3,7 @@
 **Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
-Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29; step 5 (`/code-review` high) next.
+Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29. Step 5: `/code-review` high ran 2026-09-29; fix list agreed 2026-09-30 (section 4, step 5), not yet built.
 **Changes 2026-09-29 (Basheer):** (1) the 29 Sep checkpoint found the build
 on track, so the fallback wasn't needed; (2) **no UAT move until Part 2 is
 also finished** — meanwhile the team sets Oct–Dec targets in the brand-wise
@@ -38,6 +38,11 @@ The fallback decision (29 Sep) found the build on track.
 - Old Dev test targets stay readable; revising one requires hospitals — Basheer, 2026-09-29
 - Old coverage-plan tables removed (Dev done in 0055; UAT checked empty before the move) — Basheer, 2026-09-29
 - "Was ₹X L" figure: cleared when a revision is approved, kept when rejected — Basheer, 2026-09-29
+- Approve/Reject refused if the plan changed since the manager opened it, and allowed only while waiting for approval (no "being edited" lock) — Basheer, 2026-09-30
+- Rate Hospitals: a Save button per row saves rating and note together — Basheer, 2026-09-30
+- Change note shown as "Why it changed" while waiting for approval, "Last change (approved)" after — Basheer, 2026-09-30
+- Own-SBU plans only (except Admin/GM), overlap check limited to own territory, 2-decimal amounts, faster plan lists — Basheer, 2026-09-30
+- No lock on the overlap helper for now (it already returns nothing outside the app); Backlog note instead — Basheer, 2026-09-30
 
 ## 1. In plain terms
 
@@ -159,6 +164,31 @@ The options as offered:
    the hospital total is below it, show both totals to the approver.
 4. Business Rules / ADR updates (section 7).
 5. `/code-review` at **high** (approval workflow plus RLS), fix findings.
+   **Fix list agreed 2026-09-30 (not yet built; no database change):**
+   - **Stale approval:** `TargetPlanApprovalDecision` gets required
+     `expected_updated_at`; `approve_or_reject_target_plan` requires
+     `PENDING_APPROVAL` and raises `ConflictError` (409) on a mismatch —
+     "The rep changed this plan while you were reviewing it. Here is the
+     latest version. Please review again." Frontend sends the value, and on
+     409 shows the message, closes the dialog and refetches.
+     `update_target_plan` sets `updated_at = func.now()` so a
+     hospital-only or split-only edit still changes it, then refreshes.
+   - **Rate Hospitals:** per-row Save (rating + note together); no save
+     on pick or on blur.
+   - **`TargetPlanDetails`:** "Why it changed" while PENDING_APPROVAL,
+     "Last change (approved): …" after.
+   - **Own SBU:** `create_target_plan` refuses another SBU unless Admin/GM.
+   - **Overlaps:** `check_overlaps` drops hospitals outside
+     `_territory_zone_ids`. No `REVOKE` migration (see Backlog).
+   - **Amounts:** `decimal_places=2` on `planned_amount_lakhs` and
+     `split_amount_lakhs` (the dialog already rounds, so no UI change).
+   - **Lists:** `selectinload` of `accounts` and `brand_splits` on the
+     three list queries.
+   - Tests for each; BR-PL-08 gains "the approver decides only on the
+     latest version, and only while it's waiting for approval".
+   - Not now: `BaseRepository.update` stale `updated_at` for all domains,
+     duplicated `_ACCOUNT_NOLOADS`/IST helpers (Backlog); `/zone-rollup`
+     kept for Part 2.
 6. Written manual E2E test plan, checked against live Dev data; run it.
 7. Commit, post-commit checklist. The UAT move waits for Part 2
    (2026-09-29).

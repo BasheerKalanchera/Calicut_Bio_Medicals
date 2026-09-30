@@ -245,6 +245,23 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Hospital-wise planning: overlap helper not locked to the app.**
+  `cabio_app_plan_overlap` (SECURITY DEFINER) keeps Supabase's default
+  `EXECUTE` grants. Harmless today: outside the app's session settings
+  it returns nothing. Add a `REVOKE EXECUTE … FROM PUBLIC, anon,
+  authenticated` migration if it's ever changed to answer without knowing
+  who's asking. Basheer, 2026-09-30 (`/code-review` 2026-09-29).
+
+- **Saves return a stale `updated_at` in every domain.**
+  `BaseRepository.update` only flushes, so the value the `trg_updated_at`
+  trigger writes isn't re-read into the response. Target plans get a
+  narrow fix (hospital-wise planning step 5); other domains only matter
+  if a screen starts comparing `updated_at`. `/code-review` 2026-09-29.
+
+- **Planning: duplicated helpers.** `_ACCOUNT_NOLOADS` (planning and
+  account repositories) and the IST date helpers are copied rather than
+  shared. Tidy-up only. `/code-review` 2026-09-29.
+
 - **Brand-Level Target Planning: "splits sum to the target" isn't enforced
   at the database layer.** Found by `/code-review` (high effort) on the
   feature's commits, 2026-09-23. `target_plan_brand_split` rows summing to

@@ -29,42 +29,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   — one client republish. UAT user manual has no section for this screen;
   write one with the Part 1+2 UAT move.
 - Screen not yet clicked through on Dev.
-- **Step 5 in progress — `/code-review` high ran 2026-09-29 evening on
-  `e55c112~1..bfeef46`; 10 findings, the serious ones checked against the
-  code (real). Shown to Basheer in plain language; parked for the night.
-  Nothing fixed yet. First thing next session: get his 4 answers:**
-  - **Q1 (finding 1, stale approve):** `approve_or_reject_target_plan`
-    only blocks DRAFT → stale click approves an unseen revision; reject on
-    an APPROVED plan loses the BR-PL-05 figure. *Lighter (recommended):*
-    require `status == PENDING_APPROVAL` + approval list refetches before
-    deciding. *Heavier:* also send the `updated_at` seen, refuse if
-    changed — needs `BaseRepository.update` to re-read the trigger-written
-    `updated_at` (all domains).
-  - **Q2 (Rate Hospitals row vanishes):** default "Not rated yet" filter +
-    `invalidateQueries(["accounts"])` drops the row before the note can be
-    typed; note-first saves against NOT_CLASSIFIED. *Recommended:* rated
-    rows stay on screen until the filter changes / page left. *Alt:* per-row
-    Save (rating + note together).
-  - **Q3 (old change note shown forever in `TargetPlanDetails`):**
-    *Recommended:* "Why it changed" only while PENDING_APPROVAL, after that
-    "Last change (approved): …". *Alt:* clear `change_note` on approve.
-  - **Q4: yes/no to these fixes:**
-    - (a) non-Admin/GM may only create plans in their own SBU (no check in
-      `create_target_plan`; `target_plan_write` RLS checks only `user_id`)
-    - (b) `/overlaps` → `check_overlaps` has no territory filter, and
-      `cabio_app_plan_overlap` (SECURITY DEFINER) has no `REVOKE EXECUTE`:
-      filter by `_territory_zone_ids`, plus migration `0057` REVOKE (Dev only)
-    - (c) `planned_amount_lakhs` `decimal_places=2` (dialog rounds per row,
-      totals unrounded)
-    - (d) `selectinload(accounts, brand_splits)` on the three list queries
-      (N+1)
-  - Recommended **not** now: stale `updated_at` (Backlog unless Q1 =
-    heavier); `/zone-rollup` unused (kept per 29 Sep decision, check
-    visibility in Part 2); duplicated `_ACCOUNT_NOLOADS`/IST helpers
-    (Backlog).
-  - Full review output: this session's task file
-    `tasks/aab7ec594af9daa8d.output` (scratch, may be gone) — the list
-    above is the record.
+- **Step 5 — fix list agreed 2026-09-30, not yet built.** `/code-review`
+  high ran 2026-09-29. Basheer answered all 4 questions; the agreed fixes
+  (no database change) are in the plan's section 4, step 5, and its
+  Decisions list. Deferred items went to Backlog. **Parked 2026-09-30
+  for an emergency UAT fix — Basheer still has to say "go" before any
+  code edits.**
 - **After fixes:** pytest/ruff/tsc/lint → propose commit → written E2E plan
   (checked against live Dev data, Simple/Complex tags) → E2E (restart Dev
   backend first) → Traceability 6.1/5.1 straight to Done (option a) →
