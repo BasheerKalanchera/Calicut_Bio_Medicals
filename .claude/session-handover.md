@@ -42,9 +42,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Step 5 — fix list agreed 2026-09-30, not yet built.** `/code-review`
   high ran 2026-09-29. Basheer answered all 4 questions; the agreed fixes
   (no database change) are in the plan's section 4, step 5, and its
-  Decisions list. Deferred items went to Backlog. **Parked 2026-09-30
-  for an emergency UAT fix — Basheer still has to say "go" before any
-  code edits.**
+  Decisions list. Deferred items went to Backlog. **Basheer said go
+  2026-09-30; code fixes not started yet (paused for a break).**
 - **After fixes:** pytest/ruff/tsc/lint → propose commit → written E2E plan
   (checked against live Dev data, Simple/Complex tags) → E2E (restart Dev
   backend first) → Traceability 6.1/5.1 straight to Done (option a) →
