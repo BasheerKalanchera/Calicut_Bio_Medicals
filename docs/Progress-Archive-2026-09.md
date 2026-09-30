@@ -8949,3 +8949,36 @@ writing the plan, which surfaced the real UAT problem.
 watch items. Item 2: a possible CLAUDE.md line ("when a read-only check
 would reduce a later risk and costs little, recommend running it now")
 offered; Basheer didn't take it up, so it stays a watch item.
+
+## 2026-09-30 — Hospital-wise planning Part 1: E2E run started
+
+- Pre-flight P1–P3 and setup S1 pass (Dev at `0056`; KIMS/TH2/TH3 now in
+  Trivandrum/Kollam/Kottayam, so Vivek's area holds exactly those three).
+- Section A (Rate Hospitals, steps 1–5) pass; read-only check confirmed
+  KIMS High (with the edited note), TH2 Medium, TH3 Low, set by Haroon.
+- **Bug found (Basheer):** on Rate Hospitals the search box and filters
+  scrolled away with the list. Cause: the whole screen was one scrolling
+  box, so the filter bar scrolled too. Target & Coverage Planning and Brand Target
+  Tracking had the same layout. All three now split into a fixed top bar
+  and a scrolling body (Rate Hospitals also keeps its column headings
+  pinned). The "pinned filter bar" convention was only ever copied between
+  screens, never written down — now Frontend-Implementation-Standards §6.1
+  plus a checklist line. tsc clean; eslint 0 errors on the three files.
+- Request recording in the test tab showed none of the rating saves,
+  though Basheer used that tab. Likely cause: the recorder holds about 200
+  entries, and a reload of the Vite dev app fills it with ~200 module
+  files, so later API calls don't show. Clear the recorder
+  (`read_network_requests` with `clear: true`) after every page load and
+  right before each save step. Signing in as another user reloads the
+  page and loses the recording again (steps 13–14), so after a save step
+  Claude now reads the saved record back through the app's own read
+  endpoints in the tester's session. That works reliably.
+- Sections B–C (steps 6–12) pass. Step 8: Vivek's direct rating change
+  refused with 403. **Second layout bug (Basheer):** the side menu's
+  "Target & Coverage Planning" wraps to two lines and was centred. Cause:
+  MUI buttons centre wrapped text even with `justifyContent: flex-start`.
+  Fixed with `textAlign: left` on the menu buttons; Frontend Standards §6.6
+  item 2 widened to cover wrapping labels.
+- Button wording made consistent (Basheer): Target & Coverage Planning's
+  quarterly view said "Plan Target" while the annual view said "Plan".
+  Both now use Plan / Continue / Revise. No other doc used "Plan Target".

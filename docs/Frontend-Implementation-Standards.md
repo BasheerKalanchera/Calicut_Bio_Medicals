@@ -182,6 +182,23 @@ This section defines what the frontend expects from any batch counts endpoint. B
 
 ## 6. Component Patterns
 
+### 6.1 Pinned Search/Filter Bar (added 2026-09-30)
+
+Every list or dashboard screen keeps its search box, filters and period/SBU
+pickers fixed at the top; only the content below scrolls. Reference:
+`CustomerDirectoryScreen.tsx`.
+
+- Outer `Box`: `height: "100%"` (or `flex: 1`), `display: "flex"`,
+  `flexDirection: "column"`, `overflow: "hidden"`.
+- Filter bar `Box`: `flexShrink: 0`.
+- Content `Box`: `flex: 1`, `overflowY: "auto"`, `minHeight: 0` (without
+  `minHeight: 0` the flex child grows instead of scrolling).
+- A long table inside the content box also gets `<Table stickyHeader>` so
+  its column headings stay visible.
+- Never put `overflow: "auto"` on the outer `Box` — the filters then scroll
+  away with the list (Rate Hospitals, Target & Coverage Planning and Brand
+  Target Tracking all shipped this way; fixed 2026-09-30).
+
 ### 6.2 Form Modals
 
 - Enter key in form modals must not submit the form. Add `onKeyDown` handling at the `<form>` element (see `FormModal.tsx`), not per-input.
@@ -219,6 +236,7 @@ Things that behave differently from a native element or from older MUI docs/exam
 1. **A `select` field defaulting to an empty value must show its placeholder text, not render blank.** MUI hides the selected text whenever the value is `""`, even if a matching `MenuItem value=""` exists with visible text (e.g. "All Owners", "Select account") — unlike a native `<select>`, which always shows it. Required fix for every such field: add `slotProps={{ select: { displayEmpty: true } }}`.
    - If the field's `MenuItem value=""` text already explains the field on its own (e.g. "Select account", "Me (default)"), **don't also give it a `label`** — a label plus `displayEmpty` overlap, because the label only auto-shrinks (moves out of the way, onto the border) when there's a value or focus, and `displayEmpty` shows text without either. Pick one: no label (placeholder text stands alone, as done in `OpportunityPipelineScreen.tsx`'s Owner filter and `LogActivityModal.tsx`'s Account/Assigned To/Next Action Owner fields), or keep the label and force it to sit shrunk regardless of value via `slotProps={{ inputLabel: { shrink: true } }}` alongside `displayEmpty`.
 2. **A button containing several stacked lines of text needs `alignItems: "stretch"`.** MUI's button components (`Button`, `ButtonBase`) default to centering their contents horizontally. If you stack multiple full-width rows inside one (like a card built from a button), every row will shrink to its own width and center itself unless you override this.
+   - The same default hits a **single label that wraps onto two lines**: `justifyContent: "flex-start"` only moves the text block left; the wrapped lines inside it are still centred. Any left-aligned button whose label could wrap (menu items, list-row buttons) also needs `textAlign: "left"`. Found 2026-09-30 on the side menu's "Target & Coverage Planning" (`DemoApp.tsx`).
 3. **Scrolling the active pill/tab into view in a horizontally-scrolling bar is not automatic — copy the existing recipe.** `Customer360Screen.tsx`'s `handleTabChange` has a working version: give the scroll container a ref, tag each pill with a `data-*` attribute, look it up, compute its centered scroll position from `offsetLeft`/`offsetWidth`, and call `container.scrollTo(...)` inside a short `setTimeout`. Reuse this exact approach rather than writing new scroll logic per screen.
 4. **Don't use MUI's `Stack` component.** It causes a TypeScript compile error in this project's specific combination of library versions (MUI 9.1.2 / React 19.2.5 / TS 6.0.3) — not a mistake in how it's used, just broken here. Use `Box` with flex `sx` properties instead, which is what every migrated file already does. *(Version-bound — recheck on upgrade.)*
 5. **`InputLabelProps` no longer exists in this MUI version.** Older examples use it to control a field's label (e.g. keeping a datetime field's label shrunk). Use `slotProps={{ inputLabel: {...} }}` instead. *(Version-bound.)*
@@ -306,6 +324,7 @@ Use this checklist when implementing any new list screen + detail screen pair:
 - [ ] File is `.tsx`/`.ts`, not `.jsx`/`.js` (ADR-033)
 - [ ] No `className` prop used anywhere in the file — styling is via MUI `sx` (§6.4, ADR-031)
 - [ ] List screen uses always-mounted `sx` display-toggle pattern in `DemoApp.tsx` (§2.1)
+- [ ] Search/filter bar stays pinned; only the list scrolls (§6.1)
 - [ ] All data fetching via `useQuery`; all writes via `useMutation` or `await` + `invalidateQueries` — no manual `.then()` fetch chains, no module-level cache (§3, §4.1, ADR-032)
 - [ ] List screen passes full entity object (not just ID) to `onSelectEntity` callback
 - [ ] List screen fires lazy batch counts fetch as a dependent `useQuery` after the list renders (§4.2)

@@ -87,8 +87,9 @@ export default function BrandTargetTrackingScreen() {
   if (!isAdmin) return null;
 
   return (
-    <Box sx={{ height: "100%", overflow: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5 }}>
+    <Box sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Fixed: quarter + SBU pickers — do not scroll */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, flexShrink: 0, px: 3, pt: 3, pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton size="small" onClick={() => setPeriod((p) => shiftPlanningPeriod(p, -1))} title="Previous quarter">
             <Box component="span">◀</Box>
@@ -112,52 +113,55 @@ export default function BrandTargetTrackingScreen() {
         </TextField>
       </Box>
 
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Brand vs. Committed</Typography>
-        {rollupsFailed && (
-          <Alert severity="error" sx={{ mb: 1.5 }}>
-            Couldn't load brand totals — the figures below are incomplete. Try refreshing.
-          </Alert>
-        )}
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Brand</TableCell>
-              <TableCell>Vendor Target</TableCell>
-              <TableCell>Team Committed</TableCell>
-              <TableCell>Gap</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map(({ brand, rollup }) => {
-              const vendorTarget = rollup?.vendor_target ?? null;
-              const gap = rollup?.gap ?? null;
-              return (
-                <TableRow key={brand.id}>
-                  <TableCell>{brand.name}</TableCell>
-                  <TableCell>{vendorTarget !== null ? formatLakhs(Number(vendorTarget)) : "Not set"}</TableCell>
-                  <TableCell>{rollup ? formatLakhs(Number(rollup.committed_total)) : "—"}</TableCell>
-                  <TableCell sx={{ color: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main" }}>
-                    {gap !== null ? formatLakhs(Number(gap)) : "—"}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button size="small" onClick={() => openEdit(brand, vendorTarget)}>
-                      {vendorTarget !== null ? "Revise" : "Set Target"}
-                    </Button>
+      {/* Scrollable content */}
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3 }}>
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Brand vs. Committed</Typography>
+          {rollupsFailed && (
+            <Alert severity="error" sx={{ mb: 1.5 }}>
+              Couldn't load brand totals — the figures below are incomplete. Try refreshing.
+            </Alert>
+          )}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Brand</TableCell>
+                <TableCell>Vendor Target</TableCell>
+                <TableCell>Team Committed</TableCell>
+                <TableCell>Gap</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map(({ brand, rollup }) => {
+                const vendorTarget = rollup?.vendor_target ?? null;
+                const gap = rollup?.gap ?? null;
+                return (
+                  <TableRow key={brand.id}>
+                    <TableCell>{brand.name}</TableCell>
+                    <TableCell>{vendorTarget !== null ? formatLakhs(Number(vendorTarget)) : "Not set"}</TableCell>
+                    <TableCell>{rollup ? formatLakhs(Number(rollup.committed_total)) : "—"}</TableCell>
+                    <TableCell sx={{ color: gap === null ? "text.secondary" : Number(gap) < 0 ? "success.main" : "warning.main" }}>
+                      {gap !== null ? formatLakhs(Number(gap)) : "—"}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button size="small" onClick={() => openEdit(brand, vendorTarget)}>
+                        {vendorTarget !== null ? "Revise" : "Set Target"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {rows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Typography color="text.secondary">No brands set up for this SBU yet.</Typography>
                   </TableCell>
                 </TableRow>
-              );
-            })}
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5}>
-                  <Typography color="text.secondary">No brands set up for this SBU yet.</Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
       </Box>
 
       <FormModal

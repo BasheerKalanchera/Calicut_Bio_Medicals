@@ -51,11 +51,15 @@ checks. Anything that saves to Dev is "Basheer clicks, Claude watches"
 ## Pre-flight
 
 P1. **(Claude)** Dev `alembic current` = `0056 (head)`; `docs/Physical-Schema.sql`
-    regenerated since `0056` (`70e41e1`). —
-P2. **(Basheer)** Restart the Dev backend; confirm it's running. —
+    regenerated since `0056` (`70e41e1`). **Pass** 2026-09-30 —
+    `alembic_version` = `0056`; schema last regenerated in `70e41e1`,
+    the same commit as `0056`.
+P2. **(Basheer)** Restart the Dev backend; confirm it's running.
+    **Pass** 2026-09-30 (Basheer restarted it). —
 P3. **(Claude)** Open a test browser tab and start request recording.
     Warn before any frontend file edit while it's open (hot reload can
-    reset the logged-in user). —
+    reset the logged-in user). **Pass** 2026-09-30 — test tab on
+    `localhost:5173`, logged in as Haroon; request recording started. —
 
 ## S — Setup (Simple) — *approved by Basheer, 2026-09-30*
 
@@ -63,7 +67,11 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     districts (they stay inside Arun's South Kerala too):
     **KIMS Hospital Trivandrum → Trivandrum**, **Test hospital 2 →
     Kollam**, **Test hospital 3 → Kottayam**. **Expected:** Vivek's
-    picker (step 10) then offers exactly these three. —
+    picker (step 10) then offers exactly these three. **Pass** 2026-09-30
+    — Basheer re-filed them; read-only check: KIMS → Trivandrum, TH2 →
+    Kollam, TH3 → Kottayam (all districts under South Kerala). Vivek's
+    area now holds exactly these three; Rudrappa's still none (step 36).
+    All still Not rated. —
 
 ## A — Rate Hospitals (Simple, as Haroon)
 
@@ -80,6 +88,12 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
    each (no note). Leave aster medicity Not rated. —
 5. On KIMS, change only the note, Save. Filter **High**, check the new
    note is kept and the rating is still High. —
+   **Steps 1–5: Pass** 2026-09-30 (Basheer). **Issue found:** the
+   search box and filters scroll away with the list instead of staying
+   pinned at the top, unlike Customer Directory. **Fixed** 2026-09-30
+   on all three planning screens (Frontend Standards §6.1); rechecked
+   in the browser on Rate Hospitals. DB check confirmed the three
+   ratings and KIMS's edited note. —
 
 ## B — Who sees ratings and notes (Simple, one Complex)
 
@@ -89,12 +103,20 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
    shows the **High** chip but **no note**. —
 8. **(Complex, Claude, Vivek's session)** `PATCH
    /accounts/{KIMS}/business-potential` → **403**; rating unchanged. —
+   **Steps 6–7: Pass** 2026-09-30 (Basheer). **Step 8: Pass** 2026-09-30
+   — from Vivek's session (token for vivek@cabio-demo.com), sent the
+   same values KIMS already had (High + current note): **403** "Only
+   Admin/GM may rate a hospital's Business Potential." Before the call,
+   Vivek's own read showed High with the note hidden. The follow-up
+   database read was blocked by the auto-mode permission check; with the
+   same values sent, a wrong success could only have changed who set the
+   rating and when. —
 
 ## C — Vivek's draft (Simple)
 
 9. As Vivek, open **Target & Coverage Planning**, quarter **2026-Q4**.
-   **Expected:** no target; a **Set** button. —
-10. Click Set, open the hospital picker. **Expected:** only KIMS, Test
+   **Expected:** no target; a **Plan** button. —
+10. Click Plan, open the hospital picker. **Expected:** only KIMS, Test
     hospital 2 and Test hospital 3, each with its rating chip. Searching
     "Al Shifa" or "aster medicity" finds nothing. —
 11. Add all three at **₹0**. **Expected:** KIMS gets a **red** warning,
@@ -102,6 +124,12 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     **Expected:** saved as **Draft** (₹0 is allowed on a draft). —
 12. As Arun (2026-Q4): Vivek's draft is **not** in Needs Your Approval
     and **not** in the team list. —
+    **Steps 9–12: Pass** 2026-09-30 (Basheer). Step wording corrected
+    from "Set" to "Plan"; the quarterly view's "Plan Target" button was renamed "Plan" to match the annual view (Plan / Continue / Revise in both; Basheer, 2026-09-30). **Issue
+    found:** in the side menu, "Target & Coverage Planning" wraps to two
+    lines and the text is centred, unlike the other items. **Fixed**
+    2026-09-30 (`textAlign: left` on menu buttons; Frontend Standards
+    §6.6 item 2); rechecked in the browser. —
 
 ## D — Submit (Simple, as Vivek)
 
@@ -114,13 +142,18 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     — the split must equal ₹45. Change EDAN to **₹45**, Submit.
     **Expected:** **Pending Approval**; Test hospital 3's warning shown
     but doesn't block. —
+    **Steps 13–14: Pass** 2026-09-30 (Basheer). Read back through the
+    app in Vivek's session: Pending Approval, ₹45.00; KIMS ₹30 Weekly,
+    TH2 ₹15 Monthly, TH3 ₹0 Quarterly; EDAN ₹45. (KIMS's objective
+    was saved with the quote marks from the instruction text — typing
+    artefact, not a bug.) —
 
 ## E — Same-SBU overlap (Simple, one Complex)
 
-15. As Arun, 2026-Q4, **Set**: add **KIMS ₹20** and **aster medicity
+15. As Arun, 2026-Q4, **Plan**: add **KIMS ₹20** and **aster medicity
     ₹10**. **Expected:** a warning on KIMS naming **Vivek**. Split EDAN
     ₹30, **Submit** — the warning doesn't block. —
-16. As Nishad, 2026-Q4, **Set**: add **Al Shifa Hospital Perinthalmanna
+16. As Nishad, 2026-Q4, **Plan**: add **Al Shifa Hospital Perinthalmanna
     ₹10**, split EDAN ₹10, **Submit**. —
 17. **(Complex, Claude)** `GET /planning/targets/overlaps` for Al Shifa,
     Critical Care, 2026-Q4, in Vivek's then Arun's session.
@@ -199,10 +232,10 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 
 ## M — Territory edge cases (Simple)
 
-35. As Basheer K (SBU Manager, Imaging), 2026-Q4, **Set**, open the
+35. As Basheer K (SBU Manager, Imaging), 2026-Q4, **Plan**, open the
     picker. **Expected:** hospitals from any zone (e.g. Al Shifa and Aster
     DM). **Cancel** — don't save. —
-36. As Rudrappa, 2026-Q4, **Set**. **Expected:** the picker offers no
+36. As Rudrappa, 2026-Q4, **Plan**. **Expected:** the picker offers no
     hospitals, so no plan can be submitted. **Cancel.** —
 
 ## N — Regression (Simple)

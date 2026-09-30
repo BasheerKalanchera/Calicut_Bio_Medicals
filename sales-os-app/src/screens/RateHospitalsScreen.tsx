@@ -57,8 +57,9 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
   const total = data?.total ?? 0;
 
   return (
-    <Box sx={{ height: "100%", overflow: "auto", p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
+    <Box sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Fixed: search + filters — does not scroll */}
+      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", flexShrink: 0, px: 3, pt: 3, pb: 2 }}>
         <TextField
           size="small"
           placeholder="Search hospitals"
@@ -84,51 +85,54 @@ export default function RateHospitalsScreen({ active }: { active: boolean }) {
         </TextField>
       </Box>
 
-      {isError && (
-        <Alert severity="error" action={<Button size="small" onClick={() => refetch()}>Retry</Button>}>
-          Failed to load hospitals
-        </Alert>
-      )}
+      {/* Scrollable list content */}
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+        {isError && (
+          <Alert severity="error" action={<Button size="small" onClick={() => refetch()}>Retry</Button>}>
+            Failed to load hospitals
+          </Alert>
+        )}
 
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Hospital</TableCell>
-              <TableCell>Zone</TableCell>
-              <TableCell sx={{ width: "10rem" }}>Business Potential</TableCell>
-              <TableCell>Notes (Admin/GM only)</TableCell>
-              <TableCell sx={{ width: "6rem" }} />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {accounts.map((a) => (
-              <RatingRow key={a.id} account={a} />
-            ))}
-            {!isLoading && accounts.length === 0 && (
+        <Box sx={{ bgcolor: "background.paper", borderRadius: 2 }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={5}>
-                  <Typography color="text.secondary">
-                    {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
-                  </Typography>
-                </TableCell>
+                <TableCell>Hospital</TableCell>
+                <TableCell>Zone</TableCell>
+                <TableCell sx={{ width: "10rem" }}>Business Potential</TableCell>
+                <TableCell>Notes (Admin/GM only)</TableCell>
+                <TableCell sx={{ width: "6rem" }} />
               </TableRow>
-            )}
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={5}><Typography color="text.secondary">Loading...</Typography></TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          count={total}
-          page={page}
-          onPageChange={(_e, p) => setPage(p)}
-          rowsPerPage={PAGE_SIZE}
-          rowsPerPageOptions={[PAGE_SIZE]}
-        />
+            </TableHead>
+            <TableBody>
+              {accounts.map((a) => (
+                <RatingRow key={a.id} account={a} />
+              ))}
+              {!isLoading && accounts.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5}>
+                    <Typography color="text.secondary">
+                      {potentialFilter === "NOT_CLASSIFIED" ? "Every hospital matching these filters is rated." : "No hospitals match these filters."}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+              {isLoading && (
+                <TableRow>
+                  <TableCell colSpan={5}><Typography color="text.secondary">Loading...</Typography></TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <TablePagination
+            component="div"
+            count={total}
+            page={page}
+            onPageChange={(_e, p) => setPage(p)}
+            rowsPerPage={PAGE_SIZE}
+            rowsPerPageOptions={[PAGE_SIZE]}
+          />
+        </Box>
       </Box>
     </Box>
   );

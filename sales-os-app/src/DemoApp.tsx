@@ -452,6 +452,7 @@ export default function DemoApp() {
                             sx={{
                               width: "100%",
                               justifyContent: "flex-start",
+                              textAlign: "left", // a label that wraps (e.g. "Target & Coverage Planning") stays left-aligned — §6.6 item 2
                               gap: 1.5,
                               px: 1.75,
                               py: 1,

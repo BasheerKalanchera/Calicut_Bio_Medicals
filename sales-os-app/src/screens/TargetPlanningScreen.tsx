@@ -315,8 +315,9 @@ export default function TargetPlanningScreen() {
   };
 
   return (
-    <Box sx={{ height: "100%", overflow: "auto", p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5 }}>
+    <Box sx={{ height: "100%", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      {/* Fixed: period picker + Quarterly/Annual toggle — do not scroll */}
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, flexShrink: 0, px: 3, pt: 3, pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton
             size="small"
@@ -345,289 +346,292 @@ export default function TargetPlanningScreen() {
         </ToggleButtonGroup>
       </Box>
 
-      {showMyTarget && (
-      <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Target</Typography>
-        {!isAnnual ? (
-          <>
-            {mySbus.length > 1 && (
-              <Typography sx={{ mb: 1.5 }}>
-                Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
-              </Typography>
-            )}
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>SBU</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {myPeriodTargets.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell>{t.sbu.name}</TableCell>
-                    <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                    <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
-                    <TableCell align="right">
-                      <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {myAvailableSbus.map((sbu) => (
-                  <TableRow key={sbu.id}>
-                    <TableCell>{sbu.name}</TableCell>
-                    <TableCell colSpan={2}>
-                      <Typography color="text.secondary">No target set for {period} yet.</Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan Target</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        ) : (
-          <>
-            {myAnnualBySbu.length > 1 && (
-              <Typography sx={{ mb: 1.5 }}>
-                Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
-              </Typography>
-            )}
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>SBU / Quarter</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {myAnnualBySbu.map((block) => (
-                  <Fragment key={block.sbu.id}>
-                    <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-                      <TableCell>{block.sbu.name} — Annual Total</TableCell>
-                      <TableCell>{formatLakhs(block.total)}</TableCell>
-                      <TableCell />
-                      <TableCell align="right" />
-                    </TableRow>
-                    {yearQuarters.map((q) => {
-                      const t = block.byQuarter[q];
-                      return (
-                        <TableRow key={`${block.sbu.id}-${q}`}>
-                          <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
-                          <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
-                          <TableCell>
-                            {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-              </TableBody>
-            </Table>
-          </>
-        )}
-      </Box>
-      )}
-
-      {staleNotice && (
-        <Alert severity="warning" onClose={() => setStaleNotice(null)}>
-          {staleNotice}
-        </Alert>
-      )}
-
-      {pendingApproval.length > 0 && (
+      {/* Scrollable content */}
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+        {showMyTarget && (
         <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Needs Your Approval</Typography>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox" />
-                <TableCell>Rep</TableCell>
-                <TableCell>Period</TableCell>
-                <TableCell align="right">Hospitals</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {pendingApproval.map((t) => {
-                const open = expanded.has(t.id);
-                const wasApproved = t.previous_approved_total_lakhs != null ? Number(t.previous_approved_total_lakhs) : null;
-                const belowApproved = wasApproved !== null && Number(t.target_amount_lakhs) < wasApproved;
-                return (
-                  <Fragment key={t.id}>
-                    <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
-                      <TableCell padding="checkbox">
-                        <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
-                      </TableCell>
-                      <TableCell>
-                        {t.user.display_name}
-                        {/* Approval queue only: the note outlives the approval,
-                            so in the team list this tag would never go away. */}
-                        {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
-                      </TableCell>
-                      <TableCell>{t.planning_period}</TableCell>
-                      <TableCell align="right">{hospitalCount(t)}</TableCell>
-                      <TableCell>
-                        <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
-                          {formatLakhs(Number(t.target_amount_lakhs))}
-                        </Box>
-                        {wasApproved !== null && (
-                          <Typography component="span" variant="body2" sx={{ color: belowApproved ? "warning.main" : "text.secondary" }}>
-                            {" "}(was {formatLakhs(wasApproved)})
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
-                        <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
-                      </TableCell>
-                    </TableRow>
-                    {open && (
-                      <TableRow>
-                        <TableCell colSpan={6}>
-                          <TargetPlanDetails target={t} />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Box>
-      )}
-
-      {showRollup && (
-        <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target Rollup</Typography>
-            {needsSbuChoice && (
-              <TextField
-                select
-                size="small"
-                label="SBU"
-                value={rollupSbuId ?? ""}
-                onChange={(e) => setSelectedSbuId(e.target.value)}
-                sx={{ minWidth: "12rem" }}
-              >
-                {sbus.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                ))}
-              </TextField>
-            )}
-          </Box>
-
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Target</Typography>
           {!isAnnual ? (
             <>
-              {rollup && (
+              {mySbus.length > 1 && (
                 <Typography sx={{ mb: 1.5 }}>
-                  Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
-                  {rollup.user_count} target{rollup.user_count === 1 ? "" : "s"}
+                  Total across SBUs: <strong>{formatLakhs(myPeriodTotal)}</strong>
                 </Typography>
               )}
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox" />
-                    <TableCell>Rep</TableCell>
-                    <TableCell align="right">Hospitals</TableCell>
+                    <TableCell>SBU</TableCell>
                     <TableCell>Amount</TableCell>
                     <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {teamTargets.map((t) => {
-                    const open = expanded.has(t.id);
-                    return (
-                      <Fragment key={t.id}>
-                        <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
-                          <TableCell padding="checkbox">
-                            <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
-                          </TableCell>
-                          <TableCell>{t.user.display_name}</TableCell>
-                          <TableCell align="right">{hospitalCount(t)}</TableCell>
-                          <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                          <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
-                        </TableRow>
-                        {open && (
-                          <TableRow>
-                            <TableCell colSpan={5}>
-                              <TargetPlanDetails target={t} />
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                  {teamTargets.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5}>
-                        <Typography color="text.secondary">No targets set for {period} yet.</Typography>
+                  {myPeriodTargets.map((t) => (
+                    <TableRow key={t.id}>
+                      <TableCell>{t.sbu.name}</TableCell>
+                      <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                      <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
+                      <TableCell align="right">
+                        <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
+                  {myAvailableSbus.map((sbu) => (
+                    <TableRow key={sbu.id}>
+                      <TableCell>{sbu.name}</TableCell>
+                      <TableCell colSpan={2}>
+                        <Typography color="text.secondary">No target set for {period} yet.</Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </>
           ) : (
             <>
-              <Typography sx={{ mb: 1.5 }}>
-                Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length} rep
-                {teamAnnualList.length === 1 ? "" : "s"} for {periodLabel}
-              </Typography>
+              {myAnnualBySbu.length > 1 && (
+                <Typography sx={{ mb: 1.5 }}>
+                  Grand Total across SBUs: <strong>{formatLakhs(myAnnualGrandTotal)}</strong>
+                </Typography>
+              )}
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Rep</TableCell>
+                    <TableCell>SBU / Quarter</TableCell>
                     <TableCell>Amount</TableCell>
                     <TableCell>Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {teamAnnualList.map((p) => (
-                    <Fragment key={p.user.id}>
+                  {myAnnualBySbu.map((block) => (
+                    <Fragment key={block.sbu.id}>
                       <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
-                        <TableCell>{p.user.display_name}</TableCell>
-                        <TableCell>{formatLakhs(p.total)}</TableCell>
-                        <TableCell>Annual Total</TableCell>
+                        <TableCell>{block.sbu.name} — Annual Total</TableCell>
+                        <TableCell>{formatLakhs(block.total)}</TableCell>
+                        <TableCell />
+                        <TableCell align="right" />
                       </TableRow>
                       {yearQuarters.map((q) => {
-                        const t = p.byQuarter[q];
+                        const t = block.byQuarter[q];
                         return (
-                          <TableRow key={`${p.user.id}-${q}`}>
+                          <TableRow key={`${block.sbu.id}-${q}`}>
                             <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
                             <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
                             <TableCell>
-                              {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                              {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                            </TableCell>
+                            <TableCell align="right">
+                              <Button size="small" onClick={() => openTargetDialog(q, t ?? null, block.sbu.id)}>{!t ? "Plan" : t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
                             </TableCell>
                           </TableRow>
                         );
                       })}
                     </Fragment>
                   ))}
-                  {teamAnnualList.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3}>
-                        <Typography color="text.secondary">No targets set for {periodLabel} yet.</Typography>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </>
           )}
         </Box>
-      )}
+        )}
+
+        {staleNotice && (
+          <Alert severity="warning" onClose={() => setStaleNotice(null)}>
+            {staleNotice}
+          </Alert>
+        )}
+
+        {pendingApproval.length > 0 && (
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>Needs Your Approval</Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox" />
+                  <TableCell>Rep</TableCell>
+                  <TableCell>Period</TableCell>
+                  <TableCell align="right">Hospitals</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {pendingApproval.map((t) => {
+                  const open = expanded.has(t.id);
+                  const wasApproved = t.previous_approved_total_lakhs != null ? Number(t.previous_approved_total_lakhs) : null;
+                  const belowApproved = wasApproved !== null && Number(t.target_amount_lakhs) < wasApproved;
+                  return (
+                    <Fragment key={t.id}>
+                      <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
+                        <TableCell padding="checkbox">
+                          <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                        </TableCell>
+                        <TableCell>
+                          {t.user.display_name}
+                          {/* Approval queue only: the note outlives the approval,
+                              so in the team list this tag would never go away. */}
+                          {t.change_note && <Chip label="Revised" variant="outlined" size="small" sx={{ ml: 0.5 }} />}
+                        </TableCell>
+                        <TableCell>{t.planning_period}</TableCell>
+                        <TableCell align="right">{hospitalCount(t)}</TableCell>
+                        <TableCell>
+                          <Box component="span" sx={belowApproved ? { color: "warning.main", fontWeight: 700 } : undefined}>
+                            {formatLakhs(Number(t.target_amount_lakhs))}
+                          </Box>
+                          {wasApproved !== null && (
+                            <Typography component="span" variant="body2" sx={{ color: belowApproved ? "warning.main" : "text.secondary" }}>
+                              {" "}(was {formatLakhs(wasApproved)})
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button size="small" color="success" onClick={() => openDecision(t, "APPROVED")}>Approve</Button>
+                          <Button size="small" color="error" onClick={() => openDecision(t, "REJECTED")}>Reject</Button>
+                        </TableCell>
+                      </TableRow>
+                      {open && (
+                        <TableRow>
+                          <TableCell colSpan={6}>
+                            <TargetPlanDetails target={t} />
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
+
+        {showRollup && (
+          <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target Rollup</Typography>
+              {needsSbuChoice && (
+                <TextField
+                  select
+                  size="small"
+                  label="SBU"
+                  value={rollupSbuId ?? ""}
+                  onChange={(e) => setSelectedSbuId(e.target.value)}
+                  sx={{ minWidth: "12rem" }}
+                >
+                  {sbus.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+                  ))}
+                </TextField>
+              )}
+            </Box>
+
+            {!isAnnual ? (
+              <>
+                {rollup && (
+                  <Typography sx={{ mb: 1.5 }}>
+                    Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
+                    {rollup.user_count} target{rollup.user_count === 1 ? "" : "s"}
+                  </Typography>
+                )}
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox" />
+                      <TableCell>Rep</TableCell>
+                      <TableCell align="right">Hospitals</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teamTargets.map((t) => {
+                      const open = expanded.has(t.id);
+                      return (
+                        <Fragment key={t.id}>
+                          <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
+                            <TableCell padding="checkbox">
+                              <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                            </TableCell>
+                            <TableCell>{t.user.display_name}</TableCell>
+                            <TableCell align="right">{hospitalCount(t)}</TableCell>
+                            <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                            <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
+                          </TableRow>
+                          {open && (
+                            <TableRow>
+                              <TableCell colSpan={5}>
+                                <TargetPlanDetails target={t} />
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                    {teamTargets.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={5}>
+                          <Typography color="text.secondary">No targets set for {period} yet.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            ) : (
+              <>
+                <Typography sx={{ mb: 1.5 }}>
+                  Total: <strong>{formatLakhs(annualRollupTotal)}</strong> across {teamAnnualList.length} rep
+                  {teamAnnualList.length === 1 ? "" : "s"} for {periodLabel}
+                </Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Rep</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teamAnnualList.map((p) => (
+                      <Fragment key={p.user.id}>
+                        <TableRow sx={{ "& td": { fontWeight: 700, borderTop: "2px solid", borderColor: "divider" } }}>
+                          <TableCell>{p.user.display_name}</TableCell>
+                          <TableCell>{formatLakhs(p.total)}</TableCell>
+                          <TableCell>Annual Total</TableCell>
+                        </TableRow>
+                        {yearQuarters.map((q) => {
+                          const t = p.byQuarter[q];
+                          return (
+                            <TableRow key={`${p.user.id}-${q}`}>
+                              <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
+                              <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                              <TableCell>
+                                {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </Fragment>
+                    ))}
+                    {teamAnnualList.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <Typography color="text.secondary">No targets set for {periodLabel} yet.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            )}
+          </Box>
+        )}
+      </Box>
 
       {planDialog && (
         <TargetPlanDialog
