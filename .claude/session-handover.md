@@ -89,3 +89,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Point 3 revised to "remember while going into a deal and back, reset on
   leaving the customer". Points 4 (heading shows "3 open · 12 closed") and 5
   (empty state "No open deals — show N closed") still to be added to the doc.
+
+## Forecast by closing period — discussion started 2026-09-30
+
+- Client asked (2026-09-30) to filter pipeline projections, weighted and
+  unweighted, by period (this month … FY end, total) for cash flow and
+  purchase-order planning. This is the unbuilt month/quarter half of
+  Traceability 2.5; Part 2 (plan versus actual) doesn't cover it.
+- Doc: `docs/Discussion-Forecast-By-Closing-Period-2026-09.md`, 8 questions,
+  none decided.
+- **Next:** go through the questions with Basheer, starting with Q2 (does
+  "next quarter" mean up to 31 March or only Jan–Mar? to confirm with the
+  client).
