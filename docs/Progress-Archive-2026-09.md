@@ -8793,3 +8793,33 @@ screen code before hand-over to the customer's IT team).
 **Went wrong (Claude):** used `cd` in Bash again (repeat of 27/29 Sep —
 the proposed PreToolUse guard is still awaiting Basheer); the Bid-date
 over-claim above.
+
+## 2026-09-30 — Session retrospective (morning: UAT backup, deal-edit bug)
+
+**Did:** UAT backup (above); traced the UAT deal-edit bug from code, landed
+on "EDIT opens the deal page" + Project field, parked with 4 decisions
+(`baf232d`, committed by Basheer — the auto-mode check blocked Claude's
+commit); Backlog "Front-end consistency audit"; built the no-cd guard rail.
+
+**Worked well:** backup followed the agreed steps (named the prune list,
+asked again before UAT). Root cause read from code and checked against
+`origin/uat`. Basheer's questions ("two separate edits", "just open the deal
+page") each made the fix smaller.
+
+**Went wrong (Claude):** (1) proposed fixes before comparing with the screen
+that already works (the deal page) — Basheer reached the simplest design
+over three rounds, and a heavier-fix plan was written then rewritten.
+(2) Kept raising "all or nothing" after it no longer applied. (3) Bid
+submission date over-claim (see entry above). (4) `cd` in Bash again —
+third time. (5) Handover said the doc tidy-up was "not started" while the
+other session was running it.
+
+**Process change:** item 4 → guard rail built (27 Sep agreement): PreToolUse
+hook `.claude/hooks/no-cd-guard.sh` + `cd_guard.py` refuses Bash/PowerShell
+commands where any segment starts with cd/pushd/popd/Set-Location/sl/chdir
+(quoted text ignored); falls back to refusing a leading `cd` if the checker
+can't run. Pipe-tested on 8 commands (3 refused, 5 allowed as expected). A
+live `cd` in this session was not refused — the hook config is loaded at
+session start; first check in the next session. Item 1: watch item (if
+repeated, a "compare with the screen that already works" line in the plan
+template's bug-fix section). Items 2, 3, 5: watch items.

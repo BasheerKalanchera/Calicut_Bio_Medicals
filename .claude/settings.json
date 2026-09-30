@@ -17,6 +17,10 @@
           {
             "type": "command",
             "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/ask-before-git-stash.sh\""
+          },
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/no-cd-guard.sh\""
           }
         ]
       },
