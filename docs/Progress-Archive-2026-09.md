@@ -8857,3 +8857,37 @@ lighter option A) — child-line and document additions to existing
 records logged, creation of top-level records still not, noise columns
 ignored, broader coverage, direct edits clear `updated_by`. Several
 decisions still proposed.
+
+## 2026-09-30 — session retro (planning session: audit log review and redesign)
+
+**Done:** no-cd guard rail verified live (`327f728`); read-only UAT
+audit-log review for 29 Sep; Audit Trail Redesign planned and approved
+(`5b3da4e`); Backlog and handover pointers (`14ba425`). Build waits for
+hospital-wise Part 1 step 5.
+
+**Worked well:** asked before touching UAT and verified the RLS context
+before trusting counts. Reading the real schema and code surfaced what a
+quick answer would have missed (product names built from
+brand + model + category; two link tables with no id; document delete
+destroys the file). Basheer's corrections shaped the design ("only
+creation isn't logged", "documents belong with their deal/product",
+"just 1 entry" for a deleted record). The A–I list — one question per
+item, with an example and a recommendation — got clear answers in one
+round. Only this session's hunk of the shared handover was committed.
+
+**Went wrong (Claude):** (1) Claimed a non-existent "missing user on
+product edits" bug by trusting the products' stale `updated_by` over the
+audit log, and put a fix step in the draft plan; the renames were
+Basheer's direct Supabase edits. (2) Recommended treating document
+uploads as creation, which would have repeated the half-recording just
+complained about. (3) Said a brochure replacement would show as one
+entry; it's two separate actions. (4) Too much shorthand — Basheer said
+"I didn't understand" five times. (5) Put a technical detail (the "no
+id" point) in the plain summary.
+
+**Process change:** item 4 → new CLAUDE.md Feature-planning line (decide
+several things = one question each, with a real example and a
+recommendation), history in `docs/Process-Rules-History.md`. Item 1:
+watch item (when two records disagree about who did something, ask how
+the change was made before calling either a bug). Items 2, 3, 5: watch
+items.

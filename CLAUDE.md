@@ -109,6 +109,9 @@ code or changing structure. On any conflict, the document wins over this file.
   which environment it lands in, in the plain-language pass itself. *(2026-09-19)*
 - When there's an obvious heavy design and a lighter one that gets most of the
   value, offer both as a real choice up front. *(2026-09-19)*
+- When asking Basheer to decide several things, write each as its own question
+  with a real example from the app and a recommendation — never a list of short
+  labels. *(2026-09-30)*
 - Before building on an already-approved plan, check its structural scope is still
   settled; surface interlocking structural questions (table shape, nesting,
   cascading, scoping) together in one round. *(2026-09-20)*
