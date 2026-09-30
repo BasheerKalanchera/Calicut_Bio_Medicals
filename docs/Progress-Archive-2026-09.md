@@ -8989,3 +8989,42 @@ offered; Basheer didn't take it up, so it stays a watch item.
   checks the brand split first. It was re-run in step 23 and passes. The
   step order was the test plan's mistake, not a screen bug. Run paused
   before section I (step 26); remaining: steps 26–38.
+
+## 2026-09-30 — session retro (hospital-wise planning Part 1, E2E steps P1–25)
+
+**What worked:** setup checks before testing (database version, where the
+three hospitals are filed) meant section C worked first time. Basheer
+caught three real UI problems no automated check sees: filters scrolling
+away, a centred menu label, inconsistent button wording. All were fixed,
+rechecked and committed mid-run (`cf279b7`). The pinned-filter
+convention, only ever copied between screens, is now a written standard
+(§6.1). Reading saves back through the app gave a reliable check after
+every save step, including the three-user visibility test (step 17).
+
+**What to improve:**
+1. P3 (request recording) was marked Pass without a trial capture; the
+   recorder then missed saves twice (buffer filled on page load; reset on
+   sign-in). Should have tested it once first.
+2. The test plan was written from the design, not the screen: a
+   non-existent "Set" button, and step 20 put the note check where the
+   brand-split check fires first.
+3. Some instructions weren't specific enough: Basheer had to ask what the
+   "Set vs Plan Target" note meant and where to look for the change-note
+   box. Each "Check" should say where on screen to look.
+4. A `cd` command again in the first command, second session running.
+
+**Process changes (Basheer approved all three):**
+- A. CLAUDE.md: take button labels, messages and check order from the
+  code when writing a test plan.
+- B. CLAUDE.md: confirm each save by reading the record back through the
+  app; the request recorder isn't relied on (replaces the 2026-09-24
+  "start recording first" instruction).
+- C. `cd` guard: it looked as if the no-cd hook (`fc205f8`) hadn't fired.
+  A new run log showed the real cause: Claude Code strips a `cd` into the
+  folder the shell is already in before the command reaches the hooks,
+  so the guard only ever saw the rest of the command. Today's `cd` was
+  that kind, a no-op with no effect, so the guard had nothing to catch.
+  A live `cd` into `docs/` was blocked. Hardening kept anyway: both guard
+  hooks now log every run to `.claude/hooks/guard.log` (gitignored), and
+  the no-cd guard also refuses by exit code 2 + stderr. Item 4 stays a
+  habit to watch; it was harmless this time.

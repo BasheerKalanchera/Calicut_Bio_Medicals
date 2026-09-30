@@ -1,1 +1,4 @@
 .claude/settings.local.json
+
+# Guard-rail hook run log (local diagnostics)
+.claude/hooks/guard.log

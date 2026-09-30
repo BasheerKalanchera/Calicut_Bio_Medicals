@@ -198,10 +198,13 @@ code or changing structure. On any conflict, the document wins over this file.
 - When writing a test plan, check its assumed data read-only against the live
   records — existing splits/values, and who each picker actually offers (owner,
   split, assignee) — not just role relationships. *(2026-09-24)*
+- When writing a test plan, take button labels, messages and the order of
+  checks from the code, not the design doc. *(2026-09-30)*
 - Steps that save to the shared Dev DB: plan them as "Basheer clicks, Claude
-  watches" from the start (the auto-mode classifier blocks Claude's own writes),
-  and start Claude's request recording in the tab *before* he acts.
-  *(2026-09-24)*
+  watches" from the start (the auto-mode classifier blocks Claude's own writes).
+  Confirm each save by reading the record back through the app in the
+  tester's session — don't rely on the request recorder, which loses data on
+  page load and sign-in. *(2026-09-24, 2026-09-30)*
 
 ## Show before you act
 When an action is hard to undo, spends real time/cost, or is visible to Basheer,
