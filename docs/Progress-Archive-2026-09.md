@@ -8982,3 +8982,10 @@ offered; Basheer didn't take it up, so it stays a watch item.
 - Button wording made consistent (Basheer): Target & Coverage Planning's
   quarterly view said "Plan Target" while the annual view said "Plan".
   Both now use Plan / Continue / Revise. No other doc used "Plan Target".
+- Checkpoint `cf279b7` (the three UI fixes) committed and pushed.
+- Sections E–H (steps 15–25) pass. Step 17: overlap check hides Al Shifa's
+  planner from Vivek and Arun (outside their area) and names Nishad for
+  Haroon. Step 20's "note required" check was masked because the screen
+  checks the brand split first. It was re-run in step 23 and passes. The
+  step order was the test plan's mistake, not a screen bug. Run paused
+  before section I (step 26); remaining: steps 26–38.

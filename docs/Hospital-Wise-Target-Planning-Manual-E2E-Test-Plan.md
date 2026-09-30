@@ -155,6 +155,14 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     ₹30, **Submit** — the warning doesn't block. —
 16. As Nishad, 2026-Q4, **Plan**: add **Al Shifa Hospital Perinthalmanna
     ₹10**, split EDAN ₹10, **Submit**. —
+    **Steps 15–16: Pass** 2026-09-30 (Basheer). Nishad's plan read back
+    in his session: Pending Approval, Al Shifa ₹10, EDAN ₹10. Arun's is
+    read back in step 17. —
+    **Step 17: Pass** 2026-09-30. Overlap check for Al Shifa, Critical
+    Care, 2026-Q4: Vivek → 200, empty; Arun → 200, empty; Haroon → 200,
+    one `SAME_SBU_OVERLAP` naming **Nishad K V**. Arun's step-15 plan
+    read back in his session: Pending Approval, KIMS ₹20 + aster
+    medicity ₹10 = ₹30, EDAN ₹30. —
 17. **(Complex, Claude)** `GET /planning/targets/overlaps` for Al Shifa,
     Critical Care, 2026-Q4, in Vivek's then Arun's session.
     **Expected:** both return **nothing** (Al Shifa is outside their
@@ -166,6 +174,10 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     "Revised" label. Expand: three hospitals with ratings, visit
     frequencies, amounts, and "EDAN ₹45"; no change note. —
 19. **Approve**. As Vivek: **Approved**. —
+    **Steps 18–19: Pass** 2026-09-30 (Basheer). Read back in Vivek's
+    session: Approved by Arun Adarsh, ₹45.00; last-approved benchmark
+    empty (correct — it is only filled when an approved plan is
+    revised). —
 
 ## G — Revising below the approved total (Simple)
 
@@ -173,16 +185,27 @@ S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     **₹30**; a warning that it's **₹15 below** the approved ₹45. Try
     **Submit** with no note → blocked. Note "Lost Test hospital 2 to a
     competitor", split EDAN ₹30, Submit → **Pending Approval**. —
+    **Step 20: Pass, one check moved** 2026-09-30 (Basheer). Below-target
+    warning shown ("₹30.00L is ₹15.00L below your approved target of
+    ₹45.00L … You can still submit"); the change-note box appeared.
+    Submit with no note was blocked, but by the brand-split check
+    ("must add up to exactly the plan total (currently ₹45.00L of
+    ₹30.00L)"), which the screen runs before the note check, so the
+    "note required" message itself wasn't seen. Moved to step 23. With
+    EDAN ₹30 and the note, Submit → Pending Approval. —
 21. As Arun: the row shows **Revised** and **2 hospitals**. Expand:
     "**Why it changed:** Lost Test hospital 2…" and "Last approved
     target: ₹45.00L — this revision is ₹15.00L below it". —
+    **Step 21: Pass** 2026-09-30 (Basheer). —
 
 ## H — Plan changed while the manager was reviewing (Complex, two windows)
 
 Basheer: normal window as **Arun**, private window as **Vivek**.
 
 22. Arun: click **Approve** on Vivek's plan, leave the dialog open. —
-23. Vivek: **Revise**, change only KIMS's objective to "Demo + training",
+23. Vivek: **Revise**, change only KIMS's objective to "Demo + training".
+    First click **Submit** with the note empty → blocked: "Please add a
+    short note saying why the plan changed." (moved from step 20). Then
     note "Objective updated", Submit. —
 24. Arun: click **Approve** in the still-open dialog. **Expected:** the
     dialog closes, a warning reads "The rep changed this plan while you
@@ -192,6 +215,10 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 25. Arun: **Approve** again. **Expected:** Approved. In the team list,
     expanded: "**Last change (approved):** Objective updated"; the "Last
     approved target" line is gone. —
+    **Steps 22–25: Pass** 2026-09-30 (Basheer; step 23 included the
+    moved "note required" check). Read back in Arun's team view: Vivek
+    Approved by Arun, ₹30, KIMS ₹30 "Demo and training" + TH3 ₹0,
+    change note "Objective updated", last-approved benchmark cleared. —
 
 ## I — Plan already decided by someone else (Complex, two windows)
 

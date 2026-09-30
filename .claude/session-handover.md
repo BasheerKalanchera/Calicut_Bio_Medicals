@@ -45,10 +45,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`, 38 steps
   in 2026-Q4, kept as written (Basheer). Dev check found Vivek's and
   Rudrappa's areas contain 0 hospitals (filed at zone level, above their
-  districts). **Next: Basheer does setup step S1 after lunch
-  2026-09-30** (re-file KIMS → Trivandrum, Test hospital 2 → Kollam,
-  Test hospital 3 → Kottayam, as Admin); Claude then confirms read-only
-  and marks S1 in the test plan.
+  districts). S1 done by Basheer 2026-09-30.
+- **Step 7 — E2E run in progress, paused 2026-09-30 evening:** P1–P3,
+  S1, steps 1–25 pass. Three UI fixes found and committed as checkpoint
+  `cf279b7` (pushed). Dev state now: Vivek 2026-Q4 **Approved ₹30**
+  (KIMS ₹30 + TH3 ₹0); Arun 2026-Q4 Pending ₹30 (awaits Haroon);
+  Nishad 2026-Q4 Pending ₹10. **Next:** section I, step 26 (Vivek
+  revises: TH2 back at ₹15, note "Won Test hospital 2 back", EDAN ₹45).
+  Setup: test tab as Arun; private window for Vivek, then Haroon.
+  Restart the Dev backend and reopen the test tab first. Watching saves:
+  read the record back through the app in the tester's session (the
+  request recorder loses data on sign-in).
 - UAT filing check run early (approved): 85 of 432 hospitals at region
   level; Irfan has no area. Basheer chose Option A (re-file), **held
   until he discusses it with Haroon** — Part 2 plan, step 5. Also for
@@ -56,7 +63,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   when a hospital is added/edited, so region-level filing stops
   recurring (4th occurrence; earlier ones in Progress-Archive
   2026-08-31, 2026-09-26).
-- **Then:** E2E run (restart Dev backend first) → Traceability 6.1/5.1
+- **Then:** finish the E2E run → Traceability 6.1/5.1
   straight to Done (option a) → post-commit checklist.
 - **API as built:** create/update body `{accounts[], brand_splits, submit,
   change_note}`; response `warnings` (`HIGH_POTENTIAL_ZERO`,
