@@ -70,6 +70,14 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** build step 1 (backend endpoint + tests) once Basheer says start;
   Part 1's steps 5–7 run in parallel in the other session.
 
+## Audit Trail Redesign — approved, waiting (planning session)
+
+- Plan approved 2026-09-30 (`5b3da4e`):
+  `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Backlog entry
+  "Audit Trail Redesign".
+- **Next:** start build step 1 (migration) once hospital-wise Part 1
+  step 5 is committed — ask Basheer first.
+
 ## Customer 360 open-deals filter — discussion in progress (parallel session)
 
 - Doc: `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` (committed `135df42`).

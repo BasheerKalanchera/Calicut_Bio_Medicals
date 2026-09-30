@@ -9,6 +9,21 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### Audit Trail Redesign — approved, waiting to start (2026-09-30)
+
+A UAT review found the Audit Log only half-records changes: a product
+switch on 3 deals showed the old lines removed but not the new ones
+added, and only 7 of 38 tables are watched.
+- **Plan (approved 2026-09-30):**
+  `docs/Audit-Trail-Redesign-Implementation-Plan.md` — option A, ~3–4
+  days, one migration. Closes the `marketing_lead`, `target_plan` and
+  `document` coverage entries below when built.
+- **Starts after** hospital-wise planning Part 1 step 5 is committed
+  (both touch the target-plan save code). Built on Dev; UAT move is its
+  own approval.
+- **Deferred with it (option B):** a History tab on each deal, customer
+  and product page, built on top of this later.
+
 ### UAT bug: deal edit from customer/project page fails when products and stage change together — parked (found 2026-09-30)
 
 A rep edited a deal from a customer's Opportunities tab (EDIT), added a
@@ -813,6 +828,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   from whom, when, why) if reassignment turns out to be used often enough
   that "why did this move" becomes a real question — extending the
   existing audit_log trigger to this table would be the natural Phase 2.
+  **Covered by** `docs/Audit-Trail-Redesign-Implementation-Plan.md`
+  (approved 2026-09-30); remove this entry when that ships.
 
 - **`target_plan` not covered by the ADR-017 audit trail.** Raised
   2026-09-07 during the `opportunity_item`/`split`/`stakeholder` audit
@@ -822,7 +839,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Extension-Implementation-Plan.md` for the pattern) once that feature
   ships — targets being quietly adjusted after the fact would undermine
   any performance conversation built on them, same risk category as the
-  WON-immutability concern.
+  WON-immutability concern. **Covered by**
+  `docs/Audit-Trail-Redesign-Implementation-Plan.md` (approved
+  2026-09-30); remove this entry when that ships.
 
 - **`document` not covered by the ADR-017 audit trail.** Raised
   2026-09-17 while fixing the document-delete authorization gap (owner
@@ -833,6 +852,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `marketing_lead`/`target_plan` above), so there's no queryable history
   of who removed a colleague's upload or a product's collateral link,
   only the same `structlog` info-level line every other action gets.
+  **Covered by** `docs/Audit-Trail-Redesign-Implementation-Plan.md`
+  (approved 2026-09-30); remove this entry when that ships.
   Worth adding once there's a real incident or a client ask that needs
   "who deleted this and when" answered — same generic trigger mechanism
   extends to `document` with no new design work.
