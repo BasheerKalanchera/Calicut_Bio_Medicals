@@ -8912,3 +8912,40 @@ recommendation), history in `docs/Process-Rules-History.md`. Item 1:
 watch item (when two records disagree about who did something, ask how
 the change was made before calling either a bug). Items 2, 3, 5: watch
 items.
+
+## 2026-09-30 — session retro (hospital-wise planning Part 1, steps 5–6)
+
+**Done:** step 5 code-review fixes `1a4843a`; a medium `/code-review` of
+that commit found a race (a save and an approval at the same instant
+could both pass), fixed with a row lock `3907b88`, and a dry run on Dev
+confirmed `FOR UPDATE OF target_plan` is required (plain `FOR UPDATE` is
+refused because of the outer join). E2E test plan `b239117`, data checked
+against live Dev, which found Vivek's area holds 0 hospitals (setup step
+S1 approved; Basheer runs it after lunch). UAT filing check run early at
+Basheer's suggestion `fa07250`: 85 of 432 hospitals at region level,
+Irfan has no area; Option A held for Haroon. No-cd guard rail confirmed
+live (it blocked one of Claude's own commands).
+
+**What worked:** reviewing the fix commit on its own (approval-workflow
+changes deserve their own look); proving a database detail with a dry run
+before any user clicked; checking test data against live Dev before
+writing the plan, which surfaced the real UAT problem.
+
+**What to improve (Claude):**
+1. Explanations weren't plain enough first time: Basheer had to ask what
+   "refused once someone else decided", "2 decimals" and "hold the plan"
+   meant. Each needed a concrete who-clicks-what example from the start
+   (covered by the 2026-09-30 decisions-as-questions rule).
+2. Claude placed the UAT check on move day by default; Basheer spotted
+   that a cheap read-only check reducing a later risk should run now.
+3. Region-level filing should have been raised as a structural problem at
+   its second occurrence (August); now proposed ("district or lower
+   required"), for the Haroon discussion.
+4. Code edits began on the go recorded in the handover without restating
+   the plan first; same agreed list, but the rule says explain and wait.
+5. A `cd` command despite the rule; the guard caught it.
+
+**Process change:** none. Items 1, 4, 5 are covered by existing rules —
+watch items. Item 2: a possible CLAUDE.md line ("when a read-only check
+would reduce a later risk and costs little, recommend running it now")
+offered; Basheer didn't take it up, so it stays a watch item.
