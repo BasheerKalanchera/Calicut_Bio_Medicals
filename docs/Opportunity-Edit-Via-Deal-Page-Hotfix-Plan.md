@@ -11,6 +11,7 @@ customer/project page fails when products and stage change together".
 ## Decisions
 
 - Ship as an emergency fix straight to UAT, same route as the 2026-09-14 Admin/GM split fix: branch off `origin/uat`, push to `uat`, then merge `uat` back into `main` (not cherry-pick) — Basheer, 2026-09-30
+- This fix also carries the Customer 360 Active-only Opportunities filter to UAT (`docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`, its decisions 10–12) — Basheer, 2026-09-30
 - Fix both places the bug exists (Customer 360 and Project Directory), not only the screen in the video — Basheer, 2026-09-30
 - Products and stage/status are two separate edits and are saved separately (as on the deal page), not bundled into one "all or nothing" save — Basheer, 2026-09-30
 - EDIT on a deal in Customer 360's and Project Directory's Opportunities tabs opens the deal page (Opportunity Detail); the two duplicate edit forms are removed — proposed

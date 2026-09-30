@@ -11,7 +11,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`; Backlog entries
   for the bug and "Front-end consistency audit". Rep has the workaround.
 - **Next:** when Basheer returns to it, get the 4 decisions, then build as
-  a hotfix off `origin/uat`.
+  a hotfix off `origin/uat` — together with the Customer 360 Active-only
+  filter (Basheer, 2026-09-30).
 
 ## Hospital-wise target planning — Part 1, plan steps 5–7
 
@@ -91,10 +92,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## Customer 360 Active-only Opportunities filter — decided 2026-09-30
 
-- Basheer decided all points himself (not taken to Haroon):
-  `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` section 3.
-- **Next:** short build plan; build after hospital-wise Part 1 has
-  committed its Customer 360 changes.
+- Plan approved 2026-09-30:
+  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
+  Built with the deal-edit quick fix above, same branch, in a separate
+  git worktree off `origin/uat`.
+- **Next:** build waits for Part 1's E2E run and the quick fix's 4
+  decisions; first build check is in the plan's technical addendum.
 
 ## Forecast by closing period — discussion started 2026-09-30
 

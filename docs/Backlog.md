@@ -367,8 +367,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Basheer 2026-09-30 — see
   `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` section 3
   (Active only, same set as the pipeline; customer 360 tab only, the main
-  Opportunities screen unchanged). Frontend-only; build after hospital-wise
-  planning Part 1 has committed its Customer 360 changes.
+  Opportunities screen unchanged). Plan:
+  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`
+  — ships to UAT with the Opportunity Edit quick fix.
 
 - **Hospital-wise target planning — plan approved 2026-09-27; build in progress — current step: the plan's Status line.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).

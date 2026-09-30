@@ -58,14 +58,10 @@ Lost ones into view; clicking it again hides them.
 
 ## 4. Build notes
 
-- **Timing:** the change sits in the customer 360 page, which another session
-  is changing right now for hospital-wise target planning (the Business
-  Potential rating chip). Build after that session has committed.
-  Target planning keeps priority (its UAT move now waits for its Part 2,
-  changed 2026-09-29).
+- **Plan:** `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`
+  — timing and route to UAT (with the Opportunity Edit quick fix) live
+  there.
 - **Size:** frontend-only — no migration, no API change.
-- **Environment:** built and tested on Dev first; reaches UAT with the next
-  main → UAT move.
 
 ### Technical addendum
 
