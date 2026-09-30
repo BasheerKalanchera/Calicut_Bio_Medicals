@@ -153,7 +153,7 @@ Asked for by Cabio leadership beyond the signed scope and confirmed to build; no
 | # | What's requested | Status |
 | :---: | :--- | :--- |
 | 1 | Marketing staff can see at a glance which of their leads have new comments from the sales team. | Requested by Haroon and Latheef Bhai at the 24 Sep demo. On hold until mid-October, while the team uses lead comments; not yet built. |
-| 2 | The Opportunities screen shows only open deals by default; won, lost and other closed deals appear on demand with a button. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; not yet built. |
+| 2 | A customer's Opportunities tab (on its 360 page) shows only Active Opportunities by default — the same ones the pipeline counts; On Hold, Won and Lost appear on demand with a button. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; details decided 30 Sep; not yet built. |
 | 3 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
 
 ### Pending — proposed, not yet built

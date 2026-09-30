@@ -360,17 +360,15 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   need a role-aware branch — the Review Queue for reps/managers,
   `MarketingLeadEntryScreen` for Marketing User.
 
-- **Opportunities screen: show only open deals by default, closed ones on
-  demand.** Requested by Haroon and Latheef Bhai at the 2026-09-24 demo;
+- **Customer 360 Opportunities tab: show only Active Opportunities by
+  default.** Requested by Haroon and Latheef Bhai at the 2026-09-24 demo;
   item 2 under "Requested by Cabio leadership — to be built" in
-  `docs/Signed-Requirements-to-PRD-Traceability.md`. Today
-  `OpportunityPipelineScreen.tsx` lists every status (WON/LOST/ON_HOLD
-  included). Ask: active deals only by default, plus a button that brings
-  the non-active ones into view. Small; not yet scoped. To confirm at build
-  time: whether On Hold counts as "active" (it isn't closed, but isn't
-  moving either), and whether the report drill-down lists (which open this
-  same screen pre-filtered) should keep showing Won/Lost when the report
-  card counted them.
+  `docs/Signed-Requirements-to-PRD-Traceability.md`. All decisions made by
+  Basheer 2026-09-30 — see
+  `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` section 3
+  (Active only, same set as the pipeline; customer 360 tab only, the main
+  Opportunities screen unchanged). Frontend-only; build after hospital-wise
+  planning Part 1 has committed its Customer 360 changes.
 
 - **Hospital-wise target planning — plan approved 2026-09-27; build in progress — current step: the plan's Status line.** Raised at the 2026-09-24 demo; all design questions answered
   (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).

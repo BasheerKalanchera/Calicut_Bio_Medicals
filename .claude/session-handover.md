@@ -82,13 +82,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** start build step 1 (migration) once hospital-wise Part 1
   step 5 is committed — ask Basheer first.
 
-## Customer 360 open-deals filter — discussion in progress (parallel session)
+## Customer 360 Active-only Opportunities filter — decided 2026-09-30
 
-- Doc: `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` (committed `135df42`).
-- Next: Basheer picks (a) decide points 1–5 himself, or (b) take 1–3 to Haroon.
-  Point 3 revised to "remember while going into a deal and back, reset on
-  leaving the customer". Points 4 (heading shows "3 open · 12 closed") and 5
-  (empty state "No open deals — show N closed") still to be added to the doc.
+- Basheer decided all points himself (not taken to Haroon):
+  `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` section 3.
+- **Next:** short build plan; build after hospital-wise Part 1 has
+  committed its Customer 360 changes.
 
 ## Forecast by closing period — discussion started 2026-09-30
 
