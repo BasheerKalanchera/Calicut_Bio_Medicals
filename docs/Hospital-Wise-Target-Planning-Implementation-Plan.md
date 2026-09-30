@@ -192,7 +192,8 @@ The options as offered:
      kept for Part 2.
 6. Written manual E2E test plan, checked against live Dev data; run it.
 7. Commit, post-commit checklist. The UAT move waits for Part 2
-   (2026-09-29).
+   (2026-09-29); its first step is a check of how UAT hospitals are filed
+   (Part 2 plan, step 5).
 
 **Honest timing:** steps 1–3 are about 2½–3 working days, and steps 5–6
 about one more. ~~On UAT around 1–2 Oct; fallback if step 3 isn't well

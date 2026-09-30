@@ -45,9 +45,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`, 38 steps
   in 2026-Q4, kept as written (Basheer). Dev check found Vivek's and
   Rudrappa's areas contain 0 hospitals (filed at zone level, above their
-  districts). **Still open:** Basheer's OK for setup step S1 (re-file 3
-  hospitals into Vivek's districts), and whether to add a read-only check
-  of how UAT hospitals are filed to the UAT move.
+  districts). **Next: Basheer does setup step S1 after lunch
+  2026-09-30** (re-file KIMS → Trivandrum, Test hospital 2 → Kollam,
+  Test hospital 3 → Kottayam, as Admin); Claude then confirms read-only
+  and marks S1 in the test plan.
+- UAT filing check run early (approved): 85 of 432 hospitals at region
+  level; Irfan has no area. Basheer chose Option A (re-file), **held
+  until he discusses it with Haroon** — Part 2 plan, step 5. Also for
+  that discussion (proposed, not decided): require a district or lower
+  when a hospital is added/edited, so region-level filing stops
+  recurring (4th occurrence; earlier ones in Progress-Archive
+  2026-08-31, 2026-09-26).
 - **Then:** E2E run (restart Dev backend first) → Traceability 6.1/5.1
   straight to Done (option a) → post-commit checklist.
 - **API as built:** create/update body `{accounts[], brand_splits, submit,

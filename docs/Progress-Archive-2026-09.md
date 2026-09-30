@@ -8858,6 +8858,27 @@ records logged, creation of top-level records still not, noise columns
 ignored, broader coverage, direct edits clear `updated_by`. Several
 decisions still proposed.
 
+## 2026-09-30 — Hospital-wise planning: how UAT hospitals are filed
+
+While preparing Part 1's E2E, Dev showed Vivek's area holding 0 hospitals:
+the South Kerala test hospitals were filed at region level, above his
+districts, and the planner only offers hospitals inside a rep's own
+districts. Basheer approved checking UAT early rather than on the move
+day. Read-only UAT query (approved; counts only; READ ONLY, rolled back;
+Admin RLS verified):
+- 432 hospitals: 202 at cluster level, 144 district, 1 taluk, **85 at
+  region level** (North Kerala 43, South Kerala 24, Bangalore 18).
+- Those 85 are invisible to every district- or cluster-level rep:
+  e.g. Vivek sees 17 of South Kerala's 44; Adydev, Naeem and Gopika
+  miss North Kerala's 43; Dhanushma, Om and Rudrappa miss Bangalore's 18.
+  Area Managers assigned a whole region (Arun, Nishad, Shruthi) see them.
+- **Irfan** (Sales Staff, Imaging) has no area assigned: 0 hospitals.
+- A rule change ("reps also see region-level hospitals") would show each
+  rep the whole region's unfiled hospitals, including colleagues'; the
+  data fix is re-filing them into districts. **Basheer: Option A
+  (re-file), held until he discusses it with Haroon**; recorded in the
+  Part 2 plan, step 5.
+
 ## 2026-09-30 — session retro (planning session: audit log review and redesign)
 
 **Done:** no-cd guard rail verified live (`327f728`); read-only UAT

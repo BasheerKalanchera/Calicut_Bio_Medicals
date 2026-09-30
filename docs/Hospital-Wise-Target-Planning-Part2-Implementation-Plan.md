@@ -86,7 +86,22 @@ No database change.
    but visibility-sensitive); written E2E plan checked against live Dev
    data; manual E2E; commit; post-commit checklist.
 5. Then the combined Part 1 + Part 2 move to UAT (its own plan, per
-   `docs/Deployment-Topology.md`).
+   `docs/Deployment-Topology.md`). **That plan's first step (Basheer,
+   2026-09-30):** a read-only check, run only with Basheer's go-ahead on
+   the day, of how UAT hospitals are filed: how many sit at region level
+   (e.g. "South Kerala") rather than inside a district. A rep's hospital
+   picker only offers hospitals filed inside their own districts, so
+   region-level hospitals would be invisible to district-level reps
+   (found on Dev while preparing Part 1's E2E, where Vivek's area held 0
+   hospitals). **Run early, 2026-09-30:** 85 of 432 UAT hospitals are
+   filed at region level (North Kerala 43, South Kerala 24, Bangalore
+   18); Irfan (Sales Staff, Imaging) has no area assigned (Progress-Archive
+   2026-09-30). **Basheer's choice: Option A, re-file each into its real
+   district** (not a rule change, which would show reps colleagues'
+   hospitals) — held until he has discussed it with Haroon; then pick
+   the manual (team edits on the customer page) or spreadsheet (Claude
+   applies, UAT read + write each approved) route. Irfan's area to be
+   assigned by then. Re-run the check on the move day.
 
 ## 4. Not in this plan (with reasons)
 

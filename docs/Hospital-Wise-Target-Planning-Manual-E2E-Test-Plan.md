@@ -57,7 +57,7 @@ P3. **(Claude)** Open a test browser tab and start request recording.
     Warn before any frontend file edit while it's open (hot reload can
     reset the logged-in user). —
 
-## S — Setup (Simple) — *proposed, needs Basheer's OK*
+## S — Setup (Simple) — *approved by Basheer, 2026-09-30*
 
 S1. As Admin, edit three hospitals' zone so they sit inside Vivek's
     districts (they stay inside Arun's South Kerala too):
