@@ -8823,3 +8823,9 @@ live `cd` in this session was not refused — the hook config is loaded at
 session start; first check in the next session. Item 1: watch item (if
 repeated, a "compare with the screen that already works" line in the plan
 template's bug-fix section). Items 2, 3, 5: watch items.
+
+## 2026-09-30 — no-cd guard rail verified live
+
+First check in a fresh session: `cd` in Bash and `Set-Location` in
+PowerShell were both refused by the PreToolUse hook with its explanatory
+message. Guard rail confirmed working; handover reminder removed.

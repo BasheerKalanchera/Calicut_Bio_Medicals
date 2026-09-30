@@ -12,8 +12,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   for the bug and "Front-end consistency audit". Rep has the workaround.
 - **Next:** when Basheer returns to it, get the 4 decisions, then build as
   a hotfix off `origin/uat`.
-- **First thing next session:** check the new no-cd guard rail fires (a
-  `cd` command should be refused) — not active in the session that built it.
 
 ## Hospital-wise target planning — Part 1, plan steps 5–7
 
