@@ -186,3 +186,37 @@ audio message, 2026-09-30; the discussion doc is not yet updated with it):
 - **Filing:** Arun re-filed 21 South Kerala hospitals into districts today
   (Basheer); region-level 85 → 64 (North Kerala 43, Bangalore 18, South
   Kerala 3).
+
+## 2026-10-01 — session retro (operations and planning session)
+
+**Done:** UAT backup; data-quality check with a new region-level filing
+section (85 → 64 after Arun's re-filing); doc tidy-up (4 fixed); proposed
+close dates for the 37 old Opportunities sent to Haroon; user manual and
+help catch-up plan approved; forecast questions answered from Latheef
+Bhai's transcript (Q4 parked); Expected Closure Dates report sent to
+leadership and saved as a script; UAT read-script connection fix. Commits
+`c4aaaff`, `3132e0e`, `49b22f8`, `53d6b6c`, `9a8726c`, `8bacee6`.
+
+**What worked:** Basheer's "first understand the ask" got the transcript,
+which answered three questions outright; checking the data before
+designing the screen (3 of 112 open Opportunities with a future date)
+redirected the work to fixing dates at the source; evidence over guesses
+for close dates (activity notes beat "last updated" and the created date);
+committing only this session's lines while other sessions were mid-edit.
+
+**What to improve (Claude):** handed Basheer a `!` command for a script
+not yet written; first `!` line used PowerShell syntax (`!` runs bash); a
+scripted edit turned `\n` into a real line break (second time after
+2026-09-27); a commit failed because PowerShell split the message at its
+quotes; one command used `cd` (blocked by the guard rail); the
+data-quality PDF wasn't saved until Basheer asked.
+
+**Process changes proposed, parked to 2026-10-02 morning (Basheer):**
+A. cabio-db-and-scripting skill: UAT uses the transaction pooler (port
+6543), so read scripts use one read-only transaction with
+transaction-local settings, re-checked at the end. B. Guard rail refusing
+Bash heredocs that write or patch source files (second occurrence of the
+`\n` problem). C. CLAUDE.md "Commit approval": always commit with
+`git commit -F <message file>`. D. Option for Basheer: allow Claude to run
+the two named read-only UAT data-quality scripts after his yes, instead of
+typing each `!` command himself.

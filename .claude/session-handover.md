@@ -71,3 +71,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   data-quality check; first report sent to leadership 2026-10-01.
 - **Next:** write the implementation plan when Basheer says; watch the
   closure report's progress.
+
+## Process changes from the 2026-10-01 retro — parked to 2026-10-02 morning
+
+- Basheer parked them (end of a long day). Four proposals, A–D, in
+  Progress-Archive 2026-10, entry "2026-10-01 — session retro (operations
+  and planning session)".
+- **Next:** first thing on 2026-10-02, go through A–D with Basheer.
