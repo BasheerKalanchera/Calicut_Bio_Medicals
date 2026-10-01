@@ -14,7 +14,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Committed `a430152` on branch `hotfix/opportunity-edit-via-deal-page`
   (worktree `.claude/worktrees/hotfix`, off `origin/uat` `143c78e`; its
   `sales-os-app/node_modules` is a junction to main's, `.env` copied).
-  **Not pushed:** Basheer wants it on UAT in the quiet morning hours.
+  Safety copy pushed to GitHub under its own branch name 2026-10-01 (not
+  `uat`). **Not on UAT:** Basheer wants it there in the quiet morning hours.
 - **Next (2026-10-02 morning, ask first):** `git fetch`; confirm
   `origin/uat` is still `143c78e`; `git push origin
   hotfix/opportunity-edit-via-deal-page:uat` (fast-forward; host
@@ -23,6 +24,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   post-commit checklist (filter: leadership "Requested" item 2 → built,
   scorecard regen + republish; Backlog entries for both close) → remove
   the worktree. Each commit/push its own approval.
+
+## Session retro 2026-10-01 + structural fixes — parked by Basheer
+
+- Retro drafted in chat 2026-10-01, **not yet approved or saved**. Main
+  points: hospital-wise Part 1 done; UAT hotfix built and Dev-tested; most
+  mistakes broke existing CLAUDE.md rules (test-plan live-data check,
+  Simple/Complex tagging, "Basheer clicks" for Dev writes, verify before
+  claiming); only the no-`cd` hook actually stopped a mistake.
+- **Next (2026-10-02):** re-show the retro for approval, then build the
+  fixes in Backlog "Structural guards for repeated test-plan mistakes"
+  (Basheer: tomorrow, instead of adding more CLAUDE.md text).
 
 ## Hospital-wise target planning — Part 2 (plan versus actual)
 
