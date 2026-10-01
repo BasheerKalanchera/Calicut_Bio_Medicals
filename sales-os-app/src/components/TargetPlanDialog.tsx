@@ -130,6 +130,9 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
         : null;
   const splitTotal = sumAllocation(editSplits.map((s) => Number(s.amount)));
   const splitBalanced = isAllocationBalanced(splitTotal, total, 2);
+  // Positive = brands still short of the plan total; negative = over it
+  // (e.g. hospital amounts were lowered after the brands were split).
+  const splitGap = total - splitTotal;
 
   const updateRow = (i: number, patch: Partial<PlanRow>) =>
     setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -165,7 +168,10 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
     if (brands.length > 0) {
       if (submit && (editSplits.length === 0 || !splitBalanced)) {
         throw new Error(
-          `Brand splits must add up to exactly the plan total (currently ${formatLakhs2(splitTotal)} of ${formatLakhs2(total)}).`,
+          `Your brand amounts add up to ${formatLakhs2(splitTotal)}, but the plan total is now ${formatLakhs2(total)}. `
+            + (splitGap < 0
+              ? `Reduce them by ${formatLakhs2(-splitGap)} before submitting.`
+              : `Add ${formatLakhs2(splitGap)} more before submitting.`),
         );
       }
       brand_splits = editSplits.map((s) => ({
@@ -360,7 +366,11 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Split by Brand *</Typography>
             <Typography variant="caption" sx={{ fontWeight: 700, color: splitBalanced ? "success.main" : "warning.main" }}>
-              Remaining to allocate: {formatLakhs2(total - splitTotal)}
+              {splitBalanced
+                ? "Fully allocated"
+                : splitGap < 0
+                  ? `Over by ${formatLakhs2(-splitGap)} — reduce brand amounts`
+                  : `${formatLakhs2(splitGap)} still to allocate`}
             </Typography>
           </Box>
 

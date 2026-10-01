@@ -365,13 +365,13 @@ class TargetPlanService:
             )
         if target_plan.status != "PENDING_APPROVAL":
             raise ConflictError(
-                "This plan is no longer waiting for approval -- it has already been decided. "
-                "Here is the latest version."
+                "This plan is no longer waiting for approval — it has already been decided. "
+                "Please check the latest version below."
             )
         if target_plan.updated_at != expected_updated_at:
             raise ConflictError(
                 "The rep changed this plan while you were reviewing it. "
-                "Here is the latest version. Please review again."
+                "Please check the latest version below and review again."
             )
 
         target_plan.status = status

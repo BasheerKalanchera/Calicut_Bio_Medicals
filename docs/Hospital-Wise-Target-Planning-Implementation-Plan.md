@@ -169,8 +169,11 @@ The options as offered:
    - **Stale approval:** `TargetPlanApprovalDecision` gets required
      `expected_updated_at`; `approve_or_reject_target_plan` requires
      `PENDING_APPROVAL` and raises `ConflictError` (409) on a mismatch —
-     "The rep changed this plan while you were reviewing it. Here is the
-     latest version. Please review again." Frontend sends the value, and on
+     "The rep changed this plan while you were reviewing it. Please check
+     the latest version below and review again." (or, if already decided,
+     "This plan is no longer waiting for approval — it has already been
+     decided. Please check the latest version below."; wording 2026-10-01).
+     Frontend sends the value, and on
      409 shows the message, closes the dialog and refetches.
      `update_target_plan` sets `updated_at = func.now()` so a
      hospital-only or split-only edit still changes it, then refreshes.

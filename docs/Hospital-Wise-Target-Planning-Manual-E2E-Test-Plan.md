@@ -209,8 +209,8 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
     note "Objective updated", Submit. —
 24. Arun: click **Approve** in the still-open dialog. **Expected:** the
     dialog closes, a warning reads "The rep changed this plan while you
-    were reviewing it. Here is the latest version. Please review again.",
-    and the expanded row now shows "Objective updated". Vivek's plan is
+    were reviewing it. Please check the latest version below and review
+    again." (wording changed 2026-10-01; passed with the old wording), and the expanded row now shows "Objective updated". Vivek's plan is
     still **Pending Approval**. —
 25. Arun: **Approve** again. **Expected:** Approved. In the team list,
     expanded: "**Last change (approved):** Objective updated"; the "Last
@@ -224,6 +224,11 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 
 26. Vivek: **Revise**, add Test hospital 2 back at **₹15** (total ₹45),
     note "Won Test hospital 2 back", split EDAN ₹45, Submit. —
+    **Step 26: Pass** 2026-10-01 (Basheer). Note used instead: "Plan
+    revised to check double approval test." (step 29 expects this text).
+    Read back in Arun's view: Needs Your Approval shows Vivek **Revised**,
+    3 hospitals, ₹45.0L (was ₹30.0L); KIMS ₹30 + TH2 ₹15 + TH3 ₹0; EDAN
+    ₹45; "Last approved target: ₹30.00L"; Pending Approval. —
 27. Private window as **Haroon**: click **Approve** on Vivek's plan, leave
     the dialog open. Normal window as **Arun**: **Reject** it with note
     "Recheck TH2 amount". —
@@ -233,6 +238,18 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 29. Arun's team list, expanded: "**Last change (rejected):** Won Test
     hospital 2 back"; "Last approved target: ₹30.00L" still shown (kept
     after a rejection). —
+    **Steps 27–29: Pass, step 27 run differently** 2026-10-01 (Basheer).
+    Haroon can't act on Vivek's plan: only the rep's own manager (Arun)
+    gets the Approve/Reject buttons. Admin/GM may decide on the server,
+    but the screen gives Latheef Bhai no buttons (Basheer checked). So
+    both windows were Arun: private window opened Approve and left it open;
+    Claude's tab rejected with note "Check the amount". Private window
+    then pressed Approve → "This plan is no longer waiting for approval
+    -- it has already been decided. Here is the latest version". Read
+    back in Arun's view after reload: Vivek **Rejected**, "Last change
+    (rejected): Plan revised to check double approval test.", "Last
+    approved target: ₹30.00L" still shown. Basheer asked for new
+    message wording (see Progress-Archive 2026-10). —
 
 ## J — Older plan without hospitals (Simple, as Vivek)
 
@@ -241,6 +258,19 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
     is added. Add **KIMS ₹50**, note "Now built from hospitals", split
     EDAN ₹50, Submit. **Expected:** warning **₹10 below** the approved
     ₹60; as Arun, the row shows last approved ₹60. —
+    **Step 30: Pass** 2026-10-01 (Basheer).
+    Warning seen: "₹50.00L is ₹10.00L below your approved target of
+    ₹60.00L … You can still submit". Plan error: Vivek's Q3 plan had
+    **two** brands (EDAN + ELECTROSCIENCE, ₹60 together), not EDAN
+    alone; the plan wasn't checked against the live splits. Submit was
+    blocked by "Brand splits must add up to exactly the plan total
+    (currently ₹60.00L of ₹50.00L)" until Basheer set EDAN ₹20 +
+    ELECTROSCIENCE ₹30. Read back as Arun: Vivek **Pending Approval**,
+    Revised, 1 hospital (KIMS ₹50, Monthly), ₹50.0L (was ₹60.0L), "Last
+    approved target: ₹60.00L — this revision is ₹10.00L below it", note
+    "Now built from hospitals". Submit with no hospital was blocked
+    (Basheer). Side finding: Arun's "Needs Your Approval" list in an
+    already-open tab didn't show the new plan until a reload. —
 
 ## K — Server guards (Complex, Claude, Vivek's session — all refused)
 

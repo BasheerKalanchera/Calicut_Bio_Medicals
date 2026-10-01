@@ -101,9 +101,12 @@ This document defines the core business logic, validation rules, and state-trans
 * **The approver decides only on the latest version, and only while it's
   waiting for approval.** If the salesperson saved a change after the
   approver opened the plan, or someone already decided it, Approve/Reject
-  is refused with "The rep changed this plan while you were reviewing it.
-  Here is the latest version. Please review again." and the screen reloads
-  it. No "being edited" lock.
+  is refused and the screen reloads it. The message is "The rep changed
+  this plan while you were reviewing it. Please check the latest version
+  below and review again." or, if already decided, "This plan is no longer
+  waiting for approval — it has already been decided. Please check the
+  latest version below." (wording Basheer, 2026-10-01). No "being edited"
+  lock.
 * **Origin:** Hospital-wise planning decisions, 2026-09-27; "any change
   resets approval" confirmed 2026-09-23; latest-version check from the
   `/code-review` fix list, Basheer 2026-09-30. Build: same plan.

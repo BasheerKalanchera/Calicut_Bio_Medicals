@@ -238,6 +238,9 @@ export default function TargetPlanningScreen() {
   const { data: pendingApproval = [] } = useQuery({
     queryKey: ["target-plans", "pending-approval"],
     queryFn: listPendingApproval,
+    // A manager often leaves this screen open; without polling, a newly
+    // submitted plan only appeared after a reload or window refocus.
+    refetchInterval: 60_000,
   });
 
   const { data: rollup } = useQuery({
