@@ -55,7 +55,15 @@ def main() -> None:
     dsn = env["DATABASE_URL"]
 
     conn = psycopg2.connect(dsn)
-    conn.set_session(readonly=True, autocommit=True)
+    # One read-only transaction for the whole run, rolled back at the end.
+    # UAT connects through Supabase's transaction pooler (port 6543), which
+    # may hand each transaction to a different server connection; with
+    # autocommit, every statement was its own transaction, so a
+    # session-level RLS setting could be missing for a later query (which
+    # then silently returned too few rows) or linger for other clients.
+    # Found 2026-10-01: a UAT run printed a count, then an empty list for the
+    # same rows. Dev uses the session pooler (5432), so it never showed.
+    conn.set_session(readonly=True, autocommit=False)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     # Find one active Admin/GM to impersonate for RLS context (unrestricted
@@ -74,15 +82,11 @@ def main() -> None:
         return
     print(f"Impersonating RLS context: {admin['display_name']} ({admin['role_name']})\n")
 
-    # is_local=false (the third arg) -- the app's own set_rls_context() uses
-    # true (transaction-local) because it runs inside one request's own
-    # transaction. This script runs under autocommit, so each cur.execute()
-    # is its own transaction; a transaction-local setting would vanish
-    # before the next query ever saw it. false makes it session-scoped
-    # instead, so it survives across every subsequent autocommit statement
-    # on this same connection. (Found the hard way, 2026-09-15 -- the first
-    # run of this script silently reported zero on every opportunity/
-    # reminder-dependent check because of exactly this.)
+    # is_local=true (the third arg), same as the app's own set_rls_context():
+    # the settings live exactly as long as this script's single transaction.
+    # (2026-09-15 used session-scoped settings under autocommit, because a
+    # transaction-local setting vanished after each autocommitted statement;
+    # replaced 2026-10-01, see the connection comment above.)
     #
     # Admin/GM's sbu_id is a NOT-NULL placeholder in the app's own schema
     # convention, but this particular admin row has it as SQL NULL -- guard
@@ -90,9 +94,9 @@ def main() -> None:
     # valid uuid) by passing empty string instead, same as the app's own
     # NULLIF(..., '') handling in cabio_app_sbu_id().
     cur.execute(
-        "SELECT set_config('app.current_user_id', %s, false), "
-        "set_config('app.current_sbu_id', %s, false), "
-        "set_config('app.current_role_id', %s, false)",
+        "SELECT set_config('app.current_user_id', %s, true), "
+        "set_config('app.current_sbu_id', %s, true), "
+        "set_config('app.current_role_id', %s, true)",
         (
             str(admin["id"]),
             str(admin["sbu_id"]) if admin["sbu_id"] else "",
@@ -461,6 +465,15 @@ def main() -> None:
         by_region = Counter(r["region"] for r in rows_16)
         print(f"\n   By region: {dict(by_region.most_common())}")
 
+    # Every result above came from the same transaction; confirm the RLS
+    # context was still in place for the last query before trusting them.
+    cur.execute("SELECT cabio_app_uid() AS uid")
+    if cur.fetchone()["uid"] is None:
+        print("\nRLS context was lost during the run -- results NOT trusted, run log not written.")
+        conn.rollback()
+        conn.close()
+        return
+    conn.rollback()
     cur.close()
     conn.close()
 

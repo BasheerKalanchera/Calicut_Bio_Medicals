@@ -75,7 +75,8 @@ code or changing structure. On any conflict, the document wins over this file.
   load the `doc-integrity-sweep` skill and offer to run it. *(2026-09-24)*
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
-  hook reminds when it's due. *(2026-09-24)* Raw output and draft reports
+  hook reminds when it's due. *(2026-09-24)* Run `scripts/uat_closure_date_report.py`
+  with it (Expected Closure Dates and Lead-stage chance). *(2026-10-01)* Raw output and draft reports
   stay in the session scratchpad; only the finished PDF, after Basheer
   approves it, goes in `C:\Backups\CabioUAT\data_consistency_reports\`.
   *(2026-10-01)*

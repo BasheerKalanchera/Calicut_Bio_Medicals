@@ -155,3 +155,34 @@ checks (scratchpad scripts, run by Basheer via `!`):
     after the task was stopped; it had to be stopped by its process id.
 - **Next:** push to UAT on the morning of 2026-10-02 (Basheer: quiet
   hours), then step 17 on UAT, then merge `uat` into `main`.
+
+## 2026-10-01 — Expected Closure Dates report; UAT read scripts lost their RLS context
+
+While going through the forecast-by-closing-period questions (Latheef Bhai's
+audio message, 2026-09-30; the discussion doc is not yet updated with it):
+- **Finding:** of 112 open Opportunities on UAT, only 3 had a future
+  Expected Closure Date (₹48 L); 17 had a passed date (₹309 L); 92 had none
+  (₹1,086 L). A "by date" forecast would be near-empty until reps add
+  dates, so Q4 is parked until the dates are corrected (Basheer).
+- **Lead-stage chance:** 28 of 56 open Leads were raised above the 5%
+  default by hand (₹530 L value, ₹296 L weighted; two Opportunities give
+  ₹234 L of it). None ticked High Priority: reps use the chance to say
+  "this one is real".
+- **Report:** four-step "Expected Closure Dates" PDF (passed dates, Demo
+  stage or later with no date, Lead stage with a higher chance, early stage
+  for information), gentle and sorted by owner. Approved by Basheer and sent
+  to Cabio leadership; `C:\Backups\CabioUAT\data_consistency_reports\Expected-Closure-Dates-2026-10-01.pdf`.
+  Now `scripts/uat_closure_date_report.py`, run with the data-quality
+  check; its counts go into the run log so the next report shows progress.
+- **Connection bug:** a UAT run printed "28 above default" and then an
+  empty list for the same rows. UAT connects through the transaction
+  pooler (port 6543; Dev uses 5432), so the scripts' session-level RLS
+  settings could be missing for later statements under autocommit, and
+  could linger for other clients. Fixed in `uat_data_quality_check.py`
+  and the new script: one read-only transaction, transaction-local
+  settings, checked again before the run log is written. Re-ran today's
+  UAT check (20:45): every zero still zero; the small differences match
+  the day's work, so the morning report stands.
+- **Filing:** Arun re-filed 21 South Kerala hospitals into districts today
+  (Basheer); region-level 85 → 64 (North Kerala 43, Bangalore 18, South
+  Kerala 3).
