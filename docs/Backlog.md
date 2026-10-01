@@ -391,12 +391,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   matrix" (proposed, not decided).**
 
 - **Bring the user manual and in-app `?` help up to date — ships with the
-  next UAT move (hospital-wise Part 1+2) (Basheer, 2026-10-01).**
-  `docs/UAT-User-Manual.md` and `sales-os-app/src/utils/helpContent.tsx`
-  were last updated 2026-08-01. No help page yet for the screens moved on
-  2026-09-27 (Target Planning, Brand Target Tracking, Marketing Lead
-  Queue, Insights, Reports) or for Target & Coverage Planning. Check the
-  live menu for the full list before writing.
+  next UAT move (hospital-wise Part 1+2) (Basheer, 2026-10-01).** Plan
+  approved 2026-10-01: `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`
+  (current step: the plan's Status line).
 
 - **Approve dialog focus warning (cosmetic).** Opening the target-plan
   Approve dialog leaves keyboard focus on the button behind it; Chrome
