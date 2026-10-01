@@ -378,14 +378,20 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   reaches UAT together with Part 2 (during October); Oct–Dec targets are set
   in the brand-wise screen meanwhile.
 
-- **UAT: fill in missing "date closed" on closed deals.** Sales Report's
-  This Month / This Quarter miss all 37 deals closed before 2026-09-27
-  (they have no `closed_at`). 14 (10 Won, 4 Lost) can take their real
-  close time from the change history — fix ready to plan (small script,
-  not a migration: UAT can't take `0055` yet). 23 (20 Won, 3 Lost) closed
-  before the history began on 2026-09-08 — waiting on the team's actual
-  close dates via Haroon. Detail: Progress-Archive 2026-09-28 "UAT Sales
-  Report: This Month / This Quarter empty".
+- **UAT: fill in missing "date closed" on closed deals.** 37 deals closed
+  before 2026-09-27 have no `closed_at` (30 Won, 7 Lost). All 37 fall in
+  Jul–Sep 2026, so the Sales Report's This Month / This Quarter (no
+  past-period filter yet) no longer show them anyway; what needs the
+  dates is Part 2's plan-vs-actual for 2026-Q2. **Proposed date for each
+  deal sent to Haroon 2026-10-01** for review
+  (`C:\Backups\CabioUAT\data_consistency_reports\Closed-Deals-Close-Dates-2026-10-01.pdf`;
+  `.xlsx` with an answer column, held in case he asks). Dates come from
+  activity notes (22), date marked in Sales OS (9), rep's expected
+  closing date (4); 2 have no information. Open with Haroon: commitment
+  date or PO date (affects 5 deals), the 2 unknowns, and IQRAA Padne S50
+  Elite (conflicting notes). **Next:** apply his answers, then fill in
+  `closed_at` on UAT (a UAT write: own approval, Basheer runs it; with
+  or before the Part 2 move). Detail: Progress-Archive 2026-10-01.
 
 - **Report edge cases left by the zone tree — low priority, no screen
   affected (found in `/code-review`, 2026-09-27).** (1) The reporting

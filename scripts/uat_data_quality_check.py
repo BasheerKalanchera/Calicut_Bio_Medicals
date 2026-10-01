@@ -439,6 +439,28 @@ def main() -> None:
     run(missing_close.format(cond=f"{audit_close} >= '2026-09-27'"),
         "No close date, closed on/after 27 Sep (app fault?)")
 
+    # A hospital filed at region level (zone_level ZONE, or STATE above it)
+    # is invisible to every district- or cluster-level rep, so they can't
+    # plan or work it. Re-filing into districts was chosen 2026-09-30
+    # (Option A, pending Haroon); this tracks the count as it falls.
+    section("16. Hospitals filed at region level instead of a district")
+    cur.execute("""
+        SELECT COALESCE(z.zone_level, '(none)') AS level, COUNT(*) AS cnt
+        FROM account a LEFT JOIN zone z ON z.id = a.zone_id
+        GROUP BY 1 ORDER BY cnt DESC
+    """)
+    spread = " · ".join(f"{r['level']}: {r['cnt']}" for r in cur.fetchall())
+    print(f"\n-- All hospitals by filing level (information only): {spread}")
+    rows_16 = run("""
+        SELECT a.name, z.name AS region, z.zone_level, a.customer_type
+        FROM account a JOIN zone z ON z.id = a.zone_id
+        WHERE z.zone_level IN ('ZONE', 'STATE')
+        ORDER BY z.name, a.name
+    """, "Filed at region level", limit=100)
+    if rows_16:
+        by_region = Counter(r["region"] for r in rows_16)
+        print(f"\n   By region: {dict(by_region.most_common())}")
+
     cur.close()
     conn.close()
 
