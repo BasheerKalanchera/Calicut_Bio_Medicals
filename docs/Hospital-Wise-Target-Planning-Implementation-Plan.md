@@ -1,6 +1,11 @@
 # Hospital-Wise Target Planning — Implementation Plan
 
-**Status:** Approved 2026-09-27 (choices in section 3 answered by Basheer
+**Status: Part 1 shipped on Dev 2026-10-01** — manual E2E 38/38 passed
+(`docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`); scorecard
+rows 6.1, 1.2, 1.3 → Done (`6b4c5d8`). Commits: `e55c112`, `04c5e87`,
+`72564dc`, `467dee8`, `70e41e1`, `bfeef46`, `6a2c9ed`, `1a4843a`,
+`3907b88`, E2E fixes `cf279b7`, `3d6ca27`. UAT move with Part 2.
+**Earlier:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
 Steps 1–3 built: `e55c112` (schema), `04c5e87` (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration `0056`, applied to Dev), ₹0-warning follow-up `bfeef46` (BR-PL-06). Step 4 (rules and records) done 2026-09-29. Step 5 done: `/code-review` high ran 2026-09-29; fix list built `1a4843a`; a medium `/code-review` of that commit found one race, fixed with a row lock `3907b88` (2026-09-30). Step 6: E2E plan written 2026-09-30 (`docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`), not yet run.

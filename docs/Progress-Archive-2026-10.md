@@ -36,6 +36,46 @@ reload or window focus). tsc + lint clean.
 
 **Open question for Backlog (not decided):** should the Admin/GM screen
 show Approve/Reject on any plan, since the server already allows it?
+(Now in Backlog.)
+
+## 2026-10-01 — Hospital-wise Part 1 finished: E2E 38/38, scorecard Done
+
+- **Steps 31–33 (server guards):** the auto-mode classifier blocked
+  Claude's own write requests to Dev, so Basheer pasted each request in
+  the browser console and read back the reply: 403 own-SBU, 422
+  three-decimal amount, 422 missing version stamp. Nothing saved
+  (checked after).
+- **Step 34 (who can read hospital lines):** read-only on Dev as Vivek,
+  Arun, Nishad, Rudrappa; connection role can't bypass RLS; all three
+  settings verified. Pass. Basheer asked whether Dev proves UAT. Claude
+  first said no, citing UAT's `rls_auto_enable()` trigger, but that
+  trigger was removed 2026-09-10 (stale comment in migration 0055, not
+  checked against the history). No separate UAT re-run: the move's
+  standard check already confirms RLS and policies on new tables.
+- **Help/manual:** `docs/UAT-User-Manual.md` and the in-app `?` help
+  were last updated 2026-08-01; none of the screens moved on 2026-09-27
+  have help pages. A per-screen section was never a move step (Claude's
+  own 2026-09-29 note). Basheer's decision: bring the whole manual and
+  help up to date in the next UAT move (Backlog entry, Part 2 plan step 5).
+- **Steps 35–38:** pass (Basheer). Step 37's ₹85 was checked read-only
+  against the live splits first.
+- **Scorecard:** Beat Planning (6.1), Account Segmentation (1.2) and
+  Customer Tiering (1.3) → Done; 34 Done · 11 Partial · 5 Not started.
+  Specialty = hospital type; size not wanted yet (Latheef Bhai/Haroon via
+  Basheer). Client pages republished. Commit `6b4c5d8`.
+- **Retro.** *Worked:* fixing live and saving checkpoints mid-run;
+  reading every save back through the app; the race tests (sections H
+  and I) proved the version check end to end. *To improve:* three test
+  plan assumptions were wrong: who can approve (step 27, Haroon),
+  Vivek's Q3 brand split (step 30), and that Claude could send the
+  section K requests. Also two claims made from notes without checking
+  the history (UAT trigger, manual step); Basheer caught both.
+  Note: the "manual step" catch led to a wider fix, the whole manual
+  and help updated with the next move.
+  *Process change (proposed):* when writing a test
+  plan, check who can approve and who can save, not only who sees what,
+  and plan every Dev write, including deliberately refused requests, as
+  "Basheer sends, Claude watches".
 
 ## 2026-10-01 — UAT data-quality check; hospital filing level added
 

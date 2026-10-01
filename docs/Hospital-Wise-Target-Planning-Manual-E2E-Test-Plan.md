@@ -12,7 +12,7 @@ BR-PL-08 (change note, fresh approval, latest-version check), BR-PL-09
 **Built:** step 1 `e55c112` (migration `0055`), step 2 `04c5e87`
 (backend), 3a `72564dc`, 3b `467dee8`, 3c + 3d `70e41e1` (migration
 `0056`), ₹0 warnings `bfeef46`, code-review fixes `1a4843a`, row lock
-`3907b88`.
+`3907b88`; E2E fixes `cf279b7`, `3d6ca27`; sign-off `6b4c5d8`.
 
 **Automated coverage:** 1069 backend tests pass; ruff clean on planning;
 tsc clean; lint 0 errors (247 older warnings).
@@ -298,8 +298,10 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
     **Step 34: Pass** 2026-10-01 (Claude, Dev, read-only; Basheer
     approved). Connection role `cabio_app` (not superuser, no RLS
     bypass); all three settings verified for each user. Vivek 3 lines,
-    Arun 3, Nishad 0 (plan row also hidden), Rudrappa 0. Repeat once on
-    UAT after the Part 1+2 move (Basheer, 2026-10-01). —
+    Arun 3, Nishad 0 (plan row also hidden), Rudrappa 0. No separate UAT
+    re-run (Basheer, 2026-10-01): UAT's `rls_auto_enable()` trigger was
+    removed 2026-09-10, and the move's standard check already confirms
+    every new table has RLS and policies. —
 
 ## M — Territory edge cases (Simple)
 
@@ -332,8 +334,7 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 `cf279b7` (pinned filter bars, menu label alignment, Plan button
 wording) and `3d6ca27` (refused-approval wording, brand-split
 messages, approval list refresh). Plan corrections recorded at steps
-20, 27 and 30. One UAT follow-up: repeat step 34 after the Part 1+2
-move (Part 2 plan, step 5).
+20, 27 and 30.
 
 **Dev test data this run leaves behind:** ratings on KIMS (High),
 Test hospital 2 (Medium), Test hospital 3 (Low); 2026-Q4 plans for Vivek,

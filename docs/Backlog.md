@@ -371,12 +371,37 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`
   — ships to UAT with the Opportunity Edit quick fix.
 
-- **Hospital-wise target planning — plan approved 2026-09-27; build in progress — current step: the plan's Status line.** Raised at the 2026-09-24 demo; all design questions answered
-  (`docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`, sections 4–5).
-  Plan: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
-  Unblocked by the main → UAT move (done 2026-09-27). Changed 2026-09-29:
-  reaches UAT together with Part 2 (during October); Oct–Dec targets are set
-  in the brand-wise screen meanwhile.
+- **Admin/GM approve buttons on any target plan (undecided).** The server
+  lets Admin/GM approve or reject any plan, but their screen only shows
+  buttons for their own direct reports' plans (found in hospital-wise E2E
+  step 27, 2026-10-01). Question for Basheer: add the buttons, or remove
+  the server permission?
+
+- **Require a district (or lower) when a hospital is added or edited
+  (proposed, not decided).** Region-level filing hides hospitals from
+  district-level reps' planning picker; 4th occurrence (Progress-Archive
+  2026-08-31, 2026-09-26, 2026-09-30). For Basheer's talk with Haroon,
+  with the UAT re-filing (Part 2 plan, step 5).
+
+- **Regenerate `sales-os-app/src/types/api.ts`** — not done after
+  hospital-wise Part 1 (Dev backend was down; the screen uses its own
+  types). Do it with the Part 2 build.
+
+- **CLAUDE.md line "Backlog holds only work outside the Traceability
+  matrix" (proposed, not decided).**
+
+- **Bring the user manual and in-app `?` help up to date — ships with the
+  next UAT move (hospital-wise Part 1+2) (Basheer, 2026-10-01).**
+  `docs/UAT-User-Manual.md` and `sales-os-app/src/utils/helpContent.tsx`
+  were last updated 2026-08-01. No help page yet for the screens moved on
+  2026-09-27 (Target Planning, Brand Target Tracking, Marketing Lead
+  Queue, Insights, Reports) or for Target & Coverage Planning. Check the
+  live menu for the full list before writing.
+
+- **Approve dialog focus warning (cosmetic).** Opening the target-plan
+  Approve dialog leaves keyboard focus on the button behind it; Chrome
+  logs an `aria-hidden` warning. No effect for users; tidy when the
+  dialog is next touched.
 
 - **UAT: fill in missing "date closed" on closed deals.** 37 deals closed
   before 2026-09-27 have no `closed_at` (30 Won, 7 Lost). All 37 fall in
