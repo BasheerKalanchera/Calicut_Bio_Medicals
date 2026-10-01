@@ -60,14 +60,14 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** start build step 1 (migration) — unblocked (hospital-wise
   Part 1 finished 2026-10-01); ask Basheer first.
 
-## Forecast by closing period — discussion started 2026-09-30
+## Forecast by closing period — questions answered 2026-10-01
 
-- Client asked (2026-09-30) to filter pipeline projections, weighted and
-  unweighted, by period (this month … FY end, total) for cash flow and
-  purchase-order planning. This is the unbuilt month/quarter half of
-  Traceability 2.5; Part 2 (plan versus actual) doesn't cover it.
-- Doc: `docs/Discussion-Forecast-By-Closing-Period-2026-09.md`, 8 questions,
-  none decided.
-- **Next:** go through the questions with Basheer, starting with Q2 (does
-  "next quarter" mean up to 31 March or only Jan–Mar? to confirm with the
-  client).
+- Latheef Bhai's request (Traceability 2.5, month/quarter half):
+  `docs/Discussion-Forecast-By-Closing-Period-2026-09.md` — all questions
+  decided except Q4, parked until reps correct Expected Closure Dates
+  (only 3 of 112 open Opportunities had a future date). Common
+  Opportunity filter, lighter option; rule in both standards docs.
+- Date catch-up: `scripts/uat_closure_date_report.py`, run with the
+  data-quality check; first report sent to leadership 2026-10-01.
+- **Next:** write the implementation plan when Basheer says; watch the
+  closure report's progress.

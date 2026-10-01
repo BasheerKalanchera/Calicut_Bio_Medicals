@@ -279,6 +279,20 @@ pixel-identical replication of the Tailwind version.
 Don't chase one-time decorations. When a gap fits none of these rules, flag it
 for human review rather than guessing.
 
+### 6.9 Common Opportunity filter (decided 2026-10-01, not yet built)
+
+Any screen that filters or totals Opportunities (Pipeline list/Kanban,
+Insights, Pipeline/Sales/Product Performance reports, drill-down lists) uses
+the one shared Opportunity filter bar and passes its values unchanged to the
+server. Never build a screen's own filter boxes or date logic, even when
+it would be quicker: the Opportunity edit form copied four times (2026-09-30) is
+what this prevents. Period picks follow the forecast decisions: a dropdown
+with FY quarters (2026-Q3 = Oct–Dec) and a custom from/to range. Built
+first for the forecast-by-closing-period work
+(`docs/Discussion-Forecast-By-Closing-Period-2026-09.md`); existing screens
+move over when next touched (Backlog "Move remaining Opportunity screens to
+the common filter"). Server half: Backend standards, "Filtering Standards".
+
 ---
 
 ## 7. Service Layer (Frontend)

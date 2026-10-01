@@ -827,6 +827,19 @@ async def list_opportunities(
 ):
 ```
 
+**Common Opportunity filter (decided 2026-10-01, not yet built).** Every
+endpoint that filters or totals Opportunities (Opportunity lists, pipeline/sales/
+product reports, dashboard tiles, drill-downs) takes the same filter set
+and applies it through one shared function: which Opportunities count
+(dates, SBU, zone, owner, brand, product, stage, status). The shared
+summary on top of it (value, weighted value, units, weighted units by
+group) is shared too. An endpoint never re-implements a filter or a date
+boundary itself, so two screens showing "Expected by 31 Dec" always agree.
+Built first for the forecast-by-closing-period work
+(`docs/Discussion-Forecast-By-Closing-Period-2026-09.md`); existing endpoints
+move over when next touched (Backlog "Move remaining Opportunity screens to
+the common filter"). Frontend half: Frontend standards §6.9.
+
 ### Sorting Standards
 
 Single sort parameter with field and direction:

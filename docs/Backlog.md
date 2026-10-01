@@ -395,6 +395,16 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   approved 2026-10-01: `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`
   (current step: the plan's Status line).
 
+- **Move remaining Opportunity screens to the common filter (Basheer,
+  2026-10-01).** The forecast-by-closing-period work builds one shared
+  Opportunity filter (server function + screen filter bar) and connects
+  only Insights, the Pipeline Report with its drill-down list, and Product
+  Performance (lighter option). Still on their own filters: Sales Report,
+  Stagnant Deals, Opportunities On Hold, Pipeline Kanban/List and the
+  other drill-downs. Move each when it is next
+  touched, or in one refactoring pass. Rule: Frontend standards §6.9,
+  Backend standards "Filtering Standards".
+
 - **Structural guards for repeated test-plan mistakes (Basheer: build
   2026-10-02).** On 2026-10-01 several mistakes broke existing CLAUDE.md
   rules; only the no-`cd` hook actually stopped one. Build, about an hour:
