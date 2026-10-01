@@ -21,6 +21,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   manual/help update (Backlog). Hospital
   re-filing on UAT (Option A) held until Basheer talks
   to Haroon — Part 2 plan, step 5.
+- Close dates for the 37 deals closed before 27 Sep: proposed dates sent
+  to Haroon 2026-10-01 (Backlog "UAT: fill in missing 'date closed'").
+  Apply his answers, then fill in on UAT with or before the Part 1+2 move
+  (UAT write: own approval, Basheer runs it).
 - Plan approved 2026-09-29: `docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`
   (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
