@@ -123,3 +123,35 @@ checks (scratchpad scripts, run by Basheer via `!`):
   questions: commitment or PO date, 2 deals with no information, IQRAA
   Padne S50 Elite. Files in `C:\Backups\CabioUAT\data_consistency_reports\`.
   Backlog entry "UAT: fill in missing 'date closed'" updated.
+
+## 2026-10-01 — UAT hotfix built and Dev-tested: Opportunity edit via its own page + Customer 360 Active-only filter
+
+- **Decisions (Basheer):** the quick fix's 4 open decisions all taken as
+  recommended. EDIT on Customer 360 and Project Directory opens the
+  Opportunity page, and their duplicate edit forms are removed. The
+  Opportunity page's Edit window gets a Project dropdown with "No project"
+  (the server already accepts `project_id: null`). EDIT opens the page in
+  its normal view.
+- **Built** in worktree `.claude/worktrees/hotfix` off `origin/uat`;
+  committed `a430152` (4 files, +116/−890). Medium `/code-review` found
+  one issue: saving products on the Opportunity page didn't refresh the
+  Project Directory list (that screen stays mounted). Fixed before E2E.
+- **Dev E2E steps 1–16 pass**
+  (`docs/Opportunity-Edit-Hotfix-and-Active-Filter-Manual-E2E-Test-Plan.md`).
+  The original bug no longer reproduces: product saved, then stage →
+  Qualified with no error. Screen tweaks during the run, at Basheer's
+  request:
+  - heading "Showing Active Opportunities (2 Active of 4)", or "Showing
+    All Opportunities (4)";
+  - the heading row wraps on a phone (checked at phone width);
+  - in the no-Active state the Show All button stays in the heading row;
+  - no Show All button when nothing is hidden (decision 13).
+- **Process notes:**
+  - Claude ran section A's single-click steps itself after tagging them
+    Complex. Basheer pointed out the cost, and the remaining steps were
+    retagged Simple. When tagging, judge each step, not the section.
+  - Basheer asked for "Opportunity", never "deal"; added to CLAUDE.md.
+  - A background `npm` dev server left its `vite` child running on Windows
+    after the task was stopped; it had to be stopped by its process id.
+- **Next:** push to UAT on the morning of 2026-10-02 (Basheer: quiet
+  hours), then step 17 on UAT, then merge `uat` into `main`.

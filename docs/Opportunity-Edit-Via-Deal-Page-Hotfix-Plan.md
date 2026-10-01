@@ -1,7 +1,10 @@
 # Opportunity Edit From Customer/Project Pages (UAT Hotfix) — Implementation Plan
 
-**Status:** Draft, 2026-09-30 — **Parked** by Basheer 2026-09-30 before the
-approach decisions below were answered. Nothing built.
+**Status:** Approved 2026-10-01 (Basheer answered the four open decisions).
+Built and Dev-tested 2026-10-01 with the Customer 360 Active-only filter;
+committed `a430152` on `hotfix/opportunity-edit-via-deal-page`; push to
+UAT held for a quiet morning (Basheer).
+Earlier: drafted and parked 2026-09-30.
 **Traceability rows:** none (bug fix to existing opportunity editing; no signed requirement changes status)
 **Design / discussion:** 2026-09-30 conversation; summary in
 `docs/Progress-Archive-2026-09.md` "2026-09-30 — UAT bug: deal edit with
@@ -14,10 +17,10 @@ customer/project page fails when products and stage change together".
 - This fix also carries the Customer 360 Active-only Opportunities filter to UAT (`docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`, its decisions 10–12) — Basheer, 2026-09-30
 - Fix both places the bug exists (Customer 360 and Project Directory), not only the screen in the video — Basheer, 2026-09-30
 - Products and stage/status are two separate edits and are saved separately (as on the deal page), not bundled into one "all or nothing" save — Basheer, 2026-09-30
-- EDIT on a deal in Customer 360's and Project Directory's Opportunities tabs opens the deal page (Opportunity Detail); the two duplicate edit forms are removed — proposed
-- Add a Project dropdown to the deal page's Edit window (listing that customer's projects), so the ability to attach/move a deal to a project is not lost; it becomes the single place to change it — proposed
-- EDIT lands on the deal page in its normal view (rep then taps its Edit), not with the Edit window already open — proposed
-- The Project dropdown includes a "No project" choice to detach a deal attached by mistake (no screen allows this today); server support to be checked before building — proposed
+- EDIT on a deal in Customer 360's and Project Directory's Opportunities tabs opens the deal page (Opportunity Detail); the two duplicate edit forms are removed — Basheer, 2026-10-01
+- Add a Project dropdown to the deal page's Edit window (listing that customer's projects), so the ability to attach/move a deal to a project is not lost; it becomes the single place to change it — Basheer, 2026-10-01
+- EDIT lands on the deal page in its normal view (rep then taps its Edit), not with the Edit window already open — Basheer, 2026-10-01
+- The Project dropdown includes a "No project" choice to detach a deal attached by mistake (no screen allows this today); server already accepts it (checked on `origin/uat` 2026-10-01: `update_opportunity` applies an explicit `project_id: null` via `model_dump(exclude_unset=True)`) — Basheer, 2026-10-01
 
 ## 1. In plain terms
 

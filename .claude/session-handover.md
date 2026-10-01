@@ -5,14 +5,24 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 
 
-## Deal edit from customer/project page — UAT bug, parked 2026-09-30
+## UAT hotfix: Opportunity edit via its own page + Customer 360 Active-only filter — push in the morning
 
-- Parked by Basheer (wants a break). Plan with 4 open decisions:
-  `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`; Backlog entries
-  for the bug and "Front-end consistency audit". Rep has the workaround.
-- **Next:** when Basheer returns to it, get the 4 decisions, then build as
-  a hotfix off `origin/uat` — together with the Customer 360 Active-only
-  filter (Basheer, 2026-09-30).
+- Plans: `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`,
+  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
+  Test plan: `docs/Opportunity-Edit-Hotfix-and-Active-Filter-Manual-E2E-Test-Plan.md`
+  — Dev steps 1–16 pass 2026-10-01.
+- Committed `a430152` on branch `hotfix/opportunity-edit-via-deal-page`
+  (worktree `.claude/worktrees/hotfix`, off `origin/uat` `143c78e`; its
+  `sales-os-app/node_modules` is a junction to main's, `.env` copied).
+  **Not pushed:** Basheer wants it on UAT in the quiet morning hours.
+- **Next (2026-10-02 morning, ask first):** `git fetch`; confirm
+  `origin/uat` is still `143c78e`; `git push origin
+  hotfix/opportunity-edit-via-deal-page:uat` (fast-forward; host
+  redeploys UAT) → Basheer runs step 17 on UAT → merge `uat` into `main`
+  (expect conflicts in `Customer360Screen.tsx`), re-check on Dev, push →
+  post-commit checklist (filter: leadership "Requested" item 2 → built,
+  scorecard regen + republish; Backlog entries for both close) → remove
+  the worktree. Each commit/push its own approval.
 
 ## Hospital-wise target planning — Part 2 (plan versus actual)
 
@@ -37,15 +47,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   "Audit Trail Redesign".
 - **Next:** start build step 1 (migration) — unblocked (hospital-wise
   Part 1 finished 2026-10-01); ask Basheer first.
-
-## Customer 360 Active-only Opportunities filter — decided 2026-09-30
-
-- Plan approved 2026-09-30:
-  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
-  Built with the deal-edit quick fix above, same branch, in a separate
-  git worktree off `origin/uat`.
-- **Next:** build waits for the quick fix's 4 decisions (Part 1's E2E
-  run finished 2026-10-01); first build check is in the plan's technical addendum.
 
 ## Forecast by closing period — discussion started 2026-09-30
 

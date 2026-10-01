@@ -1,8 +1,9 @@
 # Customer 360 Active-Only Opportunities Filter — Implementation Plan
 
-**Status:** Approved 2026-09-30 (Basheer). Not built — waits for the
-Opportunity Edit quick fix's open decisions (decisions 9–11);
-hospital-wise Part 1's E2E run finished 2026-10-01 (`6b4c5d8`).
+**Status:** Approved 2026-09-30 (Basheer). Built and Dev-tested
+2026-10-01 with the Opportunity Edit quick fix; committed `a430152` on
+`hotfix/opportunity-edit-via-deal-page`; push to UAT held for a quiet
+morning (Basheer). Decisions 4 and 5 reworded during the Dev run.
 **Traceability rows:** "Requested by Cabio leadership — to be built", item 2
 (`docs/Signed-Requirements-to-PRD-Traceability.md`).
 **Design / discussion:** `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md`
@@ -18,9 +19,12 @@ hospital-wise Part 1's E2E run finished 2026-10-01 (`6b4c5d8`).
 3. After **Show All**, opening an Opportunity and pressing Back returns to
    the full list; leaving the customer and coming back resets to Active
    only — Basheer, 2026-09-30
-4. Heading: "Opportunities (3 Active of 15)" — Basheer, 2026-09-30
-5. No Active Opportunities: "No Active Opportunities", with the
-   **Show All (15)** button below it — Basheer, 2026-09-30
+4. Heading: "Showing Active Opportunities (3 Active of 15)"; after Show All,
+   "Showing All Opportunities (15)" — Basheer, 2026-09-30, reworded
+   2026-10-01
+5. No Active Opportunities: the list shows "No Active Opportunities";
+   **Show All (15)** stays in the heading row like every other state —
+   Basheer, 2026-09-30; button moved up from the empty box 2026-10-01
 6. Button: "Show All (15)", changing to "Show Active Only" — Basheer,
    2026-09-30
 7. Switching to another tab of the same customer (e.g. Opportunities →
@@ -45,6 +49,10 @@ hospital-wise Part 1's E2E run finished 2026-10-01 (`6b4c5d8`).
 12. That branch is built in a separate working folder (a git worktree),
     so the other session's unsaved work in the main folder is never
     disturbed — Basheer, 2026-09-30
+13. The Show All button appears only when something is hidden: a customer
+    whose Opportunities are all Active shows "Opportunities (4 Active of
+    4)" with no button, since Show All would list the same 4 — Basheer,
+    2026-10-01
 
 ## 1. In plain terms
 
@@ -131,11 +139,12 @@ step 5.
     `onToggleShowAll`. Split `opportunities` on
     `o.status?.status_code === "ACTIVE"` (same filter as
     `backend/app/domains/reporting/repository.py`'s pipeline query).
-    Heading `Opportunities ({active} Active of {total})`, or
+    Heading `Showing Active Opportunities ({active} Active of {total})`
+    (`Showing All Opportunities ({total})` when Show All is on), or
     `Opportunities (0)` when total is 0. Toggle button styled like the
     existing `+ Add` button. Empty states: total 0 → the existing message;
     Active 0 but total > 0 and Show All off → "No Active Opportunities"
-    plus the button.
+    (the button stays in the heading row).
   - The screen passes `showAll` through from a new prop, because the tab
     content unmounts on tab switch (decision 7) and the whole screen
     unmounts on drill-in (decision 3).

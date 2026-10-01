@@ -217,3 +217,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Manual E2E — confirm saves by reading the record back through the app, not the request recorder.
   **Why:** 2026-09-30 — the Chrome request recorder missed Basheer's saves twice in one run. The Vite dev app's ~200 module loads fill its ~200-entry buffer on page load, and signing in as another user reloads the page. Reading each saved record back through the app's own endpoints in the tester's session worked every time. This replaces the 2026-09-24 "start request recording before he acts" instruction.
+
+- **Rule:** Terminology — say "Opportunity", never "deal", in code, comments, docs, commit messages and chat.
+  **Why:** 2026-10-01 — Basheer, reviewing the hotfix commit message: "Please use the project terminology No deals only Opportunities." Claude had used "deal" throughout the chat, the test plan, two code comments and the commit message.
