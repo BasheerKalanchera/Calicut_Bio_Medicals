@@ -31,15 +31,11 @@ import {
   updateProject,
   listOpportunities,
   createOpportunity,
-  updateOpportunity,
-  addOpportunityItem,
-  deleteOpportunityItem,
   listInstalledAssets,
   createInstalledAsset,
   updateInstalledAsset,
 } from "../services/accounts";
 import {
-  listOpportunityItems,
   getStakeholderOpportunityCounts,
   listOpportunitiesForStakeholder,
 } from "../services/opportunities";
@@ -49,8 +45,6 @@ import {
   listStages,
   listStatuses,
   listUsers,
-  listLossReasons,
-  listHoldReasons,
   listGateOverrideReasons,
   listSbus,
   searchZonesForHospital,
@@ -98,6 +92,10 @@ interface Props {
   // through to ActivityTimeline so it can scroll to and highlight the exact
   // Activity the notification was about.
   highlightActivityId?: string;
+  // Opportunities tab: Show All vs Active only. Held by DemoApp so it
+  // survives a tab switch and Back from Opportunity Detail.
+  showAllOpportunities?: boolean;
+  onShowAllOpportunitiesChange?: (showAll: boolean) => void;
 }
 
 const TABS = [
@@ -473,26 +471,49 @@ function ProjectsTab({ projects, onAdd, onEdit, onSelectProject }: { projects: a
   );
 }
 
-function OpportunitiesTab({ opportunities, onAdd, onEdit, onSelectOpportunity }: { opportunities: any[]; onAdd: () => void; onEdit: (o: any) => void; onSelectOpportunity?: (opportunity: { id: string; name: string }) => void }) {
+const TAB_BUTTON_SX = { whiteSpace: "nowrap", px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } } as const;
+const EMPTY_BOX_SX = { textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" } as const;
+
+// Opens on Active Opportunities only -- the same set the pipeline counts
+// (BR-OP-07); Show All adds On Hold, Won and Lost. Editing an Opportunity happens on
+// its own detail page, so EDIT just opens it (hotfix 2026-10-01).
+function OpportunitiesTab({ opportunities, onAdd, onSelectOpportunity, showAll, onToggleShowAll }: { opportunities: any[]; onAdd: () => void; onSelectOpportunity?: (opportunity: { id: string; name: string }) => void; showAll: boolean; onToggleShowAll: () => void }) {
+  const total = opportunities.length;
+  const activeCount = opportunities.filter((o) => o.status?.status_code === "ACTIVE").length;
+  const visible = showAll ? opportunities : opportunities.filter((o) => o.status?.status_code === "ACTIVE");
+  const toggleButton = total > 0 && activeCount < total && (
+    <Button onClick={onToggleShowAll} sx={TAB_BUTTON_SX}>
+      {showAll ? "Show Active Only" : `Show All (${total})`}
+    </Button>
+  );
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+      {/* Wraps on a phone: heading on its own line, buttons right-aligned below. */}
+      <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.5 }}>
         <Typography component="h4" sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.2em" }}>
-          Opportunities ({opportunities.length})
+          {total === 0
+            ? "Opportunities (0)"
+            : showAll
+              ? `Showing All Opportunities (${total})`
+              : `Showing Active Opportunities (${activeCount} Active of ${total})`}
         </Typography>
-        <Button
-          onClick={onAdd}
-          sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-        >
-          + Add
-        </Button>
+        <Box sx={{ display: "flex", gap: 1, ml: "auto" }}>
+          {toggleButton}
+          <Button onClick={onAdd} sx={TAB_BUTTON_SX}>
+            + Add
+          </Button>
+        </Box>
       </Box>
-      {opportunities.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 6, bgcolor: "#fff", borderRadius: "1.5rem", border: "2px dashed #f3f4f6", fontStyle: "italic", color: "#9ca3af" }}>
+      {total === 0 ? (
+        <Box sx={EMPTY_BOX_SX}>
           No opportunities found for this account.
         </Box>
+      ) : visible.length === 0 ? (
+        <Box sx={EMPTY_BOX_SX}>
+          No Active Opportunities
+        </Box>
       ) : (
-        opportunities.map((o) => (
+        visible.map((o) => (
           <Box
             key={o.id}
             onClick={() => onSelectOpportunity?.({ id: o.id, name: o.name })}
@@ -512,12 +533,14 @@ function OpportunitiesTab({ opportunities, onAdd, onEdit, onSelectOpportunity }:
                     Reactivation Overdue
                   </Box>
                 )}
-                <Button
-                  onClick={(e) => { e.stopPropagation(); onEdit(o); }}
-                  sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-                >
-                  Edit
-                </Button>
+                {onSelectOpportunity && (
+                  <Button
+                    onClick={(e) => { e.stopPropagation(); onSelectOpportunity({ id: o.id, name: o.name }); }}
+                    sx={TAB_BUTTON_SX}
+                  >
+                    Edit
+                  </Button>
+                )}
               </Box>
             </Box>
             <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 2, rowGap: 0.5, fontSize: "0.75rem", color: "#6b7280" }}>
@@ -596,7 +619,7 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 // ---------------------------------------------------------------------------
 // Main screen
 // ---------------------------------------------------------------------------
-export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab, highlightActivityId }: Props) {
+export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab, highlightActivityId, showAllOpportunities = false, onShowAllOpportunitiesChange }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
   // BR-OP-12: only these roles may create an Opportunity outside their own SBU.
@@ -771,45 +794,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [newOGateOverrideReasonId, setNewOGateOverrideReasonId] = useState("");
   const [newOGateOverrideNote, setNewOGateOverrideNote] = useState("");
   const [newOItems, setNewOItems] = useState<DraftOpportunityItem[]>([]);
-  const [editingOpp, setEditingOpp] = useState<any | null>(null);
-  const [showEditOppItems, setShowEditOppItems] = useState(false);
-  const [editOName, setEditOName] = useState("");
-  const [editOProjectId, setEditOProjectId] = useState("");
-  const [editOStageId, setEditOStageId] = useState("");
-  const [editOStatusId, setEditOStatusId] = useState("");
-  const [editOLeadSourceId, setEditOLeadSourceId] = useState("");
-  const [editOOwnerId, setEditOOwnerId] = useState("");
-  const [editOWinProb, setEditOWinProb] = useState("");
-  const [editOValue, setEditOValue] = useState("");
-  const [editOItems, setEditOItems] = useState<DraftOpportunityItem[]>([]);
-  const [editOOriginalItemIds, setEditOOriginalItemIds] = useState<string[]>([]);
-  // Status-gated fields (BR-OP-02/03/05). Prefilled from o.* in openEditOpp — the
-  // by-account opportunities list response now includes them (WorkspaceOpportunity).
-  // Hold/Loss fields are still only sent when the effective status is ON_HOLD/LOST
-  // (see handleUpdateOpp), so editing an opportunity without touching its status
-  // never overwrites a previously-set hold/loss reason with an unrelated blank field.
-  const [editOPoNumber, setEditOPoNumber] = useState("");
-  // Bug fix, 2026-08-18: these 3 fields previously had no edit-form state at all in
-  // this file -- once a deal advanced to Demo/Negotiation, editing it here to set
-  // Stage there would fail server-side (BR-OP-00) with no field on screen to fix it.
-  const [editODemoStart, setEditODemoStart] = useState("");
-  const [editODemoEnd, setEditODemoEnd] = useState("");
-  const [editOClosureDate, setEditOClosureDate] = useState("");
-  const [editOHoldReasonId, setEditOHoldReasonId] = useState("");
-  const [editOReactivationDate, setEditOReactivationDate] = useState("");
-  const [editOLossReasonId, setEditOLossReasonId] = useState("");
-  const [editOCompetitorName, setEditOCompetitorName] = useState("");
-  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
-  const [editOIsExternalReferrer, setEditOIsExternalReferrer] = useState(false);
-  const [editOReferredByUserId, setEditOReferredByUserId] = useState("");
-  const [editOReferredByNote, setEditOReferredByNote] = useState("");
-  // BR-OP-14: gate override. editOGateOverrideChecked is the sole trigger -- an
-  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
-  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
-  const [editOGateOverrideChecked, setEditOGateOverrideChecked] = useState(false);
-  const [editOGateOverrideApproverId, setEditOGateOverrideApproverId] = useState("");
-  const [editOGateOverrideReasonId, setEditOGateOverrideReasonId] = useState("");
-  const [editOGateOverrideNote, setEditOGateOverrideNote] = useState("");
 
   // Installed assets
   const [showCreateAsset, setShowCreateAsset] = useState(false);
@@ -836,37 +820,21 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const { data: stages = [] } = useQuery({
     queryKey: ["stages"],
     queryFn: () => listStages() as Promise<any[]>,
-    enabled: showCreateOpp || editingOpp !== null,
+    enabled: showCreateOpp,
     staleTime: Infinity,
   });
 
   const { data: oppStatuses = [] } = useQuery({
     queryKey: ["statuses"],
     queryFn: () => listStatuses() as Promise<any[]>,
-    enabled: showCreateOpp || editingOpp !== null,
+    enabled: showCreateOpp,
     staleTime: Infinity,
   });
 
   const { data: leadSources = [] } = useQuery({
     queryKey: ["leadSources"],
     queryFn: () => listLeadSources() as Promise<any[]>,
-    enabled: showCreateOpp || editingOpp !== null,
-    staleTime: Infinity,
-  });
-
-  // Only needed on the Edit Opportunity modal (BR-OP-03/05 status gates) — Create
-  // Opportunity can't set these fields at all (OpportunityCreate has no such fields).
-  const { data: lossReasons = [] } = useQuery({
-    queryKey: ["lossReasons"],
-    queryFn: () => listLossReasons() as Promise<any[]>,
-    enabled: editingOpp !== null,
-    staleTime: Infinity,
-  });
-
-  const { data: holdReasons = [] } = useQuery({
-    queryKey: ["holdReasons"],
-    queryFn: () => listHoldReasons() as Promise<any[]>,
-    enabled: editingOpp !== null,
+    enabled: showCreateOpp,
     staleTime: Infinity,
   });
 
@@ -876,21 +844,20 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const { data: gateOverrideReasons = [] } = useQuery({
     queryKey: ["gateOverrideReasons"],
     queryFn: () => listGateOverrideReasons() as Promise<any[]>,
-    enabled: showCreateOpp || editingOpp !== null,
+    enabled: showCreateOpp,
     staleTime: Infinity,
   });
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers() as Promise<any[]>,
-    enabled: showCreateProject || editingProject !== null || showCreateOpp || editingOpp !== null,
+    enabled: showCreateProject || editingProject !== null || showCreateOpp,
     staleTime: Infinity,
   });
 
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
   const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
-  const editOLeadSourceCode = leadSources.find((ls: any) => ls.id === editOLeadSourceId)?.name;
 
   // BR-OP-10: creation must default to Active only -- there is exactly one Active
   // status in the system, so this is never a real user choice on Add Opportunity.
@@ -902,7 +869,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // an already-set value (not from the stage threshold) is never hidden by this --
   // see each field's render condition below (Backlog decision, 2026-08-18).
   const newOStageOrder = stages.find((s: any) => s.id === newOStageId)?.display_order ?? 0;
-  const editOStageOrder = stages.find((s: any) => s.id === editOStageId)?.display_order ?? 0;
 
   // Distinct query key -- must not reuse ["users","all"] above, which (despite its
   // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
@@ -916,7 +882,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       const d = await listUsers("all");
       return Array.isArray(d) ? d : [];
     },
-    enabled: showCreateOpp || editingOpp !== null,
+    enabled: showCreateOpp,
     staleTime: Infinity,
   });
 
@@ -936,18 +902,13 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     return Array.from(byId.values());
   }
   const newOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(newOOwnerId);
-  const editOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(editOOwnerId);
 
   // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
   // which products are eligible (BR-OP-11 validates items against the opportunity's
   // actual SBU, not the caller's own) — everywhere else it's just the caller's own SBU.
-  // Editing an existing Opportunity must filter by *its own* sbu_id, not the caller's --
-  // otherwise Admin/GM (whose own userProfile.sbu is null, per BR-OP-12) fall through to
-  // an unfiltered fetch and see every product, regardless of the deal's actual SBU.
+  // Editing an existing Opportunity happens on its own detail page (hotfix 2026-10-01).
   const productsSbuId = (showCreateOpp && isSbuOverrideRole && newOSbuId)
     ? newOSbuId
-    : editingOpp
-    ? editingOpp.sbu_id
     : (userProfile as any)?.sbu?.id;
   const { data: products = [] } = useQuery({
     queryKey: ["products", "picker", productsSbuId],
@@ -955,7 +916,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       const d: any = await listProducts({ page_size: 100, sbu_id: productsSbuId } as any);
       return d.items || [];
     },
-    enabled: showCreateOpp || editingOpp !== null || showCreateAsset || editingAsset !== null,
+    enabled: showCreateOpp || showCreateAsset || editingAsset !== null,
   });
 
   const { data: sbus = [] } = useQuery({
@@ -964,32 +925,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     enabled: showCreateOpp && isSbuOverrideRole,
     staleTime: Infinity,
   });
-
-  // Edit Opportunity's item list is an editable draft buffer, not a direct render of
-  // query data. listOpportunityItems is only fetched on-demand (enabled: editingOpp
-  // !== null), so it isn't available the instant the modal opens — it arrives
-  // asynchronously. Seed the draft once per editingOpp.id via a ref guard, not a plain
-  // [oppItemsData]-keyed effect: otherwise a background refetch (React Query's default
-  // refetchOnWindowFocus) while the modal is open would silently clobber unsaved edits.
-  const { data: oppItemsData } = useQuery({
-    queryKey: ["opp-items", editingOpp?.id],
-    queryFn: () => listOpportunityItems(editingOpp!.id),
-    enabled: editingOpp !== null,
-  });
-  const seededOppIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (editingOpp === null) { seededOppIdRef.current = null; return; }
-    if (oppItemsData === undefined) return;
-    if (seededOppIdRef.current === editingOpp.id) return;
-    seededOppIdRef.current = editingOpp.id;
-    const mapped = oppItemsData.map((i: any) => ({
-      id: i.id, product_id: i.product_id, product_name: i.product?.name, product_type: i.product?.product_type,
-      description: i.description, line_type: i.line_type,
-      quantity: i.quantity, unit_price_lakhs: Number(i.unit_price_lakhs), discount_lakhs: Number(i.discount_lakhs),
-    }));
-    setEditOItems(mapped);
-    setEditOOriginalItemIds(mapped.map((i: any) => i.id));
-  }, [editingOpp, oppItemsData]);
 
   const chipBarRef = useRef<HTMLDivElement>(null);
 
@@ -1030,12 +965,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       setNewOValue(itemsTotal(newOItems).toFixed(2));
     } else { setNewOValue(""); }
   }, [newOItems]);
-
-  useEffect(() => {
-    if (editOItems.length > 0) {
-      setEditOValue(itemsTotal(editOItems).toFixed(2));
-    }
-  }, [editOItems]);
 
   // --- Loading / error states ---
   if (loading) {
@@ -1295,110 +1224,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
   };
 
-  const openEditOpp = (o: any) => {
-    setEditingOpp(o); setEditOName(o.name || ""); setEditOProjectId(o.project_id || "");
-    setEditOStageId(o.stage?.id || ""); setEditOStatusId(o.status?.id || "");
-    setEditOLeadSourceId(o.lead_source_id || ""); setEditOOwnerId(o.owner?.id || "");
-    setEditOWinProb(o.win_probability != null ? String(o.win_probability) : "");
-    setEditOValue(o.indicative_value != null ? String(o.indicative_value) : "");
-    setEditOItems([]); setEditOOriginalItemIds([]);
-    setEditODemoStart(o.demo_start_date || ""); setEditODemoEnd(o.demo_end_date || "");
-    setEditOClosureDate(o.expected_closure_date || "");
-    setEditOPoNumber(o.po_number || ""); setEditOHoldReasonId(o.hold_reason_id || "");
-    setEditOReactivationDate(o.reactivation_date || ""); setEditOLossReasonId(o.loss_reason_id || "");
-    setEditOCompetitorName(o.competitor_name || "");
-    setEditOIsExternalReferrer(!!o.referred_by_note);
-    setEditOReferredByUserId(o.referred_by?.id || ""); setEditOReferredByNote(o.referred_by_note || "");
-    setEditOGateOverrideChecked(!!o.gate_override_approver_id);
-    setEditOGateOverrideApproverId(o.gate_override_approver_id || "");
-    setEditOGateOverrideReasonId(o.gate_override_reason_id || "");
-    setEditOGateOverrideNote(o.gate_override_note || "");
-  };
-
-  const handleUpdateOpp = async () => {
-    if (!editOName.trim()) throw new Error("Opportunity name is required");
-    const _editStage = stages.find((s: any) => s.id === editOStageId);
-    const _qualStage = stages.find((s: any) => s.stage_code === "QUALIFIED");
-    if (_editStage && _qualStage && _editStage.display_order >= _qualStage.display_order && editOValue === "") {
-      throw new Error("Indicative value is required for Qualified stage and above");
-    }
-    // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
-    // while the selected status is On Hold/Lost, since the form has no way to know
-    // whether they were already satisfied by a previous save (see field declarations).
-    const _newStatus = oppStatuses.find((s: any) => s.id === editOStatusId);
-    const _selectedLossReason = lossReasons.find((r: any) => r.id === editOLossReasonId);
-    if (_newStatus?.status_code === "ON_HOLD") {
-      if (!editOHoldReasonId) throw new Error("Hold Reason is required to put an opportunity On-Hold");
-      if (!editOReactivationDate) throw new Error("Reactivation Date is required to put an opportunity On-Hold");
-      if (editOReactivationDate <= new Date().toISOString().slice(0, 10)) throw new Error("Reactivation Date must be a future date");
-    }
-    if (_newStatus?.status_code === "LOST") {
-      if (!editOLossReasonId) throw new Error("Loss Reason is required to mark an opportunity as Lost");
-      if (_selectedLossReason?.reason_code === "COMPETITOR_WON" && !editOCompetitorName.trim()) {
-        throw new Error("Competitor Name is required when Loss Reason is 'Competitor Won'");
-      }
-    }
-    if (_newStatus?.status_code === "WON" && !editOPoNumber.trim()) {
-      throw new Error("PO Number is required to mark an opportunity as Won");
-    }
-    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
-    // the failure surfaces before the round-trip, not just as a 422.
-    if (editOGateOverrideChecked && editOGateOverrideApproverId && !editOGateOverrideReasonId) {
-      throw new Error("Gate override reason is required whenever an approver is set");
-    }
-    const payload: any = {
-      name: editOName.trim(), owner_id: editOOwnerId || undefined,
-      stage_id: editOStageId || undefined, status_id: editOStatusId || undefined,
-      win_probability: editOWinProb !== "" ? Number(editOWinProb) : undefined,
-      lead_source_id: editOLeadSourceId || null,
-      indicative_value: editOValue !== "" ? Number(editOValue) : null,
-      demo_start_date: editOGateOverrideChecked ? null : (editODemoStart || null),
-      demo_end_date: editOGateOverrideChecked ? null : (editODemoEnd || null),
-      expected_closure_date: (editOGateOverrideChecked && editOStageOrder >= STAGE_ORDER_ORDER) ? null : (editOClosureDate || null),
-    };
-    if (editOProjectId) payload.project_id = editOProjectId;
-    payload.po_number = editOPoNumber.trim() || null;
-    if (editOLeadSourceCode === "REFERRAL") {
-      if (editOIsExternalReferrer) {
-        payload.referred_by_note = editOReferredByNote.trim() || null;
-        payload.referred_by_user_id = null;
-      } else {
-        payload.referred_by_user_id = editOReferredByUserId || null;
-        payload.referred_by_note = null;
-      }
-    } else {
-      // Lead Source no longer Referral -- clear any previously-set referral credit
-      // rather than leaving it stranded and invisible (BR-FIN-07).
-      payload.referred_by_user_id = null;
-      payload.referred_by_note = null;
-    }
-    if (_newStatus?.status_code === "ON_HOLD") {
-      payload.hold_reason_id = editOHoldReasonId;
-      payload.reactivation_date = editOReactivationDate;
-    }
-    if (_newStatus?.status_code === "LOST") {
-      payload.loss_reason_id = editOLossReasonId;
-      if (editOCompetitorName.trim()) payload.competitor_name = editOCompetitorName.trim();
-    }
-    // BR-OP-14: always sent explicitly (not conditionally omitted), same style as
-    // demo_start_date etc above -- unchecking Gate Override must actively clear a
-    // previously-set override, not just hide it client-side (TC-17).
-    payload.gate_override_approver_id = editOGateOverrideChecked ? (editOGateOverrideApproverId || null) : null;
-    payload.gate_override_reason_id = (editOGateOverrideChecked && editOGateOverrideApproverId) ? (editOGateOverrideReasonId || null) : null;
-    payload.gate_override_note = (editOGateOverrideChecked && editOGateOverrideApproverId) ? (editOGateOverrideNote.trim() || null) : null;
-    await updateOpportunity(editingOpp.id, payload);
-    const currentIds = editOItems.filter((i: any) => i.id).map((i: any) => i.id);
-    const toDelete = editOOriginalItemIds.filter((id) => !currentIds.includes(id));
-    const toAdd = editOItems.filter((i: any) => !i.id);
-    await Promise.all([
-      ...toDelete.map((id) => deleteOpportunityItem(id as any).catch(() => { })),
-      ...toAdd.map((i: any) => addOpportunityItem(editingOpp.id, { product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }).catch(() => { })),
-    ]);
-    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
-    queryClient.invalidateQueries({ queryKey: ["opp-items", editingOpp.id] });
-    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-  };
-
   // Installed assets
   const openCreateAsset = () => {
     setNewAIsCompetitor(false); setNewAProductId(""); setNewACompetitorName(""); setNewAInstallDate(""); setNewADepartment("");
@@ -1427,9 +1252,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     await updateInstalledAsset(editingAsset.id, payload);
     queryClient.invalidateQueries({ queryKey: ["installed-assets", "byAccount", accountId] });
   };
-
-  const editOStatusCode = oppStatuses.find((s: any) => s.id === editOStatusId)?.status_code;
-  const editOLossReasonCode = lossReasons.find((r: any) => r.id === editOLossReasonId)?.reason_code;
 
   return (
     <Box
@@ -1520,7 +1342,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} onSelectProject={(p: any) => onSelectProject?.({ ...p, account: { id: accountId, name: account?.name } })} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onEdit={openEditOpp} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} showAll={showAllOpportunities} onToggleShowAll={() => onShowAllOpportunitiesChange?.(!showAllOpportunities)} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} highlightActivityId={highlightActivityId} />
@@ -1811,177 +1633,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         />
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <OpportunityItemAddRow products={products} onAdd={(item) => setNewOItems([...newOItems, item])} />
-        </Box>
-      </FormModal>
-
-      {/* Edit Opportunity */}
-      <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp} disableEnforceFocus={showEditOppItems}>
-        <TextField label="Name *" value={editOName} onChange={(e) => setEditOName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        <TextField select label="Project" value={editOProjectId} onChange={(e) => setEditOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">None</MenuItem>
-          {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-        </TextField>
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <TextField
-            select label="Stage" value={editOStageId}
-            onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setEditOStageId(e.target.value); if (s) setEditOWinProb(String(s.default_win_probability)); }}
-            fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select stage</MenuItem>
-            {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-          </TextField>
-          <TextField select label="Status" value={editOStatusId} onChange={(e) => setEditOStatusId(e.target.value)} fullWidth size="small" sx={{ flex: 1 }} slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
-          </TextField>
-        </Box>
-        <TextField select label="Lead Source" value={editOLeadSourceId} onChange={(e) => setEditOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">Select source</MenuItem>
-          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
-        </TextField>
-        {editOLeadSourceCode === "REFERRAL" && (
-          <Box>
-            <FormControlLabel
-              control={<Checkbox color="primary" checked={editOIsExternalReferrer} onChange={(e) => { setEditOIsExternalReferrer(e.target.checked); setEditOReferredByUserId(""); setEditOReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
-            />
-            {editOIsExternalReferrer ? (
-              <TextField label="Referred By" value={editOReferredByNote} onChange={(e) => setEditOReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
-            ) : (
-              <TextField select label="Referred By" value={editOReferredByUserId} onChange={(e) => setEditOReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                <MenuItem value="">Select colleague</MenuItem>
-                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-              </TextField>
-            )}
-          </Box>
-        )}
-        <TextField select label="Owner" value={editOOwnerId} onChange={(e) => setEditOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">Select owner</MenuItem>
-          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-        </TextField>
-        <TextField label="Win Probability %" type="number" value={editOWinProb} onChange={(e) => setEditOWinProb(e.target.value)} fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        {(editOStageOrder >= STAGE_ORDER_QUALIFIED || editOItems.length > 0 || editOValue !== "") && (
-          <TextField
-            label={`Indicative Value (Lakhs)${editOItems.length > 0 ? " (auto)" : ""}`}
-            type="number" value={editOValue} onChange={(e) => setEditOValue(e.target.value)}
-            disabled={editOItems.length > 0}
-            fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
-          />
-        )}
-        <FormControlLabel
-          control={<Checkbox color="primary" checked={editOGateOverrideChecked} onChange={(e) => setEditOGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
-        />
-        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoStart !== "") && !editOGateOverrideChecked && (
-          <TextField label="Demo Start Date" type="date" value={editODemoStart} onChange={(e) => setEditODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {((editOStageOrder >= STAGE_ORDER_DEMO && editOLeadSourceCode !== "REPEAT_ORDER") || editODemoEnd !== "") && !editOGateOverrideChecked && (
-          <TextField label="Demo End Date" type="date" value={editODemoEnd} onChange={(e) => setEditODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {((editOStageOrder >= STAGE_ORDER_NEGOTIATION && editOLeadSourceCode !== "REPEAT_ORDER") || editOClosureDate !== "") &&
-          !(editOGateOverrideChecked && editOStageOrder >= STAGE_ORDER_ORDER) && (
-          <TextField label="Expected Closure Date" type="date" value={editOClosureDate} onChange={(e) => setEditOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {editOGateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select
-              label={editOGateOverrideApproverId ? "Approved By *" : "Approved By"}
-              value={editOGateOverrideApproverId}
-              onChange={(e) => setEditOGateOverrideApproverId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-              helperText="The owner's immediate manager, or a General Manager"
-            >
-              <MenuItem value="">No override</MenuItem>
-              {editOGateOverrideApproverOptions.map((u: any) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
-                </MenuItem>
-              ))}
-            </TextField>
-            {editOGateOverrideApproverId && (
-              <>
-                <TextField
-                  select label="Reason *" value={editOGateOverrideReasonId} onChange={(e) => setEditOGateOverrideReasonId(e.target.value)}
-                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-                >
-                  <MenuItem value="">Select reason</MenuItem>
-                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-                </TextField>
-                <TextField
-                  label="Note" value={editOGateOverrideNote} onChange={(e) => setEditOGateOverrideNote(e.target.value)}
-                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
-                />
-              </>
-            )}
-          </Box>
-        )}
-        {(editOStageOrder >= STAGE_ORDER_ORDER || editOPoNumber.trim() !== "" || editOStatusCode === "WON") && (
-          <TextField label="PO Number" value={editOPoNumber} onChange={(e) => setEditOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
-        )}
-        {editOStatusCode === "ON_HOLD" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
-            <TextField
-              select label="Hold Reason *" value={editOHoldReasonId} onChange={(e) => setEditOHoldReasonId(e.target.value)}
-              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Select reason</MenuItem>
-              {holdReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-            </TextField>
-            <TextField
-              label="Reactivation Date *" type="date" value={editOReactivationDate} onChange={(e) => setEditOReactivationDate(e.target.value)}
-              fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Box>
-        )}
-        {editOStatusCode === "LOST" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select label="Loss Reason *" value={editOLossReasonId} onChange={(e) => setEditOLossReasonId(e.target.value)}
-              fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Select reason</MenuItem>
-              {lossReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-            </TextField>
-            {editOLossReasonCode === "COMPETITOR_WON" && (
-              <TextField label="Competitor Name *" value={editOCompetitorName} onChange={(e) => setEditOCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
-            )}
-          </Box>
-        )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
-            <Button
-              type="button"
-              onClick={() => setShowEditOppItems(true)}
-              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-            >
-              {editOItems.length > 0 ? `Edit (${editOItems.length})` : "+ Add Products"}
-            </Button>
-          </Box>
-          <OpportunityItemsList items={editOItems} variant="summary" />
-        </Box>
-      </FormModal>
-
-      <FormModal isOpen={showEditOppItems} onClose={() => setShowEditOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
-        <OpportunityItemsList
-          items={editOItems}
-          variant="editable"
-          emptyMessage="No products added"
-          onRemove={(i) => setEditOItems(editOItems.filter((_, j) => j !== i))}
-          onUpdateField={(i, field, value) => setEditOItems(editOItems.map((it, j) => {
-            if (j !== i) return it;
-            // Dropping `id` forces handleUpdateOpp's diffing to treat an edited
-            // pre-existing row as delete-old + add-new (there's no single-item
-            // PATCH endpoint) -- same technique the pre-extraction code used.
-            const { id: _id, ...rest } = it;
-            return { ...rest, [field]: value };
-          }))}
-        />
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <OpportunityItemAddRow products={products} onAdd={(item) => setEditOItems([...editOItems, item])} />
         </Box>
       </FormModal>
 

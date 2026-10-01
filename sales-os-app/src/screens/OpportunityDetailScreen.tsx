@@ -34,7 +34,7 @@ import {
   removeOpportunityStakeholder,
   updateOpportunityStakeholder,
 } from "../services/opportunities";
-import { listStakeholders } from "../services/accounts";
+import { listStakeholders, listProjects } from "../services/accounts";
 import { listActivitiesByOpportunity, listOpportunityReminders } from "../services/activities";
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources, listGateOverrideReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
@@ -334,10 +334,12 @@ function NextActionsTab({ opportunityId }: { opportunityId: string }) {
 function ProductsTab({
   opportunityId,
   sbuId,
+  accountId,
   onIndicativeValueChange,
 }: {
   opportunityId: string;
   sbuId: string;
+  accountId: string;
   onIndicativeValueChange: (value: string | null) => void;
 }) {
   const queryClient = useQueryClient();
@@ -402,6 +404,9 @@ function ProductsTab({
       const newValue = editItems.length > 0 ? total.toFixed(2) : null;
       await patchOpportunity(opportunityId, { indicative_value: newValue !== null ? Number(newValue) : null });
       queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+      // Project Directory stays mounted while this page is open, so its
+      // Opportunities list must be told the value changed (code review 2026-10-01).
+      queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
       onIndicativeValueChange(newValue);
       setEditing(false);
     } catch (e: any) {
@@ -1247,6 +1252,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   // Overview edit state
   const [showEditOpp, setShowEditOpp]             = useState(false);
   const [editName, setEditName]                   = useState("");
+  // The only place an Opportunity's project is changed ("" = No project) -- Customer
+  // 360 and Project Directory open this page instead of their own edit forms
+  // (hotfix 2026-10-01).
+  const [editProjectId, setEditProjectId]         = useState("");
   const [editStageId, setEditStageId]             = useState("");
   const [editStatusId, setEditStatusId]           = useState("");
   const [editOwnerId, setEditOwnerId]             = useState("");
@@ -1359,6 +1368,13 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     staleTime: Infinity,
   });
 
+  // Same key as Customer360Screen's Projects tab, so the two share a cache.
+  const { data: accountProjects = [] } = useQuery({
+    queryKey: ["projects", "byAccount", opp?.account?.id],
+    enabled:  showEditOpp && !!opp?.account?.id,
+    queryFn:  async () => (await listProjects(opp!.account.id as any)) as { id: string; name: string }[],
+  });
+
   // BR-OP-14: needed on the Edit modal (approver picker) AND on the read-only
   // Overview display whenever an override is already set (same pattern as
   // holdReasons/lossReasons above).
@@ -1426,6 +1442,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const openEditOpp = () => {
     if (!opp) return; // only reachable once the detail body (gated below) has rendered
     setEditName(opp.name);
+    setEditProjectId(opp.project?.id ?? "");
     setEditStageId(opp.stage.id);
     setEditStatusId(opp.status.id);
     setEditOwnerId(opp.owner.id);
@@ -1483,6 +1500,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     const referralLeadSourceCode = leadSources.find((ls) => ls.id === editLeadSourceId)?.name;
     const payload: Record<string, unknown> = {
       name:                  editName.trim(),
+      // Always sent: "" (No project) must actively detach, not be skipped.
+      project_id:            editProjectId || null,
       stage_id:              editStageId  || undefined,
       status_id:             editStatusId || undefined,
       owner_id:              editOwnerId  || undefined,
@@ -1527,6 +1546,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     payload.high_priority_manual = editHighPriorityManual;
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+    // Customer 360's and Project Directory's Opportunities lists (Back lands there).
+    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", opp.account.id] });
+    const newProject = accountProjects.find((p) => p.id === editProjectId);
     // Reconstruct nested objects from loaded master data so header + strip +
     // pipeline card re-render immediately (local state and cache both, via applyOppPatch)
     const newStage       = stages.find((s) => s.id === editStageId);
@@ -1543,6 +1565,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       : undefined;
     applyOppPatch({
       name:                  editName.trim(),
+      project:               editProjectId ? (newProject ? { id: newProject.id, name: newProject.name } : opp.project) : null,
       win_probability:       editWinProb !== "" ? editWinProb : opp.win_probability,
       indicative_value:      editValue   !== "" ? editValue   : null,
       expected_closure_date: (gateOverrideChecked && editStageOrder >= STAGE_ORDER_ORDER) ? null : (editClosureDate || null),
@@ -1721,6 +1744,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           <ProductsTab
             opportunityId={opp.id}
             sbuId={opp.sbu.id}
+            accountId={opp.account.id}
             onIndicativeValueChange={(v) => applyOppPatch({ indicative_value: v })}
           />
         )}
@@ -1736,6 +1760,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       {/* Edit Opportunity modal */}
       <FormModal isOpen={showEditOpp} onClose={() => setShowEditOpp(false)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
         <TextField label="Name *" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <TextField select label="Project" value={editProjectId} onChange={(e) => setEditProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+          <MenuItem value="">No project</MenuItem>
+          {accountProjects.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
+        </TextField>
         <Box sx={{ display: "flex", gap: 1.5 }}>
           <TextField
             select
