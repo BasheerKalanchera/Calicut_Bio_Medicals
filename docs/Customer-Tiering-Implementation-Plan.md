@@ -9,6 +9,10 @@ Low / Not rated, Admin/GM set it, notes Admin/GM only — BR-ACC-04) was built
 as part of Hospital-wise planning (step 3a `72564dc`; schema `e55c112`),
 see `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`. The
 remaining open questions here are unchanged.
+**Update 2026-10-01:** scorecard rows 1.2 and 1.3 are Done (Business
+Potential passed manual E2E). **Size is not wanted for now:** Latheef
+Bhai and Haroon have no use for hospital size yet (Basheer checked with
+them), so question 1's Size part is parked; revisit if they ask.
 **Scorecard rows:** Feature 5.1 "Tier 1 / Tier 2 dropdown" (1.3 Customer
 Tiering, Not started) and Feature 5.1 "Account types … A/B/C/D class"
 (1.1 Account Structure & Hierarchy, Partial; A/B/C/D parked for Phase 2 by

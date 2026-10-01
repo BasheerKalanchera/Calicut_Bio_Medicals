@@ -5,15 +5,15 @@
 
 ## Summary
 
-Of **50** signed requirements: **31 done, 11 partly done, 8 not started** — plus **16 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **16 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 31 | 11 | 8 | 16 |
+| 34 | 11 | 5 | 16 |
 
 **Real progress, two honest ways to read it:**
-- **Strictly done:** 31 of 50 = **62.0%**
-- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (31 + 11×0.5) ÷ 50 = **73.0%**
+- **Strictly done:** 34 of 50 = **68.0%**
+- **Counting partly-done items as half-credit** (the fairer "real progress" number, since 11 items aren't zero — they're mid-flight): (34 + 11×0.5) ÷ 50 = **79.0%**
 
 ---
 
@@ -24,8 +24,8 @@ Where every hospital, clinic and dealer account is set up, described and tracked
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 1 | 5.1 | Account types (multi-location corporate, A/B/C/D class, diagnostic centers, clinics, dealers) | 1.1 Account Structure & Hierarchy | Partial | Hospital records capture type and corporate grouping today; the A/B/C/D classification tier is parked for a later phase. |
-| 2 | 5.1 | Account segmentation by size, specialty, revenue potential | 1.2 Account Segmentation | Not started |  |
-| 3 | 5.1 | Tier 1 / Tier 2 dropdown | 1.3 Customer Tiering | Not started |  |
+| 2 | 5.1 | Account segmentation by size, specialty, revenue potential | 1.2 Account Segmentation | Done |  |
+| 3 | 5.1 | Tier 1 / Tier 2 dropdown | 1.3 Customer Tiering | Done |  |
 | 4 | 5.2 | Stakeholder phone, WhatsApp, email | 1.4 Customer Profile Management → Stakeholder Management | Done |  |
 | 5 | 5.2 | Good Paymaster / Problematic Payer flag | 1.5 Financial Categorization | Done (exceeds spec) |  |
 | 6 | 5.2 | Promoter / Neutral / Detractor sentiment tagging | 1.6 Customer Health & Sentiment | Done |  |
@@ -96,7 +96,7 @@ The management tools behind the scenes — targets, territories, roles, and who'
 
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
-| 39 | *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Not started |  |
+| 39 | *(untagged)* | Basic Beat Planning, upgradable to Google Maps tracking in Phase 2 | 6.1 Beat Planning | Done |  |
 | 40 | 2.1 | Territory & Ownership Mapping; multiple reps owning separate opportunities at one hospital | 6.2 Geographic Coverage & Ownership Mapping | Done |  |
 | 41 | *(untagged, optional)* | Account Manager role per customer | 6.3 Account Manager Assignment | Not started |  |
 | 42 | 3.1 | Sales target configuration: individual, team, regional | 6.4 Target Management | Done | Every salesperson can now set their own quarterly sales target, which their manager reviews and approves before it counts. Managers also see their whole team's targets rolled up in one place. |

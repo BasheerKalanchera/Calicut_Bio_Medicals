@@ -502,8 +502,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Two open questions for Haroon/Latheef Bhai, surfaced during the
   same 2026-09-13 Phase 1 Delivery Scorecard review — none built, both
   waiting on a "do we actually need this" answer before being scoped:**
-  (1) Feature 5.1, Account Segmentation by size/specialty/revenue potential;
-  (2) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown). Full
+  ~~(1) Feature 5.1, Account Segmentation by size/specialty/revenue potential;
+  (2) Feature 5.1, Customer Tiering (Tier 1/Tier 2 dropdown).~~ —
+  **RESOLVED 2026-10-01:** both Done via Business Potential (Hospital-wise
+  planning Part 1); specialty is the hospital type; size not wanted yet
+  (Latheef Bhai/Haroon, via Basheer). Full
   detail and evidence for each: `docs/Signed-Requirements-to-PRD-
   Traceability.md`, Module 1 table.
   ~~(3) Feature 5.1, A/B/C/D hospital classification field~~ — **RESOLVED,

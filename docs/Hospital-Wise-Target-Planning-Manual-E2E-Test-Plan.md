@@ -280,12 +280,26 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
     unchanged. —
 33. `POST /planning/targets/{id}/approve` **without** `expected_updated_at`
     (in Arun's session) → **422**; nothing decided. —
+    **Steps 31–32: Pass** 2026-10-01 (Basheer pasted, Vivek's session;
+    both sent as drafts). 31 → 403 "You can only set a target for your
+    own SBU."; 32 → 422 `decimal_max_places` on KIMS. Read back: Vivek
+    has no Imaging plan; 2026-Q4 still Rejected ₹45, KIMS ₹30, unchanged
+    since the step-27 rejection. —
+    **Step 33: Pass** 2026-10-01. Basheer pasted the request in the
+    browser console (the auto-mode classifier blocks Claude's own write
+    requests to Dev). Body `{"status":"APPROVED"}` on Vivek's 2026-Q4
+    plan → 422, only `expected_updated_at` "Field required". —
 
 ## L — Who can read hospital lines (Complex, Claude, read-only database check)
 
 34. Read `target_plan_account` rows for Vivek's 2026-Q4 plan, as each
     user (all three settings set and verified). **Expected:** Vivek and
     Arun see them; **Nishad 0**; **Rudrappa 0**. —
+    **Step 34: Pass** 2026-10-01 (Claude, Dev, read-only; Basheer
+    approved). Connection role `cabio_app` (not superuser, no RLS
+    bypass); all three settings verified for each user. Vivek 3 lines,
+    Arun 3, Nishad 0 (plan row also hidden), Rudrappa 0. Repeat once on
+    UAT after the Part 1+2 move (Basheer, 2026-10-01). —
 
 ## M — Territory edge cases (Simple)
 
@@ -294,6 +308,7 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
     DM). **Cancel** — don't save. —
 36. As Rudrappa, 2026-Q4, **Plan**. **Expected:** the picker offers no
     hospitals, so no plan can be submitted. **Cancel.** —
+    **Steps 35–36: Pass** 2026-10-01 (Basheer). —
 
 ## N — Regression (Simple)
 
@@ -304,12 +319,21 @@ Basheer: normal window as **Arun**, private window as **Vivek**.
 38. Menu per role: **Rate Hospitals** for Haroon and Abdul Latheef only;
     Target & Coverage Planning for everyone. Pipeline and Insights load
     normally. —
+    **Steps 37–38: Pass** 2026-10-01 (Basheer). Expected ₹85 checked
+    first read-only on Dev (as Admin): all three Q4 plans EDAN only —
+    Vivek ₹45 Rejected, Arun ₹30 and Nishad ₹10 Pending. —
 
 ---
 
 ## Sign-off
 
-**Result:** not yet run.
+**Result:** **all 38 steps pass** (plus P1–P3, S1), run 2026-09-30 to
+2026-10-01 by Basheer with Claude on Dev. Fixes found during the run:
+`cf279b7` (pinned filter bars, menu label alignment, Plan button
+wording) and `3d6ca27` (refused-approval wording, brand-split
+messages, approval list refresh). Plan corrections recorded at steps
+20, 27 and 30. One UAT follow-up: repeat step 34 after the Part 1+2
+move (Part 2 plan, step 5).
 
 **Dev test data this run leaves behind:** ratings on KIMS (High),
 Test hospital 2 (Medium), Test hospital 3 (Low); 2026-Q4 plans for Vivek,

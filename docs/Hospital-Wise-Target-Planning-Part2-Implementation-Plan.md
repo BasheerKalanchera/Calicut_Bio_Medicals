@@ -102,6 +102,12 @@ No database change.
    the manual (team edits on the customer page) or spreadsheet (Claude
    applies, UAT read + write each approved) route. Irfan's area to be
    assigned by then. Re-run the check on the move day.
+   **After the migrations apply on UAT (Basheer, 2026-10-01):** repeat
+   Part 1 E2E step 34 once on UAT, read-only and with Basheer's go-ahead:
+   who can read a plan's hospital lines (rep and manager yes, peer and
+   other-SBU user 0), all three RLS settings verified. Dev passed
+   2026-10-01; this confirms UAT's `rls_auto_enable()` trigger didn't
+   leave `target_plan_account` without its policies.
 
 ## 4. Not in this plan (with reasons)
 
