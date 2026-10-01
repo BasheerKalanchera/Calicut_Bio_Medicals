@@ -18,9 +18,9 @@ added, and only 7 of 38 tables are watched.
   `docs/Audit-Trail-Redesign-Implementation-Plan.md` — option A, ~3–4
   days, one migration. Closes the `marketing_lead`, `target_plan` and
   `document` coverage entries below when built.
-- **Starts after** hospital-wise planning Part 1 step 5 is committed
-  (both touch the target-plan save code). Built on Dev; UAT move is its
-  own approval.
+- **Unblocked** (hospital-wise Part 1 step 5 committed 2026-09-30; both
+  touch the target-plan save code). Starts when Basheer says. Built on
+  Dev; UAT move is its own approval.
 - **Deferred with it (option B):** a History tab on each deal, customer
   and product page, built on top of this later.
 

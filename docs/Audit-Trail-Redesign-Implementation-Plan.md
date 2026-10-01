@@ -1,6 +1,6 @@
 # Audit Trail Redesign — Implementation Plan
 
-**Status:** Approved 2026-09-30 (Basheer). Build waits for hospital-wise planning Part 1 step 5 to be committed.
+**Status:** Approved 2026-09-30 (Basheer). Not started. Unblocked: hospital-wise Part 1 step 5 committed 2026-09-30 (`1a4843a`, `3907b88`); start when Basheer says.
 **Traceability rows:** beyond-signed item 13 (Audit Log screen) — wording
 update only; supports BR-AUD-01.
 **Design / discussion:** this plan. Trigger for it: a product switch on 3

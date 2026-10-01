@@ -1,8 +1,8 @@
 # Customer 360 Active-Only Opportunities Filter — Implementation Plan
 
-**Status:** Approved 2026-09-30 (Basheer). Not built — waits for
-hospital-wise Part 1's E2E run and the Opportunity Edit quick fix's open
-decisions (decisions 9–11).
+**Status:** Approved 2026-09-30 (Basheer). Not built — waits for the
+Opportunity Edit quick fix's open decisions (decisions 9–11);
+hospital-wise Part 1's E2E run finished 2026-10-01 (`6b4c5d8`).
 **Traceability rows:** "Requested by Cabio leadership — to be built", item 2
 (`docs/Signed-Requirements-to-PRD-Traceability.md`).
 **Design / discussion:** `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md`
