@@ -90,7 +90,7 @@ plan's step 6.
    tab to return to, and clear it when a customer is opened fresh.
    Run tsc and lint.
 2. **Review.** `/code-review` (medium) on the change; fix findings.
-3. **E2E plan.** Write `docs/Customer360-Active-Opportunities-Filter-Manual-E2E-Test-Plan.md`,
+3. **E2E plan.** Written as the shared plan `docs/Opportunity-Edit-Hotfix-and-Active-Filter-Manual-E2E-Test-Plan.md` (covers this filter and the Opportunity Edit quick fix),
    with steps tagged Simple/Complex, checked read-only against a real Dev
    customer that has a mix of Active, On Hold, Won and Lost Opportunities.
 4. **E2E run** on Dev, with the Dev backend restarted first. Pass/Fail
