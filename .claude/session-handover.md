@@ -16,7 +16,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `sales-os-app/node_modules` is a junction to main's, `.env` copied).
   Safety copy pushed to GitHub under its own branch name 2026-10-01 (not
   `uat`). **Not on UAT:** Basheer wants it there in the quiet morning hours.
-- **Next (2026-10-02 morning, ask first):** `git fetch`; confirm
+- **Next (2026-10-03 morning, ask first; moved from 2 Oct by Basheer):** `git fetch`; confirm
   `origin/uat` is still `143c78e`; `git push origin
   hotfix/opportunity-edit-via-deal-page:uat` (fast-forward; host
   redeploys UAT) → Basheer runs step 17 on UAT → merge `uat` into `main`
@@ -36,18 +36,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   fixes in Backlog "Structural guards for repeated test-plan mistakes"
   (Basheer: tomorrow, instead of adding more CLAUDE.md text).
 
-## Hospital-wise target planning — Part 2 (plan versus actual)
+## Plan vs Actuals Tracking (Insights Dashboard)
 
-- Part 1 finished 2026-10-01 (E2E 38/38, scorecard Done; Progress-Archive
-  2026-10). UAT move waits for Part 2: migrations 0055 + 0056, plus the
+- Renamed 2026-10-02 (Basheer) from "Hospital-wise target planning Part 2".
+- Hospital-wise Target Planning finished 2026-10-01 (E2E 38/38, scorecard
+  Done; Progress-Archive 2026-10). Its UAT move waits for this feature: migrations 0055 + 0056, plus the
   manual/help update (Backlog). Hospital
   re-filing on UAT (Option A) held until Basheer talks
-  to Haroon — Part 2 plan, step 5.
+  to Haroon — Plan vs Actuals Tracking plan, step 5.
 - Close dates for the 37 deals closed before 27 Sep: proposed dates sent
   to Haroon 2026-10-01 (Backlog "UAT: fill in missing 'date closed'").
-  Apply his answers, then fill in on UAT with or before the Part 1+2 move
+  Apply his answers, then fill in on UAT with or before the combined UAT move
   (UAT write: own approval, Basheer runs it).
-- Plan approved 2026-09-29: `docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`
+- Plan approved 2026-09-29: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`
   (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
 - **Next:** build step 1 (backend endpoint + tests) once Basheer says start.

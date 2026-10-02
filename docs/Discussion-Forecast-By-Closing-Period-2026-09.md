@@ -69,7 +69,7 @@ What it tells us:
 |---|---|---|---|---|
 | Insights Dashboard — Pipeline box | Total and weighted value of all Active deals | Stage, Rep, SBU, Zone, Product | **None** — every open deal, whatever its date | No |
 | Pipeline Report screen | Same numbers, own screen | Same, plus Brand | **None** | **Yes** — click a row to see its deals |
-| Plan vs Actual (Part 2, not built yet) | Per salesperson: planned, won, weighted "expected this quarter" | Person → hospital, brand | One chosen quarter | Late deals listed |
+| Plan vs Actuals Tracking (not built yet) | Per salesperson: planned, won, weighted "expected this quarter" | Person → hospital, brand | One chosen quarter | Late deals listed |
 
 On Hold, Stalled and Lost deals are never counted in the forecast
 (BR-OP-07); that doesn't change here.
@@ -78,7 +78,7 @@ On Hold, Stalled and Lost deals are never counted in the forecast
 expected to close by 31 December", and see their total, weighted total,
 and the deals themselves.
 
-**Part 2 doesn't fill it:** Part 2 answers "is each salesperson on track
+**Plan vs Actuals Tracking doesn't fill it:** it answers "is each salesperson on track
 against the hospitals they planned this quarter?" Its weighted Expected
 column is fixed to one quarter and grouped by person — it won't give
 "all SonoScape machines likely in the next 6 months", or a company total
@@ -163,7 +163,7 @@ months" view it can't be placed — so it would silently disappear, and the
 
 **Q5. What about deals whose closing date has already passed?**
 Example: a deal was due 15 September, it's now 30 September and it's still
-open. Part 2 already decided (BR-OP-16): count it as due now, and flag it
+open. Plan vs Actuals Tracking already decided (BR-OP-16): count it as due now, and flag it
 "Closing date passed".
 - *Recommendation:* same rule here, so the two screens agree — it counts
   in every period, flagged, and appears in the deal list with the flag.
@@ -228,7 +228,7 @@ screen can only show expected orders.
   Opportunities list; would need a closing-date filter carried through.
   Insights Dashboard box (`InsightsDashboardScreen.tsx`) has no drill.
 - Likely shape: `closure_from` / `closure_to` query params using
-  `_period_bounds` (Part 2 plans to move it to a shared util), a
+  `_period_bounds` (Plan vs Actuals Tracking plans to move it to a shared util), a
   null-date bucket, and a past-date flag per BR-OP-16.
 - Units: `opportunity_item.quantity` (integer, NOT NULL).
 - Closing-date gates: BR-OP-01 (Clinical Evaluation → Negotiation),

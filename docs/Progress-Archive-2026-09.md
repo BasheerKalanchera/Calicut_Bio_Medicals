@@ -8646,7 +8646,7 @@ fix gets built the same day, or parked in the handover with a date.
 ## 2026-09-29 — Hospital-wise planning Part 2 plan approved; closing-date rule
 
 Part 2 (plan versus actual) planned and approved:
-`docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md`, the
+`docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`, the
 first plan written from the new template. Lighter build (~3 days, no DB
 change). Basheer's calls: hospital's zone; "Expected this quarter" counted
 by closing date; no-plan people shown at ₹0 planned; brand planned vs won

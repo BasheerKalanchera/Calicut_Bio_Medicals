@@ -1,8 +1,8 @@
 # User Manual and In-App Help Catch-up — Implementation Plan
 
 **Status:** Approved 2026-10-01 (Basheer). Not started. Steps 1–2 can
-start any time; step 3 waits for Part 2's screens; ships with the
-hospital-wise Part 1+2 UAT move.
+start any time; step 3 waits for Plan vs Actuals Tracking's screens; ships with the
+combined Hospital-wise Target Planning + Plan vs Actuals Tracking UAT move.
 **Traceability rows:** none (supports the UAT rollout; Backlog "Bring the
 user manual and in-app `?` help up to date").
 **Design / discussion:** this plan. Original manual and help: Progress-Archive
@@ -69,7 +69,7 @@ After this work:
    line (D7b); post-commit checklist.
 
 Total about 3 days. Steps 1–2 can start any time; step 3 touches the same
-frontend as the Part 2 build, so it waits until Part 2's screens are
+frontend as the Plan vs Actuals Tracking build, so it waits until its screens are
 settled.
 
 ## 3. Not in this plan (with reasons)

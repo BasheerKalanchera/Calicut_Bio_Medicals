@@ -217,8 +217,8 @@ company), per hospital:
 > finish ₹Y+Z**
 
 Plus one "Unplanned" line for deals won at hospitals outside the plan
-(decision 3). **Part 2's own plan, approved 2026-09-29:**
-`docs/Hospital-Wise-Target-Planning-Part2-Implementation-Plan.md` (Parts 1
+(decision 3). **Part 2's own plan, approved 2026-09-29 (renamed Plan vs Actuals Tracking 2026-10-02):**
+`docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (Parts 1
 and 2 go to UAT together).
 
 **Already done for Part 2:** the zone roll-up backend,

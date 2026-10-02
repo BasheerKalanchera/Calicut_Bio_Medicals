@@ -225,7 +225,7 @@ one filter). **Needs Basheer's/Haroon's call:** should reports actually
 implement `Value × Split%` per ADR-003's original intent, or was that
 design superseded and never formally revised? Either answer is a real
 decision, not an engineering default. **Asked Haroon 2026-09-29** (Basheer,
-while approving hospital-wise planning Part 2, whose scorecard follows
+while approving Plan vs Actuals Tracking, whose scorecard follows
 whatever the reports do).
 
 ### Product Catalog Brand/Category/Model: Done 2026-09-23, three minor clean-ups left
@@ -381,11 +381,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   (proposed, not decided).** Region-level filing hides hospitals from
   district-level reps' planning picker; 4th occurrence (Progress-Archive
   2026-08-31, 2026-09-26, 2026-09-30). For Basheer's talk with Haroon,
-  with the UAT re-filing (Part 2 plan, step 5).
+  with the UAT re-filing (Plan vs Actuals Tracking plan, step 5).
 
 - **Regenerate `sales-os-app/src/types/api.ts`** — not done after
-  hospital-wise Part 1 (Dev backend was down; the screen uses its own
-  types). Do it with the Part 2 build.
+  Hospital-wise Target Planning (Dev backend was down; the screen uses its own
+  types). Do it with the Plan vs Actuals Tracking build.
 
 - **CLAUDE.md line "Backlog holds only work outside the Traceability
   matrix" (proposed, not decided).**
@@ -425,7 +425,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   before 2026-09-27 have no `closed_at` (30 Won, 7 Lost). All 37 fall in
   Jul–Sep 2026, so the Sales Report's This Month / This Quarter (no
   past-period filter yet) no longer show them anyway; what needs the
-  dates is Part 2's plan-vs-actual for 2026-Q2. **Proposed date for each
+  dates is Plan vs Actuals Tracking for 2026-Q2. **Proposed date for each
   deal sent to Haroon 2026-10-01** for review
   (`C:\Backups\CabioUAT\data_consistency_reports\Closed-Deals-Close-Dates-2026-10-01.pdf`;
   `.xlsx` with an answer column, held in case he asks). Dates come from
