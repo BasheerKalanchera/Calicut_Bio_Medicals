@@ -6,7 +6,10 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
-    "sqlalchemy>=2.0.0",
+    # Capped below 2.1: 2.1 makes a plain postgresql:// URL use the psycopg 3
+    # driver, which isn't installed (only psycopg2-binary) -- the app then
+    # crashes at startup. Lift only as a deliberate, tested upgrade.
+    "sqlalchemy>=2.0.0,<2.1",
     "alembic>=1.14.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
