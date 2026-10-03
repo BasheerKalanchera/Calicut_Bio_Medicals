@@ -465,6 +465,22 @@ def main() -> None:
         by_region = Counter(r["region"] for r in rows_16)
         print(f"\n   By region: {dict(by_region.most_common())}")
 
+    # 17. Audit log size watch (information only) -- growth should be visible
+    # long before it matters (Audit Trail Redesign plan, step 4).
+    section("17. Audit log size (information only)")
+    cur.execute("""
+        SELECT pg_total_relation_size('audit_log') AS bytes,
+               pg_size_pretty(pg_total_relation_size('audit_log')) AS pretty
+        FROM (SELECT 1) x
+    """)
+    size = cur.fetchone()
+    cur.execute("SELECT action, COUNT(*) AS cnt FROM audit_log GROUP BY action ORDER BY action")
+    by_action = {r["action"]: r["cnt"] for r in cur.fetchall()}
+    total_entries = sum(by_action.values())
+    print(f"\n-- Audit log: {total_entries} entries, {size['pretty']} on disk; by action: {by_action}")
+    counts.append(("Audit log entries", total_entries))
+    counts.append(("Audit log size (KB)", size["bytes"] // 1024))
+
     # Every result above came from the same transaction; confirm the RLS
     # context was still in place for the last query before trusting them.
     cur.execute("SELECT cabio_app_uid() AS uid")
