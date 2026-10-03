@@ -107,7 +107,6 @@
 - **Endpoints:**
   - `PUT /opportunities/{id}/items` (Bulk replace items)
   - `PUT /opportunities/{id}/splits` (Bulk replace splits - validates to 100%)
-  - `PUT /opportunities/{id}/stakeholders` (Bulk map stakeholders to deal)
 - **Justification:** Required for Phase 1. `OpportunityStakeholder` requires influence mapping per ADR-021. `PUT` (bulk replace) handles deletions inherently without needing explicit `DELETE` endpoints.
 
 ---

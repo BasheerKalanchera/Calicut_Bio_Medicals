@@ -199,10 +199,6 @@ class StakeholderLinkResponse(BaseModel):
     stakeholder: StakeholderNested
 
 
-class StakeholdersBulkUpdate(BaseModel):
-    stakeholders: list[StakeholderLinkCreate]
-
-
 # ------------------------------------------------------------------
 # Stakeholder -> opportunities (reverse linkage)
 # ------------------------------------------------------------------

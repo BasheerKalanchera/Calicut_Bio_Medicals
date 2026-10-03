@@ -6,7 +6,7 @@ Repository is fully mocked — no DB required.  Tests cover:
   - update_opportunity: PATCH semantics, stage gate, status transition, terminal lock
   - replace_splits: BR-FIN-01 (100% sum), empty list passthrough
   - split editing authority (BR-FIN-08): can_edit_splits and replace_splits agree
-  - replace_items / replace_stakeholders: NotFoundError on missing opportunity
+  - replace_items: NotFoundError on missing opportunity
 """
 
 import uuid
@@ -35,7 +35,6 @@ from app.domains.opportunity.schemas import (
     SplitsBulkUpdate,
     StakeholderLinkCreate,
     StakeholderLinkUpdate,
-    StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
 from app.domains.opportunity.validators import _today_ist
@@ -166,7 +165,6 @@ def _make_repo(**overrides) -> MagicMock:
     repo.update.side_effect = lambda obj: obj
     repo.replace_splits.return_value = []
     repo.replace_items.return_value = []
-    repo.replace_stakeholders.return_value = []
     repo.list_splits.return_value = []
     # By default, assume any newly-referenced participant is in the opportunity's own
     # SBU -- tests exercising the ADR-037 cross-SBU rejection override this explicitly.
@@ -1964,57 +1962,6 @@ class TestOpportunityItemCreateValidation:
             OpportunityItemCreate(
                 quantity=1, unit_price_lakhs=Decimal("5.00"), line_type="PRODUCT"
             )
-
-
-# ===========================================================================
-# replace_stakeholders
-# ===========================================================================
-
-class TestReplaceStakeholders:
-    def test_raises_not_found_for_missing_opportunity(self):
-        repo = _make_repo()
-        repo.get_for_update.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
-
-        with pytest.raises(NotFoundError, match="Opportunity"):
-            service.replace_stakeholders(
-                OPP_ID,
-                StakeholdersBulkUpdate(stakeholders=[]),
-                updated_by=USER_ID,
-            )
-
-    def test_empty_stakeholders_clears_all(self):
-        repo = _make_repo()
-        repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
-
-        service.replace_stakeholders(
-            OPP_ID, StakeholdersBulkUpdate(stakeholders=[]), updated_by=USER_ID
-        )
-
-        repo.replace_stakeholders.assert_called_once_with(OPP_ID, [])
-
-    def test_stakeholders_mapped_with_correct_fields(self):
-        repo = _make_repo()
-        repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
-
-        stakeholder_id = uuid.uuid4()
-        data = StakeholdersBulkUpdate(stakeholders=[
-            StakeholderLinkCreate(
-                stakeholder_id=stakeholder_id,
-                influence_level="HIGH",
-                decision_role="Procurement Head",
-                notes="Key decision maker",
-            )
-        ])
-        service.replace_stakeholders(OPP_ID, data, updated_by=USER_ID)
-
-        links = repo.replace_stakeholders.call_args[0][1]
-        assert len(links) == 1
-        assert links[0].stakeholder_id == stakeholder_id
-        assert links[0].influence_level == "HIGH"
-        assert links[0].decision_role == "Procurement Head"
 
 
 # ===========================================================================

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import case, delete, func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, noload
 
 from app.db.base import BaseRepository
@@ -553,30 +553,6 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def list_opportunity_stakeholders(
         self, opportunity_id: uuid.UUID
     ) -> list[OpportunityStakeholder]:
-        return list(
-            self.db.scalars(
-                select(OpportunityStakeholder).where(
-                    OpportunityStakeholder.opportunity_id == opportunity_id
-                )
-            ).all()
-        )
-
-    def replace_stakeholders(
-        self, opportunity_id: uuid.UUID, new_links: list[OpportunityStakeholder]
-    ) -> list[OpportunityStakeholder]:
-        # Deletes and reinserts every link, so every already-linked stakeholder
-        # gets a fresh created_at/created_by on every call — corrupts the audit
-        # trail if used for a partial update (add/remove/edit one link). No
-        # current caller; use add_stakeholder/delete_stakeholder/
-        # update_stakeholder_link for single-item operations instead.
-        self.db.execute(
-            delete(OpportunityStakeholder).where(
-                OpportunityStakeholder.opportunity_id == opportunity_id
-            )
-        )
-        for link in new_links:
-            self.db.add(link)
-        self.db.flush()
         return list(
             self.db.scalars(
                 select(OpportunityStakeholder).where(

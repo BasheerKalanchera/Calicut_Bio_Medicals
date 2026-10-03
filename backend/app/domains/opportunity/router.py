@@ -29,7 +29,6 @@ from app.domains.opportunity.schemas import (
     StakeholderLinkResponse,
     StakeholderLinkUpdate,
     StakeholderOpportunityCountsEntry,
-    StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.service import OpportunityService
 from app.domains.organization.models import UserProfile
@@ -297,23 +296,6 @@ def list_opportunity_stakeholders(
     service: OpportunityService = Depends(_get_service),  # noqa: B008
 ) -> APIResponse[list[StakeholderLinkResponse]]:
     links = service.list_stakeholders(opportunity_id)
-    return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])
-
-
-@router.put("/opportunities/{opportunity_id}/stakeholders")
-# Do not wire a new frontend caller to this endpoint: it deletes and
-# reinserts every link on every call, stamping a fresh created_at/created_by
-# on already-linked stakeholders each time — audit-trail corruption for any
-# partial-update use case. Use the single-item POST/PATCH/DELETE endpoints
-# below instead; this bulk endpoint has no current caller (see repository.py
-# replace_stakeholders).
-def replace_opportunity_stakeholders(
-    opportunity_id: uuid.UUID,
-    body: StakeholdersBulkUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
-) -> APIResponse[list[StakeholderLinkResponse]]:
-    links = service.replace_stakeholders(opportunity_id, body, updated_by=current_user.id)
     return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])
 
 

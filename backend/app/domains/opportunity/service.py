@@ -21,7 +21,6 @@ from app.domains.opportunity.schemas import (
     SplitsBulkUpdate,
     StakeholderLinkCreate,
     StakeholderLinkUpdate,
-    StakeholdersBulkUpdate,
 )
 from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
 from app.domains.organization.models import UserProfile
@@ -662,30 +661,6 @@ class OpportunityService:
 
     def list_stakeholders(self, opportunity_id: uuid.UUID) -> list[OpportunityStakeholder]:
         return self.repository.list_opportunity_stakeholders(opportunity_id)
-
-    def replace_stakeholders(
-        self,
-        opportunity_id: uuid.UUID,
-        data: StakeholdersBulkUpdate,
-        *,
-        updated_by: uuid.UUID,
-    ) -> list[OpportunityStakeholder]:
-        if not self.repository.get_for_update(opportunity_id):
-            raise NotFoundError(f"Opportunity {opportunity_id} not found")
-
-        new_links = [
-            OpportunityStakeholder(
-                opportunity_id=opportunity_id,
-                stakeholder_id=link.stakeholder_id,
-                influence_level=link.influence_level,
-                decision_role=link.decision_role,
-                notes=link.notes,
-                created_by=updated_by,
-                updated_by=updated_by,
-            )
-            for link in data.stakeholders
-        ]
-        return self.repository.replace_stakeholders(opportunity_id, new_links)
 
     def add_stakeholder(
         self,
