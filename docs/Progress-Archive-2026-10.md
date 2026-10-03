@@ -293,6 +293,26 @@ directly:
 - **E:** `docs/templates/Manual-E2E-Test-Plan-Template.md` +
   `.claude/hooks/test_plan_guard.py`: a new test plan must start from the
   template, fill the four "Checked against live data" lines from real
+## 2026-10-03 — Payment Confirmation Gate (BR-OP-17) built and E2E-passed
+
+- Commits `b9e01e8`, `71f07b5`, `0d0133d`, code-review fixes `75ac199`.
+  Dev `alembic current` = 0059 (head); backend 1091/1091.
+- Manual E2E on Dev, 18/18 pass (Basheer clicked saves, Claude read back
+  in its own tab after fresh loads): Won greyed out before Payment Pending
+  (incl. Fast-Track and Lead); PO required for Delivery & Installation;
+  untick refused; Won stores confirmer, date and note; Order → Payment
+  Pending in one save works.
+- Findings: a Won Opportunity drops off the Kanban board (found via List
+  view search) — looks like existing behaviour, not checked. A list filter
+  hid *New opportunity test* from Basheer at the start (data was fine).
+- Dev test data is permanent: *New opportunity test* and *Test usg oder
+  with Buyback* are Won. Traceability "Commitment beyond contract" row 18
+  added. UAT: arrives with the next UAT move (0057/0058).
+- **Retro:** worked: the code-review pass before E2E, so the run found no
+  defects; reading records back after a full reload. Improve: I truncated
+  tsc output with `tail` and had to flag the count as unverified — save to
+  a file instead (already a rule).
+
   records, and tag every step `[Simple]` or `[Complex: <reason>]`. Older
   plans (no template marker) are unaffected. Live check refused an
   untagged plan.

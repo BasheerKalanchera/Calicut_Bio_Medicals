@@ -274,6 +274,32 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   (31 of 70 open Imaging deals with no product, etc.): Progress-Archive
   2026-09-26 "Vendor pipeline report: trial run". No export feature exists
   anywhere in the app yet.
+- **Salesperson Performance report — measures and shape undecided
+  (Basheer, 2026-10-03).** Signed 11.1 names "salesperson performance" but
+  nothing defines it. Discussion note for Haroon:
+  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` (measures,
+  split-% credit, lighter vs fuller, export). Known small gap either way:
+  the Sales Report can't pick a past month or quarter.
+
+- **Payment Pending list for Finance (Basheer, 2026-10-03; undecided shape).**
+  At Cabio the rep owns payment collection (relationship with the hospital),
+  but Finance does follow-up calls — and Finance doesn't use Sales OS. Once
+  BR-OP-17 is live, Opportunities at Payment Pending are exactly the "PO
+  received, not yet fully paid" list Finance needs. Options: a periodic export
+  (Excel) sent to Finance, or a read-only in-app list for a Finance login. Not
+  in the signed requirements (PRD Appendix B.5 keeps Payment/Collections in
+  Finance's system), so it's beyond-contract work. Decide with Haroon whether
+  Finance would use it, and which shape. Related open question on Finance
+  access: Opportunity Support Attribution entry below.
+
+- **Stall-alert time limit for the new Payment Pending stage (Basheer,
+  2026-10-03; value undecided).** The automatic stall alerts (BR-OP-06,
+  signed requirement 13.2 "Automated stagnant-deal alerts", Partial) have
+  per-stage limits agreed by Haroon 2026-09-14 — but Payment Pending
+  (BR-OP-17) didn't exist then, so it has none. When 13.2 is built, seed a
+  Payment Pending limit so overdue collections alert the rep and their
+  manager. Suggested 30 or 45 days; Haroon to choose.
+
 
 ## Deferred / undecided items
 
@@ -1154,26 +1180,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   existing pre-`0043` Won/Lost deals have `closed_at = NULL` so still
   can't be checked retroactively.
 
-- **Payment Confirmation Gate before Won — proposed 2026-09-11, core shape decided by
-  Basheer, not yet scoped or built.** Raised alongside the Pricing/Discount-Authority
-  paper: Cabio has situations where a deal is delivered and won but payment hasn't
-  actually been received — reps shouldn't be able to mark Closed-Won until it has.
-  Today Won is settable from any stage with only PO Number + Product Details required;
-  no payment concept exists anywhere in the schema, matching the original PRD's
-  Finance-system-of-record boundary for Payment/Invoice/Collections. **Decided:**
-  visibility + an actual gate (not a cosmetic stage) — a new "Payment Pending" stage
-  after Delivery & Installation. Exact rule, decided 2026-09-11: **"Won cannot be set
-  if full payment is not collected"** — applies to every Opportunity with no
-  exceptions, including REPEAT_ORDER and Manager-Attested Fast-Track deals — confirmed
-  by self-attestation in-app (no Tally connection). Remaining open questions (stage
-  naming, timing against the concurrent Insights Dashboard build) and what this
-  deliberately doesn't do: `docs/Discussion-Payment-Confirmation-Gate-2026-09.md`.
-  **2026-10-03: Basheer wants this moved up the build queue** (triggered by MMC
-  "Edan F6 CTG machine single fhr", marked Won at stage Lead, so its delivery
-  and installation can't be tracked); checking priority with Haroon. Questions
-  for him: build before Plan vs Actuals Tracking goes live; stage name; leave
-  already-Won Opportunities as they are; interim "Won only after delivery,
-  installation and full payment" instruction to reps.
+- **Shared Opportunity notes table — revisit only if needed (Basheer, 2026-10-03).**
+  Notes are one column per event today (`loss_notes`, `gate_override_note`,
+  `referred_by_note`, `full_payment_note`), which fits events that happen once.
+  Revisit a shared notes table (type, text, who, when) if a repeating event needs
+  its own note per occurrence — e.g. an Opportunity put On Hold several times
+  (each hold overwrites the last reason today) or instalment payments.
 
 - ~~**Duplicate hospital names in the Customer Directory.**~~ — **DONE,
   live in UAT since the 2026-09-09 promotion.** Option B (soft

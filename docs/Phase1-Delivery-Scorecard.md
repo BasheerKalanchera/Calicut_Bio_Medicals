@@ -5,11 +5,11 @@
 
 ## Summary
 
-Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **17 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **2 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **18 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **2 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
-| 34 | 11 | 5 | 17 |
+| 34 | 11 | 5 | 18 |
 
 **Real progress, two honest ways to read it:**
 - **Strictly done:** 34 of 50 = **68.0%**
@@ -146,6 +146,7 @@ Following items were not part of the requirements that were signed off by Cabio 
 | 15 | The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines. |
 | 16 | A rep can report back directly on a marketing-sourced lead once they've followed up — what they did, what they're waiting on — and anyone who can see that lead (their manager, GM, etc.) can ask for an update on the same thread, instead of a separate conversation. |
 | 17 | A customer's Opportunities tab opens on its Active Opportunities only — the same ones the pipeline counts — with a "Show All" button for On Hold, Won and Lost. Asked for by Cabio leadership at the 24 Sep demo. |
+| 18 | An Opportunity can no longer be marked Won by a single click at any stage. It has to pass through a new last stage, Payment Pending, and the person marking it Won must tick "full payment received" — the system records who confirmed it and when, with an optional note. This closes the gap where a deal could be marked Won while payment was still outstanding. |
 
 ### Requested by Cabio leadership — to be built
 

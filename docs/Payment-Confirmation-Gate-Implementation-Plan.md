@@ -1,7 +1,11 @@
 # Payment Confirmation Gate Before Won — Implementation Plan
 
-**Status:** Draft, 2026-10-03. Build may start (Basheer, 2026-10-03); three
-decisions still with Haroon and Latheef Bhai (stage name, interim instruction, timing).
+**Status:** Built and Dev-tested, 2026-10-03 — commits `b9e01e8`, `71f07b5`,
+`0d0133d`, `75ac199`; manual E2E 18/18 (`docs/Payment-Confirmation-Gate-Manual-E2E-Test-Plan.md`).
+Not on UAT yet: arrives with the next UAT move (migrations 0057/0058), its own
+approval. Still with Haroon and Latheef Bhai: final stage name (~2026-10-05),
+interim instruction to reps, timing vs Plan vs Actuals; tell them stall alerts
+for Delivery & Installation are NOT live.
 **Traceability rows:** none directly (no signed requirement changes status); adds a
 rule beyond the signed scope — goes in "Commitment beyond contract" once shipped.
 **Design / discussion:** `docs/Discussion-Payment-Confirmation-Gate-2026-09.md`;

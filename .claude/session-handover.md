@@ -3,7 +3,14 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
+## Uncommitted docs — waiting for a batch commit approval
 
+- Payment Confirmation Gate paperwork is closed (E2E 18/18, 2026-10-03).
+  Docs waiting for one batch commit (only my lines in shared files):
+  `docs/Backlog.md`, `docs/Progress-Archive-2026-10.md`, this file, the E2E
+  plan, the gate plan, Traceability, `docs/Discussion-Salesperson-Performance-Report-2026-10.md`.
+  The other session also edits Backlog/Progress-Archive/CLAUDE.md/settings.json
+  - check `git diff --cached` and leave its lines out.
 
 ## Session retro 2026-10-01 + structural fixes — parked by Basheer
 
@@ -12,9 +19,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   mistakes broke existing CLAUDE.md rules (test-plan live-data check,
   Simple/Complex tagging, "Basheer clicks" for Dev writes, verify before
   claiming); only the no-`cd` hook actually stopped a mistake.
-- **Next (overdue since 2026-10-02):** re-show the retro for approval, then build the
-  fixes in Backlog "Structural guards for repeated test-plan mistakes"
-  (Basheer: tomorrow, instead of adding more CLAUDE.md text).
+- 2026-10-03: the structural fixes were built (shell guard, test-plan guard
+  + template, UAT-connection note; Progress-Archive 2026-10-03). Only the
+  retro text itself is still unsaved.
+- **Next:** re-show the retro for approval when Basheer chooses.
 
 ## Plan vs Actuals Tracking (Insights Dashboard)
 
@@ -33,13 +41,30 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
 - **Next:** build step 1 (backend endpoint + tests) once Basheer says start.
 
-## Audit Trail Redesign — approved, waiting (planning session)
+## Audit Trail Redesign — building
 
-- Plan approved 2026-09-30 (`5b3da4e`):
-  `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Backlog entry
-  "Audit Trail Redesign".
-- **Next:** start build step 1 (migration) — unblocked (hospital-wise
-  Part 1 finished 2026-10-01); ask Basheer first.
+- Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Started
+  2026-10-03 ahead of Plan vs Actuals (Basheer: UAT loses history daily).
+- Step 1 done: migration 0059 applied to Dev, `alembic current` = 0059
+  (head), schema regenerated, 8/8 rolled-back checks on Dev; `24f5607`.
+  Until step 2, Dev logs remove/add pairs for unchanged lines on the four
+  wipe-and-rewrite saves (expected).
+- Step 3 done: Audit Log pages by save (never splits a save), one card per
+  record touched, Added/Changed/Removed tags + "What happened" filter, names
+  for every tracked table; `ce56c22` + fix `b0ba088` (api.ts types were
+  lost when another session rewrote the shared file mid-commit). Backend
+  audit tests 17/17; read-only Dev check: 89 saves, none cut short.
+- **Next:** step 4 (log size + entry count in
+  `scripts/uat_data_quality_check.py`, small). Then step 2 (rewrite the
+  four wipe-and-rewrite saves: Opportunity contacts, user zones,
+  target-plan hospitals, target-plan brand splits) — only after the
+  Payment Confirmation Gate is fully committed, since it touches the
+  Opportunity contacts save. Then step 5: `/code-review high`, E2E plan
+  from `docs/templates/Manual-E2E-Test-Plan-Template.md` (a guard refuses
+  one without the live-data section and Simple/Complex tags), Dev E2E,
+  final commit. UAT move (0059 + steps 2–4 together) is its own approval.
+- Never `api.ts` by regenerate: another session edits it; hand-edit only
+  the Audit Log types (`AuditSaveResponse`, `owner_*`, `action` filter).
 
 ## Forecast by closing period — questions answered 2026-10-01
 
@@ -53,9 +78,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** write the implementation plan when Basheer says; watch the
   closure report's progress.
 
-## Process changes from the 2026-10-01 retro — parked, overdue since 2026-10-02
+## Process changes from the 2026-10-01 retro — resolved 2026-10-03
 
-- Basheer parked them (end of a long day). Four proposals, A–D, in
-  Progress-Archive 2026-10, entry "2026-10-01 — session retro (operations
-  and planning session)".
-- **Next:** go through A–D with Basheer when he chooses.
+- A (UAT connection note), B and F (shell guard), E (test-plan guard +
+  template) were built directly (Basheer: fewer mistakes, self-correct on
+  repeats); C dropped. D: Basheer added the two UAT check scripts to his
+  personal allow list. Progress-Archive 2026-10-03. Nothing left here;
+  remove this section at the next tidy-up.
