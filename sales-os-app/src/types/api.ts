@@ -3810,13 +3810,6 @@ export interface components {
              */
             high_priority_manual: boolean;
             /**
-             * Confirm Full Payment
-             * @default false
-             */
-            confirm_full_payment: boolean;
-            /** Full Payment Note */
-            full_payment_note?: string | null;
-            /**
              * Items
              * @default []
              */

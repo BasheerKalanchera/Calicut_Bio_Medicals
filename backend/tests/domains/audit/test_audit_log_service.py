@@ -1,162 +1,259 @@
 """
-Unit tests for AuditLogService.
+Unit tests for the Audit Log service and its display maps.
 
-Repository is fully mocked -- no DB required. Covers:
+Repository is mocked for the service tests -- no DB required. Covers:
   - the Admin/General Manager role gate (mirrors ZoneAdminService's
     _require_admin, tests/domains/reference/test_zone_service.py)
-  - filters are passed through to the repository unchanged
+  - filters (incl. the "What happened" action filter) passed through
+  - _TABLE_SPECS covers every audited table and only uses models the
+    name lookup can resolve (a missing _MODEL_DISPLAY_ATTR entry crashed
+    the whole endpoint once, 2026-09-09)
+  - _resolve_display_values on stub rows: owner grouping for line tables,
+    record labels built from FK names, parent context
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import AuthorizationError
-from app.domains.account.models import Account, Stakeholder
+from app.core.exceptions import AuthorizationError, ValidationError
 from app.domains.audit.repository import (
     _FIELD_RESOLVER_MAP,
+    _FIELD_RESOLVER_OVERRIDES,
     _MODEL_DISPLAY_ATTR,
-    _PARENT_CONTEXT_MAP,
-    _RECORD_LABEL_RESOLVER_MAP,
+    _TABLE_SPECS,
     AuditLogRepository,
 )
 from app.domains.audit.service import AuditLogService
-from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
-from app.domains.organization.models import UserProfile
-from app.domains.product.models import Product
 
 ADMIN = "Admin"
 GM = "General Manager"
 NON_ADMIN_ROLES = ["SBU Manager", "Area Manager", "Sales Staff"]
 
+# Every table with an audit trigger (migrations 0030, 0041, 0059).
+AUDITED_TABLES = {
+    "account",
+    "user_profile",
+    "product",
+    "opportunity",
+    "stakeholder",
+    "opportunity_item",
+    "split",
+    "target_plan",
+    "marketing_lead",
+    "project",
+    "installed_asset",
+    "zone",
+    "brand",
+    "model",
+    "category",
+    "opportunity_stakeholder",
+    "user_zone",
+    "target_plan_account",
+    "target_plan_brand_split",
+    "document",
+}
+LINE_TABLES = {
+    "opportunity_item",
+    "split",
+    "opportunity_stakeholder",
+    "user_zone",
+    "target_plan_account",
+    "target_plan_brand_split",
+    "document",
+}
 
-def _make_repo(**overrides) -> MagicMock:
+
+def _make_repo() -> MagicMock:
     repo = MagicMock(spec=AuditLogRepository)
-    repo.list_filtered.return_value = ([], 0)
-    for k, v in overrides.items():
-        setattr(repo, k, v)
+    repo.list_saves.return_value = ([], 0)
     return repo
 
 
 class TestAuthorizationGate:
     @pytest.mark.parametrize("role", NON_ADMIN_ROLES)
     def test_non_admin_rejected(self, role):
-        service = AuditLogService(repository=_make_repo())
-
         with pytest.raises(AuthorizationError):
-            service.list_audit_log(role_name=role)
+            AuditLogService(repository=_make_repo()).list_audit_log(role_name=role)
 
     @pytest.mark.parametrize("role", [ADMIN, GM])
     def test_admin_and_gm_allowed(self, role):
         repo = _make_repo()
-        service = AuditLogService(repository=repo)
-
-        service.list_audit_log(role_name=role)
-
-        repo.list_filtered.assert_called_once()
+        AuditLogService(repository=repo).list_audit_log(role_name=role)
+        repo.list_saves.assert_called_once()
 
 
 class TestFilterPassthrough:
     def test_filters_forwarded_to_repository(self):
         repo = _make_repo()
-        service = AuditLogService(repository=repo)
-        record_id = uuid.uuid4()
-        changed_by = uuid.uuid4()
-        date_from = datetime(2026, 9, 1)
-        date_to = datetime(2026, 9, 2)
+        record_id, changed_by = uuid.uuid4(), uuid.uuid4()
+        date_from, date_to = datetime(2026, 9, 1), datetime(2026, 9, 2)
 
-        service.list_audit_log(
+        AuditLogService(repository=repo).list_audit_log(
             role_name=ADMIN,
             offset=10,
             limit=20,
             table_name="account",
+            action="INSERT",
             record_id=record_id,
             changed_by=changed_by,
             date_from=date_from,
             date_to=date_to,
         )
 
-        repo.list_filtered.assert_called_once_with(
+        repo.list_saves.assert_called_once_with(
             offset=10,
             limit=20,
             table_name="account",
+            action="INSERT",
             record_id=record_id,
             changed_by=changed_by,
             date_from=date_from,
             date_to=date_to,
         )
 
+    def test_unknown_action_rejected(self):
+        with pytest.raises(ValidationError):
+            AuditLogService(repository=_make_repo()).list_audit_log(role_name=ADMIN, action="CREATE")
+
     def test_result_returned_unchanged(self):
         repo = _make_repo()
-        repo.list_filtered.return_value = (["row"], 1)
-        service = AuditLogService(repository=repo)
-
-        result = service.list_audit_log(role_name=ADMIN)
-
-        assert result == (["row"], 1)
+        repo.list_saves.return_value = (["save"], 1)
+        assert AuditLogService(repository=repo).list_audit_log(role_name=ADMIN) == (["save"], 1)
 
 
-class TestAuditTrailExtensionResolverMaps:
-    """Audit-Trail-Extension-Implementation-Plan.md's display-layer
-    additions for stakeholder/opportunity_item/split. Static dict checks --
-    the maps only feed DB-dependent query-building code (verified live
-    against Dev), so this just guards against a typo'd entry or a model
-    added to one map without the matching _MODEL_DISPLAY_ATTR entry it
-    needs at read time."""
+class TestTableSpecs:
+    def test_every_audited_table_has_a_spec(self):
+        assert set(_TABLE_SPECS) == AUDITED_TABLES
 
-    def test_new_fk_field_resolvers_present(self):
-        assert _FIELD_RESOLVER_MAP["opportunity_id"] is Opportunity
-        assert _FIELD_RESOLVER_MAP["product_id"] is Product
-        assert _FIELD_RESOLVER_MAP["user_id"] is UserProfile
+    def test_line_tables_flagged(self):
+        assert {t for t, s in _TABLE_SPECS.items() if s.is_line} == LINE_TABLES
 
-    def test_stakeholder_record_label_resolver_present(self):
-        assert _RECORD_LABEL_RESOLVER_MAP["stakeholder"] == (Stakeholder, "name")
+    def test_tables_without_id_take_parent_id(self):
+        assert {t for t, s in _TABLE_SPECS.items() if not s.has_id} == {"opportunity_stakeholder", "user_zone"}
 
-    def test_opportunity_item_and_split_deliberately_have_no_record_label(self):
-        assert "opportunity_item" not in _RECORD_LABEL_RESOLVER_MAP
-        assert "split" not in _RECORD_LABEL_RESOLVER_MAP
+    def test_every_parent_is_itself_specced(self):
+        for table, spec in _TABLE_SPECS.items():
+            for parent in spec.parents:
+                assert parent.table in _TABLE_SPECS, f"{table}: parent {parent.table} has no spec"
+
+    def test_every_fk_label_part_resolves_to_a_named_model(self):
+        for table, spec in _TABLE_SPECS.items():
+            for kind, col in spec.label:
+                if kind == "fk":
+                    model = _FIELD_RESOLVER_OVERRIDES.get((table, col)) or _FIELD_RESOLVER_MAP.get(col)
+                    assert model in _MODEL_DISPLAY_ATTR, f"{table}.{col} can't be named"
 
     def test_every_field_resolver_model_has_a_display_attr(self):
-        for model in _FIELD_RESOLVER_MAP.values():
-            assert model in _MODEL_DISPLAY_ATTR, f"{model} missing from _MODEL_DISPLAY_ATTR"
-
-    def test_every_record_label_resolver_model_has_a_display_attr(self):
-        """Found live 2026-09-09: Stakeholder was added to
-        _RECORD_LABEL_RESOLVER_MAP but not _MODEL_DISPLAY_ATTR, which
-        crashed the whole Audit Log endpoint (KeyError, 500) the moment a
-        stakeholder audit row existed -- _resolve_display_values reads
-        _MODEL_DISPLAY_ATTR for every model in _RECORD_LABEL_RESOLVER_MAP,
-        not just _FIELD_RESOLVER_MAP, so both maps need this check."""
-        for model, _display_field in _RECORD_LABEL_RESOLVER_MAP.values():
+        for model in list(_FIELD_RESOLVER_MAP.values()) + list(_FIELD_RESOLVER_OVERRIDES.values()):
             assert model in _MODEL_DISPLAY_ATTR, f"{model} missing from _MODEL_DISPLAY_ATTR"
 
 
-class TestParentContextMap:
-    """Parent-context feature (2026-09-10): shows each row's immediate
-    parent -- e.g. parent_type="opportunity" on a split row,
-    parent_type="account" on an opportunity/stakeholder row -- so a row
-    can be placed, and clicked through to, without cross-referencing the
-    DB by id. Same KeyError-class risk as TestAuditTrailExtensionResolverMaps
-    above -- _resolve_parent_ids / _resolve_display_values look up every
-    _PARENT_CONTEXT_MAP target model in _MODEL_DISPLAY_ATTR too."""
+def _entry(table, action, record_id, old=None, new=None, changed_by=None):
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        table_name=table,
+        record_id=record_id,
+        action=action,
+        changed_at=datetime(2026, 10, 3, 10, 0, tzinfo=UTC),
+        changed_by=changed_by,
+        old_data=old,
+        new_data=new,
+    )
 
-    def test_expected_tables_and_targets(self):
-        assert _PARENT_CONTEXT_MAP["opportunity"] == (Opportunity, "account_id", Account, "account")
-        assert _PARENT_CONTEXT_MAP["opportunity_item"] == (
-            OpportunityItem,
-            "opportunity_id",
-            Opportunity,
-            "opportunity",
-        )
-        assert _PARENT_CONTEXT_MAP["split"] == (Split, "opportunity_id", Opportunity, "opportunity")
-        assert _PARENT_CONTEXT_MAP["stakeholder"] == (Stakeholder, "account_id", Account, "account")
 
-    def test_tables_with_no_natural_parent_are_absent(self):
-        for table_name in ("account", "user_profile", "product"):
-            assert table_name not in _PARENT_CONTEXT_MAP
+class TestResolveDisplayValues:
+    """Stubs the two DB reads (_live_rows and the per-model name query) so
+    the grouping and labelling logic runs without a database."""
 
-    def test_every_target_model_has_a_display_attr(self):
-        for _own_model, _fk_column, target_model, _label in _PARENT_CONTEXT_MAP.values():
-            assert target_model in _MODEL_DISPLAY_ATTR, f"{target_model} missing from _MODEL_DISPLAY_ATTR"
+    def _repo(self, live: dict, names: dict) -> AuditLogRepository:
+        repo = AuditLogRepository(MagicMock())
+
+        def live_rows(model, ids):
+            return {i: live[i] for i in ids if i in live}
+
+        repo._live_rows = live_rows  # type: ignore[method-assign]
+
+        # The name query returns (id, name) pairs; returning every known name
+        # for any model is fine, since lookups are by id.
+        def execute(_stmt):
+            result = MagicMock()
+            result.all.return_value = list(names.items())
+            return result
+
+        repo.db.execute.side_effect = execute
+        return repo
+
+    def test_product_swap_on_opportunity_grouped_under_the_opportunity(self):
+        opp_id, old_prod, new_prod, item1, item2 = (uuid.uuid4() for _ in range(5))
+        account_id = uuid.uuid4()
+        live = {opp_id: {"id": opp_id, "name": "Aster stands", "account_id": account_id}}
+        names = {old_prod: "Wall-mount stand", new_prod: "Equipwell stand", account_id: "Aster MIMS"}
+        repo = self._repo(live, names)
+        rows = [
+            (
+                _entry(
+                    "opportunity_item",
+                    "DELETE",
+                    item1,
+                    old={"id": str(item1), "opportunity_id": str(opp_id), "product_id": str(old_prod)},
+                ),
+                "Haroon",
+            ),
+            (
+                _entry(
+                    "opportunity_item",
+                    "INSERT",
+                    item2,
+                    new={"id": str(item2), "opportunity_id": str(opp_id), "product_id": str(new_prod)},
+                ),
+                "Haroon",
+            ),
+        ]
+
+        resolved = repo._resolve_display_values(rows)
+
+        assert [r.owner_type for r in resolved] == ["opportunity", "opportunity"]
+        assert {r.owner_id for r in resolved} == {opp_id}
+        assert resolved[0].owner_label == "Aster stands"
+        assert [r.record_label for r in resolved] == ["Wall-mount stand", "Equipwell stand"]
+
+    def test_contact_without_id_grouped_under_its_opportunity(self):
+        opp_id, stakeholder_id = uuid.uuid4(), uuid.uuid4()
+        live = {opp_id: {"id": opp_id, "name": "ICU monitors", "account_id": None}}
+        repo = self._repo(live, {stakeholder_id: "Dr. Varsa"})
+        rows = [
+            (
+                _entry(
+                    "opportunity_stakeholder",
+                    "INSERT",
+                    opp_id,
+                    new={"opportunity_id": str(opp_id), "stakeholder_id": str(stakeholder_id)},
+                ),
+                None,
+            )
+        ]
+
+        (row,) = repo._resolve_display_values(rows)
+
+        assert (row.owner_type, row.owner_id, row.owner_label) == ("opportunity", opp_id, "ICU monitors")
+        assert row.record_label == "Dr. Varsa"
+
+    def test_main_record_is_its_own_owner_with_parent_context(self):
+        opp_id, account_id = uuid.uuid4(), uuid.uuid4()
+        live = {
+            opp_id: {"id": opp_id, "name": "USG", "account_id": account_id},
+            account_id: {"id": account_id, "name": "KIMS"},
+        }
+        repo = self._repo(live, {})
+        rows = [
+            (_entry("opportunity", "UPDATE", opp_id, old={"indicative_value": 1}, new={"indicative_value": 2}), "A")
+        ]
+
+        (row,) = repo._resolve_display_values(rows)
+
+        assert (row.owner_type, row.owner_id, row.owner_label) == ("opportunity", opp_id, "USG")
+        assert (row.parent_type, row.parent_id, row.parent_label) == ("account", account_id, "KIMS")

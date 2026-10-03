@@ -3,40 +3,46 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import func, inspect, select
 from sqlalchemy.orm import Session
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account, Stakeholder
+from app.domains.asset.models import InstalledAsset
 from app.domains.audit.models import AuditLog
-from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
-from app.domains.organization.models import UserProfile
+from app.domains.document.models import Document
+from app.domains.marketing_lead.models import MarketingLead
+from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
+from app.domains.organization.models import UserProfile, UserZone
+from app.domains.planning.models import TargetPlan, TargetPlanAccount, TargetPlanBrandSplit
 from app.domains.product.models import Product
 from app.domains.project.models import Project
 from app.domains.reference.models import (
     SBU,
+    Brand,
+    Category,
     GateOverrideReason,
     HoldReason,
     LeadSource,
     LossReason,
+    Model,
     OpportunityStage,
     OpportunityStatus,
+    ProjectStatus,
     Role,
     Zone,
 )
 
-# field name -> (target model, display attribute). Deliberately keyed by
-# column *name*, not (table, column) -- every FK column in this schema that
-# shares a name points at the same target across all 4 audited tables (every
-# zone_id means zone.id, whether on account or user_profile; every
-# created_by/updated_by means user_profile.id). This is real, bounded
-# maintenance scope, but it's a display-layer concern only -- the trigger
-# itself (0030_add_audit_log.py) stays fully generic and needs no change
-# when a column is added; only this map would need a new entry, and only
-# for a genuinely new FK *name* the diff hasn't seen before, not for every
-# new column in general.
+# field name -> target model. Deliberately keyed by column *name*, not
+# (table, column) -- nearly every FK column name in this schema points at
+# the same target on every table (every zone_id means zone.id; every
+# created_by/updated_by means user_profile.id). The one clash is status_id
+# (project vs opportunity), handled by _FIELD_RESOLVER_OVERRIDES. A display-
+# layer concern only -- the trigger itself stays generic; a new FK *name*
+# shows its raw id until it gets an entry here.
 _FIELD_RESOLVER_MAP: dict[str, type] = {
     "zone_id": Zone,
+    "parent_zone_id": Zone,
     "sbu_id": SBU,
     "role_id": Role,
     "created_by": UserProfile,
@@ -46,6 +52,12 @@ _FIELD_RESOLVER_MAP: dict[str, type] = {
     "referred_by_user_id": UserProfile,
     "gate_override_approver_id": UserProfile,
     "gate_override_set_by": UserProfile,
+    "full_payment_confirmed_by": UserProfile,
+    "assigned_to_user_id": UserProfile,
+    "approved_by": UserProfile,
+    "reviewed_by": UserProfile,
+    "uploaded_by_user_id": UserProfile,
+    "user_id": UserProfile,
     "account_id": Account,
     "parent_account_id": Account,
     "project_id": Project,
@@ -55,34 +67,22 @@ _FIELD_RESOLVER_MAP: dict[str, type] = {
     "loss_reason_id": LossReason,
     "hold_reason_id": HoldReason,
     "gate_override_reason_id": GateOverrideReason,
-    # Added for the Audit Trail Extension (opportunity_item/split/stakeholder,
-    # Audit-Trail-Extension-Implementation-Plan.md) -- opportunity_id and
-    # product_id are new FK *names* the diff hadn't needed to resolve before;
-    # user_id here means split's participant (UserProfile), same target every
-    # other user_id-shaped column already resolves to.
     "opportunity_id": Opportunity,
+    "converted_opportunity_id": Opportunity,
     "product_id": Product,
-    "user_id": UserProfile,
+    "stakeholder_id": Stakeholder,
+    "brand_id": Brand,
+    "model_id": Model,
+    "category_id": Category,
 }
 
-# table_name (as stamped by TG_TABLE_NAME) -> (model, display attribute) --
-# resolves a row's own record_id to its current name/label.
-_RECORD_LABEL_RESOLVER_MAP: dict[str, tuple[type, str]] = {
-    "account": (Account, "name"),
-    "user_profile": (UserProfile, "display_name"),
-    "product": (Product, "name"),
-    "opportunity": (Opportunity, "name"),
-    "stakeholder": (Stakeholder, "name"),
-    # opportunity_item and split deliberately get no entry here -- neither
-    # has a natural single-column label (a line item's identity is a
-    # product+quantity combination, a split's is a percentage); the diff
-    # itself already carries the meaningful before/after values. See the
-    # implementation plan's "Display-layer additions" section.
+# (table, field) pairs whose target differs from _FIELD_RESOLVER_MAP's.
+_FIELD_RESOLVER_OVERRIDES: dict[tuple[str, str], type] = {
+    ("project", "status_id"): ProjectStatus,
 }
 
-# model -> its display attribute name. Consistent per model across both maps
-# above (e.g. UserProfile is always "display_name"), so one lookup query per
-# referenced model per page is enough regardless of which field pointed at it.
+# model -> its display attribute. One lookup query per referenced model per
+# page, whichever field pointed at it.
 _MODEL_DISPLAY_ATTR: dict[type, str] = {
     Zone: "name",
     SBU: "name",
@@ -92,6 +92,7 @@ _MODEL_DISPLAY_ATTR: dict[type, str] = {
     Project: "name",
     OpportunityStage: "stage_name",
     OpportunityStatus: "status_name",
+    ProjectStatus: "status_name",
     LeadSource: "name",
     LossReason: "reason_name",
     HoldReason: "reason_name",
@@ -99,26 +100,89 @@ _MODEL_DISPLAY_ATTR: dict[type, str] = {
     Product: "name",
     Opportunity: "name",
     Stakeholder: "name",
+    Brand: "name",
+    Model: "name",
+    Category: "name",
 }
 
-# table_name -> (own model, FK column name, target model, parent type).
-# Resolves each row's immediate parent for display -- e.g. "Opportunity:
-# USG M/c" on a split row, "Account: Aster MIMS Calicut" on an Opportunity
-# row -- so someone browsing the log can place a row (and click through
-# to it) without cross-referencing the DB by id. `parent type` is a plain
-# lowercase tag ("account"/"opportunity"), not a display label -- the
-# frontend already owns capitalization for table_name via TABLE_OPTIONS,
-# same convention here. Only tables with one natural parent get an entry;
-# account/user_profile/product sit at the top of their own hierarchy
-# already.
-_PARENT_CONTEXT_MAP: dict[str, tuple[type, str, type, str]] = {
-    "opportunity": (Opportunity, "account_id", Account, "account"),
-    "opportunity_item": (OpportunityItem, "opportunity_id", Opportunity, "opportunity"),
-    "split": (Split, "opportunity_id", Opportunity, "opportunity"),
-    "stakeholder": (Stakeholder, "account_id", Account, "account"),
+
+@dataclass(frozen=True)
+class _Parent:
+    fk: str  # column on the row holding the parent's id
+    table: str  # parent's table name, also its owner/parent type tag
+
+
+@dataclass(frozen=True)
+class _TableSpec:
+    model: type
+    # Label parts, joined with " · " (empties skipped): ("attr", column) uses
+    # the row's own value; ("fk", column) the referenced record's name.
+    label: tuple[tuple[str, str], ...] = ()
+    # Candidate parents; the first whose FK is set is used (document has four).
+    parents: tuple[_Parent, ...] = ()
+    # Line tables: entries are grouped under their parent on the screen.
+    is_line: bool = False
+    # Line tables without an id column: the trigger stores the parent's id
+    # as record_id (migration 0059).
+    has_id: bool = True
+
+
+_ACCOUNT = _Parent("account_id", "account")
+_OPPORTUNITY = _Parent("opportunity_id", "opportunity")
+_TARGET_PLAN = _Parent("target_plan_id", "target_plan")
+
+# Every table the audit trigger watches (migrations 0030, 0041, 0059).
+_TABLE_SPECS: dict[str, _TableSpec] = {
+    "account": _TableSpec(Account, label=(("attr", "name"),)),
+    "user_profile": _TableSpec(UserProfile, label=(("attr", "display_name"),)),
+    "product": _TableSpec(Product, label=(("attr", "name"),)),
+    "opportunity": _TableSpec(Opportunity, label=(("attr", "name"),), parents=(_ACCOUNT,)),
+    "stakeholder": _TableSpec(Stakeholder, label=(("attr", "name"),), parents=(_ACCOUNT,)),
+    "project": _TableSpec(Project, label=(("attr", "name"),), parents=(_ACCOUNT,)),
+    "installed_asset": _TableSpec(
+        InstalledAsset, label=(("fk", "product_id"), ("attr", "competitor_product_name")), parents=(_ACCOUNT,)
+    ),
+    "marketing_lead": _TableSpec(
+        MarketingLead, label=(("attr", "event_name"), ("fk", "account_id")), parents=(_ACCOUNT,)
+    ),
+    "target_plan": _TableSpec(TargetPlan, label=(("fk", "user_id"), ("attr", "planning_period"))),
+    "zone": _TableSpec(Zone, label=(("attr", "name"),)),
+    "brand": _TableSpec(Brand, label=(("attr", "name"),)),
+    "model": _TableSpec(Model, label=(("attr", "name"),)),
+    "category": _TableSpec(Category, label=(("attr", "name"),)),
+    "opportunity_item": _TableSpec(
+        OpportunityItem,
+        label=(("fk", "product_id"), ("attr", "description")),
+        parents=(_OPPORTUNITY,),
+        is_line=True,
+    ),
+    "split": _TableSpec(Split, label=(("fk", "user_id"),), parents=(_OPPORTUNITY,), is_line=True),
+    "opportunity_stakeholder": _TableSpec(
+        OpportunityStakeholder,
+        label=(("fk", "stakeholder_id"),),
+        parents=(_OPPORTUNITY,),
+        is_line=True,
+        has_id=False,
+    ),
+    "user_zone": _TableSpec(
+        UserZone, label=(("fk", "zone_id"),), parents=(_Parent("user_id", "user_profile"),), is_line=True, has_id=False
+    ),
+    "target_plan_account": _TableSpec(
+        TargetPlanAccount, label=(("fk", "account_id"),), parents=(_TARGET_PLAN,), is_line=True
+    ),
+    "target_plan_brand_split": _TableSpec(
+        TargetPlanBrandSplit, label=(("fk", "brand_id"),), parents=(_TARGET_PLAN,), is_line=True
+    ),
+    "document": _TableSpec(
+        Document,
+        label=(("attr", "file_name"),),
+        parents=(_ACCOUNT, _Parent("project_id", "project"), _OPPORTUNITY, _Parent("product_id", "product")),
+        is_line=True,
+    ),
 }
 
 AuditLogRawRow = tuple[AuditLog, str | None]
+Snapshot = dict[str, object]
 
 
 @dataclass
@@ -126,189 +190,275 @@ class ResolvedAuditRow:
     entry: AuditLog
     changed_by_name: str | None
     record_label: str | None
+    # The row's immediate parent, for context and click-through (an
+    # Opportunity's account, a line's Opportunity or target plan).
     parent_type: str | None = None
     parent_id: uuid.UUID | None = None
     parent_label: str | None = None
+    # The record this entry is grouped under on screen: the parent for line
+    # tables, the row itself for main records.
+    owner_type: str = ""
+    owner_id: uuid.UUID | None = None
+    owner_label: str | None = None
     old_data_display: dict[str, str] = field(default_factory=dict)
     new_data_display: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass
+class ResolvedAuditSave:
+    """Everything recorded by one save: same transaction start time
+    (`changed_at` defaults to now()) and same user."""
+
+    changed_at: datetime
+    changed_by_name: str | None
+    rows: list[ResolvedAuditRow]
+
+
+def _as_uuid(val: object) -> uuid.UUID | None:
+    if isinstance(val, uuid.UUID):
+        return val
+    if isinstance(val, str):
+        with contextlib.suppress(ValueError):
+            return uuid.UUID(val)
+    return None
+
+
+def _field_model(table_name: str, field_name: str) -> type | None:
+    return _FIELD_RESOLVER_OVERRIDES.get((table_name, field_name)) or _FIELD_RESOLVER_MAP.get(field_name)
 
 
 class AuditLogRepository(BaseRepository[AuditLog]):
     def __init__(self, db: Session):
         super().__init__(AuditLog, db)
 
-    def _filtered_select(
+    def _conditions(
         self,
         *,
         table_name: str | None,
+        action: str | None,
         record_id: uuid.UUID | None,
         changed_by: uuid.UUID | None,
         date_from: datetime | None,
         date_to: datetime | None,
-    ):
-        stmt = select(AuditLog, UserProfile.display_name).outerjoin(
-            UserProfile, UserProfile.id == AuditLog.changed_by
-        )
+    ) -> list:
+        conds = []
         if table_name is not None:
-            stmt = stmt.where(AuditLog.table_name == table_name)
+            conds.append(AuditLog.table_name == table_name)
+        if action is not None:
+            conds.append(AuditLog.action == action)
         if record_id is not None:
-            stmt = stmt.where(AuditLog.record_id == record_id)
+            conds.append(AuditLog.record_id == record_id)
         if changed_by is not None:
-            stmt = stmt.where(AuditLog.changed_by == changed_by)
+            conds.append(AuditLog.changed_by == changed_by)
         if date_from is not None:
-            stmt = stmt.where(AuditLog.changed_at >= date_from)
+            conds.append(AuditLog.changed_at >= date_from)
         if date_to is not None:
-            stmt = stmt.where(AuditLog.changed_at <= date_to)
-        return stmt
+            conds.append(AuditLog.changed_at <= date_to)
+        return conds
 
-    def list_filtered(
+    def list_saves(
         self,
         *,
         offset: int = 0,
         limit: int = 50,
         table_name: str | None = None,
+        action: str | None = None,
         record_id: uuid.UUID | None = None,
         changed_by: uuid.UUID | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
-    ) -> tuple[list[ResolvedAuditRow], int]:
-        stmt = self._filtered_select(
+    ) -> tuple[list[ResolvedAuditSave], int]:
+        """Pages by save, not by log row, so one save is never split across
+        pages: first the page's (changed_at, changed_by) pairs, then every
+        matching row of those saves."""
+        conds = self._conditions(
             table_name=table_name,
+            action=action,
             record_id=record_id,
             changed_by=changed_by,
             date_from=date_from,
             date_to=date_to,
         )
-        total = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-        raw_rows: list[AuditLogRawRow] = list(
-            self.db.execute(stmt.order_by(AuditLog.changed_at.desc()).offset(offset).limit(limit)).all()
+        keys_stmt = (
+            select(AuditLog.changed_at, AuditLog.changed_by)
+            .where(*conds)
+            .group_by(AuditLog.changed_at, AuditLog.changed_by)
         )
-        return self._resolve_display_values(raw_rows), total
+        total = self.db.scalar(select(func.count()).select_from(keys_stmt.subquery())) or 0
+        keys = [
+            (k[0], k[1])
+            for k in self.db.execute(keys_stmt.order_by(AuditLog.changed_at.desc()).offset(offset).limit(limit)).all()
+        ]
+        if not keys:
+            return [], total
 
-    def _collect_ids_by_model(self, raw_rows: list[AuditLogRawRow]) -> dict[type, set[uuid.UUID]]:
-        ids_by_model: dict[type, set[uuid.UUID]] = {}
-        for entry, _ in raw_rows:
-            record_resolver = _RECORD_LABEL_RESOLVER_MAP.get(entry.table_name)
-            if record_resolver:
-                ids_by_model.setdefault(record_resolver[0], set()).add(entry.record_id)
-            for data in (entry.old_data, entry.new_data):
-                if not data:
-                    continue
-                for field_name, val in data.items():
-                    model = _FIELD_RESOLVER_MAP.get(field_name)
-                    if model and isinstance(val, str):
-                        with contextlib.suppress(ValueError):
-                            ids_by_model.setdefault(model, set()).add(uuid.UUID(val))
-        return ids_by_model
-
-    def _resolve_parent_ids(
-        self, raw_rows: list[AuditLogRawRow]
-    ) -> dict[tuple[str, uuid.UUID], uuid.UUID]:
-        """Maps each row needing parent context to its parent's id --
-        from old_data's full-row snapshot for a DELETE (the row itself is
-        gone, nothing left to query live), or a single batched live
-        lookup per table for anything else (the row still exists, and its
-        parent FK almost never changes, so it's rarely present in the
-        diff itself). Keyed by (table_name, record_id) rather than just
-        record_id since ids aren't guaranteed unique across tables."""
-        parent_ids: dict[tuple[str, uuid.UUID], uuid.UUID] = {}
-        live_lookup_ids: dict[str, set[uuid.UUID]] = {}
-
-        for entry, _ in raw_rows:
-            context = _PARENT_CONTEXT_MAP.get(entry.table_name)
-            if not context:
-                continue
-            if entry.action == "DELETE":
-                _own_model, fk_column, _target_model, _label = context
-                raw_val = (entry.old_data or {}).get(fk_column)
-                if isinstance(raw_val, str):
-                    with contextlib.suppress(ValueError):
-                        parent_ids[(entry.table_name, entry.record_id)] = uuid.UUID(raw_val)
-            else:
-                live_lookup_ids.setdefault(entry.table_name, set()).add(entry.record_id)
-
-        for table_name, record_ids in live_lookup_ids.items():
-            own_model, fk_column, _target_model, _label = _PARENT_CONTEXT_MAP[table_name]
-            fk_col = getattr(own_model, fk_column)
-            rows = self.db.execute(
-                select(own_model.id, fk_col).where(own_model.id.in_(record_ids))
+        key_set = set(keys)
+        raw_rows: list[AuditLogRawRow] = [
+            (entry, name)
+            for entry, name in self.db.execute(
+                select(AuditLog, UserProfile.display_name)
+                .outerjoin(UserProfile, UserProfile.id == AuditLog.changed_by)
+                .where(*conds, AuditLog.changed_at.in_([k[0] for k in keys]))
+                .order_by(AuditLog.changed_at.desc(), AuditLog.table_name, AuditLog.id)
             ).all()
-            for record_id, parent_id in rows:
-                if parent_id is not None:
-                    parent_ids[(table_name, record_id)] = parent_id
+            if (entry.changed_at, entry.changed_by) in key_set
+        ]
+        resolved = self._resolve_display_values(raw_rows)
 
-        return parent_ids
+        by_key: dict[tuple, list[ResolvedAuditRow]] = {k: [] for k in keys}
+        for row in resolved:
+            by_key[(row.entry.changed_at, row.entry.changed_by)].append(row)
+        saves = [
+            ResolvedAuditSave(changed_at=k[0], changed_by_name=rows[0].changed_by_name, rows=rows)
+            for k, rows in by_key.items()
+            if rows
+        ]
+        return saves, total
 
-    def _resolve_diff_display(
-        self, data: dict | None, resolved: dict[type, dict[uuid.UUID, str]]
-    ) -> dict[str, str]:
-        if not data:
+    # --- display resolution -------------------------------------------------
+
+    def _live_rows(self, model: type, ids: set[uuid.UUID]) -> dict[uuid.UUID, Snapshot]:
+        if not ids:
             return {}
-        display: dict[str, str] = {}
-        for field_name, val in data.items():
-            model = _FIELD_RESOLVER_MAP.get(field_name)
-            if not model or not isinstance(val, str):
-                continue
-            try:
-                label = resolved.get(model, {}).get(uuid.UUID(val))
-            except ValueError:
-                continue
-            if label is not None:
-                display[field_name] = label
-        return display
+        columns = [c.key for c in inspect(model).column_attrs]
+        objs = self.db.execute(select(model).where(model.id.in_(ids))).scalars().all()
+        return {obj.id: {c: getattr(obj, c) for c in columns} for obj in objs}
+
+    def _snapshots(self, raw_rows: list[AuditLogRawRow]) -> list[Snapshot]:
+        """A best-effort full view of each logged row: the stored full row
+        for INSERT/DELETE; the live row overlaid with the logged new values
+        for UPDATE."""
+        live_ids: dict[str, set[uuid.UUID]] = {}
+        for entry, _ in raw_rows:
+            spec = _TABLE_SPECS.get(entry.table_name)
+            if spec and spec.has_id and entry.action == "UPDATE":
+                live_ids.setdefault(entry.table_name, set()).add(entry.record_id)
+        live = {t: self._live_rows(_TABLE_SPECS[t].model, ids) for t, ids in live_ids.items()}
+
+        snapshots: list[Snapshot] = []
+        for entry, _ in raw_rows:
+            spec = _TABLE_SPECS.get(entry.table_name)
+            if entry.action == "DELETE":
+                snap: Snapshot = dict(entry.old_data or {})
+            elif entry.action == "INSERT":
+                snap = dict(entry.new_data or {})
+            else:
+                snap = {**live.get(entry.table_name, {}).get(entry.record_id, {}), **(entry.new_data or {})}
+            if spec and not spec.has_id and spec.parents:
+                snap.setdefault(spec.parents[0].fk, entry.record_id)
+            snapshots.append(snap)
+        return snapshots
+
+    @staticmethod
+    def _parent_of(spec: _TableSpec | None, snap: Snapshot) -> tuple[str, uuid.UUID] | None:
+        if not spec:
+            return None
+        for parent in spec.parents:
+            pid = _as_uuid(snap.get(parent.fk))
+            if pid is not None:
+                return parent.table, pid
+        return None
+
+    @staticmethod
+    def _label_fk_ids(spec: _TableSpec, snap: Snapshot, ids_by_model: dict[type, set[uuid.UUID]], table: str):
+        for kind, col in spec.label:
+            if kind == "fk":
+                model = _field_model(table, col)
+                val = _as_uuid(snap.get(col))
+                if model and val:
+                    ids_by_model.setdefault(model, set()).add(val)
+
+    @staticmethod
+    def _label(spec: _TableSpec | None, snap: Snapshot, names: dict[type, dict[uuid.UUID, str]], table: str):
+        if not spec:
+            return None
+        parts: list[str] = []
+        for kind, col in spec.label:
+            if kind == "attr":
+                val = snap.get(col)
+                if val not in (None, ""):
+                    parts.append(str(val))
+            else:
+                model = _field_model(table, col)
+                val = _as_uuid(snap.get(col))
+                name = names.get(model, {}).get(val) if model and val else None
+                if name:
+                    parts.append(name)
+        return " · ".join(parts) or None
 
     def _resolve_display_values(self, raw_rows: list[AuditLogRawRow]) -> list[ResolvedAuditRow]:
-        ids_by_model = self._collect_ids_by_model(raw_rows)
-        parent_ids = self._resolve_parent_ids(raw_rows)
-        for (table_name, _record_id), parent_id in parent_ids.items():
-            target_model = _PARENT_CONTEXT_MAP[table_name][2]
-            ids_by_model.setdefault(target_model, set()).add(parent_id)
+        snapshots = self._snapshots(raw_rows)
+        parents = [
+            self._parent_of(_TABLE_SPECS.get(entry.table_name), snap)
+            for (entry, _), snap in zip(raw_rows, snapshots, strict=True)
+        ]
 
-        # One SELECT per referenced model for the whole page, not per row.
-        resolved: dict[type, dict[uuid.UUID, str]] = {}
+        # Live parent rows, so a parent's label can be built like any record's.
+        parent_ids: dict[str, set[uuid.UUID]] = {}
+        for p in parents:
+            if p:
+                parent_ids.setdefault(p[0], set()).add(p[1])
+        parent_rows = {t: self._live_rows(_TABLE_SPECS[t].model, ids) for t, ids in parent_ids.items()}
+
+        # Every referenced name, one SELECT per model for the whole page.
+        ids_by_model: dict[type, set[uuid.UUID]] = {}
+        for (entry, _), snap in zip(raw_rows, snapshots, strict=True):
+            spec = _TABLE_SPECS.get(entry.table_name)
+            if spec:
+                self._label_fk_ids(spec, snap, ids_by_model, entry.table_name)
+            for data in (entry.old_data, entry.new_data):
+                for field_name, val in (data or {}).items():
+                    model = _field_model(entry.table_name, field_name)
+                    vid = _as_uuid(val)
+                    if model and vid:
+                        ids_by_model.setdefault(model, set()).add(vid)
+        for table, rows in parent_rows.items():
+            for snap in rows.values():
+                self._label_fk_ids(_TABLE_SPECS[table], snap, ids_by_model, table)
+
+        names: dict[type, dict[uuid.UUID, str]] = {}
         for model, ids in ids_by_model.items():
-            if not ids:
-                continue
             attr_col = getattr(model, _MODEL_DISPLAY_ATTR[model])
-            rows = self.db.execute(select(model.id, attr_col).where(model.id.in_(ids))).all()
-            resolved[model] = dict(rows)
+            names[model] = dict(self.db.execute(select(model.id, attr_col).where(model.id.in_(ids))).all())
 
         result: list[ResolvedAuditRow] = []
-        for entry, changed_by_name in raw_rows:
-            record_label = None
-            record_resolver = _RECORD_LABEL_RESOLVER_MAP.get(entry.table_name)
-            if record_resolver:
-                model, display_field = record_resolver
-                record_label = resolved.get(model, {}).get(entry.record_id)
-                # DELETE: the row no longer exists in its live table -- fall
-                # back to the full-row snapshot captured in old_data itself.
-                if record_label is None and entry.old_data:
-                    record_label = entry.old_data.get(display_field)
-
-            parent_type = None
-            parent_id_out = None
-            parent_label = None
-            context = _PARENT_CONTEXT_MAP.get(entry.table_name)
-            if context:
-                _own_model, _fk_column, target_model, ptype = context
-                parent_id = parent_ids.get((entry.table_name, entry.record_id))
-                if parent_id is not None:
-                    parent_name = resolved.get(target_model, {}).get(parent_id)
-                    if parent_name is not None:
-                        parent_type = ptype
-                        parent_id_out = parent_id
-                        parent_label = parent_name
-
+        for (entry, changed_by_name), snap, parent in zip(raw_rows, snapshots, parents, strict=True):
+            spec = _TABLE_SPECS.get(entry.table_name)
+            record_label = self._label(spec, snap, names, entry.table_name)
+            parent_type = parent_id = parent_label = None
+            if parent:
+                parent_snap = parent_rows.get(parent[0], {}).get(parent[1])
+                if parent_snap is not None:
+                    parent_type, parent_id = parent
+                    parent_label = self._label(_TABLE_SPECS[parent[0]], parent_snap, names, parent[0])
+            if spec and spec.is_line and parent_id is not None:
+                owner = (parent_type or "", parent_id, parent_label)
+            else:
+                owner = (entry.table_name, entry.record_id, record_label)
             result.append(
                 ResolvedAuditRow(
                     entry=entry,
                     changed_by_name=changed_by_name,
                     record_label=record_label,
                     parent_type=parent_type,
-                    parent_id=parent_id_out,
+                    parent_id=parent_id,
                     parent_label=parent_label,
-                    old_data_display=self._resolve_diff_display(entry.old_data, resolved),
-                    new_data_display=self._resolve_diff_display(entry.new_data, resolved),
+                    owner_type=owner[0],
+                    owner_id=owner[1],
+                    owner_label=owner[2],
+                    old_data_display=self._diff_display(entry.table_name, entry.old_data, names),
+                    new_data_display=self._diff_display(entry.table_name, entry.new_data, names),
                 )
             )
         return result
+
+    @staticmethod
+    def _diff_display(table: str, data: dict | None, names: dict[type, dict[uuid.UUID, str]]) -> dict[str, str]:
+        display: dict[str, str] = {}
+        for field_name, val in (data or {}).items():
+            model = _field_model(table, field_name)
+            vid = _as_uuid(val)
+            label = names.get(model, {}).get(vid) if model and vid else None
+            if label is not None:
+                display[field_name] = label
+        return display

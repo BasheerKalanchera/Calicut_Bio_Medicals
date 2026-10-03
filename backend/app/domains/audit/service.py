@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
 
-from app.core.exceptions import AuthorizationError
-from app.domains.audit.repository import AuditLogRepository, ResolvedAuditRow
+from app.core.exceptions import AuthorizationError, ValidationError
+from app.domains.audit.repository import AuditLogRepository, ResolvedAuditSave
 
 # Mirrors reference/service.py's ZoneAdminService._require_admin -- same role
 # set as the DB-level RLS policy on audit_log itself (audit_log_admin_gm_read,
@@ -10,6 +10,9 @@ from app.domains.audit.repository import AuditLogRepository, ResolvedAuditRow
 # policy, not a substitute for it -- RLS is what actually protects the data
 # from a direct query bypassing the app entirely.
 _AUDIT_LOG_ADMIN_ROLES = {"Admin", "General Manager"}
+
+# The Audit Log's "What happened" filter (Added / Changed / Removed).
+_ACTIONS = {"INSERT", "UPDATE", "DELETE"}
 
 
 class AuditLogService:
@@ -27,16 +30,20 @@ class AuditLogService:
         offset: int = 0,
         limit: int = 50,
         table_name: str | None = None,
+        action: str | None = None,
         record_id: uuid.UUID | None = None,
         changed_by: uuid.UUID | None = None,
         date_from: datetime | None = None,
         date_to: datetime | None = None,
-    ) -> tuple[list[ResolvedAuditRow], int]:
+    ) -> tuple[list[ResolvedAuditSave], int]:
         self._require_admin(role_name)
-        return self.repository.list_filtered(
+        if action is not None and action not in _ACTIONS:
+            raise ValidationError(f"action must be one of {sorted(_ACTIONS)}")
+        return self.repository.list_saves(
             offset=offset,
             limit=limit,
             table_name=table_name,
+            action=action,
             record_id=record_id,
             changed_by=changed_by,
             date_from=date_from,

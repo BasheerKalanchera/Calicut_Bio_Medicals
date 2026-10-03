@@ -22,6 +22,13 @@ class AuditLogResponse(BaseModel):
     parent_type: str | None
     parent_id: uuid.UUID | None
     parent_label: str | None
+    # The record this entry is grouped under on screen: the parent for line
+    # tables (an Opportunity's product lines, a target plan's hospitals),
+    # the row itself for main records. owner_type is a table name.
+    owner_type: str
+    owner_id: uuid.UUID | None
+    owner_label: str | None
+    # INSERT (a line added to an existing record), UPDATE or DELETE.
     action: str
     changed_at: datetime
     # None when changed_by itself is None (a direct-DB write outside a
@@ -36,3 +43,13 @@ class AuditLogResponse(BaseModel):
     # new_data value.
     old_data_display: dict[str, str]
     new_data_display: dict[str, str]
+
+
+class AuditSaveResponse(BaseModel):
+    """Everything one save recorded (same time, same user). The Audit Log
+    pages by save, so a save is never split across pages."""
+
+    changed_at: datetime
+    # None for a direct-DB write outside the app (no logged-in user).
+    changed_by_name: str | None
+    entries: list[AuditLogResponse]
