@@ -5,16 +5,28 @@ from decimal import Decimal
 from sqlalchemy import func
 
 from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError, ValidationError
+from app.core.periods import period_bounds, quarter_dates, today_ist
 from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
 from app.domains.planning.models import BrandVendorTarget, TargetPlan
-from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
+from app.domains.planning.repository import (
+    BrandVendorTargetRepository,
+    PlanVsActualRepository,
+    TargetPlanRepository,
+)
 from app.domains.planning.schemas import (
     BrandSplitEntry,
     BrandVendorTargetSet,
     PlanAccountEntry,
+    PlanVsActualBrand,
+    PlanVsActualHospital,
+    PlanVsActualLateOpportunity,
+    PlanVsActualPerson,
+    PlanVsActualResponse,
+    PlanVsActualZone,
     PlanWarning,
     PlanWarningKind,
+    QuarterState,
     TargetPlanCreate,
     TargetPlanUpdate,
 )
@@ -450,3 +462,186 @@ class BrandVendorTargetService:
 
     def list_by_period(self, planning_period: str) -> list[BrandVendorTarget]:
         return self.repository.list_by_period(planning_period)
+
+
+_ZERO = Decimal("0")
+_CENT = Decimal("0.01")
+
+
+def _percent_of_plan(won: Decimal, planned: Decimal) -> Decimal | None:
+    return (won / planned * 100).quantize(_CENT) if planned else None
+
+
+class _PersonAcc:
+    """Running figures for one person while the response is assembled."""
+
+    def __init__(self, user_id: uuid.UUID, display_name: str):
+        self.user_id = user_id
+        self.display_name = display_name
+        self.plan_status: str | None = None
+        self.hospitals: dict[uuid.UUID, list] = {}  # account_id -> [name, planned, won]
+        self.unplanned_won = _ZERO
+        self.brands: dict[uuid.UUID, list] = {}  # brand_id -> [name, planned, won]
+        self.expected: Decimal | None = None
+        self.undated = 0
+        self.late: list[PlanVsActualLateOpportunity] = []
+
+    @property
+    def planned(self) -> Decimal:
+        return sum((h[1] for h in self.hospitals.values()), _ZERO)
+
+    @property
+    def won(self) -> Decimal:
+        return sum((h[2] for h in self.hospitals.values()), _ZERO) + self.unplanned_won
+
+
+class PlanVsActualService:
+    """Plan vs Actual for one SBU and quarter (Plan vs Actuals Tracking plan).
+    Read-only. "Won" is credited to the Opportunity's owner; "expected" is
+    ACTIVE Opportunities weighted by win probability, by expected closing
+    date; what counts as expected depends on where the quarter sits relative
+    to today (IST)."""
+
+    def __init__(self, repository: PlanVsActualRepository):
+        self.repository = repository
+
+    def get_plan_vs_actual(
+        self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
+    ) -> PlanVsActualResponse:
+        today = today_ist()
+        q_start, q_end = quarter_dates(planning_period)
+        if today > q_end:
+            state = QuarterState.PAST
+        elif today < q_start:
+            state = QuarterState.FUTURE
+        else:
+            state = QuarterState.CURRENT
+        start_dt, end_dt = period_bounds(q_start, q_end)
+
+        repo = self.repository
+        people: dict[uuid.UUID, _PersonAcc] = {}
+
+        def person(user_id: uuid.UUID, name: str) -> _PersonAcc:
+            if user_id not in people:
+                people[user_id] = _PersonAcc(user_id, name)
+            return people[user_id]
+
+        brand_names: dict[uuid.UUID, str] = {}
+        plans = repo.list_plans(sbu_id, planning_period)
+        for plan in plans:
+            acc = person(plan.user_id, plan.user.display_name)
+            acc.plan_status = plan.status
+            for pa in plan.accounts:
+                acc.hospitals[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
+            for split in plan.brand_splits:
+                brand_names[split.brand_id] = split.brand.name
+                acc.brands[split.brand_id] = [split.brand.name, split.split_amount_lakhs, _ZERO]
+
+        # Zone planned figures: by the hospital's zone, not the planner's.
+        planned_account_ids = {a for p in people.values() for a in p.hospitals}
+        zone_of = repo.zone_of_accounts(list(planned_account_ids))
+        zones: dict[tuple[uuid.UUID | None, str | None], list[Decimal]] = {}  # key -> [planned, won]
+        for p in people.values():
+            for account_id, h in p.hospitals.items():
+                zones.setdefault(zone_of.get(account_id, (None, None)), [_ZERO, _ZERO])[0] += h[1]
+
+        for owner_id, owner_name, account_id, zone_id, zone_name, amount in repo.won_by_owner_account(
+            current_user, sbu_id, start_dt, end_dt
+        ):
+            acc = person(owner_id, owner_name)
+            if account_id in acc.hospitals:
+                acc.hospitals[account_id][2] += amount
+            else:
+                acc.unplanned_won += amount
+            zones.setdefault((zone_id, zone_name), [_ZERO, _ZERO])[1] += amount
+
+        for owner_id, brand_id, brand_name, amount in repo.won_by_owner_brand(current_user, sbu_id, start_dt, end_dt):
+            brand_names[brand_id] = brand_name
+            owner = people.get(owner_id)
+            if owner is None:
+                continue  # owner already added above if they have wins; guard anyway
+            owner.brands.setdefault(brand_id, [brand_name, _ZERO, _ZERO])[2] += amount
+
+        if state is not QuarterState.PAST:
+            closing_from = q_start if state is QuarterState.FUTURE else None
+            for owner_id, owner_name, amount in repo.expected_by_owner(current_user, sbu_id, closing_from, q_end):
+                person(owner_id, owner_name).expected = amount.quantize(_CENT)
+            for owner_id, owner_name, count in repo.undated_counts(current_user, sbu_id):
+                person(owner_id, owner_name).undated = count
+        if state is QuarterState.CURRENT:
+            for opp_id, name, account_id, account_name, owner_id, owner_name, closing, value in repo.late_opportunities(
+                current_user, sbu_id, today
+            ):
+                person(owner_id, owner_name).late.append(
+                    PlanVsActualLateOpportunity(
+                        opportunity_id=opp_id,
+                        name=name,
+                        account_id=account_id,
+                        account_name=account_name,
+                        expected_closure_date=closing,
+                        value_lakhs=value,
+                    )
+                )
+
+        rows = [self._person_response(p, state) for p in sorted(people.values(), key=lambda p: p.display_name.lower())]
+        planned = sum((r.planned_lakhs for r in rows), _ZERO)
+        won = sum((r.won_lakhs for r in rows), _ZERO)
+        expected = None if state is QuarterState.PAST else sum((r.expected_lakhs or _ZERO for r in rows), _ZERO)
+        brand_totals: dict[uuid.UUID, list[Decimal]] = {}
+        for p in people.values():
+            for brand_id, (_, b_planned, b_won) in p.brands.items():
+                totals = brand_totals.setdefault(brand_id, [_ZERO, _ZERO])
+                totals[0] += b_planned
+                totals[1] += b_won
+        return PlanVsActualResponse(
+            sbu_id=sbu_id,
+            planning_period=planning_period,
+            quarter_state=state,
+            as_of=today,
+            planned_lakhs=planned,
+            won_lakhs=won,
+            expected_lakhs=expected,
+            likely_finish_lakhs=won + (expected or _ZERO),
+            percent_of_plan=_percent_of_plan(won, planned),
+            people=rows,
+            zones=[
+                PlanVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1])
+                for (zid, zname), v in sorted(zones.items(), key=lambda kv: (kv[0][1] is None, kv[0][1] or ""))
+            ],
+            brands=[
+                PlanVsActualBrand(brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1])
+                for bid, v in sorted(brand_totals.items(), key=lambda kv: brand_names[kv[0]].lower())
+            ],
+        )
+
+    @staticmethod
+    def _person_response(p: _PersonAcc, state: QuarterState) -> PlanVsActualPerson:
+        planned, won = p.planned, p.won
+        expected = None if state is QuarterState.PAST else (p.expected or _ZERO)
+        hospitals = [
+            PlanVsActualHospital(account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2])
+            for aid, h in sorted(p.hospitals.items(), key=lambda kv: kv[1][0].lower())
+        ]
+        if p.unplanned_won:
+            hospitals.append(
+                PlanVsActualHospital(
+                    account_id=None, account_name="Unplanned", planned_lakhs=_ZERO, won_lakhs=p.unplanned_won
+                )
+            )
+        return PlanVsActualPerson(
+            user_id=p.user_id,
+            display_name=p.display_name,
+            plan_status=p.plan_status,
+            planned_lakhs=planned,
+            won_lakhs=won,
+            expected_lakhs=expected,
+            likely_finish_lakhs=won + (expected or _ZERO),
+            percent_of_plan=_percent_of_plan(won, planned),
+            undated_opportunity_count=p.undated,
+            late_opportunities=p.late,
+            hospitals=hospitals,
+            brands=[
+                PlanVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2])
+                for bid, b in sorted(p.brands.items(), key=lambda kv: kv[1][0].lower())
+            ],
+        )

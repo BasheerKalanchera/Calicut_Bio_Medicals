@@ -1,14 +1,25 @@
 import uuid
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy import case, delete, func, or_, select, text
 from sqlalchemy.orm import Session, aliased, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
+from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile
+from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.planning.models import BrandVendorTarget, TargetPlan, TargetPlanAccount, TargetPlanBrandSplit
-from app.domains.reference.models import Zone, ZoneClosure
+from app.domains.product.models import Product
+from app.domains.reference.models import Brand, OpportunityStatus, Zone, ZoneClosure
+
+# Net line value (BR-FIN-03: BUYBACK lines net against PRODUCT lines). Same
+# expression as reporting/repository.py's _NET_VALUE.
+_NET_VALUE = case(
+    (OpportunityItem.line_type == "BUYBACK", -OpportunityItem.extended_value_lakhs),
+    else_=OpportunityItem.extended_value_lakhs,
+)
 
 # Account has several lazy="select" collections; none are needed for the
 # planner's picker or territory checks (same reasoning as
@@ -347,3 +358,205 @@ class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):
     def list_by_period(self, planning_period: str) -> list[BrandVendorTarget]:
         stmt = select(BrandVendorTarget).where(BrandVendorTarget.planning_period == planning_period)
         return list(self.db.scalars(stmt).all())
+
+
+class PlanVsActualRepository:
+    """Read-only queries behind the Plan vs Actual section (Plan vs Actuals
+    Tracking plan, step 1). Plans come through target_plan's RLS; Opportunities
+    are narrowed to the caller's owner scope, the same rule reporting uses."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    @staticmethod
+    def _apply_owner_scope(stmt, current_user: UserProfile):
+        role_name = current_user.role.role_name
+        if role_name not in UNRESTRICTED_ROLES:
+            scope_builder = TEAM_SCOPE_BUILDERS.get(role_name)
+            self_row = UserProfile.id == current_user.id
+            stmt = stmt.where(or_(scope_builder(current_user), self_row) if scope_builder else self_row)
+        return stmt
+
+    @staticmethod
+    def _zone_ancestor():
+        zone_anc = aliased(Zone)
+        return (
+            select(
+                ZoneClosure.descendant_zone_id.label("zone_id"),
+                zone_anc.id.label("anc_id"),
+                zone_anc.name.label("anc_name"),
+            )
+            .join(zone_anc, zone_anc.id == ZoneClosure.ancestor_zone_id)
+            .where(zone_anc.zone_level == "ZONE")
+            .subquery()
+        )
+
+    def list_plans(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
+        """Submitted plans only (pending or approved); drafts and rejected
+        plans don't count towards "planned"."""
+        stmt = (
+            select(TargetPlan)
+            .where(TargetPlan.sbu_id == sbu_id)
+            .where(TargetPlan.planning_period == planning_period)
+            .where(TargetPlan.status.in_(("PENDING_APPROVAL", "APPROVED")))
+            .options(*_PLAN_CHILDREN)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def zone_of_accounts(self, account_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple[uuid.UUID | None, str | None]]:
+        """ZONE-level ancestor of each hospital's zone: account_id ->
+        (zone_id, zone_name). Hospitals filed above zone level map to (None, None)."""
+        if not account_ids:
+            return {}
+        zone_ancestor = self._zone_ancestor()
+        stmt = (
+            select(Account.id, zone_ancestor.c.anc_id, zone_ancestor.c.anc_name)
+            .outerjoin(zone_ancestor, zone_ancestor.c.zone_id == Account.zone_id)
+            .where(Account.id.in_(account_ids))
+        )
+        return {a: (zid, zn) for a, zid, zn in self.db.execute(stmt).all()}
+
+    def won_by_owner_account(
+        self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
+    ) -> list[tuple[uuid.UUID, str, uuid.UUID, uuid.UUID | None, str | None, Decimal]]:
+        """Net won value per (owner, hospital) for Opportunities closed in
+        [start, end): (owner_id, owner_name, account_id, zone_id, zone_name, amount)."""
+        zone_ancestor = self._zone_ancestor()
+        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        stmt = (
+            select(
+                Opportunity.owner_id,
+                UserProfile.display_name,
+                Opportunity.account_id,
+                zone_ancestor.c.anc_id,
+                zone_ancestor.c.anc_name,
+                amount,
+            )
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(Account, Account.id == Opportunity.account_id)
+            .outerjoin(zone_ancestor, zone_ancestor.c.zone_id == Account.zone_id)
+            .where(OpportunityStatus.status_code == "WON")
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.closed_at >= start)
+            .where(Opportunity.closed_at < end)
+            .group_by(
+                Opportunity.owner_id,
+                UserProfile.display_name,
+                Opportunity.account_id,
+                zone_ancestor.c.anc_id,
+                zone_ancestor.c.anc_name,
+            )
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, n, a, zid, zn, Decimal(v)) for o, n, a, zid, zn, v in self.db.execute(stmt).all()]
+
+    def won_by_owner_brand(
+        self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
+    ) -> list[tuple[uuid.UUID, uuid.UUID, str, Decimal]]:
+        """Net won value per (owner, brand): (owner_id, brand_id, brand_name,
+        amount). Lines with no product (BUYBACK) have no brand and are skipped."""
+        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        stmt = (
+            select(Opportunity.owner_id, Brand.id, Brand.name, amount)
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(Product, Product.id == OpportunityItem.product_id)
+            .join(Brand, Brand.id == Product.brand_id)
+            .where(OpportunityStatus.status_code == "WON")
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.closed_at >= start)
+            .where(Opportunity.closed_at < end)
+            .group_by(Opportunity.owner_id, Brand.id, Brand.name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, b, bn, Decimal(v)) for o, b, bn, v in self.db.execute(stmt).all()]
+
+    def expected_by_owner(
+        self,
+        current_user: UserProfile,
+        sbu_id: uuid.UUID,
+        closing_from: date | None,
+        closing_to: date,
+    ) -> list[tuple[uuid.UUID, str, Decimal]]:
+        """Probability-weighted net value of ACTIVE Opportunities whose
+        expected closure date is <= closing_to (and >= closing_from when
+        given): (owner_id, owner_name, amount)."""
+        amount = func.coalesce(func.sum(_NET_VALUE * Opportunity.win_probability / 100), 0)
+        stmt = (
+            select(Opportunity.owner_id, UserProfile.display_name, amount)
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .where(OpportunityStatus.status_code == "ACTIVE")
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.expected_closure_date <= closing_to)
+            .group_by(Opportunity.owner_id, UserProfile.display_name)
+        )
+        if closing_from is not None:
+            stmt = stmt.where(Opportunity.expected_closure_date >= closing_from)
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, n, Decimal(v)) for o, n, v in self.db.execute(stmt).all()]
+
+    def late_opportunities(
+        self, current_user: UserProfile, sbu_id: uuid.UUID, today: date
+    ) -> list[tuple[uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, date, Decimal]]:
+        """BR-OP-16: ACTIVE Opportunities whose expected closure date has
+        passed: (id, name, account_id, account_name, owner_id, owner_name,
+        expected_closure_date, net value)."""
+        value = func.coalesce(func.sum(_NET_VALUE), 0)
+        stmt = (
+            select(
+                Opportunity.id,
+                Opportunity.name,
+                Opportunity.account_id,
+                Account.name,
+                Opportunity.owner_id,
+                UserProfile.display_name,
+                Opportunity.expected_closure_date,
+                value,
+            )
+            .select_from(Opportunity)
+            .outerjoin(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(Account, Account.id == Opportunity.account_id)
+            .where(OpportunityStatus.status_code == "ACTIVE")
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.expected_closure_date < today)
+            .group_by(
+                Opportunity.id,
+                Opportunity.name,
+                Opportunity.account_id,
+                Account.name,
+                Opportunity.owner_id,
+                UserProfile.display_name,
+                Opportunity.expected_closure_date,
+            )
+            .order_by(Opportunity.expected_closure_date, Opportunity.name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(i, n, a, an, o, on, d, Decimal(v)) for i, n, a, an, o, on, d, v in self.db.execute(stmt).all()]
+
+    def undated_counts(
+        self, current_user: UserProfile, sbu_id: uuid.UUID
+    ) -> list[tuple[uuid.UUID, str, int]]:
+        """ACTIVE Opportunities with no expected closure date, per owner:
+        (owner_id, owner_name, count). They can't be placed in a quarter."""
+        stmt = (
+            select(Opportunity.owner_id, UserProfile.display_name, func.count(Opportunity.id))
+            .select_from(Opportunity)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .where(OpportunityStatus.status_code == "ACTIVE")
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.expected_closure_date.is_(None))
+            .group_by(Opportunity.owner_id, UserProfile.display_name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, n, int(c)) for o, n, c in self.db.execute(stmt).all()]

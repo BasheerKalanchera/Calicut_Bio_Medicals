@@ -1,6 +1,6 @@
 import re
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
@@ -234,3 +234,81 @@ class BrandRollupResponse(BaseModel):
     committed_total: Decimal
     vendor_target: Decimal | None
     gap: Decimal | None
+
+
+class QuarterState(StrEnum):
+    CURRENT = "CURRENT"
+    PAST = "PAST"
+    FUTURE = "FUTURE"
+
+
+class PlanVsActualLateOpportunity(BaseModel):
+    """BR-OP-16: still open past its expected closing date. Flag only."""
+
+    opportunity_id: uuid.UUID
+    name: str
+    account_id: uuid.UUID
+    account_name: str
+    expected_closure_date: date
+    value_lakhs: Decimal
+
+
+class PlanVsActualHospital(BaseModel):
+    """One line per hospital on the person's plan; wins at hospitals that
+    aren't on the plan share a single line with account_id=None
+    ("Unplanned")."""
+
+    account_id: uuid.UUID | None
+    account_name: str
+    planned_lakhs: Decimal
+    won_lakhs: Decimal
+
+
+class PlanVsActualBrand(BaseModel):
+    brand_id: uuid.UUID
+    brand_name: str
+    planned_lakhs: Decimal
+    won_lakhs: Decimal
+
+
+class PlanVsActualPerson(BaseModel):
+    user_id: uuid.UUID
+    display_name: str
+    # None = no submitted plan; the person still shows with Planned 0.
+    plan_status: str | None
+    planned_lakhs: Decimal
+    won_lakhs: Decimal
+    # None for a past quarter (nothing left to expect).
+    expected_lakhs: Decimal | None
+    likely_finish_lakhs: Decimal
+    # None when planned is 0 -- the screen shows a dash.
+    percent_of_plan: Decimal | None
+    undated_opportunity_count: int
+    late_opportunities: list[PlanVsActualLateOpportunity]
+    hospitals: list[PlanVsActualHospital]
+    brands: list[PlanVsActualBrand]
+
+
+class PlanVsActualZone(BaseModel):
+    """Grouped by the hospital's zone, not the planner's. zone_id=None is
+    the bucket for hospitals filed above zone level."""
+
+    zone_id: uuid.UUID | None
+    zone_name: str | None
+    planned_lakhs: Decimal
+    won_lakhs: Decimal
+
+
+class PlanVsActualResponse(BaseModel):
+    sbu_id: uuid.UUID
+    planning_period: str
+    quarter_state: QuarterState
+    as_of: date
+    planned_lakhs: Decimal
+    won_lakhs: Decimal
+    expected_lakhs: Decimal | None
+    likely_finish_lakhs: Decimal
+    percent_of_plan: Decimal | None
+    people: list[PlanVsActualPerson]
+    zones: list[PlanVsActualZone]
+    brands: list[PlanVsActualBrand]

@@ -8,12 +8,17 @@ from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
-from app.domains.planning.repository import BrandVendorTargetRepository, TargetPlanRepository
+from app.domains.planning.repository import (
+    BrandVendorTargetRepository,
+    PlanVsActualRepository,
+    TargetPlanRepository,
+)
 from app.domains.planning.schemas import (
     BrandRollupResponse,
     BrandVendorTargetResponse,
     BrandVendorTargetSet,
     EligibleAccountResponse,
+    PlanVsActualResponse,
     PlanWarning,
     SBUTargetRollupResponse,
     TargetPlanApprovalDecision,
@@ -22,7 +27,7 @@ from app.domains.planning.schemas import (
     TargetPlanUpdate,
     ZoneRollupEntry,
 )
-from app.domains.planning.service import BrandVendorTargetService, TargetPlanService
+from app.domains.planning.service import BrandVendorTargetService, PlanVsActualService, TargetPlanService
 from app.domains.reference.repository import BrandRepository
 
 router = APIRouter(prefix="/planning/targets", tags=["Target Planning"])
@@ -39,6 +44,12 @@ def _get_brand_vendor_service(
     db: Session = Depends(get_db),
 ) -> BrandVendorTargetService:
     return BrandVendorTargetService(repository=BrandVendorTargetRepository(db))
+
+
+def _get_plan_vs_actual_service(
+    db: Session = Depends(get_db),
+) -> PlanVsActualService:
+    return PlanVsActualService(repository=PlanVsActualRepository(db))
 
 
 @router.get("")
@@ -75,6 +86,17 @@ def list_team_targets(
     unrestricted for Admin/GM), same as every other list endpoint here."""
     target_plans = service.list_team_targets(sbu_id, planning_period, current_user=current_user)
     return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
+
+
+@router.get("/plan-vs-actual")
+def get_plan_vs_actual(
+    sbu_id: uuid.UUID = Query(...),
+    planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: PlanVsActualService = Depends(_get_plan_vs_actual_service),
+) -> APIResponse[PlanVsActualResponse]:
+    """Planned vs Won vs Expected for one quarter (Insights Dashboard). Read-only."""
+    return APIResponse(data=service.get_plan_vs_actual(sbu_id, planning_period, current_user=current_user))
 
 
 @router.get("/zone-rollup")

@@ -1,12 +1,12 @@
 import uuid
-from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse
+from app.core.periods import period_bounds
 from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.reporting.repository import ReportingRepository
@@ -24,26 +24,6 @@ from app.domains.reporting.schemas import (
     StagnantDealsResponse,
 )
 from app.domains.reporting.service import ReportingService
-
-_IST = ZoneInfo("Asia/Kolkata")
-
-
-def _ist_midnight(d: date) -> datetime:
-    return datetime(d.year, d.month, d.day, tzinfo=_IST)
-
-
-def _period_bounds(
-    period_start: date | None, period_end: date | None
-) -> tuple[datetime | None, datetime | None]:
-    # period_end is inclusive (a calendar date the caller picked, e.g. "the
-    # last day of this quarter") -- closed_at is a timestamp, so the upper
-    # bound has to be the start of the *next* day, not midnight of
-    # period_end itself, or that whole last day would be excluded.
-    # Midnight in IST, not the DB session's UTC -- a naive bound put every
-    # period boundary at 05:30 IST (Backlog, found 2026-09-27).
-    start_dt = _ist_midnight(period_start) if period_start else None
-    end_dt = _ist_midnight(period_end + timedelta(days=1)) if period_end else None
-    return start_dt, end_dt
 
 router = APIRouter(prefix="/reporting", tags=["Reporting"])
 
@@ -147,7 +127,7 @@ def get_sales_headline(
     current_user: UserProfile = Depends(get_current_user),
     service: ReportingService = Depends(_get_service),
 ) -> APIResponse[SalesHeadline]:
-    start_dt, end_dt = _period_bounds(period_start, period_end)
+    start_dt, end_dt = period_bounds(period_start, period_end)
     return APIResponse(
         data=service.sales_headline(
             current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
@@ -167,7 +147,7 @@ def get_sales_summary(
     current_user: UserProfile = Depends(get_current_user),
     service: ReportingService = Depends(_get_service),
 ) -> APIResponse[SalesSummaryResponse]:
-    start_dt, end_dt = _period_bounds(period_start, period_end)
+    start_dt, end_dt = period_bounds(period_start, period_end)
     return APIResponse(
         data=service.sales_summary(
             current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id,
