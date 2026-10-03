@@ -2,8 +2,8 @@
 
 **Covers:** `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md` and
 `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
-**Built:** branch `hotfix/opportunity-edit-via-Opportunity-page` (off `origin/uat`
-`143c78e`), worktree `.claude/worktrees/hotfix` — not yet committed.
+**Built:** `a430152` on branch `hotfix/opportunity-edit-via-deal-page` (off
+`origin/uat` `143c78e`); on UAT 2026-10-03; merged into `main` as `eb89fa7`.
 **Where:** Dev. Screens run from the worktree at `localhost:5174`; Dev
 backend and Dev database as usual. A short re-check on UAT follows the push
 (section G).
@@ -129,13 +129,25 @@ Claude then reads the record back in the app.
     Opportunity with no products → Opportunity page → add a product (Products → Save) →
     Edit → stage onward → Save. **Expected:** no error. Glance at the
     Opportunities tab: Active only + Show All. —
+    **Step 17: Pass (look-only)** 2026-10-03 (Basheer). Run as a look-only
+    check by Basheer's choice, so no test data was saved on UAT: Kmct Medical
+    college Hospital shows "3 Active of 4", Show All (4) reveals the Won one;
+    Edit opens the Opportunity page; its Edit window has Project with "No
+    project"; Cancel. Projects → Mobile ICU → Edit opens the Opportunity
+    page. The full save path is covered by Dev steps 1–16 and the rep's own
+    next real edit. —
 
 ## Sign-off
 
 **Result:** Dev steps 1–16 pass, 2026-10-01 (Basheer, with Claude).
 Screen changes made during the run at Basheer's request: heading wording,
 phone-width heading row, Show All button moved into the heading row in
-the no-Active state. Step 17 (UAT) runs after the push.
+the no-Active state. Pushed to UAT 2026-10-03 (`uat` 143c78e →
+a430152, frontend only); step 17 (UAT, look-only) passes 2026-10-03.
+After merging `uat` into `main` (no conflicts): tsc and lint 0 errors,
+backend 1069/1069 pass; Dev re-check on Aster MIMS Calicut (Active-only
+heading + Show All, Edit opens the Opportunity page, Project field) passes
+2026-10-03 (Basheer).
 
 **Dev data this run changes:** New USG Machine - referral test (product
 added, stage Qualified, project set then cleared, On Hold then Active);

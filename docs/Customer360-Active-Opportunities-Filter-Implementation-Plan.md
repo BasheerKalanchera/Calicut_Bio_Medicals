@@ -1,10 +1,10 @@
 # Customer 360 Active-Only Opportunities Filter — Implementation Plan
 
-**Status:** Approved 2026-09-30 (Basheer). Built and Dev-tested
-2026-10-01 with the Opportunity Edit quick fix; committed `a430152` on
-`hotfix/opportunity-edit-via-deal-page`; push to UAT held for a quiet
-morning (Basheer). Decisions 4 and 5 reworded during the Dev run.
-**Traceability rows:** "Requested by Cabio leadership — to be built", item 2
+**Status:** Shipped 2026-10-03. Built with the Opportunity Edit quick fix
+(`a430152`), live on UAT 2026-10-03, merged into `main` as `eb89fa7`;
+E2E passed on Dev and UAT. Decisions 4 and 5 reworded during the Dev run.
+**Traceability rows:** was "Requested by Cabio leadership — to be built"
+item 2; now "Commitment beyond contract" #17
 (`docs/Signed-Requirements-to-PRD-Traceability.md`).
 **Design / discussion:** `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md`
 (section 3 holds decisions 1–6 below).

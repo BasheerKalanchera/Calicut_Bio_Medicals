@@ -1,15 +1,14 @@
 # Opportunity Edit From Customer/Project Pages (UAT Hotfix) — Implementation Plan
 
-**Status:** Approved 2026-10-01 (Basheer answered the four open decisions).
-Built and Dev-tested 2026-10-01 with the Customer 360 Active-only filter;
-committed `a430152` on `hotfix/opportunity-edit-via-deal-page`; push to
-UAT held for a quiet morning (Basheer).
+**Status:** Shipped 2026-10-03. Approved 2026-10-01; committed `a430152`,
+live on UAT 2026-10-03, merged into `main` as `eb89fa7`; E2E passed on Dev
+and UAT. User-manual line carried by the manual/help catch-up (Backlog).
+Built and Dev-tested 2026-10-01 with the Customer 360 Active-only filter.
 Earlier: drafted and parked 2026-09-30.
 **Traceability rows:** none (bug fix to existing opportunity editing; no signed requirement changes status)
 **Design / discussion:** 2026-09-30 conversation; summary in
 `docs/Progress-Archive-2026-09.md` "2026-09-30 — UAT bug: deal edit with
-products and stage change together". Backlog entry "UAT bug: deal edit from
-customer/project page fails when products and stage change together".
+products and stage change together". (Backlog entry closed 2026-10-03.)
 
 ## Decisions
 

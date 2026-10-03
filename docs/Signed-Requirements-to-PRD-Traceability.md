@@ -176,6 +176,7 @@ written in plain, external-safe language.
 | 14 | The sales team has already started entering real, live deals into the environment used for testing the system before go-live — so when it moves to production, that work carries straight over instead of being re-entered from scratch. Because real business data is at stake there already, it's backed up and its recoverability verified on the same schedule a live system would get, with copies kept on an external hard disk for disaster recovery — not treated as disposable test data. |
 | 15 | The catalogue already recognises refurbished equipment and accessories as their own category, not just new machines. |
 | 16 | A rep can report back directly on a marketing-sourced lead once they've followed up — what they did, what they're waiting on — and anyone who can see that lead (their manager, GM, etc.) can ask for an update on the same thread, instead of a separate conversation. |
+| 17 | A customer's Opportunities tab opens on its Active Opportunities only — the same ones the pipeline counts — with a "Show All" button for On Hold, Won and Lost. Asked for by Cabio leadership at the 24 Sep demo. |
 
 ### Requested by Cabio leadership — to be built
 
@@ -187,8 +188,7 @@ decided on yet.
 | # | What's requested | Status |
 | :---: | :--- | :--- |
 | 1 | Marketing staff can see at a glance which of their leads have new comments from the sales team. | Requested by Haroon and Latheef Bhai at the 24 Sep demo. On hold until mid-October, while the team uses lead comments; not yet built. |
-| 2 | A customer's Opportunities tab (on its 360 page) shows only Active Opportunities by default — the same ones the pipeline counts; On Hold, Won and Lost appear on demand with a button. | Requested by Haroon and Latheef Bhai at the 24 Sep demo; details decided 30 Sep; not yet built. |
-| 3 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
+| 2 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
 
 ### Pending — proposed, not yet built
 

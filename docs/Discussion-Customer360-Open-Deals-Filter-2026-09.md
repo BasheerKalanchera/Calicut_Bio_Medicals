@@ -1,13 +1,13 @@
 # Discussion: Active-Only Filter on the Customer 360 Opportunities Tab — 2026-09-28
 
 **Status:** Decided by Basheer, 2026-09-30 (section 3) — not taken to Haroon.
-Nothing built yet; a short build plan follows.
+Built and shipped 2026-10-03 (live on UAT; `main` `eb89fa7`) — see
+`docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
 **Participants:** Basheer (decisions), Claude (options and analysis).
 **Origin:** the 2026-09-24 demo to Latheef Bhai and Haroon — item 2 under
 "Requested by Cabio leadership — to be built" in
-`docs/Signed-Requirements-to-PRD-Traceability.md`. Backlog entry:
-"Customer 360 Opportunities tab: show only Active Opportunities by default"
-in `docs/Backlog.md`.
+`docs/Signed-Requirements-to-PRD-Traceability.md` (now "Commitment beyond
+contract" #17). Backlog entry closed 2026-10-03.
 
 ## 1. Summary
 

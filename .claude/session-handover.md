@@ -5,26 +5,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 
 
-## UAT hotfix: Opportunity edit via its own page + Customer 360 Active-only filter — push in the morning
-
-- Plans: `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md`,
-  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`.
-  Test plan: `docs/Opportunity-Edit-Hotfix-and-Active-Filter-Manual-E2E-Test-Plan.md`
-  — Dev steps 1–16 pass 2026-10-01.
-- Committed `a430152` on branch `hotfix/opportunity-edit-via-deal-page`
-  (worktree `.claude/worktrees/hotfix`, off `origin/uat` `143c78e`; its
-  `sales-os-app/node_modules` is a junction to main's, `.env` copied).
-  Safety copy pushed to GitHub under its own branch name 2026-10-01 (not
-  `uat`). **Not on UAT:** Basheer wants it there in the quiet morning hours.
-- **Next (2026-10-03 morning, ask first; moved from 2 Oct by Basheer):** `git fetch`; confirm
-  `origin/uat` is still `143c78e`; `git push origin
-  hotfix/opportunity-edit-via-deal-page:uat` (fast-forward; host
-  redeploys UAT) → Basheer runs step 17 on UAT → merge `uat` into `main`
-  (expect conflicts in `Customer360Screen.tsx`), re-check on Dev, push →
-  post-commit checklist (filter: leadership "Requested" item 2 → built,
-  scorecard regen + republish; Backlog entries for both close) → remove
-  the worktree. Each commit/push its own approval.
-
 ## Session retro 2026-10-01 + structural fixes — parked by Basheer
 
 - Retro drafted in chat 2026-10-01, **not yet approved or saved**. Main

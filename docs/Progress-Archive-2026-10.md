@@ -220,3 +220,41 @@ Bash heredocs that write or patch source files (second occurrence of the
 `git commit -F <message file>`. D. Option for Basheer: allow Claude to run
 the two named read-only UAT data-quality scripts after his yes, instead of
 typing each `!` command himself.
+
+## 2026-10-03 — UAT hotfix shipped: pushed to UAT, checked, merged back into main
+
+- Render log (UAT backend) showed only health checks 06:24–07:18, so
+  pushed `hotfix/opportunity-edit-via-deal-page` to `uat` (143c78e →
+  a430152, fast-forward). Only the frontend redeployed; correct, since no
+  backend file changed (and avoids the fragile backend rebuild, see
+  2026-09 SQLAlchemy/psycopg entry).
+- Step 17 run look-only by Basheer's choice (no test data on UAT), on
+  Kmct Medical college Hospital and project Mobile ICU (picked by a
+  read-only UAT lookup): all 5 checks pass.
+- Found: MMC "Edan F6 CTG machine single fhr" (the reported record) is
+  now Won with its product but still at stage Lead (rep meant Order).
+  Allowed by BR (Won from any stage); Won locks the stage, so delivery
+  and installation can't be tracked on any Won Opportunity. Basheer wants
+  the Payment Confirmation Gate moved up; checking with Haroon (Backlog).
+  No change made to the record.
+- Merged `uat` into `main` (no conflicts, contrary to the expected
+  `Customer360Screen.tsx` clash): tsc/lint 0 errors, backend 1069/1069,
+  Dev re-check passed (Basheer). Commit `eb89fa7`, pushed; `uat` is now 0
+  ahead / 82 behind `main`. Ruff reports 62 findings on `main`, none from
+  this change (Backlog "Backend style checker (ruff) not clean").
+- Closed: both plans (Shipped), test plan, both Backlog entries;
+  leadership request "Active-only filter" moved to Commitment beyond
+  contract #17, scorecard regenerated.
+- **Retro:** worked: checking the Render log before pushing; a
+  dry-run merge before touching main; a look-only UAT check instead of
+  test data on live sales records. Improve (Claude): said "safe to run"
+  about the tests before checking what they connect to (Basheer stopped
+  it and asked); made doc edits before showing them first. No new process
+  rule — both are existing CLAUDE.md rules ("Verify before claiming",
+  "Show before you act").
+- Side finding: half the UptimeRobot checks use HEAD and get 405 from
+  `/api/v1/health`; the monitor may show UAT as down. Offered to log it
+  (Basheer hasn't decided).
+- Process: the auto-mode classifier blocked Claude's approved read-only
+  UAT script; Basheer ran it via `!`. Second instance of proposal D in
+  the 2026-10-01 retro.

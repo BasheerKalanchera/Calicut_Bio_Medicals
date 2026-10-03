@@ -24,21 +24,6 @@ added, and only 7 of 38 tables are watched.
 - **Deferred with it (option B):** a History tab on each deal, customer
   and product page, built on top of this later.
 
-### UAT bug: deal edit from customer/project page fails when products and stage change together — parked (found 2026-09-30)
-
-A rep edited a deal from a customer's Opportunities tab (EDIT), added a
-product, moved Lead → Order and Active → Won in the same edit, and Save
-failed with "At least one product must be added to advance to Qualified
-stage". The form sends the stage change before the product. Project
-Directory's edit form has the same flaw; the deal page does not.
-- **Workaround (given to the rep by Basheer, 2026-09-30):** save the
-  product first, then edit again for stage/status; or open the deal from
-  the pipeline and use the deal page (Products Save first, then Edit).
-- **Plan:** `docs/Opportunity-Edit-Via-Deal-Page-Hotfix-Plan.md` — EDIT
-  opens the deal page, old forms removed, Project field added to the deal
-  page. Four decisions still "proposed"; to go to UAT as an emergency fix
-  once answered.
-
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
@@ -75,6 +60,17 @@ with the next move; then the Render Build Command can go back to
 `pip install .`), and review the other open-ended dependencies — the same
 build also jumped FastAPI, Starlette and others to versions never tested
 here. Details: Progress-Archive 2026-09-27 "UAT move".
+
+### Backend style checker (ruff) not clean — small tidy-up (found 2026-10-03)
+
+`ruff check backend` reports 62 findings on `main` (`cc269a4`), none from
+code changed that day: B008 ×47 (FastAPI `Depends()` in default
+arguments — standard pattern, a false alarm), I001 ×9, SIM102 ×4, E501 ×1,
+UP035 ×1; 53 in `app/`, 9 in `alembic/`. Earlier progress notes say "ruff
+clean", so either they checked a narrower set of files or these crept in.
+**Fix (~15 min):** ignore B008 for FastAPI in `backend/pyproject.toml`,
+tidy the other 15, and write down one standard ruff command for the
+pre-E2E checks. Found while running the checks for the UAT hotfix merge.
 
 ### Pin one Python version everywhere, then upgrade to 3.13 — after 2 Oct (raised 2026-09-27)
 
@@ -360,17 +356,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   need a role-aware branch — the Review Queue for reps/managers,
   `MarketingLeadEntryScreen` for Marketing User.
 
-- **Customer 360 Opportunities tab: show only Active Opportunities by
-  default.** Requested by Haroon and Latheef Bhai at the 2026-09-24 demo;
-  item 2 under "Requested by Cabio leadership — to be built" in
-  `docs/Signed-Requirements-to-PRD-Traceability.md`. All decisions made by
-  Basheer 2026-09-30 — see
-  `docs/Discussion-Customer360-Open-Deals-Filter-2026-09.md` section 3
-  (Active only, same set as the pipeline; customer 360 tab only, the main
-  Opportunities screen unchanged). Plan:
-  `docs/Customer360-Active-Opportunities-Filter-Implementation-Plan.md`
-  — ships to UAT with the Opportunity Edit quick fix.
-
 - **Admin/GM approve buttons on any target plan (undecided).** The server
   lets Admin/GM approve or reject any plan, but their screen only shows
   buttons for their own direct reports' plans (found in hospital-wise E2E
@@ -393,7 +378,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Bring the user manual and in-app `?` help up to date — ships with the
   next UAT move (hospital-wise Part 1+2) (Basheer, 2026-10-01).** Plan
   approved 2026-10-01: `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`
-  (current step: the plan's Status line).
+  (current step: the plan's Status line). Include: editing an Opportunity
+  now happens only on its own page (Edit on a customer or project opens
+  it) — UAT hotfix 2026-10-03.
 
 - **Move remaining Opportunity screens to the common filter (Basheer,
   2026-10-01).** The forecast-by-closing-period work builds one shared
@@ -1208,6 +1195,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   by self-attestation in-app (no Tally connection). Remaining open questions (stage
   naming, timing against the concurrent Insights Dashboard build) and what this
   deliberately doesn't do: `docs/Discussion-Payment-Confirmation-Gate-2026-09.md`.
+  **2026-10-03: Basheer wants this moved up the build queue** (triggered by MMC
+  "Edan F6 CTG machine single fhr", marked Won at stage Lead, so its delivery
+  and installation can't be tracked); checking priority with Haroon. Questions
+  for him: build before Plan vs Actuals Tracking goes live; stage name; leave
+  already-Won Opportunities as they are; interim "Won only after delivery,
+  installation and full payment" instruction to reps.
 
 - ~~**Duplicate hospital names in the Customer Directory.**~~ — **DONE,
   live in UAT since the 2026-09-09 promotion.** Option B (soft
