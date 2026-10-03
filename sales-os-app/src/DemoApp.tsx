@@ -176,6 +176,10 @@ export default function DemoApp() {
   // Opportunity Detail (e.g. the stakeholder bridge list) — reset to
   // undefined (defaults to Overview) on any fresh account open.
   const [customer360InitialTab, setCustomer360InitialTab] = useState<string | undefined>(undefined);
+  // Customer 360 Opportunities tab: Show All (true) vs Active only (false).
+  // Lives here, not in the screen, so it survives a tab switch and Back from
+  // Opportunity Detail; reset on any fresh account open or leaving the customer.
+  const [customer360ShowAllOpps, setCustomer360ShowAllOpps] = useState(false);
   // Activity id to scroll to and highlight on whichever Activity tab opens
   // next -- set by a comment/manager-note notification click, since both
   // Opportunity Detail and Customer 360 route through the same two handlers
@@ -228,6 +232,7 @@ export default function DemoApp() {
     // account) starts on Overview by default -- callers that need a specific
     // tab (e.g. a Manager Note notification landing on Activity) pass one.
     setCustomer360InitialTab(initialTab);
+    setCustomer360ShowAllOpps(false);
     // Unconditional, same reasoning as handleSelectOpportunity's customer360Tab
     // below -- a caller that doesn't pass one must clear a stale id left over
     // from a previous notification click, not leave the old Activity highlighted.
@@ -238,6 +243,7 @@ export default function DemoApp() {
 
   function handleBack360() {
     setSelectedAccount(null);
+    setCustomer360ShowAllOpps(false);
     setView(accountReturnView);
   }
 
@@ -710,6 +716,8 @@ export default function DemoApp() {
               onSelectProject={handleSelectProject}
               initialTab={customer360InitialTab}
               highlightActivityId={highlightActivityId}
+              showAllOpportunities={customer360ShowAllOpps}
+              onShowAllOpportunitiesChange={setCustomer360ShowAllOpps}
             />
           )}
 

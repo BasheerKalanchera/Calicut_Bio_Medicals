@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useState, type RefObject } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { Alert, Autocomplete, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -6,8 +6,8 @@ import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listAllProjects } from "../services/projects";
-import { listAccounts, createProject, updateProject, listOpportunities, updateOpportunity, createOpportunity, listOpportunityItems, addOpportunityItem, deleteOpportunityItem } from "../services/accounts";
-import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listHoldReasons, listLossReasons, listGateOverrideReasons, listSbus } from "../services/masterData";
+import { listAccounts, createProject, updateProject, listOpportunities, createOpportunity } from "../services/accounts";
+import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listGateOverrideReasons, listSbus } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
@@ -62,40 +62,6 @@ function ProjectDetailView({
   // as Customer360Screen.tsx / QuickLeadModal.tsx.
   const isSbuOverrideRole = ["Admin", "General Manager"].includes(userProfile?.role_name);
 
-  const [editingOpp, setEditingOpp] = useState<any | null>(null);
-  const [editOppName, setEditOppName] = useState("");
-  const [editOppStageId, setEditOppStageId] = useState("");
-  const [editOppStatusId, setEditOppStatusId] = useState("");
-  const [editOppOwnerId, setEditOppOwnerId] = useState("");
-  const [editOppWinProb, setEditOppWinProb] = useState("");
-  const [editOppValue, setEditOppValue] = useState("");
-  const [editOppItems, setEditOppItems] = useState<DraftOpportunityItem[]>([]);
-  const [editOppOriginalItemIds, setEditOppOriginalItemIds] = useState<string[]>([]);
-  const [showEditOppItemsModal, setShowEditOppItemsModal] = useState(false);
-  const [editOppLeadSourceId, setEditOppLeadSourceId] = useState("");
-  const [editOppPoNumber, setEditOppPoNumber] = useState("");
-  // Bug fix, 2026-08-18: these 3 fields previously had no edit-form state at all in
-  // this file -- once a deal advanced to Demo/Negotiation, editing it here to set
-  // Stage there would fail server-side (BR-OP-00) with no field on screen to fix it.
-  const [editOppDemoStart, setEditOppDemoStart] = useState("");
-  const [editOppDemoEnd, setEditOppDemoEnd] = useState("");
-  const [editOppClosureDate, setEditOppClosureDate] = useState("");
-  const [editOppHoldReasonId, setEditOppHoldReasonId] = useState("");
-  const [editOppReactivationDate, setEditOppReactivationDate] = useState("");
-  const [editOppLossReasonId, setEditOppLossReasonId] = useState("");
-  const [editOppCompetitorName, setEditOppCompetitorName] = useState("");
-  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
-  const [editOppIsExternalReferrer, setEditOppIsExternalReferrer] = useState(false);
-  const [editOppReferredByUserId, setEditOppReferredByUserId] = useState("");
-  const [editOppReferredByNote, setEditOppReferredByNote] = useState("");
-  // BR-OP-14: gate override. editOppGateOverrideChecked is the sole trigger -- an
-  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
-  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
-  const [editOppGateOverrideChecked, setEditOppGateOverrideChecked] = useState(false);
-  const [editOppGateOverrideApproverId, setEditOppGateOverrideApproverId] = useState("");
-  const [editOppGateOverrideReasonId, setEditOppGateOverrideReasonId] = useState("");
-  const [editOppGateOverrideNote, setEditOppGateOverrideNote] = useState("");
-
   const [showAddOpp, setShowAddOpp] = useState(false);
   const [addOppName, setAddOppName] = useState("");
   const [addOppStageId, setAddOppStageId] = useState("");
@@ -137,34 +103,29 @@ function ProjectDetailView({
   const { data: oppStages = [] } = useQuery({
     queryKey: ["stages"],
     queryFn: () => listStages() as Promise<any[]>,
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
   const { data: oppStatuses = [] } = useQuery({
     queryKey: ["statuses"],
     queryFn: () => listStatuses() as Promise<any[]>,
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
   const { data: leadSources = [] } = useQuery({
     queryKey: ["leadSources"],
     queryFn: () => listLeadSources() as Promise<any[]>,
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
   // LeadSource has no separate code column -- `name` already holds the pseudo-code
   // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
   const addOppLeadSourceCode = leadSources.find((ls: any) => ls.id === addOppLeadSourceId)?.name;
-  const editOppLeadSourceCode = leadSources.find((ls: any) => ls.id === editOppLeadSourceId)?.name;
   // BR-OP-10: creation must default to Active only -- there is exactly one Active
   // status in the system, so this is never a real user choice on Add Opportunity.
   // Set automatically rather than showing a one-option dropdown.
   const activeStatusId = oppStatuses.find((s: any) => s.status_code === "ACTIVE")?.id;
-  // On Edit, a field showing purely from an already-set value (not from the stage
-  // threshold) is never hidden by this -- see each field's render condition below
-  // (Backlog decision, 2026-08-18).
   const addOppStageOrder = oppStages.find((s: any) => s.id === addOppStageId)?.display_order ?? 0;
-  const editOppStageOrder = oppStages.find((s: any) => s.id === editOppStageId)?.display_order ?? 0;
 
 
   // Distinct query key -- must not reuse ["users","all"] below, which (despite its
@@ -179,7 +140,7 @@ function ProjectDetailView({
       const d = await listUsers("all");
       return Array.isArray(d) ? (d as any[]) : [];
     },
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
 
@@ -199,35 +160,19 @@ function ProjectDetailView({
     return Array.from(byId.values());
   }
   const addOppGateOverrideApproverOptions = gateOverrideApproverOptionsFor(addOppOwnerId);
-  const editOppGateOverrideApproverOptions = gateOverrideApproverOptionsFor(editOppOwnerId);
 
-  // BR-OP-14: needed on both Add and Edit -- gate override applies on creation
-  // too, e.g. a referral going straight to Negotiation with no prior demo.
+  // BR-OP-14: gate override applies on creation too, e.g. a referral going
+  // straight to Negotiation with no prior demo.
   const { data: gateOverrideReasons = [] } = useQuery({
     queryKey: ["gateOverrideReasons"],
     queryFn: () => listGateOverrideReasons() as Promise<any[]>,
-    enabled: showAddOpp || editingOpp !== null,
-    staleTime: Infinity,
-  });
-  // Only needed on the Edit Opportunity modal (BR-OP-03/05 status gates) --
-  // Create can't set these at all since BR-OP-10 restricts initial Status to
-  // Active only (see the Status field below).
-  const { data: holdReasons = [] } = useQuery({
-    queryKey: ["holdReasons"],
-    queryFn: () => listHoldReasons() as Promise<any[]>,
-    enabled: editingOpp !== null,
-    staleTime: Infinity,
-  });
-  const { data: lossReasons = [] } = useQuery({
-    queryKey: ["lossReasons"],
-    queryFn: () => listLossReasons() as Promise<any[]>,
-    enabled: editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
   const { data: oppUsers = [] } = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers() as Promise<any[]>,
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
     staleTime: Infinity,
   });
   const { data: sbus = [] } = useQuery({
@@ -242,14 +187,10 @@ function ProjectDetailView({
   // the opportunity's actual SBU, not the caller's own) -- everywhere else
   // it's just the caller's own SBU. Keying the query on this value replaces
   // the pre-migration manual refetch effect entirely: React Query refetches
-  // on its own whenever the resolved SBU changes.
-  // Editing an existing Opportunity must filter by *its own* sbu_id, not the
-  // caller's -- otherwise Admin/GM (whose own userProfile.sbu is null, per
-  // BR-OP-12) fall through to an unfiltered fetch and see every product.
+  // on its own whenever the resolved SBU changes. Editing an existing
+  // Opportunity happens on its own detail page (hotfix 2026-10-01).
   const productsSbuId = showAddOpp && isSbuOverrideRole && addOppSbuId
     ? addOppSbuId
-    : editingOpp
-    ? editingOpp.sbu_id
     : userProfile?.sbu?.id;
   const { data: oppProducts = [] } = useQuery({
     queryKey: ["products", "picker", productsSbuId],
@@ -257,53 +198,8 @@ function ProjectDetailView({
       const d: any = await listProducts({ page_size: 100, sbu_id: productsSbuId } as any);
       return (d.items ?? []) as ProductOption[];
     },
-    enabled: showAddOpp || editingOpp !== null,
+    enabled: showAddOpp,
   });
-
-  // Edit Opportunity's item list is an editable draft buffer, not a direct
-  // render of query data -- listOpportunityItems is only fetched on-demand
-  // (enabled: editingOpp !== null), so it isn't available the instant the
-  // modal opens. Seed the draft once per editingOpp.id via a ref guard, same
-  // pattern as Customer360Screen.tsx, so a background refetch while the
-  // modal is open doesn't clobber unsaved edits.
-  const { data: oppItemsData } = useQuery({
-    queryKey: ["opp-items", editingOpp?.id],
-    queryFn: () => listOpportunityItems(editingOpp!.id as any) as Promise<any[]>,
-    enabled: editingOpp !== null,
-  });
-  const seededOppIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (editingOpp === null) { seededOppIdRef.current = null; return; }
-    if (oppItemsData === undefined) return;
-    if (seededOppIdRef.current === editingOpp.id) return;
-    seededOppIdRef.current = editingOpp.id;
-    const mapped = oppItemsData.map((i: any) => ({
-      id: i.id,
-      product_id: i.product_id,
-      product_name: i.product?.name,
-      product_type: i.product?.product_type,
-      description: i.description,
-      line_type: i.line_type,
-      quantity: i.quantity,
-      unit_price_lakhs: Number(i.unit_price_lakhs),
-      discount_lakhs: Number(i.discount_lakhs),
-    }));
-    // Seeds the Edit Opportunity item table from the fetched items once per
-    // opportunity opened (seededOppIdRef dedups it); React 18 batches these
-    // into one re-render, not worth restructuring this actively-used form for.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditOppItems(mapped);
-    setEditOppOriginalItemIds(mapped.map((i: any) => i.id));
-  }, [editingOpp, oppItemsData]);
-
-  useEffect(() => {
-    // Derives the Edit Opportunity Value field from its item list; React 18
-    // batches this into one re-render, not worth restructuring for.
-    if (editOppItems.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEditOppValue(itemsTotal(editOppItems).toFixed(2));
-    }
-  }, [editOppItems]);
 
   useEffect(() => {
     // Derives the Add Opportunity Value field from its item list; React 18
@@ -315,123 +211,6 @@ function ProjectDetailView({
       setAddOppValue("");
     }
   }, [addOppItems]);
-
-  function openEditOpp(opp: any) {
-    setEditingOpp(opp);
-    setEditOppName(opp.name || "");
-    setEditOppStageId(opp.stage?.id || "");
-    setEditOppStatusId(opp.status?.id || "");
-    setEditOppOwnerId(opp.owner?.id || "");
-    setEditOppWinProb(String(opp.win_probability ?? ""));
-    setEditOppValue(opp.indicative_value != null ? String(opp.indicative_value) : "");
-    setEditOppItems([]);
-    setEditOppOriginalItemIds([]);
-    setEditOppLeadSourceId(opp.lead_source_id || "");
-    setEditOppDemoStart(opp.demo_start_date || "");
-    setEditOppDemoEnd(opp.demo_end_date || "");
-    setEditOppClosureDate(opp.expected_closure_date || "");
-    setEditOppPoNumber(opp.po_number || "");
-    setEditOppHoldReasonId(opp.hold_reason_id || "");
-    setEditOppReactivationDate(opp.reactivation_date || "");
-    setEditOppLossReasonId(opp.loss_reason_id || "");
-    setEditOppCompetitorName(opp.competitor_name || "");
-    setEditOppIsExternalReferrer(!!opp.referred_by_note);
-    setEditOppReferredByUserId(opp.referred_by?.id || "");
-    setEditOppReferredByNote(opp.referred_by_note || "");
-    setEditOppGateOverrideChecked(!!opp.gate_override_approver_id);
-    setEditOppGateOverrideApproverId(opp.gate_override_approver_id || "");
-    setEditOppGateOverrideReasonId(opp.gate_override_reason_id || "");
-    setEditOppGateOverrideNote(opp.gate_override_note || "");
-  }
-
-  async function handleUpdateOpp() {
-    if (!editOppName.trim()) throw new Error("Opportunity name is required");
-    // BR-OP-02/03/05: status-gated required fields. Re-checked/re-sent on every save
-    // while the selected status is On Hold/Lost/Won, same pattern as Customer360Screen.tsx.
-    const _newStatus = oppStatuses.find((s: any) => s.id === editOppStatusId);
-    const _selectedLossReason = lossReasons.find((r: any) => r.id === editOppLossReasonId);
-    if (_newStatus?.status_code === "ON_HOLD") {
-      if (!editOppHoldReasonId) throw new Error("Hold Reason is required to put an opportunity On-Hold");
-      if (!editOppReactivationDate) throw new Error("Reactivation Date is required to put an opportunity On-Hold");
-      if (editOppReactivationDate <= new Date().toISOString().slice(0, 10)) throw new Error("Reactivation Date must be a future date");
-    }
-    if (_newStatus?.status_code === "LOST") {
-      if (!editOppLossReasonId) throw new Error("Loss Reason is required to mark an opportunity as Lost");
-      if (_selectedLossReason?.reason_code === "COMPETITOR_WON" && !editOppCompetitorName.trim()) {
-        throw new Error("Competitor Name is required when Loss Reason is 'Competitor Won'");
-      }
-    }
-    if (_newStatus?.status_code === "WON" && !editOppPoNumber.trim()) {
-      throw new Error("PO Number is required to mark an opportunity as Won");
-    }
-    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
-    // the failure surfaces before the round-trip, not just as a 422.
-    if (editOppGateOverrideChecked && editOppGateOverrideApproverId && !editOppGateOverrideReasonId) {
-      throw new Error("Gate override reason is required whenever an approver is set");
-    }
-    const payload: any = {
-      name: editOppName.trim(),
-      stage_id: editOppStageId || undefined,
-      status_id: editOppStatusId || undefined,
-      owner_id: editOppOwnerId || undefined,
-      win_probability: editOppWinProb !== "" ? Number(editOppWinProb) : undefined,
-    };
-    if (editOppValue !== "") payload.indicative_value = Number(editOppValue);
-    payload.lead_source_id = editOppLeadSourceId || null;
-    payload.demo_start_date = editOppGateOverrideChecked ? null : (editOppDemoStart || null);
-    payload.demo_end_date = editOppGateOverrideChecked ? null : (editOppDemoEnd || null);
-    payload.expected_closure_date = (editOppGateOverrideChecked && editOppStageOrder >= STAGE_ORDER_ORDER) ? null : (editOppClosureDate || null);
-    payload.po_number = editOppPoNumber.trim() || null;
-    if (_newStatus?.status_code === "ON_HOLD") {
-      payload.hold_reason_id = editOppHoldReasonId;
-      payload.reactivation_date = editOppReactivationDate;
-    }
-    if (_newStatus?.status_code === "LOST") {
-      payload.loss_reason_id = editOppLossReasonId;
-      if (editOppCompetitorName.trim()) payload.competitor_name = editOppCompetitorName.trim();
-    }
-    if (editOppLeadSourceCode === "REFERRAL") {
-      if (editOppIsExternalReferrer) {
-        payload.referred_by_note = editOppReferredByNote.trim() || null;
-        payload.referred_by_user_id = null;
-      } else {
-        payload.referred_by_user_id = editOppReferredByUserId || null;
-        payload.referred_by_note = null;
-      }
-    } else {
-      // Lead Source no longer Referral -- clear any previously-set referral credit
-      // rather than leaving it stranded and invisible (BR-FIN-07).
-      payload.referred_by_user_id = null;
-      payload.referred_by_note = null;
-    }
-    // BR-OP-14: always sent explicitly (not conditionally omitted), same style as
-    // demo_start_date etc above -- unchecking Gate Override must actively clear a
-    // previously-set override, not just hide it client-side (TC-17).
-    payload.gate_override_approver_id = editOppGateOverrideChecked ? (editOppGateOverrideApproverId || null) : null;
-    payload.gate_override_reason_id = (editOppGateOverrideChecked && editOppGateOverrideApproverId) ? (editOppGateOverrideReasonId || null) : null;
-    payload.gate_override_note = (editOppGateOverrideChecked && editOppGateOverrideApproverId) ? (editOppGateOverrideNote.trim() || null) : null;
-    await updateOpportunity(editingOpp.id as any, payload);
-    const currentItemIds = editOppItems.filter((i) => i.id).map((i) => i.id);
-    const toDelete = editOppOriginalItemIds.filter((id) => !currentItemIds.includes(id));
-    const toAdd = editOppItems.filter((i) => !i.id);
-    await Promise.all([
-      ...toDelete.map((id) => deleteOpportunityItem(id as any).catch(() => {})),
-      ...toAdd.map((i) =>
-        addOpportunityItem(editingOpp.id as any, {
-          product_id: i.product_id,
-          description: i.description,
-          quantity: i.quantity,
-          unit_price_lakhs: i.unit_price_lakhs,
-          discount_lakhs: i.discount_lakhs,
-          line_type: i.line_type,
-        }).catch(() => {})
-      ),
-    ]);
-    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", p.account.id] });
-    queryClient.invalidateQueries({ queryKey: ["opp-items", editingOpp.id] });
-    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-    setEditingOpp(null);
-  }
 
   function openAddOpp() {
     setAddOppName(p.name);
@@ -518,9 +297,6 @@ function ProjectDetailView({
     { label: "Bid Submission Date", value: p.bid_submission_date || "—" },
   ];
 
-  const editOppStatusCode = oppStatuses.find((s: any) => s.id === editOppStatusId)?.status_code;
-  const editOppLossReasonCode = lossReasons.find((r: any) => r.id === editOppLossReasonId)?.reason_code;
-
   return (
     <>
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", bgcolor: "#f9fafb" }}>
@@ -603,12 +379,14 @@ function ProjectDetailView({
                         )}
                       </Box>
                     </Box>
-                    <Button
-                      onClick={(e) => { e.stopPropagation(); openEditOpp(opp); }}
-                      sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" }, flexShrink: 0 }}
-                    >
-                      Edit
-                    </Button>
+                    {onSelectOpportunity && (
+                      <Button
+                        onClick={(e) => { e.stopPropagation(); onSelectOpportunity({ id: opp.id, name: opp.name }); }}
+                        sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "primary.main", bgcolor: "#eff6ff", "&:hover": { bgcolor: "#dbeafe" }, flexShrink: 0 }}
+                      >
+                        Edit
+                      </Button>
+                    )}
                   </Box>
                 ))}
               </Box>
@@ -621,220 +399,6 @@ function ProjectDetailView({
           </Box>
         </Box>
       </Box>
-
-      {/* Edit Opportunity Modal */}
-      <FormModal isOpen={editingOpp !== null} onClose={() => setEditingOpp(null)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
-        {editingOpp && (
-          <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
-            {p.account?.name} — {p.name}
-          </Box>
-        )}
-        <TextField label="Name *" value={editOppName} onChange={(e) => setEditOppName(e.target.value)} autoFocus fullWidth size="small" />
-        <Box sx={{ display: "flex", gap: 1.5 }}>
-          <TextField
-            select
-            label="Stage"
-            value={editOppStageId}
-            onChange={(e) => {
-              const s: any = oppStages.find((x: any) => x.id === e.target.value);
-              setEditOppStageId(e.target.value);
-              if (s) setEditOppWinProb(String(s.default_win_probability));
-            }}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select stage</MenuItem>
-            {oppStages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-          </TextField>
-          <TextField
-            select
-            label="Status"
-            value={editOppStatusId}
-            onChange={(e) => setEditOppStatusId(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ flex: 1 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
-          </TextField>
-        </Box>
-        <TextField
-          select
-          label="Lead Source"
-          value={editOppLeadSourceId}
-          onChange={(e) => setEditOppLeadSourceId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select source</MenuItem>
-          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
-        </TextField>
-        {editOppLeadSourceCode === "REFERRAL" && (
-          <Box>
-            <FormControlLabel
-              control={<Checkbox color="primary" checked={editOppIsExternalReferrer} onChange={(e) => { setEditOppIsExternalReferrer(e.target.checked); setEditOppReferredByUserId(""); setEditOppReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
-            />
-            {editOppIsExternalReferrer ? (
-              <TextField label="Referred By" value={editOppReferredByNote} onChange={(e) => setEditOppReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
-            ) : (
-              <TextField select label="Referred By" value={editOppReferredByUserId} onChange={(e) => setEditOppReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                <MenuItem value="">Select colleague</MenuItem>
-                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-              </TextField>
-            )}
-          </Box>
-        )}
-        <TextField
-          select
-          label="Owner"
-          value={editOppOwnerId}
-          onChange={(e) => setEditOppOwnerId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select owner</MenuItem>
-          {oppUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-        </TextField>
-        <TextField
-          label="Win Probability %"
-          type="number"
-          value={editOppWinProb}
-          onChange={(e) => setEditOppWinProb(e.target.value)}
-          placeholder="0 – 100"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, max: 100 } }}
-        />
-        {(editOppStageOrder >= STAGE_ORDER_QUALIFIED || editOppItems.length > 0 || editOppValue !== "") && (
-          <TextField
-            label={`Indicative Value (Lakhs)${editOppItems.length > 0 ? " (auto)" : ""}`}
-            type="number"
-            value={editOppValue}
-            onChange={(e) => setEditOppValue(e.target.value)}
-            disabled={editOppItems.length > 0}
-            placeholder="e.g. 25.50"
-            fullWidth
-            size="small"
-            slotProps={{ htmlInput: { min: 0, step: "any" } }}
-          />
-        )}
-        <FormControlLabel
-          control={<Checkbox color="primary" checked={editOppGateOverrideChecked} onChange={(e) => setEditOppGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
-        />
-        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoStart !== "") && !editOppGateOverrideChecked && (
-          <TextField label="Demo Start Date" type="date" value={editOppDemoStart} onChange={(e) => setEditOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {((editOppStageOrder >= STAGE_ORDER_DEMO && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppDemoEnd !== "") && !editOppGateOverrideChecked && (
-          <TextField label="Demo End Date" type="date" value={editOppDemoEnd} onChange={(e) => setEditOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {((editOppStageOrder >= STAGE_ORDER_NEGOTIATION && editOppLeadSourceCode !== "REPEAT_ORDER") || editOppClosureDate !== "") &&
-          !(editOppGateOverrideChecked && editOppStageOrder >= STAGE_ORDER_ORDER) && (
-          <TextField label="Expected Closure Date" type="date" value={editOppClosureDate} onChange={(e) => setEditOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {editOppGateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select
-              label={editOppGateOverrideApproverId ? "Approved By *" : "Approved By"}
-              value={editOppGateOverrideApproverId}
-              onChange={(e) => setEditOppGateOverrideApproverId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-              helperText="The owner's immediate manager, or a General Manager"
-            >
-              <MenuItem value="">No override</MenuItem>
-              {editOppGateOverrideApproverOptions.map((u: any) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
-                </MenuItem>
-              ))}
-            </TextField>
-            {editOppGateOverrideApproverId && (
-              <>
-                <TextField
-                  select label="Reason *" value={editOppGateOverrideReasonId} onChange={(e) => setEditOppGateOverrideReasonId(e.target.value)}
-                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-                >
-                  <MenuItem value="">Select reason</MenuItem>
-                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-                </TextField>
-                <TextField
-                  label="Note" value={editOppGateOverrideNote} onChange={(e) => setEditOppGateOverrideNote(e.target.value)}
-                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
-                />
-              </>
-            )}
-          </Box>
-        )}
-        {(editOppStageOrder >= STAGE_ORDER_ORDER || editOppPoNumber.trim() !== "" || editOppStatusCode === "WON") && (
-          <TextField label="PO Number" value={editOppPoNumber} onChange={(e) => setEditOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
-        )}
-        {editOppStatusCode === "ON_HOLD" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>
-            <TextField
-              select
-              label="Hold Reason *"
-              value={editOppHoldReasonId}
-              onChange={(e) => setEditOppHoldReasonId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Select reason</MenuItem>
-              {holdReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-            </TextField>
-            <TextField
-              label="Reactivation Date *"
-              type="date"
-              value={editOppReactivationDate}
-              onChange={(e) => setEditOppReactivationDate(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Box>
-        )}
-        {editOppStatusCode === "LOST" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select
-              label="Loss Reason *"
-              value={editOppLossReasonId}
-              onChange={(e) => setEditOppLossReasonId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Select reason</MenuItem>
-              {lossReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-            </TextField>
-            {editOppLossReasonCode === "COMPETITOR_WON" && (
-              <TextField label="Competitor Name *" value={editOppCompetitorName} onChange={(e) => setEditOppCompetitorName(e.target.value)} placeholder="e.g. Siemens" fullWidth size="small" />
-            )}
-          </Box>
-        )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Box>
-            <Button
-              onClick={() => setShowEditOppItemsModal(true)}
-              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-            >
-              {editOppItems.length > 0 ? `Edit (${editOppItems.length})` : "+ Add Products"}
-            </Button>
-          </Box>
-          <OpportunityItemsList items={editOppItems} variant="summary" />
-        </Box>
-      </FormModal>
 
       {/* Add Opportunity Modal */}
       <FormModal isOpen={showAddOpp} onClose={() => setShowAddOpp(false)} title="Add Opportunity" onSubmit={handleCreateOpp}>
@@ -1013,31 +577,6 @@ function ProjectDetailView({
         />
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <OpportunityItemAddRow products={oppProducts} onAdd={(item) => setAddOppItems([...addOppItems, item])} />
-        </Box>
-      </FormModal>
-
-      {/* Edit Opportunity — Products secondary modal */}
-      <FormModal isOpen={showEditOppItemsModal} onClose={() => setShowEditOppItemsModal(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
-        <OpportunityItemsList
-          items={editOppItems}
-          variant="editable"
-          emptyMessage="No products added"
-          onRemove={(i) => setEditOppItems(editOppItems.filter((_, j) => j !== i))}
-          onUpdateField={(i, field, value) =>
-            setEditOppItems(
-              editOppItems.map((it, j) => {
-                if (j !== i) return it;
-                // Dropping `id` forces handleUpdateOpp's diffing to treat an edited
-                // pre-existing row as delete-old + add-new (there's no single-item
-                // PATCH endpoint) -- same technique the pre-extraction code used.
-                const { id: _id, ...rest } = it;
-                return { ...rest, [field]: value };
-              })
-            )
-          }
-        />
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <OpportunityItemAddRow products={oppProducts} onAdd={(item) => setEditOppItems([...editOppItems, item])} />
         </Box>
       </FormModal>
     </>
