@@ -161,3 +161,72 @@ export interface BrandRollup {
   vendor_target: string | null;
   gap: string | null;
 }
+
+// Plan vs Actuals Tracking (Insights Dashboard). Decimals arrive as strings.
+export type QuarterState = "CURRENT" | "PAST" | "FUTURE";
+
+// BR-OP-16: still open past its expected closing date. Flag only.
+export interface PlanVsActualLateOpportunity {
+  opportunity_id: string;
+  name: string;
+  account_id: string;
+  account_name: string;
+  expected_closure_date: string;
+  value_lakhs: string;
+}
+
+// account_id null = the shared "Unplanned" line (wins at hospitals not on the plan).
+export interface PlanVsActualHospital {
+  account_id: string | null;
+  account_name: string;
+  planned_lakhs: string;
+  won_lakhs: string;
+}
+
+export interface PlanVsActualBrand {
+  brand_id: string;
+  brand_name: string;
+  planned_lakhs: string;
+  won_lakhs: string;
+}
+
+export interface PlanVsActualPerson {
+  user_id: string;
+  display_name: string;
+  // null = no submitted plan; the person still shows with Planned 0.
+  plan_status: string | null;
+  planned_lakhs: string;
+  won_lakhs: string;
+  // null for a past quarter.
+  expected_lakhs: string | null;
+  likely_finish_lakhs: string;
+  // null when planned is 0.
+  percent_of_plan: string | null;
+  undated_opportunity_count: number;
+  late_opportunities: PlanVsActualLateOpportunity[];
+  hospitals: PlanVsActualHospital[];
+  brands: PlanVsActualBrand[];
+}
+
+// zone_id null = hospitals filed above zone level.
+export interface PlanVsActualZone {
+  zone_id: string | null;
+  zone_name: string | null;
+  planned_lakhs: string;
+  won_lakhs: string;
+}
+
+export interface PlanVsActualResponse {
+  sbu_id: string;
+  planning_period: string;
+  quarter_state: QuarterState;
+  as_of: string;
+  planned_lakhs: string;
+  won_lakhs: string;
+  expected_lakhs: string | null;
+  likely_finish_lakhs: string;
+  percent_of_plan: string | null;
+  people: PlanVsActualPerson[];
+  zones: PlanVsActualZone[];
+  brands: PlanVsActualBrand[];
+}

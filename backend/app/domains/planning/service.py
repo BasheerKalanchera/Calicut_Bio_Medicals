@@ -479,6 +479,10 @@ class _PersonAcc:
         self.user_id = user_id
         self.display_name = display_name
         self.plan_status: str | None = None
+        # The plan's saved total. Plans saved before hospital-wise planning
+        # carry a total (and brand splits) with no hospital lines, so this
+        # can exceed the sum of the hospitals; the difference is `unassigned`.
+        self.plan_total = _ZERO
         self.hospitals: dict[uuid.UUID, list] = {}  # account_id -> [name, planned, won]
         self.unplanned_won = _ZERO
         self.brands: dict[uuid.UUID, list] = {}  # brand_id -> [name, planned, won]
@@ -487,8 +491,17 @@ class _PersonAcc:
         self.late: list[PlanVsActualLateOpportunity] = []
 
     @property
-    def planned(self) -> Decimal:
+    def hospital_planned(self) -> Decimal:
         return sum((h[1] for h in self.hospitals.values()), _ZERO)
+
+    @property
+    def unassigned(self) -> Decimal:
+        """Planned amount not tied to any hospital (legacy plans)."""
+        return max(self.plan_total - self.hospital_planned, _ZERO)
+
+    @property
+    def planned(self) -> Decimal:
+        return self.hospital_planned + self.unassigned
 
     @property
     def won(self) -> Decimal:
@@ -531,6 +544,7 @@ class PlanVsActualService:
         for plan in plans:
             acc = person(plan.user_id, plan.user.display_name)
             acc.plan_status = plan.status
+            acc.plan_total = plan.target_amount_lakhs
             for pa in plan.accounts:
                 acc.hospitals[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
             for split in plan.brand_splits:
@@ -544,6 +558,8 @@ class PlanVsActualService:
         for p in people.values():
             for account_id, h in p.hospitals.items():
                 zones.setdefault(zone_of.get(account_id, (None, None)), [_ZERO, _ZERO])[0] += h[1]
+            if p.unassigned:  # no hospital, so no zone
+                zones.setdefault((None, None), [_ZERO, _ZERO])[0] += p.unassigned
 
         for owner_id, owner_name, account_id, zone_id, zone_name, amount in repo.won_by_owner_account(
             current_user, sbu_id, start_dt, end_dt
@@ -622,6 +638,15 @@ class PlanVsActualService:
             PlanVsActualHospital(account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2])
             for aid, h in sorted(p.hospitals.items(), key=lambda kv: kv[1][0].lower())
         ]
+        if p.unassigned:
+            hospitals.append(
+                PlanVsActualHospital(
+                    account_id=None,
+                    account_name="Not assigned to a hospital",
+                    planned_lakhs=p.unassigned,
+                    won_lakhs=_ZERO,
+                )
+            )
         if p.unplanned_won:
             hospitals.append(
                 PlanVsActualHospital(

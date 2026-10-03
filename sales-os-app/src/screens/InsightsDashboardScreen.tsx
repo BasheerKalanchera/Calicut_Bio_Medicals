@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, MenuItem, TextField } from "@mui/material";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
+import PlanVsActualSection from "../components/PlanVsActualSection";
 import { useAuth } from "../contexts/AuthContext";
 import { getActivityLevels, getOverdueActions, getPipelineSummary } from "../services/reporting";
 import type { PipelineGroupBy } from "../types/reporting";
@@ -85,6 +86,8 @@ export default function InsightsDashboardScreen() {
           <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
           <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
         </Box>
+
+        <PlanVsActualSection />
 
         <SectionCard
           title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}

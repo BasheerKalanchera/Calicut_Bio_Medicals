@@ -11,6 +11,7 @@ import type {
   EligibleAccount,
   PlanWarning,
   ZoneRollupEntry,
+  PlanVsActualResponse,
 } from "../types/targetPlanning";
 
 export async function listTargetPlans(): Promise<TargetPlan[]> {
@@ -56,6 +57,14 @@ export async function checkPlanOverlaps(
 
 export async function getZoneRollup(sbuId: string, planningPeriod: string): Promise<ZoneRollupEntry[]> {
   const response = await api.get("/planning/targets/zone-rollup", {
+    params: { sbu_id: sbuId, planning_period: planningPeriod },
+  });
+  return response.data.data;
+}
+
+// Planned vs Won vs Expected for one quarter -- read-only, RLS-scoped.
+export async function getPlanVsActual(sbuId: string, planningPeriod: string): Promise<PlanVsActualResponse> {
+  const response = await api.get("/planning/targets/plan-vs-actual", {
     params: { sbu_id: sbuId, planning_period: planningPeriod },
   });
   return response.data.data;

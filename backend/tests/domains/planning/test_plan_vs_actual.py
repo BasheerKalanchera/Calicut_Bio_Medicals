@@ -59,11 +59,15 @@ def _user() -> MagicMock:
     return MagicMock(spec=UserProfile)
 
 
-def _plan(user_id, name, accounts, brand_splits=(), status="APPROVED"):
+def _plan(user_id, name, accounts, brand_splits=(), status="APPROVED", total=None):
     plan = MagicMock()
     plan.user_id = user_id
     plan.user.display_name = name
     plan.status = status
+    # The saved total is the sum of the hospitals unless a legacy plan says otherwise.
+    plan.target_amount_lakhs = (
+        Decimal(total) if total is not None else sum((Decimal(a[2]) for a in accounts), Decimal(0))
+    )
     plan.accounts = [
         MagicMock(account_id=aid, planned_amount_lakhs=Decimal(amt), **{"account.name": aname})
         for aid, aname, amt in accounts
@@ -125,6 +129,27 @@ def test_owner_credit_unplanned_line_and_percent(monkeypatch):
     unplanned = [h for h in asha.hospitals if h.account_id is None]
     assert len(unplanned) == 1
     assert (unplanned[0].planned_lakhs, unplanned[0].won_lakhs) == (0, Decimal("5.00"))
+
+
+def test_legacy_plan_without_hospitals_counts_in_full(monkeypatch):
+    # Saved before hospital-wise planning: a total and a brand split, no hospital lines.
+    rep, brand = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(list_plans=[_plan(rep, "Rudra", [], brand_splits=[(brand, "SonoScape", "10")], total="10")])
+    resp = _run(repo, date(2026, 11, 1), monkeypatch)
+    rudra = resp.people[0]
+    assert rudra.planned_lakhs == resp.planned_lakhs == Decimal("10")
+    assert resp.brands[0].planned_lakhs == Decimal("10")  # tile, person and brand table agree
+    lines = [(h.account_name, h.planned_lakhs) for h in rudra.hospitals]
+    assert lines == [("Not assigned to a hospital", Decimal("10"))]
+    assert [(z.zone_name, z.planned_lakhs) for z in resp.zones] == [(None, Decimal("10"))]
+
+
+def test_partly_assigned_plan_shows_only_the_remainder(monkeypatch):
+    rep, h1 = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(list_plans=[_plan(rep, "Asha", [(h1, "Hospital A", "40")], total="50")])
+    asha = _run(repo, date(2026, 11, 1), monkeypatch).people[0]
+    assert asha.planned_lakhs == Decimal("50")
+    assert [h.planned_lakhs for h in asha.hospitals] == [Decimal("40"), Decimal("10")]
 
 
 def test_person_without_plan_still_appears(monkeypatch):
