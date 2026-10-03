@@ -12,7 +12,7 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-10-03 from the Dev database, catching up migration
--- 0058: BR-OP-17: optional note with the full-payment confirmation
+-- 0059: audit trail redesign, step 1: trigger v2, more tables, direct-edit editor
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 444skC447NU2dGwu4VOXuBGzZNX5a6EiBhpC7xbyneFrH8VlgXxC6u7MRPBO48Q
+\restrict AtohBxkaDLZZhQdmsGg1SxwjTZAns9Su7hTbOHAO4Fo7oNR2ltkHopG3yDcpxWP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -60,32 +60,74 @@ COMMENT ON SCHEMA public IS 'standard public schema';
 CREATE FUNCTION public.audit_log_row_change() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
-        DECLARE
-            diff_old jsonb;
-            diff_new jsonb;
-        BEGIN
-            IF TG_OP = 'DELETE' THEN
-                INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
-                VALUES (TG_TABLE_NAME, OLD.id, TG_OP, cabio_app_uid(), to_jsonb(OLD), NULL);
-                RETURN OLD;
+    AS $_$
+DECLARE
+    row_data jsonb;
+    parent_tables text[];
+    parent_fks text[];
+    parent_table text;
+    parent_id uuid;
+    parent_created timestamptz;
+    parent_rows int;
+    rec_id uuid;
+    diff_old jsonb;
+    diff_new jsonb;
+BEGIN
+    row_data := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
 
-            ELSE
-                SELECT jsonb_object_agg(o.key, o.value), jsonb_object_agg(o.key, n.value)
-                INTO diff_old, diff_new
-                FROM jsonb_each(to_jsonb(OLD)) o
-                JOIN jsonb_each(to_jsonb(NEW)) n USING (key)
-                WHERE o.value IS DISTINCT FROM n.value
-                  AND o.key <> 'updated_at';
-
-                IF diff_old IS NOT NULL THEN
-                    INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
-                    VALUES (TG_TABLE_NAME, NEW.id, TG_OP, cabio_app_uid(), diff_old, diff_new);
-                END IF;
-                RETURN NEW;
+    -- Line tables: find the parent record this row belongs to.
+    IF TG_NARGS >= 2 THEN
+        parent_tables := string_to_array(TG_ARGV[0], ',');
+        parent_fks := string_to_array(TG_ARGV[1], ',');
+        FOR i IN 1 .. array_length(parent_fks, 1) LOOP
+            IF row_data ->> parent_fks[i] IS NOT NULL THEN
+                parent_table := parent_tables[i];
+                parent_id := (row_data ->> parent_fks[i])::uuid;
+                EXIT;
             END IF;
-        END;
-        $$;
+        END LOOP;
+        IF parent_id IS NOT NULL THEN
+            EXECUTE format('SELECT created_at FROM %I WHERE id = $1', parent_table)
+                INTO parent_created USING parent_id;
+            -- EXECUTE doesn't set FOUND; ROW_COUNT is the reliable check.
+            GET DIAGNOSTICS parent_rows = ROW_COUNT;
+            IF parent_rows = 0 THEN
+                -- Parent already gone: a cascaded delete; the parent's own removal is logged.
+                RETURN NULL;
+            END IF;
+        END IF;
+    END IF;
+
+    rec_id := COALESCE((row_data ->> 'id')::uuid, parent_id);
+
+    IF TG_OP = 'DELETE' THEN
+        INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
+        VALUES (TG_TABLE_NAME, rec_id, TG_OP, cabio_app_uid(), row_data, NULL);
+
+    ELSIF TG_OP = 'INSERT' THEN
+        -- Lines saved together with a brand-new parent are part of its creation.
+        IF parent_created IS NOT NULL AND parent_created = now() THEN
+            RETURN NULL;
+        END IF;
+        INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
+        VALUES (TG_TABLE_NAME, rec_id, TG_OP, cabio_app_uid(), NULL, row_data);
+
+    ELSE
+        SELECT jsonb_object_agg(o.key, o.value), jsonb_object_agg(o.key, n.value)
+        INTO diff_old, diff_new
+        FROM jsonb_each(to_jsonb(OLD)) o
+        JOIN jsonb_each(to_jsonb(NEW)) n USING (key)
+        WHERE o.value IS DISTINCT FROM n.value
+          AND o.key NOT IN ('updated_at', 'updated_by');
+
+        IF diff_old IS NOT NULL THEN
+            INSERT INTO audit_log (table_name, record_id, action, changed_by, old_data, new_data)
+            VALUES (TG_TABLE_NAME, rec_id, TG_OP, cabio_app_uid(), diff_old, diff_new);
+        END IF;
+    END IF;
+    RETURN NULL;
+END;
+$_$;
 
 
 --
@@ -268,6 +310,11 @@ CREATE FUNCTION public.update_updated_at() RETURNS trigger
     AS $$
 BEGIN
     NEW.updated_at = NOW();
+    -- No app user (direct database edit or script): don't leave the last
+    -- app editor's name on the record.
+    IF cabio_app_uid() IS NULL AND to_jsonb(NEW) ? 'updated_by' THEN
+        NEW.updated_by := NULL;
+    END IF;
     RETURN NEW;
 END;
 $$;
@@ -357,7 +404,7 @@ CREATE TABLE public.audit_log (
     changed_at timestamp with time zone DEFAULT now() NOT NULL,
     old_data jsonb,
     new_data jsonb,
-    CONSTRAINT ck_audit_log_action CHECK ((action = ANY (ARRAY['UPDATE'::text, 'DELETE'::text])))
+    CONSTRAINT ck_audit_log_action CHECK ((action = ANY (ARRAY['INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))
 );
 
 
@@ -1782,6 +1829,48 @@ CREATE TRIGGER trg_audit_account AFTER DELETE OR UPDATE ON public.account FOR EA
 
 
 --
+-- Name: brand trg_audit_brand; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_brand AFTER DELETE OR UPDATE ON public.brand FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: category trg_audit_category; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_category AFTER DELETE OR UPDATE ON public.category FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: document trg_audit_document; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_document AFTER INSERT OR DELETE OR UPDATE ON public.document FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('account,project,opportunity,product', 'account_id,project_id,opportunity_id,product_id');
+
+
+--
+-- Name: installed_asset trg_audit_installed_asset; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_installed_asset AFTER DELETE OR UPDATE ON public.installed_asset FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: marketing_lead trg_audit_marketing_lead; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_marketing_lead AFTER DELETE OR UPDATE ON public.marketing_lead FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: model trg_audit_model; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_model AFTER DELETE OR UPDATE ON public.model FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: opportunity trg_audit_opportunity; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -1792,7 +1881,14 @@ CREATE TRIGGER trg_audit_opportunity AFTER DELETE OR UPDATE ON public.opportunit
 -- Name: opportunity_item trg_audit_opportunity_item; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_audit_opportunity_item AFTER DELETE OR UPDATE ON public.opportunity_item FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+CREATE TRIGGER trg_audit_opportunity_item AFTER INSERT OR DELETE OR UPDATE ON public.opportunity_item FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('opportunity', 'opportunity_id');
+
+
+--
+-- Name: opportunity_stakeholder trg_audit_opportunity_stakeholder; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_opportunity_stakeholder AFTER INSERT OR DELETE OR UPDATE ON public.opportunity_stakeholder FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('opportunity', 'opportunity_id');
 
 
 --
@@ -1803,10 +1899,17 @@ CREATE TRIGGER trg_audit_product AFTER DELETE OR UPDATE ON public.product FOR EA
 
 
 --
+-- Name: project trg_audit_project; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_project AFTER DELETE OR UPDATE ON public.project FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: split trg_audit_split; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_audit_split AFTER DELETE OR UPDATE ON public.split FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+CREATE TRIGGER trg_audit_split AFTER INSERT OR DELETE OR UPDATE ON public.split FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('opportunity', 'opportunity_id');
 
 
 --
@@ -1817,10 +1920,45 @@ CREATE TRIGGER trg_audit_stakeholder AFTER DELETE OR UPDATE ON public.stakeholde
 
 
 --
+-- Name: target_plan trg_audit_target_plan; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_target_plan AFTER DELETE OR UPDATE ON public.target_plan FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: target_plan_account trg_audit_target_plan_account; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_target_plan_account AFTER INSERT OR DELETE OR UPDATE ON public.target_plan_account FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('target_plan', 'target_plan_id');
+
+
+--
+-- Name: target_plan_brand_split trg_audit_target_plan_brand_split; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_target_plan_brand_split AFTER INSERT OR DELETE OR UPDATE ON public.target_plan_brand_split FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('target_plan', 'target_plan_id');
+
+
+--
 -- Name: user_profile trg_audit_user_profile; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER trg_audit_user_profile AFTER DELETE OR UPDATE ON public.user_profile FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
+-- Name: user_zone trg_audit_user_zone; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_user_zone AFTER INSERT OR DELETE OR UPDATE ON public.user_zone FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change('user_profile', 'user_id');
+
+
+--
+-- Name: zone trg_audit_zone; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_zone AFTER DELETE OR UPDATE ON public.zone FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
 
 
 --
@@ -3438,5 +3576,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 444skC447NU2dGwu4VOXuBGzZNX5a6EiBhpC7xbyneFrH8VlgXxC6u7MRPBO48Q
+\unrestrict AtohBxkaDLZZhQdmsGg1SxwjTZAns9Su7hTbOHAO4Fo7oNR2ltkHopG3yDcpxWP
 
