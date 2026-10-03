@@ -61,6 +61,8 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+// BR-OP-17: Won only from this stage, with full payment confirmed.
+const STAGE_ORDER_PAYMENT_PENDING = 80;
 
 const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
@@ -246,6 +248,16 @@ function OverviewTab({
             <Field label="Gate Override Approved By" value={opp.gate_override_approver?.display_name ?? null} />
             <Field label="Gate Override Reason"      value={opp.gate_override_reason?.reason_name ?? null} />
             {opp.gate_override_note && <Field label="Gate Override Note" value={opp.gate_override_note} />}
+          </Box>
+        )}
+        {opp.full_payment_confirmed_at && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+            <Field label="Full Payment Confirmed By" value={opp.full_payment_confirmed_by_user?.display_name ?? null} />
+            <Field
+              label="Confirmed On"
+              value={new Date(opp.full_payment_confirmed_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+            />
+            {opp.full_payment_note && <Field label="Payment Note" value={opp.full_payment_note} />}
           </Box>
         )}
         <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #f9fafb" }}>
@@ -1285,6 +1297,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editGateOverrideApproverId, setEditGateOverrideApproverId] = useState("");
   const [editGateOverrideReasonId, setEditGateOverrideReasonId]     = useState("");
   const [editGateOverrideNote, setEditGateOverrideNote]             = useState("");
+  // BR-OP-17: the "full payment received" tick and optional note, sent only
+  // with the move to Won.
+  const [editConfirmFullPayment, setEditConfirmFullPayment]         = useState(false);
+  const [editFullPaymentNote, setEditFullPaymentNote]               = useState("");
   // BR-OP-15: manual High Priority flag, only meaningful at/below Demo stage --
   // past Demo, the deal is already automatically High Priority (see editStageOrder below).
   const [editHighPriorityManual, setEditHighPriorityManual]         = useState(false);
@@ -1465,6 +1481,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditGateOverrideReasonId(opp.gate_override_reason_id ?? "");
     setEditGateOverrideNote(opp.gate_override_note ?? "");
     setEditHighPriorityManual(opp.high_priority_manual);
+    setEditConfirmFullPayment(false);
+    setEditFullPaymentNote(opp.full_payment_note ?? "");
     setShowEditOpp(true);
   };
 
@@ -1489,6 +1507,14 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     }
     if (newStatus?.status_code === "WON" && !editPoNumber.trim()) {
       throw new Error("PO Number is required to mark an opportunity as Won");
+    }
+    // BR-OP-17: mirrors the server's check so it fails before the PATCH.
+    const isMarkingWon = newStatus?.status_code === "WON" && opp.status.status_code !== "WON";
+    if (isMarkingWon && editStageOrder < STAGE_ORDER_PAYMENT_PENDING) {
+      throw new Error("Move the Opportunity to the Payment Pending stage before marking it as Won");
+    }
+    if (isMarkingWon && !editConfirmFullPayment) {
+      throw new Error("Confirm that full payment has been received to mark this Opportunity as Won");
     }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the PATCH round-trip, not just as a 422.
@@ -1544,6 +1570,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     // BR-OP-15: always sent explicitly -- unchecking the manual flag must
     // actively clear it, not just hide the checkbox client-side.
     payload.high_priority_manual = editHighPriorityManual;
+    if (isMarkingWon) {
+      payload.confirm_full_payment = true;
+      payload.full_payment_note = editFullPaymentNote.trim() || null;
+    }
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Customer 360's and Project Directory's Opportunities lists (Back lands there).
@@ -1585,6 +1615,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       gate_override_approver:    (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideApprover ? { id: newGateOverrideApprover.id, display_name: newGateOverrideApprover.display_name } : opp.gate_override_approver) : null,
       gate_override_reason:      (gateOverrideChecked && editGateOverrideApproverId) ? (newGateOverrideReason ? { id: newGateOverrideReason.id, reason_name: newGateOverrideReason.reason_name } : opp.gate_override_reason) : null,
       high_priority_manual:      editHighPriorityManual,
+      // BR-OP-17: the server stamps the real time and confirmer; shown here
+      // straight away from what was just sent (the next fetch replaces it).
+      ...(isMarkingWon && {
+        full_payment_confirmed_at: new Date().toISOString(),
+        full_payment_note: editFullPaymentNote.trim() || null,
+        // userProfile is already typed `any` by AuthContext.
+        full_payment_confirmed_by_user: userProfile
+          ? { id: userProfile.id, display_name: userProfile.display_name }
+          : null,
+      }),
       is_high_priority:          (newStage ? newStage.display_order : opp.stage.display_order) > STAGE_ORDER_DEMO || editHighPriorityManual,
       ...(newStage  && { stage:  { id: newStage.id,  stage_code: newStage.stage_code,   stage_name: newStage.stage_name,   display_order: newStage.display_order,   default_win_probability: newStage.default_win_probability } }),
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
@@ -1789,9 +1829,29 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
           >
             <MenuItem value="">Select status</MenuItem>
-            {oppStatuses.map((s) => <MenuItem key={s.id} value={s.id}>{s.status_name}</MenuItem>)}
+            {oppStatuses.map((s) => {
+              // BR-OP-17: Won only from Payment Pending (unless it's already Won).
+              const wonLocked = s.status_code === "WON" && opp.status.status_code !== "WON" && editStageOrder < STAGE_ORDER_PAYMENT_PENDING;
+              return (
+                <MenuItem key={s.id} value={s.id} disabled={wonLocked}>
+                  {s.status_name}{wonLocked ? " — move to Payment Pending first" : ""}
+                </MenuItem>
+              );
+            })}
           </TextField>
         </Box>
+        {editStatusCode === "WON" && opp.status.status_code !== "WON" && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 1.5, borderRadius: "0.75rem", bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+            <FormControlLabel
+              control={<Checkbox color="primary" checked={editConfirmFullPayment} onChange={(e) => setEditConfirmFullPayment(e.target.checked)} />}
+              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>I confirm full payment has been received *</Typography>}
+            />
+            <TextField
+              label="Payment Note" value={editFullPaymentNote} onChange={(e) => setEditFullPaymentNote(e.target.value)}
+              placeholder="Optional — e.g. Final payment by cheque no. 1234" fullWidth size="small" multiline minRows={2}
+            />
+          </Box>
+        )}
         <TextField
           select
           label="Lead Source"

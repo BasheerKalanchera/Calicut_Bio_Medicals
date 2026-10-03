@@ -66,6 +66,7 @@ const PIPELINE_STAGE_CODES = [
   "NEGOTIATION",
   "ORDER",
   "DELIVERY_INSTALLATION",
+  "PAYMENT_PENDING", // BR-OP-17 (migration 0057)
 ];
 
 // Local stopgap types — listStages/listUsers return Promise<unknown> today.

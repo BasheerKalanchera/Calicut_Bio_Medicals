@@ -3810,6 +3810,13 @@ export interface components {
              */
             high_priority_manual: boolean;
             /**
+             * Confirm Full Payment
+             * @default false
+             */
+            confirm_full_payment: boolean;
+            /** Full Payment Note */
+            full_payment_note?: string | null;
+            /**
              * Items
              * @default []
              */
@@ -3993,6 +4000,12 @@ export interface components {
             gate_override_set_by: string | null;
             /** High Priority Manual */
             high_priority_manual: boolean;
+            /** Full Payment Confirmed At */
+            full_payment_confirmed_at: string | null;
+            /** Full Payment Confirmed By */
+            full_payment_confirmed_by: string | null;
+            /** Full Payment Note */
+            full_payment_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -4079,6 +4092,13 @@ export interface components {
             gate_override_note?: string | null;
             /** High Priority Manual */
             high_priority_manual?: boolean | null;
+            /**
+             * Confirm Full Payment
+             * @default false
+             */
+            confirm_full_payment: boolean;
+            /** Full Payment Note */
+            full_payment_note?: string | null;
         };
         /** OverdueActionRow */
         OverdueActionRow: {
@@ -4277,6 +4297,10 @@ export interface components {
             gate_override_set_by: string | null;
             /** High Priority Manual */
             high_priority_manual: boolean;
+            /** Full Payment Confirmed At */
+            full_payment_confirmed_at: string | null;
+            /** Full Payment Note */
+            full_payment_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -4297,6 +4321,7 @@ export interface components {
             referred_by: components["schemas"]["OwnerNested"] | null;
             gate_override_approver: components["schemas"]["OwnerNested"] | null;
             gate_override_reason: components["schemas"]["GateOverrideReasonNested"] | null;
+            full_payment_confirmed_by_user: components["schemas"]["OwnerNested"] | null;
             /** Is High Priority */
             readonly is_high_priority: boolean;
         };
@@ -5033,12 +5058,21 @@ export interface components {
             /** Is Terminal */
             is_terminal: boolean;
         };
-        /** TargetPlanApprovalDecision */
+        /**
+         * TargetPlanApprovalDecision
+         * @description `expected_updated_at` is the plan's updated_at as the approver's
+         *     screen showed it -- a mismatch means the rep saved since (409).
+         */
         TargetPlanApprovalDecision: {
             /** Status */
             status: string;
             /** Note */
             note?: string | null;
+            /**
+             * Expected Updated At
+             * Format: date-time
+             */
+            expected_updated_at: string;
         };
         /**
          * TargetPlanCreate
