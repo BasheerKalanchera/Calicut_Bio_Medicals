@@ -258,3 +258,22 @@ typing each `!` command himself.
 - Process: the auto-mode classifier blocked Claude's approved read-only
   UAT script; Basheer ran it via `!`. Second instance of proposal D in
   the 2026-10-01 retro.
+
+## 2026-10-03 — UAT backup, data-quality check and Expected Closure Dates report
+
+- **Backup:** `cabio_uat_2026-10-03.dump` (472 TOC entries); pruned
+  `cabio_uat_2026-09-11.dump`. Docker again needed a forced close (also
+  2 Oct) — harmless.
+- **Data quality vs 1 Oct report:** region-level hospitals 85 → 64 (21
+  South Kerala hospitals now filed at district; all added since 1 Oct
+  filed correctly); Opportunities with no activity 63 → 61; Won with PO
+  but no activity 7 → 8 (MMC "Edan F6 CTG machine single fhr", PO "0" —
+  same record as in the hotfix entry above); everything else unchanged.
+  Report: `UAT-Data-Quality-Report-2026-10-03.pdf`, now saying
+  "Opportunity" instead of "deal".
+- **Expected Closure Dates:** no rep has updated a date since the 1 Oct
+  report (Steps 1–2 unchanged: 17 passed, 18 with no date); 2 new
+  Opportunities with no date; Step 3 28 → 29 (Fazal, Khaira, Lead at
+  99%). The script adds "Thank you to everyone who updated…" whenever
+  any count changes, even when nothing improved; corrected by hand in
+  this draft.

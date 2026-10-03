@@ -166,9 +166,16 @@ def build_html(stages, rows, today: str, prev: dict[str, int] | None) -> tuple[s
             chg("step2", "Demo stage or later with no date", False),
             chg("lead_high_chance", "Lead stage with a higher chance", False),
         ) if x]
-        if items:
+        # Thank reps only when something improved; a count can change for the
+        # worse (e.g. a new Lead entered at 99%) without anyone updating dates.
+        if any(x.endswith("✓") for x in items):
             progress = ("<div class=why><b>Since the last check:</b> " + " · ".join(items)
                         + ". Thank you to everyone who updated their Opportunities.</div>")
+        elif items:
+            progress = ("<div class=why><b>Since the last check:</b> " + " · ".join(items)
+                        + ". No dates have been updated yet.</div>")
+        else:
+            progress = "<div class=why><b>Since the last check:</b> no change.</div>"
 
     defaults = ", ".join(f"{s['stage_name']} {s['default_win_probability']:.0f}%" for s in stages
                          if s["stage_name"] not in ("Lead", "Delivery & Installation"))
