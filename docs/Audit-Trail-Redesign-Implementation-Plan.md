@@ -110,10 +110,12 @@ Rough size of the work: 3–4 days.
    (non-app) edits clear the record's "last changed by". Apply to Dev,
    record `alembic current`, regenerate `Physical-Schema.sql`, tests.
    **Checkpoint commit.**
-2. **Save only what changed.** Rewrite the four wipe-and-rewrite save
-   paths (deal contacts, user zones, target-plan hospitals, target-plan
-   brand splits) to update, add and remove individually, like deal
-   product lines already do. Tests per path. **Checkpoint commit.**
+2. **Save only what changed.** Rewrite the three wipe-and-rewrite save
+   paths (user zones, target-plan hospitals, target-plan brand splits)
+   to update, add and remove individually, like Opportunity product
+   lines already do. Tests per path. **Checkpoint commit.** (Opportunity
+   contacts had a fourth, but it had no caller and was removed, not
+   rewritten: `9a6d98d`.)
 3. **Audit Log screen.** Names for the newly tracked records; "Added"
    label and filter; one grouped entry per record per save. Tests.
 4. **Size watch.** Add log size and entry count to
@@ -217,12 +219,12 @@ RLS context, or genuine app saves would lose their editor. The Audit Log
 screen's "Direct database access (no logged-in user)" label is already
 right for these.
 
-**Save paths to partition** (pattern: `replace_items`,
-`opportunity/repository.py:397`): `replace_stakeholders`
-(`opportunity/repository.py:561`), `replace_zones`
-(`organization/repository.py:177`), `replace_brand_splits` and
-`replace_accounts` (`planning/repository.py:120`, `:158`).
-`replace_splits` is already keyed on `(opportunity_id, user_id)`.
+**Save paths partitioned** (pattern: `replace_items`,
+`opportunity/repository.py:397`): `replace_zones`
+(`organization/repository.py`), `replace_brand_splits` and
+`replace_accounts` (`planning/repository.py`), built in `c91e51e`.
+`replace_splits` was already keyed on `(opportunity_id, user_id)`.
+The unused `replace_stakeholders` was deleted (`9a6d98d`).
 
 **Screen grouping.** Rows from one save share `changed_at` (DB default
 `now()` = transaction start); group by `(changed_at, parent)` using the

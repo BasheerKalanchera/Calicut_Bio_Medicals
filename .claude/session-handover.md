@@ -47,22 +47,22 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   2026-10-03 ahead of Plan vs Actuals (Basheer: UAT loses history daily).
 - Step 1 done: migration 0059 applied to Dev, `alembic current` = 0059
   (head), schema regenerated, 8/8 rolled-back checks on Dev; `24f5607`.
-  Until step 2, Dev logs remove/add pairs for unchanged lines on the four
-  wipe-and-rewrite saves (expected).
 - Step 3 done: Audit Log pages by save (never splits a save), one card per
   record touched, Added/Changed/Removed tags + "What happened" filter, names
   for every tracked table; `ce56c22` + fix `b0ba088` (api.ts types were
   lost when another session rewrote the shared file mid-commit). Backend
   audit tests 17/17; read-only Dev check: 89 saves, none cut short.
-- **Next:** step 4 (log size + entry count in
-  `scripts/uat_data_quality_check.py`, small). Then step 2 (rewrite the
-  four wipe-and-rewrite saves: Opportunity contacts, user zones,
-  target-plan hospitals, target-plan brand splits) — only after the
-  Payment Confirmation Gate is fully committed, since it touches the
-  Opportunity contacts save. Then step 5: `/code-review high`, E2E plan
-  from `docs/templates/Manual-E2E-Test-Plan-Template.md` (a guard refuses
-  one without the live-data section and Simple/Complex tags), Dev E2E,
-  final commit. UAT move (0059 + steps 2–4 together) is its own approval.
+- Step 4 done: size + entry count in the UAT data-quality check; `8842d67`.
+- Step 2 done: user zones, target-plan splits and hospitals now save by
+  diff, with tests (168 passing in organization + planning); `c91e51e`.
+  Not yet run against Dev; that is part of step 5. The unused Opportunity
+  contacts "replace all" save was removed instead; `9a6d98d`.
+- **Next:** step 5: `/code-review high`, written E2E plan from
+  `docs/templates/Manual-E2E-Test-Plan-Template.md` (guard needs the
+  live-data section and Simple/Complex tags), Dev E2E ("Basheer clicks,
+  Claude watches" for saves; restart the Dev backend first), final
+  commit. Check Dev `alembic current` = 0059 and Physical-Schema is
+  regenerated. UAT move (0059 + steps 2–4 together) is its own approval.
 - Never `api.ts` by regenerate: another session edits it; hand-edit only
   the Audit Log types (`AuditSaveResponse`, `owner_*`, `action` filter).
 

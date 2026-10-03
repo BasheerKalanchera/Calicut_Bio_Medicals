@@ -336,3 +336,20 @@ directly:
 - **Retro:** worked: building the fixes instead of proposing them. Improve
   (Claude): repeat mistakes had piled up as open proposals for two days,
   which CLAUDE.md already said not to do ("build the structural fix then").
+
+## 2026-10-03 — Audit Trail Redesign: steps 2 and 4 done
+
+- Step 4 (`8842d67`): audit-log size and entry count added to the UAT
+  data-quality check.
+- Step 2 (`c91e51e`): `replace_zones`, `replace_brand_splits` and
+  `replace_accounts` now delete only dropped rows, add only new ones and
+  update changed ones in place, so unchanged rows no longer appear as
+  fake remove/add pairs in the audit log. 168 tests pass in organization
+  + planning.
+- The fourth path, the Opportunity contacts "replace all" save, had no
+  caller (checked frontend and backend). Basheer chose removal over a
+  rewrite; `9a6d98d` (1094 tests pass).
+- Retro: worked: checking for callers before rewriting saved a rewrite.
+  Improve: a safety-check denial on one edit mid-batch needed a
+  plain-language round trip; ask earlier when a cleanup edit is not
+  covered by the approved plan.
