@@ -12,7 +12,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   mistakes broke existing CLAUDE.md rules (test-plan live-data check,
   Simple/Complex tagging, "Basheer clicks" for Dev writes, verify before
   claiming); only the no-`cd` hook actually stopped a mistake.
-- **Next (2026-10-02):** re-show the retro for approval, then build the
+- **Next (overdue since 2026-10-02):** re-show the retro for approval, then build the
   fixes in Backlog "Structural guards for repeated test-plan mistakes"
   (Basheer: tomorrow, instead of adding more CLAUDE.md text).
 
@@ -53,9 +53,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** write the implementation plan when Basheer says; watch the
   closure report's progress.
 
-## Process changes from the 2026-10-01 retro — parked to 2026-10-02 morning
+## Process changes from the 2026-10-01 retro — parked, overdue since 2026-10-02
 
 - Basheer parked them (end of a long day). Four proposals, A–D, in
   Progress-Archive 2026-10, entry "2026-10-01 — session retro (operations
   and planning session)".
-- **Next:** first thing on 2026-10-02, go through A–D with Basheer.
+- **Next:** go through A–D with Basheer when he chooses.

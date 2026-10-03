@@ -376,17 +376,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   touched, or in one refactoring pass. Rule: Frontend standards §6.9,
   Backend standards "Filtering Standards".
 
-- **Structural guards for repeated test-plan mistakes (Basheer: build
-  2026-10-02).** On 2026-10-01 several mistakes broke existing CLAUDE.md
-  rules; only the no-`cd` hook actually stopped one. Build, about an hour:
-  (1) a manual E2E test-plan template plus a save-time hook that refuses
-  a `*-Manual-E2E-Test-Plan.md` without a filled-in "Checked against live
-  data" section (who sees, who can approve, who can save, existing
-  values/splits), or with any step lacking a Simple/Complex tag; a bare
-  "Complex" without a reason is refused. (2) A commit-message hook that
-  refuses the word "deal" (CLAUDE.md terminology rule). No new CLAUDE.md
-  text for "verify before claiming" (can't be machine-checked).
-
 - **Approve dialog focus warning (cosmetic).** Opening the target-plan
   Approve dialog leaves keyboard focus on the button behind it; Chrome
   logs an `aria-hidden` warning. No effect for users; tidy when the

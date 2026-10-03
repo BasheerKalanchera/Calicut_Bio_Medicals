@@ -277,3 +277,27 @@ typing each `!` command himself.
   99%). The script adds "Thank you to everyone who updated…" whenever
   any count changes, even when nothing improved; corrected by hand in
   this draft.
+
+## 2026-10-03 — Repeat mistakes now refused by guard rails (retro fixes A, B, E, F)
+
+Basheer: fewer mistakes, and self-correction when one repeats, without a
+decision round per proposal. So the 2026-10-01 retro fixes were built
+directly:
+- **A:** `cabio-db-and-scripting` skill — UAT goes through the transaction
+  pooler; scripts use one read-only transaction with transaction-local
+  settings (pattern: `uat_data_quality_check.py`).
+- **B + F:** `.claude/hooks/shell_guard.py` refuses shell-scripted writes
+  to code files under backend/ and sales-os-app/ (the `\n` breakage,
+  27 Sep and 1 Oct) and commit messages saying "deal" (file paths are
+  ignored). 10 test cases; live dry-run refused.
+- **E:** `docs/templates/Manual-E2E-Test-Plan-Template.md` +
+  `.claude/hooks/test_plan_guard.py`: a new test plan must start from the
+  template, fill the four "Checked against live data" lines from real
+  records, and tag every step `[Simple]` or `[Complex: <reason>]`. Older
+  plans (no template marker) are unaffected. Live check refused an
+  untagged plan.
+- **C dropped** (PowerShell quoting; commits now run from Bash). **D:**
+  Basheer adds the two UAT check scripts to his personal allow list.
+- **Retro:** worked: building the fixes instead of proposing them. Improve
+  (Claude): repeat mistakes had piled up as open proposals for two days,
+  which CLAUDE.md already said not to do ("build the structural fix then").

@@ -19,6 +19,15 @@ Origins of each rule: `docs/Process-Rules-History.md` (grep the date tag).
   tier-restricted user sees, use that user's own id/role/SBU.
 - Run it read-only (`SET TRANSACTION READ ONLY`) unless a write was approved.
 - UAT: ask Basheer first, even read-only (see CLAUDE.md Architecture › Safety).
+- **UAT connects through Supabase's transaction pooler (port 6543; Dev uses
+  5432).** Each transaction may land on a different server connection, so
+  session-level settings (`SET`, `set_config(..., false)`, autocommit) can be
+  missing for later statements, or linger for other clients. Run the whole
+  script in **one** read-only transaction with transaction-local settings
+  (`set_config(..., true)` / `SET LOCAL`), re-check them before writing any
+  result, then roll back. Pattern: `scripts/uat_data_quality_check.py`.
+  *(2026-10-01: a UAT run reported 28 rows, then an empty list for the same
+  rows.)*
 
 ## Every migration — completion checklist *(2026-09-23)*
 A migration isn't done when the file is written. Right after `alembic upgrade`

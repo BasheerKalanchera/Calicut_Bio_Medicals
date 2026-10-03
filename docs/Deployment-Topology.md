@@ -108,6 +108,12 @@ either.
 **Keep-alive:** no longer needed once Prod runs on Render's Starter tier (doesn't spin
 down). The UptimeRobot monitor set up 2026-08-03 for the free-tier backend can be
 retired once Prod is live on Starter.
+About half its checks are `HEAD /api/v1/health`, which the backend answers with
+405 (the route is GET-only); the rest are GETs answered 200. The monitor still
+shows Up (checked 2026-10-03: up 5d 20h), so no change. The free plan can't
+switch the method to GET (paid feature). If it ever reports UAT down while the
+app works, make the route accept HEAD too (`api_route(..., methods=["GET", "HEAD"])`
+in `backend/app/api/routers/health.py`).
 
 ---
 
