@@ -28,13 +28,13 @@ router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
 
 def _get_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> AccountService:
     return AccountService(repository=AccountRepository(db))
 
 
 def _get_workspace_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> WorkspaceService:
     return WorkspaceService(repository=AccountRepository(db))
 
@@ -42,12 +42,12 @@ def _get_workspace_service(
 @router.get("")
 def list_accounts(
     search: str | None = Query(None),
-    zone_id: uuid.UUID | None = Query(None),  # noqa: B008
-    business_potential: BusinessPotential | None = Query(None),  # noqa: B008
+    zone_id: uuid.UUID | None = Query(None),
+    business_potential: BusinessPotential | None = Query(None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[PaginatedResponse[AccountListResponse]]:
     offset = (page - 1) * page_size
     accounts, total = service.list_accounts(
@@ -76,8 +76,8 @@ def list_accounts(
 @router.get("/counts")
 def get_account_counts(
     ids: str = Query(..., description="Comma-separated account UUIDs"),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[dict[str, AccountCountsEntry]]:
     account_ids = [uuid.UUID(i.strip()) for i in ids.split(",") if i.strip()]
     counts = service.get_counts_for_accounts(account_ids)
@@ -87,8 +87,8 @@ def get_account_counts(
 @router.get("/{account_id}")
 def get_account(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[AccountDetailResponse]:
     account, counts = service.get_account_with_counts(account_id)
     children = service.list_children(account_id)
@@ -109,8 +109,8 @@ def get_account(
 @router.post("", status_code=201)
 def create_account(
     body: AccountCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[AccountResponse]:
     account = service.create_account(
         body,
@@ -127,8 +127,8 @@ def create_account(
 def update_account(
     account_id: uuid.UUID,
     body: AccountUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[AccountResponse]:
     account = service.update_account(account_id, body, updated_by=current_user.id)
     return APIResponse(
@@ -140,8 +140,8 @@ def update_account(
 def set_business_potential(
     account_id: uuid.UUID,
     body: BusinessPotentialUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AccountService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AccountService = Depends(_get_service),
 ) -> APIResponse[AccountResponse]:
     """Rate Hospitals screen -- Admin/GM only, enforced in the service."""
     account = service.set_business_potential(
@@ -155,8 +155,8 @@ def set_business_potential(
 @router.get("/{account_id}/workspace")
 def get_workspace(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: WorkspaceService = Depends(_get_workspace_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: WorkspaceService = Depends(_get_workspace_service),
 ) -> APIResponse[WorkspaceResponse]:
     workspace = service.get_workspace(account_id)
     return APIResponse(data=workspace)

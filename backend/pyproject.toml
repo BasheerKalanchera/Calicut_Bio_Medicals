@@ -52,8 +52,20 @@ select = [
     "RUF",
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's Depends()/Query() in argument defaults is the framework's standard idiom.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.Header",
+]
+
 [tool.ruff.lint.per-file-ignores]
 "app/domains/*/models.py" = ["F821"]
+# Already-applied historical migrations: import order left as written.
+"alembic/versions/*" = ["I001"]
 # Hand-written seed-data migrations: literal (id, ..., name) tuples read far
 # better as one row per line than wrapped across multiple.
 "alembic/versions/0049_product_brand_model_category_fk.py" = ["E501"]

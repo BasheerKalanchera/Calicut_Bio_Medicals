@@ -9,7 +9,7 @@ from app.domains.organization.models import UserProfile
 
 def get_current_user(
     authorization: str | None = Header(None),
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> UserProfile:
     if not authorization:
         raise AuthenticationError("Authorization header required")

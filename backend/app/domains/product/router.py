@@ -15,7 +15,7 @@ router = APIRouter(prefix="/products", tags=["Products"])
 
 
 def _get_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> ProductService:
     return ProductService(repository=ProductRepository(db))
 
@@ -23,12 +23,12 @@ def _get_service(
 @router.get("")
 def list_products(
     search: str | None = Query(None),
-    sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
+    sbu_id: uuid.UUID | None = Query(None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
     include_count: bool = Query(default=True),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ProductService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
 ) -> APIResponse[PaginatedResponse[ProductListResponse]]:
     offset = (page - 1) * page_size
     products, total = service.list_products(
@@ -54,9 +54,9 @@ def list_products(
 @router.get("/count")
 def count_products(
     search: str | None = Query(None),
-    sbu_id: uuid.UUID | None = Query(None),  # noqa: B008
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ProductService = Depends(_get_service),  # noqa: B008
+    sbu_id: uuid.UUID | None = Query(None),
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
 ) -> APIResponse[int]:
     return APIResponse(data=service.count_products(search=search, sbu_id=sbu_id))
 
@@ -64,8 +64,8 @@ def count_products(
 @router.post("", status_code=201)
 def create_product(
     body: ProductCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ProductService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.create_product(body, created_by=current_user.id, role_name=current_user.role.role_name)
     return APIResponse(data=ProductResponse.model_validate(product))
@@ -74,8 +74,8 @@ def create_product(
 @router.get("/{product_id}")
 def get_product(
     product_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ProductService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.get_product(product_id)
     return APIResponse(data=ProductResponse.model_validate(product))
@@ -85,8 +85,8 @@ def get_product(
 def update_product(
     product_id: uuid.UUID,
     body: ProductUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ProductService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ProductService = Depends(_get_service),
 ) -> APIResponse[ProductResponse]:
     product = service.update_product(
         product_id, body, updated_by=current_user.id, role_name=current_user.role.role_name

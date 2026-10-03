@@ -17,7 +17,7 @@ from app.domains.organization.models import UserProfile
 router = APIRouter(tags=["Notifications"])
 
 
-def _get_service(db: Session = Depends(get_db)) -> NotificationService:  # noqa: B008
+def _get_service(db: Session = Depends(get_db)) -> NotificationService:
     return NotificationService(repository=NotificationRepository(db))
 
 
@@ -42,8 +42,8 @@ def _to_response(row: NotificationRow) -> NotificationResponse:
 @router.get("/notifications")
 def list_notifications(
     limit: int = Query(20, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: NotificationService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: NotificationService = Depends(_get_service),
 ) -> APIResponse[list[NotificationResponse]]:
     rows = service.list_for_user(current_user.id, limit=limit)
     return APIResponse(data=[_to_response(r) for r in rows])
@@ -51,8 +51,8 @@ def list_notifications(
 
 @router.get("/notifications/unread-count")
 def get_unread_count(
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: NotificationService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: NotificationService = Depends(_get_service),
 ) -> APIResponse[UnreadCountResponse]:
     unread_count, urgent_unread_count = service.count_unread(current_user.id)
     return APIResponse(
@@ -62,8 +62,8 @@ def get_unread_count(
 
 @router.get("/notifications/urgent-unread")
 def list_urgent_unread(
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: NotificationService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: NotificationService = Depends(_get_service),
 ) -> APIResponse[list[NotificationResponse]]:
     rows = service.list_urgent_unread(current_user.id)
     return APIResponse(data=[_to_response(r) for r in rows])
@@ -72,8 +72,8 @@ def list_urgent_unread(
 @router.post("/notifications/mark-read", status_code=204)
 def mark_read(
     body: MarkReadRequest,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: NotificationService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: NotificationService = Depends(_get_service),
 ) -> None:
     # For entity types with their own detail GET route (opportunity), that
     # route's own read-receipt side effect is preferred over calling this --

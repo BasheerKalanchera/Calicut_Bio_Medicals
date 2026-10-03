@@ -196,7 +196,10 @@ class AccountRepository(BaseRepository[Account]):
             select(func.count()).select_from(Opportunity).where(Opportunity.account_id == account_id).scalar_subquery()
         )
         asset_count = (
-            select(func.count()).select_from(InstalledAsset).where(InstalledAsset.account_id == account_id).scalar_subquery()
+            select(func.count())
+            .select_from(InstalledAsset)
+            .where(InstalledAsset.account_id == account_id)
+            .scalar_subquery()
         )
         activity_count = (
             select(func.count()).select_from(Activity).where(Activity.account_id == account_id).scalar_subquery()

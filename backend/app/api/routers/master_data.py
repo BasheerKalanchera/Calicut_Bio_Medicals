@@ -86,8 +86,8 @@ def _fetch_entities(entity_name: MasterDataEntity, db: Session) -> list[Any]:
 @router.get("/master-data/{entity_name}")
 def list_master_data(
     entity_name: MasterDataEntity,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    db: Session = Depends(get_db),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> APIResponse[list]:
     _model, schema = ENTITY_REGISTRY[entity_name]
     items = _fetch_entities(entity_name, db)
@@ -111,8 +111,8 @@ _ZONE_SEARCH_UNRESTRICTED_ROLES = {"Admin", "General Manager", "SBU Manager"}
 @router.get("/master-data/zones/search")
 def search_zones(
     q: str = Query(min_length=2),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    db: Session = Depends(get_db),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> APIResponse[list[ZoneSearchResult]]:
     repo = ZoneRepository(db)
     zones = repo.search_by_name(q)
@@ -136,8 +136,8 @@ def search_zones(
 @router.get("/master-data/zones/search-for-hospital")
 def search_zones_for_hospital(
     q: str = Query(min_length=2),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    db: Session = Depends(get_db),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> APIResponse[list[ZoneSearchResult]]:
     repo = ZoneRepository(db)
     if current_user.role.role_name in _ZONE_SEARCH_UNRESTRICTED_ROLES:
@@ -154,7 +154,7 @@ def search_zones_for_hospital(
 
 
 def _get_user_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> UserService:
     return UserService(repository=UserRepository(db))
 
@@ -182,8 +182,8 @@ def list_users(
     page_size: int = Query(default=50, ge=1, le=100),
     scope: str = Query(default="scoped", pattern="^(scoped|sbu|all)$"),
     include_inactive: bool = Query(default=False),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[PaginatedResponse[UserListResponse]]:
     offset = (page - 1) * page_size
     users, total = service.list_active_users(
@@ -205,8 +205,8 @@ def list_users(
 @router.post("/users", status_code=201)
 def create_user(
     body: UserCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[UserListResponse]:
     user = service.create_user(body, role_name=current_user.role.role_name)
     return APIResponse(data=_to_user_list_response(user))
@@ -216,8 +216,8 @@ def create_user(
 def update_user(
     user_id: uuid.UUID,
     body: UserUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[UserListResponse]:
     user = service.update_user(user_id, body, role_name=current_user.role.role_name)
     return APIResponse(data=_to_user_list_response(user))
@@ -226,8 +226,8 @@ def update_user(
 @router.get("/users/{user_id}/blast-radius")
 def get_user_blast_radius(
     user_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[UserBlastRadius]:
     direct_report_count, open_opportunity_count = service.user_blast_radius(
         user_id, role_name=current_user.role.role_name
@@ -242,8 +242,8 @@ def get_user_blast_radius(
 @router.post("/users/{user_id}/deactivate")
 def deactivate_user(
     user_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[UserListResponse]:
     user = service.deactivate_user(user_id, role_name=current_user.role.role_name)
     return APIResponse(data=_to_user_list_response(user))
@@ -252,8 +252,8 @@ def deactivate_user(
 @router.post("/users/{user_id}/reactivate")
 def reactivate_user(
     user_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: UserService = Depends(_get_user_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: UserService = Depends(_get_user_service),
 ) -> APIResponse[UserListResponse]:
     user = service.reactivate_user(user_id, role_name=current_user.role.role_name)
     return APIResponse(data=_to_user_list_response(user))

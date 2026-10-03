@@ -1,4 +1,9 @@
 .claude/settings.local.json
 
+# Test coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+
 # Guard-rail hook run log (local diagnostics)
 .claude/hooks/guard.log

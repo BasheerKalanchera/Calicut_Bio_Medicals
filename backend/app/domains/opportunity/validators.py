@@ -84,7 +84,7 @@ def validate_stage_transition(
             )
 
     # Gate: Qualified → Demo
-    if current_stage_order < _ORDER_DEMO <= new_stage_order:
+    if current_stage_order < _ORDER_DEMO <= new_stage_order:  # noqa: SIM102 — gate header kept apart from its rule
         if not is_repeat_order and not is_gate_override and not demo_start_date:
             raise BusinessRuleViolation(
                 "Demo Start Date is required to advance to Demo stage."
@@ -95,7 +95,7 @@ def validate_stage_transition(
     # in the current schema — gate enforcement deferred to a future sprint.
 
     # Gate: Clinical Evaluation → Negotiation
-    if current_stage_order < _ORDER_NEGOTIATION <= new_stage_order:
+    if current_stage_order < _ORDER_NEGOTIATION <= new_stage_order:  # noqa: SIM102 — gate header kept apart from its rule
         if not is_repeat_order and not is_gate_override and not expected_closure_date:
             raise BusinessRuleViolation(
                 "Expected Closure Date is required to advance to Negotiation stage."
@@ -113,7 +113,7 @@ def validate_stage_transition(
             )
 
     # Gate: Order → Delivery & Installation
-    if current_stage_order < _ORDER_DELIVERY <= new_stage_order:
+    if current_stage_order < _ORDER_DELIVERY <= new_stage_order:  # noqa: SIM102 — gate header kept apart from its rule
         if not po_number:
             raise BusinessRuleViolation(
                 "PO Number is required to advance to Delivery & Installation stage."

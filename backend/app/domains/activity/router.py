@@ -29,7 +29,7 @@ from app.domains.organization.models import UserProfile
 router = APIRouter(tags=["Activities & Reminders"])
 
 
-def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:  # noqa: B008
+def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:
     return ActivityService(
         repository=ActivityRepository(db),
         reminder_repository=ReminderRepository(db),
@@ -37,14 +37,14 @@ def _get_activity_service(db: Session = Depends(get_db)) -> ActivityService:  # 
     )
 
 
-def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:  # noqa: B008
+def _get_reminder_service(db: Session = Depends(get_db)) -> ReminderService:
     return ReminderService(
         repository=ReminderRepository(db),
         activity_repository=ActivityRepository(db),
     )
 
 
-def _get_comment_service(db: Session = Depends(get_db)) -> ActivityCommentService:  # noqa: B008
+def _get_comment_service(db: Session = Depends(get_db)) -> ActivityCommentService:
     return ActivityCommentService(
         repository=ActivityCommentRepository(db),
         notification_service=NotificationService(repository=NotificationRepository(db)),
@@ -60,8 +60,8 @@ def list_activities(
     account_id: uuid.UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[PaginatedResponse[ActivityResponse]]:
     items, total = service.list_by_account(account_id, page=page, page_size=page_size)
     return APIResponse(
@@ -78,8 +78,8 @@ def list_activities(
 @router.get("/accounts/{account_id}/opportunities/lookup")
 def list_account_opportunities_lookup(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[list[OpportunityLookup]]:
     # BR-ACT-10: deliberately unscoped by the caller's own SBU/zone tier --
     # see cabio_app_account_opportunities() and the schema's own docstring
@@ -93,8 +93,8 @@ def list_opportunity_activities(
     opportunity_id: uuid.UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[PaginatedResponse[ActivityResponse]]:
     items, total = service.list_by_opportunity(opportunity_id, page=page, page_size=page_size)
     return APIResponse(
@@ -113,8 +113,8 @@ def list_project_activities(
     project_id: uuid.UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[PaginatedResponse[ActivityResponse]]:
     items, total = service.list_by_project(project_id, page=page, page_size=page_size)
     return APIResponse(
@@ -134,8 +134,8 @@ def list_daily_activity_report(
     user_id: uuid.UUID | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[PaginatedResponse[ActivityReportRow]]:
     items, total = service.list_daily_report(
         current_user, report_date, user_id=user_id, page=page, page_size=page_size
@@ -174,8 +174,8 @@ def list_daily_activity_report(
 @router.post("/activities", status_code=201)
 def log_activity(
     body: ActivityCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityService = Depends(_get_activity_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityService = Depends(_get_activity_service),
 ) -> APIResponse[ActivityResponse]:
     activity, reminder = service.log_activity(body, created_by=current_user.id)
     response = ActivityResponse.model_validate(activity)
@@ -186,8 +186,8 @@ def log_activity(
 @router.get("/activities/{activity_id}/comments")
 def list_activity_comments(
     activity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityCommentService = Depends(_get_comment_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityCommentService = Depends(_get_comment_service),
 ) -> APIResponse[list[ActivityCommentResponse]]:
     items = service.list_for_activity(activity_id)
     return APIResponse(data=[ActivityCommentResponse.model_validate(c) for c in items])
@@ -197,8 +197,8 @@ def list_activity_comments(
 def create_activity_comment(
     activity_id: uuid.UUID,
     body: ActivityCommentCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ActivityCommentService = Depends(_get_comment_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ActivityCommentService = Depends(_get_comment_service),
 ) -> APIResponse[ActivityCommentResponse]:
     comment = service.create_comment(activity_id, body, author_id=current_user.id)
     return APIResponse(data=ActivityCommentResponse.model_validate(comment))
@@ -215,8 +215,8 @@ def list_reminders(
     due_before: datetime | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReminderService = Depends(_get_reminder_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReminderService = Depends(_get_reminder_service),
 ) -> APIResponse[PaginatedResponse[ReminderResponse]]:
     items, total = service.list_for_user(
         current_user.id,
@@ -243,8 +243,8 @@ def list_opportunity_reminders(
     include_completed: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReminderService = Depends(_get_reminder_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReminderService = Depends(_get_reminder_service),
 ) -> APIResponse[PaginatedResponse[ReminderResponse]]:
     items, total = service.list_for_opportunity(
         opportunity_id,
@@ -266,8 +266,8 @@ def list_opportunity_reminders(
 @router.post("/reminders", status_code=201)
 def create_reminder(
     body: ReminderCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReminderService = Depends(_get_reminder_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReminderService = Depends(_get_reminder_service),
 ) -> APIResponse[ReminderResponse]:
     reminder = service.create_reminder(body, created_by=current_user.id)
     return APIResponse(data=ReminderResponse.model_validate(reminder))
@@ -277,8 +277,8 @@ def create_reminder(
 def patch_reminder(
     reminder_id: uuid.UUID,
     body: ReminderUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReminderService = Depends(_get_reminder_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReminderService = Depends(_get_reminder_service),
 ) -> APIResponse[ReminderResponse]:
     reminder = service.patch_reminder(reminder_id, body, updated_by=current_user.id)
     return APIResponse(data=ReminderResponse.model_validate(reminder))

@@ -24,9 +24,12 @@ class InstalledAssetService:
     ) -> InstalledAsset:
         if not self.repository.account_exists(account_id):
             raise NotFoundError(f"Account {account_id} not found")
-        if not data.is_competitor_equipment and data.product_id:
-            if not self.repository.product_exists(data.product_id):
-                raise NotFoundError(f"Product {data.product_id} not found")
+        if (
+            not data.is_competitor_equipment
+            and data.product_id
+            and not self.repository.product_exists(data.product_id)
+        ):
+            raise NotFoundError(f"Product {data.product_id} not found")
         asset = InstalledAsset(
             account_id=account_id,
             product_id=data.product_id,

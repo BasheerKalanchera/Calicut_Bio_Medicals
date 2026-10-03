@@ -353,3 +353,25 @@ directly:
   Improve: a safety-check denial on one edit mid-batch needed a
   plain-language round trip; ask earlier when a cleanup edit is not
   covered by the approved plan.
+
+## 2026-10-03 — Maintenance quick wins: ruff clean, backup file names
+
+- `ruff check backend` went from 62 findings to 0. B008 (FastAPI
+  `Depends()` in defaults) is now handled by one `extend-immutable-calls`
+  setting in `pyproject.toml`; the 279 `# noqa: B008` comments it made
+  redundant were removed. Old migrations are exempt from import-order (I001).
+  Fixed: one long line, one nested `if` (asset service), one `Callable`
+  import. The three nested-`if` gate validators in the Opportunity stage
+  gates keep a `# noqa: SIM102` so each gate's header stays apart from its
+  rule. Standard command recorded in Backend-Implementation-Standards
+  (Ruff section). 1095 tests pass.
+- `.gitignore` now ignores `.coverage` / `htmlcov/`.
+- `scripts/backup_uat.ps1` dump names now carry the time
+  (`cabio_uat_<date>_<HHmm>.dump`); not yet run (needs a UAT connection and
+  approval). The session-start hook reads only the date part, so the
+  backup-due reminder is unaffected.
+- Retro: worked: the one-setting fix beat 47 per-line comments. Improve
+  (Claude): running ruff's auto-fix with only one rule selected also
+  stripped 38 still-needed `noqa` comments (F401, E712, SIM102) — caught
+  because ruff was re-run in full straight after; select RUF100 together
+  with the project's full rule set, or review the diff first.

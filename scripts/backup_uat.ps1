@@ -107,8 +107,8 @@ try {
     }
     $adminUrl = ($adminUrlLine -replace '^ADMIN_DATABASE_URL=', '').Trim()
 
-    $dateStamp = Get-Date -Format 'yyyy-MM-dd'
-    $dumpFile  = "cabio_uat_$dateStamp.dump"
+    $timeStamp = Get-Date -Format 'yyyy-MM-dd_HHmm'
+    $dumpFile  = "cabio_uat_$timeStamp.dump"
     $dumpPath  = Join-Path $BackupDir $dumpFile
 
     docker run --rm `

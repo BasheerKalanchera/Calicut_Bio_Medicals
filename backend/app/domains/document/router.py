@@ -15,7 +15,7 @@ router = APIRouter(tags=["Documents"])
 
 
 def _get_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> DocumentService:
     return DocumentService(repository=DocumentRepository(db))
 
@@ -27,8 +27,8 @@ def _get_service(
 @router.get("/products/{product_id}/documents")
 def list_product_documents(
     product_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> APIResponse[list[DocumentResponse]]:
     documents = service.list_by_product(product_id)
     return APIResponse(data=[DocumentResponse.model_validate(d) for d in documents])
@@ -38,8 +38,8 @@ def list_product_documents(
 def create_product_document(
     product_id: uuid.UUID,
     body: DocumentCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> APIResponse[DocumentResponse]:
     document = service.create_document(
         product_id, body, uploaded_by=current_user.id, role_name=current_user.role.role_name
@@ -50,8 +50,8 @@ def create_product_document(
 @router.delete("/documents/{document_id}", status_code=204)
 def delete_document(
     document_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> None:
     service.delete_document(document_id, current_user=current_user)
 
@@ -59,8 +59,8 @@ def delete_document(
 @router.get("/documents/{document_id}/download-url")
 def get_document_download_url(
     document_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> APIResponse[DocumentDownloadUrl]:
     return APIResponse(data=service.get_download_url(document_id))
 
@@ -72,8 +72,8 @@ def get_document_download_url(
 @router.get("/opportunities/{opportunity_id}/documents")
 def list_opportunity_documents(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> APIResponse[list[DocumentResponse]]:
     documents = service.list_by_opportunity(opportunity_id)
     return APIResponse(data=[DocumentResponse.model_validate(d) for d in documents])
@@ -83,8 +83,8 @@ def list_opportunity_documents(
 def create_opportunity_document(
     opportunity_id: uuid.UUID,
     file: UploadFile,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: DocumentService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: DocumentService = Depends(_get_service),
 ) -> APIResponse[DocumentResponse]:
     document = service.upload_document(opportunity_id, file, uploaded_by=current_user.id)
     return APIResponse(data=DocumentResponse.model_validate(document))

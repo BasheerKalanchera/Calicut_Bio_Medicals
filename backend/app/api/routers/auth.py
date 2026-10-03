@@ -18,8 +18,8 @@ _IST = ZoneInfo("Asia/Kolkata")
 
 @router.get("/me")
 def get_me(
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    db: Session = Depends(get_db),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> APIResponse[UserMeResponse]:
     # Same request-scoped db session get_current_user already set the RLS
     # context on -- this reuses that, no extra connection/handshake.

@@ -30,8 +30,8 @@ router = APIRouter(prefix="/marketing-leads", tags=["Marketing Leads"])
 
 
 def _get_service(
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    db: Session = Depends(get_db),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> MarketingLeadService:
     return MarketingLeadService(
         repository=MarketingLeadRepository(db),
@@ -40,7 +40,7 @@ def _get_service(
     )
 
 
-def _get_comment_service(db: Session = Depends(get_db)) -> MarketingLeadCommentService:  # noqa: B008
+def _get_comment_service(db: Session = Depends(get_db)) -> MarketingLeadCommentService:
     return MarketingLeadCommentService(
         repository=MarketingLeadCommentRepository(db),
         notification_service=NotificationService(repository=NotificationRepository(db)),
@@ -75,15 +75,15 @@ def _to_response(row: MarketingLeadRow) -> MarketingLeadResponse:
     )
 
 
-def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:  # noqa: B008
+def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:
     return NotificationService(repository=NotificationRepository(db))
 
 
 @router.get("")
 def list_marketing_leads(
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
-    notification_service: NotificationService = Depends(_get_notification_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadService = Depends(_get_service),
+    notification_service: NotificationService = Depends(_get_notification_service),
 ) -> APIResponse[list[MarketingLeadResponse]]:
     # Marked before listing (not after) so this same response already
     # reflects first_viewed_at/read state, rather than the rep seeing
@@ -101,8 +101,8 @@ def list_marketing_leads(
 @router.post("", status_code=201)
 def create_marketing_lead(
     data: MarketingLeadCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadService = Depends(_get_service),
 ) -> APIResponse[MarketingLeadResponse]:
     lead = service.create_lead(data, role_name=current_user.role.role_name)
     row = service.repository.get_enriched_by_id(lead.id)
@@ -113,8 +113,8 @@ def create_marketing_lead(
 def discard_marketing_lead(
     lead_id: uuid.UUID,
     data: MarketingLeadDiscard,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadService = Depends(_get_service),
 ) -> APIResponse[MarketingLeadResponse]:
     lead = service.discard_lead(
         lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
@@ -127,8 +127,8 @@ def discard_marketing_lead(
 def mark_converted(
     lead_id: uuid.UUID,
     data: MarketingLeadMarkConverted,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadService = Depends(_get_service),
 ) -> APIResponse[MarketingLeadResponse]:
     lead = service.mark_converted(
         lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
@@ -141,8 +141,8 @@ def mark_converted(
 def reassign_marketing_lead(
     lead_id: uuid.UUID,
     data: MarketingLeadReassign,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadService = Depends(_get_service),
 ) -> APIResponse[MarketingLeadResponse]:
     lead = service.reassign_lead(
         lead_id, data, role_name=current_user.role.role_name, actor_sbu_id=current_user.sbu_id
@@ -154,8 +154,8 @@ def reassign_marketing_lead(
 @router.get("/{lead_id}/comments")
 def list_marketing_lead_comments(
     lead_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadCommentService = Depends(_get_comment_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadCommentService = Depends(_get_comment_service),
 ) -> APIResponse[list[MarketingLeadCommentResponse]]:
     items = service.list_for_lead(lead_id)
     return APIResponse(data=[MarketingLeadCommentResponse.model_validate(c) for c in items])
@@ -165,8 +165,8 @@ def list_marketing_lead_comments(
 def create_marketing_lead_comment(
     lead_id: uuid.UUID,
     body: MarketingLeadCommentCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: MarketingLeadCommentService = Depends(_get_comment_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: MarketingLeadCommentService = Depends(_get_comment_service),
 ) -> APIResponse[MarketingLeadCommentResponse]:
     comment = service.create_comment(lead_id, body, author_id=current_user.id)
     return APIResponse(data=MarketingLeadCommentResponse.model_validate(comment))

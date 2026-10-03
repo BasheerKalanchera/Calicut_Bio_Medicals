@@ -48,7 +48,7 @@ def _period_bounds(
 router = APIRouter(prefix="/reporting", tags=["Reporting"])
 
 
-def _get_service(db: Session = Depends(get_db)) -> ReportingService:  # noqa: B008
+def _get_service(db: Session = Depends(get_db)) -> ReportingService:
     return ReportingService(repository=ReportingRepository(db))
 
 
@@ -58,8 +58,8 @@ def get_pipeline_summary(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[PipelineSummaryResponse]:
     return APIResponse(
         data=service.pipeline_summary(current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
@@ -72,8 +72,8 @@ def get_stagnant_deals(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[StagnantDealsResponse]:
     return APIResponse(
         data=service.stagnant_deals(
@@ -89,8 +89,8 @@ def get_activity_levels(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[RepActivityLevelResponse]:
     return APIResponse(
         data=service.activity_levels(
@@ -104,8 +104,8 @@ def get_overdue_actions(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[OverdueActionsResponse]:
     return APIResponse(data=service.overdue_actions(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id))
 
@@ -116,8 +116,8 @@ def get_product_performance(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[ProductPerformanceResponse]:
     return APIResponse(
         data=service.product_performance(current_user, group_by, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
@@ -129,8 +129,8 @@ def get_opportunities_on_hold(
     sbu_id: uuid.UUID | None = Query(None),
     zone_id: uuid.UUID | None = Query(None),
     user_id: uuid.UUID | None = Query(None),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[OpportunitiesOnHoldResponse]:
     return APIResponse(
         data=service.opportunities_on_hold(current_user, sbu_id=sbu_id, zone_id=zone_id, user_id=user_id)
@@ -144,8 +144,8 @@ def get_sales_headline(
     user_id: uuid.UUID | None = Query(None),
     period_start: date | None = Query(None),
     period_end: date | None = Query(None, description="Inclusive"),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[SalesHeadline]:
     start_dt, end_dt = _period_bounds(period_start, period_end)
     return APIResponse(
@@ -164,8 +164,8 @@ def get_sales_summary(
     user_id: uuid.UUID | None = Query(None),
     period_start: date | None = Query(None),
     period_end: date | None = Query(None, description="Inclusive"),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: ReportingService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: ReportingService = Depends(_get_service),
 ) -> APIResponse[SalesSummaryResponse]:
     start_dt, end_dt = _period_bounds(period_start, period_end)
     return APIResponse(

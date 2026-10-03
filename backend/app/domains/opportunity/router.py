@@ -55,7 +55,7 @@ def _closed_bounds(
 
 
 def _get_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> OpportunityService:
     return OpportunityService(
         repository=OpportunityRepository(db),
@@ -63,7 +63,7 @@ def _get_service(
     )
 
 
-def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:  # noqa: B008
+def _get_notification_service(db: Session = Depends(get_db)) -> NotificationService:
     return NotificationService(repository=NotificationRepository(db))
 
 
@@ -89,8 +89,8 @@ def list_pipeline(
     owner_team_only: bool = Query(False),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[PaginatedResponse[PipelineOpportunity]]:
     closed_after, closed_before = _closed_bounds(closed_from, closed_to)
     items, total = service.list_pipeline(
@@ -130,8 +130,8 @@ def list_pipeline(
 @router.get("/accounts/{account_id}/opportunities")
 def list_opportunities(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[WorkspaceOpportunity]]:
     opportunities = service.list_by_account(account_id)
     return APIResponse(data=[WorkspaceOpportunity.model_validate(o) for o in opportunities])
@@ -145,8 +145,8 @@ def list_opportunities(
 def create_opportunity(
     account_id: uuid.UUID,
     body: OpportunityCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[OpportunityResponse]:
     opportunity = service.create_opportunity(
         account_id,
@@ -166,9 +166,9 @@ def create_opportunity(
 @router.get("/opportunities/{opportunity_id}")
 def get_opportunity(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
-    notification_service: NotificationService = Depends(_get_notification_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
+    notification_service: NotificationService = Depends(_get_notification_service),
 ) -> APIResponse[PipelineOpportunity]:
     opportunity = service.get_opportunity(opportunity_id)
     # WhatsApp-style read receipt: opening the Opportunity itself marks any
@@ -185,8 +185,8 @@ def get_opportunity(
 def update_opportunity(
     opportunity_id: uuid.UUID,
     body: OpportunityUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[OpportunityResponse]:
     opportunity = service.update_opportunity(
         opportunity_id, body, updated_by=current_user.id
@@ -201,8 +201,8 @@ def update_opportunity(
 @router.get("/opportunities/{opportunity_id}/items")
 def list_opportunity_items(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[OpportunityItemResponse]]:
     items = service.list_items(opportunity_id)
     return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
@@ -212,8 +212,8 @@ def list_opportunity_items(
 def replace_opportunity_items(
     opportunity_id: uuid.UUID,
     body: ItemsBulkUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[OpportunityItemResponse]]:
     items = service.replace_items(opportunity_id, body, updated_by=current_user.id)
     return APIResponse(data=[OpportunityItemResponse.model_validate(i) for i in items])
@@ -223,8 +223,8 @@ def replace_opportunity_items(
 def add_opportunity_item(
     opportunity_id: uuid.UUID,
     body: OpportunityItemCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[OpportunityItemResponse]:
     item = service.add_item(opportunity_id, body, created_by=current_user.id)
     return APIResponse(data=OpportunityItemResponse.model_validate(item))
@@ -233,8 +233,8 @@ def add_opportunity_item(
 @router.delete("/opportunity-items/{item_id}", status_code=204)
 def delete_opportunity_item(
     item_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> None:
     service.delete_item(item_id)
 
@@ -246,8 +246,8 @@ def delete_opportunity_item(
 @router.get("/opportunities/{opportunity_id}/splits")
 def list_splits(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[SplitResponse]]:
     splits = service.list_splits(opportunity_id)
     return APIResponse(data=[SplitResponse.model_validate(s) for s in splits])
@@ -256,8 +256,8 @@ def list_splits(
 @router.get("/opportunities/{opportunity_id}/splits/can-edit")
 def can_edit_splits(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[SplitEditPermission]:
     can_edit = service.can_edit_splits(
         opportunity_id,
@@ -272,8 +272,8 @@ def can_edit_splits(
 def replace_splits(
     opportunity_id: uuid.UUID,
     body: SplitsBulkUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[SplitResponse]]:
     splits = service.replace_splits(
         opportunity_id,
@@ -292,8 +292,8 @@ def replace_splits(
 @router.get("/opportunities/{opportunity_id}/stakeholders")
 def list_opportunity_stakeholders(
     opportunity_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[StakeholderLinkResponse]]:
     links = service.list_stakeholders(opportunity_id)
     return APIResponse(data=[StakeholderLinkResponse.model_validate(lnk) for lnk in links])
@@ -303,8 +303,8 @@ def list_opportunity_stakeholders(
 def add_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     body: StakeholderLinkCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[StakeholderLinkResponse]:
     link = service.add_stakeholder(opportunity_id, body, created_by=current_user.id)
     return APIResponse(data=StakeholderLinkResponse.model_validate(link))
@@ -314,8 +314,8 @@ def add_opportunity_stakeholder(
 def remove_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     stakeholder_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> None:
     service.remove_stakeholder(opportunity_id, stakeholder_id)
 
@@ -325,8 +325,8 @@ def update_opportunity_stakeholder(
     opportunity_id: uuid.UUID,
     stakeholder_id: uuid.UUID,
     body: StakeholderLinkUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[StakeholderLinkResponse]:
     link = service.update_stakeholder(opportunity_id, stakeholder_id, body, updated_by=current_user.id)
     return APIResponse(data=StakeholderLinkResponse.model_validate(link))
@@ -339,8 +339,8 @@ def update_opportunity_stakeholder(
 @router.get("/stakeholders/counts")
 def get_stakeholder_opportunity_counts(
     ids: str = Query(..., description="Comma-separated stakeholder UUIDs"),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[dict[str, StakeholderOpportunityCountsEntry]]:
     stakeholder_ids = [uuid.UUID(i.strip()) for i in ids.split(",") if i.strip()]
     counts = service.get_opportunity_counts_for_stakeholders(stakeholder_ids)
@@ -355,8 +355,8 @@ def get_stakeholder_opportunity_counts(
 @router.get("/stakeholders/{stakeholder_id}/opportunities")
 def list_opportunities_for_stakeholder(
     stakeholder_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: OpportunityService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: OpportunityService = Depends(_get_service),
 ) -> APIResponse[list[OpportunityForStakeholder]]:
     opportunities = service.list_opportunities_for_stakeholder(stakeholder_id)
     return APIResponse(data=[OpportunityForStakeholder.model_validate(o) for o in opportunities])

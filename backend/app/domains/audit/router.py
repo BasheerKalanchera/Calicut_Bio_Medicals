@@ -15,7 +15,7 @@ from app.domains.organization.models import UserProfile
 router = APIRouter(tags=["Audit Log"])
 
 
-def _get_service(db: Session = Depends(get_db)) -> AuditLogService:  # noqa: B008
+def _get_service(db: Session = Depends(get_db)) -> AuditLogService:
     return AuditLogService(repository=AuditLogRepository(db))
 
 
@@ -53,14 +53,14 @@ def _to_save_response(save: ResolvedAuditSave) -> AuditSaveResponse:
 def list_audit_log(
     table_name: str | None = Query(None),
     action: str | None = Query(None, description="INSERT (added), UPDATE (changed) or DELETE (removed)"),
-    record_id: uuid.UUID | None = Query(None),  # noqa: B008
-    changed_by: uuid.UUID | None = Query(None),  # noqa: B008
-    date_from: datetime | None = Query(None),  # noqa: B008
-    date_to: datetime | None = Query(None),  # noqa: B008
+    record_id: uuid.UUID | None = Query(None),
+    changed_by: uuid.UUID | None = Query(None),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100, description="Saves per page, not log rows"),
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: AuditLogService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: AuditLogService = Depends(_get_service),
 ) -> APIResponse[PaginatedResponse[AuditSaveResponse]]:
     offset = (page - 1) * page_size
     saves, total = service.list_audit_log(

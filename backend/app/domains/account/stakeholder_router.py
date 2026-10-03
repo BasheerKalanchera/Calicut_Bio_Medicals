@@ -19,7 +19,7 @@ router = APIRouter(tags=["Stakeholders"])
 
 
 def _get_service(
-    db: Session = Depends(get_db),  # noqa: B008
+    db: Session = Depends(get_db),
 ) -> StakeholderService:
     return StakeholderService(repository=StakeholderRepository(db))
 
@@ -27,8 +27,8 @@ def _get_service(
 @router.get("/accounts/{account_id}/stakeholders")
 def list_stakeholders(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: StakeholderService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: StakeholderService = Depends(_get_service),
 ) -> APIResponse[list[StakeholderResponse]]:
     stakeholders = service.list_stakeholders(account_id)
     return APIResponse(
@@ -40,8 +40,8 @@ def list_stakeholders(
 def create_stakeholder(
     account_id: uuid.UUID,
     body: StakeholderCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: StakeholderService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: StakeholderService = Depends(_get_service),
 ) -> APIResponse[StakeholderResponse]:
     stakeholder = service.create_stakeholder(
         account_id, body, created_by=current_user.id
@@ -53,8 +53,8 @@ def create_stakeholder(
 def update_stakeholder(
     stakeholder_id: uuid.UUID,
     body: StakeholderUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: StakeholderService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: StakeholderService = Depends(_get_service),
 ) -> APIResponse[StakeholderResponse]:
     stakeholder = service.update_stakeholder(
         stakeholder_id, body, updated_by=current_user.id

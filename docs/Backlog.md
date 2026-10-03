@@ -24,6 +24,19 @@ added, and only 7 of 38 tables are watched.
 - **Deferred with it (option B):** a History tab on each deal, customer
   and product page, built on top of this later.
 
+### Audit trigger: skip a missing parent only on DELETE — parked (found 2026-10-03)
+
+Found by the Audit Trail Redesign `/code-review high`. The line-table
+audit trigger (`alembic/versions/0059_audit_trail_redesign.py:103`) skips
+the log row whenever the parent record can't be found. That is right for a
+cascaded delete (the parent's own removal is logged) but too broad: an
+add or edit with a missing parent would also go unlogged.
+- **Risk: low.** The database link means a line can't normally be added or
+  edited without its parent, so no history is lost today.
+- **Fix when wanted:** change the check to `parent_rows = 0 AND TG_OP =
+  'DELETE'` in a small migration (0060) that redefines the function. Touches
+  Dev first; could ride with the combined UAT move.
+
 ### Front-end consistency audit — parked, undecided (raised 2026-09-30)
 
 The 2026-09-30 deal-edit bug came from duplicated screen code: the deal
@@ -58,17 +71,6 @@ open-ended dependencies — that build also jumped FastAPI, Starlette and
 others to versions never tested here. Details: Progress-Archive
 2026-09-27 "UAT move".
 
-### Backend style checker (ruff) not clean — small tidy-up (found 2026-10-03)
-
-`ruff check backend` reports 62 findings on `main` (`cc269a4`), none from
-code changed that day: B008 ×47 (FastAPI `Depends()` in default
-arguments — standard pattern, a false alarm), I001 ×9, SIM102 ×4, E501 ×1,
-UP035 ×1; 53 in `app/`, 9 in `alembic/`. Earlier progress notes say "ruff
-clean", so either they checked a narrower set of files or these crept in.
-**Fix (~15 min):** ignore B008 for FastAPI in `backend/pyproject.toml`,
-tidy the other 15, and write down one standard ruff command for the
-pre-E2E checks. Found while running the checks for the UAT hotfix merge.
-
 ### Pin one Python version everywhere, then upgrade to 3.13 — after 2 Oct (raised 2026-09-27)
 
 The local Dev venv is Python 3.11.9 only because that's what it was built
@@ -87,14 +89,6 @@ it on Render (`PYTHON_VERSION` or a `.python-version` file), in
 `pyproject.toml` and ruff's `target-version`, and record it in
 `docs/Deployment-Topology.md`. Do it in its own window, not mid-feature.
 
-### UAT backup file names clash within a day (found 2026-09-27)
-
-`scripts/backup_uat.ps1` names each dump `cabio_uat_<date>.dump`, so a
-second run on the same day silently overwrites the first. During a
-migration that would replace the pre-migration rollback point with an
-already-migrated copy (worked around on 2026-09-27 with a renamed copy).
-**To do:** add the time to the file name (`cabio_uat_<date>_<HHmm>.dump`);
-the keep-14-newest pruning already works by count, so it's unaffected.
 
 ### Automatic tests for the privacy (RLS) rules against a real test database — after 2 Oct (raised 2026-09-27)
 

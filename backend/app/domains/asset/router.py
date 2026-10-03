@@ -15,15 +15,15 @@ from app.domains.organization.models import UserProfile
 router = APIRouter(tags=["Assets"])
 
 
-def _get_service(db: Session = Depends(get_db)) -> InstalledAssetService:  # noqa: B008
+def _get_service(db: Session = Depends(get_db)) -> InstalledAssetService:
     return InstalledAssetService(repository=InstalledAssetRepository(db))
 
 
 @router.get("/accounts/{account_id}/installed-assets")
 def list_installed_assets(
     account_id: uuid.UUID,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: InstalledAssetService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: InstalledAssetService = Depends(_get_service),
 ) -> APIResponse[list[WorkspaceInstalledAsset]]:
     assets = service.list_by_account(account_id)
     return APIResponse(data=[WorkspaceInstalledAsset.model_validate(a) for a in assets])
@@ -33,8 +33,8 @@ def list_installed_assets(
 def create_installed_asset(
     account_id: uuid.UUID,
     body: InstalledAssetCreate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: InstalledAssetService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: InstalledAssetService = Depends(_get_service),
 ) -> APIResponse[InstalledAssetResponse]:
     asset = service.create_installed_asset(account_id, body, created_by=current_user.id)
     return APIResponse(data=InstalledAssetResponse.model_validate(asset))
@@ -44,8 +44,8 @@ def create_installed_asset(
 def update_installed_asset(
     asset_id: uuid.UUID,
     body: InstalledAssetUpdate,
-    current_user: UserProfile = Depends(get_current_user),  # noqa: B008
-    service: InstalledAssetService = Depends(_get_service),  # noqa: B008
+    current_user: UserProfile = Depends(get_current_user),
+    service: InstalledAssetService = Depends(_get_service),
 ) -> APIResponse[InstalledAssetResponse]:
     asset = service.update_installed_asset(asset_id, body, updated_by=current_user.id)
     return APIResponse(data=InstalledAssetResponse.model_validate(asset))

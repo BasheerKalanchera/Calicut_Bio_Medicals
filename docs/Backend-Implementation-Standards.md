@@ -1316,6 +1316,14 @@ select = [
 known-first-party = ["app"]
 ```
 
+`pyproject.toml` also tells the `B` rules that FastAPI's `Depends()`, `Query()`,
+`Path()`, `Body()` and `Header()` in argument defaults are fine
+(`extend-immutable-calls`), so no `# noqa: B008` is needed on them. A `# noqa`
+that no longer suppresses anything is itself flagged (RUF100) — remove it.
+
+**Standard check (run before manual E2E, must exit 0):**
+`backend/.venv/Scripts/ruff check backend`
+
 ### Formatting
 
 Ruff formatter with the configuration above. No Black. No yapf. One formatter only.
