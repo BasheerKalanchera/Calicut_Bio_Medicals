@@ -522,19 +522,30 @@ class TestTransitionToWon:
             reactivation_date=None,
             po_number=PO,
             has_items=True,
+            current_stage_order=80,
             new_stage_order=80,
             full_payment_confirmed=True,
         )
         args.update(overrides)
         validate_status_transition(**args)
 
-    def test_passes_at_payment_pending_with_payment_confirmed(self):
+    def test_passes_when_already_saved_at_payment_pending(self):
         self._won()
 
     @pytest.mark.parametrize("stage_order", [10, 60, 70])
     def test_blocked_before_payment_pending(self, stage_order):
         with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
-            self._won(new_stage_order=stage_order)
+            self._won(current_stage_order=stage_order, new_stage_order=stage_order)
+
+    @pytest.mark.parametrize("from_order", [10, 60, 70])
+    def test_blocked_moving_to_payment_pending_and_won_in_one_save(self, from_order):
+        # Option B (Basheer, 2026-10-03): Payment Pending must be saved first.
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            self._won(current_stage_order=from_order, new_stage_order=80)
+
+    def test_blocked_moving_off_payment_pending_while_marking_won(self):
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            self._won(current_stage_order=80, new_stage_order=70)
 
     def test_blocked_without_payment_confirmation(self):
         with pytest.raises(BusinessRuleViolation, match="full payment"):
@@ -559,7 +570,7 @@ class TestTransitionToWon:
     def test_lost_and_on_hold_unaffected_by_stage(self):
         # Lost needs only its own reason, from any stage (BR-OP-17 is Won-only).
         self._won(new_status_code="LOST", loss_reason_id=uuid.uuid4(), loss_reason_code="PRICE",
-                  new_stage_order=10, full_payment_confirmed=False)
+                  current_stage_order=10, new_stage_order=10, full_payment_confirmed=False)
 
 
 class TestTransitionToLost:

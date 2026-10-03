@@ -359,6 +359,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 noload(Opportunity.items),
                 noload(Opportunity.activities),
                 noload(Opportunity.documents),
+                # BR-OP-17: the confirmer's name is only shown on the detail
+                # page, never needed while saving (PATCH returns OpportunityResponse).
+                noload(Opportunity.full_payment_confirmed_by_user),
             )
         )
 

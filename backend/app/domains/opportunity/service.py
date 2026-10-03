@@ -175,6 +175,14 @@ class OpportunityService:
         if data.gate_override_approver_id is not None:
             self._validate_gate_override(data.owner_id, data.gate_override_approver_id)
 
+        # BR-OP-17: no creating directly as Won -- an Opportunity must be saved at
+        # Payment Pending before it can be marked Won (Basheer, 2026-10-03).
+        if new_status.status_code == "WON":
+            raise BusinessRuleViolation(
+                "An Opportunity can't be created as Won. Create it as Active, move it to "
+                "Payment Pending, then mark it as Won."
+            )
+
         # BR-OP-00: gates apply even on creation at a non-Lead stage
         validate_stage_transition(
             new_stage_order=new_stage.display_order,
@@ -200,11 +208,7 @@ class OpportunityService:
             reactivation_date=None,
             po_number=data.po_number,
             has_items=bool(data.items),
-            new_stage_order=new_stage.display_order,
-            full_payment_confirmed=data.confirm_full_payment,
         )
-        # BR-OP-17: who confirmed full payment, and when -- only on a Won create.
-        is_won = new_status.status_code == "WON"
 
         opportunity = Opportunity(
             account_id=account_id,
@@ -229,13 +233,10 @@ class OpportunityService:
             gate_override_set_at=func.now() if data.gate_override_approver_id is not None else None,
             gate_override_set_by=created_by if data.gate_override_approver_id is not None else None,
             high_priority_manual=data.high_priority_manual,
-            # A deal can be created directly at a terminal status (e.g. entering
-            # a historical Won/Lost deal) -- same closed_at stamping rule as
-            # update_opportunity's transition path applies here too.
+            # An Opportunity can be created directly at a terminal status other
+            # than Won (BR-OP-17 refuses Won above) -- same closed_at stamping
+            # rule as update_opportunity's transition path applies here too.
             closed_at=func.now() if new_status.is_terminal else None,
-            full_payment_confirmed_at=func.now() if is_won else None,
-            full_payment_confirmed_by=created_by if is_won else None,
-            full_payment_note=data.full_payment_note,
             created_by=created_by,
             updated_by=created_by,
         )
@@ -276,8 +277,11 @@ class OpportunityService:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
 
         updates = data.model_dump(exclude_unset=True)
-        # BR-OP-17: the payment tick is a request flag, not a column.
+        # BR-OP-17: the payment tick is a request flag, not a column, and the
+        # payment note is accepted only with the move to Won (applied below) --
+        # never on its own, so it can't drift from what was confirmed.
         confirm_full_payment = bool(updates.pop("confirm_full_payment", False))
+        full_payment_note = updates.pop("full_payment_note", None)
         if not updates:
             return opportunity
 
@@ -290,6 +294,15 @@ class OpportunityService:
         current_stage_order = current_stage.display_order
         current_status_code = current_status.status_code
         current_is_terminal = current_status.is_terminal
+
+        # BR-OP-09: a Won/Lost Opportunity's stage is frozen. Status changes are
+        # refused in validate_status_transition, but a stage-only save would
+        # otherwise slip past it (e.g. moving a Won one back to Lead, which
+        # BR-OP-17 exists to prevent). Resending the same stage is fine.
+        if current_is_terminal and updates.get("stage_id", opportunity.stage_id) != opportunity.stage_id:
+            raise BusinessRuleViolation(
+                f"Cannot change the stage of a {current_status_code} opportunity."
+            )
 
         # Captured before the setattr loop below overwrites it.
         previous_owner_id = opportunity.owner_id
@@ -428,15 +441,17 @@ class OpportunityService:
                 reactivation_date=opportunity.reactivation_date,
                 po_number=opportunity.po_number,
                 has_items=has_items,
+                current_stage_order=current_stage_order,
                 new_stage_order=effective_stage.display_order,
                 full_payment_confirmed=confirm_full_payment,
             )
 
-            # BR-OP-17: stamp who confirmed full payment, and when, on the
-            # move to Won (BR-OP-09 means this can only happen once).
+            # BR-OP-17: stamp who confirmed full payment, and when, plus the
+            # optional note, on the move to Won (BR-OP-09: only ever once).
             if effective_status.status_code == "WON" and current_status_code != "WON":
                 opportunity.full_payment_confirmed_at = func.now()
                 opportunity.full_payment_confirmed_by = updated_by
+                opportunity.full_payment_note = full_payment_note
 
             # Sales Report needs the real date a deal closed, not `updated_at`
             # (which changes on any unrelated edit). Stamped once, exactly

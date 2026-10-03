@@ -253,11 +253,7 @@ class OpportunityCreate(BaseModel):
     gate_override_reason_id: uuid.UUID | None = None
     gate_override_note: str | None = None
     high_priority_manual: bool = False
-    # BR-OP-17: creating directly as Won needs the final payment stage and this
-    # tick, same as marking Won later. Not stored -- the service stamps
-    # full_payment_confirmed_at/_by from it.
-    confirm_full_payment: bool = False
-    full_payment_note: str | None = None
+    # No payment fields: BR-OP-17 refuses creating an Opportunity as Won.
     items: list[OpportunityItemCreate] = []
 
     @model_validator(mode="after")

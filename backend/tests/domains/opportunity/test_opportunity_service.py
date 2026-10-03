@@ -199,8 +199,8 @@ def _make_create_data(**overrides) -> OpportunityCreate:
 
 
 def _won_create_data(**overrides) -> OpportunityCreate:
-    """Create-as-Won at Payment Pending: every stage gate from Lead satisfied
-    (BR-OP-00), plus the BR-OP-17 payment tick."""
+    """Create-as-Won at Payment Pending with every stage gate from Lead
+    satisfied (BR-OP-00) -- BR-OP-17 still refuses it."""
     defaults = dict(
         status_id=STATUS_WON_ID,
         lead_source_id=LEAD_SOURCE_ID,
@@ -209,7 +209,6 @@ def _won_create_data(**overrides) -> OpportunityCreate:
         expected_closure_date=date(2026, 10, 1),
         po_number="PO-1001",
         items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
-        confirm_full_payment=True,
     )
     defaults.update(overrides)
     return _make_create_data(**defaults)
@@ -322,57 +321,19 @@ class TestCreateOpportunity:
         with pytest.raises(BusinessRuleViolation, match="Loss Reason"):
             service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
 
-    def test_create_at_won_stamps_closed_at(self):
-        """A deal can be entered directly as Won (e.g. a historical sale) --
-        closed_at must be stamped here too, not just on the update path."""
-        repo = _make_repo()
-        repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
-        repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+    # BR-OP-17 (Basheer, 2026-10-03): no creating directly as Won -- not even at
+    # Payment Pending with every gate met. It must be saved at Payment Pending
+    # first, then marked Won in a later save.
 
-        service.create_opportunity(ACCOUNT_ID, _won_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
-
-        created_obj: Opportunity = repo.create.call_args[0][0]
-        assert created_obj.closed_at is not None
-
-    # BR-OP-17: creating directly as Won follows the same rule as marking Won.
-
-    def test_create_at_won_stamps_full_payment_confirmation(self):
+    def test_create_as_won_refused_even_at_payment_pending(self):
         repo = _make_repo()
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
         repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
-        service.create_opportunity(
-            ACCOUNT_ID, _won_create_data(full_payment_note="Cheque 1234"), created_by=USER_ID, sbu_id=SBU_ID
-        )
-
-        created_obj: Opportunity = repo.create.call_args[0][0]
-        assert created_obj.full_payment_confirmed_at is not None
-        assert created_obj.full_payment_confirmed_by == USER_ID
-        assert created_obj.full_payment_note == "Cheque 1234"
-
-    def test_create_at_won_refused_before_payment_pending(self):
-        repo = _make_repo()
-        repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
-
-        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+        with pytest.raises(BusinessRuleViolation, match="can't be created as Won"):
             service.create_opportunity(ACCOUNT_ID, _won_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
         repo.create.assert_not_called()
-
-    def test_create_at_won_refused_without_payment_tick(self):
-        repo = _make_repo()
-        repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
-
-        with pytest.raises(BusinessRuleViolation, match="full payment"):
-            service.create_opportunity(
-                ACCOUNT_ID, _won_create_data(confirm_full_payment=False), created_by=USER_ID, sbu_id=SBU_ID
-            )
 
     def test_create_at_active_leaves_payment_confirmation_empty(self):
         repo = _make_repo()
@@ -1087,6 +1048,70 @@ class TestUpdateOpportunity:
             service.update_opportunity(
                 OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
             )
+
+    def test_payment_pending_and_won_in_one_save_refused(self):
+        # Option B (Basheer, 2026-10-03): saved at Payment Pending first, then Won.
+        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.side_effect = [
+            _make_stage(70, "DELIVERY_INSTALLATION"),   # current, before this save
+            _make_stage(80, "PAYMENT_PENDING"),         # effective, after it
+        ]
+        repo.get_status.side_effect = [
+            _make_status("ACTIVE"),
+            _make_status("WON", is_terminal=True),
+        ]
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending stage first"):
+            service.update_opportunity(
+                OPP_ID,
+                OpportunityUpdate(stage_id=uuid.uuid4(), status_id=STATUS_WON_ID, confirm_full_payment=True),
+                updated_by=USER_ID,
+            )
+        repo.update.assert_not_called()
+
+    def test_payment_note_ignored_without_the_move_to_won(self):
+        # The note is only stored with the Won step, never on its own.
+        opp = _make_opportunity()
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(name="Renamed", full_payment_note="sneaky"), updated_by=USER_ID
+        )
+
+        assert opp.full_payment_note is None
+
+    def test_stage_change_on_won_opportunity_refused(self):
+        # BR-OP-09: a stage-only save can't move a Won Opportunity back.
+        opp = _make_opportunity(stage_id=uuid.uuid4())
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="Cannot change the stage of a WON"):
+            service.update_opportunity(OPP_ID, OpportunityUpdate(stage_id=STAGE_LEAD_ID), updated_by=USER_ID)
+        repo.update.assert_not_called()
+
+    def test_resending_same_stage_on_won_opportunity_allowed(self):
+        stage_id = uuid.uuid4()
+        opp = _make_opportunity(stage_id=stage_id)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(stage_id=stage_id, name="Renamed"), updated_by=USER_ID
+        )
+        repo.update.assert_called_once()
 
     def test_payment_tick_is_not_written_onto_the_record(self):
         # confirm_full_payment is a request flag, not a column -- an unrelated

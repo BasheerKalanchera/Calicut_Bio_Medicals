@@ -1510,8 +1510,9 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     }
     // BR-OP-17: mirrors the server's check so it fails before the PATCH.
     const isMarkingWon = newStatus?.status_code === "WON" && opp.status.status_code !== "WON";
-    if (isMarkingWon && editStageOrder < STAGE_ORDER_PAYMENT_PENDING) {
-      throw new Error("Move the Opportunity to the Payment Pending stage before marking it as Won");
+    // Option B (Basheer, 2026-10-03): already saved at Payment Pending, and staying there.
+    if (isMarkingWon && (opp.stage.display_order < STAGE_ORDER_PAYMENT_PENDING || editStageOrder < STAGE_ORDER_PAYMENT_PENDING)) {
+      throw new Error("Save the Opportunity at the Payment Pending stage first, then mark it as Won");
     }
     if (isMarkingWon && !editConfirmFullPayment) {
       throw new Error("Confirm that full payment has been received to mark this Opportunity as Won");
@@ -1630,6 +1631,10 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       ...(newStatus && { status: { id: newStatus.id, status_code: newStatus.status_code, status_name: newStatus.status_name, is_terminal: newStatus.is_terminal ?? opp.status.is_terminal } }),
       ...(newOwner  && { owner:  { id: newOwner.id,  display_name: newOwner.display_name } }),
     });
+    // BR-OP-17: after the instant update above, refetch this record so the
+    // payment panel ends on the server's stored confirmer and time, not the
+    // browser's clock and login.
+    if (isMarkingWon) queryClient.invalidateQueries({ queryKey: ["opportunity", opportunityId] });
   };
 
   const editStatusCode = oppStatuses.find((s) => s.id === editStatusId)?.status_code;
@@ -1830,11 +1835,12 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           >
             <MenuItem value="">Select status</MenuItem>
             {oppStatuses.map((s) => {
-              // BR-OP-17: Won only from Payment Pending (unless it's already Won).
-              const wonLocked = s.status_code === "WON" && opp.status.status_code !== "WON" && editStageOrder < STAGE_ORDER_PAYMENT_PENDING;
+              // BR-OP-17, option B: Won only once the Opportunity is *saved* at
+              // Payment Pending (unless it's already Won).
+              const wonLocked = s.status_code === "WON" && opp.status.status_code !== "WON" && opp.stage.display_order < STAGE_ORDER_PAYMENT_PENDING;
               return (
                 <MenuItem key={s.id} value={s.id} disabled={wonLocked}>
-                  {s.status_name}{wonLocked ? " — move to Payment Pending first" : ""}
+                  {s.status_name}{wonLocked ? " — save at Payment Pending first" : ""}
                 </MenuItem>
               );
             })}

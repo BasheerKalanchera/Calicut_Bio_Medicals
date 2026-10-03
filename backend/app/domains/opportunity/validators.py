@@ -133,6 +133,7 @@ def validate_status_transition(
     reactivation_date: date | None,
     po_number: str | None,
     has_items: bool,
+    current_stage_order: int | None = None,
     new_stage_order: int | None = None,
     full_payment_confirmed: bool = False,
 ) -> None:
@@ -142,9 +143,12 @@ def validate_status_transition(
     Pass current_status_code="ACTIVE" and current_is_terminal=False when creating
     an opportunity so that non-Active initial statuses are validated.
 
-    new_stage_order is the stage the Opportunity will be at after this save, and
-    full_payment_confirmed the "full payment received" tick sent with it. Both
-    default to refusing Won, so a caller that forgets them fails closed.
+    BR-OP-17: current_stage_order is the stage already saved before this save,
+    new_stage_order the stage after it, and full_payment_confirmed the "full
+    payment received" tick sent with it. Won needs the Opportunity to be saved
+    at Payment Pending first (a separate, earlier save -- Basheer, 2026-10-03)
+    and to stay there. All three default to refusing Won, so a caller that
+    forgets them (including create) fails closed.
     """
     # BR-OP-09: cannot leave a terminal status
     if current_is_terminal:
@@ -167,9 +171,14 @@ def validate_status_transition(
             )
         # BR-OP-17: Won only from the last stage, after full payment -- no
         # REPEAT_ORDER (BR-OP-13) or gate-override (BR-OP-14) exemption.
-        if new_stage_order is None or new_stage_order < _ORDER_PAYMENT_PENDING:
+        if (
+            current_stage_order is None
+            or current_stage_order < _ORDER_PAYMENT_PENDING
+            or new_stage_order is None
+            or new_stage_order < _ORDER_PAYMENT_PENDING
+        ):
             raise BusinessRuleViolation(
-                "Move the Opportunity to the Payment Pending stage before marking it as Won."
+                "Save the Opportunity at the Payment Pending stage first, then mark it as Won."
             )
         if not full_payment_confirmed:
             raise BusinessRuleViolation(

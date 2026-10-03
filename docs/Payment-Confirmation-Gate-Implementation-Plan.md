@@ -38,8 +38,16 @@ fhr" case (Won at stage Lead, 2026-10-03, Progress-Archive 2026-10).
 - Opportunities in the new stage count in the open pipeline and the weighted forecast,
   like Delivery & Installation does today; default chance of winning 98% (Delivery &
   Installation is 95%) — Basheer, 2026-10-03
-- Creating an Opportunity directly as Won is refused unless it is created at the new
-  stage with payment confirmed (same rule, no side door) — Basheer, 2026-10-03
+- ~~Creating an Opportunity directly as Won is refused unless it is created at the new
+  stage with payment confirmed~~ — superseded after code review: **creating directly
+  as Won is refused outright**; a past sale is entered as Active and moved through
+  the stages — Basheer, 2026-10-03
+- After code review: **the Opportunity must already be saved at Payment Pending**
+  before it can be marked Won — reaching Payment Pending and marking Won are always
+  two separate saves (option B; a one-save jump with a fast-track could repeat the
+  MMC case) — Basheer, 2026-10-03
+- After code review: the payment note is stored only with the move to Won; a Won or
+  Lost Opportunity's stage can't be changed (BR-OP-09) — Basheer, 2026-10-03
 - Interim, before the app enforces this: ask reps now to mark Won only after delivery,
   installation and full payment — proposed (asked of Haroon and Latheef Bhai, not yet
   answered)
@@ -64,8 +72,10 @@ After this change:
 - A new last stage appears after Delivery & Installation: **Order → Delivery &
   Installation → Payment Pending** (working name). It shows on the pipeline board as a
   new column.
-- **Won can only be chosen from that last stage.** On any earlier stage the Won option
-  is greyed out with a short note saying why ("Move to Payment Pending first").
+- **Won can only be chosen once the Opportunity has been saved at that last stage.**
+  Until then the Won option is greyed out with a short note saying why ("save at
+  Payment Pending first") — reaching Payment Pending and marking Won are two
+  separate saves. An Opportunity can't be created directly as Won.
 - When choosing Won, the rep (or their manager) must tick **"I confirm full payment has
   been received."** The Opportunity page then shows "Full payment confirmed by
   <name> on <date>".
@@ -136,16 +146,17 @@ Estimate: about 3–4 working days.
   user_profile(id)`. Both columns are covered by the existing `opportunity` audit
   trigger (UPDATE).
 - **Validators** (`backend/app/domains/opportunity/validators.py`): `_ORDER_PAYMENT_PENDING
-  = 80`; `validate_status_transition` gains `current_stage_order` (after the save) and
-  `confirm_full_payment: bool`; Won requires stage order = 80 and the flag. No new
+  = 80`; `validate_status_transition` gains `current_stage_order` (before the save),
+  `new_stage_order` (after it) and `full_payment_confirmed`; Won requires both stage
+  orders ≥ 80 and the flag (option B), failing closed when any is missing. No new
   stage gate in `validate_stage_transition` (decision above).
-- **Service** (`service.py` create ~L192 and update ~L411): pass the new arguments; on
-  Won set `full_payment_confirmed_at = now()`, `full_payment_confirmed_by = user_id`.
-  Stage and status changing in one save: the stage check uses the stage after the
-  save, so "move to Payment Pending + mark Won" in one Edit works.
-- **Schemas:** `OpportunityUpdate`/`OpportunityCreate` gain `confirm_full_payment:
-  bool = False`; read schema exposes `full_payment_confirmed_at` and the confirmer's
-  display name.
+- **Service** (`service.py`): `create_opportunity` refuses status WON outright;
+  `update_opportunity` pops `confirm_full_payment` and `full_payment_note`, and on
+  the move to Won sets `full_payment_confirmed_at = now()`, `_by = user_id` and the
+  note; refuses a stage change while Won/Lost (BR-OP-09).
+- **Schemas:** `OpportunityUpdate` gains `confirm_full_payment: bool = False` and
+  `full_payment_note`; `OpportunityCreate` gains nothing; read schemas expose the
+  confirmation fields and the confirmer's display name.
 - **Frontend:** `OpportunityDetailScreen.tsx` Edit Opportunity modal (status picker,
   tick box, confirmed-by line; existing Won/PO check at ~L1490);
   `OpportunityPipelineScreen.tsx` `PIPELINE_STAGE_CODES` gains `PAYMENT_PENDING`.
@@ -153,6 +164,7 @@ Estimate: about 3–4 working days.
   creation-only and unaffected — verify during build.
 - **Reports:** no query change — revenue already keys on `status_code = 'WON'` and
   `closed_at`; pipeline/forecast already include every non-terminal stage.
-- **Tests:** validator unit tests (Won refused below stage 80; refused without the
-  flag; allowed with both; REPEAT_ORDER and gate-override not exempt; create-as-Won);
-  service tests for who/when recording; router test for the create path.
+- **Tests:** validator unit tests (Won refused below stage 80, and in the same save
+  that reaches it; refused without the flag; allowed when already at 80 with the
+  flag; REPEAT_ORDER not exempt); service tests for who/when/note recording,
+  create-as-Won refused, note ignored without Won, stage frozen once Won.
