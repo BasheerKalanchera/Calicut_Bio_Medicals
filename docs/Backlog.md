@@ -46,20 +46,17 @@ maintainability once handed to the customer's IT team.
 - **Order (proposed):** the deal-edit hotfix above first (it already
   removes two copies), then the rule and check, then the audit.
 
-### Cap SQLAlchemy below 2.1 in `backend/pyproject.toml` — urgent (found 2026-09-27)
+### Backend dependencies: finish the SQLAlchemy cap follow-ups (found 2026-09-27)
 
-`pyproject.toml` has `sqlalchemy>=2.0.0` with no upper bound. SQLAlchemy
-2.1 makes a plain `postgresql://` URL use the psycopg 3 driver, which isn't
-installed (only `psycopg2-binary`), so the app crashes at startup:
-`ModuleNotFoundError: No module named 'psycopg'`. Hit on the UAT backend's
-fresh Render build during the 2026-09-27 move; worked around by changing
-that service's Build Command to `pip install . "sqlalchemy>=2.0,<2.1"`.
-Local Dev venv is on 2.0.51, so Dev only breaks on a fresh install.
-**To do:** add the `<2.1` cap in `pyproject.toml` on `main` (rides to UAT
-with the next move; then the Render Build Command can go back to
-`pip install .`), and review the other open-ended dependencies — the same
-build also jumped FastAPI, Starlette and others to versions never tested
-here. Details: Progress-Archive 2026-09-27 "UAT move".
+The `<2.1` cap is in `backend/pyproject.toml` on `main` (`0ffe00c`,
+2026-10-03; fresh install resolves to SQLAlchemy 2.0.54). Why: 2.1 makes a
+plain `postgresql://` URL use the psycopg 3 driver, which isn't installed,
+so the app crashes at startup — hit on the UAT Render build 2026-09-27.
+**Left to do:** (1) at the next UAT move (which carries the cap), set the
+UAT Render Build Command back to `pip install .`; (2) review the other
+open-ended dependencies — that build also jumped FastAPI, Starlette and
+others to versions never tested here. Details: Progress-Archive
+2026-09-27 "UAT move".
 
 ### Backend style checker (ruff) not clean — small tidy-up (found 2026-10-03)
 
@@ -274,6 +271,9 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   (31 of 70 open Imaging deals with no product, etc.): Progress-Archive
   2026-09-26 "Vendor pipeline report: trial run". No export feature exists
   anywhere in the app yet.
+
+## Deferred / undecided items
+
 - **Salesperson Performance report — measures and shape undecided
   (Basheer, 2026-10-03).** Signed 11.1 names "salesperson performance" but
   nothing defines it. Discussion note for Haroon:
@@ -299,9 +299,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   (BR-OP-17) didn't exist then, so it has none. When 13.2 is built, seed a
   Payment Pending limit so overdue collections alert the rep and their
   manager. Suggested 30 or 45 days; Haroon to choose.
-
-
-## Deferred / undecided items
 
 - **Hospital-wise planning: overlap helper not locked to the app.**
   `cabio_app_plan_overlap` (SECURITY DEFINER) keeps Supabase's default

@@ -101,6 +101,12 @@ code or changing structure. On any conflict, the document wins over this file.
   counts) — never a placeholder to fill in later.
 - New generated/exported files go to the session scratchpad by explicit full path
   from the first write — never a bare relative filename.
+- **Natural Transition Checkpoint (2-Hour / Push Checkpoint):**
+  Immediately after completing a `git push` or completing a major milestone:
+  1. If the session has been active for ~2 hours (or history exceeds ~25 turns), Claude MUST pause and NOT start the next task.
+  2. Ensure `.claude/session-handover.md` has the exact next step recorded.
+  3. Prompt Basheer:
+     > "🔄 **Clean Transition Point Reached:** Code is pushed and handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
 
 ## Feature planning
 - The moment a task's scope becomes feature-sized, write

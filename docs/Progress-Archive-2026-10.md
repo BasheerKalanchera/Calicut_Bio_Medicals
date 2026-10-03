@@ -278,21 +278,21 @@ typing each `!` command himself.
   any count changes, even when nothing improved; corrected by hand in
   this draft.
 
-## 2026-10-03 — Repeat mistakes now refused by guard rails (retro fixes A, B, E, F)
+## 2026-10-03 — SQLAlchemy capped below 2.1; payment gate option B chosen
 
-Basheer: fewer mistakes, and self-correction when one repeats, without a
-decision round per proposal. So the 2026-10-01 retro fixes were built
-directly:
-- **A:** `cabio-db-and-scripting` skill — UAT goes through the transaction
-  pooler; scripts use one read-only transaction with transaction-local
-  settings (pattern: `uat_data_quality_check.py`).
-- **B + F:** `.claude/hooks/shell_guard.py` refuses shell-scripted writes
-  to code files under backend/ and sales-os-app/ (the `\n` breakage,
-  27 Sep and 1 Oct) and commit messages saying "deal" (file paths are
-  ignored). 10 test cases; live dry-run refused.
-- **E:** `docs/templates/Manual-E2E-Test-Plan-Template.md` +
-  `.claude/hooks/test_plan_guard.py`: a new test plan must start from the
-  template, fill the four "Checked against live data" lines from real
+- `0ffe00c` caps `sqlalchemy>=2.0.0,<2.1` in `backend/pyproject.toml`
+  (fresh-install dry run resolves 2.0.54; nothing else needs 2.1 — alembic
+  needs >=1.4.23). Backend 1069/1069. Backlog entry narrowed to the two
+  follow-ups: revert the UAT Render Build Command at the next move; review
+  other open-ended dependencies.
+- Payment Confirmation Gate: Basheer chose option B (Won only from the new
+  last stage after full payment, so Order and Delivery & Installation are
+  passed through), pending Haroon and Latheef Bhai; note drafted for them.
+  Found while reviewing the gate: the rule as written (payment tick only)
+  would still allow Won at Lead — the MMC case.
+- **Retro:** worked: checking installed versions and dependants before
+  answering "will the cap break anything". Improve: nothing new.
+
 ## 2026-10-03 — Payment Confirmation Gate (BR-OP-17) built and E2E-passed
 
 - Commits `b9e01e8`, `71f07b5`, `0d0133d`, code-review fixes `75ac199`.
@@ -313,6 +313,21 @@ directly:
   tsc output with `tail` and had to flag the count as unverified — save to
   a file instead (already a rule).
 
+## 2026-10-03 — Repeat mistakes now refused by guard rails (retro fixes A, B, E, F)
+
+Basheer: fewer mistakes, and self-correction when one repeats, without a
+decision round per proposal. So the 2026-10-01 retro fixes were built
+directly:
+- **A:** `cabio-db-and-scripting` skill — UAT goes through the transaction
+  pooler; scripts use one read-only transaction with transaction-local
+  settings (pattern: `uat_data_quality_check.py`).
+- **B + F:** `.claude/hooks/shell_guard.py` refuses shell-scripted writes
+  to code files under backend/ and sales-os-app/ (the `\n` breakage,
+  27 Sep and 1 Oct) and commit messages saying "deal" (file paths are
+  ignored). 10 test cases; live dry-run refused.
+- **E:** `docs/templates/Manual-E2E-Test-Plan-Template.md` +
+  `.claude/hooks/test_plan_guard.py`: a new test plan must start from the
+  template, fill the four "Checked against live data" lines from real
   records, and tag every step `[Simple]` or `[Complex: <reason>]`. Older
   plans (no template marker) are unaffected. Live check refused an
   untagged plan.
