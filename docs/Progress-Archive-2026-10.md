@@ -375,3 +375,53 @@ directly:
   stripped 38 still-needed `noqa` comments (F401, E712, SIM102) — caught
   because ruff was re-run in full straight after; select RUF100 together
   with the project's full rule set, or review the diff first.
+
+## 2026-10-03 — session retro (Payment Gate close-out and maintenance session)
+
+- Done: Payment Confirmation Gate (BR-OP-17) E2E 18/18 on Dev, shipped as
+  `4561ad5`, checklist run, both scorecard Artifacts republished (Beyond
+  Contract at 18). `cdf1611`: SQLAlchemy-cap follow-ups + Natural Transition
+  Checkpoint rule. `2ae24f8`: ruff clean-up (62 to 0), `.gitignore`,
+  time-stamped UAT backup names, matching docs; 1095 tests pass.
+- Worked: one setting replaced 47 per-line comments; ruff re-run in full
+  straight after the auto-fix caught the damage before any commit; code and
+  docs went in one approved batch with the staged list checked, keeping the
+  other session's files out.
+- Improve (Claude): (1) ruff auto-fix run with only one rule selected also
+  stripped 38 still-needed comments — check the diff before running tests,
+  not after. (2) Said Audit Trail step 4 was next when the handover note
+  already showed it done — read the file, not an old summary. (3) Told
+  Basheer a Progress-Archive entry was cut off when it had only been moved —
+  check the file itself before claiming damage. The shell guard correctly
+  blocked a `sed -i` on a code file; Edit was used instead.
+- Process change: none new; the existing "scan the diff after a scripted
+  bulk edit" rule covers (1) — the gap was timing, not the rule.
+- Open: backup script's new file name untested against UAT; pytest is 1095
+  vs 1094 recorded earlier (not investigated); Audit Trail step 5 is in the
+  other session.
+
+## 2026-10-03 — Audit Trail Redesign, step 5 (Dev E2E) and retro
+
+- Done: Dev E2E for migration 0059 and the save-by-diff changes, every step
+  Pass (sections A–F, 31 steps). Pre-flight: pytest 1120 passed, ruff, tsc
+  and lint clean. Checked on Dev: unchanged resubmit logs nothing; creating a
+  record logs nothing; adding or removing a line under an existing record
+  logs ADDED/REMOVED; a hospital added and an amount rebalanced in one save
+  group together with no total row (total unchanged, correct). Audit Log
+  paging showed "Page 1 of 3 (106 saves)" with no save split.
+- Accepted: the Audit Log screen stays mounted, so it needs F5 to show new
+  changes. Admin/GM don't need live refresh; no fix.
+- Left on Dev: test Opportunity "Activity visibility test" at Qty 2, ₹50L
+  (was Qty 1, ₹25L); Vivek's 2026-Q3 plan note reads "Added one extra
+  hospital → Removed that hospital".
+- Worked: "Basheer clicks, Claude watches" for every Dev save; asking for the
+  full cards instead of accepting "B1–B4 pass" on one combined save.
+- Improve (Claude): (1) E1 first assumed a product name field without
+  reading the form code — read the form before writing the step. (2) The
+  code-review findings 5, 6, 7, 9, 10 were noted only by number, so their
+  text was lost with the context — log each finding in the Backlog the moment
+  the review finishes, not "later in the docs batch".
+- Process change: none new; (2) is covered by "write handover/Backlog notes
+  with real values", the gap was timing.
+- Open: UAT move (0059 + steps 2–4) needs its own approval; take a UAT
+  `audit_log` backup first.

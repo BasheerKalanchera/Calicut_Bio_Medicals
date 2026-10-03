@@ -9,20 +9,13 @@ Session Handoff rule).
 
 ## Parked initiatives
 
-### Audit Trail Redesign — approved, waiting to start (2026-09-30)
+### Audit Trail Redesign — built and tested on Dev; UAT move waiting (2026-10-03)
 
-A UAT review found the Audit Log only half-records changes: a product
-switch on 3 deals showed the old lines removed but not the new ones
-added, and only 7 of 38 tables are watched.
-- **Plan (approved 2026-09-30):**
-  `docs/Audit-Trail-Redesign-Implementation-Plan.md` — option A, ~3–4
-  days, one migration. Closes the `marketing_lead`, `target_plan` and
-  `document` coverage entries below when built.
-- **Unblocked** (hospital-wise Part 1 step 5 committed 2026-09-30; both
-  touch the target-plan save code). Starts when Basheer says. Built on
-  Dev; UAT move is its own approval.
-- **Deferred with it (option B):** a History tab on each deal, customer
-  and product page, built on top of this later.
+Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Dev E2E passed
+2026-10-03. Still to do: the UAT move (migration 0059 + steps 2–4
+together, its own approval, back up UAT `audit_log` first).
+- **Deferred (option B):** a History tab on each deal, customer and
+  product page, built on top of this later.
 
 ### Audit trigger: skip a missing parent only on DELETE — parked (found 2026-10-03)
 

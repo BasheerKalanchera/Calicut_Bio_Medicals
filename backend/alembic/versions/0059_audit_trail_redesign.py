@@ -223,6 +223,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # WARNING: destructive. Deletes every audit_log row with action 'INSERT'
+    # (permanent loss of that history) and drops the triggers on the newer
+    # tables, so changes to them stop being logged. Don't run on UAT/Prod
+    # without a backup of audit_log.
     for table in list(LINE_TABLES) + MAIN_TABLES:
         op.execute(f"DROP TRIGGER IF EXISTS trg_audit_{table} ON {table};")
     for table in ("opportunity_item", "split"):

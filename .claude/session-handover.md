@@ -39,30 +39,23 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Plan approved 2026-09-29: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`
   (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
-- **Next:** build step 1 (backend endpoint + tests) once Basheer says start.
+- Built: backend `0f7d75a`, frontend + legacy-plan fix `231fbd0` (pushed,
+  partial checkpoint). E2E plan written, untracked:
+  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`.
+- **Next:** `/code-review` medium on those two commits (Opportunity
+  visibility vs plan visibility per role; decide `/zone-rollup` keep or
+  retire). Then revise the E2E plan, restart the Dev backend, run the E2E.
+  After: BR-PL rule, Traceability, UI-Inventory, scorecard regenerate,
+  post-commit checklist.
 
-## Audit Trail Redesign — building
+## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
-- Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Started
-  2026-10-03 ahead of Plan vs Actuals (Basheer: UAT loses history daily).
-- Step 1 done: migration 0059 applied to Dev, `alembic current` = 0059
-  (head), schema regenerated, 8/8 rolled-back checks on Dev; `24f5607`.
-- Step 3 done: Audit Log pages by save (never splits a save), one card per
-  record touched, Added/Changed/Removed tags + "What happened" filter, names
-  for every tracked table; `ce56c22` + fix `b0ba088` (api.ts types were
-  lost when another session rewrote the shared file mid-commit). Backend
-  audit tests 17/17; read-only Dev check: 89 saves, none cut short.
-- Step 4 done: size + entry count in the UAT data-quality check; `8842d67`.
-- Step 2 done: user zones, target-plan splits and hospitals now save by
-  diff, with tests (168 passing in organization + planning); `c91e51e`.
-  Not yet run against Dev; that is part of step 5. The unused Opportunity
-  contacts "replace all" save was removed instead; `9a6d98d`.
-- **Next:** step 5: `/code-review high`, written E2E plan from
-  `docs/templates/Manual-E2E-Test-Plan-Template.md` (guard needs the
-  live-data section and Simple/Complex tags), Dev E2E ("Basheer clicks,
-  Claude watches" for saves; restart the Dev backend first), final
-  commit. Check Dev `alembic current` = 0059 and Physical-Schema is
-  regenerated. UAT move (0059 + steps 2–4 together) is its own approval.
+- Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`; E2E plan:
+  `docs/Audit-Trail-Redesign-Manual-E2E-Test-Plan.md`. Steps 1–4 and the
+  review fix are committed (`24f5607` … `fb5b7e6`). Dev E2E finished
+  2026-10-03: all steps Pass; pytest 1120, ruff, tsc and lint clean.
+- Review findings 5, 6, 7, 9, 10: only the numbers survived, not the text, due to session compaction.
+- **Next:** When the session restarts, re-do the code review first (`/code-review` on steps 1–4) to re-evaluate and document any findings. After the code review is complete, the UAT move (migration 0059 + steps 2–4 together) is its own approval; ask UAT backup first (0059's downgrade deletes INSERT history). Then the post-commit checklist.
 - Never `api.ts` by regenerate: another session edits it; hand-edit only
   the Audit Log types (`AuditSaveResponse`, `owner_*`, `action` filter).
 
