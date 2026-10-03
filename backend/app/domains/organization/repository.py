@@ -175,9 +175,22 @@ class UserRepository(BaseRepository[UserProfile]):
         return self.db.get(Zone, zone_id) is not None
 
     def replace_zones(self, user: UserProfile, zone_ids: list[uuid.UUID]) -> list[UserZone]:
-        self.db.execute(delete(UserZone).where(UserZone.user_id == user.id))
+        # Diffed against the saved rows: only zones added or dropped are
+        # written, so the audit log shows just those and not a fake
+        # remove/re-add of every unchanged zone (Audit Trail Redesign step 2).
+        existing = set(
+            self.db.scalars(select(UserZone.zone_id).where(UserZone.user_id == user.id)).all()
+        )
+        wanted = set(zone_ids)
+        dropped = existing - wanted
+        if dropped:
+            self.db.execute(
+                delete(UserZone).where(UserZone.user_id == user.id, UserZone.zone_id.in_(dropped))
+            )
         for zone_id in zone_ids:
-            self.db.add(UserZone(user_id=user.id, zone_id=zone_id))
+            if zone_id not in existing:
+                self.db.add(UserZone(user_id=user.id, zone_id=zone_id))
+                existing.add(zone_id)
         self.db.flush()
         # A raw Core-style delete+insert doesn't retroactively refresh an
         # already-loaded (selectin) user.zones collection -- expire it so the

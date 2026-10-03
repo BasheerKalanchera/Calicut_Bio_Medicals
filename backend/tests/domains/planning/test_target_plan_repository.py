@@ -117,20 +117,59 @@ class TestGetSbuRollup:
         assert count == 4
 
 
+def _rows_db(rows):
+    db = MagicMock()
+    db.scalars.return_value.all.return_value = rows
+    return db
+
+
 class TestReplaceBrandSplits:
-    def test_deletes_existing_then_inserts_each_split(self):
+    """Diff-based save (Audit Trail Redesign step 2): only added, changed or
+    dropped brands are written."""
+
+    @staticmethod
+    def _row(brand_id, amount):
+        row = MagicMock()
+        row.id = uuid.uuid4()
+        row.brand_id = brand_id
+        row.split_amount_lakhs = amount
+        return row
+
+    def test_unchanged_splits_write_nothing(self):
+        brand_a = uuid.uuid4()
+        row = self._row(brand_a, Decimal("30"))
+        repo = TargetPlanRepository(db=_rows_db([row]))
+
+        repo.replace_brand_splits(uuid.uuid4(), [(brand_a, Decimal("30.00"))])
+
+        repo.db.execute.assert_not_called()
+        repo.db.add.assert_not_called()
+        assert row.split_amount_lakhs == Decimal("30")
+
+    def test_changed_amount_updates_in_place(self):
+        brand_a = uuid.uuid4()
+        row = self._row(brand_a, Decimal("30"))
+        repo = TargetPlanRepository(db=_rows_db([row]))
+
+        repo.replace_brand_splits(uuid.uuid4(), [(brand_a, Decimal("45"))])
+
+        assert row.split_amount_lakhs == Decimal("45")
+        repo.db.execute.assert_not_called()
+        repo.db.add.assert_not_called()
+        repo.db.flush.assert_called_once()
+
+    def test_adds_new_and_drops_removed_brand_only(self):
         target_plan_id = uuid.uuid4()
         brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
-        repo = TargetPlanRepository(db=MagicMock())
+        row_a = self._row(brand_a, Decimal("30"))
+        repo = TargetPlanRepository(db=_rows_db([row_a]))
 
-        repo.replace_brand_splits(
-            target_plan_id, [(brand_a, Decimal("30")), (brand_b, Decimal("20"))]
-        )
+        repo.replace_brand_splits(target_plan_id, [(brand_b, Decimal("20"))])
 
-        delete_stmt = repo.db.execute.call_args_list[0][0][0]
-        sql = _compiled(delete_stmt)
-        assert f"target_plan_brand_split.target_plan_id = '{_uuid_literal(target_plan_id)}'" in sql
-        assert repo.db.add.call_count == 2
+        sql = _compiled(repo.db.execute.call_args[0][0])
+        assert _uuid_literal(row_a.id) in sql
+        added = repo.db.add.call_args[0][0]
+        assert (added.target_plan_id, added.brand_id) == (target_plan_id, brand_b)
         repo.db.flush.assert_called_once()
 
 
@@ -185,22 +224,65 @@ class TestBrandVendorTargetRepository:
 
 
 class TestReplaceAccounts:
-    def test_deletes_existing_inserts_each_and_expires_the_collection(self):
+    """Diff-based save, matched by hospital."""
+
+    @staticmethod
+    def _row(account_id, amount="30", freq="WEEKLY", objective=None):
+        row = MagicMock()
+        row.id = uuid.uuid4()
+        row.account_id = account_id
+        row.planned_amount_lakhs = Decimal(amount)
+        row.visit_frequency = freq
+        row.strategic_objective = objective
+        return row
+
+    @staticmethod
+    def _plan():
         target_plan = MagicMock()
         target_plan.id = uuid.uuid4()
-        acc_a, acc_b = uuid.uuid4(), uuid.uuid4()
-        repo = TargetPlanRepository(db=MagicMock())
+        return target_plan
+
+    def test_unchanged_hospitals_write_nothing_but_still_expire(self):
+        acc_a = uuid.uuid4()
+        repo = TargetPlanRepository(db=_rows_db([self._row(acc_a)]))
+        target_plan = self._plan()
 
         repo.replace_accounts(
-            target_plan,
-            [(acc_a, Decimal("30"), "WEEKLY", None), (acc_b, Decimal("0"), "MONTHLY", "Visits only")],
-            user_id=USER_ID,
+            target_plan, [(acc_a, Decimal("30.00"), "WEEKLY", None)], user_id=USER_ID
         )
 
-        delete_stmt = repo.db.execute.call_args_list[0][0][0]
-        sql = _compiled(delete_stmt)
-        assert f"target_plan_account.target_plan_id = '{_uuid_literal(target_plan.id)}'" in sql
-        assert repo.db.add.call_count == 2
+        repo.db.execute.assert_not_called()
+        repo.db.add.assert_not_called()
+        repo.db.expire.assert_called_once_with(target_plan, ["accounts"])
+
+    def test_changed_hospital_updates_in_place_and_stamps_updater(self):
+        acc_a = uuid.uuid4()
+        row = self._row(acc_a)
+        repo = TargetPlanRepository(db=_rows_db([row]))
+
+        repo.replace_accounts(
+            self._plan(), [(acc_a, Decimal("30"), "MONTHLY", "Visits only")], user_id=USER_ID
+        )
+
+        assert (row.visit_frequency, row.strategic_objective) == ("MONTHLY", "Visits only")
+        assert row.updated_by == USER_ID
+        repo.db.execute.assert_not_called()
+        repo.db.add.assert_not_called()
+
+    def test_adds_new_and_drops_removed_hospital_only(self):
+        acc_a, acc_b = uuid.uuid4(), uuid.uuid4()
+        row_a = self._row(acc_a)
+        repo = TargetPlanRepository(db=_rows_db([row_a]))
+        target_plan = self._plan()
+
+        repo.replace_accounts(
+            target_plan, [(acc_b, Decimal("0"), "MONTHLY", "Visits only")], user_id=USER_ID
+        )
+
+        assert _uuid_literal(row_a.id) in _compiled(repo.db.execute.call_args[0][0])
+        added = repo.db.add.call_args[0][0]
+        assert added.account_id == acc_b
+        assert (added.created_by, added.updated_by) == (USER_ID, USER_ID)
         repo.db.flush.assert_called_once()
         repo.db.expire.assert_called_once_with(target_plan, ["accounts"])
 

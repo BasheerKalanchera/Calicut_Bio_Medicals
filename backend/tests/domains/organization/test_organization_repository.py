@@ -236,47 +236,71 @@ class TestListActive:
 
 
 class TestReplaceZones:
-    """Mirrors how OpportunityRepository.replace_splits's delete-then-reinsert
-    shape is exercised: mocked db, assert the delete/add/flush sequence and
-    the re-query used to build the returned list."""
+    """Diff-based save (Audit Trail Redesign step 2): mocked db; the first
+    scalars() call returns the saved zone ids, the second the re-queried rows."""
 
-    def test_deletes_then_reinserts_and_returns_fresh_rows(self):
+    @staticmethod
+    def _db(saved_zone_ids, fresh_rows=()):
+        mock_db = MagicMock()
+        saved = MagicMock()
+        saved.all.return_value = list(saved_zone_ids)
+        fresh = MagicMock()
+        fresh.all.return_value = list(fresh_rows)
+        mock_db.scalars.side_effect = [saved, fresh]
+        return mock_db
+
+    @staticmethod
+    def _user():
         user = MagicMock(spec=UserProfile)
         user.id = uuid.uuid4()
+        return user
+
+    def test_unchanged_zones_write_nothing(self):
+        zone_a, zone_b = uuid.uuid4(), uuid.uuid4()
+        mock_db = self._db([zone_a, zone_b])
+
+        UserRepository(mock_db).replace_zones(self._user(), [zone_b, zone_a])
+
+        mock_db.execute.assert_not_called()
+        mock_db.add.assert_not_called()
+
+    def test_adds_only_the_new_zone(self):
+        user = self._user()
         zone_a, zone_b = uuid.uuid4(), uuid.uuid4()
         fresh_rows = [MagicMock(spec=UserZone), MagicMock(spec=UserZone)]
+        mock_db = self._db([zone_a], fresh_rows)
 
-        mock_db = MagicMock()
-        mock_db.scalars.return_value.all.return_value = fresh_rows
+        result = UserRepository(mock_db).replace_zones(user, [zone_a, zone_b])
 
-        repo = UserRepository(mock_db)
-        result = repo.replace_zones(user, [zone_a, zone_b])
-
-        # delete-then-reinsert: one DELETE, one add() per new zone_id
-        delete_stmt = mock_db.execute.call_args.args[0]
-        assert str(delete_stmt.table) == "user_zone"
-        assert mock_db.add.call_count == 2
+        mock_db.execute.assert_not_called()
         added = [call.args[0] for call in mock_db.add.call_args_list]
-        assert {row.zone_id for row in added} == {zone_a, zone_b}
-        assert all(row.user_id == user.id for row in added)
-
+        assert [row.zone_id for row in added] == [zone_b]
+        assert added[0].user_id == user.id
         mock_db.flush.assert_called_once()
         # Stale-collection guard: the already-loaded (selectin) user.zones
         # must be expired, not left holding pre-replace data.
         mock_db.expire.assert_called_once_with(user, ["zones"])
-
         assert result == fresh_rows
 
+    def test_removes_only_the_dropped_zone(self):
+        zone_a, zone_b = uuid.uuid4(), uuid.uuid4()
+        mock_db = self._db([zone_a, zone_b])
+
+        UserRepository(mock_db).replace_zones(self._user(), [zone_a])
+
+        delete_stmt = mock_db.execute.call_args.args[0]
+        assert str(delete_stmt.table) == "user_zone"
+        sql = str(delete_stmt.compile(compile_kwargs={"literal_binds": True}))
+        assert zone_b.hex in sql
+        assert zone_a.hex not in sql
+        mock_db.add.assert_not_called()
+
     def test_empty_zone_ids_clears_all_assignments(self):
-        user = MagicMock(spec=UserProfile)
-        user.id = uuid.uuid4()
+        mock_db = self._db([uuid.uuid4()])
 
-        mock_db = MagicMock()
-        mock_db.scalars.return_value.all.return_value = []
+        result = UserRepository(mock_db).replace_zones(self._user(), [])
 
-        repo = UserRepository(mock_db)
-        result = repo.replace_zones(user, [])
-
+        mock_db.execute.assert_called_once()
         mock_db.add.assert_not_called()
         mock_db.flush.assert_called_once()
         assert result == []

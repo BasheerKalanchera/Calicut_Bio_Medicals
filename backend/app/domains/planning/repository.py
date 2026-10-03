@@ -133,19 +133,31 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
     def replace_brand_splits(
         self, target_plan_id: uuid.UUID, splits: list[tuple[uuid.UUID, Decimal]]
     ) -> None:
-        """Delete-and-recreate, not diffed in place -- target_plan has no
-        audit-trail trigger yet (BR-AUD-01), so there's no
-        OpportunityRepository.replace_items-style audit-noise reason to do
-        an in-place UPDATE-by-id instead."""
-        self.db.execute(
-            delete(TargetPlanBrandSplit).where(TargetPlanBrandSplit.target_plan_id == target_plan_id)
-        )
-        for brand_id, amount in splits:
-            self.db.add(
-                TargetPlanBrandSplit(
-                    target_plan_id=target_plan_id, brand_id=brand_id, split_amount_lakhs=amount
+        """Diffed against the saved rows (matched by brand): only brands
+        that were added, changed or dropped are written, so the audit log
+        shows just those and not a fake remove/re-add of every unchanged
+        brand (BR-AUD-01, Audit Trail Redesign step 2)."""
+        existing = {
+            row.brand_id: row
+            for row in self.db.scalars(
+                select(TargetPlanBrandSplit).where(TargetPlanBrandSplit.target_plan_id == target_plan_id)
+            ).all()
+        }
+        wanted = {brand_id: amount for brand_id, amount in splits}
+
+        dropped = [row.id for brand_id, row in existing.items() if brand_id not in wanted]
+        if dropped:
+            self.db.execute(delete(TargetPlanBrandSplit).where(TargetPlanBrandSplit.id.in_(dropped)))
+        for brand_id, amount in wanted.items():
+            row = existing.get(brand_id)
+            if row is None:
+                self.db.add(
+                    TargetPlanBrandSplit(
+                        target_plan_id=target_plan_id, brand_id=brand_id, split_amount_lakhs=amount
+                    )
                 )
-            )
+            elif row.split_amount_lakhs != amount:
+                row.split_amount_lakhs = amount
         self.db.flush()
 
     def get_brand_rollups(
@@ -175,23 +187,46 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         *,
         user_id: uuid.UUID,
     ) -> None:
-        """Delete-and-recreate, same reasoning as replace_brand_splits. The
-        bulk DELETE bypasses the ORM, so the plan's `accounts` collection is
-        expired afterwards -- otherwise a collection loaded earlier in the
-        session would still show the old rows in the response."""
-        self.db.execute(delete(TargetPlanAccount).where(TargetPlanAccount.target_plan_id == target_plan.id))
-        for account_id, amount, visit_frequency, objective in entries:
-            self.db.add(
-                TargetPlanAccount(
-                    target_plan_id=target_plan.id,
-                    account_id=account_id,
-                    planned_amount_lakhs=amount,
-                    visit_frequency=visit_frequency,
-                    strategic_objective=objective,
-                    created_by=user_id,
-                    updated_by=user_id,
+        """Diffed against the saved rows (matched by hospital), same
+        reasoning as replace_brand_splits: only added, changed or dropped
+        hospitals are written. The bulk DELETE bypasses the ORM, so the
+        plan's `accounts` collection is expired afterwards -- otherwise a
+        collection loaded earlier in the session would still show the old
+        rows in the response."""
+        existing = {
+            row.account_id: row
+            for row in self.db.scalars(
+                select(TargetPlanAccount).where(TargetPlanAccount.target_plan_id == target_plan.id)
+            ).all()
+        }
+        wanted = {entry[0]: entry for entry in entries}
+
+        dropped = [row.id for account_id, row in existing.items() if account_id not in wanted]
+        if dropped:
+            self.db.execute(delete(TargetPlanAccount).where(TargetPlanAccount.id.in_(dropped)))
+        for account_id, (_, amount, visit_frequency, objective) in wanted.items():
+            row = existing.get(account_id)
+            if row is None:
+                self.db.add(
+                    TargetPlanAccount(
+                        target_plan_id=target_plan.id,
+                        account_id=account_id,
+                        planned_amount_lakhs=amount,
+                        visit_frequency=visit_frequency,
+                        strategic_objective=objective,
+                        created_by=user_id,
+                        updated_by=user_id,
+                    )
                 )
-            )
+            elif (
+                row.planned_amount_lakhs != amount
+                or row.visit_frequency != visit_frequency
+                or row.strategic_objective != objective
+            ):
+                row.planned_amount_lakhs = amount
+                row.visit_frequency = visit_frequency
+                row.strategic_objective = objective
+                row.updated_by = user_id
         self.db.flush()
         self.db.expire(target_plan, ["accounts"])
 

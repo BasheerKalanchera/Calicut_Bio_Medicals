@@ -49,9 +49,8 @@ class TargetPlan(AuditMixin, Base):
 class TargetPlanBrandSplit(AuditMixin, Base):
     """Per-brand breakdown of a TargetPlan's one quarterly number
     (docs/Brand-Level-Target-Planning-Implementation-Plan.md). Rows are
-    always replaced wholesale on revision, not diffed in place -- target_plan
-    has no audit-trail trigger yet (BR-AUD-01), so there's no
-    OpportunityRepository.replace_items-style audit-noise concern here."""
+    saved by diff on revision (only added/changed/dropped brands are
+    written), so the audit trail (BR-AUD-01) shows real changes only."""
 
     __tablename__ = "target_plan_brand_split"
     __table_args__ = (
@@ -73,7 +72,7 @@ class TargetPlanBrandSplit(AuditMixin, Base):
 class TargetPlanAccount(AuditMixin, Base):
     """One hospital on a TargetPlan (docs/Hospital-Wise-Target-Planning-Implementation-Plan.md).
     The plan's target_amount_lakhs is the SUM of planned_amount_lakhs,
-    enforced at the service layer. Replaced wholesale on revision, same as
+    enforced at the service layer. Saved by diff on revision, same as
     TargetPlanBrandSplit."""
 
     __tablename__ = "target_plan_account"
