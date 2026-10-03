@@ -121,22 +121,6 @@ break on every schema change; consider replacing them with a check that
 every model maps and every relationship resolves, without a hard-coded
 total.
 
-### Review commit frequency — decide ~2026-10-03 (raised 2026-09-26)
-
-65 commits in the week to 2026-09-26, only 15 feat/fix; each needs
-Basheer's approval and a manual paste (the auto-mode classifier blocks
-Claude's commits). Basheer: keep the current practice one more week, then
-review. Proposal on the table (would go in CLAUDE.md "Commit approval"):
-> **Batching docs-only commits:** docs-only changes (handover, Backlog,
-> Progress-Archive, plan tweaks) accumulate and are committed together at a
-> natural pause — end of a task, before a break, or before a session
-> restart — not one commit per edit. Feature/fix commits stay separate and
-> first; the post-commit checklist may ride in the next docs batch. Every
-> commit still needs its own explicit approval.
-
-Optional alongside it: a permission rule letting Claude run `git commit` /
-`git push` itself after Basheer approves the file list and message.
-
 ### Basheer's own task: allow read-only commands without permission prompts (2026-09-24)
 
 Basheer plans to do this himself, so Claude shouldn't do it unasked; mention

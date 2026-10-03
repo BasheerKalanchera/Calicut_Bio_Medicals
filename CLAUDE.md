@@ -142,6 +142,12 @@ code or changing structure. On any conflict, the document wins over this file.
   committing ("…then commit and push") approves the edits only, not the commit.
 - Applies to every commit: feature, fix, docs-only follow-ups, checklist commits,
   checkpoint commits. No size exemption. *(2026-09-23)*
+- **Batch docs-only commits:** docs-only changes (handover, Backlog,
+  Progress-Archive, plan tweaks) accumulate and are committed together at a
+  natural pause — end of a task, before a break, or before a session
+  restart — not one commit per edit. Feature/fix commits stay separate and
+  first; the post-commit checklist may ride in the next docs batch. Each
+  batch still needs its own explicit approval. *(2026-10-03)*  
 - A bare "yes" to an either/or offer means the plan-first option; otherwise ask.
   If a reply answers only part of a multi-part question, the rest is still
   open. *(2026-09-15, 2026-09-17)*
