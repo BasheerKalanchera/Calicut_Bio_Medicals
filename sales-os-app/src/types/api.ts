@@ -1901,8 +1901,8 @@ export interface components {
             message: string;
             data: components["schemas"]["PaginatedResponse_ActivityResponse_"];
         };
-        /** APIResponse[PaginatedResponse[AuditLogResponse]] */
-        APIResponse_PaginatedResponse_AuditLogResponse__: {
+        /** APIResponse[PaginatedResponse[AuditSaveResponse]] */
+        APIResponse_PaginatedResponse_AuditSaveResponse__: {
             /**
              * Success
              * @default true
@@ -1913,7 +1913,7 @@ export interface components {
              * @default
              */
             message: string;
-            data: components["schemas"]["PaginatedResponse_AuditLogResponse_"];
+            data: components["schemas"]["PaginatedResponse_AuditSaveResponse_"];
         };
         /** APIResponse[PaginatedResponse[PipelineOpportunity]] */
         APIResponse_PaginatedResponse_PipelineOpportunity__: {
@@ -3151,6 +3151,12 @@ export interface components {
             parent_id: string | null;
             /** Parent Label */
             parent_label: string | null;
+            /** Owner Type */
+            owner_type: string;
+            /** Owner Id */
+            owner_id: string | null;
+            /** Owner Label */
+            owner_label: string | null;
             /** Action */
             action: string;
             /**
@@ -3176,6 +3182,22 @@ export interface components {
             new_data_display: {
                 [key: string]: string;
             };
+        };
+        /**
+         * AuditSaveResponse
+         * @description Everything one save recorded (same time, same user). The Audit Log
+         *     pages by save, so a save is never split across pages.
+         */
+        AuditSaveResponse: {
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed By Name */
+            changed_by_name: string | null;
+            /** Entries */
+            entries: components["schemas"]["AuditLogResponse"][];
         };
         /** Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post */
         Body_create_opportunity_document_api_v1_opportunities__opportunity_id__documents_post: {
@@ -3810,6 +3832,13 @@ export interface components {
              */
             high_priority_manual: boolean;
             /**
+             * Confirm Full Payment
+             * @default false
+             */
+            confirm_full_payment: boolean;
+            /** Full Payment Note */
+            full_payment_note?: string | null;
+            /**
              * Items
              * @default []
              */
@@ -4161,10 +4190,10 @@ export interface components {
             /** Total Pages */
             total_pages: number;
         };
-        /** PaginatedResponse[AuditLogResponse] */
-        PaginatedResponse_AuditLogResponse_: {
+        /** PaginatedResponse[AuditSaveResponse] */
+        PaginatedResponse_AuditSaveResponse_: {
             /** Items */
-            items: components["schemas"]["AuditLogResponse"][];
+            items: components["schemas"]["AuditSaveResponse"][];
             /** Total */
             total: number;
             /** Page */
@@ -8691,12 +8720,15 @@ export interface operations {
         parameters: {
             query?: {
                 table_name?: string | null;
+                /** @description INSERT (added), UPDATE (changed) or DELETE (removed) */
+                action?: string | null;
                 record_id?: string | null;
                 changed_by?: string | null;
                 date_from?: string | null;
                 date_to?: string | null;
-                page?: number;
+                /** @description Saves per page, not log rows */
                 page_size?: number;
+                page?: number;
             };
             header?: {
                 authorization?: string | null;
@@ -8712,7 +8744,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_AuditLogResponse__"];
+                    "application/json": components["schemas"]["APIResponse_PaginatedResponse_AuditSaveResponse__"];
                 };
             };
             /** @description Validation Error */
