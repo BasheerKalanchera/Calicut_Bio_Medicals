@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-09-29 from the Dev database, catching up migration
--- 0056: BR-PL-05: remember the last approved total when an approved plan is revised
+-- Regenerated 2026-10-03 from the Dev database, catching up migration
+-- 0057: BR-OP-17: payment confirmation before Won -- new last stage + who/when fields
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NZPfsIIUYfarhULrWLkTaJ4863CONIDJjDuGe1rkImyuVzVVjLoAmTUfy4UNoYn
+\restrict aEqV5ONdgWJ51MvocGfVlMljwwZleDbVVcR6J9OexL6v05lvJPhlcpLaLJqUlhQ
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -600,6 +600,9 @@ CREATE TABLE public.opportunity (
     gate_override_set_by uuid,
     high_priority_manual boolean DEFAULT false NOT NULL,
     closed_at timestamp with time zone,
+    full_payment_confirmed_at timestamp with time zone,
+    full_payment_confirmed_by uuid,
+    CONSTRAINT ck_opportunity_full_payment_confirmed_pair CHECK (((full_payment_confirmed_at IS NULL) = (full_payment_confirmed_by IS NULL))),
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
     CONSTRAINT opportunity_win_probability_check CHECK (((win_probability >= (0)::numeric) AND (win_probability <= (100)::numeric)))
@@ -2298,6 +2301,14 @@ ALTER TABLE ONLY public.opportunity
 
 
 --
+-- Name: opportunity opportunity_full_payment_confirmed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.opportunity
+    ADD CONSTRAINT opportunity_full_payment_confirmed_by_fkey FOREIGN KEY (full_payment_confirmed_by) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: opportunity opportunity_gate_override_approver_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3426,5 +3437,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NZPfsIIUYfarhULrWLkTaJ4863CONIDJjDuGe1rkImyuVzVVjLoAmTUfy4UNoYn
+\unrestrict aEqV5ONdgWJ51MvocGfVlMljwwZleDbVVcR6J9OexL6v05lvJPhlcpLaLJqUlhQ
 

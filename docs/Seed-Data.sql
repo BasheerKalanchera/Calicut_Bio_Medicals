@@ -14,7 +14,9 @@ INSERT INTO opportunity_stage (id, stage_code, stage_name, display_order, defaul
 ('11111111-1111-1111-1111-100000000004', 'CLINICAL_EVALUATION', 'Clinical Evaluation', 40, 55.00),
 ('11111111-1111-1111-1111-100000000005', 'NEGOTIATION', 'Negotiation', 50, 70.00),
 ('11111111-1111-1111-1111-100000000006', 'ORDER', 'Order', 60, 90.00),
-('11111111-1111-1111-1111-100000000007', 'DELIVERY_INSTALLATION', 'Delivery & Installation', 70, 95.00)
+('11111111-1111-1111-1111-100000000007', 'DELIVERY_INSTALLATION', 'Delivery & Installation', 70, 95.00),
+-- BR-OP-17 (migration 0057, 2026-10-03); working name, final name from Haroon/Latheef Bhai
+('11111111-1111-1111-1111-100000000008', 'PAYMENT_PENDING', 'Payment Pending', 80, 98.00)
 ON CONFLICT (stage_code) DO NOTHING;
 
 -- ==========================================
