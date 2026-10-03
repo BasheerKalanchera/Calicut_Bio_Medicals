@@ -203,7 +203,12 @@ class TargetPlanService:
             raise ValidationError("Each brand can only appear once in the split.")
 
     def _apply_brand_splits(
-        self, target_plan: TargetPlan, splits: list[BrandSplitEntry] | None, *, submit: bool
+        self,
+        target_plan: TargetPlan,
+        splits: list[BrandSplitEntry] | None,
+        *,
+        submit: bool,
+        current_user: UserProfile,
     ) -> None:
         """Brand-Level Target Planning decision #1: splitting is mandatory,
         enforced here (not just the frontend's dialogBrands.length gate, per
@@ -223,7 +228,9 @@ class TargetPlanService:
             # an approver never sees an unbalanced split (Basheer, 2026-09-28).
             self._check_no_duplicate_brands(splits or [])
             self.repository.replace_brand_splits(
-                target_plan.id, [(s.brand_id, s.split_amount_lakhs) for s in splits or []]
+                target_plan,
+                [(s.brand_id, s.split_amount_lakhs) for s in splits or []],
+                user_id=current_user.id,
             )
             return
         if not splits:
@@ -238,7 +245,9 @@ class TargetPlanService:
                 f"splits total {total}, target is {target_plan.target_amount_lakhs}."
             )
         self.repository.replace_brand_splits(
-            target_plan.id, [(s.brand_id, s.split_amount_lakhs) for s in splits]
+            target_plan,
+            [(s.brand_id, s.split_amount_lakhs) for s in splits],
+            user_id=current_user.id,
         )
 
     def create_target_plan(
@@ -268,7 +277,9 @@ class TargetPlanService:
         )
         target_plan = self.repository.create(target_plan)
         self._replace_accounts(target_plan, data.accounts, current_user=current_user)
-        self._apply_brand_splits(target_plan, data.brand_splits, submit=data.submit)
+        self._apply_brand_splits(
+            target_plan, data.brand_splits, submit=data.submit, current_user=current_user
+        )
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def update_target_plan(
@@ -323,7 +334,9 @@ class TargetPlanService:
         target_plan = self.repository.update(target_plan)
         self.repository.db.refresh(target_plan, ["updated_at"])
         self._replace_accounts(target_plan, data.accounts, current_user=current_user)
-        self._apply_brand_splits(target_plan, data.brand_splits, submit=data.submit)
+        self._apply_brand_splits(
+            target_plan, data.brand_splits, submit=data.submit, current_user=current_user
+        )
         return target_plan, self._build_warnings(data.accounts, accounts_by_id, target_plan)
 
     def approve_or_reject_target_plan(

@@ -131,16 +131,23 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         return Decimal(total), count
 
     def replace_brand_splits(
-        self, target_plan_id: uuid.UUID, splits: list[tuple[uuid.UUID, Decimal]]
+        self,
+        target_plan: TargetPlan,
+        splits: list[tuple[uuid.UUID, Decimal]],
+        *,
+        user_id: uuid.UUID,
     ) -> None:
         """Diffed against the saved rows (matched by brand): only brands
         that were added, changed or dropped are written, so the audit log
         shows just those and not a fake remove/re-add of every unchanged
-        brand (BR-AUD-01, Audit Trail Redesign step 2)."""
+        brand (BR-AUD-01, Audit Trail Redesign step 2). Edits and adds
+        stamp `user_id` (the audit trigger nulls updated_by otherwise), and
+        the plan's `brand_splits` collection is expired afterwards because
+        the bulk DELETE bypasses the ORM."""
         existing = {
             row.brand_id: row
             for row in self.db.scalars(
-                select(TargetPlanBrandSplit).where(TargetPlanBrandSplit.target_plan_id == target_plan_id)
+                select(TargetPlanBrandSplit).where(TargetPlanBrandSplit.target_plan_id == target_plan.id)
             ).all()
         }
         wanted = {brand_id: amount for brand_id, amount in splits}
@@ -153,12 +160,18 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
             if row is None:
                 self.db.add(
                     TargetPlanBrandSplit(
-                        target_plan_id=target_plan_id, brand_id=brand_id, split_amount_lakhs=amount
+                        target_plan_id=target_plan.id,
+                        brand_id=brand_id,
+                        split_amount_lakhs=amount,
+                        created_by=user_id,
+                        updated_by=user_id,
                     )
                 )
             elif row.split_amount_lakhs != amount:
                 row.split_amount_lakhs = amount
+                row.updated_by = user_id
         self.db.flush()
+        self.db.expire(target_plan, ["brand_splits"])
 
     def get_brand_rollups(
         self, brand_ids: list[uuid.UUID], planning_period: str

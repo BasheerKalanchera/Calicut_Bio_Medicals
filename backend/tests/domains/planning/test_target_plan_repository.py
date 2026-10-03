@@ -135,42 +135,66 @@ class TestReplaceBrandSplits:
         row.split_amount_lakhs = amount
         return row
 
-    def test_unchanged_splits_write_nothing(self):
+    @staticmethod
+    def _plan():
+        target_plan = MagicMock()
+        target_plan.id = uuid.uuid4()
+        return target_plan
+
+    def test_unchanged_splits_write_nothing_but_still_expire(self):
         brand_a = uuid.uuid4()
         row = self._row(brand_a, Decimal("30"))
         repo = TargetPlanRepository(db=_rows_db([row]))
+        target_plan = self._plan()
 
-        repo.replace_brand_splits(uuid.uuid4(), [(brand_a, Decimal("30.00"))])
+        repo.replace_brand_splits(target_plan, [(brand_a, Decimal("30.00"))], user_id=USER_ID)
 
         repo.db.execute.assert_not_called()
         repo.db.add.assert_not_called()
         assert row.split_amount_lakhs == Decimal("30")
+        repo.db.expire.assert_called_once_with(target_plan, ["brand_splits"])
 
-    def test_changed_amount_updates_in_place(self):
+    def test_changed_amount_updates_in_place_and_stamps_updater(self):
         brand_a = uuid.uuid4()
         row = self._row(brand_a, Decimal("30"))
         repo = TargetPlanRepository(db=_rows_db([row]))
 
-        repo.replace_brand_splits(uuid.uuid4(), [(brand_a, Decimal("45"))])
+        repo.replace_brand_splits(self._plan(), [(brand_a, Decimal("45"))], user_id=USER_ID)
 
         assert row.split_amount_lakhs == Decimal("45")
+        assert row.updated_by == USER_ID
         repo.db.execute.assert_not_called()
         repo.db.add.assert_not_called()
         repo.db.flush.assert_called_once()
 
     def test_adds_new_and_drops_removed_brand_only(self):
-        target_plan_id = uuid.uuid4()
         brand_a, brand_b = uuid.uuid4(), uuid.uuid4()
         row_a = self._row(brand_a, Decimal("30"))
         repo = TargetPlanRepository(db=_rows_db([row_a]))
+        target_plan = self._plan()
 
-        repo.replace_brand_splits(target_plan_id, [(brand_b, Decimal("20"))])
+        repo.replace_brand_splits(target_plan, [(brand_b, Decimal("20"))], user_id=USER_ID)
 
         sql = _compiled(repo.db.execute.call_args[0][0])
         assert _uuid_literal(row_a.id) in sql
         added = repo.db.add.call_args[0][0]
-        assert (added.target_plan_id, added.brand_id) == (target_plan_id, brand_b)
+        assert (added.target_plan_id, added.brand_id) == (target_plan.id, brand_b)
+        assert (added.created_by, added.updated_by) == (USER_ID, USER_ID)
         repo.db.flush.assert_called_once()
+
+    def test_expires_brand_splits_after_the_bulk_delete(self):
+        """The Core DELETE bypasses the ORM identity map, so the plan's loaded
+        `brand_splits` collection must be expired after the flush or the
+        response would still show the dropped brand."""
+        brand_a = uuid.uuid4()
+        repo = TargetPlanRepository(db=_rows_db([self._row(brand_a, Decimal("30"))]))
+        target_plan = self._plan()
+
+        repo.replace_brand_splits(target_plan, [], user_id=USER_ID)
+
+        names = [c[0] for c in repo.db.method_calls]
+        assert names.index("flush") < names.index("expire")
+        repo.db.expire.assert_called_once_with(target_plan, ["brand_splits"])
 
 
 class TestGetBrandRollups:
