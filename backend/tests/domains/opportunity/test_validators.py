@@ -506,8 +506,12 @@ class TestTransitionToWon:
                 has_items=False,
             )
 
-    def test_passes_with_po_and_items(self):
-        validate_status_transition(
+    # BR-OP-17: Won only from the Payment Pending stage (display_order 80),
+    # with the "full payment received" tick.
+
+    @staticmethod
+    def _won(**overrides):
+        args = dict(
             current_status_code="ACTIVE",
             current_is_terminal=False,
             new_status_code="WON",
@@ -518,7 +522,44 @@ class TestTransitionToWon:
             reactivation_date=None,
             po_number=PO,
             has_items=True,
+            new_stage_order=80,
+            full_payment_confirmed=True,
         )
+        args.update(overrides)
+        validate_status_transition(**args)
+
+    def test_passes_at_payment_pending_with_payment_confirmed(self):
+        self._won()
+
+    @pytest.mark.parametrize("stage_order", [10, 60, 70])
+    def test_blocked_before_payment_pending(self, stage_order):
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            self._won(new_stage_order=stage_order)
+
+    def test_blocked_without_payment_confirmation(self):
+        with pytest.raises(BusinessRuleViolation, match="full payment"):
+            self._won(full_payment_confirmed=False)
+
+    def test_fails_closed_when_caller_omits_new_arguments(self):
+        # A caller that never passes the stage or the tick must not let Won through.
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            validate_status_transition(
+                current_status_code="ACTIVE",
+                current_is_terminal=False,
+                new_status_code="WON",
+                loss_reason_id=None,
+                loss_reason_code=None,
+                competitor_name=None,
+                hold_reason_id=None,
+                reactivation_date=None,
+                po_number=PO,
+                has_items=True,
+            )
+
+    def test_lost_and_on_hold_unaffected_by_stage(self):
+        # Lost needs only its own reason, from any stage (BR-OP-17 is Won-only).
+        self._won(new_status_code="LOST", loss_reason_id=uuid.uuid4(), loss_reason_code="PRICE",
+                  new_stage_order=10, full_payment_confirmed=False)
 
 
 class TestTransitionToLost:

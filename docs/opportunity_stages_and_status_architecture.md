@@ -113,6 +113,8 @@ Status answers a different question from Stage:
 
 A salesperson can mark a deal as Won, Lost, or On-Hold from **any stage**. The Stage is frozen at its current value when a terminal status is applied.
 
+> **Amended 2026-10-03 (BR-OP-17, `docs/Business-Rules.md`):** Won is now reachable only from the new last stage, Payment Pending (after Delivery & Installation), with full payment confirmed. Lost and On-Hold remain reachable from any stage.
+
 | Status Transition | Who Triggers It | Mandatory Requirements |
 | :---- | :---- | :---- |
 | **Any Stage → Won** | Salesperson (manual) | 1. PO Number entered.<br>2. Product details confirmed. |

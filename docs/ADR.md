@@ -344,6 +344,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * New master entities: `OpportunityStage` and `OpportunityStatus`.
   * `Opportunity` entity uses `stage_id` and `status_id` foreign keys.
   * Stalled background job required for 180-day inactivity detection.
+* **Amendment (2026-10-03, BR-OP-17):** Won remains a status, not a stage, but is now reachable only from the last stage, Payment Pending, with full payment confirmed. Lost and On Hold stay reachable from any stage, so loss-point analysis is unaffected; the stage at Won is now always Payment Pending.
 * **Affected Modules:** Opportunity Pipeline, Forecasting, Reporting, Business Rules Engine.
 
 ---

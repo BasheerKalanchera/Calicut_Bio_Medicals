@@ -59,6 +59,8 @@ def _make_pipeline_opportunity(*, stage: StageNested, high_priority_manual: bool
         gate_override_set_at=None,
         gate_override_set_by=None,
         high_priority_manual=high_priority_manual,
+        full_payment_confirmed_at=None,
+        full_payment_note=None,
         created_at=NOW,
         updated_at=NOW,
         account=ACCOUNT,
@@ -71,6 +73,7 @@ def _make_pipeline_opportunity(*, stage: StageNested, high_priority_manual: bool
         referred_by=None,
         gate_override_approver=None,
         gate_override_reason=None,
+        full_payment_confirmed_by_user=None,
     )
 
 

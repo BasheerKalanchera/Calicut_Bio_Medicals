@@ -142,7 +142,9 @@ def test_all_relationships_resolve():
     # (CoveragePlan.user/.target_plan/.entries, CoveragePlanEntry.coverage_plan/
     # .account, UserProfile.coverage_plans, TargetPlan.coverage_plans,
     # Account.coverage_plan_entries).
-    assert rel_count == 115, f"Expected 115 relationships, found {rel_count}"
+    # 116, not 115: BR-OP-17 added Opportunity.full_payment_confirmed_by_user
+    # (0057) -- one-directional onto UserProfile, like gate_override_set_by_user.
+    assert rel_count == 116, f"Expected 116 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

@@ -27,6 +27,7 @@ _ORDER_DEMO = 30
 _ORDER_NEGOTIATION = 50
 _ORDER_ORDER = 60
 _ORDER_DELIVERY = 70
+_ORDER_PAYMENT_PENDING = 80
 
 
 _REPEAT_ORDER_LEAD_SOURCE = "REPEAT_ORDER"
@@ -132,12 +133,18 @@ def validate_status_transition(
     reactivation_date: date | None,
     po_number: str | None,
     has_items: bool,
+    new_stage_order: int | None = None,
+    full_payment_confirmed: bool = False,
 ) -> None:
     """
-    Enforce status transition rules (BR-OP-02, BR-OP-03, BR-OP-05, BR-OP-09).
+    Enforce status transition rules (BR-OP-02, BR-OP-03, BR-OP-05, BR-OP-09, BR-OP-17).
 
     Pass current_status_code="ACTIVE" and current_is_terminal=False when creating
     an opportunity so that non-Active initial statuses are validated.
+
+    new_stage_order is the stage the Opportunity will be at after this save, and
+    full_payment_confirmed the "full payment received" tick sent with it. Both
+    default to refusing Won, so a caller that forgets them fails closed.
     """
     # BR-OP-09: cannot leave a terminal status
     if current_is_terminal:
@@ -157,6 +164,16 @@ def validate_status_transition(
         if not has_items:
             raise BusinessRuleViolation(
                 "At least one product must be confirmed to mark an opportunity as Won."
+            )
+        # BR-OP-17: Won only from the last stage, after full payment -- no
+        # REPEAT_ORDER (BR-OP-13) or gate-override (BR-OP-14) exemption.
+        if new_stage_order is None or new_stage_order < _ORDER_PAYMENT_PENDING:
+            raise BusinessRuleViolation(
+                "Move the Opportunity to the Payment Pending stage before marking it as Won."
+            )
+        if not full_payment_confirmed:
+            raise BusinessRuleViolation(
+                "Confirm that full payment has been received to mark this Opportunity as Won."
             )
 
     elif new_status_code == "LOST":

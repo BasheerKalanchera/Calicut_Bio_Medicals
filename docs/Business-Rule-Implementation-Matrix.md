@@ -24,6 +24,7 @@
 | BR-OP-08 | Win Probability Rules | Service Layer | `OpportunityService` | Manages default stage values versus explicit manual user overrides. |
 | BR-OP-09 | Terminal Status Governance | Service Layer | `OpportunityService` | Prevents state transitions and edits on WON/LOST records. |
 | BR-OP-10 | Default Opportunity Status | Service Layer | `OpportunityService` | Automates the default ACTIVE status assignment before database insertion. |
+| BR-OP-17 | Payment Confirmation Before Won | Service Layer | `validate_status_transition`, `OpportunityService` create/update | Won only from Payment Pending (`display_order` 80) with `confirm_full_payment`; fails closed. Stamps `full_payment_confirmed_at/_by`. Migrations 0057, 0058. Screens pending (plan step 3). |
 | BR-OP-16 | Closing Date Passed | Service Layer (planned) | `TargetPlanService` plan-vs-actual | Not built — Plan vs Actuals Tracking. Flag computed at query time (Active and closing date before today IST); never blocks. |
 | BR-PROJ-01 | Project Lifecycle | Service Layer | `ProjectService` | Status transition constraints (e.g., bid_submission_date required for BID_SUBMITTED). |
 | BR-FIN-01 | Contributor Split Validation | Service Layer | `SplitService` | Atomic transaction validation ensuring total equals exactly 100%. |

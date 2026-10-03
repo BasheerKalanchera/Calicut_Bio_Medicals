@@ -45,6 +45,12 @@ fhr" case (Won at stage Lead, 2026-10-03, Progress-Archive 2026-10).
   answered)
 - Timing: switch this on before Plan vs Actuals Tracking goes live on UAT, so "Won"
   only ever means one thing on that screen — proposed (asked, not yet answered)
+- An optional payment note goes with the tick (e.g. "Final payment by cheque no.
+  1234"), like loss notes and fast-track notes; new column `full_payment_note`
+  (migration 0058) — Basheer, 2026-10-03
+- One column per note, no shared Opportunity notes table for now; revisit if a
+  repeating event (several holds, instalment payments) needs its own notes (Backlog)
+  — Basheer, 2026-10-03
 - Rule number: BR-OP-17 "Payment Confirmation Before Won" (BR-OP-15 and 16 are taken)
   — Basheer, 2026-10-03
 

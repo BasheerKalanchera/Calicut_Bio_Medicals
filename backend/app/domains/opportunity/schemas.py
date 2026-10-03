@@ -253,6 +253,11 @@ class OpportunityCreate(BaseModel):
     gate_override_reason_id: uuid.UUID | None = None
     gate_override_note: str | None = None
     high_priority_manual: bool = False
+    # BR-OP-17: creating directly as Won needs the final payment stage and this
+    # tick, same as marking Won later. Not stored -- the service stamps
+    # full_payment_confirmed_at/_by from it.
+    confirm_full_payment: bool = False
+    full_payment_note: str | None = None
     items: list[OpportunityItemCreate] = []
 
     @model_validator(mode="after")
@@ -292,6 +297,10 @@ class OpportunityUpdate(BaseModel):
     gate_override_reason_id: uuid.UUID | None = None
     gate_override_note: str | None = None
     high_priority_manual: bool | None = None
+    # BR-OP-17: the "full payment received" tick sent with the move to Won.
+    # Not a column -- the service pops it and stamps full_payment_confirmed_at/_by.
+    confirm_full_payment: bool = False
+    full_payment_note: str | None = None
 
     @model_validator(mode="after")
     def _check_referral_not_both(self) -> "OpportunityUpdate":
@@ -341,6 +350,9 @@ class OpportunityResponse(BaseModel):
     gate_override_set_at: datetime | None
     gate_override_set_by: uuid.UUID | None
     high_priority_manual: bool
+    full_payment_confirmed_at: datetime | None
+    full_payment_confirmed_by: uuid.UUID | None
+    full_payment_note: str | None
     created_at: datetime
     updated_at: datetime
     sbu: SBUNested
@@ -379,6 +391,8 @@ class PipelineOpportunity(BaseModel):
     gate_override_set_at: datetime | None
     gate_override_set_by: uuid.UUID | None
     high_priority_manual: bool
+    full_payment_confirmed_at: datetime | None
+    full_payment_note: str | None
     created_at: datetime
     updated_at: datetime
     account: AccountNested
@@ -391,6 +405,7 @@ class PipelineOpportunity(BaseModel):
     referred_by: OwnerNested | None
     gate_override_approver: OwnerNested | None
     gate_override_reason: GateOverrideReasonNested | None
+    full_payment_confirmed_by_user: OwnerNested | None
 
     @computed_field
     @property

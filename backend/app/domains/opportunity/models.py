@@ -97,6 +97,14 @@ class Opportunity(AuditMixin, Base):
     )
     high_priority_manual: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # BR-OP-17: stamped by the service when the Opportunity is marked Won
+    # (who ticked "full payment received", and when). Both or neither --
+    # ck_opportunity_full_payment_confirmed_pair.
+    full_payment_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    full_payment_confirmed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
+    )
+    full_payment_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     account: Mapped["Account"] = relationship(back_populates="opportunities", lazy="joined")
     sbu: Mapped["SBU"] = relationship(back_populates="opportunities", lazy="joined")
@@ -112,6 +120,9 @@ class Opportunity(AuditMixin, Base):
     )
     gate_override_set_by_user: Mapped["UserProfile | None"] = relationship(
         foreign_keys=[gate_override_set_by], lazy="joined"
+    )
+    full_payment_confirmed_by_user: Mapped["UserProfile | None"] = relationship(
+        foreign_keys=[full_payment_confirmed_by], lazy="joined"
     )
     stage: Mapped["OpportunityStage"] = relationship(back_populates="opportunities", lazy="joined")
     status: Mapped["OpportunityStatus"] = relationship(back_populates="opportunities", lazy="joined")

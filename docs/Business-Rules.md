@@ -142,6 +142,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 | **Clinical Evaluation → Negotiation** | 1. Clinical Evaluation Outcome recorded.<br>2. Expected Closure Date defined — not required when `lead_source` = REPEAT_ORDER (BR-OP-13). |
 | **Negotiation → Order** | 1. Order Value confirmed.<br>2. Product Details defined.<br>3. Shared Ownership Validation completed (if applicable).<br>4. Handover Information completed. |
 | **Order → Delivery & Installation** | 1. Purchase Order Number entered.<br>2. Delivery Date scheduled.<br>3. Installation Site confirmed. |
+| **Delivery & Installation → Payment Pending** | No extra requirement — moving here states delivery and installation are done. Won is reachable only from this stage (BR-OP-17). |
 
 ### BR-OP-02: "On-Hold" Status Discipline (ADR-005)
 * **Rule:** Moving an opportunity to the "On-Hold" status is a guarded transition.
@@ -165,8 +166,8 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Reference:** ADR-014 (Account → Project → Opportunity Relationship Model).
 
 ### BR-OP-05: Status Transition Rules
-* **Rule:** Status is independent of Stage. An Opportunity can transition to Won, Lost, or On-Hold from any stage.
-* **Won Requirements:** To transition to Won from any stage, `PO Number` and `Product Details` must be confirmed.
+* **Rule:** Status is independent of Stage. An Opportunity can transition to Lost or On-Hold from any stage; Won only from Payment Pending (BR-OP-17, 2026-10-03).
+* **Won Requirements:** `PO Number` and `Product Details` must be confirmed. **Since 2026-10-03, Won is reachable only from the Payment Pending stage, with full payment confirmed — see BR-OP-17.** Lost and On Hold remain reachable from any stage.
 * **Lost Requirements:** See BR-OP-03.
 * **On-Hold Requirements:** See BR-OP-02.
 
@@ -238,14 +239,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 ### BR-OP-13: REPEAT_ORDER Fast-Track (2026-08-05)
 * **Rule:** An Opportunity where the customer is buying the exact same equipment they already have from Cabio — price pre-negotiated off a prior Purchase Order, no fresh demo or negotiation — is tagged with the `REPEAT_ORDER` `LeadSource` value. This is distinct from the existing `Existing Customer` value, which only describes how the lead reached Cabio (an existing relationship), not whether this specific deal is a repeat order.
 * **Effect:** When `lead_source` = `REPEAT_ORDER`, the Qualified → Demo (Demo Date) and Clinical Evaluation → Negotiation (Expected Closure Date) gates in BR-OP-01 are not enforced — those pipeline stages genuinely don't occur for this deal type.
-* **Unaffected:** The Negotiation → Order gate (Order Value, Product Details) and the Order → Delivery gate (PO Number) are enforced exactly as for any other Opportunity — a REPEAT_ORDER deal still requires confirmed price and product details, sourced from the prior order rather than a fresh negotiation.
+* **Unaffected:** The Negotiation → Order gate (Order Value, Product Details) and the Order → Delivery gate (PO Number) are enforced exactly as for any other Opportunity — a REPEAT_ORDER deal still requires confirmed price and product details, sourced from the prior order rather than a fresh negotiation. BR-OP-17 (Won only from Payment Pending, after full payment) also applies unchanged.
 * **Scope:** A single flag — no sub-classification of repeat order types. Any role may set it; there is no manager-approval or override path for this exception (considered and deliberately not built — the volume this rule addresses, ~40% of the pipeline, was judged too high for a per-deal approval workflow).
 * **Enforcement:** `validate_stage_transition` (`app/domains/opportunity/validators.py`) — gated on the selected lead source's `name` equalling `REPEAT_ORDER`, looked up via `OpportunityRepository.get_lead_source`.
 * **Reference:** ADR-015 (Opportunity Creation at Any Sales Stage); `docs/Discussion-FastTrack-Opportunity-Creation.md` for the full options analysis and decision record.
 
 ### BR-OP-14: Manager-Attested Gate Override (2026-08-25)
 * **Rule:** A rep may skip the Qualified → Demo (Demo Date) and Clinical Evaluation → Negotiation (Expected Closure Date) gates in BR-OP-01 for a deal-specific reason (e.g. the customer declines a demo), distinct from BR-OP-13's REPEAT_ORDER exception (which is lead-source-driven, not a judgment call). Setting `gate_override_approver_id` requires naming either the opportunity owner's own immediate manager — validated against `user_profile.manager_id` — who must hold the Area Manager role, or (as an escalation path for when that manager is unavailable, e.g. on leave) any user holding the General Manager role, with no reporting-line check for that path. Plus a `gate_override_reason_id` (master data) and optional `gate_override_note`.
-* **Effect:** Identical to BR-OP-13's — Negotiation → Order and Order → Delivery gates are unaffected; Order Value, Product Details, and PO Number remain mandatory.
+* **Effect:** Identical to BR-OP-13's — Negotiation → Order and Order → Delivery gates are unaffected; Order Value, Product Details, and PO Number remain mandatory. BR-OP-17 (payment confirmation before Won) is not waived either.
 * **Approver:** The rep sets the override themselves (an attestation, not a blocking approval workflow) but must name a real approving manager at the same time, creating an auditable record without a wait-for-approval step.
 * **Approver awareness notification (2026-08-27):** the named approver receives a non-urgent, in-app notification (`GATE_OVERRIDE_NAMED`) the moment `gate_override_approver_id` is newly set — bell-icon only, never the interrupting urgent dialog. This is awareness, not an approval gate: the deal is already fast-tracked when the notification fires, nothing waits on the manager acting on it.
 * **Audit:** `gate_override_set_at`/`gate_override_set_by` capture who actually set it and when, distinct from `gate_override_approver_id` (who approved it). Re-stamped (and the notification re-fires) only when `gate_override_approver_id` actually changes value on an update — an edit that resends the same already-set approver (the frontend always includes the field once the checkbox is checked) must leave both untouched.
@@ -255,7 +256,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 
 ### BR-OP-15: High Priority Deal Flag (2026-09-14)
 * **Rule:** An Opportunity is treated as High Priority in one of two ways:
-  1. **Automatic:** any Opportunity past the Demo stage — Clinical Evaluation, Negotiation, Order, or Delivery & Installation (`opportunity_stage.display_order > 30`) — is automatically High Priority. Computed at query time from the current stage; no stored field, nothing to keep in sync.
+  1. **Automatic:** any Opportunity past the Demo stage — Clinical Evaluation, Negotiation, Order, Delivery & Installation, or Payment Pending (`opportunity_stage.display_order > 30`) — is automatically High Priority. Computed at query time from the current stage; no stored field, nothing to keep in sync.
   2. **Manual:** an Opportunity still in Lead, Qualified, or Demo stage (`display_order` 10/20/30) does not qualify automatically, but can be marked High Priority by hand via a flag a person sets explicitly.
 * **Rationale:** Confirmed by Haroon, 2026-09-14, replacing an earlier proposed value/closure-date threshold rule (₹30L Imaging / ₹15L Critical Care, within 14 days of Expected Closure Date) that was never approved — see `docs/Backlog.md`'s "Auto-computed High Priority deal flag" entry for that superseded derivation. A deal advancing past Demo already represents real, demonstrated commitment regardless of its size or exact closing date, which is a simpler and more defensible signal than a tunable Lakhs/day threshold.
 * **Downstream use:** feeds the Insights Dashboard's missing "High-Priority Deals" tile, the Kanban board's priority sort (alongside its existing probability ordering), and the still-unbuilt Weekly Follow-up Report.
@@ -268,6 +269,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Forecast effect:** in Plan vs Actuals Tracking, a flagged Opportunity counts in the current quarter's Expected, not in the past quarter its date points to.
 * **Rationale:** Basheer, 2026-09-29, after comparing Salesforce, Dynamics and Zoho: none blocks on a past closing date; common practice is to flag it and have the manager follow up. Salesforce's default of quietly dropping such Opportunities from forward-looking reports is what this avoids.
 * **Enforcement:** not built yet — `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`.
+
+### BR-OP-17: Payment Confirmation Before Won (2026-10-03)
+* **Rule:** "Won cannot be set if full payment is not collected." An Opportunity can be marked Won only (a) from the last stage, **Payment Pending** (working name; `opportunity_stage.display_order` 80, after Delivery & Installation), and (b) with "full payment received" confirmed in the same save. Full payment only — a partial or advance payment does not qualify.
+* **Effect:** every Opportunity passes through Order and Delivery & Installation before Won, so delivery and installation are tracked in the app. Moving from Delivery & Installation to Payment Pending needs nothing extra — the move itself states that delivery and installation are done. Creating an Opportunity directly as Won follows the same rule. Lost and On Hold are unaffected and remain allowed from any stage.
+* **No exceptions:** REPEAT_ORDER (BR-OP-13) and Manager-Attested Gate Override (BR-OP-14) Opportunities follow this rule too.
+* **Who confirms:** anyone who can edit the Opportunity (the rep, or a manager above them). Self-attested in the app — no Tally or Finance connection (Finance stays the system of record, PRD Appendix B.5). `full_payment_confirmed_at` / `full_payment_confirmed_by` are stamped automatically; an optional `full_payment_note` (e.g. "Final payment by cheque no. 1234") goes with it, like `loss_notes` and `gate_override_note`.
+* **Reports:** Won revenue is dated by `closed_at`, which is now the payment-confirmation date, not the PO date. Payment Pending Opportunities count in the open pipeline and weighted forecast (default win probability 98%).
+* **Existing data:** Opportunities already Won before go-live are untouched (forwards-only).
+* **Rationale:** Basheer, 2026-09-11 (rule wording, no exceptions) and 2026-10-03 (Won only from the last stage — a payment tick alone would still allow Won at Lead, the MMC "Edan F6" case); agreed by Haroon and Latheef Bhai, 2026-10-03.
+* **Enforcement:** `validate_status_transition` (`app/domains/opportunity/validators.py`, fails closed if the stage or tick isn't passed); `OpportunityService.create_opportunity` / `update_opportunity` stamp who/when. Migrations `0057`, `0058`. Screens: `docs/Payment-Confirmation-Gate-Implementation-Plan.md` step 3.
 
 ---
 

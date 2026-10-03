@@ -12,7 +12,7 @@
 -- used as an `alembic stamp <rev>` checkpoint.
 --
 -- Regenerated 2026-10-03 from the Dev database, catching up migration
--- 0057: BR-OP-17: payment confirmation before Won -- new last stage + who/when fields
+-- 0058: BR-OP-17: optional note with the full-payment confirmation
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict aEqV5ONdgWJ51MvocGfVlMljwwZleDbVVcR6J9OexL6v05lvJPhlcpLaLJqUlhQ
+\restrict 444skC447NU2dGwu4VOXuBGzZNX5a6EiBhpC7xbyneFrH8VlgXxC6u7MRPBO48Q
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -602,6 +602,7 @@ CREATE TABLE public.opportunity (
     closed_at timestamp with time zone,
     full_payment_confirmed_at timestamp with time zone,
     full_payment_confirmed_by uuid,
+    full_payment_note text,
     CONSTRAINT ck_opportunity_full_payment_confirmed_pair CHECK (((full_payment_confirmed_at IS NULL) = (full_payment_confirmed_by IS NULL))),
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
@@ -3437,5 +3438,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict aEqV5ONdgWJ51MvocGfVlMljwwZleDbVVcR6J9OexL6v05lvJPhlcpLaLJqUlhQ
+\unrestrict 444skC447NU2dGwu4VOXuBGzZNX5a6EiBhpC7xbyneFrH8VlgXxC6u7MRPBO48Q
 

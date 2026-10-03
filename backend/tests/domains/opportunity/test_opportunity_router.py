@@ -68,6 +68,10 @@ def _mock_opportunity(**overrides) -> MagicMock:
         "gate_override_set_by": None,
         "gate_override_approver": None,
         "gate_override_reason": None,
+        "full_payment_confirmed_at": None,
+        "full_payment_confirmed_by": None,
+        "full_payment_note": None,
+        "full_payment_confirmed_by_user": None,
     }
     defaults.update(overrides)
     opp = MagicMock(spec=Opportunity)

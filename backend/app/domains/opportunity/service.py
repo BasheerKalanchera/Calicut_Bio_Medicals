@@ -200,7 +200,11 @@ class OpportunityService:
             reactivation_date=None,
             po_number=data.po_number,
             has_items=bool(data.items),
+            new_stage_order=new_stage.display_order,
+            full_payment_confirmed=data.confirm_full_payment,
         )
+        # BR-OP-17: who confirmed full payment, and when -- only on a Won create.
+        is_won = new_status.status_code == "WON"
 
         opportunity = Opportunity(
             account_id=account_id,
@@ -229,6 +233,9 @@ class OpportunityService:
             # a historical Won/Lost deal) -- same closed_at stamping rule as
             # update_opportunity's transition path applies here too.
             closed_at=func.now() if new_status.is_terminal else None,
+            full_payment_confirmed_at=func.now() if is_won else None,
+            full_payment_confirmed_by=created_by if is_won else None,
+            full_payment_note=data.full_payment_note,
             created_by=created_by,
             updated_by=created_by,
         )
@@ -269,6 +276,8 @@ class OpportunityService:
             raise NotFoundError(f"Opportunity {opportunity_id} not found")
 
         updates = data.model_dump(exclude_unset=True)
+        # BR-OP-17: the payment tick is a request flag, not a column.
+        confirm_full_payment = bool(updates.pop("confirm_full_payment", False))
         if not updates:
             return opportunity
 
@@ -419,7 +428,15 @@ class OpportunityService:
                 reactivation_date=opportunity.reactivation_date,
                 po_number=opportunity.po_number,
                 has_items=has_items,
+                new_stage_order=effective_stage.display_order,
+                full_payment_confirmed=confirm_full_payment,
             )
+
+            # BR-OP-17: stamp who confirmed full payment, and when, on the
+            # move to Won (BR-OP-09 means this can only happen once).
+            if effective_status.status_code == "WON" and current_status_code != "WON":
+                opportunity.full_payment_confirmed_at = func.now()
+                opportunity.full_payment_confirmed_by = updated_by
 
             # Sales Report needs the real date a deal closed, not `updated_at`
             # (which changes on any unrelated edit). Stamped once, exactly

@@ -135,6 +135,9 @@ def _make_opportunity(**overrides) -> MagicMock:
         gate_override_set_at=None,
         gate_override_set_by=None,
         high_priority_manual=False,
+        full_payment_confirmed_at=None,
+        full_payment_confirmed_by=None,
+        full_payment_note=None,
     )
     defaults.update(overrides)
     opp = MagicMock(spec=Opportunity)
@@ -193,6 +196,23 @@ def _make_create_data(**overrides) -> OpportunityCreate:
     )
     defaults.update(overrides)
     return OpportunityCreate(**defaults)
+
+
+def _won_create_data(**overrides) -> OpportunityCreate:
+    """Create-as-Won at Payment Pending: every stage gate from Lead satisfied
+    (BR-OP-00), plus the BR-OP-17 payment tick."""
+    defaults = dict(
+        status_id=STATUS_WON_ID,
+        lead_source_id=LEAD_SOURCE_ID,
+        indicative_value=Decimal("5"),
+        demo_start_date=date(2026, 9, 1),
+        expected_closure_date=date(2026, 10, 1),
+        po_number="PO-1001",
+        items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
+        confirm_full_payment=True,
+    )
+    defaults.update(overrides)
+    return _make_create_data(**defaults)
 
 
 # ===========================================================================
@@ -307,18 +327,62 @@ class TestCreateOpportunity:
         closed_at must be stamped here too, not just on the update path."""
         repo = _make_repo()
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
         repo.has_items.return_value = True
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
-        data = _make_create_data(
-            status_id=STATUS_WON_ID,
-            po_number="PO-1001",
-            items=[OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))],
-        )
-        service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
+        service.create_opportunity(ACCOUNT_ID, _won_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
 
         created_obj: Opportunity = repo.create.call_args[0][0]
         assert created_obj.closed_at is not None
+
+    # BR-OP-17: creating directly as Won follows the same rule as marking Won.
+
+    def test_create_at_won_stamps_full_payment_confirmation(self):
+        repo = _make_repo()
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.create_opportunity(
+            ACCOUNT_ID, _won_create_data(full_payment_note="Cheque 1234"), created_by=USER_ID, sbu_id=SBU_ID
+        )
+
+        created_obj: Opportunity = repo.create.call_args[0][0]
+        assert created_obj.full_payment_confirmed_at is not None
+        assert created_obj.full_payment_confirmed_by == USER_ID
+        assert created_obj.full_payment_note == "Cheque 1234"
+
+    def test_create_at_won_refused_before_payment_pending(self):
+        repo = _make_repo()
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            service.create_opportunity(ACCOUNT_ID, _won_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
+        repo.create.assert_not_called()
+
+    def test_create_at_won_refused_without_payment_tick(self):
+        repo = _make_repo()
+        repo.get_status.return_value = _make_status("WON", is_terminal=True)
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="full payment"):
+            service.create_opportunity(
+                ACCOUNT_ID, _won_create_data(confirm_full_payment=False), created_by=USER_ID, sbu_id=SBU_ID
+            )
+
+    def test_create_at_active_leaves_payment_confirmation_empty(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.create_opportunity(ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
+
+        created_obj: Opportunity = repo.create.call_args[0][0]
+        assert created_obj.full_payment_confirmed_at is None
+        assert created_obj.full_payment_confirmed_by is None
 
     # No equivalent "create directly at Lost" test -- create_opportunity's
     # validate_status_transition call hardcodes loss_reason_id/competitor_name/
@@ -953,7 +1017,7 @@ class TestUpdateOpportunity:
         opp = _make_opportunity(po_number="PO-1001", closed_at=None)
         repo = _make_repo()
         repo.get_for_update.return_value = opp
-        repo.get_stage.return_value = _make_stage(10, "LEAD")
+        repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
         repo.get_status.side_effect = [
             _make_status("ACTIVE"),
             _make_status("WON", is_terminal=True),
@@ -962,10 +1026,82 @@ class TestUpdateOpportunity:
         service = OpportunityService(repository=repo, notification_service=_make_notification_service())
 
         service.update_opportunity(
-            OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID), updated_by=USER_ID
+            OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
         )
 
         assert opp.closed_at is not None
+
+    # BR-OP-17 on the update path.
+
+    def _won_update_setup(self, stage_order: int, stage_code: str):
+        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(stage_order, stage_code)
+        repo.get_status.side_effect = [
+            _make_status("ACTIVE"),
+            _make_status("WON", is_terminal=True),
+        ]
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        return opp, repo, service
+
+    def test_transition_to_won_stamps_who_and_when(self):
+        opp, _, service = self._won_update_setup(80, "PAYMENT_PENDING")
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True, full_payment_note="RTGS 88231"),
+            updated_by=USER_ID,
+        )
+
+        assert opp.full_payment_confirmed_at is not None
+        assert opp.full_payment_confirmed_by == USER_ID
+        assert opp.full_payment_note == "RTGS 88231"
+
+    def test_transition_to_won_refused_without_payment_tick(self):
+        opp, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
+
+        with pytest.raises(BusinessRuleViolation, match="full payment"):
+            service.update_opportunity(OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID), updated_by=USER_ID)
+        repo.update.assert_not_called()
+        assert opp.full_payment_confirmed_at is None
+
+    def test_transition_to_won_refused_at_delivery_and_installation(self):
+        # The MMC case: Won before the last stage is refused even with the tick.
+        _, repo, service = self._won_update_setup(70, "DELIVERY_INSTALLATION")
+
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            service.update_opportunity(
+                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+            )
+        repo.update.assert_not_called()
+
+    def test_repeat_order_not_exempt_from_payment_stage(self):
+        # BR-OP-13 waives demo/negotiation gates, never BR-OP-17.
+        opp, repo, service = self._won_update_setup(60, "ORDER")
+        opp.lead_source_id = LEAD_SOURCE_ID
+        repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
+
+        with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
+            service.update_opportunity(
+                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+            )
+
+    def test_payment_tick_is_not_written_onto_the_record(self):
+        # confirm_full_payment is a request flag, not a column -- an unrelated
+        # save carrying it must not set an attribute or stamp anything.
+        opp = _make_opportunity()
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(
+            OPP_ID, OpportunityUpdate(name="Renamed", confirm_full_payment=True), updated_by=USER_ID
+        )
+
+        assert "confirm_full_payment" not in vars(opp)
+        assert opp.full_payment_confirmed_at is None
 
     def test_transition_to_lost_stamps_closed_at(self):
         opp = _make_opportunity(loss_reason_id=LOSS_REASON_PRICE_ID, closed_at=None)
