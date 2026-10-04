@@ -39,10 +39,77 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `/zone-rollup` retired. pytest 1124, ruff, tsc, lint clean. E2E plan revised
   against live Dev data re-checked 2026-10-04 (hide-colleagues cases R1-R6,
   corrected figures) and committed in the same commit.
-- **Next:** restart the Dev backend (confirm P1), then run the E2E from
-  pre-flight: "Basheer clicks, Claude watches" for saves, Pass/Fail recorded
-  per step. After: BR-PL rule, Traceability, UI-Inventory, scorecard
-  regenerate + `--check`, post-commit checklist.
+- **E2E STOPPED 2026-10-04 by Basheer: "this feature is not built properly."**
+  Done: Pre-flight and Section A (Imaging and Critical Care as Haroon) Pass;
+  A3 re-check Pass for Basheer K hidden in all quarters. Sections S, W, C, L,
+  E, R not run. Not Done on the scorecard; no E2E sign-off.
+- What went wrong in the build (details in Progress-Archive retro): the
+  who-is-shown rule was changed twice mid-E2E. First fix hid everyone with no
+  plan (wrong); second fix hid only people outside the SBU (Basheer-approved).
+  Then Basheer found Vivek (Critical Care, Sales Staff, no Opportunities;
+  plans Q2 approved, Q3 pending, Q4 rejected) shows only in Q2/Q3. Cause: the
+  list is built only from plans/wins/expected/late Opportunities
+  (`service.py` `people` dict), so an SBU member with no activity never gets
+  a row. Basheer's expectation: the GM sees **every** SBU member, every quarter.
+- **Uncommitted** in the working tree (partial; do not commit as-is):
+  `repository.py` (`home_sbu_by_user`), `service.py` (home-SBU filter),
+  `test_plan_vs_actual.py` (3 tests), `PlanVsActualSection.tsx` ("No submitted
+  plan" line), plus E2E-plan and Progress-Archive notes. pytest 146 planning,
+  ruff, tsc, lint clean. Dev has a test Opportunity "Test +lead screen"
+  linked to Basheer K.
+- UAT check 2026-10-04 (read-only, Basheer approved): 160 Opportunities;
+  none owned by someone whose home SBU differs from the Opportunity's SBU
+  (so Basheer K's Dev case can't occur there). Only Haroon Sidheeq (GM, no
+  home SBU) owns Opportunities outside a home SBU: 29 Critical Care, 13
+  Imaging. Basheer: Haroon is GM **and** sells on the ground in both SBUs.
+  So the built rule is wrong for him: no plan = no row, yet his wins count in
+  the totals. Proposed rule (not approved): show a person if home SBU =
+  viewed SBU, **or** a submitted plan there, **or** they own Opportunities
+  there (Won/Expected/late). Dev's test Opportunity "Test +lead screen" would
+  make Basheer K appear: reassign or retire it first (has Activity rows,
+  so reassign rather than delete).
+- **Next (Basheer decides, tomorrow):** revisit the design before more code.
+  Open points: (1) write one people-rule in the plan doc (the proposed rule
+  above); (2) GM/Admin see every active member of the viewed SBU even with
+  nothing in the quarter (Planned 0), others only their own scope; (3) Area
+  Managers included or not (Critical Care: Arun Adarsh, Nishad K V, Vivek;
+  recommended yes); (4) Haroon always shown in both SBUs, or only with a
+  plan/Opportunities; (5) rejected/draft plans stay ignored (`list_plans`
+  counts only pending/approved). **Superseded by the design review below.**
+- **Design review 2026-10-04 (E2E paused; Basheer: design → gap analysis →
+  fix → new E2E plan → E2E).** Agreed, **not yet saved to the plan doc**:
+  - Roster: every active SBU member expected to plan gets a row every
+    quarter on **both** Target Planning and Plan vs Actuals, plan or not,
+    within the viewer's scope (purpose: managers chase non-submitters).
+    Reopens Target Planning (Dev only; both go to UAT together). Checked in
+    code: Target Planning today lists only people with a plan.
+  - Each row shows status Not started / Draft / Waiting / Approved /
+    Rejected, plus an "N of M haven't submitted" line on both screens.
+    Automatic bell reminder → Backlog entry (needs the nightly job; not
+    written yet).
+  - A manager sees only the word "Draft" for a team member's draft.
+  - Who plans: everyone active except Admin. Fahad (Imaging, now Marketing
+    User temporarily) goes back to Imaging sales; Basheer will create a
+    separate Marketing user. Haroon (GM, no home SBU) sells and has targets,
+    so he is on the roster in **both** SBUs — confirm he counts as "not
+    submitted" when planless.
+  - Dev data 2026-10-04 (read-only): Q3 Imaging only Rudrappa has a plan
+    (Waiting ₹10 L); Critical Care Arun Approved ₹50 L, Vivek Waiting ₹51 L
+    (was ₹60 L approved), Nishad none. Q4: Vivek Rejected ₹45 L (was ₹30 L
+    approved).
+  - **Parked for tomorrow:** Q3 revised-after-approval figure (light "was
+    ₹X approved" note, recommended; heavy = keep approved snapshot, DB
+    change); Q4 Won counts at payment (BR-OP-17) — confirm with Haroon;
+    Q5 manager row own plan only (recommended) vs team subtotal; Q6 screen
+    mainly for Haroon/Basheer K weekly review.
+- **Next:** settle Q3–Q6 with real examples; show the Decisions text for the
+  plan doc, then gap analysis → fix plan → build. Session retro 2026-10-04
+  saved to Progress-Archive. Then rerun A, continue from Section S
+  (Fazal plans Aster DM 20 + Aster MIMS Calicut 10, Haroon approves, Nishad
+  plans one hospital for 10 in Critical Care; Basheer clicks, Claude
+  watches), then W, C, L, E, R. After E2E: BR-PL rule, Traceability,
+  UI-Inventory, scorecard regenerate + `--check`, post-commit checklist, list
+  the `PVA test` Opportunities in Progress-Archive.
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
@@ -69,11 +136,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** write the implementation plan when Basheer says; watch the
   closure report's progress.
 
-## Doc tidy-up 2026-10-04 — committed `7e2e9b9`; open leftovers
+## Doc tidy-up 2026-10-04 — closed in `7e2e9b9` + `58063fb`; two items left
 
-- ZonePicker plan: Status needs a check against code and records; plan untouched until then.
-- Pipeline product-filter half: Backlog entry, or ask Latheef Bhai? (Basheer decides.)
-- Phase-2E-Task9 scratch doc: delete or keep? (Basheer decides.)
-- Doc-integrity-sweep skill still says "six checks" in a few places: fix wording?
-- Traceability item 13 ("Commitment beyond contract") wording + scorecard republish: with the UAT move; show the diff first.
-- Untracked docs not from this thread: Forecast-By-Closing-Period plan, Opportunity-Create-Form-Unification plan, Plan-vs-Actuals E2E plan, Weekly-Follow-up-Report plan (confirm who owns the last).
+- Traceability item 13 ("Commitment beyond contract") wording + scorecard republish: with the UAT move (Basheer, 2026-10-04); show the diff first.
+- Antigravity plans (Forecast-By-Closing-Period, Opportunity-Create-Form-Unification, Weekly-Follow-up-Report): untracked, not ours, leave out of commits. **Next:** fix them per the 2026-10-04 review, each edit shown before/after first. Order: Weekly, Forecast, Create-Form, after the Plan vs Actuals E2E.

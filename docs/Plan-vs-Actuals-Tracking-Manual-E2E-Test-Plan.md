@@ -2,7 +2,7 @@
 # Plan vs Actuals Tracking — Manual E2E Test Plan
 
 **Covers:** `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`.
-**Built:** backend `0f7d75a`, frontend and legacy-plan fix `231fbd0`; code-review fixes (plans shown only within the viewer's scope, "Total (your view)" label, `/zone-rollup` retired) pending commit (partial checkpoint).
+**Built:** backend `0f7d75a`, frontend and legacy-plan fix `231fbd0`; code-review fixes (plans shown only within the viewer's scope, "Total (your view)" label, `/zone-rollup` retired) `903ad41` (partial checkpoint); people from another SBU get no row unless they have a plan in the viewed SBU (totals still count them), added during E2E 2026-10-04, pending commit.
 **Where:** Dev.
 
 **Won cannot be undone** (Business-Rules: Won and Lost Opportunities are never
@@ -40,13 +40,13 @@ the app.
 
 - P1. [Simple] Dev backend restarted since the last backend change (scope fix in `planning/repository.py`, `/zone-rollup` removal). —
 - P2. [Simple] Frontend running; Basheer signed in as Basheer K (SBU Manager) in one browser, Haroon Sidheeq (GM) available in another. —
-- P3. [Simple] Open Insights Dashboard; the "Plan vs Actuals" card shows "This quarter" (2026-Q3). Note the starting figures for Imaging, per person. —
+- P3. [Simple] Open Insights Dashboard; the "Plan vs Actuals" card shows "This quarter" (2026-Q3). Note the starting figures for Imaging, per person. — Pass 2026-10-04 (as Haroon; card shows 2026-Q3; Imaging Rudrappa 10.00).
 
 ## A — Legacy plans (no hospitals): nothing to create
 
-1. [Simple] Insights Dashboard, SBU Imaging, quarter 2026-Q3. **Expected:** Rudrappa row Planned 10.00 (pending plans count). —
-2. [Complex: expand row, compare three tables] Expand Rudrappa. **Expected:** Brand table total 10.00; Hospital table shows one line "Not assigned to a hospital" 10.00; By zone shows "Not in a zone" 10.00. —
-3. [Simple] Signed in as Haroon, switch SBU to Critical Care. **Expected:** Arun Adarsh Planned 50.00 (approved, no hospitals); expanding shows "Not assigned to a hospital" 50.00. Vivek Planned 51.00 (pending); expand and record his hospital lines (KIMS Hospital Trivandrum is known). —
+1. [Simple] Insights Dashboard, SBU Imaging, quarter 2026-Q3. **Expected:** Rudrappa row Planned 10.00 (pending plans count). — Pass 2026-10-04.
+2. [Complex: expand row, compare three tables] Expand Rudrappa. **Expected:** Brand table total 10.00; Hospital table shows one line "Not assigned to a hospital" 10.00. The By zone table is dashboard-level, not inside the row: it shows "Not in a zone" including this 10.00. — Pass 2026-10-04 (figures matched).
+3. [Simple] Signed in as Haroon, switch SBU to Critical Care. **Expected:** Arun Adarsh Planned 50.00 (approved, no hospitals); expanding shows "Not assigned to a hospital" 50.00. Vivek Planned 51.00 (pending); expand and record his hospital lines (KIMS Hospital Trivandrum is known). Basheer K (SBU Manager, Imaging) must NOT appear: he belongs to Imaging and has no plan in Critical Care (he is only linked to a Dev test Opportunity, "Test +lead screen"). People from another SBU get no row unless they have a plan in the viewed SBU (decided 2026-10-04; their wins still count in the totals). A Critical Care person with no plan would still show, at Planned 0.00 with "No submitted plan for this quarter." in the expanded row (covered by unit tests; no such person exists on Dev now). — Pass 2026-10-04: Arun 50.00, "Not assigned to a hospital" 50.00 (EDAN 25, Magnamed 25); Vivek 51.00, KIMS Hospital Trivandrum 51.00 (EDAN 20, ELECTROSCIENCE 31); Basheer K row gone after the first (wrong) no-plan-no-row change (Basheer confirmed on screen 2026-10-04); **re-check after the corrected "other SBU" rule, pending.**
 
 ## S — Setup: proper hospital-wise plans
 
