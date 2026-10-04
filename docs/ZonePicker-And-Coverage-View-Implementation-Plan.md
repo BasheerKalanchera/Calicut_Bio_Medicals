@@ -1,7 +1,8 @@
 # Shared ZonePicker + Territory Admin Coverage View — Implementation Plan
 
-**Status:** Built (2026-08-13) — migration 0020 applied to Dev, `tsc`/lint/
-ruff clean. Manual verification in progress (checklist below). Post-build:
+**Status:** Built and shipped — `4f814e3` (2026-08-13), manually verified
+(`docs/Progress-Archive-2026-08.md`). Migration 0020 applied to Dev, `tsc`/lint/
+ruff clean. Post-build:
 Territory Admin's coverage chips were cluttering the tree view by default,
 so a "Show Coverage"/"Hide Coverage" toggle button was added
 (`showCoverage` state, defaults to `false`, client-side only).

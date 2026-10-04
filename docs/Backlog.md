@@ -469,55 +469,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   too as those grow) — worth a short standards-doc note next time that
   doc is touched, so a 5th copy of the same bug doesn't get written.
 
-- **Account Directory / Pipeline filters — Pipeline half BUILT 2026-09-15
-  (Pipeline Report), Account Directory half still needs Cabio leadership
-  sign-off.** Raised 2026-09-13 during the Phase 1
-  Delivery Scorecard review. `account.customer_type` and
-  `account.payer_behavior` already exist and could be exposed as filters
-  on the Account Directory screen; separately, each Opportunity already
-  links to its product(s) via `opportunity_item`, which could support a
-  product filter on the Pipeline board. Neither filter is built today —
-  the Account Directory screen currently filters only by Zone + a
-  hospital-name search box, and the Pipeline board only by Owner + Zone +
-  a deal-name/hospital-name search box. Two things to settle with Haroon/
-  Latheef Bhai before building either: (1) is this filtering actually
-  needed at all, or scope creep; (2) if needed, does every Sales Rep need
-  it as a day-to-day operational filter right on the Directory/Pipeline
-  screen, or is it only a manager/leadership planning need better served
-  by a report or dashboard tile instead (which should link into a
-  pre-filtered list rather than duplicating the filter UI a second time).
-  Note: no existing report already covers this — the Pipeline Value/
-  Forecast report only breaks down by Stage, Rep, SBU or Zone, and the
-  Product Performance report only shows won-deal revenue/quantity by
-  product/brand, not open pipeline value by product. So a "Pipeline
-  Analysis by Product" report, if leadership wants that route, would be
-  new work, not a filter relocated onto an existing screen.
-  **Basheer's steer (2026-09-13):** if a product filter is needed, it
-  belongs on a proper standalone **Pipeline Report** — which conveniently
-  is also a report PRD 5.6 (Core Reports) already asks for and that
-  doesn't exist yet today (only Product Performance is built from that
-  list of four; see the 11.1 row in
-  `docs/Signed-Requirements-to-PRD-Traceability.md`). Building it would
-  close both gaps at once, rather than treating "add a Pipeline Report"
-  and "add a product filter" as two separate asks.
-  **Decided, 2026-09-14 (Basheer):** going with this route — product
-  filtering will not be added to the Pipeline board itself; it's delivered
-  via the standalone Pipeline Report instead, scheduled in
-  `docs/Phase1-Completion-Sprint-Plan.md` alongside the Sales Report. No
-  longer waiting on a separate leadership sign-off for this half.
-  **Built, 2026-09-15:** Pipeline Report shipped (Feature 11.1, alongside
-  Sales Report) — standalone screen, open-deal breakdown by Stage/Rep/SBU/
-  Zone/Product, reusing the existing `pipeline_summary` engine. This half
-  of the entry is closed; only the Account Directory half (still awaiting
-  leadership sign-off) remains open below. See `docs/Sales-And-Pipeline-
-  Report-Implementation-Plan.md` and its manual E2E test plan.
-  A related question from the same review, now resolved: filtering Account
-  Directory by hospital class (A/B/C/D) depends on that classification data
-  existing at all — Haroon confirmed 2026-09-14 that the A/B/C/D field itself
-  is parked for Phase 2 (see Feature 5.1 in `docs/Signed-Requirements-to-
-  PRD-Traceability.md`), so an A/B/C/D filter is moot for Phase 1 too, by the
-  same logic. Filtering by specialty stays a separate, still-open question.
-
 - **Two open questions for Haroon/Latheef Bhai, surfaced during the
   same 2026-09-13 Phase 1 Delivery Scorecard review — none built, both
   waiting on a "do we actually need this" answer before being scoped:**
