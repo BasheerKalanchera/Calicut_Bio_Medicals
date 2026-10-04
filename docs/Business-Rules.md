@@ -282,6 +282,14 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** Basheer, 2026-09-11 (rule wording, no exceptions) and 2026-10-03 (Won only from the last stage — a payment tick alone would still allow Won at Lead, the MMC "Edan F6" case); agreed by Haroon and Latheef Bhai, 2026-10-03.
 * **Enforcement:** `validate_status_transition` (`app/domains/opportunity/validators.py`; checks the stage before and after the save, fails closed if the stages or tick aren't passed); `OpportunityService.create_opportunity` refuses Won; `update_opportunity` stamps who/when and refuses stage changes on Won/Lost. Migrations `0057`, `0058`. Screens: `docs/Payment-Confirmation-Gate-Implementation-Plan.md` step 3.
 
+### BR-OP-18: Open Opportunities Stay With an Owner in Their SBU (2026-10-04)
+* **Rule:** A user's SBU (or a role change that sets one) cannot be saved while they still own open Opportunities in a different SBU. Each such Opportunity must first be reassigned to an active person in its own SBU.
+* **Effect:** The save is refused with a message naming each blocking Opportunity and its SBU (e.g. "Basheer K still owns 1 open Opportunity in Critical Care: 'Test +lead screen'. Reassign it to someone in Critical Care first."). The admin reassigns on the Opportunity screen, then saves the user again. Won and Lost Opportunities never block and are never moved — past credit stays with whoever closed them. A change *to* Admin or General Manager never blocks, since those roles may own Opportunities in any SBU (BR-OP-12).
+* **Also:** an existing Opportunity's owner can only be changed to someone in the Opportunity's SBU (Admin/GM may override), matching BR-OP-12 at creation. The screen's owner picker already prevents this; the server check is a safety net.
+* **Not covered:** deactivating a user (no SBU change; often urgent) keeps today's open-Opportunity count warning and is not blocked.
+* **Rationale:** Basheer, 2026-10-04. On 3 Sep 2026 Basheer K was changed from Admin to SBU Manager (Imaging) while still owning an open Critical Care Opportunity he created as Admin on 18 Aug; it stayed stranded in Critical Care until reassigned by hand on 4 Oct. Blocking, not just warning, chosen so the case cannot recur.
+* **Enforcement:** not built yet — see `docs/Backlog.md` "Block an SBU change while the user owns open Opportunities in another SBU".
+
 ---
 
 # 3a. Product Catalog Rules

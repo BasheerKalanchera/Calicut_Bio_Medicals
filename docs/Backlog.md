@@ -9,6 +9,26 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
+
+Rule decided: BR-OP-18 (`docs/Business-Rules.md`). Found when Basheer K
+(moved Admin → SBU Manager, Imaging, on 3 Sep 2026) still owned an open
+Critical Care Opportunity; fixed on Dev by hand 2026-10-04 (reassigned to
+Nishad K V).
+- **Save block (lighter option, Basheer 2026-10-04):** the user-edit save
+  is refused with a message naming each blocking Opportunity; the admin
+  reassigns on the Opportunity screen. No in-dialog owner picker.
+  `organization/service.py` `update_user`; the dialog only shows the
+  server's message.
+- **Owner-change check on the server:** refuse an owner outside the
+  Opportunity's SBU on edit (Admin/GM override), reusing
+  `get_user_sbu_ids` in `opportunity/service.py` `update_opportunity`.
+  Low priority — the screen's owner picker already prevents it.
+- **One-time UAT check (read-only, Basheer's go-ahead on the day):** list
+  open Opportunities whose owner's SBU differs from the Opportunity's SBU
+  (owner not Admin/GM), so any existing stranded ones can be reassigned
+  before the block goes live.
+
 ### Audit Trail Redesign — built and tested on Dev; UAT move waiting (2026-10-03)
 
 Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Dev E2E passed
