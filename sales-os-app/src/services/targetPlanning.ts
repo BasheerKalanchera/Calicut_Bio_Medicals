@@ -10,7 +10,6 @@ import type {
   BrandRollup,
   EligibleAccount,
   PlanWarning,
-  ZoneRollupEntry,
   PlanVsActualResponse,
 } from "../types/targetPlanning";
 
@@ -51,13 +50,6 @@ export async function checkPlanOverlaps(
     params: { sbu_id: sbuId, planning_period: planningPeriod, account_ids: accountIds },
     // Repeated `account_ids=a&account_ids=b`, as FastAPI expects (see getBrandRollups).
     paramsSerializer: { indexes: null },
-  });
-  return response.data.data;
-}
-
-export async function getZoneRollup(sbuId: string, planningPeriod: string): Promise<ZoneRollupEntry[]> {
-  const response = await api.get("/planning/targets/zone-rollup", {
-    params: { sbu_id: sbuId, planning_period: planningPeriod },
   });
   return response.data.data;
 }

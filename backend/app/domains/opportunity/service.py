@@ -136,9 +136,8 @@ class OpportunityService:
         self._require_account(account_id)
 
         # BR-OP-12: caller's own SBU by default. Admin/General Manager have no
-        # meaningful "own" SBU (their profile's sbu_id is a placeholder), so they must
-        # always explicitly choose one -- never silently defaulted, even to a value that
-        # happens to match their own placeholder.
+        # meaningful "own" SBU (their profile's sbu_id is empty), so they must
+        # always explicitly choose one -- never silently defaulted.
         target_sbu_id = sbu_id
         if role_name in _SBU_OVERRIDE_ROLES:
             if data.sbu_id is None:

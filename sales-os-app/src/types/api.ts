@@ -1441,27 +1441,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/planning/targets/zone-rollup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Zone Rollup
-         * @description Planned amounts per zone (North Kerala, South Kerala, ...) across the
-         *     submitted plans the caller can see under RLS -- same visibility as /team.
-         */
-        get: operations["get_zone_rollup_api_v1_planning_targets_zone_rollup_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/planning/targets/eligible-accounts": {
         parameters: {
             query?: never;
@@ -2701,21 +2680,6 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["ZoneNameMatch"][];
-        };
-        /** APIResponse[list[ZoneRollupEntry]] */
-        APIResponse_list_ZoneRollupEntry__: {
-            /**
-             * Success
-             * @default true
-             */
-            success: boolean;
-            /**
-             * Message
-             * @default
-             */
-            message: string;
-            /** Data */
-            data: components["schemas"]["ZoneRollupEntry"][];
         };
         /** APIResponse[list[ZoneSearchResult]] */
         APIResponse_list_ZoneSearchResult__: {
@@ -5551,24 +5515,6 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-        };
-        /**
-         * ZoneRollupEntry
-         * @description Planned amounts summed by each hospital's ZONE-level ancestor. A
-         *     hospital filed above zone level (e.g. at bare "Kerala") has no such
-         *     ancestor -- zone_id/zone_name are None for that bucket.
-         */
-        ZoneRollupEntry: {
-            /** Zone Id */
-            zone_id: string | null;
-            /** Zone Name */
-            zone_name: string | null;
-            /** Planned Amount Lakhs */
-            planned_amount_lakhs: string;
-            /** Hospital Count */
-            hospital_count: number;
-            /** Person Count */
-            person_count: number;
         };
         /** ZoneSearchResult */
         ZoneSearchResult: {
@@ -9408,40 +9354,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_list_TargetPlanResponse__"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_zone_rollup_api_v1_planning_targets_zone_rollup_get: {
-        parameters: {
-            query: {
-                sbu_id: string;
-                planning_period: string;
-            };
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["APIResponse_list_ZoneRollupEntry__"];
                 };
             };
             /** @description Validation Error */

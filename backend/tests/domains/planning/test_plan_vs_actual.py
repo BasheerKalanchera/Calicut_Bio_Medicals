@@ -282,3 +282,36 @@ def test_brand_won_skips_lines_without_a_product():
     sql = _sql_of("won_by_owner_brand", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
     assert "JOIN product" in sql
     assert "JOIN brand" in sql
+
+
+def _plans_sql(user) -> str:
+    db = MagicMock()
+    db.scalars.return_value.all.return_value = []
+    PlanVsActualRepository(db).list_plans(user, SBU_ID, PERIOD)
+    stmt = db.scalars.call_args.args[0]
+    return str(stmt.compile(compile_kwargs={"literal_binds": True})).replace("-", "")
+
+
+def test_plans_listed_only_submitted_or_approved_and_joined_to_owner():
+    sql = _plans_sql(_user_with_role("Admin"))
+    assert "JOIN user_profile" in sql
+    assert "'APPROVED'" in sql
+    assert "'PENDING_APPROVAL'" in sql
+    assert "'DRAFT'" not in sql
+
+
+def test_plans_for_admin_are_not_narrowed_by_owner():
+    admin = _user_with_role("Admin")
+    assert admin.id.hex not in _plans_sql(admin)
+
+
+def test_plans_for_sales_rep_hide_colleagues():
+    rep = _user_with_role("Sales Rep")
+    assert rep.id.hex in _plans_sql(rep)
+
+
+def test_plans_for_sbu_manager_are_narrowed_to_their_sbu():
+    manager = _user_with_role("SBU Manager")
+    sql = _plans_sql(manager)
+    assert "user_profile.sbu_id" in sql
+    assert manager.id.hex in sql

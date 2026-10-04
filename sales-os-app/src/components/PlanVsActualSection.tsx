@@ -78,7 +78,7 @@ function PersonDetail({ person }: { person: PlanVsActualPerson }) {
             {person.hospitals.map((h) => (
               <TableRow key={h.account_id ?? h.account_name}>
                 <TableCell sx={h.account_id === null ? { fontStyle: "italic" } : undefined}>
-                  {h.account_id === null ? "Unplanned" : h.account_name}
+                  {h.account_name}
                 </TableCell>
                 <TableCell sx={numCellSx}>{lakhs(h.planned_lakhs)}</TableCell>
                 <TableCell sx={numCellSx}>{lakhs(h.won_lakhs)}</TableCell>
@@ -114,6 +114,8 @@ function PersonDetail({ person }: { person: PlanVsActualPerson }) {
 export default function PlanVsActualSection() {
   const { userProfile } = useAuth();
   const homeSbuId: string | undefined = userProfile?.sbu?.id;
+  // Only Admin/GM see the whole company; everyone else sees their own scope.
+  const isCompanyWide = ["Admin", "General Manager"].includes(userProfile?.role_name ?? "");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -165,7 +167,7 @@ export default function PlanVsActualSection() {
       <LoadingOrEmpty
         isLoading={query.isLoading}
         isError={query.isError}
-        isEmpty={!!data && data.people.length === 0 && data.planned_lakhs === "0" && data.won_lakhs === "0"}
+        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0}
         emptyText="Nothing planned or won for this quarter."
         errorText="Couldn't load Plan vs Actuals."
         onRetry={() => query.refetch()}
@@ -258,7 +260,7 @@ export default function PlanVsActualSection() {
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 900 }}>Company total</TableCell>
+                    <TableCell sx={{ fontWeight: 900 }}>{isCompanyWide ? "Company total" : "Total (your view)"}</TableCell>
                     <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.planned_lakhs)}</TableCell>
                     <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.won_lakhs)}</TableCell>
                   </TableRow>

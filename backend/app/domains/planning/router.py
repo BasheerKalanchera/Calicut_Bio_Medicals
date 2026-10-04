@@ -25,7 +25,6 @@ from app.domains.planning.schemas import (
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
-    ZoneRollupEntry,
 )
 from app.domains.planning.service import BrandVendorTargetService, PlanVsActualService, TargetPlanService
 from app.domains.reference.repository import BrandRepository
@@ -97,30 +96,6 @@ def get_plan_vs_actual(
 ) -> APIResponse[PlanVsActualResponse]:
     """Planned vs Won vs Expected for one quarter (Insights Dashboard). Read-only."""
     return APIResponse(data=service.get_plan_vs_actual(sbu_id, planning_period, current_user=current_user))
-
-
-@router.get("/zone-rollup")
-def get_zone_rollup(
-    sbu_id: uuid.UUID = Query(...),
-    planning_period: str = Query(...),
-    current_user: UserProfile = Depends(get_current_user),
-    service: TargetPlanService = Depends(_get_service),
-) -> APIResponse[list[ZoneRollupEntry]]:
-    """Planned amounts per zone (North Kerala, South Kerala, ...) across the
-    submitted plans the caller can see under RLS -- same visibility as /team."""
-    rows = service.get_zone_rollup(sbu_id, planning_period)
-    return APIResponse(
-        data=[
-            ZoneRollupEntry(
-                zone_id=zone_id,
-                zone_name=zone_name,
-                planned_amount_lakhs=amount,
-                hospital_count=hospitals,
-                person_count=people,
-            )
-            for zone_id, zone_name, amount, hospitals, people in rows
-        ]
-    )
 
 
 @router.get("/eligible-accounts")

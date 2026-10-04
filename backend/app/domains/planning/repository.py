@@ -302,48 +302,6 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         ).all()
         return [(row.account_id, row.display_name) for row in rows]
 
-    def get_zone_rollup(
-        self, sbu_id: uuid.UUID, planning_period: str
-    ) -> list[tuple[uuid.UUID | None, str | None, Decimal, int, int]]:
-        """Planned amounts per ZONE-level ancestor of each hospital's zone
-        (same walk-up as AccountRepository.find_similar_by_name), submitted
-        plans only, under the caller's RLS. Returns (zone_id, zone_name,
-        amount, hospital_count, person_count)."""
-        zone_anc = aliased(Zone)
-        zone_ancestor = (
-            select(
-                ZoneClosure.descendant_zone_id.label("zone_id"),
-                zone_anc.id.label("anc_id"),
-                zone_anc.name.label("anc_name"),
-            )
-            .join(zone_anc, zone_anc.id == ZoneClosure.ancestor_zone_id)
-            .where(zone_anc.zone_level == "ZONE")
-            .subquery()
-        )
-        stmt = (
-            select(
-                zone_ancestor.c.anc_id,
-                zone_ancestor.c.anc_name,
-                func.coalesce(func.sum(TargetPlanAccount.planned_amount_lakhs), 0),
-                func.count(func.distinct(TargetPlanAccount.account_id)),
-                func.count(func.distinct(TargetPlan.user_id)),
-            )
-            .select_from(TargetPlanAccount)
-            .join(TargetPlan, TargetPlan.id == TargetPlanAccount.target_plan_id)
-            .join(Account, Account.id == TargetPlanAccount.account_id)
-            .outerjoin(zone_ancestor, zone_ancestor.c.zone_id == Account.zone_id)
-            .where(TargetPlan.sbu_id == sbu_id)
-            .where(TargetPlan.planning_period == planning_period)
-            .where(TargetPlan.status != "DRAFT")
-            .group_by(zone_ancestor.c.anc_id, zone_ancestor.c.anc_name)
-            .order_by(zone_ancestor.c.anc_name)
-        )
-        return [
-            (zone_id, zone_name, Decimal(amount), hospitals, people)
-            for zone_id, zone_name, amount, hospitals, people in self.db.execute(stmt).all()
-        ]
-
-
 class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):
     def __init__(self, db: Session):
         super().__init__(BrandVendorTarget, db)
@@ -391,16 +349,21 @@ class PlanVsActualRepository:
             .subquery()
         )
 
-    def list_plans(self, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
+    def list_plans(self, current_user: UserProfile, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
         """Submitted plans only (pending or approved); drafts and rejected
-        plans don't count towards "planned"."""
+        plans don't count towards "planned". RLS lets any role see plans in
+        its zone subtree, so the plan owner is narrowed to the caller's owner
+        scope here -- the same rule Won and Expected use -- else a colleague's
+        plan would show as "Planned X, Won 0"."""
         stmt = (
             select(TargetPlan)
+            .join(UserProfile, UserProfile.id == TargetPlan.user_id)
             .where(TargetPlan.sbu_id == sbu_id)
             .where(TargetPlan.planning_period == planning_period)
             .where(TargetPlan.status.in_(("PENDING_APPROVAL", "APPROVED")))
             .options(*_PLAN_CHILDREN)
         )
+        stmt = self._apply_owner_scope(stmt, current_user)
         return list(self.db.scalars(stmt).all())
 
     def zone_of_accounts(self, account_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple[uuid.UUID | None, str | None]]:

@@ -73,14 +73,6 @@ export interface PlanWarning {
   colleague_name: string | null;
 }
 
-export interface ZoneRollupEntry {
-  zone_id: string | null;
-  zone_name: string | null;
-  planned_amount_lakhs: string;
-  hospital_count: number;
-  person_count: number;
-}
-
 export interface TargetPlan {
   id: string;
   user_id: string;

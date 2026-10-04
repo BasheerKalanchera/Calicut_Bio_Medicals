@@ -182,18 +182,6 @@ class SBUTargetRollupResponse(BaseModel):
     user_count: int
 
 
-class ZoneRollupEntry(BaseModel):
-    """Planned amounts summed by each hospital's ZONE-level ancestor. A
-    hospital filed above zone level (e.g. at bare "Kerala") has no such
-    ancestor -- zone_id/zone_name are None for that bucket."""
-
-    zone_id: uuid.UUID | None
-    zone_name: str | None
-    planned_amount_lakhs: Decimal
-    hospital_count: int
-    person_count: int
-
-
 class EligibleAccountResponse(BaseModel):
     """One row of the plan dialog's hospital picker."""
 

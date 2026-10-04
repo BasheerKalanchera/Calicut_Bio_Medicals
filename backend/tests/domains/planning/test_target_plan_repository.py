@@ -375,19 +375,3 @@ class TestFindOverlaps:
         assert "cabio_app_plan_overlap" in str(sql_text)
         assert params == {"ids": [str(account_id)], "sbu_id": str(SBU_ID), "period": "2026-Q3"}
         assert result == [(account_id, "Anil")]
-
-
-class TestGetZoneRollup:
-    def test_groups_submitted_plans_by_zone_level_ancestor(self):
-        zone_id = uuid.uuid4()
-        repo = TargetPlanRepository(db=MagicMock())
-        repo.db.execute.return_value.all.return_value = [(zone_id, "North Kerala", 120, 5, 2)]
-
-        rows = repo.get_zone_rollup(SBU_ID, "2026-Q3")
-
-        sql = _compiled(repo.db.execute.call_args[0][0])
-        assert "zone_1.zone_level = 'ZONE'" in sql or "zone_level = 'ZONE'" in sql
-        assert "LEFT OUTER JOIN" in sql
-        assert "target_plan.status != 'DRAFT'" in sql
-        assert f"target_plan.sbu_id = '{_uuid_literal(SBU_ID)}'" in sql
-        assert rows == [(zone_id, "North Kerala", Decimal("120"), 5, 2)]

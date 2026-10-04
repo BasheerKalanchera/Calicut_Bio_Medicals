@@ -108,9 +108,6 @@ class TargetPlanService:
     def list_eligible_accounts(self, search: str | None, *, current_user: UserProfile) -> list[Account]:
         return self.repository.list_eligible_accounts(search=search, zone_ids=_territory_zone_ids(current_user))
 
-    def get_zone_rollup(self, sbu_id: uuid.UUID, planning_period: str):
-        return self.repository.get_zone_rollup(sbu_id, planning_period)
-
     def check_overlaps(
         self, account_ids: list[uuid.UUID], sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
     ) -> list[PlanWarning]:
@@ -540,7 +537,7 @@ class PlanVsActualService:
             return people[user_id]
 
         brand_names: dict[uuid.UUID, str] = {}
-        plans = repo.list_plans(sbu_id, planning_period)
+        plans = repo.list_plans(current_user, sbu_id, planning_period)
         for plan in plans:
             acc = person(plan.user_id, plan.user.display_name)
             acc.plan_status = plan.status

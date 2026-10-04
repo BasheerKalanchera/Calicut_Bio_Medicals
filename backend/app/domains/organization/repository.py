@@ -89,11 +89,10 @@ class UserRepository(BaseRepository[UserProfile]):
                 select(Role.id).where(Role.role_name.in_(UNRESTRICTED_ROLES))
             )
             if current_user.role.role_name in UNRESTRICTED_ROLES:
-                # Admin/GM carry an sbu_id only to satisfy the NOT NULL column -- it's
-                # a placeholder, not a real SBU membership (see the identical note on
-                # the "scoped" branch below). Comparing candidates against it would
-                # wrongly restrict the split-participant picker to whichever SBU
-                # happens to be on the caller's placeholder row. Admin/GM are an
+                # Admin/GM have no real SBU membership (their sbu_id is empty on Dev;
+                # see the identical note on the "scoped" branch below). Comparing
+                # candidates against it would wrongly restrict the split-participant
+                # picker to whichever SBU happens to be on the caller's row. Admin/GM are an
                 # unrestricted overlay tier, so show every active, non-unrestricted
                 # user regardless of SBU -- BR-FIN-06 itself is still enforced
                 # server-side in replace_splits against the *opportunity's* sbu_id.
@@ -116,11 +115,10 @@ class UserRepository(BaseRepository[UserProfile]):
             scope_builder = TEAM_SCOPE_BUILDERS.get(current_user.role.role_name)
             visible = or_(scope_builder(current_user), self_row) if scope_builder else self_row
 
-            # Admin/General Manager carry an sbu_id/zone_id only to satisfy the NOT NULL
-            # columns -- they're an unrestricted overlay tier, not members of any operational
-            # SBU/zone/team, so they must never surface as a match under another tier's scoped
-            # branch just because their placeholder values happen to coincide (e.g. an SBU
-            # Manager whose SBU happens to match an Admin's on-paper sbu_id).
+            # Admin/General Manager are an unrestricted overlay tier, not members of any
+            # operational SBU/zone/team (their sbu_id is empty on Dev), so they must never
+            # surface as a match under another tier's scoped branch just because a stored
+            # value happens to coincide (e.g. an SBU Manager whose SBU matches an Admin's).
             not_unrestricted = UserProfile.role_id.not_in(
                 select(Role.id).where(Role.role_name.in_(UNRESTRICTED_ROLES))
             )

@@ -5,7 +5,7 @@ Hospital-wise Target Planning is finished; this feature tracks actuals
 against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
-the same day). Not started. Split-credit question sent to Haroon
+the same day). Built on Dev, E2E pending: backend `0f7d75a`, frontend `231fbd0`. Split-credit question sent to Haroon
 2026-09-29 — doesn't block this build (see Decisions).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
@@ -135,8 +135,8 @@ No database change.
 ## 6. Technical addendum
 
 - **Endpoint:** `GET /planning/targets/plan-vs-actual?sbu_id&planning_period`
-  in the planning router (it already owns `/zone-rollup`, which this
-  replaces for the screen; keep or retire `/zone-rollup` at code review).
+  in the planning router. The older `/zone-rollup` endpoint was retired at
+  code review (2026-10-04): nothing called it and it counted rejected plans.
 - **Plans:** `target_plan` with status `PENDING_APPROVAL`/`APPROVED`, joined to
   `target_plan_account` (`planned_amount_lakhs`) and `target_plan_brand_split`,
   under the caller's RLS (same as `/team`).
@@ -156,11 +156,15 @@ No database change.
 - **Closing date passed (BR-OP-16):** `status = ACTIVE AND
   expected_closure_date < today (IST)`; returned per person with Opportunity id,
   name, account, date, value.
-- **Visibility:** Opportunities scoped with `ReportingRepository._apply_owner_scope`
-  (TEAM_SCOPE_BUILDERS). Review item: confirm this matches `target_plan` RLS
-  for each role, so no one sees a plan without its actuals or the reverse.
-- **Zones:** reuse the `get_zone_rollup` ZONE-level ancestor grouping on
-  `account.zone_id` for both planned and actual.
+- **Visibility (fixed at code review 2026-10-04):** `target_plan` RLS lets any
+  role see plans in its zone subtree, wider than the owner scope used for
+  Opportunities. So `PlanVsActualRepository.list_plans` joins the plan owner
+  to `UserProfile` and applies the same `_apply_owner_scope` rule
+  (TEAM_SCOPE_BUILDERS; Admin/GM unrestricted). Colleagues outside the
+  viewer's scope are hidden entirely, plan and actuals alike. Totals label:
+  "Company total" for Admin/GM, "Total (your view)" for others.
+- **Zones:** ZONE-level ancestor grouping on `account.zone_id` for both
+  planned and actual (own implementation in `PlanVsActualService`).
 - **Quarter → dates:** "YYYY-Qn" with YYYY = FY start year (Q3 = Oct–Dec);
   a backend helper mirroring `getFiscalQuarterBounds` in
   `sales-os-app/src/utils/formatter.ts`.
