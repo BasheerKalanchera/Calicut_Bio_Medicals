@@ -441,3 +441,48 @@ directly:
   the same day.
 - Open: UAT move (0059 + steps 2–4), own approval, UAT `audit_log` backup
   first. Traceability row 13 wording and the scorecard wait for that move.
+
+## 2026-10-04 — One-time plan sweep and doc tidy-up (retro)
+
+Commit `7e2e9b9` (21 docs files). Sweep: found 18, fixed 17, deferred 1.
+
+- What happened: a very old feature's plan still said "Not started". A
+  one-time sweep of every plan Status line against git found 18 stale
+  plans. 17 now show the shipped hash (and E2E where a passed test plan
+  exists), plus targeted "superseded" tags and ticked "docs to update"
+  items; reasoning left untouched. ZonePicker deferred (needs a code/record
+  check).
+- Worked: a question about one old feature exposed that the daily check
+  only looked at recent changes. Hashes verified against git; exact
+  before → after shown before editing; history never rewritten.
+- Improve: Item 13 was first described without naming its section in a big
+  document, and the "needs a decision" case was jargon-heavy until Basheer
+  asked for clarity. Apply script failed on a doubled filename (nothing
+  written); one tick edit failed on different line wrapping.
+- Process change: the daily tidy-up skill gains check 7 (plan Status lines
+  against git). Every finding names its exact section and states plainly
+  what is needed.
+
+## 2026-10-04 — Audit log wrap-up and Plan vs Actuals review fixes (retro)
+
+Commits `51deecc`, `4958fd4` (Audit log) and `903ad41` (Plan vs Actuals).
+
+- What happened: Audit log finished on Dev (E2E 31/31, one real fix: stable
+  page order). Plan vs Actuals code review found a real leak: plans were
+  listed across a whole zone area while actuals were owner-limited, so a
+  Sales Executive saw colleagues' plans. Fixed (plans shown only within the
+  viewer's scope), labels now "Company total" / "Total (your view)",
+  `/zone-rollup` retired end to end. E2E plan revised against live Dev data
+  re-checked 2026-10-04 and pushed. E2E itself not yet run.
+- Worked: reviews taken one by one with findings verified before fixing; a
+  announced read-only Dev query exposed the E2E plan's wrong assumptions
+  before any test; hide-check cases built from real people and figures;
+  every commit shown and approved first, other sessions' files left out.
+- Improve: two code reviews launched in parallel errored and one report was
+  wrong, so one was repeated; the leak passed the first review because the
+  plan list's visibility rule and the actuals' rule were never compared; the
+  2026-10-03 live-data note had wrong roles and amounts; `rg` is not
+  installed so the Grep tool fails (Bash grep used).
+- Process change: new CLAUDE.md rule (Manual E2E) — visibility/permission
+  test plans need a hide-check case from live data and a scope re-check
+  just before E2E. Run code reviews one at a time.

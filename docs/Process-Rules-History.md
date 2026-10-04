@@ -220,3 +220,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Terminology — say "Opportunity", never "deal", in code, comments, docs, commit messages and chat.
   **Why:** 2026-10-01 — Basheer, reviewing the hotfix commit message: "Please use the project terminology No deals only Opportunities." Claude had used "deal" throughout the chat, the test plan, two code comments and the commit message.
+
+- **Rule:** Manual E2E — a permission/visibility test plan needs a hide-check case from live data, with the scope check re-run just before E2E.
+  **Why:** 2026-10-04 — Plan vs Actuals listed plans across a whole zone area while actuals were limited to the owner, so a Sales Executive could see colleagues' plans. The code review caught it, not the E2E plan. The plan's live-data note (written 2026-10-03) also had wrong roles and amounts (Nishad K V is an Area Manager; Vivek's Q3 plan is 51.00, not 50.00) until a re-check on 2026-10-04.

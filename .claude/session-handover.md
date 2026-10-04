@@ -3,15 +3,6 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-## Uncommitted docs — waiting for a batch commit approval
-
-- Payment Confirmation Gate paperwork is closed (E2E 18/18, 2026-10-03).
-  Docs waiting for one batch commit (only my lines in shared files):
-  `docs/Backlog.md`, `docs/Progress-Archive-2026-10.md`, this file, the E2E
-  plan, the gate plan, Traceability, `docs/Discussion-Salesperson-Performance-Report-2026-10.md`.
-  The other session also edits Backlog/Progress-Archive/CLAUDE.md/settings.json
-  - check `git diff --cached` and leave its lines out.
-
 ## Session retro 2026-10-01 + structural fixes — parked by Basheer
 
 - Retro drafted in chat 2026-10-01, **not yet approved or saved**. Main
@@ -42,11 +33,18 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Built: backend `0f7d75a`, frontend + legacy-plan fix `231fbd0` (pushed,
   partial checkpoint). E2E plan written, untracked:
   `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`.
-- **Next:** `/code-review` medium on those two commits (Opportunity
-  visibility vs plan visibility per role; decide `/zone-rollup` keep or
-  retire). Then revise the E2E plan, restart the Dev backend, run the E2E.
-  After: BR-PL rule, Traceability, UI-Inventory, scorecard regenerate,
-  post-commit checklist.
+- Code review fixes committed and pushed 2026-10-04 as `903ad41` (partial
+  checkpoint, E2E pending): plans visible only within the viewer's owner scope
+  (colleagues hidden), "Total (your view)" label, numeric empty check,
+  `/zone-rollup` retired. pytest 1124, ruff, tsc, lint clean. E2E plan revised
+  against live Dev data re-checked 2026-10-04 (hide-colleagues cases R1-R6,
+  corrected figures) and committed in the same commit.
+- **Next:** restart the Dev backend (confirm P1), then run the E2E from
+  pre-flight: "Basheer clicks, Claude watches" for saves, Pass/Fail recorded
+  per step. After: BR-PL rule, Traceability, UI-Inventory, scorecard
+  regenerate + `--check`, post-commit checklist.
+- Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
+  Weekly-Follow-up) are not ours; leave them out of commits.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
@@ -71,10 +69,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** write the implementation plan when Basheer says; watch the
   closure report's progress.
 
-## Process changes from the 2026-10-01 retro — resolved 2026-10-03
+## Doc tidy-up 2026-10-04 — committed `7e2e9b9`; open leftovers
 
-- A (UAT connection note), B and F (shell guard), E (test-plan guard +
-  template) were built directly (Basheer: fewer mistakes, self-correct on
-  repeats); C dropped. D: Basheer added the two UAT check scripts to his
-  personal allow list. Progress-Archive 2026-10-03. Nothing left here;
-  remove this section at the next tidy-up.
+- ZonePicker plan: Status needs a check against code and records; plan untouched until then.
+- Pipeline product-filter half: Backlog entry, or ask Latheef Bhai? (Basheer decides.)
+- Phase-2E-Task9 scratch doc: delete or keep? (Basheer decides.)
+- Doc-integrity-sweep skill still says "six checks" in a few places: fix wording?
+- Traceability item 13 ("Commitment beyond contract") wording + scorecard republish: with the UAT move; show the diff first.
+- Untracked docs not from this thread: Forecast-By-Closing-Period plan, Opportunity-Create-Form-Unification plan, Plan-vs-Actuals E2E plan, Weekly-Follow-up-Report plan (confirm who owns the last).

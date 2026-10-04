@@ -218,6 +218,10 @@ code or changing structure. On any conflict, the document wins over this file.
   split, assignee) — not just role relationships. *(2026-09-24)*
 - When writing a test plan, take button labels, messages and the order of
   checks from the code, not the design doc. *(2026-09-30)*
+- A test plan for any permission or visibility feature must include a
+  hide-check case — a real person who must NOT see a given row, picked from
+  live data — and re-run the scope check just before E2E, not only when the
+  plan was written. *(2026-10-04)*
 - Steps that save to the shared Dev DB: plan them as "Basheer clicks, Claude
   watches" from the start (the auto-mode classifier blocks Claude's own writes).
   Confirm each save by reading the record back through the app in the
