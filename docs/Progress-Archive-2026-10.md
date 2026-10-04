@@ -425,3 +425,19 @@ directly:
   with real values", the gap was timing.
 - Open: UAT move (0059 + steps 2–4) needs its own approval; take a UAT
   `audit_log` backup first.
+## 2026-10-04 — Audit Trail Redesign: code review redone, one fix shipped (`51deecc`)
+
+- Re-ran `/code-review` on steps 1–4. Five findings; each checked against the
+  code. Only one was real: saves sharing a timestamp could page in an
+  unstable order (a save could show on two pages or none). Fixed with a
+  `changed_by` tie-break in `list_saves` plus a test (`51deecc`; pytest for
+  the audit tests 18 passed).
+- Left as designed: a payment note sent with a non-Won save is silently
+  dropped (optional later change: reject it with an error; Basheer's call).
+- Dismissed with evidence: three findings that did not hold up in the code.
+- Worked: reading the code for each finding before editing; only the real
+  one got a change.
+- Improve: the 2026-10-03 lesson held — findings were verified and recorded
+  the same day.
+- Open: UAT move (0059 + steps 2–4), own approval, UAT `audit_log` backup
+  first. Traceability row 13 wording and the scorecard wait for that move.

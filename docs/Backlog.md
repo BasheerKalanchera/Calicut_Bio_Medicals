@@ -837,48 +837,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   is worth scoping at all, or if the WhatsApp-coaching approach is
   sufficient going forward.
 
-- **`marketing_lead` not covered by the ADR-017 audit trail.** Raised
-  2026-09-03 while scoping manager Convert/Discard/Reassign rights
-  (`docs/Lead-Management-Manual-E2E-Test-Plan.md`'s Group F). ADR-017's
-  audit_log trigger only covers account/user_profile/product/opportunity
-  (Phase 1) — `marketing_lead` reassignment, conversion, and discard
-  currently only get a `structlog` info-level log line, same as every
-  other action in that domain, not a queryable history. Deliberately kept
-  minimal for now rather than scoping a schema addition into an
-  already-large change. Worth a real audit trail (who reassigned what,
-  from whom, when, why) if reassignment turns out to be used often enough
-  that "why did this move" becomes a real question — extending the
-  existing audit_log trigger to this table would be the natural Phase 2.
-  **Covered by** `docs/Audit-Trail-Redesign-Implementation-Plan.md`
-  (approved 2026-09-30); remove this entry when that ships.
-
-- **`target_plan` not covered by the ADR-017 audit trail.** Raised
-  2026-09-07 during the `opportunity_item`/`split`/`stakeholder` audit
-  scoping discussion. Deferred rather than dropped: Target Planning itself
-  isn't built yet, so there's nothing to audit. Add `target_plan` to the
-  `audit_log` trigger list (same generic mechanism, see `docs/Audit-Trail-
-  Extension-Implementation-Plan.md` for the pattern) once that feature
-  ships — targets being quietly adjusted after the fact would undermine
-  any performance conversation built on them, same risk category as the
-  WON-immutability concern. **Covered by**
-  `docs/Audit-Trail-Redesign-Implementation-Plan.md` (approved
-  2026-09-30); remove this entry when that ships.
-
-- **`document` not covered by the ADR-017 audit trail.** Raised
-  2026-09-17 while fixing the document-delete authorization gap (owner
-  or Admin/GM only, `docs/RLS-Gaps-2026-09-17-Manual-E2E-Test-Plan.md`).
-  Industry-standard practice for a permissioned delete is usually to
-  also record who did it — right now a document deletion isn't in the
-  `audit_log` trigger list at all (same Phase 1 scope gap as
-  `marketing_lead`/`target_plan` above), so there's no queryable history
-  of who removed a colleague's upload or a product's collateral link,
-  only the same `structlog` info-level line every other action gets.
-  **Covered by** `docs/Audit-Trail-Redesign-Implementation-Plan.md`
-  (approved 2026-09-30); remove this entry when that ships.
-  Worth adding once there's a real incident or a client ask that needs
-  "who deleted this and when" answered — same generic trigger mechanism
-  extends to `document` with no new design work.
-
 - **Urgent-notification infrastructure — retained 2026-09-02, now back in
   active use via Manager Note (2026-09-08/09).** The IndiaMART 4-hour-SLA
   urgent path (`URGENT_LEAD_SOURCE_NAMES` computing `is_urgent` in

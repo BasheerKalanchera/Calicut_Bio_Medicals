@@ -1,6 +1,6 @@
 # Audit Trail Redesign — Implementation Plan
 
-**Status:** Approved 2026-09-30 (Basheer). Not started. Unblocked: hospital-wise Part 1 step 5 committed 2026-09-30 (`1a4843a`, `3907b88`); start when Basheer says.
+**Status:** Built and Dev-tested 2026-10-03 — commits `24f5607`, `ce56c22`, `b0ba088`, `8842d67`, `c91e51e`, `9a6d98d`, `fb5b7e6`, plus review fix `51deecc`; manual E2E 31/31 passed. Approved 2026-09-30 (Basheer). Not on UAT yet: moves with everything else pending in main in one UAT move (migration 0059 + steps 2–4), its own approval.
 **Traceability rows:** beyond-signed item 13 (Audit Log screen) — wording
 update only; supports BR-AUD-01.
 **Design / discussion:** this plan. Trigger for it: a product switch on 3

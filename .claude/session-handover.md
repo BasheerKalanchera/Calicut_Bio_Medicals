@@ -54,8 +54,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Audit-Trail-Redesign-Manual-E2E-Test-Plan.md`. Steps 1–4 and the
   review fix are committed (`24f5607` … `fb5b7e6`). Dev E2E finished
   2026-10-03: all steps Pass; pytest 1120, ruff, tsc and lint clean.
-- Review findings 5, 6, 7, 9, 10: only the numbers survived, not the text, due to session compaction.
-- **Next:** When the session restarts, re-do the code review first (`/code-review` on steps 1–4) to re-evaluate and document any findings. After the code review is complete, the UAT move (migration 0059 + steps 2–4 together) is its own approval; ask UAT backup first (0059's downgrade deletes INSERT history). Then the post-commit checklist.
+- Code review redone 2026-10-04: one real finding, fixed in `51deecc` (stable paging order). Payment-note-dropped-on-non-Won-save left as designed unless Basheer wants it rejected.
+- **Next:** the UAT move (migration 0059 + steps 2–4 together) (migration 0059 + steps 2–4 together) is its own approval; ask UAT backup first (0059's downgrade deletes INSERT history). Then the post-commit checklist.
 - Never `api.ts` by regenerate: another session edits it; hand-edit only
   the Audit Log types (`AuditSaveResponse`, `owner_*`, `action` filter).
 
