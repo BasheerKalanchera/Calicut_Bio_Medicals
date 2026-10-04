@@ -287,7 +287,10 @@ class AuditLogRepository(BaseRepository[AuditLog]):
         total = self.db.scalar(select(func.count()).select_from(keys_stmt.subquery())) or 0
         keys = [
             (k[0], k[1])
-            for k in self.db.execute(keys_stmt.order_by(AuditLog.changed_at.desc()).offset(offset).limit(limit)).all()
+            for k in self.db.execute(
+                # changed_by breaks ties so saves sharing a timestamp page in a stable order.
+                keys_stmt.order_by(AuditLog.changed_at.desc(), AuditLog.changed_by).offset(offset).limit(limit)
+            ).all()
         ]
         if not keys:
             return [], total

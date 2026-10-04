@@ -125,6 +125,21 @@ class TestFilterPassthrough:
         assert AuditLogService(repository=repo).list_audit_log(role_name=ADMIN) == (["save"], 1)
 
 
+class TestSavePagingOrder:
+    def test_saves_with_same_timestamp_are_ordered_by_user(self):
+        """Two users saving in the same instant must page in a fixed order,
+        or a save could land on two pages or none."""
+        db = MagicMock()
+        db.scalar.return_value = 0
+        db.execute.return_value.all.return_value = []
+
+        AuditLogRepository(db).list_saves()
+
+        paging_stmt = db.execute.call_args_list[0].args[0]
+        order_by = [str(clause) for clause in paging_stmt._order_by_clauses]
+        assert order_by == ["audit_log.changed_at DESC", "audit_log.changed_by"]
+
+
 class TestTableSpecs:
     def test_every_audited_table_has_a_spec(self):
         assert set(_TABLE_SPECS) == AUDITED_TABLES
