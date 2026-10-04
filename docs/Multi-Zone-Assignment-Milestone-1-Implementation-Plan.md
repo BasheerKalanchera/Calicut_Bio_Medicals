@@ -1,6 +1,6 @@
 # Multi-Zone User Assignment — Milestone 1 Implementation Plan
 
-**Status:** Planned — approved for build, not yet started.
+**Status:** Built — `ce61dc2` (2026-08-11). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-10
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete, ordered implementation plan for Milestone 1 of
@@ -39,7 +39,7 @@ not just automated tests.
 - **Schema**: `user_profile.zone_id uuid` (nullable scalar FK), no junction
   table. Next migration number: **0018** (`down_revision = "0017"`) — the
   Buyback free-text change (`docs/Buyback-Freetext-Implementation-Plan.md`)
-  is being built first and claims `0017`. **Re-verify the actual head in
+  is being built first and claims `0017`. _(Superseded — Buyback built, `8ab0c4e`; this milestone built, `ce61dc2`.)_ **Re-verify the actual head in
   `backend/alembic/versions/` at build time** rather than trusting this
   number blindly, in case ordering has shifted again since this was written.
 - **The one RLS branch to rewrite** — `opportunity_tier_visibility` on

@@ -1,6 +1,6 @@
 # Zone Deactivate/Reactivate — Implementation Plan
 
-**Status:** Draft — planned, not yet built.
+**Status:** Built — `b0b4109` (2026-08-16). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-16
 
 ## Context

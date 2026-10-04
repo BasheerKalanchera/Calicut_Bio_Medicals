@@ -1,6 +1,6 @@
 # Opportunity Document Upload — Implementation Plan
 
-**Status:** Planned — approved for build, not yet started.
+**Status:** Built — `49c4c1d` (2026-08-11). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-11
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete implementation plan for real document/photo upload on

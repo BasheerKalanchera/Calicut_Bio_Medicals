@@ -1,7 +1,7 @@
 # Audit Trail for Key Master Tables — Implementation Plan
 
-**Status:** Planned, not built. Queued for the build session currently on
-BR-ACC-03 (duplicate hospital matching).
+**Status:** Built — `099e54c` (2026-09-02, ADR-017); later redesigned, see
+`docs/Audit-Trail-Redesign-Implementation-Plan.md`. Build steps below are complete; kept as the original plan.
 **Input:** `docs/Audit-Trail-Implementation-Brief-2026-08-31.md` — this plan
 resolves that brief's open questions and produces the concrete migration
 shape. Mechanism (Postgres triggers + centralized `audit_log`) is settled

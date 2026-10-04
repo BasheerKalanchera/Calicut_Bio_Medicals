@@ -1,6 +1,6 @@
 # Next Actions Module — Implementation Plan
 
-**Status:** Approved, not yet implemented
+**Status:** Built — `3bab93f` (BR-ACT-04)
 **Date:** July 3, 2026
 **Sprint:** Sprint 2 (Opportunities & Activities), July 13 demo checkpoint (`docs/implementation_plan.md`)
 

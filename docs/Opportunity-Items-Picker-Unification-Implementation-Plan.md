@@ -1,6 +1,6 @@
 # Opportunity Items Picker Unification — Implementation Plan
 
-**Status:** Planned — pending Basheer's review, not yet started.
+**Status:** Built — `8ab0c4e` (2026-08-11). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-11
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete, ordered implementation plan to bring the Product/Accessory/

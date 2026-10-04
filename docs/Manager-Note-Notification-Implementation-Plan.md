@@ -1,6 +1,6 @@
 # Manager Note Notification — Implementation Plan
 
-**Status:** Approved, ready to build. **Raised:** 2026-09-08, Haroon (phone
+**Status:** Built — `356933d` (2026-09-08); manual E2E 15/15 passed 2026-09-09. Build steps below are complete; kept as the original plan. **Raised:** 2026-09-08, Haroon (phone
 call to Basheer) — the rep a `MANAGER_NOTE` is about gets no notification
 today. **Decisions confirmed** (Basheer, 2026-09-08): both passive and
 urgent notifications are needed — the manager ticks an "Urgent" flag at

@@ -1,6 +1,6 @@
 # Zone Hierarchy Redesign — Implementation Plan
 
-**Status:** Planned — approved for build, not yet started.
+**Status:** Built — `1e8bb5a` (backend, 2026-08-11), `f6a2a11` (Territory Admin screen, 2026-08-12). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-11
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Concrete, ordered implementation plan for
@@ -82,7 +82,7 @@ what shipped.
 
 **Migration numbering:** highest on disk is `0017`
 (`0017_add_opportunity_item_description_and_nullable_product.py`,
-Buyback, built). Multi-Zone Milestone 1 claims `0018` (not built);
+Buyback, built). Multi-Zone Milestone 1 claims `0018` (not built) _(superseded — Milestone 1 now built, `ce61dc2`)_;
 Referral Credit & Relationship-Support claims `0019` (not built,
 independent of this feature). This migration needs **`0020`** if both of
 those land first in that order — but since this plan's only hard

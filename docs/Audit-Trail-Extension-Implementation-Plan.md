@@ -1,6 +1,6 @@
 # Audit Trail Extension — Opportunity Item, Split, Stakeholder — Implementation Plan
 
-**Status:** Planned, not built. **Start date: 2026-09-10** — after the
+**Status:** Built — `6a580fa` (2026-09-09); manual E2E 18 cases passed. Build steps below are complete; kept as the original plan. Original note: **Start date: 2026-09-10** — after the
 2026-09-08 UAT batch (Marketing Lead Handling, Opportunity Notes Privacy,
 Audit Trail Phase 1, Manager-Attested Gate Override, Sales Development
 Activities, Relationship-Support Activity, Login Reminders, Opportunity
@@ -187,11 +187,15 @@ coverage:
   and note the delete-driven-by-design behavior for the latter two so a
   future reader isn't confused seeing DELETE rows for routine edits made
   before this fix (historical entries, if any land during a transition
-  window, will look different from post-fix entries).
+  window, will look different from post-fix entries). _(Done — audited tables
+  listed in `Business-Rules.md`, `6a580fa`; ADR-017's Affected Modules is
+  module-level and needed no change.)_
 - `docs/Physical-Schema.sql` — regenerate after the migration is applied,
   per the standard `PDM Change → Model Update → alembic revision → Review
   → Apply → Regenerate Physical-Schema.sql` workflow
-  (`Backend-Implementation-Standards.md`).
+  (`Backend-Implementation-Standards.md`). _(Done — triggers for
+  `opportunity_item`, `split`, `opportunity_stakeholder` present in
+  `Physical-Schema.sql`.)_
 
 ## Sequencing / scope note
 

@@ -4,7 +4,7 @@
 file is kept for historical record of the original design decisions only;
 for how the system is actually operated day to day, see that file instead.
 
-**Status:** Draft, awaiting Basheer's review. **Problem:** feature status
+**Status:** Built — `8e55ac0` (2026-09-15). Build steps below are complete; kept as the original plan. **Problem:** feature status
 currently gets hand-typed in three places that have each drifted
 independently — `Signed-Requirements-to-PRD-Traceability.md`'s own header
 tally (stale: "24 Done · 15 Partial · 11 Not started" vs. its real current

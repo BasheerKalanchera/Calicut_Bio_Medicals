@@ -1,6 +1,6 @@
 # Pipeline Product Filter + Product Performance Drill-down — Implementation Plan
 
-**Status:** Approved, ready to build. **Features:** 2.2's Pipeline product
+**Status:** Report Drill-down (11.2) built — `6bb0d31` (2026-09-15), E2E fixes `9023965`. Product filter half: status not yet confirmed. **Features:** 2.2's Pipeline product
 filter (Module 3 → PRD 3.8, `docs/Backlog.md`'s "Account Directory / Pipeline
 filters" entry, decided 2026-09-14) and 11.2 Drill-down Reporting (Module 5 →
 PRD 5.9), scoped down to its first concrete case: Product Performance Report.

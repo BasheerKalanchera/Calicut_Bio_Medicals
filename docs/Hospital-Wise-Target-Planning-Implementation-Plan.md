@@ -15,8 +15,8 @@ also finished** — meanwhile the team sets Oct–Dec targets in the brand-wise
 Target Planning screen already on UAT, then revises them with hospitals once
 this reaches UAT; (3) the **By Zone table moves to Part 2** — earlier "totals
 per zone" wording in Part 1 was Claude's addition, never put to Basheer as a
-choice; its backend (`/zone-rollup`, `04c5e87`) is already built and counts
-as Part 2 work done early; (4) new rule **BR-PL-05**: a revised plan below
+choice; its backend (`/zone-rollup`, `04c5e87`) was built early but retired
+2026-10-04 — Plan vs Actuals Tracking does the zone grouping itself; (4) new rule **BR-PL-05**: a revised plan below
 its last approved total gets a warning and the approver sees both totals
 (step 3d).
 **Design and decisions:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
@@ -197,7 +197,7 @@ The options as offered:
      latest version, and only while it's waiting for approval".
    - Not now: `BaseRepository.update` stale `updated_at` for all domains,
      duplicated `_ACCOUNT_NOLOADS`/IST helpers (Backlog); `/zone-rollup`
-     kept for Part 2.
+     (later retired, 2026-10-04).
 6. Written manual E2E test plan, checked against live Dev data; run it.
 7. Commit, post-commit checklist. The UAT move waits for Part 2
    (2026-09-29); its first step is a check of how UAT hospitals are filed
@@ -221,11 +221,10 @@ Plus one "Unplanned" line for deals won at hospitals outside the plan
 `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (Parts 1
 and 2 go to UAT together).
 
-**Already done for Part 2:** the zone roll-up backend,
-`GET /planning/targets/zone-rollup` (`04c5e87`, 2026-09-27) — planned
-amounts, hospital and person counts per zone, submitted plans only. It
-groups by the **hospital's** zone, which Part 2 keeps (Basheer,
-2026-09-29). Left for Part 2: the By Zone screen, then actuals beside it.
+**Zone grouping:** a zone roll-up endpoint, `GET /planning/targets/zone-rollup`
+(`04c5e87`, 2026-09-27), was built early but retired 2026-10-04 (nothing
+called it; it counted rejected plans). Plan vs Actuals Tracking groups by the
+**hospital's** zone itself, as agreed (Basheer, 2026-09-29).
 
 **Quarter date range (note from the reporting session, 2026-09-27):** a
 quarter must start at midnight Indian time, not 5:30 am (the database runs
@@ -329,11 +328,8 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
   only, service-layer check like `_require_admin_or_gm`), stamps set-by and
   set-at. List endpoint gains a `business_potential` filter for the
   Rate Hospitals screen.
-- **Roll-ups:** `GET /planning/targets/zone-rollup?sbu_id&planning_period`,
-  meaning the sum of `planned_amount_lakhs` grouped by each account's
-  `ZONE`-level ancestor (same walk-up as
-  `AccountRepository.find_similar_by_name`), under the caller's RLS.
-  Built `04c5e87`; unused until Part 2 (2026-09-29). The
+- **Roll-ups:** `GET /planning/targets/zone-rollup` (`04c5e87`) was retired
+  2026-10-04; zone grouping now lives in Plan vs Actuals Tracking. The
   existing per-person `/team` endpoint returns `accounts` too, and hides
   other people's drafts.
 - **Also built for the plan dialog:** `GET /planning/targets/eligible-accounts?search=`

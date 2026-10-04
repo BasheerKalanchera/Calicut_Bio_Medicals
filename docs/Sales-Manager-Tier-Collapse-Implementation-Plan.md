@@ -1,6 +1,6 @@
 # Collapse Sales Manager (Level 5) into Area Manager — Implementation Plan
 
-**Status:** Draft — planned, not yet built.
+**Status:** Built — `5367557` (2026-08-15). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-12
 
 ## Context

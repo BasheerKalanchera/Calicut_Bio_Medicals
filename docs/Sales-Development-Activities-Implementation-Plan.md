@@ -1,6 +1,6 @@
 # Sales Development Activities — Implementation Plan
 
-**Status:** Draft — planned, not yet built. Decided with Haroon 2026-08-27; full
+**Status:** Built — `ac587a3` (2026-08-27, BR-ACT-09). Build steps below are complete; kept as the original plan. Decided with Haroon 2026-08-27; full
 discussion and reasoning in `docs/Discussion-Sales-Development-Activities-2026-08.md`
 (not repeated here). This doc covers the concrete build.
 

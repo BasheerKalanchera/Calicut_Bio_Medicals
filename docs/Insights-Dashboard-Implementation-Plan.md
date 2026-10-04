@@ -2,7 +2,7 @@
 
 **Status:** Approved for build, 2026-09-11 — **Batch 1a**, a 5-widget slice of Batch 1
 below, chosen as the fully-spec'd subset ready to build now. Target Planning (this
-doc's original prerequisite) has **not** been built yet, checked directly against
+doc's original prerequisite) has **not** been built yet (superseded: Target Planning is now built, see `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`), checked directly against
 `backend/app/domains/` — confirmed not a blocker: none of Batch 1a's 5 widgets need
 fiscal-quarter resolution, only Batch 2 does. Build proceeds in three parts: **Part 1
 (this document)** — plan; Part 2 — backend (`reporting` domain, tests); Part 3 —

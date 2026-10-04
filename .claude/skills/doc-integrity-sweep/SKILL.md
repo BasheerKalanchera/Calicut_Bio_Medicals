@@ -20,7 +20,7 @@ and log it as partial.
 2. Read the last line of `docs/Doc-Integrity-Sweep-Log.md` for the date of
    the previous sweep. Everything below covers **changes since that date**.
 
-## The six checks
+## The seven checks
 
 1. **Broken file pointers:** run `sh scripts/find_broken_doc_links.sh`. Fix
    the ones in (a) files changed since the last sweep and (b) today's
@@ -53,6 +53,17 @@ and log it as partial.
    finding (he decides the item, or the Status goes back to Draft). This
    backs up the save-time guard rail, which only sees Claude's own
    Write/Edit saves.
+7. **Plan Status lines against git:** list every `docs/*-Implementation-Plan.md`
+   whose Status says Planned, Draft, Approved, "ready to build" or "not yet
+   built". For each, look for a feature commit
+   (`git log --oneline -i --grep=<feature name>`). If one exists, the Status is
+   stale: change it to "Built — `hash` (date)" (add the passed E2E count if its
+   test plan shows one), and add one line under it: "Build steps below are
+   complete; kept as the original plan." Also tag, as "(superseded — now built,
+   `hash`)", any other plan's claim that this feature is "not built". Leave the
+   plan's reasoning untouched. A commit marked partial or "E2E pending" is not
+   Built; say so in the Status. If git can't confirm either way, list it as a
+   needs-Basheer finding. *(2026-10-04: 18 plans were found stale in one sweep.)*
 
 ## Reporting and fixing
 

@@ -1,7 +1,7 @@
 # Lead Follow-up Comments — Implementation Plan
 
 **Status:** Confirmed by Latheef Bhai, 2026-09-17. All three open design questions
-resolved (Basheer, same day). Not yet built.
+resolved (Basheer, same day). Built — `d899b15` (2026-09-18); manual E2E 19/19 passed 2026-09-18. Build steps below are complete; kept as the original plan.
 **Raised:** 2026-09-17 — Basheer assigned a marketing-sourced lead to a rep and found
 no way to see what the rep did with it once opened, or to nudge them for an update.
 Full background: `docs/Discussion-Lead-Followup-Comments-2026-09.md`.
@@ -122,4 +122,4 @@ confirm no edit/delete affordance exists anywhere in the UI or via a direct API 
 
 Zero file overlap with the other session's current Target Planning/Coverage Planning
 track (`backend/app/domains/planning/`, `TargetPlanningScreen.tsx`) — this touches
-`marketing_lead`/`notification`/`marketing_leads.py` only. Safe to build in parallel.
+`marketing_lead`/`notification`/`marketing_leads.py` only. Safe to build in parallel. _(Done — built, `d899b15`.)_

@@ -1,6 +1,6 @@
 # Hide Senior-Tier Notes from Area Manager / SBU Manager — Implementation Plan
 
-**Status:** Draft — direction agreed (Haroon signed off 2026-09-05), not yet built.
+**Status:** Built — `552c0ee` (2026-09-05); direction agreed with Haroon 2026-09-05. Build steps below are complete; kept as the original plan.
 **Date:** 2026-09-05
 **Implements:** the "hide the notes, not the deal" recommendation from
 `docs/Opportunity-Notes-Privacy-Discussion-Brief-2026-09-04.md`.

@@ -1,6 +1,6 @@
 # Opportunity-Assignment Notifications (bell icon) — Implementation Plan
 
-**Status:** Planned, not yet implemented
+**Status:** Built — `c7b90db` (2026-09-03). Build steps below are complete; kept as the original plan.
 **Date:** 2026-08-24
 **Origin:** Pivot from Reminders-on-Login work. Basheer described real
 usage that the login-only reminders dialog can't cover: an admin (or

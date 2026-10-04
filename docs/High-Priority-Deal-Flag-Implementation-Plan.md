@@ -1,6 +1,6 @@
 # High Priority Deal Flag — Implementation Plan
 
-**Status:** Approved, ready to build. **Feature:** 2.2 (Module 3 → PRD 3.9
+**Status:** Built — `b000a09` (2026-09-15, BR-OP-15). Build steps below are complete; kept as the original plan. **Feature:** 2.2 (Module 3 → PRD 3.9
 Deal Prioritization). **Rule confirmed:** Haroon, 2026-09-14 —
 `Business-Rules.md`'s **BR-OP-15**, replacing an earlier proposed
 value/closure-date threshold (see `docs/Backlog.md`'s "Auto-computed 'High
@@ -81,7 +81,7 @@ takes over.
    other fields.
 5. **`docs/Business-Rules.md`** — BR-OP-15's "Enforcement" bullet updated
    from "Not yet built" to the actual migration/field/computed-field
-   references once merged.
+   references once merged. _(Done — BR-OP-15 "Enforcement" updated, `b000a09`.)_
 6. **Tests** (`backend/tests/domains/opportunity/`) — cover:
    - `is_high_priority` computed field: false for Lead/Qualified/Demo with
      `high_priority_manual=False`; true for the same three stages when
