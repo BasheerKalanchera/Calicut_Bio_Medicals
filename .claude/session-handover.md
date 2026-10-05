@@ -75,14 +75,23 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
-## UAT outage 2026-10-05 — fix on Dev (`945253d`); UAT move waiting
+## UAT outage 2026-10-05 — hotfix committed locally; push to UAT planned 2026-10-06 morning
 
-- Fix pushed to `main`, Dev-verified (Progress-Archive-2026-10). UAT still
-  runs the old query behind the Render 5 + 5 pool guard rail.
-- **Next:** the UAT move is its own approval (code deploy only, no DB
-  change; Render redeploys from the UAT branch, so say what else it
-  carries). After it, ask Haroon to open Next Actions and watch UAT.
-- Read-only UAT check before/after is optional; ask first (UAT rule).
+- On `main`: size fix `945253d`, stable-order change `0e3d81f` (due date,
+  then logged earlier first, then id). Both Dev-verified.
+- UAT hotfix: **`fa61bd8`, local only**, on branch `uat-hotfix-next-actions`
+  (based on UAT's `a430152`; both changes; backend 975 passed, ruff clean).
+  Remote `uat` is still `a430152`: nothing has reached UAT. Its working
+  folder is in the old session's scratchpad; if gone, recreate with
+  `git worktree add <path> uat-hotfix-next-actions`.
+- UAT read-only check 2026-10-05 (Om Hiremath, 99 open): joins 110 → 6,
+  request 0.8–3.4 s → 0.17–0.19 s, same 99 rows and fields.
+- **Next (Basheer, first thing 2026-10-06):** check the branch is still
+  `fa61bd8` on `a430152` and `origin/uat` hasn't moved → push to `uat`
+  (own approval; Render restarts briefly) → Haroon opens Next Actions,
+  watch UAT → merge `uat` back into `main` (as `eb89fa7`).
+- Optional after the push: read-only UAT check; the 3-person test on UAT
+  (new code only, never the old query); ask first (UAT rule).
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
