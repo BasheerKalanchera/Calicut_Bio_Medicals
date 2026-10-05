@@ -281,6 +281,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Insights Dashboard E2E test plan (Basheer, 2026-10-05).** The dashboard
+  is built (Batch 1a `d7a0e6f`, Batch 1b `087c284`, Product breakdown
+  `34d0170`) but has no written manual E2E plan. Write the full plan
+  together with the Plan vs Actuals verification plan, after the Plan vs
+  Actuals redesign is finalised.
+
 - **Salesperson Performance report — measures and shape undecided
   (Basheer, 2026-10-03).** Signed 11.1 names "salesperson performance" but
   nothing defines it. Discussion note for Haroon:

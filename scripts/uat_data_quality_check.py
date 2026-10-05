@@ -161,7 +161,7 @@ def main() -> None:
         LEFT JOIN zone z ON z.id = a.zone_id
         WHERE NOT EXISTS (SELECT 1 FROM opportunity o WHERE o.account_id = a.id)
           AND NOT EXISTS (SELECT 1 FROM activity act WHERE act.account_id = a.id)
-        ORDER BY a.name
+        ORDER BY z.name, a.name
     """, "Dead accounts")
 
     # 4. Opportunities with zero Activity logged
