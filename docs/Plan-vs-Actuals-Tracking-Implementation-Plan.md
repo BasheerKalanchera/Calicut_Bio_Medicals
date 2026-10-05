@@ -32,6 +32,22 @@ one move, once this part is finished and tested (Basheer, 2026-09-29).
 - Brand-wise planned vs won, per person, inside their expanded row, for both SBUs — Basheer, 2026-09-29
 - Lighter build (no company→SBU→zone ladder, no Customer 360 view, no monthly chart, no automatic overdue reminder) — Basheer, 2026-09-29
 
+### Redesign decisions — Basheer, 2026-10-05 (approved in chat; replace any older line they conflict with)
+
+The screen is renamed **Target vs Actuals** (file and code renames happen with the build; this
+file keeps its old name until then so links elsewhere don't break).
+
+- **Roster:** every active SBU member except Admin gets a row every quarter, on both Target Planning and Target vs Actuals, within the viewer's scope. Statuses: Not started / Draft / Waiting / Approved / Rejected. A "N of M haven't submitted" line. Managers see only "Draft" on others' plans. Haroon is on both SBU rosters and counts as not submitted when planless. (Replaces "people with no plan still appear: Planned ₹0".)
+- **Revised plans:** show the revised figure with a "was ₹X approved" note.
+- **Won:** counts at full payment (BR-OP-17); "% of target" uses Won only.
+- **Manager's own row:** own plan and own wins only, not the team's.
+- **Visibility:** staff see their own row; Area Manager sees self + team; SBU Manager sees their people + the SBU row against the SBU target; GM sees all SBUs + the company row; Admin gets the GM view with no row of their own.
+- **PO columns:** separate "PO received" and "Won (paid)" columns, each counted in its own quarter. New "PO date" box next to PO number, required at Order → Delivery; older records fall back to the audit-log date.
+- **SBU target:** one figure per SBU per quarter, entered by the GM in SBU Target Rollup, kept in its own register table, visible to SBU Manager and above. Company target = sum of the SBU targets.
+- **Wording:** "no expected closure date".
+- **Split credit:** owner gets full credit, as every report does today. Question put to Haroon (2026-09-29, re-sent 2026-10-05); answer pending; doesn't block the build. UAT today: 5 shared Opportunities, Haroon on 4.
+- **Scope:** all in Part 1, one migration (PO date + SBU target), one UAT move.
+
 ## 1. In plain terms
 
 Hospital-wise Target Planning lets each salesperson build their quarter's target hospital by
@@ -70,9 +86,43 @@ silently drops out. A finished quarter shows only what was won.
 ## 2. Build size
 
 Lighter build, chosen 2026-09-29: about 3 days, plus review and testing.
-No database change.
+**Revised 2026-10-05:** one migration (PO date column + SBU target table)
+under the redesign decisions above; estimate to be redone in the gap analysis.
 
-## 3. Build order
+## 3. Revised build order (2026-10-05, approved by Basheer)
+
+Light first: the roster is built on Target vs Actuals now; the Target &
+Coverage Planning screen (`TargetPlanningScreen`, same screen under two
+names) follows as a separate pass. The old build order below is superseded.
+
+1. **Database, one migration (0060):** PO date on Opportunities + SBU target
+   table. Shown for approval, applied to Dev only, `Physical-Schema.sql`
+   regenerated, `alembic current` recorded.
+2. **Backend, Opportunity side:** PO date field; required at Order →
+   Delivery (validator); audit-log date as fallback for older records; tests.
+3. **Backend, Target vs Actuals:** roster (every active SBU member except
+   Admin) with statuses and the "N of M haven't submitted" line; managers
+   see only "Draft" on others' plans; "was ₹X approved" note; PO received
+   and Won (paid) columns; SBU row and company row; GM entry of the SBU
+   target; role visibility; endpoint rename. **Checkpoint commit** (tests
+   pass), proposed for approval.
+4. **Frontend:** Target vs Actuals screen (rows, columns, status labels),
+   GM box for the SBU target, PO date box on the Opportunity screen, rename;
+   `api.ts` types hand-edited.
+5. **Checks:** pytest, ruff, tsc, lint; `/code-review` at **high**
+   (migration + visibility); fresh E2E plan checked against live Dev data,
+   with a hide-check case and Simple/Complex tags; Dev backend restarted;
+   manual E2E; commit, push, post-commit checklist.
+6. **Second pass: Target & Coverage Planning screen.** Roster and statuses
+   on that screen, reusing the step 3 backend. Own short plan, own test
+   (the screen last passed E2E 38/38, so it is re-tested), own commit.
+7. **UAT move, only after step 6 is built and tested** (Basheer,
+   2026-10-05): one combined move (Hospital-wise Target Planning + Target
+   vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a
+   UAT backup first and its own approval; the hospital re-filing (step 5
+   of the old order below) and close-date items still apply.
+
+### Old build order (superseded)
 
 1. **Backend:** one new read-only endpoint returning, for a quarter and
    SBU, every visible plan's hospitals with planned / won / expected, the
@@ -111,6 +161,9 @@ No database change.
    manual and in-app `?` help up to date".
 
 ## 4. Not in this plan (with reasons)
+
+- **Roster on the Target & Coverage Planning screen** — not in this pass;
+  it is the separate second pass (step 6 above), before the UAT move.
 
 - **Split-shared credit** — waiting on Haroon; see Decisions and Backlog
   "Reports never implement split-weighted attribution".

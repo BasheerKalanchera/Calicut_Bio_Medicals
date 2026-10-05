@@ -56,32 +56,22 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   2026-10-05 design below; expect rework. Dev has a test Opportunity "Test
   +lead screen" linked to Basheer K (reassign, don't delete: it has Activity
   rows).
-- Design review finished 2026-10-05; decisions agreed in chat, NOT yet
-  written to the plan doc:
-  - Full rename to "Target vs Actuals" (screen, docs, file and code names).
-  - Roster: every active SBU member except Admin gets a row every quarter
-    on both Target Planning and Target vs Actuals, within the viewer's
-    scope; statuses Not started/Draft/Waiting/Approved/Rejected; "N of M
-    haven't submitted" line; managers see only "Draft". Haroon is on both
-    SBU rosters and counts as not submitted when planless.
-  - Q3: show the revised figure with a "was ₹X approved" note.
-  - Q4: Won counts at full payment (BR-OP-17); % of target uses Won only.
-  - Q5: a manager's row = own plan and wins only.
-  - Visibility: staff own row; Area Manager + team; SBU Manager + SBU vs
-    SBU target; GM all SBUs + company; Admin = GM view, no own row.
-  - PO: separate "PO received" and "Won (paid)" columns, each in its own
-    quarter; new "PO date" box next to PO number (required at
-    Order → Delivery); older records fall back to the audit-log date.
-  - SBU target: one figure per SBU per quarter, GM enters it in SBU Target
-    Rollup, separate register table, visible SBU Manager and above;
-    company = sum of SBUs.
-  - Wording: "no expected closure date". Split credit: owner gets full
-    credit, waiting on Haroon (UAT: 5 shared Opportunities, Haroon in 4).
-  - All in Part 1, one migration (PO date + SBU target), one UAT move.
-- Plan doc section 2 "No database change" is now wrong; revise it.
-- **Next:** show the Decisions text for the plan doc, the split note and
-  the Haroon message (redraft all three) → gap analysis → fix plan →
-  build → new E2E plan → E2E.
+- Design review finished 2026-10-05; decisions, gap analysis and the
+  revised build order are written in the plan doc (uncommitted). Light
+  first: roster on Target vs Actuals; the Target & Coverage Planning
+  screen is a separate second pass; the UAT move comes only after both are
+  built and tested (Basheer, 2026-10-05).
+- Split credit: question sent to Haroon, answer expected 2026-10-06.
+- Step 1 done: migration 0060 (PO date + SBU target table) committed and
+  pushed as `1821c30`; applied to Dev, `alembic current` = `0060 (head)`;
+  `Physical-Schema.sql` regenerated in the same commit. Models updated; no
+  code uses the new column/table yet.
+- **Next:** step 2 (Opportunity side): PO date field in schemas/service,
+  required at Order → Delivery in `validators.py`, audit-log-date fallback
+  for older records, tests. Show the file-by-file plan for approval first.
+  Then steps 3-7 per the plan doc's "Revised build order".
+- Uncommitted docs waiting for the next docs batch: the plan doc edits and
+  this handover (plus another session's files: leave out).
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
