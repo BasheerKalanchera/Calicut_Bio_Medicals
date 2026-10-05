@@ -3,6 +3,21 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
+## Where we stopped — 2026-10-05 evening
+
+- Due-today items all done and pushed (`9a23a4e`): UAT backup, data-quality
+  and closure-date reports (PDFs in the data_consistency_reports backup
+  folder), doc tidy-up.
+- Untested: the new sort by Area in `scripts/uat_data_quality_check.py`;
+  check it on the next run.
+- Waiting on others: Fahad's and Vivek's 2026-Q2 targets (₹113.30 L and
+  ₹90.60 L) still unapproved after the quarter ended.
+- Offer open: build `scripts/uat_closure_date_report.py`'s comparison column
+  from the previous report (repo edit; plan approval first).
+- The working tree holds another session's uncommitted work
+  (`.claude/settings.json`, the Plan vs Actuals code, activity repository +
+  its test, three untracked plan docs): leave it out of commits.
+
 ## Session retro 2026-10-01 + structural fixes — parked by Basheer
 
 - Retro drafted in chat 2026-10-01, **not yet approved or saved**. Main
@@ -30,44 +45,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Plan approved 2026-09-29: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`
   (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
-- Built: backend `0f7d75a`, frontend + legacy-plan fix `231fbd0` (pushed,
-  partial checkpoint). E2E plan written, untracked:
-  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`.
-- Code review fixes committed and pushed 2026-10-04 as `903ad41` (partial
-  checkpoint, E2E pending): plans visible only within the viewer's owner scope
-  (colleagues hidden), "Total (your view)" label, numeric empty check,
-  `/zone-rollup` retired. pytest 1124, ruff, tsc, lint clean. E2E plan revised
-  against live Dev data re-checked 2026-10-04 (hide-colleagues cases R1-R6,
-  corrected figures) and committed in the same commit.
-- **E2E STOPPED 2026-10-04 by Basheer: "this feature is not built properly."**
-  Done: Pre-flight and Section A (Imaging and Critical Care as Haroon) Pass;
-  A3 re-check Pass for Basheer K hidden in all quarters. Sections S, W, C, L,
-  E, R not run. Not Done on the scorecard; no E2E sign-off.
-- What went wrong in the build (details in Progress-Archive retro): the
-  who-is-shown rule was changed twice mid-E2E. First fix hid everyone with no
-  plan (wrong); second fix hid only people outside the SBU (Basheer-approved).
-  Then Basheer found Vivek (Critical Care, Sales Staff, no Opportunities;
-  plans Q2 approved, Q3 pending, Q4 rejected) shows only in Q2/Q3. Cause: the
-  list is built only from plans/wins/expected/late Opportunities
-  (`service.py` `people` dict), so an SBU member with no activity never gets
-  a row. Basheer's expectation: the GM sees **every** SBU member, every quarter.
+- Built but unsigned: backend `0f7d75a`, frontend `231fbd0`, review fixes
+  `903ad41` (partial checkpoint). E2E stopped 2026-10-04 by Basheer ("not
+  built properly"): Pre-flight and Section A passed, the rest not run; not
+  Done on the scorecard. Build history, the who-is-listed failure and the
+  UAT check: Progress-Archive-2026-10 (2026-10-04 entries).
 - **Uncommitted** in the working tree (partial; do not commit as-is):
-  `repository.py` (`home_sbu_by_user`), `service.py` (home-SBU filter),
-  `test_plan_vs_actual.py` (3 tests), `PlanVsActualSection.tsx` ("No submitted
-  plan" line), plus E2E-plan and Progress-Archive notes. pytest 146 planning,
-  ruff, tsc, lint clean. Dev has a test Opportunity "Test +lead screen"
-  linked to Basheer K.
-- UAT check 2026-10-04 (read-only, Basheer approved): 160 Opportunities;
-  none owned by someone whose home SBU differs from the Opportunity's SBU
-  (so Basheer K's Dev case can't occur there). Only Haroon Sidheeq (GM, no
-  home SBU) owns Opportunities outside a home SBU: 29 Critical Care, 13
-  Imaging. Basheer: Haroon is GM **and** sells on the ground in both SBUs.
-  So the built rule is wrong for him: no plan = no row, yet his wins count in
-  the totals. Proposed rule (not approved): show a person if home SBU =
-  viewed SBU, **or** a submitted plan there, **or** they own Opportunities
-  there (Won/Expected/late). Dev's test Opportunity "Test +lead screen" would
-  make Basheer K appear: reassign or retire it first (has Activity rows,
-  so reassign rather than delete).
+  `repository.py`, `service.py`, `test_plan_vs_actual.py`,
+  `PlanVsActualSection.tsx`, plus E2E-plan notes. Superseded by the
+  2026-10-05 design below; expect rework. Dev has a test Opportunity "Test
+  +lead screen" linked to Basheer K (reassign, don't delete: it has Activity
+  rows).
 - Design review finished 2026-10-05; decisions agreed in chat, NOT yet
   written to the plan doc:
   - Full rename to "Target vs Actuals" (screen, docs, file and code names).
@@ -110,7 +98,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   first), test that the response is unchanged, /code-review, Dev check,
   UAT move with its own approval. Then add a pool/Production sizing note
   to Deployment-Topology.md (Production on paid Supabase next month).
-- Open: did a UAT backup run 3:30–4:00 pm?
+- No UAT backup ran in the 3:30–4:00 pm window; the latest is 2026-10-05 08:33.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

@@ -661,3 +661,12 @@ and the open decisions.
 - **Retro:** compare the actual lists first, then explain any change in value.
 - **Doc tidy-up:** Insights Dashboard plan Status corrected to Built; its E2E
   plan deferred to Backlog (to be written with the Plan vs Actuals plan).
+
+## 2026-10-05 — Housekeeping session (retro)
+
+All five due items were finished and pushed (`9a23a4e`): UAT backup, data-quality report, closure-date report, documentation tidy-up and the report sort by Area. The handover note was cut from 141 to about 130 lines by moving the Plan vs Actuals build history here (see the 2026-10-04 entries).
+
+- **Worked:** the reports were checked against live data before being shared, which corrected two of my guesses (one Opportunity had moved to Negotiation, not closed; one had been marked Lost, not moved to a later date). The tidy-up caught one stale plan Status, and the missing E2E plan went into the Backlog.
+- **Improve:** I filed my Progress-Archive entry a second time. Another session had already committed it in `cb60b87`, and I did not look at what was already committed before staging. Caught before the push; one amend fixed it. The existing rule covers my writing into another session's work, not another session having already written mine.
+- **Process change (proposed, not adopted):** before committing a shared doc, run `git log -3 -- <file>` and search `HEAD` for my own heading. First occurrence, so no hook yet.
+- **Handover:** the Plan vs Actuals block had grown to 82 of 141 lines because it was kept as a running diary. Rule of thumb from now on: when a thread's Done and Next lines are separable, the history goes to the archive at the next pause.
