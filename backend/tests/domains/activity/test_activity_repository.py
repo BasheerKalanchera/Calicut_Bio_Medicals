@@ -238,6 +238,25 @@ class TestReminderListQuerySize:
         for table in ("sbu", "role", "zone", "project"):
             assert f"join {table} " not in sql
 
+    def _order_by(self, sql: str) -> str:
+        return sql.split("order by", 1)[1].split("limit", 1)[0].replace("\n", " ")
+
+    def _assert_stable_order(self, sql: str) -> None:
+        clause = self._order_by(sql)
+        due = clause.index("reminder.due_date")
+        created = clause.index("reminder.created_at")
+        row_id = clause.index("reminder.id")
+        assert due < created < row_id
+        assert "desc" not in clause
+
+    def test_list_for_user_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(self._compiled(lambda repo: repo.list_for_user(uuid.uuid4())))
+
+    def test_list_by_opportunity_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(
+            self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
+        )
+
     # Pending list: the closing activity is a separate lookup (no joins of
     # its own in the main statement). list_by_opportunity has one extra join
     # for its own Activity filter.

@@ -253,6 +253,11 @@ def _activity_display_options(relationship, loader=joinedload):
     )
 
 
+# Soonest due first; same due date -> logged earlier first (it has waited
+# longer); id as the last tie-break so the order is identical on every load.
+_REMINDER_ORDER = (Reminder.due_date.asc(), Reminder.created_at.asc(), Reminder.id.asc())
+
+
 def _reminder_display_options(include_completed: bool):
     # Without these, each reminder pulls ~118 joined tables in one statement
     # (UAT outage 2026-10-05, docs/Progress-Archive-2026-10.md).
@@ -301,7 +306,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             stmt = stmt.where(Reminder.due_date >= due_after)
         if due_before is not None:
             stmt = stmt.where(Reminder.due_date <= due_before)
-        stmt = stmt.order_by(Reminder.due_date.asc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def count_for_user(
@@ -336,7 +341,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(Activity.opportunity_id == opportunity_id)
             .where(Reminder.is_completed == include_completed)
-            .order_by(Reminder.due_date.asc())
+            .order_by(*_REMINDER_ORDER)
             .offset(offset)
             .limit(limit)
         )
