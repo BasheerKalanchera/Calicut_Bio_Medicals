@@ -80,6 +80,7 @@ class Opportunity(AuditMixin, Base):
     demo_start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     demo_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     po_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    po_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     referred_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("user_profile.id"), nullable=True
     )

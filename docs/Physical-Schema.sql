@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-03 from the Dev database, catching up migration
--- 0059: audit trail redesign, step 1: trigger v2, more tables, direct-edit editor
+-- Regenerated 2026-10-05 from the Dev database, catching up migration
+-- 0060: po_date on opportunity; sbu_target table
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict AtohBxkaDLZZhQdmsGg1SxwjTZAns9Su7hTbOHAO4Fo7oNR2ltkHopG3yDcpxWP
+\restrict lPbwCd13eLkLmy0MpqzdlCbVirGapPqID7yOsYchGbJG8wTk4Xot7dQHOdGg14K
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -650,6 +650,7 @@ CREATE TABLE public.opportunity (
     full_payment_confirmed_at timestamp with time zone,
     full_payment_confirmed_by uuid,
     full_payment_note text,
+    po_date date,
     CONSTRAINT ck_opportunity_full_payment_confirmed_pair CHECK (((full_payment_confirmed_at IS NULL) = (full_payment_confirmed_by IS NULL))),
     CONSTRAINT ck_opportunity_gate_override_reason_required CHECK (((gate_override_approver_id IS NULL) OR (gate_override_reason_id IS NOT NULL))),
     CONSTRAINT ck_opportunity_referral_not_both CHECK ((NOT ((referred_by_user_id IS NOT NULL) AND (referred_by_note IS NOT NULL)))),
@@ -819,6 +820,24 @@ CREATE TABLE public.sbu (
     name character varying(100) NOT NULL,
     description text,
     is_active boolean DEFAULT true
+);
+
+
+--
+-- Name: sbu_target; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sbu_target (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    sbu_id uuid NOT NULL,
+    planning_period character varying(10) NOT NULL,
+    target_amount_lakhs numeric(15,2) NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    CONSTRAINT ck_sbu_target_nonneg CHECK ((target_amount_lakhs >= (0)::numeric)),
+    CONSTRAINT ck_sbu_target_planning_period CHECK (((planning_period)::text ~ '^\d{4}-Q[1-4]$'::text))
 );
 
 
@@ -1335,6 +1354,14 @@ ALTER TABLE ONLY public.sbu
 
 
 --
+-- Name: sbu_target sbu_target_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_target
+    ADD CONSTRAINT sbu_target_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: split split_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1420,6 +1447,14 @@ ALTER TABLE ONLY public.category
 
 ALTER TABLE ONLY public.model
     ADD CONSTRAINT uq_model_brand_name UNIQUE (brand_id, name);
+
+
+--
+-- Name: sbu_target uq_sbu_target; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_target
+    ADD CONSTRAINT uq_sbu_target UNIQUE (sbu_id, planning_period);
 
 
 --
@@ -1906,6 +1941,13 @@ CREATE TRIGGER trg_audit_project AFTER DELETE OR UPDATE ON public.project FOR EA
 
 
 --
+-- Name: sbu_target trg_audit_sbu_target; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_audit_sbu_target AFTER DELETE OR UPDATE ON public.sbu_target FOR EACH ROW EXECUTE FUNCTION public.audit_log_row_change();
+
+
+--
 -- Name: split trg_audit_split; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2036,6 +2078,13 @@ CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.project FOR EACH ROW EXECU
 --
 
 CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.reminder FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+
+--
+-- Name: sbu_target trg_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_updated_at BEFORE UPDATE ON public.sbu_target FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 
 --
@@ -2744,6 +2793,30 @@ ALTER TABLE ONLY public.reminder
 
 
 --
+-- Name: sbu_target sbu_target_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_target
+    ADD CONSTRAINT sbu_target_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.user_profile(id);
+
+
+--
+-- Name: sbu_target sbu_target_sbu_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_target
+    ADD CONSTRAINT sbu_target_sbu_id_fkey FOREIGN KEY (sbu_id) REFERENCES public.sbu(id);
+
+
+--
+-- Name: sbu_target sbu_target_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbu_target
+    ADD CONSTRAINT sbu_target_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.user_profile(id);
+
+
+--
 -- Name: split split_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3398,6 +3471,33 @@ CREATE POLICY reminder_update ON public.reminder FOR UPDATE USING ((activity_id 
 
 
 --
+-- Name: sbu_target; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.sbu_target ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: sbu_target sbu_target_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY sbu_target_insert ON public.sbu_target FOR INSERT WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
+-- Name: sbu_target sbu_target_read; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY sbu_target_read ON public.sbu_target FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()))));
+
+
+--
+-- Name: sbu_target sbu_target_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY sbu_target_update ON public.sbu_target FOR UPDATE USING ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text]))) WITH CHECK ((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])));
+
+
+--
 -- Name: split; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -3576,5 +3676,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict AtohBxkaDLZZhQdmsGg1SxwjTZAns9Su7hTbOHAO4Fo7oNR2ltkHopG3yDcpxWP
+\unrestrict lPbwCd13eLkLmy0MpqzdlCbVirGapPqID7yOsYchGbJG8wTk4Xot7dQHOdGg14K
 

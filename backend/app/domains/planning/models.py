@@ -98,6 +98,27 @@ class TargetPlanAccount(AuditMixin, Base):
     account: Mapped["Account"] = relationship(lazy="joined")
 
 
+class SbuTarget(AuditMixin, Base):
+    """The GM-entered target for a whole SBU for a quarter (Plan vs Actuals
+    Tracking redesign, 2026-10-05). Separate from the sum of people's plans,
+    which is what the SBU Target Rollup shows. SBU Manager and above read;
+    Admin/GM write; no delete."""
+
+    __tablename__ = "sbu_target"
+    __table_args__ = (
+        UniqueConstraint("sbu_id", "planning_period", name="uq_sbu_target"),
+        CheckConstraint("planning_period ~ '^\\d{4}-Q[1-4]$'", name="ck_sbu_target_planning_period"),
+        CheckConstraint("target_amount_lakhs >= 0", name="ck_sbu_target_nonneg"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    sbu_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("sbu.id"), nullable=False)
+    planning_period: Mapped[str] = mapped_column(String(10), nullable=False)
+    target_amount_lakhs: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
+
+    sbu: Mapped["SBU"] = relationship(lazy="joined")
+
+
 class BrandVendorTarget(AuditMixin, Base):
     """The number a brand/vendor actually promised Cabio for a quarter --
     Admin/GM only (docs/Brand-Level-Target-Planning-Implementation-Plan.md
