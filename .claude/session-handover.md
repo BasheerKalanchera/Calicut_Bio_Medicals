@@ -85,20 +85,14 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
-## UAT outage 2026-10-05 — app restored; real fix awaiting go-ahead
+## UAT outage 2026-10-05 — fix on Dev (`945253d`); UAT move waiting
 
-- Slow from ~2 pm, froze ~3:50 pm. Cause: the Next Actions screen loads
-  each reminder with ~100 linked lookups across ~12 tables in one query,
-  which exhausted memory on UAT's free Nano database. Basheer restarted
-  the Supabase project, then Render; app back.
-- Guard rail: Basheer set Render DB_POOL_SIZE=5, DB_MAX_OVERFLOW=5
-  (single worker, max 10 connections) and redeployed.
-- **Next:** Part A fix (Next Actions query loads only the names it shows;
-  no model/DB/frontend change): measure on Dev before/after (announce
-  first), test that the response is unchanged, /code-review, Dev check,
-  UAT move with its own approval. Then add a pool/Production sizing note
-  to Deployment-Topology.md (Production on paid Supabase next month).
-- No UAT backup ran in the 3:30–4:00 pm window; the latest is 2026-10-05 08:33.
+- Fix pushed to `main`, Dev-verified (Progress-Archive-2026-10). UAT still
+  runs the old query behind the Render 5 + 5 pool guard rail.
+- **Next:** the UAT move is its own approval (code deploy only, no DB
+  change; Render redeploys from the UAT branch, so say what else it
+  carries). After it, ask Haroon to open Next Actions and watch UAT.
+- Read-only UAT check before/after is optional; ask first (UAT rule).
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

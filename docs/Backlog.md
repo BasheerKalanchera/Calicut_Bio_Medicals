@@ -281,6 +281,15 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Reopened Next Action keeps its old closing note (Basheer, 2026-10-05;
+  undecided).** The back-end accepts reopening a completed Next Action
+  (BR-ACT-05 allows it, `ReminderService.patch_reminder`), but no screen
+  offers it and the old closing activity is not cleared. Decide: remove the
+  reopen path, or make reopening clear the closing note. Read-only check
+  2026-10-05: 0 open reminders carry a closing activity on Dev (24 open) or
+  UAT (610 open). The Next Actions list query was written so a reopened row
+  would still show its note (separate lookup, never fired today).
+
 - **Insights Dashboard E2E test plan (Basheer, 2026-10-05).** The dashboard
   is built (Batch 1a `d7a0e6f`, Batch 1b `087c284`, Product breakdown
   `34d0170`) but has no written manual E2E plan. Write the full plan

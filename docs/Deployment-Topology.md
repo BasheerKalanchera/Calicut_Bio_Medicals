@@ -105,6 +105,16 @@ beyond just the 2-project limit. Not a blocker today, but worth revisiting if Pr
 grows — flagged here rather than resolved, since it wasn't sized under the old plan
 either.
 
+**Database sizing and connection pool:** UAT's free Nano database ran out of
+memory on 2026-10-05 (cause and fix: `docs/Progress-Archive-2026-10.md`).
+The Render backend's pool is capped at `DB_POOL_SIZE=5` + `DB_MAX_OVERFLOW=5`
+(one worker, at most 10 connections), set on UAT that day. Production is
+planned on a paid Supabase tier (Basheer, 2026-10-05); when it is set up,
+size the pool to that tier's connection and memory limits rather than
+copying 5 + 5, and update the Cost table above, which still assumes the
+free tier. Run the Plan vs Actuals and Next Actions screens against a
+realistic data volume before go-live.
+
 **Keep-alive:** no longer needed once Prod runs on Render's Starter tier (doesn't spin
 down). The UptimeRobot monitor set up 2026-08-03 for the free-tier backend can be
 retired once Prod is live on Starter.

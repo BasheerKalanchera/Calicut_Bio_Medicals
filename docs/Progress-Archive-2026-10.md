@@ -620,6 +620,26 @@ and the open decisions.
 - Done: Render pool lowered to 5 + 5 (guard rail, not the fix).
 - Pending: the query fix (load only displayed names, per query), and a
   Production sizing note. Open: whether a UAT backup overlapped.
+- Fix built and pushed `945253d` (Dev only). Each reminder list now joins
+  only what the screen shows: Pending 6 joins (by-Opportunity 7), Completed
+  11 (12), down from ~118. On Pending, the closing note loads in a separate
+  lookup that fires only for a reopened row (none exist on Dev or UAT).
+  Dev check, 3 concurrent × 3 rounds, pool 5 + 5: statement 41,018 → 1,556
+  characters; planning 649 → 4.4 ms; connection-held total 26.1 → 6.8 s;
+  slowest request 4.2 → 1.4 s. Responses identical to the old loading in 8
+  list cases; 1 SQL statement per list. pytest 1130, ruff clean.
+- Review (medium): no change needed. Its main worry (hidden extra lookups)
+  was checked on Dev and did not occur. Join-count tests kept exact on
+  purpose. Its other findings concerned the separate Target vs Actuals work.
+- Reopen path: the back-end lets a completed Next Action be reopened but no
+  screen does, and the old closing note stays; logged in Backlog. Read-only
+  check: 0 open reminders carry a closing activity (Dev 24 open, UAT 610).
+- Retro: worked: measuring before and after on Dev, and comparing responses
+  byte for byte, caught a dropped field (created-by name) in my first
+  version. Improve: the peak-connection metric turned out unreliable (it
+  counts every session on the shared login); I should have checked that
+  before quoting it, and relied on time-held and statement size instead.
+  Also, I wrongly called Dev a bigger machine than UAT; both are free tier.
 
 ## 2026-10-05 — Target vs Actuals design settled; UAT outage (retro)
 
