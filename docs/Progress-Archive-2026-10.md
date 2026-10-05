@@ -604,3 +604,60 @@ and the open decisions.
   discussion with a read-only query of the real people and records involved,
   and take every example from it; (3) the two rules from the previous entry
   (membership rule in plans; "member with no activity" test case).
+
+## 2026-10-05 — UAT outage: Next Actions screen exhausted database memory
+
+- What happened: UAT slowed from ~2 pm (Haroon: Next Actions screen) and
+  froze ~3:50 pm; sign-ins failed (Supabase 522s, then a pooler
+  "too many authentication failures" lock). Basheer restarted the UAT
+  Supabase project, then the Render backend; app restored.
+- Cause: `GET /reminders` loads each reminder through chained
+  `lazy="joined"` relationships (Reminder → Activity → account,
+  opportunity, user…), one statement with ~100 joins over ~12 tables. On
+  the free Nano tier this pushed memory into swap; slow requests piled up
+  connections (peak 24 of the database's 60) until it froze. The pooler
+  lock was a side-effect, cleared by the Render restart.
+- Done: Render pool lowered to 5 + 5 (guard rail, not the fix).
+- Pending: the query fix (load only displayed names, per query), and a
+  Production sizing note. Open: whether a UAT backup overlapped.
+
+## 2026-10-05 — Target vs Actuals design settled; UAT outage (retro)
+
+- Worked: every open design question closed in one sitting, using real UAT
+  data (Basheer's split query) and industry practice (Salesforce, Zoho,
+  Dynamics) for the PO-vs-payment and SBU-target calls. The outage was
+  traced to one screen within about an hour, and a guard rail went in
+  the same day.
+- Improve: (1) I explained the outage before checking the code and
+  numbers: "100 files per reminder" (really one query, ~100 lookups),
+  connections as the cause (they were a symptom), and "24 of 30" (it was
+  24 of the database's 60). Basheer had to ask four times. (2) The design
+  decisions sat only in chat for hours; when the outage broke in, the
+  plan-doc text, split note and Haroon message were left unapproved.
+  (3) Explanations needed deeper everyday analogies than I first gave.
+- Process change (proposed, not yet in CLAUDE.md): (1) during an incident,
+  state only what the evidence shows and label any guess as a guess;
+  (2) once a design decision is agreed, write it into the plan doc
+  (uncommitted) the same turn, so an interruption can't strand it.
+
+## 2026-10-05 — UAT checks and what moved (retro)
+
+- **UAT backup:** taken and saved.
+- **Data-quality report:** saved to `C:\Backups\CabioUAT\data_consistency_reports\`.
+  Hospitals filed at region level fell from 64 to 11. Two more Opportunities
+  have no activity logged and two more activities have no next action;
+  everything else unchanged. The "added but not used yet" list is now sorted
+  by Area (`scripts/uat_data_quality_check.py`, section 3 query).
+- **Closure-date report:** saved over the earlier copy, with a "since the last
+  check" comparison (red for increases, green for decreases).
+- **Why values rose with no change in count** (read-only UAT change-history
+  query): Haroon Sidheeq raised "Heart Lung Machine", renamed "CVTS OT
+  Equipment", from ₹30 L to ₹55 L on 3 Oct, and added three Opportunities at
+  IQRAA Malaparamba on 5 Oct (₹0.28 L, ₹2.30 L, ₹12.5 L; about ₹15.1 L).
+  Fahad added an E10 at AJ Hospital (₹20 L); Nishad added a CX12 (₹1.68 L).
+  Haroon's +₹50.8 L cannot be matched to the rupee without the exact 3 Oct list.
+- **Two wrong guesses of mine, corrected:** the E10 portable moved to
+  Negotiation (not closed); the CTG was marked Lost (not moved to a later date).
+- **Retro:** compare the actual lists first, then explain any change in value.
+- **Doc tidy-up:** Insights Dashboard plan Status corrected to Built; its E2E
+  plan deferred to Backlog (to be written with the Plan vs Actuals plan).

@@ -68,50 +68,49 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   there (Won/Expected/late). Dev's test Opportunity "Test +lead screen" would
   make Basheer K appear: reassign or retire it first (has Activity rows,
   so reassign rather than delete).
-- **Next (Basheer decides, tomorrow):** revisit the design before more code.
-  Open points: (1) write one people-rule in the plan doc (the proposed rule
-  above); (2) GM/Admin see every active member of the viewed SBU even with
-  nothing in the quarter (Planned 0), others only their own scope; (3) Area
-  Managers included or not (Critical Care: Arun Adarsh, Nishad K V, Vivek;
-  recommended yes); (4) Haroon always shown in both SBUs, or only with a
-  plan/Opportunities; (5) rejected/draft plans stay ignored (`list_plans`
-  counts only pending/approved). **Superseded by the design review below.**
-- **Design review 2026-10-04 (E2E paused; Basheer: design → gap analysis →
-  fix → new E2E plan → E2E).** Agreed, **not yet saved to the plan doc**:
-  - Roster: every active SBU member expected to plan gets a row every
-    quarter on **both** Target Planning and Plan vs Actuals, plan or not,
-    within the viewer's scope (purpose: managers chase non-submitters).
-    Reopens Target Planning (Dev only; both go to UAT together). Checked in
-    code: Target Planning today lists only people with a plan.
-  - Each row shows status Not started / Draft / Waiting / Approved /
-    Rejected, plus an "N of M haven't submitted" line on both screens.
-    Automatic bell reminder → Backlog entry (needs the nightly job; not
-    written yet).
-  - A manager sees only the word "Draft" for a team member's draft.
-  - Who plans: everyone active except Admin. Fahad (Imaging, now Marketing
-    User temporarily) goes back to Imaging sales; Basheer will create a
-    separate Marketing user. Haroon (GM, no home SBU) sells and has targets,
-    so he is on the roster in **both** SBUs — confirm he counts as "not
-    submitted" when planless.
-  - Dev data 2026-10-04 (read-only): Q3 Imaging only Rudrappa has a plan
-    (Waiting ₹10 L); Critical Care Arun Approved ₹50 L, Vivek Waiting ₹51 L
-    (was ₹60 L approved), Nishad none. Q4: Vivek Rejected ₹45 L (was ₹30 L
-    approved).
-  - **Parked for tomorrow:** Q3 revised-after-approval figure (light "was
-    ₹X approved" note, recommended; heavy = keep approved snapshot, DB
-    change); Q4 Won counts at payment (BR-OP-17) — confirm with Haroon;
-    Q5 manager row own plan only (recommended) vs team subtotal; Q6 screen
-    mainly for Haroon/Basheer K weekly review.
-- **Next:** settle Q3–Q6 with real examples; show the Decisions text for the
-  plan doc, then gap analysis → fix plan → build. Session retro 2026-10-04
-  saved to Progress-Archive. Then rerun A, continue from Section S
-  (Fazal plans Aster DM 20 + Aster MIMS Calicut 10, Haroon approves, Nishad
-  plans one hospital for 10 in Critical Care; Basheer clicks, Claude
-  watches), then W, C, L, E, R. After E2E: BR-PL rule, Traceability,
-  UI-Inventory, scorecard regenerate + `--check`, post-commit checklist, list
-  the `PVA test` Opportunities in Progress-Archive.
+- Design review finished 2026-10-05; decisions agreed in chat, NOT yet
+  written to the plan doc:
+  - Full rename to "Target vs Actuals" (screen, docs, file and code names).
+  - Roster: every active SBU member except Admin gets a row every quarter
+    on both Target Planning and Target vs Actuals, within the viewer's
+    scope; statuses Not started/Draft/Waiting/Approved/Rejected; "N of M
+    haven't submitted" line; managers see only "Draft". Haroon is on both
+    SBU rosters and counts as not submitted when planless.
+  - Q3: show the revised figure with a "was ₹X approved" note.
+  - Q4: Won counts at full payment (BR-OP-17); % of target uses Won only.
+  - Q5: a manager's row = own plan and wins only.
+  - Visibility: staff own row; Area Manager + team; SBU Manager + SBU vs
+    SBU target; GM all SBUs + company; Admin = GM view, no own row.
+  - PO: separate "PO received" and "Won (paid)" columns, each in its own
+    quarter; new "PO date" box next to PO number (required at
+    Order → Delivery); older records fall back to the audit-log date.
+  - SBU target: one figure per SBU per quarter, GM enters it in SBU Target
+    Rollup, separate register table, visible SBU Manager and above;
+    company = sum of SBUs.
+  - Wording: "no expected closure date". Split credit: owner gets full
+    credit, waiting on Haroon (UAT: 5 shared Opportunities, Haroon in 4).
+  - All in Part 1, one migration (PO date + SBU target), one UAT move.
+- Plan doc section 2 "No database change" is now wrong; revise it.
+- **Next:** show the Decisions text for the plan doc, the split note and
+  the Haroon message (redraft all three) → gap analysis → fix plan →
+  build → new E2E plan → E2E.
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
+
+## UAT outage 2026-10-05 — app restored; real fix awaiting go-ahead
+
+- Slow from ~2 pm, froze ~3:50 pm. Cause: the Next Actions screen loads
+  each reminder with ~100 linked lookups across ~12 tables in one query,
+  which exhausted memory on UAT's free Nano database. Basheer restarted
+  the Supabase project, then Render; app back.
+- Guard rail: Basheer set Render DB_POOL_SIZE=5, DB_MAX_OVERFLOW=5
+  (single worker, max 10 connections) and redeployed.
+- **Next:** Part A fix (Next Actions query loads only the names it shows;
+  no model/DB/frontend change): measure on Dev before/after (announce
+  first), test that the response is unchanged, /code-review, Dev check,
+  UAT move with its own approval. Then add a pool/Production sizing note
+  to Deployment-Topology.md (Production on paid Supabase next month).
+- Open: did a UAT backup run 3:30–4:00 pm?
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
