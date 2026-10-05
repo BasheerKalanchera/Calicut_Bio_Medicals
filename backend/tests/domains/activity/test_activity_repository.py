@@ -13,7 +13,9 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
-from app.domains.activity.repository import ActivityRepository
+from sqlalchemy.dialects import postgresql
+
+from app.domains.activity.repository import ActivityRepository, ReminderRepository
 from app.domains.organization.models import UserProfile
 
 START = datetime(2026, 8, 6, 0, 0, 0, tzinfo=UTC)
@@ -214,3 +216,70 @@ class TestListByAccountCommentCount:
 
         assert result == [activity]
         assert activity.comment_count == 3
+
+
+class TestReminderListQuerySize:
+    """UAT outage 2026-10-05: the Next Actions list joined ~118 tables because
+    every nested relationship loaded eagerly. Both reminder list queries must
+    now join only what ReminderResponse shows."""
+
+    def _compiled(self, call) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = []
+        call(ReminderRepository(mock_db))
+        stmt = mock_db.scalars.call_args.args[0]
+        return str(stmt.compile(dialect=postgresql.dialect())).lower()
+
+    def _assert_only_displayed_tables(self, sql: str) -> None:
+        # Shown on screen: account, opportunity and people's names.
+        for table in ("account", "opportunity", "user_profile"):
+            assert f"join {table} " in sql
+        # Never shown: the user's SBU/role/zone chain and the project.
+        for table in ("sbu", "role", "zone", "project"):
+            assert f"join {table} " not in sql
+
+    def _order_by(self, sql: str) -> str:
+        return sql.split("order by", 1)[1].split("limit", 1)[0].replace("\n", " ")
+
+    def _assert_stable_order(self, sql: str) -> None:
+        clause = self._order_by(sql)
+        due = clause.index("reminder.due_date")
+        created = clause.index("reminder.created_at")
+        row_id = clause.index("reminder.id")
+        assert due < created < row_id
+        assert "desc" not in clause
+
+    def test_list_for_user_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(self._compiled(lambda repo: repo.list_for_user(uuid.uuid4())))
+
+    def test_list_by_opportunity_order_is_due_date_then_logged_then_id(self):
+        self._assert_stable_order(
+            self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
+        )
+
+    # Pending list: the closing activity is a separate lookup (no joins of
+    # its own in the main statement). list_by_opportunity has one extra join
+    # for its own Activity filter.
+    def test_list_for_user_pending_has_six_joins(self):
+        sql = self._compiled(lambda repo: repo.list_for_user(uuid.uuid4()))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 6
+
+    def test_list_by_opportunity_pending_has_seven_joins(self):
+        sql = self._compiled(lambda repo: repo.list_by_opportunity(uuid.uuid4()))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 7
+
+    # Completed list: every row has a closing activity the screen shows, so
+    # it joins in the same statement (5 more joins).
+    def test_list_for_user_completed_joins_closing_activity(self):
+        sql = self._compiled(lambda repo: repo.list_for_user(uuid.uuid4(), include_completed=True))
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 11
+
+    def test_list_by_opportunity_completed_joins_closing_activity(self):
+        sql = self._compiled(
+            lambda repo: repo.list_by_opportunity(uuid.uuid4(), include_completed=True)
+        )
+        self._assert_only_displayed_tables(sql)
+        assert sql.count(" join ") == 12

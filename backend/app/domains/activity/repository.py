@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from datetime import datetime
 
 from sqlalchemy import ScalarSelect, func, or_, select, text
-from sqlalchemy.orm import Session, noload
+from sqlalchemy.orm import Session, joinedload, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
@@ -234,6 +234,48 @@ class ActivityCommentRepository(BaseRepository[ActivityComment]):
         return list(self.db.scalars(stmt).all())
 
 
+def _name_only(relationship, *columns):
+    # Join the related row, but only the columns ReminderResponse shows, and
+    # stop there: lazyload("*") switches off the model's own lazy="joined"
+    # chains (user -> sbu/role/zone ...) that otherwise balloon the query.
+    return joinedload(relationship).load_only(*columns).lazyload("*")
+
+
+def _activity_display_options(relationship, loader=joinedload):
+    # ActivityContextNested needs the activity's own columns plus the
+    # account, opportunity, user and created-by names -- nothing else.
+    return loader(relationship).options(
+        _name_only(Activity.account, Account.id, Account.name),
+        _name_only(Activity.opportunity, Opportunity.id, Opportunity.name),
+        _name_only(Activity.user, UserProfile.id, UserProfile.display_name),
+        _name_only(Activity.created_by_user, UserProfile.id, UserProfile.display_name),
+        noload(Activity.project),
+    )
+
+
+# Soonest due first; same due date -> logged earlier first (it has waited
+# longer); id as the last tie-break so the order is identical on every load.
+_REMINDER_ORDER = (Reminder.due_date.asc(), Reminder.created_at.asc(), Reminder.id.asc())
+
+
+def _reminder_display_options(include_completed: bool):
+    # Without these, each reminder pulls ~118 joined tables in one statement
+    # (UAT outage 2026-10-05, docs/Progress-Archive-2026-10.md).
+    #
+    # Completed list: every row has a closing activity and the screen shows
+    # it, so it joins in the same statement. Pending list: none has one (no
+    # screen reopens a Next Action), so it loads in a separate lookup that
+    # SQLAlchemy skips when no row on the page has a closing_activity_id --
+    # the main statement stays small and a reopened row would still show it.
+    return (
+        _activity_display_options(Reminder.activity),
+        _activity_display_options(
+            Reminder.closing_activity, loader=joinedload if include_completed else selectinload
+        ),
+        _name_only(Reminder.assigned_to_user, UserProfile.id, UserProfile.display_name),
+    )
+
+
 class ReminderRepository(BaseRepository[Reminder]):
     def __init__(self, db: Session):
         super().__init__(Reminder, db)
@@ -256,6 +298,7 @@ class ReminderRepository(BaseRepository[Reminder]):
     ) -> list[Reminder]:
         stmt = (
             select(Reminder)
+            .options(*_reminder_display_options(include_completed))
             .where(Reminder.assigned_to_user_id == user_id)
             .where(Reminder.is_completed == include_completed)
         )
@@ -263,7 +306,7 @@ class ReminderRepository(BaseRepository[Reminder]):
             stmt = stmt.where(Reminder.due_date >= due_after)
         if due_before is not None:
             stmt = stmt.where(Reminder.due_date <= due_before)
-        stmt = stmt.order_by(Reminder.due_date.asc()).offset(offset).limit(limit)
+        stmt = stmt.order_by(*_REMINDER_ORDER).offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
 
     def count_for_user(
@@ -294,10 +337,11 @@ class ReminderRepository(BaseRepository[Reminder]):
     ) -> list[Reminder]:
         stmt = (
             select(Reminder)
+            .options(*_reminder_display_options(include_completed))
             .join(Activity, Reminder.activity_id == Activity.id)
             .where(Activity.opportunity_id == opportunity_id)
             .where(Reminder.is_completed == include_completed)
-            .order_by(Reminder.due_date.asc())
+            .order_by(*_REMINDER_ORDER)
             .offset(offset)
             .limit(limit)
         )
