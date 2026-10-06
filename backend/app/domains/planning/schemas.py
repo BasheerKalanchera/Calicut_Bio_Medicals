@@ -231,8 +231,8 @@ class QuarterState(StrEnum):
 
 
 class RosterStatus(StrEnum):
-    """A roster member's plan for the quarter, as Target vs Actuals shows it.
-    PENDING_APPROVAL is labelled "Waiting" on screen."""
+    """A roster member's plan for the quarter, as Target vs Actuals and the
+    Target Planning roster show it."""
 
     NOT_STARTED = "NOT_STARTED"
     DRAFT = "DRAFT"
@@ -339,6 +339,32 @@ class TargetVsActualResponse(BaseModel):
     people: list[TargetVsActualPerson]
     zones: list[TargetVsActualZone]
     brands: list[TargetVsActualBrand]
+
+
+class TargetRosterPerson(BaseModel):
+    """One row of the Target Planning roster (Target-Coverage-Roster plan)."""
+
+    user_id: uuid.UUID
+    display_name: str
+    plan_status: RosterStatus
+    # What counts towards the total: the plan's total while waiting or
+    # approved, the last approved total for a rejected revision (BR-PL-05),
+    # else 0.
+    counted_lakhs: Decimal
+    previous_approved_total_lakhs: Decimal | None
+    # None when there is no plan, or it is someone else's draft (status only).
+    plan: TargetPlanResponse | None
+
+
+class TargetRosterResponse(BaseModel):
+    sbu_id: uuid.UUID
+    planning_period: str
+    # Same figure as Target vs Actuals' "Planned": includes plans by owners
+    # with no row (e.g. since deactivated), as the card's totals do.
+    total_lakhs: Decimal
+    roster_count: int
+    not_submitted_count: int
+    people: list[TargetRosterPerson]
 
 
 class SbuTargetSet(BaseModel):

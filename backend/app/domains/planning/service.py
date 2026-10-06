@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -26,7 +27,10 @@ from app.domains.planning.schemas import (
     RosterStatus,
     SbuTargetSet,
     TargetPlanCreate,
+    TargetPlanResponse,
     TargetPlanUpdate,
+    TargetRosterPerson,
+    TargetRosterResponse,
     TargetVsActualBrand,
     TargetVsActualHospital,
     TargetVsActualLateOpportunity,
@@ -476,6 +480,51 @@ def _percent_of_target(won: Decimal, target: Decimal | None) -> Decimal | None:
     return (won / target * 100).quantize(_CENT) if target else None
 
 
+@dataclass
+class _RosterEntry:
+    """One person's plan status for a quarter, and what of it counts."""
+
+    user_id: uuid.UUID
+    display_name: str
+    # False for a plan owner outside the roster (another SBU's person, someone
+    # since deactivated): no row, but their plan still counts in the totals.
+    on_roster: bool
+    status: RosterStatus = RosterStatus.NOT_STARTED
+    plan: TargetPlan | None = None
+    counted: Decimal = _ZERO
+    # Rejected revision counted at its last approved total (BR-PL-05).
+    approved_fallback: bool = False
+
+    @property
+    def submitted(self) -> bool:
+        return self.status in SUBMITTED_PLAN_STATUSES or self.approved_fallback
+
+
+def _build_roster(
+    repo: TargetVsActualRepository, current_user: UserProfile, sbu_id: uuid.UUID, planning_period: str
+) -> list[_RosterEntry]:
+    """Who is on the quarter's roster and what each plan counts for. Shared by
+    Target vs Actuals and the Target Planning roster so the two screens list
+    the same people, statuses and totals (Target-Coverage-Roster plan)."""
+    entries: dict[uuid.UUID, _RosterEntry] = {}
+    for user_id, name in repo.roster(current_user, sbu_id):
+        entries[user_id] = _RosterEntry(user_id, name, on_roster=True)
+    for plan in repo.list_plans(current_user, sbu_id, planning_period):
+        entry = entries.get(plan.user_id)
+        if entry is None:
+            entry = entries[plan.user_id] = _RosterEntry(plan.user_id, plan.user.display_name, on_roster=False)
+        entry.status = RosterStatus(plan.status)
+        entry.plan = plan
+        if entry.status is RosterStatus.REJECTED and plan.previous_approved_total_lakhs is not None:
+            # BR-PL-05: a rejected revision of an approved plan leaves the
+            # last approved total as the goal.
+            entry.counted = plan.previous_approved_total_lakhs
+            entry.approved_fallback = True
+        elif entry.status in SUBMITTED_PLAN_STATUSES:
+            entry.counted = plan.target_amount_lakhs
+    return list(entries.values())
+
+
 class _PersonAcc:
     """Running figures for one person while the response is assembled."""
 
@@ -581,29 +630,24 @@ class TargetVsActualService:
                 people[user_id] = _PersonAcc(user_id, name)
             return people[user_id]
 
-        roster_ids: set[uuid.UUID] = set()
-        for user_id, name in repo.roster(current_user, sbu_id):
-            person(user_id, name)
-            roster_ids.add(user_id)
-
+        roster = _build_roster(repo, current_user, sbu_id, planning_period)
+        roster_ids = {e.user_id for e in roster if e.on_roster}
         brand_names: dict[uuid.UUID, str] = {}
-        plans = repo.list_plans(current_user, sbu_id, planning_period)
-        for plan in plans:
-            acc = person(plan.user_id, plan.user.display_name)
-            acc.plan_status = RosterStatus(plan.status)
-            acc.previous_approved_total = plan.previous_approved_total_lakhs
-            if acc.plan_status is RosterStatus.REJECTED and plan.previous_approved_total_lakhs is not None:
-                # BR-PL-05: a rejected revision of an approved plan leaves the
-                # last approved total as the goal. Only the total survives --
-                # the hospitals and brands on file are the rejected revision's.
-                acc.plan_total = plan.previous_approved_total_lakhs
-                acc.approved_fallback = True
+        for entry in roster:
+            acc = person(entry.user_id, entry.display_name)
+            acc.plan_status = entry.status
+            acc.plan_total = entry.counted
+            acc.approved_fallback = entry.approved_fallback
+            plan = entry.plan
+            if plan is None:
                 continue
-            if acc.plan_status not in SUBMITTED_PLAN_STATUSES:
+            acc.previous_approved_total = plan.previous_approved_total_lakhs
+            if entry.approved_fallback or entry.status not in SUBMITTED_PLAN_STATUSES:
+                # Only a rejected revision's last approved total survives --
+                # the hospitals and brands on file are the rejected revision's.
                 # Draft and rejected plans don't count, and their figures are
                 # never shown: a manager sees only "Draft" on someone's draft.
                 continue
-            acc.plan_total = plan.target_amount_lakhs
             for pa in plan.accounts:
                 acc.hospitals[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
             for split in plan.brand_splits:
@@ -671,11 +715,7 @@ class TargetVsActualService:
         # (another SBU's person, someone since deactivated) stay in the headline
         # and zone/brand tables; only the person rows follow the roster.
         shown = [r for p, r in zip(ordered, rows, strict=True) if p.user_id in roster_ids]
-        not_submitted = sum(
-            1
-            for uid in roster_ids
-            if people[uid].plan_status not in SUBMITTED_PLAN_STATUSES and not people[uid].approved_fallback
-        )
+        not_submitted = sum(1 for e in roster if e.on_roster and not e.submitted)
         planned = sum((r.planned_lakhs for r in rows), _ZERO)
         po_received = sum((r.po_received_lakhs for r in rows), _ZERO)
         won = sum((r.won_lakhs for r in rows), _ZERO)
@@ -746,6 +786,33 @@ class TargetVsActualService:
                 TargetVsActualBrand(brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1])
                 for bid, v in sorted(brand_totals.items(), key=lambda kv: brand_names[kv[0]].lower())
             ],
+        )
+
+    def get_roster(self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile) -> TargetRosterResponse:
+        """Target Planning's quarter roster: everyone Target vs Actuals lists,
+        with their plan where the caller may see it, and the same total."""
+        roster = _build_roster(self.repository, current_user, sbu_id, planning_period)
+        rows = []
+        for e in sorted((e for e in roster if e.on_roster), key=lambda e: e.display_name.lower()):
+            # Drafts are private to their owner: a manager sees only "Draft".
+            visible = e.plan is not None and (e.status is not RosterStatus.DRAFT or e.user_id == current_user.id)
+            rows.append(
+                TargetRosterPerson(
+                    user_id=e.user_id,
+                    display_name=e.display_name,
+                    plan_status=e.status,
+                    counted_lakhs=e.counted,
+                    previous_approved_total_lakhs=e.plan.previous_approved_total_lakhs if visible else None,
+                    plan=TargetPlanResponse.model_validate(e.plan) if visible else None,
+                )
+            )
+        return TargetRosterResponse(
+            sbu_id=sbu_id,
+            planning_period=planning_period,
+            total_lakhs=sum((e.counted for e in roster), _ZERO),
+            roster_count=len(rows),
+            not_submitted_count=sum(1 for e in roster if e.on_roster and not e.submitted),
+            people=rows,
         )
 
     @staticmethod

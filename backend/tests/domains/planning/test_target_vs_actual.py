@@ -6,6 +6,7 @@ repository), the SBU target service, and the shape of the repository's SQL
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +16,7 @@ from app.core.periods import IST, quarter_dates, quarter_of
 from app.domains.organization.models import UserProfile
 from app.domains.planning import service as service_module
 from app.domains.planning.repository import SbuTargetRepository, TargetVsActualRepository
-from app.domains.planning.schemas import QuarterState, RosterStatus, SbuTargetSet
+from app.domains.planning.schemas import QuarterState, RosterStatus, SbuTargetSet, TargetPlanResponse
 from app.domains.planning.service import SbuTargetService, TargetVsActualService
 
 SBU_ID = uuid.uuid4()
@@ -453,6 +454,93 @@ def test_brand_planned_vs_won(monkeypatch):
         ("Philips", Decimal("25"), Decimal("9.00"))
     ]
     assert resp.people[0].brands[0].won_lakhs == Decimal("9.00")
+
+
+# --- Target Planning roster (Target-Coverage-Roster plan) -------------------
+
+
+def _roster(repo, monkeypatch, user=None):
+    # The stubbed plans aren't ORM rows; tag each row's plan with the stub's id.
+    monkeypatch.setattr(
+        service_module,
+        "TargetPlanResponse",
+        SimpleNamespace(model_validate=lambda p: TargetPlanResponse.model_construct(id=p.id)),
+    )
+    user = user or _user_with_role("SBU Manager")
+    return TargetVsActualService(repo).get_roster(SBU_ID, PERIOD, current_user=user)
+
+
+def test_roster_lists_everyone_by_name_with_not_started_rows(monkeypatch):
+    a, b = uuid.uuid4(), uuid.uuid4()
+    plan = _plan(b, "asha", [(uuid.uuid4(), "H1", "40")], status="APPROVED")
+    resp = _roster(_repo(roster=[(a, "Bala"), (b, "asha")], list_plans=[plan]), monkeypatch)
+    assert [(p.display_name, p.plan_status) for p in resp.people] == [
+        ("asha", RosterStatus.APPROVED),
+        ("Bala", RosterStatus.NOT_STARTED),
+    ]
+    assert resp.people[0].plan.id is plan.id and resp.people[1].plan is None
+    assert (resp.total_lakhs, resp.roster_count, resp.not_submitted_count) == (Decimal("40"), 2, 1)
+
+
+def test_roster_hides_someone_elses_draft_but_shows_your_own(monkeypatch):
+    me = _user_with_role("SBU Manager")
+    rep = uuid.uuid4()
+    theirs = _plan(rep, "Ravi", [(uuid.uuid4(), "H1", "40")], status="DRAFT", previous="20")
+    mine = _plan(me.id, "Me", [(uuid.uuid4(), "H2", "15")], status="DRAFT")
+    resp = _roster(_repo(roster=[(rep, "Ravi"), (me.id, "Me")], list_plans=[theirs, mine]), monkeypatch, user=me)
+    by_name = {p.display_name: p for p in resp.people}
+    ravi, own = by_name["Ravi"], by_name["Me"]
+    assert ravi.plan_status == RosterStatus.DRAFT
+    assert (ravi.plan, ravi.previous_approved_total_lakhs, ravi.counted_lakhs) == (None, None, Decimal(0))
+    assert own.plan.id is mine.id and own.counted_lakhs == Decimal(0)
+    assert (resp.total_lakhs, resp.not_submitted_count) == (Decimal(0), 2)
+
+
+def test_roster_counts_a_rejected_revision_at_its_last_approved_total(monkeypatch):
+    # BR-PL-05 on Target Planning too: approved at 30, revised to 45, rejected.
+    vivek, nisha = uuid.uuid4(), uuid.uuid4()
+    revision = _plan(vivek, "Vivek", [(uuid.uuid4(), "H1", "45")], status="REJECTED", previous="30")
+    first_try = _plan(nisha, "Nisha", [(uuid.uuid4(), "H2", "25")], status="REJECTED")
+    resp = _roster(_repo(roster=[(vivek, "Vivek"), (nisha, "Nisha")], list_plans=[revision, first_try]), monkeypatch)
+    by_name = {p.display_name: p for p in resp.people}
+    # The row still shows the plan asked for; only the last approved total counts.
+    assert by_name["Vivek"].plan.id is revision.id
+    assert (by_name["Vivek"].counted_lakhs, by_name["Vivek"].previous_approved_total_lakhs) == (
+        Decimal("30"),
+        Decimal("30"),
+    )
+    # A rejected first plan counts nothing and isn't submitted.
+    assert by_name["Nisha"].counted_lakhs == Decimal(0)
+    assert (resp.total_lakhs, resp.not_submitted_count) == (Decimal("30"), 1)
+
+
+def test_roster_total_counts_a_plan_owner_outside_the_roster(monkeypatch):
+    outsider = uuid.uuid4()
+    plan = _plan(outsider, "Ravi", [(uuid.uuid4(), "H1", "12")], status="PENDING_APPROVAL")
+    resp = _roster(_repo(list_plans=[plan]), monkeypatch)
+    assert resp.people == []
+    assert (resp.total_lakhs, resp.roster_count) == (Decimal("12"), 0)
+
+
+def test_roster_and_target_vs_actuals_agree_on_people_statuses_and_total(monkeypatch):
+    a, b, c, d, outsider = (uuid.uuid4() for _ in range(5))
+    repo = _repo(
+        roster=[(a, "Asha"), (b, "Bala"), (c, "Chitra"), (d, "Dev")],
+        list_plans=[
+            _plan(a, "Asha", [(uuid.uuid4(), "H1", "40")], status="APPROVED"),
+            _plan(b, "Bala", [(uuid.uuid4(), "H2", "45")], status="REJECTED", previous="30"),
+            _plan(c, "Chitra", [(uuid.uuid4(), "H3", "9")], status="DRAFT"),
+            _plan(outsider, "Ravi", [], status="PENDING_APPROVAL", total="5"),
+        ],
+    )
+    card = _run(repo, IN_QUARTER, monkeypatch)
+    roster = _roster(repo, monkeypatch)
+    assert [(p.display_name, p.plan_status) for p in roster.people] == [
+        (p.display_name, p.plan_status) for p in card.people
+    ]
+    assert [p.counted_lakhs for p in roster.people] == [p.planned_lakhs for p in card.people]
+    assert roster.total_lakhs == card.planned_lakhs == Decimal("75")
+    assert (roster.roster_count, roster.not_submitted_count) == (card.roster_count, card.not_submitted_count)
 
 
 # --- SBU target service -----------------------------------------------------

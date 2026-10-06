@@ -27,6 +27,7 @@ from app.domains.planning.schemas import (
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
+    TargetRosterResponse,
     TargetVsActualResponse,
 )
 from app.domains.planning.service import (
@@ -112,6 +113,18 @@ def get_target_vs_actual(
     """Target vs Actuals for one quarter (Insights Dashboard): roster rows,
     PO received, Won (paid), Expected; SBU and company rows by role. Read-only."""
     return APIResponse(data=service.get_target_vs_actual(sbu_id, planning_period, current_user=current_user))
+
+
+@router.get("/roster")
+def get_target_roster(
+    sbu_id: uuid.UUID = Query(...),
+    planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: TargetVsActualService = Depends(_get_target_vs_actual_service),
+) -> APIResponse[TargetRosterResponse]:
+    """Target Planning's quarter roster: everyone in the caller's scope with
+    their plan status, and the total Target vs Actuals counts. Read-only."""
+    return APIResponse(data=service.get_roster(sbu_id, planning_period, current_user=current_user))
 
 
 @router.get("/eligible-accounts")
