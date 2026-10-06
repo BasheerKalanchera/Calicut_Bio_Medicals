@@ -22,7 +22,11 @@ from app.domains.opportunity.schemas import (
     StakeholderLinkCreate,
     StakeholderLinkUpdate,
 )
-from app.domains.opportunity.validators import validate_stage_transition, validate_status_transition
+from app.domains.opportunity.validators import (
+    validate_po_date,
+    validate_stage_transition,
+    validate_status_transition,
+)
 from app.domains.organization.models import UserProfile
 
 # BR-OP-12: only these roles may create an Opportunity outside their own SBU.
@@ -181,6 +185,8 @@ class OpportunityService:
                 "Payment Pending, then mark it as Won."
             )
 
+        validate_po_date(data.po_date)
+
         # BR-OP-00: gates apply even on creation at a non-Lead stage
         validate_stage_transition(
             new_stage_order=new_stage.display_order,
@@ -193,6 +199,7 @@ class OpportunityService:
             po_number=data.po_number,
             has_items=bool(data.items),
             gate_override_approver_id=data.gate_override_approver_id,
+            po_date=data.po_date,
         )
 
         validate_status_transition(
@@ -206,6 +213,7 @@ class OpportunityService:
             reactivation_date=None,
             po_number=data.po_number,
             has_items=bool(data.items),
+            po_date=data.po_date,
         )
 
         opportunity = Opportunity(
@@ -223,6 +231,7 @@ class OpportunityService:
             demo_start_date=data.demo_start_date,
             demo_end_date=data.demo_end_date,
             po_number=data.po_number,
+            po_date=data.po_date,
             referred_by_user_id=data.referred_by_user_id,
             referred_by_note=data.referred_by_note,
             gate_override_approver_id=data.gate_override_approver_id,
@@ -282,6 +291,9 @@ class OpportunityService:
         full_payment_note = updates.pop("full_payment_note", None)
         if not updates:
             return opportunity
+
+        if "po_date" in updates:
+            validate_po_date(updates["po_date"])
 
         # Capture current state before applying updates
         current_stage = self.repository.get_stage(opportunity.stage_id)
@@ -385,6 +397,7 @@ class OpportunityService:
                 po_number=opportunity.po_number,
                 has_items=has_items,
                 gate_override_approver_id=opportunity.gate_override_approver_id,
+                po_date=opportunity.po_date,
             )
 
         # BR-OP-14 (2026-08-27 fix): a save that *clears* the override must
@@ -418,6 +431,7 @@ class OpportunityService:
                 po_number=opportunity.po_number,
                 has_items=has_items,
                 gate_override_approver_id=None,
+                po_date=opportunity.po_date,
             )
 
         # BR-OP-02 / BR-OP-03 / BR-OP-05 / BR-OP-09: status transition validation
@@ -442,6 +456,7 @@ class OpportunityService:
                 current_stage_order=current_stage_order,
                 new_stage_order=effective_stage.display_order,
                 full_payment_confirmed=confirm_full_payment,
+                po_date=opportunity.po_date,
             )
 
             # BR-OP-17: stamp who confirmed full payment, and when, plus the

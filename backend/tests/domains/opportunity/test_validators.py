@@ -15,6 +15,7 @@ from app.core.exceptions import BusinessRuleViolation
 from app.domains.opportunity import validators
 from app.domains.opportunity.validators import (
     _today_ist,
+    validate_po_date,
     validate_stage_transition,
     validate_status_transition,
 )
@@ -37,6 +38,7 @@ CLOSURE_DATE = date.today()
 PO = "PO-2026-001"
 TOMORROW = _today_ist() + timedelta(days=1)
 YESTERDAY = _today_ist() - timedelta(days=1)
+PO_DATE = YESTERDAY
 
 
 def _stage_ctx(**overrides):
@@ -47,6 +49,7 @@ def _stage_ctx(**overrides):
         demo_start_date=DEMO_DATE,
         expected_closure_date=CLOSURE_DATE,
         po_number=PO,
+        po_date=PO_DATE,
         has_items=True,
     )
     base.update(overrides)
@@ -378,6 +381,51 @@ class TestOrderToDeliveryGate:
             **_stage_ctx(),
         )
 
+    def test_blocked_without_po_date(self):
+        with pytest.raises(BusinessRuleViolation, match="PO Date is required"):
+            validate_stage_transition(
+                new_stage_order=DELIVERY,
+                current_stage_order=ORDER,
+                **_stage_ctx(po_date=None),
+            )
+
+    def test_lead_straight_to_delivery_needs_po_date(self):
+        # A one-shot jump (or a create at Delivery) passes this gate too.
+        with pytest.raises(BusinessRuleViolation, match="PO Date is required"):
+            validate_stage_transition(
+                new_stage_order=DELIVERY,
+                current_stage_order=0,
+                **_stage_ctx(po_date=None),
+            )
+
+    def test_no_po_date_needed_below_delivery(self):
+        validate_stage_transition(
+            new_stage_order=ORDER,
+            current_stage_order=NEGOTIATION,
+            **_stage_ctx(po_number=None, po_date=None),
+        )
+
+    def test_older_record_moving_backward_not_asked_for_po_date(self):
+        # Decision 2 (Basheer, 2026-10-06): no gate fires on a backward move.
+        validate_stage_transition(
+            new_stage_order=DELIVERY,
+            current_stage_order=80,
+            **_stage_ctx(po_date=None),
+        )
+
+
+class TestValidatePoDate:
+    def test_today_and_past_allowed(self):
+        validate_po_date(_today_ist())
+        validate_po_date(YESTERDAY)
+
+    def test_none_allowed(self):
+        validate_po_date(None)
+
+    def test_future_refused(self):
+        with pytest.raises(BusinessRuleViolation, match="future"):
+            validate_po_date(TOMORROW)
+
 
 class TestStageSkipAndCreate:
     def test_skipping_multiple_stages_enforces_all_intermediate_gates(self):
@@ -503,6 +551,7 @@ class TestTransitionToWon:
                 hold_reason_id=None,
                 reactivation_date=None,
                 po_number=PO,
+                po_date=PO_DATE,
                 has_items=False,
             )
 
@@ -521,6 +570,7 @@ class TestTransitionToWon:
             hold_reason_id=None,
             reactivation_date=None,
             po_number=PO,
+            po_date=PO_DATE,
             has_items=True,
             current_stage_order=80,
             new_stage_order=80,
@@ -564,8 +614,15 @@ class TestTransitionToWon:
                 hold_reason_id=None,
                 reactivation_date=None,
                 po_number=PO,
+                po_date=PO_DATE,
                 has_items=True,
             )
+
+    def test_blocked_without_po_date(self):
+        # Covers older Opportunities that reached Payment Pending before the
+        # Delivery gate asked for a PO Date (Basheer, 2026-10-06).
+        with pytest.raises(BusinessRuleViolation, match="PO Date is required to mark"):
+            self._won(po_date=None)
 
     def test_lost_and_on_hold_unaffected_by_stage(self):
         # Lost needs only its own reason, from any stage (BR-OP-17 is Won-only).

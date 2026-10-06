@@ -42,7 +42,7 @@ file keeps its old name until then so links elsewhere don't break).
 - **Won:** counts at full payment (BR-OP-17); "% of target" uses Won only.
 - **Manager's own row:** own plan and own wins only, not the team's.
 - **Visibility:** staff see their own row; Area Manager sees self + team; SBU Manager sees their people + the SBU row against the SBU target; GM sees all SBUs + the company row; Admin gets the GM view with no row of their own.
-- **PO columns:** separate "PO received" and "Won (paid)" columns, each counted in its own quarter. New "PO date" box next to PO number, required at Order → Delivery; older records fall back to the audit-log date.
+- **PO columns:** separate "PO received" and "Won (paid)" columns, each counted in its own quarter. New "PO date" box next to PO number, required at Order → Delivery and at Won, never in the future. Revised 2026-10-06 (Basheer, "keep it simple"): no audit-log fallback; older records without a PO date are left alone, left out of "PO received", and counted in a "N Opportunities past Order have no PO date" note.
 - **SBU target:** one figure per SBU per quarter, entered by the GM in SBU Target Rollup, kept in its own register table, visible to SBU Manager and above. Company target = sum of the SBU targets.
 - **Wording:** "no expected closure date".
 - **Split credit:** owner gets full credit, as every report does today. Question put to Haroon (2026-09-29, re-sent 2026-10-05); answer pending; doesn't block the build. UAT today: 5 shared Opportunities, Haroon on 4.
@@ -99,11 +99,12 @@ names) follows as a separate pass. The old build order below is superseded.
    table. Shown for approval, applied to Dev only, `Physical-Schema.sql`
    regenerated, `alembic current` recorded.
 2. **Backend, Opportunity side:** PO date field; required at Order →
-   Delivery (validator); audit-log date as fallback for older records; tests.
+   Delivery and at Won; never in the future; no fallback for older records
+   (revised 2026-10-06); tests.
 3. **Backend, Target vs Actuals:** roster (every active SBU member except
    Admin) with statuses and the "N of M haven't submitted" line; managers
    see only "Draft" on others' plans; "was ₹X approved" note; PO received
-   and Won (paid) columns; SBU row and company row; GM entry of the SBU
+   and Won (paid) columns, with the "no PO date" note; SBU row and company row; GM entry of the SBU
    target; role visibility; endpoint rename. **Checkpoint commit** (tests
    pass), proposed for approval.
 4. **Frontend:** Target vs Actuals screen (rows, columns, status labels),

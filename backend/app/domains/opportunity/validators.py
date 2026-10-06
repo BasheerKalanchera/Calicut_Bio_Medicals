@@ -45,6 +45,7 @@ def validate_stage_transition(
     po_number: str | None,
     has_items: bool,
     gate_override_approver_id: uuid.UUID | None = None,
+    po_date: date | None = None,
 ) -> None:
     """
     Enforce exit criteria when advancing to a new stage.
@@ -113,10 +114,14 @@ def validate_stage_transition(
             )
 
     # Gate: Order → Delivery & Installation
-    if current_stage_order < _ORDER_DELIVERY <= new_stage_order:  # noqa: SIM102 — gate header kept apart from its rule
+    if current_stage_order < _ORDER_DELIVERY <= new_stage_order:
         if not po_number:
             raise BusinessRuleViolation(
                 "PO Number is required to advance to Delivery & Installation stage."
+            )
+        if not po_date:
+            raise BusinessRuleViolation(
+                "PO Date is required to advance to Delivery & Installation stage."
             )
     # delivery_date and installation_site are not in the current schema — gate deferred.
 
@@ -136,6 +141,7 @@ def validate_status_transition(
     current_stage_order: int | None = None,
     new_stage_order: int | None = None,
     full_payment_confirmed: bool = False,
+    po_date: date | None = None,
 ) -> None:
     """
     Enforce status transition rules (BR-OP-02, BR-OP-03, BR-OP-05, BR-OP-09, BR-OP-17).
@@ -164,6 +170,12 @@ def validate_status_transition(
         if not po_number:
             raise BusinessRuleViolation(
                 "PO Number is required to mark an opportunity as Won."
+            )
+        # Also catches an older Opportunity that reached Payment Pending
+        # before the PO Date gate existed (Basheer, 2026-10-06).
+        if not po_date:
+            raise BusinessRuleViolation(
+                "PO Date is required to mark an opportunity as Won."
             )
         if not has_items:
             raise BusinessRuleViolation(
@@ -208,3 +220,10 @@ def validate_status_transition(
             raise BusinessRuleViolation(
                 "Reactivation Date must be a future date."
             )
+
+
+def validate_po_date(po_date: date | None) -> None:
+    """A PO already received can't be dated after today (IST) -- checked on
+    every save that sends a PO Date, not only at the stage gates."""
+    if po_date is not None and po_date > _today_ist():
+        raise BusinessRuleViolation("PO Date can't be in the future.")

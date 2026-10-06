@@ -48,6 +48,7 @@ def _make_pipeline_opportunity(*, stage: StageNested, high_priority_manual: bool
         demo_start_date=None,
         demo_end_date=None,
         po_number=None,
+        po_date=None,
         loss_reason_id=None,
         competitor_name=None,
         hold_reason_id=None,

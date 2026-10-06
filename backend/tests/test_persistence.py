@@ -73,8 +73,9 @@ def test_all_28_tables_registered():
     # 37, not 38: Hospital-Wise Target Planning added target_plan_account and
     # dropped the never-used coverage_plan, coverage_plan_entry
     # (0055_hospital_wise_target_planning.py).
+    # 38, not 37: Target vs Actuals added sbu_target (0060_po_date_and_sbu_target.py).
     table_count = len(Base.metadata.tables)
-    assert table_count == 37, f"Expected 37 tables, found {table_count}"
+    assert table_count == 38, f"Expected 38 tables, found {table_count}"
 
 
 def test_mapper_configuration_succeeds():
@@ -144,7 +145,9 @@ def test_all_relationships_resolve():
     # Account.coverage_plan_entries).
     # 116, not 115: BR-OP-17 added Opportunity.full_payment_confirmed_by_user
     # (0057) -- one-directional onto UserProfile, like gate_override_set_by_user.
-    assert rel_count == 116, f"Expected 116 relationships, found {rel_count}"
+    # 117, not 116: Target vs Actuals added SbuTarget.sbu (0060) --
+    # one-directional onto SBU.
+    assert rel_count == 117, f"Expected 117 relationships, found {rel_count}"
 
 
 def test_reference_models_importable():

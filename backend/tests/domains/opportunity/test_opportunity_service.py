@@ -122,6 +122,7 @@ def _make_opportunity(**overrides) -> MagicMock:
         demo_end_date=None,
         expected_closure_date=None,
         po_number=None,
+        po_date=None,
         loss_reason_id=None,
         loss_notes=None,
         competitor_name=None,
@@ -217,6 +218,19 @@ def _won_create_data(**overrides) -> OpportunityCreate:
 # ===========================================================================
 
 class TestCreateOpportunity:
+    def test_create_with_future_po_date_refused(self):
+        repo = _make_repo()
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="future"):
+            service.create_opportunity(
+                ACCOUNT_ID,
+                _make_create_data(po_date=_today_ist() + timedelta(days=1)),
+                created_by=USER_ID,
+                sbu_id=SBU_ID,
+            )
+        repo.create.assert_not_called()
+
     def test_raises_not_found_for_unknown_account(self):
         repo = _make_repo()
         repo.account_exists.return_value = False
@@ -257,6 +271,7 @@ class TestCreateOpportunity:
         )
 
         repo.create.assert_called_once()
+        assert repo.create.call_args[0][0].po_date is None
         assert result.name == "New Deal"
         assert result.created_by == USER_ID
 
@@ -973,7 +988,7 @@ class TestUpdateOpportunity:
             )
 
     def test_transition_to_won_stamps_closed_at(self):
-        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        opp = _make_opportunity(po_number="PO-1001", po_date=date(2026, 9, 15), closed_at=None)
         repo = _make_repo()
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
@@ -993,7 +1008,7 @@ class TestUpdateOpportunity:
     # BR-OP-17 on the update path.
 
     def _won_update_setup(self, stage_order: int, stage_code: str):
-        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        opp = _make_opportunity(po_number="PO-1001", po_date=date(2026, 9, 15), closed_at=None)
         repo = _make_repo()
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(stage_order, stage_code)
@@ -1049,7 +1064,7 @@ class TestUpdateOpportunity:
 
     def test_payment_pending_and_won_in_one_save_refused(self):
         # Option B (Basheer, 2026-10-03): saved at Payment Pending first, then Won.
-        opp = _make_opportunity(po_number="PO-1001", closed_at=None)
+        opp = _make_opportunity(po_number="PO-1001", po_date=date(2026, 9, 15), closed_at=None)
         repo = _make_repo()
         repo.get_for_update.return_value = opp
         repo.get_stage.side_effect = [
@@ -1068,6 +1083,62 @@ class TestUpdateOpportunity:
                 OPP_ID,
                 OpportunityUpdate(stage_id=uuid.uuid4(), status_id=STATUS_WON_ID, confirm_full_payment=True),
                 updated_by=USER_ID,
+            )
+        repo.update.assert_not_called()
+
+    # PO Date (Target vs Actuals step 2, Basheer 2026-10-06).
+
+    def test_won_refused_for_older_record_without_po_date(self):
+        opp, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
+        opp.po_date = None
+
+        with pytest.raises(BusinessRuleViolation, match="PO Date is required to mark"):
+            service.update_opportunity(
+                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+            )
+        repo.update.assert_not_called()
+
+    def test_won_allowed_when_po_date_sent_in_same_save(self):
+        opp, _, service = self._won_update_setup(80, "PAYMENT_PENDING")
+        opp.po_date = None
+
+        service.update_opportunity(
+            OPP_ID,
+            OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True, po_date=date(2026, 9, 15)),
+            updated_by=USER_ID,
+        )
+
+        assert opp.po_date == date(2026, 9, 15)
+        assert opp.closed_at is not None
+
+    def test_move_to_delivery_refused_without_po_date(self):
+        opp = _make_opportunity(
+            po_number="PO-1001", indicative_value=Decimal("5"), lead_source_id=LEAD_SOURCE_ID,
+            demo_start_date=date(2026, 9, 1), expected_closure_date=date(2026, 10, 1),
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.side_effect = [
+            _make_stage(60, "ORDER"),                   # current
+            _make_stage(70, "DELIVERY_INSTALLATION"),   # effective
+        ]
+        repo.get_status.return_value = _make_status("ACTIVE")
+        repo.has_items.return_value = True
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="PO Date is required to advance"):
+            service.update_opportunity(OPP_ID, OpportunityUpdate(stage_id=uuid.uuid4()), updated_by=USER_ID)
+        repo.update.assert_not_called()
+
+    def test_future_po_date_refused_on_any_save(self):
+        opp = _make_opportunity()
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="future"):
+            service.update_opportunity(
+                OPP_ID, OpportunityUpdate(po_date=_today_ist() + timedelta(days=1)), updated_by=USER_ID
             )
         repo.update.assert_not_called()
 

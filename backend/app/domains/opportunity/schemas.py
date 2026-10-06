@@ -237,6 +237,7 @@ class OpportunityCreate(BaseModel):
     demo_start_date: date | None = None
     demo_end_date: date | None = None
     po_number: str | None = Field(None, max_length=100)
+    po_date: date | None = None
     # Referral credit (BR-FIN-07) -- optional, tied to lead_source = "Referral"
     # in the UI, but not enforced here since the field is opt-in, not mandatory.
     referred_by_user_id: uuid.UUID | None = None
@@ -278,6 +279,7 @@ class OpportunityUpdate(BaseModel):
     demo_start_date: date | None = None
     demo_end_date: date | None = None
     po_number: str | None = Field(None, max_length=100)
+    po_date: date | None = None
     loss_reason_id: uuid.UUID | None = None
     loss_notes: str | None = None
     competitor_name: str | None = Field(None, max_length=255)
@@ -329,6 +331,7 @@ class OpportunityResponse(BaseModel):
     demo_start_date: date | None
     demo_end_date: date | None
     po_number: str | None
+    po_date: date | None
     loss_reason_id: uuid.UUID | None
     loss_notes: str | None
     competitor_name: str | None
@@ -372,6 +375,7 @@ class PipelineOpportunity(BaseModel):
     demo_start_date: date | None
     demo_end_date: date | None
     po_number: str | None
+    po_date: date | None
     loss_reason_id: uuid.UUID | None
     competitor_name: str | None
     hold_reason_id: uuid.UUID | None

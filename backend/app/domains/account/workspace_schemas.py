@@ -135,6 +135,7 @@ class WorkspaceOpportunity(BaseModel):
     demo_start_date: date | None
     demo_end_date: date | None
     po_number: str | None
+    po_date: date | None
     hold_reason_id: uuid.UUID | None
     reactivation_date: date | None
     loss_reason_id: uuid.UUID | None
