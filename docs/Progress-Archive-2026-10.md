@@ -835,6 +835,41 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - **Decided:** `docs/Query-Load-Fixes-Implementation-Plan.md`, approved.
   All rows by Sun 2026-10-11, each to UAT by the hotfix route, in 4 trips.
 
+## 2026-10-06 — Session retro (tracker work + Target vs Actuals step 3)
+
+- **History re-derived from code (P12):** asked to start step 3, Claude
+  began reconstructing its background from the code; the plan doc,
+  handover and archive already held it. Basheer had to redirect.
+- **Side effect told after approval (P13):** step 3 breaks the Dev Target
+  vs Actuals card until step 4 (as step 2 blocks moving an Opportunity to
+  Delivery from the screen); this surfaced at commit time, not before
+  Basheer said "go".
+- **Avoidable retries (P14):** three commands blocked by known shell guard
+  rails (shell edit to a code file, folder change, rename); the ruff
+  import-order fix guessed twice instead of reading ruff's diff.
+- **Long silences (P15):** three system nudges that Basheer hadn't heard
+  from Claude during the build.
+- **Handover stale mid-build (P16):** context was summarised twice during
+  the build while the handover still said "Next: step 3".
+- **Commit slip (Basheer):** the step 3 handover/archive edits went into
+  another session's commit (`afa1b45`) instead of their own approved docs
+  batch.
+
+## 2026-10-06 — Session retro (Target vs Actuals step 4, `2c189d7`)
+
+- **Avoidable retries again (P14):** two commands blocked by known shell
+  guard rails (a folder change before the type check; a shell edit to
+  `api.ts`). The guards caught both; each cost a retry.
+- **Long silences again (P15):** four system nudges that Basheer hadn't
+  heard from Claude while files were being written.
+- **Changed cross-session agreement not passed on (P17):** step 4 was to
+  land after the Query Load Fixes session's Opportunity-page fix (their
+  D2); Basheer chose to commit first. Recorded only in this session's
+  handover section, not where the other session looks.
+- **Staged state not mentioned (P18):** `git mv` of the card file staged
+  the rename; the report didn't say so and Basheer had to ask about an
+  unexplained staged file.
+
 ## 2026-10-06 — Query Load Fixes, fix 1 (Opportunity page + Product documents): `90ae253`
 
 - **Shipped to `main`:** the Opportunity page (header, Products, Splits,
@@ -873,3 +908,18 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   the review's own test run was blocked the same way.
 - **Long silences again (P15):** two system nudges that Basheer hadn't
   heard from Claude while tests and checks ran.
+
+## 2026-10-06 — Target vs Actuals step 5: code review fixes (`eab65e3`)
+
+- `/code-review` high on steps 1–4 found 10 issues. Basheer decided 1–4:
+  the SBU row is SBU-wide (before, the SBU Manager's view dropped the GM's
+  own wins); a rejected revision keeps counting at the last approved total
+  (BR-PL-05); a PO Date can't be removed at Delivery or later, or once Won
+  (Business-Rules); the Customer 360 and Project Directory create forms
+  wait for the create-form merge (Backlog). Also fixed: the company target
+  counts only active SBUs; the "no PO date" note counts open Opportunities
+  in the current quarter only; summary totals in one round trip; the SBU
+  target box shows load errors and resets its draft on SBU/quarter switch.
+  Finding 10 (shared constants) handled by making the stage and status
+  constants public instead of copying them.
+- Checks: pytest 1196, ruff, tsc clean, lint 0 errors. Not yet E2E-tested.

@@ -37,8 +37,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   built properly"): Pre-flight and Section A passed, the rest not run; not
   Done on the scorecard. Build history, the who-is-listed failure and the
   UAT check: Progress-Archive-2026-10 (2026-10-04 entries).
-- Still uncommitted: `PlanVsActualSection.tsx` (old 2-line change; rework
-  in step 4). Dev has a test Opportunity "Test +lead screen" linked to
+- Dev has a test Opportunity "Test +lead screen" linked to
   Basheer K (reassign, don't delete: it has Activity rows).
 - Design review finished 2026-10-05; decisions, gap analysis and the
   revised build order are written in the plan doc (`d935ebc`). Light
@@ -46,27 +45,32 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   screen is a separate second pass; the UAT move comes only after both are
   built and tested (Basheer, 2026-10-05).
 - Split credit: question sent to Haroon, answer expected 2026-10-06.
-- Step 1 done: migration 0060 (PO date + SBU target table) committed and
-  pushed as `1821c30`; applied to Dev, `alembic current` = `0060 (head)`;
-  `Physical-Schema.sql` regenerated in the same commit. Models updated; no
-  code uses the new column/table yet.
-- Step 2 (Opportunity side) committed and pushed 2026-10-06 as `ebc9613`
-  (checkpoint, frontend pending): PO date
-  required at Order → Delivery and at Won, never in the future; no
-  audit-log fallback (Basheer: keep it simple; older records get a "no PO
-  date" note in step 3). pytest 1145, ruff clean. Also fixed the table and
-  relationship counts in `test_persistence.py` that step 1 left stale.
-- Step 3 (Target vs Actuals backend) committed and pushed 2026-10-06 as
-  `cc4eb91` (checkpoint, frontend pending): roster rows, drafts private,
-  PO received, SBU/company rows, `/planning/sbu-targets`; endpoint renamed
-  to `/planning/targets/target-vs-actuals`. pytest 1168, ruff clean.
-  Detail: Progress-Archive-2026-10 (2026-10-06).
-- **Next:** step 4 (frontend) per the plan doc's "Revised build order":
-  rewire the card to the new endpoint (`targetPlanning.ts:59`, hand-edit
-  types, never regenerate `api.ts`), roster/status/PO columns, SBU target
-  entry, and the PO date box on the Opportunity stage move. Until then on
-  Dev the Target vs Actuals card errors and nobody can move an Opportunity
-  to Delivery from the screen.
+- Steps 1–3 committed and pushed: `1821c30` (migration 0060, Dev at
+  `0060 (head)`), `ebc9613` (PO date gates), `cc4eb91` (backend); detail
+  in Progress-Archive-2026-10 (2026-10-05/06).
+- Uncommitted, to ride in the next docs batch (Basheer, 2026-10-06): the
+  2026-10-06 session retro in Progress-Archive and P12–P16 in
+  `docs/Process-Improvements.md`.
+- Step 4 (frontend) committed and pushed 2026-10-06 as `2c189d7`
+  (checkpoint, review and E2E pending; committed before the Query Load
+  Fixes' Opportunity-page fix, at Basheer's go-ahead); tsc clean, lint
+  0 errors (warnings only in old code). Basheer chose Option C: PO date box
+  on the Opportunity page edit form + Quick Lead only; the other two create
+  forms get it via the create-form merge, straight after this feature.
+  Files: `api.ts` (po_date), `formatter.ts` (getTodayIso), Opportunity
+  page, QuickLeadModal, planning types/service, `TargetVsActualsSection.tsx`
+  (renamed from PlanVsActualSection), new `SbuTargetBox.tsx`, Insights and
+  Target Planning screens.
+- Doc rename decided (Basheer, 2026-10-06): at the post-commit checklist,
+  rename both `Plan-vs-Actuals-Tracking-*` docs to `Target-vs-Actuals-*`
+  and fix links in Business-Rules, Traceability, Insights-Dashboard plan,
+  Hospital-Wise plan, Salesperson-Performance discussion, this note.
+  History docs (Progress-Archive, sweep log) keep the old name.
+- Step 5 review fixes committed and pushed as `eab65e3` (detail in
+  Progress-Archive-2026-10).
+- **Next:** write the E2E plan (Dev data in scratchpad
+  `tva_e2e_data_check_out.txt`; Vivek's CC Q4 rejected-at-₹45 L / approved
+  ₹30 L plan is the "last approved" case), restart the Dev backend, run E2E.
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
