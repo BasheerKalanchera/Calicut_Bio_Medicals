@@ -48,9 +48,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Steps 1–3 committed and pushed: `1821c30` (migration 0060, Dev at
   `0060 (head)`), `ebc9613` (PO date gates), `cc4eb91` (backend); detail
   in Progress-Archive-2026-10 (2026-10-05/06).
-- Uncommitted, to ride in the next docs batch (Basheer, 2026-10-06): the
-  2026-10-06 session retro in Progress-Archive and P12–P16 in
-  `docs/Process-Improvements.md`.
+- Step 5 session retro (Progress-Archive, P21, P15) committed in the
+  2026-10-06 lunch docs batch. Open from it: the rejected-revision
+  display was approved as "Rejected (₹X approved)" but built as a "last
+  approved" note; ask Basheer which he wants during E2E.
 - Step 4 (frontend) committed and pushed 2026-10-06 as `2c189d7`
   (checkpoint, review and E2E pending; committed before the Query Load
   Fixes' Opportunity-page fix, at Basheer's go-ahead); tsc clean, lint
@@ -97,8 +98,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Progress-Archive-2026-10 and the plan's section 6. The Target vs
   Actuals session may now restart the Dev backend and start its E2E.
 - **Next:** UAT trip 1 for `90ae253` by the hotfix route on the morning
-  of Wed 2026-10-07 (Basheer's timing; own approval, plan D-list). Fix 2
-  (Activity comments + Daily Report) can be built on Dev meanwhile.
+  of Wed 2026-10-07 (Basheer's timing; own approval, plan D-list).
+  Order: Claude times 3–5 busy Opportunities + one product's documents
+  in Chrome on UAT (Basheer picks them), deploy, time the same pages
+  again (plan step 7, before/after note). Fix 2 (Activity comments +
+  Daily Report) starts on Dev after lunch 2026-10-06; if it is finished
+  and checked on Dev by then, it rides in the same hotfix (D9
+  exception), and trip 2's pages are timed too.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

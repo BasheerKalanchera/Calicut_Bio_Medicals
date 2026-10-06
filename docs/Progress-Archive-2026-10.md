@@ -923,3 +923,39 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   Finding 10 (shared constants) handled by making the stage and status
   constants public instead of copying them.
 - Checks: pytest 1196, ruff, tsc clean, lint 0 errors. Not yet E2E-tested.
+
+## 2026-10-06 — Session retro (Target vs Actuals step 5, `eab65e3`)
+
+- **Approved wording changed silently (P21):** the rejected-revision
+  display was approved as "Rejected (₹X approved)"; built as "Rejected"
+  plus a "last approved" note under the figure, and the difference wasn't
+  reported. Can be switched to the approved wording during E2E.
+- **Long silences again (P15):** two system nudges while tests and
+  frontend fixes were written without a progress line.
+- **Avoidable failed check:** two new test lines over ruff's length limit
+  failed the first run; keep new lines short.
+
+## 2026-10-06 — Sales Report: Vivek missing from Arun Adarsh's view (UAT)
+
+- Read-only UAT check (Basheer's go-ahead; one read-only transaction,
+  rolled back): Vivek is in Arun's team on every branch of the Area
+  Manager rule (same SBU, zone under South Kerala, reports to Arun) but
+  has **0 Won Opportunities** on UAT, ever. Arun's report as Arun shows
+  only himself (This Quarter 1 win ₹9.15 L; All Time 5 wins ₹20.95 L).
+  Not a bug: the report lists only owners with Won deals in the period.
+- Behaviour noted for Basheer: a win counts in the month it is marked Won
+  in the app (`closed_at`), full value to the owner only (splits not
+  read), and a win with no product lines is left out.
+
+## 2026-10-06 — Session retro (Sales Report question, UAT trip planning)
+
+- **Before/after check with no "before" (P22):** the first trip 1 note
+  asked whether pages "feel faster than before" without recording before;
+  Basheer caught it. Now timed in Chrome before and after every trip.
+- **Rule cited without its reason (P3):** "refuses UAT (D4)" given as the
+  reason; the real reasons came only when Basheer asked.
+- **Unchecked claim (P1):** "fix 1 took most of a session", not checked.
+- **Long silences (P15):** two system nudges, during code reading and
+  while writing the UAT script.
+- **Pages left to Basheer (P19):** the timing steps say "Basheer picks";
+  propose a shortlist from UAT data first (read-only query, own approval).

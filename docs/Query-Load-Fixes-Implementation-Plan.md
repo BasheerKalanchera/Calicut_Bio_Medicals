@@ -34,7 +34,9 @@ Progress-Archive-2026-10 (2026-10-06 entry).
   fix pattern), so new code doesn't add to the problem — Basheer, 2026-10-06
 - D7. Each fix moves to UAT as soon as it is done, not with the next feature
   promotion; each UAT move is its own approval; no separate UAT measurement
-  unless a screen is reported slow there — Basheer, 2026-10-06
+  unless a screen is reported slow there — Basheer, 2026-10-06. (The
+  before/after screen timing in Chrome, step 7, is not this: it uses the
+  website, not the database — Basheer, 2026-10-06.)
 - D8. Route to UAT: the Next Actions hotfix route — build and check on `main`
   against Dev, then carry the same change onto the `uat` branch, run the
   tests there, deploy, and merge `uat` back into `main`. A plain `main` →
@@ -43,7 +45,10 @@ Progress-Archive-2026-10 (2026-10-06 entry).
 - D9. UAT trips: four, one per fix group — Opportunity page (with Product
   documents); Activity comments and Daily Report; Pipeline; the three
   priority-4 rows together — not one combined move at the end of the
-  week — Basheer, 2026-10-06
+  week — Basheer, 2026-10-06. Exception: if fix 2 is finished and
+  checked on Dev before trip 1's deploy (morning of 2026-10-07), trips 1
+  and 2 go as one hotfix, timed together; otherwise trip 1 goes alone —
+  Basheer, 2026-10-06.
 
 ## 1. In plain terms
 
@@ -89,6 +94,26 @@ Marketing Leads.
    7. UAT move (D7, D8; own approval): same change on the `uat` branch,
       tests there, deploy, Basheer opens the screen once on UAT, merge `uat`
       back into `main`.
+      - Before/after check, every trip: the measuring script runs only on
+        Dev and refuses UAT (D4), so the check on UAT is done on the
+        screens themselves, with the same pages both times:
+        1. Before the deploy: Basheer picks the pages (below). Each is
+           opened on UAT, twice, and the second opening's load time is
+           noted.
+        2. After the deploy: the same pages, opened the same way, timed
+           again.
+        Pages per trip:
+        - Trip 1 (Opportunity page and Product documents): 3–5 busy
+          Opportunities (many products, splits, stakeholders or
+          documents) with their tabs, and one product with documents.
+        - Trip 2 (Activity comments and Daily Report): comment threads on
+          2–3 busy activities, and the Daily Activity Report for a busy day.
+        - Trip 3 (Pipeline): the Opportunity Pipeline, as a manager.
+        - Trip 4 (priority-4 rows): the Audit Log and the Territory Admin
+          zone tree. The unused workspace request has no screen to time.
+        Timing: Claude reads the request times in Chrome, signed in to the
+        UAT website as Basheer (no database connection). Result in section
+        6's "On UAT" column and Progress-Archive (Basheer, 2026-10-06).
 
 ## 3. Not in this plan (with reasons)
 
