@@ -13,6 +13,7 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { itemsTotal } from "../utils/opportunityItems";
 import { marketingLeadRef } from "../utils/marketingLeadMilestone";
+import { getTodayIso } from "../utils/formatter";
 
 // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
 // field first becomes relevant -- mirrors backend/app/domains/opportunity/
@@ -25,6 +26,7 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+const STAGE_ORDER_DELIVERY = 70;
 
 const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
@@ -113,6 +115,7 @@ export default function QuickLeadModal({
   const [demoEnd, setDemoEnd]           = useState("");
   const [closureDate, setClosureDate]   = useState("");
   const [poNumber, setPoNumber]         = useState("");
+  const [poDate, setPoDate]             = useState("");
   // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
   const [isExternalReferrer, setIsExternalReferrer] = useState(false);
   const [referredByUserId, setReferredByUserId]     = useState("");
@@ -274,7 +277,7 @@ export default function QuickLeadModal({
     setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setLeadSourceId(initialLeadSourceId || "");
-    setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber("");
+    setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber(""); setPoDate("");
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
@@ -309,6 +312,12 @@ export default function QuickLeadModal({
     if (gateOverrideChecked && gateOverrideApproverId && !gateOverrideReasonId) {
       throw new Error("Gate override reason is required whenever an approver is set");
     }
+    // PO Date mirrors the server (validators.py): needed when creating at
+    // Delivery & Installation or later; never in the future.
+    if (selectedStageOrder >= STAGE_ORDER_DELIVERY && !poDate) {
+      throw new Error("PO Date is required to create an opportunity at Delivery & Installation stage or later");
+    }
+    if (poDate && poDate > getTodayIso()) throw new Error("PO Date can't be in the future");
     const payload: Record<string, unknown> = {
       name: name.trim(),
       stage_id: stageId,
@@ -324,6 +333,7 @@ export default function QuickLeadModal({
     if (demoEnd && !gateOverrideChecked) payload.demo_end_date = demoEnd;
     if (closureDate && !(gateOverrideChecked && selectedStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = closureDate;
     if (poNumber.trim()) payload.po_number = poNumber.trim();
+    if (poDate) payload.po_date = poDate;
     if (leadSourceCode === "REFERRAL") {
       if (isExternalReferrer) {
         if (referredByNote.trim()) payload.referred_by_note = referredByNote.trim();
@@ -574,7 +584,15 @@ export default function QuickLeadModal({
           </Box>
         )}
         {selectedStageOrder >= STAGE_ORDER_ORDER && (
-          <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+          <>
+            <TextField label="PO Number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+            <TextField
+              label="PO Date" type="date" value={poDate} onChange={(e) => setPoDate(e.target.value)}
+              fullWidth size="small"
+              helperText="Date on the customer's purchase order. Needed from Delivery onwards."
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: getTodayIso() } }}
+            />
+          </>
         )}
         <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>

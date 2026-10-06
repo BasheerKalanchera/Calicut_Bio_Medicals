@@ -17,6 +17,13 @@ export function getFiscalQuarterBounds(date: dayjs.Dayjs = dayjs()): { start: st
   return { start: quarterStart.format("YYYY-MM-DD"), end: quarterEnd.format("YYYY-MM-DD") };
 }
 
+// Today as "YYYY-MM-DD" in the browser's own time zone (IST for every Cabio
+// user) -- not toISOString(), which is UTC and still "yesterday" before 5:30 am
+// IST. Used as the `max` of no-future date fields (e.g. PO Date).
+export function getTodayIso(): string {
+  return dayjs().format("YYYY-MM-DD");
+}
+
 // Target Planning's planning_period format (Business-Rules.md: YYYY-Qn, Indian
 // FY April-March) -- the "YYYY" is the fiscal year's start calendar year, e.g.
 // October 2026 (FY2026 Q3) is "2026-Q3", not "2027-Q3".

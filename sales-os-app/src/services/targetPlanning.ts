@@ -10,7 +10,9 @@ import type {
   BrandRollup,
   EligibleAccount,
   PlanWarning,
-  PlanVsActualResponse,
+  TargetVsActualResponse,
+  SbuTarget,
+  SbuTargetSet,
 } from "../types/targetPlanning";
 
 export async function listTargetPlans(): Promise<TargetPlan[]> {
@@ -54,11 +56,27 @@ export async function checkPlanOverlaps(
   return response.data.data;
 }
 
-// Planned vs Won vs Expected for one quarter -- read-only, RLS-scoped.
-export async function getPlanVsActual(sbuId: string, planningPeriod: string): Promise<PlanVsActualResponse> {
-  const response = await api.get("/planning/targets/plan-vs-actual", {
+// Target vs Actuals for one quarter -- roster rows, PO received, Won (paid),
+// Expected, and the SBU/company rows by role. Read-only, RLS-scoped.
+export async function getTargetVsActual(sbuId: string, planningPeriod: string): Promise<TargetVsActualResponse> {
+  const response = await api.get("/planning/targets/target-vs-actuals", {
     params: { sbu_id: sbuId, planning_period: planningPeriod },
   });
+  return response.data.data;
+}
+
+// GM-entered SBU targets for a quarter. Admin, GM and SBU Manager (RLS
+// narrows an SBU Manager to their own SBU).
+export async function listSbuTargets(planningPeriod: string): Promise<SbuTarget[]> {
+  const response = await api.get("/planning/sbu-targets", {
+    params: { planning_period: planningPeriod },
+  });
+  return response.data.data;
+}
+
+// Upsert, Admin/GM only. No delete -- a wrong figure is corrected, not removed.
+export async function setSbuTarget(data: SbuTargetSet): Promise<SbuTarget> {
+  const response = await api.post("/planning/sbu-targets", data);
   return response.data.data;
 }
 

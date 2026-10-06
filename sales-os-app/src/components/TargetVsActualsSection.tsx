@@ -8,8 +8,14 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { LoadingOrEmpty, SectionCard, StatTile } from "./ReportingUI";
 import { useAuth } from "../contexts/AuthContext";
 import { listSbus } from "../services/masterData";
-import { getPlanVsActual } from "../services/targetPlanning";
-import type { PlanVsActualBrand, PlanVsActualPerson, QuarterState } from "../types/targetPlanning";
+import { getTargetVsActual } from "../services/targetPlanning";
+import type {
+  QuarterState,
+  RosterStatus,
+  TargetVsActualBrand,
+  TargetVsActualPerson,
+  TargetVsActualSummaryRow,
+} from "../types/targetPlanning";
 import { formatLakhs, getCurrentPlanningPeriod, shiftPlanningPeriod } from "../utils/formatter";
 
 // Local stopgap type -- listSbus returns Promise<unknown> today (see
@@ -24,26 +30,57 @@ const QUARTER_STATE_LABEL: Record<QuarterState, string> = {
   FUTURE: "Upcoming quarter",
 };
 
+const STATUS_LABEL: Record<RosterStatus, string> = {
+  NOT_STARTED: "Not started",
+  DRAFT: "Draft",
+  PENDING_APPROVAL: "Waiting",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+const STATUS_COLOR: Record<RosterStatus, string> = {
+  NOT_STARTED: "#9ca3af",
+  DRAFT: "#6b7280",
+  PENDING_APPROVAL: "#b45309",
+  APPROVED: "#059669",
+  REJECTED: "#d03b3b",
+};
+
+// Only waiting and approved plans carry figures; the backend sends Draft and
+// Rejected plans (and people with no plan) with planned 0 and no breakdown.
+const SUBMITTED: ReadonlySet<RosterStatus> = new Set(["PENDING_APPROVAL", "APPROVED"]);
+
+const NOT_SUBMITTED_NOTE: Partial<Record<RosterStatus, string>> = {
+  NOT_STARTED: "No plan started for this quarter.",
+  DRAFT: "Plan is still a draft. Its figures show once it's submitted.",
+  REJECTED: "Plan was sent back. Its figures show once it's resubmitted.",
+};
+
 // Backend sends Decimals as strings; null means "not applicable" (past
-// quarter's Expected, or a percent with nothing planned) and shows a dash.
+// quarter's Expected, or a percent with nothing to compare with) and shows a dash.
 function lakhs(v: string | null): string {
   return v === null ? DASH : formatLakhs(parseFloat(v));
 }
 function percent(v: string | null): string {
   return v === null ? DASH : `${parseFloat(v).toFixed(0)}%`;
 }
+function plural(n: number, one: string, many: string): string {
+  return n === 1 ? one : many;
+}
 
 const headCellSx = { fontSize: "0.6875rem", fontWeight: 900, textTransform: "uppercase", color: "#6b7280" } as const;
+const numHeadSx = { ...headCellSx, textAlign: "right" } as const;
 const numCellSx = { fontVariantNumeric: "tabular-nums", textAlign: "right" } as const;
+const noteSx = { fontSize: "0.75rem", color: "text.secondary" } as const;
 
-function BrandTable({ brands }: { brands: PlanVsActualBrand[] }) {
+function BrandTable({ brands }: { brands: TargetVsActualBrand[] }) {
   return (
     <Table size="small">
       <TableHead>
         <TableRow>
           <TableCell sx={headCellSx}>Brand</TableCell>
-          <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Planned</TableCell>
-          <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Won</TableCell>
+          <TableCell sx={numHeadSx}>Planned</TableCell>
+          <TableCell sx={numHeadSx}>Won</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -59,19 +96,28 @@ function BrandTable({ brands }: { brands: PlanVsActualBrand[] }) {
   );
 }
 
-function PersonDetail({ person }: { person: PlanVsActualPerson }) {
+function NoPoDateNote({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <Box sx={noteSx}>
+      {count} {plural(count, "Opportunity past Order has", "Opportunities past Order have")} no PO date, so{" "}
+      {plural(count, "it isn't", "they aren't")} counted in PO received.
+    </Box>
+  );
+}
+
+function PersonDetail({ person }: { person: TargetVsActualPerson }) {
+  const note = NOT_SUBMITTED_NOTE[person.plan_status];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 1 }}>
-      {person.plan_status === null && (
-        <Box sx={{ fontSize: "0.8125rem", color: "text.secondary" }}>No submitted plan for this quarter.</Box>
-      )}
+      {note && <Box sx={{ fontSize: "0.8125rem" }}>{note}</Box>}
       {person.hospitals.length > 0 && (
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell sx={headCellSx}>Hospital</TableCell>
-              <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Planned</TableCell>
-              <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Won</TableCell>
+              <TableCell sx={numHeadSx}>Planned</TableCell>
+              <TableCell sx={numHeadSx}>Won</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -102,19 +148,62 @@ function PersonDetail({ person }: { person: PlanVsActualPerson }) {
         </Box>
       )}
       {person.undated_opportunity_count > 0 && (
-        <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
-          {person.undated_opportunity_count} open {person.undated_opportunity_count === 1 ? "Opportunity has" : "Opportunities have"} no
-          closing date, so {person.undated_opportunity_count === 1 ? "it isn't" : "they aren't"} counted in Expected.
+        <Box sx={noteSx}>
+          {person.undated_opportunity_count} open{" "}
+          {plural(person.undated_opportunity_count, "Opportunity has", "Opportunities have")} no expected closure date, so{" "}
+          {plural(person.undated_opportunity_count, "it isn't", "they aren't")} counted in Expected.
         </Box>
       )}
+      <NoPoDateNote count={person.no_po_date_count} />
     </Box>
   );
 }
 
-export default function PlanVsActualSection() {
+// The SBU row (SBU Manager and above) and company row (Admin/GM), measured
+// against the GM-entered SBU target(s).
+function SummaryRows({ sbuRow, companyRow }: { sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
+  const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
+  if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
+  if (companyRow) rows.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
+  if (rows.length === 0) return null;
+  return (
+    <Box sx={{ overflowX: "auto" }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={headCellSx}>Against SBU target</TableCell>
+            <TableCell sx={numHeadSx}>Target</TableCell>
+            <TableCell sx={numHeadSx}>Planned</TableCell>
+            <TableCell sx={numHeadSx}>PO received</TableCell>
+            <TableCell sx={numHeadSx}>Won (paid)</TableCell>
+            <TableCell sx={numHeadSx}>% of target</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map(({ key, label, row, notSet }) => (
+            <TableRow key={key}>
+              <TableCell sx={{ fontWeight: 700 }}>{label}</TableCell>
+              <TableCell sx={numCellSx}>
+                {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
+              </TableCell>
+              <TableCell sx={numCellSx}>{lakhs(row.planned_lakhs)}</TableCell>
+              <TableCell sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TableCell>
+              <TableCell sx={numCellSx}>{lakhs(row.won_lakhs)}</TableCell>
+              <TableCell sx={numCellSx}>{percent(row.percent_of_target)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+export default function TargetVsActualsSection() {
   const { userProfile } = useAuth();
   const homeSbuId: string | undefined = userProfile?.sbu?.id;
-  // Only Admin/GM see the whole company; everyone else sees their own scope.
+  // Admin/GM see everyone in the chosen SBU (the zone table's total is that
+  // SBU's, not the company's -- the company figure is the company row);
+  // everyone else sees their own scope.
   const isCompanyWide = ["Admin", "General Manager"].includes(userProfile?.role_name ?? "");
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
@@ -129,8 +218,8 @@ export default function PlanVsActualSection() {
   const sbuId = homeSbuId ?? selectedSbuId ?? sbus[0]?.id ?? null;
 
   const query = useQuery({
-    queryKey: ["planning", "plan-vs-actual", sbuId, period],
-    queryFn: () => getPlanVsActual(sbuId as string, period),
+    queryKey: ["planning", "target-vs-actuals", sbuId, period],
+    queryFn: () => getTargetVsActual(sbuId as string, period),
     enabled: !!sbuId,
   });
   const data = query.data;
@@ -163,30 +252,41 @@ export default function PlanVsActualSection() {
   );
 
   return (
-    <SectionCard title="Plan vs Actuals" action={picker}>
+    <SectionCard title="Target vs Actuals" action={picker}>
       <LoadingOrEmpty
         isLoading={query.isLoading}
         isError={query.isError}
-        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0}
-        emptyText="Nothing planned or won for this quarter."
-        errorText="Couldn't load Plan vs Actuals."
+        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0 && Number(data.po_received_lakhs) === 0}
+        emptyText="No one to show for this quarter."
+        errorText="Couldn't load Target vs Actuals."
         onRetry={() => query.refetch()}
       />
       {data && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+          <Box sx={noteSx}>
             {QUARTER_STATE_LABEL[data.quarter_state]} · as of {data.as_of}
+            {data.roster_count > 0 && (
+              <>
+                {" · "}
+                <Box component="span" sx={data.not_submitted_count > 0 ? { color: "#b45309", fontWeight: 700 } : undefined}>
+                  {data.not_submitted_count} of {data.roster_count} haven't submitted a plan
+                </Box>
+              </>
+            )}
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <StatTile label="Planned" value={lakhs(data.planned_lakhs)} />
-            <StatTile label="Won so far" value={lakhs(data.won_lakhs)} />
-            <StatTile label="Expected this quarter" value={lakhs(data.expected_lakhs)} sublabel="Open Opportunities, win-probability adjusted" />
+            <StatTile label="Planned" value={lakhs(data.planned_lakhs)} sublabel="Waiting and approved plans" />
+            <StatTile label="PO received" value={lakhs(data.po_received_lakhs)} sublabel="PO dated in this quarter" />
             <StatTile
-              label="Likely finish"
-              value={lakhs(data.likely_finish_lakhs)}
-              sublabel={data.percent_of_plan === null ? "No plan to compare with" : `${percent(data.percent_of_plan)} of plan`}
+              label="Won (paid)"
+              value={lakhs(data.won_lakhs)}
+              sublabel={data.percent_of_target === null ? "No plan to compare with" : `${percent(data.percent_of_target)} of planned`}
             />
+            <StatTile label="Expected this quarter" value={lakhs(data.expected_lakhs)} sublabel="Open Opportunities, win-probability adjusted" />
+            <StatTile label="Likely finish" value={lakhs(data.likely_finish_lakhs)} sublabel="Won + Expected" />
           </Box>
+
+          <SummaryRows sbuRow={data.sbu_row} companyRow={data.company_row} />
 
           <Box sx={{ overflowX: "auto" }}>
             <Table size="small">
@@ -194,16 +294,19 @@ export default function PlanVsActualSection() {
                 <TableRow>
                   <TableCell sx={{ width: 40 }} />
                   <TableCell sx={headCellSx}>Person</TableCell>
-                  <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Planned</TableCell>
-                  <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Won</TableCell>
-                  <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Expected</TableCell>
-                  <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Likely finish</TableCell>
-                  <TableCell sx={{ ...headCellSx, textAlign: "right" }}>% of plan</TableCell>
+                  <TableCell sx={headCellSx}>Status</TableCell>
+                  <TableCell sx={numHeadSx}>Target</TableCell>
+                  <TableCell sx={numHeadSx}>PO received</TableCell>
+                  <TableCell sx={numHeadSx}>Won (paid)</TableCell>
+                  <TableCell sx={numHeadSx}>Expected</TableCell>
+                  <TableCell sx={numHeadSx}>Likely finish</TableCell>
+                  <TableCell sx={numHeadSx}>% of target</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.people.map((p) => {
                   const open = expanded.has(p.user_id);
+                  const submitted = SUBMITTED.has(p.plan_status);
                   return (
                     <Fragment key={p.user_id}>
                       <TableRow hover>
@@ -220,16 +323,25 @@ export default function PlanVsActualSection() {
                             </Box>
                           )}
                         </TableCell>
-                        <TableCell sx={numCellSx}>{lakhs(p.planned_lakhs)}</TableCell>
+                        <TableCell sx={{ fontSize: "0.75rem", fontWeight: 700, color: STATUS_COLOR[p.plan_status], whiteSpace: "nowrap" }}>
+                          {STATUS_LABEL[p.plan_status]}
+                        </TableCell>
+                        <TableCell sx={numCellSx}>
+                          {submitted ? lakhs(p.planned_lakhs) : DASH}
+                          {submitted && p.previous_approved_total_lakhs !== null && (
+                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
+                          )}
+                        </TableCell>
+                        <TableCell sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TableCell>
                         <TableCell sx={numCellSx}>{lakhs(p.won_lakhs)}</TableCell>
                         <TableCell sx={numCellSx}>{lakhs(p.expected_lakhs)}</TableCell>
                         <TableCell sx={numCellSx}>{lakhs(p.likely_finish_lakhs)}</TableCell>
-                        <TableCell sx={numCellSx}>{percent(p.percent_of_plan)}</TableCell>
+                        <TableCell sx={numCellSx}>{percent(p.percent_of_target)}</TableCell>
                       </TableRow>
                       {open && (
                         <TableRow>
                           <TableCell />
-                          <TableCell colSpan={6}>
+                          <TableCell colSpan={8}>
                             <PersonDetail person={p} />
                           </TableCell>
                         </TableRow>
@@ -240,6 +352,7 @@ export default function PlanVsActualSection() {
               </TableBody>
             </Table>
           </Box>
+          <NoPoDateNote count={data.no_po_date_count} />
 
           {data.zones.length > 0 && (
             <Box sx={{ overflowX: "auto" }}>
@@ -247,8 +360,8 @@ export default function PlanVsActualSection() {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={headCellSx}>By zone</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Planned</TableCell>
-                    <TableCell sx={{ ...headCellSx, textAlign: "right" }}>Won</TableCell>
+                    <TableCell sx={numHeadSx}>Planned</TableCell>
+                    <TableCell sx={numHeadSx}>Won</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -260,7 +373,7 @@ export default function PlanVsActualSection() {
                     </TableRow>
                   ))}
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 900 }}>{isCompanyWide ? "Company total" : "Total (your view)"}</TableCell>
+                    <TableCell sx={{ fontWeight: 900 }}>{isCompanyWide ? "SBU total" : "Total (your view)"}</TableCell>
                     <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.planned_lakhs)}</TableCell>
                     <TableCell sx={{ ...numCellSx, fontWeight: 900 }}>{lakhs(data.won_lakhs)}</TableCell>
                   </TableRow>

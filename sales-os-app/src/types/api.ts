@@ -3780,6 +3780,8 @@ export interface components {
             demo_end_date?: string | null;
             /** Po Number */
             po_number?: string | null;
+            /** Po Date */
+            po_date?: string | null;
             /** Referred By User Id */
             referred_by_user_id?: string | null;
             /** Referred By Note */
@@ -3953,6 +3955,8 @@ export interface components {
             demo_end_date: string | null;
             /** Po Number */
             po_number: string | null;
+            /** Po Date */
+            po_date: string | null;
             /** Loss Reason Id */
             loss_reason_id: string | null;
             /** Loss Notes */
@@ -4049,6 +4053,8 @@ export interface components {
             demo_end_date?: string | null;
             /** Po Number */
             po_number?: string | null;
+            /** Po Date */
+            po_date?: string | null;
             /** Loss Reason Id */
             loss_reason_id?: string | null;
             /** Loss Notes */
@@ -4254,6 +4260,8 @@ export interface components {
             demo_end_date: string | null;
             /** Po Number */
             po_number: string | null;
+            /** Po Date */
+            po_date: string | null;
             /** Loss Reason Id */
             loss_reason_id: string | null;
             /** Competitor Name */
@@ -5376,6 +5384,8 @@ export interface components {
             demo_end_date: string | null;
             /** Po Number */
             po_number: string | null;
+            /** Po Date */
+            po_date: string | null;
             /** Hold Reason Id */
             hold_reason_id: string | null;
             /** Reactivation Date */

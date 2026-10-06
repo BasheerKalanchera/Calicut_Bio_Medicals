@@ -51,6 +51,7 @@ import ReminderRow from "../components/ReminderRow";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
+import { getTodayIso } from "../utils/formatter";
 
 // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
 // field first becomes relevant -- mirrors backend/app/domains/opportunity/
@@ -61,6 +62,7 @@ const STAGE_ORDER_QUALIFIED = 20;
 const STAGE_ORDER_DEMO = 30;
 const STAGE_ORDER_NEGOTIATION = 50;
 const STAGE_ORDER_ORDER = 60;
+const STAGE_ORDER_DELIVERY = 70;
 // BR-OP-17: Won only from this stage, with full payment confirmed.
 const STAGE_ORDER_PAYMENT_PENDING = 80;
 
@@ -226,7 +228,8 @@ function OverviewTab({
           <Field label="Demo End"            value={opp.demo_end_date ?? null} />
           <Field label="Expected Closure"    value={opp.expected_closure_date ?? null} />
           <Field label="PO Number"           value={opp.po_number ?? null} />
-          <Field label="SBU"                 value={opp.sbu.name} />
+          <Field label="PO Date"             value={opp.po_date ?? null} />
+          <Field label="SBU"              value={opp.sbu.name} />
           <Field label="Lead Source"         value={opp.lead_source?.name ?? null} />
           <Field label="Associated Project"  value={opp.project?.name ?? null} />
           <Field label="Referred By"         value={opp.referred_by?.display_name ?? opp.referred_by_note ?? null} />
@@ -1278,6 +1281,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
   const [editDemoEnd, setEditDemoEnd]             = useState("");
   const [editLeadSourceId, setEditLeadSourceId]   = useState("");
   const [editPoNumber, setEditPoNumber]           = useState("");
+  const [editPoDate, setEditPoDate]               = useState("");
   // Status-gated fields (BR-OP-02/03/05) — same pattern as Customer360Screen.tsx.
   // Hold/Loss fields are only sent when the effective status is ON_HOLD/LOST (see
   // handleUpdateOpp), so editing an opportunity without touching its status never
@@ -1469,6 +1473,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     setEditDemoEnd(opp.demo_end_date ?? "");
     setEditLeadSourceId(opp.lead_source?.id ?? "");
     setEditPoNumber(opp.po_number ?? "");
+    setEditPoDate(opp.po_date ?? "");
     setEditHoldReasonId(opp.hold_reason_id ?? "");
     setEditReactivationDate(opp.reactivation_date ?? "");
     setEditLossReasonId(opp.loss_reason_id ?? "");
@@ -1508,6 +1513,17 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     if (newStatus?.status_code === "WON" && !editPoNumber.trim()) {
       throw new Error("PO Number is required to mark an opportunity as Won");
     }
+    // PO Date gates mirror the server (validators.py): needed on the move past
+    // Order into Delivery & Installation, and at Won; never in the future.
+    if (opp.stage.display_order < STAGE_ORDER_DELIVERY && editStageOrder >= STAGE_ORDER_DELIVERY && !editPoDate) {
+      throw new Error("PO Date is required to advance to Delivery & Installation stage");
+    }
+    if (newStatus?.status_code === "WON" && !editPoDate) {
+      throw new Error("PO Date is required to mark an opportunity as Won");
+    }
+    if (editPoDate && editPoDate > getTodayIso()) {
+      throw new Error("PO Date can't be in the future");
+    }
     // BR-OP-17: mirrors the server's check so it fails before the PATCH.
     const isMarkingWon = newStatus?.status_code === "WON" && opp.status.status_code !== "WON";
     // Option B (Basheer, 2026-10-03): already saved at Payment Pending, and staying there.
@@ -1539,6 +1555,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       demo_end_date:         gateOverrideChecked ? null : (editDemoEnd || null),
       lead_source_id:        editLeadSourceId || null,
       po_number:             editPoNumber.trim() || null,
+      po_date:               editPoDate || null,
     };
     if (newStatus?.status_code === "ON_HOLD") {
       payload.hold_reason_id = editHoldReasonId;
@@ -1604,7 +1621,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       demo_end_date:         gateOverrideChecked ? null : (editDemoEnd || null),
       lead_source:           editLeadSourceId ? (newLeadSource ?? opp.lead_source) : null,
       po_number:             editPoNumber.trim() || null,
-      hold_reason_id:        newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
+      po_date:               editPoDate || null,
+      hold_reason_id:       newStatus?.status_code === "ON_HOLD" ? editHoldReasonId : opp.hold_reason_id,
       reactivation_date:     newStatus?.status_code === "ON_HOLD" ? editReactivationDate : opp.reactivation_date,
       loss_reason_id:        newStatus?.status_code === "LOST" ? editLossReasonId : opp.loss_reason_id,
       competitor_name:       newStatus?.status_code === "LOST" ? (editCompetitorName.trim() || opp.competitor_name) : opp.competitor_name,
@@ -1972,8 +1990,16 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             )}
           </Box>
         )}
-        {(editStageOrder >= STAGE_ORDER_ORDER || editPoNumber.trim() !== "" || editStatusCode === "WON") && (
-          <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+        {(editStageOrder >= STAGE_ORDER_ORDER || editPoNumber.trim() !== "" || editPoDate !== "" || editStatusCode === "WON") && (
+          <>
+            <TextField label="PO Number" value={editPoNumber} onChange={(e) => setEditPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
+            <TextField
+              label="PO Date" type="date" value={editPoDate} onChange={(e) => setEditPoDate(e.target.value)}
+              fullWidth size="small"
+              helperText="Date on the customer's purchase order. Needed to move to Delivery and to mark Won."
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: getTodayIso() } }}
+            />
+          </>
         )}
         {editStatusCode === "ON_HOLD" && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fffbeb", border: "1px solid #fde68a" }}>

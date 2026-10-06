@@ -20,6 +20,7 @@ import {
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import FormModal from "../components/FormModal";
+import SbuTargetBox from "../components/SbuTargetBox";
 import TargetPlanDetails from "../components/TargetPlanDetails";
 import TargetPlanDialog from "../components/TargetPlanDialog";
 import { useAuth } from "../contexts/AuthContext";
@@ -52,6 +53,12 @@ interface SbuOption { id: string; name: string }
 // Sales Staff never sees the team-wide rollup section at all -- everyone
 // else (SBU Manager/Area Manager/Admin/GM) does, scoped by RLS.
 const ROLLUP_VISIBLE_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
+
+// The GM-entered SBU target (Target vs Actuals): Admin/GM set it, an SBU
+// Manager sees their own SBU's read-only, Area Manager not at all -- matches
+// the /planning/sbu-targets permissions.
+const SBU_TARGET_VIEW_ROLES = new Set(["Admin", "General Manager", "SBU Manager"]);
+const SBU_TARGET_EDIT_ROLES = new Set(["Admin", "General Manager"]);
 
 // Admin is purely an oversight/approval account -- unlike GM, who sells
 // personally alongside running the company (Basheer's call, 2026-09-17),
@@ -535,6 +542,9 @@ export default function TargetPlanningScreen() {
 
             {!isAnnual ? (
               <>
+                {rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (
+                  <SbuTargetBox sbuId={rollupSbuId} period={period} canEdit={SBU_TARGET_EDIT_ROLES.has(roleName)} />
+                )}
                 {rollup && (
                   <Typography sx={{ mb: 1.5 }}>
                     Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
