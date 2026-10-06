@@ -8,31 +8,37 @@ from app.core.exceptions import AuthorizationError, ConflictError, NotFoundError
 from app.core.periods import period_bounds, quarter_dates, today_ist
 from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
-from app.domains.planning.models import BrandVendorTarget, TargetPlan
+from app.domains.planning.models import BrandVendorTarget, SbuTarget, TargetPlan
 from app.domains.planning.repository import (
     BrandVendorTargetRepository,
-    PlanVsActualRepository,
+    SbuTargetRepository,
     TargetPlanRepository,
+    TargetVsActualRepository,
 )
 from app.domains.planning.schemas import (
     BrandSplitEntry,
     BrandVendorTargetSet,
     PlanAccountEntry,
-    PlanVsActualBrand,
-    PlanVsActualHospital,
-    PlanVsActualLateOpportunity,
-    PlanVsActualPerson,
-    PlanVsActualResponse,
-    PlanVsActualZone,
     PlanWarning,
     PlanWarningKind,
     QuarterState,
+    RosterStatus,
+    SbuTargetSet,
     TargetPlanCreate,
     TargetPlanUpdate,
+    TargetVsActualBrand,
+    TargetVsActualHospital,
+    TargetVsActualLateOpportunity,
+    TargetVsActualPerson,
+    TargetVsActualResponse,
+    TargetVsActualSummaryRow,
+    TargetVsActualZone,
 )
 from app.domains.reference.repository import BrandRepository
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
+# Who may read SBU targets -- matches sbu_target's read policy (migration 0060).
+_SBU_TARGET_READ_ROLES = ("Admin", "General Manager", "SBU Manager")
 
 # Who may plan any hospital, not just their own territory. Same role set as
 # account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES and master_data.py's
@@ -465,8 +471,11 @@ _ZERO = Decimal("0")
 _CENT = Decimal("0.01")
 
 
-def _percent_of_plan(won: Decimal, planned: Decimal) -> Decimal | None:
-    return (won / planned * 100).quantize(_CENT) if planned else None
+_SUBMITTED_PLAN_STATUSES = (RosterStatus.PENDING_APPROVAL, RosterStatus.APPROVED)
+
+
+def _percent_of_target(won: Decimal, target: Decimal | None) -> Decimal | None:
+    return (won / target * 100).quantize(_CENT) if target else None
 
 
 class _PersonAcc:
@@ -475,7 +484,10 @@ class _PersonAcc:
     def __init__(self, user_id: uuid.UUID, display_name: str):
         self.user_id = user_id
         self.display_name = display_name
-        self.plan_status: str | None = None
+        self.plan_status = RosterStatus.NOT_STARTED
+        self.previous_approved_total: Decimal | None = None
+        self.po_received = _ZERO
+        self.no_po_date = 0
         # The plan's saved total. Plans saved before hospital-wise planning
         # carry a total (and brand splits) with no hospital lines, so this
         # can exceed the sum of the hospitals; the difference is `unassigned`.
@@ -485,7 +497,7 @@ class _PersonAcc:
         self.brands: dict[uuid.UUID, list] = {}  # brand_id -> [name, planned, won]
         self.expected: Decimal | None = None
         self.undated = 0
-        self.late: list[PlanVsActualLateOpportunity] = []
+        self.late: list[TargetVsActualLateOpportunity] = []
 
     @property
     def hospital_planned(self) -> Decimal:
@@ -505,19 +517,52 @@ class _PersonAcc:
         return sum((h[2] for h in self.hospitals.values()), _ZERO) + self.unplanned_won
 
 
-class PlanVsActualService:
-    """Plan vs Actual for one SBU and quarter (Plan vs Actuals Tracking plan).
-    Read-only. "Won" is credited to the Opportunity's owner; "expected" is
-    ACTIVE Opportunities weighted by win probability, by expected closing
-    date; what counts as expected depends on where the quarter sits relative
-    to today (IST)."""
+class SbuTargetService:
+    """The GM-entered target for a whole SBU per quarter (Plan vs Actuals
+    Tracking redesign, 2026-10-05). Admin/GM write; SBU Manager and above
+    read (RLS also narrows an SBU Manager to their own SBU); no delete."""
 
-    def __init__(self, repository: PlanVsActualRepository):
+    def __init__(self, repository: SbuTargetRepository):
         self.repository = repository
 
-    def get_plan_vs_actual(
+    def set_target(self, data: SbuTargetSet, *, current_user: UserProfile) -> SbuTarget:
+        """Upsert -- a quarter's figure can be corrected, not just entered once."""
+        _require_admin_or_gm(current_user)
+        existing = self.repository.get_by_sbu_period(data.sbu_id, data.planning_period)
+        if existing:
+            existing.target_amount_lakhs = data.target_amount_lakhs
+            existing.updated_by = current_user.id
+            return self.repository.update(existing)
+
+        sbu_target = SbuTarget(
+            sbu_id=data.sbu_id,
+            planning_period=data.planning_period,
+            target_amount_lakhs=data.target_amount_lakhs,
+            created_by=current_user.id,
+            updated_by=current_user.id,
+        )
+        return self.repository.create(sbu_target)
+
+    def list_by_period(self, planning_period: str, *, current_user: UserProfile) -> list[SbuTarget]:
+        if current_user.role.role_name not in _SBU_TARGET_READ_ROLES:
+            raise AuthorizationError("Only SBU Managers and above may see SBU targets.")
+        return self.repository.list_by_period(planning_period)
+
+
+class TargetVsActualService:
+    """Target vs Actuals for one SBU and quarter (Plan vs Actuals Tracking
+    plan). Read-only. Every roster member gets a row; "Won" (paid, BR-OP-17)
+    and "PO received" are credited to the Opportunity's owner, each in its
+    own quarter; "expected" is ACTIVE Opportunities weighted by win
+    probability, by expected closing date; what counts as expected depends on
+    where the quarter sits relative to today (IST)."""
+
+    def __init__(self, repository: TargetVsActualRepository):
+        self.repository = repository
+
+    def get_target_vs_actual(
         self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile
-    ) -> PlanVsActualResponse:
+    ) -> TargetVsActualResponse:
         today = today_ist()
         q_start, q_end = quarter_dates(planning_period)
         if today > q_end:
@@ -536,11 +581,21 @@ class PlanVsActualService:
                 people[user_id] = _PersonAcc(user_id, name)
             return people[user_id]
 
+        roster_ids: set[uuid.UUID] = set()
+        for user_id, name in repo.roster(current_user, sbu_id):
+            person(user_id, name)
+            roster_ids.add(user_id)
+
         brand_names: dict[uuid.UUID, str] = {}
         plans = repo.list_plans(current_user, sbu_id, planning_period)
         for plan in plans:
             acc = person(plan.user_id, plan.user.display_name)
-            acc.plan_status = plan.status
+            acc.plan_status = RosterStatus(plan.status)
+            acc.previous_approved_total = plan.previous_approved_total_lakhs
+            if acc.plan_status not in _SUBMITTED_PLAN_STATUSES:
+                # Draft and rejected plans don't count, and their figures are
+                # never shown: a manager sees only "Draft" on someone's draft.
+                continue
             acc.plan_total = plan.target_amount_lakhs
             for pa in plan.accounts:
                 acc.hospitals[pa.account_id] = [pa.account.name, pa.planned_amount_lakhs, _ZERO]
@@ -575,6 +630,11 @@ class PlanVsActualService:
                 continue  # owner already added above if they have wins; guard anyway
             owner.brands.setdefault(brand_id, [brand_name, _ZERO, _ZERO])[2] += amount
 
+        for owner_id, owner_name, amount in repo.po_received_by_owner(current_user, sbu_id, q_start, q_end):
+            person(owner_id, owner_name).po_received += amount
+        for owner_id, owner_name, count in repo.no_po_date_counts(current_user, sbu_id, start_dt, end_dt):
+            person(owner_id, owner_name).no_po_date = count
+
         if state is not QuarterState.PAST:
             closing_from = q_start if state is QuarterState.FUTURE else None
             for owner_id, owner_name, amount in repo.expected_by_owner(current_user, sbu_id, closing_from, q_end):
@@ -586,7 +646,7 @@ class PlanVsActualService:
                 current_user, sbu_id, today
             ):
                 person(owner_id, owner_name).late.append(
-                    PlanVsActualLateOpportunity(
+                    TargetVsActualLateOpportunity(
                         opportunity_id=opp_id,
                         name=name,
                         account_id=account_id,
@@ -596,48 +656,88 @@ class PlanVsActualService:
                     )
                 )
 
-        rows = [self._person_response(p, state) for p in sorted(people.values(), key=lambda p: p.display_name.lower())]
+        ordered = sorted(people.values(), key=lambda p: p.display_name.lower())
+        rows = [self._person_response(p, state) for p in ordered]
+        # Totals count every owner, so real wins by someone outside the roster
+        # (another SBU's person, someone since deactivated) stay in the headline
+        # and zone/brand tables; only the person rows follow the roster.
+        shown = [r for p, r in zip(ordered, rows, strict=True) if p.user_id in roster_ids]
+        not_submitted = sum(1 for uid in roster_ids if people[uid].plan_status not in _SUBMITTED_PLAN_STATUSES)
         planned = sum((r.planned_lakhs for r in rows), _ZERO)
+        po_received = sum((r.po_received_lakhs for r in rows), _ZERO)
         won = sum((r.won_lakhs for r in rows), _ZERO)
         expected = None if state is QuarterState.PAST else sum((r.expected_lakhs or _ZERO for r in rows), _ZERO)
+
+        sbu_row = company_row = None
+        role_name = current_user.role.role_name
+        if role_name in _OVERLAY_ROLES or (role_name == "SBU Manager" and current_user.sbu_id == sbu_id):
+            targets = repo.sbu_target_amounts(planning_period)
+            target = targets.get(sbu_id)
+            sbu_row = TargetVsActualSummaryRow(
+                target_lakhs=target,
+                planned_lakhs=planned,
+                po_received_lakhs=po_received,
+                won_lakhs=won,
+                percent_of_target=_percent_of_target(won, target),
+            )
+            if role_name in _OVERLAY_ROLES:
+                c_planned, c_po_received, c_won = repo.company_totals(
+                    planning_period, q_start, q_end, start_dt, end_dt
+                )
+                # Company target = sum of the SBU targets; a partial sum would
+                # read as a real target, so it waits until every SBU has one.
+                c_target = sum(targets.values(), _ZERO) if len(targets) >= repo.active_sbu_count() else None
+                company_row = TargetVsActualSummaryRow(
+                    target_lakhs=c_target,
+                    planned_lakhs=c_planned,
+                    po_received_lakhs=c_po_received,
+                    won_lakhs=c_won,
+                    percent_of_target=_percent_of_target(c_won, c_target),
+                )
         brand_totals: dict[uuid.UUID, list[Decimal]] = {}
         for p in people.values():
             for brand_id, (_, b_planned, b_won) in p.brands.items():
                 totals = brand_totals.setdefault(brand_id, [_ZERO, _ZERO])
                 totals[0] += b_planned
                 totals[1] += b_won
-        return PlanVsActualResponse(
+        return TargetVsActualResponse(
             sbu_id=sbu_id,
             planning_period=planning_period,
             quarter_state=state,
             as_of=today,
             planned_lakhs=planned,
+            po_received_lakhs=po_received,
             won_lakhs=won,
             expected_lakhs=expected,
             likely_finish_lakhs=won + (expected or _ZERO),
-            percent_of_plan=_percent_of_plan(won, planned),
-            people=rows,
+            percent_of_target=_percent_of_target(won, planned),
+            no_po_date_count=sum(p.no_po_date for p in people.values()),
+            roster_count=len(roster_ids),
+            not_submitted_count=not_submitted,
+            sbu_row=sbu_row,
+            company_row=company_row,
+            people=shown,
             zones=[
-                PlanVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1])
+                TargetVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1])
                 for (zid, zname), v in sorted(zones.items(), key=lambda kv: (kv[0][1] is None, kv[0][1] or ""))
             ],
             brands=[
-                PlanVsActualBrand(brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1])
+                TargetVsActualBrand(brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1])
                 for bid, v in sorted(brand_totals.items(), key=lambda kv: brand_names[kv[0]].lower())
             ],
         )
 
     @staticmethod
-    def _person_response(p: _PersonAcc, state: QuarterState) -> PlanVsActualPerson:
+    def _person_response(p: _PersonAcc, state: QuarterState) -> TargetVsActualPerson:
         planned, won = p.planned, p.won
         expected = None if state is QuarterState.PAST else (p.expected or _ZERO)
         hospitals = [
-            PlanVsActualHospital(account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2])
+            TargetVsActualHospital(account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2])
             for aid, h in sorted(p.hospitals.items(), key=lambda kv: kv[1][0].lower())
         ]
         if p.unassigned:
             hospitals.append(
-                PlanVsActualHospital(
+                TargetVsActualHospital(
                     account_id=None,
                     account_name="Not assigned to a hospital",
                     planned_lakhs=p.unassigned,
@@ -646,24 +746,27 @@ class PlanVsActualService:
             )
         if p.unplanned_won:
             hospitals.append(
-                PlanVsActualHospital(
+                TargetVsActualHospital(
                     account_id=None, account_name="Unplanned", planned_lakhs=_ZERO, won_lakhs=p.unplanned_won
                 )
             )
-        return PlanVsActualPerson(
+        return TargetVsActualPerson(
             user_id=p.user_id,
             display_name=p.display_name,
             plan_status=p.plan_status,
+            previous_approved_total_lakhs=p.previous_approved_total,
             planned_lakhs=planned,
+            po_received_lakhs=p.po_received,
             won_lakhs=won,
             expected_lakhs=expected,
             likely_finish_lakhs=won + (expected or _ZERO),
-            percent_of_plan=_percent_of_plan(won, planned),
+            percent_of_target=_percent_of_target(won, planned),
             undated_opportunity_count=p.undated,
+            no_po_date_count=p.no_po_date,
             late_opportunities=p.late,
             hospitals=hospitals,
             brands=[
-                PlanVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2])
+                TargetVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2])
                 for bid, b in sorted(p.brands.items(), key=lambda kv: kv[1][0].lower())
             ],
         )

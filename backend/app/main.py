@@ -168,6 +168,7 @@ def _register_routers(application: FastAPI) -> None:
     application.include_router(marketing_leads.router, prefix="/api/v1")
     application.include_router(planning_router.router, prefix="/api/v1")
     application.include_router(planning_router.brand_vendor_router, prefix="/api/v1")
+    application.include_router(planning_router.sbu_target_router, prefix="/api/v1")
 
 
 app = create_app()

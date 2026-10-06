@@ -230,7 +230,18 @@ class QuarterState(StrEnum):
     FUTURE = "FUTURE"
 
 
-class PlanVsActualLateOpportunity(BaseModel):
+class RosterStatus(StrEnum):
+    """A roster member's plan for the quarter, as Target vs Actuals shows it.
+    PENDING_APPROVAL is labelled "Waiting" on screen."""
+
+    NOT_STARTED = "NOT_STARTED"
+    DRAFT = "DRAFT"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class TargetVsActualLateOpportunity(BaseModel):
     """BR-OP-16: still open past its expected closing date. Flag only."""
 
     opportunity_id: uuid.UUID
@@ -241,7 +252,7 @@ class PlanVsActualLateOpportunity(BaseModel):
     value_lakhs: Decimal
 
 
-class PlanVsActualHospital(BaseModel):
+class TargetVsActualHospital(BaseModel):
     """One line per hospital on the person's plan; wins at hospitals that
     aren't on the plan share a single line with account_id=None
     ("Unplanned")."""
@@ -252,32 +263,41 @@ class PlanVsActualHospital(BaseModel):
     won_lakhs: Decimal
 
 
-class PlanVsActualBrand(BaseModel):
+class TargetVsActualBrand(BaseModel):
     brand_id: uuid.UUID
     brand_name: str
     planned_lakhs: Decimal
     won_lakhs: Decimal
 
 
-class PlanVsActualPerson(BaseModel):
+class TargetVsActualPerson(BaseModel):
     user_id: uuid.UUID
     display_name: str
-    # None = no submitted plan; the person still shows with Planned 0.
-    plan_status: str | None
+    # Only waiting and approved plans count towards planned; a draft or
+    # rejected plan shows its status with no figures.
+    plan_status: RosterStatus
+    # BR-PL-05: set while a revision of an approved plan is in flight --
+    # the screen notes "was ₹X approved" beside the revised figure.
+    previous_approved_total_lakhs: Decimal | None
     planned_lakhs: Decimal
+    # Opportunities whose PO date falls in the quarter, whatever their status
+    # now (Lost excluded); counted separately from Won.
+    po_received_lakhs: Decimal
+    # BR-OP-17: Won is reached only at full payment.
     won_lakhs: Decimal
     # None for a past quarter (nothing left to expect).
     expected_lakhs: Decimal | None
     likely_finish_lakhs: Decimal
-    # None when planned is 0 -- the screen shows a dash.
-    percent_of_plan: Decimal | None
+    # Won only; None when planned is 0 -- the screen shows a dash.
+    percent_of_target: Decimal | None
     undated_opportunity_count: int
-    late_opportunities: list[PlanVsActualLateOpportunity]
-    hospitals: list[PlanVsActualHospital]
-    brands: list[PlanVsActualBrand]
+    no_po_date_count: int
+    late_opportunities: list[TargetVsActualLateOpportunity]
+    hospitals: list[TargetVsActualHospital]
+    brands: list[TargetVsActualBrand]
 
 
-class PlanVsActualZone(BaseModel):
+class TargetVsActualZone(BaseModel):
     """Grouped by the hospital's zone, not the planner's. zone_id=None is
     the bucket for hospitals filed above zone level."""
 
@@ -287,16 +307,57 @@ class PlanVsActualZone(BaseModel):
     won_lakhs: Decimal
 
 
-class PlanVsActualResponse(BaseModel):
+class TargetVsActualSummaryRow(BaseModel):
+    """The SBU row (SBU Manager and above) or the company row (Admin/GM),
+    measured against the GM-entered SBU target(s). target_lakhs is None
+    until a target is entered (for the company row: until every SBU has one)."""
+
+    target_lakhs: Decimal | None
+    planned_lakhs: Decimal
+    po_received_lakhs: Decimal
+    won_lakhs: Decimal
+    percent_of_target: Decimal | None
+
+
+class TargetVsActualResponse(BaseModel):
     sbu_id: uuid.UUID
     planning_period: str
     quarter_state: QuarterState
     as_of: date
     planned_lakhs: Decimal
+    po_received_lakhs: Decimal
     won_lakhs: Decimal
     expected_lakhs: Decimal | None
     likely_finish_lakhs: Decimal
-    percent_of_plan: Decimal | None
-    people: list[PlanVsActualPerson]
-    zones: list[PlanVsActualZone]
-    brands: list[PlanVsActualBrand]
+    percent_of_target: Decimal | None
+    no_po_date_count: int
+    # "N of M haven't submitted": M = roster_count.
+    roster_count: int
+    not_submitted_count: int
+    sbu_row: TargetVsActualSummaryRow | None
+    company_row: TargetVsActualSummaryRow | None
+    people: list[TargetVsActualPerson]
+    zones: list[TargetVsActualZone]
+    brands: list[TargetVsActualBrand]
+
+
+class SbuTargetSet(BaseModel):
+    sbu_id: uuid.UUID
+    planning_period: str
+    target_amount_lakhs: Decimal = Field(..., ge=0)
+
+    @field_validator("planning_period")
+    @classmethod
+    def validate_planning_period(cls, v: str) -> str:
+        if not re.match(r"^\d{4}-Q[1-4]$", v):
+            raise ValueError("planning_period must be in the form YYYY-Qn, e.g. 2026-Q3")
+        return v
+
+
+class SbuTargetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    sbu_id: uuid.UUID
+    planning_period: str
+    target_amount_lakhs: Decimal

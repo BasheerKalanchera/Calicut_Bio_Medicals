@@ -10,9 +10,28 @@ from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
-from app.domains.planning.models import BrandVendorTarget, TargetPlan, TargetPlanAccount, TargetPlanBrandSplit
+from app.domains.planning.models import (
+    BrandVendorTarget,
+    SbuTarget,
+    TargetPlan,
+    TargetPlanAccount,
+    TargetPlanBrandSplit,
+)
 from app.domains.product.models import Product
-from app.domains.reference.models import Brand, OpportunityStatus, Zone, ZoneClosure
+from app.domains.reference.models import (
+    SBU,
+    Brand,
+    OpportunityStage,
+    OpportunityStatus,
+    Role,
+    Zone,
+    ZoneClosure,
+)
+
+# Delivery & Installation's display_order -- the stage after Order, where a
+# PO date becomes required (opportunity/validators.py _ORDER_DELIVERY).
+_DELIVERY_STAGE_ORDER = 70
+_SUBMITTED_PLAN_STATUSES = ("PENDING_APPROVAL", "APPROVED")
 
 # Net line value (BR-FIN-03: BUYBACK lines net against PRODUCT lines). Same
 # expression as reporting/repository.py's _NET_VALUE.
@@ -318,9 +337,23 @@ class BrandVendorTargetRepository(BaseRepository[BrandVendorTarget]):
         return list(self.db.scalars(stmt).all())
 
 
-class PlanVsActualRepository:
-    """Read-only queries behind the Plan vs Actual section (Plan vs Actuals
-    Tracking plan, step 1). Plans come through target_plan's RLS; Opportunities
+class SbuTargetRepository(BaseRepository[SbuTarget]):
+    def __init__(self, db: Session):
+        super().__init__(SbuTarget, db)
+
+    def get_by_sbu_period(self, sbu_id: uuid.UUID, planning_period: str) -> SbuTarget | None:
+        stmt = select(SbuTarget).where(SbuTarget.sbu_id == sbu_id, SbuTarget.planning_period == planning_period)
+        return self.db.scalars(stmt).first()
+
+    def list_by_period(self, planning_period: str) -> list[SbuTarget]:
+        """RLS narrows this: Admin/GM see every SBU, an SBU Manager their own."""
+        stmt = select(SbuTarget).where(SbuTarget.planning_period == planning_period)
+        return list(self.db.scalars(stmt).all())
+
+
+class TargetVsActualRepository:
+    """Read-only queries behind Target vs Actuals (Plan vs Actuals Tracking
+    plan). Plans come through target_plan's RLS; people and Opportunities
     are narrowed to the caller's owner scope, the same rule reporting uses."""
 
     def __init__(self, db: Session):
@@ -350,21 +383,34 @@ class PlanVsActualRepository:
         )
 
     def list_plans(self, current_user: UserProfile, sbu_id: uuid.UUID, planning_period: str) -> list[TargetPlan]:
-        """Submitted plans only (pending or approved); drafts and rejected
-        plans don't count towards "planned". RLS lets any role see plans in
-        its zone subtree, so the plan owner is narrowed to the caller's owner
-        scope here -- the same rule Won and Expected use -- else a colleague's
-        plan would show as "Planned X, Won 0"."""
+        """Every plan in any status -- the roster shows Draft and Rejected
+        too; the service counts only waiting and approved ones. RLS lets any
+        role see plans in its zone subtree, so the plan owner is narrowed to
+        the caller's owner scope here -- the same rule Won and Expected use --
+        else a colleague's plan would show as "Planned X, Won 0"."""
         stmt = (
             select(TargetPlan)
             .join(UserProfile, UserProfile.id == TargetPlan.user_id)
             .where(TargetPlan.sbu_id == sbu_id)
             .where(TargetPlan.planning_period == planning_period)
-            .where(TargetPlan.status.in_(("PENDING_APPROVAL", "APPROVED")))
             .options(*_PLAN_CHILDREN)
         )
         stmt = self._apply_owner_scope(stmt, current_user)
         return list(self.db.scalars(stmt).all())
+
+    def roster(self, current_user: UserProfile, sbu_id: uuid.UUID) -> list[tuple[uuid.UUID, str]]:
+        """Who gets a row: every active member of the SBU plus the General
+        Manager (on both SBUs' rosters), never Admin, within the caller's
+        owner scope: (user_id, display_name)."""
+        stmt = (
+            select(UserProfile.id, UserProfile.display_name)
+            .join(Role, Role.id == UserProfile.role_id)
+            .where(UserProfile.is_active.is_not(False))
+            .where(Role.role_name != "Admin")
+            .where(or_(UserProfile.sbu_id == sbu_id, Role.role_name == "General Manager"))
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(u, n) for u, n in self.db.execute(stmt).all()]
 
     def zone_of_accounts(self, account_ids: list[uuid.UUID]) -> dict[uuid.UUID, tuple[uuid.UUID | None, str | None]]:
         """ZONE-level ancestor of each hospital's zone: account_id ->
@@ -523,3 +569,97 @@ class PlanVsActualRepository:
         )
         stmt = self._apply_owner_scope(stmt, current_user)
         return [(o, n, int(c)) for o, n, c in self.db.execute(stmt).all()]
+
+    @staticmethod
+    def _po_received_filter(q_start: date, q_end: date):
+        """PO date in the quarter, whatever the status now, except Lost."""
+        return (
+            Opportunity.po_date >= q_start,
+            Opportunity.po_date <= q_end,
+            OpportunityStatus.status_code != "LOST",
+        )
+
+    def po_received_by_owner(
+        self, current_user: UserProfile, sbu_id: uuid.UUID, q_start: date, q_end: date
+    ) -> list[tuple[uuid.UUID, str, Decimal]]:
+        """Net value of Opportunities whose PO date falls in the quarter:
+        (owner_id, owner_name, amount). Counted in the PO's quarter, which
+        can differ from the quarter it is Won (paid) in."""
+        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        stmt = (
+            select(Opportunity.owner_id, UserProfile.display_name, amount)
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(*self._po_received_filter(q_start, q_end))
+            .group_by(Opportunity.owner_id, UserProfile.display_name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, n, Decimal(v)) for o, n, v in self.db.execute(stmt).all()]
+
+    def no_po_date_counts(
+        self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
+    ) -> list[tuple[uuid.UUID, str, int]]:
+        """Opportunities past Order with no PO date, per owner: (owner_id,
+        owner_name, count). Open ones at Delivery or later, plus ones Won in
+        [start, end) -- older Opportunities reached those points before the
+        PO date was asked for (decision 2026-10-06: counted, not back-filled)."""
+        stmt = (
+            select(Opportunity.owner_id, UserProfile.display_name, func.count(Opportunity.id))
+            .select_from(Opportunity)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .join(OpportunityStage, OpportunityStage.id == Opportunity.stage_id)
+            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(Opportunity.po_date.is_(None))
+            .where(
+                or_(
+                    (OpportunityStatus.status_code == "WON")
+                    & (Opportunity.closed_at >= start)
+                    & (Opportunity.closed_at < end),
+                    OpportunityStatus.status_code.not_in(("WON", "LOST"))
+                    & (OpportunityStage.display_order >= _DELIVERY_STAGE_ORDER),
+                )
+            )
+            .group_by(Opportunity.owner_id, UserProfile.display_name)
+        )
+        stmt = self._apply_owner_scope(stmt, current_user)
+        return [(o, n, int(c)) for o, n, c in self.db.execute(stmt).all()]
+
+    def sbu_target_amounts(self, planning_period: str) -> dict[uuid.UUID, Decimal]:
+        """GM-entered SBU targets for the quarter: sbu_id -> amount. RLS
+        narrows: Admin/GM see every SBU, an SBU Manager their own."""
+        stmt = select(SbuTarget.sbu_id, SbuTarget.target_amount_lakhs).where(
+            SbuTarget.planning_period == planning_period
+        )
+        return {s: Decimal(v) for s, v in self.db.execute(stmt).all()}
+
+    def active_sbu_count(self) -> int:
+        return int(self.db.scalar(select(func.count(SBU.id)).where(SBU.is_active.is_not(False))) or 0)
+
+    def company_totals(
+        self, planning_period: str, q_start: date, q_end: date, start: datetime, end: datetime
+    ) -> tuple[Decimal, Decimal, Decimal]:
+        """Across every SBU, for the Admin/GM company row: (planned,
+        po_received, won). Planned = waiting and approved plans' totals."""
+        planned = self.db.scalar(
+            select(func.coalesce(func.sum(TargetPlan.target_amount_lakhs), 0))
+            .where(TargetPlan.planning_period == planning_period)
+            .where(TargetPlan.status.in_(_SUBMITTED_PLAN_STATUSES))
+        )
+        value = func.coalesce(func.sum(_NET_VALUE), 0)
+        lines = (
+            select(value)
+            .select_from(Opportunity)
+            .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
+            .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+        )
+        po_received = self.db.scalar(lines.where(*self._po_received_filter(q_start, q_end)))
+        won = self.db.scalar(
+            lines.where(OpportunityStatus.status_code == "WON")
+            .where(Opportunity.closed_at >= start)
+            .where(Opportunity.closed_at < end)
+        )
+        return Decimal(planned or 0), Decimal(po_received or 0), Decimal(won or 0)

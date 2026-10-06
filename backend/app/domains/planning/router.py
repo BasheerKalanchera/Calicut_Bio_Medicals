@@ -10,27 +10,36 @@ from app.db.session import get_db
 from app.domains.organization.models import UserProfile
 from app.domains.planning.repository import (
     BrandVendorTargetRepository,
-    PlanVsActualRepository,
+    SbuTargetRepository,
     TargetPlanRepository,
+    TargetVsActualRepository,
 )
 from app.domains.planning.schemas import (
     BrandRollupResponse,
     BrandVendorTargetResponse,
     BrandVendorTargetSet,
     EligibleAccountResponse,
-    PlanVsActualResponse,
     PlanWarning,
+    SbuTargetResponse,
     SBUTargetRollupResponse,
+    SbuTargetSet,
     TargetPlanApprovalDecision,
     TargetPlanCreate,
     TargetPlanResponse,
     TargetPlanUpdate,
+    TargetVsActualResponse,
 )
-from app.domains.planning.service import BrandVendorTargetService, PlanVsActualService, TargetPlanService
+from app.domains.planning.service import (
+    BrandVendorTargetService,
+    SbuTargetService,
+    TargetPlanService,
+    TargetVsActualService,
+)
 from app.domains.reference.repository import BrandRepository
 
 router = APIRouter(prefix="/planning/targets", tags=["Target Planning"])
 brand_vendor_router = APIRouter(prefix="/planning/brand-vendor-targets", tags=["Target Planning"])
+sbu_target_router = APIRouter(prefix="/planning/sbu-targets", tags=["Target Planning"])
 
 
 def _get_service(
@@ -45,10 +54,16 @@ def _get_brand_vendor_service(
     return BrandVendorTargetService(repository=BrandVendorTargetRepository(db))
 
 
-def _get_plan_vs_actual_service(
+def _get_target_vs_actual_service(
     db: Session = Depends(get_db),
-) -> PlanVsActualService:
-    return PlanVsActualService(repository=PlanVsActualRepository(db))
+) -> TargetVsActualService:
+    return TargetVsActualService(repository=TargetVsActualRepository(db))
+
+
+def _get_sbu_target_service(
+    db: Session = Depends(get_db),
+) -> SbuTargetService:
+    return SbuTargetService(repository=SbuTargetRepository(db))
 
 
 @router.get("")
@@ -87,15 +102,16 @@ def list_team_targets(
     return APIResponse(data=[TargetPlanResponse.model_validate(t) for t in target_plans])
 
 
-@router.get("/plan-vs-actual")
-def get_plan_vs_actual(
+@router.get("/target-vs-actuals")
+def get_target_vs_actual(
     sbu_id: uuid.UUID = Query(...),
     planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
     current_user: UserProfile = Depends(get_current_user),
-    service: PlanVsActualService = Depends(_get_plan_vs_actual_service),
-) -> APIResponse[PlanVsActualResponse]:
-    """Planned vs Won vs Expected for one quarter (Insights Dashboard). Read-only."""
-    return APIResponse(data=service.get_plan_vs_actual(sbu_id, planning_period, current_user=current_user))
+    service: TargetVsActualService = Depends(_get_target_vs_actual_service),
+) -> APIResponse[TargetVsActualResponse]:
+    """Target vs Actuals for one quarter (Insights Dashboard): roster rows,
+    PO received, Won (paid), Expected; SBU and company rows by role. Read-only."""
+    return APIResponse(data=service.get_target_vs_actual(sbu_id, planning_period, current_user=current_user))
 
 
 @router.get("/eligible-accounts")
@@ -263,3 +279,25 @@ def set_brand_vendor_target(
 ) -> APIResponse[BrandVendorTargetResponse]:
     vendor_target = service.set_vendor_target(body, current_user=current_user)
     return APIResponse(data=BrandVendorTargetResponse.model_validate(vendor_target))
+
+
+@sbu_target_router.get("")
+def list_sbu_targets(
+    planning_period: str = Query(..., pattern=r"^\d{4}-Q[1-4]$"),
+    current_user: UserProfile = Depends(get_current_user),
+    service: SbuTargetService = Depends(_get_sbu_target_service),
+) -> APIResponse[list[SbuTargetResponse]]:
+    """Admin, GM and SBU Manager (RLS narrows an SBU Manager to their own SBU)."""
+    sbu_targets = service.list_by_period(planning_period, current_user=current_user)
+    return APIResponse(data=[SbuTargetResponse.model_validate(t) for t in sbu_targets])
+
+
+@sbu_target_router.post("", status_code=201)
+def set_sbu_target(
+    body: SbuTargetSet,
+    current_user: UserProfile = Depends(get_current_user),
+    service: SbuTargetService = Depends(_get_sbu_target_service),
+) -> APIResponse[SbuTargetResponse]:
+    """Upsert, Admin/GM only. No delete -- a wrong figure is corrected, not removed."""
+    sbu_target = service.set_target(body, current_user=current_user)
+    return APIResponse(data=SbuTargetResponse.model_validate(sbu_target))
