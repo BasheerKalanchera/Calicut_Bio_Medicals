@@ -51,6 +51,17 @@ else
   echo
 fi
 
+# 2d. Weekly process review due (Mondays, or after 7 days; last review is
+#     the newest "- YYYY-MM-DD" line in docs/Process-Improvements.md).
+PI_LOG=docs/Process-Improvements.md
+last=$(grep -E '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$PI_LOG" 2>/dev/null | tail -n 1 | cut -c3-12)
+if [ -n "$last" ]; then
+  days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
+  if [ "$days" -ge 7 ] || { [ "$(date +%u)" -eq 1 ] && [ "$days" -ge 1 ]; }; then
+    echo "DUE TODAY: weekly process review (last review $last, $days day(s) ago; $PI_LOG). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Then: build at most 3 items, drop or park with a date anything skipped in two reviews." && echo
+  fi
+fi
+
 # 3. Handover size alarm, then the handover itself.
 [ -f "$H" ] || exit 0
 n=$(wc -l < "$H")

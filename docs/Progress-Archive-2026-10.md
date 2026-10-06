@@ -764,3 +764,24 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
     skill now requires the full backend pytest before a migration/model
     commit, with the pass count in its message (origin in
     Process-Rules-History, 2026-10-06).
+
+## 2026-10-06 — Retro review: suggestions now tracked, weekly review added
+
+- **Why (Basheer):** improvements from the last ~10 days of retros were
+  being skipped. Reviewed every retro from 2026-09-26 to 2026-10-06.
+- **Found:** ~43 retros in 11 days. Guard rails that got built all held;
+  the repeats are judgement mistakes: claims or examples not checked (×9),
+  test-plan assumptions wrong (×5), explanations needing a second pass
+  (×6), heavy option offered first (×4). Seven one-off suggestions had no
+  follow-up anywhere.
+- **Correction (Claude):** the first summary listed two suggestions as open
+  that were already built: the fresh-install check
+  (`docs/Deployment-Topology.md`) and "who can approve / who can save" (the
+  test-plan template). Caught on checking before the edits.
+- **Done:** `docs/Process-Improvements.md` (P1–P11), SessionStart reminder
+  for a Monday review (block 2d), CLAUDE.md "Retros and weekly review"
+  plus the Documentation homes and post-commit step 2 wording, origin in
+  Process-Rules-History. The parked 2026-10-01 retro was closed: its fixes
+  shipped 2026-10-03 and its text exists only in an old chat.
+- **Next:** first weekly review Monday 2026-10-12; P1 is its first
+  candidate.

@@ -20,18 +20,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   gaps, plus three untracked plan docs from another session: leave them out
   of commits.
 
-## Session retro 2026-10-01 + structural fixes — parked by Basheer
-
-- Retro drafted in chat 2026-10-01, **not yet approved or saved**. Main
-  points: hospital-wise Part 1 done; UAT hotfix built and Dev-tested; most
-  mistakes broke existing CLAUDE.md rules (test-plan live-data check,
-  Simple/Complex tagging, "Basheer clicks" for Dev writes, verify before
-  claiming); only the no-`cd` hook actually stopped a mistake.
-- 2026-10-03: the structural fixes were built (shell guard, test-plan guard
-  + template, UAT-connection note; Progress-Archive 2026-10-03). Only the
-  retro text itself is still unsaved.
-- **Next:** re-show the retro for approval when Basheer chooses.
-
 ## Plan vs Actuals Tracking (Insights Dashboard)
 
 - Renamed 2026-10-02 (Basheer) from "Hospital-wise target planning Part 2".

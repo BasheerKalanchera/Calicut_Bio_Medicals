@@ -63,7 +63,7 @@ code or changing structure. On any conflict, the document wins over this file.
   result → that feature's test plan; environments/rollout/UAT→Prod gates →
   `docs/Deployment-Topology.md`; open or deferred work → Backlog; rules and
   decisions → Business-Rules / ADR; history → Progress-Archive; current task
-  → `session-handover.md`. Rules for how Claude works go in CLAUDE.md, not
+  → `session-handover.md`; process suggestions → `docs/Process-Improvements.md`. Rules for how Claude works go in CLAUDE.md, not
   Claude memory; memory holds only short-lived context, never project status
   or standing rules. A `TODO`/`FIXME` note in code is only a short pointer to an open
   Backlog entry (e.g. `see docs/Backlog.md "<entry title>"`); the details
@@ -71,6 +71,10 @@ code or changing structure. On any conflict, the document wins over this file.
 - **When a fact or decision changes:** in the same commit, search the docs for
   the old wording and for the open question's title, and update every
   living-doc hit — not just the doc you're working in. *(2026-09-26)*
+- **Retros and weekly review:** one retro per session, at its end: only what
+  went wrong and what to change. Each suggestion gets a P-number in
+  `docs/Process-Improvements.md` the same turn (or a +1 on its Seen count).
+  Weekly review when the hook says it's due. *(2026-10-06)*
 - **Daily documentation tidy-up:** when the SessionStart hook says it's due,
   load the `doc-integrity-sweep` skill and offer to run it. *(2026-09-24)*
 - **UAT data-quality check:** every alternate day, run by Claude under
@@ -264,8 +268,8 @@ commit; the checklist is a separate, later commit. *(2026-09-18)*
 Right after the push, before other work:
 1. Update `session-handover.md`: remove the finished thread (its detail goes
    to Progress-Archive) — don't add a "DONE" summary. *(2026-09-24)*
-2. Add a Progress-Archive entry with a short retro line (what worked, what to
-   improve, any process change).
+2. Add a Progress-Archive entry for what shipped; its lessons go in the
+   session's end-of-session retro. *(2026-10-06)*
 3. Close the feature's paperwork: its plan's Status line and its test plan's
    "Built" commits show the shipped hashes, and its own Backlog entry is
    removed. Then check `docs/Backlog.md` for newly-surfaced deferred ideas.
