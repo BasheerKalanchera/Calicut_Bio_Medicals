@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 from unittest.mock import MagicMock
 
+from sqlalchemy.dialects import postgresql
+
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.organization.models import UserProfile
@@ -514,3 +516,89 @@ class TestAccountInUserZones:
         repo = OpportunityRepository(mock_db)
 
         assert repo.account_in_user_zones(uuid.uuid4(), uuid.uuid4()) is False
+
+
+class TestOpportunityPageQuerySize:
+    """docs/Query-Load-Fixes-Implementation-Plan.md: the Opportunity page's
+    requests joined 35-59 tables because every related row brought its own
+    lazy="joined" chain (owner -> sbu/role/zone, product -> brand/category ...).
+    Each statement must now join only what its response shows."""
+
+    # Tables only reachable through those chains -- never shown on the page.
+    CHAIN_TABLES = ("role", "zone", "project_status", "brand", "category", "model", "opportunity_stage")
+
+    def _sql(self, stmt) -> str:
+        return str(stmt.compile(dialect=postgresql.dialect())).lower()
+
+    def _scalars_sql(self, call, *, unique: bool = False) -> list[str]:
+        mock_db = MagicMock()
+        if unique:
+            mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        else:
+            mock_db.scalars.return_value.all.return_value = []
+        call(OpportunityRepository(mock_db))
+        return [self._sql(c.args[0]) for c in mock_db.scalars.call_args_list]
+
+    def _assert_no_chain(self, sql: str, allowed: tuple[str, ...] = ()) -> None:
+        for table in self.CHAIN_TABLES:
+            if table not in allowed:
+                assert f"join {table} " not in sql, table
+
+    def test_detail_joins_only_the_eleven_shown_references(self):
+        mock_db = MagicMock()
+        OpportunityRepository(mock_db).get_for_detail(uuid.uuid4())
+        sql = self._sql(mock_db.scalar.call_args.args[0])
+        # account, sbu, project, lead_source, gate_override_reason, stage,
+        # status, and four people (owner, referred_by, approver, payment confirmer).
+        assert sql.count(" join ") == 11
+        self._assert_no_chain(sql, allowed=("opportunity_stage",))
+
+    def test_items_join_only_product(self):
+        (sql,) = self._scalars_sql(lambda repo: repo.list_items(uuid.uuid4()), unique=True)
+        assert sql.count(" join ") == 1
+        assert "join product " in sql
+        self._assert_no_chain(sql)
+
+    def test_splits_join_only_the_participant(self):
+        (sql,) = self._scalars_sql(lambda repo: repo.list_splits(uuid.uuid4()))
+        assert sql.count(" join ") == 1
+        assert "join user_profile " in sql
+        self._assert_no_chain(sql)
+
+    def test_stakeholders_join_only_the_stakeholder(self):
+        (sql,) = self._scalars_sql(lambda repo: repo.list_opportunity_stakeholders(uuid.uuid4()))
+        assert sql.count(" join ") == 1
+        assert "join stakeholder " in sql
+        self._assert_no_chain(sql)
+
+    def test_saving_products_loads_no_chains_and_rereads_fresh(self):
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        OpportunityRepository(mock_db).replace_items(uuid.uuid4(), [])
+        existing_stmt, reread_stmt = (c.args[0] for c in mock_db.scalars.call_args_list)
+        assert self._sql(existing_stmt).count(" join ") == 0
+        assert self._sql(reread_stmt).count(" join ") == 1
+        # A line whose product just changed must show the new product.
+        assert reread_stmt.get_execution_options().get("populate_existing") is True
+
+    def test_saving_splits_loads_no_chains_and_rereads_fresh(self):
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = []
+        OpportunityRepository(mock_db).replace_splits(uuid.uuid4(), [])
+        stmts = [c.args[0] for c in mock_db.scalars.call_args_list]
+        assert all(self._sql(s).count(" join ") == 1 for s in stmts)
+        assert stmts[-1].get_execution_options().get("populate_existing") is True
+
+    def test_stakeholder_link_lookup_and_reload_join_only_the_stakeholder(self):
+        mock_db = MagicMock()
+        repo = OpportunityRepository(mock_db)
+        repo.get_stakeholder_link(uuid.uuid4(), uuid.uuid4())
+        repo.update_stakeholder_link(MagicMock())
+        lookup, reload = (c.args[0] for c in mock_db.scalar.call_args_list)
+        for stmt in (lookup, reload):
+            sql = self._sql(stmt)
+            assert sql.count(" join ") == 1
+            self._assert_no_chain(sql)
+        mock_db.get.assert_not_called()
+        mock_db.refresh.assert_not_called()
+        assert reload.get_execution_options().get("populate_existing") is True
