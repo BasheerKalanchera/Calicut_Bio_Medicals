@@ -293,6 +293,13 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Annual view roster on Target Planning (Basheer, 2026-10-06; deferred).**
+  The "who hasn't started" roster (`docs/Target-Coverage-Roster-Implementation-Plan.md`)
+  shows on the Quarter view only. The Annual view already lists each
+  person's four quarters, but only for people with at least one plan that
+  year; the upgrade, if needed, is to list people with no plan all year
+  too. Deferred because plans are made and approved one quarter at a time.
+
 - **Customer 360 and Project Directory create forms have no PO Date box
   (Basheer, 2026-10-06; decided — fix with the create-form merge).** Since
   the PO Date gate (Order → Delivery and Won), those two forms can't create

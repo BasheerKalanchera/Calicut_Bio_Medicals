@@ -37,7 +37,7 @@ one move, once this part is finished and tested (Basheer, 2026-09-29).
 The screen is renamed **Target vs Actuals** (file and code renames happen with the build; this
 file keeps its old name until then so links elsewhere don't break).
 
-- **Roster:** every active SBU member except Admin gets a row every quarter, on both Target Planning and Target vs Actuals, within the viewer's scope. Statuses: Not started / Draft / Waiting / Approved / Rejected. A "N of M haven't submitted" line. Managers see only "Draft" on others' plans. Haroon is on both SBU rosters and counts as not submitted when planless. (Replaces "people with no plan still appear: Planned ₹0".)
+- **Roster:** every active SBU member except Admin gets a row every quarter, on both Target Planning and Target vs Actuals, within the viewer's scope. Statuses: Not started / Draft / Pending Approval / Approved / Rejected ("Pending Approval", the wording users already know, replaced "Waiting" — Basheer, 2026-10-06). A "N of M haven't submitted" line. Managers see only "Draft" on others' plans. Haroon is on both SBU rosters and counts as not submitted when planless. (Replaces "people with no plan still appear: Planned ₹0".)
 - **Revised plans:** show the revised figure with a "was ₹X approved" note. If the revision is rejected, the last approved total still counts (BR-PL-05), shown as "last approved" with no hospital or brand breakdown, and the person counts as submitted (Basheer, 2026-10-06, code review).
 - **Won:** counts at full payment (BR-OP-17); "% of target" uses Won only.
 - **Manager's own row:** own plan and own wins only, not the team's.
@@ -114,9 +114,19 @@ names) follows as a separate pass. The old build order below is superseded.
    (migration + visibility); fresh E2E plan checked against live Dev data,
    with a hide-check case and Simple/Complex tags; Dev backend restarted;
    manual E2E; commit, push, post-commit checklist.
+   **Manual E2E deferred (Basheer, 2026-10-06):** run once with step 6's
+   test, after step 6 is built. Done so far: checks, `/code-review` high,
+   fixes `eab65e3`.
 6. **Second pass: Target & Coverage Planning screen.** Roster and statuses
    on that screen, reusing the step 3 backend. Own short plan, own test
    (the screen last passed E2E 38/38, so it is re-tested), own commit.
+   Roster on the Quarter view only; the Annual view keeps its totals
+   (Basheer, 2026-10-06; Backlog "Annual view roster on Target
+   Planning"). One combined E2E for steps 5 and 6: the Target vs Actuals
+   card in full, the target → approval → actuals chain (Basheer K's Al
+   Shifa plan against his existing ₹18 L wins), the Won-without-PO-date
+   refusal, and both screens showing the same people, statuses and
+   targets. Then commit, push and the post-commit checklist for both.
 7. **UAT move, only after step 6 is built and tested** (Basheer,
    2026-10-05): one combined move (Hospital-wise Target Planning + Target
    vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a

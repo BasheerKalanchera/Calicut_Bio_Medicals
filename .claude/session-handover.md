@@ -39,29 +39,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   UAT check: Progress-Archive-2026-10 (2026-10-04 entries).
 - Dev has a test Opportunity "Test +lead screen" linked to
   Basheer K (reassign, don't delete: it has Activity rows).
-- Design review finished 2026-10-05; decisions, gap analysis and the
-  revised build order are written in the plan doc (`d935ebc`). Light
-  first: roster on Target vs Actuals; the Target & Coverage Planning
-  screen is a separate second pass; the UAT move comes only after both are
-  built and tested (Basheer, 2026-10-05).
-- Split credit: question sent to Haroon, answer expected 2026-10-06.
-- Steps 1–3 committed and pushed: `1821c30` (migration 0060, Dev at
-  `0060 (head)`), `ebc9613` (PO date gates), `cc4eb91` (backend); detail
-  in Progress-Archive-2026-10 (2026-10-05/06).
-- Step 5 session retro (Progress-Archive, P21, P15) committed in the
-  2026-10-06 lunch docs batch. Open from it: the rejected-revision
-  display was approved as "Rejected (₹X approved)" but built as a "last
-  approved" note; ask Basheer which he wants during E2E.
-- Step 4 (frontend) committed and pushed 2026-10-06 as `2c189d7`
-  (checkpoint, review and E2E pending; committed before the Query Load
-  Fixes' Opportunity-page fix, at Basheer's go-ahead); tsc clean, lint
-  0 errors (warnings only in old code). Basheer chose Option C: PO date box
-  on the Opportunity page edit form + Quick Lead only; the other two create
-  forms get it via the create-form merge, straight after this feature.
-  Files: `api.ts` (po_date), `formatter.ts` (getTodayIso), Opportunity
-  page, QuickLeadModal, planning types/service, `TargetVsActualsSection.tsx`
-  (renamed from PlanVsActualSection), new `SbuTargetBox.tsx`, Insights and
-  Target Planning screens.
+- Redesign decisions and build order in the plan doc (`d935ebc`); UAT
+  move only after steps 5 and 6 are both built and tested. Split credit
+  question with Haroon (answer expected 2026-10-06).
+- Committed and pushed (detail in Progress-Archive-2026-10): `1821c30`
+  (migration 0060, Dev at `0060 (head)`), `ebc9613` (PO date gates),
+  `cc4eb91` (backend), `2c189d7` (frontend: PO date box on the
+  Opportunity edit form + Quick Lead only, Option C).
+- Open for E2E: the rejected-revision display was approved as "Rejected
+  (₹X approved)" but built as a "last approved" note; ask Basheer which.
 - Doc rename decided (Basheer, 2026-10-06): at the post-commit checklist,
   rename both `Plan-vs-Actuals-Tracking-*` docs to `Target-vs-Actuals-*`
   and fix links in Business-Rules, Traceability, Insights-Dashboard plan,
@@ -69,11 +55,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   History docs (Progress-Archive, sweep log) keep the old name.
 - Step 5 review fixes committed and pushed as `eab65e3` (detail in
   Progress-Archive-2026-10).
-- **Next:** write the E2E plan (Dev data in scratchpad
-  `tva_e2e_data_check_out.txt`; Vivek's CC Q4 rejected-at-₹45 L / approved
-  ₹30 L plan is the "last approved" case), restart the Dev backend, run E2E.
-- Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
-  Weekly-Follow-up) are not ours; leave them out of commits.
+- Step 5's manual E2E deferred (Basheer, 2026-10-06): one combined E2E
+  after step 6; roster on the Quarter view only (plan doc, steps 5–6).
+- Step 6 plan approved 2026-10-06 (Basheer):
+  `docs/Target-Coverage-Roster-Implementation-Plan.md` (shared roster
+  list for both screens).
+- Step 6 part 1 (backend) committed and pushed 2026-10-06 as `0b503ad`
+  (checkpoint): new `GET /planning/targets/roster`, shared
+  `_build_roster` (the card uses it too), 5 new tests; pytest 1201, ruff
+  clean. **Next:** step 2 (frontend: Target Planning Quarter team table
+  from `/roster`, "N of M haven't submitted", "Pending Approval" on the
+  card; ask Basheer about removing the then-unused `/rollup`). E2E data:
+  session 0fa74619 scratchpad (`tva_views_out.txt`, `tp_team_out.txt`,
+  `tva_mgr_out.txt`, `tva_elig_out.txt`, `tva_bk_out.txt`).
 
 ## Query load fixes — approved 2026-10-06, deadline Sun 2026-10-11
 
