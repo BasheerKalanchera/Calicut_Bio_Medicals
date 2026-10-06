@@ -63,7 +63,7 @@ class TestListProductDocuments:
 
     def test_product_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None  # existence check finds no row
 
         _setup_overrides(mock_db)
         try:
@@ -117,7 +117,7 @@ class TestCreateProductDocument:
 
     def test_product_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None  # existence check finds no row
 
         _setup_overrides(mock_db)
         try:
@@ -318,7 +318,7 @@ class TestListOpportunityDocuments:
 
     def test_opportunity_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None  # existence check finds no row
 
         _setup_overrides(mock_db)
         try:
@@ -354,7 +354,7 @@ class TestCreateOpportunityDocument:
 
     def test_opportunity_not_found_returns_404(self, client: TestClient) -> None:
         mock_db = MagicMock()
-        mock_db.get.return_value = None
+        mock_db.scalar.return_value = None  # existence check finds no row
 
         _setup_overrides(mock_db)
         try:

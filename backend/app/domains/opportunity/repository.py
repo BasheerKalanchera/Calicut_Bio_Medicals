@@ -1,15 +1,18 @@
 import uuid
 
 from sqlalchemy import case, delete, func, or_, select
-from sqlalchemy.orm import Session, noload
+from sqlalchemy.orm import Session, joinedload, lazyload, noload
 
 from app.db.base import BaseRepository
-from app.domains.account.models import Account
+from app.domains.account.models import Account, Stakeholder
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.organization.models import UserProfile, UserZone
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.product.models import Product
+from app.domains.project.models import Project
 from app.domains.reference.models import (
+    SBU,
+    GateOverrideReason,
     LeadSource,
     LossReason,
     OpportunityStage,
@@ -17,6 +20,63 @@ from app.domains.reference.models import (
     Role,
     ZoneClosure,
 )
+
+
+def _name_only(relationship, *columns):
+    # Join the related row, but only the columns the response shows, and
+    # stop there: lazyload("*") switches off the related model's own
+    # lazy="joined" chains (user -> sbu/role/zone ...) that otherwise balloon
+    # the query. Same pattern as activity/repository.py.
+    return joinedload(relationship).load_only(*columns).lazyload("*")
+
+
+# Opportunity page (docs/Query-Load-Fixes-Implementation-Plan.md): each list
+# loads exactly what its response schema shows.
+def _detail_options():
+    # PipelineOpportunity: names for every nested reference, full stage and
+    # status rows (StageNested/StatusNested use most of their columns).
+    return (
+        _name_only(Opportunity.account, Account.id, Account.name),
+        _name_only(Opportunity.sbu, SBU.id, SBU.name),
+        _name_only(Opportunity.project, Project.id, Project.name),
+        _name_only(Opportunity.owner, UserProfile.id, UserProfile.display_name),
+        _name_only(Opportunity.referred_by, UserProfile.id, UserProfile.display_name),
+        _name_only(Opportunity.gate_override_approver, UserProfile.id, UserProfile.display_name),
+        _name_only(Opportunity.full_payment_confirmed_by_user, UserProfile.id, UserProfile.display_name),
+        _name_only(Opportunity.lead_source, LeadSource.id, LeadSource.name),
+        _name_only(Opportunity.gate_override_reason, GateOverrideReason.id, GateOverrideReason.reason_name),
+        joinedload(Opportunity.stage).lazyload("*"),
+        joinedload(Opportunity.status).lazyload("*"),
+        noload(Opportunity.gate_override_set_by_user),
+        noload(Opportunity.loss_reason),
+        noload(Opportunity.hold_reason),
+        noload(Opportunity.opportunity_stakeholders),
+        noload(Opportunity.splits),
+        noload(Opportunity.items),
+        noload(Opportunity.activities),
+        noload(Opportunity.documents),
+    )
+
+
+def _item_options():
+    return (
+        noload(OpportunityItem.opportunity),
+        _name_only(OpportunityItem.product, Product.id, Product.name, Product.product_type),
+    )
+
+
+def _split_options():
+    return (
+        noload(Split.opportunity),
+        _name_only(Split.user, UserProfile.id, UserProfile.display_name),
+    )
+
+
+def _stakeholder_link_options():
+    return (
+        noload(OpportunityStakeholder.opportunity),
+        _name_only(OpportunityStakeholder.stakeholder, Stakeholder.id, Stakeholder.name),
+    )
 
 
 class OpportunityRepository(BaseRepository[Opportunity]):
@@ -250,17 +310,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         return self.db.scalar(
             select(Opportunity)
             .where(Opportunity.id == opportunity_id)
-            .options(
-                # Same eager-load profile as list_pipeline — this feeds the
-                # same PipelineOpportunity schema.
-                noload(Opportunity.opportunity_stakeholders),
-                noload(Opportunity.splits),
-                noload(Opportunity.items),
-                noload(Opportunity.activities),
-                noload(Opportunity.documents),
-                noload(Opportunity.loss_reason),
-                noload(Opportunity.hold_reason),
-            )
+            # Feeds PipelineOpportunity: names only, not the referenced
+            # rows' own joined chains.
+            .options(*_detail_options())
         )
 
     # ------------------------------------------------------------------
@@ -327,7 +379,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def list_items(self, opportunity_id: uuid.UUID) -> list[OpportunityItem]:
         return list(
             self.db.scalars(
-                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+                select(OpportunityItem)
+                .where(OpportunityItem.opportunity_id == opportunity_id)
+                .options(*_item_options())
             ).unique().all()
         )
 
@@ -359,7 +413,10 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         existing_by_id = {
             item.id: item
             for item in self.db.scalars(
-                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+                # Only the lines' own columns are compared below.
+                select(OpportunityItem)
+                .where(OpportunityItem.opportunity_id == opportunity_id)
+                .options(lazyload("*"))
             ).unique().all()
         }
         incoming_ids = {item.id for item in new_items if item.id is not None}
@@ -397,10 +454,15 @@ class OpportunityRepository(BaseRepository[Opportunity]):
                 item.id = None
                 self.db.add(item)
         self.db.flush()
-        # Re-query so product relationship (lazy="joined") is loaded for the response
+        # Re-read for the response. populate_existing: a line whose product
+        # just changed must show the new product, not the one loaded before
+        # the save (and extended_value_lakhs is recomputed by the database).
         return list(
             self.db.scalars(
-                select(OpportunityItem).where(OpportunityItem.opportunity_id == opportunity_id)
+                select(OpportunityItem)
+                .where(OpportunityItem.opportunity_id == opportunity_id)
+                .options(*_item_options())
+                .execution_options(populate_existing=True)
             ).unique().all()
         )
 
@@ -411,7 +473,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     def list_splits(self, opportunity_id: uuid.UUID) -> list[Split]:
         return list(
             self.db.scalars(
-                select(Split).where(Split.opportunity_id == opportunity_id)
+                select(Split).where(Split.opportunity_id == opportunity_id).options(*_split_options())
             ).all()
         )
 
@@ -463,7 +525,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         existing_by_user = {
             split.user_id: split
             for split in self.db.scalars(
-                select(Split).where(Split.opportunity_id == opportunity_id)
+                select(Split).where(Split.opportunity_id == opportunity_id).options(*_split_options())
             ).all()
         }
         incoming_user_ids = {s.user_id for s in new_splits}
@@ -486,10 +548,13 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             else:
                 self.db.add(split)
         self.db.flush()
-        # Re-query so user relationship (lazy="joined") is loaded for the response
+        # Re-read so a newly added participant's name is loaded for the response.
         return list(
             self.db.scalars(
-                select(Split).where(Split.opportunity_id == opportunity_id)
+                select(Split)
+                .where(Split.opportunity_id == opportunity_id)
+                .options(*_split_options())
+                .execution_options(populate_existing=True)
             ).all()
         )
 
@@ -502,9 +567,9 @@ class OpportunityRepository(BaseRepository[Opportunity]):
     ) -> list[OpportunityStakeholder]:
         return list(
             self.db.scalars(
-                select(OpportunityStakeholder).where(
-                    OpportunityStakeholder.opportunity_id == opportunity_id
-                )
+                select(OpportunityStakeholder)
+                .where(OpportunityStakeholder.opportunity_id == opportunity_id)
+                .options(*_stakeholder_link_options())
             ).all()
         )
 
@@ -533,15 +598,27 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         )
 
     def get_stakeholder_link(
-        self, opportunity_id: uuid.UUID, stakeholder_id: uuid.UUID
+        self, opportunity_id: uuid.UUID, stakeholder_id: uuid.UUID, *, reload: bool = False
     ) -> "OpportunityStakeholder | None":
-        return self.db.get(OpportunityStakeholder, (opportunity_id, stakeholder_id))
+        # A select rather than db.get, which would load the link's full
+        # joined chain. reload: re-read a just-saved link (replaces
+        # db.refresh, which would also load that chain).
+        stmt = (
+            select(OpportunityStakeholder)
+            .where(
+                OpportunityStakeholder.opportunity_id == opportunity_id,
+                OpportunityStakeholder.stakeholder_id == stakeholder_id,
+            )
+            .options(*_stakeholder_link_options())
+        )
+        if reload:
+            stmt = stmt.execution_options(populate_existing=True)
+        return self.db.scalar(stmt)
 
     def add_stakeholder(self, link: OpportunityStakeholder) -> OpportunityStakeholder:
         self.db.add(link)
         self.db.flush()
-        self.db.refresh(link)
-        return link
+        return self.get_stakeholder_link(link.opportunity_id, link.stakeholder_id, reload=True)
 
     def delete_stakeholder(self, link: OpportunityStakeholder) -> None:
         self.db.delete(link)
@@ -549,8 +626,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
 
     def update_stakeholder_link(self, link: OpportunityStakeholder) -> OpportunityStakeholder:
         self.db.flush()
-        self.db.refresh(link)
-        return link
+        return self.get_stakeholder_link(link.opportunity_id, link.stakeholder_id, reload=True)
 
     # ------------------------------------------------------------------
     # Stakeholder -> opportunities (reverse linkage, Customer 360 bridge list)
