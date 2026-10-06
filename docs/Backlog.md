@@ -9,6 +9,18 @@ Session Handoff rule).
 
 ## Parked initiatives
 
+### Query load fixes — in progress, deadline Sun 2026-10-11 (2026-10-06)
+
+Eight screens fetch far more than they show (the cause of the Next Actions
+outage). Plan, priority order and progress table:
+`docs/Query-Load-Fixes-Implementation-Plan.md`. Approved by Basheer
+2026-10-06: all rows fixed on `main` and moved to UAT (hotfix route, 4
+trips) by **Sun 2026-10-11**.
+- **Close this entry** when every row in the plan's progress table shows
+  both a `main` commit and a UAT move.
+- **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
+  with the reason and a new date — not on Sunday.
+
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
 Rule decided: BR-OP-18 (`docs/Business-Rules.md`). Found when Basheer K
@@ -284,7 +296,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 - **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard
   reload fires ~30 API calls at once; with the 5 + 5 pool on the free tier
   most take 1.5–3 s (median ~2 s, measured as Om Hiremath after the Next
-  Actions hotfix). Decide after the query audit: fewer/combined calls on
+  Actions hotfix). Query audit done 2026-10-06
+  (`docs/Query-Load-Fixes-Implementation-Plan.md`); still to decide: fewer/combined calls on
   the home page, or a bigger tier (see `docs/Deployment-Topology.md`,
   "Database sizing and connection pool").
 

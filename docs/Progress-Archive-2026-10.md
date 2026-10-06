@@ -785,3 +785,52 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   shipped 2026-10-03 and its text exists only in an old chat.
 - **Next:** first weekly review Monday 2026-10-12; P1 is its first
   candidate.
+
+## 2026-10-06 — Target vs Actuals step 3 (backend) committed: `cc4eb91`
+
+- Checkpoint, frontend pending (step 4). Built from the plan doc's revised
+  build order, approved by Basheer the same day. Dev code only; no DB
+  change; tests use stubs, so no Dev writes. pytest 1168, ruff clean.
+- **Built:** roster rows (every active SBU member plus the GM, never
+  Admin) with Not started / Draft / Waiting / Approved / Rejected and an
+  "N of M haven't submitted" count; Draft and Rejected shown as status
+  only; "was ₹X approved" on revised plans; PO received beside Won (paid);
+  a count of Opportunities past Order with no PO date; SBU row (SBU
+  Manager of that SBU and above) and company row (Admin/GM); SBU target
+  entry at `/planning/sbu-targets` (Admin/GM write, SBU Manager and above
+  read, no delete). Endpoint renamed to
+  `/planning/targets/target-vs-actuals`; the old uncommitted home-SBU
+  filter was replaced by the roster.
+- **Choices made while building (told to Basheer):** the company target
+  stays blank until every SBU has one; wins by people outside the roster
+  get no row but stay in totals and the zone/brand tables; no-PO-date
+  count = open at Delivery or later, or Won in the quarter. A rejected
+  revision of an approved plan counts 0 planned (the documented rule);
+  its old approved figure is still shown.
+- **Known gap until step 4:** the Dev Target vs Actuals card calls the old
+  endpoint and errors.
+
+## 2026-10-06 — Query audit (Dev): heavy screens found, fix plan approved
+
+- **Why:** the Next Actions outage (fixed `fa61bd8`) came from chained
+  auto-loading; the audit checked the rest of the app. Dev only, read-only.
+- **Method:** every GET request run in-process as three users (Admin, SBU
+  Manager, Sales Staff), each in a transaction that is always rolled back;
+  joins, statements and planning time recorded. Saves (log activity, four
+  Opportunity saves) measured the same way; before/after checks confirmed
+  nothing was kept.
+- **Found:** the Opportunity page opens with ~135 ms planning and ~360
+  joins over 6 requests. Saving products, splits or stakeholders reloads
+  the full bundle 2–3 times (35–68 ms). Pipeline 165–185 ms (one
+  statement, 36 joins). Activity comments 61 joins; Daily Activity Report
+  57; product documents 59; Audit Log 43 statements; zone tree 93
+  statements. The account workspace request is unused by any screen.
+- **Fine as is:** logging an activity, editing Opportunity details,
+  Customer 360, Activity timelines, Next Actions.
+- **Corrections:** activity saves were first called "likely heavy"
+  (measured: fine); the first ranking was grouped by fix rather than
+  impact and undercounted the Opportunity page (~240 → ~360). Basheer's
+  point that reps open Opportunities from Customer 360 to edit led to
+  measuring the saves.
+- **Decided:** `docs/Query-Load-Fixes-Implementation-Plan.md`, approved.
+  All rows by Sun 2026-10-11, each to UAT by the hotfix route, in 4 trips.

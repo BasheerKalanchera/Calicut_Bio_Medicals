@@ -309,6 +309,7 @@ account: Mapped["Account"] = relationship(
 ```
 
 - Default lazy loading: `"selectin"` for collections, `"joined"` for single references.
+- **Screen requests state their own loading** *(2026-10-06, `docs/Query-Load-Fixes-Implementation-Plan.md` D6)*. The `joined` default above chains: each joined record brings its own joined records, so loading one Opportunity reached ~360 joined tables and Next Actions 110+ (UAT outage 2026-10-05). Every repository method behind a screen's list or detail request — including the re-read after a save — sets its loading explicitly: `joinedload(rel).load_only(<columns shown>).lazyload("*")` for what the response shows, `noload(...)` for the rest (pattern: `_activity_display_options` in `activity/repository.py`). Budget: no statement above 15 joins or 10 ms planning; measure with `scripts/query_audit.py` (Dev only).
 - Override to `lazy="select"` is permitted for back-reference collections on reference entities (SBU, Zone, Role, LeadSource, OpportunityStage, OpportunityStatus, ProjectStatus, LossReason, HoldReason) and high-fanout parent entities (UserProfile, Product), where eager loading would cause excessive queries with no business benefit. The override must be explicit (`lazy="select"`), not implicit (omitting lazy).
 - Always define both sides with `back_populates`.
 - Never use `backref`.

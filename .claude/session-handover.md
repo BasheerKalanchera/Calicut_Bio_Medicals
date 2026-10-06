@@ -14,11 +14,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   ₹90.60 L) still unapproved after the quarter ended.
 - Offer open: build `scripts/uat_closure_date_report.py`'s comparison column
   from the previous report (repo edit; plan approval first).
-- The working tree holds the old, uncommitted Target vs Actuals code
-  (`repository.py`, `service.py`, `test_plan_vs_actual.py`,
-  `PlanVsActualSection.tsx`), to be reworked today for the design-review
-  gaps, plus three untracked plan docs from another session: leave them out
-  of commits.
+- Untracked plan docs from other sessions (Forecast, Create-Form,
+  Weekly-Follow-up): leave them out of commits.
 
 ## Plan vs Actuals Tracking (Insights Dashboard)
 
@@ -40,12 +37,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   built properly"): Pre-flight and Section A passed, the rest not run; not
   Done on the scorecard. Build history, the who-is-listed failure and the
   UAT check: Progress-Archive-2026-10 (2026-10-04 entries).
-- **Uncommitted** in the working tree (partial; do not commit as-is):
-  `repository.py`, `service.py`, `test_plan_vs_actual.py`,
-  `PlanVsActualSection.tsx`, plus E2E-plan notes. Superseded by the
-  2026-10-05 design below; expect rework. Dev has a test Opportunity "Test
-  +lead screen" linked to Basheer K (reassign, don't delete: it has Activity
-  rows).
+- Still uncommitted: `PlanVsActualSection.tsx` (old 2-line change; rework
+  in step 4). Dev has a test Opportunity "Test +lead screen" linked to
+  Basheer K (reassign, don't delete: it has Activity rows).
 - Design review finished 2026-10-05; decisions, gap analysis and the
   revised build order are written in the plan doc (`d935ebc`). Light
   first: roster on Target vs Actuals; the Target & Coverage Planning
@@ -62,24 +56,35 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   audit-log fallback (Basheer: keep it simple; older records get a "no PO
   date" note in step 3). pytest 1145, ruff clean. Also fixed the table and
   relationship counts in `test_persistence.py` that step 1 left stale.
-- **Next:** step 3 (Target vs Actuals backend) per the plan doc's "Revised
-  build order"; rework the uncommitted planning files above. On Dev, nobody can move
-  an Opportunity to Delivery from the screen until step 4 adds the PO date box.
+- Step 3 (Target vs Actuals backend) committed and pushed 2026-10-06 as
+  `cc4eb91` (checkpoint, frontend pending): roster rows, drafts private,
+  PO received, SBU/company rows, `/planning/sbu-targets`; endpoint renamed
+  to `/planning/targets/target-vs-actuals`. pytest 1168, ruff clean.
+  Detail: Progress-Archive-2026-10 (2026-10-06).
+- **Next:** step 4 (frontend) per the plan doc's "Revised build order":
+  rewire the card to the new endpoint (`targetPlanning.ts:59`, hand-edit
+  types, never regenerate `api.ts`), roster/status/PO columns, SBU target
+  entry, and the PO date box on the Opportunity stage move. Until then on
+  Dev the Target vs Actuals card errors and nobody can move an Opportunity
+  to Delivery from the screen.
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
-## Query audit (lighter) — approved 2026-10-06
+## Query load fixes — approved 2026-10-06, deadline Sun 2026-10-11
 
-- Why: the Next Actions outage (fixed, live on UAT `fa61bd8`; see
-  Progress-Archive-2026-10, 2026-10-06) came from chained auto-loading of
-  related records. 74 such settings in 17 files (`lazy="joined"` /
-  `selectin` / `subquery`); largest: opportunity models 20, activity 10,
-  planning 7.
-- Lighter option (Basheer): Dev only, no code change. Measure each
-  screen's main list request (joins, statement size, planning time; method
-  as the 2026-10-05 reminder test) and rank against Next Actions' old 110
-  joins; fix proposals one approval at a time.
-- **Next:** list the list endpoints and show the measuring plan first.
+- Plan: `docs/Query-Load-Fixes-Implementation-Plan.md` (priority list,
+  D1–D9, progress table); Backlog entry tracks it to closure. Audit
+  results: Progress-Archive-2026-10 (2026-10-06).
+- Order: Opportunity page (open + save, with Product documents) → Activity
+  comments + Daily Report → Pipeline → Audit Log + zone tree + remove
+  workspace request. Each: fix on `main` (own commit) → UAT by hotfix
+  route (own approval); 4 trips.
+- The other session owns Target vs Actuals (planning files + the PO date
+  box on the Opportunity page): check `git status` before every save and
+  commit; stay out of their files.
+- **Next:** step 0 commits (plan; then standards rule, Backlog, archive,
+  handover, `scripts/query_audit.py`), then measure and fix the
+  Opportunity page.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
