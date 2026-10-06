@@ -211,8 +211,9 @@ class ActivityReportRow(BaseModel):
     # logged against, BR-ACT-04) -- same field/reasoning as ActivityResponse's
     # own created_by_user. Missed on this schema when that field was added
     # elsewhere (2026-09-08); DailyActivityReportScreen.tsx already expected
-    # it. Activity.created_by_user is `lazy="joined"`, so no repository
-    # change is needed -- it's already being fetched, just never exposed here.
+    # it. ActivityRepository.list_by_date loads it (name only) explicitly,
+    # alongside account/opportunity/project/user -- keep those in step with
+    # the nested fields here.
     created_by_user: UserNested | None = None
 
 

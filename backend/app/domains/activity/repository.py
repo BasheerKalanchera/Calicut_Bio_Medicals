@@ -179,7 +179,15 @@ class ActivityRepository(BaseRepository[Activity]):
             select(Activity)
             .join(UserProfile, Activity.user_id == UserProfile.id)
             .where(Activity.activity_date >= start, Activity.activity_date < end)
-            .options(noload(Activity.reminders))
+            .options(
+                noload(Activity.reminders),
+                # ActivityReportRow shows only these names (Query Load Fixes, fix 2).
+                _name_only(Activity.account, Account.id, Account.name),
+                _name_only(Activity.opportunity, Opportunity.id, Opportunity.name),
+                _name_only(Activity.project, Project.id, Project.name),
+                _name_only(Activity.user, UserProfile.id, UserProfile.display_name),
+                _name_only(Activity.created_by_user, UserProfile.id, UserProfile.display_name),
+            )
         )
         stmt = self._apply_daily_report_scope(stmt, current_user, user_id)
         stmt = stmt.order_by(Activity.activity_date.desc()).offset(offset).limit(limit)
@@ -219,6 +227,7 @@ class ActivityCommentRepository(BaseRepository[ActivityComment]):
     def list_for_activity(self, activity_id: uuid.UUID) -> list[ActivityComment]:
         stmt = (
             select(ActivityComment)
+            .options(*_comment_display_options())
             .where(ActivityComment.activity_id == activity_id)
             .order_by(ActivityComment.created_at.asc())
         )
@@ -235,10 +244,20 @@ class ActivityCommentRepository(BaseRepository[ActivityComment]):
 
 
 def _name_only(relationship, *columns):
-    # Join the related row, but only the columns ReminderResponse shows, and
+    # Join the related row, but only the given columns (what the calling
+    # response schema shows -- reminders, Daily Report rows, comments), and
     # stop there: lazyload("*") switches off the model's own lazy="joined"
     # chains (user -> sbu/role/zone ...) that otherwise balloon the query.
     return joinedload(relationship).load_only(*columns).lazyload("*")
+
+
+def _comment_display_options():
+    # ActivityCommentResponse uses activity_id (a column) and the author's
+    # name -- not the Activity itself.
+    return (
+        noload(ActivityComment.activity),
+        _name_only(ActivityComment.author, UserProfile.id, UserProfile.display_name),
+    )
 
 
 def _activity_display_options(relationship, loader=joinedload):
