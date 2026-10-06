@@ -960,6 +960,39 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - **Pages left to Basheer (P19):** the timing steps say "Basheer picks";
   propose a shortlist from UAT data first (read-only query, own approval).
 
+## 2026-10-06 — Query Load Fixes fix 2 (Activity comments + Daily Report): built and checked on Dev
+
+- Committed and pushed as `bc09b28`: `activity/repository.py` (`list_by_date` loads
+  only the names the report rows show; `list_for_activity` loads only the
+  comment author's name), `activity/schemas.py` (comment only), and new
+  join-budget tests in `test_activity_repository.py`. pytest 1199, ruff
+  clean, `/code-review` medium done; one review fix removed a comment-post
+  re-read (the author already comes from the signed-in user, no SQL).
+- `scripts/query_audit.py` now picks the busiest Daily Report day itself
+  (2026-10-05 was empty on Dev). Still uncommitted, own approval.
+- Database check (Admin, SBU Manager, Sales Staff): all 18 responses
+  unchanged; Daily Report 57 → 6 joins, comment thread 61 → 5 joins.
+- **Old-vs-fixed run** (Basheer's method): fix set aside in `git stash`,
+  Dev backend restarted on old code, same cases run, fix restored,
+  restarted, same cases run again. As Haroon Sidheeq (General Manager):
+
+  | Case | Old code | Fixed code |
+  |---|---|---|
+  | Daily Report 27 Aug: screen | 14 cards (all Fahad's) | Identical 14 cards |
+  | Daily Report: server | 11 statements, 57 joins, 72.1 ms | 4 statements, 6 joins, 4.7 ms |
+  | Comment thread (Fazal's Al Shifa Manager Note, 8 Sep): data | 6 comments, 4 writers' names | Identical |
+  | Comment thread: server | 9 statements, 61 joins, 41.9 ms | 4 statements, 5 joins, 1.1 ms |
+
+  Responses compared old vs fixed: 5, changed 0. Browser load times not
+  used: the app fires ~36 other requests with each screen load, so one
+  reading swings 1.2–4 s; the fixed-code reading also overlapped the
+  script run. Records in the session scratchpad
+  (`fix2_screen_old_report.txt`, `fix2_old_report*`, `fix2_new_report*`).
+- Comment thread screen not opened on either code; its data proof is the
+  server comparison (screen code unchanged).
+- Next: D9: rides with UAT trip 1 on
+  2026-10-07 morning.
+
 ## 2026-10-06 — Target vs Actuals step 6 (Target Planning roster): plan approved, backend checkpoint `0b503ad`
 
 - Plan: `docs/Target-Coverage-Roster-Implementation-Plan.md`, approved
@@ -989,3 +1022,21 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - Roster rows built to carry the whole plan instead of the plan's
   "asked amount"; told Basheer before the commit, not before building —
   P25, P21 seen +1.
+
+## 2026-10-06 — Session retro (Query Load Fixes fix 2, old-vs-fixed run)
+
+- **Test plan with no starting point (P22, P19):** asked Basheer to check
+  "11 cards as before" and "comments as before" without naming the user
+  or the old values; Haroon actually sees 14. Basheer caught it and set
+  the old-vs-fixed method (now plan step 5).
+- **Half the cases run on old code (P26):** only the Daily Report was run
+  before the fix was restored; the comment thread's old data was saved
+  by the script run, by luck rather than plan.
+- **19 browser calls chasing a clean timing (P27, P11):** the app fires
+  ~36 other requests per screen load, so readings swung 1.2–4 s; kept
+  retrying instead of reporting. Then ran the script and the browser at
+  once, spoiling the fixed-code reading.
+- **Answer before checking (P1):** said the comment check could only be
+  done on fixed code; the saved old answer was already there.
+- **Tool errors and silences (P14, P15):** wrong Python folder, the
+  no-change-folder guard, two "hasn't heard from you" nudges.

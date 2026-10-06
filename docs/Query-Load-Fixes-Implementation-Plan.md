@@ -89,7 +89,11 @@ Marketing Leads.
    2. Trim that request's loading.
    3. Measure again; confirm the responses are identical (D5).
    4. pytest and ruff; `/code-review` (medium).
-   5. Basheer opens the screen once on Dev.
+   5. Old-vs-fixed run on Dev. Each case names the user and the values
+      expected on the old code. With the old code loaded, run every case
+      (what the screen shows, plus the server's answer from the script);
+      then restore the fix, restart, run the same cases again and compare
+      (Basheer, 2026-10-06).
    6. `fix:` commit on `main` (own approval); tick the row in section 6.
    7. UAT move (D7, D8; own approval): same change on the `uat` branch,
       tests there, deploy, Basheer opens the screen once on UAT, merge `uat`
@@ -171,9 +175,9 @@ Marketing Leads.
 | Row | Fixed on `main` | On UAT | Before → after |
 |---|---|---|---|
 | Opportunity page (open + save) | `90ae253` (2026-10-06) | — | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
-| Activity comments | — | — | |
+| Activity comments | `bc09b28` (2026-10-06) | — | Thread 61 → 5 joins, ~35–42 → ~1 ms; old vs fixed code as Haroon: same 6 comments and writers |
 | Opportunity Pipeline | — | — | |
-| Daily Activity Report | — | — | |
+| Daily Activity Report | `bc09b28` (2026-10-06) | — | 57 → 6 joins, 11 → 4 statements, 60–77 → ~5 ms; old vs fixed code as Haroon (27 Aug): same 14 cards |
 | Product documents | `90ae253` (with Opportunity documents) | — | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
 | Audit Log | — | — | |
 | Zone tree | — | — | |

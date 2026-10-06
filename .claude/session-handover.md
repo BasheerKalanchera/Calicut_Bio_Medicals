@@ -83,8 +83,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   commit; stay out of their files.
 - Step 0 docs committed and pushed as `afa1b45` (plan, standards rule,
   Backlog, Progress-Archive, handover).
-- `scripts/query_audit.py` (D4) written and tested, **not committed**
-  (own commit; Basheer's yes still pending). Dev test data: Basheer added
+- `scripts/query_audit.py` (D4) committed 2026-10-06 as `b06a043`. Dev test data: Basheer added
   stakeholder "Ajmal" and a PDF to Vivek's "New USG m/c" so the Sales
   Staff view covers every part of the Opportunity page.
 - Fix 1 (Opportunity page + Product documents) committed and pushed
@@ -95,10 +94,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   of Wed 2026-10-07 (Basheer's timing; own approval, plan D-list).
   Order: Claude times 3–5 busy Opportunities + one product's documents
   in Chrome on UAT (Basheer picks them), deploy, time the same pages
-  again (plan step 7, before/after note). Fix 2 (Activity comments +
-  Daily Report) starts on Dev after lunch 2026-10-06; if it is finished
-  and checked on Dev by then, it rides in the same hotfix (D9
-  exception), and trip 2's pages are timed too.
+  again (plan step 7, before/after note). If fix 2 is committed and
+  checked on Dev by then, it rides in the same hotfix (D9 exception),
+  and trip 2's pages are timed too.
+- Fix 2 (Activity comments + Daily Report) built and checked on Dev
+  2026-10-06; committed and pushed as `bc09b28` (main only, not UAT):
+  activity `repository.py`, `schemas.py`, `test_activity_repository.py`.
+  Old-vs-fixed run done as Haroon: same screens/data, Daily Report 57 → 6
+  joins (72 → 4.7 ms), comments 61 → 5 (42 → 1.1 ms). Detail:
+  Progress-Archive-2026-10 and the plan's section 6.
+  **Next:** rides UAT trip 1 on 2026-10-07 morning (D9); time trip 2 pages too.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
