@@ -31,7 +31,7 @@ import {
   listTargetPlans,
   listPendingApproval,
   listTeamTargets,
-  getSbuRollup,
+  getTargetRoster,
   approveTargetPlan,
   rejectTargetPlan,
 } from "../services/targetPlanning";
@@ -42,7 +42,7 @@ import {
   getPlanningYearQuarters,
   formatLakhs,
 } from "../utils/formatter";
-import type { TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
+import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus, TargetRosterPerson } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
@@ -84,6 +84,25 @@ const STATUS_COLOR: Record<TargetPlanStatus, "default" | "warning" | "success" |
 
 function StatusChip({ status }: { status: TargetPlanStatus }) {
   return <Chip label={STATUS_LABEL[status]} color={STATUS_COLOR[status]} size="small" />;
+}
+
+// A roster row with no plan to show: nobody has started one, or it is
+// someone else's draft (drafts are private to their owner).
+function RosterStatusOnly({ status }: { status: RosterStatus }) {
+  return status === "NOT_STARTED" ? (
+    <Chip label="Not started" variant="outlined" size="small" />
+  ) : (
+    <StatusChip status={status} />
+  );
+}
+
+// Beside a roster row's amount (BR-PL-05): a revision waiting for approval
+// notes the figure it replaces; a rejected revision notes the last approved
+// figure, which is what still counts.
+function previousApprovedNote(p: TargetRosterPerson): string | null {
+  if (p.previous_approved_total_lakhs === null) return null;
+  const amount = formatLakhs(Number(p.previous_approved_total_lakhs));
+  return p.plan_status === "REJECTED" ? `${amount} approved still counts` : `was ${amount} approved`;
 }
 
 // A resolved decision (Approved/Rejected) can carry the approver's note --
@@ -250,15 +269,11 @@ export default function TargetPlanningScreen() {
     refetchInterval: 60_000,
   });
 
-  const { data: rollup } = useQuery({
-    queryKey: ["target-plans", "rollup", rollupSbuId, period],
-    queryFn: () => getSbuRollup(rollupSbuId as string, period),
-    enabled: showRollup && !isAnnual && !!rollupSbuId,
-  });
-
-  const { data: teamTargets = [] } = useQuery({
-    queryKey: ["target-plans", "team", rollupSbuId, period],
-    queryFn: () => listTeamTargets(rollupSbuId as string, period),
+  // Quarter view: everyone in the viewer's scope, plan or not, and the same
+  // total the Target vs Actuals card shows (Target-Coverage-Roster plan).
+  const { data: roster } = useQuery({
+    queryKey: ["target-plans", "roster", rollupSbuId, period],
+    queryFn: () => getTargetRoster(rollupSbuId as string, period),
     enabled: showRollup && !isAnnual && !!rollupSbuId,
   });
 
@@ -545,10 +560,17 @@ export default function TargetPlanningScreen() {
                 {rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (
                   <SbuTargetBox key={`${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} canEdit={SBU_TARGET_EDIT_ROLES.has(roleName)} />
                 )}
-                {rollup && (
+                {roster && (
                   <Typography sx={{ mb: 1.5 }}>
-                    Total: <strong>{formatLakhs(Number(rollup.total_target_amount_lakhs))}</strong> across{" "}
-                    {rollup.user_count} target{rollup.user_count === 1 ? "" : "s"}
+                    Total: <strong>{formatLakhs(Number(roster.total_lakhs))}</strong>
+                    {roster.roster_count > 0 && (
+                      <Typography component="span" color={roster.not_submitted_count > 0 ? "warning.main" : "text.secondary"}>
+                        {" · "}
+                        {roster.not_submitted_count > 0
+                          ? `${roster.not_submitted_count} of ${roster.roster_count} haven't submitted`
+                          : `all ${roster.roster_count} submitted`}
+                      </Typography>
+                    )}
                   </Typography>
                 )}
                 <Table size="small">
@@ -562,20 +584,31 @@ export default function TargetPlanningScreen() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {teamTargets.map((t) => {
-                      const open = expanded.has(t.id);
+                    {(roster?.people ?? []).map((p) => {
+                      const t = p.plan;
+                      const open = t !== null && expanded.has(t.id);
+                      const note = t && previousApprovedNote(p);
                       return (
-                        <Fragment key={t.id}>
+                        <Fragment key={p.user_id}>
                           <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
                             <TableCell padding="checkbox">
-                              <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />
+                              {t && <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />}
                             </TableCell>
-                            <TableCell>{t.user.display_name}</TableCell>
-                            <TableCell align="right">{hospitalCount(t)}</TableCell>
-                            <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
-                            <TableCell><StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /></TableCell>
+                            <TableCell>{p.display_name}</TableCell>
+                            <TableCell align="right">{t ? hospitalCount(t) : "—"}</TableCell>
+                            <TableCell>
+                              {t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}
+                              {note && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                                  {note}
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <RosterStatusOnly status={p.plan_status} />}
+                            </TableCell>
                           </TableRow>
-                          {open && (
+                          {open && t && (
                             <TableRow>
                               <TableCell colSpan={5}>
                                 <TargetPlanDetails target={t} />
@@ -585,10 +618,10 @@ export default function TargetPlanningScreen() {
                         </Fragment>
                       );
                     })}
-                    {teamTargets.length === 0 && (
+                    {roster && roster.people.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5}>
-                          <Typography color="text.secondary">No targets set for {period} yet.</Typography>
+                          <Typography color="text.secondary">No one in this team for {period}.</Typography>
                         </TableCell>
                       </TableRow>
                     )}

@@ -175,13 +175,6 @@ class TargetPlanResponse(BaseModel):
     updated_at: datetime
 
 
-class SBUTargetRollupResponse(BaseModel):
-    sbu_id: uuid.UUID
-    planning_period: str
-    total_target_amount_lakhs: Decimal
-    user_count: int
-
-
 class EligibleAccountResponse(BaseModel):
     """One row of the plan dialog's hospital picker."""
 

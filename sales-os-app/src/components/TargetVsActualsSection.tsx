@@ -33,7 +33,7 @@ const QUARTER_STATE_LABEL: Record<QuarterState, string> = {
 const STATUS_LABEL: Record<RosterStatus, string> = {
   NOT_STARTED: "Not started",
   DRAFT: "Draft",
-  PENDING_APPROVAL: "Waiting",
+  PENDING_APPROVAL: "Pending Approval",
   APPROVED: "Approved",
   REJECTED: "Rejected",
 };
@@ -46,7 +46,7 @@ const STATUS_COLOR: Record<RosterStatus, string> = {
   REJECTED: "#d03b3b",
 };
 
-// Only waiting and approved plans carry figures; the backend sends Draft and
+// Only pending-approval and approved plans carry figures; the backend sends Draft and
 // Rejected plans (and people with no plan) with planned 0 and no breakdown --
 // except a rejected revision of an approved plan, which counts at its last
 // approved total (BR-PL-05).
@@ -283,7 +283,7 @@ export default function TargetVsActualsSection() {
             )}
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <StatTile label="Planned" value={lakhs(data.planned_lakhs)} sublabel="Waiting and approved plans" />
+            <StatTile label="Planned" value={lakhs(data.planned_lakhs)} sublabel="Pending approval and approved plans" />
             <StatTile label="PO received" value={lakhs(data.po_received_lakhs)} sublabel="PO dated in this quarter" />
             <StatTile
               label="Won (paid)"

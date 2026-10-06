@@ -21,7 +21,6 @@ from app.domains.planning.schemas import (
     EligibleAccountResponse,
     PlanWarning,
     SbuTargetResponse,
-    SBUTargetRollupResponse,
     SbuTargetSet,
     TargetPlanApprovalDecision,
     TargetPlanCreate,
@@ -150,24 +149,6 @@ def check_overlaps(
     """Live same-SBU overlap warnings while the plan is being edited."""
     return APIResponse(
         data=service.check_overlaps(account_ids, sbu_id, planning_period, current_user=current_user)
-    )
-
-
-@router.get("/rollup")
-def get_sbu_rollup(
-    sbu_id: uuid.UUID = Query(...),
-    planning_period: str = Query(...),
-    current_user: UserProfile = Depends(get_current_user),
-    service: TargetPlanService = Depends(_get_service),
-) -> APIResponse[SBUTargetRollupResponse]:
-    total, count = service.get_sbu_rollup(sbu_id, planning_period)
-    return APIResponse(
-        data=SBUTargetRollupResponse(
-            sbu_id=sbu_id,
-            planning_period=planning_period,
-            total_target_amount_lakhs=total,
-            user_count=count,
-        )
     )
 
 

@@ -418,9 +418,6 @@ class TargetPlanService:
         target_plan.updated_by = current_user.id
         return self.repository.update(target_plan)
 
-    def get_sbu_rollup(self, sbu_id: uuid.UUID, planning_period: str) -> tuple[Decimal, int]:
-        return self.repository.get_sbu_rollup(sbu_id, planning_period)
-
     def delete_target_plan(self, target_plan_id: uuid.UUID, *, current_user: UserProfile) -> None:
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:

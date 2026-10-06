@@ -479,18 +479,6 @@ class TestListPendingApprovalForApprover:
         )
 
 
-class TestGetSbuRollup:
-    def test_delegates_to_repository_and_includes_pending(self):
-        repo = _make_repo(get_sbu_rollup=MagicMock(return_value=(Decimal("120.00"), 3)))
-        service = _make_service(repo)
-
-        total, count = service.get_sbu_rollup(SBU_ID, "2026-Q3")
-
-        assert total == Decimal("120.00")
-        assert count == 3
-        repo.get_sbu_rollup.assert_called_once_with(SBU_ID, "2026-Q3")
-
-
 class TestGetBrandRollups:
     """/code-review 2026-09-23: committed_total is already narrowed by the
     caller's own RLS visibility, not the true team total, so this must stay

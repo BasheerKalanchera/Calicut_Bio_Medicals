@@ -97,26 +97,6 @@ class TestGetByUserSbuPeriod:
         assert "target_plan.planning_period = '2026-Q3'" in sql
 
 
-class TestGetSbuRollup:
-    def test_sums_every_submitted_status_but_not_drafts(self):
-        """Resolved 2026-09-16: pending targets count in the rollup too.
-        DRAFT rows don't (Hospital-Wise Target Planning, 2026-09-27) --
-        they're unsubmitted and private to their owner."""
-        repo = TargetPlanRepository(db=MagicMock())
-        repo.db.execute.return_value.one.return_value = (150, 4)
-
-        total, count = repo.get_sbu_rollup(SBU_ID, "2026-Q3")
-
-        stmt = repo.db.execute.call_args[0][0]
-        sql = _compiled(stmt)
-        assert f"target_plan.sbu_id = '{_uuid_literal(SBU_ID)}'" in sql
-        assert "target_plan.planning_period = '2026-Q3'" in sql
-        assert "target_plan.status != 'DRAFT'" in sql
-        assert "PENDING_APPROVAL" not in sql
-        assert total == 150
-        assert count == 4
-
-
 def _rows_db(rows):
     db = MagicMock()
     db.scalars.return_value.all.return_value = rows

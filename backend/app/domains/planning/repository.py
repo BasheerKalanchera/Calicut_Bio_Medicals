@@ -143,23 +143,6 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         )
         return self.db.scalars(stmt).first()
 
-    def get_sbu_rollup(self, sbu_id: uuid.UUID, planning_period: str) -> tuple[Decimal, int]:
-        """SUM + COUNT across every submitted row -- pending targets count too
-        (resolved 2026-09-16), so the rollup shows the full picture, not just
-        approved numbers. DRAFT rows are excluded: they're unsubmitted and
-        private to their owner (Hospital-Wise Target Planning, 2026-09-27)."""
-        stmt = (
-            select(
-                func.coalesce(func.sum(TargetPlan.target_amount_lakhs), 0),
-                func.count(TargetPlan.id),
-            )
-            .where(TargetPlan.sbu_id == sbu_id)
-            .where(TargetPlan.planning_period == planning_period)
-            .where(TargetPlan.status != "DRAFT")
-        )
-        total, count = self.db.execute(stmt).one()
-        return Decimal(total), count
-
     def replace_brand_splits(
         self,
         target_plan: TargetPlan,
@@ -207,8 +190,8 @@ class TargetPlanRepository(BaseRepository[TargetPlan]):
         self, brand_ids: list[uuid.UUID], planning_period: str
     ) -> dict[uuid.UUID, Decimal]:
         """SUM of every TargetPlanBrandSplit row per brand for this period,
-        across all submitted target_plan statuses (DRAFT excluded, same as
-        get_sbu_rollup above), one GROUP BY for every brand at once instead
+        across all submitted target_plan statuses (DRAFT excluded: unsubmitted
+        and private to their owner), one GROUP BY for every brand at once instead
         of a query per brand (/code-review 2026-09-23). A brand with no
         splits yet is simply absent from the returned dict -- callers treat
         a missing key as zero."""

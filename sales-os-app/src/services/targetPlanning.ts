@@ -4,13 +4,13 @@ import type {
   TargetPlanCreate,
   TargetPlanUpdate,
   TargetPlanApprovalDecision,
-  SbuTargetRollup,
   BrandVendorTarget,
   BrandVendorTargetSet,
   BrandRollup,
   EligibleAccount,
   PlanWarning,
   TargetVsActualResponse,
+  TargetRosterResponse,
   SbuTarget,
   SbuTargetSet,
 } from "../types/targetPlanning";
@@ -80,8 +80,10 @@ export async function setSbuTarget(data: SbuTargetSet): Promise<SbuTarget> {
   return response.data.data;
 }
 
-export async function getSbuRollup(sbuId: string, planningPeriod: string): Promise<SbuTargetRollup> {
-  const response = await api.get("/planning/targets/rollup", {
+// Target Planning's quarter roster: everyone in the caller's scope with their
+// plan status, and the same total Target vs Actuals counts. Read-only.
+export async function getTargetRoster(sbuId: string, planningPeriod: string): Promise<TargetRosterResponse> {
+  const response = await api.get("/planning/targets/roster", {
     params: { sbu_id: sbuId, planning_period: planningPeriod },
   });
   return response.data.data;

@@ -111,7 +111,6 @@ QUERY_PARAMS = {
     P + "/planning/targets/team": {"sbu_id": IMG, "planning_period": "2026-Q3"},
     P + "/planning/targets/target-vs-actuals": {"sbu_id": IMG, "planning_period": "2026-Q3"},
     P + "/planning/targets/overlaps": {"sbu_id": IMG, "planning_period": "2026-Q3", "account_ids": [ACC]},
-    P + "/planning/targets/rollup": {"sbu_id": IMG, "planning_period": "2026-Q3"},
     P + "/planning/targets/brand-rollups": {"brand_ids": [BRAND], "planning_period": "2026-Q3"},
     P + "/planning/brand-vendor-targets": {"planning_period": "2026-Q3"},
 }

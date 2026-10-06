@@ -125,13 +125,6 @@ export interface TargetPlanApprovalDecision {
   expected_updated_at: string;
 }
 
-export interface SbuTargetRollup {
-  sbu_id: string;
-  planning_period: string;
-  total_target_amount_lakhs: string;
-  user_count: number;
-}
-
 export interface BrandVendorTargetSet {
   brand_id: string;
   planning_period: string;
@@ -157,8 +150,32 @@ export interface BrandRollup {
 // Target vs Actuals (Insights Dashboard). Decimals arrive as strings.
 export type QuarterState = "CURRENT" | "PAST" | "FUTURE";
 
-// A roster member's plan for the quarter. PENDING_APPROVAL shows as "Waiting".
+// A roster member's plan for the quarter, on Target vs Actuals and the
+// Target Planning roster alike.
 export type RosterStatus = "NOT_STARTED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+
+// One row of the Target Planning roster (Target-Coverage-Roster plan).
+export interface TargetRosterPerson {
+  user_id: string;
+  display_name: string;
+  plan_status: RosterStatus;
+  // What counts towards the total: waiting/approved plan's total, a rejected
+  // revision's last approved total (BR-PL-05), else 0.
+  counted_lakhs: string;
+  previous_approved_total_lakhs: string | null;
+  // null: no plan, or someone else's draft (status only).
+  plan: TargetPlan | null;
+}
+
+// total_lakhs is the same figure as Target vs Actuals' "Planned".
+export interface TargetRosterResponse {
+  sbu_id: string;
+  planning_period: string;
+  total_lakhs: string;
+  roster_count: number;
+  not_submitted_count: number;
+  people: TargetRosterPerson[];
+}
 
 // BR-OP-16: still open past its expected closing date. Flag only.
 export interface TargetVsActualLateOpportunity {
