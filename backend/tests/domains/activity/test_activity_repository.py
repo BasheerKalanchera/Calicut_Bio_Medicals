@@ -15,7 +15,11 @@ from unittest.mock import MagicMock
 
 from sqlalchemy.dialects import postgresql
 
-from app.domains.activity.repository import ActivityRepository, ReminderRepository
+from app.domains.activity.repository import (
+    ActivityCommentRepository,
+    ActivityRepository,
+    ReminderRepository,
+)
 from app.domains.organization.models import UserProfile
 
 START = datetime(2026, 8, 6, 0, 0, 0, tzinfo=UTC)
@@ -283,3 +287,43 @@ class TestReminderListQuerySize:
         )
         self._assert_only_displayed_tables(sql)
         assert sql.count(" join ") == 12
+
+
+class TestDailyReportAndCommentQuerySize:
+    """docs/Query-Load-Fixes-Implementation-Plan.md, fix 2: the Daily Activity
+    Report joined 57 tables and a comment thread 61, through the models'
+    lazy="joined" chains. Each now joins only the names its screen shows."""
+
+    def _sql(self, stmt) -> str:
+        return str(stmt.compile(dialect=postgresql.dialect())).lower()
+
+    def _daily_report_sql(self, current_user: MagicMock) -> str:
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.unique.return_value.all.return_value = []
+        ActivityRepository(mock_db).list_by_date(current_user, START, END)
+        return self._sql(mock_db.scalars.call_args.args[0])
+
+    def _assert_daily_report_joins(self, sql: str) -> None:
+        for table in ("account", "opportunity", "project", "user_profile"):
+            assert f"join {table} " in sql
+        for table in ("sbu", "role", "zone", "reminder"):
+            assert f"join {table} " not in sql
+        # Scope join on user_profile + account, opportunity, project, user,
+        # created-by user.
+        assert sql.count(" join ") == 6
+
+    def test_daily_report_joins_only_displayed_names_admin(self):
+        self._assert_daily_report_joins(self._daily_report_sql(_make_current_user("Admin")))
+
+    def test_daily_report_joins_only_displayed_names_manager(self):
+        # Scoped tier: the scope is a WHERE condition, not extra joins.
+        self._assert_daily_report_joins(self._daily_report_sql(_make_current_user("SBU Manager")))
+
+    def test_comment_thread_joins_only_the_author(self):
+        mock_db = MagicMock()
+        mock_db.scalars.return_value.all.return_value = []
+        ActivityCommentRepository(mock_db).list_for_activity(uuid.uuid4())
+        sql = self._sql(mock_db.scalars.call_args.args[0])
+
+        assert "join user_profile " in sql
+        assert sql.count(" join ") == 1
