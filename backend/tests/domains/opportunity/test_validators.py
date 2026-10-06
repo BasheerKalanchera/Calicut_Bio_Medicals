@@ -16,6 +16,7 @@ from app.domains.opportunity import validators
 from app.domains.opportunity.validators import (
     _today_ist,
     validate_po_date,
+    validate_po_date_kept,
     validate_stage_transition,
     validate_status_transition,
 )
@@ -425,6 +426,24 @@ class TestValidatePoDate:
     def test_future_refused(self):
         with pytest.raises(BusinessRuleViolation, match="future"):
             validate_po_date(TOMORROW)
+
+
+class TestValidatePoDateKept:
+    @pytest.mark.parametrize(("stage", "status"), [(DELIVERY, "ACTIVE"), (80, "ACTIVE"), (ORDER, "WON")])
+    def test_removal_refused_at_delivery_or_won(self, stage, status):
+        with pytest.raises(BusinessRuleViolation, match="can't be removed"):
+            validate_po_date_kept(previous_po_date=YESTERDAY, po_date=None, stage_order=stage, status_code=status)
+
+    def test_correction_allowed_at_delivery(self):
+        validate_po_date_kept(
+            previous_po_date=YESTERDAY, po_date=_today_ist(), stage_order=DELIVERY, status_code="ACTIVE"
+        )
+
+    def test_removal_allowed_before_delivery(self):
+        validate_po_date_kept(previous_po_date=YESTERDAY, po_date=None, stage_order=ORDER, status_code="ACTIVE")
+
+    def test_older_record_without_one_saves_as_before(self):
+        validate_po_date_kept(previous_po_date=None, po_date=None, stage_order=80, status_code="WON")
 
 
 class TestStageSkipAndCreate:

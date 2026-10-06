@@ -293,6 +293,14 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Customer 360 and Project Directory create forms have no PO Date box
+  (Basheer, 2026-10-06; decided — fix with the create-form merge).** Since
+  the PO Date gate (Order → Delivery and Won), those two forms can't create
+  an Opportunity at Delivery or later: the save is refused for a missing
+  PO Date. Create at Order or earlier, then move it on from the Opportunity
+  page. The merge (`docs/Opportunity-Create-Form-Unification-Implementation-Plan.md`)
+  brings the box to every create form; drop this entry when it ships.
+
 - **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard
   reload fires ~30 API calls at once; with the 5 + 5 pool on the free tier
   most take 1.5–3 s (median ~2 s, measured as Om Hiremath after the Next

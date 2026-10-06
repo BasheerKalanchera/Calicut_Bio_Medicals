@@ -103,9 +103,8 @@ def _repo(**overrides) -> MagicMock:
     repo.expected_by_owner.return_value = []
     repo.late_opportunities.return_value = []
     repo.undated_counts.return_value = []
-    repo.sbu_target_amounts.return_value = {}
-    repo.active_sbu_count.return_value = 2
-    repo.company_totals.return_value = (Decimal(0), Decimal(0), Decimal(0))
+    repo.active_sbu_targets.return_value = {}
+    repo.summary_totals.return_value = (Decimal(0), Decimal(0), Decimal(0))
     for k, v in overrides.items():
         getattr(repo, k).return_value = v
     return repo
@@ -218,6 +217,28 @@ def test_draft_and_rejected_plans_show_status_only(monkeypatch, status):
     assert resp.not_submitted_count == 1
 
 
+def test_rejected_revision_counts_at_its_last_approved_total(monkeypatch):
+    # BR-PL-05: approved at 30, revised to 45, revision rejected -- 30 is still the goal.
+    rep, acc, brand = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Vivek")],
+        list_plans=[
+            _plan(
+                rep, "Vivek", [(acc, "Hospital A", "45")], [(brand, "Philips", "45")], status="REJECTED", previous="30"
+            )
+        ],
+    )
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("SBU Manager"))
+    [vivek] = resp.people
+    assert vivek.plan_status == RosterStatus.REJECTED
+    assert (vivek.planned_lakhs, vivek.previous_approved_total_lakhs) == (Decimal("30"), Decimal("30"))
+    # The rejected revision's hospitals and brands never show; only the approved total.
+    assert [(h.account_name, h.planned_lakhs) for h in vivek.hospitals] == [("Last approved target", Decimal("30"))]
+    assert vivek.brands == [] and resp.brands == []
+    assert resp.planned_lakhs == Decimal("30")
+    assert resp.not_submitted_count == 0
+
+
 def test_waiting_and_approved_plans_count_and_are_submitted(monkeypatch):
     a, b, c = (uuid.uuid4() for _ in range(3))
     repo = _repo(
@@ -269,15 +290,25 @@ def test_po_received_is_separate_from_won_and_percent_uses_won_only(monkeypatch)
     assert (q_start, q_end) == (date(2026, 10, 1), date(2026, 12, 31))
 
 
+@pytest.mark.parametrize(
+    ("today", "include_open"), [(IN_QUARTER, True), (date(2026, 9, 1), False), (date(2027, 2, 1), False)]
+)
+def test_open_opportunities_without_po_date_count_only_in_the_current_quarter(monkeypatch, today, include_open):
+    repo = _repo()
+    _run(repo, today, monkeypatch)
+    assert repo.no_po_date_counts.call_args.kwargs == {"include_open": include_open}
+
+
 # --- SBU and company rows ---------------------------------------------------
 
 
 @pytest.mark.parametrize("role", ["Sales Rep", "Area Manager"])
 def test_staff_and_area_managers_get_no_sbu_or_company_row(monkeypatch, role):
-    repo = _repo(sbu_target_amounts={SBU_ID: Decimal("500")})
+    repo = _repo(active_sbu_targets={SBU_ID: Decimal("500")})
     resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role(role))
     assert resp.sbu_row is None and resp.company_row is None
-    repo.sbu_target_amounts.assert_not_called()
+    repo.active_sbu_targets.assert_not_called()
+    repo.summary_totals.assert_not_called()
 
 
 def test_sbu_manager_gets_their_own_sbus_row_only(monkeypatch):
@@ -286,13 +317,31 @@ def test_sbu_manager_gets_their_own_sbus_row_only(monkeypatch):
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
         won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("50.00"))],
-        sbu_target_amounts={SBU_ID: Decimal("200")},
+        active_sbu_targets={SBU_ID: Decimal("200")},
+        summary_totals=(Decimal("100"), Decimal("0"), Decimal("50.00")),
     )
     resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("SBU Manager"))
     assert resp.sbu_row.target_lakhs == Decimal("200")
     assert resp.sbu_row.planned_lakhs == Decimal("100")
     assert resp.sbu_row.percent_of_target == Decimal("25.00")  # against the SBU target, not the plans
     assert resp.company_row is None
+    assert repo.summary_totals.call_args.kwargs == {"sbu_id": SBU_ID}
+
+
+def test_sbu_row_is_sbu_wide_not_the_callers_team(monkeypatch):
+    # The GM's own Won Opportunity is outside an SBU Manager's team rows, but
+    # the SBU row must still match what the GM sees (code review 2026-10-06).
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Asha")],
+        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("10.00"))],
+        active_sbu_targets={SBU_ID: Decimal("200")},
+        summary_totals=(Decimal("0"), Decimal("0"), Decimal("60.00")),  # 10 + GM's 50
+    )
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("SBU Manager"))
+    assert resp.won_lakhs == Decimal("10.00")  # headline: the caller's view
+    assert resp.sbu_row.won_lakhs == Decimal("60.00")  # SBU row: the whole SBU
+    assert resp.sbu_row.percent_of_target == Decimal("30.00")
 
 
 def test_sbu_manager_of_another_sbu_gets_no_sbu_row(monkeypatch):
@@ -309,12 +358,13 @@ def test_sbu_row_without_a_target_has_no_percent(monkeypatch):
 
 @pytest.mark.parametrize("role", ["General Manager", "Admin"])
 def test_gm_and_admin_get_sbu_and_company_rows(monkeypatch, role):
-    repo = _repo(
-        sbu_target_amounts={SBU_ID: Decimal("200"), uuid.uuid4(): Decimal("300")},
-        company_totals=(Decimal("400"), Decimal("150"), Decimal("100")),
+    repo = _repo(active_sbu_targets={SBU_ID: Decimal("200"), uuid.uuid4(): Decimal("300")})
+    repo.summary_totals.side_effect = lambda *a, sbu_id: (
+        (Decimal("100"), Decimal("40"), Decimal("30")) if sbu_id else (Decimal("400"), Decimal("150"), Decimal("100"))
     )
     resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role(role, sbu_id=None))
     assert resp.sbu_row.target_lakhs == Decimal("200")
+    assert resp.sbu_row.won_lakhs == Decimal("30")
     row = resp.company_row
     assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs) == (
         Decimal("500"),
@@ -326,7 +376,7 @@ def test_gm_and_admin_get_sbu_and_company_rows(monkeypatch, role):
 
 
 def test_company_target_waits_until_every_sbu_has_one(monkeypatch):
-    repo = _repo(sbu_target_amounts={SBU_ID: Decimal("200")}, active_sbu_count=2)
+    repo = _repo(active_sbu_targets={SBU_ID: Decimal("200"), uuid.uuid4(): None})
     resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("General Manager", sbu_id=None))
     assert resp.company_row.target_lakhs is None
     assert resp.company_row.percent_of_target is None
@@ -501,12 +551,58 @@ def test_po_received_is_by_po_date_and_excludes_lost():
     assert "!= 'LOST'" in sql
 
 
+def _no_po_date_sql(include_open: bool) -> str:
+    db = MagicMock()
+    db.execute.return_value.all.return_value = []
+    TargetVsActualRepository(db).no_po_date_counts(
+        _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END, include_open=include_open
+    )
+    return str(db.execute.call_args.args[0].compile(compile_kwargs={"literal_binds": True}))
+
+
 def test_no_po_date_counts_open_past_order_and_won_in_quarter():
-    sql = _sql_of("no_po_date_counts", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
+    sql = _no_po_date_sql(include_open=True)
     assert "po_date IS NULL" in sql
     assert "display_order >= 70" in sql
     assert "'WON'" in sql
     assert "closed_at >=" in sql
+
+
+def test_no_po_date_counts_outside_current_quarter_are_won_in_quarter_only():
+    sql = _no_po_date_sql(include_open=False)
+    assert "display_order >= 70" not in sql
+    assert "closed_at >=" in sql
+
+
+def test_active_sbu_targets_lists_only_active_sbus():
+    sql = _sql_of("active_sbu_targets", PERIOD)
+    assert "LEFT OUTER JOIN sbu_target" in sql
+    assert "is_active IS NOT false" in sql
+    assert f"'{PERIOD}'" in sql
+
+
+def _summary_sql(sbu_id) -> str:
+    db = MagicMock()
+    db.execute.return_value.one.return_value = (0, 0, 0)
+    TargetVsActualRepository(db).summary_totals(
+        PERIOD, date(2026, 10, 1), date(2026, 12, 31), WIN_START, WIN_END, sbu_id=sbu_id
+    )
+    assert db.execute.call_count == 1  # one round trip
+    return str(db.execute.call_args.args[0].compile(compile_kwargs={"literal_binds": True})).replace("-", "")
+
+
+def test_summary_totals_are_not_narrowed_to_the_callers_team():
+    sql = _summary_sql(SBU_ID)
+    assert "user_profile" not in sql  # no owner scope
+    assert SBU_ID.hex in sql
+    assert "'REJECTED'" in sql and "previous_approved_total_lakhs" in sql  # BR-PL-05
+    assert "FILTER (WHERE" in sql
+
+
+def test_company_summary_totals_cover_every_sbu():
+    sql = _summary_sql(None)
+    assert "opportunity.sbu_id =" not in sql
+    assert "target_plan.sbu_id =" not in sql
 
 
 def test_roster_is_active_non_admin_members_plus_the_gm():

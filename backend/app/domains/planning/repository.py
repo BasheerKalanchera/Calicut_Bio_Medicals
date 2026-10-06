@@ -2,12 +2,13 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import case, delete, func, or_, select, text
+from sqlalchemy import and_, case, delete, func, or_, select, text
 from sqlalchemy.orm import Session, aliased, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
 from app.domains.opportunity.models import Opportunity, OpportunityItem
+from app.domains.opportunity.validators import DELIVERY_STAGE_ORDER
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.planning.models import (
@@ -28,10 +29,9 @@ from app.domains.reference.models import (
     ZoneClosure,
 )
 
-# Delivery & Installation's display_order -- the stage after Order, where a
-# PO date becomes required (opportunity/validators.py _ORDER_DELIVERY).
-_DELIVERY_STAGE_ORDER = 70
-_SUBMITTED_PLAN_STATUSES = ("PENDING_APPROVAL", "APPROVED")
+# Plans whose figures count in Target vs Actuals (the service also counts a
+# rejected revision's last approved total -- BR-PL-05).
+SUBMITTED_PLAN_STATUSES = ("PENDING_APPROVAL", "APPROVED")
 
 # Net line value (BR-FIN-03: BUYBACK lines net against PRODUCT lines). Same
 # expression as reporting/repository.py's _NET_VALUE.
@@ -600,12 +600,28 @@ class TargetVsActualRepository:
         return [(o, n, Decimal(v)) for o, n, v in self.db.execute(stmt).all()]
 
     def no_po_date_counts(
-        self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
+        self,
+        current_user: UserProfile,
+        sbu_id: uuid.UUID,
+        start: datetime,
+        end: datetime,
+        *,
+        include_open: bool,
     ) -> list[tuple[uuid.UUID, str, int]]:
         """Opportunities past Order with no PO date, per owner: (owner_id,
-        owner_name, count). Open ones at Delivery or later, plus ones Won in
-        [start, end) -- older Opportunities reached those points before the
-        PO date was asked for (decision 2026-10-06: counted, not back-filled)."""
+        owner_name, count). Ones Won in [start, end), plus -- when
+        include_open, i.e. the current quarter -- open ones at Delivery or
+        later, which belong to no particular quarter. Older Opportunities
+        reached those points before the PO date was asked for (decision
+        2026-10-06: counted, not back-filled)."""
+        won_in_quarter = (
+            (OpportunityStatus.status_code == "WON")
+            & (Opportunity.closed_at >= start)
+            & (Opportunity.closed_at < end)
+        )
+        open_past_order = OpportunityStatus.status_code.not_in(("WON", "LOST")) & (
+            OpportunityStage.display_order >= DELIVERY_STAGE_ORDER
+        )
         stmt = (
             select(Opportunity.owner_id, UserProfile.display_name, func.count(Opportunity.id))
             .select_from(Opportunity)
@@ -614,52 +630,74 @@ class TargetVsActualRepository:
             .join(UserProfile, UserProfile.id == Opportunity.owner_id)
             .where(Opportunity.sbu_id == sbu_id)
             .where(Opportunity.po_date.is_(None))
-            .where(
-                or_(
-                    (OpportunityStatus.status_code == "WON")
-                    & (Opportunity.closed_at >= start)
-                    & (Opportunity.closed_at < end),
-                    OpportunityStatus.status_code.not_in(("WON", "LOST"))
-                    & (OpportunityStage.display_order >= _DELIVERY_STAGE_ORDER),
-                )
-            )
+            .where(or_(won_in_quarter, open_past_order) if include_open else won_in_quarter)
             .group_by(Opportunity.owner_id, UserProfile.display_name)
         )
         stmt = self._apply_owner_scope(stmt, current_user)
         return [(o, n, int(c)) for o, n, c in self.db.execute(stmt).all()]
 
-    def sbu_target_amounts(self, planning_period: str) -> dict[uuid.UUID, Decimal]:
-        """GM-entered SBU targets for the quarter: sbu_id -> amount. RLS
-        narrows: Admin/GM see every SBU, an SBU Manager their own."""
-        stmt = select(SbuTarget.sbu_id, SbuTarget.target_amount_lakhs).where(
-            SbuTarget.planning_period == planning_period
+    def active_sbu_targets(self, planning_period: str) -> dict[uuid.UUID, Decimal | None]:
+        """Every active SBU -> its GM-entered target for the quarter, or None
+        if not set. RLS on sbu_target narrows: Admin/GM see every SBU's
+        figure, an SBU Manager only their own (others come back None)."""
+        stmt = (
+            select(SBU.id, SbuTarget.target_amount_lakhs)
+            .outerjoin(
+                SbuTarget,
+                (SbuTarget.sbu_id == SBU.id) & (SbuTarget.planning_period == planning_period),
+            )
+            .where(SBU.is_active.is_not(False))
         )
-        return {s: Decimal(v) for s, v in self.db.execute(stmt).all()}
+        return {s: (None if v is None else Decimal(v)) for s, v in self.db.execute(stmt).all()}
 
-    def active_sbu_count(self) -> int:
-        return int(self.db.scalar(select(func.count(SBU.id)).where(SBU.is_active.is_not(False))) or 0)
-
-    def company_totals(
-        self, planning_period: str, q_start: date, q_end: date, start: datetime, end: datetime
+    def summary_totals(
+        self,
+        planning_period: str,
+        q_start: date,
+        q_end: date,
+        start: datetime,
+        end: datetime,
+        *,
+        sbu_id: uuid.UUID | None,
     ) -> tuple[Decimal, Decimal, Decimal]:
-        """Across every SBU, for the Admin/GM company row: (planned,
-        po_received, won). Planned = waiting and approved plans' totals."""
-        planned = self.db.scalar(
-            select(func.coalesce(func.sum(TargetPlan.target_amount_lakhs), 0))
-            .where(TargetPlan.planning_period == planning_period)
-            .where(TargetPlan.status.in_(_SUBMITTED_PLAN_STATUSES))
+        """(planned, po_received, won) for one whole SBU, or every SBU when
+        sbu_id is None -- not narrowed to the caller's team, so the SBU row
+        reads the same for its SBU Manager as for the GM. Planned = waiting
+        and approved plans' totals, plus a rejected revision's last approved
+        total (BR-PL-05). One round trip."""
+        planned = func.coalesce(
+            func.sum(
+                case(
+                    (TargetPlan.status.in_(SUBMITTED_PLAN_STATUSES), TargetPlan.target_amount_lakhs),
+                    (TargetPlan.status == "REJECTED", func.coalesce(TargetPlan.previous_approved_total_lakhs, 0)),
+                    else_=0,
+                )
+            ),
+            0,
         )
-        value = func.coalesce(func.sum(_NET_VALUE), 0)
+        plans = select(planned).where(TargetPlan.planning_period == planning_period)
+        if sbu_id is not None:
+            plans = plans.where(TargetPlan.sbu_id == sbu_id)
+
+        po_cond = and_(*self._po_received_filter(q_start, q_end))
+        won_cond = (
+            (OpportunityStatus.status_code == "WON")
+            & (Opportunity.closed_at >= start)
+            & (Opportunity.closed_at < end)
+        )
         lines = (
-            select(value)
+            select(
+                func.coalesce(func.sum(_NET_VALUE).filter(po_cond), 0).label("po_received"),
+                func.coalesce(func.sum(_NET_VALUE).filter(won_cond), 0).label("won"),
+            )
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
+            .where(or_(po_cond, won_cond))
         )
-        po_received = self.db.scalar(lines.where(*self._po_received_filter(q_start, q_end)))
-        won = self.db.scalar(
-            lines.where(OpportunityStatus.status_code == "WON")
-            .where(Opportunity.closed_at >= start)
-            .where(Opportunity.closed_at < end)
-        )
-        return Decimal(planned or 0), Decimal(po_received or 0), Decimal(won or 0)
+        if sbu_id is not None:
+            lines = lines.where(Opportunity.sbu_id == sbu_id)
+        lines = lines.subquery()
+
+        row = self.db.execute(select(plans.scalar_subquery(), lines.c.po_received, lines.c.won)).one()
+        return Decimal(row[0] or 0), Decimal(row[1] or 0), Decimal(row[2] or 0)

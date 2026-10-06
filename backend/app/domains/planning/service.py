@@ -10,6 +10,7 @@ from app.domains.account.models import Account
 from app.domains.organization.models import UserProfile
 from app.domains.planning.models import BrandVendorTarget, SbuTarget, TargetPlan
 from app.domains.planning.repository import (
+    SUBMITTED_PLAN_STATUSES,
     BrandVendorTargetRepository,
     SbuTargetRepository,
     TargetPlanRepository,
@@ -471,9 +472,6 @@ _ZERO = Decimal("0")
 _CENT = Decimal("0.01")
 
 
-_SUBMITTED_PLAN_STATUSES = (RosterStatus.PENDING_APPROVAL, RosterStatus.APPROVED)
-
-
 def _percent_of_target(won: Decimal, target: Decimal | None) -> Decimal | None:
     return (won / target * 100).quantize(_CENT) if target else None
 
@@ -486,6 +484,8 @@ class _PersonAcc:
         self.display_name = display_name
         self.plan_status = RosterStatus.NOT_STARTED
         self.previous_approved_total: Decimal | None = None
+        # Rejected revision counted at its last approved total (BR-PL-05).
+        self.approved_fallback = False
         self.po_received = _ZERO
         self.no_po_date = 0
         # The plan's saved total. Plans saved before hospital-wise planning
@@ -592,7 +592,14 @@ class TargetVsActualService:
             acc = person(plan.user_id, plan.user.display_name)
             acc.plan_status = RosterStatus(plan.status)
             acc.previous_approved_total = plan.previous_approved_total_lakhs
-            if acc.plan_status not in _SUBMITTED_PLAN_STATUSES:
+            if acc.plan_status is RosterStatus.REJECTED and plan.previous_approved_total_lakhs is not None:
+                # BR-PL-05: a rejected revision of an approved plan leaves the
+                # last approved total as the goal. Only the total survives --
+                # the hospitals and brands on file are the rejected revision's.
+                acc.plan_total = plan.previous_approved_total_lakhs
+                acc.approved_fallback = True
+                continue
+            if acc.plan_status not in SUBMITTED_PLAN_STATUSES:
                 # Draft and rejected plans don't count, and their figures are
                 # never shown: a manager sees only "Draft" on someone's draft.
                 continue
@@ -632,7 +639,9 @@ class TargetVsActualService:
 
         for owner_id, owner_name, amount in repo.po_received_by_owner(current_user, sbu_id, q_start, q_end):
             person(owner_id, owner_name).po_received += amount
-        for owner_id, owner_name, count in repo.no_po_date_counts(current_user, sbu_id, start_dt, end_dt):
+        for owner_id, owner_name, count in repo.no_po_date_counts(
+            current_user, sbu_id, start_dt, end_dt, include_open=state is QuarterState.CURRENT
+        ):
             person(owner_id, owner_name).no_po_date = count
 
         if state is not QuarterState.PAST:
@@ -662,7 +671,11 @@ class TargetVsActualService:
         # (another SBU's person, someone since deactivated) stay in the headline
         # and zone/brand tables; only the person rows follow the roster.
         shown = [r for p, r in zip(ordered, rows, strict=True) if p.user_id in roster_ids]
-        not_submitted = sum(1 for uid in roster_ids if people[uid].plan_status not in _SUBMITTED_PLAN_STATUSES)
+        not_submitted = sum(
+            1
+            for uid in roster_ids
+            if people[uid].plan_status not in SUBMITTED_PLAN_STATUSES and not people[uid].approved_fallback
+        )
         planned = sum((r.planned_lakhs for r in rows), _ZERO)
         po_received = sum((r.po_received_lakhs for r in rows), _ZERO)
         won = sum((r.won_lakhs for r in rows), _ZERO)
@@ -671,22 +684,30 @@ class TargetVsActualService:
         sbu_row = company_row = None
         role_name = current_user.role.role_name
         if role_name in _OVERLAY_ROLES or (role_name == "SBU Manager" and current_user.sbu_id == sbu_id):
-            targets = repo.sbu_target_amounts(planning_period)
+            targets = repo.active_sbu_targets(planning_period)
             target = targets.get(sbu_id)
+            # SBU-wide, not the caller's team: the SBU Manager and the GM are
+            # measured against one target, so they must see the same figures
+            # (code review 2026-10-06 -- the GM's own sales were missing).
+            s_planned, s_po_received, s_won = repo.summary_totals(
+                planning_period, q_start, q_end, start_dt, end_dt, sbu_id=sbu_id
+            )
             sbu_row = TargetVsActualSummaryRow(
                 target_lakhs=target,
-                planned_lakhs=planned,
-                po_received_lakhs=po_received,
-                won_lakhs=won,
-                percent_of_target=_percent_of_target(won, target),
+                planned_lakhs=s_planned,
+                po_received_lakhs=s_po_received,
+                won_lakhs=s_won,
+                percent_of_target=_percent_of_target(s_won, target),
             )
             if role_name in _OVERLAY_ROLES:
-                c_planned, c_po_received, c_won = repo.company_totals(
-                    planning_period, q_start, q_end, start_dt, end_dt
+                c_planned, c_po_received, c_won = repo.summary_totals(
+                    planning_period, q_start, q_end, start_dt, end_dt, sbu_id=None
                 )
-                # Company target = sum of the SBU targets; a partial sum would
-                # read as a real target, so it waits until every SBU has one.
-                c_target = sum(targets.values(), _ZERO) if len(targets) >= repo.active_sbu_count() else None
+                # Company target = sum of the active SBUs' targets; a partial
+                # sum would read as a real target, so it waits until every
+                # active SBU has one.
+                set_targets = [v for v in targets.values() if v is not None]
+                c_target = sum(set_targets, _ZERO) if targets and len(set_targets) == len(targets) else None
                 company_row = TargetVsActualSummaryRow(
                     target_lakhs=c_target,
                     planned_lakhs=c_planned,
@@ -739,7 +760,7 @@ class TargetVsActualService:
             hospitals.append(
                 TargetVsActualHospital(
                     account_id=None,
-                    account_name="Not assigned to a hospital",
+                    account_name="Last approved target" if p.approved_fallback else "Not assigned to a hospital",
                     planned_lakhs=p.unassigned,
                     won_lakhs=_ZERO,
                 )

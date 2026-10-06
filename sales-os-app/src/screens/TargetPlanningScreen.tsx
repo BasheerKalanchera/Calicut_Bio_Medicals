@@ -543,7 +543,7 @@ export default function TargetPlanningScreen() {
             {!isAnnual ? (
               <>
                 {rollupSbuId && roleName && SBU_TARGET_VIEW_ROLES.has(roleName) && (
-                  <SbuTargetBox sbuId={rollupSbuId} period={period} canEdit={SBU_TARGET_EDIT_ROLES.has(roleName)} />
+                  <SbuTargetBox key={`${rollupSbuId}-${period}`} sbuId={rollupSbuId} period={period} canEdit={SBU_TARGET_EDIT_ROLES.has(roleName)} />
                 )}
                 {rollup && (
                   <Typography sx={{ mb: 1.5 }}>

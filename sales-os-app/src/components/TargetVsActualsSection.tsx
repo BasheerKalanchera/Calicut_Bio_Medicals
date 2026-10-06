@@ -47,8 +47,14 @@ const STATUS_COLOR: Record<RosterStatus, string> = {
 };
 
 // Only waiting and approved plans carry figures; the backend sends Draft and
-// Rejected plans (and people with no plan) with planned 0 and no breakdown.
+// Rejected plans (and people with no plan) with planned 0 and no breakdown --
+// except a rejected revision of an approved plan, which counts at its last
+// approved total (BR-PL-05).
 const SUBMITTED: ReadonlySet<RosterStatus> = new Set(["PENDING_APPROVAL", "APPROVED"]);
+
+function countsAtLastApproved(p: TargetVsActualPerson): boolean {
+  return p.plan_status === "REJECTED" && p.previous_approved_total_lakhs !== null;
+}
 
 const NOT_SUBMITTED_NOTE: Partial<Record<RosterStatus, string>> = {
   NOT_STARTED: "No plan started for this quarter.",
@@ -107,7 +113,9 @@ function NoPoDateNote({ count }: { count: number }) {
 }
 
 function PersonDetail({ person }: { person: TargetVsActualPerson }) {
-  const note = NOT_SUBMITTED_NOTE[person.plan_status];
+  const note = countsAtLastApproved(person)
+    ? `Revision was sent back. The last approved target (${lakhs(person.previous_approved_total_lakhs)}) still counts until a new one is approved.`
+    : NOT_SUBMITTED_NOTE[person.plan_status];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 1 }}>
       {note && <Box sx={{ fontSize: "0.8125rem" }}>{note}</Box>}
@@ -307,6 +315,7 @@ export default function TargetVsActualsSection() {
                 {data.people.map((p) => {
                   const open = expanded.has(p.user_id);
                   const submitted = SUBMITTED.has(p.plan_status);
+                  const lastApproved = countsAtLastApproved(p);
                   return (
                     <Fragment key={p.user_id}>
                       <TableRow hover>
@@ -327,9 +336,12 @@ export default function TargetVsActualsSection() {
                           {STATUS_LABEL[p.plan_status]}
                         </TableCell>
                         <TableCell sx={numCellSx}>
-                          {submitted ? lakhs(p.planned_lakhs) : DASH}
+                          {submitted || lastApproved ? lakhs(p.planned_lakhs) : DASH}
                           {submitted && p.previous_approved_total_lakhs !== null && (
                             <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
+                          )}
+                          {lastApproved && (
+                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>last approved</Box>
                           )}
                         </TableCell>
                         <TableCell sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TableCell>

@@ -14,7 +14,7 @@ export default function SbuTargetBox({ sbuId, period, canEdit }: { sbuId: string
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: targets = [], isLoading } = useQuery({
+  const { data: targets = [], isLoading, isError } = useQuery({
     queryKey: ["planning", "sbu-targets", period],
     queryFn: () => listSbuTargets(period),
   });
@@ -46,9 +46,15 @@ export default function SbuTargetBox({ sbuId, period, canEdit }: { sbuId: string
         {draft === null ? (
           <>
             <Typography>
-              {isLoading ? "…" : current ? <strong>{formatLakhs(Number(current.target_amount_lakhs))}</strong> : "Not set"}
+              {isLoading
+                ? "…"
+                : isError
+                  ? "Couldn't load the SBU target. Refresh to try again."
+                  : current
+                    ? <strong>{formatLakhs(Number(current.target_amount_lakhs))}</strong>
+                    : "Not set"}
             </Typography>
-            {canEdit && !isLoading && (
+            {canEdit && !isLoading && !isError && (
               <Button size="small" onClick={() => setDraft(current ? String(Number(current.target_amount_lakhs)) : "")}>
                 {current ? "Change" : "Set target"}
               </Button>

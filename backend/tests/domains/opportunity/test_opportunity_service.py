@@ -1142,6 +1142,27 @@ class TestUpdateOpportunity:
             )
         repo.update.assert_not_called()
 
+    def test_po_date_removal_refused_past_order(self):
+        opp = _make_opportunity(po_number="PO-1001", po_date=date(2026, 9, 15))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        with pytest.raises(BusinessRuleViolation, match="can't be removed"):
+            service.update_opportunity(OPP_ID, OpportunityUpdate(po_date=None), updated_by=USER_ID)
+        repo.update.assert_not_called()
+
+    def test_po_date_correction_allowed_past_order(self):
+        opp = _make_opportunity(po_number="PO-1001", po_date=date(2026, 9, 15))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+        service.update_opportunity(OPP_ID, OpportunityUpdate(po_date=date(2026, 9, 20)), updated_by=USER_ID)
+        assert opp.po_date == date(2026, 9, 20)
+
     def test_payment_note_ignored_without_the_move_to_won(self):
         # The note is only stored with the Won step, never on its own.
         opp = _make_opportunity()

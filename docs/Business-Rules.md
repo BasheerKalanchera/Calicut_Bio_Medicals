@@ -141,7 +141,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 | **Demo → Clinical Evaluation** | 1. Demo Outcome recorded.<br>2. Clinical contact identified (doctor or biomedical engineer).<br>3. Clinical evaluation start date defined. |
 | **Clinical Evaluation → Negotiation** | 1. Clinical Evaluation Outcome recorded.<br>2. Expected Closure Date defined — not required when `lead_source` = REPEAT_ORDER (BR-OP-13). |
 | **Negotiation → Order** | 1. Order Value confirmed.<br>2. Product Details defined.<br>3. Shared Ownership Validation completed (if applicable).<br>4. Handover Information completed. |
-| **Order → Delivery & Installation** | 1. Purchase Order Number entered.<br>2. PO Date entered — the date the PO was received; never later than today (IST), checked on every save that sends it (2026-10-06).<br>3. Delivery Date scheduled.<br>4. Installation Site confirmed. |
+| **Order → Delivery & Installation** | 1. Purchase Order Number entered.<br>2. PO Date entered — the date the PO was received; never later than today (IST), checked on every save that sends it (2026-10-06). Once the Opportunity is at Delivery or later, or Won, a PO Date it has can be corrected but not removed; older records that never had one save as before (2026-10-06).<br>3. Delivery Date scheduled.<br>4. Installation Site confirmed. |
 | **Delivery & Installation → Payment Pending** | No extra requirement — moving here states delivery and installation are done. Won is reachable only from this stage (BR-OP-17). |
 
 ### BR-OP-02: "On-Hold" Status Discipline (ADR-005)

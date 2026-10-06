@@ -28,6 +28,8 @@ _ORDER_NEGOTIATION = 50
 _ORDER_ORDER = 60
 _ORDER_DELIVERY = 70
 _ORDER_PAYMENT_PENDING = 80
+# Public for Target vs Actuals' "past Order with no PO date" count.
+DELIVERY_STAGE_ORDER = _ORDER_DELIVERY
 
 
 _REPEAT_ORDER_LEAD_SOURCE = "REPEAT_ORDER"
@@ -227,3 +229,20 @@ def validate_po_date(po_date: date | None) -> None:
     every save that sends a PO Date, not only at the stage gates."""
     if po_date is not None and po_date > _today_ist():
         raise BusinessRuleViolation("PO Date can't be in the future.")
+
+
+def validate_po_date_kept(
+    *, previous_po_date: date | None, po_date: date | None, stage_order: int, status_code: str
+) -> None:
+    """Once an Opportunity is at Delivery or later, or Won, a PO Date it has
+    can be corrected but not removed -- removing it would silently drop the
+    Opportunity from Target vs Actuals' "PO received" (code review
+    2026-10-06). Older records that never had one save as before."""
+    if (
+        previous_po_date is not None
+        and po_date is None
+        and (stage_order >= _ORDER_DELIVERY or status_code == "WON")
+    ):
+        raise BusinessRuleViolation(
+            "PO Date can't be removed once the Opportunity is past the Order stage."
+        )

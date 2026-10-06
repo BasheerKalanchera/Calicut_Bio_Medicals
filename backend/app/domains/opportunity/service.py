@@ -24,6 +24,7 @@ from app.domains.opportunity.schemas import (
 )
 from app.domains.opportunity.validators import (
     validate_po_date,
+    validate_po_date_kept,
     validate_stage_transition,
     validate_status_transition,
 )
@@ -317,6 +318,7 @@ class OpportunityService:
         # Captured before the setattr loop below overwrites it.
         previous_owner_id = opportunity.owner_id
         previous_gate_override_approver_id = opportunity.gate_override_approver_id
+        previous_po_date = opportunity.po_date
 
         # Apply field updates
         for field, value in updates.items():
@@ -375,6 +377,13 @@ class OpportunityService:
             raise NotFoundError(f"Stage {opportunity.stage_id} not found")
         if not effective_status:
             raise NotFoundError(f"Status {opportunity.status_id} not found")
+
+        validate_po_date_kept(
+            previous_po_date=previous_po_date,
+            po_date=opportunity.po_date,
+            stage_order=effective_stage.display_order,
+            status_code=effective_status.status_code,
+        )
 
         has_items = self.repository.has_items(opportunity_id)
 
