@@ -38,6 +38,10 @@ on Dev, before any other work:
 - Record the apply explicitly, with the real value: "applied to Dev,
   `alembic current` = `00NN (head)`" in the commit message or the handover
   note. Never leave a "not yet applied" note as the last word.
+- Run the full backend `pytest` (not just the touched domain) before the
+  migration/model commit, and put the pass count in its message — a new
+  table or relationship changes the counts in `tests/test_persistence.py`.
+  *(2026-10-06)*
 - Commit the migration and the regenerated schema together, or the schema in
   the very next commit. A migration written but not yet applied goes in
   `.claude/session-handover.md` as an open item until it is.

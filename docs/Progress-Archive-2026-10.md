@@ -731,3 +731,36 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   only page reloads; and do each browser reading in one step, not
   refresh/wait/read as three (Basheer: "wasting calls"). Process change:
   none.
+
+## 2026-10-06 — Target vs Actuals step 2 (PO date) + session retro
+
+- **Step 2 shipped as a checkpoint, `ebc9613`** (backend only, frontend in
+  step 4). PO Date required at Order → Delivery & Installation (also on a
+  one-shot jump or a create at a later stage) and at Won; never later than
+  today (IST), checked on every save that sends one. Basheer's calls: no
+  audit-log fallback ("keep it simple"); older records aren't forced, and
+  step 3 shows a "no PO date" note; Won also checks PO Date because reps
+  sometimes rush an Opportunity through to Won. pytest 1145, ruff clean.
+  Until step 4, Dev can't move an Opportunity to Delivery or mark Won from
+  the screen.
+- **Om Hiremath "27 overdue vs 99":** not a bug. UAT read-only count: 104
+  open = 27 overdue + 77 due later (one item dated 2029-09-22, likely a
+  typo).
+- **Session retro:**
+  - Done: Next Actions hotfix live on UAT and verified as Om (entry above);
+    `uat` merged back to main (`6d9c068`); old branches and the worktree
+    removed; step 2 above.
+  - Worked: a real-login before/after instead of waiting for Haroon;
+    one-question-at-a-time decisions with examples; the shell guard
+    blocked a scripted code edit, so it went through the edit tool; the
+    other session's files stayed out of both commits.
+  - Improve: (1) browser readings took three steps each (Basheer:
+    "wasting calls"); take each in one. (2) For older records, the heavy
+    design (history lookup) was offered first, without the light option
+    side by side, as CLAUDE.md asks; this cost a round. (3) Step 1
+    (`1821c30`) left `test_persistence.py`'s table and relationship counts
+    stale, because the full suite wasn't run before that commit.
+  - Process change: the migration checklist in the `cabio-db-and-scripting`
+    skill now requires the full backend pytest before a migration/model
+    commit, with the pass count in its message (origin in
+    Process-Rules-History, 2026-10-06).

@@ -223,3 +223,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Manual E2E — a permission/visibility test plan needs a hide-check case from live data, with the scope check re-run just before E2E.
   **Why:** 2026-10-04 — Plan vs Actuals listed plans across a whole zone area while actuals were limited to the owner, so a Sales Executive could see colleagues' plans. The code review caught it, not the E2E plan. The plan's live-data note (written 2026-10-03) also had wrong roles and amounts (Nishad K V is an Area Manager; Vivek's Q3 plan is 51.00, not 50.00) until a re-check on 2026-10-04.
+
+- **Rule:** Migrations — run the full backend pytest before the migration/model commit and record the pass count.
+  **Why:** 2026-10-06 — migration 0060 (`1821c30`) added the `SbuTarget` model, but `tests/test_persistence.py` still expected 37 tables and 116 relationships. Only the touched area had been checked, so the break surfaced a day later in step 2's full run and was fixed in `ebc9613`. A second stale-test slip in recent weeks, so the structural fix went in now.

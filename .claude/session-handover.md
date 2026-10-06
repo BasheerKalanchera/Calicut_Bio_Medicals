@@ -68,10 +68,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   pushed as `1821c30`; applied to Dev, `alembic current` = `0060 (head)`;
   `Physical-Schema.sql` regenerated in the same commit. Models updated; no
   code uses the new column/table yet.
-- **Next:** step 2 (Opportunity side): PO date field in schemas/service,
-  required at Order → Delivery in `validators.py`, audit-log-date fallback
-  for older records, tests. Show the file-by-file plan for approval first.
-  Then steps 3-7 per the plan doc's "Revised build order".
+- Step 2 (Opportunity side) committed and pushed 2026-10-06 as `ebc9613`
+  (checkpoint, frontend pending): PO date
+  required at Order → Delivery and at Won, never in the future; no
+  audit-log fallback (Basheer: keep it simple; older records get a "no PO
+  date" note in step 3). pytest 1145, ruff clean. Also fixed the table and
+  relationship counts in `test_persistence.py` that step 1 left stale.
+- **Next:** step 3 (Target vs Actuals backend) per the plan doc's "Revised
+  build order"; rework the uncommitted planning files above. On Dev, nobody can move
+  an Opportunity to Delivery from the screen until step 4 adds the PO date box.
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
