@@ -1040,3 +1040,34 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   done on fixed code; the saved old answer was already there.
 - **Tool errors and silences (P14, P15):** wrong Python folder, the
   no-change-folder guard, two "hasn't heard from you" nudges.
+
+## 2026-10-06 — Query Load Fixes: regression check of fixes 1 + 2 on Dev
+
+- Asked for by Basheer: the automatic comparisons proved the same data,
+  but nobody had clicked through the screens. First checklist covered 2 of
+  the 10 ways into the Opportunity page; Basheer caught it and it was
+  rebuilt from the code (plan section 7, parts A–D).
+- Run as Haroon Sidheeq (General Manager): 17 Pass, 0 fail. Not run, for
+  lack of Dev data: Stagnant Deals (none on Dev), urgent-notice pop-up
+  (none), Project Directory comment thread (no project activity has a
+  comment). All three use the same route as steps that passed.
+- Finding: the plan's section 1 said comment threads appear on five
+  screens; the code shows three (Customer 360, Opportunity page, Project
+  Directory). Corrected.
+- Every entry point re-asks the server for the Opportunity header
+  (`initialDataUpdatedAt: 0`), so each one exercised fix 1.
+
+### Session retro (Query Load Fixes regression check)
+- **Checklist missed entry points (P28, P2):** covered 2 of 10 ways into
+  the Opportunity page; built from the plan's wording, not a code search.
+  Basheer caught it. No click-through had been planned for fixes 1 and 2
+  at all; Basheer raised it after both were committed.
+- **Wrong statement carried forward (P23):** plan said comment threads on
+  five screens; the code shows three.
+- **Answer before checking (P1):** said step 1 didn't test fix 1, then
+  read the code and retracted.
+- **Browser waste (P29, P11):** read the whole Pipeline page to find a menu
+  for a Simple step Basheer could click.
+- **Records misnamed (P19, P1):** "Vivek's New USG m/c" is Fazal's; "Test
+  opportunity" given without saying it is Lost and reached by a reminder.
+- **Silences (P15):** "hasn't heard from you" nudges during code lookups.

@@ -84,7 +84,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Step 0 docs committed and pushed as `afa1b45` (plan, standards rule,
   Backlog, Progress-Archive, handover).
 - `scripts/query_audit.py` (D4) committed 2026-10-06 as `b06a043`. Dev test data: Basheer added
-  stakeholder "Ajmal" and a PDF to Vivek's "New USG m/c" so the Sales
+  stakeholder "Ajmal" and a PDF to Fazal's "New USG m/c" (aster medicity) so the Sales
   Staff view covers every part of the Opportunity page.
 - Fix 1 (Opportunity page + Product documents) committed and pushed
   2026-10-06 as `90ae253`; on `main` only, not yet on UAT. Results:
@@ -104,6 +104,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   joins (72 → 4.7 ms), comments 61 → 5 (42 → 1.1 ms). Detail:
   Progress-Archive-2026-10 and the plan's section 6.
   **Next:** rides UAT trip 1 on 2026-10-07 morning (D9); time trip 2 pages too.
+- Regression check of fixes 1 + 2 on Dev done 2026-10-06 as Haroon (plan
+  section 7, every entry point): 17 Pass, 3 not run with reasons (no data
+  on Dev), 0 fail. Detail: Progress-Archive-2026-10.
+- **Next:** Fix 3 (Pipeline): measure first with `query_audit.py --only
+  /opportunities/pipeline --save-responses <scratchpad>`, then fix,
+  compare, tests, code-review, old-vs-fixed run, `fix:` commit.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

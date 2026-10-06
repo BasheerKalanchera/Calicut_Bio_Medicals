@@ -63,7 +63,7 @@ Screens, in priority order (impact = cost × how often it is used):
 | Priority | Screen | Used by | Cost today (Dev) | What gets fixed |
 |---|---|---|---|---|
 | 1 | **Opportunity page**: opening it (from Customer 360, Pipeline, bell or reminder) and saving products, splits or stakeholders | Reps, many times a day, mostly to edit | Open: ~135 ms, ~33 questions, ~360 shelves. Saves: products ~46 ms, splits ~68 ms (loads the bundle 3 times), stakeholder ~35 ms | Detail, products, splits, stakeholders, documents: open and save |
-| 1 | **Activity comment threads** (on Account, Opportunity, Project, Daily Report and Pipeline) | Everyone | ~40 ms, 94 shelves | Same cause as Next Actions |
+| 1 | **Activity comment threads** (on Customer 360, the Opportunity page and the Project Directory; corrected 2026-10-06 from the code) | Everyone | ~40 ms, 94 shelves | Same cause as Next Actions |
 | 2 | **Opportunity Pipeline** | Mostly managers | ~165–185 ms, the slowest single screen | Main list request; cause still to be read |
 | 2 | **Daily Activity Report** | Managers, daily | ~35–40 ms, up to 100 activities per page | Same Activity fix as comments |
 | 3 | **Product Catalogue**, a product's documents | Occasional | ~35 ms, 78 shelves | Comes free with the Opportunity documents fix |
@@ -182,3 +182,73 @@ Marketing Leads.
 | Audit Log | — | — | |
 | Zone tree | — | — | |
 | Account workspace (remove) | — | — | |
+
+## 7. Regression check on Dev — fixes 1 and 2 (before UAT trip 1)
+
+Added 2026-10-06 (Basheer): the automatic checks proved the same data comes
+back, but no one had clicked through the app. Risk being checked: a linked
+record the fix stopped fetching shows up blank instead of failing loudly.
+Rebuilt the same day to cover every way into the changed screens (the first
+version covered 2 of 10; Basheer caught it).
+
+**Where the changed code is reached** (from the code, 2026-10-06):
+- Opportunity page: 10 entry points, all through one route
+  (`DemoApp.tsx` `handleSelectOpportunity`). Every one re-asks the server
+  for the header (`OpportunityDetailScreen.tsx` `initialDataUpdatedAt: 0`),
+  so each entry point exercises fix 1. Tabs and saves don't depend on the
+  entry point, so they are checked once (part B).
+- Comment threads: 3 places — Customer 360 (hospital), Opportunity page,
+  Project Directory (`ActivityTimeline`). The Daily Report and Pipeline don't
+  show comment threads (section 1 said they did; corrected).
+- Daily Activity Report: its own screen.
+- Logging an activity and activity timelines: not changed by fix 2, not
+  checked (and test activities can't be deleted).
+
+**Set-up:** all steps as Haroon Sidheeq (General Manager, sees and edits
+every Opportunity; Basheer's choice). The three-role check is the
+automatic comparison already done. Dev backend restarted before part A.
+Part B saves to the shared Dev database: Basheer clicks, Claude watches,
+each save undone by a second save (both stay in the Audit Log). Records
+looked up read-only on Dev 2026-10-06; names repeat across hospitals, so
+each is given with its hospital. "Pass" = header (hospital, stage, status,
+owner, SBU) and Overview show names, no blanks.
+
+### A. Opening the Opportunity page from every entry point
+
+| # | Step | Type | Result |
+|---|---|---|---|
+| A1 | Pipeline → "usg m/c" (aster medicity) | Simple | Pass (Basheer, 2026-10-06) |
+| A2 | Customer 360 → aster medicity → Opportunities tab → "usg m/c" | Simple | Pass (Basheer, 2026-10-06) |
+| A3 | Project Directory → "ICU Monitoring System Upgrade" (KIMS Hospital Trivandrum) → "New USG m/c" | Simple | Pass (Basheer, 2026-10-06) |
+| A4 | Next Actions → reminder on "Test opportunity" (Al Shifa Hospital Perinthalmanna) | Simple | Pass (Basheer, 2026-10-06) |
+| A5 | Audit Log → a row for "Test +lead screen" (Aster MIMS Calicut) → open the Opportunity | Simple | Pass (Basheer, 2026-10-06) |
+| A6 | Daily Activity Report, 27 Aug → click an Opportunity name on a card | Simple | Pass (Basheer, 2026-10-06) |
+| A7 | Stagnant Deals → first Opportunity listed | Simple | Not run: no stagnant Opportunities on Dev; same route and name-only hand-over as A4–A9 |
+| A8 | Opportunities On Hold → "New ICU Monitor deal" (Aster DM) | Simple | Pass (Basheer, 2026-10-06) |
+| A9 | Sign out, sign in as Haroon → the due-reminders pop-up → "Test opportunity" (Al Shifa) | Simple | Pass (Basheer, 2026-10-06) |
+| A10 | Bell → an Opportunity notification. Haroon has none on Dev; only Basheer K has one ("New USG Machine - referral test", Aster MIMS Calicut). Run as Basheer K, or skip: same route and same name-only hand-over as A4 and A9 | Simple | Pass (Basheer, 2026-10-06) |
+| A11 | Urgent-notice pop-up: no urgent notification on Dev; same route as the bell. Not run, for that reason | — | Not run |
+
+### B. Opportunity page tabs and saves (once)
+
+| # | Step | Type | Result |
+|---|---|---|---|
+| B1 | "New USG m/c" (aster medicity, owner Fazal): Products, Splits, Stakeholders (Ajmal), Documents (the PDF) tabs all show names | Simple | Pass (Basheer, 2026-10-06) |
+| B2 | "usg m/c" (aster medicity) → Products: add a line, change its product, remove it. Right product name after each save | Complex | Pass (Basheer, 2026-10-06) |
+| B3 | "usg m/c" → Splits: change the percentages, save; put them back, save. Names stay filled | Complex | Pass (Basheer, 2026-10-06) |
+| B4 | "usg m/c" → Stakeholders: add one, edit its role, remove it. Name shown after each save | Complex | Pass (Basheer, 2026-10-06) |
+| B5 | "usg m/c" → Documents: upload a small file, open it, delete it. Then Product Catalogue → a product with documents: list and uploader names show | Complex | Pass (Basheer, 2026-10-06) |
+
+### C. Comment threads, from each place they appear
+
+| # | Step | Type | Result |
+|---|---|---|---|
+| C1 | Opportunity "New opportunity for hospital pick" (Al Shifa) → Activity tab → Manager Note of 8 Sep → 6 comments, every writer's name shown | Simple | Pass (Basheer, 2026-10-06) |
+| C2 | Customer 360 → Al Shifa Hospital Perinthalmanna → Activity → hospital-level Manager Note of 9 Sep → 2 comments, writers' names shown | Simple | Pass (Basheer, 2026-10-06) |
+| C3 | Project Directory: no project activity on Dev has a comment; same server request as C1 and C2. Not run unless Basheer adds a comment (permanent on Dev) | — | Not run |
+
+### D. Daily Activity Report
+
+| # | Step | Type | Result |
+|---|---|---|---|
+| D1 | 27 Aug: 14 cards; names, hospitals and Opportunity names filled | Simple | Pass (Basheer, 2026-10-06) |
