@@ -856,3 +856,20 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - **Order with Target vs Actuals:** built on top of step 4 (`2c189d7`) by
   Basheer's choice; that session's E2E can start after a Dev backend
   restart.
+
+## 2026-10-06 — Session retro (Query Load Fixes, fix 1, `90ae253`)
+
+- **Explanation too technical (P3):** the product-name correction was
+  shown as a before/after table of the "save reply" without saying what
+  that is or that users never saw the wrong name; Basheer had to ask.
+- **Check without a record named (P19):** Basheer was asked to check
+  Product documents without being told which product has any; he had to
+  ask.
+- **Guessed database names (P20):** the save-comparison script failed
+  twice on a guessed table name (`opportunity_split`, really `split`) and
+  a guessed product type; both are in `Physical-Schema.sql`.
+- **Avoidable retries again (P14):** three commands blocked by known
+  shell guard rails (two shell edits to code files, one folder change);
+  the review's own test run was blocked the same way.
+- **Long silences again (P15):** two system nudges that Basheer hadn't
+  heard from Claude while tests and checks ran.
