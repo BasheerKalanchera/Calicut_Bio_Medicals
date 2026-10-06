@@ -5,7 +5,7 @@ Hospital-wise Target Planning is finished; this feature tracks actuals
 against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
-the same day). Built on Dev, E2E pending: backend `0f7d75a`, frontend `231fbd0`. Split-credit question sent to Haroon
+the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order"; step 1 done (`1821c30`), step 2 next. Split-credit question sent to Haroon
 2026-09-29 — doesn't block this build (see Decisions).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
@@ -95,7 +95,7 @@ Light first: the roster is built on Target vs Actuals now; the Target &
 Coverage Planning screen (`TargetPlanningScreen`, same screen under two
 names) follows as a separate pass. The old build order below is superseded.
 
-1. **Database, one migration (0060):** PO date on Opportunities + SBU target
+1. **Done `1821c30` (2026-10-05).** **Database, one migration (0060):** PO date on Opportunities + SBU target
    table. Shown for approval, applied to Dev only, `Physical-Schema.sql`
    regenerated, `alembic current` recorded.
 2. **Backend, Opportunity side:** PO date field; required at Order →

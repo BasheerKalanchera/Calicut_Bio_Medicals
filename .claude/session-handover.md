@@ -14,9 +14,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   ₹90.60 L) still unapproved after the quarter ended.
 - Offer open: build `scripts/uat_closure_date_report.py`'s comparison column
   from the previous report (repo edit; plan approval first).
-- The working tree holds another session's uncommitted work
-  (`.claude/settings.json`, the Plan vs Actuals code, activity repository +
-  its test, three untracked plan docs): leave it out of commits.
+- The working tree holds the old, uncommitted Target vs Actuals code
+  (`repository.py`, `service.py`, `test_plan_vs_actual.py`,
+  `PlanVsActualSection.tsx`), to be reworked today for the design-review
+  gaps, plus three untracked plan docs from another session: leave them out
+  of commits.
 
 ## Session retro 2026-10-01 + structural fixes — parked by Basheer
 
@@ -57,7 +59,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   +lead screen" linked to Basheer K (reassign, don't delete: it has Activity
   rows).
 - Design review finished 2026-10-05; decisions, gap analysis and the
-  revised build order are written in the plan doc (uncommitted). Light
+  revised build order are written in the plan doc (`d935ebc`). Light
   first: roster on Target vs Actuals; the Target & Coverage Planning
   screen is a separate second pass; the UAT move comes only after both are
   built and tested (Basheer, 2026-10-05).
@@ -70,28 +72,21 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   required at Order → Delivery in `validators.py`, audit-log-date fallback
   for older records, tests. Show the file-by-file plan for approval first.
   Then steps 3-7 per the plan doc's "Revised build order".
-- Uncommitted docs waiting for the next docs batch: the plan doc edits and
-  this handover (plus another session's files: leave out).
 - Other sessions' untracked plan docs (Forecast, Opportunity-Create-Form,
   Weekly-Follow-up) are not ours; leave them out of commits.
 
-## UAT outage 2026-10-05 — hotfix committed locally; push to UAT planned 2026-10-06 morning
+## Query audit (lighter) — approved 2026-10-06
 
-- On `main`: size fix `945253d`, stable-order change `0e3d81f` (due date,
-  then logged earlier first, then id). Both Dev-verified.
-- UAT hotfix: **`fa61bd8`, local only**, on branch `uat-hotfix-next-actions`
-  (based on UAT's `a430152`; both changes; backend 975 passed, ruff clean).
-  Remote `uat` is still `a430152`: nothing has reached UAT. Its working
-  folder is in the old session's scratchpad; if gone, recreate with
-  `git worktree add <path> uat-hotfix-next-actions`.
-- UAT read-only check 2026-10-05 (Om Hiremath, 99 open): joins 110 → 6,
-  request 0.8–3.4 s → 0.17–0.19 s, same 99 rows and fields.
-- **Next (Basheer, first thing 2026-10-06):** check the branch is still
-  `fa61bd8` on `a430152` and `origin/uat` hasn't moved → push to `uat`
-  (own approval; Render restarts briefly) → Haroon opens Next Actions,
-  watch UAT → merge `uat` back into `main` (as `eb89fa7`).
-- Optional after the push: read-only UAT check; the 3-person test on UAT
-  (new code only, never the old query); ask first (UAT rule).
+- Why: the Next Actions outage (fixed, live on UAT `fa61bd8`; see
+  Progress-Archive-2026-10, 2026-10-06) came from chained auto-loading of
+  related records. 74 such settings in 17 files (`lazy="joined"` /
+  `selectin` / `subquery`); largest: opportunity models 20, activity 10,
+  planning 7.
+- Lighter option (Basheer): Dev only, no code change. Measure each
+  screen's main list request (joins, statement size, planning time; method
+  as the 2026-10-05 reminder test) and rank against Next Actions' old 110
+  joins; fix proposals one approval at a time.
+- **Next:** list the list endpoints and show the measuring plan first.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

@@ -700,3 +700,34 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - **Machine note:** alembic needs the backend folder as the working directory, so with no `cd` run it as `python -c "import os,sys; os.chdir(<backend>); sys.path.insert(0,'.'); from alembic.config import main; main(argv=[...])"`.
 - **Parked for 2026-10-06:** step 2 (Opportunity side: PO date field, Order → Delivery rule, audit-log fallback, tests); Haroon's split-credit answer expected.
 - **Process change:** none.
+
+## 2026-10-06 — Next Actions hotfix live on UAT (retro)
+
+- **Shipped:** pre-checks passed (branch still `fa61bd8` on `a430152`,
+  `origin/uat` unmoved). Basheer pushed `fa61bd8` to `uat`; Render "Deploy
+  live" 06:16. Merged back into `main` as `6d9c068` (no file changes: main
+  already had `945253d` + `0e3d81f`), so the next UAT promotion is a clean
+  fast-forward.
+- **Real-user check (Basheer's idea):** signed in as Om Hiremath (99 open)
+  on UAT, hard-reloaded the home page, which fetches the Next Actions list
+  among ~30 API calls; browser resource timings.
+
+  | | Next Actions list | Rest of page (median) |
+  |---|---|---|
+  | Before (old code) | 3.0 / 6.8 / 7.5 s | ~1.5 / 2.0 / 1.5 s |
+  | After, warming up | 3.5 / 3.2 s | 4.1 / 3.2 s |
+  | After, warm | 1.9 / 2.3 / 2.1 / 3.8 s | 1.9 / 2.2 / 1.7 / 2.9 s |
+
+  Before, the list was 3–5× slower than everything else; after, it moves
+  in step with the page. The page shows ~4× (7.5 → 1.9 s), not Dev's ~10×,
+  because ~30 requests queue through the 5 + 5 pool and the list waits its
+  turn; its own DB work was ~0.2 s in the 2026-10-05 check. Clicking Next
+  Actions in the menu reuses the home page's copy (no new request), so the
+  hard reload is the right trigger. Haroon's check is now optional.
+- **Next:** lighter query audit on Dev (approved), to find other screens
+  with the same chained-loading trap.
+- **Retro:** worked: a before/after on a real heavy user's login, same
+  method both times. Improve: plan a queue-free measurement up front, not
+  only page reloads; and do each browser reading in one step, not
+  refresh/wait/read as three (Basheer: "wasting calls"). Process change:
+  none.

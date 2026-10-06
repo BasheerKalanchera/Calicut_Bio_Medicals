@@ -281,6 +281,13 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard
+  reload fires ~30 API calls at once; with the 5 + 5 pool on the free tier
+  most take 1.5–3 s (median ~2 s, measured as Om Hiremath after the Next
+  Actions hotfix). Decide after the query audit: fewer/combined calls on
+  the home page, or a bigger tier (see `docs/Deployment-Topology.md`,
+  "Database sizing and connection pool").
+
 - **Reopened Next Action keeps its old closing note (Basheer, 2026-10-05;
   undecided).** The back-end accepts reopening a completed Next Action
   (BR-ACT-05 allows it, `ReminderService.patch_reminder`), but no screen
