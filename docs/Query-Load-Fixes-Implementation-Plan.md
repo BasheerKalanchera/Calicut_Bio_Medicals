@@ -15,6 +15,9 @@ Progress-Archive-2026-10 (2026-10-06 entry).
 - D2. Any work on a listed screen, backend or frontend, includes that
   screen's fix as its own `fix:` commit, landing before the other work's
   commit — Basheer, 2026-10-06
+  - Exception 2026-10-06: Target vs Actuals step 4 (`2c189d7`) landed
+    before the Opportunity-page fix, by Basheer's choice; the fix goes on
+    top. No overlap: step 4 is screen code only, the fix is backend only.
 - D3. Deadline: every row in section 6 is fixed this week (by Sun 2026-10-11), not "as touched";
   rows go in priority order, and D2 only moves a row earlier — Basheer,
   2026-10-06
@@ -100,7 +103,8 @@ Marketing Leads.
 - No business rule changes. Responses must stay identical.
 - Backend standards: the D6 rule, plus a note that the "single reference =
   joined" default is no longer enough on its own.
-- Backlog: one entry, "Query load fixes (as touched)", linking here.
+- Backlog: one entry, "Query load fixes — in progress, deadline Sun
+  2026-10-11", linking here.
 - Progress-Archive-2026-10: audit results and save checks (2026-10-06).
 
 ## 5. Technical addendum
@@ -141,11 +145,11 @@ Marketing Leads.
 
 | Row | Fixed on `main` | On UAT | Before → after |
 |---|---|---|---|
-| Opportunity page (open + save) | — | — | |
+| Opportunity page (open + save) | `90ae253` (2026-10-06) | — | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
 | Activity comments | — | — | |
 | Opportunity Pipeline | — | — | |
 | Daily Activity Report | — | — | |
-| Product documents | (with Opportunity documents) | — | |
+| Product documents | `90ae253` (with Opportunity documents) | — | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
 | Audit Log | — | — | |
 | Zone tree | — | — | |
 | Account workspace (remove) | — | — | |

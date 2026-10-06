@@ -834,3 +834,25 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   measuring the saves.
 - **Decided:** `docs/Query-Load-Fixes-Implementation-Plan.md`, approved.
   All rows by Sun 2026-10-11, each to UAT by the hotfix route, in 4 trips.
+
+## 2026-10-06 — Query Load Fixes, fix 1 (Opportunity page + Product documents): `90ae253`
+
+- **Shipped to `main`:** the Opportunity page (header, Products, Splits,
+  Stakeholders, Documents, and their saves) and the Product Catalogue's
+  document list now load only what they show. UAT move (trip 1) planned
+  for the morning of 2026-10-07 (Basheer).
+- **Before → after (Dev):** header 35 → 11 joins, planning ~16–24 →
+  ~4.5 ms; tab lists 41–59 → 5 joins; saves 41–45 → at most 14 joins.
+  One 40.8 ms reading was a cold start; re-checked twice at 4.5–4.9 ms.
+- **Same answers:** 27 of 27 screen replies unchanged (three users);
+  saves, run on Dev and rolled back, unchanged except one correction.
+- **Bug found and fixed:** after changing a product line's product, the
+  save reply named the old product (the server reused a copy it already
+  held). The screen reloads the list, so users never saw it; the reply is
+  now correct.
+- **Checks:** join-budget regression tests added; pytest 1179, ruff check
+  clean; `/code-review` medium no findings; Basheer checked the page and
+  Product documents on Dev.
+- **Order with Target vs Actuals:** built on top of step 4 (`2c189d7`) by
+  Basheer's choice; that session's E2E can start after a Dev backend
+  restart.

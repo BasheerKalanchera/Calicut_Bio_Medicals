@@ -82,9 +82,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - The other session owns Target vs Actuals (planning files + the PO date
   box on the Opportunity page): check `git status` before every save and
   commit; stay out of their files.
-- **Next:** step 0 commits (plan; then standards rule, Backlog, archive,
-  handover, `scripts/query_audit.py`), then measure and fix the
-  Opportunity page.
+- Step 0 docs committed and pushed as `afa1b45` (plan, standards rule,
+  Backlog, Progress-Archive, handover).
+- `scripts/query_audit.py` (D4) written and tested, **not committed**
+  (own commit; Basheer's yes still pending). Dev test data: Basheer added
+  stakeholder "Ajmal" and a PDF to Vivek's "New USG m/c" so the Sales
+  Staff view covers every part of the Opportunity page.
+- Fix 1 (Opportunity page + Product documents) committed and pushed
+  2026-10-06 as `90ae253`; on `main` only, not yet on UAT. Results:
+  Progress-Archive-2026-10 and the plan's section 6. The Target vs
+  Actuals session may now restart the Dev backend and start its E2E.
+- **Next:** UAT trip 1 for `90ae253` by the hotfix route on the morning
+  of Wed 2026-10-07 (Basheer's timing; own approval, plan D-list). Fix 2
+  (Activity comments + Daily Report) can be built on Dev meanwhile.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
