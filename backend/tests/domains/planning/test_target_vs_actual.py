@@ -514,12 +514,23 @@ def test_roster_counts_a_rejected_revision_at_its_last_approved_total(monkeypatc
     assert (resp.total_lakhs, resp.not_submitted_count) == (Decimal("30"), 1)
 
 
-def test_roster_total_counts_a_plan_owner_outside_the_roster(monkeypatch):
+def test_roster_lists_a_former_member_after_the_team_and_outside_n_of_m(monkeypatch):
+    # Moved SBU or deactivated: their plan still counts, so they get a row
+    # (after the team) the total can be traced to -- but not in "N of M".
+    asha, outsider = uuid.uuid4(), uuid.uuid4()
+    plan = _plan(outsider, "Aaron", [(uuid.uuid4(), "H1", "12")], status="PENDING_APPROVAL")
+    resp = _roster(_repo(roster=[(asha, "Asha")], list_plans=[plan]), monkeypatch)
+    assert [(p.display_name, p.on_team) for p in resp.people] == [("Asha", True), ("Aaron", False)]
+    assert resp.people[1].plan.id is plan.id and resp.people[1].counted_lakhs == Decimal("12")
+    assert (resp.total_lakhs, resp.roster_count, resp.not_submitted_count) == (Decimal("12"), 1, 1)
+
+
+def test_roster_leaves_out_a_former_members_private_draft(monkeypatch):
     outsider = uuid.uuid4()
-    plan = _plan(outsider, "Ravi", [(uuid.uuid4(), "H1", "12")], status="PENDING_APPROVAL")
+    plan = _plan(outsider, "Ravi", [(uuid.uuid4(), "H1", "12")], status="DRAFT")
     resp = _roster(_repo(list_plans=[plan]), monkeypatch)
     assert resp.people == []
-    assert (resp.total_lakhs, resp.roster_count) == (Decimal("12"), 0)
+    assert (resp.total_lakhs, resp.roster_count) == (Decimal(0), 0)
 
 
 def test_roster_and_target_vs_actuals_agree_on_people_statuses_and_total(monkeypatch):
@@ -535,10 +546,11 @@ def test_roster_and_target_vs_actuals_agree_on_people_statuses_and_total(monkeyp
     )
     card = _run(repo, IN_QUARTER, monkeypatch)
     roster = _roster(repo, monkeypatch)
-    assert [(p.display_name, p.plan_status) for p in roster.people] == [
-        (p.display_name, p.plan_status) for p in card.people
-    ]
-    assert [p.counted_lakhs for p in roster.people] == [p.planned_lakhs for p in card.people]
+    team = [p for p in roster.people if p.on_team]
+    assert [(p.display_name, p.plan_status) for p in team] == [(p.display_name, p.plan_status) for p in card.people]
+    assert [p.counted_lakhs for p in team] == [p.planned_lakhs for p in card.people]
+    # The former member's row is what makes the rows add up to the total.
+    assert sum((p.counted_lakhs for p in roster.people), Decimal(0)) == roster.total_lakhs
     assert roster.total_lakhs == card.planned_lakhs == Decimal("75")
     assert (roster.roster_count, roster.not_submitted_count) == (card.roster_count, card.not_submitted_count)
 

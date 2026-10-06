@@ -271,7 +271,7 @@ export default function TargetPlanningScreen() {
 
   // Quarter view: everyone in the viewer's scope, plan or not, and the same
   // total the Target vs Actuals card shows (Target-Coverage-Roster plan).
-  const { data: roster } = useQuery({
+  const { data: roster, isError: rosterFailed } = useQuery({
     queryKey: ["target-plans", "roster", rollupSbuId, period],
     queryFn: () => getTargetRoster(rollupSbuId as string, period),
     enabled: showRollup && !isAnnual && !!rollupSbuId,
@@ -288,19 +288,34 @@ export default function TargetPlanningScreen() {
       enabled: showRollup && isAnnual && !!rollupSbuId,
     })),
   });
+  // The totals come from the quarter rosters, so each quarter counts exactly
+  // as the Quarter view and the Target vs Actuals card do: no drafts, a
+  // rejected revision at its last approved total (code review 2026-10-06).
+  // The per-quarter rows below still show each plan as filed.
+  const annualRosterQueries = useQueries({
+    queries: yearQuarters.map((q) => ({
+      queryKey: ["target-plans", "roster", rollupSbuId, q],
+      queryFn: () => getTargetRoster(rollupSbuId as string, q),
+      enabled: showRollup && isAnnual && !!rollupSbuId,
+    })),
+  });
+  const countedByUser = new Map<string, number>();
+  for (const q of annualRosterQueries) {
+    for (const p of q.data?.people ?? []) {
+      countedByUser.set(p.user_id, (countedByUser.get(p.user_id) ?? 0) + Number(p.counted_lakhs));
+    }
+  }
   const teamAnnualByUser = new Map<string, AnnualPerson>();
   for (const q of annualTeamQueries) {
     for (const t of q.data ?? []) {
       if (!teamAnnualByUser.has(t.user_id)) {
-        teamAnnualByUser.set(t.user_id, { user: t.user, total: 0, byQuarter: {} });
+        teamAnnualByUser.set(t.user_id, { user: t.user, total: countedByUser.get(t.user_id) ?? 0, byQuarter: {} });
       }
-      const entry = teamAnnualByUser.get(t.user_id)!;
-      entry.total += Number(t.target_amount_lakhs);
-      entry.byQuarter[t.planning_period] = t;
+      teamAnnualByUser.get(t.user_id)!.byQuarter[t.planning_period] = t;
     }
   }
   const teamAnnualList = Array.from(teamAnnualByUser.values()).sort((a, b) => b.total - a.total);
-  const annualRollupTotal = teamAnnualList.reduce((sum, p) => sum + p.total, 0);
+  const annualRollupTotal = annualRosterQueries.reduce((sum, q) => sum + Number(q.data?.total_lakhs ?? 0), 0);
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["target-plans"] });
@@ -584,12 +599,23 @@ export default function TargetPlanningScreen() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(roster?.people ?? []).map((p) => {
+                    {(roster?.people ?? []).map((p, i, people) => {
                       const t = p.plan;
                       const open = t !== null && expanded.has(t.id);
                       const note = t && previousApprovedNote(p);
+                      // Former members come last (server order); head their group once.
+                      const firstFormer = !p.on_team && (i === 0 || people[i - 1].on_team);
                       return (
                         <Fragment key={p.user_id}>
+                          {firstFormer && (
+                            <TableRow>
+                              <TableCell colSpan={5}>
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                  No longer on this team — their plans still count in the total
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          )}
                           <TableRow sx={open ? { "& > td": { borderBottom: "none" } } : undefined}>
                             <TableCell padding="checkbox">
                               {t && <ExpandToggle open={open} onClick={() => toggleExpanded(t.id)} />}
@@ -618,6 +644,13 @@ export default function TargetPlanningScreen() {
                         </Fragment>
                       );
                     })}
+                    {rosterFailed && !roster && (
+                      <TableRow>
+                        <TableCell colSpan={5}>
+                          <Typography color="error">Couldn't load the team list. Please refresh.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
                     {roster && roster.people.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5}>

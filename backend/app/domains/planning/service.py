@@ -497,6 +497,11 @@ class _RosterEntry:
         return self.status in SUBMITTED_PLAN_STATUSES or self.approved_fallback
 
 
+def _not_submitted(roster: list[_RosterEntry]) -> int:
+    """The N in "N of M haven't submitted" -- one definition for both screens."""
+    return sum(1 for e in roster if e.on_roster and not e.submitted)
+
+
 def _build_roster(
     repo: TargetVsActualRepository, current_user: UserProfile, sbu_id: uuid.UUID, planning_period: str
 ) -> list[_RosterEntry]:
@@ -712,7 +717,7 @@ class TargetVsActualService:
         # (another SBU's person, someone since deactivated) stay in the headline
         # and zone/brand tables; only the person rows follow the roster.
         shown = [r for p, r in zip(ordered, rows, strict=True) if p.user_id in roster_ids]
-        not_submitted = sum(1 for e in roster if e.on_roster and not e.submitted)
+        not_submitted = _not_submitted(roster)
         planned = sum((r.planned_lakhs for r in rows), _ZERO)
         po_received = sum((r.po_received_lakhs for r in rows), _ZERO)
         won = sum((r.won_lakhs for r in rows), _ZERO)
@@ -787,16 +792,24 @@ class TargetVsActualService:
 
     def get_roster(self, sbu_id: uuid.UUID, planning_period: str, *, current_user: UserProfile) -> TargetRosterResponse:
         """Target Planning's quarter roster: everyone Target vs Actuals lists,
-        with their plan where the caller may see it, and the same total."""
+        with their plan where the caller may see it, and the same total.
+        Plan owners no longer on the team (moved SBU, deactivated) follow as
+        on_team=False rows, so the rows explain the total and their plans can
+        still be opened (code review 2026-10-06, Basheer)."""
         roster = _build_roster(self.repository, current_user, sbu_id, planning_period)
         rows = []
-        for e in sorted((e for e in roster if e.on_roster), key=lambda e: e.display_name.lower()):
+        # Team members first, then former members; each group by name.
+        for e in sorted(roster, key=lambda e: (not e.on_roster, e.display_name.lower())):
             # Drafts are private to their owner: a manager sees only "Draft".
             visible = e.plan is not None and (e.status is not RosterStatus.DRAFT or e.user_id == current_user.id)
+            if not e.on_roster and not visible:
+                # A former member's private draft: counts nothing, shows nothing.
+                continue
             rows.append(
                 TargetRosterPerson(
                     user_id=e.user_id,
                     display_name=e.display_name,
+                    on_team=e.on_roster,
                     plan_status=e.status,
                     counted_lakhs=e.counted,
                     previous_approved_total_lakhs=e.plan.previous_approved_total_lakhs if visible else None,
@@ -807,8 +820,8 @@ class TargetVsActualService:
             sbu_id=sbu_id,
             planning_period=planning_period,
             total_lakhs=sum((e.counted for e in roster), _ZERO),
-            roster_count=len(rows),
-            not_submitted_count=sum(1 for e in roster if e.on_roster and not e.submitted),
+            roster_count=sum(1 for e in roster if e.on_roster),
+            not_submitted_count=_not_submitted(roster),
             people=rows,
         )
 

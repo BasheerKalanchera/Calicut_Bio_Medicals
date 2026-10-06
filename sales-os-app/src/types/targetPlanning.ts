@@ -158,6 +158,9 @@ export type RosterStatus = "NOT_STARTED" | "DRAFT" | "PENDING_APPROVAL" | "APPRO
 export interface TargetRosterPerson {
   user_id: string;
   display_name: string;
+  // false: no longer on the team (moved SBU, deactivated); listed last, their
+  // plan still counts in the total, not part of "N of M".
+  on_team: boolean;
   plan_status: RosterStatus;
   // What counts towards the total: waiting/approved plan's total, a rejected
   // revision's last approved total (BR-PL-05), else 0.

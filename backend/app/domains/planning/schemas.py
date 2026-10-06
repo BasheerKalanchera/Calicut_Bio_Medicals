@@ -339,6 +339,9 @@ class TargetRosterPerson(BaseModel):
 
     user_id: uuid.UUID
     display_name: str
+    # False: a plan owner no longer on the team (moved SBU, deactivated) --
+    # their plan still counts in the total; not part of "N of M".
+    on_team: bool
     plan_status: RosterStatus
     # What counts towards the total: the plan's total while waiting or
     # approved, the last approved total for a rejected revision (BR-PL-05),
