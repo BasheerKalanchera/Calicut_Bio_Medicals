@@ -91,6 +91,8 @@ ID_QUERIES = {
     "stakeholder_id": "SELECT stakeholder_id FROM opportunity_stakeholder GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1",
     "activity_id": "SELECT activity_id FROM activity_comment GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1",
     "zone_id": "SELECT id FROM zone WHERE name='North Kerala' LIMIT 1",
+    # Not a path id: the Pipeline's stage filter (VARIANTS below).
+    "stage_id": "SELECT stage_id FROM opportunity GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1",
     "user_id": "SELECT id FROM user_profile WHERE display_name='Basheer K' LIMIT 1",
     # Not a path id: the Daily Activity Report's day (busiest on Dev, so the
     # before/after comparison has rows to compare); fills QUERY_PARAMS below.
@@ -102,6 +104,7 @@ QUERY_PARAMS = {
     P + "/master-data/zones/search-for-hospital": {"q": "Ker"},
     P + "/accounts/counts": {"ids": ACC},
     P + "/stakeholders/counts": {"ids": "a3d390a7-40c0-43a5-9eee-79edd08f3188"},
+    P + "/opportunities/pipeline": {"page_size": 500},  # the screen's own size (listPipeline)
     P + "/activities": {},  # report_date: busiest day, set from ID_QUERIES in main()
     P + "/admin/zones/name-check": {"name": "Calicut"},
     P + "/reference/brands": {"sbu_id": IMG},
@@ -113,6 +116,17 @@ QUERY_PARAMS = {
     P + "/planning/targets/overlaps": {"sbu_id": IMG, "planning_period": "2026-Q3", "account_ids": [ACC]},
     P + "/planning/targets/brand-rollups": {"brand_ids": [BRAND], "planning_period": "2026-Q3"},
     P + "/planning/brand-vendor-targets": {"planning_period": "2026-Q3"},
+}
+# Extra runs of a route with filters that take a different path through the
+# database (Query Load Fixes fix 3). "{key}" values are filled from the ids
+# above. Results and saved responses are keyed "<user> GET <path> [<label>]".
+VARIANTS = {
+    P + "/opportunities/pipeline": {
+        "zone": {"zone_id": "{zone_id}"},
+        "stage": {"stage_id": "{stage_id}"},
+        "team only": {"owner_team_only": "true"},  # every report drill-down
+        "product": {"product_id": "{product_id}"},
+    },
 }
 
 engine = create_engine(ENV["DATABASE_URL"], pool_size=1, max_overflow=0)
@@ -262,42 +276,15 @@ def main() -> int:
                 results.append({"user": name, "path": path, "status": "no-id:" + ",".join(missing)})
                 continue
             url = re.sub(r"{(\w+)}", lambda m, ids=ids: ids[m.group(1)], path)
-            captured.clear()
-            planning_ms.clear()
-            blocked.clear()
-            resp = client.get(url, params=QUERY_PARAMS.get(path, {}), headers={"Authorization": "Bearer x"})
-            joins = [s.upper().count(" JOIN ") for s, _ in captured]
-            row = {
-                "user": name,
-                "path": path,
-                "status": resp.status_code,
-                "detail": resp.text[:160] if resp.status_code >= 400 else "",
-                "statements": len(captured),
-                "max_joins": max(joins, default=0),
-                "total_joins": sum(joins),
-                "max_chars": max((len(s) for s, _ in captured), default=0),
-                "plan_ms_max": round(max(planning_ms, default=0.0), 1),
-                "plan_ms_total": round(sum(p for p in planning_ms if p > 0), 1),
-                "explain_failed": sum(1 for p in planning_ms if p < 0),
-                "resp_bytes": len(resp.content),
-                "blocked_writes": list(blocked),
-            }
-            key = f"{name} GET {path}"
-            body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text
-            responses[key] = {"status": resp.status_code, "body": body}
-            if args.compare_responses:
-                before = saved.get(key)
-                diff = "not in saved responses" if before is None else _diff(before, responses[key])
-                row["same_as_before"] = diff is None
-                if diff:
-                    row["difference"] = diff
-                    changed += 1
-            results.append(row)
-            print(
-                f"{name[:12]:12} {resp.status_code} {row['statements']:3} st {row['max_joins']:3} j "
-                f"{row['plan_ms_max']:7.1f} ms  {path}"
-                + ("" if row.get("same_as_before", True) else f"  CHANGED: {row['difference']}")
-            )
+            runs = [("", QUERY_PARAMS.get(path, {}))] + [
+                (label, {**QUERY_PARAMS.get(path, {}), **extra}) for label, extra in VARIANTS.get(path, {}).items()
+            ]
+            for label, raw_params in runs:
+                params = {
+                    k: re.sub(r"{(\w+)}", lambda m, ids=ids: ids[m.group(1)], v) if isinstance(v, str) else v
+                    for k, v in raw_params.items()
+                }
+                changed += _run(client, name, path, label, url, params, saved, responses, results, args)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=1), encoding="utf-8")
@@ -310,6 +297,49 @@ def main() -> int:
         print(f"\nResponses compared: {len(responses)}, changed: {changed}")
         return 1 if changed else 0
     return 0
+
+
+def _run(client, name, path, label, url, params, saved, responses, results, args) -> int:
+    """One request: measure it, record it, compare it. Returns 1 if changed."""
+    captured.clear()
+    planning_ms.clear()
+    blocked.clear()
+    resp = client.get(url, params=params, headers={"Authorization": "Bearer x"})
+    joins = [s.upper().count(" JOIN ") for s, _ in captured]
+    shown = f"{path} [{label}]" if label else path
+    row = {
+        "user": name,
+        "path": shown,
+        "status": resp.status_code,
+        "detail": resp.text[:160] if resp.status_code >= 400 else "",
+        "statements": len(captured),
+        "max_joins": max(joins, default=0),
+        "total_joins": sum(joins),
+        "max_chars": max((len(s) for s, _ in captured), default=0),
+        "plan_ms_max": round(max(planning_ms, default=0.0), 1),
+        "plan_ms_total": round(sum(p for p in planning_ms if p > 0), 1),
+        "explain_failed": sum(1 for p in planning_ms if p < 0),
+        "resp_bytes": len(resp.content),
+        "blocked_writes": list(blocked),
+    }
+    key = f"{name} GET {shown}"
+    body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else resp.text
+    responses[key] = {"status": resp.status_code, "body": body}
+    changed = 0
+    if args.compare_responses:
+        before = saved.get(key)
+        diff = "not in saved responses" if before is None else _diff(before, responses[key])
+        row["same_as_before"] = diff is None
+        if diff:
+            row["difference"] = diff
+            changed = 1
+    results.append(row)
+    print(
+        f"{name[:12]:12} {resp.status_code} {row['statements']:3} st {row['max_joins']:3} j "
+        f"{row['plan_ms_max']:7.1f} ms  {shown}"
+        + ("" if row.get("same_as_before", True) else f"  CHANGED: {row['difference']}")
+    )
+    return changed
 
 
 if __name__ == "__main__":
