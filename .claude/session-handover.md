@@ -86,27 +86,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - `scripts/query_audit.py` (D4) committed 2026-10-06 as `b06a043`. Dev test data: Basheer added
   stakeholder "Ajmal" and a PDF to Fazal's "New USG m/c" (aster medicity) so the Sales
   Staff view covers every part of the Opportunity page.
-- Fix 1 (Opportunity page + Product documents) committed and pushed
-  2026-10-06 as `90ae253`; on `main` only, not yet on UAT. Results:
-  Progress-Archive-2026-10 and the plan's section 6. The Target vs
-  Actuals session may now restart the Dev backend and start its E2E.
-- **Next:** UAT trip 1 for `90ae253` by the hotfix route on the morning
-  of Wed 2026-10-07 (Basheer's timing; own approval, plan D-list).
-  Order: Claude times 3–5 busy Opportunities + one product's documents
-  in Chrome on UAT (Basheer picks them), deploy, time the same pages
-  again (plan step 7, before/after note). If fix 2 is committed and
-  checked on Dev by then, it rides in the same hotfix (D9 exception),
-  and trip 2's pages are timed too.
-- Fix 2 (Activity comments + Daily Report) built and checked on Dev
-  2026-10-06; committed and pushed as `bc09b28` (main only, not UAT):
-  activity `repository.py`, `schemas.py`, `test_activity_repository.py`.
-  Old-vs-fixed run done as Haroon: same screens/data, Daily Report 57 → 6
-  joins (72 → 4.7 ms), comments 61 → 5 (42 → 1.1 ms). Detail:
-  Progress-Archive-2026-10 and the plan's section 6.
-  **Next:** rides UAT trip 1 on 2026-10-07 morning (D9); time trip 2 pages too.
-- Regression check of fixes 1 + 2 on Dev done 2026-10-06 as Haroon (plan
-  section 7, every entry point): 17 Pass, 3 not run with reasons (no data
-  on Dev), 0 fail. Detail: Progress-Archive-2026-10.
+- Fixes 1 + 2 (`90ae253`, `bc09b28`) on UAT 2026-10-07 (`30d545f`;
+  merged back into `main` as `18b9148`); detail in Progress-Archive-2026-10
+  and the plan's section 6.
 - **Next:** Fix 3 (Pipeline): measure first with `query_audit.py --only
   /opportunities/pipeline --save-responses <scratchpad>`, then fix,
   compare, tests, code-review, old-vs-fixed run, `fix:` commit.

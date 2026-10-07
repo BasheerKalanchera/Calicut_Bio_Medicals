@@ -1071,3 +1071,42 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - **Records misnamed (P19, P1):** "Vivek's New USG m/c" is Fazal's; "Test
   opportunity" given without saying it is Lost and reached by a reminder.
 - **Silences (P15):** "hasn't heard from you" nudges during code lookups.
+
+## 2026-10-07 — Query Load Fixes UAT trip 1 (fixes 1 + 2, D9)
+
+- Cherry-picked `90ae253` and `bc09b28` onto `uat` `fa61bd8` in a
+  temporary worktree: `34737e7`, `4e8c47d`. One import conflict: kept
+  `delete`, since UAT still has `replace_stakeholders` (removed on `main`
+  in `9a6d98d`).
+- Full pytest on the UAT copy: 5 failures, AttributeError
+  `full_payment_confirmed_by_user`. That relationship is `main`-only
+  (`71f07b5`, payment gate BR-OP-17); without this run every Opportunity
+  page on UAT would have broken. Fixed by `30d545f` (UAT only): the
+  payment-confirmer join dropped, query-size test 11 → 10 joins. Re-run:
+  989 passed. Ruff: 51 findings, all already on `fa61bd8`; changed files
+  clean.
+- Pushed `fa61bd8..30d545f` to `uat`; Render live 07:49 IST. Basheer's
+  screen check passed (Opportunity tabs, product documents, comments,
+  Daily Report).
+- Timing on UAT in Chrome as Basheer, one reload per round, seconds:
+
+  | Page | Before | After |
+  |---|---|---|
+  | Opportunity header | 0.7–1.5 | 0.62–0.74 |
+  | Products | 0.6–1.9 | 0.51–0.66 |
+  | Splits | 0.6–1.6 | 0.49–0.65 |
+  | Stakeholders | 0.6–1.4 | 0.53–1.0 |
+  | Documents | 0.75–1.4 | 0.55–0.70 |
+  | Aeonmed product documents | 0.84 / 1.06 | 0.55 |
+  | Comments | 0.9–1.6 | 0.57–0.68 |
+  | Daily Report, 5 Oct | 5.6 / 2.1 | 0.72 / 0.70 |
+
+  About half the time on most screens; Daily Report 3–8×. Smaller than
+  Next Actions (~4×) because about 0.5 s of every request is the
+  Render ↔ Supabase round trip (`/auth/me` ~0.5 s); the database-load cut
+  (57 → 6 and 61 → 5 joins) was the main aim. Noisy readings came from
+  the background burst (zones tree ~9 s): fix 4's territory.
+- `uat` merged back into `main` as `18b9148`: conflicts resolved to
+  `main` (11 joins, `replace_stakeholders` stays removed); the merged
+  tree is identical to `af67dd3`; pytest 1203 passed. UAT gets the 11th
+  join back when BR-OP-17 is promoted.

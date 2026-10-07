@@ -174,11 +174,11 @@ Marketing Leads.
 
 | Row | Fixed on `main` | On UAT | Before → after |
 |---|---|---|---|
-| Opportunity page (open + save) | `90ae253` (2026-10-06) | — | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
-| Activity comments | `bc09b28` (2026-10-06) | — | Thread 61 → 5 joins, ~35–42 → ~1 ms; old vs fixed code as Haroon: same 6 comments and writers |
+| Opportunity page (open + save) | `90ae253` (2026-10-06) | `34737e7` + `30d545f` (2026-10-07; no payment-confirmer join, so 10 joins). Header 0.7–1.5 → 0.62–0.74 s; tabs 0.6–1.9 → 0.49–1.0 s | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
+| Activity comments | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 0.9–1.6 → 0.57–0.68 s | Thread 61 → 5 joins, ~35–42 → ~1 ms; old vs fixed code as Haroon: same 6 comments and writers |
 | Opportunity Pipeline | — | — | |
-| Daily Activity Report | `bc09b28` (2026-10-06) | — | 57 → 6 joins, 11 → 4 statements, 60–77 → ~5 ms; old vs fixed code as Haroon (27 Aug): same 14 cards |
-| Product documents | `90ae253` (with Opportunity documents) | — | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
+| Daily Activity Report | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 5 Oct: 5.6 / 2.1 → 0.72 / 0.70 s | 57 → 6 joins, 11 → 4 statements, 60–77 → ~5 ms; old vs fixed code as Haroon (27 Aug): same 14 cards |
+| Product documents | `90ae253` (with Opportunity documents) | `34737e7` (2026-10-07). 0.84 / 1.06 → 0.55 s | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
 | Audit Log | — | — | |
 | Zone tree | — | — | |
 | Account workspace (remove) | — | — | |
