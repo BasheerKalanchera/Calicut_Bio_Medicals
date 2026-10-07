@@ -97,11 +97,11 @@ def _repo(**overrides) -> MagicMock:
     repo.roster.return_value = []
     repo.list_plans.return_value = []
     repo.zone_of_accounts.return_value = {}
-    repo.won_by_owner_account.return_value = []
-    repo.won_by_owner_brand.return_value = []
-    repo.po_received_by_owner.return_value = []
+    repo.won_by_person_account.return_value = []
+    repo.won_by_person_brand.return_value = []
+    repo.po_received_by_person.return_value = []
     repo.no_po_date_counts.return_value = []
-    repo.expected_by_owner.return_value = []
+    repo.expected_by_person.return_value = []
     repo.late_opportunities.return_value = []
     repo.undated_counts.return_value = []
     repo.active_sbu_targets.return_value = {}
@@ -127,7 +127,7 @@ def test_quarter_state_follows_today(monkeypatch):
 def test_won_window_is_ist_midnights_of_the_quarter(monkeypatch):
     repo = _repo()
     _run(repo, IN_QUARTER, monkeypatch)
-    _, _, start, end = repo.won_by_owner_account.call_args.args
+    _, _, start, end = repo.won_by_person_account.call_args.args
     assert start.isoformat() == "2026-10-01T00:00:00+05:30"
     assert end.isoformat() == "2027-01-01T00:00:00+05:30"
 
@@ -137,7 +137,7 @@ def test_owner_credit_unplanned_line_and_percent(monkeypatch):
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(h1, "Hospital A", "40"), (h2, "Hospital B", "10")])],
-        won_by_owner_account=[
+        won_by_person_account=[
             (rep, "Asha", h1, None, None, Decimal("10.00")),
             (rep, "Asha", other, None, None, Decimal("5.00")),  # not on her plan
         ],
@@ -191,8 +191,8 @@ def test_owner_outside_the_roster_has_no_row_but_still_counts_in_totals(monkeypa
     # Someone from another SBU, or since deactivated, who won an Opportunity here.
     outsider = uuid.uuid4()
     repo = _repo(
-        won_by_owner_account=[(outsider, "Ravi", uuid.uuid4(), None, None, Decimal("7.00"))],
-        po_received_by_owner=[(outsider, "Ravi", Decimal("3.00"))],
+        won_by_person_account=[(outsider, "Ravi", uuid.uuid4(), None, None, Decimal("7.00"))],
+        po_received_by_person=[(outsider, "Ravi", Decimal("3.00"))],
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
     assert resp.people == []
@@ -277,8 +277,8 @@ def test_po_received_is_separate_from_won_and_percent_uses_won_only(monkeypatch)
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
-        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
-        po_received_by_owner=[(rep, "Asha", Decimal("55.00"))],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
+        po_received_by_person=[(rep, "Asha", Decimal("55.00"))],
         no_po_date_counts=[(rep, "Asha", 2)],
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
@@ -287,7 +287,7 @@ def test_po_received_is_separate_from_won_and_percent_uses_won_only(monkeypatch)
     assert asha.percent_of_target == Decimal("20.00")
     assert (asha.no_po_date_count, resp.no_po_date_count) == (2, 2)
     assert resp.po_received_lakhs == Decimal("55.00")
-    q_start, q_end = repo.po_received_by_owner.call_args.args[2:]
+    q_start, q_end = repo.po_received_by_person.call_args.args[2:]
     assert (q_start, q_end) == (date(2026, 10, 1), date(2026, 12, 31))
 
 
@@ -317,7 +317,7 @@ def test_sbu_manager_gets_their_own_sbus_row_only(monkeypatch):
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
-        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("50.00"))],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("50.00"))],
         active_sbu_targets={SBU_ID: Decimal("200")},
         summary_totals=(Decimal("100"), Decimal("0"), Decimal("50.00")),
     )
@@ -335,7 +335,7 @@ def test_sbu_row_is_sbu_wide_not_the_callers_team(monkeypatch):
     rep, acc = uuid.uuid4(), uuid.uuid4()
     repo = _repo(
         roster=[(rep, "Asha")],
-        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("10.00"))],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("10.00"))],
         active_sbu_targets={SBU_ID: Decimal("200")},
         summary_totals=(Decimal("0"), Decimal("0"), Decimal("60.00")),  # 10 + GM's 50
     )
@@ -391,14 +391,16 @@ def test_current_quarter_expected_includes_late_and_flags_them(monkeypatch):
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
-        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
-        expected_by_owner=[(rep, "Asha", Decimal("30.456"))],
-        late_opportunities=[(opp, "Ventilators", acc, "A", rep, "Asha", date(2026, 10, 2), Decimal("12.00"))],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("20.00"))],
+        expected_by_person=[(rep, "Asha", Decimal("30.456"))],
+        late_opportunities=[
+            (opp, "Ventilators", acc, "A", rep, "Asha", rep, "Asha", date(2026, 10, 2), Decimal("12.00"), Decimal(100))
+        ],
         undated_counts=[(rep, "Asha", 2)],
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
     # No lower bound on the closing date in the current quarter: late ones count.
-    assert repo.expected_by_owner.call_args.args[2:] == (None, date(2026, 12, 31))
+    assert repo.expected_by_person.call_args.args[2:] == (None, date(2026, 12, 31))
     asha = resp.people[0]
     assert asha.expected_lakhs == Decimal("30.46")
     assert asha.likely_finish_lakhs == Decimal("50.46")
@@ -410,7 +412,7 @@ def test_current_quarter_expected_includes_late_and_flags_them(monkeypatch):
 def test_future_quarter_expected_is_bounded_both_sides(monkeypatch):
     repo = _repo()
     _run(repo, date(2026, 9, 1), monkeypatch)
-    assert repo.expected_by_owner.call_args.args[2:] == (date(2026, 10, 1), date(2026, 12, 31))
+    assert repo.expected_by_person.call_args.args[2:] == (date(2026, 10, 1), date(2026, 12, 31))
     repo.late_opportunities.assert_not_called()
 
 
@@ -419,10 +421,10 @@ def test_past_quarter_has_no_expected_and_finish_equals_won(monkeypatch):
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
-        won_by_owner_account=[(rep, "Asha", acc, None, None, Decimal("80.00"))],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("80.00"))],
     )
     resp = _run(repo, date(2027, 2, 1), monkeypatch)
-    repo.expected_by_owner.assert_not_called()
+    repo.expected_by_person.assert_not_called()
     repo.late_opportunities.assert_not_called()
     assert resp.expected_lakhs is None
     assert resp.people[0].expected_lakhs is None
@@ -434,7 +436,7 @@ def test_zone_totals_use_the_hospitals_zone(monkeypatch):
     repo = _repo(
         list_plans=[_plan(rep, "Asha", [(acc, "A", "40")])],
         zone_of_accounts={acc: (north, "North Kerala")},
-        won_by_owner_account=[(rep, "Asha", acc, north, "North Kerala", Decimal("10.00"))],
+        won_by_person_account=[(rep, "Asha", acc, north, "North Kerala", Decimal("10.00"))],
     )
     zones = _run(repo, IN_QUARTER, monkeypatch).zones
     assert [(z.zone_name, z.planned_lakhs, z.won_lakhs) for z in zones] == [
@@ -447,13 +449,96 @@ def test_brand_planned_vs_won(monkeypatch):
     repo = _repo(
         roster=[(rep, "Asha")],
         list_plans=[_plan(rep, "Asha", [(acc, "A", "40")], brand_splits=[(brand, "Philips", "25")])],
-        won_by_owner_brand=[(rep, brand, "Philips", Decimal("9.00"))],
+        won_by_person_brand=[(rep, brand, "Philips", Decimal("9.00"))],
     )
     resp = _run(repo, IN_QUARTER, monkeypatch)
     assert [(b.brand_name, b.planned_lakhs, b.won_lakhs) for b in resp.brands] == [
         ("Philips", Decimal("25"), Decimal("9.00"))
     ]
     assert resp.people[0].brands[0].won_lakhs == Decimal("9.00")
+
+
+# --- split credit (BR-FIN-09) -----------------------------------------------
+
+
+def test_shared_win_lands_on_each_sharers_own_plan_or_unplanned(monkeypatch):
+    # A 10 L win at Hospital A, 60/40: Asha planned A, Vivek didn't.
+    asha, vivek, acc, north, brand = (uuid.uuid4() for _ in range(5))
+    repo = _repo(
+        roster=[(asha, "Asha"), (vivek, "Vivek")],
+        list_plans=[_plan(asha, "Asha", [(acc, "A", "20")]), _plan(vivek, "Vivek", [(uuid.uuid4(), "B", "20")])],
+        zone_of_accounts={acc: (north, "North Kerala")},
+        won_by_person_account=[
+            (asha, "Asha", acc, north, "North Kerala", Decimal("6.00")),
+            (vivek, "Vivek", acc, north, "North Kerala", Decimal("4.00")),
+        ],
+        won_by_person_brand=[(asha, brand, "Philips", Decimal("6.00")), (vivek, brand, "Philips", Decimal("4.00"))],
+        po_received_by_person=[(asha, "Asha", Decimal("6.00")), (vivek, "Vivek", Decimal("4.00"))],
+    )
+    resp = _run(repo, IN_QUARTER, monkeypatch)
+    a, v = resp.people
+    assert [(h.account_name, h.won_lakhs) for h in a.hospitals] == [("A", Decimal("6.00"))]
+    assert ("Unplanned", Decimal("4.00")) in [(h.account_name, h.won_lakhs) for h in v.hospitals]
+    assert (a.po_received_lakhs, v.po_received_lakhs) == (Decimal("6.00"), Decimal("4.00"))
+    # Group figures count the Opportunity once, at full value.
+    assert (resp.won_lakhs, resp.po_received_lakhs) == (Decimal("10.00"), Decimal("10.00"))
+    assert [(z.zone_name, z.won_lakhs) for z in resp.zones if z.zone_name == "North Kerala"] == [
+        ("North Kerala", Decimal("10.00"))
+    ]
+    assert [(b.brand_name, b.won_lakhs) for b in resp.brands] == [("Philips", Decimal("10.00"))]
+
+
+def test_shares_round_per_row_but_totals_add_back_to_the_full_value(monkeypatch):
+    # 10 L three ways: each row shows 3.33, the total stays 10.00, not 9.99.
+    people = [(uuid.uuid4(), n) for n in ("Asha", "Bindu", "Vivek")]
+    third = Decimal(10) / 3
+    repo = _repo(
+        roster=people,
+        won_by_person_account=[(u, n, uuid.uuid4(), None, None, third) for u, n in people],
+        expected_by_person=[(u, n, third) for u, n in people],
+    )
+    resp = _run(repo, IN_QUARTER, monkeypatch)
+    assert [p.won_lakhs for p in resp.people] == [Decimal("3.33")] * 3
+    assert [p.expected_lakhs for p in resp.people] == [Decimal("3.33")] * 3
+    assert (resp.won_lakhs, resp.expected_lakhs) == (Decimal("10.00"), Decimal("10.00"))
+
+
+def test_late_shared_opportunity_shows_on_every_sharers_row(monkeypatch):
+    fazal, vivek, acc, opp = (uuid.uuid4() for _ in range(4))
+    opp_cols = (opp, "New USG m/c", acc, "aster medicity")
+    owner_cols = (fazal, "Fazal", date(2026, 10, 2), Decimal("10"))
+    repo = _repo(
+        roster=[(fazal, "Fazal"), (vivek, "Vivek")],
+        late_opportunities=[
+            (*opp_cols, fazal, "Fazal", *owner_cols, Decimal(60)),
+            (*opp_cols, vivek, "Vivek", *owner_cols, Decimal(40)),
+        ],
+    )
+    f, v = _run(repo, IN_QUARTER, monkeypatch).people
+    (fl,), (vl,) = f.late_opportunities, v.late_opportunities
+    assert (fl.owner_name, fl.share_percentage, fl.share_lakhs) == (None, Decimal(60), Decimal("6.00"))
+    assert (vl.owner_name, vl.share_percentage, vl.share_lakhs) == ("Fazal", Decimal(40), Decimal("4.00"))
+    assert vl.value_lakhs == Decimal("10")
+
+
+def test_late_opportunity_reaches_an_owner_with_no_share(monkeypatch):
+    # Fazal owns it but split it 100 % to Vivek: Fazal still sees the late
+    # flag (he must update it), at 0 %; his Won and Expected stay untouched.
+    fazal, vivek, acc, opp = (uuid.uuid4() for _ in range(4))
+    opp_cols = (opp, "New USG m/c", acc, "aster medicity")
+    owner_cols = (fazal, "Fazal", date(2026, 10, 2), Decimal("10"))
+    repo = _repo(
+        roster=[(fazal, "Fazal"), (vivek, "Vivek")],
+        late_opportunities=[
+            (*opp_cols, fazal, "Fazal", *owner_cols, Decimal(0)),
+            (*opp_cols, vivek, "Vivek", *owner_cols, Decimal(100)),
+        ],
+    )
+    f, v = _run(repo, IN_QUARTER, monkeypatch).people
+    (fl,), (vl,) = f.late_opportunities, v.late_opportunities
+    assert (fl.owner_name, fl.share_percentage, fl.share_lakhs) == (None, Decimal(0), Decimal("0.00"))
+    assert (vl.owner_name, vl.share_percentage, vl.share_lakhs) == ("Fazal", Decimal(100), Decimal("10.00"))
+    assert (f.won_lakhs, f.expected_lakhs) == (Decimal("0.00"), Decimal("0.00"))
 
 
 # --- Target Planning roster (Target-Coverage-Roster plan) -------------------
@@ -613,7 +698,7 @@ def _sql_of(method: str, *args) -> str:
 
 
 def test_expected_counts_only_active_and_weights_by_probability():
-    sql = _sql_of("expected_by_owner", _user_with_role("Admin"), SBU_ID, None, date(2026, 12, 31))
+    sql = _sql_of("expected_by_person", _user_with_role("Admin"), SBU_ID, None, date(2026, 12, 31))
     assert "'ACTIVE'" in sql
     assert "win_probability" in sql
     assert "expected_closure_date <=" in sql
@@ -625,27 +710,79 @@ def test_late_opportunities_are_active_and_before_today():
     assert "expected_closure_date < '2026-11-01'" in sql
 
 
-def test_won_by_owner_is_owner_credited_and_status_won():
-    sql = _sql_of("won_by_owner_account", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
+@pytest.mark.parametrize(
+    ("method", "args"),
+    [
+        ("won_by_person_account", (WIN_START, WIN_END)),
+        ("won_by_person_brand", (WIN_START, WIN_END)),
+        ("expected_by_person", (None, date(2026, 12, 31))),
+        ("po_received_by_person", (date(2026, 10, 1), date(2026, 12, 31))),
+        ("late_opportunities", (IN_QUARTER,)),
+    ],
+)
+def test_per_person_figures_credit_split_shares_or_the_owner(method, args):
+    # BR-FIN-09: split rows, else the owner at 100 %; the person joined and
+    # scoped is the credited one, not the owner.
+    sql = _sql_of(method, _user_with_role("Admin"), SBU_ID, *args)
+    assert "FROM split" in sql
+    assert "split_percentage" in sql
+    # The split rows are only this SBU's, and "has no split" is checked
+    # against each Opportunity's own split rows.
+    assert "FROM split JOIN opportunity ON opportunity.id = split.opportunity_id" in sql
+    assert "split.opportunity_id = opportunity.id" in sql
+    assert "NOT (EXISTS" in sql
+    assert "user_profile.id = credit.user_id" in sql
+    if method != "late_opportunities":
+        assert "* credit.pct" in sql
+        # Only the late list adds an owner left out of their own split.
+        assert "split.user_id = opportunity.owner_id" not in sql
+        assert " 0 AS anon" not in sql
+
+
+def test_late_list_reaches_an_owner_left_out_of_their_split():
+    sql = _sql_of("late_opportunities", _user_with_role("Admin"), SBU_ID, IN_QUARTER)
+    assert "split.user_id = opportunity.owner_id" in sql
+    # Two owner parts: no split (at 100 %), and left out of the split (at 0 %).
+    assert " 100 AS anon" in sql and " 0 AS anon" in sql
+
+
+def test_won_by_person_is_status_won():
+    sql = _sql_of("won_by_person_account", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
     assert "'WON'" in sql
-    assert "owner_id" in sql
 
 
-def test_sales_rep_is_scoped_to_own_opportunities():
+def test_sales_rep_is_scoped_to_own_credit():
     rep = _user_with_role("Sales Rep")
-    sql = _sql_of("won_by_owner_account", rep, SBU_ID, WIN_START, WIN_END)
-    assert "owner_id" in sql
+    sql = _sql_of("won_by_person_account", rep, SBU_ID, WIN_START, WIN_END)
+    assert "user_profile.id = credit.user_id" in sql
     assert rep.id.hex in sql.replace("-", "")
 
 
+def test_missing_date_counts_stay_with_the_owner():
+    for method, args in (
+        ("undated_counts", ()),
+        ("no_po_date_counts", (WIN_START, WIN_END)),
+    ):
+        db = MagicMock()
+        db.execute.return_value.all.return_value = []
+        repo = TargetVsActualRepository(db)
+        if method == "no_po_date_counts":
+            repo.no_po_date_counts(_user_with_role("Admin"), SBU_ID, *args, include_open=True)
+        else:
+            repo.undated_counts(_user_with_role("Admin"), SBU_ID)
+        sql = str(db.execute.call_args.args[0].compile(compile_kwargs={"literal_binds": True}))
+        assert "split" not in sql
+        assert "user_profile.id = opportunity.owner_id" in sql
+
+
 def test_brand_won_skips_lines_without_a_product():
-    sql = _sql_of("won_by_owner_brand", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
+    sql = _sql_of("won_by_person_brand", _user_with_role("Admin"), SBU_ID, WIN_START, WIN_END)
     assert "JOIN product" in sql
     assert "JOIN brand" in sql
 
 
 def test_po_received_is_by_po_date_and_excludes_lost():
-    sql = _sql_of("po_received_by_owner", _user_with_role("Admin"), SBU_ID, date(2026, 10, 1), date(2026, 12, 31))
+    sql = _sql_of("po_received_by_person", _user_with_role("Admin"), SBU_ID, date(2026, 10, 1), date(2026, 12, 31))
     assert "po_date >= '2026-10-01'" in sql
     assert "po_date <= '2026-12-31'" in sql
     assert "!= 'LOST'" in sql

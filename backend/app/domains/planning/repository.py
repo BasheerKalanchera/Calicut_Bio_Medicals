@@ -2,12 +2,12 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import and_, case, delete, func, or_, select, text
+from sqlalchemy import and_, case, delete, func, literal, or_, select, text, union_all
 from sqlalchemy.orm import Session, aliased, noload, selectinload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account
-from app.domains.opportunity.models import Opportunity, OpportunityItem
+from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.validators import DELIVERY_STAGE_ORDER
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
@@ -337,10 +337,48 @@ class SbuTargetRepository(BaseRepository[SbuTarget]):
 class TargetVsActualRepository:
     """Read-only queries behind Target vs Actuals (Plan vs Actuals Tracking
     plan). Plans come through target_plan's RLS; people and Opportunities
-    are narrowed to the caller's owner scope, the same rule reporting uses."""
+    are narrowed to the caller's owner scope, the same rule reporting uses.
+    Per-person figures credit each split participant by their share
+    (BR-FIN-09); the summary totals count each Opportunity once."""
 
     def __init__(self, db: Session):
         self.db = db
+
+    @staticmethod
+    def _credit(sbu_id: uuid.UUID, owner_at_zero: bool = False):
+        """BR-FIN-09: who is credited with each Opportunity, and at what
+        percentage -- its split rows, or its owner at 100 % when it has none.
+        Columns: opportunity_id, user_id, pct. Split percentages sum to 100,
+        so the shares of one Opportunity add back to its full value.
+        owner_at_zero also lists an owner left out of their own split at 0 %,
+        so the late list still reaches the person who must update it."""
+        has_split = select(Split.id).where(Split.opportunity_id == Opportunity.id).exists()
+        parts = [
+            select(
+                Split.opportunity_id.label("opportunity_id"),
+                Split.user_id.label("user_id"),
+                Split.split_percentage.label("pct"),
+            )
+            .join(Opportunity, Opportunity.id == Split.opportunity_id)
+            .where(Opportunity.sbu_id == sbu_id),
+            select(Opportunity.id, Opportunity.owner_id, literal(Decimal(100)))
+            .where(Opportunity.sbu_id == sbu_id)
+            .where(~has_split),
+        ]
+        if owner_at_zero:
+            owner_in_split = (
+                select(Split.id)
+                .where(Split.opportunity_id == Opportunity.id)
+                .where(Split.user_id == Opportunity.owner_id)
+                .exists()
+            )
+            parts.append(
+                select(Opportunity.id, Opportunity.owner_id, literal(Decimal(0)))
+                .where(Opportunity.sbu_id == sbu_id)
+                .where(has_split)
+                .where(~owner_in_split)
+            )
+        return union_all(*parts).subquery("credit")
 
     @staticmethod
     def _apply_owner_scope(stmt, current_user: UserProfile):
@@ -408,16 +446,18 @@ class TargetVsActualRepository:
         )
         return {a: (zid, zn) for a, zid, zn in self.db.execute(stmt).all()}
 
-    def won_by_owner_account(
+    def won_by_person_account(
         self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
     ) -> list[tuple[uuid.UUID, str, uuid.UUID, uuid.UUID | None, str | None, Decimal]]:
-        """Net won value per (owner, hospital) for Opportunities closed in
-        [start, end): (owner_id, owner_name, account_id, zone_id, zone_name, amount)."""
+        """Net won value per (credited person, hospital) for Opportunities
+        closed in [start, end), each person's share only (BR-FIN-09):
+        (user_id, display_name, account_id, zone_id, zone_name, amount)."""
         zone_ancestor = self._zone_ancestor()
-        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        credit = self._credit(sbu_id)
+        amount = func.coalesce(func.sum(_NET_VALUE * credit.c.pct / 100), 0)
         stmt = (
             select(
-                Opportunity.owner_id,
+                credit.c.user_id,
                 UserProfile.display_name,
                 Opportunity.account_id,
                 zone_ancestor.c.anc_id,
@@ -427,7 +467,8 @@ class TargetVsActualRepository:
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(credit, credit.c.opportunity_id == Opportunity.id)
+            .join(UserProfile, UserProfile.id == credit.c.user_id)
             .join(Account, Account.id == Opportunity.account_id)
             .outerjoin(zone_ancestor, zone_ancestor.c.zone_id == Account.zone_id)
             .where(OpportunityStatus.status_code == "WON")
@@ -435,7 +476,7 @@ class TargetVsActualRepository:
             .where(Opportunity.closed_at >= start)
             .where(Opportunity.closed_at < end)
             .group_by(
-                Opportunity.owner_id,
+                credit.c.user_id,
                 UserProfile.display_name,
                 Opportunity.account_id,
                 zone_ancestor.c.anc_id,
@@ -443,32 +484,35 @@ class TargetVsActualRepository:
             )
         )
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(o, n, a, zid, zn, Decimal(v)) for o, n, a, zid, zn, v in self.db.execute(stmt).all()]
+        return [(u, n, a, zid, zn, Decimal(v)) for u, n, a, zid, zn, v in self.db.execute(stmt).all()]
 
-    def won_by_owner_brand(
+    def won_by_person_brand(
         self, current_user: UserProfile, sbu_id: uuid.UUID, start: datetime, end: datetime
     ) -> list[tuple[uuid.UUID, uuid.UUID, str, Decimal]]:
-        """Net won value per (owner, brand): (owner_id, brand_id, brand_name,
-        amount). Lines with no product (BUYBACK) have no brand and are skipped."""
-        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        """Net won value per (credited person, brand), each person's share
+        only (BR-FIN-09): (user_id, brand_id, brand_name, amount). Lines with
+        no product (BUYBACK) have no brand and are skipped."""
+        credit = self._credit(sbu_id)
+        amount = func.coalesce(func.sum(_NET_VALUE * credit.c.pct / 100), 0)
         stmt = (
-            select(Opportunity.owner_id, Brand.id, Brand.name, amount)
+            select(credit.c.user_id, Brand.id, Brand.name, amount)
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(credit, credit.c.opportunity_id == Opportunity.id)
+            .join(UserProfile, UserProfile.id == credit.c.user_id)
             .join(Product, Product.id == OpportunityItem.product_id)
             .join(Brand, Brand.id == Product.brand_id)
             .where(OpportunityStatus.status_code == "WON")
             .where(Opportunity.sbu_id == sbu_id)
             .where(Opportunity.closed_at >= start)
             .where(Opportunity.closed_at < end)
-            .group_by(Opportunity.owner_id, Brand.id, Brand.name)
+            .group_by(credit.c.user_id, Brand.id, Brand.name)
         )
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(o, b, bn, Decimal(v)) for o, b, bn, v in self.db.execute(stmt).all()]
+        return [(u, b, bn, Decimal(v)) for u, b, bn, v in self.db.execute(stmt).all()]
 
-    def expected_by_owner(
+    def expected_by_person(
         self,
         current_user: UserProfile,
         sbu_id: uuid.UUID,
@@ -477,30 +521,39 @@ class TargetVsActualRepository:
     ) -> list[tuple[uuid.UUID, str, Decimal]]:
         """Probability-weighted net value of ACTIVE Opportunities whose
         expected closure date is <= closing_to (and >= closing_from when
-        given): (owner_id, owner_name, amount)."""
-        amount = func.coalesce(func.sum(_NET_VALUE * Opportunity.win_probability / 100), 0)
+        given), each credited person's share only (BR-FIN-09):
+        (user_id, display_name, amount)."""
+        credit = self._credit(sbu_id)
+        amount = func.coalesce(
+            func.sum(_NET_VALUE * Opportunity.win_probability / 100 * credit.c.pct / 100), 0
+        )
         stmt = (
-            select(Opportunity.owner_id, UserProfile.display_name, amount)
+            select(credit.c.user_id, UserProfile.display_name, amount)
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(credit, credit.c.opportunity_id == Opportunity.id)
+            .join(UserProfile, UserProfile.id == credit.c.user_id)
             .where(OpportunityStatus.status_code == "ACTIVE")
             .where(Opportunity.sbu_id == sbu_id)
             .where(Opportunity.expected_closure_date <= closing_to)
-            .group_by(Opportunity.owner_id, UserProfile.display_name)
+            .group_by(credit.c.user_id, UserProfile.display_name)
         )
         if closing_from is not None:
             stmt = stmt.where(Opportunity.expected_closure_date >= closing_from)
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(o, n, Decimal(v)) for o, n, v in self.db.execute(stmt).all()]
+        return [(u, n, Decimal(v)) for u, n, v in self.db.execute(stmt).all()]
 
     def late_opportunities(
         self, current_user: UserProfile, sbu_id: uuid.UUID, today: date
-    ) -> list[tuple[uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, date, Decimal]]:
+    ) -> list[tuple[uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, uuid.UUID, str, date, Decimal, Decimal]]:
         """BR-OP-16: ACTIVE Opportunities whose expected closure date has
-        passed: (id, name, account_id, account_name, owner_id, owner_name,
-        expected_closure_date, net value)."""
+        passed, one row per credited person (BR-FIN-09): (id, name,
+        account_id, account_name, user_id, display_name, owner_id,
+        owner_name, expected_closure_date, full net value, share %). An owner
+        left out of their own split gets a row at 0 %."""
+        credit = self._credit(sbu_id, owner_at_zero=True)
+        owner = aliased(UserProfile)
         value = func.coalesce(func.sum(_NET_VALUE), 0)
         stmt = (
             select(
@@ -508,15 +561,20 @@ class TargetVsActualRepository:
                 Opportunity.name,
                 Opportunity.account_id,
                 Account.name,
-                Opportunity.owner_id,
+                credit.c.user_id,
                 UserProfile.display_name,
+                Opportunity.owner_id,
+                owner.display_name,
                 Opportunity.expected_closure_date,
                 value,
+                credit.c.pct,
             )
             .select_from(Opportunity)
             .outerjoin(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(credit, credit.c.opportunity_id == Opportunity.id)
+            .join(UserProfile, UserProfile.id == credit.c.user_id)
+            .join(owner, owner.id == Opportunity.owner_id)
             .join(Account, Account.id == Opportunity.account_id)
             .where(OpportunityStatus.status_code == "ACTIVE")
             .where(Opportunity.sbu_id == sbu_id)
@@ -526,14 +584,20 @@ class TargetVsActualRepository:
                 Opportunity.name,
                 Opportunity.account_id,
                 Account.name,
-                Opportunity.owner_id,
+                credit.c.user_id,
                 UserProfile.display_name,
+                Opportunity.owner_id,
+                owner.display_name,
                 Opportunity.expected_closure_date,
+                credit.c.pct,
             )
             .order_by(Opportunity.expected_closure_date, Opportunity.name)
         )
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(i, n, a, an, o, on, d, Decimal(v)) for i, n, a, an, o, on, d, v in self.db.execute(stmt).all()]
+        return [
+            (i, n, a, an, u, un, o, on, d, Decimal(v), Decimal(p))
+            for i, n, a, an, u, un, o, on, d, v, p in self.db.execute(stmt).all()
+        ]
 
     def undated_counts(
         self, current_user: UserProfile, sbu_id: uuid.UUID
@@ -562,25 +626,28 @@ class TargetVsActualRepository:
             OpportunityStatus.status_code != "LOST",
         )
 
-    def po_received_by_owner(
+    def po_received_by_person(
         self, current_user: UserProfile, sbu_id: uuid.UUID, q_start: date, q_end: date
     ) -> list[tuple[uuid.UUID, str, Decimal]]:
-        """Net value of Opportunities whose PO date falls in the quarter:
-        (owner_id, owner_name, amount). Counted in the PO's quarter, which
-        can differ from the quarter it is Won (paid) in."""
-        amount = func.coalesce(func.sum(_NET_VALUE), 0)
+        """Net value of Opportunities whose PO date falls in the quarter,
+        each credited person's share only (BR-FIN-09): (user_id,
+        display_name, amount). Counted in the PO's quarter, which can differ
+        from the quarter it is Won (paid) in."""
+        credit = self._credit(sbu_id)
+        amount = func.coalesce(func.sum(_NET_VALUE * credit.c.pct / 100), 0)
         stmt = (
-            select(Opportunity.owner_id, UserProfile.display_name, amount)
+            select(credit.c.user_id, UserProfile.display_name, amount)
             .select_from(Opportunity)
             .join(OpportunityItem, OpportunityItem.opportunity_id == Opportunity.id)
             .join(OpportunityStatus, OpportunityStatus.id == Opportunity.status_id)
-            .join(UserProfile, UserProfile.id == Opportunity.owner_id)
+            .join(credit, credit.c.opportunity_id == Opportunity.id)
+            .join(UserProfile, UserProfile.id == credit.c.user_id)
             .where(Opportunity.sbu_id == sbu_id)
             .where(*self._po_received_filter(q_start, q_end))
-            .group_by(Opportunity.owner_id, UserProfile.display_name)
+            .group_by(credit.c.user_id, UserProfile.display_name)
         )
         stmt = self._apply_owner_scope(stmt, current_user)
-        return [(o, n, Decimal(v)) for o, n, v in self.db.execute(stmt).all()]
+        return [(u, n, Decimal(v)) for u, n, v in self.db.execute(stmt).all()]
 
     def no_po_date_counts(
         self,

@@ -187,7 +187,10 @@ export interface TargetVsActualLateOpportunity {
   account_id: string;
   account_name: string;
   expected_closure_date: string;
-  value_lakhs: string;
+  value_lakhs: string; // the Opportunity's full net value
+  share_percentage: string; // this person's share; "100.00" when not shared (BR-FIN-09)
+  share_lakhs: string;
+  owner_name: string | null; // set when this row's person isn't the owner
 }
 
 // account_id null = the shared "Unplanned" line (wins at hospitals not on the plan).

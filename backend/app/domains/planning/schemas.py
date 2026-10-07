@@ -235,14 +235,19 @@ class RosterStatus(StrEnum):
 
 
 class TargetVsActualLateOpportunity(BaseModel):
-    """BR-OP-16: still open past its expected closing date. Flag only."""
+    """BR-OP-16: still open past its expected closing date. Flag only.
+    Listed on every split participant's row (BR-FIN-09)."""
 
     opportunity_id: uuid.UUID
     name: str
     account_id: uuid.UUID
     account_name: str
     expected_closure_date: date
-    value_lakhs: Decimal
+    value_lakhs: Decimal  # the Opportunity's full net value
+    share_percentage: Decimal  # this person's share (100 when not shared)
+    share_lakhs: Decimal
+    # The owner, when this row's person isn't them; else None.
+    owner_name: str | None = None
 
 
 class TargetVsActualHospital(BaseModel):

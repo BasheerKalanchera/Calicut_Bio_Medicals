@@ -603,10 +603,12 @@ class SbuTargetService:
 class TargetVsActualService:
     """Target vs Actuals for one SBU and quarter (Plan vs Actuals Tracking
     plan). Read-only. Every roster member gets a row; "Won" (paid, BR-OP-17)
-    and "PO received" are credited to the Opportunity's owner, each in its
-    own quarter; "expected" is ACTIVE Opportunities weighted by win
-    probability, by expected closing date; what counts as expected depends on
-    where the quarter sits relative to today (IST)."""
+    and "PO received" are credited to each split participant by their share,
+    or to the owner when there is no split (BR-FIN-09), each in its own
+    quarter; "expected" is ACTIVE Opportunities weighted by win probability
+    and then by share, by expected closing date; what counts as expected
+    depends on where the quarter sits relative to today (IST). The SBU and
+    company rows count each Opportunity once, at full value."""
 
     def __init__(self, repository: TargetVsActualRepository):
         self.repository = repository
@@ -666,25 +668,28 @@ class TargetVsActualService:
             if p.unassigned:  # no hospital, so no zone
                 zones.setdefault((None, None), [_ZERO, _ZERO])[0] += p.unassigned
 
-        for owner_id, owner_name, account_id, zone_id, zone_name, amount in repo.won_by_owner_account(
+        # BR-FIN-09: each figure below is the person's share of a shared
+        # Opportunity, unrounded until the response so that the zone, brand
+        # and headline totals add back to the full values.
+        for user_id, name, account_id, zone_id, zone_name, amount in repo.won_by_person_account(
             current_user, sbu_id, start_dt, end_dt
         ):
-            acc = person(owner_id, owner_name)
+            acc = person(user_id, name)
             if account_id in acc.hospitals:
                 acc.hospitals[account_id][2] += amount
             else:
                 acc.unplanned_won += amount
             zones.setdefault((zone_id, zone_name), [_ZERO, _ZERO])[1] += amount
 
-        for owner_id, brand_id, brand_name, amount in repo.won_by_owner_brand(current_user, sbu_id, start_dt, end_dt):
+        for user_id, brand_id, brand_name, amount in repo.won_by_person_brand(current_user, sbu_id, start_dt, end_dt):
             brand_names[brand_id] = brand_name
-            owner = people.get(owner_id)
-            if owner is None:
-                continue  # owner already added above if they have wins; guard anyway
-            owner.brands.setdefault(brand_id, [brand_name, _ZERO, _ZERO])[2] += amount
+            acc = people.get(user_id)
+            if acc is None:
+                continue  # added above if they have wins; guard anyway
+            acc.brands.setdefault(brand_id, [brand_name, _ZERO, _ZERO])[2] += amount
 
-        for owner_id, owner_name, amount in repo.po_received_by_owner(current_user, sbu_id, q_start, q_end):
-            person(owner_id, owner_name).po_received += amount
+        for user_id, name, amount in repo.po_received_by_person(current_user, sbu_id, q_start, q_end):
+            person(user_id, name).po_received += amount
         for owner_id, owner_name, count in repo.no_po_date_counts(
             current_user, sbu_id, start_dt, end_dt, include_open=state is QuarterState.CURRENT
         ):
@@ -692,15 +697,18 @@ class TargetVsActualService:
 
         if state is not QuarterState.PAST:
             closing_from = q_start if state is QuarterState.FUTURE else None
-            for owner_id, owner_name, amount in repo.expected_by_owner(current_user, sbu_id, closing_from, q_end):
-                person(owner_id, owner_name).expected = amount.quantize(_CENT)
+            for user_id, name, amount in repo.expected_by_person(current_user, sbu_id, closing_from, q_end):
+                person(user_id, name).expected = amount
+            # Owner only: fixing a missing date is the owner's job.
             for owner_id, owner_name, count in repo.undated_counts(current_user, sbu_id):
                 person(owner_id, owner_name).undated = count
         if state is QuarterState.CURRENT:
-            for opp_id, name, account_id, account_name, owner_id, owner_name, closing, value in repo.late_opportunities(
-                current_user, sbu_id, today
-            ):
-                person(owner_id, owner_name).late.append(
+            # BR-FIN-09: listed on every sharer's row, so each sees the urgency.
+            for (
+                opp_id, name, account_id, account_name, user_id, user_name,
+                owner_id, owner_name, closing, value, pct,
+            ) in repo.late_opportunities(current_user, sbu_id, today):
+                person(user_id, user_name).late.append(
                     TargetVsActualLateOpportunity(
                         opportunity_id=opp_id,
                         name=name,
@@ -708,20 +716,28 @@ class TargetVsActualService:
                         account_name=account_name,
                         expected_closure_date=closing,
                         value_lakhs=value,
+                        share_percentage=pct,
+                        share_lakhs=(value * pct / 100).quantize(_CENT),
+                        owner_name=None if owner_id == user_id else owner_name,
                     )
                 )
 
         ordered = sorted(people.values(), key=lambda p: p.display_name.lower())
         rows = [self._person_response(p, state) for p in ordered]
-        # Totals count every owner, so real wins by someone outside the roster
-        # (another SBU's person, someone since deactivated) stay in the headline
-        # and zone/brand tables; only the person rows follow the roster.
+        # Totals count every credited person, so real wins by someone outside
+        # the roster (another SBU's person, someone since deactivated) stay in
+        # the headline and zone/brand tables; only the person rows follow the
+        # roster. Summed before rounding, so shares add back to full values.
         shown = [r for p, r in zip(ordered, rows, strict=True) if p.user_id in roster_ids]
         not_submitted = _not_submitted(roster)
         planned = sum((r.planned_lakhs for r in rows), _ZERO)
-        po_received = sum((r.po_received_lakhs for r in rows), _ZERO)
-        won = sum((r.won_lakhs for r in rows), _ZERO)
-        expected = None if state is QuarterState.PAST else sum((r.expected_lakhs or _ZERO for r in rows), _ZERO)
+        po_received = sum((p.po_received for p in people.values()), _ZERO).quantize(_CENT)
+        won = sum((p.won for p in people.values()), _ZERO).quantize(_CENT)
+        expected = (
+            None
+            if state is QuarterState.PAST
+            else sum((p.expected or _ZERO for p in people.values()), _ZERO).quantize(_CENT)
+        )
 
         sbu_row = company_row = None
         role_name = current_user.role.role_name
@@ -781,11 +797,13 @@ class TargetVsActualService:
             company_row=company_row,
             people=shown,
             zones=[
-                TargetVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1])
+                TargetVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1].quantize(_CENT))
                 for (zid, zname), v in sorted(zones.items(), key=lambda kv: (kv[0][1] is None, kv[0][1] or ""))
             ],
             brands=[
-                TargetVsActualBrand(brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1])
+                TargetVsActualBrand(
+                    brand_id=bid, brand_name=brand_names[bid], planned_lakhs=v[0], won_lakhs=v[1].quantize(_CENT)
+                )
                 for bid, v in sorted(brand_totals.items(), key=lambda kv: brand_names[kv[0]].lower())
             ],
         )
@@ -827,10 +845,12 @@ class TargetVsActualService:
 
     @staticmethod
     def _person_response(p: _PersonAcc, state: QuarterState) -> TargetVsActualPerson:
-        planned, won = p.planned, p.won
-        expected = None if state is QuarterState.PAST else (p.expected or _ZERO)
+        planned, won = p.planned, p.won.quantize(_CENT)
+        expected = None if state is QuarterState.PAST else (p.expected or _ZERO).quantize(_CENT)
         hospitals = [
-            TargetVsActualHospital(account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2])
+            TargetVsActualHospital(
+                account_id=aid, account_name=h[0], planned_lakhs=h[1], won_lakhs=h[2].quantize(_CENT)
+            )
             for aid, h in sorted(p.hospitals.items(), key=lambda kv: kv[1][0].lower())
         ]
         if p.unassigned:
@@ -845,7 +865,10 @@ class TargetVsActualService:
         if p.unplanned_won:
             hospitals.append(
                 TargetVsActualHospital(
-                    account_id=None, account_name="Unplanned", planned_lakhs=_ZERO, won_lakhs=p.unplanned_won
+                    account_id=None,
+                    account_name="Unplanned",
+                    planned_lakhs=_ZERO,
+                    won_lakhs=p.unplanned_won.quantize(_CENT),
                 )
             )
         return TargetVsActualPerson(
@@ -854,7 +877,7 @@ class TargetVsActualService:
             plan_status=p.plan_status,
             previous_approved_total_lakhs=p.previous_approved_total,
             planned_lakhs=planned,
-            po_received_lakhs=p.po_received,
+            po_received_lakhs=p.po_received.quantize(_CENT),
             won_lakhs=won,
             expected_lakhs=expected,
             likely_finish_lakhs=won + (expected or _ZERO),
@@ -864,7 +887,7 @@ class TargetVsActualService:
             late_opportunities=p.late,
             hospitals=hospitals,
             brands=[
-                TargetVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2])
+                TargetVsActualBrand(brand_id=bid, brand_name=b[0], planned_lakhs=b[1], won_lakhs=b[2].quantize(_CENT))
                 for bid, b in sorted(p.brands.items(), key=lambda kv: kv[1][0].lower())
             ],
         )

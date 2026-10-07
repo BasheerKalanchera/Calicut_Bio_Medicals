@@ -149,8 +149,10 @@ function PersonDetail({ person }: { person: TargetVsActualPerson }) {
             <Box key={o.opportunity_id} sx={{ fontSize: "0.8125rem", display: "flex", justifyContent: "space-between", gap: 2, py: 0.25 }}>
               <span>
                 {o.name} — {o.account_name} (was due {o.expected_closure_date})
+                {(o.owner_name || Number(o.share_percentage) < 100) &&
+                  ` · shared${o.owner_name ? `, owner ${o.owner_name}` : ""}, ${Number(o.share_percentage)} %`}
               </span>
-              <span style={{ fontVariantNumeric: "tabular-nums" }}>{lakhs(o.value_lakhs)}</span>
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>{lakhs(o.share_lakhs)}</span>
             </Box>
           ))}
         </Box>
@@ -213,6 +215,9 @@ export default function TargetVsActualsSection() {
   // SBU's, not the company's -- the company figure is the company row);
   // everyone else sees their own scope.
   const isCompanyWide = ["Admin", "General Manager"].includes(userProfile?.role_name ?? "");
+  // BR-FIN-09: a team view's totals are its members' shares, so an
+  // Opportunity shared with someone outside the team counts only in part.
+  const isTeamView = userProfile?.role_name === "Area Manager";
   const [period, setPeriod] = useState(() => getCurrentPlanningPeriod());
   const [selectedSbuId, setSelectedSbuId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
@@ -281,6 +286,7 @@ export default function TargetVsActualsSection() {
                 </Box>
               </>
             )}
+            {isTeamView && " · Totals show only your team members' shares of shared Opportunities"}
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
             <StatTile label="Planned" value={lakhs(data.planned_lakhs)} sublabel="Pending approval and approved plans" />
@@ -341,7 +347,7 @@ export default function TargetVsActualsSection() {
                             <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>was {lakhs(p.previous_approved_total_lakhs)} approved</Box>
                           )}
                           {lastApproved && (
-                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>last approved</Box>
+                            <Box sx={{ ...noteSx, whiteSpace: "nowrap" }}>approved, still counts</Box>
                           )}
                         </TableCell>
                         <TableCell sx={numCellSx}>{lakhs(p.po_received_lakhs)}</TableCell>
