@@ -40,7 +40,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
 *   **Decision:** Opportunities support shared ownership across Strategic Business Units (SBUs) via a strict 100% split model.
 *   **Status:** Accepted (Implemented in Prototype App.jsx; updated by ACR — MA-07). **Cross-SBU scope superseded by ADR-037 (2026-07-30)** — see that entry; the 100% allocation rule itself remains fully in force.
 *   **Rationale:** High-value hospital setups require cross-collaboration (e.g., Imaging + Critical Care). A unified Opportunity with split credit prevents "double-counting" in organizational rollups.
-*   **Impact:** Revenue rollups must calculate `Value × Split%`. SBU isolation logic must allow cross-SBU read access for shared deals. When no split is explicitly entered during Opportunity creation, the system automatically creates a 100% split assigned to the opportunity creator, ensuring the 100% allocation rule is always satisfied from the point of creation.
+*   **Impact:** Revenue rollups must calculate `Value × Split%` (carried out for per-person figures by BR-FIN-09, 2026-10-07; group figures count each Opportunity once). SBU isolation logic must allow cross-SBU read access for shared deals. When no split is explicitly entered during Opportunity creation, the system automatically creates a 100% split assigned to the opportunity creator, ensuring the 100% allocation rule is always satisfied from the point of creation.
 *   **Affected Modules:** Opportunity Pipeline, Target Planning, Insights.
 
 ### ADR-037: Split Participant SBU Restriction — Supersedes ADR-003's Cross-SBU Scope

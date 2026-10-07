@@ -1,9 +1,9 @@
 ---
 name: doc-integrity-sweep
-description: Cabio daily documentation tidy-up. Load when the session-start hook says a doc-integrity sweep is due, or when Basheer asks for a documentation tidy-up, consistency sweep, or doc-sync check. Compares what the docs claim with what git shows, fixes gaps with one batch approval, and logs the result.
+description: Cabio documentation tidy-up (every alternate day). Load when the session-start hook says a doc-integrity sweep is due, or when Basheer asks for a documentation tidy-up, consistency sweep, or doc-sync check. Compares what the docs claim with what git shows, fixes gaps with one batch approval, and logs the result.
 ---
 
-# Daily documentation tidy-up
+# Documentation tidy-up (every alternate day)
 
 Why this exists: on 2026-09-24 one review turned up stale status claims,
 unrecorded test results, a month-old wrong memory note, and ~40 broken "see
@@ -91,7 +91,10 @@ next sweep is due. A skipped log line means the reminder keeps firing.
 
 ## Frequency
 
-Set by `SWEEP_EVERY_DAYS` in `.claude/hooks/session-start.sh` (starts at 1).
-Proposed rule, and **Basheer decides each change**:
+Every alternate day (Basheer, 2026-10-07; was daily): the day after the UAT
+data-quality check, so the two never share a day. Set in
+`.claude/hooks/session-start.sh` section 2c: due when the last check was
+yesterday and no sweep has run since it, or after `SWEEP_MAX_DAYS` (4)
+without a sweep. Further cuts proposed, and **Basheer decides each change**:
 - after 14 days, if the last 5 sweeps each found ≤1 real issue → every 3 days
 - after 2 more quiet weeks → weekly

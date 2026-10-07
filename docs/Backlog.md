@@ -21,6 +21,49 @@ trips) by **Sun 2026-10-11**.
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
   with the reason and a new date — not on Sunday.
 
+### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
+
+When someone in an Area Manager's team holds a split share on an
+Opportunity whose owner is outside that team, the manager can't see that
+Opportunity (privacy rules follow the owner), so the member's share is
+missing from the member's row and the team totals on the manager's
+Target vs Actuals card. The member's own card and the Admin/GM view show
+it correctly. Basheer accepted this as is on 2026-10-07 (option a, step 6b
+review of BR-FIN-09); the card notes that team totals are members' shares.
+Revisit only if managers report numbers that don't match their team's own
+cards.
+
+### Pipeline: cards with the same priority and chance can swap places — not started (2026-10-07)
+
+Found in the Query Load fixes fix 3 code review (finding 1; Basheer
+2026-10-07). The Pipeline sorts by priority and chance only, so tied
+cards can come back in a different order between loads (seen on the
+Order tab, unfiltered vs North Kerala). Fix: add the Opportunity's id as
+the last sort key in the Pipeline query.
+
+### Pipeline zone filter shows "No options" until a name is typed — not started (2026-10-07)
+
+Seen in both rounds of the fix 3 screen check (existing behaviour, not
+caused by the fix). Fix: list the zones as soon as the box is opened.
+
+### Screen wording: "deal" → "Opportunity" across the app — parked (2026-10-07)
+
+The app still says "deal" in about 25 places users can read (Opportunity
+wording rule, CLAUDE.md). Found in the fix 3 screen check ("· 7 deals" on
+the Pipeline drill-down bar). Basheer 2026-10-07: its own small fix, not
+part of Query Load fix 3.
+- Where: Pipeline (drill-down bar, "No deals" columns); every report
+  bar's count (`ReportingUI.tsx`); Pipeline Report and Insights Dashboard
+  tiles; Sales Report ("Deals Won", "Avg Deal Size", empty text);
+  "Stagnant Deals" menu item, title and empty text; "Fast-Track this
+  Deal" tick-box (4 screens); "this deal is past Demo stage"; help
+  panels (`helpContent.tsx`, ~12 sentences); one server message
+  (`document/service.py`); `docs/UAT-User-Manual.md` (10 places).
+- Recommended: rename the familiar names too ("Stagnant Opportunities",
+  "Fast-Track this Opportunity"); Basheer to tell Haroon. Not yet decided.
+- No database change. Checks: tsc, lint, a visual walk on Dev. Could go
+  to UAT with Query Load fix 4.
+
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
 Rule decided: BR-OP-18 (`docs/Business-Rules.md`). Found when Basheer K
@@ -48,6 +91,27 @@ Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Dev E2E passed
 together, its own approval, back up UAT `audit_log` first).
 - **Deferred (option B):** a History tab on each deal, customer and
   product page, built on top of this later.
+
+### Forecast by closing period — questions answered, plan not started (2026-10-01)
+
+Latheef Bhai's request (Traceability 2.5, month/quarter half):
+`docs/Discussion-Forecast-By-Closing-Period-2026-09.md`. All questions
+decided except Q4, parked until reps correct Expected Closure Dates (only
+3 of 112 open Opportunities had a future date). Common Opportunity
+filter, lighter option; rule in both standards docs. Date catch-up is
+tracked by `scripts/uat_closure_date_report.py`, run with the UAT
+data-quality check.
+- **Next:** write the implementation plan when Basheer says.
+
+### Doc tidy-up 2026-10-04 leftovers — two items (2026-10-04)
+
+- Traceability item 13 ("Commitment beyond contract") wording + scorecard
+  republish: with the next UAT move (Basheer, 2026-10-04); show the diff
+  first.
+- The three untracked plans from another tool (Forecast-By-Closing-Period,
+  Opportunity-Create-Form-Unification, Weekly-Follow-up-Report): fix them
+  per the 2026-10-04 review, each edit shown before/after first. Order:
+  Weekly, Forecast, Create-Form, after the Plan vs Actuals E2E.
 
 ### Audit trigger: skip a missing parent only on DELETE — parked (found 2026-10-03)
 
@@ -222,7 +286,12 @@ implement `Value × Split%` per ADR-003's original intent, or was that
 design superseded and never formally revised? Either answer is a real
 decision, not an engineering default. **Asked Haroon 2026-09-29** (Basheer,
 while approving Plan vs Actuals Tracking, whose scorecard follows
-whatever the reports do).
+whatever the reports do). **Decided 2026-10-07 (BR-FIN-09): per-person
+figures use split %, group figures count once.** Target vs Actuals is
+done in its own plan (step 6b). Remaining here: the Sales Report,
+Pipeline Report and Product Performance per-person views and their
+click-through lists — need a short plan, and go to UAT together with
+Target vs Actuals.
 
 ### Product Catalog Brand/Category/Model: Done 2026-09-23, three minor clean-ups left
 
@@ -336,7 +405,11 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   nothing defines it. Discussion note for Haroon:
   `docs/Discussion-Salesperson-Performance-Report-2026-10.md` (measures,
   split-% credit, lighter vs fuller, export). Known small gap either way:
-  the Sales Report can't pick a past month or quarter.
+  the Sales Report can't pick a past month or quarter. **2026-10-07:**
+  split-% credit answered (yes); a one-line-per-person download for
+  Finance's incentive calculation is wanted from next month (first month
+  still to confirm); parked until Target vs Actuals is done — detail in
+  the discussion note, section 7.
 
 - **Payment Pending list for Finance (Basheer, 2026-10-03; undecided shape).**
   At Cabio the rep owns payment collection (relationship with the hospital),

@@ -1167,3 +1167,90 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   scratchpad, which he can't open, so they went into the backups folder
   before review. Fixed: drafts now go in a `drafts` subfolder there
   (CLAUDE.md "UAT data-quality check").
+
+## 2026-10-07 — Query Load Fixes fix 3 (Pipeline) built on a side branch
+- Built in a background session that couldn't touch `main`: side branch
+  `worktree-query-load-fix3-pipeline`, `8e8e075` (checkpoint, pushed).
+  Changes the Opportunity repository, its test and `scripts/query_audit.py`
+  (the audit now also covers zone, stage, team only and product).
+- Dev old → fixed (15/15 responses identical; Admin, SBU Manager, Sales
+  Staff): unfiltered 36 → 11 joins, ~169–179 → ~17–18 ms planning; zone
+  37 → 12, ~234–256 → ~33–35 ms; stage 36 → 11, ~104–107 → ~13 ms; team
+  only 36–37 → 11–12, ~67–158 → ~6–21 ms; product 36 → 11, ~234–269 →
+  ~24 ms.
+- pytest 1206, ruff clean. /code-review medium: fixed 2/3/4/5/6/8, 7 left
+  as is, 1 (no final tie-breaker in the Pipeline sort) to Backlog.
+- Old-vs-fixed screen check (plan step 5), as Basheer K: round 1 on
+  `3a754f5`, round 2 after the merge; all 5 checks Pass, screens
+  identical. Full results: the plan's section 8.
+- Shipped: merged into `main` as `f7d25b1` and pushed 2026-10-07. UAT
+  trip 3 next (own approval).
+
+### Session retro (Query Load Fixes fix 3, background session)
+- **Background session not said up front (P34):** the session couldn't
+  edit the main folder or handover, or push/merge into `main`, but this
+  wasn't stated in its first reply; Basheer should have been offered the
+  chance to reopen it as an ordinary session.
+- **Repeat check in a temporary helper (P35):** the filtered Pipeline
+  comparisons first ran from a throwaway script; they belong in
+  `query_audit.py`, which now has them.
+- **Unsourced numbers (P1, x2):** an unexplained "500" setting and a
+  "a few ms" guess.
+- **Too technical (P3):** review findings 4–7 explained in code terms;
+  3 was folded into 2.
+- **Shell guard rejections (P14):** `cd` and shell-guard rejections again.
+- **Before/after too narrow (P28):** the first comparison covered only
+  the unfiltered Pipeline.
+
+### Session retro (Query Load Fixes fix 3: screen check and wrap-up)
+- **Pushed without checking in (P30):** "if all pass, push" was taken as
+  approval; should have asked once before the push.
+- **Step order changed unannounced (P21):** merged into `main` before the
+  screen check instead of testing on the side branch; Basheer had to ask
+  "Did the plan change?".
+- **Didn't say what Basheer needed to do (P36):** the audit run started
+  without saying no servers were needed; Basheer stopped it to ask.
+- **Results not where Basheer could open them (P28, counted above):**
+  until he asked, they were only in the scratchpad and handover; now the
+  plan's section 8.
+- **Chat table too wide (P37):** the first results table didn't fit the
+  terminal; shown again with 5 short columns.
+- **Scope stated before searching (P23):** said "deal" appeared in 3
+  places; a search found ~25 on screen plus 10 in the manual.
+
+## 2026-10-07 — Target vs Actuals: step 6 trail (moved from the handover)
+- Renamed 2026-10-02 (Basheer) from "Hospital-wise target planning Part 2".
+- Step 6 frontend `23582c1` (checkpoint, 2026-10-06): Target Planning
+  Quarter table from `/roster`, "N of M haven't submitted", "Pending
+  Approval" on the card. Old `/rollup` removed end to end, including its
+  `query_audit.py` entry. pytest 1202.
+- Step 6 review (2026-10-06): 8 findings, Basheer chose 4 fixes (former
+  members as "No longer on this team" rows; Annual totals like the
+  Quarter view; error message if the list fails; one shared "haven't
+  submitted" count). Built: pytest 1203, ruff, tsc and lint clean.
+  Committed and pushed as `a9e9277`.
+
+## 2026-10-07 — Target vs Actuals step 6b: split credit (BR-FIN-09)
+- Built and committed as `2e2e4c0` (checkpoint, E2E pending). Each
+  person's PO received, Won and Expected now count their split % of a
+  shared Opportunity (owner at 100 % when there is no split); SBU and
+  company rows still count each Opportunity once. Late Opportunities show
+  on every sharer's row with "shared, owner X" and their %.
+- `/code-review` medium: 9 findings. Basheer's choices: point 1 (Area
+  Manager team totals are members' shares) kept as built, plus a note on
+  the Area Manager card; fixes 2 (owner left out of their own split still
+  sees the late flag, at 0 %), 3 (label shown whenever the person isn't
+  the owner), 5 (split rows limited to the SBU) and 6 (tighter tests);
+  point 4 checked against Dev data instead. Also on the card: "last
+  approved" → "approved, still counts". pytest 1217, ruff, tsc and lint
+  clean.
+- Area Manager gap (a member's share on an Opportunity outside the team
+  is missing from the manager's view) accepted as is: Backlog entry.
+- Read-only Dev check (admin connection + API as Admin and each Area
+  Manager, read-only transactions, 0 writes): 0 problems; no split totals
+  other than 100 %; Imaging 2026-Q3 Won 18.00 matches across headline,
+  people, SBU row and an independent calculation; all 4 Area Manager
+  cards load. Gap: Dev's 5 shared Opportunities (all Imaging, 4 open, 1
+  Lost) have none Won or late, so the E2E must set one up — "New USG
+  m/c" (owner Fazal not in the split; Basheer K 50 / Vivek 50) with a
+  past closing date covers the late flag and the 0 % owner case.

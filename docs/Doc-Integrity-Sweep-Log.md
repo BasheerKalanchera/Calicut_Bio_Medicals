@@ -4,7 +4,7 @@ One line per sweep, newest last. Written by the `doc-integrity-sweep` skill.
 The session-start hook reads the date on the last line to decide when the
 next sweep is due.
 
-**Basheer's weekly two-minute check:** did a sweep happen every day, and are
+**Basheer's weekly two-minute check:** did a sweep happen every alternate day, and are
 the numbers going down? A missing day or rising numbers means we've drifted.
 
 Format: date | found | fixed | deferred | broken links (TOTAL from

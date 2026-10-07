@@ -243,7 +243,8 @@ Won at 02:00 IST on 1 July falls in Jul–Sep.
   and 3). Still with Latheef Bhai and Haroon; none of Part 1 depends on them.
 - **Split-shared deals in actuals.** Part 2 credits the deal owner, as the
   Sales Report does. Changes only if the Backlog entry "Reports never
-  implement split-weighted attribution" is decided otherwise.
+  implement split-weighted attribution" is decided otherwise — decided
+  2026-10-07: split %, BR-FIN-09.
 - **A history of every change note.** Part 1 keeps the latest note on the
   plan, shown to the approver. Keeping every past version belongs with the
   general audit-trail item (BR-AUD-01).

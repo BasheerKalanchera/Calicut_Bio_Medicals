@@ -38,14 +38,24 @@ else
   echo
 fi
 
-# 2c. Documentation tidy-up due (daily for now; Basheer lowers the frequency
-#     as errors fall — see .claude/skills/doc-integrity-sweep/SKILL.md).
-SWEEP_EVERY_DAYS=1
+# 2c. Documentation tidy-up due (every alternate day, Basheer 2026-10-07):
+#     the day after the UAT data-quality check, so the two never share a
+#     day. Due when the last check was yesterday and no sweep has run since
+#     it; or, as a backstop, when SWEEP_MAX_DAYS have passed without one.
+#     See .claude/skills/doc-integrity-sweep/SKILL.md "Frequency".
+SWEEP_MAX_DAYS=4
 SWEEP_LOG=docs/Doc-Integrity-Sweep-Log.md
 last=$(grep -E '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$SWEEP_LOG" 2>/dev/null | tail -n 1 | cut -c3-12)
+dq_last=$(tail -n 1 "$DQ_LOG" 2>/dev/null | cut -c1-10)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  [ "$days" -ge "$SWEEP_EVERY_DAYS" ] && echo "DUE TODAY: documentation tidy-up (last sweep $last, $days day(s) ago). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes." && echo
+  due=
+  if [ -n "$dq_last" ]; then
+    dq_days=$(( ( $(date +%s) - $(date -d "$dq_last" +%s) ) / 86400 ))
+    [ "$dq_days" -eq 1 ] && [ "$last" \< "$dq_last" ] && due=1
+  fi
+  [ "$days" -ge "$SWEEP_MAX_DAYS" ] && due=1
+  [ -n "$due" ] && echo "DUE TODAY: documentation tidy-up (last sweep $last, $days day(s) ago; last UAT data-quality check ${dq_last:-none}). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes." && echo
 else
   echo "DUE TODAY: documentation tidy-up (none recorded yet). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes."
   echo

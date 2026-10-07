@@ -229,3 +229,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Session handoff — one retro per session; each suggestion gets a P-number in `docs/Process-Improvements.md`; weekly review reminded by the SessionStart hook (block 2d). Post-commit checklist step 2 no longer asks for a per-commit retro line.
   **Why:** 2026-10-06 — Basheer noticed retro improvements were being skipped. A review of 2026-09-26 to 2026-10-06 found ~43 retros in 11 days (about four a day, many repeating each other) and 7 one-off suggestions with no follow-up, plus four judgement mistakes repeating across sessions (claims without checking ×9, wrong test-plan assumptions ×5, explanations needing a second pass ×6, heavy option first ×4). The guard rails that did get built (no-cd, stash, plan decisions, shell writes, test-plan template) all held. Suggestions were lost because the archive is a chronological log with no status per suggestion, not because of where they were written.
+
+- **Rule:** Session handoff — documentation tidy-up every alternate day, the day after the UAT data-quality check (was daily).
+  **Why:** 2026-10-07 — Basheer's choice: the two recurring jobs take turns (data-quality check one day, tidy-up the next) instead of the tidy-up asking every day. The hook keeps them apart even after a skipped day (Option A), with a 4-day backstop.

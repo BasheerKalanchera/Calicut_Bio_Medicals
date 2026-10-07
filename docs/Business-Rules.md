@@ -384,6 +384,17 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Not affected:** Opportunity/split visibility; the automatic 100% split created with a new Opportunity (BR-FIN-05); new-participant SBU eligibility (BR-FIN-06), which still applies on top of this rule.
 * **Origin:** Brand-Level Target Planning manual E2E, 2026-09-23 — a cross-SBU Next Action assignee could open, and partly edit, another SBU's deal split. **Decided by Basheer, 2026-09-23; built 2026-09-24 (`584d218`, `6280964`)** — `docs/Split-Editing-Permission-Implementation-Plan.md`. Closed-deal handling decided the same day (above).
 
+### BR-FIN-09: Credit on Shared Opportunities (2026-10-07)
+* **Rule:** figures about **one person** credit each split participant by their split %; figures about a **group** (zone, SBU, company, brand, product, stage) count each Opportunity once, at full value. E.g. Fazal owns a ₹10 L Opportunity and Fahad holds 40 %: Fazal's row shows ₹6 L, Fahad's ₹4 L, the zone total ₹10 L.
+* **Applies to:** PO received, Won and Expected (Expected is weighted by win probability, then by share).
+* **Hospital and brand lines:** a share sits on the participant's own planned hospital line if they planned that hospital, otherwise on their "Unplanned" line; brand lines follow the same share.
+* **Closing date passed (BR-OP-16):** a late shared Opportunity is listed on every participant's row; non-owners see it marked "shared — owner X" with their share, since only the owner can update the date. Group counts include it once. An owner left out of their own split still sees it, marked "shared, 0 %", with nothing added to their figures.
+* **Team views (Area Manager):** the team's totals are its members' shares added up, so an Opportunity shared with someone outside the team counts only in part; the screen says so ("Totals show only your team members' shares of shared Opportunities"). SBU and company rows count it in full. (Basheer, 2026-10-07.)
+* **No split rows:** the owner gets 100 %. (Splits are always within the Opportunity's own SBU — BR-FIN-06.)
+* **Where:** Target vs Actuals first (`docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`, step 6b); the per-person views of the Sales Report, Pipeline Report and Product Performance, and their click-through lists, follow with their own plan. Both go to UAT together.
+* **Why:** Finance will use per-person figures for incentives (`docs/Discussion-Salesperson-Performance-Report-2026-10.md`, section 7), so every screen must agree on what each person won. Carries out ADR-003's original "Value × Split %" intent for per-person figures.
+* **Origin:** answer passed on by Basheer, 2026-10-07. Closes the Backlog question "Reports never implement split-weighted attribution".
+
 ---
 
 # 5. Account & Stakeholder Rules

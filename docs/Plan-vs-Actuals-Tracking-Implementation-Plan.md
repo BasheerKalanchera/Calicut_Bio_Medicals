@@ -5,8 +5,8 @@ Hospital-wise Target Planning is finished; this feature tracks actuals
 against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
-the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order"; step 1 done (`1821c30`), step 2 next. Split-credit question sent to Haroon
-2026-09-29 — doesn't block this build (see Decisions).
+the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order"; step 1 done (`1821c30`), step 2 next. Split credit decided
+2026-10-07 (BR-FIN-09); built as step 6b.
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
 **Design / discussion:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
@@ -21,7 +21,7 @@ one move, once this part is finished and tested (Basheer, 2026-09-29).
 - "Won so far" = value of Opportunities won at that hospital during the quarter, credited to the Opportunity owner, as the Sales Report counts — Basheer, 2026-09-27
 - Expected is shown beside Won, never added into it: Won + Expected = Likely finish — Basheer, 2026-09-27
 - Opportunities won at hospitals outside the plan count toward the person's actuals, on their own "Unplanned" line — Basheer, 2026-09-27
-- Split-shared Opportunities: owner gets full credit, as every report does today; if Haroon (asked 2026-09-29) wants credit shared by split %, that changes all reports together, scorecard included — Basheer, 2026-09-27
+- ~~Split-shared Opportunities: owner gets full credit, as every report does today; if Haroon (asked 2026-09-29) wants credit shared by split %, that changes all reports together, scorecard included — Basheer, 2026-09-27~~ Replaced 2026-10-07: shared Opportunities credited by split % — BR-FIN-09 — Basheer
 - Everyone sees plan-versus-actual for exactly the plans they can already see in Target & Coverage Planning — Basheer, 2026-09-29
 - Zone totals group by the hospital's zone, not the planner's — Basheer, 2026-09-29
 - "Expected this quarter" = Active Opportunities only, weighted by win probability, by expected closure date; Opportunities with no closing date left out and shown as a count note — Basheer, 2026-09-29
@@ -45,7 +45,7 @@ file keeps its old name until then so links elsewhere don't break).
 - **PO columns:** separate "PO received" and "Won (paid)" columns, each counted in its own quarter. New "PO date" box next to PO number, required at Order → Delivery and at Won, never in the future. Revised 2026-10-06 (Basheer, "keep it simple"): no audit-log fallback; older records without a PO date are left alone, left out of "PO received", and counted in a "N Opportunities past Order have no PO date" note (Won ones by the quarter they were won in; still-open ones in the current quarter only — code review 2026-10-06).
 - **SBU target:** one figure per SBU per quarter, entered by the GM in SBU Target Rollup, kept in its own register table, visible to SBU Manager and above. Company target = sum of the active SBUs' targets, shown only once every active SBU has one. The SBU row's figures are SBU-wide, not the viewer's team, so the SBU Manager and the GM see the same numbers (Basheer, 2026-10-06, code review).
 - **Wording:** "no expected closure date".
-- **Split credit:** owner gets full credit, as every report does today. Question put to Haroon (2026-09-29, re-sent 2026-10-05); answer pending; doesn't block the build. UAT today: 5 shared Opportunities, Haroon on 4.
+- **Split credit (Basheer, 2026-10-07):** each person's row counts their split share of PO received, Won and Expected; group rows count once; late shared Opportunities are listed for every participant, marked "shared — owner X". Full rule: BR-FIN-09. UAT today: 5 shared Opportunities, Haroon on 4.
 - **Scope:** all in Part 1, one migration (PO date + SBU target), one UAT move.
 
 ## 1. In plain terms
@@ -127,6 +127,10 @@ names) follows as a separate pass. The old build order below is superseded.
    Shifa plan against his existing ₹18 L wins), the Won-without-PO-date
    refusal, and both screens showing the same people, statuses and
    targets. Then commit, push and the post-commit checklist for both.
+6b. **Split credit (BR-FIN-09)** in Target vs Actuals (Basheer, 2026-10-07):
+   backend share-weighting and the "shared — owner X" note on late
+   Opportunities; tests; `/code-review` at medium. Before the combined
+   E2E, which gains a shared-Opportunity case.
 7. **UAT move, only after step 6 is built and tested** (Basheer,
    2026-10-05): one combined move (Hospital-wise Target Planning + Target
    vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a
@@ -176,8 +180,6 @@ names) follows as a separate pass. The old build order below is superseded.
 - **Roster on the Target & Coverage Planning screen** — not in this pass;
   it is the separate second pass (step 6 above), before the UAT move.
 
-- **Split-shared credit** — waiting on Haroon; see Decisions and Backlog
-  "Reports never implement split-weighted attribution".
 - **The Fuller items** (click-down ladder, Customer 360 view, monthly chart,
   automatic overdue reminder) — Lighter chosen; each can be added later
   without rework. The reminder needs the nightly job planned for stale-Opportunity

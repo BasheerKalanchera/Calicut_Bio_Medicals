@@ -75,8 +75,10 @@ code or changing structure. On any conflict, the document wins over this file.
   went wrong and what to change. Each suggestion gets a P-number in
   `docs/Process-Improvements.md` the same turn (or a +1 on its Seen count).
   Weekly review when the hook says it's due. *(2026-10-06)*
-- **Daily documentation tidy-up:** when the SessionStart hook says it's due,
-  load the `doc-integrity-sweep` skill and offer to run it. *(2026-09-24)*
+- **Documentation tidy-up, every alternate day:** the day after the UAT
+  data-quality check, so the two take turns. When the SessionStart hook says
+  it's due, load the `doc-integrity-sweep` skill and offer to run it.
+  *(2026-09-24, 2026-10-07)*
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
   hook reminds when it's due. *(2026-09-24)* Run `scripts/uat_closure_date_report.py`
