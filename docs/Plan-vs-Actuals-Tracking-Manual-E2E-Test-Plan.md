@@ -1,108 +1,214 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
-# Plan vs Actuals Tracking — Manual E2E Test Plan
+# Target vs Actuals — Manual E2E Test Plan
 
-**Covers:** `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`.
-**Built:** backend `0f7d75a`, frontend and legacy-plan fix `231fbd0`; code-review fixes (plans shown only within the viewer's scope, "Total (your view)" label, `/zone-rollup` retired) `903ad41` (partial checkpoint); people from another SBU get no row unless they have a plan in the viewed SBU (totals still count them), added during E2E 2026-10-04, pending commit.
+**Covers:** `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (Target vs Actuals card, PO date gates, split credit BR-FIN-09 = step 6b) and `docs/Target-Coverage-Roster-Implementation-Plan.md` (Target Planning team list, step 6), plus a re-run of `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md` (38 steps, section K).
+**Built:** `0f7d75a`, `231fbd0`, `903ad41`, step 6 roster commits, `2e2e4c0` (split credit + review fixes). This plan replaces the earlier run (2026-10-03/04, stopped); that run's notes are in Progress-Archive-2026-10.
 **Where:** Dev.
 
-**Won cannot be undone** (Business-Rules: Won and Lost Opportunities are never
-reopened). Every Opportunity created or moved to Won below is a permanent
-test record on the shared Dev DB. They are all named `PVA test …` so they
-can be found later. Nothing else in this plan is irreversible.
+**Quarters used:** sections A–J run in **2026-Q3 (Oct–Dec 2026)**, the current quarter, because actuals (wins, PO dates, late Opportunities) only exist there. Section K runs in **2027-Q1 (Apr–Jun 2027)**, the first quarter with no plans at all, so its new plans don't disturb the totals A–J check. 2026-Q4 (Jan–Mar 2027) already has plans.
+
+**Permanent records this plan leaves on Dev (approved by Basheer, 2026-10-07):**
+SBU targets 2026-Q3, Imaging ₹100L and Critical Care ₹150L (can be changed later, not deleted); Fahad's "Test opportunity" (EMS Hospital, ₹1L) becomes Won (Won is never reopened); Basheer K's 2026-Q3 Al Shifa plan ₹20L with a rejected revision to ₹15L; Rudrappa's 2026-Q3 plan approved by Shruthi; "New USG m/c" gets the past closing date 2026-10-01; section K's 2027-Q1 plans, ratings and notes.
 
 ## Checked against live data
 
-Checked read-only on Dev, 2026-10-03, with all three RLS settings (user,
-role, SBU) set and verified (Admin). Raw output is in the session scratchpad.
+Read-only on Dev, 2026-10-07 13:46 UTC, as Admin, with all three RLS settings (user, role, SBU) set and verified; every count matched the admin connection. Raw output: session scratchpad `e2e_data2_out.txt` (session 1e7c86e6).
 
-**Re-checked 2026-10-04 (same way, read-only, Dev; output in the session scratchpad), which corrects the notes below where they differ:**
-- Nishad K V is an **Area Manager** (North Kerala), not Sales Staff. Arun Adarsh's 2026-Q3 plan is APPROVED 50.00; Vivek's 2026-Q3 plan is PENDING 51.00; 2026-Q4 already has Critical Care plans: Arun Adarsh 30.00 and Nishad K V 10.00 (both pending). Imaging has nothing in 2026-Q4.
-- Haroon's own 2026-Q2 plans have no SBU on his profile, so only Admin/GM see them. Basheer K (SBU Manager) does not.
-- **What each person's scope lets through (plan owners with a submitted plan):** Vivek: himself only. Arun Adarsh: himself and Vivek, not Nishad. Nishad K V: himself only. Fazal: nobody until step S (not Rudrappa). Shruthi: Rudrappa. Rudrappa: himself. Basheer K: Rudrappa. Admin/GM: everyone. Steps R1–R6 use these.
-- Steps that look for Haroon's rows, or for Critical Care, are run signed in as Haroon (Basheer K cannot see them).
+- **Who sees:** Imaging: Basheer K (SBU Manager), Fazal and Shruthi (Area Managers), Fahad (Marketing User), Rudrappa (Sales Staff). Critical Care: Arun Adarsh and Nishad K V (Area Managers), Vivek (Sales Staff). Haroon Sidheeq (GM, no SBU) and Abdul Latheef P (Admin) see both SBUs. Scope: Arun sees Arun + Vivek; Fazal sees Fazal + Fahad; Shruthi sees Shruthi + Rudrappa; Basheer K sees all of Imaging except Haroon's row; Nishad, Vivek, Rudrappa and Fahad see only themselves. The SBU target box is refused below SBU Manager ("Only SBU Managers and above may see SBU targets.").
+- **Who can approve:** a plan goes to the planner's own manager: Rudrappa → Shruthi, Vivek → Arun, Fahad → Fazal; Basheer K, Fazal, Shruthi, Arun and Nishad → Haroon. Only that manager gets the Approve/Reject buttons (found in the Hospital-Wise run, 2026-10-01).
+- **Who can save:** SBU targets: Admin or GM. Stage moves: the Opportunity owner (Fahad for "Test opportunity"). Won: GM (Haroon). A user's SBU and manager: Admin. Changing a user's SBU clears a manager from the other SBU (must be re-picked); zones are kept.
+- **Existing values:** as read on 2026-10-07:
+  - Plans exist only in 2026-Q2, Q3 and Q4. **2026-Q3:** Imaging: Rudrappa PENDING ₹10 (no hospitals). Critical Care: Arun APPROVED ₹50 (no hospitals); Vivek PENDING ₹51 (was ₹60 approved; KIMS Hospital Trivandrum). **2026-Q4:** Arun PENDING ₹30, Nishad PENDING ₹10, Vivek REJECTED ₹45 (counts ₹30). **2026-Q2:** Haroon ₹120 Imaging and ₹80 Critical Care, Vivek ₹65 Critical Care, all approved. **2027-Q1:** empty for everyone. No SBU targets set. No former team members.
+  - **Imaging 2026-Q3 as Admin:** Planned 10.00, PO received 0, Won 18.00 (Basheer K: 2 × ₹9 at Al Shifa Hospital Perinthalmanna, PO-TEST-1703/1704, closed 2026-10-03, no PO date), Expected 66.50, Likely finish 84.50, "5 of 6 haven't submitted". As Basheer K: 4 of 5, Expected 31.50, Likely 49.50.
+  - **Past closing date:** Fahad "Test Gate override oppotunity (renamed for TC-19/22)" (Maulana, due 2026-09-03, 20.00); Fazal "New oppotunity fast track" (Aster DM, 2026-10-01, 25.00); Haroon "Activity visibility test" (Aster DM, 2026-09-21, 50.00).
+  - **At Order:** Fahad's "Test opportunity" (EMS Hospital, ₹1.00, 90 %, no PO number or date). Nothing is at Payment Pending.
+  - **Splits:** "New USG m/c" (Qualified, no closing date): Basheer K 50 / Vivek 50; the owner Fazal is not in the split; Vivek's home SBU is Critical Care.
+  - **Annual FY 2026-27, Critical Care, as Admin:** ₹316 (Vivek 146, Arun 80, Haroon 80, Nishad 10); Arun's view 226; Vivek's view 146.
+  - **Hospital pickers:** Basheer K's offers Al Shifa (Hospital-Wise step 35, 2026-10-01). Vivek's area holds exactly KIMS Hospital Trivandrum, Test hospital 2 and Test hospital 3 (re-filed 2026-09-30); Rudrappa's holds none. Ratings: KIMS High, Test hospital 2 Medium, Test hospital 3 Low, aster medicity Not rated.
 
-- **Who sees:** Imaging has Basheer K (SBU Manager), Fazal and Shruthi (Area Managers), Fahad (Marketing User), Rudrappa (Sales Staff); Critical Care has Arun Adarsh and Nishad K V (Area Managers) and Vivek (Sales Staff); Haroon Sidheeq (General Manager) and Abdul Latheef P (Admin) see both SBUs.
-- **Who can approve:** every Area Manager reports to Haroon; Rudrappa reports to Shruthi, Vivek to Arun Adarsh, Fahad to Fazal. The approver picker offers the planner's manager chain, to be confirmed at step S5.
-- **Who can save:** Won is GM only (Haroon), and the win is credited to the Opportunity owner; the owner picker's choices are to be confirmed at step W1 before any record is created.
-- **Existing values:** 2026-Q3 Imaging has one plan, Rudrappa PENDING_APPROVAL total 10.00 with no hospital lines (legacy), and none for Fazal or Shruthi. 2026-Q3 Critical Care has Arun Adarsh APPROVED 50.00 with no hospital lines (legacy) and Vivek PENDING_APPROVAL 50.00 with KIMS Hospital Trivandrum 50.00. 2026-Q2 has Haroon 120.00 (Imaging), Haroon 80.00 and Vivek 65.00 (Critical Care), all APPROVED, no hospital lines. No Opportunity is at Payment Pending; three sit at Order (all Fahad, undated) and six at Negotiation. Three are past their closing date: "Test Gate override oppotunity (renamed for TC-19/22)" (Fahad, 3 Sep), "Activity visibility test" (Haroon, 21 Sep), "New oppotunity fast track" (Fazal, 1 Oct, Aster DM, 25.00, 70%). Critical Care has no late-stage Opportunity. Two Opportunities are Won since 1 Apr, both owned by Basheer K (no plan), closed 3 Oct 2026, 9.00 each at Al Shifa Hospital Perinthalmanna.
+Button labels, messages and the order of checks are taken from the code (`TargetVsActualsSection.tsx`, `SbuTargetBox.tsx`, `TargetPlanningScreen.tsx`, `TargetPlanDialog.tsx`, `OpportunityDetailScreen.tsx`, `opportunity/validators.py`, `planning/service.py`), not the design doc. Money shows as "₹18.0L" on the card and as "₹18.00L" in the plan dialog.
 
-Button labels, messages and the order of checks are taken from the code
-(`TargetPlanDialog.tsx`, `TargetPlanningScreen.tsx`,
-`OpportunityDetailScreen.tsx`, `PlanVsActualSection.tsx`), not the design doc.
-
-**Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
-Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
-multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
-Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
-the app.
+**Tags:** every step starts with `[Simple]` (one click/type/verify-a-value; Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift, multi-step, cross-screen/cross-role, or a genuine visual check). Saves to Dev are "Basheer clicks, Claude watches": Claude reads the record back through the app in the tester's session.
 
 ## Pre-flight
 
-- P1. [Simple] Dev backend restarted since the last backend change (scope fix in `planning/repository.py`, `/zone-rollup` removal). —
-- P2. [Simple] Frontend running; Basheer signed in as Basheer K (SBU Manager) in one browser, Haroon Sidheeq (GM) available in another. —
-- P3. [Simple] Open Insights Dashboard; the "Plan vs Actuals" card shows "This quarter" (2026-Q3). Note the starting figures for Imaging, per person. — Pass 2026-10-04 (as Haroon; card shows 2026-Q3; Imaging Rudrappa 10.00).
+- P1. [Simple] Basheer restarts the Dev backend (after `2e2e4c0`) and confirms it's running. —
+- P2. [Simple] Frontend running; a normal window plus a private window, for two people at once. —
+- P3. [Complex: read-only DB check] Claude re-runs the scope and data check just before step A1 and records any difference from the section above. —
 
-## A — Legacy plans (no hospitals): nothing to create
+## A — The card, as Admin (Imaging, 2026-Q3)
 
-1. [Simple] Insights Dashboard, SBU Imaging, quarter 2026-Q3. **Expected:** Rudrappa row Planned 10.00 (pending plans count). — Pass 2026-10-04.
-2. [Complex: expand row, compare three tables] Expand Rudrappa. **Expected:** Brand table total 10.00; Hospital table shows one line "Not assigned to a hospital" 10.00. The By zone table is dashboard-level, not inside the row: it shows "Not in a zone" including this 10.00. — Pass 2026-10-04 (figures matched).
-3. [Simple] Signed in as Haroon, switch SBU to Critical Care. **Expected:** Arun Adarsh Planned 50.00 (approved, no hospitals); expanding shows "Not assigned to a hospital" 50.00. Vivek Planned 51.00 (pending); expand and record his hospital lines (KIMS Hospital Trivandrum is known). Basheer K (SBU Manager, Imaging) must NOT appear: he belongs to Imaging and has no plan in Critical Care (he is only linked to a Dev test Opportunity, "Test +lead screen"). People from another SBU get no row unless they have a plan in the viewed SBU (decided 2026-10-04; their wins still count in the totals). A Critical Care person with no plan would still show, at Planned 0.00 with "No submitted plan for this quarter." in the expanded row (covered by unit tests; no such person exists on Dev now). — Pass 2026-10-04: Arun 50.00, "Not assigned to a hospital" 50.00 (EDAN 25, Magnamed 25); Vivek 51.00, KIMS Hospital Trivandrum 51.00 (EDAN 20, ELECTROSCIENCE 31); Basheer K row gone after the first (wrong) no-plan-no-row change (Basheer confirmed on screen 2026-10-04); **re-check after the corrected "other SBU" rule, pending.**
+1. [Simple] Insights Dashboard, SBU Imaging. **Expected:** chip "Current quarter · as of <today>"; tiles Planned ₹10.0L, PO received ₹0.0L, Won (paid) ₹18.0L "180% of planned", Expected this quarter ₹66.5L, Likely finish ₹84.5L. —
+2. [Simple] **Expected:** "5 of 6 haven't submitted a plan"; rows Basheer K, Fahad, Fazal, Haroon, Rudrappa, Shruthi; no Critical Care person. —
+3. [Simple] **Expected:** "Against SBU target": SBU row "Target not set", planned ₹10.0L, won ₹18.0L; Company row "Waits for every SBU's target", planned ₹111.0L. —
+4. [Complex: expand row, read notes] Expand Basheer K. **Expected:** hospital line "Unplanned", Won ₹18.0L (brand SonoScape); note "2 Opportunities past Order have no PO date, so …"; note "… open Opportunities have no expected closure date, so they aren't counted in Expected." —
+5. [Complex: expand rows] Expand Fahad, Fazal, Haroon. **Expected:** each has the badge "1 past closing date" and the late line: "Test Gate override oppotunity (renamed for TC-19/22) — Maulana … (was due 2026-09-03)" ₹20.0L; "New oppotunity fast track — Aster DM … (was due 2026-10-01)" ₹25.0L; "Activity visibility test — Aster DM … (was due 2026-09-21)" ₹50.0L. None says "shared". —
+6. [Simple] Expand Rudrappa, then Shruthi. **Expected:** Rudrappa Planned ₹10.0L (pending); Shruthi "No plan started for this quarter." —
+7. [Simple] "By zone". **Expected:** North Kerala Won ₹18.0L; "Not in a zone" Planned ₹10.0L; footer "SBU total". —
 
-## S — Setup: proper hospital-wise plans
+## B — Target Planning matches the card
 
-Basheer clicks, Claude watches. Planner: Fazal (Imaging Area Manager, no plan yet).
+1. [Complex: cross-screen comparison] Target & Coverage Planning, Imaging 2026-Q3, as Admin. **Expected:** the same six people as A2; "Total: ₹10.0L · 5 of 6 haven't submitted"; Rudrappa Pending Approval; the other five "Not started". —
+2. [Complex: cross-screen comparison] Switch both screens to Critical Care 2026-Q3. **Expected:** total ₹101; "2 of 4 haven't submitted"; Arun Approved ₹50; Vivek Pending ₹51 with "was ₹60.0L approved"; the card shows the same people and Planned ₹101.0L. —
 
-1. [Simple] Sign in as Fazal. Target Planning, "My Target", Imaging 2026-Q3, click "Plan". **Expected:** dialog titled "Target & Coverage Plan — 2026-Q3". —
-2. [Complex: hospital picker scope unknown] In "Search to add a hospital from your area" add Aster DM and Aster MIMS Calicut. **Expected:** both offered; if either is not, record which hospitals Fazal can pick and substitute them (the Won steps follow the substitutes). —
-3. [Simple] Set "Amount (₹ Lakhs)": Aster DM 20, Aster MIMS Calicut 10; fill the brand split to total 30. **Expected:** no "Add … more before submitting." message. —
-4. [Simple] Click "Submit for approval". **Expected:** plan listed as pending, no "Needs Brand Split" chip. —
-5. [Complex: cross-role] As Haroon, Target Planning, "Needs Your Approval", click "Approve" on Fazal's 30.00 plan. **Expected:** status Approved. —
-6. [Simple] Insights Dashboard, Imaging 2026-Q3. **Expected:** Fazal Planned 30.00; Hospital table Aster DM 20.00 and Aster MIMS Calicut 10.00, Won 0.00; Brand total 30.00. —
-7. [Simple] Repeat for Critical Care 2026-Q3: sign in as Nishad K V (Area Manager; his 2026-Q4 plan of 10.00 is a different quarter and stays), plan one hospital for 10, submit; Haroon approves. **Expected:** Nishad Planned 10.00 for 2026-Q3 (checked as Haroon). —
+## C — Past and upcoming quarters, rejected revision
 
-## W — Actuals: Opportunities moved to Won
+1. [Simple] Card, Critical Care, "Previous quarter" arrow (2026-Q2). **Expected:** chip "Past quarter"; Expected shows "—"; Planned ₹145.0L; "2 of 4 haven't submitted"; Company row planned ₹265.0L. —
+2. [Simple] "Next quarter" arrow to 2026-Q4. **Expected:** chip "Upcoming quarter"; Planned ₹70.0L; "1 of 4 haven't submitted"; Vivek ₹30.0L with "₹30.0L approved still counts"; expanded: "Revision was sent back. The last approved target (₹30.0L) still counts until a new one is approved." —
+3. [Simple] Target Planning, Critical Care 2026-Q4. **Expected:** total ₹70; Vivek Rejected with "₹30.0L approved still counts". —
 
-Test Opportunities (permanent once Won): `PVA test planned`, `PVA test unplanned`, `PVA test other person`.
+## D — SBU targets (Basheer clicks, Claude watches)
 
-1. [Simple] Create `PVA test planned` at Aster DM, owner Fazal, value 8. **Expected:** saved. If Fazal is not offered as owner, stop and record the picker's choices. —
-2. [Simple] Create `PVA test unplanned` at a hospital Fazal did not plan (e.g. Al Shifa Hospital Perinthalmanna), owner Fazal, value 5. —
-3. [Simple] Create `PVA test other person` at Aster DM, owner Shruthi (no plan), value 4. —
-4. [Complex: multi-step, stage gate] For each of the three: open the Opportunity, "Edit Opportunity", set Stage to Payment Pending, save. **Expected:** stage shows Payment Pending; Status "Won" stays disabled ("— save at Payment Pending first") until saved at that stage. —
-5. [Complex: Expected figure] Insights Dashboard before any Won. **Expected:** Fazal's Expected includes the three test Opportunities weighted by win probability, plus "New oppotunity fast track" (25 × 70% = 17.50 if still Negotiation). Likely finish = Won + Expected. —
-6. [Complex: cross-role, irreversible] As Haroon: open `PVA test planned`, "Edit Opportunity", Status Won, tick "I confirm full payment has been received *", Payment Note "PVA E2E", save. **Expected:** Opportunity Won. —
-7. [Simple] Insights Dashboard Imaging 2026-Q3. **Expected:** Fazal Won 8.00; Aster DM line Won 8.00 against Planned 20.00; Aster DM's zone row Won 8.00; Company total Won up by 8.00. —
-8. [Complex: irreversible] As Haroon mark `PVA test unplanned` Won the same way. **Expected:** Fazal's hospital table gains line "Unplanned" (Planned 0, Won 5.00); Fazal's Won 13.00. —
-9. [Complex: irreversible] As Haroon mark `PVA test other person` Won. **Expected:** Shruthi appears with Planned 0.00, Won 4.00 and an "Unplanned" line; Fazal's figures unchanged. —
-10. [Simple] Compare the "Won so far" tile with the sum of the person rows. **Expected:** equal; Likely finish and "% of plan" updated. —
+1. [Simple] As Haroon, card, Imaging 2026-Q3. **Expected:** "SBU target for 2026-Q3: Not set", button "Set target", caption "Set by the GM. Target vs Actuals measures the SBU's Won against it." —
+2. [Simple] "Set target", type -5 in "₹ Lakhs", Save. **Expected:** "Enter 0 or more"; nothing saved. —
+3. [Simple] Type 100, Save. **Expected:** box shows ₹100.0L and a "Change" button; SBU row target ₹100.0L; Company row still "Waits for every SBU's target". —
+4. [Simple] Switch to Critical Care, set 150. **Expected:** Company row target ₹250.0L. —
+5. [Simple] As Basheer K, Imaging. **Expected:** box shows ₹100.0L with no "Set target"/"Change" button. —
+6. [Complex: cross-role, hide check] As Fazal (Imaging), then as Arun (Critical Care). **Expected:** no SBU target box, no SBU or Company target row. —
 
-## C — Closed outside the quarter
+## E — Plan → approval → actuals (Basheer clicks, Claude watches)
 
-1. [Simple] Previous quarter view (2026-Q2) after step W10. **Expected:** none of the three `PVA test` wins appear there (they closed in 2026-Q3); the two 3 Oct wins by Basheer K do not appear either. A back-dated close would need a database edit and is not part of this plan. —
+1. [Complex: cross-role] As Shruthi, Target Planning, Imaging 2026-Q3, "Needs Your Approval": Approve Rudrappa's ₹10. **Expected:** Approved; card still Planned ₹10.0L. —
+2. [Simple] As Basheer K, Imaging 2026-Q3, "Plan": add Al Shifa Hospital Perinthalmanna ₹20, brand split ₹20, "Save draft". **Expected:** Draft. —
+3. [Complex: cross-role, hide check] As Haroon. **Expected:** Target Planning shows Basheer K "Draft" with the amount "—"; card Planned still ₹10.0L; Basheer K's expanded row: "Plan is still a draft. Its figures show once it's submitted." —
+4. [Simple] As Basheer K, "Submit for approval". **Expected:** Pending Approval. —
+5. [Complex: cross-role] As Haroon, Approve. **Expected:** card Planned ₹30.0L, Won ₹18.0L "60% of planned"; "4 of 6 haven't submitted"; Basheer K's hospital table: Al Shifa Planned ₹20.0L, Won ₹18.0L, no "Unplanned" line. —
+6. [Simple] As Basheer K, "Revise": Al Shifa ₹15, brand ₹15. **Expected:** "₹15.00L is ₹5.00L below your approved target of ₹20.00L … You can still submit". Note "E2E revision", Submit. —
+7. [Simple] Card as Haroon. **Expected:** Basheer K ₹15.0L with "was ₹20.0L approved"; Planned ₹25.0L. —
+8. [Complex: cross-role] As Haroon, Reject with note "E2E reject". **Expected:** Basheer K ₹20.0L with "₹20.0L approved still counts"; expanded: "Revision was sent back. The last approved target (₹20.0L) still counts until a new one is approved."; Planned back to ₹30.0L; Target Planning shows the same. —
 
-## L — Late Opportunities
+## F — PO date gates and PO received (Fahad's "Test opportunity", EMS Hospital, ₹1L)
 
-1. [Complex: expand row] Imaging 2026-Q3, expand Fazal. **Expected:** "Closing date passed" lists "New oppotunity fast track" (closing 1 Oct 2026). —
-2. [Simple] Signed in as Haroon (Basheer K cannot see his row), expand Haroon's row. **Expected:** "Closing date passed" lists "Activity visibility test"; undated Opportunities show an "open Opportunities have no …" note. —
+Fahad moves the stages; Haroon marks it Won. Basheer clicks, Claude watches.
 
-## E — Previous and upcoming quarter
+1. [Simple] As Fahad, "Edit Opportunity", Stage → Delivery & Installation, PO number and PO date empty, save. **Expected:** "PO Date is required to advance to Delivery & Installation stage"; nothing saved. —
+2. [Complex: server-only check] PO date today, PO number still empty, save. **Expected:** the server refuses: "PO Number is required to advance to Delivery & Installation stage."; nothing saved. —
+3. [Simple] PO number "PO-E2E-1007", PO date tomorrow, save. **Expected:** "PO Date can't be in the future". —
+4. [Simple] PO date today, save. **Expected:** stage Delivery & Installation; card as Admin: PO received ₹1.0L. —
+5. [Simple] Stage → Payment Pending, save. **Expected:** saved. —
+6. [Complex: server-only check] Empty the PO date, save at Payment Pending. **Expected:** "PO Date can't be removed once the Opportunity is past the Order stage."; after a reload the PO date is still there. —
+7. [Complex: cross-role] As Haroon: Status Won, empty the PO date, save. **Expected:** refused before saving: "PO Date is required to mark an opportunity as Won". —
+8. [Simple] Restore the PO date, Status Won, payment tick off, save. **Expected:** "Confirm that full payment has been received to mark this Opportunity as Won". —
+9. [Complex: irreversible] Tick "I confirm full payment has been received *", save. **Expected:** Won. Card: Fahad Won ₹1.0L; headline Won ₹19.0L; SBU row won ₹19.0L. —
 
-1. [Simple] Signed in as Haroon, click the "Previous quarter" arrow (2026-Q2). **Expected:** chip "Past quarter"; Expected column shows "—"; Haroon Planned 120.00 (Imaging). —
-2. [Simple] Signed in as Haroon, click the "Next quarter" arrow until 2026-Q4. **Expected:** chip "Upcoming quarter"; Imaging shows "Nothing planned or won for this quarter."; Critical Care shows Arun Adarsh 30.00 and Nishad K V 10.00. —
+## G — Shared Opportunity past its closing date ("New USG m/c")
 
-## R — Role scope (read-only)
+1. [Complex: read before/after] Claude records the Expected for Basheer K and Fazal and the Imaging headline. As Basheer K, set "New USG m/c" Expected Closure Date to 2026-10-01, save (Basheer clicks, Claude watches). —
+2. [Complex: expand rows] Card as Admin, Imaging. **Expected:** Basheer K: "New USG m/c — <account> (was due 2026-10-01) · shared, owner Fazal, 50%" at his 50 % share; Fazal: the same line "· shared, 0%" at ₹0.0L. Basheer K's Expected rises by his share; the headline by the full weighted value. —
+3. [Complex: cross-role, hide check] Critical Care card as Admin, then as Vivek. **Expected:** "New USG m/c" is not listed. —
+4. [Simple] As Fazal, Imaging. **Expected:** the roster line ends "· Totals show only your team members' shares of shared Opportunities". —
 
-Colleagues outside a person's scope are hidden entirely (plan and actuals),
-even though they plan in the same SBU. Run after step S.
+## H — Former team member (Rudrappa, moved and moved back)
 
-1. [Complex: cross-role, hide check] Sign in as Fazal, Imaging 2026-Q3. **Expected:** only Fazal's own row; Rudrappa's pending 10.00 plan does not appear; total label "Total (your view)", total equals Fazal's row. —
-2. [Complex: cross-role, hide check] Sales Executive: sign in as Vivek (Critical Care Sales Staff), Critical Care 2026-Q3. **Expected:** only Vivek's own row (Planned 51.00); Arun Adarsh's approved 50.00 plan does not appear; label "Total (your view)"; no Imaging data and no SBU switch to Imaging. —
-3. [Complex: cross-role, hide check] Sign in as Arun Adarsh, Critical Care 2026-Q4. **Expected:** only Arun's own 30.00; Nishad's 10.00 does not appear. Then 2026-Q3: Arun and Vivek both shown, not Nishad. —
-4. [Complex: cross-role] Sign in as Basheer K (SBU Manager), Imaging 2026-Q3. **Expected:** Rudrappa, Fazal and Shruthi's rows visible; label "Total (your view)"; 2026-Q2 does not show Haroon's 120.00 plan. —
-5. [Simple] Sign in as Haroon. **Expected:** both SBUs selectable, all people visible including Haroon's Q2 plans; label "Company total". —
-6. [Simple] Sign in as Rudrappa (Imaging Sales Staff), Imaging 2026-Q3. **Expected:** own row only, label "Total (your view)". (No colleague plan exists in this quarter, so this is a confirm, not a hide check.) —
+1. [Complex: admin change] As Admin, User Directory: Rudrappa's SBU → Critical Care, manager Arun Adarsh, save (Basheer clicks, Claude watches). —
+2. [Simple] Target Planning, Imaging 2026-Q3. **Expected:** Rudrappa under "No longer on this team — their plans still count in the total", Approved ₹10; total unchanged; the count is now over 5 people. —
+3. [Simple] Card, Imaging, then Critical Care. **Expected:** Imaging: no Rudrappa row, Planned unchanged, "… of 5 haven't submitted". Critical Care: Rudrappa listed with "No plan started for this quarter."; "3 of 5 haven't submitted". —
+4. [Complex: admin change] Move him back: SBU Imaging, re-pick manager Shruthi, save. **Expected:** A2's six rows return; Shruthi's view shows Rudrappa again. —
+
+## I — Annual view
+
+1. [Simple] Target Planning, Annual, FY 2026-27, Critical Care, as Admin. **Expected:** "Total: ₹316 across 4 reps for FY 2026-27" (format as shown on screen); Annual Total Vivek ₹146, Arun ₹80, Haroon ₹80, Nishad ₹10. —
+2. [Complex: cross-role] As Arun: total ₹226. As Vivek: ₹146. —
+
+## J — Hide checks (read-only, Imaging/Critical Care 2026-Q3)
+
+1. [Complex: cross-role, hide check] Rudrappa. **Expected:** only his own row; "Total (your view)"; no SBU target box. —
+2. [Complex: cross-role, hide check] Fahad. **Expected:** only Fahad. —
+3. [Complex: cross-role, hide check] Shruthi. **Expected:** Shruthi + Rudrappa; not Fazal, Fahad or Basheer K. —
+4. [Complex: cross-role, hide check] Vivek, Critical Care. **Expected:** only Vivek; no Imaging card; "New USG m/c" not listed. —
+5. [Complex: cross-role, hide check] Basheer K, Imaging. **Expected:** no Haroon row; SBU row still SBU-wide. —
+6. [Complex: cross-role, hide check] Arun. **Expected:** Arun + Vivek; not Nishad. —
+
+## K — Hospital-Wise Target Planning re-run (quarter 2027-Q1, Apr–Jun 2027)
+
+Steps 1–38 follow `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`, adapted: quarter 2027-Q1; hospitals are already re-filed and rated, so the rating steps use aster medicity and rating changes; step 12 reflects the team list (step 6); step 27 runs with both windows as Arun (only the rep's own manager gets the buttons); step 30 checks an older plan read-only; messages are today's wording. Step 39 links back to the card.
+
+### Rate Hospitals (as Haroon)
+
+1. [Simple] Open **Rate Hospitals**. **Expected:** filtered to "Not rated yet"; aster medicity listed, KIMS not (already High); each row has a rating, a note box and a greyed-out **Save**. —
+2. [Simple] On aster medicity pick **High**, don't Save; change the filter to "All ratings" and back. **Expected:** still Not rated. —
+3. [Simple] Pick **Medium**, note "E2E rating", **Save**. **Expected:** leaves "Not rated yet"; filter Medium shows it with the note. —
+4. [Simple] Change Test hospital 3 to **Medium**, Save; then back to **Low**, Save. **Expected:** Low. —
+5. [Simple] On KIMS change only the note to "ICU expansion planned (E2E)", Save. **Expected:** filter High shows KIMS with the new note. —
+
+### Who sees ratings and notes
+
+6. [Simple] As Haroon, KIMS's customer page. **Expected:** **High** chip and the note. —
+7. [Simple] As Vivek: no **Rate Hospitals** in the menu; KIMS's page shows **High** but no note. —
+8. [Complex: direct API call] Vivek's session: `PATCH /accounts/{KIMS}/business-potential` with KIMS's current values → **403** "Only Admin/GM may rate a hospital's Business Potential." (Basheer pastes it in the console). —
+
+### Vivek's draft
+
+9. [Simple] As Vivek, **Target & Coverage Planning**, quarter **2027-Q1**. **Expected:** no target; a **Plan** button. —
+10. [Simple] **Plan**, open the hospital picker. **Expected:** only KIMS, Test hospital 2 and Test hospital 3, each with its rating chip; "Al Shifa" and "aster medicity" find nothing. —
+11. [Simple] Add all three at **₹0**. **Expected:** KIMS a red warning, Test hospital 2 and 3 yellow; total ₹0.00L. **Save draft** → Draft. —
+12. [Complex: cross-role, hide check] As Arun, 2027-Q1. **Expected:** Vivek's plan not in Needs Your Approval; the team list shows Vivek "Draft" with the amount "—" and no hospitals. —
+
+### Submit (as Vivek)
+
+13. [Simple] Reopen the draft: KIMS **₹30** (Weekly, objective Demo new ventilator), Test hospital 2 **₹15** (Monthly), Test hospital 3 **₹0** (Quarterly). **Expected:** total ₹45.00L; KIMS's red warning goes; Test hospital 3's yellow stays; no change-note box. —
+14. [Simple] Brand split **EDAN ₹40**, **Submit for approval**. **Expected:** blocked: "Your brand amounts add up to ₹40.00L, but the plan total is now ₹45.00L. Add ₹5.00L more before submitting." EDAN **₹45**, Submit → **Pending Approval**. —
+
+### Same-SBU overlap
+
+15. [Simple] As Arun, 2027-Q1, **Plan**: KIMS **₹20**, aster medicity **₹10**. **Expected:** a warning on KIMS naming Vivek. EDAN ₹30, Submit → Pending Approval (warning doesn't block). —
+16. [Simple] As Nishad, 2027-Q1, **Plan**: Al Shifa Hospital Perinthalmanna **₹10**, EDAN ₹10, Submit → Pending Approval. —
+17. [Complex: direct API call] `GET /planning/targets/overlaps` for Al Shifa, Critical Care, 2027-Q1 in Vivek's, Arun's and Haroon's sessions. **Expected:** Vivek and Arun empty; Haroon one `SAME_SBU_OVERLAP` naming Nishad K V. —
+
+### First approval (as Arun)
+
+18. [Simple] Needs Your Approval: Vivek 2027-Q1 ₹45, 3 hospitals, no "Revised". Expand: hospitals with ratings, visit frequencies, amounts, "EDAN ₹45"; no change note. —
+19. [Simple] **Approve**. As Vivek: Approved. —
+
+### Revising below the approved total (as Vivek)
+
+20. [Simple] **Revise**: remove Test hospital 2. **Expected:** total ₹30.00L; "₹30.00L is ₹15.00L below your approved target of ₹45.00L … You can still submit". EDAN ₹30, note "Lost Test hospital 2 to a competitor", Submit → Pending Approval. —
+21. [Simple] As Arun: **Revised**, 2 hospitals; expanded: "Why it changed: Lost Test hospital 2…" and "Last approved target: ₹45.00L — this revision is ₹15.00L below it". —
+
+### Plan changed while the manager was reviewing (normal window Arun, private window Vivek)
+
+22. [Complex: two windows] Arun: **Approve** on Vivek's plan; leave the dialog open. —
+23. [Complex: two windows] Vivek: **Revise**, change only KIMS's objective to Demo and training; Submit with the note empty → "Please add a short note saying why the plan changed."; note "Objective updated", Submit. —
+24. [Complex: two windows] Arun: **Approve** in the open dialog. **Expected:** dialog closes; "The rep changed this plan while you were reviewing it. Please check the latest version below and review again."; row shows "Objective updated"; still Pending Approval. —
+25. [Simple] Arun: **Approve** again. **Expected:** Approved; expanded "Last change (approved): Objective updated"; no "Last approved target" line. —
+
+### Plan already decided (both windows Arun)
+
+26. [Simple] Vivek: **Revise**, add Test hospital 2 back at ₹15 (total ₹45), EDAN ₹45, note "Won Test hospital 2 back", Submit. —
+27. [Complex: two windows] Private window (Arun): **Approve**, leave the dialog open. Normal window (Arun): **Reject**, note "Recheck TH2 amount". —
+28. [Complex: two windows] Private window: **Approve**. **Expected:** dialog closes; "This plan is no longer waiting for approval — it has already been decided. Please check the latest version below."; Vivek's plan stays Rejected. —
+29. [Simple] Arun's team list, expanded: "Last change (rejected): Won Test hospital 2 back"; "Last approved target: ₹30.00L" still shown. —
+
+### Older plan without hospitals (read-only)
+
+30. [Simple] As Arun, quarter **2026-Q3**: his Approved ₹50 plan (no hospitals) shows normally. **Revise**: Submit is blocked until a hospital is added. **Cancel** — don't save (a revision here would change section B's totals). —
+
+### Server guards (Vivek's session; Basheer pastes, Claude watches; all refused)
+
+31. [Complex: direct API call] `POST /planning/targets` for Imaging, 2027-Q1, KIMS ₹1 → **403** "You can only set a target for your own SBU."; nothing created. —
+32. [Complex: direct API call] `PATCH` Vivek's 2027-Q1 plan with KIMS ₹10.005 → **422**; plan unchanged. —
+33. [Complex: direct API call] Arun's session: `POST /planning/targets/{id}/approve` without `expected_updated_at` → **422** "Field required"; nothing decided. —
+
+### Who can read hospital lines
+
+34. [Complex: read-only DB check] `target_plan_account` rows for Vivek's 2027-Q1 plan as each user (all three settings set and verified). **Expected:** Vivek and Arun see them; Nishad 0; Rudrappa 0. —
+
+### Territory edge cases
+
+35. [Simple] As Basheer K, 2027-Q1, **Plan**, open the picker. **Expected:** hospitals from any zone (Al Shifa, Aster DM). **Cancel.** —
+36. [Simple] As Rudrappa, 2027-Q1, **Plan**. **Expected:** the picker offers no hospitals. **Cancel.** —
+
+### Regression
+
+37. [Simple] As Haroon, **Brand Target Tracking**, Critical Care, 2027-Q1. **Expected:** EDAN Team Committed ₹85 = Vivek ₹45 (Rejected) + Arun ₹30 + Nishad ₹10. —
+38. [Simple] Menu per role: **Rate Hospitals** for Haroon and Abdul Latheef only; Target & Coverage Planning for everyone; Pipeline and Insights load normally. —
+
+### Link back to the card
+
+39. [Simple] Insights Dashboard, Critical Care, 2027-Q1, as Admin. **Expected:** chip "Upcoming quarter"; Planned ₹70.0L (Vivek's rejected revision counts his last approved ₹30 + Arun ₹30 + Nishad ₹10); Won (paid) ₹0.0L; "1 of 4 haven't submitted". —
 
 ## Close-out
 
 - Record Pass/Fail beside each step as it completes.
-- List the test Opportunities left on Dev in Progress-Archive.
+- List the permanent Dev records (top of this plan) in Progress-Archive.
 - Scorecard row moves to Done only when every step above is checked off.

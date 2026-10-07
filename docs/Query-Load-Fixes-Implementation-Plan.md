@@ -1,6 +1,6 @@
 # Query Load Fixes — Implementation Plan
 
-**Status:** Approved 2026-10-06 (Basheer). Deadline: all rows fixed and on UAT by Sun 2026-10-11.
+**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07.
 **Traceability rows:** none (no signed requirement; reliability work after the
 Next Actions outage).
 **Design / discussion:** query audit on Dev, 2026-10-06 — results in
@@ -48,7 +48,12 @@ Progress-Archive-2026-10 (2026-10-06 entry).
   week — Basheer, 2026-10-06. Exception: if fix 2 is finished and
   checked on Dev before trip 1's deploy (morning of 2026-10-07), trips 1
   and 2 go as one hotfix, timed together; otherwise trip 1 goes alone —
-  Basheer, 2026-10-06.
+  Basheer, 2026-10-06. Changed 2026-10-07 (Basheer): no trip 4. Fix 4
+  (Audit Log, zone tree, workspace removal) is built and checked on Dev
+  and committed to `main`, then reaches UAT with the next full `main` →
+  UAT promotion (with Target vs Actuals and the Audit Trail Redesign).
+  Reason: UAT still runs the old Audit Log, so the Audit Log fix can't
+  go before the redesign does.
 
 ## 1. In plain terms
 
@@ -113,8 +118,10 @@ Marketing Leads.
         - Trip 2 (Activity comments and Daily Report): comment threads on
           2–3 busy activities, and the Daily Activity Report for a busy day.
         - Trip 3 (Pipeline): the Opportunity Pipeline, as a manager.
-        - Trip 4 (priority-4 rows): the Audit Log and the Territory Admin
-          zone tree. The unused workspace request has no screen to time.
+        - No trip 4 (D9, changed 2026-10-07): the Audit Log and the
+          Territory Admin zone tree are timed on UAT before and after the
+          full promotion that carries fix 4. The unused workspace request
+          has no screen to time.
         Timing: Claude reads the request times in Chrome, signed in to the
         UAT website as Basheer (no database connection). Result in section
         6's "On UAT" column and Progress-Archive (Basheer, 2026-10-06).

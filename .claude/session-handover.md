@@ -18,14 +18,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (checkpoint; E2E pending): pytest 1217, ruff, tsc, lint clean.
   Read-only Dev check 0 problems, no split totals ≠ 100 %, but no shared
   Opportunity on Dev is Won or late (output: session 5cef2040 scratchpad
-  `split_check_out.txt`). E2E setup: Basheer gives "New USG m/c" (owner
-  Fazal not in split; Basheer K 50 / Vivek 50) a past closing date →
-  late on all three rows ("shared, 0 %" on Fazal's), Fazal's Area
-  Manager note.
-- **Next:** write the combined E2E checklist (shared-Opportunity, former-member, Annual-total
-  cases) → checks, Dev backend restart → run E2E. E2E data: session
-  0fa74619 scratchpad (`tva_*_out.txt`, `tp_team_out.txt`) + session
-  5cef2040 scratchpad (`e2e_data_out.txt`).
+  `split_check_out.txt`).
+- Combined E2E test plan written 2026-10-07:
+  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` (A–J in
+  2026-Q3, K = 38-step Hospital-Wise re-run + step 39 in 2027-Q1). Live
+  data: session 1e7c86e6 scratchpad `e2e_data2_out.txt`.
+- **Next:** Basheer restarts the Dev backend (P1) → Claude re-runs the
+  read-only scope check (P3) → E2E from step A1.
 - Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't
   delete (it has Activity rows).
 - UAT move: after the combined E2E, together with Hospital-wise Target
@@ -52,7 +51,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Order: Opportunity page (open + save, with Product documents) → Activity
   comments + Daily Report → Pipeline → Audit Log + zone tree + remove
   workspace request. Each: fix on `main` (own commit) → UAT by hotfix
-  route (own approval); 4 trips.
+  route (own approval); 3 trips. Fix 4 has no trip: it goes to UAT with
+  the next full promotion (plan D9, changed 2026-10-07).
 - The other session owns Target vs Actuals (planning files + the PO date
   box on the Opportunity page): check `git status` before every save and
   commit; stay out of their files.
@@ -63,6 +63,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (Basheer), plan step 7, own approval: before
   timings on UAT (Pipeline as a manager), same change on `uat`, tests,
   deploy, after timings, merge `uat` back into `main`.
+- **Then (parked to Thu 2026-10-08, Basheer):** build and test fix 4 on
+  Dev. Approach (agreed in outline 2026-10-07; confirm before editing):
+  zone tree loads all zones + assignees in a couple of queries
+  (`reference/repository.py:192`); Audit Log `_live_rows`
+  (`audit/repository.py:327`) stops pulling linked records
+  (`lazyload("*")`); delete the unused `/accounts/{id}/workspace` route,
+  `WorkspaceService`, `get_for_workspace`, its two test files and
+  `getWorkspace` in `accounts.ts` (keep the shared Workspace* schemas;
+  leave `api.ts`). Deadline Sun 2026-10-11 for fix 4 = committed on `main`
+  (Basheer, 2026-10-07).
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

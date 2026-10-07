@@ -15,7 +15,9 @@ Eight screens fetch far more than they show (the cause of the Next Actions
 outage). Plan, priority order and progress table:
 `docs/Query-Load-Fixes-Implementation-Plan.md`. Approved by Basheer
 2026-10-06: all rows fixed on `main` and moved to UAT (hotfix route, 4
-trips) by **Sun 2026-10-11**.
+trips) by **Sun 2026-10-11**. Changed 2026-10-07: 3 trips; fix 4 is due
+committed on `main` by Sunday and reaches UAT with the next full
+promotion (plan D9).
 - **Close this entry** when every row in the plan's progress table shows
   both a `main` commit and a UAT move.
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,

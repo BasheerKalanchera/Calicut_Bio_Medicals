@@ -1184,7 +1184,9 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   `3a754f5`, round 2 after the merge; all 5 checks Pass, screens
   identical. Full results: the plan's section 8.
 - Shipped: merged into `main` as `f7d25b1` and pushed 2026-10-07. UAT
-  trip 3 next (own approval).
+  trip 3 next (own approval). Temporary branch
+  `worktree-query-load-fix3-pipeline` and its worktree removed after
+  the merge (2026-10-07).
 
 ### Session retro (Query Load Fixes fix 3, background session)
 - **Background session not said up front (P34):** the session couldn't
@@ -1254,3 +1256,51 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   Lost) have none Won or late, so the E2E must set one up — "New USG
   m/c" (owner Fazal not in the split; Basheer K 50 / Vivek 50) with a
   past closing date covers the late flag and the 0 % owner case.
+
+## 2026-10-07 — Retro: Python cache cleanup and fix 4 planning (Query Load Fixes)
+- Python cache files sat in `scripts/__pycache__`; removing the fix 3
+  worktree needed `--force` because of them, and the cause wasn't
+  reported or fixed until Basheer asked what the two unknown files were.
+  Change: when a routine step hits an unexpected obstacle, say what
+  caused it in the same report and propose fixing the cause then (P38).
+  Cause fixed by the clean-pycache hook (`92bc894`).
+- The fix 4 proposal named the "workspace request" without explaining
+  it; Basheer had to ask (P3 +1).
+- Went right: the Audit Log snag (UAT still runs the old Audit Log) was
+  found by diffing `origin/uat` against `main` before any code was
+  written (P31 in use); Basheer then moved fix 4 to the next full
+  promotion (plan D9).
+
+## 2026-10-07 — Target vs Actuals: combined E2E test plan rewritten
+- `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` rewritten for
+  steps 5, 6 and 6b together: sections A–J (card, team list, SBU
+  targets, plan → approval → actuals, PO date gates, shared Opportunity
+  past its closing date, former team member, Annual view, hide checks)
+  in 2026-Q3, and K (the 38-step Hospital-Wise re-run plus a link-back
+  step 39) in 2027-Q1, the first quarter with no plans. Checked against
+  a read-only Dev run (2026-10-07 13:46 UTC, as Admin, all three RLS
+  settings verified, 0 writes).
+- Basheer's decisions (2026-10-07): former-member case by moving
+  Rudrappa to Critical Care and back (manager re-picked); the 38-step
+  re-run in an empty quarter; and the permanent Dev records listed at
+  the top of the test plan (SBU targets, Fahad's "Test opportunity"
+  Won, Basheer K's Al Shifa plan and rejected revision, "New USG m/c"
+  closing date 2026-10-01).
+- Found while checking: "New USG m/c" will show late on two rows
+  (Basheer K, Fazal at 0 %), not three: Vivek is Critical Care, so he
+  gets no row on the Imaging card; his 50 % still counts in Imaging's
+  headline totals.
+
+## 2026-10-07 — Retro: Target vs Actuals E2E test plan
+- Answered "what's next" by copying the handover note, which called the
+  test plan a "checklist" and said three rows instead of two; Basheer
+  had to point it out. Change: check the handover's claims against git,
+  docs and code before answering (P39).
+- Named the empty quarter as "2027-Q4 (Jan–Mar 2027)" from memory and
+  got approval on it; Jan–Mar 2027 is 2026-Q4 and already has plans.
+  Caught before saving; the plan uses 2027-Q1 (Apr–Jun 2027) (P1 +1).
+- The draft didn't explain plainly why it used two quarters; Basheer
+  had to ask (P3 +1).
+- Shell guard blocked a folder change twice and a scripted edit once
+  (P14 +1); the test-plan save check refused "Existing values" written
+  on the lines below it (P40).
