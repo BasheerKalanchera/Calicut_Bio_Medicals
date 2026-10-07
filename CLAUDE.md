@@ -109,6 +109,9 @@ code or changing structure. On any conflict, the document wins over this file.
   counts) — never a placeholder to fill in later.
 - New generated/exported files go to the session scratchpad by explicit full path
   from the first write — never a bare relative filename.
+- A task that runs a script cleans up the Python cache it leaves behind;
+  for `scripts/` the `clean-pycache` hook does it automatically. The
+  backend's cache stays (the running server uses it). *(2026-10-07)*
 - **Natural Transition Checkpoint (2-Hour / Push Checkpoint):**
   Immediately after completing a `git push` or completing a major milestone:
   1. If the session has been active for ~2 hours (or history exceeds ~25 turns), Claude MUST pause and NOT start the next task.

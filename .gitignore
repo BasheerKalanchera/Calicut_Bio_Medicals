@@ -7,3 +7,7 @@ htmlcov/
 
 # Guard-rail hook run log (local diagnostics)
 .claude/hooks/guard.log
+
+# Python cache files (any folder)
+__pycache__/
+*.pyc

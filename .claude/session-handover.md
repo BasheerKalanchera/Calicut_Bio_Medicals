@@ -59,13 +59,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Fixes 1 + 2 on UAT 2026-10-07 (merged back as `18b9148`); fix 3
   (Pipeline) on `main` 2026-10-07 (`8e8e075` + merge `f7d25b1`, pushed).
   Detail: the plan's sections 6 and 8, Progress-Archive-2026-10.
-- Docs from this thread, uncommitted, for the other session's full docs
-  batch (Basheer, 2026-10-07): Query-Load plan (section 6 row, section 8),
-  Progress-Archive (fix 3 entry + two retros), Process-Improvements
-  (P34–P37; P1/P3/P14/P21/P23/P28/P30 seen +1), Backlog (tie-breaker,
-  zone picker, "deal" wording, Forecast + doc tidy-up leftovers), this
-  note; tidy-up every alternate day: hook, CLAUDE.md, sweep skill,
-  Sweep-Log, Process-Rules-History.
 - **Next:** UAT trip 3 (Pipeline), early morning Thu 2026-10-08
   (Basheer), plan step 7, own approval: before
   timings on UAT (Pipeline as a manager), same change on `uat`, tests,

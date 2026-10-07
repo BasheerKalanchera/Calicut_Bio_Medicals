@@ -232,3 +232,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Session handoff — documentation tidy-up every alternate day, the day after the UAT data-quality check (was daily).
   **Why:** 2026-10-07 — Basheer's choice: the two recurring jobs take turns (data-quality check one day, tidy-up the next) instead of the tidy-up asking every day. The hook keeps them apart even after a skipped day (Option A), with a 4-day backstop.
+
+- **Rule:** Session handoff — a task that runs a script cleans up its Python cache; the `clean-pycache` hook (PostToolUse) deletes `scripts/__pycache__` after any command that runs a `scripts/*.py` file. Root `.gitignore` also ignores `__pycache__/` and `*.pyc` as a safety net.
+  **Why:** 2026-10-07 — Basheer asked what two unknown files in the working tree were: Python cache files left in `scripts/__pycache__` by the scorecard and report scripts (they also blocked removing the fix-3 worktree). His call: Python may create them, but the task that made them must delete them when done. The backend's cache is left alone because the running Dev server uses it.
