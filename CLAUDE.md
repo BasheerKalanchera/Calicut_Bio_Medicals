@@ -80,9 +80,10 @@ code or changing structure. On any conflict, the document wins over this file.
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
   hook reminds when it's due. *(2026-09-24)* Run `scripts/uat_closure_date_report.py`
-  with it (Expected Closure Dates and Lead-stage chance). *(2026-10-01)* Raw output and draft reports
-  stay in the session scratchpad; only the finished PDF, after Basheer
-  approves it, goes in `C:\Backups\CabioUAT\data_consistency_reports\`.
+  with it (Expected Closure Dates and Lead-stage chance). *(2026-10-01)* Raw output stays in the session
+  scratchpad; draft PDFs go in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`
+  (Basheer can't open the scratchpad), and only after he approves one does
+  it move up into `C:\Backups\CabioUAT\data_consistency_reports\`.
   *(2026-10-01)* Both reports' summaries link to each section, and each
   section heading has a "Back to summary" link. *(2026-10-07)*
 - **Surfacing hook reminders:** Basheer never sees SessionStart hook output —

@@ -1110,3 +1110,60 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   `main` (11 joins, `replace_stakeholders` stays removed); the merged
   tree is identical to `af67dd3`; pytest 1203 passed. UAT gets the 11th
   join back when BR-OP-17 is promoted.
+
+### Session retro (Query Load Fixes UAT trip 1)
+- **Moved ahead without checking in (P30):** went from the "before"
+  timing straight into cherry-picking; Basheer stopped it.
+- **Wrong fact about a record (P19, P1):** said City Nursing Home had
+  splits; it has none. Spoke from memory, not the picker data in hand.
+- **UAT gap found late (P31):** fix 1 used the `main`-only payment
+  confirmer; full pytest on the UAT copy caught it, after the copy.
+- **Timing method not explained up front (P22):** Basheer thought pages
+  weren't refreshed; one reload per round had covered every page.
+- **Browser waste (P11):** hidden Chrome tab throttled runs and caused
+  45 s timeouts until Basheer brought it to the front.
+
+## 2026-10-07 — UAT backup, data-quality check and Expected Closure Dates report
+
+- **Backup:** `scripts/backup_uat.ps1` run, verified; 17 Sep dump pruned
+  (14 kept).
+- **Data quality vs 5 Oct** (505 hospitals, 179 Opportunities, 1,096
+  activities): no-activity Opportunities 63 → 58 (14 left, 9 joined); Won
+  with PO but no activity 8 → 5; no next action 133 → 165 (Nishad +28);
+  notes that don't say what happened 9 → 28 (Nishad 14, Vivek 5, mostly
+  "Done" closing "Follow up"); double-submits 3 → 7 pairs (4 new, Nishad);
+  region-level hospitals 11 → 12 (Sanjos hospital Alappuzha); targets
+  pending after quarter start 2 → 1 (Vivek's resolved, Fahad's ₹113.30 L
+  left). New: "Radians health care Thrissur" (Dealer) added 3 times on
+  5 Oct, one copy holds Arun's 2 Opportunities; marked "Please fix" for an
+  admin. The section 3 sort by Area (last session's change) checked: works.
+- **Closure report:** 120 open; future date 5 → 4, passed 15 → 14, Demo+
+  with no date 18 → 16, Lead with a higher chance 30 → 36 (mostly new
+  Opportunities entered high), early stage with no date 76 → 86.
+- **Report changes (Basheer):** both summaries now link to each section
+  with "Back to summary" on each heading; the closure summary table gained
+  a "vs <last run>" column (counts only). A same-day re-run now compares
+  against the last run before today and replaces today's log line.
+  Committed `4a40c2c`; UAT re-run gave the same counts. Data-quality PDF
+  built by hand from the check output (rule in CLAUDE.md).
+- **Section 9 wording:** Haroon replied, so the "awaiting his answers"
+  line was replaced with "Haroon has sent back the correct close dates for
+  all 37; they will be entered on UAT shortly."
+- **Haroon's close dates (scan received):** 26 match the proposal, 10
+  changed (rows 1, 3, 10, 13, 14, 17, 18, 19, 29, 31), row 35 struck out.
+  Follow-up sent via Basheer on WhatsApp: rows 13+14 (KIMS Alshifa) dated
+  23 Jul / 27 Jun, before the 12–13 Aug demo; rows 17+18 month (8 or 9)
+  unclear; row 35 duplicate of row 31 or something else. Scan kept out of
+  the repo (moved to the backups folder by Basheer).
+- Reports: `UAT-Data-Quality-Report-2026-10-07.pdf`,
+  `Expected-Closure-Dates-2026-10-07.pdf` in
+  `C:\Backups\CabioUAT\data_consistency_reports\`.
+
+### Session retro (UAT chores, 2026-10-07)
+- **Commit failed on the first try (P32):** Windows PowerShell split the
+  `-m` message at its quote marks; retried with `git commit -F`. The
+  no-cd guard also blocked a `Set-Location` again (P14).
+- **Drafts out of Basheer's reach (P33):** draft PDFs sat in the session
+  scratchpad, which he can't open, so they went into the backups folder
+  before review. Fixed: drafts now go in a `drafts` subfolder there
+  (CLAUDE.md "UAT data-quality check").

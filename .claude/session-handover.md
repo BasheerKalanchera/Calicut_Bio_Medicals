@@ -3,17 +3,15 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-## Where we stopped — 2026-10-05 evening
+## Where we stopped — 2026-10-07 morning (UAT chores)
 
-- Due-today items all done and pushed (`9a23a4e`): UAT backup, data-quality
-  and closure-date reports (PDFs in the data_consistency_reports backup
-  folder), doc tidy-up.
-- Untested: the new sort by Area in `scripts/uat_data_quality_check.py`;
-  check it on the next run.
-- Waiting on others: Fahad's and Vivek's 2026-Q2 targets (₹113.30 L and
-  ₹90.60 L) still unapproved after the quarter ended.
-- Offer open: build `scripts/uat_closure_date_report.py`'s comparison column
-  from the previous report (repo edit; plan approval first).
+- Done: UAT backup, data-quality and closure-date reports (PDFs in the
+  data_consistency_reports backup folder); closure report script `4a40c2c`.
+  Detail: Progress-Archive-2026-10 (2026-10-07).
+- Not run: doc tidy-up (due 2026-10-07; offer it in the next session).
+- Waiting on others: Fahad's 2026-Q2 target (₹113.30 L) still unapproved.
+- **Next:** Haroon's close dates for the 37 closed Opportunities (see the
+  Plan vs Actuals section below).
 - Untracked plan docs from other sessions (Forecast, Create-Form,
   Weekly-Follow-up): leave them out of commits.
 
@@ -25,10 +23,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   manual/help update (Backlog). Hospital
   re-filing on UAT (Option A) held until Basheer talks
   to Haroon — Plan vs Actuals Tracking plan, step 5.
-- Close dates for the 37 deals closed before 27 Sep: proposed dates sent
-  to Haroon 2026-10-01 (Backlog "UAT: fill in missing 'date closed'").
-  Apply his answers, then fill in on UAT with or before the combined UAT move
-  (UAT write: own approval, Basheer runs it).
+- Close dates for the 37 Opportunities closed before 27 Sep: Haroon's
+  marked-up list received 2026-10-07 (scan:
+  `C:\Backups\CabioUAT\data_consistency_reports\Close dates for 37 opportunities.pdf`;
+  Backlog "UAT: fill in missing 'date closed'"). 3 questions sent back
+  via Basheer (rows 13+14, 17+18, 35). **Next:** with his answers, write
+  the UAT fill-in plan (each Opportunity + date, fresh UAT backup first,
+  Basheer runs it; own approval), with or before the combined UAT move.
 - Plan approved 2026-09-29: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`
   (Lighter build, ~3 days, no DB change; new rule BR-OP-16 Closing Date
   Passed). Split-credit question sent to Haroon 2026-09-29 — doesn't block.
@@ -46,8 +47,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (migration 0060, Dev at `0060 (head)`), `ebc9613` (PO date gates),
   `cc4eb91` (backend), `2c189d7` (frontend: PO date box on the
   Opportunity edit form + Quick Lead only, Option C).
-- Open for E2E: the rejected-revision display was approved as "Rejected
-  (₹X approved)" but built as a "last approved" note; ask Basheer which.
+- Rejected-revision display decided (Basheer, 2026-10-07): keep the built
+  layout; change the card's note "last approved" to "approved, still
+  counts" (`TargetVsActualsSection.tsx:344`) to match Target Planning.
+  Do before or during the combined E2E; plan doc line 41 updated.
 - Doc rename decided (Basheer, 2026-10-06): at the post-commit checklist,
   rename both `Plan-vs-Actuals-Tracking-*` docs to `Target-vs-Actuals-*`
   and fix links in Business-Rules, Traceability, Insights-Dashboard plan,
@@ -89,6 +92,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Fixes 1 + 2 (`90ae253`, `bc09b28`) on UAT 2026-10-07 (`30d545f`;
   merged back into `main` as `18b9148`); detail in Progress-Archive-2026-10
   and the plan's section 6.
+- Uncommitted, for the next docs batch: session retro 2026-10-07 in
+  Progress-Archive-2026-10 and P30–P31 (+ P1/P11/P19/P22 seen +1) in
+  Process-Improvements.
 - **Next:** Fix 3 (Pipeline): measure first with `query_audit.py --only
   /opportunities/pipeline --save-responses <scratchpad>`, then fix,
   compare, tests, code-review, old-vs-fixed run, `fix:` commit.

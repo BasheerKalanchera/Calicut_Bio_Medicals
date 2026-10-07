@@ -472,9 +472,14 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   activity notes (22), date marked in Sales OS (9), rep's expected
   closing date (4); 2 have no information. Open with Haroon: commitment
   date or PO date (affects 5 deals), the 2 unknowns, and IQRAA Padne S50
-  Elite (conflicting notes). **Next:** apply his answers, then fill in
-  `closed_at` on UAT (a UAT write: own approval, Basheer runs it; with
-  or before the Part 2 move). Detail: Progress-Archive 2026-10-01.
+  Elite (conflicting notes). **Haroon's answers received 2026-10-07**
+  (scan: `C:\Backups\CabioUAT\data_consistency_reports\Close dates for 37 opportunities.pdf`):
+  26 agree with the proposal, 10 changed, row 35 (S70I, Life Line Health
+  Care Plus Falnir) struck out; 3 follow-up questions sent (rows 13+14
+  dated before the demo, rows 17+18 month unclear, row 35 meaning).
+  **Next:** with those answers, fill in `closed_at` on UAT (a UAT write:
+  own approval, Basheer runs it; with or before the Part 2 move). Detail:
+  Progress-Archive 2026-10-01 and 2026-10-07.
 
 - **Report edge cases left by the zone tree — low priority, no screen
   affected (found in `/code-review`, 2026-09-27).** (1) The reporting
