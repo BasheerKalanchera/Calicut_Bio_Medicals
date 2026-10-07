@@ -481,13 +481,14 @@ class TestOpportunityPageQuerySize:
             if table not in allowed:
                 assert f"join {table} " not in sql, table
 
-    def test_detail_joins_only_the_eleven_shown_references(self):
+    def test_detail_joins_only_the_ten_shown_references(self):
         mock_db = MagicMock()
         OpportunityRepository(mock_db).get_for_detail(uuid.uuid4())
         sql = self._sql(mock_db.scalar.call_args.args[0])
         # account, sbu, project, lead_source, gate_override_reason, stage,
-        # status, and four people (owner, referred_by, approver, payment confirmer).
-        assert sql.count(" join ") == 11
+        # status, and three people (owner, referred_by, approver). No payment
+        # confirmer on UAT until the payment gate (BR-OP-17) is moved there.
+        assert sql.count(" join ") == 10
         self._assert_no_chain(sql, allowed=("opportunity_stage",))
 
     def test_items_join_only_product(self):

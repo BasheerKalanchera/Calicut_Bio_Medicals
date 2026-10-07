@@ -42,7 +42,6 @@ def _detail_options():
         _name_only(Opportunity.owner, UserProfile.id, UserProfile.display_name),
         _name_only(Opportunity.referred_by, UserProfile.id, UserProfile.display_name),
         _name_only(Opportunity.gate_override_approver, UserProfile.id, UserProfile.display_name),
-        _name_only(Opportunity.full_payment_confirmed_by_user, UserProfile.id, UserProfile.display_name),
         _name_only(Opportunity.lead_source, LeadSource.id, LeadSource.name),
         _name_only(Opportunity.gate_override_reason, GateOverrideReason.id, GateOverrideReason.reason_name),
         joinedload(Opportunity.stage).lazyload("*"),
