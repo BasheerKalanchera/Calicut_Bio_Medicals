@@ -113,17 +113,23 @@ def fetch(env_name: str):
     return stages, rows
 
 
-def previous_counts() -> dict[str, int] | None:
+def previous_counts(today: str) -> dict[str, int] | None:
+    """Counts from the last closure run before today (YYYY-MM-DD), so a same-day
+    re-run still compares against the previous report, not against itself."""
     if not RUN_LOG.exists():
         return None
-    lines = [ln for ln in RUN_LOG.read_text(encoding="utf-8").splitlines() if "| closure:" in ln]
+    lines = [ln for ln in RUN_LOG.read_text(encoding="utf-8").splitlines()
+             if "| closure:" in ln and not ln.startswith(today)]
     if not lines:
         return None
     body = lines[-1].split("| closure:", 1)[1]
-    return {k.strip(): int(v) for k, v in (p.split("=") for p in body.split(";") if "=" in p)}
+    counts = {k.strip(): int(v) for k, v in (p.split("=") for p in body.split(";") if "=" in p)}
+    run_day = datetime.strptime(lines[-1][:10], "%Y-%m-%d")
+    counts["_on"] = f"{run_day.day} {run_day:%b}"  # column heading, e.g. "vs 5 Oct"
+    return counts
 
 
-def build_html(stages, rows, today: str, prev: dict[str, int] | None) -> tuple[str, dict[str, int]]:
+def build_html(stages, rows, today: str, prev: dict | None) -> tuple[str, dict[str, int]]:
     e = html.escape
     by = defaultdict(list)
     for r in rows:
@@ -177,6 +183,25 @@ def build_html(stages, rows, today: str, prev: dict[str, int] | None) -> tuple[s
         else:
             progress = "<div class=why><b>Since the last check:</b> no change.</div>"
 
+    # "Where we are today" change column. Counts only: the run log keeps no values.
+    def delta(now_n, keys, good_if_up):
+        if not prev or any(k not in prev for k in keys):
+            return "—"
+        diff = now_n - sum(prev[k] for k in keys)
+        if diff == 0:
+            return "<span class=same>no change</span>"
+        cls = "same" if good_if_up is None else ("down" if (diff > 0) == good_if_up else "up")
+        return f"<span class={cls}>{diff:+d}</span>"
+
+    buckets = ("future", "passed", "step2", "step4")
+    summary_rows = [
+        ("Open Opportunities", len(rows), fmt_l(tot(rows)), delta(len(rows), buckets, None)),
+        ("Expected Closure Date in the future", len(fut), fmt_l(tot(fut)), delta(len(fut), ("future",), True)),
+        ("Expected Closure Date already passed", len(s1), fmt_l(tot(s1)), delta(len(s1), ("passed",), False)),
+        ("No Expected Closure Date", len(nodate), fmt_l(tot(nodate)), delta(len(nodate), ("step2", "step4"), False)),
+    ]
+    vs_label = f"vs {prev['_on']}" if prev and "_on" in prev else "vs last check"
+
     defaults = ", ".join(f"{s['stage_name']} {s['default_win_probability']:.0f}%" for s in stages
                          if s["stage_name"] not in ("Lead", "Delivery & Installation"))
     lead_default = next((s["default_win_probability"] for s in stages if s["stage_name"] == "Lead"), 5)
@@ -184,6 +209,7 @@ def build_html(stages, rows, today: str, prev: dict[str, int] | None) -> tuple[s
     s4_val = defaultdict(float)
     for r in s4:
         s4_val[r["owner"]] += float(r["value"])
+    back = '<a class=back href="#summary">Back to summary</a>'
 
     page = f"""<!doctype html><html><head><meta charset=utf-8><title>Expected Closure Dates — {today}</title><style>
 body{{font-family:'Segoe UI',Arial,sans-serif;color:#222;font-size:10.5pt;line-height:1.45;margin:0 8mm}}
@@ -197,6 +223,8 @@ table{{border-collapse:collapse;width:100%;margin:8px 0;font-size:9.5pt}}
 th{{background:#f3f4f6;text-align:left;padding:6px}}
 td{{border-bottom:1px solid #e5e5e5;padding:5px 6px;vertical-align:top}}
 td:last-child{{white-space:nowrap}} tr{{page-break-inside:avoid}} thead{{display:table-header-group}}
+a{{color:#1f4e79}} .back{{float:right;font-size:9pt;font-weight:normal}}
+.up{{color:#b42318}} .down{{color:#1e7b34}} .same{{color:#888}}
 @page{{size:A4;margin:14mm 10mm}}
 </style></head><body>
 <h1>Expected Closure Dates</h1>
@@ -206,31 +234,29 @@ Opportunities are expected by a certain date?”) and the <b>next quarterly vend
 likely to sell in the next six months?”). That only works when each open Opportunity has a realistic
 <b>Expected Closure Date</b>. A rough month is fine, and it can be changed at any time as things move.</div>
 {progress}
-<h2>Where we are today</h2>
-{table(["", "Opportunities", "Value"], [
-    ("Open Opportunities", f"<b>{len(rows)}</b>", fmt_l(tot(rows))),
-    ("Expected Closure Date in the future", f"<b>{len(fut)}</b>", fmt_l(tot(fut))),
-    ("Expected Closure Date already passed", f"<b>{len(s1)}</b>", fmt_l(tot(s1))),
-    ("No Expected Closure Date", f"<b>{len(nodate)}</b>", fmt_l(tot(nodate))),
-])}
+<h2 id=summary>Where we are today</h2>
+{table(["", "Opportunities", vs_label, "Value"],
+       [(label, f"<b>{n}</b>", d, v) for label, n, v, d in summary_rows])}
+<p class=note>Jump to: <a href="#step1">Step 1 ({len(s1)})</a> · <a href="#step2">Step 2 ({len(s2)})</a> ·
+<a href="#step3">Step 3 ({len(lead_high)})</a> · <a href="#step4">Step 4 ({len(s4)})</a></p>
 <p>We don't need all of these fixed at once. Below are four small steps, starting with the ones that matter most
 for planning.</p>
 
-<h2>Step 1 — please update now: dates that have passed ({len(s1)} Opportunities, {fmt_l(tot(s1))})</h2>
+<h2 id=step1>{back}Step 1 —please update now: dates that have passed ({len(s1)} Opportunities, {fmt_l(tot(s1))})</h2>
 <p>These Opportunities had an Expected Closure Date that has now gone by, and they are still open.</p>
 <div class=act><b>Action (owner):</b> if the Opportunity is still going, move the date to when you now expect it
 to close. If it has been won or lost, please mark it Won or Lost.</div>
 {table(["Owner", "Opportunity", "Hospital", "Stage", "Date entered", "Value"],
        [(e(r["owner"]), e(r["opp"]), e(r["hosp"]), e(r["stage"]), fmt_d(r["ecd"]), fmt_l(r["value"])) for r in s1])}
 
-<h2>Step 2 — next: Opportunities at Demo stage or later with no date ({len(s2)} Opportunities, {fmt_l(tot(s2))})</h2>
+<h2 id=step2>{back}Step 2 —next: Opportunities at Demo stage or later with no date ({len(s2)} Opportunities, {fmt_l(tot(s2))})</h2>
 <p>These are the Opportunities closest to an order (Demo stage or later, or marked High Priority), but they have
 no Expected Closure Date yet.</p>
 <div class=act><b>Action (owner):</b> add your best guess of the month it will close. It can be changed later.</div>
 {table(["Owner", "Opportunity", "Hospital", "Stage", "Value"],
        [(e(r["owner"]), e(r["opp"]), e(r["hosp"]), e(r["stage"]), fmt_l(r["value"])) for r in s2])}
 
-<h2>Step 3 — Lead-stage Opportunities with a higher chance of winning ({len(lead_high)} Opportunities)</h2>
+<h2 id=step3>{back}Step 3 —Lead-stage Opportunities with a higher chance of winning ({len(lead_high)} Opportunities)</h2>
 <p>Every new Opportunity starts at <b>{lead_default:.0f}%</b> at Lead stage, and the chance rises as it moves
 through the stages ({defaults}). These Opportunities are still at Lead stage but have a higher chance entered by
 hand. The weighted forecast uses that number, so a high chance at Lead stage makes the forecast look bigger than
@@ -242,7 +268,7 @@ instead.</div>
 {table(["Owner", "Opportunity", "Hospital", "Chance entered", "Value"],
        [(e(r["owner"]), e(r["opp"]), e(r["hosp"]), f"{r['pct']:.0f}%", fmt_l(r["value"])) for r in lead_high])}
 
-<h2>Step 4 — later: early-stage Opportunities with no date ({len(s4)} Opportunities)</h2>
+<h2 id=step4>{back}Step 4 —later: early-stage Opportunities with no date ({len(s4)} Opportunities)</h2>
 <p><b>No action needed yet.</b> These are at Lead or Qualified stage. We'll come back to them once Steps 1 to 3
 are done. For information, by owner:</p>
 {table(["Owner", "Opportunities", "Value"], [(e(o), n, fmt_l(s4_val[o])) for o, n in sorted(s4_by.items())])}
@@ -261,7 +287,7 @@ def main() -> None:
 
     stages, rows = fetch(args.env)
     now = datetime.now()
-    prev = previous_counts() if args.env == "uat" else None
+    prev = previous_counts(f"{now:%Y-%m-%d}") if args.env == "uat" else None
     page, counts = build_html(stages, rows, f"{now.day} {now:%B %Y}", prev)
 
     args.out.mkdir(parents=True, exist_ok=True)
@@ -279,8 +305,14 @@ def main() -> None:
         print("Dev trial -- run log not written.")
         return
     RUN_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with RUN_LOG.open("a", encoding="utf-8") as f:
-        f.write(f"{now:%Y-%m-%d %H:%M} | closure: " + "; ".join(f"{k}={v}" for k, v in counts.items()) + "\n")
+    # One closure line per day: a same-day re-run replaces the earlier line, so
+    # the next report compares against the copy that was actually issued.
+    kept = []
+    if RUN_LOG.exists():
+        kept = [ln for ln in RUN_LOG.read_text(encoding="utf-8").splitlines()
+                if not (ln.startswith(f"{now:%Y-%m-%d}") and "| closure:" in ln)]
+    kept.append(f"{now:%Y-%m-%d %H:%M} | closure: " + "; ".join(f"{k}={v}" for k, v in counts.items()))
+    RUN_LOG.write_text("\n".join(kept) + "\n", encoding="utf-8")
     print(f"Run logged to {RUN_LOG}")
 
 

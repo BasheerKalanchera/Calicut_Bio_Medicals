@@ -83,7 +83,8 @@ code or changing structure. On any conflict, the document wins over this file.
   with it (Expected Closure Dates and Lead-stage chance). *(2026-10-01)* Raw output and draft reports
   stay in the session scratchpad; only the finished PDF, after Basheer
   approves it, goes in `C:\Backups\CabioUAT\data_consistency_reports\`.
-  *(2026-10-01)*
+  *(2026-10-01)* Both reports' summaries link to each section, and each
+  section heading has a "Back to summary" link. *(2026-10-07)*
 - **Surfacing hook reminders:** Basheer never sees SessionStart hook output —
   only Claude does. Whenever it reports something due, the first reply of the
   session opens with a short "Due today" list, asking whether to run each item,
