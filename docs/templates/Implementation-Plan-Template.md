@@ -24,10 +24,23 @@ table, screen, column or rule) is a decision and goes here too.
 
 <Numbered steps, with checkpoint commits.>
 
-## 3. Not in this plan (with reasons)
+## 3. What could be affected
 
-## 4. Business rules and records to update
+For any change to how data is fetched or saved, list every way into it,
+found by a code search:
+- (a) screens that request it directly;
+- (b) reports or links that open those screens with a filter;
+- (c) other screens that reuse or pre-fetch its data, including saves that
+  update it in place.
 
-## 5. Technical addendum
+Each item gets a check before and after the change. Write
+"None — <reason>" if the change has no such reach. Fill this in before
+the plan is approved.
+
+## 4. Not in this plan (with reasons)
+
+## 5. Business rules and records to update
+
+## 6. Technical addendum
 
 <Files, tables, endpoints, tests.>

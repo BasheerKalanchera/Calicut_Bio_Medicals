@@ -9,7 +9,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 16 | open — first review |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 6 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 11 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 12 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
 | P5 | Plans for a list/table screen state who is listed (zero rows, no-home-SBU people); test plans add "member with no activity" and "dual-role person" cases | 2026-10-04 | 1 | open |
 | P6 | Before E2E, trace each plan decision to its code and test step; a decision with neither blocks E2E | 2026-10-04 | 1 | open |
@@ -20,7 +20,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | open |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | open |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 8 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 9 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 7 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 1 | open |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | open |
@@ -28,13 +28,13 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 | P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 5 | open |
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | open |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 3 | open |
-| P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 3 | open |
+| P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
 | P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 3 | open |
 | P24 | After each handover-note edit, check its line count; if it recurs, a save-time check | 2026-10-06 | 1 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | open |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | open |
 | P27 | If a measurement is still unreliable after 2 tries, stop and report; never run two measurements against the same database at once | 2026-10-06 | 1 | open |
-| P28 | A test plan for a change with nothing visible on screen lists every way into the changed code, found by a code search, and is in the plan at approval, not after the commit | 2026-10-06 | 3 | open |
+| P28 | A test plan for a change with nothing visible on screen lists every way into the changed code, found by a code search, and is in the plan at approval, not after the commit | 2026-10-06 | 4 | built (plan template section 3; Query Load plan step 7 step 0; 2026-10-08) — also covers places that reuse or pre-fetch the data |
 | P29 | Before the first browser action in a test, say which step and why it can't be handed to Basheer | 2026-10-06 | 1 | open |
 | P30 | In an agreed multi-step plan, check in before starting each next step, even when the whole plan is approved | 2026-10-07 | 2 | open |
 | P31 | Before copying a `main` fix to UAT, check that what it uses (fields, tables, functions) exists on `uat`, and say so in the trip plan | 2026-10-07 | 1 | open |
@@ -47,6 +47,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 | P38 | When a routine step hits an unexpected obstacle (e.g. a forced delete), say what caused it in the same report and propose fixing the cause then | 2026-10-07 | 1 | open |
 | P39 | Before answering a status or "what's next" question, check every claim in the handover note against git, docs and code; the note is a pointer, not proof (qualifies P12) | 2026-10-07 | 1 | open |
 | P40 | The E2E test-plan template says each of the four live-data lines needs text on the line itself (the save check reads only that line) | 2026-10-07 | 1 | open |
+| P41 | Before any browser check of a fix, list which screens and filters reach the changed code; skip browser work on paths it does not touch | 2026-10-08 | 1 | open |
+| P42 | Timing a screen on UAT: force a fresh load (hard refresh) every time; menu clicks within 30 s reuse the stored copy | 2026-10-08 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

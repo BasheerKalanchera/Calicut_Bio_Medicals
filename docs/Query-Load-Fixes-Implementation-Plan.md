@@ -106,6 +106,15 @@ Marketing Leads.
       - Before/after check, every trip: the measuring script runs only on
         Dev and refuses UAT (D4), so the check on UAT is done on the
         screens themselves, with the same pages both times:
+        0. Before the "before" timings, Claude searches the code and
+           lists every way the changed request is reached, in three
+           groups: (a) screens that request it directly; (b) reports or
+           links that open that screen with a filter, each filter listed
+           separately; (c) other screens that reuse or pre-fetch its
+           data, including saves that update it in place. Basheer
+           approves the list; every item on it is checked before and
+           after the deploy, not just timed (Basheer, 2026-10-08, after
+           trip 3 timed only the plain Pipeline).
         1. Before the deploy: Basheer picks the pages (below). Each is
            opened on UAT, twice, and the second opening's load time is
            noted.
@@ -183,7 +192,7 @@ Marketing Leads.
 |---|---|---|---|
 | Opportunity page (open + save) | `90ae253` (2026-10-06) | `34737e7` + `30d545f` (2026-10-07; no payment-confirmer join, so 10 joins). Header 0.7–1.5 → 0.62–0.74 s; tabs 0.6–1.9 → 0.49–1.0 s | Detail 35 → 11 joins, ~16–24 → ~4.5 ms; lists 41–59 → 5; saves 41–45 → ≤14 |
 | Activity comments | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 0.9–1.6 → 0.57–0.68 s | Thread 61 → 5 joins, ~35–42 → ~1 ms; old vs fixed code as Haroon: same 6 comments and writers |
-| Opportunity Pipeline | `8e8e075` + merge `f7d25b1` (2026-10-07) | — | 36–37 → 11–12 joins, 4–10 → 4 statements; ~167–276 → ~6–35 ms across unfiltered, zone, stage, team-only and product views; old vs fixed code as Basheer K: same screens (section 8) |
+| Opportunity Pipeline | `8e8e075` + merge `f7d25b1` (2026-10-07) | `569209f` (2026-10-08; 10 joins, no payment-confirmer). Hard refresh: Nishad (Area Manager) 1.93 → ~1.4 s; Basheer K (Admin) 2.88 → 1.8–3.3 s, no clear change (network delay dominates). Same card counts both rounds. Only the plain view timed; full Dev comparison pending (section 9) | 36–37 → 11–12 joins, 4–10 → 4 statements; ~167–276 → ~6–35 ms across unfiltered, zone, stage, team-only and product views; old vs fixed code as Basheer K: same screens (section 8) |
 | Daily Activity Report | `bc09b28` (2026-10-06) | `4e8c47d` (2026-10-07). 5 Oct: 5.6 / 2.1 → 0.72 / 0.70 s | 57 → 6 joins, 11 → 4 statements, 60–77 → ~5 ms; old vs fixed code as Haroon (27 Aug): same 14 cards |
 | Product documents | `90ae253` (with Opportunity documents) | `34737e7` (2026-10-07). 0.84 / 1.06 → 0.55 s | List 59 → 5 joins (the 5 are the signed-in-user lookup) |
 | Audit Log | — | — | |
@@ -294,3 +303,61 @@ responses identical.
 Seen on both rounds (existing, Backlog): the zone picker shows "No
 options" until a zone name is typed; cards with the same priority and
 chance can swap order.
+
+## 9. Full Dev comparison — fix 3 (Pipeline), approved 2026-10-08
+
+Why: UAT trip 3 (`569209f`, 2026-10-08) timed only the plain Pipeline;
+section 8 compared five views. This closes the gap with the step 7 "step
+0" list (Basheer, 2026-10-08). Method: the comparison tool
+(`scripts/query_audit.py`) runs the server code in-process from the folder
+it sits in, so the old code runs from a separate copy and the Dev server
+is not touched or restarted. Read-only on Dev. Between `3a754f5` (old) and
+`f7d25b1` (fix) only `opportunity/repository.py` and its test changed.
+
+Users, every Pipeline view: Abdul Latheef P (Admin), Basheer K (SBU
+Manager), Vivek (Sales Staff), one Dev Area Manager (looked up in step 2).
+
+| # | View | Where users reach it | Compared before |
+|---|---|---|---|
+| 1 | No filter | Pipeline screen | Yes (section 8) |
+| 2 | One stage | Stage tab, report click-through | Yes |
+| 3 | One zone | Pipeline filter, report click-through | Yes |
+| 4 | Team only | Every report click-through | Yes |
+| 5 | One product | Pipeline Report, Product Performance | Yes |
+| 6 | One owner | Pipeline filter, Sales Report | New |
+| 7 | One brand | Product Performance "By Brand" | New |
+| 8 | One status (Won) | Report click-throughs by status | New |
+| 9 | One SBU | Pipeline filter, report click-through | New |
+| 10 | One account | Pipeline opened from an account | New |
+| 11 | Exact zone only | Zone filter without sub-zones | New |
+| 12 | With trade-in; with no products | Pipeline quick filters | New |
+| 13 | Closed between two dates | Sales Report click-through | New |
+| 14 | Team only + product together | A report click-through as sent | New |
+| 15 | Opportunity page | Opened from a card (reuses card data) | New |
+
+The card updating after a save on the Opportunity page asks the server
+nothing new: the app writes the saved values onto the card list it already
+holds. That list is the answer to views 1–14, so it is covered if all of
+them match.
+
+Checklist:
+- [x] 1. List approved (Basheer, 2026-10-08).
+- [ ] 2. Add views 6–15 and the Area Manager to the tool (permanent; show
+  the change first); find each view's record read-only on Dev (busy owner,
+  brand, account; Won status; a date range with closed Opportunities).
+- [ ] 3. Separate copy at `3a754f5` under `.claude/worktrees/`; copy in
+  `backend/.env` and the updated tool for the run.
+- [ ] 4. Old code: run the tool from the copy, `--save-responses`.
+- [ ] 5. Fixed code: run from the main folder straight after,
+  `--compare-responses`; re-run any differing view once (a Dev save
+  between runs gives a false difference).
+- [ ] 6. Delete the copy, the `.env` copy and temporary files.
+- [ ] 7. Plain-language report: matched / differed and why / any view
+  slower. Results go in this section.
+- [ ] 8. Basheer decides UAT: all match → fix 3 closed; real difference →
+  rollback or correction in the next early-morning window (sooner if
+  users would notice).
+- [ ] 9. Paperwork, each with its own approval: merge `uat` back into
+  `main` (resolve to `main`: 11 joins and its filters; pytest; push;
+  then remove `.claude/worktrees/uat-fix3` and the local `uat` branch);
+  the tool change as its own commit; results in the docs batch.

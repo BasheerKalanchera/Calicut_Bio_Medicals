@@ -1304,3 +1304,45 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - Shell guard blocked a folder change twice and a scripted edit once
   (P14 +1); the test-plan save check refused "Existing values" written
   on the lines below it (P40).
+
+## 2026-10-08 — Query Load Fixes: UAT trip 3 (Pipeline)
+
+- Fix 3 copied to the `uat` branch in a worktree (`.claude/worktrees/uat-fix3`):
+  cherry-pick of `8e8e075` without `scripts/query_audit.py` (Dev-only) and
+  without `main`'s trade-in / no-products / closed-date filters (not on
+  UAT). Join counts in the tests set to UAT's 10 / 11 / 11 (no
+  payment-confirmer join on UAT). pytest passed; pushed as `569209f`;
+  Render deploy succeeded. A diff of the two diffs confirmed only those
+  intended differences.
+- Timings on the UAT website (browser request times; after the deploy by
+  hard refresh, because menu clicks within 30 s reuse the app's stored copy):
+  Nishad (Area Manager) 1.93 → ~1.4 s; Basheer K (Admin) 2.88 → 1.8–3.3 s,
+  no clear change — `/auth/me` alone takes 1.0–1.5 s on UAT, so network
+  delay swamps the ~0.2 s database saving. Card counts identical both
+  rounds (Nishad: 11/12/2/0/7/16/0; Admin: 81/30/13/3/21/31/3).
+- Report click-through on UAT as Admin: Pipeline Report → Aeonmed 7200A
+  showed 7 cards = Product Performance's 7.
+- Gap: only the plain Pipeline was compared before and after. The
+  filtered views and the places that reuse Pipeline data were not listed
+  first. Basheer asked for the full Dev comparison before closing fix 3:
+  plan section 9 (list approved 2026-10-08). Plan step 7 now starts with
+  a "What could be affected" list ("step 0"), and the plan template has
+  the same as a required section 3.
+- `uat` not yet merged back into `main` (plan section 9 step 9).
+
+## 2026-10-08 — Retro: UAT trip 3
+
+- The before/after check covered only the plain Pipeline; filtered views,
+  report click-throughs and data reuse were mapped after the deploy, and
+  I first pointed at the plan template instead of owning the miss (P28
+  +1, now built as plan step 7 step 0 and template section 3; P22 +1).
+  Basheer's morning UAT window went on timings that didn't settle the
+  question.
+- Browser time spent on report click-throughs before checking which
+  screens the fix reaches (P41).
+- After timings first taken by menu clicks, which serve the app's stored
+  copy; Basheer had to correct it to hard refresh (P42).
+- First worktree was made outside the project folder, where the edit
+  tools are blocked (P14 +1).
+- Explanations used analogies Basheer didn't want; his global
+  instructions now say plain technical explanation, no analogies (P3 +1).

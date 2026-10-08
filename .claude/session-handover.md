@@ -59,12 +59,18 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Fixes 1 + 2 on UAT 2026-10-07 (merged back as `18b9148`); fix 3
   (Pipeline) on `main` 2026-10-07 (`8e8e075` + merge `f7d25b1`, pushed).
   Detail: the plan's sections 6 and 8, Progress-Archive-2026-10.
-- **Next:** UAT trip 3 (Pipeline), early morning Thu 2026-10-08
-  (Basheer), plan step 7, own approval: before
-  timings on UAT (Pipeline as a manager), same change on `uat`, tests,
-  deploy, after timings, merge `uat` back into `main`.
-- **Then (parked to Thu 2026-10-08, Basheer):** build and test fix 4 on
-  Dev. Approach (agreed in outline 2026-10-07; confirm before editing):
+- Fix 3 on UAT 2026-10-08 as `569209f` (pushed to `uat`, deployed).
+  Only the plain Pipeline was timed (plan section 6), so Basheer asked
+  for the full old-vs-fixed comparison on Dev before closing it.
+- **Next:** plan section 9 checklist, from step 2 (list approved
+  2026-10-08). Read-only on Dev; the Dev server is not restarted. Any
+  UAT rollback/correction waits for an early-morning window.
+- Still open from trip 3: `uat` not yet merged back into `main`; the
+  worktree `.claude/worktrees/uat-fix3` (local branch `uat`) stays until
+  that merge (section 9 step 9).
+- **Then:** build and test fix 4 on Dev, starting with its "What could
+  be affected" list (plan step 7, step 0) for approval before any edit.
+  Approach (agreed in outline 2026-10-07; confirm before editing):
   zone tree loads all zones + assignees in a couple of queries
   (`reference/repository.py:192`); Audit Log `_live_rows`
   (`audit/repository.py:327`) stops pulling linked records
