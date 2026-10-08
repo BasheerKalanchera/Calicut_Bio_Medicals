@@ -26,13 +26,14 @@
 | BR-OP-10 | Default Opportunity Status | Service Layer | `OpportunityService` | Automates the default ACTIVE status assignment before database insertion. |
 | BR-OP-17 | Payment Confirmation Before Won | Service Layer | `validate_status_transition`, `OpportunityService` create/update | Won only when already saved at Payment Pending (`display_order` 80, stage before and after the save) with `confirm_full_payment`; fails closed. Create-as-Won refused. Stamps `full_payment_confirmed_at/_by` and the note; stage frozen once Won/Lost. Migrations 0057, 0058. |
 | BR-OP-18 | Open Opportunities Stay With an Owner in Their SBU | Service Layer (planned) | `OrganizationService.update_user`, `OpportunityService.update_opportunity` | Not built — Backlog "Block an SBU change while the user owns open Opportunities in another SBU". User save refused while they own non-terminal Opportunities outside their new SBU (unless new role is Admin/GM); owner change limited to the Opportunity's SBU. |
-| BR-OP-16 | Closing Date Passed | Service Layer (planned) | `TargetPlanService` plan-vs-actual | Not built — Plan vs Actuals Tracking. Flag computed at query time (Active and closing date before today IST); never blocks. |
+| BR-OP-16 | Closing Date Passed | Repository Layer | `TargetVsActualRepository.late_opportunities` | Built on Dev (`cc4eb91`, split-aware `2e2e4c0`); E2E pending. Flag computed at query time (Active and closing date before today IST); never blocks. |
 | BR-PROJ-01 | Project Lifecycle | Service Layer | `ProjectService` | Status transition constraints (e.g., bid_submission_date required for BID_SUBMITTED). |
 | BR-FIN-01 | Contributor Split Validation | Service Layer | `SplitService` | Atomic transaction validation ensuring total equals exactly 100%. |
 | BR-FIN-02 | Value Representation | Database Constraint | `opportunity_item` table | Structural enforcement via `NUMERIC(15,2)` precision schemas. |
 | BR-FIN-03 | Opportunity Value Calculation | Database View | `vw_opportunities_with_value` | Dynamically derived based on `opportunity_item` rows per ADR-026. |
 | BR-FIN-04 | Split Governance | Service Layer | `SplitService` | State-aware validation preventing updates on closed opportunities. |
 | BR-FIN-05 | Default Opportunity Split Assignment | Service Layer | `SplitService` | Business logic automation auto-generating 100% split to the deal creator. |
+| BR-FIN-09 | Credit on Shared Opportunities | Repository Layer | `TargetVsActualRepository._credit` and its won / expected / late queries | Person figures by split %, group figures once at full value. Built on Dev `2e2e4c0`; E2E pending. |
 | BR-ACC-01 | Stakeholder Sentiment | Repository Layer | `AccountRepository` | Account Health calculated dynamically via aggregated stakeholder NPS at query time. |
 | BR-ACC-02 | Payer Behavior | Database Constraint | `account` table | Enforced structurally via `CHECK IN` constraint. |
 | BR-ACC-04 | Hospital Business Potential Rating | Service Layer + Response Schema | `AccountService.set_business_potential`, `redact_business_potential_notes` | Admin/GM only to set; notes redacted for everyone else (`account` has no RLS). |

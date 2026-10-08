@@ -5,8 +5,8 @@ Hospital-wise Target Planning is finished; this feature tracks actuals
 against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
-the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order"; step 1 done (`1821c30`), step 2 next. Split credit decided
-2026-10-07 (BR-FIN-09); built as step 6b.
+the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order". Steps 1–6b built on Dev: `1821c30`, `ebc9613`, `cc4eb91`, `2c189d7`, review fixes `eab65e3`; step 6 `0b503ad`, `23582c1`, `a9e9277`; step 6b `2e2e4c0` (split credit, BR-FIN-09, decided
+2026-10-07). Not Done: combined manual E2E pending (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
 **Design / discussion:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
@@ -98,16 +98,16 @@ names) follows as a separate pass. The old build order below is superseded.
 1. **Done `1821c30` (2026-10-05).** **Database, one migration (0060):** PO date on Opportunities + SBU target
    table. Shown for approval, applied to Dev only, `Physical-Schema.sql`
    regenerated, `alembic current` recorded.
-2. **Backend, Opportunity side:** PO date field; required at Order →
+2. **Done `ebc9613` (2026-10-06).** **Backend, Opportunity side:** PO date field; required at Order →
    Delivery and at Won; never in the future; no fallback for older records
    (revised 2026-10-06); tests.
-3. **Backend, Target vs Actuals:** roster (every active SBU member except
+3. **Done `cc4eb91` (2026-10-06).** **Backend, Target vs Actuals:** roster (every active SBU member except
    Admin) with statuses and the "N of M haven't submitted" line; managers
    see only "Draft" on others' plans; "was ₹X approved" note; PO received
    and Won (paid) columns, with the "no PO date" note; SBU row and company row; GM entry of the SBU
    target; role visibility; endpoint rename. **Checkpoint commit** (tests
    pass), proposed for approval.
-4. **Frontend:** Target vs Actuals screen (rows, columns, status labels),
+4. **Done `2c189d7` (2026-10-06).** **Frontend:** Target vs Actuals screen (rows, columns, status labels),
    GM box for the SBU target, PO date box on the Opportunity screen, rename;
    `api.ts` types hand-edited.
 5. **Checks:** pytest, ruff, tsc, lint; `/code-review` at **high**
@@ -117,7 +117,7 @@ names) follows as a separate pass. The old build order below is superseded.
    **Manual E2E deferred (Basheer, 2026-10-06):** run once with step 6's
    test, after step 6 is built. Done so far: checks, `/code-review` high,
    fixes `eab65e3`.
-6. **Second pass: Target & Coverage Planning screen.** Roster and statuses
+6. **Built `0b503ad`, `23582c1`, review fixes `a9e9277` (2026-10-06); E2E pending.** **Second pass: Target & Coverage Planning screen.** Roster and statuses
    on that screen, reusing the step 3 backend. Own short plan, own test
    (the screen last passed E2E 38/38, so it is re-tested), own commit.
    Roster on the Quarter view only; the Annual view keeps its totals
@@ -127,7 +127,7 @@ names) follows as a separate pass. The old build order below is superseded.
    Shifa plan against his existing ₹18 L wins), the Won-without-PO-date
    refusal, and both screens showing the same people, statuses and
    targets. Then commit, push and the post-commit checklist for both.
-6b. **Split credit (BR-FIN-09)** in Target vs Actuals (Basheer, 2026-10-07):
+6b. **Built `2e2e4c0` (2026-10-07); E2E pending.** **Split credit (BR-FIN-09)** in Target vs Actuals (Basheer, 2026-10-07):
    backend share-weighting and the "shared — owner X" note on late
    Opportunities; tests; `/code-review` at medium. Before the combined
    E2E, which gains a shared-Opportunity case.

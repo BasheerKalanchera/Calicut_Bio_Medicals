@@ -1,6 +1,6 @@
 # Target & Coverage Planning Roster — Implementation Plan
 
-**Status:** Approved 2026-10-06 (Basheer). Step 6 of
+**Status:** Built on Dev 2026-10-06 — `0b503ad`, `23582c1`, review fixes `a9e9277`; combined manual E2E pending (not Done). Approved 2026-10-06 (Basheer). Step 6 of
 `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (section 3).
 **Traceability rows:** 3.1 Target Planning (roster on the planning
 screen); 3.2 actual-vs-target dashboards (finished together with step 5).

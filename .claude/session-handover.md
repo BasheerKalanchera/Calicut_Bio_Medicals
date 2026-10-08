@@ -6,6 +6,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Untracked plan docs from other sessions (Forecast, Create-Form,
   Weekly-Follow-up): leave them out of commits.
 
+## Process consolidation — plan drafted 2026-10-08, waiting on Basheer
+
+- Plan: `docs/Process-Consolidation-Implementation-Plan.md` (Draft,
+  uncommitted). Full pass and alternate-day review decided by Basheer;
+  6 open questions in the plan's "Open questions" section — he is
+  taking time to answer. Don't start building until he does.
+- Also uncommitted from this session (2026-10-08 doc tidy-up, approved):
+  Plan-vs-Actuals and Target-Coverage-Roster plan Status lines, matrix
+  BR-OP-16/BR-FIN-09 rows, Backlog "Business-rule … list has drifted",
+  sweep log line. Next docs batch commit (own approval).
+
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 
 - Plans: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (build

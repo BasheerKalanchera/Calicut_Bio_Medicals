@@ -23,6 +23,29 @@ promotion (plan D9).
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
   with the reason and a new date — not on Sunday.
 
+### Business-rule "where it's enforced" list has drifted — parked, not started (2026-10-08)
+
+Found in the 2026-10-08 doc tidy-up. `docs/Business-Rule-Implementation-Matrix.md`
+(which `Backend-Implementation-Standards.md` calls authoritative) covers
+37 of the 59 rules in `docs/Business-Rules.md`. Missing: BR-ACC-03,
+BR-ACT-04–10, BR-CAT-01–04, BR-FIN-06–08, BR-OP-11–15, BR-ORG-01–02.
+Stale code names: `SplitService` (BR-FIN-01/04/05), `ActivityRLSPolicy`
+(BR-ACT-02), `BaseService` (BR-AUD-01). Some rows predate later rules
+(e.g. BR-FIN-04 vs BR-FIN-08). Its sections 2–5 repeat the table and are
+staler still.
+- **Proposed (light, recommended):** one full pass checking all 59 rules
+  against the code (~1 hr), plus two checks: a commit-time hook that
+  refuses a commit changing Business-Rules.md without the matrix, and a
+  daily rule-vs-matrix comparison in `session-start.sh` that lands on the
+  "Due today" list. **Heavy alternative:** build the matrix from the BR
+  labels in the code (~half a day). Undecided: light or heavy; delete or
+  rewrite sections 2–5 (recommend delete).
+- Rows for BR-FIN-06/07/08 already drafted in the 2026-10-08 chat (not
+  applied). BR-OP-16 and BR-FIN-09 rows fixed 2026-10-08.
+- **Pick up before** any build that leans on the matrix — Basheer said
+  parking in Backlog "is not working" (2026-10-08), so this should not
+  sit long.
+
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
 When someone in an Area Manager's team holds a split share on an
