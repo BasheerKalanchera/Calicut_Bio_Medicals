@@ -6,13 +6,21 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Untracked plan docs from other sessions (Forecast, Create-Form,
   Weekly-Follow-up): leave them out of commits.
 
-## Process consolidation — plan drafted 2026-10-08, waiting on Basheer
+## Process consolidation — plan approved 2026-10-08, building
 
-- Plan: `docs/Process-Consolidation-Implementation-Plan.md` (Draft,
-  committed `6118d49` with the 2026-10-08 doc tidy-up, pushed). Full
-  pass and alternate-day review decided by Basheer; 6 open questions in
-  the plan's "Open questions" section — he is taking time to answer.
-  Don't start building until he does.
+- Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3
+  done 2026-10-08 (uncommitted until the docs batch): 3 skills created;
+  CLAUDE.md sections moved to skills/template; 18 items folded in;
+  tracker 45 → 25 open.
+- **Next (2026-10-09):** review the 9 drops with Basheer (P18, P26, P27,
+  P34, P35, P37, P38, P42, P44) → 16 open; then the top 10 in Pareto
+  order, from P1.
+- Still to write, shown first: paperwork check in `cabio-post-commit`
+  (feat/fix only, all living docs + handover); retro + daily review
+  procedure in `process-review` (incl. which pack was missed, for which
+  job).
+- Target vs Actuals E2E did not move 2026-10-08; it's next for the build
+  session.
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 

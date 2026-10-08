@@ -190,6 +190,19 @@ that never re-fetches couldn't have shown.
 4. Cherry-pick the fix into `main` too, so ongoing feature work doesn't lose it or
    reintroduce the same bug at the next weekly promotion.
 
+**Fix to UAT ahead of a full promotion** (used 2026-09-14 Admin/GM split,
+2026-09-30 Opportunity editing, 2026-10-06 Next Actions; written down 2026-10-08)
+
+When something on UAT is broken or urgent and can't wait for the next full move.
+`main` always holds unfinished work and unreleased migrations, so a plain
+`main` → `uat` merge isn't possible:
+1. Write a hotfix plan for approval (its own doc, or a section of the feature's
+   plan): what changes, which files, how it's tested.
+2. Create `hotfix/<name>` from `uat`; build the fix there; run the full tests.
+3. Merge into `uat` and deploy (own approval); Basheer opens the screen once on UAT.
+4. Merge `uat` back into `main` as a whole (not cherry-pick); delete the hotfix
+   branch.
+
 **Migration caveat:** Alembic migrations form a strict chain (`down_revision`). If a
 hotfix on `prod` adds a migration after `main` has already added newer ones, cherry-
 picking that migration file into `main` will likely produce two competing heads —

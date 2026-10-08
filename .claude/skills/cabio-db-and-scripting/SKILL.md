@@ -1,6 +1,6 @@
 ---
 name: cabio-db-and-scripting
-description: Cabio Sales OS checklist for raw SQL against the Dev or UAT database (especially RLS-protected tables), writing, applying or committing any Alembic migration (especially one that deletes/retires/bulk-updates rows), analysing exported data for a migration or cutover, writing a one-off Python or PowerShell script, diagnosing a repeated failure, or explaining why a local git branch is behind its remote. Load before any of these tasks.
+description: Cabio Sales OS checklist for raw SQL against the Dev or UAT database (especially RLS-protected tables), writing, applying or committing any Alembic migration (especially one that deletes/retires/bulk-updates rows), analysing exported data for a migration or cutover, writing a one-off Python or PowerShell script, diagnosing a repeated failure, or explaining why a local git branch is behind its remote, or running the alternate-day UAT data-quality check. Load before any of these tasks.
 ---
 
 # Cabio — database, migration, scripting and git checklist
@@ -63,6 +63,8 @@ on Dev, before any other work:
   `backend/alembic/versions/` before calling it a bug. *(2026-08-31)*
 
 ## Scripts
+- Before writing a query or script, look up every table name, column name and
+  allowed value in `docs/Physical-Schema.sql` — never guess. *(2026-10-06)*
 - Throwaway scripts (one-off data matching, migration generators) go in the
   session scratchpad directory — never inside the repo (e.g. `.claude/scratch/`).
   Check the path before the first write. *(2026-09-21)*
@@ -90,6 +92,17 @@ on Dev, before any other work:
   file), search the diff for unintended matches before running tests —
   e.g. a pattern for `target_amount_lakhs=` also hit
   `vendor_target_amount_lakhs=`. *(2026-09-27)*
+
+## UAT data-quality check (every alternate day)
+Moved here word for word from CLAUDE.md on 2026-10-08. Still ask first, per
+the UAT rule in CLAUDE.md.
+- Run `scripts/uat_closure_date_report.py` with it (Expected Closure Dates and
+  Lead-stage chance). *(2026-10-01)* Raw output stays in the session
+  scratchpad; draft PDFs go in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`
+  (Basheer can't open the scratchpad), and only after he approves one does
+  it move up into `C:\Backups\CabioUAT\data_consistency_reports\`.
+  *(2026-10-01)* Both reports' summaries link to each section, and each
+  section heading has a "Back to summary" link. *(2026-10-07)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

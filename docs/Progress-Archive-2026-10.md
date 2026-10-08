@@ -1375,3 +1375,43 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
 - Wrote "uncommitted" into the handover note just before the commit, so
   it needed a second edit after the push (P16 +1).
 - Edited the handover note twice without showing the change first (P45).
+
+## 2026-10-08 — Process consolidation: steps 1–3
+
+- Plan `docs/Process-Consolidation-Implementation-Plan.md` approved
+  (Basheer). Goal: open list at most 10, then his daily process time
+  down to zero.
+- Step 1: three new skills — `cabio-e2e-testing`, `cabio-post-commit`,
+  `process-review` — plus the UAT data-quality steps in
+  `cabio-db-and-scripting` and the planning rules in the plan template;
+  all moved word for word. CLAUDE.md 2,878 → 2,215 words after the
+  fold-ins (one-line pointers left behind).
+- Step 3: 18 items folded into existing rules, one at a time with
+  Basheer (source text, destination text, proposed sentence): P7, P8, P9,
+  P12, P13, P16, P17, P20, P21, P23, P25, P29, P30, P39, P41, P43, P45,
+  P31. Tracker 45 → 25 open (2 built earlier).
+- New in `docs/Deployment-Topology.md`: "Fix to UAT ahead of a full
+  promotion" — hotfix branch from `uat`, plan first, merge back into
+  `main` as a whole (the route already used 14 Sep, 30 Sep, 6 Oct).
+  Basheer added: check with him before browser checks of the screens in
+  any E2E plan (`cabio-e2e-testing`).
+- P44 moved from fold-in to the drop list (9 drops to review next).
+- Target vs Actuals E2E did not move today; the whole day went on this.
+
+## 2026-10-08 — Retro: process consolidation session
+
+- Gave numbers before checking, four times: "114" with no source, "about
+  45 %" shrink (actual 33 %), "20 fold-ins" (19), "14 of 19" (counted
+  rounds, not items) — P1 +4.
+- Described the past from memory, four times: proposed homes for P13,
+  P31, P41 without reading them (P31's didn't exist); P9's sentence
+  wrong; the P31 route took four rounds before checking how the four past
+  UAT fixes were routed; yesterday's P44 retro line called a 22-rule gap
+  "three small drafted rows" — P23 +4, repeated after its merge this
+  morning (daily review: enforce or accept).
+- Approved items without updating the tracker in the same step until
+  Basheer asked; fixed in-session (tracker now updated per approval).
+- Proposed running the daily review without Basheer; he rejected it — he
+  wants to be present.
+- Target vs Actuals E2E didn't move: the day's cost of process work, which
+  the plan aims to bring down.
