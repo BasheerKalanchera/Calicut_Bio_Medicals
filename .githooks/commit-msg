@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+# Commit-message guard: Business Rules and their matrix change together.
+# A commit that changes docs/Business-Rules.md must also change
+# docs/Business-Rule-Implementation-Matrix.md (where in the code each rule is
+# enforced), unless the message says "no matrix change" (an edit that changes
+# no rule, e.g. a typo). Basheer, 2026-10-08: "later never arrives".
+#
+# Runs here (not pre-commit) because only commit-msg can read the message.
+# Active once per clone via: git config core.hooksPath .githooks
+
+STAGED=$(git diff --cached --name-only)
+
+if echo "$STAGED" | grep -qx 'docs/Business-Rules.md' \
+  && ! echo "$STAGED" | grep -qx 'docs/Business-Rule-Implementation-Matrix.md' \
+  && ! grep -qi 'no matrix change' "$1"; then
+  echo "Commit refused: docs/Business-Rules.md changed but docs/Business-Rule-Implementation-Matrix.md did not."
+  echo "Update the matrix row for each rule added, changed or removed, and commit both together."
+  echo "If no rule changed (e.g. a typo), add \"no matrix change\" to the commit message."
+  exit 1
+fi
+
+exit 0

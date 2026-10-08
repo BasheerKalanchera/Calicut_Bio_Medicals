@@ -1376,6 +1376,96 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   it needed a second edit after the push (P16 +1).
 - Edited the handover note twice without showing the change first (P45).
 
+## 2026-10-08 — Business-rule matrix brought up to date
+
+- Light pass (Basheer's choice): all 59 rules checked against the code by
+  hand. `docs/Business-Rule-Implementation-Matrix.md` rewritten as one
+  table, one row per rule in rule order (was 37 rows); stale names fixed
+  (SplitService, ActivityRLSPolicy, BaseService, OrganizationService →
+  UserService); §2–§7 deleted — rule content stays in Business-Rules
+  (Basheer: the matrix carries only where each rule is enforced).
+- Business-Rules §1 now says the matrix changes in the same commit as any
+  rule ("later never arrives"); new `.githooks/commit-msg` refuses a
+  commit that stages Business-Rules without the matrix unless the message
+  says "no matrix change". Tested in a throwaway repo: refuses rules-only,
+  passes with the phrase, with both files, and for unrelated commits.
+- Rule vs code gaps found (reported to Basheer, not yet decided):
+  BR-FIN-05 (no automatic 100 % split row; reports assume it), BR-OP-06
+  (Stalled not built), BR-OP-08 (edit form overwrites a manual win
+  probability on stage change), BR-ACT-02 (any role can log a Manager
+  Note), BR-ACT-07 (rule text predates company-wide product visibility),
+  BR-PROJ-01 (no bid-submission-date check), BR-ACC-01 (Account Health not
+  built).
+- Backlog: the drift entry and the 2026-09-29 BR-OP-11–15 bullet removed.
+
+## 2026-10-08 — Close dates: Haroon's answers; Life Line duplicate sale found
+
+- Haroon's answers (via Basheer): rows 13+14 (KIMS Alshifa) keep his
+  dates — PO dates are right, demo dates unknown; row 17 = 4 Aug; row 18
+  = 2 Sep; row 35 is the same sale as row 31, and the hospital itself was
+  entered twice.
+- UAT read-only lookup (approved; one read-only transaction as an Admin,
+  rolled back; output in this session's scratchpad `lifeline_lookup_out.txt`):
+  "Life Line Health Care BC Road Manglore" (added 28 Aug by Haroon) and
+  "Life Line Health Care Plus Falnir" (added 4 Sep by Fahad as "…
+  Falnir", renamed "… Plus Falnir" 21 Sep), both Mangalore. One
+  Opportunity each — S70, ₹30 L, Won, same product line, no splits — so
+  the sale counts twice. Duplicate hospital holds 5 visit notes (3 on its
+  Opportunity), 1 contact, 1 installed machine record, 2 open reminders.
+- Duplicate warning (BR-ACC-03, `e86d49a`) reached UAT 2026-09-08, after
+  the duplicate was added. The app's own matcher scores the 21 Sep
+  rename at 0.50 against BC Road (cut-off 0.50), so the rename should
+  have warned; it only advises. "Lifeline" written as one word scores 0.
+- Demo dates differ between the two (12–15 Aug vs 27–28 Aug). Basheer:
+  seen elsewhere too — dummy demo dates were probably entered to pass the
+  demo gate before Fast-Track; the clean-up is validating real use cases.
+- Write-up for Haroon (credit question, clean-up, prevention):
+  `C:\Backups\CabioUAT\data_consistency_reports\drafts\Life-Line-Duplicate-Sale-2026-10-08.pdf`.
+  Backlog: new entry "Duplicate hospital and sale: Life Line Health Care,
+  Mangalore"; close-dates entry updated.
+
+## 2026-10-08 — Duplicate hospitals on UAT: scan, Radians root cause, warning passes
+
+- **UAT scan** (approved; read-only, Admin context, rolled back; script
+  and output in this session's scratchpad `dup_scan.py`,
+  `dup_scan_out.txt`): 530 hospitals, every pair in the same ZONE branch
+  scored with the app's matcher, plus a joined-words variant; 995 pairs
+  read by hand. Result: about 13 likely duplicate pairs (Radians ×3, St
+  Thomas Malakkara, TMM Thiruvalla, Believers NCH Mala, Jubilee Thrissur,
+  Thalassery Co-operative, Nurture, Srinivas, Dr Jaiswal, Miracle, Sparsh,
+  Ganga, Bharathi) and 5 to ask the field team about. Same sale on both
+  records: Life Line (Won ×2) and S M Diagnostic Laboratory (₹22 L +
+  ₹20 L, both open Leads for one P25 Elite). 5 duplicates were added after
+  the warning went live (8 Sep). Report:
+  `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-Check-2026-10-08.pdf`.
+- **No database rule against duplicate names:** the only guard is the
+  app's case-insensitive exact-name check before insert
+  (`AccountRepository.exists_by_name`); `account` has no unique
+  constraint, so overlapping saves can both pass.
+- **Radians ×3 root cause (confirmed):** second UAT read-only lookup
+  (approved; `radians_lookup.py`, `radians_lookup_out.txt`): created_at
+  (transaction start) 10:05:40.806 / 42.046 / 43.211 UTC on 5 Oct, by
+  Arun Adarsh; consecutive xmin; no other writes by him in between; his
+  2 Opportunities sit on the third copy, the first two are empty. Render
+  log (copied by Basheer) shows three `account_duplicate_override_confirmed`
+  lines with distinct correlation ids at 10:05:41.162 / 53.155 / 53.177 —
+  three presses of "Create Anyway", requests 2 and 3 stalled ~11 s before
+  the check while request 1 was still uncommitted. "Create Anyway"
+  (`AddHospitalModal.tsx`) and "Change Anyway" (`Customer360Screen.tsx`)
+  have no disabled state; the main Create button does. The warning fired
+  only because of "Thrissur" (score 0.5 vs Jubilee / Believers). Cause of
+  the 11 s stall unknown.
+- **Warning passed 42 times, 1–8 Oct** (40 hospitals). Only ~4–5 were
+  real duplicates by name; most share just a town name or "Cooperative".
+  Evidence saved (Render overwrites logs):
+  `C:\Backups\CabioUAT\data_consistency_reports\evidence\Render-UAT-duplicate-override-log-2026-10-01-to-10-08.txt`.
+- **Spaces:** punctuation and extra spaces between words are handled; one
+  word written as two is not ("Lifeline" vs "Life Line" 0.00; "SM" vs
+  "S M" 0.25).
+- Fix plan written: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
+  (Draft). Backlog: new entry "Duplicate hospitals on UAT — clean-up and
+  prevention".
+
 ## 2026-10-08 — Process consolidation: steps 1–3
 
 - Plan `docs/Process-Consolidation-Implementation-Plan.md` approved
@@ -1415,3 +1505,48 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   wants to be present.
 - Target vs Actuals E2E didn't move: the day's cost of process work, which
   the plan aims to bring down.
+
+## 2026-10-08 — Session record: business rules, close dates, duplicate hospitals
+
+One long session (about 05:00–16:00 UTC, two context compactions). Detail
+in the three sections above (matrix; close dates and Life Line; duplicate
+hospitals). In short:
+- Business-rule matrix rewritten (59 rules, one row each); Business-Rules
+  §1 same-commit note; `.githooks/commit-msg` check. 7 rule-vs-code gaps
+  moved to Backlog "Business rules vs code — 7 gaps awaiting decision".
+- Haroon's answers on close dates logged; Life Line duplicate sale
+  write-up PDF in the backups drafts folder (prevention section dropped at
+  Basheer's request); credit question waits on Haroon.
+- UAT duplicate-hospitals scan (read-only, approved): 13 pairs; draft PDF
+  `Duplicate-Hospitals-Check-2026-10-08.pdf`. Radians cause confirmed from
+  UAT records and the Render log (three presses of "Create Anyway"); log
+  saved as evidence in the backups `evidence` folder.
+- `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md` drafted
+  (Parts A–D; 7 decisions proposed). Basheer decided: the three extra
+  safeguards wait until UAT is checked again about a week after Part A
+  is live.
+
+## 2026-10-08 — Retro: business rules, close dates, duplicate hospitals
+
+- A cause stated as fact in a report meant for others: "saves arriving
+  together" for Radians, unchecked; the real cause was three presses of
+  an unguarded button. The spaces line was also too broad (spaces between
+  words were already handled). Basheer doubted both — P7 seen again,
+  after its merge.
+- Undecided prevention ideas written as "we will" in the Life Line
+  write-up; Basheer had them removed — P46.
+- The Radians UAT script also read the same user's other saves in the
+  time window, beyond the approved "history records of the three saves"
+  (read-only, relevant, but not as described) — P47.
+- Basheer's "propose these if we find more cases on UAT" was recorded as
+  "held by Basheer" after the scan found 13; corrected, and he decided
+  (one-week recheck after Part A) — P48.
+- "6 duplicates after the warning" (actually 5) — P1 +1.
+- Questions he couldn't follow ("what is the correct name for this
+  doc?", "what you mean by Both checks?") — P3 +1.
+- He had to ask "How to review what you have done?" — P49.
+- Handover note not updated all day (still said "3 questions sent back"
+  after Haroon answered) — P16 seen again, after its merge.
+- Long silences during checks — P15 +1.
+- The docs batch stayed uncommitted all day across two natural pauses,
+  beside another session's commits — P50.

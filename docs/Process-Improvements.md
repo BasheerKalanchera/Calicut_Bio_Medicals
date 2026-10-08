@@ -7,13 +7,13 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 21 | open — first review |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 22 | open — first review |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 6 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 12 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 13 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
 | P5 | Plans for a list/table screen state who is listed (zero rows, no-home-SBU people); test plans add "member with no activity" and "dual-role person" cases | 2026-10-04 | 1 | open |
 | P6 | Before E2E, trace each plan decision to its code and test step; a decision with neither blocks E2E | 2026-10-04 | 1 | open |
-| P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 1 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) |
+| P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
 | P9 | Before committing a shared doc, check `git log -3 -- <file>` for my own heading | 2026-10-05 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P10 | Doc tidy-up flags any migration creating a SECURITY DEFINER function without `REVOKE EXECUTE` | 2026-09-29 | 1 | open |
@@ -21,8 +21,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
 | P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 9 | open |
-| P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 7 | open |
-| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 2 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
+| P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
+| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 3 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | open |
 | P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 5 | open |
@@ -52,6 +52,11 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P43 | When a side topic comes up during a chore, first say what is left of the chore: finish it (commit proposal included) or say plainly it is paused and what remains | 2026-10-08 | 1 | merged (CLAUDE.md "Show before you act", 2026-10-08) |
 | P44 | A small gap found in a tidy-up, with its fix already drafted, is fixed in the same sweep (with approval), not parked in the Backlog | 2026-10-08 | 1 | open — proposed drop (plan step D) |
 | P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 1 | merged (CLAUDE.md "Show before you act", 2026-10-08) |
+| P46 | In anything written for others, undecided ideas go under "Options" or are left out, never written as "we will" | 2026-10-08 | 1 | open |
+| P47 | A UAT script runs only the queries described when asking; anything extra is asked for first | 2026-10-08 | 1 | open |
+| P48 | When Basheer makes a decision conditional ("if we find more cases"), check the condition and bring it back to him; never record it as decided or held | 2026-10-08 | 1 | open |
+| P49 | When a piece of work is finished, say which file to open and what to look for, so Basheer can review it | 2026-10-08 | 1 | open |
+| P50 | In a long session, offer the docs batch commit again at each natural pause | 2026-10-08 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

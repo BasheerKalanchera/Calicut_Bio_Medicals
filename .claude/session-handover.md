@@ -46,11 +46,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - UAT move: after the combined E2E, together with Hospital-wise Target
   Planning (migrations 0055 + 0056, manual/help update) and hospital
   re-filing (Option A, held until Basheer talks to Haroon; plan step 5).
-- Close dates for the 37 closed Opportunities: Haroon's list received
-  2026-10-07 (scan in the data_consistency_reports backups folder;
-  Backlog "UAT: fill in missing 'date closed'"); 3 questions sent back
-  (rows 13+14, 17+18, 35). With his answers: write the UAT fill-in plan
-  (fresh backup first, Basheer runs it; own approval).
+- Close dates: Haroon answered all 3 questions 2026-10-08 (Backlog "UAT:
+  fill in missing 'date closed'"; row 35 dropped — Life Line duplicate,
+  credit question waits on Haroon). **Next:** write the UAT fill-in plan
+  for the other 36 (fresh backup first, Basheer runs it; own approval).
 - At the post-commit checklist: rename both `Plan-vs-Actuals-Tracking-*`
   docs to `Target-vs-Actuals-*` and fix links (Business-Rules,
   Traceability, Insights-Dashboard plan, Hospital-Wise plan,
@@ -58,6 +57,20 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   old name.
 - Forecast plan (untracked, other session) line 110: update to BR-FIN-09
   at its review.
+
+## Duplicate hospitals — fix plan drafted 2026-10-08, awaiting Basheer
+
+- Plan: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
+  (Draft). Findings and evidence: Progress-Archive 2026-10-08; Backlog
+  "Duplicate hospitals on UAT — clean-up and prevention".
+- Waiting on Basheer: the plan's proposed decisions (Part A hotfix alone
+  first; include "Change Anyway"; message from Haroon to the field team;
+  test both Part B options).
+- **Next:** decisions marked → Part A on `hotfix/create-anyway-guard`
+  from `uat`, starting with the plan's "What could be affected" list.
+  Merge back into `main` only after Query Load trip 3's merge-back.
+- One week after Part A is live on UAT: check UAT again for new
+  duplicates (asked first); propose the three safeguards only if any.
 
 ## Query load fixes — approved 2026-10-06, deadline Sun 2026-10-11
 

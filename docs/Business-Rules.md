@@ -10,6 +10,13 @@
 # 1. Introduction
 This document defines the core business logic, validation rules, and state-transition constraints for the Cabio Sales OS. These rules must be enforced by the FastAPI backend and reflected in the React frontend UI to ensure data integrity and process discipline.
 
+**Keeping the matrix in step:** whenever a rule here is added, changed or
+removed, update `docs/Business-Rule-Implementation-Matrix.md` (where in the
+code each rule is enforced) in the same commit — never "later". A `commit-msg`
+hook (`.githooks/commit-msg`) refuses a commit that changes this file without
+the matrix; for an edit that changes no rule (e.g. a typo), add
+`no matrix change` to the commit message.
+
 ---
 
 # 2. Planning Domain Rules

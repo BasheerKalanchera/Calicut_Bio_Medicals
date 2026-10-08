@@ -23,28 +23,70 @@ promotion (plan D9).
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
   with the reason and a new date — not on Sunday.
 
-### Business-rule "where it's enforced" list has drifted — parked, not started (2026-10-08)
+### Duplicate hospital and sale: Life Line Health Care, Mangalore — waiting on Haroon (2026-10-08)
 
-Found in the 2026-10-08 doc tidy-up. `docs/Business-Rule-Implementation-Matrix.md`
-(which `Backend-Implementation-Standards.md` calls authoritative) covers
-37 of the 59 rules in `docs/Business-Rules.md`. Missing: BR-ACC-03,
-BR-ACT-04–10, BR-CAT-01–04, BR-FIN-06–08, BR-OP-11–15, BR-ORG-01–02.
-Stale code names: `SplitService` (BR-FIN-01/04/05), `ActivityRLSPolicy`
-(BR-ACT-02), `BaseService` (BR-AUD-01). Some rows predate later rules
-(e.g. BR-FIN-04 vs BR-FIN-08). Its sections 2–5 repeat the table and are
-staler still.
-- **Proposed (light, recommended):** one full pass checking all 59 rules
-  against the code (~1 hr), plus two checks: a commit-time hook that
-  refuses a commit changing Business-Rules.md without the matrix, and a
-  daily rule-vs-matrix comparison in `session-start.sh` that lands on the
-  "Due today" list. **Heavy alternative:** build the matrix from the BR
-  labels in the code (~half a day). Undecided: light or heavy; delete or
-  rewrite sections 2–5 (recommend delete).
-- Rows for BR-FIN-06/07/08 already drafted in the 2026-10-08 chat (not
-  applied). BR-OP-16 and BR-FIN-09 rows fixed 2026-10-08.
-- **Pick up before** any build that leans on the matrix — Basheer said
-  parking in Backlog "is not working" (2026-10-08), so this should not
-  sit long.
+- **What:** one S70 sale (₹30 L) is Won twice on UAT — Haroon's at
+  "Life Line Health Care BC Road Manglore" (keep) and Fahad's at "Life
+  Line Health Care Plus Falnir" (duplicate hospital, added 4 Sep, before
+  the duplicate warning reached UAT on 8 Sep). Counted twice in revenue
+  and Target vs Actuals until cleaned up. Lookup results: Progress-Archive
+  2026-10-08.
+- **Waiting on:** Haroon — credit to him, Fahad, or shared (write-up
+  `C:\Backups\CabioUAT\data_consistency_reports\drafts\Life-Line-Duplicate-Sale-2026-10-08.pdf`,
+  for Basheer to send).
+- **Clean-up (needs its own plan before any change — Basheer: "figure out
+  and do it carefully"):** (1) agreed credit on the kept Opportunity;
+  (2) remove the duplicate Opportunity — its 3 visit notes and 2 open
+  reminders move to the kept one (Activities are never deleted);
+  (3) merge the duplicate hospital — contact, 2 other visit notes and the
+  installed machine record (Basheer, 2026-10-08) move to BC Road; then
+  remove it. Every table pointing at a hospital or an Opportunity is
+  checked first; fresh UAT backup before each step; Basheer runs each.
+- **Prevention:** see "Duplicate hospitals on UAT — clean-up and
+  prevention" below.
+- **Demo dates (Basheer, 2026-10-08):** the two records show different
+  demos (12–15 Aug, 27–28 Aug). Seen elsewhere too — dummy demo dates
+  were probably entered to pass the demo gate before Fast-Track (UAT
+  2026-09-08). Proposed: the data check lists suspect demo dates for
+  review; no data changed.
+
+### Duplicate hospitals on UAT — clean-up and prevention (2026-10-08)
+
+- **Found:** about 13 likely duplicate hospital pairs on UAT and 5 to ask
+  the field team about; S M Diagnostic Laboratory has the same open
+  Opportunity on both records (₹22 L + ₹20 L, one P25 Elite). "Create
+  Anyway" can be pressed repeatedly (Radians ×3); the warning was passed
+  42 times in 8 days, mostly false alarms on town names. Detail:
+  Progress-Archive 2026-10-08; report
+  `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-Check-2026-10-08.pdf`.
+- **Prevention:** `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
+  (Draft, awaiting Basheer) — Part A button fix as a UAT hotfix; then
+  fewer false alarms, "Lifeline" = "Life Line", database rule.
+- **Clean-up (not planned yet):** per pair, field team confirms → own
+  plan per merge (Opportunities, visits, contacts move; fresh UAT backup;
+  Basheer runs it). S M Diagnostic first (two salespeople on one sale).
+  Life Line has its own entry above.
+- **Decided (Basheer, 2026-10-08):** about a week after Part A (button
+  fix) is live on UAT, check UAT again for new duplicates. Only if they
+  still appear, propose: manager notified on a passed warning, Admin
+  merge tool, Admin approval to pass the warning.
+- **Close** when the plan's parts are on UAT and the pairs are resolved.
+
+### Business rules vs code — 7 gaps awaiting decision (2026-10-08)
+
+Found while checking all 59 rules for the matrix rewrite (Progress-Archive
+2026-10-08, "Business-rule matrix brought up to date"). Each needs Basheer
+to decide: change the code, or change the rule.
+- BR-FIN-05: no automatic 100 % split row; reports assume one.
+- BR-OP-06: Stalled status not built.
+- BR-OP-08: the edit form overwrites a manual win probability on stage
+  change.
+- BR-ACT-02: any role can log a Manager Note.
+- BR-ACT-07: rule text predates company-wide product visibility.
+- BR-PROJ-01: no bid-submission-date check.
+- BR-ACC-01: Account Health not built.
+- **Close** when each has a decision recorded in Business-Rules (and the
+  matrix, same commit) or a build entry of its own.
 
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
@@ -575,9 +617,13 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   26 agree with the proposal, 10 changed, row 35 (S70I, Life Line Health
   Care Plus Falnir) struck out; 3 follow-up questions sent (rows 13+14
   dated before the demo, rows 17+18 month unclear, row 35 meaning).
-  **Next:** with those answers, fill in `closed_at` on UAT (a UAT write:
-  own approval, Basheer runs it; with or before the Part 2 move). Detail:
-  Progress-Archive 2026-10-01 and 2026-10-07.
+  **All answered 2026-10-08:** rows 13+14 keep his dates (PO dates are
+  right; demo dates unknown), row 17 = 4 Aug, row 18 = 2 Sep, row 35 is a
+  duplicate of row 31 (handled in "Duplicate hospital and sale: Life
+  Line Health Care, Mangalore"). **Next:** write the UAT fill-in plan for
+  the other 36 (`closed_at` on UAT; fresh backup, own approval, Basheer
+  runs it; with or before the Part 2 move). Detail: Progress-Archive
+  2026-10-01, 2026-10-07 and 2026-10-08.
 
 - **Report edge cases left by the zone tree — low priority, no screen
   affected (found in `/code-review`, 2026-09-27).** (1) The reporting
@@ -620,12 +666,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Report. Needs a record of past closing dates (the audit trail may already
   hold it — check first). Not in Traceability; Phase 2 candidate unless
   Basheer pulls it in.
-
-- **Rules-to-code table missing BR-OP-11 to BR-OP-15 — found 2026-09-29.**
-  `docs/Business-Rule-Implementation-Matrix.md` jumps from BR-OP-10 to
-  BR-OP-16; the five rules exist in `docs/Business-Rules.md` with their
-  enforcement written there. Add a row each (copy the enforcement line) at
-  the next daily doc tidy-up.
 
 - **Codify the searchable-account-picker pattern in
   `Frontend-Implementation-Standards.md` — not yet written down.** Four
