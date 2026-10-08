@@ -1346,3 +1346,32 @@ Wrote the agreed redesign into `docs/Plan-vs-Actuals-Tracking-Implementation-Pla
   tools are blocked (P14 +1).
 - Explanations used analogies Basheer didn't want; his global
   instructions now say plain technical explanation, no analogies (P3 +1).
+
+## 2026-10-08 — Doc tidy-up; business-rule matrix drift; Process Consolidation plan
+
+- UAT backup `cabio_uat_2026-10-08_0645.dump` (580,569 bytes, 472 TOC
+  entries); pruned `cabio_uat_2026-09-20.dump`.
+- Doc tidy-up: 4 fixes (Target vs Actuals and roster plan Status lines,
+  matrix BR-OP-16 and BR-FIN-09 rows); committed `6118d49`.
+- Found: `Business-Rule-Implementation-Matrix.md` covers 37 of 59 rules,
+  5 stale code names. Parked in Backlog by Basheer (light/heavy fix
+  undecided).
+- Process review: tracker has 42 suggestions, 2 built; the most-repeated
+  mistakes are already covered by rules; CLAUDE.md 2,878 words, 62 dated
+  rules; guard rails denied 98 commands, inconsistently. Basheer chose a
+  full consolidation pass and an alternate-day process review;
+  `docs/Process-Consolidation-Implementation-Plan.md` (Draft, 6 open
+  questions, Basheer taking time to answer).
+
+## 2026-10-08 — Retro: doc tidy-up and process review session
+
+- The tidy-up drifted into the business-rule matrix and the process
+  review without saying the tidy-up still needed its commit; Basheer had
+  to ask (P43).
+- Proposed parking the BR-FIN-06/07/08 matrix rows in the Backlog though
+  the fix was small and drafted (P44).
+- Gave "about 25 to drop" before reading the items one by one; actual 8
+  (P1 +1).
+- Wrote "uncommitted" into the handover note just before the commit, so
+  it needed a second edit after the push (P16 +1).
+- Edited the handover note twice without showing the change first (P45).

@@ -7,7 +7,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 16 | open — first review |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 17 | open — first review |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 6 | open |
 | P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 12 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
@@ -22,7 +22,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | open |
 | P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 9 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 7 | open |
-| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 1 | open |
+| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 2 | open |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | open |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | open |
 | P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 5 | open |
@@ -49,6 +49,9 @@ anything skipped in two reviews. Status: open · built (<commit>) · dropped (<w
 | P40 | The E2E test-plan template says each of the four live-data lines needs text on the line itself (the save check reads only that line) | 2026-10-07 | 1 | open |
 | P41 | Before any browser check of a fix, list which screens and filters reach the changed code; skip browser work on paths it does not touch | 2026-10-08 | 1 | open |
 | P42 | Timing a screen on UAT: force a fresh load (hard refresh) every time; menu clicks within 30 s reuse the stored copy | 2026-10-08 | 1 | open |
+| P43 | When a side topic comes up during a chore, first say what is left of the chore: finish it (commit proposal included) or say plainly it is paused and what remains | 2026-10-08 | 1 | open |
+| P44 | A small gap found in a tidy-up, with its fix already drafted, is fixed in the same sweep (with approval), not parked in the Backlog | 2026-10-08 | 1 | open |
+| P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
