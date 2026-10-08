@@ -491,6 +491,27 @@ class TestOpportunityPageQuerySize:
         assert sql.count(" join ") == 10
         self._assert_no_chain(sql, allowed=("opportunity_stage",))
 
+    def _pipeline_sql(self, **kwargs) -> str:
+        (sql,) = self._scalars_sql(lambda repo: repo.list_pipeline(**kwargs), unique=True)
+        # Fix 3: the card's stage is read from the High Priority sort's own
+        # stage join (BR-OP-15), not joined a second time.
+        assert sql.count("join opportunity_stage") == 1
+        self._assert_no_chain(sql, allowed=("opportunity_stage",))
+        return sql
+
+    def test_pipeline_joins_only_the_shown_references(self):
+        # The same ten as the detail (no payment confirmer on UAT).
+        assert self._pipeline_sql().count(" join ") == 10
+
+    def test_pipeline_zone_filter_adds_only_the_account_join(self):
+        sql = self._pipeline_sql(zone_id=uuid.uuid4())
+        assert sql.count(" join ") == 11
+
+    def test_pipeline_team_only_adds_only_the_owner_join(self):
+        # Every report drill-down sends owner_team_only.
+        sql = self._pipeline_sql(owner_team_only=True, current_user=_make_current_user("Area Manager"))
+        assert sql.count(" join ") == 11
+
     def test_items_join_only_product(self):
         (sql,) = self._scalars_sql(lambda repo: repo.list_items(uuid.uuid4()), unique=True)
         assert sql.count(" join ") == 1

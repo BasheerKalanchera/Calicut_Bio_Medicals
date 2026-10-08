@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import case, delete, func, or_, select
-from sqlalchemy.orm import Session, joinedload, lazyload, noload
+from sqlalchemy.orm import Session, contains_eager, joinedload, lazyload, noload
 
 from app.db.base import BaseRepository
 from app.domains.account.models import Account, Stakeholder
@@ -30,11 +30,17 @@ def _name_only(relationship, *columns):
     return joinedload(relationship).load_only(*columns).lazyload("*")
 
 
-# Opportunity page (docs/Query-Load-Fixes-Implementation-Plan.md): each list
-# loads exactly what its response schema shows.
-def _detail_options():
-    # PipelineOpportunity: names for every nested reference, full stage and
-    # status rows (StageNested/StatusNested use most of their columns).
+# Opportunity page and Pipeline (docs/Query-Load-Fixes-Implementation-Plan.md):
+# each request loads exactly what its response schema shows.
+def _opportunity_record_options(stage_loader=None):
+    # The PipelineOpportunity response, shared by the Opportunity page header
+    # (get_for_detail) and every Pipeline card (list_pipeline, up to 500
+    # rows): anything added here loads for both. Names for every nested
+    # reference, full stage and status rows (StageNested/StatusNested use
+    # most of their columns). stage_loader: list_pipeline already joins the
+    # stage for its sort, so it reads the stage from that join instead.
+    if stage_loader is None:
+        stage_loader = joinedload(Opportunity.stage).lazyload("*")
     return (
         _name_only(Opportunity.account, Account.id, Account.name),
         _name_only(Opportunity.sbu, SBU.id, SBU.name),
@@ -44,7 +50,7 @@ def _detail_options():
         _name_only(Opportunity.gate_override_approver, UserProfile.id, UserProfile.display_name),
         _name_only(Opportunity.lead_source, LeadSource.id, LeadSource.name),
         _name_only(Opportunity.gate_override_reason, GateOverrideReason.id, GateOverrideReason.reason_name),
-        joinedload(Opportunity.stage).lazyload("*"),
+        stage_loader,
         joinedload(Opportunity.status).lazyload("*"),
         noload(Opportunity.gate_override_set_by_user),
         noload(Opportunity.loss_reason),
@@ -137,7 +143,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         # reporting/repository.py's _apply_owner_scope exactly, applied to
         # whoever owns the Opportunity. Deliberately narrower than this
         # query's normal RLS-backed visibility, which also grants a Split
-        # participant standing access to a deal (ADR-013) without that deal
+        # participant standing access to an Opportunity (ADR-013) without it
         # counting toward the participant's own reporting numbers (ADR-003's
         # "Value x Split%" attribution was never built into the reporting
         # queries -- see docs/Report-Drilldown-Implementation-Plan.md). A
@@ -169,19 +175,12 @@ class OpportunityRepository(BaseRepository[Opportunity]):
         offset: int = 0,
         limit: int = 50,
     ) -> list[Opportunity]:
-        stmt = (
-            select(Opportunity)
-            .options(
-                # noload the lazy="select" (heavy) relationships
-                noload(Opportunity.opportunity_stakeholders),
-                noload(Opportunity.splits),
-                noload(Opportunity.items),
-                noload(Opportunity.activities),
-                noload(Opportunity.documents),
-                # noload joined relationships not needed for pipeline cards
-                noload(Opportunity.loss_reason),
-                noload(Opportunity.hold_reason),
-            )
+        # Same PipelineOpportunity response as the Opportunity page header, so
+        # the same names-only loading (Query Load Fixes, fix 3): the default
+        # lazy="joined" chains made this 36 joins and ~170 ms of planning.
+        # The stage comes from the sort's own stage join below.
+        stmt = select(Opportunity).options(
+            *_opportunity_record_options(stage_loader=contains_eager(Opportunity.stage).lazyload("*"))
         )
         if zone_id:
             # Opportunity has no zone_id of its own -- zone lives one hop away via
@@ -230,7 +229,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             )
         if owner_team_only and current_user is not None:
             stmt = self._apply_owner_team_scope(stmt, current_user)
-        # BR-OP-15: High Priority deals first (automatic past-Demo or manual
+        # BR-OP-15: High Priority Opportunities first (automatic past-Demo or manual
         # flag), then by win probability -- Basheer's call, 2026-09-15.
         is_high_priority = case(
             (
@@ -311,7 +310,7 @@ class OpportunityRepository(BaseRepository[Opportunity]):
             .where(Opportunity.id == opportunity_id)
             # Feeds PipelineOpportunity: names only, not the referenced
             # rows' own joined chains.
-            .options(*_detail_options())
+            .options(*_opportunity_record_options())
         )
 
     # ------------------------------------------------------------------
