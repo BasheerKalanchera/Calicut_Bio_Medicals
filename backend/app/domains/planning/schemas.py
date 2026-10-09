@@ -306,9 +306,11 @@ class TargetVsActualZone(BaseModel):
 
 
 class TargetVsActualSummaryRow(BaseModel):
-    """The SBU row (SBU Manager and above) or the company row (Admin/GM),
-    measured against the GM-entered SBU target(s). target_lakhs is None
-    until a target is entered (for the company row: until every SBU has one)."""
+    """The SBU row (SBU Manager and above), the company row (Admin/GM) or
+    the team row (Area Manager: their team's totals against their SBU's
+    target), measured against the GM-entered SBU target(s). target_lakhs is
+    None until a target is entered (for the company row: until every SBU
+    has one)."""
 
     target_lakhs: Decimal | None
     planned_lakhs: Decimal
@@ -334,6 +336,7 @@ class TargetVsActualResponse(BaseModel):
     not_submitted_count: int
     sbu_row: TargetVsActualSummaryRow | None
     company_row: TargetVsActualSummaryRow | None
+    team_row: TargetVsActualSummaryRow | None
     people: list[TargetVsActualPerson]
     zones: list[TargetVsActualZone]
     brands: list[TargetVsActualBrand]

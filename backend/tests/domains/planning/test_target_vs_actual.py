@@ -300,16 +300,59 @@ def test_open_opportunities_without_po_date_count_only_in_the_current_quarter(mo
     assert repo.no_po_date_counts.call_args.kwargs == {"include_open": include_open}
 
 
-# --- SBU and company rows ---------------------------------------------------
+# --- SBU, company and team rows ---------------------------------------------
 
 
-@pytest.mark.parametrize("role", ["Sales Rep", "Area Manager"])
-def test_staff_and_area_managers_get_no_sbu_or_company_row(monkeypatch, role):
+def test_staff_get_no_summary_rows(monkeypatch):
     repo = _repo(active_sbu_targets={SBU_ID: Decimal("500")})
-    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role(role))
-    assert resp.sbu_row is None and resp.company_row is None
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("Sales Rep"))
+    assert resp.sbu_row is None and resp.company_row is None and resp.team_row is None
     repo.active_sbu_targets.assert_not_called()
     repo.summary_totals.assert_not_called()
+
+
+def test_area_manager_gets_their_team_against_the_sbu_target(monkeypatch):
+    # Plan step 6c (Basheer, 2026-10-09): the team's own totals against the
+    # SBU target -- never the SBU-wide figures.
+    rep, acc = uuid.uuid4(), uuid.uuid4()
+    repo = _repo(
+        roster=[(rep, "Asha")],
+        list_plans=[_plan(rep, "Asha", [(acc, "A", "100")])],
+        won_by_person_account=[(rep, "Asha", acc, None, None, Decimal("30.00"))],
+        po_received_by_person=[(rep, "Asha", Decimal("40.00"))],
+        active_sbu_targets={SBU_ID: Decimal("150")},
+    )
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("Area Manager"))
+    row = resp.team_row
+    assert (row.target_lakhs, row.planned_lakhs, row.po_received_lakhs, row.won_lakhs) == (
+        Decimal("150"),
+        resp.planned_lakhs,
+        resp.po_received_lakhs,
+        resp.won_lakhs,
+    )
+    assert row.won_lakhs == Decimal("30.00")
+    assert row.percent_of_target == Decimal("20.00")
+    assert resp.sbu_row is None and resp.company_row is None
+    repo.summary_totals.assert_not_called()
+
+
+def test_area_manager_team_row_without_a_target_has_no_percent(monkeypatch):
+    resp = _run(_repo(), IN_QUARTER, monkeypatch, user=_user_with_role("Area Manager"))
+    assert resp.team_row.target_lakhs is None
+    assert resp.team_row.percent_of_target is None
+
+
+def test_area_manager_of_another_sbu_gets_no_team_row(monkeypatch):
+    repo = _repo(active_sbu_targets={SBU_ID: Decimal("150")})
+    resp = _run(repo, IN_QUARTER, monkeypatch, user=_user_with_role("Area Manager", sbu_id=uuid.uuid4()))
+    assert resp.team_row is None
+    repo.active_sbu_targets.assert_not_called()
+
+
+@pytest.mark.parametrize("role", ["SBU Manager", "General Manager"])
+def test_managers_above_area_get_no_team_row(monkeypatch, role):
+    resp = _run(_repo(), IN_QUARTER, monkeypatch, user=_user_with_role(role))
+    assert resp.team_row is None
 
 
 def test_sbu_manager_gets_their_own_sbus_row_only(monkeypatch):
@@ -673,7 +716,14 @@ def test_setting_an_sbu_target_creates_then_corrects():
 
 
 @pytest.mark.parametrize(
-    ("role", "allowed"), [("SBU Manager", True), ("General Manager", True), ("Area Manager", False)]
+    ("role", "allowed"),
+    [
+        ("SBU Manager", True),
+        ("General Manager", True),
+        ("Area Manager", True),  # own SBU only, via the read policy (migration 0061)
+        ("Sales Rep", False),
+        ("Marketing User", False),
+    ],
 )
 def test_who_may_read_sbu_targets(role, allowed):
     repo = MagicMock(spec=SbuTargetRepository)

@@ -42,8 +42,8 @@ from app.domains.planning.schemas import (
 from app.domains.reference.repository import BrandRepository
 
 _OVERLAY_ROLES = ("Admin", "General Manager")
-# Who may read SBU targets -- matches sbu_target's read policy (migration 0060).
-_SBU_TARGET_READ_ROLES = ("Admin", "General Manager", "SBU Manager")
+# Who may read SBU targets -- matches sbu_target's read policy (migration 0061).
+_SBU_TARGET_READ_ROLES = ("Admin", "General Manager", "SBU Manager", "Area Manager")
 
 # Who may plan any hospital, not just their own territory. Same role set as
 # account/service.py's _ZONE_ASSIGNMENT_EXEMPT_ROLES and master_data.py's
@@ -596,7 +596,7 @@ class SbuTargetService:
 
     def list_by_period(self, planning_period: str, *, current_user: UserProfile) -> list[SbuTarget]:
         if current_user.role.role_name not in _SBU_TARGET_READ_ROLES:
-            raise AuthorizationError("Only SBU Managers and above may see SBU targets.")
+            raise AuthorizationError("Only Area Managers and above may see SBU targets.")
         return self.repository.list_by_period(planning_period)
 
 
@@ -739,9 +739,20 @@ class TargetVsActualService:
             else sum((p.expected or _ZERO for p in people.values()), _ZERO).quantize(_CENT)
         )
 
-        sbu_row = company_row = None
+        sbu_row = company_row = team_row = None
         role_name = current_user.role.role_name
-        if role_name in _OVERLAY_ROLES or (role_name == "SBU Manager" and current_user.sbu_id == sbu_id):
+        if role_name == "Area Manager" and current_user.sbu_id == sbu_id:
+            # The team's own totals (the headline) against the SBU target,
+            # read-only (plan step 6c). No SBU-wide figures for this role.
+            target = repo.active_sbu_targets(planning_period).get(sbu_id)
+            team_row = TargetVsActualSummaryRow(
+                target_lakhs=target,
+                planned_lakhs=planned,
+                po_received_lakhs=po_received,
+                won_lakhs=won,
+                percent_of_target=_percent_of_target(won, target),
+            )
+        elif role_name in _OVERLAY_ROLES or (role_name == "SBU Manager" and current_user.sbu_id == sbu_id):
             targets = repo.active_sbu_targets(planning_period)
             target = targets.get(sbu_id)
             # SBU-wide, not the caller's team: the SBU Manager and the GM are
@@ -795,6 +806,7 @@ class TargetVsActualService:
             not_submitted_count=not_submitted,
             sbu_row=sbu_row,
             company_row=company_row,
+            team_row=team_row,
             people=shown,
             zones=[
                 TargetVsActualZone(zone_id=zid, zone_name=zname, planned_lakhs=v[0], won_lakhs=v[1].quantize(_CENT))

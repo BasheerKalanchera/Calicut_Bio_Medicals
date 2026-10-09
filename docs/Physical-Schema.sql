@@ -11,8 +11,8 @@
 -- it is not consumed by Alembic or the application at runtime, and cannot be
 -- used as an `alembic stamp <rev>` checkpoint.
 --
--- Regenerated 2026-10-05 from the Dev database, catching up migration
--- 0060: po_date on opportunity; sbu_target table
+-- Regenerated 2026-10-09 from the Dev database, catching up migration
+-- 0061: sbu_target: Area Manager may read their own SBU's target
 -- See docs/Backend-Implementation-Standards.md's migration workflow.
 --
 -- Regenerate with: .\scripts\regen_physical_schema.ps1
@@ -22,7 +22,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict lPbwCd13eLkLmy0MpqzdlCbVirGapPqID7yOsYchGbJG8wTk4Xot7dQHOdGg14K
+\restrict pcak6wY3YMoxn2Afn47befhEVmloNvDhxnBa6mSUNYdsZpdc81Tawlw1qyNjisi
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -3487,7 +3487,7 @@ CREATE POLICY sbu_target_insert ON public.sbu_target FOR INSERT WITH CHECK ((pub
 -- Name: sbu_target sbu_target_read; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY sbu_target_read ON public.sbu_target FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = 'SBU Manager'::text) AND (sbu_id = public.cabio_app_sbu_id()))));
+CREATE POLICY sbu_target_read ON public.sbu_target FOR SELECT USING (((public.cabio_app_role_name() = ANY (ARRAY['Admin'::text, 'General Manager'::text])) OR ((public.cabio_app_role_name() = ANY (ARRAY['SBU Manager'::text, 'Area Manager'::text])) AND (sbu_id = public.cabio_app_sbu_id()))));
 
 
 --
@@ -3676,5 +3676,5 @@ CREATE POLICY target_plan_write ON public.target_plan FOR INSERT WITH CHECK ((us
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lPbwCd13eLkLmy0MpqzdlCbVirGapPqID7yOsYchGbJG8wTk4Xot7dQHOdGg14K
+\unrestrict pcak6wY3YMoxn2Afn47befhEVmloNvDhxnBa6mSUNYdsZpdc81Tawlw1qyNjisi
 
