@@ -114,7 +114,7 @@ function NoPoDateNote({ count }: { count: number }) {
 
 function PersonDetail({ person }: { person: TargetVsActualPerson }) {
   const note = countsAtLastApproved(person)
-    ? `Revision was sent back. The last approved target (${lakhs(person.previous_approved_total_lakhs)}) still counts until a new one is approved.`
+    ? `Revision was sent back. The last approved plan (${lakhs(person.previous_approved_total_lakhs)}) still counts until a new one is approved.`
     : NOT_SUBMITTED_NOTE[person.plan_status];
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, py: 1 }}>
@@ -169,6 +169,13 @@ function PersonDetail({ person }: { person: TargetVsActualPerson }) {
   );
 }
 
+// Team plans (bottom-up) as a share of the GM's SBU target (top-down); a dash
+// until a target is set.
+function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
+  const target = row.target_lakhs === null ? 0 : parseFloat(row.target_lakhs);
+  return target > 0 ? String((parseFloat(row.planned_lakhs) / target) * 100) : null;
+}
+
 // The SBU row (SBU Manager and above) and company row (Admin/GM), measured
 // against the GM-entered SBU target(s).
 function SummaryRows({ sbuRow, companyRow }: { sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
@@ -182,11 +189,12 @@ function SummaryRows({ sbuRow, companyRow }: { sbuRow: TargetVsActualSummaryRow 
         <TableHead>
           <TableRow>
             <TableCell sx={headCellSx}>Against SBU target</TableCell>
-            <TableCell sx={numHeadSx}>Target</TableCell>
-            <TableCell sx={numHeadSx}>Planned</TableCell>
+            <TableCell sx={numHeadSx}>SBU target (GM)</TableCell>
+            <TableCell sx={numHeadSx}>Team plans</TableCell>
+            <TableCell sx={numHeadSx}>Plans vs SBU target</TableCell>
             <TableCell sx={numHeadSx}>PO received</TableCell>
             <TableCell sx={numHeadSx}>Won (paid)</TableCell>
-            <TableCell sx={numHeadSx}>% of target</TableCell>
+            <TableCell sx={numHeadSx}>% of SBU target</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -197,6 +205,7 @@ function SummaryRows({ sbuRow, companyRow }: { sbuRow: TargetVsActualSummaryRow 
                 {row.target_lakhs === null ? <Box component="span" sx={noteSx}>{notSet}</Box> : lakhs(row.target_lakhs)}
               </TableCell>
               <TableCell sx={numCellSx}>{lakhs(row.planned_lakhs)}</TableCell>
+              <TableCell sx={numCellSx}>{percent(plansVsTarget(row))}</TableCell>
               <TableCell sx={numCellSx}>{lakhs(row.po_received_lakhs)}</TableCell>
               <TableCell sx={numCellSx}>{lakhs(row.won_lakhs)}</TableCell>
               <TableCell sx={numCellSx}>{percent(row.percent_of_target)}</TableCell>
@@ -289,12 +298,12 @@ export default function TargetVsActualsSection() {
             {isTeamView && " · Totals show only your team members' shares of shared Opportunities"}
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-            <StatTile label="Planned" value={lakhs(data.planned_lakhs)} sublabel="Pending approval and approved plans" />
+            <StatTile label="Team plans" value={lakhs(data.planned_lakhs)} sublabel="Sum of each rep's plan, pending or approved" />
             <StatTile label="PO received" value={lakhs(data.po_received_lakhs)} sublabel="PO dated in this quarter" />
             <StatTile
               label="Won (paid)"
               value={lakhs(data.won_lakhs)}
-              sublabel={data.percent_of_target === null ? "No plan to compare with" : `${percent(data.percent_of_target)} of planned`}
+              sublabel={data.percent_of_target === null ? "No plan to compare with" : `${percent(data.percent_of_target)} of team plans`}
             />
             <StatTile label="Expected this quarter" value={lakhs(data.expected_lakhs)} sublabel="Open Opportunities, win-probability adjusted" />
             <StatTile label="Likely finish" value={lakhs(data.likely_finish_lakhs)} sublabel="Won + Expected" />
@@ -309,12 +318,12 @@ export default function TargetVsActualsSection() {
                   <TableCell sx={{ width: 40 }} />
                   <TableCell sx={headCellSx}>Person</TableCell>
                   <TableCell sx={headCellSx}>Status</TableCell>
-                  <TableCell sx={numHeadSx}>Target</TableCell>
+                  <TableCell sx={numHeadSx}>Rep Plan</TableCell>
                   <TableCell sx={numHeadSx}>PO received</TableCell>
                   <TableCell sx={numHeadSx}>Won (paid)</TableCell>
                   <TableCell sx={numHeadSx}>Expected</TableCell>
                   <TableCell sx={numHeadSx}>Likely finish</TableCell>
-                  <TableCell sx={numHeadSx}>% of target</TableCell>
+                  <TableCell sx={numHeadSx}>% of plan</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

@@ -14,7 +14,7 @@ Target vs Actuals plan), after the combined E2E below.
 - Everyone in the viewer's scope gets a row on the Target Planning team table every quarter, with a "N of M haven't submitted" line; managers see only "Draft" on others' drafts — Basheer, 2026-10-05
 - Roster on the Quarter view only; the Annual view keeps its totals (Backlog "Annual view roster on Target Planning") — Basheer, 2026-10-06
 - "Pending Approval" everywhere, on Target Planning and on the Target vs Actuals card (the card's "Waiting" changes) — Basheer, 2026-10-06
-- A rejected revision counts at its last approved amount on Target Planning too, so the planning total and the card's "Planned" always match; the row shows the amount asked for and the wording Basheer picks for the card at E2E — Basheer, 2026-10-06
+- A rejected revision counts at its last approved amount on Target Planning too, so the planning total and the card's "Planned" (renamed "Team plans" 2026-10-09; see the Plan-vs-Actuals plan's Decisions) always match; the row shows the amount asked for and the wording Basheer picks for the card at E2E — Basheer, 2026-10-06
 - The "was ₹X approved" note on revised plans shows in the team table too — Basheer, 2026-10-06
 - One combined manual E2E for steps 5 and 6, run after this build — Basheer, 2026-10-06
 - Both screens read one shared roster-and-status list from the backend, so they can't drift apart — Basheer, 2026-10-06

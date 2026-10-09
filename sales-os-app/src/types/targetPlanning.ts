@@ -170,7 +170,7 @@ export interface TargetRosterPerson {
   plan: TargetPlan | null;
 }
 
-// total_lakhs is the same figure as Target vs Actuals' "Planned".
+// total_lakhs is the same figure as Target vs Actuals' "Team plans".
 export interface TargetRosterResponse {
   sbu_id: string;
   planning_period: string;

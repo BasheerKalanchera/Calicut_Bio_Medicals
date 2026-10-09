@@ -100,6 +100,17 @@ review of BR-FIN-09); the card notes that team totals are members' shares.
 Revisit only if managers report numbers that don't match their team's own
 cards.
 
+### App-wide: a rep's plan is called "target" on Target Planning — not started (2026-10-09)
+
+On 2026-10-09 (Target vs Actuals E2E) Basheer chose: "target" means only the
+GM's top-down SBU target, "plan" means a rep's own bottom-up plan. The Target
+vs Actuals card now follows this (labels in the Plan-vs-Actuals plan's
+Decisions). Target & Coverage Planning still calls a rep's plan their
+"target" — e.g. "₹15.00L is ₹5.00L below your approved target of ₹20.00L",
+"The last approved target (₹20.0L) still counts", and the screen's own name.
+To decide: rename across the app (screen, messages, manual/help), or leave
+as is. Wording only; no data change.
+
 ### Pipeline: cards with the same priority and chance can swap places — not started (2026-10-07)
 
 Found in the Query Load fixes fix 3 code review (finding 1; Basheer
