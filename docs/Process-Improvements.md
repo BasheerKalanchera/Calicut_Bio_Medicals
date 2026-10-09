@@ -9,7 +9,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 22 | open — first review |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 6 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 13 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 15 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
 | P5 | Plans for a list/table screen state who is listed (zero rows, no-home-SBU people); test plans add "member with no activity" and "dual-role person" cases | 2026-10-04 | 1 | open |
 | P6 | Before E2E, trace each plan decision to its code and test step; a decision with neither blocks E2E | 2026-10-04 | 1 | open |
@@ -30,7 +30,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 3 | merged (CLAUDE.md "Show before you act", 2026-10-08) |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
 | P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 7 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08) |
-| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check | 2026-10-06 | 1 | open |
+| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 2 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | open |
 | P27 | If a measurement is still unreliable after 2 tries, stop and report; never run two measurements against the same database at once | 2026-10-06 | 1 | open |
@@ -57,6 +57,10 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P48 | When Basheer makes a decision conditional ("if we find more cases"), check the condition and bring it back to him; never record it as decided or held | 2026-10-08 | 1 | open |
 | P49 | When a piece of work is finished, say which file to open and what to look for, so Basheer can review it | 2026-10-08 | 1 | open |
 | P50 | In a long session, offer the docs batch commit again at each natural pause | 2026-10-08 | 1 | open |
+| P51 | Before giving an example for a business rule, read the rules next to it (overrides, fast-tracks, exemptions); the example must not contradict them | 2026-10-09 | 1 | open |
+| P52 | Before saying something "isn't written anywhere else", read the relevant section or search several wordings; an exact-phrase miss proves nothing | 2026-10-09 | 1 | open |
+| P53 | A commit message matches the detail of recent commits: the why, what changed per file, test results where relevant | 2026-10-09 | 1 | open |
+| P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection | 2026-10-09 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

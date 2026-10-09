@@ -19,7 +19,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (feat/fix only, all living docs + handover); retro + daily review
   procedure in `process-review` (incl. which pack was missed, for which
   job).
-- Target vs Actuals E2E started 2026-10-09 (see its section below).
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 
@@ -68,62 +67,43 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Duplicate hospitals — fix plan drafted 2026-10-08, awaiting Basheer
 
 - Plan: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft). Findings and evidence: Progress-Archive 2026-10-08; Backlog
-  "Duplicate hospitals on UAT — clean-up and prevention".
-- Waiting on Basheer: the plan's proposed decisions (Part A hotfix alone
-  first; include "Change Anyway"; message from Haroon to the field team;
-  test both Part B options).
+  (Draft); its proposed decisions wait on Basheer.
 - **Next:** decisions marked → Part A on `hotfix/create-anyway-guard`
   from `uat`, starting with the plan's "What could be affected" list.
-  Merge back into `main` only after Query Load trip 3's merge-back.
-- One week after Part A is live on UAT: check UAT again for new
-  duplicates (asked first); propose the three safeguards only if any.
 
-## Query load fixes — approved 2026-10-06, deadline Sun 2026-10-11
+## Query load fixes — approved 2026-10-06, fix 4 due Mon 2026-10-12
 
-- Plan: `docs/Query-Load-Fixes-Implementation-Plan.md` (priority list,
-  D1–D9, progress table); Backlog entry tracks it to closure. Audit
-  results: Progress-Archive-2026-10 (2026-10-06).
-- Order: Opportunity page (open + save, with Product documents) → Activity
-  comments + Daily Report → Pipeline → Audit Log + zone tree + remove
-  workspace request. Each: fix on `main` (own commit) → UAT by hotfix
-  route (own approval); 3 trips. Fix 4 has no trip: it goes to UAT with
-  the next full promotion (plan D9, changed 2026-10-07).
-- The other session owns Target vs Actuals (planning files + the PO date
-  box on the Opportunity page): check `git status` before every save and
-  commit; stay out of their files.
-- Fixes 1 + 2 on UAT 2026-10-07 (merged back as `18b9148`); fix 3
-  (Pipeline) on `main` 2026-10-07 (`8e8e075` + merge `f7d25b1`, pushed).
-  Detail: the plan's sections 6 and 8, Progress-Archive-2026-10.
-- Fix 3 on UAT 2026-10-08 as `569209f` (pushed to `uat`, deployed).
-  Only the plain Pipeline was timed (plan section 6), so Basheer asked
-  for the full old-vs-fixed comparison on Dev before closing it.
-- **Next:** plan section 9 checklist, from step 2 (list approved
-  2026-10-08). Read-only on Dev; the Dev server is not restarted. Any
-  UAT rollback/correction waits for an early-morning window.
-- Still open from trip 3: `uat` not yet merged back into `main`; the
-  worktree `.claude/worktrees/uat-fix3` (local branch `uat`) stays until
-  that merge (section 9 step 9).
-- **Then:** build and test fix 4 on Dev, starting with its "What could
-  be affected" list (plan step 7, step 0) for approval before any edit.
-  Approach (agreed in outline 2026-10-07; confirm before editing):
-  zone tree loads all zones + assignees in a couple of queries
-  (`reference/repository.py:192`); Audit Log `_live_rows`
-  (`audit/repository.py:327`) stops pulling linked records
-  (`lazyload("*")`); delete the unused `/accounts/{id}/workspace` route,
-  `WorkspaceService`, `get_for_workspace`, its two test files and
-  `getWorkspace` in `accounts.ts` (keep the shared Workspace* schemas;
-  leave `api.ts`). Deadline Sun 2026-10-11 for fix 4 = committed on `main`
-  (Basheer, 2026-10-07).
+- Plan: `docs/Query-Load-Fixes-Implementation-Plan.md`; history in its
+  sections 6–8 and Progress-Archive-2026-10. Fixes 1–3 on UAT; fix 4
+  goes with the next full promotion (D9).
+- The other session owns Target vs Actuals files: check `git status`
+  before every save and commit.
+- **Next:** plan section 9 from step 2, through step 9 (merge `uat`
+  back into `main`, remove the `uat-fix3` worktree).
+- **Then:** fix 4 on Dev, starting with its "What could be affected"
+  list for approval; approach in the plan's technical addendum. Due
+  committed on `main` by Mon 2026-10-12 (Basheer, 2026-10-09).
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
-- Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`. Built, Dev
-  E2E passed, review fix `51deecc`; history in Progress-Archive-2026-10
-  (2026-10-03/04), tracked in Backlog.
-- **Next:** the UAT move (migration 0059 + steps 2–4 together) is its own
-  approval; ask UAT backup first (0059's downgrade deletes INSERT
-  history). Then the post-commit checklist.
-- Never `api.ts` by regenerate: another session edits it; hand-edit only
-  the Audit Log types (`AuditSaveResponse`, `owner_*`, `action` filter).
+- Plan: `docs/Audit-Trail-Redesign-Implementation-Plan.md`; history in
+  Progress-Archive-2026-10, tracked in Backlog.
+- **Next:** UAT move (migration 0059 + steps 2–4), own approval; the
+  plan's step 5 has the pre-move cautions. Then the post-commit
+  checklist.
+
+## Opportunity chance rules + one create form — plan drafted 2026-10-09
+
+- Plan: `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+  (Draft). D1–D6 decided (Basheer, 2026-10-09): BR-OP-19 (chance ≥ 50 %
+  before Negotiation needs an Expected Closure Date) and the BR-OP-08
+  note are in Business-Rules + Matrix; Backlog rule gaps 7 → 6 (BR-OP-08
+  now tracked by the plan). UAT with the next full promotion.
+- Waiting on Basheer: D7–D13 (shown in chat 2026-10-09 with a
+  recommendation each) and deleting the other session's untracked
+  `Opportunity-Create-Form-Unification-Implementation-Plan.md`.
+- **Next:** decisions marked → fill the plan's "What could be affected"
+  from a code search → approval → build step 1.
+- Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
+  first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 

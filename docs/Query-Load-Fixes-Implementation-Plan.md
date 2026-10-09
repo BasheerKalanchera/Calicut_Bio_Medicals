@@ -1,6 +1,6 @@
 # Query Load Fixes — Implementation Plan
 
-**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07.
+**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07. Fix 4 moved to **Mon 2026-10-12** — Basheer, 2026-10-09 (9 Oct went to a planning session; fixes 1–3 met the 11th).
 **Traceability rows:** none (no signed requirement; reliability work after the
 Next Actions outage).
 **Design / discussion:** query audit on Dev, 2026-10-06 — results in
@@ -178,6 +178,14 @@ Marketing Leads.
   - Audit Log: 45 joins, 43 statements. Zone tree (`/admin/zones/tree`): 93
     statements (per-node loading). Account `…/workspace`: unused by the
     frontend (`getWorkspace` has no caller).
+- Fix 4 approach (agreed in outline 2026-10-07; confirm before
+  editing): zone tree loads all zones + assignees in a couple of
+  queries (`reference/repository.py:192`); Audit Log `_live_rows`
+  (`audit/repository.py:327`) stops pulling linked records
+  (`lazyload("*")`); delete the unused `/accounts/{id}/workspace`
+  route, `WorkspaceService`, `get_for_workspace`, its two test files
+  and `getWorkspace` in `accounts.ts` (keep the shared Workspace*
+  schemas; leave `api.ts`).
 - Measuring method: FastAPI TestClient in-process against Dev; each request
   in a transaction that is always rolled back; statements captured by a
   `before_cursor_execute` listener; `EXPLAIN (SUMMARY ON)` for planning time.

@@ -123,6 +123,11 @@ Rough size of the work: 3–4 days.
 5. Records (section 4), pytest/ruff/tsc/lint, `/code-review` high
    (migration + trigger), written E2E plan checked against live Dev data,
    E2E, commit, post-commit checklist. UAT move is its own approval.
+   Before it, ask Basheer for a fresh UAT backup: migration 0059's
+   downgrade deletes INSERT history, so a rollback would lose it.
+   Never regenerate `api.ts` for this work (another session edits it by
+   hand); hand-edit only the Audit Log types (`AuditSaveResponse`,
+   `owner_*`, `action` filter).
 
 ## 3. Not in this plan (with reasons)
 

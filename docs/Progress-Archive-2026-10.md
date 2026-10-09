@@ -1623,3 +1623,40 @@ hospitals). In short:
   hospitals are compared only within their own district. The app's
   duplicate warning may have the same gap — guess, not checked
   (`find_similar_by_name` not read).
+
+## 2026-10-09 — Planning: BR-OP-19, BR-OP-08 decided, chance + create-form plan; handover trim; retro (P51–P54)
+
+- **Rule gaps, one by one (gap 1 of 7, BR-OP-08):** the Opportunity page
+  replaces a rep's own chance with the stage's standard figure on every
+  stage change (`OpportunityDetailScreen.tsx` Stage `onChange`). Basheer:
+  the rule stands, code fixed to match (option A: a chance still equal to
+  the old stage's figure follows the new stage; any other is kept).
+- **New rule BR-OP-19 (Cabio leadership via Basheer):** at Lead to
+  Clinical Evaluation, a chance of 50 % or more needs an Expected Closure
+  Date; existing Opportunities held to it on their next save; leadership
+  chases them meanwhile with the Expected Closure Dates report (UAT 9 Oct:
+  24 open Leads above 50 %, 8 at exactly 50 %).
+- **Plan (Draft):** `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+  folds in the create-form merge (Basheer: "kill 2 birds"). Three steps;
+  D1–D6 decided, D7–D13 proposed. UAT with the next full promotion,
+  together with Target vs Actuals. Code check while drafting: the three
+  create forms show the closure-date box only from Negotiation, so step 3
+  must show it earlier or the rule cannot be met (D7).
+- Backlog rule gaps awaiting decision 7 → 6 (BR-OP-08 now with the plan;
+  BR-OP-19 tracked in the Matrix as Not built).
+- **Fix 4** moved to Mon 2026-10-12 (Basheer). Fix 3's full Dev
+  comparison (plan section 9, steps 2–9) and the `uat` merge-back still
+  pending.
+- **Handover trimmed** 129 → 109 lines: history already in this archive
+  and the plans removed; the Fix 4 outline moved into its plan's
+  technical addendum; the Audit Trail UAT-backup and `api.ts` cautions
+  moved into that plan. Target vs Actuals section (other session's) left
+  for that session to trim.
+- **Retro:** (1) a BR-OP-08 example ("hospital said yes → 80 %") ignored
+  fast-track (BR-OP-14); Basheer caught it → P51. (2) Claimed the one-week
+  duplicate re-check was only in the handover; the plan has it as "about
+  a week" — exact-phrase search → P52. (3) First commit message two lines;
+  Basheer asked for more → P53. (4) "7 → 6" and "three things" needed a
+  follow-up question each → P3 +2. (5) Proposed growing the handover to
+  142 lines without offering a trim → P24 +1. (6) Saved 8 Oct hospital
+  scan lacked ids; 4 needed a second UAT lookup → P54.

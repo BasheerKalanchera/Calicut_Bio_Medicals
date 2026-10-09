@@ -9,7 +9,7 @@ Session Handoff rule).
 
 ## Parked initiatives
 
-### Query load fixes — in progress, deadline Sun 2026-10-11 (2026-10-06)
+### Query load fixes — in progress, fix 4 due Mon 2026-10-12 (2026-10-06)
 
 Eight screens fetch far more than they show (the cause of the Next Actions
 outage). Plan, priority order and progress table:
@@ -17,7 +17,9 @@ outage). Plan, priority order and progress table:
 2026-10-06: all rows fixed on `main` and moved to UAT (hotfix route, 4
 trips) by **Sun 2026-10-11**. Changed 2026-10-07: 3 trips; fix 4 is due
 committed on `main` by Sunday and reaches UAT with the next full
-promotion (plan D9).
+promotion (plan D9). Changed 2026-10-09 (Basheer): fix 4 due committed
+on `main` by **Mon 2026-10-12**; 9 Oct went to planning. Fixes 1–3 are
+on UAT.
 - **Close this entry** when every row in the plan's progress table shows
   both a `main` commit and a UAT move.
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
@@ -72,15 +74,13 @@ promotion (plan D9).
   merge tool, Admin approval to pass the warning.
 - **Close** when the plan's parts are on UAT and the pairs are resolved.
 
-### Business rules vs code — 7 gaps awaiting decision (2026-10-08)
+### Business rules vs code — 6 gaps awaiting decision (2026-10-08)
 
 Found while checking all 59 rules for the matrix rewrite (Progress-Archive
 2026-10-08, "Business-rule matrix brought up to date"). Each needs Basheer
 to decide: change the code, or change the rule.
 - BR-FIN-05: no automatic 100 % split row; reports assume one.
 - BR-OP-06: Stalled status not built.
-- BR-OP-08: the edit form overwrites a manual win probability on stage
-  change.
 - BR-ACT-02: any role can log a Manager Note.
 - BR-ACT-07: rule text predates company-wide product visibility.
 - BR-PROJ-01: no bid-submission-date check.

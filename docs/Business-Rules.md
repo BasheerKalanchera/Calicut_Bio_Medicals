@@ -213,6 +213,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * Once manually overridden, subsequent Stage changes must NOT automatically overwrite the user-defined probability.
 * The manually overridden value remains in effect until the user explicitly changes it again.
 * Stage default probabilities remain available as guidance values and approved reporting reference data.
+* **Decided 2026-10-09 (Basheer):** the rule stands; the code is fixed to match. A value equal to the outgoing stage's default counts as "not overridden" and follows the new stage's default; any other value is kept. A high value is held in check by BR-OP-19. Plan: `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`.
 
 ### BR-OP-09: Terminal Status Governance
 * WON and LOST are terminal Opportunity statuses.
@@ -296,6 +297,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Not covered:** deactivating a user (no SBU change; often urgent) keeps today's open-Opportunity count warning and is not blocked.
 * **Rationale:** Basheer, 2026-10-04. On 3 Sep 2026 Basheer K was changed from Admin to SBU Manager (Imaging) while still owning an open Critical Care Opportunity he created as Admin on 18 Aug; it stayed stranded in Critical Care until reassigned by hand on 4 Oct. Blocking, not just warning, chosen so the case cannot recur.
 * **Enforcement:** not built yet — see `docs/Backlog.md` "Block an SBU change while the user owns open Opportunities in another SBU".
+
+### BR-OP-19: A High Chance Needs an Expected Closure Date (2026-10-09)
+* **Rule:** An Opportunity at Lead, Qualified, Demo or Clinical Evaluation stage cannot be saved with a win probability of 50 % or more unless it has an Expected Closure Date. From Negotiation on, BR-OP-01 already requires the date.
+* **Effect:** The save is refused with a message asking for the date or a lower chance (e.g. "A 60 % chance needs an Expected Closure Date. Enter the date, or lower the chance below 50 %."). Applies on create and on every later save of the Opportunity itself, so existing Opportunities already over the limit are held to it the next time anyone saves them.
+* **Rationale:** Cabio leadership via Basheer, 2026-10-09. On UAT 24 open Leads had a chance above 50 % and 8 more exactly 50 % (Expected Closure Dates report, 9 Oct), inflating the weighted forecast with no date to plan cash flow against. Leadership chases the existing ones with that report until this ships.
+* **Enforcement:** not built yet — see `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`. Reaches UAT with the next full promotion from Dev.
 
 ---
 
