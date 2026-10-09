@@ -186,10 +186,12 @@ data-quality check.
 - Traceability item 13 ("Commitment beyond contract") wording + scorecard
   republish: with the next UAT move (Basheer, 2026-10-04); show the diff
   first.
-- The three untracked plans from another tool (Forecast-By-Closing-Period,
-  Opportunity-Create-Form-Unification, Weekly-Follow-up-Report): fix them
-  per the 2026-10-04 review, each edit shown before/after first. Order:
-  Weekly, Forecast, Create-Form, after the Plan vs Actuals E2E.
+- The two untracked plans from another tool (Forecast-By-Closing-Period,
+  Weekly-Follow-up-Report): fix them per the 2026-10-04 review, each edit
+  shown before/after first. Order: Weekly, Forecast, after the Plan vs
+  Actuals E2E. (The third, Opportunity-Create-Form-Unification, was
+  replaced by `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+  and deleted 2026-10-09.)
 
 ### Audit trigger: skip a missing parent only on DELETE — parked (found 2026-10-03)
 
@@ -452,8 +454,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   the PO Date gate (Order → Delivery and Won), those two forms can't create
   an Opportunity at Delivery or later: the save is refused for a missing
   PO Date. Create at Order or earlier, then move it on from the Opportunity
-  page. The merge (`docs/Opportunity-Create-Form-Unification-Implementation-Plan.md`)
-  brings the box to every create form; drop this entry when it ships.
+  page. The merge (`docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`,
+  D11) brings the box to every create form; drop this entry when it ships.
 
 - **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard
   reload fires ~30 API calls at once; with the 5 + 5 pool on the free tier

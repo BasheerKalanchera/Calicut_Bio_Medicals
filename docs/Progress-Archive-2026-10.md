@@ -1660,3 +1660,35 @@ hospitals). In short:
   follow-up question each → P3 +2. (5) Proposed growing the handover to
   142 lines without offering a trim → P24 +1. (6) Saved 8 Oct hospital
   scan lacked ids; 4 needed a second UAT lookup → P54.
+
+## 2026-10-09 — Planning (evening): chance + create-form plan D7–D14 decided, code search; parked
+
+- **Decided (Basheer):** D7, D8, D10–D13 as recommended. D9: only the
+  Opportunity's own save is checked (a stage change counts); product,
+  document, stakeholder and split saves are never refused. Basheer asked
+  whether old Opportunities still get corrected: yes on their next save,
+  but untouched ones would not, so D14 adds a non-blocking notice on the
+  page of any Opportunity over the limit (option b of four).
+- **4 Oct draft** (`Opportunity-Create-Form-Unification-...`) mined and
+  deleted: locked hospital shown as a fixed name with search and "+ Add
+  Hospital" hidden; form-only data loads removed; parity check before
+  deleting; project page first; E2E from all four ways in. Backlog links
+  now point to the new plan. BR-OP-19 text and its Matrix row updated
+  for the notice and the stage-change / side-save wording.
+- **Code search** (plan section 3 filled in). Found: Clinical
+  Evaluation's standard chance is 55 % (Seed-Data.sql), so every
+  Opportunity there needs a date (D15); the edit form sends the chance on
+  Lost / On Hold saves, so without an exception an old 55 % Opportunity
+  couldn't be marked Lost (D16); every form hides the closure date for
+  Repeat Orders (must show under D8); the products panel saves through
+  the same update, so the check keys on chance / stage / date changes;
+  "+ Lead" already has every feature of the two inline forms; the label
+  "Fast-Track this Deal" on all three forms (D17).
+- **Parked** overnight with D15–D17 waiting on Basheer.
+- **Retro:** (1) At session start took up the Target vs Actuals E2E (the
+  build session's) because its files were open and uncommitted; Basheer
+  meant the planning thread → P55. (2) D9 recommendation didn't say that
+  untouched Opportunities would never be corrected; Basheer had to ask →
+  P56. (3) BR-OP-19 was written into Business-Rules before checking stage
+  standard chances (Clinical Evaluation 55 %) and status-change saves
+  (Lost / On Hold); the code search found them after (D15, D16) → P57.

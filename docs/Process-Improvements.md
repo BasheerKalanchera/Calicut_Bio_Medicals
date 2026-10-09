@@ -61,6 +61,9 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P52 | Before saying something "isn't written anywhere else", read the relevant section or search several wordings; an exact-phrase miss proves nothing | 2026-10-09 | 1 | open |
 | P53 | A commit message matches the detail of recent commits: the why, what changed per file, test results where relevant | 2026-10-09 | 1 | open |
 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection | 2026-10-09 | 1 | open |
+| P55 | When the handover has several threads, ask which one before choosing from open files or uncommitted changes (they may be another session's) | 2026-10-09 | 1 | open |
+| P56 | Every recommendation states what it leaves uncovered | 2026-10-09 | 1 | open |
+| P57 | Before writing a new validation rule, check the stage standard figures and every save path it touches, status changes included | 2026-10-09 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

@@ -99,11 +99,18 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   before Negotiation needs an Expected Closure Date) and the BR-OP-08
   note are in Business-Rules + Matrix; Backlog rule gaps 7 → 6 (BR-OP-08
   now tracked by the plan). UAT with the next full promotion.
-- Waiting on Basheer: D7–D13 (shown in chat 2026-10-09 with a
-  recommendation each) and deleting the other session's untracked
-  `Opportunity-Create-Form-Unification-Implementation-Plan.md`.
-- **Next:** decisions marked → fill the plan's "What could be affected"
-  from a code search → approval → build step 1.
+- D7–D14 decided 2026-10-09 (D14: notice on the page of an Opportunity
+  over the limit; lessons from the 4 Oct draft folded in, draft
+  deleted). BR-OP-19 text + Matrix row updated for the notice.
+- Code search done 2026-10-09; "What could be affected" filled in.
+  Parked overnight (Basheer). Waiting on Basheer: D15 (Clinical
+  Evaluation's 55 % standard chance means every one there needs a date),
+  D16 (rule only while Active; Lost/On Hold/Won never refused), D17
+  ("Fast-Track this Deal" → "…this Opportunity"); each shown in chat
+  with a recommendation. Offered: read-only Dev check of Clinical
+  Evaluation's standard chance + count without a date (not run).
+- **Next:** D15–D17 answered → BR-OP-19 text updated if D16 agreed →
+  plan to Approved → build step 1.
 - Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
   first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 
