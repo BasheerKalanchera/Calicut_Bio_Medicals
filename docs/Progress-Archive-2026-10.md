@@ -1551,6 +1551,35 @@ hospitals). In short:
 - The docs batch stayed uncommitted all day across two natural pauses,
   beside another session's commits — P50.
 
+## 2026-10-09 — Target vs Actuals combined E2E: started; "target" vs "plan" on the card
+
+- Pre-flight: no app code changed since `2e2e4c0`; pytest 1217, ruff,
+  tsc clean, lint 0 errors / 186 warnings; Dev `alembic current` =
+  `0060 (head)`. Read-only scope and data re-check: no difference from
+  2026-10-07 for any user, SBU or quarter; 2027-Q1 empty; 0 writes.
+- A1–A3 Pass. A1 found a test-plan error, not an app bug: the plan
+  expected a chip "Current quarter"; the code shows "This quarter · as
+  of <date>" on a plain line. Plan wording corrected (A1, C1, C2, K39).
+- At A3 Basheer asked why "Target not set" sat beside Planned ₹10L. The
+  card used "Target" for both the GM's SBU target and, in the people
+  table, a rep's own plan. Decision (Basheer): "target" = GM's top-down
+  SBU target only, "plan" = reps' bottom-up plans; new "Plans vs SBU
+  target" column (team plans ÷ SBU target). Recorded in the plan's
+  Decisions; committed as `cf64cd4`. Target Planning's own wording left
+  for Backlog "App-wide: a rep's plan is called 'target' on Target
+  Planning".
+- A3b–C3 Pass. At A7 Basheer renamed the zone table's "Not in a zone"
+  to "Not attached to a zone" (`142b6fb`). C2 and E8 corrected in the
+  test plan: the card's note under a sent-back rep reads "approved,
+  still counts"; "₹X approved still counts" is Target Planning's wording.
+- Side change (Basheer): Insights Dashboard sections became pill tabs
+  like Customer 360 (Target vs Actuals · Pipeline · Team Activity ·
+  Overdue Actions; always opens on Target vs Actuals; summary tiles in
+  the Pipeline tab; each tab loads when opened), and the menu reads
+  "Insights Dashboard" (`2fdac69`). Lint rejected resetting the tab
+  inside an effect; reset moved into render. Checked by Basheer as GM,
+  salesperson and in a narrow window. Remaining E2E steps unchanged.
+
 ## 2026-10-09 — UAT data-quality check; look-alike hospital check added to the script
 
 - UAT backup and the routine data-quality check run (approved). Reports

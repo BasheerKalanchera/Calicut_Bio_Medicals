@@ -19,8 +19,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   (feat/fix only, all living docs + handover); retro + daily review
   procedure in `process-review` (incl. which pack was missed, for which
   job).
-- Target vs Actuals E2E did not move 2026-10-08; it's next for the build
-  session.
+- Target vs Actuals E2E started 2026-10-09 (see its section below).
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 
@@ -39,8 +38,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` (A–J in
   2026-Q3, K = 38-step Hospital-Wise re-run + step 39 in 2027-Q1). Live
   data: session 1e7c86e6 scratchpad `e2e_data2_out.txt`.
-- **Next:** Basheer restarts the Dev backend (P1) → Claude re-runs the
-  read-only scope check (P3) → E2E from step A1.
+- E2E run 2026-10-09: P1–P3, A1–A3 Pass (recorded in the test plan).
+  At A3 Basheer split "target" (GM's SBU target) from "plan" (reps'
+  plans) on the card and added a "Plans vs SBU target" column: committed
+  and pushed as `cf64cd4` (partial; E2E in progress). Scope re-check
+  output: session 10b0c4a6 scratchpad `e2e_data3_out.txt`.
+- A3b–C3 Pass 2026-10-09. During the run: zone label "Not attached to a
+  zone" `142b6fb`; Insights Dashboard tabs + menu renamed "Insights
+  Dashboard" `2fdac69` (both pushed). The card is on the first tab, so
+  the remaining steps are unchanged.
+- **Next:** D1. Basheer runs the Simple steps himself.
 - Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't
   delete (it has Activity rows).
 - UAT move: after the combined E2E, together with Hospital-wise Target

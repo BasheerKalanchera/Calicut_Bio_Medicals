@@ -41,22 +41,22 @@ Button labels, messages and the order of checks are taken from the code (`Target
 1. [Simple] Insights Dashboard, SBU Imaging. **Expected:** line "This quarter · as of <today> · 5 of 6 haven't submitted a plan"; tiles Team plans ₹10.0L, PO received ₹0.0L, Won (paid) ₹18.0L "180% of team plans", Expected this quarter ₹66.5L, Likely finish ₹84.5L. — **Pass** 2026-10-09 (plan wording corrected: it said chip "Current quarter"; the code shows "This quarter" on a plain line, `TargetVsActualsSection.tsx:28`).
 2. [Simple] **Expected:** "5 of 6 haven't submitted a plan"; rows Basheer K, Fahad, Fazal, Haroon, Rudrappa, Shruthi; no Critical Care person. — **Pass** 2026-10-09.
 3. [Simple] **Expected:** "Against SBU target": SBU row "Target not set", planned ₹10.0L, won ₹18.0L; Company row "Waits for every SBU's target", planned ₹111.0L. — **Pass** 2026-10-09.
-3b. [Simple] After the 2026-10-09 relabel (plan Decisions "Top-down target vs bottom-up plans"). **Expected:** SBU table headers "SBU target (GM)", "Team plans", "Plans vs SBU target", "PO received", "Won (paid)", "% of SBU target"; "Plans vs SBU target" shows "—" on both rows (no target yet); people table headers "Rep Plan" and "% of plan"; top tile "Team plans" with caption "Sum of each rep's plan, pending or approved". —
-4. [Complex: expand row, read notes] Expand Basheer K. **Expected:** hospital line "Unplanned", Won ₹18.0L (brand SonoScape); note "2 Opportunities past Order have no PO date, so …"; note "… open Opportunities have no expected closure date, so they aren't counted in Expected." —
-5. [Complex: expand rows] Expand Fahad, Fazal, Haroon. **Expected:** each has the badge "1 past closing date" and the late line: "Test Gate override oppotunity (renamed for TC-19/22) — Maulana … (was due 2026-09-03)" ₹20.0L; "New oppotunity fast track — Aster DM … (was due 2026-10-01)" ₹25.0L; "Activity visibility test — Aster DM … (was due 2026-09-21)" ₹50.0L. None says "shared". —
-6. [Simple] Expand Rudrappa, then Shruthi. **Expected:** Rudrappa Rep Plan ₹10.0L (pending); Shruthi "No plan started for this quarter." —
-7. [Simple] "By zone". **Expected:** North Kerala Won ₹18.0L; "Not in a zone" Planned ₹10.0L; footer "SBU total". —
+3b. [Simple] After the 2026-10-09 relabel (plan Decisions "Top-down target vs bottom-up plans"). **Expected:** SBU table headers "SBU target (GM)", "Team plans", "Plans vs SBU target", "PO received", "Won (paid)", "% of SBU target"; "Plans vs SBU target" shows "—" on both rows (no target yet); people table headers "Rep Plan" and "% of plan"; top tile "Team plans" with caption "Sum of each rep's plan, pending or approved". — **Pass** 2026-10-09.
+4. [Complex: expand row, read notes] Expand Basheer K. **Expected:** hospital line "Unplanned", Won ₹18.0L (brand SonoScape); note "2 Opportunities past Order have no PO date, so …"; note "… open Opportunities have no expected closure date, so they aren't counted in Expected." — **Pass** 2026-10-09 (run by Basheer; note reads "14 open Opportunities …", matching Dev data).
+5. [Complex: expand rows] Expand Fahad, Fazal, Haroon. **Expected:** each has the badge "1 past closing date" and the late line: "Test Gate override oppotunity (renamed for TC-19/22) — Maulana … (was due 2026-09-03)" ₹20.0L; "New oppotunity fast track — Aster DM … (was due 2026-10-01)" ₹25.0L; "Activity visibility test — Aster DM … (was due 2026-09-21)" ₹50.0L. None says "shared". — **Pass** 2026-10-09 (run by Basheer).
+6. [Simple] Expand Rudrappa, then Shruthi. **Expected:** Rudrappa Rep Plan ₹10.0L (pending); Shruthi "No plan started for this quarter." — **Pass** 2026-10-09.
+7. [Simple] "By zone". **Expected:** North Kerala Won ₹18.0L; "Not attached to a zone" Planned ₹10.0L; footer "SBU total". — **Pass** 2026-10-09 (label was "Not in a zone"; renamed at Basheer's request the same day).
 
 ## B — Target Planning matches the card
 
-1. [Complex: cross-screen comparison] Target & Coverage Planning, Imaging 2026-Q3, as Admin. **Expected:** the same six people as A2; "Total: ₹10.0L · 5 of 6 haven't submitted"; Rudrappa Pending Approval; the other five "Not started". —
-2. [Complex: cross-screen comparison] Switch both screens to Critical Care 2026-Q3. **Expected:** total ₹101; "2 of 4 haven't submitted"; Arun Approved ₹50; Vivek Pending ₹51 with "was ₹60.0L approved"; the card shows the same people and Team plans ₹101.0L. —
+1. [Complex: cross-screen comparison] Target & Coverage Planning, Imaging 2026-Q3, as Admin. **Expected:** the same six people as A2; "Total: ₹10.0L · 5 of 6 haven't submitted"; Rudrappa Pending Approval; the other five "Not started". — **Pass** 2026-10-09 (run by Basheer).
+2. [Complex: cross-screen comparison] Switch both screens to Critical Care 2026-Q3. **Expected:** total ₹101; "2 of 4 haven't submitted"; Arun Approved ₹50; Vivek Pending ₹51 with "was ₹60.0L approved"; the card shows the same people and Team plans ₹101.0L. — **Pass** 2026-10-09 (run by Basheer).
 
 ## C — Past and upcoming quarters, rejected revision
 
-1. [Simple] Card, Critical Care, "Previous quarter" arrow (2026-Q2). **Expected:** line starts "Past quarter"; Expected shows "—"; Team plans ₹145.0L; "2 of 4 haven't submitted"; Company row Team plans ₹265.0L. —
-2. [Simple] "Next quarter" arrow to 2026-Q4. **Expected:** line starts "Upcoming quarter"; Team plans ₹70.0L; "1 of 4 haven't submitted"; Vivek ₹30.0L with "₹30.0L approved still counts"; expanded: "Revision was sent back. The last approved plan (₹30.0L) still counts until a new one is approved." —
-3. [Simple] Target Planning, Critical Care 2026-Q4. **Expected:** total ₹70; Vivek Rejected with "₹30.0L approved still counts". —
+1. [Simple] Card, Critical Care, "Previous quarter" arrow (2026-Q2). **Expected:** line starts "Past quarter"; Expected shows "—"; Team plans ₹145.0L; "2 of 4 haven't submitted"; Company row Team plans ₹265.0L. — **Pass** 2026-10-09.
+2. [Simple] "Next quarter" arrow to 2026-Q4. **Expected:** line starts "Upcoming quarter"; Team plans ₹70.0L; "1 of 4 haven't submitted"; Vivek ₹30.0L with the small note "approved, still counts" under it; expanded: "Revision was sent back. The last approved plan (₹30.0L) still counts until a new one is approved." — **Pass** 2026-10-09.
+3. [Simple] Target Planning, Critical Care 2026-Q4. **Expected:** total ₹70; Vivek Rejected with "₹30.0L approved still counts". — **Pass** 2026-10-09.
 
 ## D — SBU targets (Basheer clicks, Claude watches)
 
@@ -76,7 +76,7 @@ Button labels, messages and the order of checks are taken from the code (`Target
 5. [Complex: cross-role] As Haroon, Approve. **Expected:** card Team plans ₹30.0L, Won ₹18.0L "60% of team plans"; "4 of 6 haven't submitted"; Basheer K's hospital table: Al Shifa Planned ₹20.0L, Won ₹18.0L, no "Unplanned" line. —
 6. [Simple] As Basheer K, "Revise": Al Shifa ₹15, brand ₹15. **Expected:** "₹15.00L is ₹5.00L below your approved target of ₹20.00L … You can still submit". Note "E2E revision", Submit. —
 7. [Simple] Card as Haroon. **Expected:** Basheer K ₹15.0L with "was ₹20.0L approved"; Team plans ₹25.0L. —
-8. [Complex: cross-role] As Haroon, Reject with note "E2E reject". **Expected:** Basheer K ₹20.0L with "₹20.0L approved still counts"; expanded: "Revision was sent back. The last approved plan (₹20.0L) still counts until a new one is approved."; Team plans back to ₹30.0L; Target Planning shows the same. —
+8. [Complex: cross-role] As Haroon, Reject with note "E2E reject". **Expected:** card: Basheer K ₹20.0L with the small note "approved, still counts" under it; expanded: "Revision was sent back. The last approved plan (₹20.0L) still counts until a new one is approved."; Team plans back to ₹30.0L; Target Planning shows the same. —
 
 ## F — PO date gates and PO received (Fahad's "Test opportunity", EMS Hospital, ₹1L)
 
