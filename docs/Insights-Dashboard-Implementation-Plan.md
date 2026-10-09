@@ -322,8 +322,16 @@ Per PRD §5.13 ("Opportunity Hold Report"). Fully buildable, no schema gaps:
   and mark choices right from the start).
 - Nav: add to **SALES EXECUTION** (not Administration — Sales Staff has a real,
   scoped-down view of this screen too, unlike Target Planning which is manager-only).
-  `{ id: "insights", label: "Insights", icon: "📊" }`, no role gate on visibility —
-  the backend/RLS scoping already produces the right content per role.
+  `{ id: "insights", label: "Insights Dashboard", icon: "📊" }`, no role gate on visibility —
+  the backend/RLS scoping already produces the right content per role. Menu label
+  and page heading renamed from "Insights" (Basheer, 2026-10-09).
+- **Tabs, not one long scroll (Basheer, 2026-10-09).** One section per tab:
+  Target vs Actuals · Pipeline · Team Activity · Overdue Actions (the last two
+  manager tier only, as before). Pill-style tabs copied from Customer 360 /
+  Opportunity 360 so the app looks the same everywhere. Always opens on Target
+  vs Actuals, including on coming back from another menu. The two summary tiles
+  (Active Pipeline Value, Weighted Forecast) sit inside the Pipeline tab. Each
+  tab's numbers load only when the tab is first opened.
 - `services/reporting.ts`, `types/reporting.ts` — typed, following the same pattern
   called out in Target Planning's plan (no `Promise<unknown>`).
 

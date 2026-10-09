@@ -52,7 +52,7 @@ const SALES_EXECUTION_ITEMS = [
   { id: "opportunities", label: "Pipeline",           icon: "📈" },
   { id: "marketingLeadQueue", label: "Marketing Lead Queue", icon: "📥" },
   { id: "nextActions",   label: "Next Actions",       icon: "✅" },
-  { id: "insights", label: "Insights", icon: "📊" },
+  { id: "insights", label: "Insights Dashboard", icon: "📊" },
   { id: "targetPlanning", label: "Target & Coverage Planning", icon: "🎯" },
 ];
 
@@ -851,10 +851,10 @@ export default function DemoApp() {
           <Box sx={{ flex: 1, overflow: "hidden", display: view === "insights" ? "flex" : "none", flexDirection: "column" }}>
             <Box sx={{ px: 2, py: 1.5, bgcolor: "#fff", borderBottom: "1px solid #f3f4f6", flexShrink: 0 }}>
               <Typography component="h2" sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#1f2937", letterSpacing: "-0.025em" }}>
-                Insights
+                Insights Dashboard
               </Typography>
             </Box>
-            <InsightsDashboardScreen />
+            <InsightsDashboardScreen isActive={view === "insights"} />
           </Box>
 
           {/* Reports — always mounted, hidden when not active; no admin

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, Button, MenuItem, TextField } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
 import dayjs from "dayjs";
 import { LoadingOrEmpty, MiniBar, SectionCard, StatTile, ZoneTreeNote } from "../components/ReportingUI";
 import TargetVsActualsSection from "../components/TargetVsActualsSection";
@@ -15,6 +16,10 @@ import { formatLakhs } from "../utils/formatter";
 // Opportunities On Hold are each their own full report screen now (see
 // StagnantDealsReportScreen.tsx, ProductPerformanceReportScreen.tsx,
 // OpportunitiesOnHoldReportScreen.tsx), not dashboard tiles.
+//
+// Tabs (Basheer, 2026-10-09): one section per tab instead of one long
+// scroll, pill style copied from Customer360Screen's chip bar. Always opens
+// on Target vs Actuals; each tab's queries run only once it is opened.
 const MANAGER_TIER_ROLES = new Set(["SBU Manager", "Area Manager", "Admin", "General Manager"]);
 
 const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
@@ -26,9 +31,60 @@ const GROUP_BY_OPTIONS: { value: PipelineGroupBy; label: string }[] = [
   { value: "brand", label: "Brand" },
 ];
 
-export default function InsightsDashboardScreen() {
+type TabId = "target" | "pipeline" | "activity" | "overdue";
+
+const TABS: { id: TabId; label: string; managerOnly: boolean }[] = [
+  { id: "target", label: "Target vs Actuals", managerOnly: false },
+  { id: "pipeline", label: "Pipeline", managerOnly: false },
+  { id: "activity", label: "Team Activity", managerOnly: true },
+  { id: "overdue", label: "Overdue Actions", managerOnly: true },
+];
+
+const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
+
+interface Props {
+  // DemoApp keeps this screen mounted while hidden; used to reset to the
+  // first tab so the screen always opens on Target vs Actuals.
+  isActive: boolean;
+}
+
+export default function InsightsDashboardScreen({ isActive }: Props) {
   const { userProfile } = useAuth();
   const isManagerTier = MANAGER_TIER_ROLES.has((userProfile as { role_name?: string } | null)?.role_name ?? "");
+  const tabs = TABS.filter((t) => isManagerTier || !t.managerOnly);
+
+  const [activeTab, setActiveTab] = useState<TabId>("target");
+  const chipBarRef = useRef<HTMLDivElement>(null);
+
+  const centerTab = useCallback((tabId: TabId, behavior: ScrollBehavior = "smooth") => {
+    setTimeout(() => {
+      const container = chipBarRef.current;
+      if (container) {
+        const chip = container.querySelector(`[data-tab="${tabId}"]`) as HTMLElement | null;
+        if (chip) {
+          const scrollLeft = chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
+          container.scrollTo({ left: scrollLeft, behavior });
+        }
+      }
+    }, 50);
+  }, []);
+
+  const handleTabChange = useCallback((tabId: TabId) => {
+    setActiveTab(tabId);
+    centerTab(tabId);
+  }, [centerTab]);
+
+  // Back to the first tab whenever the screen is hidden (state adjusted
+  // during render, React's recommended alternative to setState in an effect).
+  const [wasActive, setWasActive] = useState(isActive);
+  if (isActive !== wasActive) {
+    setWasActive(isActive);
+    if (!isActive) setActiveTab("target");
+  }
+
+  useEffect(() => {
+    if (!isActive) centerTab("target", "auto");
+  }, [isActive, centerTab]);
 
   const [groupBy, setGroupBy] = useState<PipelineGroupBy>(isManagerTier ? "rep" : "stage");
 
@@ -39,6 +95,7 @@ export default function InsightsDashboardScreen() {
   const pipelineQuery = useQuery({
     queryKey: ["reporting", "pipeline-summary", groupBy],
     queryFn: () => getPipelineSummary(groupBy),
+    enabled: activeTab === "pipeline",
   });
 
   // Headline totals are fetched separately, always grouped by Stage --
@@ -52,18 +109,19 @@ export default function InsightsDashboardScreen() {
   const headlineQuery = useQuery({
     queryKey: ["reporting", "pipeline-summary", "stage"],
     queryFn: () => getPipelineSummary("stage"),
+    enabled: activeTab === "pipeline",
   });
 
   const activityQuery = useQuery({
     queryKey: ["reporting", "activity-levels", periodStart, periodEnd],
     queryFn: () => getActivityLevels(periodStart, periodEnd),
-    enabled: isManagerTier,
+    enabled: isManagerTier && activeTab === "activity",
   });
 
   const overdueQuery = useQuery({
     queryKey: ["reporting", "overdue-actions"],
     queryFn: () => getOverdueActions(),
-    enabled: isManagerTier,
+    enabled: isManagerTier && activeTab === "overdue",
   });
 
   const pipelineRows = pipelineQuery.data?.rows ?? [];
@@ -80,56 +138,94 @@ export default function InsightsDashboardScreen() {
   const overdueRows = overdueQuery.data?.rows ?? [];
 
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", bgcolor: "background.default", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-          <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
-          <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
-        </Box>
-
-        <TargetVsActualsSection />
-
-        <SectionCard
-          title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
-          action={
-            <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
-              {GROUP_BY_OPTIONS.map((o) => (
-                <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
-              ))}
-            </TextField>
-          }
+    <Box sx={{ flex: 1, overflow: "hidden", bgcolor: "background.default", display: "flex", flexDirection: "column" }}>
+      {/* Tab chip bar -- stays put while the tab content scrolls */}
+      <Box sx={{ position: "relative", px: 2, pt: 2, pb: 1.5, flexShrink: 0 }}>
+        <Box
+          ref={chipBarRef}
+          sx={{
+            display: "flex", gap: 1, overflowX: "auto", pb: 0.5,
+            "&::-webkit-scrollbar": { display: "none" },
+            scrollbarWidth: "none",
+            pr: "50vw",
+          }}
         >
-          <LoadingOrEmpty
-            isLoading={pipelineQuery.isLoading}
-            isError={pipelineQuery.isError}
-            isEmpty={pipelineRows.length === 0}
-            emptyText={isManagerTier ? "No active pipeline." : "You don't own any active deals yet."}
-            errorText="Couldn't load pipeline summary."
-            onRetry={() => pipelineQuery.refetch()}
-          />
-          {pipelineRows.length > 0 && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {pipelineRows.map((row) => (
-                <MiniBar
-                  key={`${row.group_id}${row.zone_exact ? "-exact" : ""}`}
-                  label={row.group_name}
-                  value={parseFloat(row.total_value_lakhs)}
-                  max={maxGroupValue}
-                  formatValue={formatLakhs}
-                  secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
-                  secondaryLabel="weighted"
-                  count={row.opportunity_count}
-                  indent={row.depth ?? 0}
-                />
-              ))}
-            </Box>
-          )}
-          {groupBy === "zone" && pipelineRows.length > 0 && <ZoneTreeNote />}
-        </SectionCard>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <Button
+                key={tab.id}
+                data-tab={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                sx={{
+                  flexShrink: 0, display: "flex", alignItems: "center", gap: 0.75, px: 2, py: 1,
+                  borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 700, whiteSpace: "nowrap",
+                  transition: "all 0.2s", border: "1px solid", textTransform: "none",
+                  ...(isActive
+                    ? { bgcolor: "primary.main", color: "#fff", borderColor: "primary.main", boxShadow: SHADOW_SM }
+                    : { bgcolor: "#fff", color: "#6b7280", borderColor: "#e5e7eb", "&:hover": { borderColor: "#93c5fd", color: "primary.main" } }),
+                }}
+              >
+                {isActive && <CheckIcon sx={{ fontSize: 14, flexShrink: 0 }} />}
+                {tab.label}
+              </Button>
+            );
+          })}
+        </Box>
+        <Box sx={{ position: "absolute", right: 0, top: 0, height: "100%", width: 40, pointerEvents: "none", background: "linear-gradient(to left, #f9fafb, transparent)" }} />
       </Box>
 
-      {isManagerTier && (
-        <>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 2, pb: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+        {activeTab === "target" && <TargetVsActualsSection />}
+
+        {activeTab === "pipeline" && (
+          <>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <StatTile label="Active Pipeline Value" value={formatLakhs(totalValue)} sublabel={`${totalCount} active deals`} />
+              <StatTile label="Weighted Forecast" value={formatLakhs(totalWeighted)} sublabel="Active deals, win-probability adjusted" />
+            </Box>
+
+            <SectionCard
+              title={`Pipeline by ${GROUP_BY_OPTIONS.find((o) => o.value === groupBy)?.label}`}
+              action={
+                <TextField select size="small" value={groupBy} onChange={(e) => setGroupBy(e.target.value as PipelineGroupBy)} sx={{ minWidth: 110 }}>
+                  {GROUP_BY_OPTIONS.map((o) => (
+                    <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                  ))}
+                </TextField>
+              }
+            >
+              <LoadingOrEmpty
+                isLoading={pipelineQuery.isLoading}
+                isError={pipelineQuery.isError}
+                isEmpty={pipelineRows.length === 0}
+                emptyText={isManagerTier ? "No active pipeline." : "You don't own any active deals yet."}
+                errorText="Couldn't load pipeline summary."
+                onRetry={() => pipelineQuery.refetch()}
+              />
+              {pipelineRows.length > 0 && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {pipelineRows.map((row) => (
+                    <MiniBar
+                      key={`${row.group_id}${row.zone_exact ? "-exact" : ""}`}
+                      label={row.group_name}
+                      value={parseFloat(row.total_value_lakhs)}
+                      max={maxGroupValue}
+                      formatValue={formatLakhs}
+                      secondaryValue={parseFloat(row.weighted_forecast_lakhs)}
+                      secondaryLabel="weighted"
+                      count={row.opportunity_count}
+                      indent={row.depth ?? 0}
+                    />
+                  ))}
+                </Box>
+              )}
+              {groupBy === "zone" && pipelineRows.length > 0 && <ZoneTreeNote />}
+            </SectionCard>
+          </>
+        )}
+
+        {isManagerTier && activeTab === "activity" && (
           <SectionCard title="Team Activity — last 30 days">
             <LoadingOrEmpty
               isLoading={activityQuery.isLoading}
@@ -147,7 +243,9 @@ export default function InsightsDashboardScreen() {
               </Box>
             )}
           </SectionCard>
+        )}
 
+        {isManagerTier && activeTab === "overdue" && (
           <SectionCard title={`Overdue Actions${overdueQuery.data ? ` — ${overdueQuery.data.total_overdue} total` : ""}`}>
             <LoadingOrEmpty
               isLoading={overdueQuery.isLoading}
@@ -180,8 +278,8 @@ export default function InsightsDashboardScreen() {
               </Box>
             )}
           </SectionCard>
-        </>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }
