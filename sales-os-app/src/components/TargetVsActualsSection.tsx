@@ -394,7 +394,7 @@ export default function TargetVsActualsSection() {
                 <TableBody>
                   {data.zones.map((z) => (
                     <TableRow key={z.zone_id ?? "no-zone"}>
-                      <TableCell>{z.zone_name ?? "Not in a zone"}</TableCell>
+                      <TableCell>{z.zone_name ?? "Not attached to a zone"}</TableCell>
                       <TableCell sx={numCellSx}>{lakhs(z.planned_lakhs)}</TableCell>
                       <TableCell sx={numCellSx}>{lakhs(z.won_lakhs)}</TableCell>
                     </TableRow>
