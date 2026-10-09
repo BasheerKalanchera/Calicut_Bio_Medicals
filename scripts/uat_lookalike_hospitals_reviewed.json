@@ -1,0 +1,603 @@
+{
+  "_about": "Look-alike hospital groups (uat_data_quality_check.py section 18) that a rep has confirmed are different places. Add one entry per confirmed group: the UAT hospital ids, names for reading, who confirmed and when.",
+  "confirmed_different": [
+    {
+      "hospital_ids": [
+        "fa0b7d6e-054a-412f-8cd5-3ca35d9b84e6",
+        "f383601a-bdb6-416c-88f3-77ef3526532b"
+      ],
+      "names": [
+        "FATIMA MATA  MISSION HOSPITAL (Gopika pv)",
+        "Fathima Hispital Kozhikode (Fazal)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "a23a6225-edde-48cd-bb85-92c4285eb282",
+        "9468eaec-99e7-454c-a910-dfeedb78ca2d",
+        "ce1a4c57-daf4-49fb-ae47-f70e726c7404",
+        "ace1a4a8-99c4-4918-a022-72618ad91b79"
+      ],
+      "names": [
+        "Aanya Hospital, Vijaynagar (Om Hiremath)",
+        "Manas multi-speciality Hospital, Kodigehalli (Om Hiremath)",
+        "Manasa Hospital, Vijaynagar (Om Hiremath)",
+        "Tanmay Hospital, Vijaynagar (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "257246de-cc03-46af-9f2e-72f2655bcb62",
+        "41f320bb-0b35-443f-8a33-2f978ddc896f",
+        "c75bfdd6-1d63-4c3c-9795-781b7df98ce0",
+        "da7efa72-ce9d-40f9-8c80-7938ddf4289d",
+        "60222604-70c2-49d7-8791-1b2e5b8b6071",
+        "73bb66e6-285a-4b94-bb5d-af33b1c056cd",
+        "65f2b18b-3041-42a1-81b4-0b93e556d2dd"
+      ],
+      "names": [
+        "Akshaya Child Clinic Kadugodi (Rudrappa Deevatagi)",
+        "Ashraya Hospital, sunkadakatte (Om Hiremath)",
+        "C.V diagnostic, sunkadakatte (Om Hiremath)",
+        "Laxmi Multi Speciality Hospital, HMT layout (Om Hiremath)",
+        "Ram Diagnostics (Rudrappa Deevatagi)",
+        "Sri Laxmi multi speciality hospital, sunkadakatte (Om Hiremath)",
+        "Sri Ram hospital, sunkadakatte (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "8ec228ad-0df1-4068-9e13-2fc705a2ff86",
+        "61b675db-929f-42aa-aea7-9095d06307d2"
+      ],
+      "names": [
+        "Arya BrightCare- Labs, nagarbhavi (Om Hiremath)",
+        "Arya Hospital , Varthur (Rudrappa Deevatagi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "fbbb3c40-7b01-4237-b44a-b7d551f6c832",
+        "45ee8d57-c706-4624-b3ed-036142ccd636"
+      ],
+      "names": [
+        "Ashwini clinic, jakkur layout (Om Hiremath)",
+        "Ashwini Multispeciality Hospital, Hoskote (Rudrappa Deevatagi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "5a752ae2-36e6-4db9-89a8-37e9faae9516",
+        "270c7c09-cc1f-4c05-a670-3b9ec5785cf0",
+        "418e97b3-89a8-4304-915c-493c77026f33",
+        "87d3cb2c-f78f-49cd-abd4-fdce3abbebb2"
+      ],
+      "names": [
+        "Aster CMI ,Hebbal (Shruthi)",
+        "Aster DM (None)",
+        "Aster RV (Shruthi)",
+        "Aster Whitefield (Shruthi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "7c71ae11-f4ca-4e64-8fcb-9223306be049",
+        "ba845825-8a9a-4ac1-95a8-b46fd03a7b70",
+        "6ed10d25-6e0b-411d-87d7-fc97332da2ca",
+        "00966806-18b6-49ea-9fc5-c261f5ad8e13"
+      ],
+      "names": [
+        "Bangalore Hospital, Kengeri (Shruthi)",
+        "Bangalore Medical System (Shruthi)",
+        "Bangalore multi-speciality hospital, HBR Layout (Om Hiremath)",
+        "Bangalore super speciality clinic, Malleshwaram (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "39bc72fa-6da6-4441-928f-9fba8a48463c",
+        "37766f28-608b-4a6b-ad6e-ee222c4111b8"
+      ],
+      "names": [
+        "Bharathy Hospital, Vijaynagar (Om Hiremath)",
+        "Harish Diagnostic, Vijaynagar (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "8dcc0759-69fe-41de-ae57-a04077749253",
+        "05c24996-9182-4b28-9680-b197cd40fa98"
+      ],
+      "names": [
+        "Boss multi-speciality hospital, magadi road (Om Hiremath)",
+        "SRS Diagnostic centre, Magadi Road (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "0fbb78eb-57b1-4dee-93c1-2a4dee144a3e",
+        "6b329473-96d8-49c3-8b6f-8b95bc8640b8"
+      ],
+      "names": [
+        "Care well Hospital, MS palya (Om Hiremath)",
+        "Trust well Hospital (Shruthi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "1c9e494f-145d-4a77-971e-3a75606af876",
+        "676b9725-112a-4ec3-af85-072ee61e1e1f",
+        "19c73d4e-8b7c-4bb2-bd47-dd0610cfd4a9",
+        "6a09eb89-efc8-4a23-ac64-9a6bca3f4ac2",
+        "035782da-0929-4402-bb6f-c361c402da46"
+      ],
+      "names": [
+        "Credent diagnostics, vidyaranyapura (Om Hiremath)",
+        "J.B Diagnostic centre, vidyaranyapura (Om Hiremath)",
+        "Labis Diagnostics, vidyaranyapura (Om Hiremath)",
+        "Med Assist Clinic & Diagnostic Alavahalli (Rudrappa Deevatagi)",
+        "Medi care, vidyaranyapura (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "2c43ba7e-b888-4ffb-b82f-7317203680c4",
+        "ae83cd25-121e-4ed7-954b-c6f8fabc6153",
+        "696f4629-4dd6-4789-8a81-cec339d8fa25",
+        "b52f7060-38dc-4053-a5a3-89be50e4d17a",
+        "78a8dc95-6f1d-400c-90e3-5f48ee86a00b"
+      ],
+      "names": [
+        "Dr.Sanjeev Gowda, Bangalore (Shruthi)",
+        "RKB Sanjeevini Hospital (Rudrappa Deevatagi)",
+        "Sanjeevini Clinic, Panthur (Basheer K)",
+        "Sanjeevini Women’s Hospital Budigere (Rudrappa Deevatagi)",
+        "Sanjeevni Hospital, Mahalaxmi layout (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "1b38447f-1c89-4685-be0b-654905d3990c",
+        "bd2812c2-7321-4f7f-abe4-ad58545b5a13"
+      ],
+      "names": [
+        "GM multi-speciality hospital, nagarbhavi (Om Hiremath)",
+        "S K Hospital, Nagarbhavi (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "15eba6ec-c039-454a-91c8-ed0e00de6539",
+        "ff4f1659-edc7-4aab-b73c-433378267d8f"
+      ],
+      "names": [
+        "Kamadhenu Hospital, Vijaynagar (Om Hiremath)",
+        "Madhu Super speciality Hospital, Vijaynagar (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "f777ce83-5f71-47e5-8de5-0c69d0074e19",
+        "629dee82-3a0e-4386-8d83-4374f87f7e37"
+      ],
+      "names": [
+        "Kanva Diagnostic, Rajajinagar (Om Hiremath)",
+        "Vega Multi-speciality Hospital, Rajajinagar (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "e76ddb75-dda4-4648-8ef4-86f08f8afa39",
+        "6b003512-2fdb-45b3-914e-c73508532be3"
+      ],
+      "names": [
+        "Kethams Hospital, vidyaranyapura (Om Hiremath)",
+        "Kruthika Hospital, vidyaranyapura (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "dcfd43b2-7041-4558-9a7a-ee3bd8f092b8",
+        "7ca4d8ae-36b0-4f0b-a6f4-1125dd6bc682",
+        "901b282f-3e58-4551-9810-3964acd3e4ae",
+        "82134b7d-cfeb-43ac-974e-070ad80b15df"
+      ],
+      "names": [
+        "Nadam diagnostic centre, yelahanka (Om Hiremath)",
+        "Narmada multi-speciality hospital, yelahanka (Om Hiremath)",
+        "Navya multi-speciality hospital,Yelahanka (Om Hiremath)",
+        "Sri Hanuradha Hospital, Yelahanka new town (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "515009a5-a537-41b6-83a2-347cbf801691",
+        "0a80fdfb-192f-4808-a724-06fd75de05c7"
+      ],
+      "names": [
+        "Ramaiah Medical College Hospital (Shruthi)",
+        "Ramaiah Memorial Hospital (Shruthi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "3faa9639-451a-4886-a98d-f88b8ae32f93",
+        "5e51cf33-abb0-4f77-b891-639e4c030505"
+      ],
+      "names": [
+        "Sahara diagnostic, Nagavara (Om Hiremath)",
+        "Sahasra Hospitals, Varthur road (Rudrappa Deevatagi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "30e0d7b1-46d4-42b5-8edc-cc5822ad9256",
+        "a921a037-ce53-414b-9522-307eed53f73f",
+        "06337999-3590-441f-8e6d-906842b06819"
+      ],
+      "names": [
+        "Sai Baba hospital (Om Hiremath)",
+        "Sai Children Clinic, immadgalli road (Rudrappa Deevatagi)",
+        "Sai Healing Centre (Rudrappa Deevatagi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "ede109b9-8397-401d-832a-b085fa9959c9",
+        "c0e1e6a9-edb0-49f8-ac05-d34f7e924e5a",
+        "08154951-5eac-4b4d-85f1-8ae37d7daf16"
+      ],
+      "names": [
+        "Shree Laxmi Children & Mother Hospital (Rudrappa Deevatagi)",
+        "Shree Ram Hospital (Rudrappa Deevatagi)",
+        "Sree Vidya laboratory, HMT layout (Om Hiremath)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "27f2aa3d-2405-4333-9c62-7f86bfe2278c",
+        "0711b3c6-4234-4091-a371-e3fea3dc9400"
+      ],
+      "names": [
+        "V Care Scan Centre (Shruthi)",
+        "V Scans & Imaging Centre Belathur (Rudrappa Deevatagi)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "627959a7-28c3-45b2-879f-68901063d60b",
+        "92833733-13db-411c-a5f4-9bc35d967972",
+        "4481ca32-087c-47fc-81c4-55ac0ddba2cf",
+        "ee456896-1f26-41fb-ab90-ea353a297563"
+      ],
+      "names": [
+        "Al Abeer Hospital Kizhissery (Naeem)",
+        "al shifa (Basheer K)",
+        "Al-Noor hospital tirur (Gopika pv)",
+        "Al-Salama hospital (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "dddddddd-dddd-dddd-dddd-020000000002",
+        "ba489381-0a9e-433e-9d6d-3894fc5129c1",
+        "c1d1e12e-a6da-41e0-a9f7-97e9072f41a8"
+      ],
+      "names": [
+        "Aster MIMS Calicut (None)",
+        "Aster Mims Kotakkal (Haroon Sidheeq)",
+        "Aster Mims Mother Areekode (Haroon Sidheeq)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "1d2b1d5b-8592-4749-b74e-0e8eec819897",
+        "6181dd19-1bc8-467a-ae63-4c7dfd0c87b3",
+        "113bf43e-8cb2-430b-9d56-650aa086e45c",
+        "5ae986ed-7fdf-408c-bc3d-f5bd020a3c77"
+      ],
+      "names": [
+        "Baby Memorial hospital Calicut (BMH) (Nishad K V)",
+        "Baby Memorial hospital payyannur (BMH) (Gopika pv)",
+        "Baby Memorial Hospital Vadakara (Fazal)",
+        "SABA Hospital - Payyannur (Basheer K)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "15edb58c-0ce9-4454-a23e-c6fc94df6774",
+        "5159eac7-a0db-4c9d-a916-e45f4fa74d04"
+      ],
+      "names": [
+        "Cloudex Diagnostics, thaliparamba (Gopika pv)",
+        "Lourde Hospital, Thaliparamba (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "b9f93992-a335-4f35-9555-224b9d8a5c84",
+        "ad8852f3-61ff-42cb-8553-dca83b829e87",
+        "937d44c0-b1d2-49d2-ad4a-5602a2c0405f",
+        "6e92fce2-3083-41e4-be85-5251336ade40",
+        "87429882-41ec-4170-beaa-5cdbcc8143ab",
+        "bef76e1b-63e2-4a92-96b1-d0fda634313e",
+        "ed05fd43-4fe9-48f8-9b6e-273be7696813",
+        "50fd5158-021d-4f8b-b592-9fdab6bd0e42"
+      ],
+      "names": [
+        "Cooperative hospital cherupuzha (Gopika pv)",
+        "Cooperative hospital payyannur (Gopika pv)",
+        "Cooperative hospital thaliparamba (Gopika pv)",
+        "Cooperative hospital vadakara (Nishad K V)",
+        "Coperative Hospital Thalassery (Fazal)",
+        "EMS Cooperative Hospital Perambra (Fazal)",
+        "EMS Coperative Mukkam (Fazal)",
+        "PMSA Cooperative hospital Malappuram (Nishad K V)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "c7a983e1-390d-4d5c-88ef-16038176735c",
+        "3f244c26-bc49-4cc5-98fd-bd0d33cc727e"
+      ],
+      "names": [
+        "Dr. Supriya Sonologist Home clinic Kozhikode (Fazal)",
+        "Supriya hospital puthanathanni (Nishad K V)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "dfb0bf52-3ff9-4ef4-8f41-4dcda668c527",
+        "8cdbac48-deb2-48f4-90b5-a4fc2b7335f4",
+        "8b906278-9c91-46cf-b043-2bae87f3338a",
+        "3f99ba54-ad46-4423-b80f-85265d83b800",
+        "a4320b33-14f3-4e11-8035-4ed6e7386e19",
+        "f9cd53aa-bf4b-495f-a8d5-10d14cbf115e"
+      ],
+      "names": [
+        "IQRAA Community Hospital Padne Kassargod (Haroon Sidheeq)",
+        "IQRAA Fertility- Address Mall Calicut (Haroon Sidheeq)",
+        "IQRAA GTMO HOSPITAL GUDALLUR (Haroon Sidheeq)",
+        "IQRAA Hospital Sulthan Bathery (Gopika pv)",
+        "Iqraa Hospital Vazhakkad (Haroon Sidheeq)",
+        "IQRAA International Hospital & Research Centre Malaparamba Kozhikode (Haroon Sidheeq)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "a1865d9a-c3ed-4207-a783-6cba3c070ee8",
+        "32e60262-808d-48c5-884f-5f8a588427b6",
+        "1984fe2f-d737-4b92-a019-153ab5f0d231",
+        "32809d53-5c51-4955-972c-7f02579fe23f",
+        "b9ab00f0-0349-423d-b883-d958064b4e76",
+        "d93f1f58-7f5c-4b8b-bde0-f8c9d3977980"
+      ],
+      "names": [
+        "KIMS Alshifa Super Speciality Hospital- Perinthalmanna (Haroon Sidheeq)",
+        "KIMS Hospital Koduvally (Fazal)",
+        "KMC hospital kuttiyadi (Nishad K V)",
+        "KMCT Hospital Kasaragode (Haroon Sidheeq)",
+        "KMCT Medical Centre Koduvally (Haroon Sidheeq)",
+        "Kmct Medical college Hospital (Haroon Sidheeq)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "206c0e78-d0eb-4b64-9c7e-5571bd6ef1c4",
+        "51e1ca29-1824-4ced-8b71-5e532feb1632",
+        "116bc64c-7222-4b95-8830-8240f7e619e6",
+        "b55a5d8f-2772-4738-9b90-0d0754986e97"
+      ],
+      "names": [
+        "Malabar Hospital Erinchipalam Kozhikode (Haroon Sidheeq)",
+        "Malabar Hospital, Manjeri (Haroon Sidheeq)",
+        "Malabar Medical College ulliyeri (MMC) (Nishad K V)",
+        "Malabar scans and research centre, tirur (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "cebce8b0-a1f2-4e71-9c81-1e60643debb3",
+        "dd18c056-d8a3-4939-9a15-b840e5f109ee",
+        "a1065d9e-7d82-4a2a-ab41-d82f3a64aee9",
+        "9d05c0f9-40f6-4528-b64d-0d083d6bba97"
+      ],
+      "names": [
+        "Medical Laboratories (Gopika pv)",
+        "Micro health laboratories (Gopika pv)",
+        "MITHRAA Healthcare laboratories (Gopika pv)",
+        "S B Medical Laboratories, thaliparamba (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "3567d2de-b471-403b-a858-0ac6587c3f98",
+        "bf243cea-9d93-4d6d-9076-e73ec401d1f1"
+      ],
+      "names": [
+        "Mes Medical College Hospital Perinthalmanna (Haroon Sidheeq)",
+        "Ramdas clinic perinthalmanna (Nishad K V)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "86322d41-669b-447f-8057-5a382ebdd3d4",
+        "52dd6a8b-1b72-44c4-a150-1b94a855fa45",
+        "bb140119-0e50-43cc-86b6-51630a271e70"
+      ],
+      "names": [
+        "Mission hospital Thalassery (Nishad K V)",
+        "Tely hospital Thalassery (Nishad K V)",
+        "Thalassery Co-Operative Hospital (Fazal)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "3d0ab7fb-d07b-4d05-8707-40d4af650c1b",
+        "b79a696b-a71b-4219-b095-80eb0acbde63"
+      ],
+      "names": [
+        "Nucleus Health Care Parakkadav (Fazal)",
+        "Nucleus Hospital Nadapuram (Fazal)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "4b4b0458-f09b-4167-88c1-0476877b5edd",
+        "6f4ee8e0-0e27-4d05-809a-e1c0c9ae8444",
+        "cca7873c-c205-48b5-8db7-db43c2d885e2"
+      ],
+      "names": [
+        "Nursing home, tirur (Gopika pv)",
+        "Tirur Mission Hospital (Gopika pv)",
+        "Tirur Nursing Home (Naeem)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "a9acff93-b852-481d-ae82-c65147915616",
+        "206bc266-73cd-4704-8cbd-bd309a803b65"
+      ],
+      "names": [
+        "Orchid hospital changaramkulam (Nishad K V)",
+        "Orchid Hospital Malappuram (Naeem)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "7ea87c4f-a7c1-4a99-8bb9-18a131f877c3",
+        "d9598e2d-7e3f-429a-b099-4cca5d781e7e",
+        "35c3c802-6525-4e52-bc7f-d781f63378f2"
+      ],
+      "names": [
+        "St Joseph's Hospital Karuvanchal ( SJH) (Gopika pv)",
+        "St. Joseph’s Hospital Mukkam (Fazal)",
+        "St:Joseph's Mission hospital (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "aa1af16d-daae-470a-b124-9de8208fafdd",
+        "1ec7c973-e9c5-4fbb-a5e4-89db99c8922c"
+      ],
+      "names": [
+        "Vinayaka hospital Sulthan Bathery (Gopika pv)",
+        "Vinayaka jyothi hospital (Gopika pv)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "7b40b0a5-c111-4b1f-affd-6d7ffbd2e5ea",
+        "bd58a89a-ea48-4dda-802a-faa1a105452a"
+      ],
+      "names": [
+        "BMH Corporate Office Kochi (Haroon Sidheeq)",
+        "BMH Perumbavur (Arun Adarsh)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "13a186d7-4463-49ec-ae36-13a04f0a9274",
+        "e0b2ef14-37da-4dc8-a7f0-ae4678aad297"
+      ],
+      "names": [
+        "NIMS Medicity , Neyyattinkara (Vivek)",
+        "SNIMS CHALAKKA PARAVUR (Arun Adarsh)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    },
+    {
+      "hospital_ids": [
+        "c863cd67-906f-4dee-a1f8-86b2f6bdeb04",
+        "8c80b211-2694-4016-9b75-0b186c38ff25"
+      ],
+      "names": [
+        "SREE AYYAPPA MEDICAL COLLEGE, VADASSERIKKARA (Vivek)",
+        "SREE GOKULAM MEDICAL COLLEGE HOSPITAL, VENJARAMMOODU (Vivek)"
+      ],
+      "confirmed_by": "Basheer",
+      "date": "2026-10-09"
+    }
+  ]
+}

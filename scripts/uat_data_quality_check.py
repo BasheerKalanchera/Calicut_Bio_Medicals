@@ -16,8 +16,15 @@ from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
+import json
+
 import psycopg2
 import psycopg2.extras
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+# The app's own "common words" list for hospital names (the new-hospital
+# duplicate warning uses it), so section 18 ignores the same words.
+from app.domains.account.duplicate_matching import TOKEN_MATCH_RATIO, _tokenize  # noqa: E402
 
 sys.stdout.reconfigure(encoding="utf-8")
 ENV_FILES = {
@@ -32,6 +39,65 @@ TARGET_LIMIT_LAKHS = 2000
 # .claude/settings.json reads the last line to remind when a run is due
 # (every alternate day, run under Basheer's supervision).
 RUN_LOG = Path(r"C:\Backups\CabioUAT\data_consistency_reports\data_quality_log.txt")
+# Section 18: look-alike groups a rep has confirmed are different places.
+# A group stays out of the count only while all its hospitals are inside one
+# confirmed entry; a newly added look-alike reopens it.
+LOOKALIKE_REVIEWED = Path(__file__).with_name("uat_lookalike_hospitals_reviewed.json")
+# Words skipped, on top of the app's common words, when picking a hospital's
+# main name ("Dr. Jaiswal" -> "jaiswal", "St Thomas" -> "thomas").
+LOOKALIKE_SKIP = {"dr", "st", "saint", "sri", "shri", "multi", "speciality", "specialty",
+                  "super", "superspeciality", "new", "laboratory", "lab", "labs", "scan",
+                  "scans", "imaging"}
+
+
+def main_name_keys(name: str) -> set[str]:
+    """The hospital's main name word, as a rep would type it into the Account
+    Management search box -- plus the first two words joined, so "Life Line"
+    also matches "Lifeline". Single letters are joined ("S M" -> "sm")."""
+    words, letters = [], ""
+    for w in _tokenize(name):
+        if len(w) == 1:
+            letters += w
+            continue
+        if letters:
+            words.append(letters)
+            letters = ""
+        words.append(w)
+    if letters:
+        words.append(letters)
+    words = [w for w in words if w not in LOOKALIKE_SKIP] or words
+    keys = {words[0]} if words else set()
+    if len(words) > 1:
+        keys.add(words[0] + words[1])
+    return keys
+
+
+def lookalike_groups(hospitals: list[dict]) -> list[list[dict]]:
+    """Groups hospitals in the same territory whose main names match or are
+    spelt almost the same ("Swasya" / "Swasthya"). Misses names written in a
+    different word order."""
+    parent = {h["id"]: h["id"] for h in hospitals}
+
+    def root(x):
+        while parent[x] != x:
+            x = parent[x]
+        return x
+
+    by_territory: dict = {}
+    for h in hospitals:
+        h["keys"] = main_name_keys(h["name"])
+        by_territory.setdefault(h["territory"], []).append(h)
+    for hs in by_territory.values():
+        for i, a in enumerate(hs):
+            for b in hs[i + 1:]:
+                if a["keys"] & b["keys"] or any(
+                        difflib.SequenceMatcher(None, x, y).ratio() >= TOKEN_MATCH_RATIO
+                        for x in a["keys"] for y in b["keys"]):
+                    parent[root(a["id"])] = root(b["id"])
+    groups: dict = {}
+    for h in hospitals:
+        groups.setdefault(root(h["id"]), []).append(h)
+    return [g for g in groups.values() if len(g) > 1]
 
 
 def load_env(path: Path) -> dict[str, str]:
@@ -48,6 +114,8 @@ def load_env(path: Path) -> dict[str, str]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env", choices=["uat", "dev"], default="uat")
+    parser.add_argument("--no-log", action="store_true",
+                        help="extra UAT run (e.g. testing a new section): don't write the run log")
     args = parser.parse_args()
     print(f"Environment: {args.env.upper()}\n")
 
@@ -481,6 +549,45 @@ def main() -> None:
     counts.append(("Audit log entries", total_entries))
     counts.append(("Audit log size (KB)", size["bytes"] // 1024))
 
+    # 18. Look-alike hospital names. Section 1 only catches exactly the same
+    # name; this catches "Sparsh Hospital" / "Sparsh Hospital infantry road"
+    # and "Life Line Health Care BC Road" / "... Plus Falnir" (found
+    # 2026-10-08). Territory = nearest ZONE-level zone, the same grouping as
+    # the app's new-hospital duplicate warning (BR-ACC-03).
+    section("18. Hospitals with look-alike names (same territory)")
+    cur.execute("""
+        SELECT a.id::text AS id, a.name, a.created_at, cu.display_name AS added_by,
+               COALESCE((SELECT z2.name FROM zone_closure zc JOIN zone z2 ON z2.id = zc.ancestor_zone_id
+                         WHERE zc.descendant_zone_id = a.zone_id AND z2.zone_level = 'ZONE' LIMIT 1),
+                        z.name) AS territory,
+               (SELECT COUNT(*) FROM opportunity o WHERE o.account_id = a.id) AS opps,
+               (SELECT COUNT(*) FROM activity x WHERE x.account_id = a.id) AS visits
+        FROM account a JOIN zone z ON z.id = a.zone_id
+        LEFT JOIN user_profile cu ON cu.id = a.created_by
+    """)
+    groups = lookalike_groups(cur.fetchall())
+    reviewed = json.loads(LOOKALIKE_REVIEWED.read_text(encoding="utf-8"))["confirmed_different"]
+    confirmed = [set(r["hospital_ids"]) for r in reviewed]
+    open_groups = [g for g in groups if not any({h["id"] for h in g} <= c for c in confirmed)]
+    last_run = None
+    if RUN_LOG.exists():
+        lines = [x for x in RUN_LOG.read_text(encoding="utf-8").splitlines() if x.strip()]
+        if lines:
+            last_run = datetime.strptime(lines[-1][:16], "%Y-%m-%d %H:%M")
+    # The run log is in local (India) time; created_at is stored in UTC.
+    new_groups = [g for g in open_groups if last_run and any(
+        h["created_at"].astimezone().replace(tzinfo=None) > last_run for h in g)]
+    since = f"{last_run:%Y-%m-%d %H:%M}" if last_run else "no earlier run"
+    print(f"\n-- Look-alike groups: {len(open_groups)} open ({len(groups) - len(open_groups)} confirmed "
+          f"different places), {len(new_groups)} with a hospital added since the last check ({since})")
+    for g in sorted(open_groups, key=lambda g: (g[0]["territory"], sorted(h["name"].lower() for h in g))):
+        mark = "NEW " if g in new_groups else ""
+        print(f"   {mark}[{g[0]['territory']}] " + "  ||  ".join(
+            f"{h['name']} ({h['added_by']}, {h['created_at']:%Y-%m-%d}, opps {h['opps']}, visits {h['visits']})"
+            for h in sorted(g, key=lambda h: h["name"].lower())))
+    counts.append(("Look-alike hospital groups open", len(open_groups)))
+    counts.append(("Look-alike groups new since last check", len(new_groups)))
+
     # Every result above came from the same transaction; confirm the RLS
     # context was still in place for the last query before trusting them.
     cur.execute("SELECT cabio_app_uid() AS uid")
@@ -493,8 +600,8 @@ def main() -> None:
     cur.close()
     conn.close()
 
-    if args.env != "uat":
-        print(f"\nDone ({args.env.upper()} trial -- UAT run log not written).")
+    if args.env != "uat" or args.no_log:
+        print(f"\nDone ({args.env.upper()}, run log not written).")
         return
     RUN_LOG.parent.mkdir(parents=True, exist_ok=True)
     summary = "; ".join(f"{label}={n}" for label, n in counts)

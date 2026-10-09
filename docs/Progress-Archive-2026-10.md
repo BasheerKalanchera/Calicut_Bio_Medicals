@@ -1550,3 +1550,47 @@ hospitals). In short:
 - Long silences during checks — P15 +1.
 - The docs batch stayed uncommitted all day across two natural pauses,
   beside another session's commits — P50.
+
+## 2026-10-09 — UAT data-quality check; look-alike hospital check added to the script
+
+- UAT backup and the routine data-quality check run (approved). Reports
+  approved by Basheer and moved from drafts to the main folder:
+  `UAT-Data-Quality-Report-2026-10-09.pdf`,
+  `Expected-Closure-Dates-2026-10-09.pdf`, and the two 8 Oct drafts
+  (`Duplicate-Hospitals-Check-2026-10-08.pdf`,
+  `Life-Line-Duplicate-Sale-2026-10-08.pdf`).
+- Report section 10 "Hospitals entered more than once": the Life Line
+  duplicate added; the 15 likely duplicates + 5 to check from the 8 Oct
+  scan listed in one table sorted by rep, so leadership can follow up with
+  each rep. 11 of the 15 were entered twice by the same rep; 4 involve two
+  people (Life Line, S M Diagnostic, Jubilee, Nurture).
+- **Why 8 Oct had 995 pairs:** pairs, not hospitals (354 distinct
+  hospitals of ~530), and a shared common word ("Speciality", a town
+  name) was enough to pair unrelated hospitals.
+- **New script section 18 (`scripts/uat_data_quality_check.py`):**
+  modelled on how a rep would spot a repeat — the Account Management
+  search box is a plain "contains" match on the name. The check groups
+  hospitals in the same territory whose main name word is the same or
+  spelt almost the same (app's own matcher, `duplicate_matching`, same
+  0.82 cut-off; common words such as Hospital, Clinic, Dr, St ignored;
+  single letters joined, "S M" → "SM"). Offline test on the 8 Oct data:
+  19 of the 20 known pairs found; the miss is Thalassery Co-operative
+  (words in a different order). New `--no-log` flag.
+- **UAT run of section 18 only** (approved; read-only, Admin context
+  checked at start and end, rolled back): 538 hospitals, 66 groups, 188
+  hospitals in them. Basheer's review (draft
+  `Look-Alike-Hospitals-Review-2026-10-09.pdf`): 41 groups are different
+  places sharing a town or brand name, plus Fatima Mata Mission Hospital
+  (Gopika) / Fathima Hospital Kozhikode (Fazal) — 42 recorded in
+  `scripts/uat_lookalike_hospitals_reviewed.json` (ids for 4 hospitals
+  from a second approved read-only UAT lookup). Open: 19 groups holding
+  the known duplicates + 5 possible new ones (Hosmat, Praana/Prana, RxDx,
+  Sattva, Shoba/Shobha) that Basheer has passed to Cabio leadership to
+  follow up. Decision (Basheer): section 10 stays as today's list of 20;
+  from the next check on, any look-alike added since the last check is
+  flagged "new".
+- **Finding, not yet in Backlog:** on UAT, Mangalore, Tumakuru and
+  Dakshina Kannada are district-level with no zone above them, so their
+  hospitals are compared only within their own district. The app's
+  duplicate warning may have the same gap — guess, not checked
+  (`find_similar_by_name` not read).
