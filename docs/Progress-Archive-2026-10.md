@@ -1692,3 +1692,36 @@ hospitals). In short:
   P56. (3) BR-OP-19 was written into Business-Rules before checking stage
   standard chances (Clinical Evaluation 55 %) and status-change saves
   (Lost / On Hold); the code search found them after (D15, D16) → P57.
+
+## 2026-10-09 — Target vs Actuals E2E D1–D6; step 6c parts 1–2 (Area Managers see the SBU target); parked
+
+- **E2E D1–D6 Pass.** At D1–D3 Basheer found three things on the SBU
+  target box (Target & Coverage Planning, not the card — the test plan had
+  the wrong screen, corrected): the "Set target" button was invisible
+  (now filled), "Enter 0 or more" showed on an empty box (now only for a
+  real bad value; Save stays disabled), and the amount looked like its
+  label (grey label, bold slightly larger amount, kept black after I had
+  wrongly made it blue). Fix committed separately.
+- **Log-out "blinks twice":** watched in a recorded tab with a reload
+  marker — no reload, no refused request, only the tab-focus `/auth/me`
+  calls. Not reproduced; wait for a repeat there.
+- **Decision at D6 (Basheer):** Area Managers see their own SBU's target
+  read-only plus a "Your team" row (plan decision + step 6c); a target
+  per area goes to the Backlog as undecided. E2E parked at E1.
+- **Step 6c parts 1–2, `8d4ce27`:** migration 0061 (read policy adds
+  Area Manager, own SBU). Claude's `alembic upgrade head` was blocked by
+  the classifier even though it changes no data; Basheer ran it:
+  `alembic current` = 0061 (head). Physical-Schema regenerated (diff:
+  the policy only). Backend `team_row` = the team's own totals against
+  the SBU target; pytest 1223, ruff clean. The promised RLS test can't
+  live in the suite (it never touches the database), so a read-only Dev
+  check instead: Fazal (Area Manager, Imaging) reads only Imaging ₹100L of
+  the two targets; Rudrappa (Sales Staff) reads none.
+- **Retro:** (1) D1 written without reading the screen's code → P23 +1.
+  (2) Blue amount added unasked and called approved → P21 +1. (3)
+  Migration run blocked again, now for a policy-only change → P58, rule
+  widened in the scripting skill. (4) Promised a database-level test the
+  suite can't hold → P59. (5) Handover not updated at the checkpoint
+  commit → P16 +1. (6) "Lower roles get the new message" needed a
+  follow-up question → P3 +1. (7) Docker not running when the step came
+  → P36 +1.

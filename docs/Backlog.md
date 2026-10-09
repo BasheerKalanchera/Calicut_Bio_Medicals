@@ -111,6 +111,17 @@ Decisions). Target & Coverage Planning still calls a rep's plan their
 To decide: rename across the app (screen, messages, manual/help), or leave
 as is. Wording only; no data change.
 
+### Area targets under the SBU target — undecided (2026-10-09)
+
+Raised at the Target vs Actuals E2E (D6): should the GM or SBU Manager
+split each SBU's quarterly target into a target per area (e.g. Imaging
+₹100L as Shruthi's area ₹40L, Fazal's ₹60L), with each Area Manager
+measured against their own figure? Not built: it needs a new stored
+figure, a screen to enter it, and a rule for area figures that don't add
+up to the SBU target. Meanwhile Area Managers see the whole SBU target
+against their team's own totals ("Your team" row; Plan-vs-Actuals plan,
+step 6c). To decide: build area targets, or keep the share view only.
+
 ### Pipeline: cards with the same priority and chance can swap places — not started (2026-10-07)
 
 Found in the Query Load fixes fix 3 code review (finding 1; Basheer

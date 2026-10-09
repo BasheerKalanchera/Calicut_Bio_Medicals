@@ -46,7 +46,21 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   zone" `142b6fb`; Insights Dashboard tabs + menu renamed "Insights
   Dashboard" `2fdac69` (both pushed). The card is on the first tab, so
   the remaining steps are unchanged.
-- **Next:** D1. Basheer runs the Simple steps himself.
+- D1–D6 Pass 2026-10-09. SBU target box fixes from D1–D3 committed
+  separately (fix commit, 2026-10-09).
+- **E2E parked at E1 (Basheer, 2026-10-09):** building plan step 6c first
+  — Area Managers see their own SBU's target read-only + a "Your team"
+  row. Parts 1–2 done in `8d4ce27`: migration 0061 applied to Dev
+  (`alembic current` = 0061 (head)), Physical-Schema regenerated, backend
+  `team_row`, pytest 1223. Read-only Dev check: Fazal (AM, Imaging) sees
+  only Imaging ₹100L; Rudrappa sees none (session 08b0bffd scratchpad
+  `check_0061_rls_out.txt`).
+- **Next:** step 6c part 3 (frontend: Area Manager in
+  `SBU_TARGET_VIEW_ROLES`, `team_row` in `types/targetPlanning.ts`,
+  "Your team" row in `SummaryRows`) → part 4 (`/code-review` high, all
+  checks) → D6b, D6c, E1. Check in before each part.
+- Log-out "login screen blinks twice": not reproduced in a recorded tab
+  2026-10-09 (no reload, no refused request); wait for a repeat there.
 - Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't
   delete (it has Activity rows).
 - UAT move: after the combined E2E, together with Hospital-wise Target

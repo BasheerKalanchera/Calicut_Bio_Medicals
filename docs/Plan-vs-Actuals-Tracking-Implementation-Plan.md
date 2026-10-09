@@ -43,10 +43,11 @@ file keeps its old name until then so links elsewhere don't break).
 - **Manager's own row:** own plan and own wins only, not the team's.
 - **Visibility:** staff see their own row; Area Manager sees self + team; SBU Manager sees their people + the SBU row against the SBU target; GM sees all SBUs + the company row; Admin gets the GM view with no row of their own.
 - **PO columns:** separate "PO received" and "Won (paid)" columns, each counted in its own quarter. New "PO date" box next to PO number, required at Order → Delivery and at Won, never in the future. Revised 2026-10-06 (Basheer, "keep it simple"): no audit-log fallback; older records without a PO date are left alone, left out of "PO received", and counted in a "N Opportunities past Order have no PO date" note (Won ones by the quarter they were won in; still-open ones in the current quarter only — code review 2026-10-06).
-- **SBU target:** one figure per SBU per quarter, entered by the GM in SBU Target Rollup, kept in its own register table, visible to SBU Manager and above. Company target = sum of the active SBUs' targets, shown only once every active SBU has one. The SBU row's figures are SBU-wide, not the viewer's team, so the SBU Manager and the GM see the same numbers (Basheer, 2026-10-06, code review).
+- **SBU target:** one figure per SBU per quarter, entered by the GM in SBU Target Rollup, kept in its own register table, visible to Area Manager and above (Area Manager: own SBU only, read-only — see "Area Managers see the SBU target" below). Company target = sum of the active SBUs' targets, shown only once every active SBU has one. The SBU row's figures are SBU-wide, not the viewer's team, so the SBU Manager and the GM see the same numbers (Basheer, 2026-10-06, code review).
 - **Wording:** "no expected closure date".
 - **Split credit (Basheer, 2026-10-07):** each person's row counts their split share of PO received, Won and Expected; group rows count once; late shared Opportunities are listed for every participant, marked "shared — owner X". Full rule: BR-FIN-09. UAT today: 5 shared Opportunities, Haroon on 4.
-- **Scope:** all in Part 1, one migration (PO date + SBU target), one UAT move.
+- **Scope:** all in Part 1, migrations 0060 (PO date + SBU target) and 0061 (Area Manager read of the SBU target, step 6c), one UAT move.
+- **Area Managers see the SBU target (Basheer, 2026-10-09, at E2E D6):** an Area Manager sees their own SBU's target, read-only, in SBU Target Rollup, and on the card a **"Your team"** row in the "Against SBU target" table: SBU target, their team's plans, Plans vs SBU target, PO received, Won (paid), % of SBU target — so they see what share of the SBU their team carries. The SBU-wide row and the Company row stay SBU Manager and above; Sales Staff and Marketing Users see no SBU target. Needs migration 0061 (the `sbu_target` read policy). Built now, before the E2E resumes (step 6c). A separate target per area is not built: Backlog "Area targets under the SBU target".
 - **Top-down target vs bottom-up plans (Basheer, 2026-10-09, at E2E):** on the card, "target" means only the GM's SBU target and "plan" means the reps' own plans. Labels: tile "Team plans" (caption "Sum of each rep's plan, pending or approved"; Won tile "N% of team plans"); SBU/Company table "SBU target (GM)", "Team plans", "% of SBU target"; people table "Rep Plan", "% of plan"; a sent-back revision reads "The last approved plan (₹X) still counts…"; zone table's no-zone line "Not attached to a zone". New SBU/Company column **"Plans vs SBU target"** = team plans ÷ SBU target, "—" until a target is set (screen-side, no server change). Target Planning's own use of "target" for a rep's plan is unchanged: Backlog "App-wide: a rep's plan is called 'target' on Target Planning".
 
 ## 1. In plain terms
@@ -132,6 +133,20 @@ names) follows as a separate pass. The old build order below is superseded.
    backend share-weighting and the "shared — owner X" note on late
    Opportunities; tests; `/code-review` at medium. Before the combined
    E2E, which gains a shared-Opportunity case.
+6c. **Area Managers see the SBU target (Basheer, 2026-10-09; E2E parked at
+   E1 meanwhile).** (1) Migration 0061: `sbu_target` read policy adds
+   Area Manager, own SBU; applied to Dev, `Physical-Schema.sql`
+   regenerated. (2) Backend: Area Manager may read SBU targets; new "Your
+   team" row (SBU target against the team's own totals); tests, plus a
+   read-only Dev check of the read policy (the test suite never touches
+   the database). (3) Frontend: read-only box on Target Planning; "Your
+   team" row on the card. (4) `/code-review` high (RLS), pytest, ruff,
+   tsc, lint. Check in before each part; checkpoint commit when tests
+   pass. Then the E2E resumes: D6b, D6c (hide check: Sales Staff,
+   Marketing User), then E1. 0061 goes to UAT in the same move as 0060.
+   **Progress:** parts 1–2 done 2026-10-09 in `8d4ce27` (0061 applied to
+   Dev, `alembic current` = 0061 (head); pytest 1223; Dev check: an Imaging
+   Area Manager reads only Imaging's target, Sales Staff reads none).
 7. **UAT move, only after step 6 is built and tested** (Basheer,
    2026-10-05): one combined move (Hospital-wise Target Planning + Target
    vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a

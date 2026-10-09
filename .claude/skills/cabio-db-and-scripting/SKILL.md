@@ -46,9 +46,11 @@ on Dev, before any other work:
   the very next commit. A migration written but not yet applied goes in
   `.claude/session-handover.md` as an open item until it is.
 - UAT is a separate apply with its own approval — record it separately.
-- A migration that drops tables: say upfront, in the plan's approval
-  request, that Basheer will run `alembic upgrade head` himself — the
-  auto-mode classifier blocks Claude's own run of it. *(2026-09-27)*
+- Any migration (not only one that drops tables): say upfront, in the
+  plan's approval request, that Basheer will run `alembic upgrade head`
+  himself, and give him the full-path `! …` command — the auto-mode
+  classifier blocks Claude's own run of it on the shared Dev DB.
+  *(2026-09-27, 2026-10-09: blocked again for a policy-only migration)*
 
 ## Migrations that delete, retire or bulk-update rows *(2026-09-21)*
 - Query `pg_constraint` for every table with a foreign key into the one being
