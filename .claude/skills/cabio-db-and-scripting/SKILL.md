@@ -105,6 +105,9 @@ the UAT rule in CLAUDE.md.
   it move up into `C:\Backups\CabioUAT\data_consistency_reports\`.
   *(2026-10-01)* Both reports' summaries link to each section, and each
   section heading has a "Back to summary" link. *(2026-10-07)*
+- Section 18 (look-alike hospitals): groups Basheer confirms as different places go
+  into `scripts/uat_lookalike_hospitals_reviewed.json`, so they drop out of the
+  open count. *(2026-10-09)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

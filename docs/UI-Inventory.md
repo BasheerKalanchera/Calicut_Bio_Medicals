@@ -19,7 +19,7 @@ The navigation sidebar (L1904 – L1966) is structured into logical sections:
 | **Sales Execution** | Account Management | `customers` / `projects` | All users | 🏥 |
 | | Opportunities | `pipeline` / `manager` | All users | 📊 |
 | | Next Actions | `reminders` | All users | ✅ |
-| **Performance** | Insights | `insights` | All users | 💡 |
+| **Performance** | Insights Dashboard | `insights` | All users | 💡 |
 | **Administration** | Product Catalog | `catalog` | All users | 📦 |
 | | Users | `users` | Admin roles only (`isAdmin`) | 👥 |
 

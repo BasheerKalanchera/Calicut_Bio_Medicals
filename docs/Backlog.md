@@ -88,6 +88,15 @@ to decide: change the code, or change the rule.
 - **Close** when each has a decision recorded in Business-Rules (and the
   matrix, same commit) or a build entry of its own.
 
+### Commit check: keep `.githooks/commit-msg` in Unix line endings — not started (2026-10-08)
+
+Git on Windows warned it will give the hook Windows line endings the next
+time it checks the file out; the hook would then stop running (it cannot
+harm anything, but the Business-Rules/matrix check would silently
+lapse). Fix: a `.gitattributes` line `.githooks/* text eol=lf`, then
+confirm the hook still refuses a rules-only commit. Small; next docs
+batch.
+
 ### Target vs Actuals: Area Manager misses a member's share outside the team — accepted, not planned (2026-10-07)
 
 When someone in an Area Manager's team holds a split share on an

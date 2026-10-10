@@ -47,7 +47,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Dashboard" `2fdac69` (both pushed). The card is on the first tab, so
   the remaining steps are unchanged.
 - D1–D6 Pass 2026-10-09. SBU target box fixes from D1–D3 committed
-  separately (fix commit, 2026-10-09).
+  separately (`f28b39b`, 2026-10-09).
 - **E2E parked at E1 (Basheer, 2026-10-09):** building plan step 6c first
   — Area Managers see their own SBU's target read-only + a "Your team"
   row. Parts 1–2 done in `8d4ce27`: migration 0061 applied to Dev
