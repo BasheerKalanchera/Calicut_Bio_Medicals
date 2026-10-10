@@ -1,6 +1,6 @@
 # Opportunity Chance Rules and One Create Form — Implementation Plan
 
-**Status:** Draft, 2026-10-09.
+**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Not started.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
 front-end clean-up).
 **Design / discussion:** chat with Basheer 2026-10-09 (Backlog "Business
@@ -51,15 +51,21 @@ useful points are folded in and it was deleted 2026-10-09.
   until fixed: "Chance is 50 % or more but there's no expected closure
   date — add one." It does not block anything; it covers Opportunities
   nobody re-saves (D4, D9) — Basheer, 2026-10-09
-- D15. Clinical Evaluation's standard chance is 55 % (Seed-Data.sql; Dev
-  not yet checked), so every Opportunity at Clinical Evaluation needs a
-  date unless the rep lowers the chance; accept this rather than lower
-  the stage's standard figure — proposed
+- D15. Clinical Evaluation's standard chance is 55 % (Seed-Data.sql; UAT
+  confirmed 2026-10-10), so every Opportunity at Clinical Evaluation needs
+  a date unless the rep lowers the chance; accepted rather than lowering
+  the stage's standard figure. UAT on 10 Oct: 3 active at Clinical
+  Evaluation, 2 without a date; across all stages before Negotiation, 52
+  of 110 active are at 50 %+ and 47 of those have no date (the D14
+  notice's day-one count) — Basheer, 2026-10-10
 - D16. BR-OP-19 and the D14 notice apply only while the Opportunity stays
-  Active; marking it Lost, On Hold or Won is never refused by it — proposed
+  Active; marking it Lost, On Hold or Won is never refused by it, and an
+  On Hold Opportunity made Active again is held to it on that save;
+  BR-OP-19 text and matrix row updated — Basheer, 2026-10-10
 - D17. The gate-override tick box "Fast-Track this Deal" is renamed
   "Fast-Track this Opportunity" on the merged form (step 2) and on the
-  Opportunity page if it appears there — proposed
+  Opportunity page (both carry it today; the two inline forms go in
+  step 2); the only "Deal" text on either form — Basheer, 2026-10-10
 
 ## 1. In plain terms
 
@@ -116,6 +122,8 @@ move from Dev, together with Target vs Actuals.
    - The Project Directory (smaller) first, then Customer 360: each drops
      its own form (~260 and ~310 lines) and opens the shared one instead,
      along with the lists it loaded only for that form.
+   - "Fast-Track this Deal" → "Fast-Track this Opportunity" on the
+     "+ Lead" form and the Opportunity page (D17).
    - Frontend standards rule (D12); UI inventory updated.
    - *Checkpoint commit per screen.* Nothing stops working on Dev.
 3. **The rule on the merged form.**

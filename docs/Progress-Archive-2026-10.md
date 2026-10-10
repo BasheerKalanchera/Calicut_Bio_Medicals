@@ -1725,3 +1725,28 @@ hospitals). In short:
   commit → P16 +1. (6) "Lower roles get the new message" needed a
   follow-up question → P3 +1. (7) Docker not running when the step came
   → P36 +1.
+
+## 2026-10-10 — UAT backup; doc tidy-up; chance + create-form plan D15 decided
+
+- **UAT backup:** `cabio_uat_2026-10-10_0642.dump` (612 KB, 472 TOC
+  entries, same as 9 Oct); pruned `cabio_uat_2026-09-26.dump`, 14 kept.
+- **Doc tidy-up:** `ef12377` (pushed); details in Doc-Integrity-Sweep-Log.
+- **D15 (Clinical Evaluation's 55 % standard chance means a date is
+  needed there):** read-only UAT check first (Basheer approved), as Admin,
+  RLS checked before and after, rolled back. UAT stage figures match
+  Seed-Data (Clinical Evaluation 55 %). Active Opportunities before
+  Negotiation: Lead 70 (32 at 50 %+, 28 of them with no date), Qualified
+  25 (10, 10), Demo 12 (7, 7), Clinical Evaluation 3 (3, 2); total 110,
+  52 at 50 %+, 47 with no date: the D14 notice's day-one count. Clinical
+  Evaluation is 2 of the 47, so D15 accepted (Basheer).
+- **Plan approved:** D16 (BR-OP-19 only while Active; Lost/On Hold/Won
+  never refused; On Hold made Active again is held to it) and D17
+  ("Fast-Track this Opportunity" on the "+ Lead" form and the
+  Opportunity page, in step 2) decided; BR-OP-19 text and matrix row
+  updated; plan Approved, D1–D17 all decided. Next: build step 1.
+- **Retro:** (1) Backlog-entry question in the tidy-up report used
+  unexplained terms → P3 +1. (2) D15 explained without restating the
+  50 % line; two follow-up questions → P3 +1. (3) D15 check offered on
+  Dev when UAT holds the real data → P60. (4) Three decisions in one
+  message; Basheer asked for one at a time → P61. (5) Folder-change
+  command blocked by the guard → P14 +1.

@@ -106,25 +106,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   plan's step 5 has the pre-move cautions. Then the post-commit
   checklist.
 
-## Opportunity chance rules + one create form — plan drafted 2026-10-09
+## Opportunity chance rules + one create form — plan approved 2026-10-10
 
 - Plan: `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
-  (Draft). D1–D6 decided (Basheer, 2026-10-09): BR-OP-19 (chance ≥ 50 %
-  before Negotiation needs an Expected Closure Date) and the BR-OP-08
-  note are in Business-Rules + Matrix; Backlog rule gaps 7 → 6 (BR-OP-08
-  now tracked by the plan). UAT with the next full promotion.
-- D7–D14 decided 2026-10-09 (D14: notice on the page of an Opportunity
-  over the limit; lessons from the 4 Oct draft folded in, draft
-  deleted). BR-OP-19 text + Matrix row updated for the notice.
-- Code search done 2026-10-09; "What could be affected" filled in.
-  Parked overnight (Basheer). Waiting on Basheer: D15 (Clinical
-  Evaluation's 55 % standard chance means every one there needs a date),
-  D16 (rule only while Active; Lost/On Hold/Won never refused), D17
-  ("Fast-Track this Deal" → "…this Opportunity"); each shown in chat
-  with a recommendation. Offered: read-only Dev check of Clinical
-  Evaluation's standard chance + count without a date (not run).
-- **Next:** D15–D17 answered → BR-OP-19 text updated if D16 agreed →
-  plan to Approved → build step 1.
+  — Approved 2026-10-10, D1–D17 all decided (history: Progress-Archive
+  2026-10-09 and 2026-10-10). BR-OP-19 (Active Opportunity, chance ≥ 50 %
+  before Negotiation, needs an Expected Closure Date) in Business-Rules +
+  Matrix. UAT with the next full promotion.
+- **Next:** build step 1 (server check + Opportunity page fix); check in
+  before starting it.
 - Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
   first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 
