@@ -55,10 +55,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `team_row`, pytest 1223. Read-only Dev check: Fazal (AM, Imaging) sees
   only Imaging ₹100L; Rudrappa sees none (session 08b0bffd scratchpad
   `check_0061_rls_out.txt`).
-- **Next:** step 6c part 3 (frontend: Area Manager in
-  `SBU_TARGET_VIEW_ROLES`, `team_row` in `types/targetPlanning.ts`,
-  "Your team" row in `SummaryRows`) → part 4 (`/code-review` high, all
-  checks) → D6b, D6c, E1. Check in before each part.
+- Parts 3–4 done 2026-10-10 in `3249aa7` (frontend + `/code-review`
+  high fixes; pytest 1223, ruff, tsc, lint clean). Backlog: "Target
+  Planning: screen keeps its own copy of who sees the SBU target".
+- D6b, D6c, E1 Pass 2026-10-10 (run by Basheer). E1 found the card
+  didn't reload after a plan change on Target Planning: fixed `a9b3fa3`.
+- **Next:** E2 (Basheer K saves an Al Shifa ₹20 draft), then E3–E8. The
+  refresh fix gets its first real test at E3.
 - Log-out "login screen blinks twice": not reproduced in a recorded tab
   2026-10-09 (no reload, no refused request); wait for a repeat there.
 - Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't

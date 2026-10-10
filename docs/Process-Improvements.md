@@ -9,7 +9,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 22 | open — first review |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 6 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 18 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 19 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
 | P5 | Plans for a list/table screen state who is listed (zero rows, no-home-SBU people); test plans add "member with no activity" and "dual-role person" cases | 2026-10-04 | 1 | open |
 | P6 | Before E2E, trace each plan decision to its code and test step; a decision with neither blocks E2E | 2026-10-04 | 1 | open |
@@ -20,16 +20,16 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 10 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 11 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 4 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | open |
-| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 5 | open |
+| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 6 | open |
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 4 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
-| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 8 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09 |
+| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 9 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 2 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | open |
@@ -68,6 +68,9 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P59 | Before promising a kind of test (e.g. a database-level RLS test), check the suite has that kind; otherwise offer the alternative (a read-only Dev check) upfront | 2026-10-09 | 1 | open |
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | open |
 | P61 | When several decisions are open, show the first one alone and wait; the next follows its answer | 2026-10-10 | 1 | open |
+| P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
+| P63 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one | 2026-10-10 | 1 | open |
+| P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh | 2026-10-10 | 1 | open |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

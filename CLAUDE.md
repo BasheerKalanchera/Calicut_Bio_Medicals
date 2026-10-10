@@ -205,6 +205,9 @@ This includes small housekeeping edits (handover note, logs). *(2026-10-08)*
 - **Side topics during a chore** — before switching, say what's left of the
   chore: finish it (commit proposal included), or say plainly it's paused and
   what remains. *(2026-10-08)*
+- **Name the screen first:** when explaining a change, finding or E2E step,
+  start with the screen (and card/tab) it affects — several screens are
+  often in one E2E. *(2026-10-10)*
 - State a risk once. If Basheer decides otherwise, do what he asked without
   repeating the warning. *(2026-07-06)*
 - When a question can be answered in plain language or by a query, answer in plain

@@ -131,6 +131,19 @@ up to the SBU target. Meanwhile Area Managers see the whole SBU target
 against their team's own totals ("Your team" row; Plan-vs-Actuals plan,
 step 6c). To decide: build area targets, or keep the share view only.
 
+### Target Planning: screen keeps its own copy of who sees the SBU target — not started (2026-10-10)
+
+Found by the step 6c code review. Target Planning decides whether to show
+the SBU target box from its own role list, separate from the server and
+database checks. When the backend let Area Managers read the target, the
+screen still hid the box until its list was changed too. Fix: the screen
+shows the box whenever the server returns the target and hides it when
+refused; only the backend holds the rule (its server and database checks
+both stay). Other screens use the same own-role-list pattern, so decide
+first whether to do this app-wide. Code: `TargetPlanningScreen.tsx`
+`SBU_TARGET_VIEW_ROLES` vs `service.py` `_SBU_TARGET_READ_ROLES` and the
+`sbu_target_read` policy (migration 0061).
+
 ### Pipeline: cards with the same priority and chance can swap places — not started (2026-10-07)
 
 Found in the Query Load fixes fix 3 code review (finding 1; Basheer

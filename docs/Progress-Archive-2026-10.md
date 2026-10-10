@@ -1750,3 +1750,28 @@ hospitals). In short:
   Dev when UAT holds the real data → P60. (4) Three decisions in one
   message; Basheer asked for one at a time → P61. (5) Folder-change
   command blocked by the guard → P14 +1.
+
+## 2026-10-10 — Target vs Actuals step 6c parts 3–4; E2E D6b, D6c, E1 Pass
+
+- **Step 6c parts 3–4** (`3249aa7`, pushed): Target Planning shows the
+  SBU target box read-only to Area Managers; the Insights Dashboard card's
+  "Against SBU target" table gets a "Your team" row. `/code-review` high:
+  6 findings, all confirmed. Fixed: 3 code notes still giving the old
+  rule; "No one to show" shown above a row with a target. Left as is
+  (Basheer): the "Your team" row repeats 3 of the tiles' figures (agreed
+  columns, 2026-10-09). To Backlog: the screen keeps its own copy of who
+  sees the SBU target. pytest 1223, ruff, tsc, lint 0 errors.
+- **E2E:** D6b, D6c Pass (run by Basheer). E1 Pass after a hard refresh:
+  approving on Target Planning didn't tell the card to reload, so it
+  showed "pending" for up to 30 seconds. Fixed `a9b3fa3` (pushed): every
+  plan change also marks the card's figures out of date, as the SBU
+  target box already did. E1's wording assumed an SBU picker Shruthi
+  doesn't have; noted in the test plan.
+- **Retro:** (1) Explanations didn't name the screen; Basheer asked
+  which screen point 3 was on → P62 (built: CLAUDE.md). (2) Said the SBU
+  row "works the same way" without reading the code; corrected → P23 +1.
+  (3) Point 4 needed a follow-up ("screen or backend?") → P3 +1. (4) E1
+  instruction assumed an SBU picker Shruthi doesn't have → P19 +1. (5)
+  First pytest run used the computer-wide Python → P63; folder-change
+  command blocked by the guard → P14 +1. (6) The cross-screen refresh
+  bug got past the review and the test plan → P64.
