@@ -1816,6 +1816,15 @@ hospitals). In short:
 - pytest 1231 (7 new), ruff, tsc, lint clean. Browser check parked
   for the next session (add a test Marketing User, no lead saved);
   then clear the new user's SBU and move the 11 leads.
+- Browser check 2026-10-10: steps 0–5 Pass, run by Basheer
+  (`docs/Marketing-User-No-SBU-Manual-E2E-Test-Plan.md`; step 5 =
+  marketinguser@cabio-demo.com's SBU cleared on User Directory).
+- Leads moved 2026-10-10: 11 of Fahad's leads now entered by
+  marketinguser@cabio-demo.com; script run by Basheer (session c0d49683
+  scratchpad `move_fahad_leads.py`), all checks passed (before 11/0,
+  11 rows updated, after 0/11); Fahad's 3 comments unchanged. Basheer
+  confirmed on the Leads screen. Fix reaches UAT with the next full
+  promotion.
 - **Retro:** (1) Shell guard blocked a `cd` twice and a scripted code
   edit once → P14 +2. (2) First build missed that the edit form resends
   the hidden old SBU; the "what could be affected" list checked who
