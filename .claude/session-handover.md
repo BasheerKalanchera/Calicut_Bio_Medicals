@@ -121,3 +121,19 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
   first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 
+## Marketing User with no SBU + move Fahad's leads — fix pushed 2026-10-10
+
+- Fix `4163971` (BR-ORG-03): a Marketing User may have no SBU on the User
+  Directory; editing clears it. pytest 1231. UAT with the next full
+  promotion.
+- **Next — browser check (Basheer, 2026-10-10: add a user, save no lead):**
+  Basheer creates a test login in Supabase (Dev) and gives the UID; as
+  Admin add it on User Directory as Marketing User (SBU box hidden, saves
+  with none; edit + save keeps none); as that user open "New lead", check
+  both SBUs pick and the rep list follows; close without saving.
+- **Then:** edit marketinguser@cabio-demo.com (`36faafc9-…`) to clear its
+  SBU, then move the 11 leads' "entered by" from Fahad (`ee1e4987-…`) to
+  it — one transaction with a row-count check, own approval. Fahad's 3
+  comments stay. Dev check script: session a2d89b82 scratchpad
+  `lead_owner_check.py`.
+

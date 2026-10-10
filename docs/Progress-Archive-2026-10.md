@@ -1792,3 +1792,38 @@ hospitals). In short:
   8–9 Oct conversations or docs; Basheer chose the watch list instead.
 - Basheer declined a save-time check for seen-once items (not worth the
   extra machinery).
+
+## 2026-10-10 — Marketing User with no SBU (BR-ORG-03), fix `4163971`
+
+- Basheer created marketinguser@cabio-demo.com on Dev to take over the
+  11 marketing leads entered by Fahad. The User Directory refused to
+  save a Marketing User with no SBU, though the SBU is picked per lead,
+  so the fix comes first.
+- "What could be affected" search: only the User Directory and the
+  user save rules read the user's own SBU for a Marketing User. Lead
+  entry, lead visibility, database security rules, Opportunities and
+  dashboards don't (Marketing User has no access to the last two).
+- Built: Marketing User joins Admin/GM as SBU-optional; editing such a
+  user clears the SBU; the server refuses clearing it from a role that
+  needs one (an addition, flagged to Basheer); the same-SBU manager
+  check (BR-ORG-01) is skipped only while the user has no SBU.
+- `/code-review` found the main bug: the edit form loaded the old SBU
+  into the hidden field and saved it again, so clearing never happened.
+  Fixed before the commit, with the manager-check tightening above.
+  Left alone: an explicit empty role from outside the screen gives a
+  crash error instead of a clear message (older, not reachable from
+  the screen).
+- pytest 1231 (7 new), ruff, tsc, lint clean. Browser check parked
+  for the next session (add a test Marketing User, no lead saved);
+  then clear the new user's SBU and move the 11 leads.
+- **Retro:** (1) Shell guard blocked a `cd` twice and a scripted code
+  edit once → P14 +2. (2) First build missed that the edit form resends
+  the hidden old SBU; the "what could be affected" list checked who
+  reads the SBU, not how the form saves it → watch-list P57 seen again,
+  moved to the open list as P65 (Seen 2). (3) BR-ORG-03's "Enforcement"
+  line and the matrix row were added without being shown first; told
+  after the commit → P21 +1. (4) Commit refused: a Business-Rules
+  change needs its matrix row → new watch-list line. (5) Added a
+  17-line handover section without checking length or offering a trim
+  (147 of 150) → P24 +1. Checked: open list, watch list; Dev/UAT rules
+  and commit approval held. Open list 13 → 14.

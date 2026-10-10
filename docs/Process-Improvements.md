@@ -18,17 +18,17 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 11 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 13 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 4 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
 | P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 7 | open |
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
-| P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 4 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09 |
+| P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
 | P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 9 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
-| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 2 | open |
+| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 3 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
 | P27 | If a measurement is still unreliable after 2 tries, stop and report; never run two measurements against the same database at once | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
@@ -55,6 +55,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P59 | Before promising a kind of test (e.g. a database-level RLS test), check the suite has that kind; otherwise offer the alternative (a read-only Dev check) upfront | 2026-10-09 | 1 | merged (counted as a repeat of P2, 2026-10-10) |
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
 | P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
+| P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57) | 2026-10-09 | 2 | open |
 
 ## Watch list
 
@@ -77,10 +78,10 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-10 | 2026-10-09 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection |
 | 2026-10-10 | 2026-10-09 | P55 | When the handover has several threads, ask which one before choosing from open files or uncommitted changes (they may be another session's) |
 | 2026-10-10 | 2026-10-09 | P56 | Every recommendation states what it leaves uncovered |
-| 2026-10-10 | 2026-10-09 | P57 | Before writing a new validation rule, check the stage standard figures and every save path it touches, status changes included |
 | 2026-10-10 | 2026-10-10 | P61 | When several decisions are open, show the first one alone and wait; the next follows its answer |
 | 2026-10-10 | 2026-10-10 | P63 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one |
 | 2026-10-10 | 2026-10-10 | P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh |
+| 2026-10-10 | 2026-10-10 | — | A change to `Business-Rules.md` needs its row in `Business-Rule-Implementation-Matrix.md` in the same commit (the commit hook refused it) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
