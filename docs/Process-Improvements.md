@@ -18,12 +18,12 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 13 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 14 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 4 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
-| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 7 | open |
+| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 8 | open |
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
@@ -82,6 +82,9 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-10 | 2026-10-10 | P63 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one |
 | 2026-10-10 | 2026-10-10 | P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh |
 | 2026-10-10 | 2026-10-10 | — | A change to `Business-Rules.md` needs its row in `Business-Rule-Implementation-Matrix.md` in the same commit (the commit hook refused it) |
+| 2026-10-10 | 2026-10-10 | — | A `!` command given to Basheer uses forward-slash paths (`/c/Users/…`); Git Bash strips Windows backslashes |
+| 2026-10-10 | 2026-10-10 | — | Before saying what a test step proved, check what that step actually did (said step 2 proved SBU clearing; its user never had one) |
+| 2026-10-10 | 2026-10-10 | — | A new test plan starts from `docs/templates/Manual-E2E-Test-Plan-Template.md` (the save check refused a from-scratch one) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

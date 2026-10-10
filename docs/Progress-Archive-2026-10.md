@@ -1861,6 +1861,22 @@ hospitals). In short:
   17-line handover section without checking length or offering a trim
   (147 of 150) → P24 +1. Checked: open list, watch list; Dev/UAT rules
   and commit approval held. Open list 13 → 14.
+- **Retro (afternoon session c0d49683 — browser check, lead move):**
+  (1) The `!` command given to Basheer used Windows backslash paths;
+  Git Bash stripped them and Python wasn't found (nothing ran) → new
+  watch-list line. (2) Said editing clears the SBU "as step 2 showed";
+  step 2's user never had one — caught, step 5 added → new watch-list
+  line. (3) SBU-clearing instruction didn't say the box is hidden by
+  design; Basheer looked for it and concluded a script was needed →
+  P19 +1. (4) Test plan first written without the template; the save
+  check refused it → new watch-list line. (5) Staging script sent the
+  patch to git in text mode; Windows line endings made `git apply`
+  refuse it (nothing staged) → P14 +1. Held: lead move shown first, one
+  transaction with before/after checks, run by Basheer; only this
+  thread's lines committed (`d42fb65`), other session's left out.
+  Checked: open list (P2, P14, P19, P23, P24, P50, P55), watch list
+  (P32, P40, P63). This retro adds nothing to the open list (15, after
+  the other session's P66 in `a6e044b`).
 
 ## 2026-10-10 — Target vs Actuals E2E G1 Pass (test plan step corrected)
 

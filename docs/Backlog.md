@@ -1129,21 +1129,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   `docs/Lead-Management-Implementation-Plan.md`; E2E plan and live
   progress: `docs/Lead-Management-Manual-E2E-Test-Plan.md`,
   `docs/Progress-Archive-2026-09.md`.
-  **Follow-up, not part of this phase (raised 2026-09-02, during Group A
-  E2E testing):** creating a *brand-new* Marketing User via User
-  Directory's "+ Add User" flow currently fails with "SBU is required for
-  this role" — `organization/service.py`'s `create_user` (`service.py:45-
-  52`) only exempts the SBU-required check for roles in
-  `_USER_WRITE_ROLES = {"General Manager", "Admin"}`, and Marketing User
-  isn't in that set. Doesn't block current testing (reassigning an
-  *existing* user's role, as done for live E2E, goes through `update_user`
-  instead, which has no such check at all). **Not a one-line fix:**
-  `_USER_WRITE_ROLES` is overloaded — it also gates who's authorized to
-  create/update users at all (`service.py:35`), so simply adding
-  Marketing User to it would incorrectly grant this role user-management
-  rights. Correct fix is a second, separate constant scoped to "roles
-  that don't need a real SBU membership" (Admin, GM, Marketing User),
-  leaving the authorization check untouched.
+  Follow-up raised 2026-09-02 (new Marketing User couldn't be saved
+  without an SBU): fixed `4163971`, 2026-10-10.
 
 - **Lead follow-up comments — confirmed by Latheef Bhai, 2026-09-17,
   implementation plan written same day, not built yet.** Raised
