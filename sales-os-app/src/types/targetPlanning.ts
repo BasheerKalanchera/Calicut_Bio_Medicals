@@ -240,7 +240,8 @@ export interface TargetVsActualZone {
   won_lakhs: string;
 }
 
-// The SBU row (SBU Manager and above) or company row (Admin/GM).
+// The SBU row (SBU Manager and above), company row (Admin/GM) or team row
+// (Area Manager: their team's totals against their SBU's target).
 // target_lakhs null = not entered yet (company: until every SBU has one).
 export interface TargetVsActualSummaryRow {
   target_lakhs: string | null;
@@ -267,6 +268,7 @@ export interface TargetVsActualResponse {
   not_submitted_count: number;
   sbu_row: TargetVsActualSummaryRow | null;
   company_row: TargetVsActualSummaryRow | null;
+  team_row: TargetVsActualSummaryRow | null;
   people: TargetVsActualPerson[];
   zones: TargetVsActualZone[];
   brands: TargetVsActualBrand[];

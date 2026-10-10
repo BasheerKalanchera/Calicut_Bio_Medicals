@@ -5,8 +5,9 @@ import { listSbuTargets, setSbuTarget } from "../services/targetPlanning";
 import { formatLakhs } from "../utils/formatter";
 
 // The GM-entered target for one SBU and quarter -- what Target vs Actuals'
-// SBU row measures against. Admin/GM edit; SBU Manager sees it read-only;
-// the screen hides it from everyone else (the backend refuses them anyway).
+// SBU and team rows measure against. Admin/GM edit; SBU Manager and Area
+// Manager see their own SBU's read-only; the screen hides it from everyone
+// else (the backend refuses them anyway).
 export default function SbuTargetBox({ sbuId, period, canEdit }: { sbuId: string; period: string; canEdit: boolean }) {
   const queryClient = useQueryClient();
   // null = not editing; otherwise the box's text.

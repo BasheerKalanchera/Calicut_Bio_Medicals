@@ -55,9 +55,9 @@ interface SbuOption { id: string; name: string }
 const ROLLUP_VISIBLE_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
 
 // The GM-entered SBU target (Target vs Actuals): Admin/GM set it, an SBU
-// Manager sees their own SBU's read-only, Area Manager not at all -- matches
-// the /planning/sbu-targets permissions.
-const SBU_TARGET_VIEW_ROLES = new Set(["Admin", "General Manager", "SBU Manager"]);
+// Manager or Area Manager sees their own SBU's read-only -- matches the
+// /planning/sbu-targets permissions.
+const SBU_TARGET_VIEW_ROLES = new Set(["Admin", "General Manager", "SBU Manager", "Area Manager"]);
 const SBU_TARGET_EDIT_ROLES = new Set(["Admin", "General Manager"]);
 
 // Admin is purely an oversight/approval account -- unlike GM, who sells

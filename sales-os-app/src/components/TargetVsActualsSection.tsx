@@ -176,10 +176,11 @@ function plansVsTarget(row: TargetVsActualSummaryRow): string | null {
   return target > 0 ? String((parseFloat(row.planned_lakhs) / target) * 100) : null;
 }
 
-// The SBU row (SBU Manager and above) and company row (Admin/GM), measured
-// against the GM-entered SBU target(s).
-function SummaryRows({ sbuRow, companyRow }: { sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
+// The team row (Area Manager), SBU row (SBU Manager and above) and company
+// row (Admin/GM), measured against the GM-entered SBU target(s).
+function SummaryRows({ teamRow, sbuRow, companyRow }: { teamRow: TargetVsActualSummaryRow | null; sbuRow: TargetVsActualSummaryRow | null; companyRow: TargetVsActualSummaryRow | null }) {
   const rows: { key: string; label: string; row: TargetVsActualSummaryRow; notSet: string }[] = [];
+  if (teamRow) rows.push({ key: "team", label: "Your team", row: teamRow, notSet: "Target not set" });
   if (sbuRow) rows.push({ key: "sbu", label: "SBU", row: sbuRow, notSet: "Target not set" });
   if (companyRow) rows.push({ key: "company", label: "Company", row: companyRow, notSet: "Waits for every SBU's target" });
   if (rows.length === 0) return null;
@@ -278,7 +279,7 @@ export default function TargetVsActualsSection() {
       <LoadingOrEmpty
         isLoading={query.isLoading}
         isError={query.isError}
-        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0 && Number(data.po_received_lakhs) === 0}
+        isEmpty={!!data && data.people.length === 0 && Number(data.planned_lakhs) === 0 && Number(data.won_lakhs) === 0 && Number(data.po_received_lakhs) === 0 && !data.team_row?.target_lakhs && !data.sbu_row?.target_lakhs}
         emptyText="No one to show for this quarter."
         errorText="Couldn't load Target vs Actuals."
         onRetry={() => query.refetch()}
@@ -309,7 +310,7 @@ export default function TargetVsActualsSection() {
             <StatTile label="Likely finish" value={lakhs(data.likely_finish_lakhs)} sublabel="Won + Expected" />
           </Box>
 
-          <SummaryRows sbuRow={data.sbu_row} companyRow={data.company_row} />
+          <SummaryRows teamRow={data.team_row} sbuRow={data.sbu_row} companyRow={data.company_row} />
 
           <Box sx={{ overflowX: "auto" }}>
             <Table size="small">

@@ -281,7 +281,8 @@ def list_sbu_targets(
     current_user: UserProfile = Depends(get_current_user),
     service: SbuTargetService = Depends(_get_sbu_target_service),
 ) -> APIResponse[list[SbuTargetResponse]]:
-    """Admin, GM and SBU Manager (RLS narrows an SBU Manager to their own SBU)."""
+    """Admin, GM, SBU Manager and Area Manager (RLS narrows SBU and Area
+    Managers to their own SBU)."""
     sbu_targets = service.list_by_period(planning_period, current_user=current_user)
     return APIResponse(data=[SbuTargetResponse.model_validate(t) for t in sbu_targets])
 
