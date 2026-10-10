@@ -319,6 +319,8 @@ export default function TargetPlanningScreen() {
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["target-plans"] });
+    // The Insights Dashboard's Target vs Actuals card shows plan statuses too.
+    queryClient.invalidateQueries({ queryKey: ["planning", "target-vs-actuals"] });
   };
 
   const openTargetDialog = (quarterPeriod: string, existing: TargetPlan | null, sbuId: string) => {
