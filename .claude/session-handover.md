@@ -60,8 +60,22 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Planning: screen keeps its own copy of who sees the SBU target".
 - D6b, D6c, E1 Pass 2026-10-10 (run by Basheer). E1 found the card
   didn't reload after a plan change on Target Planning: fixed `a9b3fa3`.
-- **Next:** E2 (Basheer K saves an Al Shifa ₹20 draft), then E3–E8. The
-  refresh fix gets its first real test at E3.
+- E2–E8, F1–F9 Pass 2026-10-10 (run by Basheer); reload fix `a9b3fa3`
+  confirmed at E4/E5. F3 and F7 expected results corrected in the test
+  plan (PO date box refuses future dates itself; marking Won isn't
+  GM-only). 41 of 98 steps done. Test plan, this note, the
+  Progress-Archive entry (2026-10-10 E2–F9) and Process-Improvements
+  (P2, P23 counts) uncommitted — Basheer said hold the commit
+  (2026-10-10 11:10 IST break).
+- G1 Pass 2026-10-10 (changed from plan: Fazal moved "New USG m/c" to
+  Negotiation, Fast-Track, date 2026-09-15, chance 70 %). G2 as
+  Admin, Imaging: before Expected ₹66.5L / Basheer K ₹0.0L / Fazal
+  ₹17.5L. G2 Pass (₹67.2L / ₹0.3L / ₹17.5L).
+- Card layout chosen 2026-10-10 (plan decision "Card layout", step 6d;
+  mockup in docs). **Next:** Basheer decides: build 6d before resuming
+  the E2E at G3, or after. At G3, check Fazal's missing ₹0.35L share of
+  "New USG m/c" (Progress-Archive 2026-10-10 card layout entry). Still
+  open: Indicative Value finding from G2; Company row has no Likely finish.
 - Log-out "login screen blinks twice": not reproduced in a recorded tab
   2026-10-09 (no reload, no refused request); wait for a repeat there.
 - Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't

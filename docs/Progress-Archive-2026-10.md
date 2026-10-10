@@ -1793,6 +1793,31 @@ hospitals). In short:
 - Basheer declined a save-time check for seen-once items (not worth the
   extra machinery).
 
+## 2026-10-10 — Target vs Actuals E2E E2–E8, F1–F9 Pass
+
+- All run by Basheer; 41 of 98 steps done. Paused at G1 for a break.
+- **Card-reload fix `a9b3fa3` confirmed:** after Basheer K submitted his
+  plan (E4) and Haroon approved it (E5), the Insights Dashboard card
+  showed the new status without a hard refresh.
+- **E2:** the draft was saved without its brand split (a draft allows
+  that); SonoScape ₹20 added at E4, since Submit needs it.
+- **F3 expected result corrected:** the PO Date box itself won't take a
+  future date (greyed out in the calendar; typed date gets the
+  browser's "value must be 10-10-2026 or earlier"), so the app's own
+  "can't be in the future" message is never reached. Server guard
+  covered by pytest.
+- **F7 test plan error corrected:** the plan said only the GM (Haroon)
+  can mark an Opportunity Won; the code has no such rule — GM-only
+  applies to changing a Won Opportunity's split (BR-FIN-08). F7–F9 run
+  as Fahad; the plan's "Who can save" line and section F intro fixed.
+- **Retro:** (1) Test plan built on wrong assumptions, twice: F7 said
+  only the GM can mark Won; F3 expected the app's message, missing that
+  the PO Date box refuses future dates itself → P2 +2. (2) Told Basheer
+  "only the GM can mark an Opportunity Won" from the test plan without
+  reading the code; he queried it → P23 +1. Checked: open list and
+  watch list (P64 — reload fix worked as intended). Nothing new for the
+  watch list.
+
 ## 2026-10-10 — Marketing User with no SBU (BR-ORG-03), fix `4163971`
 
 - Basheer created marketinguser@cabio-demo.com on Dev to take over the
@@ -1836,3 +1861,58 @@ hospitals). In short:
   17-line handover section without checking length or offering a trim
   (147 of 150) → P24 +1. Checked: open list, watch list; Dev/UAT rules
   and commit approval held. Open list 13 → 14.
+
+## 2026-10-10 — Target vs Actuals E2E G1 Pass (test plan step corrected)
+
+- G1 (run by Basheer): before figures Imaging Expected ₹66.5L, Basheer K
+  ₹0.0L, Fazal ₹17.5L. **Test plan mistake:** G1 had Basheer K set the
+  Expected Closure Date on "New USG m/c" (Qualified), but the Edit
+  Opportunity window shows that box only from Negotiation or when a date
+  is already set (`OpportunityDetailScreen.tsx:1953`) — the step was
+  written without checking the form. Fazal (owner) moved it to
+  Negotiation with Fast-Track (Haroon Sidheeq, "Customer declined demo"),
+  closing date 2026-09-15; win probability became 70 % (stage default).
+  Extra permanent Dev records: stage move, gate override, auto High
+  Priority. G2's expected date updated to 2026-09-15.
+- Server 401s seen after the break: expired login pass on the first
+  screen load; the app refreshes and resends (`lib/api.ts:61-69`). Vite
+  parse errors in the same paste were from 2026-10-09 16:03, mid-edit
+  before `2fdac69`; nothing open.
+- G2 Pass (as Admin): headline ₹66.5L → ₹67.2L, Basheer K ₹0.0L →
+  ₹0.3L, Fazal ₹17.5L; both late lines correct. Claude's first estimate
+  (₹67.9L / ₹0.7L) wrongly assumed products = Indicative Value.
+  **Finding:** "New USG m/c" had Indicative Value ₹2L but products
+  ₹1L — BR-FIN-03 says they must match once products exist, but only
+  the screen syncs them (Products-tab save sends a second update,
+  `OpportunityDetailScreen.tsx:402-420`); the server never checks. The
+  page header showed ₹2.0L while the card counted ₹1L. Basheer repaired
+  this record by re-saving the product (₹1.1L, back to ₹1L). Proposed:
+  server sets Indicative Value from the products total on every
+  products save, plus a read-only Dev check for other mismatches —
+  waiting on Basheer (Backlog now or investigate now).
+
+## 2026-10-10 — Target vs Actuals card layout chosen (step 6d)
+
+- At G3 Basheer asked for the card to be restructured, GM/Admin view
+  first. A UX brief went to two expert reviews: option A (four sub-tabs:
+  Overview / People / Zones / Brands) and option B (pinned summary plus a
+  switcher). Claude proposed a combined option.
+- Mockups built with live Dev figures (GM login, 2026-Q3, read in the
+  browser), checked at laptop and phone width. Basheer: combined and
+  option A "still too crowded and busy"; a three-figure version (Won,
+  target, Likely only) "too light". The fourth, key figures on screen
+  with drill-down, chosen — decision and step 6d in the plan; mockup
+  `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html`.
+- **Finding, to check at G3 (not confirmed):** Imaging reps' Expected
+  adds up to ₹66.85L against the Imaging line's ₹67.2L. The ₹0.35L gap
+  equals Fazal's 50 % share of "New USG m/c" × 70 %: at G2 Basheer K's
+  row rose by ₹0.35L while Fazal's stayed ₹17.5L. Possibly the owner's
+  share is missing from the owner's own row. Until checked, the mockup's
+  Total row leaves Likely blank.
+- **Retro:** (1) Heavy layouts mocked first (combined page, then option
+  A); both rejected as too busy before a lighter one was tried → P4 +1.
+  (2) Three layout decisions asked in one message → watch-list P61
+  repeated, moved to the open list as P66 (Seen 2); open list 14 → 15.
+  Checked: open list, watch list; handover 141/150 after edit (P24
+  held); no Dev or UAT writes; other sessions' files left out of the
+  commit.

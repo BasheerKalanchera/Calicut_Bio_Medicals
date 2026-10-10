@@ -8,9 +8,9 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 24 | open — first review |
-| P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 7 | open |
+| P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 9 | open |
 | P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 19 | open |
-| P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 4 | open |
+| P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 5 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
 | P9 | Before committing a shared doc, check `git log -3 -- <file>` for my own heading | 2026-10-05 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
@@ -27,7 +27,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
-| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 9 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
+| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 10 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 (×2) |
 | P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 3 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
@@ -56,6 +56,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
 | P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
 | P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57) | 2026-10-09 | 2 | open |
+| P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 2 | open |
 
 ## Watch list
 
@@ -78,7 +79,6 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-10 | 2026-10-09 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection |
 | 2026-10-10 | 2026-10-09 | P55 | When the handover has several threads, ask which one before choosing from open files or uncommitted changes (they may be another session's) |
 | 2026-10-10 | 2026-10-09 | P56 | Every recommendation states what it leaves uncovered |
-| 2026-10-10 | 2026-10-10 | P61 | When several decisions are open, show the first one alone and wait; the next follows its answer |
 | 2026-10-10 | 2026-10-10 | P63 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one |
 | 2026-10-10 | 2026-10-10 | P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh |
 | 2026-10-10 | 2026-10-10 | — | A change to `Business-Rules.md` needs its row in `Business-Rule-Implementation-Matrix.md` in the same commit (the commit hook refused it) |

@@ -6,7 +6,7 @@ against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
 the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order". Steps 1–6b built on Dev: `1821c30`, `ebc9613`, `cc4eb91`, `2c189d7`, review fixes `eab65e3`; step 6 `0b503ad`, `23582c1`, `a9e9277`; step 6b `2e2e4c0` (split credit, BR-FIN-09, decided
-2026-10-07). Changes made during the E2E: `cf64cd4` (SBU target shown apart from rep plans), `142b6fb`, `f28b39b`. Step 6c parts 1–2 `8d4ce27` (frontend pending). Not Done: combined manual E2E in progress, parked at E1 for step 6c (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`).
+2026-10-07). Changes made during the E2E: `cf64cd4` (SBU target shown apart from rep plans), `142b6fb`, `f28b39b`. Step 6c `8d4ce27`, `3249aa7`. Step 6d (card layout) decided 2026-10-10, not started. Not Done: combined manual E2E in progress, paused at G3 (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
 **Design / discussion:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
@@ -49,6 +49,7 @@ file keeps its old name until then so links elsewhere don't break).
 - **Scope:** all in Part 1, migrations 0060 (PO date + SBU target) and 0061 (Area Manager read of the SBU target, step 6c), one UAT move.
 - **Area Managers see the SBU target (Basheer, 2026-10-09, at E2E D6):** an Area Manager sees their own SBU's target, read-only, in SBU Target Rollup, and on the card a **"Your team"** row in the "Against SBU target" table: SBU target, their team's plans, Plans vs SBU target, PO received, Won (paid), % of SBU target — so they see what share of the SBU their team carries. The SBU-wide row and the Company row stay SBU Manager and above; Sales Staff and Marketing Users see no SBU target. Needs migration 0061 (the `sbu_target` read policy). Built now, before the E2E resumes (step 6c). A separate target per area is not built: Backlog "Area targets under the SBU target".
 - **Top-down target vs bottom-up plans (Basheer, 2026-10-09, at E2E):** on the card, "target" means only the GM's SBU target and "plan" means the reps' own plans. Labels: tile "Team plans" (caption "Sum of each rep's plan, pending or approved"; Won tile "N% of team plans"); SBU/Company table "SBU target (GM)", "Team plans", "% of SBU target"; people table "Rep Plan", "% of plan"; a sent-back revision reads "The last approved plan (₹X) still counts…"; zone table's no-zone line "Not attached to a zone". New SBU/Company column **"Plans vs SBU target"** = team plans ÷ SBU target, "—" until a target is set (screen-side, no server change). Target Planning's own use of "target" for a rep's plan is unchanged: Backlog "App-wide: a rep's plan is called 'target' on Target Planning".
+- **Card layout (Basheer, 2026-10-10, at E2E G3):** the card is rebuilt as one page, key figures on screen, the rest one tap away (build step 6d). Mockup: `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html` (live Dev figures, GM view, 2026-Q3). Top: one line per SBU — Won of SBU target (%), a bar of Won against Likely finish (forecast), Likely finish (%), Team plans (%); tapping it switches the section below. Company line: Won of target (%), Team plans (%), PO received. Then for the chosen SBU: one line (PO received, Expected, "no PO date" note); filter buttons ("All N", "N of M no plan yet", "N waiting for approval", "N Opportunities past closing date"); rep table — name, a status flag only when action is due ("no plan", "plan sent back", "waiting for your approval"), a red "N late" tag, Plan, Won, Likely, % of plan, and a Total row (Plan, Won, %). Tapping a rep opens: plan status and all six figures, the revision note, late Opportunities (due date, share, chance, and how they add to Expected), by hospital, by brand, missing data. "Zones and brands" at the bottom opens planned, won and %. Layouts tried and set aside the same day — four sub-tabs (UX review option A), a pinned summary with a switcher, and one combined page: too crowded; a three-figure version: too light (history: Progress-Archive-2026-10). Screen only: figures and how they are worked out are unchanged.
 
 ## 1. In plain terms
 
@@ -147,6 +148,12 @@ names) follows as a separate pass. The old build order below is superseded.
    **Progress:** parts 1–2 done 2026-10-09 in `8d4ce27` (0061 applied to
    Dev, `alembic current` = 0061 (head); pytest 1223; Dev check: an Imaging
    Area Manager reads only Imaging's target, Sales Staff reads none).
+6d. **Card layout redesign (Basheer, 2026-10-10; not started).** Rebuild the
+   Target vs Actuals card to the "Card layout" decision above — frontend
+   only, no server or figure change. tsc, lint, `/code-review` medium;
+   re-check the E2E steps that read the card (their "where to look"
+   wording updated first); own commit. Whether it is built before the E2E
+   resumes at G3 or after: Basheer to decide.
 7. **UAT move, only after step 6 is built and tested** (Basheer,
    2026-10-05): one combined move (Hospital-wise Target Planning + Target
    vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a
