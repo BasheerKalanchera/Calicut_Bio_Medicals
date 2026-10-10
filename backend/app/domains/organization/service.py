@@ -12,6 +12,11 @@ from app.domains.organization.repository import UserRepository
 from app.domains.organization.schemas import UserCreate, UserUpdate
 
 _USER_WRITE_ROLES = {"General Manager", "Admin"}
+# Roles that may have no SBU. Admin/GM are the overlay tier; a Marketing User
+# picks the SBU per lead (MarketingLeadCreateModal), so an own SBU would only
+# hide the other SBU's leads. Separate from _USER_WRITE_ROLES on purpose --
+# that set decides who may add/edit users, which Marketing User must not.
+_SBU_OPTIONAL_ROLES = _USER_WRITE_ROLES | {"Marketing User"}
 
 
 class UserService:
@@ -39,10 +44,10 @@ class UserService:
         new_user_role_name = self.repository.get_role_name(data.role_id)
         if new_user_role_name is None:
             raise NotFoundError(f"Role {data.role_id} not found")
-        # BR-OP-12's mirror for user creation: Admin/GM have no meaningful "own"
-        # SBU, so they may be created with sbu_id omitted entirely -- every other
-        # role still requires one, same as always.
-        if new_user_role_name in _USER_WRITE_ROLES:
+        # BR-OP-12's mirror for user creation: Admin/GM/Marketing User have no
+        # meaningful "own" SBU, so they may be created with sbu_id omitted
+        # entirely -- every other role still requires one, same as always.
+        if new_user_role_name in _SBU_OPTIONAL_ROLES:
             if data.sbu_id is not None and not self.repository.sbu_exists(data.sbu_id):
                 raise NotFoundError(f"SBU {data.sbu_id} not found")
         else:
@@ -68,10 +73,13 @@ class UserService:
             # sbu_id is genuinely None for them, not a real membership. The
             # same-SBU invariant only makes sense when both sides actually
             # belong to an SBU, so it's skipped if either the manager or the
-            # user being created is Admin/GM.
+            # user being created is Admin/GM. A Marketing User is exempt only
+            # while they actually have no SBU -- one with an SBU still needs a
+            # same-SBU manager (BR-ORG-01).
             if (
                 manager.role.role_name not in _USER_WRITE_ROLES
                 and new_user_role_name not in _USER_WRITE_ROLES
+                and data.sbu_id is not None
                 and manager.sbu_id != data.sbu_id
             ):
                 raise ValidationError("Manager must belong to the same SBU as the user")
@@ -93,25 +101,38 @@ class UserService:
         user = self.repository.get_by_id(user_id)
         if not user:
             raise NotFoundError(f"User {user_id} not found")
+        # Effective post-update role and SBU (PATCH semantics). "sbu_id" in
+        # model_fields_set, not `is not None`: an explicit null clears the SBU
+        # (the User Directory sends one when the role needs no SBU), an
+        # omitted key leaves it unchanged.
+        if data.role_id is not None:
+            effective_role_name = self.repository.get_role_name(data.role_id)
+            if effective_role_name is None:
+                raise NotFoundError(f"Role {data.role_id} not found")
+        else:
+            effective_role_name = user.role.role_name
+        effective_sbu_id = data.sbu_id if "sbu_id" in data.model_fields_set else user.sbu_id
+        # Same rule as create_user -- without it an explicit null could strip
+        # the SBU from a role that needs one.
+        if effective_sbu_id is None and effective_role_name not in _SBU_OPTIONAL_ROLES:
+            raise BusinessRuleViolation("SBU is required for this role")
         if data.manager_id is not None:
             if data.manager_id == user_id:
                 raise ValidationError("A user cannot be their own manager")
             manager = self.repository.get_by_id(data.manager_id)
             if not manager:
                 raise NotFoundError(f"Manager {data.manager_id} not found")
-            # Effective SBU: this same update may also change sbu_id (PATCH
-            # semantics) -- compare against the value the user will actually
-            # end up with, not necessarily their current one.
-            effective_sbu_id = data.sbu_id if data.sbu_id is not None else user.sbu_id
-            # Admin/GM (_USER_WRITE_ROLES) are an SBU-agnostic overlay tier --
-            # see the matching comment in create_user for why they're exempt
-            # from this invariant.
-            if manager.role.role_name not in _USER_WRITE_ROLES and manager.sbu_id != effective_sbu_id:
+            # Compared against effective_sbu_id (above) -- this same update may
+            # also change sbu_id. Admin/GM managers, and users left with no
+            # SBU, are exempt -- see the matching comment in create_user.
+            if (
+                manager.role.role_name not in _USER_WRITE_ROLES
+                and effective_sbu_id is not None
+                and manager.sbu_id != effective_sbu_id
+            ):
                 raise ValidationError("Manager must belong to the same SBU as the user")
         if data.sbu_id is not None and not self.repository.sbu_exists(data.sbu_id):
             raise NotFoundError(f"SBU {data.sbu_id} not found")
-        if data.role_id is not None and not self.repository.role_exists(data.role_id):
-            raise NotFoundError(f"Role {data.role_id} not found")
         if data.zone_id is not None and not self.repository.zone_exists(data.zone_id):
             raise NotFoundError(f"Zone {data.zone_id} not found")
         if data.zone_ids is not None:

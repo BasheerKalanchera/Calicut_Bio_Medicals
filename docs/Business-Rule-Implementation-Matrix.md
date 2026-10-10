@@ -61,6 +61,7 @@ nothing enforces it yet.
 | BR-ACC-04 | Hospital Business Potential Rating | `AccountService.set_business_potential`; `redact_business_potential_notes` (`account/schemas.py`) | |
 | BR-ORG-01 | Manager Assignment SBU Eligibility | `UserService.create_user` / `update_user` (`domains/organization/service.py`) | |
 | BR-ORG-02 | Multi-Zone User Assignment | `user_zone` table (migration 0018); `UserService` (primary zone in `zone_ids`); `opportunity_tier_visibility`; `TEAM_SCOPE_BUILDERS["Area Manager"]` | |
+| BR-ORG-03 | Roles With No SBU | `UserService.create_user` / `update_user` (`_SBU_OPTIONAL_ROLES`, `domains/organization/service.py`); `sales-os-app/` `UserDirectoryScreen` `isSbuAgnosticRole` | |
 | BR-ACT-01 | Activity Account Requirement | `ActivityCreate._require_account_unless_sales_development`; `chk_activity_account_required` | |
 | BR-ACT-02 | Manager Push (Logging) | No update or delete path for any Activity (no endpoint, no UPDATE/DELETE RLS policy on `activity`) | Any role can choose Manager Note (no role check). |
 | BR-ACT-03 | Activity Account Database Enforcement | `chk_activity_account_required` (migration 0028) | |

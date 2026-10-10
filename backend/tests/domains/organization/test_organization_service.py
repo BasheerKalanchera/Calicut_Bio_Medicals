@@ -138,8 +138,8 @@ class TestCreateUser:
 
         repo.create.assert_not_called()
 
-    @pytest.mark.parametrize("agnostic_role", ["General Manager", "Admin"])
-    def test_admin_or_gm_can_be_created_without_sbu(self, agnostic_role):
+    @pytest.mark.parametrize("agnostic_role", ["General Manager", "Admin", "Marketing User"])
+    def test_sbu_optional_role_can_be_created_without_sbu(self, agnostic_role):
         new_user = _make_user(sbu_id=None)
         repo = _make_repo(get_role_name=MagicMock(return_value=agnostic_role))
         repo.get_by_id.return_value = None
@@ -361,6 +361,99 @@ class TestUpdateUser:
 
         assert result is user
         repo.update.assert_called_once()
+
+    def test_explicit_null_sbu_clears_it_for_marketing_user(self):
+        user = _make_user(sbu_id=uuid.uuid4())
+        user.role = SimpleNamespace(role_name="Marketing User")
+        repo = _make_repo()
+        repo.get_by_id.return_value = user
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        service.update_user(user.id, UserUpdate(sbu_id=None), role_name="Admin")
+
+        assert user.sbu_id is None
+        repo.update.assert_called_once()
+
+    def test_omitted_sbu_leaves_it_unchanged(self):
+        old_sbu = uuid.uuid4()
+        user = _make_user(sbu_id=old_sbu)
+        user.role = SimpleNamespace(role_name="Marketing User")
+        repo = _make_repo()
+        repo.get_by_id.return_value = user
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        service.update_user(user.id, UserUpdate(display_name="Renamed"), role_name="Admin")
+
+        assert user.sbu_id == old_sbu
+
+    def test_raises_business_rule_violation_if_sbu_cleared_for_role_that_needs_one(self):
+        user = _make_user(sbu_id=uuid.uuid4())
+        user.role = SimpleNamespace(role_name="Sales Staff")
+        repo = _make_repo()
+        repo.get_by_id.return_value = user
+
+        service = UserService(repository=repo)
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.update_user(user.id, UserUpdate(sbu_id=None), role_name="Admin")
+
+        repo.update.assert_not_called()
+
+    def test_raises_business_rule_violation_if_role_changed_away_from_marketing_user_without_sbu(self):
+        # Effective role is the NEW one: a no-SBU Marketing User switched to
+        # Sales Staff must get an SBU in the same update.
+        user = _make_user(sbu_id=None)
+        user.role = SimpleNamespace(role_name="Marketing User")
+        repo = _make_repo(get_role_name=MagicMock(return_value="Sales Staff"))
+        repo.get_by_id.return_value = user
+
+        service = UserService(repository=repo)
+        with pytest.raises(BusinessRuleViolation, match="SBU"):
+            service.update_user(user.id, UserUpdate(role_id=uuid.uuid4()), role_name="Admin")
+
+        repo.update.assert_not_called()
+
+    def test_allows_marketing_user_without_sbu_to_have_a_manager(self):
+        user = _make_user(sbu_id=None)
+        user.role = SimpleNamespace(role_name="Marketing User")
+        manager = _make_user(sbu_id=uuid.uuid4())
+        manager.role = SimpleNamespace(role_name="SBU Manager")
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: user if uid == user.id else (manager if uid == manager.id else None)
+        repo.update.return_value = user
+
+        service = UserService(repository=repo)
+        result = service.update_user(user.id, UserUpdate(manager_id=manager.id), role_name="Admin")
+
+        assert result is user
+        repo.update.assert_called_once()
+
+    def test_raises_validation_error_if_marketing_user_with_sbu_gets_manager_in_other_sbu(self):
+        # The no-SBU exemption applies only while the SBU is actually empty.
+        user = _make_user(sbu_id=uuid.uuid4())
+        user.role = SimpleNamespace(role_name="Marketing User")
+        manager = _make_user(sbu_id=uuid.uuid4())
+        manager.role = SimpleNamespace(role_name="SBU Manager")
+        repo = _make_repo()
+        repo.get_by_id.side_effect = lambda uid: user if uid == user.id else (manager if uid == manager.id else None)
+
+        service = UserService(repository=repo)
+        with pytest.raises(ValidationError, match="SBU"):
+            service.update_user(user.id, UserUpdate(manager_id=manager.id), role_name="Admin")
+
+        repo.update.assert_not_called()
+
+    def test_raises_not_found_if_new_role_missing(self):
+        user = _make_user()
+        repo = _make_repo(get_role_name=MagicMock(return_value=None))
+        repo.get_by_id.return_value = user
+
+        service = UserService(repository=repo)
+        with pytest.raises(NotFoundError, match="Role"):
+            service.update_user(user.id, UserUpdate(role_id=uuid.uuid4()), role_name="Admin")
+
+        repo.update.assert_not_called()
 
     def test_manager_sbu_check_uses_effective_sbu_id_when_sbu_also_changing(self):
         # PATCH semantics: this update changes sbu_id in the same call, so the

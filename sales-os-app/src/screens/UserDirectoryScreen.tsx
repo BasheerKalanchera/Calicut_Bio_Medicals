@@ -64,12 +64,13 @@ export default function UserDirectoryScreen() {
     queryFn: () => listZones() as Promise<MasterDataOption[]>,
   });
 
-  // Admin/General Manager are an SBU-agnostic overlay tier -- backend mirror
-  // in organization/service.py's create_user (BR-OP-12's user-creation
-  // equivalent). Every other role still requires an SBU, same as always.
+  // Admin/General Manager are an SBU-agnostic overlay tier, and a Marketing
+  // User picks the SBU per lead -- backend mirror is organization/service.py's
+  // _SBU_OPTIONAL_ROLES (BR-OP-12's user-creation equivalent). Every other
+  // role still requires an SBU, same as always.
   const isSbuAgnosticRole = (roleId: string) => {
     const roleName = roles.find((r) => r.id === roleId)?.role_name;
-    return roleName === "Admin" || roleName === "General Manager";
+    return roleName === "Admin" || roleName === "General Manager" || roleName === "Marketing User";
   };
 
   const openCreate = () => {
@@ -138,7 +139,10 @@ export default function UserDirectoryScreen() {
     if (!form.sbu_id && !isSbuAgnosticRole(form.role_id)) throw new Error("SBU is required");
     await updateUser(editingUserId, {
       display_name: form.display_name.trim(),
-      sbu_id: form.sbu_id || undefined,
+      // Always null for an SBU-agnostic role: the SBU field is hidden for it,
+      // so form.sbu_id may still hold a stale SBU loaded by openEdit, and an
+      // omitted key would leave the old SBU in place on the backend.
+      sbu_id: isSbuAgnosticRole(form.role_id) ? null : form.sbu_id || undefined,
       role_id: form.role_id,
       // null, not undefined -- an omitted key means "leave unchanged" under
       // the backend's partial-update semantics, so clearing the Zone/Manager
@@ -276,8 +280,8 @@ export default function UserDirectoryScreen() {
           value={form.role_id}
           onChange={(e) => {
             const roleId = e.target.value;
-            // Admin/General Manager have no meaningful SBU -- switching to
-            // either role clears whatever was selected rather than leaving a
+            // Admin/General Manager/Marketing User have no own SBU -- switching
+            // to one of them clears whatever was selected rather than leaving a
             // stale, now-hidden value behind.
             setForm({ ...form, role_id: roleId, sbu_id: isSbuAgnosticRole(roleId) ? "" : form.sbu_id });
           }}

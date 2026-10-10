@@ -459,6 +459,12 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Enforcement:** `user_zone` table (migration `0018`); `opportunity_tier_visibility` RLS policy (same migration); `TEAM_SCOPE_BUILDERS["Area Manager"]` (`organization/repository.py`) — the same set-membership generalization applied to the User Directory's own team-scoping rule, not just the Opportunity RLS policy.
 * **Reference:** `docs/Multi-Zone-Assignment-Technical-Design.md`, `docs/Multi-Zone-Assignment-Milestone-1-Implementation-Plan.md`.
 
+### BR-ORG-03: Roles With No SBU (2026-10-10)
+* **Rule:** Admin, General Manager and Marketing User may be saved with no SBU; every other role must have one. A Marketing User picks the SBU on each lead, so an own SBU adds nothing. Removing the SBU from a role that needs one is refused ("SBU is required for this role").
+* **Effect:** On the User Directory the SBU box is hidden for these three roles, and saving clears any SBU they had. The same-SBU manager check (BR-ORG-01) is skipped only while the user has no SBU.
+* **Rationale:** Basheer, 2026-10-10. The new marketing user on Dev covers leads for both SBUs.
+* **Enforcement:** `UserService.create_user`/`update_user` (`_SBU_OPTIONAL_ROLES`, `organization/service.py`); `UserDirectoryScreen.tsx` `isSbuAgnosticRole`.
+
 ---
 
 # 6. Activity & Interaction Rules
