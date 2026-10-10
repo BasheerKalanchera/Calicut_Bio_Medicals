@@ -18,6 +18,9 @@
 - Step-by-step procedures move out of CLAUDE.md into the SKILL.md files where they are used; the move deletes nothing — Basheer, 2026-10-08
 - The sorting in section 2 is approved, and the work runs in Pareto order: build the skills first, fold the small items in, then the top 10 by impact, then drop the rest — Basheer, 2026-10-08
 - The four small one-off checks (P6, P10, P24, P32) count as one top-10 item, "small guards batch" — Basheer, 2026-10-08
+- A slip seen once goes on a watch list in `docs/Process-Improvements.md` and gets a P-number only on its second sighting; slips touching live data, UAT or lost work get one at once. Watch-list lines with no repeat 7 days after they were added are deleted at the review — Basheer, 2026-10-10
+- No separate retro file; full retro text stays in Progress-Archive — Basheer, 2026-10-10
+- The 15 items added since 8 Oct (P46–P61, less built P58) and the old seen-once items are sorted by the new rules: 4 counted as repeats (P49 → P19, P51 → P1, P59 → P2, P60 → P1); 16 moved to the watch list (P5, P6, P32, P40, P46, P48, P50, P52–P57, P61, and P63–P64 from the 10 Oct retro); P47 and P10 stay open (UAT / database security). Open list 40 → 13 items in 11 jobs: the top 10 below (small guards batch now P10 + P24) plus P47 — Basheer, 2026-10-10
 
 ## 1. In plain terms
 

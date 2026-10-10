@@ -1775,3 +1775,20 @@ hospitals). In short:
   First pytest run used the computer-wide Python → P63; folder-change
   command blocked by the guard → P14 +1. (6) The cross-screen refresh
   bug got past the review and the test plan → P64.
+
+## 2026-10-10 — Process consolidation: drops, watch list, retro rules
+
+- 16 suggestions added since 8 Oct (15 open, P58 built) took the open
+  list from 25 to 40: the retro instructions never got the "repeat = +1,
+  cap of 10" rule. Also P62–P64 from this morning's retro.
+- Done with Basheer: 9 drops (P18, P26, P27, P34, P35, P37, P38, P42,
+  P44); 4 repeats counted (P49 → P19, P51 → P1, P59 → P2, P60 → P1);
+  16 seen-once items to a new watch list; P47 and P10 stay open
+  (UAT / database security). Open list 40 → 13 items in 11 jobs.
+- Retro rules rewritten in the `process-review` skill (repeat = +1;
+  second sighting moves a watch-list slip to the open list; safety slips
+  numbered at once; watch-list lines deleted after 7 days with no repeat).
+- No separate retro file: no record of the earlier idea found in the
+  8–9 Oct conversations or docs; Basheer chose the watch list instead.
+- Basheer declined a save-time check for seen-once items (not worth the
+  extra machinery).

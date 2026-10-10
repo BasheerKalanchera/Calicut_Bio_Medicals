@@ -9,16 +9,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Process consolidation — plan approved 2026-10-08, building
 
 - Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3
-  done 2026-10-08 (uncommitted until the docs batch): 3 skills created;
-  CLAUDE.md sections moved to skills/template; 18 items folded in;
-  tracker 45 → 25 open.
-- **Next (2026-10-09):** review the 9 drops with Basheer (P18, P26, P27,
-  P34, P35, P37, P38, P42, P44) → 16 open; then the top 10 in Pareto
-  order, from P1.
+  done 2026-10-08 (`baf56b4`).
+- 2026-10-10: 9 drops done; new watch list in `docs/Process-Improvements.md`
+  (seen-once slips, deleted after 7 days with no repeat); retro rules in
+  `process-review` (repeat = +1, watch list, cap of 10). Open list 40 → 13
+  items in 11 jobs (top 10 + P47); 16 on the watch list.
+- **Next:** job 1 (P1, numbers and examples correct and sourced), then
+  the rest of the top 10 in Pareto order.
 - Still to write, shown first: paperwork check in `cabio-post-commit`
-  (feat/fix only, all living docs + handover); retro + daily review
-  procedure in `process-review` (incl. which pack was missed, for which
-  job).
+  (feat/fix only, all living docs + handover); daily review procedure
+  and right-pack check in `process-review`.
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 
