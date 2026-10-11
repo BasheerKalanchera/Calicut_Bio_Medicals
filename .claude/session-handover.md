@@ -6,6 +6,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Untracked plan docs from other sessions (Forecast, Create-Form,
   Weekly-Follow-up): leave them out of commits.
 
+## UAT data-quality check 2026-10-11 — drafts awaiting Basheer
+
+- Both 11 Oct drafts in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`.
+  **Next:** on approval, move them up and add the result to the
+  Progress-Archive 2026-10-11 entry (script fix `738829e`).
+
 ## Process consolidation — plan approved 2026-10-08, building
 
 - Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3

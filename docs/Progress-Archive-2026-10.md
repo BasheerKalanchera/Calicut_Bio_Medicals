@@ -1932,3 +1932,39 @@ hospitals). In short:
   Checked: open list, watch list; handover 141/150 after edit (P24
   held); no Dev or UAT writes; other sessions' files left out of the
   commit.
+
+## 2026-10-11 — UAT backup; data-quality check; next-action rules discussion
+
+- **UAT backup:** `cabio_uat_2026-10-11_0537.dump` (615,380 bytes, 472
+  TOC entries); pruned `cabio_uat_2026-09-27 morning.dump`.
+- **Data-quality check** (approved, read-only, Admin context, rolled
+  back): drafts `UAT-Data-Quality-Report-2026-10-11` and
+  `Expected-Closure-Dates-2026-10-11` (PDF + HTML) in `drafts`, waiting
+  for Basheer's review.
+- **Section 7a fix (`738829e`):** the old "activities with no next
+  action" count (258) was almost all false: 243 were Activities saved when
+  a next action was marked done (follow-up optional, BR-ACT-05), 13 were
+  exempt types, 2 real (Vivek, Sree Gokulam, 7 Oct; Nishad K V, Eranad,
+  5 Oct). All 53 of Fahad's 9 Oct entries were next actions he closed
+  during Haroon's quarterly review round (Basheer: reps told to close old
+  overdue next actions). Trial script run outside the main script first.
+- **New section 7a-ii:** 125 active Opportunities, 51 with no open next
+  action: 18 worked (last next action closed, nothing new set) and 33
+  never worked (also in report section 3). Report section 6 lists them
+  with stage and chance; the old section 6 (notes that don't say what
+  happened, 50) kept as section 7 (Basheer). Sections 3 and 6 both kept:
+  different purposes (Basheer).
+- **Discussion doc** `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
+  for Haroon: versions A/B/C for steering reps to close next actions
+  (B recommended); three rules — new Opportunity starts with an activity
+  and next action; new hospital starts with a next action; closing a next
+  action needs a follow-up (exceptions: Won/Lost, another open next action
+  on the same Opportunity/hospital); On Hold keeps a next action due by
+  the re-activation date (Basheer). Structural question for Basheer: a
+  next action with no activity behind it (recommend allowing it).
+- **Retro:** (1) Discussion doc had a misspelt hospital and a wrong
+  "22 calls" figure → P1 +1. (2) Two report sentences not checked
+  against the data ("most marked done in the past week", "Fahad's 54")
+  → P1 +1. (3) Unchecked SDM Hospital Ujire example given in chat → P1
+  +1. Checked: open list, watch list; no new items. No Dev or UAT
+  writes; other sessions' files left out of the commits.
