@@ -10,6 +10,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Both 11 Oct drafts in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`.
   **Next:** on approval, move them up and add the result to the
   Progress-Archive 2026-10-11 entry (script fix `738829e`).
+- Uncommitted, for the next docs batch: Backlog (missing-next-action item removed, Om Hiremath item updated), discussion doc (Daily Hub link), Progress-Archive line "After the push (`1a17aa0`)".
 
 ## Process consolidation — plan approved 2026-10-08, building
 
@@ -144,5 +145,5 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Progress-Archive). Open: Basheer to decide whether to deactivate the
   test Marketing User login from the browser check.
 
-## Weekly Follow-up / My Work — plan drafted 2026-10-11, awaiting Basheer
-- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, all proposed. **Next:** D6 default (30 days?), D2 menu label, then BR-OP-20 / BR-OP-06 wording shown first.
+## Weekly Follow-up / My Work — plan drafted 2026-10-11
+- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; D2 (My Work) and D6 (30 days) decided `8f781dc`. **Next:** BR-OP-20 / BR-OP-06 wording shown to Basheer first, then the other proposed decisions.
