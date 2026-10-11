@@ -304,20 +304,54 @@ def main() -> None:
         "Closed deals with item edits, close time unknown (information only)")
 
     # 7. Activities not following best practice
-    section("7a. Non-Manager-Note Activities missing a mandatory next action (BR-ACT-04, via reminder table)")
+    # Leaves out the Activity saved when a next action is marked done (its
+    # follow-up is optional, BR-ACT-05) and the exempt types
+    # (NOT_CUSTOMER_FACING_TYPES, backend/app/domains/activity/schemas.py).
+    # Until 2026-10-11 both were counted: 256 of the 258 found that day.
+    section("7a. Fresh Activities missing a mandatory next action (BR-ACT-04, via reminder table)")
     rows_7a = run("""
         SELECT act.activity_type, a.name AS account_name, up.display_name AS rep,
-               act.created_at::date AS logged
+               act.notes, act.created_at::date AS logged
         FROM activity act
         LEFT JOIN account a ON a.id = act.account_id
         JOIN user_profile up ON up.id = act.user_id
-        WHERE act.activity_type <> 'MANAGER_NOTE'
+        WHERE act.activity_type NOT IN (
+                'MANAGER_NOTE', 'RELATIONSHIP_SUPPORT',
+                'CONFERENCE_EXPO', 'OEM_PRODUCT_TRAINING', 'CERTIFICATION',
+                'SALES_TRAINING', 'SEMINAR_TRADE_SHOW', 'OTHER_DEVELOPMENT')
           AND NOT EXISTS (SELECT 1 FROM reminder r WHERE r.activity_id = act.id)
+          AND NOT EXISTS (SELECT 1 FROM reminder rc WHERE rc.closing_activity_id = act.id)
         ORDER BY act.created_at DESC
-    """, "Missing next action", limit=100)
+    """, "Missing next action (fresh activities)", limit=100)
     if rows_7a:
         by_rep = Counter(r["rep"] for r in rows_7a)
         print(f"\n   By rep: {dict(by_rep.most_common())}")
+
+    # Next actions are linked to an Opportunity through the Activity that
+    # created them. "Never worked" = no Activity at all on the Opportunity.
+    section("7a-ii. Active Opportunities with no open next action")
+    rows_7aii = run("""
+        SELECT up.display_name AS owner, a.name AS account_name, o.name AS opportunity,
+               ost.stage_name AS stage, ost.display_order AS stage_order,
+               o.win_probability AS chance,
+               (SELECT max(x.created_at)::date FROM activity x
+                 WHERE x.opportunity_id = o.id) AS last_activity
+        FROM opportunity o
+        JOIN opportunity_status os ON os.id = o.status_id
+        JOIN opportunity_stage ost ON ost.id = o.stage_id
+        JOIN account a ON a.id = o.account_id
+        JOIN user_profile up ON up.id = o.owner_id
+        WHERE os.status_code = 'ACTIVE'
+          AND NOT EXISTS (SELECT 1 FROM reminder r JOIN activity x ON x.id = r.activity_id
+                          WHERE x.opportunity_id = o.id AND NOT r.is_completed)
+        ORDER BY (SELECT max(x.created_at) FROM activity x WHERE x.opportunity_id = o.id) IS NULL,
+                 ost.display_order DESC, up.display_name, a.name
+    """, "Active Opportunities, no open next action", limit=100)
+    worked = [r for r in rows_7aii if r["last_activity"] is not None]
+    counts.append(("No open next action, worked", len(worked)))
+    counts.append(("No open next action, never worked", len(rows_7aii) - len(worked)))
+    print(f"\n   Worked, nothing planned: {len(worked)}; never worked: {len(rows_7aii) - len(worked)}")
+    print(f"   By owner: {dict(Counter(r['owner'] for r in rows_7aii).most_common())}")
 
     # A short note is fine when it closes a clearly worded next action
     # ("PO follow up" -> "Done"): the next action carries the context
