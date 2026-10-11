@@ -3,8 +3,7 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
-- Untracked plan docs from other sessions (Forecast, Create-Form,
-  Weekly-Follow-up): leave them out of commits.
+- Untracked plan doc from another session (Forecast): leave it out of commits.
 
 ## UAT data-quality check 2026-10-11 — drafts awaiting Basheer
 
@@ -145,3 +144,5 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Progress-Archive). Open: Basheer to decide whether to deactivate the
   test Marketing User login from the browser check.
 
+## Weekly Follow-up / My Work — plan drafted 2026-10-11, awaiting Basheer
+- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, all proposed. **Next:** D6 default (30 days?), D2 menu label, then BR-OP-20 / BR-OP-06 wording shown first.

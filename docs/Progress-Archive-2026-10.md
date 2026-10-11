@@ -1968,3 +1968,49 @@ hospitals). In short:
   → P1 +1. (3) Unchecked SDM Hospital Ujire example given in chat → P1
   +1. Checked: open list, watch list; no new items. No Dev or UAT
   writes; other sessions' files left out of the commits.
+
+## 2026-10-11 — UAT usage analysis (Render log) and Weekly Follow-up / My Work plan
+
+- **Method:** 7 days of the UAT server log (4–10 Oct; 62,999 lines,
+  36,860 real requests once browser pre-flight checks are dropped),
+  pulled read-only through Render's log API with a temporary key
+  `uat-log-pull-2026-10-11` (Basheer to delete it). Sessions = one
+  address with no gap over 30 minutes. Limits: an address isn't a
+  person; report screens load at sign-in, so they can't be ranked by use.
+- **Findings:** 290 of about 590 app opens started with a hospital
+  search; 34 used Pipeline filters. Main loop: search → hospital page →
+  log a visit, open an Opportunity, edit, or add a contact. 89 searches
+  straight after adding a hospital; 82 duplicate-hospital refusals.
+  About 400 visits logged (217 directly + 185 by closing next actions,
+  BR-ACT-05). Next Actions in 17 % of sessions, Daily Activity Report for
+  another date or person in 15 %. 201 server errors, in pool-exhaustion
+  bursts.
+- **Plan** `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`
+  (Draft): the Weekly Follow-up report (PRD 5.8, Traceability 11.1) as
+  the rep's daily desk; all decisions proposed. The 4 Oct other-tool
+  draft deleted (its summary cards kept in D3). Industry names checked
+  online: Salesforce Home + Sales Engagement Work Queue; Dynamics 365
+  Sales accelerator under "My Work"; Zoho Home + Cadences.
+- **Basheer's direction (2026-10-11):** menu label one of My Work / My
+  Dashboard / My Hub / My Follow-up (if My Dashboard, the Insights
+  Dashboard menu goes back to "Insights"); "no activity" filter takes any
+  number of days, as does the Stagnant Deals report (90/180 too long);
+  two separate rules — new BR-OP-20 "Not visited" (now) and BR-OP-06
+  reworded to time in stage, "Stuck in stage", switched off during
+  adoption. Ways reps could game stage-clearing listed in the plan
+  section 4; Backlog entry for the later switch-on.
+- **Retro:** (1) Two claims about the app made before reading the rule
+  ("BR-OP-06 says 180 days" from a code comment; "closing a next action
+  and logging a visit are separate", contrary to BR-ACT-05) → P23 +1.
+  (2) Several decisions asked in one message, more than once → P66 +1.
+  (3) Fixing BR-OP-06's wording deferred to build time, though decisions
+  go straight into the authoritative doc → new watch-list line. (4) The
+  "two rules instead of one" explanation confused Basheer and needed a
+  plainer pass → P3 +1. (5) No docs batch offered at any pause, and the
+  handover note not updated as the plan took shape → watch-list P50
+  repeated, moved to the open list as P67 (Seen 2); P16 +1. (6) A shell
+  folder change blocked by the guard rail → P14 +1. Checked: open list,
+  watch list; open list 15 → 16. No Dev or UAT writes; Render read-only.
+  Other sessions' files left out of the commit. Open: today's
+  next-action discussion doc (section 6) still links the deleted draft —
+  for that session.

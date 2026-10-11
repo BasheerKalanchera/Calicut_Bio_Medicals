@@ -80,7 +80,9 @@ Found while checking all 59 rules for the matrix rewrite (Progress-Archive
 2026-10-08, "Business-rule matrix brought up to date"). Each needs Basheer
 to decide: change the code, or change the rule.
 - BR-FIN-05: no automatic 100 % split row; reports assume one.
-- BR-OP-06: Stalled status not built.
+- BR-OP-06: Stalled status not built. Direction 2026-10-11 (Basheer): the
+  per-stage table means time in stage, switched off during adoption —
+  proposed rewording in `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D6b.
 - BR-ACT-02: any role can log a Manager Note.
 - BR-ACT-07: rule text predates company-wide product visibility.
 - BR-PROJ-01: no bid-submission-date check.
@@ -219,10 +221,11 @@ data-quality check.
 - Traceability item 13 ("Commitment beyond contract") wording + scorecard
   republish: with the next UAT move (Basheer, 2026-10-04); show the diff
   first.
-- The two untracked plans from another tool (Forecast-By-Closing-Period,
-  Weekly-Follow-up-Report): fix them per the 2026-10-04 review, each edit
-  shown before/after first. Order: Weekly, Forecast, after the Plan vs
-  Actuals E2E. (The third, Opportunity-Create-Form-Unification, was
+- The untracked plan from another tool (Forecast-By-Closing-Period): fix
+  it per the 2026-10-04 review, each edit shown before/after first, after
+  the Plan vs Actuals E2E. (The Weekly-Follow-up-Report draft was replaced
+  by `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` and deleted
+  2026-10-11.) (The third, Opportunity-Create-Form-Unification, was
   replaced by `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
   and deleted 2026-10-09.)
 
@@ -704,6 +707,16 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Deals, Reminders, and the High Priority rule — see BR-OP-15,
   `Business-Rules.md`) — just not built yet. Also include a "Closing date
   passed" section (BR-OP-16), decided 2026-09-29.
+  Plan: `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (Draft,
+  2026-10-11) — the rep's "My Work" desk.
+
+- **"Stuck in stage" (BR-OP-06 as reworded) — later, once reps log
+  regularly (Basheer, 2026-10-11).** An Opportunity sitting in one stage
+  longer than that stage's limit becomes Stalled; moving to a new stage or
+  Won/Lost clears it, logging a call doesn't. Off for now so reps getting
+  used to structured entry aren't flooded with flags. Before switching on:
+  a record of stage moves (none today), the anti-gaming checks, and a
+  scheduled job — all in the Weekly Follow-up plan's section 4. No date.
 
 - **Count how often a deal's closing date is pushed back — idea, 2026-09-29
   (Basheer).** From Zoho practice: a deal whose Expected Closure Date keeps
