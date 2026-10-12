@@ -111,6 +111,26 @@ review of BR-FIN-09); the card notes that team totals are members' shares.
 Revisit only if managers report numbers that don't match their team's own
 cards.
 
+### Target vs Actuals: follow-ups after the combined E2E — not started (2026-10-12)
+
+Moved from the handover note 2026-10-12; none of these blocks the E2E.
+- **Card layout (plan step 6d):** chosen 2026-10-10 (plan decision "Card
+  layout"; mockup `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html`), not
+  built. The E2E
+  resumed at G3 without it. Also open from that review: the Company row
+  has no Likely finish.
+- **Indicative Value vs products (found at G2, 2026-10-10):** "New USG
+  m/c" said ₹2L while its products totalled ₹1L. BR-FIN-03 says they must
+  match, but only the screen keeps them in step. Repaired on Dev by
+  re-saving the product.
+- **Rename the docs:** at the feature's post-commit checklist, rename
+  both `Plan-vs-Actuals-Tracking-*` docs to `Target-vs-Actuals-*` and fix
+  links (Business-Rules, Traceability, Insights-Dashboard plan,
+  Hospital-Wise plan, Salesperson-Performance discussion, the handover
+  note); history docs keep the old name.
+- **Dev test Opportunity "Test +lead screen" (Basheer K):** reassign,
+  don't delete (it has Activity rows).
+
 ### App-wide: a rep's plan is called "target" on Target Planning — not started (2026-10-09)
 
 On 2026-10-09 (Target vs Actuals E2E) Basheer chose: "target" means only the
@@ -205,6 +225,28 @@ Nishad K V).
   open Opportunities whose owner's SBU differs from the Opportunity's SBU
   (owner not Admin/GM), so any existing stranded ones can be reassigned
   before the block goes live.
+
+### Cross-SBU splits: clean up old ones, block on user SBU change — not started (2026-10-12)
+
+A split share held by someone outside the Opportunity's SBU shouldn't
+exist (BR-FIN-06), and new saves already refuse one. Found at the Target
+vs Actuals E2E (G3, 2026-10-12): Vivek (Critical Care) held 50 % of
+Imaging's "New USG m/c", so that share counted in the Imaging total but
+showed on no card he or anyone could open.
+- **How it got in:** the share was added 2026-07-05, before BR-FIN-06's
+  block existed; BR-FIN-06 keeps existing participants on later saves.
+  Vivek's SBU hasn't changed since the Audit Log started (2026-09-02).
+- **Dev, read-only check 2026-10-12:** that was the only one. Basheer
+  gave Vivek's share to Fazal the same day (E2E step G4b), so Dev now has
+  none.
+- **Still open:** (1) a one-time read-only UAT check for old cross-SBU
+  shares (Basheer's go-ahead on the day), then he decides how to clean up
+  any found; (2) moving a person to another SBU on the User Directory
+  leaves their shares on open Opportunities behind — extend the save
+  block in the entry above to cover split shares too (refuse, naming each
+  Opportunity). The card's "team members' shares" note stays either way:
+  it also covers shares within one SBU ("Target vs Actuals: Area Manager
+  misses a member's share outside the team").
 
 ### Audit Trail Redesign — built and tested on Dev; UAT move waiting (2026-10-03)
 

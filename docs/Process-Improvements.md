@@ -7,8 +7,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 27 | open — first review |
-| P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 9 | open |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 29 | open — first review |
+| P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 11 | open |
 | P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 20 | open |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 6 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
@@ -20,7 +20,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
 | P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 16 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
-| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11 |
+| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
 | P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 8 | open |
@@ -28,7 +28,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
 | P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 11 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 (×2); repeated after merge 2026-10-11 |
-| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 4 | open |
+| P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 5 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
 | P27 | If a measurement is still unreliable after 2 tries, stop and report; never run two measurements against the same database at once | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
@@ -90,6 +90,7 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-11 | 2026-10-11 | — | A known-wrong rule or doc wording is fixed now (with approval), not deferred until its feature is built (BR-OP-06 wording, Weekly Follow-up plan) |
 | 2026-10-11 | 2026-10-11 | — | Docs-only changes are held for the batch, even when a commit is asked for or the session is closing; say so instead of committing (`8f781dc`, `63b5d0f` committed one by one) |
 | 2026-10-12 | 2026-10-12 | — | Run the Word/Office skill scripts with UTF-8 output from the start (`PYTHONIOENCODING=utf-8`); `validate.py` crashed on the Windows console encoding |
+| 2026-10-12 | 2026-10-12 | — | A fix to a figure checks every view that shows the same figure, so they all read alike (I2: fixed Vivek's My Target total, not the rows' "approved still counts" note until Basheer asked) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

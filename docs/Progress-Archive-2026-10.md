@@ -2041,6 +2041,85 @@ hospitals). In short:
   reminder. Catch-up done by Basheer 2026-10-12: every dump from the
   4 Oct copy onwards is now in Google Drive.
 
+## 2026-10-12 — Target vs Actuals E2E G3–J6; My Target total fix
+
+- **Run on Dev** (Build & Test session), results recorded step by step in
+  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`: G3, G4, G4b,
+  H1–H4, I1, I2, J3, J4 and J6 Pass. J3 was run early while signed in as
+  Shruthi; Basheer agreed the new order (J3, then I1–I2, J4, J6, then
+  J1, J2, J5). Still to do: J1, J2, J5 and section K.
+- **G3 answered the 10 Oct "₹0.35L gap":** the missing ₹0.35L is Vivek's
+  50 % share of "New USG m/c", counted in the Imaging headline but on no
+  row because he isn't on the Imaging team. By design.
+- **G4b:** the "New USG m/c" split was changed to Basheer K 50 / Fazal 50
+  (a split across two SBUs shouldn't exist; Backlog "Cross-SBU splits:
+  clean up old ones, block on user SBU change"). Vivek still sees the
+  Opportunity on Pipeline because a reminder on it is assigned to him;
+  Basheer confirmed that's intended, and the expected result was corrected.
+- **H2 expected result corrected:** "4 of 5 haven't submitted", not
+  "5 of 5" as Claude first said; Basheer pointed out Basheer K's plan
+  counts as submitted (approved at D5). The plan's earlier wording
+  ("over 5 people") was also wrong.
+- **I2 bug, fixed in `24c05d5` (pushed):** on Target & Coverage Planning,
+  Vivek's own My Target box showed ₹161.0L for FY 2026-27 while every
+  manager's view showed ₹146.0L. His own totals added the amount asked for
+  in every plan, so the rejected Q4 revision counted at ₹45 instead of its
+  last approved ₹30 (BR-PL-05). The totals now use the same rule as the
+  managers' list. Basheer then asked why the Q4 row didn't show the ₹30:
+  the "approved still counts" / "was … approved" note existed only on the
+  managers' quarterly list, so it was added to My Target (both views) and
+  the managers' annual view. Checked in the browser as Vivek (₹146.0L; Q4
+  "₹45.0L / ₹30.0L approved still counts") and Arun (annual, same notes,
+  ₹226.0L). tsc clean, lint 0 errors.
+- **Login "blinks twice" (Basheer reported it again):** the test tab did
+  one full page reload at 10:56:51 IST that Claude didn't trigger. The
+  only code that forces a reload is the sign-out after a refused request
+  that can't be refreshed. That this caused the blink is a guess, not
+  proven: a later recorded sign-out (Admin → Shruthi) had no reload and
+  every request succeeded. A narrow fix (ignore refused requests after a
+  deliberate sign-out) is proposed, not approved; wait for a repeat.
+- **Moved out of the handover note (2026-10-12, Basheer agreed):** the
+  7–10 Oct Target vs Actuals build and E2E history. It was already in the
+  10 Oct entries above, except these pointers:
+  - SBU target box fixes from D1–D3: `f28b39b` (2026-10-09).
+  - Read-only Dev data snapshots, in the scratchpads of earlier sessions:
+    split check after step 6b, session 5cef2040 `split_check_out.txt`
+    (0 problems, but no shared Opportunity on Dev was Won or late);
+    test-plan live data, session 1e7c86e6 `e2e_data2_out.txt`; scope
+    re-check, session 10b0c4a6 `e2e_data3_out.txt`; step 6c privacy
+    check, session 08b0bffd `check_0061_rls_out.txt` (Fazal sees only
+    Imaging ₹100L; Rudrappa sees none).
+  - **Waiting:** the UAT move goes after the combined E2E, together with
+    Hospital-wise Target Planning (migrations 0055 + 0056, manual/help
+    update) and hospital re-filing (Option A, held until Basheer talks to
+    Haroon; plan step 5). The login blink waits for a repeat (above).
+  - Not started work went to Backlog "Target vs Actuals: follow-ups after
+    the combined E2E". The close-dates line was dropped: it repeated
+    Backlog "UAT: fill in missing 'date closed'".
+- **Retro (Build & Test session, 2026-10-12; checked P1, P2, P11, P14,
+  P16, P24, P64, P65, P67, P68 and the watch list):**
+  1. At H2 Claude said the Imaging list would read "5 of 5 haven't
+     submitted" without checking whose plans counted; Basheer corrected
+     it to 4 of 5. → P1 +1.
+  2. Two test-plan expected results were wrong: G4b (written today)
+     assumed the split was Vivek's only way to see "New USG m/c" (he also
+     has a reminder on it); H2 (written earlier) said the count would go
+     "over 5 people". Neither was checked against live data. → P2 +2.
+  3. The I2 fix covered Vivek's total but not the rows beside it; Basheer
+     had to ask why the ₹30 wasn't shown before the note went on every
+     view. → new watch-list line ("a fix to a figure checks every view
+     that shows the same figure").
+  4. The handover note still said "Basheer decides on the card layout
+     before G3" through the whole run; it wasn't updated at the pauses.
+     → P16 repeated after merge 2026-10-12.
+  5. The handover went over 150 lines after Claude's edit; trimmed
+     afterwards instead of checked before adding. → P24 +1.
+  6. The Backlog draft named an untracked copy of the card mockup instead
+     of the one in docs (caught before saving). → P1 +1.
+  - Went well: the docs batch was offered at each pause; only this
+    session's lines were staged in shared files; each commit was shown
+    before it ran.
+
 ## 2026-10-12 — Levers Roadmap review; next-action rules agreed; retro
 
 - **Word document review.** Basheer asked for agree/disagree on

@@ -4,6 +4,7 @@ lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
 - Untracked plan doc from another session (Forecast): leave it out of commits.
+  At its review, update its line 110 to BR-FIN-09.
 
 ## UAT data-quality check 2026-10-11 — drafts awaiting Basheer
 
@@ -27,77 +28,14 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 
-- Plans: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (build
-  order; split credit BR-FIN-09 = step 6b) and
-  `docs/Target-Coverage-Roster-Implementation-Plan.md` (step 6). Build
-  history: Progress-Archive-2026-10.
-- Not Done on the scorecard: E2E stopped 2026-10-04; one combined E2E
-  after steps 5, 6 and 6b (Basheer, 2026-10-06).
-- Step 6b + review fixes committed and pushed 2026-10-07 as `2e2e4c0`
-  (checkpoint; E2E pending): pytest 1217, ruff, tsc, lint clean.
-  Read-only Dev check 0 problems, no split totals ≠ 100 %, but no shared
-  Opportunity on Dev is Won or late (output: session 5cef2040 scratchpad
-  `split_check_out.txt`).
-- Combined E2E test plan written 2026-10-07:
-  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` (A–J in
-  2026-Q3, K = 38-step Hospital-Wise re-run + step 39 in 2027-Q1). Live
-  data: session 1e7c86e6 scratchpad `e2e_data2_out.txt`.
-- E2E run 2026-10-09: P1–P3, A1–A3 Pass (recorded in the test plan).
-  At A3 Basheer split "target" (GM's SBU target) from "plan" (reps'
-  plans) on the card and added a "Plans vs SBU target" column: committed
-  and pushed as `cf64cd4` (partial; E2E in progress). Scope re-check
-  output: session 10b0c4a6 scratchpad `e2e_data3_out.txt`.
-- A3b–C3 Pass 2026-10-09. During the run: zone label "Not attached to a
-  zone" `142b6fb`; Insights Dashboard tabs + menu renamed "Insights
-  Dashboard" `2fdac69` (both pushed). The card is on the first tab, so
-  the remaining steps are unchanged.
-- D1–D6 Pass 2026-10-09. SBU target box fixes from D1–D3 committed
-  separately (`f28b39b`, 2026-10-09).
-- **E2E parked at E1 (Basheer, 2026-10-09):** building plan step 6c first
-  — Area Managers see their own SBU's target read-only + a "Your team"
-  row. Parts 1–2 done in `8d4ce27`: migration 0061 applied to Dev
-  (`alembic current` = 0061 (head)), Physical-Schema regenerated, backend
-  `team_row`, pytest 1223. Read-only Dev check: Fazal (AM, Imaging) sees
-  only Imaging ₹100L; Rudrappa sees none (session 08b0bffd scratchpad
-  `check_0061_rls_out.txt`).
-- Parts 3–4 done 2026-10-10 in `3249aa7` (frontend + `/code-review`
-  high fixes; pytest 1223, ruff, tsc, lint clean). Backlog: "Target
-  Planning: screen keeps its own copy of who sees the SBU target".
-- D6b, D6c, E1 Pass 2026-10-10 (run by Basheer). E1 found the card
-  didn't reload after a plan change on Target Planning: fixed `a9b3fa3`.
-- E2–E8, F1–F9 Pass 2026-10-10 (run by Basheer); reload fix `a9b3fa3`
-  confirmed at E4/E5. F3 and F7 expected results corrected in the test
-  plan (PO date box refuses future dates itself; marking Won isn't
-  GM-only). 41 of 98 steps done. Test plan, this note, the
-  Progress-Archive entry (2026-10-10 E2–F9) and Process-Improvements
-  (P2, P23 counts) committed in `a6e044b`.
-- G1 Pass 2026-10-10 (changed from plan: Fazal moved "New USG m/c" to
-  Negotiation, Fast-Track, date 2026-09-15, chance 70 %). G2 as
-  Admin, Imaging: before Expected ₹66.5L / Basheer K ₹0.0L / Fazal
-  ₹17.5L. G2 Pass (₹67.2L / ₹0.3L / ₹17.5L).
-- Card layout chosen 2026-10-10 (plan decision "Card layout", step 6d;
-  mockup in docs). **Next:** Basheer decides: build 6d before resuming
-  the E2E at G3, or after. At G3, check Fazal's missing ₹0.35L share of
-  "New USG m/c" (Progress-Archive 2026-10-10 card layout entry). Still
-  open: Indicative Value finding from G2; Company row has no Likely finish.
-- Log-out "login screen blinks twice": not reproduced in a recorded tab
-  2026-10-09 (no reload, no refused request); wait for a repeat there.
-- Dev test Opportunity "Test +lead screen" (Basheer K): reassign, don't
-  delete (it has Activity rows).
-- UAT move: after the combined E2E, together with Hospital-wise Target
-  Planning (migrations 0055 + 0056, manual/help update) and hospital
-  re-filing (Option A, held until Basheer talks to Haroon; plan step 5).
-- Close dates: Haroon answered all 3 questions 2026-10-08 (Backlog "UAT:
-  fill in missing 'date closed'"; row 35 dropped — Life Line duplicate,
-  credit question waits on Haroon). **Next:** write the UAT fill-in plan
-  for the other 36 (fresh backup first, Basheer runs it; own approval).
-- At the post-commit checklist: rename both `Plan-vs-Actuals-Tracking-*`
-  docs to `Target-vs-Actuals-*` and fix links (Business-Rules,
-  Traceability, Insights-Dashboard plan, Hospital-Wise plan,
-  Salesperson-Performance discussion, this note); history docs keep the
-  old name.
-- Forecast plan (untracked, other session) line 110: update to BR-FIN-09
-  at its review.
+- Plans: `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` and
+  `docs/Target-Coverage-Roster-Implementation-Plan.md`; test plan
+  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` (results per
+  step). History: Progress-Archive-2026-10; follow-ups: Backlog "Target
+  vs Actuals: follow-ups after the combined E2E".
+- Combined E2E on Dev: P1–J6 done except J1, J2, J5 and section K. Last
+  fix `24c05d5` (I2, pushed 2026-10-12). **Next:** J1 as Rudrappa, then
+  J2 (Fahad), J5 (Basheer K), then section K.
 
 ## Duplicate hospitals — fix plan drafted 2026-10-08, awaiting Basheer
 
