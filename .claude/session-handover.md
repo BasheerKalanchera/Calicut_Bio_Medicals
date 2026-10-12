@@ -145,3 +145,5 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## Weekly Follow-up / My Work — plan drafted 2026-10-11
 - `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; D2 (My Work) and D6 (30 days) decided `8f781dc`. **Next:** BR-OP-20 / BR-OP-06 wording shown to Basheer first, then the other proposed decisions.
+## Next-action rules — all questions answered 2026-10-12
+- `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` section 5a; rules in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11, BR-ACT-05 change); separate plan chosen (Q11). Q10: a Note carries a new hospital's first next action. **Next:** write the plan (own approval).

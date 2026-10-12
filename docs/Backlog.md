@@ -555,6 +555,27 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Payment Pending limit so overdue collections alert the rep and their
   manager. Suggested 30 or 45 days; Haroon to choose.
 
+- **Retention amounts and "fully paid" (Basheer, 2026-10-12; undecided).**
+  Some hospital orders let the customer hold back part of the payment
+  (a retention amount) until warranty or performance terms are met, often
+  a year or more after delivery. BR-OP-17 marks Won only after full payment,
+  so such an Opportunity would sit at Payment Pending for that whole time.
+  Ask Haroon: how common are retention clauses at Cabio, and should "fully
+  paid" mean everything except an agreed retention amount? Answer it
+  together with the Payment Pending stall limit above. Raised while
+  reviewing the "Operational and Financial Levers Roadmap" Word document,
+  2026-10-12.
+
+- **Stage changes only by closing a next action (Basheer, 2026-10-12;
+  parked until the team is comfortable with BR-OP-22).** Today's agreed
+  rules (BR-OP-22, BR-ACT-05 change) still let a stage or status be changed
+  on the Opportunity page, with a note. The later tightening: remove the
+  page's own stage and status controls so an Opportunity moves only when
+  its next action is closed — e.g. Fahad closes "PO follow up" with "PO
+  received" and moves SonoScape E1 Exp to Payment Pending in that form.
+  Reading (ii) in `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
+  section 5a.
+
 - **Hospital-wise planning: overlap helper not locked to the app.**
   `cabio_app_plan_overlap` (SECURITY DEFINER) keeps Supabase's default
   `EXECUTE` grants. Harmless today: outside the app's session settings

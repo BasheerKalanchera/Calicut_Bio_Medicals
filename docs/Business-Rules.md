@@ -155,6 +155,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rule:** Moving an opportunity to the "On-Hold" status is a guarded transition.
 * **Mandatory Fields:** `hold_reason_id` (Master Data) and `reactivation_date` (Date).
 * **Validation:** `reactivation_date` must be in the future.
+* **Next action (agreed 2026-10-12, not built):** putting an Opportunity On Hold also needs a next action, its due date filled in with the `reactivation_date`; the rep may move it earlier, not later (Basheer, `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` question 8; see BR-ACT-05).
 * **Logic:** When `current_date >= reactivation_date`, the system must flag the opportunity as "Reactivation Overdue" in all insights views.
 * **Audit Requirement:** Changes to `hold_reason_id` or `reactivation_date` must be recorded in audit history.
 
@@ -303,6 +304,23 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Effect:** The save is refused with a message asking for the date or a lower chance (e.g. "A 60 % chance needs an Expected Closure Date. Enter the date, or lower the chance below 50 %."). Applies on create and on every later save of the Opportunity itself, so existing Opportunities already over the limit are held to it the next time anyone saves them (a stage change counts as a save). Adding a product, document, stakeholder or split is not refused. Until an Opportunity over the limit is fixed, its page shows a notice asking for the date; the notice never blocks anything (Basheer, 2026-10-09). Marking an Opportunity Lost, On Hold or Won is never refused by this rule, and the notice shows only while it is Active; an On Hold Opportunity made Active again is held to it on that save (Basheer, 2026-10-10).
 * **Rationale:** Cabio leadership via Basheer, 2026-10-09. On UAT 24 open Leads had a chance above 50 % and 8 more exactly 50 % (Expected Closure Dates report, 9 Oct), inflating the weighted forecast with no date to plan cash flow against. Leadership chases the existing ones with that report until this ships.
 * **Enforcement:** not built yet — see `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`. Reaches UAT with the next full promotion from Dev.
+
+_(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, D6a.)_
+
+### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, not built)
+* **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.
+* **Rationale:** Haroon, 2026-10-12, answering question 5 of `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT 33 active Opportunities had never had any activity (data-quality check, 11 Oct), e.g. Om Hiremath's 17 Bangalore Opportunities entered 1–11 Sep.
+* **Enforcement:** not built yet; plan to be written (discussion note, question 11).
+
+### BR-OP-22: A Stage or Status Change Carries a Note (agreed 2026-10-12, not built)
+* **Rule:** Every stage or status change on an Opportunity needs a note saying why.
+  - **The person changing it has an open next action of their own on the Opportunity:** they close it in the same step, and what they write as "what happened" is the note. Closing it needs a new next action (BR-ACT-05), unless the change is to Won or Lost. Example: Fahad moves SonoScape E1 Exp to Payment Pending, closes "PO follow up" with "PO received", and sets "Chase payment".
+  - **No open next action of their own:** they log a Note activity, which asks for a next action as today (BR-ACT-04).
+  - **A manager changing it:** logs a Note; the owner's open next action stays open — a manager doesn't close the rep's follow-up for them.
+* **Also:** owners can close their own next actions from the Opportunity page's Next Actions tab (today it is read-only); other people's stay read-only there.
+* **Not yet:** stage and status can still be changed from the Opportunity page as today. Allowing changes *only* by closing a next action is a later tightening — see `docs/Backlog.md` "Stage changes only by closing a next action".
+* **Rationale:** Haroon, 2026-10-12 (note on every change); Basheer, 2026-10-12 (the closed next action is the note; manager case).
+* **Enforcement:** not built yet; plan to be written (discussion note, question 11).
 
 ---
 
@@ -567,6 +585,18 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   commitment made now. `next_action_text` and `next_action_due_date` must be
   given together if given at all (validator-enforced); owner defaults to
   whoever closed the reminder, same default BR-ACT-04 uses.
+* **Change agreed 2026-10-12, not built — the follow-up becomes required.**
+  Closing one's own next action on an Opportunity needs a new next action
+  on that Opportunity. The only exception: the Opportunity is marked Won
+  or Lost in the same step (a follow-up may still be added, e.g. chasing
+  payment). Another next action still being open does not exempt it
+  (Basheer, 2026-10-12 — the discussion note's second exception dropped).
+  Haroon via Basheer, 2026-10-12 (discussion note, question 4 and reading
+  (i)). The same applies to a hospital-level next action, unless the
+  visit produced a new Opportunity (BR-OP-21 gives it its own); and
+  putting an Opportunity On Hold needs a next action due by its
+  re-activation date (Basheer, 2026-10-12, questions 7 and 8). Until
+  built, the optional wording above describes the app.
 * **Purpose:** A "done" checkbox with no record of what happened is not
   useful for anyone reviewing the account/opportunity history later. The
   closing Activity is a normal Activity record — it appears in the Activity
@@ -695,6 +725,23 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   boundary.
 * **Reference:** `docs/Referral-Credit-And-Relationship-Support-Implementation-Plan.md`,
   `docs/Discussion-SplitParticipant-SBU-Scope.md` (v6, §3.3).
+
+### BR-ACT-11: An Open Next Action Must Be Closed Before a New Activity (agreed 2026-10-12, not built)
+* **Rule:** While a person has an open next action of their own on an
+  Opportunity, they cannot log a fresh activity on it; they close that
+  next action instead (BR-ACT-05), in the same Log Activity form, on every
+  screen. Only next actions assigned to that person count: Haroon's open
+  reminder on an Opportunity doesn't stop Fazal logging there.
+* **Unchanged:** activities with no Opportunity (hospital-level work); the
+  types that never need a next action (`NOT_CUSTOMER_FACING_TYPES`); a
+  stage-change note under BR-OP-22.
+* **Rationale:** Haroon, 2026-10-12, chose the strict version (C) in
+  `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
+  section 4b; Basheer, 2026-10-12, own next actions only (question 2).
+  Known cost: an unplanned visit while a planned call is still open is
+  recorded by closing the call.
+* **Enforcement:** not built yet; plan to be written (discussion note,
+  question 11).
 
 ---
 

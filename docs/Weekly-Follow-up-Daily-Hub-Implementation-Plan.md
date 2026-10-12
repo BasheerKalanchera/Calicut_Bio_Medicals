@@ -28,13 +28,15 @@ in `— proposed`; once Basheer answers, change the ending to
 - D6a. New rule BR-OP-20 "Not visited": an Active Opportunity with no activity for more than N days (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging an activity takes it off. Separate from BR-OP-06 because the trigger and the fix differ — proposed
 - D6b. BR-OP-06 reworded to mean time in stage ("Stuck in stage"): an Active Opportunity that stays in one stage longer than that stage's limit becomes Stalled; it clears when the Opportunity moves to a stage it hasn't been in before, or is marked Won or Lost. Logging an activity does not clear it. Switched off until Basheer decides reps log regularly; the per-stage table is unchanged (Payment Pending still undecided). See section 4 for what must be built before it is switched on — proposed
 - D6c. The existing Stagnant Deals report gets the same type-any-number box, and its code comment claiming "BR-OP-06 says 180 days" is corrected, so the report and this desk agree — proposed
+- D6d. "Not visited" counts only calls, visits, meetings and emails, not Notes, so a Note written for a stage change (BR-OP-22) or a new hospital doesn't reset the clock — Basheer, 2026-10-12
 - D7. "This week" means Monday to Sunday, India time — proposed
 - D8. Act from the desk: each next-action row has "Done" (the existing close form) and each Opportunity or hospital row has "Log Activity"; no new forms — proposed
-- D9. Landing screen: everyone except Marketing Users lands on Account Management now (step 1); once this screen is built, everyone except Marketing Users lands here instead (step 5) — proposed
+- D9a. Landing screen now: everyone except Marketing Users lands on Account Management instead of Pipeline (step 1) — Haroon via Basheer, 2026-10-12
+- D9b. Landing screen later: once this screen is built, everyone except Marketing Users lands here instead (step 5) — proposed
 - D10. After adding a hospital from Account Management, the app opens that hospital's page instead of returning to the list (step 1) — proposed
 - D11. Next-action pre-fill: when a rep logs an activity on a hospital or Opportunity that has an open next action of theirs, the form shows it, ticked "this activity completes it", and the new next-action box starts with its text for the rep to edit — proposed
 - D12. Which open next action is offered first when there are several: from an Opportunity page, that Opportunity's; elsewhere, the one due soonest; the rep can pick another — proposed
-- D13. D11 follows whichever version (A, B or C) Haroon picks in the next-action discussion; this plan builds the shared part (pick the next action and close it in the same form) and the pre-fill, which all three versions need — proposed
+- D13. D11 follows whichever version (A, B or C) Haroon picks in the next-action discussion (he chose C on 2026-10-12: BR-ACT-11); this plan builds the shared part (pick the next action and close it in the same form) and the pre-fill, which all three versions need — proposed
 - D14. Sequencing: step 1 first (independent, small); steps 2–4 after the Target vs Actuals E2E and the Opportunity chance + create-form plan; step 5 after hospital-wise planning reaches UAT — proposed
 
 ## 1. In plain terms

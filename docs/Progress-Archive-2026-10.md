@@ -2040,3 +2040,46 @@ hospitals). In short:
   `docs/UAT-Disaster-Recovery-Runbook.md` and the startup hook's backup
   reminder. Catch-up done by Basheer 2026-10-12: every dump from the
   4 Oct copy onwards is now in Google Drive.
+
+## 2026-10-12 — Levers Roadmap review; next-action rules agreed; retro
+
+- **Word document review.** Basheer asked for agree/disagree on
+  `Cabio_Sales_OS_Operational_Financial_Levers_Roadmap.docx` (Desktop,
+  Cabio folder). Agreed with its direction (Phase 1 first, systems of
+  record, pilots with owners). Disagreed where it reversed BR-OP-17
+  without saying so ("do not require full collection before Won").
+  Corrections made as tracked changes (author "Claude", 35 edits,
+  validation passed; not rendered — LibreOffice isn't installed) and
+  saved for Basheer's review as
+  `Cabio_Sales_OS_Levers_Roadmap_Claude_Review_2026-10-12.docx` in the
+  same folder; the original is untouched. Changes: BR-OP-17 stated as
+  today's rule; retention turned into an open question; a "Today:" status
+  on each of the 16 levers; "deal" → "Opportunity" (13 places; "Stagnant
+  Deals" kept, it is the screen's name). Gap found: retention amounts —
+  Backlog "Retention amounts and "fully paid"".
+- **Next-action rules agreed** (Haroon's answers via Basheer, plus
+  Basheer's follow-ups): `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
+  section 5a, all 11 questions answered. Rules in Business-Rules, not
+  built: BR-OP-21 (new Opportunity needs its first activity), BR-OP-22
+  (note on every stage/status change — closing one's own open next action
+  is the note; otherwise a Note; a manager logs a Note), BR-ACT-11 (close
+  one's own open next action before a new activity — version C), BR-ACT-05
+  change (closing a next action always needs a new one; only Won/Lost
+  exempt — Basheer dropped the "another one still open" exception), On
+  Hold needs a next action. A new hospital's first next action rides on a
+  Note (Q10). Separate plan chosen (Q11). Later tightening parked in
+  Backlog "Stage changes only by closing a next action".
+- **Landing screen:** Haroon confirmed the app opens on Account
+  Management (Weekly Follow-up plan D9a). "Not visited" ignores Notes
+  (D6d, Basheer).
+- **Retro.** (1) Shell guard rails hit twice — a `cd` in a command and
+  "deal" in an approved commit message (P14 +1). (2) Next-action
+  questions sent in batches; each answer opened sub-points and Basheer
+  called the exchange long (P66 +1). (3) Answers A, C, D held for a
+  second "yes" twice (watch-list → P69). (4) Recommended a structural
+  change for Q10 before checking the existing Note would do; Basheer found
+  it (P4 +1). (5) Proposed a "new" Backlog item for the screen "deal"
+  wording, missing the 7 Oct entry (watch-list P52 → P70). (6) Handover
+  taken to 149/150 lines with a new section, no trim offered (P24 +1).
+  (7) Watch list: `validate.py` crashed on the Windows console encoding.
+  Open list 17 → 19; the cap of 10 isn't in force yet.

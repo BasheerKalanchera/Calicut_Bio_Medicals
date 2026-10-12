@@ -1,7 +1,8 @@
 # Discussion: Next actions drive activity logging on an Opportunity — 2026-10-11
 
-**Status:** Discussion — for Haroon to agree the rule and answer the
-questions in section 5. Nothing built. Once agreed, it becomes its own
+**Status:** Agreed 2026-10-12 — all questions answered (section 5a).
+Agreed rules are in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11,
+BR-ACT-05 change, On Hold next action), not built. Next: its own
 implementation plan.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
@@ -232,6 +233,61 @@ the strict version gets in the way of real work.
    rebuilds. Fold it in as a later step there, or write a separate plan?
    *Recommendation: a separate plan*, so the approved plan isn't reopened;
    it builds rule 1 on top of the new create form once that lands.
+
+## 5a. Answers — 2026-10-12
+
+Haroon's answers, passed on by Basheer, and Basheer's follow-ups the
+same day:
+
+- **Question 1 — version C (strict).** A rep with an open next action of
+  their own on an Opportunity can't log a fresh activity there until it is
+  closed (Haroon). → BR-ACT-11.
+- **Question 2 — own next actions only.** Each person is held back only by
+  next actions assigned to them (Basheer). → BR-ACT-11.
+- **Question 4 — yes, as reading (i).** Closing one's own next action on
+  an Opportunity always needs a new one on that Opportunity; the only
+  exception is marking it Won or Lost — section 4a's second exception
+  ("another next action is still open") is dropped (Basheer). Stage and status can
+  still be changed on the Opportunity page (Basheer: "(i) now, tighten to
+  (ii) once the team is comfortable"). The stricter (ii) — stage and status
+  changed only by closing a next action — is parked in Backlog "Stage
+  changes only by closing a next action". → BR-ACT-05 change.
+- **Question 5 — yes.** A new Opportunity can't be saved without its first
+  activity (Haroon). → BR-OP-21.
+- **New: a note on every stage or status change** (Haroon). Basheer: when
+  the person changing it has an open next action of their own, closing that
+  next action is the note; otherwise they log a Note activity; a manager
+  logs a Note and the owner's next action stays open. → BR-OP-22.
+- **Question 6 — yes, own ones only**, as a consequence of BR-OP-22:
+  owners close their next action from the Opportunity page while changing
+  stage (Basheer).
+- **Also from Haroon:** the app opens on Account Management instead of
+  Pipeline — `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D9,
+  first half.
+
+- **Question 11 — a separate plan** (Basheer), built on top of the new
+  create form once the chance + create-form plan lands.
+
+- **Question 3 — no new rule needed** (Basheer). Under BR-ACT-11 an
+  out-of-date next action can't be left behind: the next time its owner
+  works the Opportunity, they must close it, and a Note saying why (e.g.
+  "no longer needed; customer wants a demo") is already a valid closing
+  activity.
+- **Question 7 — yes** (Basheer): closing a hospital-level next action
+  needs a new one, unless the visit produced a new Opportunity (BR-OP-21
+  gives it its own).
+- **Question 8 — yes** (Basheer): putting an Opportunity On Hold needs a
+  next action due by the re-activation date; it is the follow-up for the
+  next action closed at that point.
+- **Question 9 — yes** (Basheer); how the first next action is stored
+  (question 10).
+- **Question 10 — a Note, not (a) or (b)** (Basheer, 2026-10-12): the
+  person adding the hospital logs a Note on it ("Added for coverage; first
+  visit planned") carrying the first next action — a Note already needs a
+  hospital and a next action, so nothing structural changes. "Not visited"
+  ignores Notes (Weekly Follow-up plan D6d).
+
+All questions answered. Next: the separate implementation plan.
 
 ## 6. Related
 
