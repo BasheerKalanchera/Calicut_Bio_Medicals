@@ -1968,6 +1968,12 @@ hospitals). In short:
   → P1 +1. (3) Unchecked SDM Hospital Ujire example given in chat → P1
   +1. Checked: open list, watch list; no new items. No Dev or UAT
   writes; other sessions' files left out of the commits.
+- **After the push (`1a17aa0`):** Backlog "Missing-next-action Activities
+  concentrated in two people" removed — the 7a fix shows only 2 real
+  misses, neither Haroon's nor Fazal's. "Bulk-imported Leads" (Om
+  Hiremath) updated to 17 and pointed to the discussion doc. The
+  discussion doc's link to the deleted Weekly Follow-up Report plan now
+  points to the Daily Hub plan. Scorecard `--check` OK (34 / 11 / 5).
 
 ## 2026-10-11 — UAT usage analysis (Render log) and Weekly Follow-up / My Work plan
 
@@ -2014,3 +2020,23 @@ hospitals). In short:
   Other sessions' files left out of the commit. Open: today's
   next-action discussion doc (section 6) still links the deleted draft —
   for that session.
+
+## 2026-10-12 — UAT backup; Google Drive copy becomes daily
+
+- **UAT backup:** `cabio_uat_2026-10-12_0804.dump` (615,537 bytes, 472
+  TOC entries); pruned `cabio_uat_2026-09-28.dump`. Docker again needed
+  a forced close (handled by the script).
+- **Google Drive copy:** Basheer's last copy of the backup folder to
+  Google Drive was on 2026-10-04 (the archive's last record was
+  2026-09-20). Decision (Basheer, 2026-10-12): catch up today by copying
+  the dumps from 2026-10-05 through `cabio_uat_2026-10-12_0804.dump`
+  (plus the 2026-10-04 dump if the 4 Oct copy was taken before it),
+  then copy each day's single dump by hand after the backup runs. Claude
+  ends every backup report with that file name. A 14-day whole-folder
+  copy was considered and rejected: the Google Drive copy could be up
+  to 13 days old if the laptop and UAT were lost together. Automating
+  the copy (Google Drive for Desktop + the script's disabled copy step)
+  stays open in Backlog. Recorded in
+  `docs/UAT-Disaster-Recovery-Runbook.md` and the startup hook's backup
+  reminder. Catch-up done by Basheer 2026-10-12: every dump from the
+  4 Oct copy onwards is now in Google Drive.

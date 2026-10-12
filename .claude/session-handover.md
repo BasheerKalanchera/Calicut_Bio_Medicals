@@ -10,7 +10,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Both 11 Oct drafts in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`.
   **Next:** on approval, move them up and add the result to the
   Progress-Archive 2026-10-11 entry (script fix `738829e`).
-- Uncommitted, for the next docs batch: Backlog (missing-next-action item removed, Om Hiremath item updated), discussion doc (Daily Hub link), Progress-Archive line "After the push (`1a17aa0`)".
 
 ## Process consolidation — plan approved 2026-10-08, building
 
@@ -71,8 +70,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   plan (PO date box refuses future dates itself; marking Won isn't
   GM-only). 41 of 98 steps done. Test plan, this note, the
   Progress-Archive entry (2026-10-10 E2–F9) and Process-Improvements
-  (P2, P23 counts) uncommitted — Basheer said hold the commit
-  (2026-10-10 11:10 IST break).
+  (P2, P23 counts) committed in `a6e044b`.
 - G1 Pass 2026-10-10 (changed from plan: Fazal moved "New USG m/c" to
   Negotiation, Fast-Track, date 2026-09-15, chance 70 %). G2 as
   Admin, Imaging: before Expected ₹66.5L / Basheer K ₹0.0L / Fazal

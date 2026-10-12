@@ -159,7 +159,7 @@ the last sort key in the Pipeline query.
 Seen in both rounds of the fix 3 screen check (existing behaviour, not
 caused by the fix). Fix: list the zones as soon as the box is opened.
 
-### Screen wording: "deal" → "Opportunity" across the app — parked (2026-10-07)
+### Wording: "deal" → "Opportunity" across the app and docs — parked (2026-10-07, docs added 2026-10-12)
 
 The app still says "deal" in about 25 places users can read (Opportunity
 wording rule, CLAUDE.md). Found in the fix 3 screen check ("· 7 deals" on
@@ -172,10 +172,19 @@ part of Query Load fix 3.
   Deal" tick-box (4 screens); "this deal is past Demo stage"; help
   panels (`helpContent.tsx`, ~12 sentences); one server message
   (`document/service.py`); `docs/UAT-User-Manual.md` (10 places).
+- Docs (doc tidy-up 2026-10-12): `Signed-Requirements-to-PRD-Traceability.md`,
+  24 changes drafted (15 client-visible: Client Note column and Commitment
+  beyond contract items 4, 6, 7, 9, 10, 11, 13, 14, 19; 9 internal Notes);
+  `Audit-Trail-Redesign-Implementation-Plan.md`, 14 places. Keep as
+  written: signed requirement wording, PRD section titles (3.9, 3.10),
+  file names, and screen names until the screens are renamed. Basheer
+  2026-10-12: do the docs and the code in one go.
 - Recommended: rename the familiar names too ("Stagnant Opportunities",
   "Fast-Track this Opportunity"); Basheer to tell Haroon. Not yet decided.
 - No database change. Checks: tsc, lint, a visual walk on Dev. Could go
   to UAT with Query Load fix 4.
+- After the Traceability edit: regenerate the scorecard and show Basheer
+  the exact client-visible diff before republishing.
 
 ### Block an SBU change while the user owns open Opportunities in another SBU — not started (2026-10-04)
 
@@ -336,8 +345,8 @@ per the UAT rule). Each run appends a dated one-line summary of counts to
 (`.claude/hooks/session-start.sh`) reminds when the last run is ≥2 days old.
 After each run, compare against the previous log line and raise anything new.
 Open talking points from the first run (2026-09-15) are under "Deferred /
-undecided items" below: Lakhs/Rupees mix-ups, missing next-actions
-concentrated in two people, one bulk-import Lead cluster with no follow-up.
+undecided items" below: Lakhs/Rupees mix-ups, one bulk-import Lead
+cluster with no follow-up.
 Findings doc: `docs/UAT-Data-Quality-Findings-2026-09-15.md`.
 
 ### ~~MUI migration backlog (§9 of Frontend-Implementation-Standards.md)~~ — DONE, 2026-08-18
@@ -907,24 +916,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   list in `docs/UAT-Data-Quality-Findings-2026-09-15.md`) — still not fixed, and more
   reps are hitting the same data-entry mistake, not just the original 12. Worth raising
   as a training point (how to enter Lakhs values), not only a one-time data cleanup.
-- **Missing-next-action Activities concentrated in two people — not yet
-  raised with either.** UAT data-quality check, 2026-09-15
-  (`docs/UAT-Data-Quality-Findings-2026-09-15.md`): of 82 non-Manager-Note
-  Activities logged with no next-action reminder, **Haroon (40) and Fazal
-  (25) account for 65 of them (79%)** — everyone else is in single digits.
-  Worth a direct conversation rather than a system fix; the app already
-  supports setting a reminder on any Activity, this looks like a habit gap
-  for these two specifically, not a missing feature.
-  **Caution, 2026-09-24 — the count itself is unreliable; don't raise it with
-  anyone until the check is fixed.** Section 7a of
-  `scripts/uat_data_quality_check.py` only excludes `MANAGER_NOTE`, but
-  BR-ACT-04 also exempts the six BR-ACT-09 development types (e.g.
-  `CONFERENCE_EXPO`) and `RELATIONSHIP_SUPPORT`, and the app blocks saving
-  most other Activities without a next action. The 2026-09-24 run showed 108
-  (Haroon 49, Fazal 30), which was left out of the team report for this
-  reason. **Narrow fix:** exclude the exempt types in the 7a query, then
-  sample a few remaining rows to see whether they're real misses or a
-  different gap (e.g. reminders linked some other way).
 - **Bulk-imported Leads with zero follow-up Activity — one rep, one
   batch, not yet raised.** Same check: Om Hiremath owns 15 of 56
   zero-Activity Opportunities, all identical "New USG Machine requirement"
@@ -932,7 +923,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   session that never got individual follow-up logged, not 15 separate
   real gaps. Worth confirming with Om Hiremath whether these are genuine
   leads needing real follow-up or a data-entry exercise that should be
-  pruned.
+  pruned. **2026-10-11 UAT check:** Om has 17 Opportunities with no
+  activity (14 from this batch, entered 1–2 Sep, plus 3 entered 1–11
+  Sep). They are the rule 1 example (question 5) in
+  `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`.
 - **Pipeline-driven reorder recommendation (Latheef Bhai's idea) — not
   decided, not scoped.** Raised 2026-09-08 via voice message to Basheer:
   each quarter's stock-purchasing decision (currently underway for EDAN
@@ -1264,6 +1258,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   lost at the same time as UAT, the newest usable backup could be well
   older than the local ones (14 newest dumps kept); (2) no automated offsite copy
   exists yet (the Google Drive mirror step above is still disabled).
+
+  **2026-10-12 update:** gap (1) closed — Basheer copies each day's dump
+  to Google Drive by hand after the backup runs (caught up to 2026-10-12;
+  rule in `docs/UAT-Disaster-Recovery-Runbook.md`). Gap (2) stays open,
+  not scheduled: automating it needs Google Drive for Desktop installed,
+  then the script's copy step re-enabled.
 
 - **WON/LOST opportunities are not actually immutable — BR-OP-09 gap,
   found live 2026-09-05.** **Deliberately kept separate from the new Pricing/

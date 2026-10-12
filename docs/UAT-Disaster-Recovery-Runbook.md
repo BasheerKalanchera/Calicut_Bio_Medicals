@@ -40,10 +40,12 @@ whether that gap is acceptable before proceeding.
   the keep-14 prune never touches (it doesn't look in sub-folders). Holds
   `cabio_uat_2026-09-27_pre-move-0041.dump`, UAT at `0041` just before the
   2026-09-27 upgrade to `0054`.
-- **Secondary (offsite):** Basheer's Google Drive, updated manually and
-  irregularly as of 2026-09-20 (the backup script's own Google Drive
-  step is disabled pending Google Drive for Desktop setup). Use this
-  only if the laptop itself is unavailable.
+- **Secondary (offsite):** Basheer's Google Drive. Since 2026-10-12 he
+  copies each day's new dump there by hand after the backup runs; Claude
+  ends every backup report with that file's name (Basheer, 2026-10-12).
+  The backup script's own Google Drive step stays disabled pending
+  Google Drive for Desktop setup. Use this only if the laptop itself is
+  unavailable.
 
 ## Step-by-step process
 
@@ -111,9 +113,8 @@ process needs to change as a result.
 ## Known limitations (not yet addressed)
 
 - **Single point of failure:** primary backups live only on Basheer's
-  laptop; the offsite (Google Drive) copy is manual and irregular. If the
-  laptop is lost at the same time as UAT, the most recent usable backup
-  may be much older than the newest local one.
-- **Local-only retention:** only the 14 newest dumps are kept locally, so
-  an older backup only survives if it was separately copied to Google
-  Drive before it was pruned.
+  laptop; the offsite (Google Drive) copy is a daily manual step. If a
+  day's copy is missed and the laptop is lost at the same time as UAT,
+  the most recent usable backup is older than the newest local one.
+- **Local-only retention:** only the 14 newest dumps are kept locally;
+  older ones survive only in Google Drive, via the daily copy.

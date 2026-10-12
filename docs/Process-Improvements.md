@@ -58,6 +58,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57) | 2026-10-09 | 2 | open |
 | P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 3 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
+| P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 2 | open |
 
 ## Watch list
 
@@ -86,6 +87,8 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-10 | 2026-10-10 | — | Before saying what a test step proved, check what that step actually did (said step 2 proved SBU clearing; its user never had one) |
 | 2026-10-10 | 2026-10-10 | — | A new test plan starts from `docs/templates/Manual-E2E-Test-Plan-Template.md` (the save check refused a from-scratch one) |
 | 2026-10-11 | 2026-10-11 | — | A known-wrong rule or doc wording is fixed now (with approval), not deferred until its feature is built (BR-OP-06 wording, Weekly Follow-up plan) |
+| 2026-10-11 | 2026-10-11 | — | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (30 days / My Work asked three times) |
+| 2026-10-11 | 2026-10-11 | — | Docs-only changes are held for the batch, even when a commit is asked for or the session is closing; say so instead of committing (`8f781dc`, `63b5d0f` committed one by one) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

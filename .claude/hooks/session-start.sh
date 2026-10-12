@@ -32,7 +32,7 @@ BK_DIR=/c/Backups/CabioUAT/DB_Backups
 last=$(ls "$BK_DIR"/cabio_uat_*.dump 2>/dev/null | sed 's#.*/cabio_uat_\([0-9-]\{10\}\).*#\1#' | sort | tail -n 1)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  [ "$days" -ge 1 ] && echo "DUE TODAY: UAT backup (newest dump $last, $days day(s) old). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Not even a folder listing; another session may already be doing it. If he says yes: list the backup folder, name every file the keep-newest-14 prune will delete, and ask again before running scripts/backup_uat.ps1 (UAT rule)." && echo
+  [ "$days" -ge 1 ] && echo "DUE TODAY: UAT backup (newest dump $last, $days day(s) old). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Not even a folder listing; another session may already be doing it. If he says yes: list the backup folder, name every file the keep-newest-14 prune will delete, and ask again before running scripts/backup_uat.ps1 (UAT rule). After the run, end the report with the new dump's exact file name for Basheer to copy to Google Drive by hand (daily offsite copy, 2026-10-12)." && echo
 else
   echo "DUE TODAY: UAT backup (none found in $BK_DIR). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. (UAT rule)"
   echo

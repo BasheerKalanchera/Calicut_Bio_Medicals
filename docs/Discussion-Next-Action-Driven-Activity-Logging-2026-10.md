@@ -235,10 +235,11 @@ the strict version gets in the way of real work.
 
 ## 6. Related
 
-- The Weekly Follow-up Report plan (Draft,
-  `docs/Weekly-Follow-up-Report-Implementation-Plan.md`) has an "Overdue
-  Actions" section. It is only as useful as the next action lists behind it,
-  which this rule keeps current.
+- The Weekly Follow-up Daily Hub plan (Draft,
+  `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, which replaced
+  the Weekly Follow-up Report plan on 2026-10-11) has an "overdue next
+  actions" section. It is only as useful as the next action lists behind
+  it, which these rules keep current.
 - Business rules affected: BR-ACT-04 (next action on every activity) and
   BR-ACT-05 (completing a next action records what happened). Question 4
   would make BR-ACT-05's optional new next action mandatory while the
