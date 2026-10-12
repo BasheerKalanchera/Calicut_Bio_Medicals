@@ -42,7 +42,7 @@ import {
   getPlanningYearQuarters,
   formatLakhs,
 } from "../utils/formatter";
-import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus, TargetRosterPerson } from "../types/targetPlanning";
+import type { RosterStatus, TargetPlan, TargetPlanSbu, TargetPlanStatus } from "../types/targetPlanning";
 import type { BrandResponse } from "../types/api-aliases";
 
 // Local stopgap type -- masterData.ts's listSbus returns Promise<unknown>
@@ -96,13 +96,38 @@ function RosterStatusOnly({ status }: { status: RosterStatus }) {
   );
 }
 
-// Beside a roster row's amount (BR-PL-05): a revision waiting for approval
-// notes the figure it replaces; a rejected revision notes the last approved
+// Beside a plan's amount (BR-PL-05): a revision waiting for approval notes
+// the figure it replaces; a rejected revision notes the last approved
 // figure, which is what still counts.
-function previousApprovedNote(p: TargetRosterPerson): string | null {
-  if (p.previous_approved_total_lakhs === null) return null;
-  const amount = formatLakhs(Number(p.previous_approved_total_lakhs));
-  return p.plan_status === "REJECTED" ? `${amount} approved still counts` : `was ${amount} approved`;
+function previousApprovedNote(status: string, previous: string | number | null | undefined): string | null {
+  if (previous == null) return null;
+  const amount = formatLakhs(Number(previous));
+  return status === "REJECTED" ? `${amount} approved still counts` : `was ${amount} approved`;
+}
+
+// A plan's amount cell -- the same note under it on every view, so a row
+// showing a rejected ₹45 explains why only the approved ₹30 is in the total.
+function PlanAmount({ amount, note }: { amount: string | number; note: string | null }) {
+  return (
+    <>
+      {formatLakhs(Number(amount))}
+      {note && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+          {note}
+        </Typography>
+      )}
+    </>
+  );
+}
+
+// What one of my own plans adds to my totals -- the same rule as the roster's
+// counted_lakhs (planning service _build_roster), so "My Target" and the
+// managers' view always agree: a rejected revision counts at its last
+// approved total (BR-PL-05); a draft or a first plan rejected counts nothing.
+function countedLakhs(t: TargetPlan): number {
+  if (t.status === "REJECTED") return Number(t.previous_approved_total_lakhs ?? 0);
+  if (t.status === "PENDING_APPROVAL" || t.status === "APPROVED") return Number(t.target_amount_lakhs);
+  return 0;
 }
 
 // A resolved decision (Approved/Rejected) can carry the approver's note --
@@ -247,7 +272,7 @@ export default function TargetPlanningScreen() {
   const myPeriodTargets = myTargets.filter((t) => t.planning_period === period);
   const mySbuIdsWithTarget = new Set(myPeriodTargets.map((t) => t.sbu_id));
   const myAvailableSbus = mySbus.filter((s) => !mySbuIdsWithTarget.has(s.id));
-  const myPeriodTotal = myPeriodTargets.reduce((sum, t) => sum + Number(t.target_amount_lakhs), 0);
+  const myPeriodTotal = myPeriodTargets.reduce((sum, t) => sum + countedLakhs(t), 0);
 
   const myAnnualBySbu: AnnualSbuBlock[] = mySbus.map((sbu) => {
     const byQuarter: Record<string, TargetPlan | undefined> = {};
@@ -255,7 +280,7 @@ export default function TargetPlanningScreen() {
     for (const q of yearQuarters) {
       const t = myTargets.find((x) => x.sbu_id === sbu.id && x.planning_period === q);
       byQuarter[q] = t;
-      total += Number(t?.target_amount_lakhs ?? 0);
+      total += t ? countedLakhs(t) : 0;
     }
     return { sbu, total, byQuarter };
   });
@@ -413,7 +438,9 @@ export default function TargetPlanningScreen() {
                   {myPeriodTargets.map((t) => (
                     <TableRow key={t.id}>
                       <TableCell>{t.sbu.name}</TableCell>
-                      <TableCell>{formatLakhs(Number(t.target_amount_lakhs))}</TableCell>
+                      <TableCell>
+                        <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} />
+                      </TableCell>
                       <TableCell><StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(t.sbu_id)} /></TableCell>
                       <TableCell align="right">
                         <Button size="small" onClick={() => openTargetDialog(period, t, t.sbu_id)}>{t.status === "DRAFT" ? "Continue" : "Revise"}</Button>
@@ -464,7 +491,9 @@ export default function TargetPlanningScreen() {
                         return (
                           <TableRow key={`${block.sbu.id}-${q}`}>
                             <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
-                            <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                            <TableCell>
+                              {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
+                            </TableCell>
                             <TableCell>
                               {t ? <StatusWithNote target={t} sbuHasBrands={mySbuHasBrands.has(block.sbu.id)} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                             </TableCell>
@@ -604,7 +633,7 @@ export default function TargetPlanningScreen() {
                     {(roster?.people ?? []).map((p, i, people) => {
                       const t = p.plan;
                       const open = t !== null && expanded.has(t.id);
-                      const note = t && previousApprovedNote(p);
+                      const note = t && previousApprovedNote(p.plan_status, p.previous_approved_total_lakhs);
                       // Former members come last (server order); head their group once.
                       const firstFormer = !p.on_team && (i === 0 || people[i - 1].on_team);
                       return (
@@ -625,12 +654,7 @@ export default function TargetPlanningScreen() {
                             <TableCell>{p.display_name}</TableCell>
                             <TableCell align="right">{t ? hospitalCount(t) : "—"}</TableCell>
                             <TableCell>
-                              {t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}
-                              {note && (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                                  {note}
-                                </Typography>
-                              )}
+                              {t ? <PlanAmount amount={t.target_amount_lakhs} note={note} /> : "—"}
                             </TableCell>
                             <TableCell>
                               {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <RosterStatusOnly status={p.plan_status} />}
@@ -690,7 +714,9 @@ export default function TargetPlanningScreen() {
                           return (
                             <TableRow key={`${p.user.id}-${q}`}>
                               <TableCell sx={{ pl: 3, color: "text.secondary" }}>{q}</TableCell>
-                              <TableCell>{t ? formatLakhs(Number(t.target_amount_lakhs)) : "—"}</TableCell>
+                              <TableCell>
+                                {t ? <PlanAmount amount={t.target_amount_lakhs} note={previousApprovedNote(t.status, t.previous_approved_total_lakhs)} /> : "—"}
+                              </TableCell>
                               <TableCell>
                                 {t ? <StatusWithNote target={t} sbuHasBrands={rollupSbuHasBrands} /> : <Typography color="text.secondary" variant="body2">Not set</Typography>}
                               </TableCell>
