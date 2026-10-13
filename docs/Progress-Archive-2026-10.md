@@ -2162,3 +2162,28 @@ hospitals). In short:
   taken to 149/150 lines with a new section, no trim offered (P24 +1).
   (7) Watch list: `validate.py` crashed on the Windows console encoding.
   Open list 17 → 19; the cap of 10 isn't in force yet.
+
+## 2026-10-13 — UAT data-quality check; payment collection paper; rep plan wording (Planning & Chores)
+
+- **UAT data-quality check 13 Oct:** reports reviewed by Basheer; not
+  sent to Cabio leadership. Most issues are to be handled by the
+  next-action rules build (BR-OP-21, BR-OP-22, BR-ACT-11, BR-ACT-05
+  change). Both PDFs moved out of `drafts\`; the 11 Oct drafts stay
+  there unreviewed (13 Oct covers the same checks).
+- **Area targets under the SBU target:** parked (Basheer, 13 Oct) — Backlog
+  entry kept, marked parked.
+- **Rep plan wording:** plan and E2E test plan written and approved 13 Oct;
+  build 14 Oct (handover).
+- **Retro.** Checked P14, P23, P69, P70 and the watch list.
+  (1) Pending-work audit said Sales Development Activities, referral credit
+  and support activity were missing from the tracker; they are beyond-contract
+  items 8, 7 and 9 — searched one wording only (P70 +1, Seen 3).
+  (2) Basheer had said "close it" for area targets; asked again for a
+  separate yes before editing (P69 +1, Seen 3). (3) Shell guard blocked a
+  `cd` (P14 +1). (4) Proposed "SBU Plan Rollup" before reading that the
+  section also holds the GM's SBU target box (P23, repeated after merge).
+  New on the watch list: (5) pending list missed the approved, unstarted
+  User Manual and Help Catch-up plan; (6) after the heading decision changed,
+  the wording plan's step 3 still said "SBU Plan Rollup" (fixed the same
+  batch); (7) first Dev query script failed on a guessed database driver.
+  Open list stays at 21, over the cap of 10; process work stays paused.

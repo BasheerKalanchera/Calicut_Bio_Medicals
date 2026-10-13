@@ -6,11 +6,22 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Untracked plan doc from another session (Forecast): leave it out of commits.
   At its review, update its line 110 to BR-FIN-09.
 
-## UAT data-quality check 2026-10-11 — drafts awaiting Basheer
+## Payment collection and cycle time — paper drafted 2026-10-13
 
-- Both 11 Oct drafts in `C:\Backups\CabioUAT\data_consistency_reports\drafts\`.
-  **Next:** on approval, move them up and add the result to the
-  Progress-Archive 2026-10-11 entry (script fix `738829e`).
+- Latheef Bhai's 13 Oct ask: `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`
+  (Draft; Q1–Q6 proposed). Traceability beyond-contract "Requested" row 3
+  + notes on 11.1 and 13.2. **Next:** Basheer answers Q1–Q6 (some go to
+  Haroon / Latheef Bhai).
+
+## Rep plan wording — plan approved 2026-10-13, build 2026-10-14
+
+- Plan: `docs/Rep-Plan-Wording-Implementation-Plan.md` (Approved; all
+  decisions Basheer's). Test plan: `docs/Rep-Plan-Wording-Manual-E2E-Test-Plan.md`
+  (11 steps, no saves; data checked on Dev 2026-10-13).
+- **Next:** build step 1 (screen wording + server messages + 5 tests),
+  then code review and the test plan's pre-flight.
+- Also: User Manual and Help Catch-up plan (approved 2026-10-01, not
+  started) must land before the next UAT move.
 
 ## Process consolidation — plan approved 2026-10-08, building
 
@@ -84,4 +95,4 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Weekly Follow-up / My Work — plan drafted 2026-10-11
 - `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; D2 (My Work) and D6 (30 days) decided `8f781dc`. **Next:** BR-OP-20 / BR-OP-06 wording shown to Basheer first, then the other proposed decisions.
 ## Next-action rules — all questions answered 2026-10-12
-- `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` section 5a; rules in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11, BR-ACT-05 change); separate plan chosen (Q11). Q10: a Note carries a new hospital's first next action. **Next:** write the plan (own approval).
+- `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` section 5a; rules in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11, BR-ACT-05 change); separate plan chosen (Q11). Q10: a Note carries a new hospital's first next action. Expected to fix most issues in the UAT data-quality reports (Basheer, 2026-10-13) — the plan lists which report sections it should clear. **Next:** write the plan (own approval).

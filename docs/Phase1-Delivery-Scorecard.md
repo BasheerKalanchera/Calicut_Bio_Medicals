@@ -5,7 +5,7 @@
 
 ## Summary
 
-Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **18 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **2 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
+Of **50** signed requirements: **34 done, 11 partly done, 5 not started** — plus **18 additional features built beyond the signed contract**: some requested by the Cabio leadership team for immediate business needs, others added by our team to make the system safer and easier to use (see "Commitment beyond contract" at the end). **3 more have been requested by Cabio leadership and are pending to build** (see "Requested" below that), and **1 more has been proposed but not yet decided** (see "Pending").
 
 | Done | Partly done | Not started | Commitment beyond contract |
 | :---: | :---: | :---: | :---: |
@@ -156,6 +156,7 @@ Asked for by Cabio leadership beyond the signed scope and confirmed to build; no
 | :---: | :--- | :--- |
 | 1 | Marketing staff can see at a glance which of their leads have new comments from the sales team. | Requested by Haroon and Latheef Bhai at the 24 Sep demo. On hold until mid-October, while the team uses lead comments; not yet built. |
 | 2 | A quarterly pipeline report for each brand vendor (SonoScape first, then EDAN and others), in that vendor's own Excel layout, which Admin/GM can download themselves. Not in the signed Phase 1 scope; the closest item in the future-phases list is 17.3, Vendor/OEM Management. | Requested by Haroon, 26 Sep. This quarter's SonoScape report will be prepared by us once the pipeline data is corrected; the in-app download is not yet built. |
+| 3 | Tighter control of payment collection: each order's payment terms (when each payment is due), and automatic reminders when a payment is late — to the salesperson, their manager and the sales head, and optionally the accounts team — so no payment stays overdue beyond 60 days. Not in the signed Phase 1 scope, which leaves payments and collections to Finance's own system. | Requested by Latheef Bhai, 13 Oct. Shape still being discussed with Cabio leadership, including which parts belong to Phase 1 and which to Phase 2; not yet built. `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`. |
 
 ### Pending — proposed, not yet built
 

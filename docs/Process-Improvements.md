@@ -18,7 +18,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 16 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 17 | open |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
@@ -27,7 +27,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
-| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 11 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 (×2); repeated after merge 2026-10-11 |
+| P23 | Before a doc describes what a screen does today, read that screen's code | 2026-10-06 | 12 | merged (CLAUDE.md "Verify before claiming", 2026-10-08; repeated after merge, 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 (×2); repeated after merge 2026-10-11; repeated after merge 2026-10-13 |
 | P24 | After each handover-note edit, check its line count; if it recurs, a save-time check; offer a trim before adding a section | 2026-10-06 | 5 | open |
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
@@ -59,8 +59,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 4 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
 | P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 2 | open |
-| P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice) | 2026-10-11 | 2 | open |
-| P70 | Before proposing a new Backlog item or saying something isn't written elsewhere, search the Backlog and docs under several wordings (was watch-list P52; 2026-10-12: proposed a "new" item for the screen "deal" wording, missing the 7 Oct entry) | 2026-10-09 | 2 | open |
+| P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 3 | open |
+| P70 | Before proposing a new Backlog item or saying something isn't written elsewhere, search the Backlog and docs under several wordings (was watch-list P52; 2026-10-12: proposed a "new" item for the screen "deal" wording, missing the 7 Oct entry; 2026-10-13: audit called beyond-contract items 7–9 missing from the tracker) | 2026-10-09 | 3 | open |
 
 ## Watch list
 
@@ -91,6 +91,9 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-11 | 2026-10-11 | — | Docs-only changes are held for the batch, even when a commit is asked for or the session is closing; say so instead of committing (`8f781dc`, `63b5d0f` committed one by one) |
 | 2026-10-12 | 2026-10-12 | — | Run the Word/Office skill scripts with UTF-8 output from the start (`PYTHONIOENCODING=utf-8`); `validate.py` crashed on the Windows console encoding |
 | 2026-10-12 | 2026-10-12 | — | A fix to a figure checks every view that shows the same figure, so they all read alike (I2: fixed Vivek's My Target total, not the rows' "approved still counts" note until Basheer asked) |
+| 2026-10-13 | 2026-10-13 | — | A list of pending work includes every plan whose status is Approved and not finished (missed the User Manual and Help Catch-up plan) |
+| 2026-10-13 | 2026-10-13 | — | When a decision changes inside a plan, update every line of that plan that says the old wording (step 3 still said "SBU Plan Rollup") |
+| 2026-10-13 | 2026-10-13 | — | A new Dev query script copies its connection set-up from an existing project script, not a guessed database driver (`psycopg` failed) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

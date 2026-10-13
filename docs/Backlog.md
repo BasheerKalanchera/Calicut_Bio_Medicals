@@ -142,7 +142,11 @@ Decisions). Target & Coverage Planning still calls a rep's plan their
 To decide: rename across the app (screen, messages, manual/help), or leave
 as is. Wording only; no data change.
 
-### Area targets under the SBU target — undecided (2026-10-09)
+### Area targets under the SBU target — parked (Basheer, 2026-10-13)
+
+**Parked 2026-10-13:** not happening now (Basheer). Reopen only if
+leadership asks for per-area figures.
+
 
 Raised at the Target vs Actuals E2E (D6): should the GM or SBU Manager
 split each SBU's quarterly target into a target per area (e.g. Imaging
@@ -151,7 +155,7 @@ measured against their own figure? Not built: it needs a new stored
 figure, a screen to enter it, and a rule for area figures that don't add
 up to the SBU target. Meanwhile Area Managers see the whole SBU target
 against their team's own totals ("Your team" row; Plan-vs-Actuals plan,
-step 6c). To decide: build area targets, or keep the share view only.
+step 6c). The share view stays as is.
 
 ### Target Planning: screen keeps its own copy of who sees the SBU target — not started (2026-10-10)
 
@@ -578,35 +582,14 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   still to confirm); parked until Target vs Actuals is done — detail in
   the discussion note, section 7.
 
-- **Payment Pending list for Finance (Basheer, 2026-10-03; undecided shape).**
-  At Cabio the rep owns payment collection (relationship with the hospital),
-  but Finance does follow-up calls — and Finance doesn't use Sales OS. Once
-  BR-OP-17 is live, Opportunities at Payment Pending are exactly the "PO
-  received, not yet fully paid" list Finance needs. Options: a periodic export
-  (Excel) sent to Finance, or a read-only in-app list for a Finance login. Not
-  in the signed requirements (PRD Appendix B.5 keeps Payment/Collections in
-  Finance's system), so it's beyond-contract work. Decide with Haroon whether
-  Finance would use it, and which shape. Related open question on Finance
-  access: Opportunity Support Attribution entry below.
-
-- **Stall-alert time limit for the new Payment Pending stage (Basheer,
-  2026-10-03; value undecided).** The automatic stall alerts (BR-OP-06,
-  signed requirement 13.2 "Automated stagnant-deal alerts", Partial) have
-  per-stage limits agreed by Haroon 2026-09-14 — but Payment Pending
-  (BR-OP-17) didn't exist then, so it has none. When 13.2 is built, seed a
-  Payment Pending limit so overdue collections alert the rep and their
-  manager. Suggested 30 or 45 days; Haroon to choose.
-
-- **Retention amounts and "fully paid" (Basheer, 2026-10-12; undecided).**
-  Some hospital orders let the customer hold back part of the payment
-  (a retention amount) until warranty or performance terms are met, often
-  a year or more after delivery. BR-OP-17 marks Won only after full payment,
-  so such an Opportunity would sit at Payment Pending for that whole time.
-  Ask Haroon: how common are retention clauses at Cabio, and should "fully
-  paid" mean everything except an agreed retention amount? Answer it
-  together with the Payment Pending stall limit above. Raised while
-  reviewing the "Operational and Financial Levers Roadmap" Word document,
-  2026-10-12.
+- **Payment collection: overdue alerts, Finance list, retention, payment
+  terms per order — moved to a discussion paper 2026-10-13.** Latheef Bhai
+  asked for overdue-payment control (13 Oct); his 60-day instruction answers
+  the Payment Pending stall-limit value (was 30 or 45 days, Haroon to
+  choose). The three earlier entries (Finance list, Payment Pending stall
+  limit, retention and "fully paid") are now its questions 3, 1–2 and 6.
+  Detail: `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`;
+  Traceability beyond-contract row 3.
 
 - **Stage changes only by closing a next action (Basheer, 2026-10-12;
   parked until the team is comfortable with BR-OP-22).** Today's agreed
