@@ -62,8 +62,9 @@ on UAT.
   Progress-Archive 2026-10-08; report
   `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-Check-2026-10-08.pdf`.
 - **Prevention:** `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft, awaiting Basheer) — Part A button fix as a UAT hotfix; then
-  fewer false alarms, "Lifeline" = "Life Line", database rule.
+  (Draft) — Part A button fix built first on Dev, to UAT with the next
+  full move (Basheer, 2026-10-13); then fewer false alarms, "Lifeline" =
+  "Life Line", database rule.
 - **Clean-up (not planned yet):** per pair, field team confirms → own
   plan per merge (Opportunities, visits, contacts move; fresh UAT backup;
   Basheer runs it). S M Diagnostic first (two salespeople on one sale).
@@ -281,7 +282,7 @@ data-quality check.
   the Plan vs Actuals E2E. (The Weekly-Follow-up-Report draft was replaced
   by `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` and deleted
   2026-10-11.) (The third, Opportunity-Create-Form-Unification, was
-  replaced by `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+  replaced by `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`
   and deleted 2026-10-09.)
 
 ### Audit trigger: skip a missing parent only on DELETE — parked (found 2026-10-03)
@@ -545,7 +546,7 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   the PO Date gate (Order → Delivery and Won), those two forms can't create
   an Opportunity at Delivery or later: the save is refused for a missing
   PO Date. Create at Order or earlier, then move it on from the Opportunity
-  page. The merge (`docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`,
+  page. The merge (`docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`,
   D11) brings the box to every create form; drop this entry when it ships.
 
 - **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard

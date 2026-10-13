@@ -3,6 +3,8 @@ _Only the task actively in progress and its immediate next step. Limit 150
 lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog._
 
+- Build & Test session: ignore due-today reminders; the planning and
+  chores session handles them (Basheer, 2026-10-13).
 - Untracked plan doc from another session (Forecast): leave it out of commits.
   At its review, update its line 110 to BR-FIN-09.
 
@@ -44,16 +46,28 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md` (results per
   step). History: Progress-Archive-2026-10; follow-ups: Backlog "Target
   vs Actuals: follow-ups after the combined E2E".
-- Combined E2E on Dev: P1–J6 done except J1, J2, J5 and section K. Last
-  fix `24c05d5` (I2, pushed 2026-10-12). **Next:** J1 as Rudrappa, then
-  J2 (Fahad), J5 (Basheer K), then section K.
+- Combined E2E on Dev finished 2026-10-13: P1–K39 all Pass (Progress-
+  Archive 2026-10-13). Order decided 2026-10-13 (plan step 7): demo to
+  Haroon and Latheef Bhai on Dev → UAT move (promotion plan to write,
+  own approval) → card redesign 6d after sales-team feedback.
+  Demo script: `docs/Demo-2026-10-Haroon-Latheef.md`. **Next:** Basheer
+  fixes the demo date with Haroon and Latheef Bhai (WhatsApp drafted).
 
-## Duplicate hospitals — fix plan drafted 2026-10-08, awaiting Basheer
+## Duplicate hospitals — Part A next (Build & Test)
 
 - Plan: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft); its proposed decisions wait on Basheer.
-- **Next:** decisions marked → Part A on `hotfix/create-anyway-guard`
-  from `uat`, starting with the plan's "What could be affected" list.
+  (Draft). 2026-10-13: Part A built on Dev, to UAT with the next full
+  move; covers "Change Anyway"; no interim message. Parts B–D not
+  scheduled.
+  Test plan: `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`.
+- **Next (2026-10-14, Build & Test):** (1) Rep plan wording (section
+  above); (2) Part A, A1 on `main`; (3) the whole Win Probability plan,
+  steps 1–3; (4) write the next-action rules plan (own approval). All go
+  to UAT with the next full move. Check in before each.
+- **Overlap:** items 3 and 4 both change the "New Opportunity" form; the
+  next-action rules are built after the form merge (Win Probability step
+  2), into one form instead of three. Recorded in the next-action paper,
+  section 5a, Question 11.
 
 ## Query load fixes — approved 2026-10-06, fix 4 due Mon 2026-10-12
 
@@ -76,9 +90,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   plan's step 5 has the pre-move cautions. Then the post-commit
   checklist.
 
-## Opportunity chance rules + one create form — plan approved 2026-10-10
+## Win Probability rule + one create form — plan approved 2026-10-10
 
-- Plan: `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+- Plan: `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`
   — Approved 2026-10-10, D1–D17 all decided (history: Progress-Archive
   2026-10-09 and 2026-10-10). BR-OP-19 (Active Opportunity, chance ≥ 50 %
   before Negotiation, needs an Expected Closure Date) in Business-Rules +

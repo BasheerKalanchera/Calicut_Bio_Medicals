@@ -10,14 +10,13 @@ report `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-
 
 ## Decisions
 
-- Part A (the button fix) goes to UAT straight away by the "fix to UAT
-  ahead of a full promotion" route, on its own; Parts B–D follow later
-  — proposed
+- Part A (the button fix) is built first, on Dev, and reaches UAT with
+  the next full move from Dev together with everything else waiting; no
+  separate hotfix trip — decided (Basheer, 2026-10-13)
 - Part A also covers the "Change Anyway" button on the hospital page
-  (renaming a hospital), which has the same gap — proposed
-- Until Part A is on UAT, Haroon tells the field team: after pressing
-  "Create Anyway", wait for the form to close; never press it twice —
-  proposed
+  (renaming a hospital), which has the same gap — decided (Basheer,
+  2026-10-13)
+- No interim message to the field team — decided (Basheer, 2026-10-13)
 - Part B (fewer false alarms): ignore town and area names when they are
   the only match, using a list of place names — proposed; the list is
   chosen after testing both options in step B1 (see section 1)
@@ -48,7 +47,7 @@ Most of those were genuinely new hospitals that only shared a town name
 with another hospital. When most warnings are false alarms, people stop
 reading them — which is how the real duplicates got through.
 
-**Part A — the button (urgent, UAT first).** "Create Anyway" and the main
+**Part A — the button (built first).** "Create Anyway" and the main
 Create button both grey out and show "Saving..." while a save is in
 progress, so only one save can be sent. The same for "Change Anyway" when
 renaming a hospital. If the save fails, the error shows on the form
@@ -80,26 +79,23 @@ switched on, exact copies must be removed: on UAT that is the two empty
 Radians copies (no Opportunities, visits or contacts). A read-only check
 on Dev and UAT lists any others first.
 
-**Where each part lands.** Part A: UAT first (hotfix), then merged back
-into `main`. Parts B–D: built and tested on Dev, then to UAT with the next
-full promotion — or as a second hotfix if you want them sooner. Part D
-needs a database change on UAT, applied after a fresh backup.
+**Where each part lands.** Every part is built and tested on Dev, then
+reaches UAT with a full promotion. Part A goes with the next one, after
+the Haroon and Latheef Bhai demo (Basheer, 2026-10-13). Part D needs a
+database change on UAT, applied after a fresh backup.
 
 ## 2. Build order
 
-**Part A — hotfix, UAT first**
-- A1. Branch `hotfix/create-anyway-guard` from `uat`. Grey out both
-  buttons while saving; show save errors on the form. Same on the rename
-  warning. Type check, lint, frontend build.
-- A2. Basheer tests on the local app against Dev: press "Create Anyway"
-  several times quickly; exactly one hospital is created. This leaves one
-  test hospital, "Test duplicate guard", on the shared Dev database — the
-  app has no way to delete a hospital, so it stays (renamed "zz Test" if
-  you prefer).
-- A3. Commit (own approval), merge into `uat`, deploy (own approval);
-  Basheer opens the New Customer form once on UAT.
-- A4. Merge `uat` back into `main` (after the Query Load trip 3 merge-back,
-  which is still open, so the two don't tangle).
+**Part A — on Dev, UAT with the next full move**
+- A1. On `main`: grey out both buttons while saving; show save errors on
+  the form. Same on the rename warning. Type check, lint, frontend build.
+- A2. Pre-E2E review, then the manual E2E
+  (`docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`).
+  It leaves two test hospitals, "zz Test duplicate guard" and "zz Test
+  duplicate guard 2", on the shared Dev database — the app has no way to
+  delete a hospital, so they stay.
+- A3. Commit (own approval); reaches UAT with the next full promotion,
+  where Basheer opens the New Customer form once.
 
 Nothing stops working on Dev or UAT during Part A.
 
@@ -159,12 +155,12 @@ refused as it is today, just more reliably.
 ## 6. Technical addendum
 
 - **Part A:** `sales-os-app/src/components/AddHospitalModal.tsx` —
-  `handleCreateAnyway` (no `disabled`, no catch; line 198 on `uat`);
+  `handleCreateAnyway` (no `disabled`, no catch; button at line 198 on `main`);
   disable it and FormModal's submit while `createMutation.isPending`
   (FormModal has no prop for that today — add `submitDisabled?` or keep
   the warning's own button state; settle at build). Catch errors and show
   them in the modal. `sales-os-app/src/screens/Customer360Screen.tsx` —
-  `handleRenameAnyway` / "Change Anyway" (line 1380 on `uat`), same
+  `handleRenameAnyway` / "Change Anyway" (lines 1086, 1397 on `main`), same
   treatment. No backend change.
 - **Part B:** `backend/app/domains/account/duplicate_matching.py` —
   `score_query_containment`: matched place-name tokens don't count

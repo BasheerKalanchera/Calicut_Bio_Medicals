@@ -1636,7 +1636,7 @@ hospitals). In short:
   Date; existing Opportunities held to it on their next save; leadership
   chases them meanwhile with the Expected Closure Dates report (UAT 9 Oct:
   24 open Leads above 50 %, 8 at exactly 50 %).
-- **Plan (Draft):** `docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`
+- **Plan (Draft):** `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`
   folds in the create-form merge (Basheer: "kill 2 birds"). Three steps;
   D1–D6 decided, D7–D13 proposed. UAT with the next full promotion,
   together with Target vs Actuals. Code check while drafting: the three
@@ -2163,6 +2163,60 @@ hospitals). In short:
   (7) Watch list: `validate.py` crashed on the Windows console encoding.
   Open list 17 → 19; the cap of 10 isn't in force yet.
 
+## 2026-10-13 — Target vs Actuals E2E finished (J1, J2, J5, section K)
+
+- **Run on Dev** (Build & Test session), results in
+  `docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`: J1, J2, J5 and
+  K1–K39 Pass. The combined E2E is complete; no fixes were needed today.
+- **K6, seen once:** as Haroon, searching "KIMS" on Account Management
+  found nothing until a hard refresh; not reproduced by Basheer
+  afterwards. Cause unknown (the app clears its stored data on sign-out
+  and the search always asks the server). If seen again, capture the
+  browser's request log before refreshing.
+- **K22–K28:** the browser extension disconnected mid-run (the session
+  window also closed); K27–K28 were confirmed by Basheer. For K27–K28 the
+  two windows were swapped from the plan so the message appeared in the
+  tab Claude watched; the test is the same.
+- **K36:** Rudrappa's picker is empty because no Dev hospital is filed in
+  his two Bangalore clusters, which is what the step checks.
+- **Permanent records left on Dev** (approved 2026-10-07): SBU targets
+  2026-Q3 (Imaging ₹100L, Critical Care ₹150L); Fahad's "Test
+  opportunity" (EMS Hospital, ₹1L) Won; Basheer K's 2026-Q3 Al Shifa plan
+  ₹20L with a rejected revision to ₹15L; Rudrappa's 2026-Q3 plan approved
+  by Shruthi; "New USG m/c" closing date 2026-10-01; section K's 2027-Q1
+  plans (Vivek Rejected revision ₹45 / last approved ₹30, Arun ₹30
+  pending, Nishad ₹10 pending), ratings (aster medicity Medium, Test
+  hospital 3 Low, KIMS note "ICU expansion planned (E2E)").
+
+## 2026-10-13 — Target vs Actuals: demo before UAT; session retro (Build & Test)
+
+- **Order decided (Basheer):** demo to Haroon and Latheef Bhai on Dev,
+  then the UAT move with today's card, then the card redesign (step 6d)
+  shaped by the sales team's feedback on UAT. Recorded in the plan's
+  step 7. Both mockups (the chosen 10 Oct one and an outside UI/UX
+  expert's `target-vs-actuals-mockup.html`) and the "own menu item"
+  question go to the sales team in the same round. Demo script:
+  `docs/Demo-2026-10-Haroon-Latheef.md`.
+- **Outside expert's mockup, reviewed:** clean, but partly invented
+  figures (Critical Care Won ₹35L vs ₹0 on Dev), "deal" wording, and no
+  PO received / "haven't submitted" / Pending labels. Worth borrowing:
+  the shortfall figure, the Risks / No Plan filters, and the forecast
+  sum shown per person.
+- **Scope check for the UAT move (read-only, git):** 190 commits and
+  migrations 0055–0061 on `main` not on `uat`; `uat` holds `569209f`
+  (Query Load fix 3), to merge back first. Query Load fix 4 not built.
+  The promotion plan is written after the demo.
+- **Retro.** Checked P8, P14, P24, P66, P68 and the watch list.
+  (1) Asked about the weekly process review more than once after
+  Basheer said this session does build and test only; the instruction
+  was lost when the conversation was condensed → new P71 (Seen 2); fix:
+  a line at the top of the handover note. (2) Shell guard blocked a `cd`
+  and a combined edit command (P14 +1). (3) A transcript print failed on
+  the Windows console encoding — repeat of the 12 Oct watch-list line →
+  new P72 (Seen 2). (4) Four UAT-move decisions put in one message
+  (P66 +1). Open list 19 → 21, over the cap of 10; process work belongs
+  to the planning and chores session.
+
 ## 2026-10-13 — UAT data-quality check; payment collection paper; rep plan wording (Planning & Chores)
 
 - **UAT data-quality check 13 Oct:** reports reviewed by Basheer; not
@@ -2187,3 +2241,42 @@ hospitals). In short:
   the wording plan's step 3 still said "SBU Plan Rollup" (fixed the same
   batch); (7) first Dev query script failed on a guessed database driver.
   Open list stays at 21, over the cap of 10; process work stays paused.
+
+## 2026-10-13 (later) — Duplicate Part A and Win Probability E2E plans; plan rename; session retro (Build & Test)
+
+- **Duplicate hospitals Part A** (Basheer): built on Dev (`main`), reaches
+  UAT with the next full move together with everything else waiting; no
+  hotfix trip; also covers "Change Anyway" (hospital rename); no interim
+  message to the field team. Recorded in
+  `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md` Decisions.
+  Finding: the server already refuses an identical name, but presses
+  arriving at the same instant all pass that check before the first save
+  finishes — that is how the three Radians copies of 5 Oct happened
+  (`exists_by_name` has no lock or unique rule; Part D covers it).
+- **Win Probability rule (and One Create Form):** the whole plan, steps
+  1–3, is built next and goes to UAT with the next full move. Refusal and
+  notice wording decided: "Win Probability is 50% or more but there's no
+  expected closure date - add one." (D18, D14 aligned; BR-OP-19). Plan
+  renamed from "Opportunity Chance And Create Form" — every living-doc
+  link updated.
+- **Next-action rules:** added to tomorrow's list (Basheer). Both plans
+  change the "New Opportunity" form; the next-action rules are built after
+  the form merge (Win Probability step 2), into one form instead of three.
+  Recorded in the next-action paper, section 5a, Question 11, and the Win
+  Probability plan's "Not in this plan".
+- **Tomorrow (2026-10-14):** Rep plan wording → Part A → Win Probability
+  steps 1–3 → write the next-action rules plan.
+- Two E2E test plans written from one read-only Dev check:
+  `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md` (12
+  steps) and `docs/Win-Probability-Rule-and-One-Create-Form-Manual-E2E-Test-Plan.md`
+  (23 steps).
+- **Session retro.** Checked: P55, P45, P66, P24, P69.
+  (1) Misread which plan Basheer meant, twice — wrote only one of the two
+  test plans asked for; read "the whole plan" as the duplicate plan and
+  edited four docs before he corrected it. Watch-list P55 → open list as
+  P73, seen 3. (2) Handover and Backlog edits made without showing first:
+  P45 +1, repeated after merge. (3) Three Part A choices in one message:
+  P66 +1 (6). (4) Asked about renaming a title that already matched: new
+  watch-list line. Fine: handover at 113 lines, under 150 (P24); every
+  decision recorded the same turn (P69). Open list 21 → 22, over the cap
+  of 10; process work stays paused.

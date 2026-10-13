@@ -6,7 +6,7 @@ against those plans on the Insights Dashboard._
 
 **Status:** Approved 2026-09-29 (Basheer; every line in Decisions answered
 the same day). First build on Dev: backend `0f7d75a`, frontend `231fbd0`, review fixes `903ad41`; E2E stopped 2026-10-04 by Basheer (not Done). Redesigned 2026-10-05 — see section 3 "Revised build order". Steps 1–6b built on Dev: `1821c30`, `ebc9613`, `cc4eb91`, `2c189d7`, review fixes `eab65e3`; step 6 `0b503ad`, `23582c1`, `a9e9277`; step 6b `2e2e4c0` (split credit, BR-FIN-09, decided
-2026-10-07). Changes made during the E2E: `cf64cd4` (SBU target shown apart from rep plans), `142b6fb`, `f28b39b`, `a9b3fa3` (card reloads after a plan change). Step 6c `8d4ce27`, `3249aa7`. Step 6d (card layout) decided 2026-10-10, not started. Not Done: combined manual E2E in progress, paused at G3 (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`).
+2026-10-07). Changes made during the E2E: `cf64cd4` (SBU target shown apart from rep plans), `142b6fb`, `f28b39b`, `a9b3fa3` (card reloads after a plan change). Step 6c `8d4ce27`, `3249aa7`. Combined manual E2E finished 2026-10-13, P1–K39 all Pass (`docs/Plan-vs-Actuals-Tracking-Manual-E2E-Test-Plan.md`). Step 6d (card layout) decided 2026-10-10, not started; it now follows the UAT move (Basheer, 2026-10-13, see step 7).
 **Traceability rows:** 3.2 actual-vs-target dashboards (finishes the
 2026-09-24 demo addition); completes 6.1 Beat Planning with Hospital-wise Target Planning.
 **Design / discussion:** `docs/Discussion-Hospital-Wise-Target-Planning-2026-09.md`
@@ -153,12 +153,28 @@ names) follows as a separate pass. The old build order below is superseded.
    only, no server or figure change. tsc, lint, `/code-review` medium;
    re-check the E2E steps that read the card (their "where to look"
    wording updated first); own commit. Whether it is built before the E2E
-   resumes at G3 or after: Basheer to decide.
+   resumes at G3 or after: Basheer to decide. The E2E finished 2026-10-13
+   without it.
+   **Re-check after 6d (Basheer, 2026-10-13):** a reduced, look-only set
+   on the data the E2E left on Dev, nothing saved, not the full run —
+   A1 and A3b (Imaging headline and "x of y haven't submitted", as
+   Admin), C1 and K39 (past and upcoming quarter), D3 and D4 (SBU target
+   rows), G2 (late shared Opportunity under both owners), H3 (former
+   member has no row), J1–J6 (one look each as Rudrappa, Fahad, Shruthi,
+   Vivek, Basheer K, Arun). Each compares the new card with the figure
+   that already passed. About 12 steps, 30–45 minutes.
 7. **UAT move, only after step 6 is built and tested** (Basheer,
    2026-10-05): one combined move (Hospital-wise Target Planning + Target
    vs Actuals + Audit Trail redesign + Target & Coverage roster). Needs a
    UAT backup first and its own approval; the hospital re-filing (step 5
    of the old order below) and close-date items still apply.
+   **Order (Basheer, 2026-10-13):** demo to Haroon and Latheef Bhai on
+   Dev first; then the move to UAT with the card as it is today; then
+   step 6d, shaped by the sales team's feedback on UAT. Two mockups go
+   to them: the chosen `docs/Target-vs-Actuals-Layout-Mockup-2026-10-10.html`
+   and an outside UI/UX expert's version (`target-vs-actuals-mockup.html`,
+   repo root, untracked). Whether Target vs Actuals gets its own menu
+   item is asked in the same round.
 
 ### Old build order (superseded)
 

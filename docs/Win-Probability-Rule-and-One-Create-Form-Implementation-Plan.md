@@ -1,4 +1,4 @@
-# Opportunity Chance Rules and One Create Form — Implementation Plan
+# Win Probability Rule (and One Create Form) — Implementation Plan
 
 **Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Not started.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
@@ -48,8 +48,9 @@ useful points are folded in and it was deleted 2026-10-09.
 - D13. Editing stays on the Opportunity page; this plan does not merge the
   edit form with the create form — Basheer, 2026-10-09
 - D14. An Opportunity already over the limit shows a notice on its page
-  until fixed: "Chance is 50 % or more but there's no expected closure
-  date — add one." It does not block anything; it covers Opportunities
+  until fixed: "Win Probability is 50% or more but there's no expected
+  closure date - add one." (wording aligned with D18, Basheer
+  2026-10-13). It does not block anything; it covers Opportunities
   nobody re-saves (D4, D9) — Basheer, 2026-10-09
 - D15. Clinical Evaluation's standard chance is 55 % (Seed-Data.sql; UAT
   confirmed 2026-10-10), so every Opportunity at Clinical Evaluation needs
@@ -66,6 +67,9 @@ useful points are folded in and it was deleted 2026-10-09.
   "Fast-Track this Opportunity" on the merged form (step 2) and on the
   Opportunity page (both carry it today; the two inline forms go in
   step 2); the only "Deal" text on either form — Basheer, 2026-10-10
+- D18. The BR-OP-19 refusal reads "Win Probability is 50% or more but
+  there's no expected closure date - add one.", word for word the same
+  from the server and on the create form — Basheer, 2026-10-13
 
 ## 1. In plain terms
 
@@ -176,6 +180,13 @@ From the code search, 2026-10-09 (D15–D17 came out of it):
 
 ## 4. Not in this plan (with reasons)
 
+- **Next-action rules (BR-OP-21 and the rest):** their own plan, built
+  after this plan's step 2, so "a new Opportunity starts with an
+  activity" goes into the one merged create form instead of three (order
+  recorded 2026-10-13 in
+  `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`,
+  section 5a, Question 11).
+
 - **Merging the edit form with the create form:** creating shows fields
   stage by stage; editing must show every saved field so nothing appears
   lost, and products and stage moves on the Opportunity page have their
@@ -204,8 +215,7 @@ From the code search, 2026-10-09 (D15–D17 came out of it):
 - **Server (step 1):** in `OpportunityService.create_opportunity` and
   `update_opportunity`, after the merged values are known: stage
   `display_order` below Negotiation's, `win_probability >= 50`, no
-  `expected_closure_date` → `BusinessRuleViolation` with the BR-OP-19
-  message. Tests in the opportunity domain's service tests (create, update,
+  `expected_closure_date` → `BusinessRuleViolation` with the D18 text. Tests in the opportunity domain's service tests (create, update,
   boundary 49/50, Negotiation unaffected, REPEAT_ORDER and gate override
   still held (D8)).
 - **Opportunity page (step 1):** `OpportunityDetailScreen.tsx` Stage
@@ -232,5 +242,6 @@ From the code search, 2026-10-09 (D15–D17 came out of it):
   2026-10-04 draft.
 - **Rule on the form (step 3):** `QuickLeadModal.tsx` closure-date
   condition (`:546`) also shows the box when the chance is 50 % or more;
-  a client-side message mirrors the server's.
+  `handleSubmit` throws the same D18 text before sending, as it does
+  for PO Date (`:315–319`).
 - No migration; no schema change.

@@ -118,100 +118,102 @@ Fahad moves the stages and marks it Won (corrected 2026-10-10 from "Haroon marks
 
 ## J — Hide checks (read-only, Imaging/Critical Care 2026-Q3)
 
-1. [Complex: cross-role, hide check] Rudrappa. **Expected:** only his own row; "Total (your view)"; no SBU target box. —
-2. [Complex: cross-role, hide check] Fahad. **Expected:** only Fahad. —
+1. [Complex: cross-role, hide check] Rudrappa. **Expected:** only his own row; "Total (your view)"; no SBU target box. — **Pass** 2026-10-13 (Claude drove; backend restarted after `24c05d5`). Card, Imaging 2026-Q3: only Rudrappa (Approved ₹10.0L, everything else ₹0.0L, 0 %); "0 of 1 haven't submitted"; no SBU picker or SBU target table; zone "Not attached to a zone" ₹10.0L; footer "Total (your view)"; brand SonoScape ₹10.0L.
+2. [Complex: cross-role, hide check] Fahad. **Expected:** only Fahad. — **Pass** 2026-10-13 (Claude drove; Fahad now shows as Sales Staff, Mangalore, Imaging — back from Marketing User, so the hide check is unchanged). Card, Imaging 2026-Q3: only Fahad ("1 past closing date", Not started, plan —, PO received ₹1.0L, Won ₹1.0L, Expected ₹14.0L, Likely ₹15.0L); "1 of 1 haven't submitted"; Won tile "No plan to compare with"; no SBU picker or SBU target table; zone North Kerala Won ₹1.0L; footer "Total (your view)".
 3. [Complex: cross-role, hide check] Shruthi. **Expected:** Shruthi + Rudrappa; not Fazal, Fahad or Basheer K. — **Pass** 2026-10-12 (Claude drove, run early while signed in as Shruthi after H4; Basheer agreed the new order). Card: rows Rudrappa (Approved ₹10.0L) and Shruthi only; "1 of 2 haven't submitted"; "Your team" row against the SBU target ₹100.0L; footer "Total (your view)". Target Planning also lists only those two.
 4. [Complex: cross-role, hide check] Vivek, Critical Care. **Expected:** only Vivek; no Imaging card; "New USG m/c" not listed. — **Pass** 2026-10-12 (Claude drove). Card: only Vivek (Pending ₹51.0L, "was ₹60.0L approved"), "0 of 1 haven't submitted", no SBU picker, no SBU target table, Expected ₹0.0L, no late line; footer "Total (your view)".
-5. [Complex: cross-role, hide check] Basheer K, Imaging. **Expected:** no Haroon row; SBU row still SBU-wide. —
+5. [Complex: cross-role, hide check] Basheer K, Imaging. **Expected:** no Haroon row; SBU row still SBU-wide. — **Pass** 2026-10-13 (Claude drove). Card, Imaging 2026-Q3: five rows — Basheer K (Rejected ₹20.0L "approved, still counts", Won ₹18.0L, 90 %), Fahad, Fazal, Rudrappa (Approved ₹10.0L), Shruthi — no Haroon row; "3 of 5 haven't submitted"; footer "Total (your view)". SBU row: SBU target ₹100.0L, Team plans ₹30.0L, Plans vs SBU target 30 %, PO received ₹1.0L, Won ₹19.0L, 19 % — the same as Admin's Imaging totals (H4: Team plans ₹30.0L; Won ₹18.0L + Fahad's ₹1.0L from E). Headline Expected ₹32.2L vs Admin's ₹67.2L (G4b): the ₹35.0L gap is Haroon's row, hidden from Basheer K as at the 2026-10-07 data check (₹31.5L vs ₹66.5L). Limit: Haroon has no Imaging plan, PO or win in 2026-Q3, so the screen alone can't tell an SBU-wide row from a team row; the code confirms it is SBU-wide (`planning/service.py` `summary_totals(..., sbu_id=sbu_id)`, not the caller's team).
 6. [Complex: cross-role, hide check] Arun. **Expected:** Arun + Vivek; not Nishad. — **Pass** 2026-10-12 (Claude drove). Card, Critical Care 2026-Q3: rows Arun Adarsh (Approved ₹50.0L) and Vivek (Pending ₹51.0L, "was ₹60.0L approved") only; "0 of 2 haven't submitted"; Team plans ₹101.0L; "Your team" row against ₹150.0L; footer "Total (your view)".
 
 ## K — Hospital-Wise Target Planning re-run (quarter 2027-Q1, Apr–Jun 2027)
 
 Steps 1–38 follow `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`, adapted: quarter 2027-Q1; hospitals are already re-filed and rated, so the rating steps use aster medicity and rating changes; step 12 reflects the team list (step 6); step 27 runs with both windows as Arun (only the rep's own manager gets the buttons); step 30 checks an older plan read-only; messages are today's wording. Step 39 links back to the card.
 
+**Re-check before K1 (2026-10-13, read-only on Dev, as Admin with all three RLS settings verified, counts matched the admin connection; 0 writes; session 8a4b11fd scratchpad `k_precheck_out2.txt`):** no difference from the assumptions above. 2027-Q1 has no plans. Ratings: KIMS High (note "ICU expansion planned next year"), Test hospital 2 Medium, Test hospital 3 Low, aster medicity, Al Shifa and Aster DM Not rated (28 hospitals Not rated in all). Hospital pickers: Vivek exactly KIMS, Test hospital 2, Test hospital 3; Arun 5 (incl. KIMS and aster medicity, not Al Shifa); Nishad 19 (incl. Al Shifa, not KIMS); Basheer K, Haroon and Abdul Latheef all 31; Rudrappa none (his zones Cluster 1 and Cluster 2 hold no hospitals). Managers unchanged: Vivek → Arun; Arun and Nishad → Haroon.
+
 ### Rate Hospitals (as Haroon)
 
-1. [Simple] Open **Rate Hospitals**. **Expected:** filtered to "Not rated yet"; aster medicity listed, KIMS not (already High); each row has a rating, a note box and a greyed-out **Save**. —
-2. [Simple] On aster medicity pick **High**, don't Save; change the filter to "All ratings" and back. **Expected:** still Not rated. —
-3. [Simple] Pick **Medium**, note "E2E rating", **Save**. **Expected:** leaves "Not rated yet"; filter Medium shows it with the note. —
-4. [Simple] Change Test hospital 3 to **Medium**, Save; then back to **Low**, Save. **Expected:** Low. —
-5. [Simple] On KIMS change only the note to "ICU expansion planned (E2E)", Save. **Expected:** filter High shows KIMS with the new note. —
+1. [Simple] Open **Rate Hospitals**. **Expected:** filtered to "Not rated yet"; aster medicity listed, KIMS not (already High); each row has a rating, a note box and a greyed-out **Save**. — **Pass** 2026-10-13 (run by Basheer, as Haroon).
+2. [Simple] On aster medicity pick **High**, don't Save; change the filter to "All ratings" and back. **Expected:** still Not rated. — **Pass** 2026-10-13 (run by Basheer, as Haroon).
+3. [Simple] Pick **Medium**, note "E2E rating", **Save**. **Expected:** leaves "Not rated yet"; filter Medium shows it with the note. — **Pass** 2026-10-13 (run by Basheer, as Haroon; permanent rating on Dev).
+4. [Simple] Change Test hospital 3 to **Medium**, Save; then back to **Low**, Save. **Expected:** Low. — **Pass** 2026-10-13 (run by Basheer, as Haroon).
+5. [Simple] On KIMS change only the note to "ICU expansion planned (E2E)", Save. **Expected:** filter High shows KIMS with the new note. — **Pass** 2026-10-13 (run by Basheer, as Haroon; old note was "ICU expansion planned next year").
 
 ### Who sees ratings and notes
 
-6. [Simple] As Haroon, KIMS's customer page. **Expected:** **High** chip and the note. —
-7. [Simple] As Vivek: no **Rate Hospitals** in the menu; KIMS's page shows **High** but no note. —
-8. [Complex: direct API call] Vivek's session: `PATCH /accounts/{KIMS}/business-potential` with KIMS's current values → **403** "Only Admin/GM may rate a hospital's Business Potential." (Basheer pastes it in the console). —
+6. [Simple] As Haroon, KIMS's customer page. **Expected:** **High** chip and the note. — **Pass** 2026-10-13 (run by Basheer, as Haroon). Seen once: searching "KIMS" on Account Management first found nothing; after a hard refresh it was found, with High and the new note. Basheer couldn't make it happen again; not reproduced. The code wipes stored data on sign-out and the search always asks the server, so the cause isn't known.
+7. [Simple] As Vivek: no **Rate Hospitals** in the menu; KIMS's page shows **High** but no note. — **Pass** 2026-10-13 (run by Basheer, as Vivek).
+8. [Complex: direct API call] Vivek's session: `PATCH /accounts/{KIMS}/business-potential` with KIMS's current values → **403** "Only Admin/GM may rate a hospital's Business Potential." (Basheer pastes it in the console). — **Pass** 2026-10-13 (Basheer pasted, Vivek's session; body = KIMS's current values HIGH / "ICU expansion planned (E2E)"): 403.
 
 ### Vivek's draft
 
-9. [Simple] As Vivek, **Target & Coverage Planning**, quarter **2027-Q1**. **Expected:** no target; a **Plan** button. —
-10. [Simple] **Plan**, open the hospital picker. **Expected:** only KIMS, Test hospital 2 and Test hospital 3, each with its rating chip; "Al Shifa" and "aster medicity" find nothing. —
-11. [Simple] Add all three at **₹0**. **Expected:** KIMS a red warning, Test hospital 2 and 3 yellow; total ₹0.00L. **Save draft** → Draft. —
-12. [Complex: cross-role, hide check] As Arun, 2027-Q1. **Expected:** Vivek's plan not in Needs Your Approval; the team list shows Vivek "Draft" with the amount "—" and no hospitals. —
+9. [Simple] As Vivek, **Target & Coverage Planning**, quarter **2027-Q1**. **Expected:** no target; a **Plan** button. — **Pass** 2026-10-13 (run by Basheer, as Vivek).
+10. [Simple] **Plan**, open the hospital picker. **Expected:** only KIMS, Test hospital 2 and Test hospital 3, each with its rating chip; "Al Shifa" and "aster medicity" find nothing. — **Pass** 2026-10-13 (run by Basheer, as Vivek).
+11. [Simple] Add all three at **₹0**. **Expected:** KIMS a red warning, Test hospital 2 and 3 yellow; total ₹0.00L. **Save draft** → Draft. — **Pass** 2026-10-13 (run by Basheer, as Vivek; draft saved on Dev).
+12. [Complex: cross-role, hide check] As Arun, 2027-Q1. **Expected:** Vivek's plan not in Needs Your Approval; the team list shows Vivek "Draft" with the amount "—" and no hospitals. — **Pass** 2026-10-13 (Claude drove, as Arun). Needs Your Approval lists only Vivek's older 2026-Q3 revision (₹51.0L, was ₹60.0L — it shows every quarter's pending plans), not the 2027-Q1 draft. SBU Target Rollup 2027-Q1: "Total: ₹0.0L · 2 of 2 haven't submitted"; Arun "Not started"; Vivek "Draft", hospitals "—", amount "—", no expand arrow.
 
 ### Submit (as Vivek)
 
-13. [Simple] Reopen the draft: KIMS **₹30** (Weekly, objective Demo new ventilator), Test hospital 2 **₹15** (Monthly), Test hospital 3 **₹0** (Quarterly). **Expected:** total ₹45.00L; KIMS's red warning goes; Test hospital 3's yellow stays; no change-note box. —
-14. [Simple] Brand split **EDAN ₹40**, **Submit for approval**. **Expected:** blocked: "Your brand amounts add up to ₹40.00L, but the plan total is now ₹45.00L. Add ₹5.00L more before submitting." EDAN **₹45**, Submit → **Pending Approval**. —
+13. [Simple] Reopen the draft: KIMS **₹30** (Weekly, objective Demo new ventilator), Test hospital 2 **₹15** (Monthly), Test hospital 3 **₹0** (Quarterly). **Expected:** total ₹45.00L; KIMS's red warning goes; Test hospital 3's yellow stays; no change-note box. — **Pass** 2026-10-13 (run by Basheer, as Vivek).
+14. [Simple] Brand split **EDAN ₹40**, **Submit for approval**. **Expected:** blocked: "Your brand amounts add up to ₹40.00L, but the plan total is now ₹45.00L. Add ₹5.00L more before submitting." EDAN **₹45**, Submit → **Pending Approval**. — **Pass** 2026-10-13 (run by Basheer, as Vivek; plan submitted on Dev).
 
 ### Same-SBU overlap
 
-15. [Simple] As Arun, 2027-Q1, **Plan**: KIMS **₹20**, aster medicity **₹10**. **Expected:** a warning on KIMS naming Vivek. EDAN ₹30, Submit → Pending Approval (warning doesn't block). —
-16. [Simple] As Nishad, 2027-Q1, **Plan**: Al Shifa Hospital Perinthalmanna **₹10**, EDAN ₹10, Submit → Pending Approval. —
-17. [Complex: direct API call] `GET /planning/targets/overlaps` for Al Shifa, Critical Care, 2027-Q1 in Vivek's, Arun's and Haroon's sessions. **Expected:** Vivek and Arun empty; Haroon one `SAME_SBU_OVERLAP` naming Nishad K V. —
+15. [Simple] As Arun, 2027-Q1, **Plan**: KIMS **₹20**, aster medicity **₹10**. **Expected:** a warning on KIMS naming Vivek. EDAN ₹30, Submit → Pending Approval (warning doesn't block). — Warning seen 2026-10-13 (run by Basheer, as Arun): "Vivek in your SBU has also planned KIMS Hospital Trivandrum this quarter. These are reminders only — you can still save." My Target then showed Pending Approval ₹30.0L. **Pass** (plan submitted on Dev).
+16. [Simple] As Nishad, 2027-Q1, **Plan**: Al Shifa Hospital Perinthalmanna **₹10**, EDAN ₹10, Submit → Pending Approval. — **Pass** 2026-10-13 (run by Basheer, as Nishad; plan submitted on Dev).
+17. [Complex: direct API call] `GET /planning/targets/overlaps` for Al Shifa, Critical Care, 2027-Q1 in Vivek's, Arun's and Haroon's sessions. **Expected:** Vivek and Arun empty; Haroon one `SAME_SBU_OVERLAP` naming Nishad K V. — **Pass** 2026-10-13 (Basheer pasted the console call in each session, Claude checked the replies; read-only). Vivek and Arun: 200, `"data":[]`. Haroon: 200, one `SAME_SBU_OVERLAP` for Al Shifa Hospital Perinthalmanna, `colleague_name` "Nishad K V".
 
 ### First approval (as Arun)
 
-18. [Simple] Needs Your Approval: Vivek 2027-Q1 ₹45, 3 hospitals, no "Revised". Expand: hospitals with ratings, visit frequencies, amounts, "EDAN ₹45"; no change note. —
-19. [Simple] **Approve**. As Vivek: Approved. —
+18. [Simple] Needs Your Approval: Vivek 2027-Q1 ₹45, 3 hospitals, no "Revised". Expand: hospitals with ratings, visit frequencies, amounts, "EDAN ₹45"; no change note. — **Pass** 2026-10-13 (run by Basheer, as Arun).
+19. [Simple] **Approve**. As Vivek: Approved. — **Pass** 2026-10-13 (run by Basheer; Arun approved on Dev, Vivek sees Approved).
 
 ### Revising below the approved total (as Vivek)
 
-20. [Simple] **Revise**: remove Test hospital 2. **Expected:** total ₹30.00L; "₹30.00L is ₹15.00L below your approved target of ₹45.00L … You can still submit". EDAN ₹30, note "Lost Test hospital 2 to a competitor", Submit → Pending Approval. —
-21. [Simple] As Arun: **Revised**, 2 hospitals; expanded: "Why it changed: Lost Test hospital 2…" and "Last approved target: ₹45.00L — this revision is ₹15.00L below it". —
+20. [Simple] **Revise**: remove Test hospital 2. **Expected:** total ₹30.00L; "₹30.00L is ₹15.00L below your approved target of ₹45.00L … You can still submit". EDAN ₹30, note "Lost Test hospital 2 to a competitor", Submit → Pending Approval. — **Pass** 2026-10-13 (run by Basheer, as Vivek; revision submitted on Dev).
+21. [Simple] As Arun: **Revised**, 2 hospitals; expanded: "Why it changed: Lost Test hospital 2…" and "Last approved target: ₹45.00L — this revision is ₹15.00L below it". — **Pass** 2026-10-13 (run by Basheer, as Arun; left pending for K22).
 
 ### Plan changed while the manager was reviewing (normal window Arun, private window Vivek)
 
-22. [Complex: two windows] Arun: **Approve** on Vivek's plan; leave the dialog open. —
-23. [Complex: two windows] Vivek: **Revise**, change only KIMS's objective to Demo and training; Submit with the note empty → "Please add a short note saying why the plan changed."; note "Objective updated", Submit. —
-24. [Complex: two windows] Arun: **Approve** in the open dialog. **Expected:** dialog closes; "The rep changed this plan while you were reviewing it. Please check the latest version below and review again."; row shows "Objective updated"; still Pending Approval. —
-25. [Simple] Arun: **Approve** again. **Expected:** Approved; expanded "Last change (approved): Objective updated"; no "Last approved target" line. —
+22. [Complex: two windows] Arun: **Approve** on Vivek's plan; leave the dialog open. — **Pass** 2026-10-13 (Basheer clicked, Claude watching Arun's tab).
+23. [Complex: two windows] Vivek: **Revise**, change only KIMS's objective to Demo and training; Submit with the note empty → "Please add a short note saying why the plan changed."; note "Objective updated", Submit. — **Pass** 2026-10-13 (run by Basheer in the private window; empty-note block and "Objective updated" submit reported by Basheer).
+24. [Complex: two windows] Arun: **Approve** in the open dialog. **Expected:** dialog closes; "The rep changed this plan while you were reviewing it. Please check the latest version below and review again."; row shows "Objective updated"; still Pending Approval. — **Pass** 2026-10-13 (Claude read Arun's tab): the exact message shown above Needs Your Approval; Vivek 2027-Q1 row still waiting, "Revised", 2 hospitals, ₹30.0L (was ₹45.0L), "Why it changed: Objective updated", "Last approved target: ₹45.00L — this revision is ₹15.00L below it", KIMS objective "Demo and training.", EDAN ₹30.00L.
+25. [Simple] Arun: **Approve** again. **Expected:** Approved; expanded "Last change (approved): Objective updated"; no "Last approved target" line. — **Pass** 2026-10-13 (run by Basheer, as Arun; approved on Dev).
 
 ### Plan already decided (both windows Arun)
 
-26. [Simple] Vivek: **Revise**, add Test hospital 2 back at ₹15 (total ₹45), EDAN ₹45, note "Won Test hospital 2 back", Submit. —
-27. [Complex: two windows] Private window (Arun): **Approve**, leave the dialog open. Normal window (Arun): **Reject**, note "Recheck TH2 amount". —
-28. [Complex: two windows] Private window: **Approve**. **Expected:** dialog closes; "This plan is no longer waiting for approval — it has already been decided. Please check the latest version below."; Vivek's plan stays Rejected. —
-29. [Simple] Arun's team list, expanded: "Last change (rejected): Won Test hospital 2 back"; "Last approved target: ₹30.00L" still shown. —
+26. [Simple] Vivek: **Revise**, add Test hospital 2 back at ₹15 (total ₹45), EDAN ₹45, note "Won Test hospital 2 back", Submit. — **Pass** 2026-10-13 (run by Basheer, as Vivek; revision submitted on Dev).
+27. [Complex: two windows] Private window (Arun): **Approve**, leave the dialog open. Normal window (Arun): **Reject**, note "Recheck TH2 amount". — **Pass** 2026-10-13 (run by Basheer, as Arun in both windows; windows swapped so the Approve box sat in the tab Claude watched; rejected on Dev).
+28. [Complex: two windows] Private window: **Approve**. **Expected:** dialog closes; "This plan is no longer waiting for approval — it has already been decided. Please check the latest version below."; Vivek's plan stays Rejected. — **Pass** 2026-10-13 (run by Basheer in the normal window, per the swap above; confirmed by Basheer after the browser connection dropped).
+29. [Simple] Arun's team list, expanded: "Last change (rejected): Won Test hospital 2 back"; "Last approved target: ₹30.00L" still shown. — **Pass** 2026-10-13 (run by Basheer, as Arun).
 
 ### Older plan without hospitals (read-only)
 
-30. [Simple] As Arun, quarter **2026-Q3**: his Approved ₹50 plan (no hospitals) shows normally. **Revise**: Submit is blocked until a hospital is added. **Cancel** — don't save (a revision here would change section B's totals). —
+30. [Simple] As Arun, quarter **2026-Q3**: his Approved ₹50 plan (no hospitals) shows normally. **Revise**: Submit is blocked until a hospital is added. **Cancel** — don't save (a revision here would change section B's totals). — **Pass** 2026-10-13 (run by Basheer, as Arun; cancelled, nothing saved).
 
 ### Server guards (Vivek's session; Basheer pastes, Claude watches; all refused)
 
-31. [Complex: direct API call] `POST /planning/targets` for Imaging, 2027-Q1, KIMS ₹1 → **403** "You can only set a target for your own SBU."; nothing created. —
-32. [Complex: direct API call] `PATCH` Vivek's 2027-Q1 plan with KIMS ₹10.005 → **422**; plan unchanged. —
-33. [Complex: direct API call] Arun's session: `POST /planning/targets/{id}/approve` without `expected_updated_at` → **422** "Field required"; nothing decided. —
+31. [Complex: direct API call] `POST /planning/targets` for Imaging, 2027-Q1, KIMS ₹1 → **403** "You can only set a target for your own SBU."; nothing created. — **Pass** 2026-10-13 (Basheer pasted as Vivek, Claude checked the output): 403 with that message; sent as a draft so a wrong accept could not reach anyone.
+32. [Complex: direct API call] `PATCH` Vivek's 2027-Q1 plan with KIMS ₹10.005 → **422**; plan unchanged. — **Pass** 2026-10-13 (Basheer pasted as Vivek, Claude checked the output): 422 "Decimal input should have no more than 2 decimal places"; plan still Rejected, ₹45.00, updated time unchanged (02:59:30 UTC).
+33. [Complex: direct API call] Arun's session: `POST /planning/targets/{id}/approve` without `expected_updated_at` → **422** "Field required"; nothing decided. — **Pass** 2026-10-13 (Basheer pasted as Arun, Claude checked the output): 422 "Field required" for expected_updated_at; refused before the plan was read, so nothing decided.
 
 ### Who can read hospital lines
 
-34. [Complex: read-only DB check] `target_plan_account` rows for Vivek's 2027-Q1 plan as each user (all three settings set and verified). **Expected:** Vivek and Arun see them; Nishad 0; Rudrappa 0. —
+34. [Complex: read-only DB check] `target_plan_account` rows for Vivek's 2027-Q1 plan as each user (all three settings set and verified). **Expected:** Vivek and Arun see them; Nishad 0; Rudrappa 0. — **Pass** 2026-10-13 (Claude ran it, read-only on Dev, all three settings verified for each user): Vivek 3, Arun 3, Nishad 0, Rudrappa 0 (admin connection 3). Plan still Rejected ₹45.00, updated time unchanged since K26–K28, so K31–K33 changed nothing.
 
 ### Territory edge cases
 
-35. [Simple] As Basheer K, 2027-Q1, **Plan**, open the picker. **Expected:** hospitals from any zone (Al Shifa, Aster DM). **Cancel.** —
-36. [Simple] As Rudrappa, 2027-Q1, **Plan**. **Expected:** the picker offers no hospitals. **Cancel.** —
+35. [Simple] As Basheer K, 2027-Q1, **Plan**, open the picker. **Expected:** hospitals from any zone (Al Shifa, Aster DM). **Cancel.** — **Pass** 2026-10-13 (run by Basheer, as Basheer K; cancelled).
+36. [Simple] As Rudrappa, 2027-Q1, **Plan**. **Expected:** the picker offers no hospitals. **Cancel.** — **Pass** 2026-10-13 (run by Basheer, as Rudrappa; cancelled).
 
 ### Regression
 
-37. [Simple] As Haroon, **Brand Target Tracking**, Critical Care, 2027-Q1. **Expected:** EDAN Team Committed ₹85 = Vivek ₹45 (Rejected) + Arun ₹30 + Nishad ₹10. —
-38. [Simple] Menu per role: **Rate Hospitals** for Haroon and Abdul Latheef only; Target & Coverage Planning for everyone; Pipeline and Insights load normally. —
+37. [Simple] As Haroon, **Brand Target Tracking**, Critical Care, 2027-Q1. **Expected:** EDAN Team Committed ₹85 = Vivek ₹45 (Rejected) + Arun ₹30 + Nishad ₹10. — **Pass** 2026-10-13 (run by Basheer, as Haroon).
+38. [Simple] Menu per role: **Rate Hospitals** for Haroon and Abdul Latheef only; Target & Coverage Planning for everyone; Pipeline and Insights load normally. — **Pass** 2026-10-13 (run by Basheer).
 
 ### Link back to the card
 
-39. [Simple] Insights Dashboard, Critical Care, 2027-Q1, as Admin. **Expected:** line starts "Upcoming quarter"; Team plans ₹70.0L (Vivek's rejected revision counts his last approved ₹30 + Arun ₹30 + Nishad ₹10); Won (paid) ₹0.0L; "1 of 4 haven't submitted". —
+39. [Simple] Insights Dashboard, Critical Care, 2027-Q1, as Admin. **Expected:** line starts "Upcoming quarter"; Team plans ₹70.0L (Vivek's rejected revision counts his last approved ₹30 + Arun ₹30 + Nishad ₹10); Won (paid) ₹0.0L; "1 of 4 haven't submitted". — **Pass** 2026-10-13 (run by Basheer, as Admin).
 
 ## Close-out
 

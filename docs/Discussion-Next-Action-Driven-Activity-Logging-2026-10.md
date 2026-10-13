@@ -228,7 +228,7 @@ the strict version gets in the way of real work.
    *Recommendation: (a).*
 11. **Plan.** This changes the same "log activity" area as the approved
    Opportunity chance + create-form plan
-   (`docs/Opportunity-Chance-And-Create-Form-Implementation-Plan.md`), whose
+   (`docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`), whose
    step 1 hasn't started, and rule 1 changes the create form that plan
    rebuilds. Fold it in as a later step there, or write a separate plan?
    *Recommendation: a separate plan*, so the approved plan isn't reopened;
@@ -267,6 +267,13 @@ same day:
 
 - **Question 11 — a separate plan** (Basheer), built on top of the new
   create form once the chance + create-form plan lands.
+  **Build order (2026-10-13):** both plans change the "New Opportunity"
+  form. The Win Probability plan merges the three create forms into one;
+  the rule that a new Opportunity starts with an activity (BR-OP-21) is
+  then added to that one form. So the next-action rules are built after
+  the form merge (Win Probability plan step 2), into one form instead of
+  three. The next-action plan is written with that order and shown to
+  Basheer for approval.
 
 - **Question 3 — no new rule needed** (Basheer). Under BR-ACT-11 an
   out-of-date next action can't be left behind: the next time its owner
