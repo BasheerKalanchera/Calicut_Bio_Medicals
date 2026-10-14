@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode, type FormEvent } from "react";
+import { useState, useEffect, useRef, type ReactNode, type FormEvent } from "react";
 import {
   Box,
   Dialog,
@@ -29,6 +29,11 @@ interface FormModalProps {
   // An optional second action beside the main one (e.g. "Save draft"). Runs
   // through the same saving/error handling as onSubmit, and closes on success.
   secondaryAction?: { label: string; onClick: () => Promise<void> };
+  // True while a save started from a button inside the form (e.g. the
+  // duplicate warning's "Create Anyway") is in flight -- that save doesn't
+  // run through onSubmit, so the dialog can't see it on its own. Greys out
+  // the footer buttons and blocks closing, same as its own saving state.
+  busy?: boolean;
 }
 
 export default function FormModal({
@@ -41,15 +46,23 @@ export default function FormModal({
   disableEnforceFocus,
   maxWidth = "28rem",
   secondaryAction,
+  busy = false,
 }: FormModalProps) {
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingSelf, setSubmitting] = useState(false);
+  const submitting = submittingSelf || busy;
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) setError(null);
   }, [isOpen]);
 
+  // Blocks a second press that lands before the re-render disabling the
+  // buttons (docs/Duplicate-Hospital-Prevention-Implementation-Plan.md, Part A).
+  const runningRef = useRef(false);
+
   const runAction = async (action: () => Promise<void>) => {
+    if (runningRef.current || busy) return;
+    runningRef.current = true;
     setSubmitting(true);
     setError(null);
     try {
@@ -61,6 +74,7 @@ export default function FormModal({
         setError(axiosErr.response?.data?.detail ?? axiosErr.message ?? "Something went wrong");
       }
     } finally {
+      runningRef.current = false;
       setSubmitting(false);
     }
   };

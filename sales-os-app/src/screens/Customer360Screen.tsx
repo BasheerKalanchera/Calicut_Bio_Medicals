@@ -731,6 +731,11 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   // near-duplicate check (POSSIBLE_DUPLICATE) rejects the in-flight rename.
   const [editDuplicateCandidates, setEditDuplicateCandidates] = useState<{ id: string; name: string }[] | null>(null);
   const [pendingUpdatePayload, setPendingUpdatePayload] = useState<Record<string, unknown> | null>(null);
+  // "Change Anyway" saving state and error -- same guard as AddHospitalModal's
+  // "Create Anyway" (docs/Duplicate-Hospital-Prevention-Implementation-Plan.md, Part A).
+  const [renameForceSaving, setRenameForceSaving] = useState(false);
+  const [renameForceError, setRenameForceError] = useState<string | null>(null);
+  const renameForceSavingRef = useRef(false);
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
 
   const childAccountIds: string[] = (mergedAccount?.child_accounts || []).map((c: any) => c.id);
@@ -1028,6 +1033,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setParentSearchInput("");
     setEditDuplicateCandidates(null);
     setPendingUpdatePayload(null);
+    setRenameForceError(null);
     setShowEditAccount(true);
   };
 
@@ -1035,6 +1041,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     setShowEditAccount(false);
     setEditDuplicateCandidates(null);
     setPendingUpdatePayload(null);
+    setRenameForceError(null);
   };
 
   const applyAccountUpdate = async (payload: Record<string, unknown>) => {
@@ -1071,6 +1078,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     if (editAccountPayer) payload.payer_behavior = editAccountPayer;
     payload.customer_type = editAccountCustomerType || null;
     setEditDuplicateCandidates(null);
+    setRenameForceError(null);
     try {
       await applyAccountUpdate(payload);
     } catch (err) {
@@ -1084,12 +1092,33 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   };
 
   const handleRenameAnyway = async () => {
-    if (!pendingUpdatePayload) return;
-    await applyAccountUpdate({ ...pendingUpdatePayload, force_create: true });
-    closeEditAccount();
+    if (!pendingUpdatePayload || renameForceSavingRef.current) return;
+    renameForceSavingRef.current = true;
+    setRenameForceSaving(true);
+    setRenameForceError(null);
+    let saved = false;
+    try {
+      await applyAccountUpdate({ ...pendingUpdatePayload, force_create: true });
+      saved = true;
+    } catch (err) {
+      setRenameForceError(err instanceof Error ? err.message : "Something went wrong");
+    }
+    // Not a `finally`, and the close outside the try -- see AddHospitalModal's
+    // handleCreateAnyway.
+    renameForceSavingRef.current = false;
+    setRenameForceSaving(false);
+    if (saved) closeEditAccount();
   };
 
-  const handleUseExistingInsteadOfRename = (candidate: { id: string; name: string }) => {
+  // Same as AddHospitalModal's clearDuplicateWarning: an edit after the
+  // warning drops it, so "Change Anyway" can't save stale values.
+  const clearRenameWarning = () => {
+    setEditDuplicateCandidates(null);
+    setPendingUpdatePayload(null);
+    setRenameForceError(null);
+  };
+
+  const handleUseExistingInsteadOfRename =(candidate: { id: string; name: string }) => {
     closeEditAccount();
     onSelectAccount?.(candidate);
   };
@@ -1368,7 +1397,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
       {/* ---- Modals ---- */}
 
       {/* Edit Account */}
-      <FormModal isOpen={showEditAccount} onClose={closeEditAccount} title="Edit Customer" onSubmit={handleUpdateAccount}>
+      <FormModal isOpen={showEditAccount} onClose={closeEditAccount} title="Edit Customer" onSubmit={handleUpdateAccount} busy={renameForceSaving}>
         {editDuplicateCandidates && editDuplicateCandidates.length > 0 && (
           <>
             <Alert severity="warning" sx={{ "& .MuiAlert-message": { width: "100%" } }}>
@@ -1383,7 +1412,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
                     {editDuplicateCandidates.length > 1 && (
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
                     )}
-                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExistingInsteadOfRename(candidate)}>
+                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExistingInsteadOfRename(candidate)} disabled={renameForceSaving}>
                       Use this one instead
                     </Button>
                   </Box>
@@ -1393,26 +1422,27 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
             {/* Outside the Alert, not inside its message slot -- the warning
                 icon indents the message area, which would otherwise shift
                 this full-width button off from the rest of the form's fields. */}
-            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleRenameAnyway}>
-              Change Anyway
+            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleRenameAnyway} disabled={renameForceSaving}>
+              {renameForceSaving ? "Saving..." : "Change Anyway"}
             </Button>
+            {renameForceError && <Alert severity="error">{renameForceError}</Alert>}
           </>
         )}
-        <TextField label="Name *" value={editAccountName} onChange={(e) => setEditAccountName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        <ZonePicker label="Zone *" value={editAccountZone} onChange={setEditAccountZone} searchFn={searchZonesForHospital} />
+        <TextField label="Name *" value={editAccountName} onChange={(e) => { setEditAccountName(e.target.value); clearRenameWarning(); }} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
+        <ZonePicker label="Zone *" value={editAccountZone} onChange={(z) => { setEditAccountZone(z); clearRenameWarning(); }}searchFn={searchZonesForHospital} />
         <Autocomplete
           options={parentAccountChoices}
           getOptionLabel={(o: any) => o.name}
           isOptionEqualToValue={(o: any, v: any) => o.id === v.id}
           value={editAccountParent}
           loading={parentOptionsLoading}
-          onChange={(_e, newValue) => setEditAccountParent(newValue)}
+          onChange={(_e, newValue) => { setEditAccountParent(newValue); clearRenameWarning(); }}
           onInputChange={(_e, newInputValue) => setParentSearchInput(newInputValue)}
           renderInput={(params) => <TextField {...params} label="Parent Customer" size="small" />}
           fullWidth
         />
         <TextField
-          select label="Payer Behavior" value={editAccountPayer} onChange={(e) => setEditAccountPayer(e.target.value)}
+          select label="Payer Behavior" value={editAccountPayer} onChange={(e) => { setEditAccountPayer(e.target.value); clearRenameWarning(); }}
           fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
           <MenuItem value="">Select behavior</MenuItem>
@@ -1422,7 +1452,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
           <MenuItem value="UNKNOWN">Unknown</MenuItem>
         </TextField>
         <TextField
-          select label="Customer Type" value={editAccountCustomerType} onChange={(e) => setEditAccountCustomerType(e.target.value)}
+          select label="Customer Type" value={editAccountCustomerType} onChange={(e) => { setEditAccountCustomerType(e.target.value); clearRenameWarning(); }}
           fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
         >
           <MenuItem value="">Select type</MenuItem>

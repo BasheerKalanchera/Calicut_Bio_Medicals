@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
@@ -79,6 +79,14 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
   // confirms this is genuinely a different hospital.
   const [duplicateCandidates, setDuplicateCandidates] = useState<AccountOption[] | null>(null);
   const [pendingCreatePayload, setPendingCreatePayload] = useState<Record<string, unknown> | null>(null);
+  // "Create Anyway" saves outside FormModal's onSubmit, so it tracks its own
+  // saving state and error. The ref blocks a second press before the
+  // re-render that disables the button -- on 2026-10-05 three presses during
+  // a slow save created three copies of one hospital on UAT
+  // (docs/Duplicate-Hospital-Prevention-Implementation-Plan.md, Part A).
+  const [forceSaving, setForceSaving] = useState(false);
+  const [forceError, setForceError] = useState<string | null>(null);
+  const forceSavingRef = useRef(false);
 
   const debouncedParentSearch = useDebouncedValue(parentSearchInput);
 
@@ -97,8 +105,17 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
   const isZoneExempt = !!(userProfile?.role_name && ZONE_ASSIGNMENT_EXEMPT_ROLES.has(userProfile.role_name));
   const isBlocked = !isZoneExempt && !userProfile?.zone;
 
+  // Reset once per opening, not on every userProfile change -- Supabase
+  // re-confirms the login whenever the browser tab becomes visible again,
+  // AuthContext then stores a fresh userProfile object, and resetting on that
+  // wiped a half-filled form (and the duplicate warning) after every
+  // Alt + Tab (Basheer, Part A E2E, 2026-10-14).
+  const resetForThisOpenRef = useRef(false);
+
   useEffect(() => {
-    if (!isOpen || isBlocked) return;
+    if (!isOpen) { resetForThisOpenRef.current = false; return; }
+    if (isBlocked || resetForThisOpenRef.current) return;
+    resetForThisOpenRef.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormName("");
     // Pre-fill with the logged-in user's own zone (their day-to-day home
@@ -107,6 +124,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
     setFormZone(userProfile?.zone ? { ...userProfile.zone, path: "" } : null);
     setFormPayerBehavior(""); setFormCustomerType(""); setFormParentAccount(null);
     setParentSearchInput(""); setDuplicateCandidates(null); setPendingCreatePayload(null);
+    setForceError(null);
   }, [isOpen, isBlocked, userProfile]);
 
   const createMutation = useMutation({
@@ -137,6 +155,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
     if (formCustomerType) payload.customer_type = formCustomerType;
     if (formParentAccount) payload.parent_account_id = formParentAccount.id;
     setDuplicateCandidates(null);
+    setForceError(null);
     try {
       const created = await createMutation.mutateAsync(payload);
       onCreated?.({ id: created.id, name: created.name });
@@ -151,10 +170,36 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
   };
 
   const handleCreateAnyway = async () => {
-    if (!pendingCreatePayload) return;
-    const created = await createMutation.mutateAsync({ ...pendingCreatePayload, force_create: true });
-    handleClose();
-    onCreated?.({ id: created.id, name: created.name });
+    if (!pendingCreatePayload || forceSavingRef.current) return;
+    forceSavingRef.current = true;
+    setForceSaving(true);
+    setForceError(null);
+    let created: { id: string; name: string } | null = null;
+    try {
+      created = await createMutation.mutateAsync({ ...pendingCreatePayload, force_create: true });
+    } catch (err) {
+      setForceError(err instanceof Error ? err.message : "Something went wrong");
+    }
+    // Not a `finally` -- the React lint plugin skips a whole component
+    // containing try/finally, which would hide this file's other checks.
+    forceSavingRef.current = false;
+    setForceSaving(false);
+    // Outside the try: once the hospital exists, a failure in the caller's
+    // follow-up must not re-enable the button and invite a second copy.
+    if (created) {
+      handleClose();
+      onCreated?.({ id: created.id, name: created.name });
+    }
+  };
+
+  // Editing any field after the warning drops it, so the rep
+  // presses Create again and the new values are checked -- otherwise "Create
+  // Anyway" would save the old, already-checked values (pendingCreatePayload)
+  // and silently discard the edit (Basheer, 2026-10-14).
+  const clearDuplicateWarning = () => {
+    setDuplicateCandidates(null);
+    setPendingCreatePayload(null);
+    setForceError(null);
   };
 
   const handleUseExisting = (account: AccountOption) => {
@@ -170,6 +215,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
         title="New Customer"
         onSubmit={handleCreateAccount}
         submitLabel="Create"
+        busy={forceSaving}
       >
         {duplicateCandidates && duplicateCandidates.length > 0 && (
           <>
@@ -185,7 +231,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
                     {duplicateCandidates.length > 1 && (
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>{candidate.name}</Typography>
                     )}
-                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExisting(candidate)}>
+                    <Button type="button" size="small" variant="outlined" onClick={() => handleUseExisting(candidate)} disabled={forceSaving}>
                       Use this one instead
                     </Button>
                   </Box>
@@ -195,28 +241,29 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
             {/* Outside the Alert, not inside its message slot -- the warning
                 icon indents the message area, which would otherwise shift
                 this full-width button off from the rest of the form's fields. */}
-            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleCreateAnyway}>
-              Create Anyway
+            <Button type="button" size="medium" variant="contained" color="warning" fullWidth onClick={handleCreateAnyway} disabled={forceSaving}>
+              {forceSaving ? "Saving..." : "Create Anyway"}
             </Button>
+            {forceError && <Alert severity="error">{forceError}</Alert>}
           </>
         )}
         <TextField
           label="Name *"
           value={formName}
-          onChange={(e) => setFormName(e.target.value)}
+          onChange={(e) => { setFormName(e.target.value); clearDuplicateWarning(); }}
           autoFocus
           fullWidth
           size="small"
           placeholder="Enter customer name"
         />
-        <ZonePicker label="Zone *" value={formZone} onChange={setFormZone} searchFn={searchZonesForHospital} />
+        <ZonePicker label="Zone *" value={formZone} onChange={(z) => { setFormZone(z); clearDuplicateWarning(); }} searchFn={searchZonesForHospital} />
         <Autocomplete
           options={parentOptions}
           getOptionLabel={(o) => o.name}
           isOptionEqualToValue={(o, v) => o.id === v.id}
           value={formParentAccount}
           loading={parentOptionsLoading}
-          onChange={(_e, newValue) => setFormParentAccount(newValue)}
+          onChange={(_e, newValue) => { setFormParentAccount(newValue); clearDuplicateWarning(); }}
           onInputChange={(_e, newInputValue) => setParentSearchInput(newInputValue)}
           renderInput={(params) => <TextField {...params} label="Parent Customer" size="small" />}
           fullWidth
@@ -225,7 +272,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
           select
           label="Payer Behavior"
           value={formPayerBehavior}
-          onChange={(e) => setFormPayerBehavior(e.target.value)}
+          onChange={(e) => { setFormPayerBehavior(e.target.value); clearDuplicateWarning(); }}
           fullWidth
           size="small"
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
@@ -240,7 +287,7 @@ export default function AddHospitalModal({ isOpen, onClose, onCreated, onExistin
           select
           label="Customer Type"
           value={formCustomerType}
-          onChange={(e) => setFormCustomerType(e.target.value)}
+          onChange={(e) => { setFormCustomerType(e.target.value); clearDuplicateWarning(); }}
           fullWidth
           size="small"
           slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
