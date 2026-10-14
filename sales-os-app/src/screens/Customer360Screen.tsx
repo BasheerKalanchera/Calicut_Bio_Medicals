@@ -30,7 +30,6 @@ import {
   createProject,
   updateProject,
   listOpportunities,
-  createOpportunity,
   listInstalledAssets,
   createInstalledAsset,
   updateInstalledAsset,
@@ -42,12 +41,7 @@ import {
 } from "../services/opportunities";
 import {
   listProjectStatuses,
-  listLeadSources,
-  listStages,
-  listStatuses,
   listUsers,
-  listGateOverrideReasons,
-  listSbus,
   searchZonesForHospital,
 } from "../services/masterData";
 import type { ZoneSearchResult } from "../services/masterData";
@@ -62,21 +56,7 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import FormModal from "../components/FormModal";
 import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
-import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
-import OpportunityItemsList from "../components/OpportunityItemsList";
-import type { DraftOpportunityItem } from "../types/opportunityItems";
-import { itemsTotal } from "../utils/opportunityItems";
-
-// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
-// field first becomes relevant -- mirrors backend/app/domains/opportunity/
-// validators.py's BR-OP-00 gates exactly, so a field never appears later than
-// the point the server would actually start requiring it.
-const STAGE_ORDER_QUALIFIED = 20;
-const STAGE_ORDER_DEMO = 30;
-const STAGE_ORDER_NEGOTIATION = 50;
-const STAGE_ORDER_ORDER = 60;
-
-const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
+import QuickLeadModal from "../components/QuickLeadModal";
 
 interface Props {
   accountId: string;
@@ -637,8 +617,6 @@ function InstalledBaseTab({ assets, onAdd, onEdit }: { assets: any[]; onAdd: () 
 export default function Customer360Screen({ accountId, initialAccount = null, onBack, onSelectAccount, onSelectOpportunity, onSelectProject, initialTab, highlightActivityId, showAllOpportunities = false, onShowAllOpportunitiesChange }: Props) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
-  // BR-OP-12: only these roles may create an Opportunity outside their own SBU.
-  const isSbuOverrideRole = ["Admin", "General Manager"].includes((userProfile as any)?.role_name);
 
   const {
     data: account,
@@ -785,35 +763,9 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
   const [editPOwnerId, setEditPOwnerId] = useState("");
   const [editPBidDate, setEditPBidDate] = useState("");
 
-  // Opportunities
+  // Opportunities -- the one create form (QuickLeadModal), with this
+  // hospital fixed; the project stays a choice (Win Probability plan D10).
   const [showCreateOpp, setShowCreateOpp] = useState(false);
-  const [showNewOppItems, setShowNewOppItems] = useState(false);
-  const [newOName, setNewOName] = useState("");
-  // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU and
-  // never sees this field. "" means "use my own SBU" (the default for everyone).
-  const [newOSbuId, setNewOSbuId] = useState("");
-  const [newOProjectId, setNewOProjectId] = useState("");
-  const [newOStageId, setNewOStageId] = useState("");
-  const [newOLeadSourceId, setNewOLeadSourceId] = useState("");
-  const [newOOwnerId, setNewOOwnerId] = useState("");
-  const [newOWinProb, setNewOWinProb] = useState("");
-  const [newOValue, setNewOValue] = useState("");
-  const [newODemoStart, setNewODemoStart] = useState("");
-  const [newODemoEnd, setNewODemoEnd] = useState("");
-  const [newOClosureDate, setNewOClosureDate] = useState("");
-  const [newOPoNumber, setNewOPoNumber] = useState("");
-  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
-  const [newOIsExternalReferrer, setNewOIsExternalReferrer] = useState(false);
-  const [newOReferredByUserId, setNewOReferredByUserId] = useState("");
-  const [newOReferredByNote, setNewOReferredByNote] = useState("");
-  // BR-OP-14: gate override. newOGateOverrideChecked is the sole trigger -- an
-  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
-  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
-  const [newOGateOverrideChecked, setNewOGateOverrideChecked] = useState(false);
-  const [newOGateOverrideApproverId, setNewOGateOverrideApproverId] = useState("");
-  const [newOGateOverrideReasonId, setNewOGateOverrideReasonId] = useState("");
-  const [newOGateOverrideNote, setNewOGateOverrideNote] = useState("");
-  const [newOItems, setNewOItems] = useState<DraftOpportunityItem[]>([]);
 
   // Installed assets
   const [showCreateAsset, setShowCreateAsset] = useState(false);
@@ -837,113 +789,22 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     staleTime: Infinity,
   });
 
-  const { data: stages = [] } = useQuery({
-    queryKey: ["stages"],
-    queryFn: () => listStages() as Promise<any[]>,
-    enabled: showCreateOpp,
-    staleTime: Infinity,
-  });
-
-  const { data: oppStatuses = [] } = useQuery({
-    queryKey: ["statuses"],
-    queryFn: () => listStatuses() as Promise<any[]>,
-    enabled: showCreateOpp,
-    staleTime: Infinity,
-  });
-
-  const { data: leadSources = [] } = useQuery({
-    queryKey: ["leadSources"],
-    queryFn: () => listLeadSources() as Promise<any[]>,
-    enabled: showCreateOpp,
-    staleTime: Infinity,
-  });
-
-  // BR-OP-14: needed on both Create and Edit (unlike hold/loss reasons, which are
-  // Edit-only -- gate override applies on creation too, e.g. a referral going
-  // straight to Negotiation with no prior demo).
-  const { data: gateOverrideReasons = [] } = useQuery({
-    queryKey: ["gateOverrideReasons"],
-    queryFn: () => listGateOverrideReasons() as Promise<any[]>,
-    enabled: showCreateOpp,
-    staleTime: Infinity,
-  });
-
   const { data: users = [] } = useQuery({
     queryKey: ["users", "all"],
     queryFn: () => listUsers() as Promise<any[]>,
-    enabled: showCreateProject || editingProject !== null || showCreateOpp,
+    enabled: showCreateProject || editingProject !== null,
     staleTime: Infinity,
   });
 
-  // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
-  const newOLeadSourceCode = leadSources.find((ls: any) => ls.id === newOLeadSourceId)?.name;
-
-  // BR-OP-10: creation must default to Active only -- there is exactly one Active
-  // status in the system, so this is never a real user choice on Add Opportunity.
-  // Set automatically rather than showing a one-option dropdown.
-  const activeStatusId = oppStatuses.find((s: any) => s.status_code === "ACTIVE")?.id;
-  // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
-  // field first becomes relevant -- mirrors backend/app/domains/opportunity/
-  // validators.py's BR-OP-00 gates exactly. On Edit, a field showing purely from
-  // an already-set value (not from the stage threshold) is never hidden by this --
-  // see each field's render condition below (Backlog decision, 2026-08-18).
-  const newOStageOrder = stages.find((s: any) => s.id === newOStageId)?.display_order ?? 0;
-
-  // Distinct query key -- must not reuse ["users","all"] above, which (despite its
-  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
-  // Also doubles as the gate override approver picker's source (role_name/
-  // manager_id per user) -- the approver can be outside the current viewer's own
-  // scoped visibility (any Area Manager tier or GM company-wide), so it's enabled
-  // whenever either modal is open, not just for the REFERRAL lead source case.
-  const { data: referralUsers = [] } = useQuery({
-    queryKey: ["users", "referral-picker"],
-    queryFn: async () => {
-      const d = await listUsers("all");
-      return Array.isArray(d) ? d : [];
-    },
-    enabled: showCreateOpp,
-    staleTime: Infinity,
-  });
-
-  // Approver picker option set: the selected owner's own immediate manager (via
-  // manager_id) plus every active General Manager, not a free user picker --
-  // mirrors the backend's own approver eligibility check
-  // (OpportunityService._validate_gate_override) so the picker never offers a
-  // choice the request would then reject.
-  function gateOverrideApproverOptionsFor(ownerId: string): any[] {
-    const owner = referralUsers.find((u: any) => u.id === ownerId);
-    const manager = owner?.manager_id ? referralUsers.find((u: any) => u.id === owner.manager_id) : undefined;
-    const byId = new Map<string, any>();
-    if (manager) byId.set(manager.id, manager);
-    for (const u of referralUsers as any[]) {
-      if (u.role_name === GATE_OVERRIDE_ESCALATION_ROLE) byId.set(u.id, u);
-    }
-    return Array.from(byId.values());
-  }
-  const newOGateOverrideApproverOptions = gateOverrideApproverOptionsFor(newOOwnerId);
-
-  // While creating an Opportunity, an Admin/GM's chosen SBU override (if any) determines
-  // which products are eligible (BR-OP-11 validates items against the opportunity's
-  // actual SBU, not the caller's own) — everywhere else it's just the caller's own SBU.
-  // Editing an existing Opportunity happens on its own detail page (hotfix 2026-10-01).
-  const productsSbuId = (showCreateOpp && isSbuOverrideRole && newOSbuId)
-    ? newOSbuId
-    : (userProfile as any)?.sbu?.id;
+  // Installed asset forms' product picker -- the caller's own SBU.
+  const productsSbuId = (userProfile as any)?.sbu?.id;
   const { data: products = [] } = useQuery({
     queryKey: ["products", "picker", productsSbuId],
     queryFn: async () => {
       const d: any = await listProducts({ page_size: 100, sbu_id: productsSbuId } as any);
       return d.items || [];
     },
-    enabled: showCreateOpp || showCreateAsset || editingAsset !== null,
-  });
-
-  const { data: sbus = [] } = useQuery({
-    queryKey: ["sbus"],
-    queryFn: () => listSbus() as Promise<any[]>,
-    enabled: showCreateOpp && isSbuOverrideRole,
-    staleTime: Infinity,
+    enabled: showCreateAsset || editingAsset !== null,
   });
 
   const chipBarRef = useRef<HTMLDivElement>(null);
@@ -978,13 +839,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     centerTab(activeTab, "auto");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Auto-calc opportunity value from items
-  useEffect(() => {
-    if (newOItems.length > 0) {
-      setNewOValue(itemsTotal(newOItems).toFixed(2));
-    } else { setNewOValue(""); }
-  }, [newOItems]);
 
   // --- Loading / error states ---
   if (loading) {
@@ -1211,63 +1065,6 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
     queryClient.invalidateQueries({ queryKey: ["projects", "byAccount", accountId] });
   };
 
-  // Opportunities
-  const openCreateOpp = () => {
-    setNewOName(""); setNewOSbuId(""); setNewOProjectId(""); setNewOStageId(""); setNewOLeadSourceId("");
-    setNewOOwnerId(""); setNewOWinProb(""); setNewOValue(""); setNewOItems([]);
-    setNewODemoStart(""); setNewODemoEnd(""); setNewOClosureDate(""); setNewOPoNumber("");
-    setNewOIsExternalReferrer(false); setNewOReferredByUserId(""); setNewOReferredByNote("");
-    setNewOGateOverrideChecked(false);
-    setNewOGateOverrideApproverId(""); setNewOGateOverrideReasonId(""); setNewOGateOverrideNote("");
-    setShowCreateOpp(true);
-  };
-
-  const handleCreateOpp = async () => {
-    if (!newOName.trim()) throw new Error("Opportunity name is required");
-    // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
-    if (isSbuOverrideRole && !newOSbuId) throw new Error("SBU is required");
-    if (!newOOwnerId) throw new Error("Owner is required");
-    if (!newOStageId) throw new Error("Stage is required");
-    if (!activeStatusId) throw new Error("Unable to determine Active status -- please retry");
-    if (newOWinProb === "") throw new Error("Win probability is required");
-    const _stage = stages.find((s: any) => s.id === newOStageId);
-    const _qual = stages.find((s: any) => s.stage_code === "QUALIFIED");
-    if (_stage && _qual && _stage.display_order >= _qual.display_order && newOValue === "") {
-      throw new Error("Indicative value is required for Qualified stage and above");
-    }
-    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
-    // the failure surfaces before the round-trip, not just as a 422.
-    if (newOGateOverrideChecked && newOGateOverrideApproverId && !newOGateOverrideReasonId) {
-      throw new Error("Gate override reason is required whenever an approver is set");
-    }
-    const payload: any = { name: newOName.trim(), owner_id: newOOwnerId, stage_id: newOStageId, status_id: activeStatusId, win_probability: Number(newOWinProb) };
-    if (isSbuOverrideRole && newOSbuId) payload.sbu_id = newOSbuId;
-    if (newOProjectId) payload.project_id = newOProjectId;
-    if (newOLeadSourceId) payload.lead_source_id = newOLeadSourceId;
-    if (newOValue !== "") payload.indicative_value = Number(newOValue);
-    if (newODemoStart && !newOGateOverrideChecked) payload.demo_start_date = newODemoStart;
-    if (newODemoEnd && !newOGateOverrideChecked) payload.demo_end_date = newODemoEnd;
-    if (newOClosureDate && !(newOGateOverrideChecked && newOStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = newOClosureDate;
-    if (newOPoNumber.trim()) payload.po_number = newOPoNumber.trim();
-    if (newOLeadSourceCode === "REFERRAL") {
-      if (newOIsExternalReferrer) {
-        if (newOReferredByNote.trim()) payload.referred_by_note = newOReferredByNote.trim();
-      } else if (newOReferredByUserId) {
-        payload.referred_by_user_id = newOReferredByUserId;
-      }
-    }
-    if (newOGateOverrideChecked && newOGateOverrideApproverId) {
-      payload.gate_override_approver_id = newOGateOverrideApproverId;
-      payload.gate_override_reason_id = newOGateOverrideReasonId || null;
-      if (newOGateOverrideNote.trim()) payload.gate_override_note = newOGateOverrideNote.trim();
-    }
-    if (newOItems.length > 0) payload.items = newOItems.map((i) => ({ product_id: i.product_id, description: i.description, quantity: i.quantity, unit_price_lakhs: i.unit_price_lakhs, discount_lakhs: i.discount_lakhs, line_type: i.line_type }));
-    await createOpportunity(accountId as any, payload);
-    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
-    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
-    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-  };
-
   // Installed assets
   const openCreateAsset = () => {
     setNewAIsCompetitor(false); setNewAProductId(""); setNewACompetitorName(""); setNewAInstallDate(""); setNewADepartment("");
@@ -1387,7 +1184,7 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         {activeTab === "overview" && <OverviewTab account={account} onEdit={openEditAccount} onSelectAccount={onSelectAccount} />}
         {activeTab === "stakeholders" && (stakeholdersLoading ? <LoadingRow /> : <StakeholdersTab stakeholders={stakeholders} opportunityCounts={stakeholderOpportunityCounts} onAdd={openCreateStakeholder} onEdit={openEditStakeholder} onViewOpportunities={(s) => setViewingStakeholderOpportunities({ id: s.id, name: s.name })} />)}
         {activeTab === "projects" && (projectsLoading ? <LoadingRow /> : <ProjectsTab projects={projects} onAdd={openCreateProject} onEdit={openEditProject} onSelectProject={(p: any) => onSelectProject?.({ ...p, account: { id: accountId, name: account?.name } })} />)}
-        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={openCreateOpp} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} showAll={showAllOpportunities} onToggleShowAll={() => onShowAllOpportunitiesChange?.(!showAllOpportunities)} />)}
+        {activeTab === "opportunities" && (opportunitiesLoading ? <LoadingRow /> : <OpportunitiesTab opportunities={opportunities} onAdd={() => setShowCreateOpp(true)} onSelectOpportunity={(o: any) => onSelectOpportunity?.(o, undefined, "opportunities")} showAll={showAllOpportunities} onToggleShowAll={() => onShowAllOpportunitiesChange?.(!showAllOpportunities)} />)}
         {activeTab === "installed" && (installedLoading ? <LoadingRow /> : <InstalledBaseTab assets={installed} onAdd={openCreateAsset} onEdit={openEditAsset} />)}
         {activeTab === "activity" && (
           <ActivityTimeline accountId={accountId} onLogActivity={() => setShowLogActivity(true)} totalCount={mergedAccount.activity_count} selfFetch={false} highlightActivityId={highlightActivityId} />
@@ -1547,140 +1344,14 @@ export default function Customer360Screen({ accountId, initialAccount = null, on
         <TextField label="Bid Submission Date" type="date" value={editPBidDate} onChange={(e) => setEditPBidDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
       </FormModal>
 
-      {/* Create Opportunity */}
-      <FormModal isOpen={showCreateOpp} onClose={() => setShowCreateOpp(false)} title="New Opportunity" onSubmit={handleCreateOpp} submitLabel="Create" disableEnforceFocus={showNewOppItems}>
-        <TextField label="Name *" value={newOName} onChange={(e) => setNewOName(e.target.value)} placeholder="Enter opportunity name" autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
-        {isSbuOverrideRole && (
-          <TextField select label="SBU *" value={newOSbuId} onChange={(e) => setNewOSbuId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">Select SBU</MenuItem>
-            {sbus.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-          </TextField>
-        )}
-        <TextField select label="Project" value={newOProjectId} onChange={(e) => setNewOProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">None</MenuItem>
-          {projects.map((p: any) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-        </TextField>
-        <TextField
-          select label="Stage *" value={newOStageId}
-          onChange={(e) => { const s: any = stages.find((x: any) => x.id === e.target.value); setNewOStageId(e.target.value); if (s) setNewOWinProb(String(s.default_win_probability)); }}
-          fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select stage</MenuItem>
-          {stages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-        </TextField>
-        <TextField select label="Lead Source" value={newOLeadSourceId} onChange={(e) => setNewOLeadSourceId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">Select source</MenuItem>
-          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
-        </TextField>
-        {newOLeadSourceCode === "REFERRAL" && (
-          <Box>
-            <FormControlLabel
-              control={<Checkbox color="primary" checked={newOIsExternalReferrer} onChange={(e) => { setNewOIsExternalReferrer(e.target.checked); setNewOReferredByUserId(""); setNewOReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
-            />
-            {newOIsExternalReferrer ? (
-              <TextField label="Referred By" value={newOReferredByNote} onChange={(e) => setNewOReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
-            ) : (
-              <TextField select label="Referred By" value={newOReferredByUserId} onChange={(e) => setNewOReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                <MenuItem value="">Select colleague</MenuItem>
-                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-              </TextField>
-            )}
-          </Box>
-        )}
-        <TextField select label="Owner *" value={newOOwnerId} onChange={(e) => setNewOOwnerId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-          <MenuItem value="">Select owner</MenuItem>
-          {users.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-        </TextField>
-        <TextField label="Win Probability % *" type="number" value={newOWinProb} onChange={(e) => setNewOWinProb(e.target.value)} placeholder="Enter Win Probability %" fullWidth size="small" slotProps={{ htmlInput: { min: 0, max: 100 } }} />
-        {(newOStageOrder >= STAGE_ORDER_QUALIFIED || newOItems.length > 0) && (
-          <TextField
-            label={`Indicative Value (Lakhs)${newOItems.length > 0 ? " (auto)" : ""}`}
-            type="number" value={newOValue} onChange={(e) => setNewOValue(e.target.value)}
-            disabled={newOItems.length > 0} placeholder="Enter Indicative Value (Lakhs)"
-            fullWidth size="small" slotProps={{ htmlInput: { min: 0, step: "any" } }}
-          />
-        )}
-        <FormControlLabel
-          control={<Checkbox color="primary" checked={newOGateOverrideChecked} onChange={(e) => setNewOGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
-        />
-        {newOStageOrder >= STAGE_ORDER_DEMO && newOLeadSourceCode !== "REPEAT_ORDER" && !newOGateOverrideChecked && (
-          <>
-            <TextField label="Demo Start Date" type="date" value={newODemoStart} onChange={(e) => setNewODemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-            <TextField label="Demo End Date" type="date" value={newODemoEnd} onChange={(e) => setNewODemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-          </>
-        )}
-        {newOStageOrder >= STAGE_ORDER_NEGOTIATION && newOLeadSourceCode !== "REPEAT_ORDER" &&
-          !(newOGateOverrideChecked && newOStageOrder >= STAGE_ORDER_ORDER) && (
-          <TextField label="Expected Closure Date" type="date" value={newOClosureDate} onChange={(e) => setNewOClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {newOGateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select
-              label={newOGateOverrideApproverId ? "Approved By *" : "Approved By"}
-              value={newOGateOverrideApproverId}
-              onChange={(e) => setNewOGateOverrideApproverId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-              helperText="The owner's immediate manager, or a General Manager"
-            >
-              <MenuItem value="">No override</MenuItem>
-              {newOGateOverrideApproverOptions.map((u: any) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
-                </MenuItem>
-              ))}
-            </TextField>
-            {newOGateOverrideApproverId && (
-              <>
-                <TextField
-                  select label="Reason *" value={newOGateOverrideReasonId} onChange={(e) => setNewOGateOverrideReasonId(e.target.value)}
-                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-                >
-                  <MenuItem value="">Select reason</MenuItem>
-                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-                </TextField>
-                <TextField
-                  label="Note" value={newOGateOverrideNote} onChange={(e) => setNewOGateOverrideNote(e.target.value)}
-                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
-                />
-              </>
-            )}
-          </Box>
-        )}
-        {newOStageOrder >= STAGE_ORDER_ORDER && (
-          <TextField label="PO Number" value={newOPoNumber} onChange={(e) => setNewOPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
-        )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-            <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Typography>
-            <Button
-              type="button"
-              onClick={() => setShowNewOppItems(true)}
-              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-            >
-              {newOItems.length > 0 ? `Edit (${newOItems.length})` : "+ Add Products"}
-            </Button>
-          </Box>
-          <OpportunityItemsList items={newOItems} variant="summary" />
-        </Box>
-      </FormModal>
-
-      <FormModal isOpen={showNewOppItems} onClose={() => setShowNewOppItems(false)} title="Products" onSubmit={async () => { }} submitLabel="Done">
-        <OpportunityItemsList
-          items={newOItems}
-          variant="editable"
-          emptyMessage="No products added"
-          onRemove={(i) => setNewOItems(newOItems.filter((_, j) => j !== i))}
-          onUpdateField={(i, field, value) => setNewOItems(newOItems.map((it, j) => j === i ? { ...it, [field]: value } : it))}
-        />
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <OpportunityItemAddRow products={products} onAdd={(item) => setNewOItems([...newOItems, item])} />
-        </Box>
-      </FormModal>
+      {/* New Opportunity -- the one create form, this hospital fixed */}
+      <QuickLeadModal
+        isOpen={showCreateOpp}
+        onClose={() => setShowCreateOpp(false)}
+        sbuId={(userProfile as any)?.sbu?.id}
+        initialAccountId={accountId}
+        lockAccount
+      />
 
       {/* Create Asset */}
       <FormModal isOpen={showCreateAsset} onClose={() => setShowCreateAsset(false)} title="New Installed Asset" onSubmit={handleCreateAsset} submitLabel="Create">
