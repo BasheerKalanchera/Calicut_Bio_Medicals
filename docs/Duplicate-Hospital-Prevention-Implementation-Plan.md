@@ -1,6 +1,7 @@
 # Duplicate Hospital Prevention — Implementation Plan
 
-**Status:** Draft, 2026-10-08.
+**Status:** Draft, 2026-10-08. Part A built `f04d309` (2026-10-14), E2E on Dev
+Pass; to UAT with the next full move. Parts B–D not scheduled.
 **Traceability rows:** "What we built" #3 (near-duplicate hospital warning);
 business rule BR-ACC-03.
 **Design / discussion:** UAT findings in `docs/Progress-Archive-2026-10.md`
@@ -17,6 +18,19 @@ report `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-
   (renaming a hospital), which has the same gap — decided (Basheer,
   2026-10-13)
 - No interim message to the field team — decided (Basheer, 2026-10-13)
+- Part A also: editing any field (name, zone, parent, payer behaviour,
+  customer type) after the warning makes the warning disappear, so the rep presses Create (or Save) again and the
+  new values are checked — before this, "Create Anyway" saved the old
+  values and silently dropped the edit — decided (Basheer, 2026-10-14,
+  from the A2 code review)
+- Part A also: the shared form window used by 31 forms on 16 screens
+  accepts one press of its Save button at a time; a few of those forms
+  are added to the E2E as a regression check — decided (Basheer,
+  2026-10-14)
+- Part A also: the New Customer form no longer empties itself when the
+  rep switches away from the browser and back (it wiped the typed name
+  and the warning; the bug was there before Part A) — decided (Basheer,
+  2026-10-14, found during the E2E); E2E step 14
 - Part B (fewer false alarms): ignore town and area names when they are
   the only match, using a list of place names — proposed; the list is
   chosen after testing both options in step B1 (see section 1)
@@ -127,6 +141,9 @@ refused as it is today, just more reliably.
 - (c) **Other screens reusing the data:** the hospital lists refresh after
   a save (Customer Directory, Quick Lead's hospital picker); checked that
   the new hospital appears once.
+- (d) **Other forms in the shared form window:** 31 forms on 16 screens
+  get the one-press guard; the E2E's section R checks Add Stakeholder,
+  Edit Opportunity and Plan & Coverage (with "Save draft").
 
 ## 4. Not in this plan (with reasons)
 
@@ -162,6 +179,14 @@ refused as it is today, just more reliably.
   them in the modal. `sales-os-app/src/screens/Customer360Screen.tsx` —
   `handleRenameAnyway` / "Change Anyway" (lines 1086, 1397 on `main`), same
   treatment. No backend change.
+  As built (2026-10-14): FormModal got `busy?` and a `runningRef` guard in
+  `runAction`; both "Anyway" handlers use their own ref guard and inline
+  error Alert; every field's `onChange` clears the warning and
+  pending payload.
+  `AddHospitalModal`'s reset effect runs once per opening
+  (`resetForThisOpenRef`), not on every new `userProfile` object —
+  Supabase's tab-visible re-check fires `SIGNED_IN`, and `AuthContext`
+  then stores a fresh profile.
 - **Part B:** `backend/app/domains/account/duplicate_matching.py` —
   `score_query_containment`: matched place-name tokens don't count
   towards the score (or: tokens above a frequency in the pool are

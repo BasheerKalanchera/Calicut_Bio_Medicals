@@ -60,17 +60,16 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - The UAT move plan starts with Query Load plan section 9, steps 2–9
   (UAT's fix 3 copy into `main`, remove `uat-fix3`) — Basheer, 2026-10-14.
 
-## Duplicate hospitals — Part A next (Build & Test)
+## Build & Test — next items (2026-10-14)
 
-- Plan: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft). 2026-10-13: Part A decided — to be built on Dev (not started), to UAT with the next full
-  move; covers "Change Anyway"; no interim message. Parts B–D not
-  scheduled.
-  Test plan: `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`.
-- **Next (2026-10-14, Build & Test):** (1) Rep plan wording — done
-  2026-10-14; (2) Part A, A1 on `main`; (3) the whole Win Probability plan,
-  steps 1–3; (4) next-action rules plan — approved 2026-10-14. All go
-  to UAT with the next full move. Check in before each.
+- Duplicate hospitals Part A: done on Dev (`f04d309`); to UAT with the
+  next full move, then test plan step 19. **Next:** delete the test data
+  from Dev, namely five "zz Test duplicate guard…" hospitals and the "zz Test
+  contact" stakeholder (Basheer, 2026-10-14; read-only check shown
+  first; load `cabio-db-and-scripting`).
+- Then: (3) the whole Win Probability plan, steps 1–3; (4) next-action
+  rules plan (approved 2026-10-14). All go to UAT with the next full
+  move. Check in before each.
 - **Overlap:** the whole next-action build starts only after the form
   merge (Win Probability step 2) — Basheer, 2026-10-14, plan D7.
 

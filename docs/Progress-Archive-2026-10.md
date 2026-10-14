@@ -2363,6 +2363,36 @@ hospitals). In short:
   (step D8, Basheer's suggestion) instead of walking one through every
   stage.
 
+## 2026-10-14 — Part A E2E: New Customer form emptied on Alt + Tab (Build & Test)
+
+- At step 2 of the Part A E2E, Basheer found the New Customer form wiped
+  its typed name and the duplicate warning after switching windows with
+  Alt + Tab.
+- Cause: Supabase re-confirms the login when the tab becomes visible
+  again (`GoTrueClient._onVisibilityChanged` → `SIGNED_IN`); `AuthContext`
+  stores a fresh `userProfile`; `AddHospitalModal`'s reset effect depended
+  on it. The bug was on `main` before Part A. The whole front end was
+  searched: no other form resets on the login reload.
+- Fix: reset once per opening (`resetForThisOpenRef`). E2E step 14 added
+  (later steps renumbered 15–19). Basheer chose to fix it inside Part A
+  rather than Backlog. Type check and lint pass.
+- Step 5 (save fails mid-flow), first try with DevTools "Offline": the
+  "Create Anyway" save waited on "Saving..." and went through once when the
+  connection returned, so a fifth test hospital was created. Cause: TanStack
+  Query's default `networkMode: "online"` pauses a save while the browser
+  reports offline and sends it on reconnect. This was already the app's
+  behaviour before Part A; the only change is that Cancel is now greyed out
+  while it waits. The step was rewritten to fail the request with a one-shot console
+  snippet (Chrome's request-blocking menu has moved), which produces a real
+  error; second try Pass. Basheer decided to delete all the test
+  hospitals from Dev after the E2E.
+- Part A E2E on Dev finished: steps 1–18 Pass (step 19 is on UAT after
+  the move). Steps 10 and 11 were corrected during the run: the Audit Log
+  is Admin/GM only, so step 10 used Abdul Latheef P; step 11 used the
+  one-shot failed-request snippet instead of "Offline". Committed `f04d309`. Test data to delete
+  from Dev: five "zz Test duplicate guard…" hospitals and the "zz Test
+  contact" stakeholder.
+
 ## 2026-10-14 — Demo deck for Haroon and Latheef Bhai (Plan & Chore)
 
 - Demo moved from 14 Oct 4 pm to 15 Oct (Haroon, via Basheer). A laptop
@@ -2394,9 +2424,40 @@ hospitals). In short:
   removed from the deck before publishing. Checked P1, P3, P14, P67, P69
   and the 13–14 Oct watch-list lines: no other repeat. Open list 19
   (counted).
-- Part A E2E on Dev finished: steps 1–18 Pass (step 19 is on UAT after
-  the move). Steps 10 and 11 were corrected during the run: the Audit Log
-  is Admin/GM only, so step 10 used Abdul Latheef P; step 11 used the
-  one-shot failed-request snippet instead of "Offline". Test data to delete
-  from Dev: five "zz Test duplicate guard…" hospitals and the "zz Test
-  contact" stakeholder.
+
+## 2026-10-14 — Retro: Part A E2E and commit (Build & Test)
+
+What went wrong and what to change:
+- **Test plan built on wrong assumptions (P2, +1 → 12).** Step 5 used
+  DevTools "Offline", which only holds the save until the connection
+  returns, so it left a permanent fifth test hospital on the live Dev
+  database. Its replacement named a Chrome menu ("Network request
+  blocking") Basheer could not find. Step 10 needed the Audit Log, which
+  only Admin and General Manager see; step 13 expected a home zone for an
+  SBU Manager. Step 3's visual check was lost because the console panel
+  covered the form. Change: a test plan's tricks for forcing a failure are
+  tried against the app's own code first (how the data library behaves
+  offline), and every role in a step is checked against the screen's
+  access list.
+- **Asked permission for housekeeping (P69, +1 → 4).** Asked "Shall I make
+  that handover edit?" and held the Progress-Archive note for a yes;
+  Basheer: "Don't keep asking such silly questions." Change: handover and
+  archive notes are written straight away and reported. CLAUDE.md "Show
+  before you act" still lists the handover and logs among things shown
+  first; that line needs Basheer's decision to change.
+- **Shell guards (P14, +1 → 21).** A `cd` and a command naming a `.tsx`
+  file were refused; redone with absolute paths and a split command.
+- **Shared-file commit (P68, +1 → 3).** The other session's docs commit
+  `d8e606e` took my uncommitted "E2E finished" note and filed it under its
+  "Demo deck" heading. Moved back under Part A before the docs batch.
+
+Checked: P2, P14, P68, P69, P67 (docs batch offered at the pause ✔) and
+the watch list (no new line; the Chrome-menu slip is counted under P2).
+Open list stays at 19 (no new P-number).
+
+Spot-check, 3 figures: "34 Done, 11 Partial, 5 Not started" — scorecard
+script output ✔; Audit Log is Admin/General Manager only —
+`AuditLogScreen.tsx:16` ✔; one match shows "Did you mean…", several show
+a list — `Customer360Screen.tsx:1405–1407` ✔. Explanations: the step 5
+"Offline" cause and the post-commit report both stand without their
+technical parts ✔.

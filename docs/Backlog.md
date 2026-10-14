@@ -64,8 +64,8 @@ goes into that move's plan.
   Progress-Archive 2026-10-08; report
   `C:\Backups\CabioUAT\data_consistency_reports\drafts\Duplicate-Hospitals-Check-2026-10-08.pdf`.
 - **Prevention:** `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft) — Part A button fix built first on Dev, to UAT with the next
-  full move (Basheer, 2026-10-13); then fewer false alarms, "Lifeline" =
+  (Draft) — Part A button fix built on Dev (`f04d309`, E2E Pass
+  2026-10-14), to UAT with the next full move (Basheer, 2026-10-13); then fewer false alarms, "Lifeline" =
   "Life Line", database rule.
 - **Clean-up (not planned yet):** per pair, field team confirms → own
   plan per merge (Opportunities, visits, contacts move; fresh UAT backup;
