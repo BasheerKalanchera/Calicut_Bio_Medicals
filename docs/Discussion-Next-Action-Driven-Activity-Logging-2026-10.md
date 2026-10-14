@@ -2,8 +2,8 @@
 
 **Status:** Agreed 2026-10-12 — all questions answered (section 5a).
 Agreed rules are in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11,
-BR-ACT-05 change, On Hold next action), not built. Next: its own
-implementation plan.
+BR-ACT-05 change, On Hold next action, BR-ACC-05), not built. Plan:
+`docs/Next-Action-Rules-Implementation-Plan.md` (Approved 2026-10-14).
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** UAT data-quality check, 2026-10-11. Basheer: many sales staff log
@@ -294,7 +294,7 @@ same day:
   hospital and a next action, so nothing structural changes. "Not visited"
   ignores Notes (Weekly Follow-up plan D6d).
 
-All questions answered. Next: the separate implementation plan.
+All questions answered. Plan: `docs/Next-Action-Rules-Implementation-Plan.md`.
 
 ## 6. Related
 

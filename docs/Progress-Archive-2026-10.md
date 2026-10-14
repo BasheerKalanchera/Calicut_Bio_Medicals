@@ -2326,3 +2326,39 @@ hospitals). In short:
   7 Oct, 11 of them a move into the project folder itself; loosened.
   Tested: quarter helper, sources guard (6 cases), folder guard (14 cases
   × 2 folder spellings), reminder 0.10 s.
+- Committed `858b4dc` (22 files; other session's lines left out of the
+  handover, rules history and this file).
+
+### Retro — 2026-10-14 Plan & chore session
+
+- Spot-check, 3 figures: "P1 seen 29, P3 seen 20" (rules history) matches
+  the tracker ✔; "open list 22 → 18" recounted, 18 ✔; "43 folder-guard
+  refusals since 7 Oct, 11 into the project folder" counted from
+  `guard.log` ✔.
+- Check, 2 explanations: "the 'Most-repeated mistakes' list is dropped"
+  did not stand alone (Basheer asked what it meant) ✘ — P3 +1 (→ 21);
+  the commit proposal's plain opening stood alone ✔.
+- P14 +1 (→ 19): own `cd` blocked by the guard, before the loosening.
+- P74 new (seen 2, from the 13 Oct watch list): the Process Consolidation
+  plan still said items appear in the dropped "Most-repeated mistakes"
+  list after two rows were updated; fixed.
+- Watch list +1 line: test commands use `C:/…` paths and test files are
+  written with the file-writing tool.
+- Watch-list lines checked, no repeat: P5, P6, P32, P40, P63, 13 Oct
+  pending-work line.
+
+## 2026-10-14 — Next-action rules plan and E2E test plan
+
+- `docs/Next-Action-Rules-Implementation-Plan.md` written and approved
+  (Basheer): D1–D9 decided, five build steps, starting after Win
+  Probability step 2 (D7). New rule BR-ACC-05 in Business-Rules and the
+  Matrix; BR-OP-21, BR-OP-22 and BR-ACT-11 point to the plan.
+- D3 changed from the recommendation: cancelling the new-Opportunity form
+  sends the rep back to add a follow-up next action (Basheer). D6 cancel
+  path settled after checking the code: the hospital saves at once, so
+  cancelling the Opportunity asks for the hospital's Note and next action.
+- `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md` saved: sections A–G,
+  test records from a read-only Dev query (2026-10-14). Won is checked on
+  Dev by creating a Repeat Order Opportunity straight at Payment Pending
+  (step D8, Basheer's suggestion) instead of walking one through every
+  stage.

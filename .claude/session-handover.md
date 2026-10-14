@@ -26,9 +26,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 - Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3
   done 2026-10-08 (`baf56b4`).
-- 2026-10-14 weekly review: built P72, P1, P3, P14 (open list 22 → 18).
-  The per-message reminder, the figures-and-sources check and the
-  loosened folder guard are live.
+- 2026-10-14 weekly review: built P72, P1, P3, P14 (`858b4dc`, not
+  pushed). The per-message reminder, the figures-and-sources check and
+  the loosened folder guard are live.
+- 2026-10-14 retro done; open list now 19 (P74 new). **Uncommitted, for
+  the next docs batch (own approval):** retro in Progress-Archive-2026-10
+  (the Rep plan wording entry above it is the other session's), tracker
+  counts/P74/watch-list line in `docs/Process-Improvements.md`,
+  Process Consolidation plan "Most-repeated mistakes" line fixed, and
+  this handover update.
 - **Next:** the rest of the top 10 in Pareto order (P15, reminder after
   each finished file, is next).
 - Still to write, shown first: paperwork check in `cabio-post-commit`
@@ -60,12 +66,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Test plan: `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`.
 - **Next (2026-10-14, Build & Test):** (1) Rep plan wording — done
   2026-10-14; (2) Part A, A1 on `main`; (3) the whole Win Probability plan,
-  steps 1–3; (4) write the next-action rules plan (own approval). All go
+  steps 1–3; (4) next-action rules plan — approved 2026-10-14. All go
   to UAT with the next full move. Check in before each.
-- **Overlap:** items 3 and 4 both change the "New Opportunity" form; the
-  next-action rules are built after the form merge (Win Probability step
-  2), into one form instead of three. Recorded in the next-action paper,
-  section 5a, Question 11.
+- **Overlap:** the whole next-action build starts only after the form
+  merge (Win Probability step 2) — Basheer, 2026-10-14, plan D7.
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 
@@ -93,5 +97,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## Weekly Follow-up / My Work — plan drafted 2026-10-11
 - `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; D2 (My Work) and D6 (30 days) decided `8f781dc`. **Next:** BR-OP-20 / BR-OP-06 wording shown to Basheer first, then the other proposed decisions.
-## Next-action rules — all questions answered 2026-10-12
-- `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` section 5a; rules in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11, BR-ACT-05 change); separate plan chosen (Q11). Q10: a Note carries a new hospital's first next action. Expected to fix most issues in the UAT data-quality reports (Basheer, 2026-10-13) — the plan lists which report sections it should clear. **Next:** write the plan (own approval).
+## Next-action rules — plan approved 2026-10-14
+- `docs/Next-Action-Rules-Implementation-Plan.md` — Approved 2026-10-14
+  (D1–D9 Basheer's); BR-ACC-05 added to Business-Rules. E2E test plan
+  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md` (Won checked on Dev
+  via a fast-track Opportunity, step D8 — Basheer). Both uncommitted, for
+  the next docs batch. **Next:** build step 1, after Win Probability
+  step 2; check in first.

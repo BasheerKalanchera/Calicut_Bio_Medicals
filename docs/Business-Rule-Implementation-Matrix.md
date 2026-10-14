@@ -41,8 +41,8 @@ nothing enforces it yet.
 | BR-OP-17 | Payment Confirmation Before Won | `validate_status_transition` (saved at Payment Pending before and after, `confirm_full_payment`; fails closed); `OpportunityService.create_opportunity` refuses Won; `update_opportunity` stamps `full_payment_confirmed_at/_by` and the note. Migrations 0057, 0058 | |
 | BR-OP-18 | Open Opportunities Stay With an Owner in Their SBU | Not built | Planned: `UserService.update_user`, `OpportunityService.update_opportunity`. Backlog "Block an SBU change while the user owns open Opportunities in another SBU". |
 | BR-OP-19 | A High Chance Needs an Expected Closure Date | Not built | Planned: `OpportunityService.create_opportunity` / `update_opportunity`, plus the message on the create forms and the Opportunity page, and a notice on the page of an Active Opportunity already over the limit; Active only, so Lost, On Hold and Won saves are never refused. `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. |
-| BR-OP-21 | A New Opportunity Starts With an Activity | Not built | Plan to be written; `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. |
-| BR-OP-22 | A Stage or Status Change Carries a Note | Not built | Plan to be written; `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. |
+| BR-OP-21 | A New Opportunity Starts With an Activity | Not built | `docs/Next-Action-Rules-Implementation-Plan.md`. |
+| BR-OP-22 | A Stage or Status Change Carries a Note | Not built | `docs/Next-Action-Rules-Implementation-Plan.md`. |
 | BR-CAT-01 | Catalog Visibility Is Company-Wide | `product_read_all` RLS policy (migration 0014); writes: `product_*_sbu_scoped` policies | |
 | BR-CAT-02 | Product Classification | `ck_product_product_type` (migration 0016) | |
 | BR-CAT-03 | Buyback Line Items Are Free-Text | `OpportunityItemCreate._check_product_or_description`; `ck_opportunity_item_product_id_or_buyback` (migration 0017) | |
@@ -61,6 +61,7 @@ nothing enforces it yet.
 | BR-ACC-02 | Payer Behavior | `ck_account_payer_behavior` | |
 | BR-ACC-03 | Near-Duplicate Hospital Warning | `AccountRepository.find_similar_by_name`, `account/duplicate_matching.py`; `AccountService.create_account` (`force_create`, `PossibleDuplicateError` → 409); `sales-os-app/` `CustomerDirectoryScreen.tsx` | |
 | BR-ACC-04 | Hospital Business Potential Rating | `AccountService.set_business_potential`; `redact_business_potential_notes` (`account/schemas.py`) | |
+| BR-ACC-05 | A New Hospital Starts With a Next Action | Not built | `docs/Next-Action-Rules-Implementation-Plan.md`. |
 | BR-ORG-01 | Manager Assignment SBU Eligibility | `UserService.create_user` / `update_user` (`domains/organization/service.py`) | |
 | BR-ORG-02 | Multi-Zone User Assignment | `user_zone` table (migration 0018); `UserService` (primary zone in `zone_ids`); `opportunity_tier_visibility`; `TEAM_SCOPE_BUILDERS["Area Manager"]` | |
 | BR-ORG-03 | Roles With No SBU | `UserService.create_user` / `update_user` (`_SBU_OPTIONAL_ROLES`, `domains/organization/service.py`); `sales-os-app/` `UserDirectoryScreen` `isSbuAgnosticRole` | |
@@ -74,5 +75,5 @@ nothing enforces it yet.
 | BR-ACT-08 | Opportunity Document Upload Limits | `DocumentService.upload_document` (PNG/JPEG/PDF, 4 MB); signed URL 300 s (`core/storage.py`) | |
 | BR-ACT-09 | Sales Development Activities | `SALES_DEVELOPMENT_ACTIVITY_TYPES` and its validators (`domains/activity/schemas.py`); `chk_activity_account_required` | |
 | BR-ACT-10 | Relationship-Support Activity | `ActivityCreate` validators (Opportunity and notes required); `cabio_app_opportunity_in_account()`, `cabio_app_account_opportunities()` (migration 0029); `activity_select` | |
-| BR-ACT-11 | An Open Next Action Must Be Closed Before a New Activity | Not built | Plan to be written; `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. BR-ACT-05's required follow-up (agreed 2026-10-12) is also not built; today's row above is the optional follow-up. |
+| BR-ACT-11 | An Open Next Action Must Be Closed Before a New Activity | Not built | `docs/Next-Action-Rules-Implementation-Plan.md`. BR-ACT-05's required follow-up (agreed 2026-10-12) is also not built; today's row above is the optional follow-up. |
 | BR-AUD-01 | Business Auditability | `audit_log_row_change()` triggers (`trg_audit_*`, `docs/Physical-Schema.sql`) on Opportunity, items, splits, stakeholders, accounts, users, products, projects and target plans, among others | |

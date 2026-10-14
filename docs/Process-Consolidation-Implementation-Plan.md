@@ -91,8 +91,8 @@ Each moved section leaves a one-line pointer in CLAUDE.md. The short
 | 9 | P22 (4) | Plan template: a before/after check says what is recorded, when, and by whom |
 | 10 | P6, P10, P24, P32 (1 each) | Small guards batch: test-plan guard refuses "Ready" without a decision-to-test row (P6); doc tidy-up flags a SECURITY DEFINER function without `REVOKE EXECUTE` (P10); save-time check refuses a handover note above 150 lines (P24); shell guard refuses a PowerShell `git commit -m` with "use `git commit -F <file>`" (P32) |
 
-Items 1, 2, 4 and 6 also appear in the "Most-repeated mistakes" list at
-the top of CLAUDE.md.
+The "Most-repeated mistakes" list at the top of CLAUDE.md was dropped
+2026-10-14; the per-message reminder replaces it.
 
 **Step D — drop, narrow and seen once (9)**
 

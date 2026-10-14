@@ -310,7 +310,7 @@ _(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Imp
 ### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, not built)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.
 * **Rationale:** Haroon, 2026-10-12, answering question 5 of `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT 33 active Opportunities had never had any activity (data-quality check, 11 Oct), e.g. Om Hiremath's 17 Bangalore Opportunities entered 1–11 Sep.
-* **Enforcement:** not built yet; plan to be written (discussion note, question 11).
+* **Enforcement:** not built yet — see `docs/Next-Action-Rules-Implementation-Plan.md`.
 
 ### BR-OP-22: A Stage or Status Change Carries a Note (agreed 2026-10-12, not built)
 * **Rule:** Every stage or status change on an Opportunity needs a note saying why.
@@ -320,7 +320,7 @@ _(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Imp
 * **Also:** owners can close their own next actions from the Opportunity page's Next Actions tab (today it is read-only); other people's stay read-only there.
 * **Not yet:** stage and status can still be changed from the Opportunity page as today. Allowing changes *only* by closing a next action is a later tightening — see `docs/Backlog.md` "Stage changes only by closing a next action".
 * **Rationale:** Haroon, 2026-10-12 (note on every change); Basheer, 2026-10-12 (the closed next action is the note; manager case).
-* **Enforcement:** not built yet; plan to be written (discussion note, question 11).
+* **Enforcement:** not built yet — see `docs/Next-Action-Rules-Implementation-Plan.md`.
 
 ---
 
@@ -459,6 +459,22 @@ _(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Imp
 * **Origin:** signed requirement 5.1 (Tier 1 / Tier 2), renamed "Business
   Potential" at the 2026-09-24 demo; who sets it decided 2026-09-27
   (Basheer). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
+
+### BR-ACC-05: A New Hospital Starts With a Next Action (agreed 2026-10-12, not built)
+* **Rule:** whoever adds a hospital also logs its first activity, carrying
+  the first next action (what, by when, who). Usually a Note ("Added for
+  coverage; first visit planned"); a Visit, Call or similar if there has
+  already been contact. A hospital added from inside the new-Opportunity
+  form needs no entry of its own: the Opportunity's first activity and
+  next action cover it (BR-OP-21); if that Opportunity is then
+  cancelled, the app asks for the hospital's Note and next action before
+  the form closes (Basheer, 2026-10-14).
+* **Rationale:** Basheer, 2026-10-12, questions 9 and 10 of
+  `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT
+  36 hospitals had no Opportunity and no activity (data-quality report,
+  11 and 13 Oct, section 9).
+* **Enforcement:** not built yet — see
+  `docs/Next-Action-Rules-Implementation-Plan.md` (D6, D9).
 
 ---
 
@@ -740,8 +756,8 @@ _(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Imp
   section 4b; Basheer, 2026-10-12, own next actions only (question 2).
   Known cost: an unplanned visit while a planned call is still open is
   recorded by closing the call.
-* **Enforcement:** not built yet; plan to be written (discussion note,
-  question 11).
+* **Enforcement:** not built yet — see
+  `docs/Next-Action-Rules-Implementation-Plan.md`.
 
 ---
 
