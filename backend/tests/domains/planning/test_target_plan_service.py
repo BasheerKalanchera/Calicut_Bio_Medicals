@@ -130,7 +130,7 @@ class TestCreateTargetPlan:
         current_user = _make_user("Sales Staff")
         data = TargetPlanCreate(sbu_id=SBU_ID, planning_period="2026-Q3", accounts=_entries("50"))
 
-        with pytest.raises(ConflictError, match="already have a target"):
+        with pytest.raises(ConflictError, match="already have a plan"):
             service.create_target_plan(data, current_user=current_user)
 
 
@@ -584,7 +584,7 @@ class TestBrandSplits:
             brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("30"))],
         )
 
-        with pytest.raises(ValidationError, match="must sum to exactly the target amount"):
+        with pytest.raises(ValidationError, match="must sum to exactly the plan total"):
             service.create_target_plan(data, current_user=current_user)
 
         repo.replace_brand_splits.assert_not_called()
@@ -648,7 +648,7 @@ class TestBrandSplits:
             brand_splits=[BrandSplitEntry(brand_id=uuid.uuid4(), split_amount_lakhs=Decimal("74"))],
         )
 
-        with pytest.raises(ValidationError, match="must sum to exactly the target amount"):
+        with pytest.raises(ValidationError, match="must sum to exactly the plan total"):
             service.update_target_plan(target_plan.id, data, current_user=owner)
 
         repo.replace_brand_splits.assert_not_called()
@@ -982,7 +982,7 @@ class TestDrafts:
     @pytest.mark.parametrize(
         ("amount", "split", "message"),
         [
-            ("20", "5", "must sum to exactly the target amount"),
+            ("20", "5", "must sum to exactly the plan total"),
             ("0", "0", "total must be above zero"),
         ],
     )

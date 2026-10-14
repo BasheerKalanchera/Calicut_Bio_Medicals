@@ -417,7 +417,7 @@ export default function TargetPlanningScreen() {
       <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, px: 3, pb: 3, display: "flex", flexDirection: "column", gap: 3 }}>
         {showMyTarget && (
         <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Target</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5 }}>My Plan</Typography>
           {!isAnnual ? (
             <>
               {mySbus.length > 1 && (
@@ -451,7 +451,7 @@ export default function TargetPlanningScreen() {
                     <TableRow key={sbu.id}>
                       <TableCell>{sbu.name}</TableCell>
                       <TableCell colSpan={2}>
-                        <Typography color="text.secondary">No target set for {period} yet.</Typography>
+                        <Typography color="text.secondary">No plan set for {period} yet.</Typography>
                       </TableCell>
                       <TableCell align="right">
                         <Button size="small" variant="contained" onClick={() => openTargetDialog(period, null, sbu.id)}>Plan</Button>
@@ -584,7 +584,7 @@ export default function TargetPlanningScreen() {
         {showRollup && (
           <Box sx={{ bgcolor: "background.paper", borderRadius: 2, p: 2.5 }}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target Rollup</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>SBU Target &amp; Plans</Typography>
               {needsSbuChoice && (
                 <TextField
                   select
@@ -728,7 +728,7 @@ export default function TargetPlanningScreen() {
                     {teamAnnualList.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={3}>
-                          <Typography color="text.secondary">No targets set for {periodLabel} yet.</Typography>
+                          <Typography color="text.secondary">No plans set for {periodLabel} yet.</Typography>
                         </TableCell>
                       </TableRow>
                     )}
@@ -755,7 +755,7 @@ export default function TargetPlanningScreen() {
         onClose={() => setDecision(null)}
         title={
           decision
-            ? `${decision.status === "APPROVED" ? "Approve" : "Reject"} ${decision.targetPlan.user.display_name}'s target?`
+            ? `${decision.status === "APPROVED" ? "Approve" : "Reject"} ${decision.targetPlan.user.display_name}'s plan?`
             : ""
         }
         onSubmit={handleDecision}

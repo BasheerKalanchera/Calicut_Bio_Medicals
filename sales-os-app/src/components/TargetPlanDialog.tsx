@@ -317,13 +317,13 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
           <Typography variant="body2" color="text.secondary">
             {rows.length} hospital{rows.length === 1 ? "" : "s"}
           </Typography>
-          <Typography sx={{ fontWeight: 800 }}>Target: {formatLakhs2(total)}</Typography>
+          <Typography sx={{ fontWeight: 800 }}>Plan total: {formatLakhs2(total)}</Typography>
         </Box>
       </Box>
 
       {approvedBenchmark !== null && total < approvedBenchmark && (
         <Alert severity="warning">
-          {formatLakhs2(total)} is {formatLakhs2(approvedBenchmark - total)} below your approved target of{" "}
+          {formatLakhs2(total)} is {formatLakhs2(approvedBenchmark - total)} below your approved plan of{" "}
           {formatLakhs2(approvedBenchmark)} — add hospitals or raise amounts to close the gap. You can still submit;
           your manager will see both figures.
         </Alert>

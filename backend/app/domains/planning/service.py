@@ -255,14 +255,14 @@ class TargetPlanService:
             return
         if not splits:
             raise ValidationError(
-                "This SBU has active brands -- a brand split is required and must sum to the target amount."
+                "This SBU has active brands -- a brand split is required and must sum to the plan total."
             )
         self._check_no_duplicate_brands(splits)
         total = sum((s.split_amount_lakhs for s in splits), start=Decimal("0"))
         if total != target_plan.target_amount_lakhs:
             raise ValidationError(
-                f"Brand splits must sum to exactly the target amount: "
-                f"splits total {total}, target is {target_plan.target_amount_lakhs}."
+                f"Brand splits must sum to exactly the plan total: "
+                f"splits total {total}, plan total is {target_plan.target_amount_lakhs}."
             )
         self.repository.replace_brand_splits(
             target_plan,
@@ -276,13 +276,13 @@ class TargetPlanService:
         """The target is the SUM of the hospitals' planned amounts. submit=False
         saves a DRAFT that stays private to its owner until submitted."""
         if current_user.role.role_name not in _OVERLAY_ROLES and data.sbu_id != current_user.sbu_id:
-            raise AuthorizationError("You can only set a target for your own SBU.")
+            raise AuthorizationError("You can only set a plan for your own SBU.")
         existing = self.repository.get_by_user_sbu_period(
             current_user.id, data.sbu_id, data.planning_period
         )
         if existing:
             raise ConflictError(
-                f"You already have a target set for {data.planning_period} in this SBU."
+                f"You already have a plan for {data.planning_period} in this SBU."
             )
         total, accounts_by_id = self._validate_accounts(data.accounts, current_user=current_user, submit=data.submit)
 
@@ -323,7 +323,7 @@ class TargetPlanService:
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
         if target_plan.user_id != current_user.id:
-            raise AuthorizationError("You can only revise your own target.")
+            raise AuthorizationError("You can only revise your own plan.")
 
         was_draft = target_plan.status == "DRAFT"
         change_note = (data.change_note or "").strip() or None
@@ -394,7 +394,7 @@ class TargetPlanService:
 
         if is_self or not (is_resolved_approver or is_overlay_override):
             raise AuthorizationError(
-                "You aren't authorized to approve or reject this target."
+                "You aren't authorized to approve or reject this plan."
             )
         if target_plan.status != "PENDING_APPROVAL":
             raise ConflictError(
@@ -423,7 +423,7 @@ class TargetPlanService:
         if not target_plan:
             raise NotFoundError(f"Target plan {target_plan_id} not found")
         if target_plan.user_id != current_user.id and current_user.role.role_name not in _OVERLAY_ROLES:
-            raise AuthorizationError("You can only delete your own target.")
+            raise AuthorizationError("You can only delete your own plan.")
         self.repository.delete(target_plan)
 
     def get_brand_rollups(
@@ -869,7 +869,7 @@ class TargetVsActualService:
             hospitals.append(
                 TargetVsActualHospital(
                     account_id=None,
-                    account_name="Last approved target" if p.approved_fallback else "Not assigned to a hospital",
+                    account_name="Last approved plan" if p.approved_fallback else "Not assigned to a hospital",
                     planned_lakhs=p.unassigned,
                     won_lakhs=_ZERO,
                 )

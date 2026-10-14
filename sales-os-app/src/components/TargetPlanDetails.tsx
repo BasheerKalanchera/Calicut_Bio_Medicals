@@ -33,7 +33,7 @@ export default function TargetPlanDetails({ target }: { target: TargetPlan }) {
 
       {target.previous_approved_total_lakhs != null && (
         <Typography variant="body2">
-          <strong>Last approved target:</strong> {lakhs2(target.previous_approved_total_lakhs)}
+          <strong>Last approved plan:</strong> {lakhs2(target.previous_approved_total_lakhs)}
           {Number(target.target_amount_lakhs) < Number(target.previous_approved_total_lakhs) && (
             <Box component="span" sx={{ color: "warning.main", fontWeight: 700 }}>
               {" "}— this revision is {lakhs2(Number(target.previous_approved_total_lakhs) - Number(target.target_amount_lakhs))} below it

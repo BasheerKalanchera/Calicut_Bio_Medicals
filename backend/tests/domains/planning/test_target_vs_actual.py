@@ -234,7 +234,7 @@ def test_rejected_revision_counts_at_its_last_approved_total(monkeypatch):
     assert vivek.plan_status == RosterStatus.REJECTED
     assert (vivek.planned_lakhs, vivek.previous_approved_total_lakhs) == (Decimal("30"), Decimal("30"))
     # The rejected revision's hospitals and brands never show; only the approved total.
-    assert [(h.account_name, h.planned_lakhs) for h in vivek.hospitals] == [("Last approved target", Decimal("30"))]
+    assert [(h.account_name, h.planned_lakhs) for h in vivek.hospitals] == [("Last approved plan", Decimal("30"))]
     assert vivek.brands == [] and resp.brands == []
     assert resp.planned_lakhs == Decimal("30")
     assert resp.not_submitted_count == 0
