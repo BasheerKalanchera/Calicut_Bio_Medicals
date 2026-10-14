@@ -201,7 +201,7 @@ class TestUpdateTargetPlan:
         repo = _make_repo(get_by_id=MagicMock(return_value=None))
         service = _make_service(repo)
 
-        with pytest.raises(NotFoundError, match="not found"):
+        with pytest.raises(NotFoundError, match="This plan no longer exists"):
             service.update_target_plan(
                 uuid.uuid4(),
                 TargetPlanUpdate(accounts=_entries("1"), change_note="Revised"),

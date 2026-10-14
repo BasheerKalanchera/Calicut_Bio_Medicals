@@ -62,7 +62,7 @@ const SBU_TARGET_EDIT_ROLES = new Set(["Admin", "General Manager"]);
 
 // Admin is purely an oversight/approval account -- unlike GM, who sells
 // personally alongside running the company (Basheer's call, 2026-09-17),
-// Admin carries no personal sales quota, so "My Target" doesn't apply to
+// Admin carries no personal sales quota, so "My Plan" doesn't apply to
 // them at all. This can't be derived from userProfile.sbu being null --
 // GM's sbu is null for the exact same structural reason (no fixed home
 // SBU) but GM *does* get this section -- it's a real, deliberate business
@@ -121,7 +121,7 @@ function PlanAmount({ amount, note }: { amount: string | number; note: string | 
 }
 
 // What one of my own plans adds to my totals -- the same rule as the roster's
-// counted_lakhs (planning service _build_roster), so "My Target" and the
+// counted_lakhs (planning service _build_roster), so "My Plan" and the
 // managers' view always agree: a rejected revision counts at its last
 // approved total (BR-PL-05); a draft or a first plan rejected counts nothing.
 function countedLakhs(t: TargetPlan): number {
@@ -180,7 +180,7 @@ interface AnnualPerson {
   byQuarter: Record<string, TargetPlan | undefined>;
 }
 
-// "My Target" grouped by SBU -- almost everyone belongs to exactly one SBU
+// "My Plan" grouped by SBU -- almost everyone belongs to exactly one SBU
 // (so this collapses to a single block), but Admin/GM belong to none and
 // may set a target in each, since they sell across every SBU personally.
 interface AnnualSbuBlock {

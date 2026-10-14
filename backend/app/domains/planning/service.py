@@ -321,7 +321,7 @@ class TargetPlanService:
         to DRAFT."""
         target_plan = self.repository.get_by_id_for_update(target_plan_id)
         if not target_plan:
-            raise NotFoundError(f"Target plan {target_plan_id} not found")
+            raise NotFoundError("This plan no longer exists — reload the page.")
         if target_plan.user_id != current_user.id:
             raise AuthorizationError("You can only revise your own plan.")
 
@@ -384,7 +384,7 @@ class TargetPlanService:
         409 so the screen can reload the latest version."""
         target_plan = self.repository.get_by_id_for_update(target_plan_id)
         if not target_plan:
-            raise NotFoundError(f"Target plan {target_plan_id} not found")
+            raise NotFoundError("This plan no longer exists — reload the page.")
         if target_plan.status == "DRAFT":
             raise ValidationError("This plan is still a draft -- it can't be approved or rejected until submitted.")
 
@@ -421,7 +421,7 @@ class TargetPlanService:
     def delete_target_plan(self, target_plan_id: uuid.UUID, *, current_user: UserProfile) -> None:
         target_plan = self.repository.get_by_id(target_plan_id)
         if not target_plan:
-            raise NotFoundError(f"Target plan {target_plan_id} not found")
+            raise NotFoundError("This plan no longer exists — reload the page.")
         if target_plan.user_id != current_user.id and current_user.role.role_name not in _OVERLAY_ROLES:
             raise AuthorizationError("You can only delete your own plan.")
         self.repository.delete(target_plan)

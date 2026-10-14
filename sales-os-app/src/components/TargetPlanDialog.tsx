@@ -203,7 +203,7 @@ export default function TargetPlanDialog({ sbuId, period, existing, onClose, onS
     onSaved();
   };
 
-  const title = `${existing && !isDraft ? "Revise " : ""}Target & Coverage Plan — ${period}`;
+  const title = `${existing && !isDraft ? "Revise " : ""}Plan & Coverage — ${period}`;
 
   return (
     <FormModal
