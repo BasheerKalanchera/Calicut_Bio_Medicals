@@ -71,7 +71,7 @@ Where every visit, call and follow-up gets logged.
 | 25 | 6.2 | Field visit logging with purpose/outcome dropdowns | 4.1 Field Visit Management | Done |  |
 | 26 | 9.1 | Mandatory interaction summaries for completed deals | 4.3 Interaction Logging (also 4.6 Knowledge Repository) | Done |  |
 | 27 | 13.1 | Automated follow-up reminders | 4.4 Workflow Automation | Done |  |
-| 28 | 13.2 | Automated stagnant-deal alerts | 4.5 Pipeline Aging Alerts | Partial | A report already shows deals that have gone quiet. Automatic alerts to reps and managers the moment a deal stalls aren't live yet — scheduled shortly. |
+| 28 | 13.2 | Automated stagnant-deal alerts | 4.5 Pipeline Aging Alerts | Partial | A report already shows Opportunities that have gone quiet. Automatic alerts when an Opportunity sits too long in one stage are deliberately switched off while the sales team settles into regular logging; they will be switched on later. |
 
 ## 5. Reporting & Review
 

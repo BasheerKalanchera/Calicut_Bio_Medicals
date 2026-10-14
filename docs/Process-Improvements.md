@@ -9,8 +9,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 30 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 12 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 21 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) |
-| P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 6 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 22 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) |
+| P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 7 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
 | P9 | Before committing a shared doc, check `git log -3 -- <file>` for my own heading | 2026-10-05 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
@@ -59,7 +59,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 6 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
 | P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 3 | open |
-| P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 4 | open |
+| P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 5 | open |
 | P70 | Before proposing a new Backlog item or saying something isn't written elsewhere, search the Backlog and docs under several wordings (was watch-list P52; 2026-10-12: proposed a "new" item for the screen "deal" wording, missing the 7 Oct entry; 2026-10-13: audit called beyond-contract items 7–9 missing from the tracker) | 2026-10-09 | 3 | open |
 | P71 | A session given a role by Basheer (e.g. "Build & Test only, ignore due-today reminders") has it written at the top of the handover note the same turn, so it survives a restart or a condensed conversation | 2026-10-13 | 2 | open |
 | P72 | Any Python run on Windows writes UTF-8 from the start (`sys.stdout.reconfigure(encoding="utf-8")` or `PYTHONIOENCODING=utf-8`) (was watch-list 2026-10-12, `validate.py`; 2026-10-13: transcript print) | 2026-10-12 | 2 | built (`.claude/settings.json` env block, 2026-10-14) |
@@ -97,6 +97,7 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-13 | 2026-10-13 | — | A new Dev query script copies its connection set-up from an existing project script, not a guessed database driver (`psycopg` failed) |
 | 2026-10-13 | 2026-10-13 | — | Before acting on a rename or wording request, check whether it already reads that way; if so, say so and ask only about what differs (asked to rename a plan title that already matched) |
 | 2026-10-14 | 2026-10-14 | — | Test commands on this computer spell folders `C:/…`, not `/c/…`, and test files go in with the file-writing tool, not typed inline (one false "file not found", one false guard-test result; backslashes garbled) |
+| 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

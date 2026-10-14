@@ -61,6 +61,13 @@ Decided for this plan:
   to send the team, explaining that old open next actions must be closed
   first — Basheer, 2026-10-14
 - D9. The new-hospital rule is BR-ACC-05 in Business-Rules — Basheer, 2026-10-14
+- D10. Pre-fill (added after approval, moved here from the My Work plan's
+  D11): wherever a rep closes their own next action and must set the
+  follow-up, the new next-action box starts with the closed one's text
+  for the rep to edit, so they change one line instead of typing from
+  scratch. Built in step 1. The My Work plan (`docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`,
+  step 3, D13) is built after this plan and uses step 1 and this
+  pre-fill as they are — Basheer, 2026-10-14
 
 ## Figures and sources
 
@@ -133,6 +140,10 @@ step.
    - Next Actions screen: follow-up required in the close form; the D3
      tick box and its cancel path.
    - Opportunity page: "Close" on one's own rows in the Next Actions tab.
+   - Pre-fill (D10): in each of these close forms, the follow-up box
+     starts with the closed next action's text.
+   - The My Work plan's step 3 relies on this step; check that plan
+     before changing how closing works here.
    - Tests, then a *checkpoint commit*. Nothing stops working on Dev; reps
      with old open next actions must close them first, as intended.
 2. **A note on every stage or status change, and On Hold (point 4).**
@@ -194,7 +205,9 @@ From a code search, 2026-10-14:
   `reminder` exists whose creating activity has that `opportunity_id` and
   whose `assigned_to_user_id` is the activity's `user_id` (D2).
   `LogActivityModal.tsx` looks up those reminders and closes through
-  `PATCH /reminders/{id}`.
+  `PATCH /reminders/{id}`. D10: the follow-up `next_action_text` field in
+  each close form is seeded from the closed reminder's text (frontend
+  only; still editable, still required).
 - **Point 2 (BR-ACT-05 change):** `ReminderService.patch_reminder` requires
   `next_action_*` when `is_completed=True`, unless the Opportunity's status
   is terminal after the request, or a hospital-level reminder comes with

@@ -83,9 +83,9 @@ Found while checking all 59 rules for the matrix rewrite (Progress-Archive
 2026-10-08, "Business-rule matrix brought up to date"). Each needs Basheer
 to decide: change the code, or change the rule.
 - BR-FIN-05: no automatic 100 % split row; reports assume one.
-- BR-OP-06: Stalled status not built. Direction 2026-10-11 (Basheer): the
-  per-stage table means time in stage, switched off during adoption —
-  proposed rewording in `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` D6b.
+- BR-OP-06: Stalled status not built. Reworded 2026-10-14 (Basheer) in
+  `docs/Business-Rules.md` to time in stage, switched off during adoption;
+  see "Stuck in stage" below. "Nobody has visited" is now BR-OP-20.
 - BR-ACT-02: any role can log a Manager Note.
 - BR-ACT-07: rule text predates company-wide product visibility.
 - BR-PROJ-01: no bid-submission-date check.

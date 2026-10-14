@@ -179,8 +179,9 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Lost Requirements:** See BR-OP-03.
 * **On-Hold Requirements:** See BR-OP-02.
 
-### BR-OP-06: Stalled Opportunity Detection
-* **Rule:** An opportunity automatically transitions to the "Stalled" status if no activity (visit, call, email, meeting, note) is recorded against it for longer than its current stage's stagnation threshold. Thresholds are set per stage, and are configurable per SBU (Admin/GM editable) rather than one global number — confirmed by Haroon, 2026-09-14, seeded identically for Imaging and Critical Care today (either SBU's thresholds can be changed independently later without a code change):
+### BR-OP-06: Stuck in Stage (Stalled) — switched off
+* **Status:** switched off (Basheer, 2026-10-11) so reps who are still getting used to entering data aren't flooded with warnings. Before it is switched on it needs a record of when each stage move happened, the checks against getting round it, and a scheduled job that sets and clears Stalled — listed in `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` section 4. Reworded 2026-10-14 (Basheer) from "no activity for longer than the stage's threshold"; "nobody has visited" is now BR-OP-20.
+* **Rule:** An Active Opportunity automatically becomes "Stalled" when it stays in one stage longer than that stage's limit. The clock starts when the Opportunity *first* entered that stage. Limits are set per stage, and are configurable per SBU (Admin/GM editable) rather than one global number — confirmed by Haroon, 2026-09-14, seeded identically for Imaging and Critical Care today (either SBU's thresholds can be changed independently later without a code change):
 
   | Stage | Threshold |
   | :--- | :--- |
@@ -193,7 +194,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   | Payment Pending (BR-OP-17, added 2026-10-03) | Not yet decided — suggested 30 or 45 days; Haroon to choose (Backlog) |
 
   Clinical Evaluation has no threshold yet — that stage's own gate is still deferred (see the note in `backend/app/domains/opportunity/validators.py`).
-* **Exit Rule:** The Stalled status automatically reverts to Active when any activity is logged.
+* **Exit Rule:** The Stalled status reverts to Active when the Opportunity moves to a stage it has not been in before, or it is marked Won or Lost. Logging an activity does not clear it.
 * **Notifications:** The salesperson and their immediate manager (`user_profile.manager_id`, one hop up the reporting line — same pattern as BR-OP-14's gate-override approver) receive notifications when an opportunity becomes Stalled.
 * **Forecasting:** Stalled opportunities are excluded from committed pipeline forecasts.
 * **Implementation Note:** This rule is expected to be executed by a scheduled background process (OpportunityMonitoringJob / OpportunityLifecycleJob) rather than a user-initiated API operation — no scheduler exists in the codebase yet; this is the first one needed.
@@ -305,7 +306,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rationale:** Cabio leadership via Basheer, 2026-10-09. On UAT 24 open Leads had a chance above 50 % and 8 more exactly 50 % (Expected Closure Dates report, 9 Oct), inflating the weighted forecast with no date to plan cash flow against. Leadership chases the existing ones with that report until this ships.
 * **Enforcement:** not built yet — see `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`. Reaches UAT with the next full promotion from Dev.
 
-_(BR-OP-20 is reserved for "Not visited" in `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`, D6a.)_
+### BR-OP-20: Not Visited (agreed 2026-10-14, not built)
+* **Rule:** An Active Opportunity appears on the "Not visited" list when nobody has logged a visit, call, meeting or email on it for more than N days. The person viewing types N; the screen opens at 30 each time (Basheer, 2026-10-11). On Hold, Stalled, Won and Lost Opportunities are not listed (Basheer, 2026-10-14).
+* **What counts:** visits, calls, meetings and emails only. Notes, Manager Notes, Relationship Support and Sales Development activities (BR-ACT-09) don't reset the count (Basheer, 2026-10-12), so a Note written for a stage change (BR-OP-22) doesn't hide an Opportunity nobody has visited.
+* **No activity yet:** days are counted from the date the Opportunity was created.
+* **Effect:** a list only. Nothing on the Opportunity changes — status, forecast and notifications stay as they are.
+* **Exit:** logging a visit, call, meeting or email on it takes it off the list.
+* **Who sees what:** a rep sees their own; a manager sees their team's (same scoping as the existing reports).
+* **Where shown:** Weekly Follow-up ("My Work") and the Stagnant Deals report, which use this same measure (Basheer, 2026-10-14).
+* **Not the same as BR-OP-06:** that rule is about time spent in one stage; this one is about nobody visiting.
+* **Enforcement:** not built yet — see `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md` (D6, D6a, D6c). The Stagnant Deals report today counts every activity type and includes On Hold Opportunities, until that plan changes it.
 
 ### BR-OP-21: A New Opportunity Starts With an Activity (agreed 2026-10-12, not built)
 * **Rule:** An Opportunity cannot be saved without its first activity (the conversation that made it an Opportunity), entered in the same step. A call, visit or similar also sets a next action, as BR-ACT-04 already requires, so the Opportunity starts with both. Applies to every way an Opportunity is created, including converting a marketing lead.

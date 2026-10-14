@@ -280,8 +280,8 @@ subtle regressions than untouched code): `main.tsx`, `LoginScreen`,
 - **Log Activity**: no auto-suggested follow-up text; 6 generic channel
   types instead of the prototype's 12 business-specific purposes. Known,
   not a regression.
-- **BR-OP-06 Stalled Opportunity Detection** (180-day auto-stall): not
-  implemented at all, no scheduled job exists. Won't show up in any UI
+- **BR-OP-06 Stuck in Stage (Stalled)** (time in stage; switched off,
+  2026-10-14): not implemented at all, no scheduled job exists. Won't show up in any UI
   flow — don't go looking for it.
 - **Demo Outcome, Handover Information, Delivery Date/Installation Site**:
   formally mandated fields with zero schema support today. Not testable

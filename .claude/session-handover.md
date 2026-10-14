@@ -97,12 +97,23 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Progress-Archive). Open: Basheer to decide whether to deactivate the
   test Marketing User login from the browser check.
 
-## Weekly Follow-up / My Work — plan drafted 2026-10-11
-- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`; D2 (My Work) and D6 (30 days) decided `8f781dc`. **Next:** BR-OP-20 / BR-OP-06 wording shown to Basheer first, then the other proposed decisions.
+## Weekly Follow-up / My Work — plan drafted 2026-10-11, decisions in progress
+- `docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`. Decided
+  2026-10-14 (Basheer): D1 (opens on own work; managers get a "Showing:
+  Me ▾" switch), D3 (four sections; PRD's high-priority and 70 %+ lists
+  merged), D3a, D4 (a) and (b), D6–D6d, D11 (pre-fill moved to the
+  Next-Action plan), D12, D13 (step 3 kept, reduced: uses the Next-Action
+  plan's step 1, built first; My Work's E2E tests it through My Work's
+  buttons). BR-OP-20 and BR-OP-06 (switched off) saved in Business-Rules.
+- **Next (Plan & Chore session, 15 Oct morning):** last round, proposed
+  D5, D7, D8, D9b, D10, D14; then the plan's "what could be affected"
+  pass and approval.
 ## Next-action rules — plan approved 2026-10-14
 - `docs/Next-Action-Rules-Implementation-Plan.md` — Approved 2026-10-14
   (D1–D9 Basheer's); BR-ACC-05 added to Business-Rules. E2E test plan
   `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md` (Won checked on Dev
-  via a fast-track Opportunity, step D8 — Basheer). Both uncommitted, for
-  the next docs batch. **Next:** build step 1, after Win Probability
+  via a fast-track Opportunity, step D8 — Basheer). Both committed
+  `d0e1f1e`. Added 2026-10-14 after approval: D10 pre-fill
+  in step 1 (from the My Work plan) and pre-fill checks in E2E steps A3,
+  B2, C3, D2. **Next:** build step 1, after Win Probability
   step 2; check in first.

@@ -2,7 +2,9 @@
 # Next-Action Rules — Manual E2E Test Plan
 
 **Covers:** `docs/Next-Action-Rules-Implementation-Plan.md`, steps 1–5
-(one combined run after step 5, per the plan's step 5).
+(one combined run after step 5, per the plan's step 5). The pre-fill (plan
+D10, added 2026-10-14) is checked inside the four close forms' existing
+steps — A3, B2, C3 and D2 — so it needs no extra saves on Dev.
 **Built:** not yet; commit hashes filled in after the fact.
 **Where:** Dev.
 
@@ -95,9 +97,13 @@ marked Lost; "Ultrasound m/c" and "usg m/c" moved on a stage;
    360 (aster medicity → Log Activity, pick "usg m/c") and from the top
    bar Log Activity (pick aster medicity, then "usg m/c"). **Expected:**
    the same close-only form both times. —
-3. [Complex: save, then read back] In that form, close "Call Mr Ajman…"
-   with what happened and a follow-up next action (due one week out).
-   Basheer clicks, Claude watches. **Expected:** saved; the Opportunity's
+3. [Complex: save, then read back] In that form, pick "Call Mr Ajman…".
+   **Expected (pre-fill, D10):** the follow-up next-action box already
+   holds "Call Mr Ajman to understand the progress on budget discussion"
+   and can be edited. Change it to "Call Mr Ajman for the budget decision",
+   add what happened and a due date one week out, and save.
+   Basheer clicks, Claude watches. **Expected:** saved, with the edited
+   text (not the pre-filled one) on the follow-up; the Opportunity's
    Activity tab shows the closing activity; Next Actions tab shows the old
    one done and the follow-up open. —
 4. [Complex: rule re-applies after a close] Log Activity on "usg m/c"
@@ -126,8 +132,11 @@ marked Lost; "Ultrasound m/c" and "usg m/c" moved on a stage;
 1. [Simple] As Basheer K, Next Actions screen → close "Meet Dr Ajmal in
    person" ("new lead") with what happened but no follow-up. **Expected:**
    refused; the message asks for a follow-up next action. —
-2. [Simple] Same, now with a follow-up. **Expected:** saved; the
-   follow-up appears on the Next Actions list. —
+2. [Simple] Same, now with a follow-up. **Expected (pre-fill, D10):**
+   when the close form opens, the follow-up box already holds "Meet Dr
+   Ajmal in person"; keep the text as it is, add a due date and save.
+   **Expected:** saved; the follow-up "Meet Dr Ajmal in person" appears on
+   the Next Actions list with the new due date. —
 3. [Simple] Next Actions screen → close KIMS Hospital Trivandrum "Meet him
    again 1 wk from now" with no follow-up and the "produced a new
    Opportunity" box unticked. **Expected:** refused, as B1. —
@@ -150,8 +159,11 @@ marked Lost; "Ultrasound m/c" and "usg m/c" moved on a stage;
    "Please meet Dr Ajmal tomorrow.". —
 2. [Complex: hide-check, cross-user] As Vivek, same tab. **Expected:**
    "Close" on his own row only; none on Basheer K's. —
-3. [Complex: save, then read back] As Vivek, close his row from the tab
-   with what happened and a follow-up. **Expected:** saved; the tab and
+3. [Complex: save, then read back] As Vivek, press "Close" on his row in
+   the tab. **Expected (pre-fill, D10):** the follow-up box already holds
+   "Please meet Dr Ajmal tomorrow.". Clear it, type "Visit Dr Ajmal with
+   the brochure", add what happened and a due date, and save.
+   **Expected:** saved with the typed text; the tab and
    Vivek's Next Actions screen both show it done. —
 
 ## D — A note on every stage or status change (BR-OP-22, On Hold)
@@ -163,7 +175,9 @@ marked Lost; "Ultrasound m/c" and "usg m/c" moved on a stage;
    shows the Note; Next Actions tab shows its next action. —
 2. [Complex: close-as-note] "usg m/c" → Edit → stage Lead → Qualified.
    **Expected:** the form offers closing Basheer K's open next action as
-   the note, with a follow-up required. Save. **Expected:** stage changed,
+   the note, with a follow-up required; the follow-up box already holds
+   the open next action's text (the A3 follow-up, "Call Mr Ajman for the
+   budget decision") — pre-fill, D10. Save. **Expected:** stage changed,
    next action closed, follow-up open — one save. —
 3. [Simple] "usg m/c" → Edit → change only the name, save. **Expected:**
    saved with no note asked (no stage or status change). Change the name

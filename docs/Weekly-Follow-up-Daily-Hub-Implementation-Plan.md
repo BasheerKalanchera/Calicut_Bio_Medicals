@@ -18,25 +18,25 @@ Every choice this plan depends on, one line each. Claude's suggestions end
 in `— proposed`; once Basheer answers, change the ending to
 `— Basheer, YYYY-MM-DD`.
 
-- D1. One screen for everyone: a rep sees their own work; a manager sees their team's, with a person picker (same scoping as the existing reports) — proposed
+- D1. One screen design for everyone, opening on the viewer's own work. A rep sees only their own, with no picker. A manager also opens on their own work and gets a "Showing: Me ▾" switch with "My team" (everyone under them together) and each rep by name; picking a rep shows that rep's My Work exactly as the rep sees it. "Team" follows the existing reports: Area Manager — reps in their zones; SBU Manager — their SBU; Admin and General Manager — everyone — Basheer, 2026-10-14
 - D2. Formal screen name "Weekly Follow-up", matching signed requirement 11.1, so the scorecard row maps to it directly. Menu label "My Work" (chosen from the shortlist My Work / My Dashboard / My Hub / My Follow-up); "Insights Dashboard" keeps its name — Basheer, 2026-10-11
-- D3. Five sections: (1) high-priority Opportunities (BR-OP-15), (2) Opportunities at 70 % chance or more, (3) closing date passed (BR-OP-16), (4) "Not visited in N+ days" (new BR-OP-20, D6), (5) overdue next actions. Each has a summary card with its count and ₹ total; each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — proposed
-- D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("Not visited in 30+ days") — proposed
-- D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and, once hospital-wise planning is on UAT, "My hospitals this quarter" with last visit and next action due for each — proposed
+- D3. Four sections: (1) "High priority or 70 %+": Opportunities that are high priority (BR-OP-15) or at 70 % chance or more, with a "70 %+ only" tick box that covers PRD §5.8's separate "probability ≥70%" list; (2) closing date passed (BR-OP-16); (3) "Not visited in N+ days" (BR-OP-20, D6); (4) overdue next actions. The PRD's two lists are merged because they almost fully overlap: every stage past Demo is high priority, and the starting chance is 70 % from Negotiation on (Seed-Data.sql); only early-stage Opportunities raised to 70 %+ by hand, and Clinical Evaluation at 55 %, fall outside the overlap. An Opportunity appears in every section it qualifies for; each card shows its own count and ₹ total, never a grand total across cards (it would count the same rupees twice). Each row shows Opportunity, hospital, owner, stage, chance, value, and days overdue or idle — Basheer, 2026-10-14
+- D3a. Plain names on screen: never "Stagnant" or "Stalled" in what reps see; each list says what it is ("High priority or 70 %+", "Closing date passed", "Not visited in 30+ days" with the number following what the user types, "Overdue next actions"). The existing Stagnant Deals report keeps its name for now; renaming it is a separate later decision — Basheer, 2026-10-14
+- D4. Desk additions beyond the contract: "Next actions due this week" (not only overdue), and, once hospital-wise planning is on UAT, "My hospitals this quarter" (each hospital in the rep's approved quarterly plan) with last visit and next action due for each, built as the last step (step 5) — Basheer, 2026-10-14
 - D5. "Automated generation" in 11.1 is met by the screen always being up to date when opened; no weekly email or WhatsApp in Phase 1 — proposed
-- D6. "Not visited" uses the same measure as the existing Stagnant Deals report (days since the last activity on the Opportunity, or since it was created if none). The user types any number of days (e.g. 30 or 60 — Basheer, 2026-10-11); the screen opens at a default of 30 days and returns to it each time it is opened. — Basheer, 2026-10-11
-- D6a. New rule BR-OP-20 "Not visited": an Active Opportunity with no activity for more than N days (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging an activity takes it off. Separate from BR-OP-06 because the trigger and the fix differ — proposed
-- D6b. BR-OP-06 reworded to mean time in stage ("Stuck in stage"): an Active Opportunity that stays in one stage longer than that stage's limit becomes Stalled; it clears when the Opportunity moves to a stage it hasn't been in before, or is marked Won or Lost. Logging an activity does not clear it. Switched off until Basheer decides reps log regularly; the per-stage table is unchanged (Payment Pending still undecided). See section 4 for what must be built before it is switched on — proposed
-- D6c. The existing Stagnant Deals report gets the same type-any-number box, and its code comment claiming "BR-OP-06 says 180 days" is corrected, so the report and this desk agree — proposed
+- D6. "Not visited" counts days since the last visit, call, meeting or email on the Opportunity (D6d), or since it was created if none, and lists Active Opportunities only — not On Hold (Basheer, 2026-10-14). The user types any number of days (e.g. 30 or 60 — Basheer, 2026-10-11); the screen opens at a default of 30 days and returns to it each time it is opened. — Basheer, 2026-10-11, 2026-10-14
+- D6a. New rule BR-OP-20 "Not visited", wording in `docs/Business-Rules.md`: an Active Opportunity with no visit, call, meeting or email for more than N days (N chosen by the user) appears on the list; nothing about the Opportunity changes; logging one of those takes it off. Separate from BR-OP-06 because the trigger and the fix differ — Basheer, 2026-10-14
+- D6b. BR-OP-06 reworded to mean time in stage ("Stuck in Stage"), wording in `docs/Business-Rules.md`: an Active Opportunity that stays in one stage longer than that stage's limit becomes Stalled, counted from when it first entered the stage; it clears when the Opportunity moves to a stage it hasn't been in before, or is marked Won or Lost. Logging an activity does not clear it. Switched off until Basheer decides reps log regularly; the per-stage table is unchanged (Payment Pending still undecided). See section 4 for what must be built before it is switched on — Basheer, 2026-10-14
+- D6c. The existing Stagnant Deals report changes to the same measure as this desk: only visits, calls, meetings and emails count, and only Active Opportunities are listed (today it counts every activity type, Notes included, and also lists On Hold). It also gets the same type-any-number box, and its code comment claiming "BR-OP-06 says 180 days" is corrected, so a manager never sees two different answers — Basheer, 2026-10-14
 - D6d. "Not visited" counts only calls, visits, meetings and emails, not Notes, so a Note written for a stage change (BR-OP-22) or a new hospital doesn't reset the clock — Basheer, 2026-10-12
 - D7. "This week" means Monday to Sunday, India time — proposed
 - D8. Act from the desk: each next-action row has "Done" (the existing close form) and each Opportunity or hospital row has "Log Activity"; no new forms — proposed
 - D9a. Landing screen now: everyone except Marketing Users lands on Account Management instead of Pipeline (step 1) — Haroon via Basheer, 2026-10-12
 - D9b. Landing screen later: once this screen is built, everyone except Marketing Users lands here instead (step 5) — proposed
 - D10. After adding a hospital from Account Management, the app opens that hospital's page instead of returning to the list (step 1) — proposed
-- D11. Next-action pre-fill: when a rep logs an activity on a hospital or Opportunity that has an open next action of theirs, the form shows it, ticked "this activity completes it", and the new next-action box starts with its text for the rep to edit — proposed
-- D12. Which open next action is offered first when there are several: from an Opportunity page, that Opportunity's; elsewhere, the one due soonest; the rep can pick another — proposed
-- D13. D11 follows whichever version (A, B or C) Haroon picks in the next-action discussion (he chose C on 2026-10-12: BR-ACT-11); this plan builds the shared part (pick the next action and close it in the same form) and the pre-fill, which all three versions need — proposed
+- D11. Next-action pre-fill (the new next-action box starts with the old one's text) moved to `docs/Next-Action-Rules-Implementation-Plan.md` D10, built there — Basheer, 2026-10-14
+- D12. Which open next action the Log Activity form offers is whatever the Next-Action Rules plan builds; this plan adds no choice of its own (don't build it twice) — Basheer, 2026-10-14
+- D13. Step 3 keeps its place with reduced scope. The Next-Action Rules plan is built before this one, so showing and closing the rep's open next action in the Log Activity form (its step 1, Version C, BR-ACT-11) and the pre-fill (its D10) already exist when My Work is built; step 3 uses them and builds nothing of its own. My Work lists next actions (overdue, due this week) and its "Done" and "Log Activity" buttons open those forms. This plan's E2E tests step 3 from My Work itself (closing and logging through My Work's buttons, the lists updating afterwards); the forms' own rules are tested in the Next-Action Rules E2E plan — Basheer, 2026-10-14
 - D14. Sequencing: step 1 first (independent, small); steps 2–4 after the Target vs Actuals E2E and the Opportunity chance + create-form plan; step 5 after hospital-wise planning reaches UAT — proposed
 
 ## 1. In plain terms
@@ -54,8 +54,8 @@ This plan makes the rep's day start from one desk instead of a search box:
   add an Opportunity or log a visit; today it drops them back on the list
   and they search for the hospital they just added (89 times last week).
 - **The Weekly Follow-up desk (steps 2–4):** one screen, shown in the
-  menu under a short personal name (D2), with five sections:
-  high-priority Opportunities, 70 %+ chance, closing date passed, "Not
+  menu under a short personal name (D2), with four sections:
+  high priority or 70 %+ chance, closing date passed, "Not
   visited in N+ days" (the user picks N, e.g. 30 or 60), and overdue next
   actions, plus next actions due this week. Each section has a card with
   its count and ₹ total. A rep can close a next action or log a visit
@@ -67,11 +67,12 @@ This plan makes the rep's day start from one desk instead of a search box:
   it) stays switched off, so reps who are just getting used to entering
   data aren't flooded with flags. It is switched on later, once the basic
   routine is established.
-- **Starting from the last next action (step 3):** when a rep logs a visit
-  where they already have an open next action, the form shows it as "this
-  visit completes it" and fills the new next-action box with its text. The
-  rep edits one line instead of typing from scratch, and the old next
-  action closes instead of piling up.
+- **Closing the last next action (step 3, reduced):** when a rep logs a
+  visit where they already have an open next action, the Log Activity
+  form makes them close it in the same save, so old next actions don't
+  pile up. The Next-Action Rules plan builds this; My Work relies on it
+  and doesn't build it again (D13). The new next-action box starts with
+  the old one's text, so the rep edits one line (built there too, D11).
 - **Their hospitals (step 5):** once hospital-wise planning is on UAT, the
   desk lists the rep's planned hospitals for the quarter, and the app
   opens on this desk instead of Account Management.
@@ -86,12 +87,15 @@ with the next full promotion. Step 5 needs hospital-wise planning
    Account Management; a newly added hospital opens its page. Nothing
    stops working. Own commit; can go to UAT ahead of the rest.
 2. **Weekly Follow-up data** (backend). One new read-only report request
-   returning the five lists plus next actions due this week, scoped by
+   returning the four lists plus next actions due this week, scoped by
    role. Checkpoint commit. Nothing visible changes on Dev.
-3. **Next-action pre-fill and completion in the Log Activity form**
-   (backend + frontend), shaped by Haroon's A/B/C answer. Checkpoint
-   commit. Until step 4 lands, it is reachable from the hospital page,
-   Opportunity page and top-bar button.
+3. **Closing next actions from the Log Activity form — scope reduced
+   (D13).** Fulfilled by `docs/Next-Action-Rules-Implementation-Plan.md`
+   step 1 and D10 (pre-fill), which are built before this plan; nothing of
+   its own to build. My Work's "Done" and "Log Activity" buttons (step 4)
+   open those forms. E2E: this plan's test plan checks closing and logging
+   from My Work's buttons and that its lists update; the forms' own rules
+   are tested in the Next-Action Rules E2E plan.
 4. **Weekly Follow-up screen** in the menu under Reports, with "Done" and
    "Log Activity" on its rows. Checkpoint commit, then E2E.
 5. **My hospitals + landing on the desk**, after hospital-wise planning is
@@ -108,7 +112,8 @@ First pass from a code search, 2026-10-11. To be completed before approval.
   Account Management and from the Quick Lead form. Only the Account
   Management path changes; the Quick Lead path must keep returning the new
   hospital to the lead form.
-- **Step 3, logging and closing next actions:**
+- **Step 3, logging and closing next actions** (changed by the Next-Action
+  Rules plan, D13; listed so the dependency is visible):
   - (a) Log Activity form, opened from the top bar, the hospital page and
     the Opportunity page; the close form on the Next Actions screen.
   - (b) Next Actions screen opened from the post-login banner with a due
@@ -149,20 +154,21 @@ First pass from a code search, 2026-10-11. To be completed before approval.
   Not yet verified in code: whether a rep can move an Opportunity
   backwards today, and how a hold's restart date is handled. Check both
   before writing them into the rule.
-- **Strictness of the next-action rule (A/B/C):** decided by Haroon in the
-  discussion doc; this plan only follows it (D13).
+- **Closing next actions in the Log Activity form and the strict rule
+  (Version C, BR-ACT-11):** built by `docs/Next-Action-Rules-Implementation-Plan.md`;
+  this plan only relies on it (D12, D13).
 
 ## 5. Business rules and records to update
 
 - `docs/Business-Rules.md`:
-  - new BR-OP-20 "Not visited" (D6a);
+  - new BR-OP-20 "Not visited" (D6a) — done 2026-10-14;
   - BR-OP-06 reworded to time in stage, switched off (D6b), with every
-    other doc that mentions BR-OP-06 updated in the same commit;
-  - BR-ACT-04 and BR-ACT-05 (pre-fill, completing from the Log Activity
-    form), per Haroon's answer;
+    other doc that mentions BR-OP-06 updated in the same commit — done
+    2026-10-14;
+  - BR-ACT-04 and BR-ACT-05: changed by the Next-Action Rules plan, not
+    here, pre-fill included (D11);
   - BR-OP-16 "Where shown".
-  The exact wording of BR-OP-20 and BR-OP-06 is shown to Basheer before
-  saving.
+  BR-OP-20 and BR-OP-06 wording approved and saved 2026-10-14 (Basheer).
 - `docs/Signed-Requirements-to-PRD-Traceability.md`: row 11.1; row 6.1 at
   step 5.
 - `docs/Backlog.md`: close "Weekly Follow-up Report — not built"; remove
@@ -187,17 +193,18 @@ First pass from a code search, 2026-10-11. To be completed before approval.
   `opportunity/repository.py:263`. Alternative to decide in review: the
   screen calls the existing endpoints plus small new ones, instead of one
   combined request.
-- **Step 3:** `LogActivityModal` fetches the rep's open reminders for the
-  account or Opportunity; on submit, either `PATCH /reminders/{id}` with
-  the BR-ACT-05 closing payload (closing Activity = this Activity) or one
-  new combined endpoint, so the activity and the completion save
-  together. `NOT_CUSTOMER_FACING_TYPES` cannot close a reminder. Invalidate
-  `["reminders"]`, `["opp-reminders", id]` and the activity queries.
+- **Step 3 (reduced, D13):** the `LogActivityModal` reminder lookup and
+  close-in-the-same-save are the Next-Action Rules plan's step 1, and the
+  pre-fill its D10 (its technical addendum). Nothing added here.
 - **D6c:** `StagnantDealsReportScreen.tsx:7–20` (`STAGNANT_THRESHOLD_OPTIONS`
   90/180, comment "BR-OP-06 says 180 days") → free number entry; backend
   `threshold_days` already accepts any value ≥ 1 (`reporting/router.py:49`).
-  Measure: `reporting/repository.py` `stagnant_deals`, last `activity_date`
-  per Opportunity, else `created_at`.
+  Measure today: `reporting/repository.py:248` `stagnant_deals`, last
+  `activity_date` per Opportunity across all activity types, else
+  `created_at`, filtered `is_terminal == False` (so On Hold and Stalled are
+  included). Change (D6, D6c): last-activity subquery limited to
+  `activity_type IN ('VISIT','CALL','MEETING','EMAIL')`, and status =
+  Active only. The same expression feeds the desk's "Not visited" list.
 - **Step 5:** planned hospitals from `target_plan_account` (visit
   frequency, planned amount) for the rep's current-quarter `target_plan`.
 - Tests: pytest for scoping per role and each list's rule; E2E plan via

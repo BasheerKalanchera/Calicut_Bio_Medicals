@@ -2461,3 +2461,62 @@ script output ✔; Audit Log is Admin/General Manager only —
 a list — `Customer360Screen.tsx:1405–1407` ✔. Explanations: the step 5
 "Offline" cause and the post-commit report both stand without their
 technical parts ✔.
+
+## 2026-10-14 — My Work plan: BR-OP-20 "Not visited" and BR-OP-06 "Stuck in Stage" saved (Plan & Chore session)
+
+- **Gap found while drafting the wording.** The plan said "Not visited"
+  uses the same measure as the Stagnant Deals report, but D6d (12 Oct)
+  excludes Notes. The report today counts every activity type, Notes
+  included, and lists On Hold as well as Active (`reporting/repository.py:248`,
+  filter `is_terminal == False`). Built as planned, the two screens would
+  disagree for the same 30 days.
+- **Basheer, 2026-10-14:** the Stagnant Deals report changes to the same
+  measure (only visits, calls, meetings and emails count); "Not visited"
+  lists Active Opportunities only, not On Hold. Plan D6, D6c updated;
+  D6a, D6b decided.
+- **Saved:** BR-OP-20 "Not Visited" (replacing the reserved line) and
+  BR-OP-06 reworded to "Stuck in Stage (Stalled) — switched off" (time in
+  stage; logging an activity no longer clears it) in Business-Rules;
+  Matrix (new BR-OP-20 row, BR-OP-06 row), Backlog, Regression-Test-Plan
+  and Traceability 13.2 updated. 13.2's client-visible line now says the
+  alerts are deliberately switched off (wording Basheer, 2026-10-14);
+  the scorecard steps (`cabio-post-commit`) still have to run before the
+  docs batch.
+- **Round 1, what the screen shows (Basheer, 2026-10-14):** D1 one
+  screen design, opening on the viewer's own work; managers switch to "My
+  team" or one rep. D3 four sections: Basheer noticed that "70 %+ chance"
+  nearly duplicates high priority (every stage past Demo is high priority;
+  starting chance is 70 % from Negotiation, Seed-Data.sql), so the PRD
+  §5.8 lists are merged into "High priority or 70 %+" with a "70 %+ only"
+  tick box; an Opportunity shows in every section it fits, no grand
+  total. D3a plain names; D4 (a) due this week, (b) my hospitals (last
+  step).
+- **Overlap with the Next-Action Rules plan.** My Work step 3 (closing a
+  next action in the Log Activity form) is what that plan's step 1
+  builds. Basheer: keep step 3 with reduced scope; that plan is built
+  first, so step 3 uses it, and My Work's E2E tests it through My Work's
+  buttons (D13); which next action is offered is that plan's (D12); the
+  pre-fill moves to that plan as D10, added after its approval, applied to
+  all four close forms, with checks in its E2E steps A3, B2, C3, D2.
+- **Next (15 Oct):** last round D5, D7, D8, D9b, D10, D14.
+
+## 2026-10-14 — Retro: My Work decisions and pre-fill (Plan & Chore)
+
+- **D1 explanation did not stand on its own** — Basheer had to ask how
+  reps and managers could share one screen before it made sense. P3 +1
+  (22).
+- **Needless question** — after Basheer agreed Q1 and Q2, asked
+  separately whether to note them in the archive and handover; he asked
+  what it was for. P69 +1 (5).
+- **Heavy option first** — proposed removing My Work step 3; Basheer
+  wanted it kept with reduced scope. P4 +1 (7).
+- **"Done" written before done**, twice: Progress-Archive said the
+  scorecard was regenerated, the My Work plan said the doc sweep was done;
+  both caught and corrected. New watch-list line.
+- **Spot-checks (all pass):** Negotiation starting chance 70 %
+  (`docs/Seed-Data.sql` line 15); next-action plan and test plan
+  committed in `d0e1f1e` (git); "Call Mr Ajman to understand the progress
+  on budget discussion" matches the test plan's live-data line.
+- **Explanation checks:** D1 fail (counted under P3); the pre-fill table
+  pass.
+- **Items checked:** P1, P3, P4, P66, P69, watch list. Open list stays 19.
