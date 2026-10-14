@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
 import AddHospitalModal from "./AddHospitalModal";
@@ -45,6 +45,14 @@ interface QuickLeadModalProps {
   // context-inference DemoApp.tsx already does for LogActivityModal.
   initialAccountId?: string;
   initialProjectId?: string;
+  // Customer 360's and the Project Directory's own "+ Add" buttons: the
+  // hospital (and project) they were opened from is fixed, shown as a name
+  // instead of a picker -- the one create form for every way in (Win
+  // Probability plan D10). initialName pre-fills Name (Project Directory
+  // uses the project's name, as its own form did before the merge).
+  lockAccount?: boolean;
+  lockProject?: boolean;
+  initialName?: string;
   // Marketing Lead Convert flow only (MarketingLeadReviewQueueScreen) --
   // pre-fills Lead Source and shows the Marketing User's original note (plus
   // the Conference event name, or the lead source itself when there's no
@@ -83,6 +91,9 @@ export default function QuickLeadModal({
   sbuId,
   initialAccountId,
   initialProjectId,
+  lockAccount = false,
+  lockProject = false,
+  initialName,
   initialLeadSourceId,
   marketingLeadContextNote,
   marketingLeadEventName,
@@ -90,6 +101,7 @@ export default function QuickLeadModal({
   marketingLeadId,
 }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
+  const queryClient = useQueryClient();
   // BR-OP-12: Admin/General Manager only — everyone else creates in their own SBU
   // (the sbuId prop) and never sees the override field.
   const isSbuOverrideRole = ["Admin", "General Manager"].includes((userProfile as any)?.role_name);
@@ -274,14 +286,14 @@ export default function QuickLeadModal({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAccountId(initialAccountId || ""); setProjectId(initialProjectId || "");
     setSelectedAccount(undefined); setAccountSearchInput("");
-    setName(""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
+    setName(initialName || ""); setSbuOverrideId(""); setStageId(""); setOwnerId("");
     setWinProb(""); setValue(""); setItems([]);
     setLeadSourceId(initialLeadSourceId || "");
     setDemoStart(""); setDemoEnd(""); setClosureDate(""); setPoNumber(""); setPoDate("");
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
-  }, [isOpen, initialAccountId, initialProjectId, initialLeadSourceId]);
+  }, [isOpen, initialAccountId, initialProjectId, initialName, initialLeadSourceId]);
 
   // Falls back to the resolved initialAccountId's name only until the user
   // (or Add Hospital) makes an explicit pick -- see selectedAccount's
@@ -355,6 +367,12 @@ export default function QuickLeadModal({
       line_type: i.line_type,
     }));
     const created = await createOpportunity(accountId as any, payload);
+    // Every list a new Opportunity appears in -- the hospital's (Customer 360
+    // tab, and the Project Directory's list, which filters it), the
+    // hospital's own header counts, and the Pipeline -- so callers needn't.
+    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["account", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Awaited -- the Lead Convert flow's onCreated (LeadReviewQueueScreen)
     // does a second async call (markLeadConverted) that must complete, and
     // any failure there must surface through FormModal's normal error
@@ -412,6 +430,13 @@ export default function QuickLeadModal({
             {sbus.map((s) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
           </TextField>
         )}
+        {lockAccount ? (
+          <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main" }}>
+            {displayedAccount?.name ?? "…"}
+            {lockProject && ` — ${projects.find((p) => p.id === projectId)?.name ?? "…"}`}
+          </Box>
+        ) : (
+        <>
         <Autocomplete
           options={accounts}
           getOptionLabel={(a) => a.name}
@@ -441,6 +466,9 @@ export default function QuickLeadModal({
             + Add Hospital
           </Button>
         </Box>
+        </>
+        )}
+        {!lockProject && (
         <TextField
           select
           label={`Project${projectsLoading ? " — loading…" : ""}`}
@@ -454,6 +482,7 @@ export default function QuickLeadModal({
           <MenuItem value="">None</MenuItem>
           {projects.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
         </TextField>
+        )}
         <TextField
           select
           label="Stage *"
@@ -535,7 +564,7 @@ export default function QuickLeadModal({
         )}
         <FormControlLabel
           control={<Checkbox color="primary" checked={gateOverrideChecked} onChange={(e) => setGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
+          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Opportunity</Typography>}
         />
         {selectedStageOrder >= STAGE_ORDER_DEMO && leadSourceCode !== "REPEAT_ORDER" && !gateOverrideChecked && (
           <>

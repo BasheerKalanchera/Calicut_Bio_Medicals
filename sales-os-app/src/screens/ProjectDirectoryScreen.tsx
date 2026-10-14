@@ -1,35 +1,20 @@
 import { useCallback, useEffect, useState, type RefObject } from "react";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { Alert, Autocomplete, Box, Button, Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
+import { Alert, Autocomplete, Box, Button, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { listAllProjects } from "../services/projects";
-import { listAccounts, createProject, updateProject, listOpportunities, createOpportunity } from "../services/accounts";
-import { listProjectStatuses, listUsers, listStages, listStatuses, listLeadSources, listGateOverrideReasons, listSbus } from "../services/masterData";
-import { listProducts } from "../services/products";
+import { listAccounts, createProject, updateProject, listOpportunities } from "../services/accounts";
+import { listProjectStatuses, listUsers } from "../services/masterData";
 import { useAuth } from "../contexts/AuthContext";
 import FormModal from "../components/FormModal";
+import QuickLeadModal from "../components/QuickLeadModal";
 import ActivityTimeline from "../components/ActivityTimeline";
-import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
-import OpportunityItemsList from "../components/OpportunityItemsList";
-import { itemsTotal } from "../utils/opportunityItems";
 import useDebouncedValue from "../hooks/useDebouncedValue";
-import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 
 const SHADOW_SM = "0 1px 2px rgba(0,0,0,0.05)";
-
-// Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
-// field first becomes relevant -- mirrors backend/app/domains/opportunity/
-// validators.py's BR-OP-00 gates exactly, so a field never appears later than
-// the point the server would actually start requiring it.
-const STAGE_ORDER_QUALIFIED = 20;
-const STAGE_ORDER_DEMO = 30;
-const STAGE_ORDER_NEGOTIATION = 50;
-const STAGE_ORDER_ORDER = 60;
-
-const GATE_OVERRIDE_ESCALATION_ROLE = "General Manager";
 
 // Minimal shape DemoApp.tsx's selectedProject state actually needs — this
 // screen's own project rows/queries carry richer objects (see the `any`
@@ -57,36 +42,10 @@ function ProjectDetailView({
 }) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
-  // BR-OP-12: Admin/General Manager have no meaningful "own" SBU -- must
-  // always explicitly choose one when creating an Opportunity. Same check
-  // as Customer360Screen.tsx / QuickLeadModal.tsx.
-  const isSbuOverrideRole = ["Admin", "General Manager"].includes(userProfile?.role_name);
 
+  // The one create form (QuickLeadModal), with this project's hospital and
+  // the project itself fixed -- Win Probability plan step 2, D10.
   const [showAddOpp, setShowAddOpp] = useState(false);
-  const [addOppName, setAddOppName] = useState("");
-  const [addOppStageId, setAddOppStageId] = useState("");
-  const [addOppOwnerId, setAddOppOwnerId] = useState("");
-  const [addOppWinProb, setAddOppWinProb] = useState("");
-  const [addOppValue, setAddOppValue] = useState("");
-  const [addOppLeadSourceId, setAddOppLeadSourceId] = useState("");
-  const [addOppDemoStart, setAddOppDemoStart] = useState("");
-  const [addOppDemoEnd, setAddOppDemoEnd] = useState("");
-  const [addOppClosureDate, setAddOppClosureDate] = useState("");
-  const [addOppPoNumber, setAddOppPoNumber] = useState("");
-  const [addOppItems, setAddOppItems] = useState<DraftOpportunityItem[]>([]);
-  const [showAddOppItemsModal, setShowAddOppItemsModal] = useState(false);
-  const [addOppSbuId, setAddOppSbuId] = useState("");
-  // BR-FIN-07: referral credit, only relevant when Lead Source = Referral.
-  const [addOppIsExternalReferrer, setAddOppIsExternalReferrer] = useState(false);
-  const [addOppReferredByUserId, setAddOppReferredByUserId] = useState("");
-  const [addOppReferredByNote, setAddOppReferredByNote] = useState("");
-  // BR-OP-14: gate override. addOppGateOverrideChecked is the sole trigger -- an
-  // explicit rep action, not inferred from Stage + a blank date (2026-08-26
-  // correction; see Manager-Attested-Gate-Override-Implementation-Plan.md).
-  const [addOppGateOverrideChecked, setAddOppGateOverrideChecked] = useState(false);
-  const [addOppGateOverrideApproverId, setAddOppGateOverrideApproverId] = useState("");
-  const [addOppGateOverrideReasonId, setAddOppGateOverrideReasonId] = useState("");
-  const [addOppGateOverrideNote, setAddOppGateOverrideNote] = useState("");
 
   const { data: opportunities = [], isLoading: oppsLoading } = useQuery({
     queryKey: ["opportunities", "byAccount", p.account.id],
@@ -100,195 +59,6 @@ function ProjectDetailView({
     }
   }, [refreshOppsRef, queryClient, p.account.id]);
 
-  const { data: oppStages = [] } = useQuery({
-    queryKey: ["stages"],
-    queryFn: () => listStages() as Promise<any[]>,
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-  const { data: oppStatuses = [] } = useQuery({
-    queryKey: ["statuses"],
-    queryFn: () => listStatuses() as Promise<any[]>,
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-  const { data: leadSources = [] } = useQuery({
-    queryKey: ["leadSources"],
-    queryFn: () => listLeadSources() as Promise<any[]>,
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-  // LeadSource has no separate code column -- `name` already holds the pseudo-code
-  // (REFERRAL, TENDER, REPEAT_ORDER, ...), same value the picker renders as the label.
-  const addOppLeadSourceCode = leadSources.find((ls: any) => ls.id === addOppLeadSourceId)?.name;
-  // BR-OP-10: creation must default to Active only -- there is exactly one Active
-  // status in the system, so this is never a real user choice on Add Opportunity.
-  // Set automatically rather than showing a one-option dropdown.
-  const activeStatusId = oppStatuses.find((s: any) => s.status_code === "ACTIVE")?.id;
-  const addOppStageOrder = oppStages.find((s: any) => s.id === addOppStageId)?.display_order ?? 0;
-
-
-  // Distinct query key -- must not reuse ["users","all"] below, which (despite its
-  // name) actually calls listUsers() with no scope arg, defaulting to "scoped".
-  // Also doubles as the gate override approver picker's source (role_name/
-  // manager_id per user) -- the approver can be outside the current viewer's own
-  // scoped visibility (any Area Manager tier or GM company-wide), so it's enabled
-  // whenever either modal is open, not just for the REFERRAL lead source case.
-  const { data: referralUsers = [] } = useQuery({
-    queryKey: ["users", "referral-picker"],
-    queryFn: async () => {
-      const d = await listUsers("all");
-      return Array.isArray(d) ? (d as any[]) : [];
-    },
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-
-  // Approver picker option set: the selected owner's own immediate manager (via
-  // manager_id) plus every active General Manager, not a free user picker --
-  // mirrors the backend's own approver eligibility check
-  // (OpportunityService._validate_gate_override) so the picker never offers a
-  // choice the request would then reject.
-  function gateOverrideApproverOptionsFor(ownerId: string): any[] {
-    const owner = referralUsers.find((u: any) => u.id === ownerId);
-    const manager = owner?.manager_id ? referralUsers.find((u: any) => u.id === owner.manager_id) : undefined;
-    const byId = new Map<string, any>();
-    if (manager) byId.set(manager.id, manager);
-    for (const u of referralUsers as any[]) {
-      if (u.role_name === GATE_OVERRIDE_ESCALATION_ROLE) byId.set(u.id, u);
-    }
-    return Array.from(byId.values());
-  }
-  const addOppGateOverrideApproverOptions = gateOverrideApproverOptionsFor(addOppOwnerId);
-
-  // BR-OP-14: gate override applies on creation too, e.g. a referral going
-  // straight to Negotiation with no prior demo.
-  const { data: gateOverrideReasons = [] } = useQuery({
-    queryKey: ["gateOverrideReasons"],
-    queryFn: () => listGateOverrideReasons() as Promise<any[]>,
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-  const { data: oppUsers = [] } = useQuery({
-    queryKey: ["users", "all"],
-    queryFn: () => listUsers() as Promise<any[]>,
-    enabled: showAddOpp,
-    staleTime: Infinity,
-  });
-  const { data: sbus = [] } = useQuery({
-    queryKey: ["sbus"],
-    queryFn: () => listSbus() as Promise<any[]>,
-    enabled: showAddOpp && isSbuOverrideRole,
-    staleTime: Infinity,
-  });
-
-  // While creating an Opportunity, an Admin/GM's chosen SBU override (if any)
-  // determines which products are eligible (BR-OP-11 validates items against
-  // the opportunity's actual SBU, not the caller's own) -- everywhere else
-  // it's just the caller's own SBU. Keying the query on this value replaces
-  // the pre-migration manual refetch effect entirely: React Query refetches
-  // on its own whenever the resolved SBU changes. Editing an existing
-  // Opportunity happens on its own detail page (hotfix 2026-10-01).
-  const productsSbuId = showAddOpp && isSbuOverrideRole && addOppSbuId
-    ? addOppSbuId
-    : userProfile?.sbu?.id;
-  const { data: oppProducts = [] } = useQuery({
-    queryKey: ["products", "picker", productsSbuId],
-    queryFn: async () => {
-      const d: any = await listProducts({ page_size: 100, sbu_id: productsSbuId } as any);
-      return (d.items ?? []) as ProductOption[];
-    },
-    enabled: showAddOpp,
-  });
-
-  useEffect(() => {
-    // Derives the Add Opportunity Value field from its item list; React 18
-    // batches this into one re-render, not worth restructuring for.
-    if (addOppItems.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAddOppValue(itemsTotal(addOppItems).toFixed(2));
-    } else {
-      setAddOppValue("");
-    }
-  }, [addOppItems]);
-
-  function openAddOpp() {
-    setAddOppName(p.name);
-    setAddOppStageId("");
-    setAddOppOwnerId("");
-    setAddOppWinProb("");
-    setAddOppValue("");
-    setAddOppItems([]);
-    setAddOppLeadSourceId("");
-    setAddOppDemoStart("");
-    setAddOppDemoEnd("");
-    setAddOppClosureDate("");
-    setAddOppPoNumber("");
-    setAddOppSbuId("");
-    setAddOppIsExternalReferrer(false);
-    setAddOppReferredByUserId("");
-    setAddOppReferredByNote("");
-    setAddOppGateOverrideChecked(false);
-    setAddOppGateOverrideApproverId("");
-    setAddOppGateOverrideReasonId("");
-    setAddOppGateOverrideNote("");
-    setShowAddOpp(true);
-  }
-
-  async function handleCreateOpp() {
-    if (!addOppName.trim()) throw new Error("Opportunity name is required");
-    // BR-OP-12: Admin/GM have no meaningful "own" SBU -- must always explicitly choose.
-    if (isSbuOverrideRole && !addOppSbuId) throw new Error("SBU is required");
-    if (!addOppStageId) throw new Error("Stage is required");
-    if (!activeStatusId) throw new Error("Unable to determine Active status -- please retry");
-    if (!addOppOwnerId) throw new Error("Owner is required");
-    if (addOppWinProb === "") throw new Error("Win probability is required");
-    // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
-    // the failure surfaces before the round-trip, not just as a 422.
-    if (addOppGateOverrideChecked && addOppGateOverrideApproverId && !addOppGateOverrideReasonId) {
-      throw new Error("Gate override reason is required whenever an approver is set");
-    }
-    const payload: any = {
-      name: addOppName.trim(),
-      stage_id: addOppStageId,
-      status_id: activeStatusId,
-      owner_id: addOppOwnerId,
-      win_probability: Number(addOppWinProb),
-      project_id: p.id,
-    };
-    if (isSbuOverrideRole && addOppSbuId) payload.sbu_id = addOppSbuId;
-    if (addOppValue !== "") payload.indicative_value = Number(addOppValue);
-    if (addOppLeadSourceId) payload.lead_source_id = addOppLeadSourceId;
-    if (addOppDemoStart && !addOppGateOverrideChecked) payload.demo_start_date = addOppDemoStart;
-    if (addOppDemoEnd && !addOppGateOverrideChecked) payload.demo_end_date = addOppDemoEnd;
-    if (addOppClosureDate && !(addOppGateOverrideChecked && addOppStageOrder >= STAGE_ORDER_ORDER)) payload.expected_closure_date = addOppClosureDate;
-    if (addOppPoNumber.trim()) payload.po_number = addOppPoNumber.trim();
-    if (addOppLeadSourceCode === "REFERRAL") {
-      if (addOppIsExternalReferrer) {
-        if (addOppReferredByNote.trim()) payload.referred_by_note = addOppReferredByNote.trim();
-      } else if (addOppReferredByUserId) {
-        payload.referred_by_user_id = addOppReferredByUserId;
-      }
-    }
-    if (addOppGateOverrideChecked && addOppGateOverrideApproverId) {
-      payload.gate_override_approver_id = addOppGateOverrideApproverId;
-      payload.gate_override_reason_id = addOppGateOverrideReasonId || null;
-      if (addOppGateOverrideNote.trim()) payload.gate_override_note = addOppGateOverrideNote.trim();
-    }
-    if (addOppItems.length > 0)
-      payload.items = addOppItems.map((i) => ({
-        product_id: i.product_id,
-        description: i.description,
-        quantity: i.quantity,
-        unit_price_lakhs: i.unit_price_lakhs,
-        discount_lakhs: i.discount_lakhs,
-        line_type: i.line_type,
-      }));
-    await createOpportunity(p.account.id as any, payload);
-    queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", p.account.id] });
-    queryClient.invalidateQueries({ queryKey: ["pipeline"] });
-    setShowAddOpp(false);
-  }
 
   const fields = [
     { label: "Account", value: p.account?.name },
@@ -342,7 +112,7 @@ function ProjectDetailView({
                 Opportunities
               </Typography>
               <Button
-                onClick={openAddOpp}
+                onClick={() => setShowAddOpp(true)}
                 sx={{ px: 1.5, py: 0.75, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
               >
                 + Add
@@ -400,185 +170,17 @@ function ProjectDetailView({
         </Box>
       </Box>
 
-      {/* Add Opportunity Modal */}
-      <FormModal isOpen={showAddOpp} onClose={() => setShowAddOpp(false)} title="Add Opportunity" onSubmit={handleCreateOpp}>
-        <Box sx={{ px: 1.5, py: 1, bgcolor: "#eff6ff", borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 700, color: "primary.main", mb: 0.5 }}>
-          {p.account?.name} — {p.name}
-        </Box>
-        <TextField label="Name *" value={addOppName} onChange={(e) => setAddOppName(e.target.value)} autoFocus fullWidth size="small" />
-        {isSbuOverrideRole && (
-          <TextField
-            select
-            label="SBU *"
-            value={addOppSbuId}
-            onChange={(e) => setAddOppSbuId(e.target.value)}
-            fullWidth
-            size="small"
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-          >
-            <MenuItem value="">Select SBU</MenuItem>
-            {sbus.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-          </TextField>
-        )}
-        <TextField
-          select
-          label="Stage *"
-          value={addOppStageId}
-          onChange={(e) => {
-            const s: any = oppStages.find((x: any) => x.id === e.target.value);
-            setAddOppStageId(e.target.value);
-            if (s) setAddOppWinProb(String(s.default_win_probability));
-          }}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select stage</MenuItem>
-          {oppStages.map((s: any) => <MenuItem key={s.id} value={s.id}>{s.stage_name}</MenuItem>)}
-        </TextField>
-        <TextField
-          select
-          label="Lead Source"
-          value={addOppLeadSourceId}
-          onChange={(e) => setAddOppLeadSourceId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select source</MenuItem>
-          {leadSources.map((ls: any) => <MenuItem key={ls.id} value={ls.id}>{ls.name}</MenuItem>)}
-        </TextField>
-        {addOppLeadSourceCode === "REFERRAL" && (
-          <Box>
-            <FormControlLabel
-              control={<Checkbox color="primary" checked={addOppIsExternalReferrer} onChange={(e) => { setAddOppIsExternalReferrer(e.target.checked); setAddOppReferredByUserId(""); setAddOppReferredByNote(""); }} />}
-              label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>External referrer (not Cabio staff)</Typography>}
-            />
-            {addOppIsExternalReferrer ? (
-              <TextField label="Referred By" value={addOppReferredByNote} onChange={(e) => setAddOppReferredByNote(e.target.value)} placeholder="e.g. Dr. Menon, referring physician" fullWidth size="small" />
-            ) : (
-              <TextField select label="Referred By" value={addOppReferredByUserId} onChange={(e) => setAddOppReferredByUserId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                <MenuItem value="">Select colleague</MenuItem>
-                {referralUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-              </TextField>
-            )}
-          </Box>
-        )}
-        <TextField
-          select
-          label="Owner *"
-          value={addOppOwnerId}
-          onChange={(e) => setAddOppOwnerId(e.target.value)}
-          fullWidth
-          size="small"
-          slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-        >
-          <MenuItem value="">Select owner</MenuItem>
-          {oppUsers.map((u: any) => <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>)}
-        </TextField>
-        <TextField
-          label="Win Probability % *"
-          type="number"
-          value={addOppWinProb}
-          onChange={(e) => setAddOppWinProb(e.target.value)}
-          placeholder="0 – 100"
-          fullWidth
-          size="small"
-          slotProps={{ htmlInput: { min: 0, max: 100 } }}
-        />
-        {(addOppStageOrder >= STAGE_ORDER_QUALIFIED || addOppItems.length > 0) && (
-          <TextField
-            label={`Indicative Value (Lakhs)${addOppItems.length > 0 ? " (auto)" : ""}`}
-            type="number"
-            value={addOppValue}
-            onChange={(e) => setAddOppValue(e.target.value)}
-            disabled={addOppItems.length > 0}
-            placeholder="e.g. 25.50"
-            fullWidth
-            size="small"
-            slotProps={{ htmlInput: { min: 0, step: "any" } }}
-          />
-        )}
-        <FormControlLabel
-          control={<Checkbox color="primary" checked={addOppGateOverrideChecked} onChange={(e) => setAddOppGateOverrideChecked(e.target.checked)} />}
-          label={<Typography sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#374151" }}>Fast-Track this Deal</Typography>}
-        />
-        {addOppStageOrder >= STAGE_ORDER_DEMO && addOppLeadSourceCode !== "REPEAT_ORDER" && !addOppGateOverrideChecked && (
-          <>
-            <TextField label="Demo Start Date" type="date" value={addOppDemoStart} onChange={(e) => setAddOppDemoStart(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-            <TextField label="Demo End Date" type="date" value={addOppDemoEnd} onChange={(e) => setAddOppDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-          </>
-        )}
-        {addOppStageOrder >= STAGE_ORDER_NEGOTIATION && addOppLeadSourceCode !== "REPEAT_ORDER" &&
-          !(addOppGateOverrideChecked && addOppStageOrder >= STAGE_ORDER_ORDER) && (
-          <TextField label="Expected Closure Date" type="date" value={addOppClosureDate} onChange={(e) => setAddOppClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
-        )}
-        {addOppGateOverrideChecked && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: 1.5, borderRadius: "0.75rem", bgcolor: "#fef2f2", border: "1px solid #fecaca" }}>
-            <TextField
-              select
-              label={addOppGateOverrideApproverId ? "Approved By *" : "Approved By"}
-              value={addOppGateOverrideApproverId}
-              onChange={(e) => setAddOppGateOverrideApproverId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-              helperText="The owner's immediate manager, or a General Manager"
-            >
-              <MenuItem value="">No override</MenuItem>
-              {addOppGateOverrideApproverOptions.map((u: any) => (
-                <MenuItem key={u.id} value={u.id}>
-                  {u.display_name}{u.role_name === GATE_OVERRIDE_ESCALATION_ROLE ? " (General Manager)" : " (Manager)"}
-                </MenuItem>
-              ))}
-            </TextField>
-            {addOppGateOverrideApproverId && (
-              <>
-                <TextField
-                  select label="Reason *" value={addOppGateOverrideReasonId} onChange={(e) => setAddOppGateOverrideReasonId(e.target.value)}
-                  fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-                >
-                  <MenuItem value="">Select reason</MenuItem>
-                  {gateOverrideReasons.map((r: any) => <MenuItem key={r.id} value={r.id}>{r.reason_name}</MenuItem>)}
-                </TextField>
-                <TextField
-                  label="Note" value={addOppGateOverrideNote} onChange={(e) => setAddOppGateOverrideNote(e.target.value)}
-                  placeholder="Optional" fullWidth size="small" multiline minRows={2}
-                />
-              </>
-            )}
-          </Box>
-        )}
-        {addOppStageOrder >= STAGE_ORDER_ORDER && (
-          <TextField label="PO Number" value={addOppPoNumber} onChange={(e) => setAddOppPoNumber(e.target.value)} placeholder="e.g. PO-2024-001" fullWidth size="small" />
-        )}
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-            <Box sx={{ fontSize: "10px", fontWeight: 900, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Products</Box>
-            <Button
-              onClick={() => setShowAddOppItemsModal(true)}
-              sx={{ px: 1.5, py: 0.5, borderRadius: "0.75rem", fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", color: "#059669", bgcolor: "#ecfdf5", "&:hover": { bgcolor: "#d1fae5" } }}
-            >
-              {addOppItems.length > 0 ? `Edit (${addOppItems.length})` : "+ Add Products"}
-            </Button>
-          </Box>
-          <OpportunityItemsList items={addOppItems} variant="summary" />
-        </Box>
-      </FormModal>
-
-      {/* Add Opportunity — Products secondary modal */}
-      <FormModal isOpen={showAddOppItemsModal} onClose={() => setShowAddOppItemsModal(false)} title="Products" onSubmit={async () => {}} submitLabel="Done">
-        <OpportunityItemsList
-          items={addOppItems}
-          variant="editable"
-          emptyMessage="No products added"
-          onRemove={(i) => setAddOppItems(addOppItems.filter((_, j) => j !== i))}
-          onUpdateField={(i, field, value) => setAddOppItems(addOppItems.map((it, j) => (j === i ? { ...it, [field]: value } : it)))}
-        />
-        <Box sx={{ borderTop: "1px solid #f3f4f6", pt: "0.75rem" }}>
-          <OpportunityItemAddRow products={oppProducts} onAdd={(item) => setAddOppItems([...addOppItems, item])} />
-        </Box>
-      </FormModal>
+      {/* New Opportunity -- the one create form, hospital and project fixed */}
+      <QuickLeadModal
+        isOpen={showAddOpp}
+        onClose={() => setShowAddOpp(false)}
+        sbuId={userProfile?.sbu?.id}
+        initialAccountId={p.account.id}
+        initialProjectId={p.id}
+        initialName={p.name}
+        lockAccount
+        lockProject
+      />
     </>
   );
 }
