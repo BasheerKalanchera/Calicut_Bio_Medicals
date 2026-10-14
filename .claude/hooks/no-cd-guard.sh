@@ -10,11 +10,17 @@
 # run now leaves a line in guard.log (proves whether the hook is called at
 # all), and a refusal is also signalled by exit code 2 + stderr, which
 # Claude Code honours even if the JSON decision is lost.
+#
+# 2026-10-14 (P14): refusals log the first 300 characters of the command so
+# the weekly review can judge them; allow lines keep 60 to limit log size.
 input=$(cat)
 dir="${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}/.claude/hooks"
-cmd=$(printf '%s' "$input" | tr '\r\n' '  ' | sed -n 's/.*"command" *: *"\(.\{0,60\}\).*/\1/p')
+cmd=$(printf '%s' "$input" | tr '\r\n' '  ' | sed -n 's/.*"command" *: *"\(.\{0,300\}\).*/\1/p' | sed -e 's/", *"[a-z_]*" *:.*//' -e 's/"}*$//')
 
-log() { printf '%s no-cd %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "$cmd" >> "$dir/guard.log" 2>/dev/null; }
+log() {
+  c=$cmd; case "$1" in allow*) c=$(printf '%s' "$cmd" | cut -c1-60) ;; esac
+  printf '%s no-cd %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "$c" >> "$dir/guard.log" 2>/dev/null
+}
 
 deny() {
   log "deny"
@@ -24,7 +30,7 @@ deny() {
 
 if out=$(printf '%s' "$input" | python "$dir/cd_guard.py" 2>/dev/null); then
   if [ -n "$out" ]; then
-    deny "Blocked by the no-cd guard rail: this command changes folder, which carries over to later commands. Redo it with absolute paths (or \`git -C <dir>\` for git) and no folder change."
+    deny "Blocked by the no-cd guard rail: this command changes folder, which carries over to later commands. Redo it with absolute paths (or \`git -C <dir>\` for git), or put the folder change inside brackets: \`( cd <dir> && <command> )\`."
   fi
   log "allow"
   exit 0

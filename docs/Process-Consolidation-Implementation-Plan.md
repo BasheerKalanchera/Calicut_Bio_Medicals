@@ -80,8 +80,8 @@ Each moved section leaves a one-line pointer in CLAUDE.md. The short
 
 | # | P (seen) | Fix |
 |---|---|---|
-| 1 | P1 (21) | `scripts/quarter.py` prints the quarter code and months for a date, using the app's own quarter function; plan and test-plan templates give each number a source slot; each daily review spot-checks 3 numbers |
-| 2 | P3 (12) | Top of a short "Most-repeated mistakes" list at the head of CLAUDE.md; each daily review checks a sample of explanations |
+| 1 | P1 (21) | `scripts/quarter.py` prints the quarter code and months for a date, using the app's own quarter function; plan and test-plan templates get a "Figures and sources" section, checked on save; a per-message reminder; each end-of-session retro spot-checks 3 figures (changed 2026-10-14, Basheer) |
+| 2 | P3 (12) | The per-message reminder carries "plain language first"; each end-of-session retro checks 2 explanations (the CLAUDE.md list was dropped 2026-10-14: rules at the top still get buried) |
 | 3 | P14 (9) | Guard-rail review: deny log per guard; a guard whose denials were harmless is loosened to stop only the dangerous case (approved separately) |
 | 4 | P15 (7) | Automatic reminder after each finished file during a build |
 | 5 | P2 (6), P5, P40 | E2E test-plan template: every live-data line names its source and date; standard cases "member with no activity", "dual-role person", "no-home-SBU person" |

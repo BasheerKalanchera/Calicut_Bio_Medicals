@@ -43,6 +43,8 @@ whether that gap is acceptable before proceeding.
 - **Secondary (offsite):** Basheer's Google Drive. Since 2026-10-12 he
   copies each day's new dump there by hand after the backup runs; Claude
   ends every backup report with that file's name (Basheer, 2026-10-12).
+  All Drive copies sit in one folder, going back to 2026-09-05 (Basheer
+  organised it 2026-10-14).
   The backup script's own Google Drive step stays disabled pending
   Google Drive for Desktop setup. Use this only if the laptop itself is
   unavailable.

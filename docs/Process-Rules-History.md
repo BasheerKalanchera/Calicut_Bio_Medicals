@@ -235,3 +235,6 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Session handoff — a task that runs a script cleans up its Python cache; the `clean-pycache` hook (PostToolUse) deletes `scripts/__pycache__` after any command that runs a `scripts/*.py` file. Root `.gitignore` also ignores `__pycache__/` and `*.pyc` as a safety net.
   **Why:** 2026-10-07 — Basheer asked what two unknown files in the working tree were: Python cache files left in `scripts/__pycache__` by the scorecard and report scripts (they also blocked removing the fix-3 worktree). His call: Python may create them, but the task that made them must delete them when done. The backend's cache is left alone because the running Dev server uses it.
+
+- **Rule:** Per-message reminder (UserPromptSubmit hook `reply-checklist.sh`) — count before stating, source every figure, read before describing code, plain language first; plans and test plans carry a checked "Figures and sources" section; the retro spot-checks 3 figures and 2 explanations.
+  **Why:** 2026-10-14 — weekly process review. P1 (29 slips) and P3 (20) kept repeating despite written rules. Basheer pointed out that rules read once at session start get buried, so the reminder now arrives with every message.

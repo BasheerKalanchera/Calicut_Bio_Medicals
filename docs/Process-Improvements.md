@@ -7,9 +7,9 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 29 | open — first review |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 29 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 11 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 20 | open |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 20 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 6 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
@@ -18,7 +18,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 18 | open |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 18 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
@@ -62,7 +62,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 3 | open |
 | P70 | Before proposing a new Backlog item or saying something isn't written elsewhere, search the Backlog and docs under several wordings (was watch-list P52; 2026-10-12: proposed a "new" item for the screen "deal" wording, missing the 7 Oct entry; 2026-10-13: audit called beyond-contract items 7–9 missing from the tracker) | 2026-10-09 | 3 | open |
 | P71 | A session given a role by Basheer (e.g. "Build & Test only, ignore due-today reminders") has it written at the top of the handover note the same turn, so it survives a restart or a condensed conversation | 2026-10-13 | 2 | open |
-| P72 | Any Python run on Windows writes UTF-8 from the start (`sys.stdout.reconfigure(encoding="utf-8")` or `PYTHONIOENCODING=utf-8`) (was watch-list 2026-10-12, `validate.py`; 2026-10-13: transcript print) | 2026-10-12 | 2 | open |
+| P72 | Any Python run on Windows writes UTF-8 from the start (`sys.stdout.reconfigure(encoding="utf-8")` or `PYTHONIOENCODING=utf-8`) (was watch-list 2026-10-12, `validate.py`; 2026-10-13: transcript print) | 2026-10-12 | 2 | built (`.claude/settings.json` env block, 2026-10-14) |
 | P73 | When a reply could refer to more than one plan or thread, ask which one in a single line before editing anything (was watch-list P55; 2026-10-13: wrote only the Part A test plan when both were asked; read "the whole plan" as the duplicate plan instead of the Win Probability plan and edited 4 docs) | 2026-10-09 | 3 | open |
 
 ## Watch list
@@ -99,3 +99,4 @@ is deleted at the process review (git history keeps it). Rules:
 
 ## Weekly reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
+- 2026-10-14 — second review. Open list 22 → 18 (counted). Built P72, P1, P3, P14 — one over the limit of 3, Basheer's choice. Nothing dropped; no watch-list line was older than 7 days.

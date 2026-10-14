@@ -29,12 +29,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 - Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3
   done 2026-10-08 (`baf56b4`).
-- 2026-10-10: 9 drops done; new watch list in `docs/Process-Improvements.md`
-  (seen-once slips, deleted after 7 days with no repeat); retro rules in
-  `process-review` (repeat = +1, watch list, cap of 10). Open list 40 → 13
-  items in 11 jobs (top 10 + P47); 16 on the watch list.
-- **Next:** job 1 (P1, numbers and examples correct and sourced), then
-  the rest of the top 10 in Pareto order.
+- 2026-10-14 weekly review: built P72, P1, P3, P14 (open list 22 → 18).
+  The per-message reminder, the figures-and-sources check and the
+  loosened folder guard are live.
+- **Next:** the rest of the top 10 in Pareto order (P15, reminder after
+  each finished file, is next).
 - Still to write, shown first: paperwork check in `cabio-post-commit`
   (feat/fix only, all living docs + handover); daily review procedure
   and right-pack check in `process-review`.
@@ -52,11 +51,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   own approval) → card redesign 6d after sales-team feedback.
   Demo script: `docs/Demo-2026-10-Haroon-Latheef.md`. **Next:** Basheer
   fixes the demo date with Haroon and Latheef Bhai (WhatsApp drafted).
+- The UAT move plan starts with Query Load plan section 9, steps 2–9
+  (UAT's fix 3 copy into `main`, remove `uat-fix3`) — Basheer, 2026-10-14.
 
 ## Duplicate hospitals — Part A next (Build & Test)
 
 - Plan: `docs/Duplicate-Hospital-Prevention-Implementation-Plan.md`
-  (Draft). 2026-10-13: Part A built on Dev, to UAT with the next full
+  (Draft). 2026-10-13: Part A decided — to be built on Dev (not started), to UAT with the next full
   move; covers "Change Anyway"; no interim message. Parts B–D not
   scheduled.
   Test plan: `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`.
@@ -68,19 +69,6 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   next-action rules are built after the form merge (Win Probability step
   2), into one form instead of three. Recorded in the next-action paper,
   section 5a, Question 11.
-
-## Query load fixes — approved 2026-10-06, fix 4 due Mon 2026-10-12
-
-- Plan: `docs/Query-Load-Fixes-Implementation-Plan.md`; history in its
-  sections 6–8 and Progress-Archive-2026-10. Fixes 1–3 on UAT; fix 4
-  goes with the next full promotion (D9).
-- The other session owns Target vs Actuals files: check `git status`
-  before every save and commit.
-- **Next:** plan section 9 from step 2, through step 9 (merge `uat`
-  back into `main`, remove the `uat-fix3` worktree).
-- **Then:** fix 4 on Dev, starting with its "What could be affected"
-  list for approval; approach in the plan's technical addendum. Due
-  committed on `main` by Mon 2026-10-12 (Basheer, 2026-10-09).
 
 ## Audit Trail Redesign — built and tested on Dev; UAT move waiting
 

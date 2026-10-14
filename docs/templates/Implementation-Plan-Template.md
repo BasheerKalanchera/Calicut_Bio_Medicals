@@ -30,9 +30,21 @@ table, screen, column or rule) is a decision and goes here too.
 - <choice> — proposed
 - <choice> — Basheer, YYYY-MM-DD
 
+## Figures and sources
+
+Every number, name and example in this document, one line each, with where
+it came from: a Dev query and its date, a file, Basheer, or "made-up
+example". Counts are counted with a tool; quarters come from
+`scripts/quarter.py`. A save-time check refuses a new document without
+this section filled in.
+
+- <figure or example> — <source>
+
 ## 1. In plain terms
 
-<What changes for the people using it, no jargon.>
+<What changes for the people using it, no jargon. Explain each structural
+choice (new table, screen, rule) here in plain words before the technical
+addendum.>
 
 ## 2. Build order
 

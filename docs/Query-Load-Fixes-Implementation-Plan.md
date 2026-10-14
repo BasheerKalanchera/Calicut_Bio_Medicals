@@ -1,6 +1,6 @@
 # Query Load Fixes — Implementation Plan
 
-**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07. Fix 4 moved to **Mon 2026-10-12** — Basheer, 2026-10-09 (9 Oct went to a planning session; fixes 1–3 met the 11th).
+**Status:** Approved 2026-10-06 (Basheer). Deadline Sun 2026-10-11: fixes 1–3 fixed and on UAT; fix 4 committed on `main` (it reaches UAT with the next full promotion, D9) — Basheer, 2026-10-07. Fix 4 moved to **Mon 2026-10-12** — Basheer, 2026-10-09 (9 Oct went to a planning session; fixes 1–3 met the 11th). Changed 2026-10-14 (Basheer): fix 4 is low priority (Admin-only screens, rarely used) and is built **after** the next Dev → UAT move, no date set. The section 9 tidy-up (UAT's separate fix 3 copy back into `main`, remove the `uat-fix3` working copy) moves into that move's plan as its first step.
 **Traceability rows:** none (no signed requirement; reliability work after the
 Next Actions outage).
 **Design / discussion:** query audit on Dev, 2026-10-06 — results in

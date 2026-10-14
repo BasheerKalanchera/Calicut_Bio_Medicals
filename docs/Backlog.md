@@ -9,7 +9,7 @@ Session Handoff rule).
 
 ## Parked initiatives
 
-### Query load fixes — in progress, fix 4 due Mon 2026-10-12 (2026-10-06)
+### Query load fixes — fixes 1–3 on UAT; fix 4 after the next UAT move (2026-10-06)
 
 Eight screens fetch far more than they show (the cause of the Next Actions
 outage). Plan, priority order and progress table:
@@ -19,7 +19,9 @@ trips) by **Sun 2026-10-11**. Changed 2026-10-07: 3 trips; fix 4 is due
 committed on `main` by Sunday and reaches UAT with the next full
 promotion (plan D9). Changed 2026-10-09 (Basheer): fix 4 due committed
 on `main` by **Mon 2026-10-12**; 9 Oct went to planning. Fixes 1–3 are
-on UAT.
+on UAT. Changed 2026-10-14 (Basheer): fix 4 is low priority and is
+built after the next Dev → UAT move, no date; the section 9 tidy-up
+goes into that move's plan.
 - **Close this entry** when every row in the plan's progress table shows
   both a `main` commit and a UAT move.
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
@@ -207,7 +209,7 @@ part of Query Load fix 3.
 - Recommended: rename the familiar names too ("Stagnant Opportunities",
   "Fast-Track this Opportunity"); Basheer to tell Haroon. Not yet decided.
 - No database change. Checks: tsc, lint, a visual walk on Dev. Could go
-  to UAT with Query Load fix 4.
+  to UAT with the next full move.
 - After the Traceability edit: regenerate the scorecard and show Basheer
   the exact client-visible diff before republishing.
 

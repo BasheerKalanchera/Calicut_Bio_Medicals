@@ -2280,3 +2280,21 @@ hospitals). In short:
   watch-list line. Fine: handover at 113 lines, under 150 (P24); every
   decision recorded the same turn (P69). Open list 21 → 22, over the cap
   of 10; process work stays paused.
+
+## 2026-10-14 — Plan & chore session
+
+- UAT backup taken and checked. Basheer moved all Google Drive backups
+  (since 5 Sep) into one folder; runbook updated.
+- Documentation tidy-up: 9 fixes approved and applied (Query Load fix 4
+  after the next UAT move, its section 9 tidy-up into that move's plan;
+  roster plan status; Backlog; handover; sweep log).
+- Weekly process review (second): built P72, P1, P3, P14; open list
+  22 → 18. Basheer asked whether rules at the top of CLAUDE.md work,
+  since they're read once and then get buried, so the fix became a
+  per-message reminder hook. The save-time check looks only at a "Figures
+  and sources" section, not at every number (step numbers and dates would
+  block every save). The spot-check went into the session retro because
+  the daily review was never written. Folder guard: 43 refusals since
+  7 Oct, 11 of them a move into the project folder itself; loosened.
+  Tested: quarter helper, sources guard (6 cases), folder guard (14 cases
+  × 2 folder spellings), reminder 0.10 s.

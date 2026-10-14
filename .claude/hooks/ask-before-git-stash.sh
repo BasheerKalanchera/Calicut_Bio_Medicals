@@ -11,8 +11,12 @@
 # decision -- exit code 2 would block outright instead of asking.
 input=$(cat)
 dir="${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}/.claude/hooks"
-cmd=$(printf '%s' "$input" | tr '\r\n' '  ' | sed -n 's/.*"command" *: *"\(.\{0,60\}\).*/\1/p')
-log() { printf '%s stash %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "$cmd" >> "$dir/guard.log" 2>/dev/null; }
+cmd=$(printf '%s' "$input" | tr '\r\n' '  ' | sed -n 's/.*"command" *: *"\(.\{0,300\}\).*/\1/p' | sed -e 's/", *"[a-z_]*" *:.*//' -e 's/"}*$//')
+# 2026-10-14 (P14): "ask" lines keep 300 characters; allow lines keep 60.
+log() {
+  c=$cmd; case "$1" in allow*) c=$(printf '%s' "$cmd" | cut -c1-60) ;; esac
+  printf '%s stash %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" "$c" >> "$dir/guard.log" 2>/dev/null
+}
 if out=$(printf '%s' "$input" | python "$dir/stash_guard.py" 2>/dev/null); then
   if [ -n "$out" ]; then log "ask"; printf '%s\n' "$out"; else log "allow"; fi
   exit 0

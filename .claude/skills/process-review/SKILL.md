@@ -18,7 +18,13 @@ Before recording anything, read both tables in `docs/Process-Improvements.md`:
 - On neither → one line on the watch list (date, what happened). Exception:
   anything touching live data, UAT or lost work goes straight to the open
   list. *(2026-10-10)*
-The retro names the items it checked. Full retro text stays in Progress-Archive.
+The retro names the items it checked.
+Spot-check 3 figures, names or examples from this session's replies or
+saved docs against their source, and name them in the retro. A wrong or
+unsourced one is a P1 repeat (+1). *(2026-10-14)*
+Also check 2 of this session's explanations to Basheer: does the plain part
+stand on its own, without the technical part? A failure is a P3 repeat
+(+1). *(2026-10-14)* Full retro text stays in Progress-Archive.
 At most 10 open items (the cap starts once the consolidation plan brings the
 list to 10). If the open list goes over 10, process work stops until every
 open item is fixed, then the list starts fresh; app work continues in the

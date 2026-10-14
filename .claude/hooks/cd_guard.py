@@ -13,12 +13,20 @@ messages, echoed text, grep patterns) is ignored, so a command that merely
 mentions "cd" is let through. `git -C <dir>` and absolute paths are the
 alternatives.
 
+Loosened 2026-10-14 (weekly process review, P14): 11 of 43 refusals since
+7 Oct were a `cd` into the project folder, where the shell already is, and
+most others were one-off steps. Now allowed: a `cd` into the project folder
+itself (changes nothing), and a `cd` inside brackets `( cd x && ... )` or
+`$( ... )`, which ends with that step. A `cd` anywhere else that carries
+over is still refused.
+
 Reads the hook JSON on stdin; prints a "deny" decision or nothing. The sh
 wrapper (no-cd-guard.sh) falls back to a plain text check if this script
 can't run.
 """
 
 import json
+import os
 import re
 import sys
 
@@ -26,17 +34,36 @@ BLOCKED = {"cd", "pushd", "popd", "set-location", "sl", "chdir"}
 
 HEREDOC_RE = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1[^\n]*\n.*?\n[ \t]*\2[ \t]*(?=\n|$)", re.S)
 PS_HERESTRING_RE = re.compile(r"@(['\"])\r?\n.*?\r?\n\1@", re.S)
-QUOTED_RE = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
+QUOTED_RE = re.compile(r"'([^']*)'|\"((?:\\.|[^\"\\])*)\"")
+PATHLIKE_RE = re.compile(r"[\w:/\\.~-]+")
+BRACKETS_RE = re.compile(r"\([^()]*\)")
 SEPARATOR_RE = re.compile(r"&&|\|\||[;|\n(){}]|\$\(|`")
 
 
-def check(command: str) -> str | None:
+def _unquote(m: re.Match) -> str:
+    # A quoted path stays readable (to spot the project folder); any other
+    # quoted text is blanked so "cd" inside it is never read as a command.
+    inner = m.group(1) if m.group(1) is not None else m.group(2)
+    return f" {inner} " if PATHLIKE_RE.fullmatch(inner or "") else " _ "
+
+
+def _norm(path: str) -> str:
+    p = path.replace("\\\\", "/").replace("\\", "/").rstrip("/;").lower()
+    return re.sub(r"^/([a-z])/", r"\1:/", p)
+
+
+def check(command: str, project_dir: str = "") -> str | None:
     text = HEREDOC_RE.sub(" ", command)
     text = PS_HERESTRING_RE.sub(" ", text)
-    text = QUOTED_RE.sub(" _ ", text)
+    text = QUOTED_RE.sub(_unquote, text)
+    while BRACKETS_RE.search(text):  # ( cd x && ... ) ends with the brackets
+        text = BRACKETS_RE.sub(" ", text)
     for segment in SEPARATOR_RE.split(text):
         words = segment.split()
         if words and words[0].lower() in BLOCKED:
+            target = next((w for w in words[1:] if not w.startswith("-")), "")
+            if project_dir and target and _norm(target) == _norm(project_dir):
+                continue  # already the working folder: nothing changes
             return words[0]
     return None
 
@@ -45,7 +72,7 @@ def main() -> None:
     raw = sys.stdin.buffer.read().decode("utf-8", "replace")
     data = json.loads(raw)
     command = (data.get("tool_input") or {}).get("command") or ""
-    word = check(command)
+    word = check(command, os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd") or "")
     if word:
         print(
             json.dumps(
@@ -56,7 +83,8 @@ def main() -> None:
                         "permissionDecisionReason": (
                             f"Blocked by the no-cd guard rail: this command changes folder with `{word}`, "
                             "which carries over to later commands. Redo it with absolute paths "
-                            "(or `git -C <dir>` for git) and no folder change."
+                            "(or `git -C <dir>` for git), or put the folder change inside brackets: "
+                            "`( cd <dir> && <command> )`."
                         ),
                     }
                 }

@@ -19,6 +19,16 @@ from the database, or says `n/a — <reason>`.
 Button labels, messages and the order of checks are taken from the code,
 not the design doc.
 
+## Figures and sources
+
+Every number, name and example in this document, one line each, with where
+it came from: a Dev query and its date, a file, Basheer, or "made-up
+example". Counts are counted with a tool; quarters come from
+`scripts/quarter.py`. A save-time check refuses a new document without
+this section filled in.
+
+- <figure or example> — <source>
+
 **Tags:** every step starts with `[Simple]` (one click/type/verify-a-value,
 Basheer runs it) or `[Complex: <reason>]` (Claude drives: layout shift,
 multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
