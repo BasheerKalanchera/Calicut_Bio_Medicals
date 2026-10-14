@@ -2500,6 +2500,45 @@ technical parts ✔.
   all four close forms, with checks in its E2E steps A3, B2, C3, D2.
 - **Next (15 Oct):** last round D5, D7, D8, D9b, D10, D14.
 
+## 2026-10-14 — Win Probability step 2: one create form on both screens (Build & Test)
+
+- Project Directory's "+ Add" now opens the shared "New Opportunity" form
+  with the hospital and project fixed (`a76b02d`); Customer 360's opens it
+  with the hospital fixed and Project still a choice (`86dd1a3`). Both
+  pushed 2026-10-14. The shared form gained a list refresh after save
+  (hospital's Opportunities, hospital header, Pipeline) and the label
+  "Fast-Track this Opportunity" (D17). Customer 360 gains PO Date.
+- Code removed: 421 deletions in `a76b02d`, 345 in `86dd1a3` (git
+  commit summaries). Code search found nothing else using it; the lists
+  still used by the Project and Installed Asset forms were kept.
+- Basheer asked for regression testing of the removed code. Added section
+  E (steps 24–39) to the test plan: the old forms' features in the shared
+  form, the other forms on both screens, the ways in that stay unlocked
+  (top bar, Marketing Lead convert) and lists refreshing after save. Five
+  "zz Chance E2E" records will be left on Dev instead of four. E2E not
+  run yet — after steps 1 + 3 (one combined run).
+- **Next:** D12 rule in Frontend Standards and UI-Inventory, then check in
+  before steps 1 + 3.
+
+### Retro — 2026-10-14 Win Probability step 2 (Build & Test)
+
+- Regression steps for the code removed behind both "+ Add" buttons were
+  added only when Basheer asked → P28 +1 (Seen 5, repeated after build).
+- The terminology check refused `a76b02d`'s first commit message, which
+  quoted the old label → new watch-list line.
+- Type-check run against a guessed `tsconfig.app.json` → new watch-list
+  line.
+- Basheer had to ask whether `a76b02d` had gone in (my reading: no clear
+  "committed" line before moving on) → new watch-list line.
+- Items checked: open list (19, counted) and full watch list; no other
+  repeats.
+- Figures spot-checked: "about 420 lines" (git: 434 lines changed in the
+  file, 421 deletions in the commit — fine as an estimate); "345 lines"
+  (commit summary: 345 deletions, exact); "16 regression checks" (steps
+  24–39, counted). All correct.
+- Plain-language check: the test-plan proposal and the push report both
+  stand on their own without the technical part. Pass.
+
 ## 2026-10-14 — Retro: My Work decisions and pre-fill (Plan & Chore)
 
 - **D1 explanation did not stand on its own** — Basheer had to ask how

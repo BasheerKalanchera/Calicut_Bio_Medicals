@@ -66,8 +66,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   next full move, then test plan step 19. **Next:** delete the test data
   from Dev, namely five "zz Test duplicate guard…" hospitals and the "zz Test
   contact" stakeholder (Basheer, 2026-10-14; read-only check shown
-  first; load `cabio-db-and-scripting`).
-- Then: (3) the whole Win Probability plan, steps 1–3; (4) next-action
+  first; load `cabio-db-and-scripting`). Left to the planning and
+  chores session (Basheer, 2026-10-14).
+- Then: (3) the whole Win Probability plan, steps 1–3 (in progress, see
+  its section); (4) next-action
   rules plan (approved 2026-10-14). All go to UAT with the next full
   move. Check in before each.
 - **Overlap:** the whole next-action build starts only after the form
@@ -88,8 +90,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   2026-10-09 and 2026-10-10). BR-OP-19 (Active Opportunity, chance ≥ 50 %
   before Negotiation, needs an Expected Closure Date) in Business-Rules +
   Matrix. UAT with the next full promotion.
-- **Next:** build step 1 (server check + Opportunity page fix); check in
-  before starting it.
+- Order changed 2026-10-14 (Basheer, plan D5): step 2 (form merge)
+  first, then steps 1 and 3 together in one commit. Form comparison done:
+  nothing lost; Project Directory's pre-filled Name carried over.
+- Step 2 code done and pushed (`a76b02d`, `86dd1a3`); regression
+  section E added to the test plan (history in Progress-Archive).
+- **Next:** D12 rule in Frontend Standards and UI-Inventory, then check
+  in before steps 1 + 3.
 - Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
   first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 

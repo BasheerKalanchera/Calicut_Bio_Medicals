@@ -1,6 +1,6 @@
 # Win Probability Rule (and One Create Form) — Implementation Plan
 
-**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Not started.
+**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Building: step 2 done (`a76b02d`, `86dd1a3`, pushed 2026-10-14); D12 rule and steps 1 + 3 next.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
 front-end clean-up).
 **Design / discussion:** chat with Basheer 2026-10-09 (Backlog "Business
@@ -22,9 +22,13 @@ useful points are folded in and it was deleted 2026-10-09.
 - D4. Existing Opportunities over the limit are held to it on their next
   save; leadership chases them meanwhile with the Expected Closure Dates
   report — Basheer, 2026-10-09
-- D5. One plan, three steps in order: (1) server check + Opportunity page
-  fix, (2) merge the create forms with no change in behaviour, (3) the
-  rule's message on the merged form — Basheer, 2026-10-09
+- D5. One plan, three steps: (1) server check + Opportunity page fix,
+  (2) merge the create forms with no change in behaviour, (3) the rule's
+  message on the merged form — Basheer, 2026-10-09. Build order changed
+  2026-10-14 (Basheer): step 2 first, then steps 1 and 3 together in one
+  commit, so Dev never has a create form the server refuses without a
+  date box, and the next-action build (its D7) can start sooner. Step
+  numbers kept so other docs' references stay valid.
 - D6. Everything reaches UAT with the next full promotion from Dev,
   together with Target vs Actuals; no hotfix trip — Basheer, 2026-10-09
 - D7. On every form, the Expected Closure Date box appears before
@@ -105,16 +109,17 @@ move from Dev, together with Target vs Actuals.
 
 ## 2. Build order
 
+**Order (D5, changed 2026-10-14):** step 2 first, then steps 1 and 3
+together in one commit.
+
 1. **Server check and Opportunity page fix.**
    - Server: refuse a save that breaks BR-OP-19, on create and update.
    - Opportunity page: changing the stage keeps a chance the rep typed in;
      the Expected Closure Date box appears when the chance is 50 % or more;
      an Opportunity already over the limit shows the D14 notice.
    - Backend tests for the rule; pytest, ruff, tsc, lint.
-   - *Checkpoint commit.* On Dev until step 3: the three create forms are
-     refused by the server with its message but have no date box before
-     Negotiation, so a rep creating a high-chance Lead must lower the
-     chance or pick Negotiation. Nothing else changes.
+   - Committed together with step 3 (D5 order), so the merged create
+     form gets its date box in the same commit as the server check.
 2. **Merge the create forms** (no change in behaviour).
    - Before deleting anything: confirm the Customer 360 and Project
      Directory forms have nothing the "+ Lead" form lacks (products,

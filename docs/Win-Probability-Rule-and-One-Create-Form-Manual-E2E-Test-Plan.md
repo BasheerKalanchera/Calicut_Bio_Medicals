@@ -3,7 +3,8 @@
 
 **Covers:** `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`,
 steps 1–3 (one combined run after step 3, per the plan's step 3).
-**Built:** not yet; commit hashes filled in after the fact.
+**Built:** step 2: Project Directory `a76b02d`, Customer 360 `86dd1a3`
+(both pushed 2026-10-14); steps 1 and 3 not built yet.
 **Where:** Dev.
 
 ## Checked against live data
@@ -32,12 +33,15 @@ Re-checked just before the run, as the records below may change meanwhile.
   - Project "Another new project" — Aster MIMS Calicut (owner Basheer K).
   - A Marketing Lead in "New" status assigned to an Imaging user: not
     checked yet; picked at the re-check before the run.
+  - For section E, also picked at the re-check: an Admin or General
+    Manager login (step 29) and an existing installed asset at Aster MIMS
+    Calicut (step 33).
 
 Button labels, messages and the order of checks are taken from the code,
-not the design doc. Today's labels: form title "New Opportunity" (top bar
-and Customer 360), "Add Opportunity" (Project Directory, removed in step
-2); "Expected Closure Date", "Win Probability %", "PO Date", "Fast-Track
-this Deal" (→ "Fast-Track this Opportunity", D17). The notice text is
+not the design doc. Today's labels: form title "New Opportunity" on all
+four ways in (Project Directory's "Add Opportunity" removed in step 2,
+`a76b02d`); "Expected Closure Date", "Win Probability %", "PO Date",
+"Fast-Track this Opportunity" (renamed in `a76b02d`, D17). The notice text is
 decided (D14), and so is the refusal (D18): "Win Probability is 50% or
 more but there's no expected closure date - add one.", the same from the
 server and on the create form. Both are checked against the built code
@@ -51,8 +55,8 @@ the app.
 
 **Left on Dev permanently:** dates or chances changed on the four records
 above; one On Hold → Active round trip on "New Cath Lab Equipment"; and
-four new Opportunities named "zz Chance E2E – <way in>" (top bar, Customer
-360, Project Directory, Marketing Lead convert). Saves may add Activity
+five new Opportunities named "zz Chance E2E – <way in>" (top bar, Customer
+360, Project Directory, Marketing Lead convert, top bar on project page). Saves may add Activity
 and Audit Log rows, which cannot be deleted.
 
 ## Pre-flight
@@ -98,3 +102,41 @@ and Audit Log rows, which cannot be deleted.
 
 Negotiation and later stages are outside BR-OP-19; that boundary is
 covered by the backend tests (plan section 6), not by a manual step.
+
+**Why section E (Basheer, 2026-10-14):** step 2 removed the code behind
+both "+ Add" buttons — about 420 lines from Project Directory (`a76b02d`)
+and about 345 from Customer 360 (`86dd1a3`) (git diff counts), including
+lists those screens loaded. A code search on 2026-10-14 found nothing else
+in the app still referring to the removed code; section E checks the same
+on screen. Unless a step says Create, it ends with **Cancel** and saves
+nothing.
+
+## E — Regression: nothing else relied on the removed forms (step 2)
+
+*The old forms' features, now in the shared form (Customer 360 → Aster MIMS Calicut → Opportunities tab → add):*
+
+24. [Simple] Project list. **Expected:** offers "None" plus only Aster MIMS Calicut's projects, including "Another new project". —
+25. [Simple] Lead Source REFERRAL. **Expected:** "External referrer (not Cabio staff)" tick box and a "Referred By" colleague list with names in it; ticking the box swaps the list for a text box. —
+26. [Simple] Stage Demo. **Expected:** Demo Start Date and Demo End Date show. Stage Order: **Expected:** PO Number shows. —
+27. [Complex: approver list depends on the chosen owner] Owner Basheer K, tick "Fast-Track this Opportunity". **Expected:** "Approved By" lists his manager and every General Manager; once one is picked, "Reason *" lists reasons. —
+28. [Complex: separate products pop-up, value fills itself] "+ Add Products" → add one product → Done. **Expected:** the product shows in the form and Indicative Value (Lakhs) reads "(auto)" with its total. Cancel. —
+29. [Complex: second login, a role that picks the SBU] Sign in as an Admin or General Manager (picked at P3) → same add form. **Expected:** "SBU *" box shows and Create without it is refused with "SBU is required"; after choosing Critical Care, the product list in "+ Add Products" shows Critical Care products. Cancel; sign back in as Basheer K. —
+
+*Other forms on the same screens (they shared lists with the removed code):*
+
+30. [Simple] Customer 360 → Aster MIMS Calicut → Projects tab → add. **Expected:** "New Project" opens; "Owner *" lists names. —
+31. [Simple] Edit an existing project there. **Expected:** "Edit Project" shows its status and owner filled in, lists not empty. —
+32. [Simple] Installed assets tab → add. **Expected:** "New Installed Asset" opens; "Product *" lists Imaging products. —
+33. [Simple] Edit an existing installed asset (picked at P3). **Expected:** its product is shown, list not empty. —
+34. [Simple] Opportunities tab: open an existing Opportunity, come back, use "Show all". **Expected:** opens its page; the list changes as before. —
+35. [Simple] Project Directory → search "Another new project" → open it → Edit Project. **Expected:** status and owner lists filled. Back; "New Project" from the directory: hospital search and "Owner *" list work. —
+
+*Ways in that must stay unlocked:*
+
+36. [Complex: cross-screen, compares locked vs unlocked] On the Aster MIMS Calicut page, use the top-bar "+ Lead". **Expected:** hospital pre-filled but changeable (search box and "+ Add Hospital" shown). —
+37. [Complex: top-bar form from a project page, refresh of the project's list] On "Another new project"'s page, top-bar "+ Lead". **Expected:** hospital and project pre-filled but changeable. Name "zz Chance E2E – top bar on project page", Stage Lead → **Create** (Basheer clicks, Claude watches). **Expected:** appears in the project's list without a refresh. —
+38. [Simple] Step 18's Marketing Lead form. **Expected:** hospital changeable, not a fixed name. (Checked during step 18.) —
+
+*Lists refreshed after a save:*
+
+39. [Complex: cross-screen] After step 15: the hospital page's Opportunities tab count, and the Pipeline, show "zz Chance E2E – Customer 360" without a refresh. After step 17: the same for "zz Chance E2E – Project Directory", and Aster MIMS Calicut's Opportunities tab shows it too. —

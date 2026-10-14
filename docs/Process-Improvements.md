@@ -32,7 +32,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P25 | If building shows the approved plan's shape must change (e.g. what an endpoint returns), stop and ask before writing the code | 2026-10-06 | 1 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P26 | When old code is loaded for an old-vs-fixed comparison, run every planned case before switching back | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
 | P27 | If a measurement is still unreliable after 2 tries, stop and report; never run two measurements against the same database at once | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
-| P28 | A test plan for a change with nothing visible on screen lists every way into the changed code, found by a code search, and is in the plan at approval, not after the commit | 2026-10-06 | 4 | built (plan template section 3; Query Load plan step 7 step 0; 2026-10-08) — also covers places that reuse or pre-fetch the data |
+| P28 | A test plan for a change with nothing visible on screen lists every way into the changed code, found by a code search, and is in the plan at approval, not after the commit | 2026-10-06 | 5 | built (plan template section 3; Query Load plan step 7 step 0; 2026-10-08) — also covers places that reuse or pre-fetch the data; repeated after build 2026-10-14 (form merge: regression steps for code removed behind both "+ Add" buttons added only when Basheer asked) |
 | P29 | Before the first browser action in a test, say which step and why it can't be handed to Basheer | 2026-10-06 | 1 | merged (`cabio-e2e-testing` skill, 2026-10-08) |
 | P30 | In an agreed multi-step plan, check in before starting each next step, even when the whole plan is approved | 2026-10-07 | 2 | merged (CLAUDE.md "Feature planning", 2026-10-08) |
 | P31 | Before copying a `main` fix to UAT, check that what it uses (fields, tables, functions) exists on `uat`, and say so in the trip plan | 2026-10-07 | 1 | merged (Deployment-Topology "Fix to UAT ahead of a full promotion"; building on a branch from `uat` removes the risk, 2026-10-08) |
@@ -97,6 +97,9 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-13 | 2026-10-13 | — | A new Dev query script copies its connection set-up from an existing project script, not a guessed database driver (`psycopg` failed) |
 | 2026-10-13 | 2026-10-13 | — | Before acting on a rename or wording request, check whether it already reads that way; if so, say so and ask only about what differs (asked to rename a plan title that already matched) |
 | 2026-10-14 | 2026-10-14 | — | Test commands on this computer spell folders `C:/…`, not `/c/…`, and test files go in with the file-writing tool, not typed inline (one false "file not found", one false guard-test result; backslashes garbled) |
+| 2026-10-14 | 2026-10-14 | — | A commit message describing a rename names only the new wording (the "deal" check refused `a76b02d`'s first message, which quoted the old label) |
+| 2026-10-14 | 2026-10-14 | — | Before running a check tool, read its exact command from the project's settings (`package.json`), never guess a config file name (type-check run against a `tsconfig.app.json` that doesn't exist) |
+| 2026-10-14 | 2026-10-14 | — | After every commit, one line with its hash and whether it is pushed, before starting the next step (Basheer had to ask whether `a76b02d` had gone in) |
 | 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
 
 ## Weekly reviews
