@@ -2362,3 +2362,41 @@ hospitals). In short:
   Dev by creating a Repeat Order Opportunity straight at Payment Pending
   (step D8, Basheer's suggestion) instead of walking one through every
   stage.
+
+## 2026-10-14 — Demo deck for Haroon and Latheef Bhai (Plan & Chore)
+
+- Demo moved from 14 Oct 4 pm to 15 Oct (Haroon, via Basheer). A laptop
+  restart cut the Plan & Chore session as the deck began; recovered from
+  its log in a new session.
+- Deck (Slides artifact, private):
+  https://claude.ai/artifact/J3TSFdTxVoxnHJVD1hSxYH — 10 slides: cover,
+  overview, one per feature (ratings, plans by hospital, Target vs
+  Actuals, closing rules, report breakdowns, Audit Log) with screen and
+  login, "three things to settle", next steps. Speaker notes carry the
+  demo steps and the Dev no-save caution.
+- Content from `docs/Demo-2026-10-Haroon-Latheef.md` and Basheer's
+  feature list; screen names, Target vs Actuals card labels and the
+  payment-confirmation wording checked in the code. Zone-tree depth and
+  the reports menu path left out (not verified). No figures or
+  screenshots.
+- Basheer's quick review OK; his full review later on 14 Oct, editing the
+  deck himself. He updates the demo script's date line himself.
+- **Retro (Plan & Chore, after the restart).** (1) P1 +1 (→ 30): before
+  the restart the session said it had run "past two hours" without
+  counting; recounted from its log only when Basheer asked (4 h 31 min,
+  16 messages). (2) P14 +1 (→ 20): first command to list the old session
+  logs used `cd` outside the project folder and was blocked by the guard;
+  redone with full paths. Spot-check, 3 figures: cut-off at 2:02 pm (log's
+  last entry 08:32:50 UTC) ✔; 10 slides (counted in `deck.json`) ✔;
+  "Payment Pending" awaiting confirmation since ~5 Oct (demo script) ✔.
+  Check, 2 explanations: recovery summary ✔; docs-edit proposal stood
+  alone without its exact-text addendum ✔. Two unverified report details
+  removed from the deck before publishing. Checked P1, P3, P14, P67, P69
+  and the 13–14 Oct watch-list lines: no other repeat. Open list 19
+  (counted).
+- Part A E2E on Dev finished: steps 1–18 Pass (step 19 is on UAT after
+  the move). Steps 10 and 11 were corrected during the run: the Audit Log
+  is Admin/GM only, so step 10 used Abdul Latheef P; step 11 used the
+  one-shot failed-request snippet instead of "Offline". Test data to delete
+  from Dev: five "zz Test duplicate guard…" hospitals and the "zz Test
+  contact" stakeholder.

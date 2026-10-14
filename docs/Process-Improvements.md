@@ -7,7 +7,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 29 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 30 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 11 | open |
 | P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 21 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 6 | open |
@@ -18,7 +18,7 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 19 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 20 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |

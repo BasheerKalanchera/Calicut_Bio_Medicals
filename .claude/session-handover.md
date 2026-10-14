@@ -52,8 +52,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Archive 2026-10-13). Order decided 2026-10-13 (plan step 7): demo to
   Haroon and Latheef Bhai on Dev → UAT move (promotion plan to write,
   own approval) → card redesign 6d after sales-team feedback.
-  Demo script: `docs/Demo-2026-10-Haroon-Latheef.md`. **Next:** Basheer
-  fixes the demo date with Haroon and Latheef Bhai (WhatsApp drafted).
+  Demo script: `docs/Demo-2026-10-Haroon-Latheef.md` (its date line:
+  Basheer updates). Demo on 15 Oct 2026; deck
+  https://claude.ai/artifact/J3TSFdTxVoxnHJVD1hSxYH (private; share
+  before sending). **Next:** Basheer's full review of the deck (14 Oct),
+  editing it himself; changes from Claude only if he asks.
 - The UAT move plan starts with Query Load plan section 9, steps 2–9
   (UAT's fix 3 copy into `main`, remove `uat-fix3`) — Basheer, 2026-10-14.
 
