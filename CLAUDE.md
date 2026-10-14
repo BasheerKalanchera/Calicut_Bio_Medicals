@@ -159,6 +159,15 @@ code or changing structure. On any conflict, the document wins over this file.
   restart — not one commit per edit. Feature/fix commits stay separate and
   first; the post-commit checklist may ride in the next docs batch. Each
   batch still needs its own explicit approval. *(2026-10-03)*  
+- **Batch small code fixes:** small fixes found during a feature's code
+  review or E2E (wording, labels, messages, comments — a few lines, no
+  change to what is saved or how the app behaves) aren't committed one by
+  one. They build up and go in one `fix:` commit at the end of that
+  feature's E2E, or before a break or session restart. Full tests, type
+  check and lint still run before that commit; the E2E runs on Dev with
+  the fixes in place but uncommitted. Each batch still needs its own
+  explicit approval. A fix that changes behaviour or data, and any feature
+  build, stays its own commit. *(2026-10-14)*
 - A bare "yes" to an either/or offer means the plan-first option; otherwise ask.
   If a reply answers only part of a multi-part question, the rest is still
   open. *(2026-09-15, 2026-09-17)*

@@ -2281,6 +2281,34 @@ hospitals). In short:
   decision recorded the same turn (P69). Open list 21 → 22, over the cap
   of 10; process work stays paused.
 
+## 2026-10-14 — Rep plan wording step 1 (Build & Test)
+
+- Built and pushed `25fbeab`: a rep's own figure says "plan" on Target &
+  Coverage Planning (My Plan, SBU Target & Plans, Approve/Reject dialogs,
+  Plan total, below-approved warning, Last approved plan), the Target vs
+  Actuals card's hospital row, and the server refusal messages. 5 tests
+  updated; pytest 1231 passed, ruff, tsc, lint 0 errors. Plan's change
+  table corrected: the hospital row is on the Target vs Actuals card, not
+  Target & Coverage Planning. First pytest run used the computer-wide
+  Python again (P63 repeat); re-run with `backend/.venv`.
+- Code review of `25fbeab`: 7 findings. Fixed in code: the not-found
+  message showed an internal id (now "This plan no longer exists — reload
+  the page."); Audit Log table filter still said "Target Plan…"; 3 code
+  comments. Older test plans (4) got a wording note instead of edits;
+  yearly heading and the server-side "Last approved plan" label left by
+  decision. New rule the same day: small review/E2E fixes go in one
+  end-of-E2E `fix:` commit (CLAUDE.md "Batch small code fixes").
+- E2E on Dev, Basheer ran every step: P1–P4 and steps 1–12 Pass. Two
+  wording calls during it: the plan form's title drops "Target" ("Plan &
+  Coverage — 2026-Q3"; the form holds no SBU target); "SBU Target &
+  Plans" stays for Area Managers too ("SBU Target & Team Plans"
+  considered). A missing SBU target line for Arun turned out to be the
+  Annual view, where it is hidden by design. Fixes committed and pushed
+  as `af4b4e9` (pytest 1231 passed, ruff, tsc, lint 0 errors).
+- Plan step 2 (docs): Frontend Standards 6.10 "target" vs "plan"; User
+  Manual plan examples; Backlog entry closed; Plan-vs-Actuals plan note
+  updated.
+
 ## 2026-10-14 — Plan & chore session
 
 - UAT backup taken and checked. Basheer moved all Google Drive backups

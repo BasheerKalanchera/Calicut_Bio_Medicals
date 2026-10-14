@@ -15,15 +15,12 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   + notes on 11.1 and 13.2. **Next:** Basheer answers Q1–Q6 (some go to
   Haroon / Latheef Bhai).
 
-## Rep plan wording — plan approved 2026-10-13, build 2026-10-14
+## Before the next UAT move
 
-- Plan: `docs/Rep-Plan-Wording-Implementation-Plan.md` (Approved; all
-  decisions Basheer's). Test plan: `docs/Rep-Plan-Wording-Manual-E2E-Test-Plan.md`
-  (11 steps, no saves; data checked on Dev 2026-10-13).
-- **Next:** build step 1 (screen wording + server messages + 5 tests),
-  then code review and the test plan's pre-flight.
-- Also: User Manual and Help Catch-up plan (approved 2026-10-01, not
-  started) must land before the next UAT move.
+- User Manual and Help Catch-up plan (approved 2026-10-01, not started)
+  must land first; it now follows the "plan" wording (Frontend Standards
+  6.10). Rep plan wording (`25fbeab`, `af4b4e9`, E2E Pass 2026-10-14;
+  history in Progress-Archive) goes with that move.
 
 ## Process consolidation — plan approved 2026-10-08, building
 
@@ -61,8 +58,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   move; covers "Change Anyway"; no interim message. Parts B–D not
   scheduled.
   Test plan: `docs/Duplicate-Hospital-Prevention-Part-A-Manual-E2E-Test-Plan.md`.
-- **Next (2026-10-14, Build & Test):** (1) Rep plan wording (section
-  above); (2) Part A, A1 on `main`; (3) the whole Win Probability plan,
+- **Next (2026-10-14, Build & Test):** (1) Rep plan wording — done
+  2026-10-14; (2) Part A, A1 on `main`; (3) the whole Win Probability plan,
   steps 1–3; (4) write the next-action rules plan (own approval). All go
   to UAT with the next full move. Check in before each.
 - **Overlap:** items 3 and 4 both change the "New Opportunity" form; the

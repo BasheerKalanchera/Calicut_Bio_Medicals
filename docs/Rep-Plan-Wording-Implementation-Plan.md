@@ -1,22 +1,31 @@
 # Rep Plan Wording ("target" → "plan") — Implementation Plan
 
-**Status:** Approved 2026-10-13 (Basheer). Not started.
+**Status:** Approved 2026-10-13 (Basheer). Step 1 built `25fbeab` +
+`af4b4e9` (review and E2E fixes); E2E all Pass on Dev 2026-10-14. Step 2
+(docs) done 2026-10-14; step 3 (Basheer's quick look) is covered by the
+E2E, which he ran himself.
 **Traceability rows:** none (wording only; supports 3.2 and 6.1).
 **Design / discussion:** chat with Basheer 2026-10-09 (Target vs Actuals
 E2E) and 2026-10-13; Backlog "App-wide: a rep's plan is called 'target' on
-Target Planning".
+Target Planning" (closed 2026-10-14; this plan replaces it).
 
 ## Decisions
 
 - "Target" means only the figure the GM sets for an SBU; every figure a rep
   or manager enters for themselves is a "plan" — Basheer, 2026-10-09,
   confirmed 2026-10-13
-- The menu keeps "Target & Coverage Planning" — Basheer, 2026-10-13
-- The plan form's title stays "Target & Coverage Plan — 2026-Q3", to match
-  the menu — Basheer, 2026-10-13
+- The menu keeps "Target & Coverage Planning" — Basheer, 2026-10-13;
+  confirmed 2026-10-14 (the screen also holds the GM's SBU target)
+- The plan form's title becomes "Plan & Coverage — 2026-Q3" ("Revise Plan
+  & Coverage — 2026-Q3" when revising): the form holds only the rep's own
+  plan, no SBU target — Basheer, 2026-10-14, during the E2E (replaces the
+  2026-10-13 choice to keep "Target & Coverage Plan"). Built as a small
+  fix, in the end-of-E2E batch.
 - The managers' section heading "SBU Target Rollup" becomes "SBU Target &
   Plans" (it holds the GM's SBU target box and the reps' plans) — Basheer,
-  2026-10-13
+  2026-10-13. Same heading for Area Managers too, although their list is
+  only their team ("SBU Target & Team Plans" considered) — Basheer,
+  2026-10-14
 - The vendor target on Brand Target Tracking keeps the word "target" (a
   company commitment to a brand, not a rep's figure) — Basheer, 2026-10-13
 - User manual and in-app help take the new wording in the already-approved
@@ -26,6 +35,12 @@ Target Planning".
 - The Insights Dashboard card keeps the name "Target vs Actuals": its main
   comparison is against the GM's SBU target, and its per-rep rows already
   say "plan" — Basheer, 2026-10-13
+- The heading "SBU Target & Plans" stays in the yearly view too, though
+  the SBU target box shows only in the quarterly view (code review of
+  `25fbeab`) — Basheer, 2026-10-14
+- Earlier features' test plans keep their recorded results; each gets a
+  note at the top to read "target" as "plan" for a rep's figure when
+  re-run (code review of `25fbeab`) — Basheer, 2026-10-14
 
 ## 1. In plain terms
 
@@ -35,7 +50,9 @@ already calls the same figure a "plan". After this change both say "plan".
 The word "target" stays only for figures management sets: the GM's SBU
 target and the vendor target per brand.
 
-What people will see change, all on Target & Coverage Planning:
+What people will see change — all on Target & Coverage Planning, except
+the last row, which is the hospital list of a rep's row on the Insights
+Dashboard's Target vs Actuals card:
 
 | Today | After |
 |---|---|

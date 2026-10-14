@@ -2,7 +2,8 @@
 # Rep Plan Wording ("target" → "plan") — Manual E2E Test Plan
 
 **Covers:** `docs/Rep-Plan-Wording-Implementation-Plan.md`.
-**Built:** not built yet — commit hash filled in after the build.
+**Built:** `25fbeab` (2026-10-14); review and E2E fixes `af4b4e9`
+(2026-10-14). **Result:** P1–P4 and steps 1–12 all Pass on Dev, 2026-10-14.
 **Where:** Dev.
 
 **Nothing is saved.** Every step opens a screen or a dialog and cancels it,
@@ -37,27 +38,31 @@ browser step.
 
 ## Pre-flight
 
-- P1. [Simple] Basheer restarts the Dev backend after the wording commit and confirms it's running. —
+- P1. [Simple] Basheer restarts the Dev backend after the wording commit and confirms it's running. — **Pass** 2026-10-14 (restarted after the uncommitted review fixes too).
 - P2. [Simple] Frontend running; a normal window plus a private window, so two people can be signed in at once. —
-- P3. [Complex: automated checks] Claude runs `/code-review` on the wording commit, then the full backend pytest, ruff, `npx tsc --noEmit` and `npm run lint`, and reports counts plainly, including any failures that existed before. —
-- P4. [Complex: read-only DB check] Claude re-runs the data check just before step 1 and records any difference from the section above. —
+- P3. [Complex: automated checks] Claude runs `/code-review` on the wording commit, then the full backend pytest, ruff, `npx tsc --noEmit` and `npm run lint`, and reports counts plainly, including any failures that existed before. — **Pass** 2026-10-14: review of `25fbeab` found 7; 1 fixed in docs (plan status), 3 fixed in code (not-found message, Audit Log filter, comments — uncommitted, step 12 added), 1 handled by a note on 4 older test plans, 2 left by decision (yearly heading; server-side row label). After the fixes: pytest 1231 passed, ruff clean, tsc clean, lint 0 errors (186 warnings, all pre-existing).
+- P4. [Complex: read-only DB check] Claude re-runs the data check just before step 1 and records any difference from the section above. — **Pass** 2026-10-14: re-run as Admin (all three settings checked), output identical to 2026-10-13 (session scratchpad `wording_e2e_data_out.txt`, session 2fd0f9cf).
 
 ## A — A rep's own plan (Target & Coverage Planning)
 
-1. [Simple] As Vivek, open the menu. **Expected:** the menu item still reads "Target & Coverage Planning". Open it, quarter 2026-Q3. **Expected:** the card heading reads "My Plan" (not "My Target"); Critical Care ₹51.00L, Pending Approval. —
-2. [Simple] As Vivek, 2026-Q3, click **Revise**. **Expected:** dialog title "Revise Target & Coverage Plan — 2026-Q3" (unchanged); the total line reads "Plan total: ₹51.00L"; the warning reads "₹51.00L is ₹9.00L below your approved plan of ₹60.00L — add hospitals or raise amounts to close the gap. You can still submit; your manager will see both figures." Click **Cancel**. —
-3. [Simple] As Vivek, check the screen. **Expected:** no "SBU target for 2026-Q3" box (Sales Staff don't see it — unchanged). —
-4. [Simple] As Rudrappa, Target & Coverage Planning, 2027-Q1. **Expected:** Imaging row reads "No plan set for 2027-Q1 yet." with a **Plan** button. Don't click it. —
+1. [Simple] As Vivek, open the menu. **Expected:** the menu item still reads "Target & Coverage Planning". Open it, quarter 2026-Q3. **Expected:** the card heading reads "My Plan" (not "My Target"); Critical Care ₹51.00L, Pending Approval. — **Pass** 2026-10-14 (Basheer).
+2. [Simple] As Vivek, 2026-Q3, click **Revise**. **Expected:** dialog title "Revise Plan & Coverage — 2026-Q3" (changed 2026-10-14, small fix, uncommitted until the end-of-E2E batch); the total line reads "Plan total: ₹51.00L"; the warning reads "₹51.00L is ₹9.00L below your approved plan of ₹60.00L — add hospitals or raise amounts to close the gap. You can still submit; your manager will see both figures." Click **Cancel**. — **Pass** 2026-10-14 (Basheer), on the new title. Basheer asked during this step for "Target" to leave the form's title (the form holds no SBU target); changed and re-checked.
+3. [Simple] As Vivek, check the screen. **Expected:** no "SBU target for 2026-Q3" box (Sales Staff don't see it — unchanged). — **Pass** 2026-10-14 (Basheer).
+4. [Simple] As Rudrappa, Target & Coverage Planning, 2027-Q1. **Expected:** Imaging row reads "No plan set for 2027-Q1 yet." with a **Plan** button. Don't click it. — **Pass** 2026-10-14 (Basheer).
 
 ## B — A manager's view (Target & Coverage Planning)
 
-5. [Simple] As Arun Adarsh, Target & Coverage Planning, 2026-Q3. **Expected:** the team section heading reads "SBU Target & Plans" (not "SBU Target Rollup"); below it "SBU target for 2026-Q3: ₹150.00L" with no **Change** button. —
-6. [Simple] As Arun, expand Vivek's row. **Expected:** "Last approved plan: ₹60.00L — this revision is ₹9.00L below it". —
-7. [Complex: two dialogs, cancelled each time] As Arun, on Vivek's row click **Approve**. **Expected:** dialog title "Approve Vivek's plan?", line "2026-Q3 · ₹51.00L". **Cancel.** Click **Reject**. **Expected:** "Reject Vivek's plan?". **Cancel.** Vivek's row still Pending Approval. —
-8. [Complex: layout shift after the view change] As Arun, switch to the annual view and click **Next fiscal year** until a year with no plans. **Expected:** "No plans set for <that fiscal year> yet." —
-9. [Simple] As Haroon Sidheeq, Target & Coverage Planning, 2026-Q3, Imaging. **Expected:** heading "SBU Target & Plans"; "SBU target for 2026-Q3: ₹100.00L" with a **Change** button (don't click it); Basheer K's row Rejected. —
+5. [Simple] As Arun Adarsh, Target & Coverage Planning, 2026-Q3. **Expected:** the team section heading reads "SBU Target & Plans" (not "SBU Target Rollup"); below it "SBU target for 2026-Q3: ₹150.00L" with no **Change** button. — **Pass** 2026-10-14 (Basheer).
+6. [Simple] As Arun, expand Vivek's row. **Expected:** "Last approved plan: ₹60.00L — this revision is ₹9.00L below it". — **Pass** 2026-10-14 (Basheer).
+7. [Complex: two dialogs, cancelled each time] As Arun, on Vivek's row click **Approve**. **Expected:** dialog title "Approve Vivek's plan?", line "2026-Q3 · ₹51.00L". **Cancel.** Click **Reject**. **Expected:** "Reject Vivek's plan?". **Cancel.** Vivek's row still Pending Approval. — **Pass** 2026-10-14 (Basheer ran it himself, by his choice; nothing saved).
+8. [Complex: layout shift after the view change] As Arun, switch to the annual view and click **Next fiscal year** until a year with no plans. **Expected:** "No plans set for <that fiscal year> yet." — **Pass** 2026-10-14 (Basheer ran it himself). Note: the SBU target line shows only in the Quarterly view (by design), which briefly looked like a missing line for Area Managers.
+9. [Simple] As Haroon Sidheeq, Target & Coverage Planning, 2026-Q3, Imaging. **Expected:** heading "SBU Target & Plans"; "SBU target for 2026-Q3: ₹100.00L" with a **Change** button (don't click it); Basheer K's row Rejected. — **Pass** 2026-10-14 (Basheer).
 
 ## C — Screens that keep "target"
 
-10. [Simple] As Arun, Insights Dashboard, Critical Care, 2027-Q1. **Expected:** the card title still reads "Target vs Actuals". Expand Vivek's row. **Expected:** his hospital list shows a row "Last approved plan" ₹30.00L (not "Last approved target"). —
-11. [Simple] As Haroon, Brand Target Tracking, Critical Care, 2027-Q1. **Expected:** the column still reads "Vendor Target"; the buttons read "Set Target" or "Revise" as before. Don't click them. —
+10. [Simple] As Arun, Insights Dashboard, 2027-Q1 (Critical Care is his only SBU, so there is no SBU choice). **Expected:** the card title still reads "Target vs Actuals". Expand Vivek's row. **Expected:** his hospital list shows a row "Last approved plan" ₹30.00L (not "Last approved target"). — **Pass** 2026-10-14 (Basheer; step text corrected: Arun has no SBU choice).
+11. [Simple] As Haroon, Brand Target Tracking, Critical Care, 2027-Q1. **Expected:** the column still reads "Vendor Target"; the buttons read "Set Target" or "Revise" as before. Don't click them. — **Pass** 2026-10-14 (Basheer).
+
+## D — Audit Log (code review fix, uncommitted until the end-of-E2E batch)
+
+12. [Simple] As Haroon, Audit Log. Open the table filter (shows "All Tables"). **Expected:** the list has "Plan", "Plan Hospital" and "Plan Brand Split", and no "Target Plan". Close the list without changing anything. — **Pass** 2026-10-14 (Basheer; run before step 10, as he was already signed in as Haroon).

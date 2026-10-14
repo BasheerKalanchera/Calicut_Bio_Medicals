@@ -1,5 +1,11 @@
 # Brand-Level Target Planning — Manual E2E Test Plan
 
+> **Wording since `25fbeab` (2026-10-14):** the screens say "plan" for a
+> rep's own figure (e.g. "My Plan", "SBU Target & Plans", "Last approved
+> plan"). When re-running a step below, read "target" in its expected
+> result as "plan" wherever it means a rep's figure. Results below are
+> kept as recorded. See `docs/Rep-Plan-Wording-Implementation-Plan.md`.
+
 **Feature:** `docs/Brand-Level-Target-Planning-Implementation-Plan.md` — a
 brand-level slice of PRD §6.5, built on top of Target Planning (already
 Done, `docs/Target-Planning-Manual-E2E-Test-Plan.md`). Every quarterly

@@ -50,6 +50,9 @@ file for that date to find the story. Not loaded at session start.
 - **Rule:** Every commit needs its own explicit approval, shown first (file list + message).
   **Why:** 2026-09-23, two commits landed back to back without approval: `fbf631f` (a docs follow-up, committed off a "Go ahead" to a plan ending "then commit and push") and `36385f2` (a Brand-Level Target Planning checkpoint, committed by a parallel session following the Checkpoint commits rule). The rule lived only in memory, not in this file.
 
+- **Rule:** Batch small code fixes — small review/E2E fixes (wording, labels, messages, comments; no change to data or behaviour) go in one `fix:` commit at the end of the feature's E2E or before a break, not one commit each.
+  **Why:** 2026-10-14 — Rep plan wording: the feature commit `25fbeab` was followed straight away by a proposed second commit for three tiny review fixes (a server message, the Audit Log filter names, three comments). Basheer: "Too many small small commits" — batch small code fixes the way docs-only changes already are.
+
 ## Checkpoint commits
 
 - **Rule:** Propose a checkpoint commit at each safe, test-passing milestone on long builds.

@@ -46,9 +46,12 @@ After this work:
 - Every screen in the menu has a `?` page explaining what it is for and
   what each button does, using the exact words on the screen.
 - The manual becomes a short guide per role: for example, a Sales Rep sees
-  "How do I log a visit", "How do I mark a deal Won", "How do I plan my
-  quarter's target", while an Admin sees "How do I rate hospitals" and
-  "How do I approve a target".
+  "How do I log a visit", "How do I mark an Opportunity Won", "How do I
+  make my quarter's plan", while an Admin sees "How do I rate hospitals"
+  and "How do I approve a plan".
+- The manual and help use "plan" for a rep's own figure and "target"
+  only for the GM's SBU target and vendor brand targets (Frontend
+  Standards 6.10, built `25fbeab` 2026-10-14).
 - A test stops a new screen from shipping without help, and each future
   feature updates its own help as part of the same change.
 

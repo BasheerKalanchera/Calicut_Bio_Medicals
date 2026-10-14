@@ -1,6 +1,12 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
 # Target vs Actuals — Manual E2E Test Plan
 
+> **Wording since `25fbeab` (2026-10-14):** the screens say "plan" for a
+> rep's own figure (e.g. "My Plan", "SBU Target & Plans", "Last approved
+> plan"). When re-running a step below, read "target" in its expected
+> result as "plan" wherever it means a rep's figure. Results below are
+> kept as recorded. See `docs/Rep-Plan-Wording-Implementation-Plan.md`.
+
 **Covers:** `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` (Target vs Actuals card, PO date gates, split credit BR-FIN-09 = step 6b) and `docs/Target-Coverage-Roster-Implementation-Plan.md` (Target Planning team list, step 6), plus a re-run of `docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md` (38 steps, section K).
 **Built:** `0f7d75a`, `231fbd0`, `903ad41`, step 6 roster commits, `2e2e4c0` (split credit + review fixes). This plan replaces the earlier run (2026-10-03/04, stopped); that run's notes are in Progress-Archive-2026-10.
 **Where:** Dev.

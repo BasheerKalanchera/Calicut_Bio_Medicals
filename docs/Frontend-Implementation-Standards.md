@@ -293,6 +293,18 @@ first for the forecast-by-closing-period work
 move over when next touched (Backlog "Move remaining Opportunity screens to
 the common filter"). Server half: Backend standards, "Filtering Standards".
 
+### 6.10 Words: "target" vs "plan" (decided 2026-10-09, built 2026-10-14)
+
+**Target** means only a figure set from the top: the GM's SBU target, or a
+vendor's brand target (Brand Target Tracking). **Plan** means a rep's own
+bottom-up figure, built from their hospitals ("My Plan", "Plan total",
+"Last approved plan", "Approve Vivek's plan?"). Any new label, message or
+help text follows this, including server refusal messages. Names that hold
+both keep "Target": the menu "Target & Coverage Planning" and the heading
+"SBU Target & Plans". Code identifiers (`target_plan`,
+`target_amount_lakhs`) are not renamed. Origin:
+`docs/Rep-Plan-Wording-Implementation-Plan.md`.
+
 ---
 
 ## 7. Service Layer (Frontend)

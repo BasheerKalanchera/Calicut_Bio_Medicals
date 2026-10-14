@@ -134,17 +134,6 @@ Moved from the handover note 2026-10-12; none of these blocks the E2E.
 - **Dev test Opportunity "Test +lead screen" (Basheer K):** reassign,
   don't delete (it has Activity rows).
 
-### App-wide: a rep's plan is called "target" on Target Planning — not started (2026-10-09)
-
-On 2026-10-09 (Target vs Actuals E2E) Basheer chose: "target" means only the
-GM's top-down SBU target, "plan" means a rep's own bottom-up plan. The Target
-vs Actuals card now follows this (labels in the Plan-vs-Actuals plan's
-Decisions). Target & Coverage Planning still calls a rep's plan their
-"target" — e.g. "₹15.00L is ₹5.00L below your approved target of ₹20.00L",
-"The last approved target (₹20.0L) still counts", and the screen's own name.
-To decide: rename across the app (screen, messages, manual/help), or leave
-as is. Wording only; no data change.
-
 ### Area targets under the SBU target — parked (Basheer, 2026-10-13)
 
 **Parked 2026-10-13:** not happening now (Basheer). Reopen only if

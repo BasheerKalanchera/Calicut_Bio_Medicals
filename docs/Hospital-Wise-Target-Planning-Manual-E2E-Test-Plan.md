@@ -1,5 +1,11 @@
 # Hospital-Wise Target Planning (Part 1) — Manual E2E Test Plan
 
+> **Wording since `25fbeab` (2026-10-14):** the screens say "plan" for a
+> rep's own figure (e.g. "My Plan", "SBU Target & Plans", "Last approved
+> plan"). When re-running a step below, read "target" in its expected
+> result as "plan" wherever it means a rep's figure. Results below are
+> kept as recorded. See `docs/Rep-Plan-Wording-Implementation-Plan.md`.
+
 **Feature:** `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`
 (Part 1). A quarterly target is now built from hospitals: each hospital
 gets a visit frequency and an expected amount, and the target is their
