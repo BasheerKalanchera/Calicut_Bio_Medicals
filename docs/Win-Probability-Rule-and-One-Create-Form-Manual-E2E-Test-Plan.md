@@ -4,7 +4,7 @@
 **Covers:** `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`,
 steps 1–3 (one combined run after step 3, per the plan's step 3).
 **Built:** step 2: Project Directory `a76b02d`, Customer 360 `86dd1a3`
-(both pushed 2026-10-14); steps 1 and 3 not built yet.
+(both pushed 2026-10-14); steps 1 and 3: `ae6bd14` (pushed 2026-10-15); pre-E2E review fix: `3e37c92` (pushed 2026-10-15).
 **Where:** Dev.
 
 ## Checked against live data
@@ -95,6 +95,7 @@ and Audit Log rows, which cannot be deleted.
 ## D — Create form: 50 % or more needs a date (step 3, D7, D8)
 
 19. [Complex: the box appears as the number changes, a layout shift] Top bar "+ Lead" → hospital Aster MIMS Calicut, Stage Lead, chance 60. **Expected:** Expected Closure Date box appears (today it shows only from Negotiation). —
+19a. [Complex: the box must stay while the number changes, a layout shift] Same form: type an Expected Closure Date, then change Win Probability % to 40. **Expected:** the Expected Closure Date box stays, still showing the date. Clear the date. **Expected:** the box goes. Set the chance back to 60 for step 20. (Added 2026-10-15 for the pre-E2E review fix: a typed date was saved while its box was hidden.) —
 20. [Simple] Leave the date empty → **Create**. **Expected:** the form shows "Win Probability is 50% or more but there's no expected closure date - add one." before sending; nothing is created. —
 21. [Simple] Lead Source "REPEAT_ORDER", chance still 60, no date → **Create**. **Expected:** the same message; the date box shows for a Repeat Order too (D8). —
 22. [Simple] Tick "Fast-Track this Opportunity", chance still 60, no date → **Create**. **Expected:** the same message (D8). Untick it. —

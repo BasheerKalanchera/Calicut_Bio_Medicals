@@ -1,6 +1,6 @@
 # Win Probability Rule (and One Create Form) — Implementation Plan
 
-**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Building: step 2 done (`a76b02d`, `86dd1a3`, pushed 2026-10-14); D12 rule written 2026-10-15 (Frontend standards §6.2, UI-Inventory §2.2); steps 1 + 3 built 2026-10-15; pre-E2E review and E2E next.
+**Status:** Approved 2026-10-10 (Basheer; D1–D17 decided; D18–D19 added 2026-10-13/15). Building: step 2 done (`a76b02d`, `86dd1a3`, pushed 2026-10-14); D12 rule written 2026-10-15 (Frontend standards §6.2, UI-Inventory §2.2); steps 1 + 3 built `ae6bd14` (pushed 2026-10-15); pre-E2E review done, its fix `3e37c92` (pushed 2026-10-15); E2E next.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
 front-end clean-up).
 **Design / discussion:** chat with Basheer 2026-10-09 (Backlog "Business
@@ -74,6 +74,10 @@ useful points are folded in and it was deleted 2026-10-09.
 - D18. The BR-OP-19 refusal reads "Win Probability is 50% or more but
   there's no expected closure date - add one.", word for word the same
   from the server and on the create form — Basheer, 2026-10-13
+- D19. The Opportunity page's edit form also checks BR-OP-19 before
+  sending, with the D18 text; the D14 notice sits above the page's
+  tabs, so it shows on every tab — both as built in `ae6bd14`, kept by
+  Basheer, 2026-10-15
 
 ## 1. In plain terms
 

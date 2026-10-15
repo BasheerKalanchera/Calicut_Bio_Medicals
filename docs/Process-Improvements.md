@@ -12,7 +12,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 30 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 12 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 22 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 24 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) — repeated after build 2026-10-15 (twice) |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 7 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
@@ -21,7 +21,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 21 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 22 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) — repeated after build 2026-10-15 |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
 | P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
@@ -50,7 +50,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P42 | Timing a screen on UAT: force a fresh load (hard refresh) every time; menu clicks within 30 s reuse the stored copy | 2026-10-08 | 1 | dropped (seen once; already in Query Load plan section 6; plan step D, 2026-10-10) |
 | P43 | When a side topic comes up during a chore, first say what is left of the chore: finish it (commit proposal included) or say plainly it is paused and what remains | 2026-10-08 | 1 | merged (CLAUDE.md "Show before you act", 2026-10-08) |
 | P44 | A small gap found in a tidy-up, with its fix already drafted, is fixed in the same sweep (with approval), not parked in the Backlog | 2026-10-08 | 1 | dropped (the gap rightly needed a decision; drift now blocked by the commit check; plan step D, 2026-10-10) |
-| P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 2 | merged (CLAUDE.md "Show before you act", 2026-10-08) — repeated after merge 2026-10-13 |
+| P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 3 | merged (CLAUDE.md "Show before you act", 2026-10-08) — repeated after merge 2026-10-13, 2026-10-15 |
 | P47 | A UAT script runs only the queries described when asking; anything extra is asked for first | 2026-10-08 | 1 | open |
 | P49 | When a piece of work is finished, say which file to open and what to look for, so Basheer can review it | 2026-10-08 | 1 | merged (counted as a repeat of P19, 2026-10-10) |
 | P51 | Before giving an example for a business rule, read the rules next to it (overrides, fast-tracks, exemptions); the example must not contradict them | 2026-10-09 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
@@ -59,7 +59,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
 | P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
 | P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57) | 2026-10-09 | 2 | open |
-| P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 6 | open |
+| P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 7 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
 | P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 3 | open |
 | P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 5 | open |
@@ -68,6 +68,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P72 | Any Python run on Windows writes UTF-8 from the start (`sys.stdout.reconfigure(encoding="utf-8")` or `PYTHONIOENCODING=utf-8`) (was watch-list 2026-10-12, `validate.py`; 2026-10-13: transcript print) | 2026-10-12 | 2 | built (`.claude/settings.json` env block, 2026-10-14) |
 | P73 | When a reply could refer to more than one plan or thread, ask which one in a single line before editing anything (was watch-list P55; 2026-10-13: wrote only the Part A test plan when both were asked; read "the whole plan" as the duplicate plan instead of the Win Probability plan and edited 4 docs) | 2026-10-09 | 3 | open |
 | P74 | When a decision changes inside a plan, update every line of that plan that says the old wording (was watch-list 2026-10-13: step 3 still said "SBU Plan Rollup"; 2026-10-14: Process Consolidation plan still said items appear in the dropped "Most-repeated mistakes" list) | 2026-10-13 | 2 | open |
+| P75 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one (was watch-list P63; 2026-10-15: first run failed on a missing package) | 2026-10-10 | 2 | open |
 
 ## Watch list
 
@@ -87,7 +88,6 @@ Rules: `harness-engineering` skill.
 | 2026-10-10 | 2026-10-09 | P53 | A commit message matches the detail of recent commits: the why, what changed per file, test results where relevant |
 | 2026-10-10 | 2026-10-09 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection |
 | 2026-10-10 | 2026-10-09 | P56 | Every recommendation states what it leaves uncovered |
-| 2026-10-10 | 2026-10-10 | P63 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one |
 | 2026-10-10 | 2026-10-10 | P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh |
 | 2026-10-10 | 2026-10-10 | — | A change to `Business-Rules.md` needs its row in `Business-Rule-Implementation-Matrix.md` in the same commit (the commit hook refused it) |
 | 2026-10-10 | 2026-10-10 | — | A `!` command given to Basheer uses forward-slash paths (`/c/Users/…`); Git Bash strips Windows backslashes |
@@ -104,6 +104,7 @@ Rules: `harness-engineering` skill.
 | 2026-10-14 | 2026-10-14 | — | Before running a check tool, read its exact command from the project's settings (`package.json`), never guess a config file name (type-check run against a `tsconfig.app.json` that doesn't exist) |
 | 2026-10-14 | 2026-10-14 | — | After every commit, one line with its hash and whether it is pushed, before starting the next step (Basheer had to ask whether `a76b02d` had gone in) |
 | 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
+| 2026-10-15 | 2026-10-15 | — | Before flagging a difference from an approved plan, quote the plan's own line (flagged "notice above the tabs" as a difference; the plan only says "on its page") |
 
 ## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

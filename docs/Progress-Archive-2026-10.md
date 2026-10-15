@@ -2577,3 +2577,45 @@ technical parts ✔.
   → Harness Engineering review; skill `process-review` →
   `harness-engineering`.
 
+## 2026-10-15 — Win Probability steps 1 + 3 shipped (Build & Test)
+
+- `ae6bd14` (pushed): BR-OP-19 on the server (create and every
+  Opportunity save; Lost, On Hold, Won never refused), on the create
+  form and the Opportunity page's edit form, plus the page notice
+  (D14); BR-OP-08 — a chance the rep typed survives a stage change (D1).
+  1255 backend tests passed; ruff, tsc, lint clean.
+- Differences flagged to Basheer, all three kept (plan D19): the edit
+  form refuses the save itself before the server does (same message);
+  the notice sits above the tabs (the plan only said "on its page"); the
+  D12 docs rode in the feature commit instead of a docs batch.
+- Pre-E2E review finding: the create form hides the closure-date box
+  when the chance drops below 50 but still saves a date already typed.
+  Fixed in `3e37c92` (pushed; the box stays while a date is typed, as
+  the edit form does); test plan step 19a added. 1255 tests, ruff, tsc
+  clean; lint 0 errors, 131 old warnings.
+- Demo check (Basheer asked, 15 Oct): no slide in the demo deck is
+  affected; the only possible on-screen change is the notice, on an
+  early-stage Opportunity at 50 % or more with no closure date.
+
+## 2026-10-15 — Retro (Build & Test session)
+
+- P45 (show housekeeping edits first) 2 → 3, repeated after merge: wrote
+  Basheer's "keep all three" into the plan (D19), handover and archive
+  straight after his yes, without showing the edits first.
+- P3 (plainer explanations) 22 → 24: Basheer asked "please explain"
+  twice (the user-list line; the one-line "Create form fix" question) and
+  asked to see the three differences again.
+- P66 (one decision at a time) 6 → 7: asked fix, restart and read-only
+  check together as short labels.
+- P75 new (was watch-list P63), Seen 2: first backend test run used the
+  computer's Python and failed; rerun with `backend/.venv`.
+- P14 21 → 22: one command blocked by the no-cd guard.
+- Watch list +1: flagged "notice above the tabs" as a difference from
+  the plan; the plan only says "on its page". Quote the plan's line first.
+- **Spot-checks (P1):** "1255 tests passed" (today's pytest run), "131
+  lint warnings" (today's lint run), "Ultrasound m/c: Lead, chance 35, no
+  date" (test plan's 13 Oct Dev check, line 28) — all correct and sourced.
+- **Explanation checks (P3):** the create-form fix and the three
+  differences — both pass.
+- **Items checked:** P1, P3, P14, P45, P63, P66, watch list. Open list
+  19 → 20 (counted).
