@@ -73,9 +73,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   contact" stakeholder (Basheer, 2026-10-14; read-only check shown
   first; load `cabio-db-and-scripting`). Left to the planning and
   chores session (Basheer, 2026-10-14).
-- Then: (3) the whole Win Probability plan, steps 1–3 (in progress, see
-  its section); (4) next-action
-  rules plan (approved 2026-10-14). All go to UAT with the next full
+- Win Probability plan done on Dev (E2E all Pass 2026-10-15). Next:
+  next-action rules plan step 1 (approved 2026-10-14), now unblocked.
+  All go to UAT with the next full
   move. Check in before each.
 - **Overlap:** the whole next-action build starts only after the form
   merge (Win Probability step 2) — Basheer, 2026-10-14, plan D7.
@@ -98,17 +98,10 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Order changed 2026-10-14 (Basheer, plan D5): step 2 (form merge)
   first, then steps 1 and 3 together in one commit. Form comparison done:
   nothing lost; Project Directory's pre-filled Name carried over.
-- Step 2 code done and pushed (`a76b02d`, `86dd1a3`); regression
-  section E added to the test plan (history in Progress-Archive).
-- Steps 1 + 3 built and pushed `ae6bd14` 2026-10-15 (1255 tests
-  passed; D12 docs rode in it). Pre-E2E review done; its fix pushed
-  `3e37c92` (create form keeps the date box while a date is typed;
-  new test step 19a). **Next:** E2E on Dev (load `cabio-e2e-testing`):
-  Basheer restarts Dev backend + screens; ask before the read-only P3
-  re-check (four records, picks a Marketing Lead). Only steps that save
-  nothing before the 9:45 demo; saving steps after it (they change
-  records the demo shows).
-- Then the other 6 rule gaps one by one: BR-FIN-05 (verify in code
+- Done on Dev: built (`a76b02d`, `86dd1a3`, `ae6bd14`, `3e37c92`,
+  `e1774a1`), E2E all Pass 2026-10-15 (history in Progress-Archive).
+  Waiting for the next full UAT move.
+- **Next:** the other 6 rule gaps one by one: BR-FIN-05 (verify in code
   first), BR-ACT-02, BR-PROJ-01, BR-OP-06, BR-ACC-01, BR-ACT-07.
 
 - Marketing User with no SBU: done 2026-10-10 (history in

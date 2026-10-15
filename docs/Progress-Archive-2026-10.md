@@ -2619,3 +2619,31 @@ technical parts ✔.
   differences — both pass.
 - **Items checked:** P1, P3, P14, P45, P63, P66, watch list. Open list
   19 → 20 (counted).
+
+## 2026-10-15 — Win Probability E2E: step 9 bug (Build & Test)
+
+- E2E step 9 failed: on the Opportunity page, saving products on a 75 %
+  Opportunity with no closure date showed the BR-OP-19 refusal. Cause:
+  the products panel follows its save with a value-only update, and the
+  server checked every update. Plan D9 says product saves are never
+  refused; plan section 4 wrongly described the build. The pre-E2E
+  review missed it.
+- Fix `e1774a1` (pushed): the server skips the check for a value-only save;
+  new test; plan section 4 corrected. 1256 tests pass, ruff clean.
+  Step 9 re-run after a backend restart: Pass.
+- Stakeholder, split and document saves never reach this check (code
+  search: only the edit form and the products panel update the
+  Opportunity record).
+
+## 2026-10-15 — Win Probability E2E finished: all Pass (Build & Test)
+
+- Manual E2E on Dev (`docs/Win-Probability-Rule-and-One-Create-Form-Manual-E2E-Test-Plan.md`):
+  every step and pre-flight check Pass, Basheer ran them all. Step 9
+  passed after fix `e1774a1`. Step 33 used the only Imaging installed
+  asset on Dev, at "another hospital" (Aster MIMS Calicut has none).
+- Test records left on Dev (permanent): Opportunities "zz Chance E2E –
+  Customer 360", "– Project Directory", "– Marketing convert", "– top
+  bar", "– top bar on project page"; the "Cochin Trade show" Marketing
+  Lead now shows converted.
+- Traceability 1.3 already Done; no scorecard change. Goes to UAT with
+  the next full promotion.
