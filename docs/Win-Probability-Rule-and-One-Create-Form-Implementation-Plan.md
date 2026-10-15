@@ -1,6 +1,6 @@
 # Win Probability Rule (and One Create Form) — Implementation Plan
 
-**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Building: step 2 done (`a76b02d`, `86dd1a3`, pushed 2026-10-14); D12 rule and steps 1 + 3 next.
+**Status:** Approved 2026-10-10 (Basheer; D1–D17 all decided). Building: step 2 done (`a76b02d`, `86dd1a3`, pushed 2026-10-14); D12 rule written 2026-10-15 (Frontend standards §6.2, UI-Inventory §2.2); steps 1 + 3 built 2026-10-15; pre-E2E review and E2E next.
 **Traceability rows:** none (business-rule gap BR-OP-08, new rule BR-OP-19,
 front-end clean-up).
 **Design / discussion:** chat with Basheer 2026-10-09 (Backlog "Business

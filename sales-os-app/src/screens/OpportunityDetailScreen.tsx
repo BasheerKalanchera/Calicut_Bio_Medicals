@@ -41,7 +41,7 @@ import { listProducts } from "../services/products";
 import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloadUrl, deleteDocument } from "../services/documents";
 import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api-aliases";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
-import { isReactivationOverdue } from "../utils/opportunityStatus";
+import { isReactivationOverdue, HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG, needsClosureDateForChance, breaksHighChanceRule } from "../utils/opportunityStatus";
 import { itemsTotal } from "../utils/opportunityItems";
 import { sumAllocation, isAllocationBalanced } from "../utils/allocationSplit";
 import ActivityTimeline from "../components/ActivityTimeline";
@@ -1533,6 +1533,15 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
     if (isMarkingWon && !editConfirmFullPayment) {
       throw new Error("Confirm that full payment has been received to mark this Opportunity as Won");
     }
+    // BR-OP-19: mirrors the server's check (same message) so it fails before the PATCH.
+    if (breaksHighChanceRule(
+      newStatus?.status_code ?? opp.status.status_code,
+      editStageOrder,
+      editWinProb !== "" ? editWinProb : opp.win_probability,
+      editClosureDate,
+    )) {
+      throw new Error(HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG);
+    }
     // BR-OP-14: mirrors the schema-level model_validator's rule client-side so
     // the failure surfaces before the PATCH round-trip, not just as a 422.
     if (gateOverrideChecked && editGateOverrideApproverId && !editGateOverrideReasonId) {
@@ -1752,6 +1761,11 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </Box>
         </Box>
 
+        {/* BR-OP-19 notice (plan D14): never blocks anything; covers Opportunities nobody re-saves. */}
+        {breaksHighChanceRule(opp.status.status_code, opp.stage.display_order, opp.win_probability, opp.expected_closure_date) && (
+          <Alert severity="warning" sx={{ fontSize: "0.75rem", mb: 2 }}>{HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG}</Alert>
+        )}
+
         {/* Tab chip bar */}
         <Box sx={{ position: "relative", mb: 2 }}>
           <Box
@@ -1832,7 +1846,15 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
             select
             label="Stage"
             value={editStageId}
-            onChange={(e) => { const s = stages.find((x) => x.id === e.target.value); setEditStageId(e.target.value); if (s) setEditWinProb(String(s.default_win_probability)); }}
+            onChange={(e) => {
+              // BR-OP-08 (plan D1): a chance still at the outgoing stage's
+              // default follows the new stage's default; one the rep typed in is kept.
+              const s = stages.find((x) => x.id === e.target.value);
+              const outgoing = stages.find((x) => x.id === editStageId);
+              const untouched = !outgoing || editWinProb === "" || parseFloat(editWinProb) === parseFloat(outgoing.default_win_probability);
+              setEditStageId(e.target.value);
+              if (s && untouched) setEditWinProb(String(parseFloat(s.default_win_probability)));
+            }}
             fullWidth
             size="small"
             sx={{ flex: 1 }}
@@ -1950,7 +1972,8 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         {((editStageOrder >= STAGE_ORDER_DEMO && editLeadSourceCode !== "REPEAT_ORDER") || editDemoEnd !== "") && !gateOverrideChecked && (
           <TextField label="Demo End Date" type="date" value={editDemoEnd} onChange={(e) => setEditDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
-        {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "") &&
+        {/* BR-OP-19 (plan D7): also shown before Negotiation once the chance is 50 % or more. */}
+        {((editStageOrder >= STAGE_ORDER_NEGOTIATION && editLeadSourceCode !== "REPEAT_ORDER") || editClosureDate !== "" || needsClosureDateForChance(editStageOrder, editWinProb)) &&
           !(gateOverrideChecked && editStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={editClosureDate} onChange={(e) => setEditClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}

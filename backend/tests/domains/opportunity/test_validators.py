@@ -15,6 +15,7 @@ from app.core.exceptions import BusinessRuleViolation
 from app.domains.opportunity import validators
 from app.domains.opportunity.validators import (
     _today_ist,
+    validate_high_chance_closure_date,
     validate_po_date,
     validate_po_date_kept,
     validate_stage_transition,
@@ -412,6 +413,39 @@ class TestOrderToDeliveryGate:
             new_stage_order=DELIVERY,
             current_stage_order=80,
             **_stage_ctx(po_date=None),
+        )
+
+
+class TestValidateHighChanceClosureDate:
+    """BR-OP-19 -- the service tests cover create/update wiring and D8/D16."""
+
+    @pytest.mark.parametrize("stage", [LEAD, QUALIFIED, DEMO, CLINICAL_EVAL])
+    def test_blocked_before_negotiation_without_date(self, stage):
+        with pytest.raises(BusinessRuleViolation, match="expected closure date"):
+            validate_high_chance_closure_date(
+                stage_order=stage, status_code="ACTIVE", win_probability=Decimal("50"), expected_closure_date=None
+            )
+
+    @pytest.mark.parametrize("stage", [NEGOTIATION, ORDER, DELIVERY])
+    def test_not_checked_from_negotiation_on(self, stage):
+        validate_high_chance_closure_date(
+            stage_order=stage, status_code="ACTIVE", win_probability=Decimal("90"), expected_closure_date=None
+        )
+
+    def test_below_50_passes(self):
+        validate_high_chance_closure_date(
+            stage_order=LEAD, status_code="ACTIVE", win_probability=Decimal("49.99"), expected_closure_date=None
+        )
+
+    def test_with_date_passes(self):
+        validate_high_chance_closure_date(
+            stage_order=LEAD, status_code="ACTIVE", win_probability=Decimal("100"), expected_closure_date=CLOSURE_DATE
+        )
+
+    @pytest.mark.parametrize("status", ["ON_HOLD", "LOST", "WON"])
+    def test_not_active_passes(self, status):
+        validate_high_chance_closure_date(
+            stage_order=LEAD, status_code=status, win_probability=Decimal("80"), expected_closure_date=None
         )
 
 

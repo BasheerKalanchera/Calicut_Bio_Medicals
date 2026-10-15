@@ -310,6 +310,10 @@ maintainability once handed to the customer's IT team.
   several days before fixing starts.
 - **Order (proposed):** the deal-edit hotfix above first (it already
   removes two copies), then the rule and check, then the audit.
+- **Create forms: resolved 2026-10-14/15.** Every way of creating an
+  Opportunity now opens the one create form (`a76b02d`, `86dd1a3`); the
+  rule is in `docs/Frontend-Implementation-Standards.md` §6.2. Still open:
+  the edit side and other objects' forms.
 
 ### Backend dependencies: finish the SQLAlchemy cap follow-ups (found 2026-09-27)
 
@@ -531,14 +535,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   person's four quarters, but only for people with at least one plan that
   year; the upgrade, if needed, is to list people with no plan all year
   too. Deferred because plans are made and approved one quarter at a time.
-
-- **Customer 360 and Project Directory create forms have no PO Date box
-  (Basheer, 2026-10-06; decided — fix with the create-form merge).** Since
-  the PO Date gate (Order → Delivery and Won), those two forms can't create
-  an Opportunity at Delivery or later: the save is refused for a missing
-  PO Date. Create at Order or earlier, then move it on from the Opportunity
-  page. The merge (`docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`,
-  D11) brings the box to every create form; drop this entry when it ships.
 
 - **Home page takes ~2 s on UAT (Basheer, 2026-10-06; undecided).** A hard
   reload fires ~30 API calls at once; with the 5 + 5 pool on the free tier

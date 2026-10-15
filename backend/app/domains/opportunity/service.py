@@ -23,6 +23,7 @@ from app.domains.opportunity.schemas import (
     StakeholderLinkUpdate,
 )
 from app.domains.opportunity.validators import (
+    validate_high_chance_closure_date,
     validate_po_date,
     validate_po_date_kept,
     validate_stage_transition,
@@ -215,6 +216,14 @@ class OpportunityService:
             po_number=data.po_number,
             has_items=bool(data.items),
             po_date=data.po_date,
+        )
+
+        # BR-OP-19
+        validate_high_chance_closure_date(
+            stage_order=new_stage.display_order,
+            status_code=new_status.status_code,
+            win_probability=data.win_probability,
+            expected_closure_date=data.expected_closure_date,
         )
 
         opportunity = Opportunity(
@@ -481,6 +490,16 @@ class OpportunityService:
             # forbids leaving a terminal status, so this can never re-fire.
             if effective_status.is_terminal and opportunity.closed_at is None:
                 opportunity.closed_at = func.now()
+
+        # BR-OP-19: on every save of the Opportunity itself, after the merged
+        # values are known (D9) -- an On Hold one made Active again is held to
+        # it on that save (D16).
+        validate_high_chance_closure_date(
+            stage_order=effective_stage.display_order,
+            status_code=effective_status.status_code,
+            win_probability=opportunity.win_probability,
+            expected_closure_date=opportunity.expected_closure_date,
+        )
 
         return self.repository.update(opportunity)
 

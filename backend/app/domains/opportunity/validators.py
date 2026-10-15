@@ -224,6 +224,37 @@ def validate_status_transition(
             )
 
 
+# BR-OP-19: word for word the same on the create form (QuickLeadModal.tsx) and
+# the Opportunity page (plan D18).
+HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG = (
+    "Win Probability is 50% or more but there's no expected closure date - add one."
+)
+_HIGH_CHANCE_THRESHOLD = Decimal("50")
+
+
+def validate_high_chance_closure_date(
+    *,
+    stage_order: int,
+    status_code: str,
+    win_probability: Decimal | None,
+    expected_closure_date: date | None,
+) -> None:
+    """BR-OP-19: before Negotiation, an Active Opportunity at 50 % or more
+    needs an Expected Closure Date. Checked on every save of the Opportunity
+    itself, so one already over the limit is held to it on its next save (D4,
+    D9). No REPEAT_ORDER or gate-override exemption (D8). Lost, On Hold and
+    Won saves are never refused (D16). From Negotiation on, BR-OP-01's gate
+    already requires the date."""
+    if (
+        status_code == "ACTIVE"
+        and stage_order < _ORDER_NEGOTIATION
+        and win_probability is not None
+        and win_probability >= _HIGH_CHANCE_THRESHOLD
+        and expected_closure_date is None
+    ):
+        raise BusinessRuleViolation(HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG)
+
+
 def validate_po_date(po_date: date | None) -> None:
     """A PO already received can't be dated after today (IST) -- checked on
     every save that sends a PO Date, not only at the stage gates."""

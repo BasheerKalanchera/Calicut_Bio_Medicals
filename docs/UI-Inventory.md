@@ -70,6 +70,13 @@ The system leverages modal dialogs and overlays to capture operational inputs. B
   * **Parent Customer:** Autocomplete text search lookup against the customer database. Captures `newParentCustomerId`.
 
 ### 2.2 New Lead Wizard Form (L5041 – L5197)
+> **Current app (2026-10-14):** this is now the one Opportunity create form
+> (`QuickLeadModal.tsx`), opened from the top-bar "+ Lead", Customer 360's
+> Opportunities tab, the Project Directory and Marketing Lead "Convert".
+> From a hospital or project page the hospital (and project) is filled in
+> and locked. The prototype fields below are historical. Rule: Frontend
+> standards §6.2.
+
 * **Step 1: Account Context Selection**
   * progressive text input searching existing hospitals and cities. Clicking an item sets `selectedCustomerId`.
   * Alternatively, a dashed border button (`+ Create New Account`) opens the Customer Creation form inline.

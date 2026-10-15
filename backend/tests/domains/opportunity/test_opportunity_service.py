@@ -1312,6 +1312,167 @@ class TestUpdateOpportunity:
 
 
 # ===========================================================================
+# BR-OP-19 — a chance of 50 % or more before Negotiation needs a closure date
+# ===========================================================================
+
+_HIGH_CHANCE_MSG = "Win Probability is 50% or more but there's no expected closure date - add one."
+_DEMO_ITEMS = [OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5"))]
+
+
+class TestHighChanceNeedsClosureDate:
+    def _service(self, repo):
+        return OpportunityService(repository=repo, notification_service=_make_notification_service())
+
+    def test_create_at_50_without_date_refused_with_exact_message(self):
+        repo = _make_repo()
+
+        with pytest.raises(BusinessRuleViolation) as exc:
+            self._service(repo).create_opportunity(
+                ACCOUNT_ID, _make_create_data(win_probability=Decimal("50")), created_by=USER_ID, sbu_id=SBU_ID
+            )
+        assert str(exc.value) == _HIGH_CHANCE_MSG
+        repo.create.assert_not_called()
+
+    def test_create_at_49_99_without_date_allowed(self):
+        repo = _make_repo()
+        self._service(repo).create_opportunity(
+            ACCOUNT_ID, _make_create_data(win_probability=Decimal("49.99")), created_by=USER_ID, sbu_id=SBU_ID
+        )
+        repo.create.assert_called_once()
+
+    def test_create_at_80_with_date_allowed(self):
+        repo = _make_repo()
+        self._service(repo).create_opportunity(
+            ACCOUNT_ID,
+            _make_create_data(win_probability=Decimal("80"), expected_closure_date=TOMORROW),
+            created_by=USER_ID,
+            sbu_id=SBU_ID,
+        )
+        repo.create.assert_called_once()
+
+    def test_create_repeat_order_at_demo_still_held(self):
+        # D8: REPEAT_ORDER waives the demo gate, not this rule.
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
+
+        with pytest.raises(BusinessRuleViolation, match="expected closure date"):
+            self._service(repo).create_opportunity(
+                ACCOUNT_ID,
+                _make_create_data(
+                    stage_id=STAGE_DEMO_ID,
+                    win_probability=Decimal("60"),
+                    lead_source_id=LEAD_SOURCE_ID,
+                    indicative_value=Decimal("10.00"),
+                    items=_DEMO_ITEMS,
+                ),
+                created_by=USER_ID,
+                sbu_id=SBU_ID,
+            )
+
+    def test_create_gate_override_at_demo_still_held(self):
+        # D8: a manager's gate override waives the demo gate, not this rule.
+        approver_id = uuid.uuid4()
+        repo = _make_repo()
+        repo.get_stage.return_value = _make_stage(30, "DEMO")
+        repo.get_owner_manager_id.return_value = approver_id
+        repo.get_user_role_name.return_value = "Area Manager"
+
+        with pytest.raises(BusinessRuleViolation, match="expected closure date"):
+            self._service(repo).create_opportunity(
+                ACCOUNT_ID,
+                _make_create_data(
+                    stage_id=STAGE_DEMO_ID,
+                    win_probability=Decimal("60"),
+                    lead_source_id=LEAD_SOURCE_ID,
+                    indicative_value=Decimal("10.00"),
+                    gate_override_approver_id=approver_id,
+                    gate_override_reason_id=uuid.uuid4(),
+                    items=_DEMO_ITEMS,
+                ),
+                created_by=USER_ID,
+                sbu_id=SBU_ID,
+            )
+
+    def test_update_unrelated_field_on_existing_over_limit_refused(self):
+        # D4 / D9: an Opportunity already over the limit is held on its next save.
+        opp = _make_opportunity(win_probability=Decimal("70"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+
+        with pytest.raises(BusinessRuleViolation, match="expected closure date"):
+            self._service(repo).update_opportunity(OPP_ID, OpportunityUpdate(name="Renamed"), updated_by=USER_ID)
+        repo.update.assert_not_called()
+
+    def test_update_adding_date_clears_it(self):
+        opp = _make_opportunity(win_probability=Decimal("70"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+
+        self._service(repo).update_opportunity(
+            OPP_ID, OpportunityUpdate(expected_closure_date=TOMORROW), updated_by=USER_ID
+        )
+        repo.update.assert_called_once_with(opp)
+
+    def test_update_lowering_chance_clears_it(self):
+        opp = _make_opportunity(win_probability=Decimal("70"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+
+        self._service(repo).update_opportunity(
+            OPP_ID, OpportunityUpdate(win_probability=Decimal("40")), updated_by=USER_ID
+        )
+        repo.update.assert_called_once_with(opp)
+
+    def test_update_at_negotiation_not_checked_by_this_rule(self):
+        # From Negotiation on, BR-OP-01's gate owns the date.
+        opp = _make_opportunity(stage_id=STAGE_NEGOTIATION_ID, win_probability=Decimal("75"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_stage.return_value = _make_stage(50, "NEGOTIATION")
+
+        self._service(repo).update_opportunity(OPP_ID, OpportunityUpdate(name="X"), updated_by=USER_ID)
+        repo.update.assert_called_once_with(opp)
+
+    def test_update_marking_lost_never_refused(self):
+        # D16
+        opp = _make_opportunity(win_probability=Decimal("70"), loss_reason_id=LOSS_REASON_PRICE_ID)
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status("LOST", is_terminal=True)]
+
+        self._service(repo).update_opportunity(OPP_ID, OpportunityUpdate(status_id=STATUS_LOST_ID), updated_by=USER_ID)
+        repo.update.assert_called_once_with(opp)
+
+    def test_update_putting_on_hold_never_refused(self):
+        # D16
+        opp = _make_opportunity(
+            win_probability=Decimal("70"), hold_reason_id=HOLD_REASON_ID, reactivation_date=TOMORROW
+        )
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status("ON_HOLD")]
+
+        self._service(repo).update_opportunity(
+            OPP_ID, OpportunityUpdate(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
+        )
+        repo.update.assert_called_once_with(opp)
+
+    def test_update_on_hold_made_active_again_held(self):
+        # D16: held to the rule on the save that makes it Active again.
+        opp = _make_opportunity(status_id=STATUS_ON_HOLD_ID, win_probability=Decimal("70"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_status.side_effect = [_make_status("ON_HOLD"), _make_status("ACTIVE")]
+
+        with pytest.raises(BusinessRuleViolation, match="expected closure date"):
+            self._service(repo).update_opportunity(
+                OPP_ID, OpportunityUpdate(status_id=STATUS_ACTIVE_ID), updated_by=USER_ID
+            )
+        repo.update.assert_not_called()
+
+
+# ===========================================================================
 # update_opportunity — BR-OP-14 manager-attested gate override
 # ===========================================================================
 

@@ -14,6 +14,7 @@ import type { DraftOpportunityItem, ProductOption } from "../types/opportunityIt
 import { itemsTotal } from "../utils/opportunityItems";
 import { marketingLeadRef } from "../utils/marketingLeadMilestone";
 import { getTodayIso } from "../utils/formatter";
+import { HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG, needsClosureDateForChance } from "../utils/opportunityStatus";
 
 // Stage display_order thresholds (from Seed-Data.sql) at which each stage-gated
 // field first becomes relevant -- mirrors backend/app/domains/opportunity/
@@ -330,6 +331,10 @@ export default function QuickLeadModal({
       throw new Error("PO Date is required to create an opportunity at Delivery & Installation stage or later");
     }
     if (poDate && poDate > getTodayIso()) throw new Error("PO Date can't be in the future");
+    // BR-OP-19: mirrors the server (same message); a new Opportunity is always Active.
+    if (!closureDate && needsClosureDateForChance(selectedStageOrder, winProb)) {
+      throw new Error(HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG);
+    }
     const payload: Record<string, unknown> = {
       name: name.trim(),
       stage_id: stageId,
@@ -572,7 +577,8 @@ export default function QuickLeadModal({
             <TextField label="Demo End Date" type="date" value={demoEnd} onChange={(e) => setDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        {selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER" &&
+        {/* BR-OP-19 (plan D7): also shown before Negotiation once the chance is 50 % or more. */}
+        {((selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER") || needsClosureDateForChance(selectedStageOrder, winProb)) &&
           !(gateOverrideChecked && selectedStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}

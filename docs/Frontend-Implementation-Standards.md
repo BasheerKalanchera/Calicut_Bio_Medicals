@@ -126,7 +126,7 @@ The ref-guarded seeding subtlety this pattern needs when the seed data is a *dra
 | Project statuses | `["project-statuses"]`, `staleTime: Infinity` | — |
 | Stages / Opp statuses / Lead sources | `["stages"]` / `["statuses"]` / `["leadSources"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx`, `OpportunityPipelineScreen.tsx`, `QuickLeadModal.tsx` |
 | Hold / Loss reasons | `["holdReasons"]` / `["lossReasons"]`, `staleTime: Infinity` | `OpportunityDetailScreen.tsx` (both screens' Edit Opportunity modal + Overview display) |
-| Opportunity Owner picker (tier-scoped) | `["users", "all"]` | `QuickLeadModal.tsx`, `Customer360Screen.tsx`, `OpportunityDetailScreen.tsx`'s Edit Opportunity modal, `OpportunityPipelineScreen.tsx`'s owner filter |
+| Opportunity Owner picker (tier-scoped) | `["users", "all"]` | `QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx`'s Edit Opportunity modal, `OpportunityPipelineScreen.tsx`'s owner filter. `Customer360Screen.tsx` and `ProjectDirectoryScreen.tsx` read the same key only for their project create/edit forms (their own Opportunity create forms were removed 2026-10-14, §6.2) |
 | Split participant picker (`scope=sbu`, BR-FIN-06) | `["users", "sbu"]` | `OpportunityDetailScreen.tsx`'s Splits tab |
 | Next Action assignee picker (`scope=all`, BR-ACT-06) | `["users", "assignable"]` | `LogActivityModal.tsx` |
 | Products | `["products", "picker", sbuId]` | `QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx` |
@@ -204,6 +204,15 @@ pickers fixed at the top; only the content below scrolls. Reference:
 - Enter key in form modals must not submit the form. Add `onKeyDown` handling at the `<form>` element (see `FormModal.tsx`), not per-input.
 - Modal `onSubmit` must throw to signal failure — `FormModal` catches the error and displays it via MUI `Alert`.
 - Clear all form state fields before opening the modal (not after closing) so re-opening shows a blank form.
+- **One Opportunity create form (D12, built 2026-10-14).** Every way of
+  creating an Opportunity opens `QuickLeadModal.tsx`; no screen keeps its
+  own inline create form. Opened from a hospital or project page, it gets
+  `lockAccount` / `lockProject`, so that hospital (and project) shows as a
+  fixed name. Today's callers: top-bar "+ Lead" (`DemoApp.tsx`), Customer
+  360's Opportunities tab, the Project Directory, and Marketing Lead
+  "Convert" (`MarketingLeadReviewQueueScreen.tsx`). A new create rule goes
+  into this one form only. Origin:
+  `docs/Win-Probability-Rule-and-One-Create-Form-Implementation-Plan.md`.
 
 ### 6.3 Optimistic Error Handling in Tab Sections
 
