@@ -327,3 +327,46 @@ class TestDailyReportAndCommentQuerySize:
 
         assert "join user_profile " in sql
         assert sql.count(" join ") == 1
+
+
+class TestNextActionRuleQueries:
+    """Next-action rules plan, step 1: the three lookups behind BR-ACT-11
+    and the BR-ACT-05 change, compiled and checked for their filters."""
+
+    def _sql(self, call) -> tuple[str, MagicMock]:
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = None
+        call(ReminderRepository(mock_db))
+        stmt = mock_db.scalar.call_args.args[0]
+        return str(stmt.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})).lower(), mock_db
+
+    def test_has_open_for_user_on_opportunity_filters_owner_opportunity_and_open(self):
+        opp_id, user_id = uuid.uuid4(), uuid.uuid4()
+        sql, _ = self._sql(lambda repo: repo.has_open_for_user_on_opportunity(opp_id, user_id))
+
+        assert "join activity on reminder.activity_id = activity.id" in sql
+        assert f"activity.opportunity_id = '{opp_id}'" in sql
+        assert f"reminder.assigned_to_user_id = '{user_id}'" in sql
+        assert "reminder.is_completed = false" in sql
+
+    def test_has_open_for_user_on_opportunity_true_when_row_found(self):
+        mock_db = MagicMock()
+        mock_db.scalar.return_value = 1
+        assert ReminderRepository(mock_db).has_open_for_user_on_opportunity(uuid.uuid4(), uuid.uuid4()) is True
+
+    def test_get_opportunity_status_code_joins_status(self):
+        opp_id = uuid.uuid4()
+        sql, _ = self._sql(lambda repo: repo.get_opportunity_status_code(opp_id))
+
+        assert "select opportunity_status.status_code" in sql
+        assert f"opportunity.id = '{opp_id}'" in sql
+
+    def test_opportunity_created_on_account_since_filters_account_and_date(self):
+        opp_id, account_id = uuid.uuid4(), uuid.uuid4()
+        sql, _ = self._sql(
+            lambda repo: repo.opportunity_created_on_account_since(opp_id, account_id, START)
+        )
+
+        assert f"opportunity.id = '{opp_id}'" in sql
+        assert f"opportunity.account_id = '{account_id}'" in sql
+        assert "opportunity.created_at >=" in sql

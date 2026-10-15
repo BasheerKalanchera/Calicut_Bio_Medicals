@@ -159,6 +159,12 @@ export async function completeReminder(
     next_action_text?: string;
     next_action_due_date?: string;
     next_action_owner_id?: string;
+    // Next-action rules plan D2: the "logged for" person the closing
+    // activity is recorded under (defaults to whoever is closing).
+    user_id?: string;
+    // Plan D3: a hospital-level next action closed by the new Opportunity
+    // its visit produced, instead of a follow-up.
+    produced_opportunity_id?: string;
   },
 ): Promise<ReminderResponse> {
   const r = await api.patch(`/reminders/${reminderId}`, { is_completed: true, ...payload });

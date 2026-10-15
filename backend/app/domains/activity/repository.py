@@ -12,6 +12,7 @@ from app.domains.opportunity.models import Opportunity
 from app.domains.organization.models import UserProfile
 from app.domains.organization.repository import TEAM_SCOPE_BUILDERS, UNRESTRICTED_ROLES
 from app.domains.project.models import Project
+from app.domains.reference.models import OpportunityStatus
 
 
 class ActivityRepository(BaseRepository[Activity]):
@@ -304,6 +305,42 @@ class ReminderRepository(BaseRepository[Reminder]):
 
     def opportunity_exists(self, opportunity_id: uuid.UUID) -> bool:
         return (self.db.scalar(select(1).where(Opportunity.id == opportunity_id)) or 0) > 0
+
+    def has_open_for_user_on_opportunity(self, opportunity_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        # BR-ACT-11: only next actions assigned to this person count, and
+        # only those whose creating Activity is on this Opportunity (same
+        # join as list_by_opportunity below).
+        stmt = (
+            select(1)
+            .select_from(Reminder)
+            .join(Activity, Reminder.activity_id == Activity.id)
+            .where(Activity.opportunity_id == opportunity_id)
+            .where(Reminder.assigned_to_user_id == user_id)
+            .where(Reminder.is_completed == False)  # noqa: E712
+            .limit(1)
+        )
+        return self.db.scalar(stmt) is not None
+
+    def get_opportunity_status_code(self, opportunity_id: uuid.UUID) -> str | None:
+        stmt = (
+            select(OpportunityStatus.status_code)
+            .join(Opportunity, Opportunity.status_id == OpportunityStatus.id)
+            .where(Opportunity.id == opportunity_id)
+        )
+        return self.db.scalar(stmt)
+
+    def opportunity_created_on_account_since(
+        self, opportunity_id: uuid.UUID, account_id: uuid.UUID, since: datetime
+    ) -> bool:
+        # Next-action rules plan D3: the "visit produced a new Opportunity"
+        # exemption needs a real Opportunity on the same hospital, created
+        # after the next action it closes -- an old one can't be reused.
+        stmt = select(1).where(
+            Opportunity.id == opportunity_id,
+            Opportunity.account_id == account_id,
+            Opportunity.created_at >= since,
+        )
+        return self.db.scalar(stmt) is not None
 
     def list_for_user(
         self,

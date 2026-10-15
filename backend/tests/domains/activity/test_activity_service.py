@@ -23,7 +23,7 @@ from zoneinfo import ZoneInfo
 import pydantic
 import pytest
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import BusinessRuleViolation, NotFoundError
 from app.domains.activity.models import Activity, ActivityComment, Reminder
 from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
 from app.domains.activity.schemas import ActivityCommentCreate, ActivityCreate, ReminderCreate, ReminderUpdate
@@ -90,6 +90,10 @@ def _make_reminder_repo() -> MagicMock:
     repo.count_for_user.return_value = 0
     repo.list_by_opportunity.return_value = []
     repo.count_by_opportunity.return_value = 0
+    # BR-ACT-11: default to no open next action holding the logger back.
+    repo.has_open_for_user_on_opportunity.return_value = False
+    repo.get_opportunity_status_code.return_value = "ACTIVE"
+    repo.opportunity_created_on_account_since.return_value = False
     return repo
 
 
@@ -124,7 +128,16 @@ def _make_reminder(**overrides) -> Reminder:
 
 
 def _closing_data(**overrides) -> dict:
-    defaults = dict(is_completed=True, activity_type="CALL", activity_date=NOW, notes="Called the customer")
+    # BR-ACT-05 change: a follow-up is required unless exempt, so the
+    # default closing payload carries one.
+    defaults = dict(
+        is_completed=True,
+        activity_type="CALL",
+        activity_date=NOW,
+        notes="Called the customer",
+        next_action_text="Follow up again",
+        next_action_due_date=NOW,
+    )
     defaults.update(overrides)
     return defaults
 
@@ -407,6 +420,64 @@ class TestLogActivity:
             reminder_repository=reminder_repo,
             notification_service=_make_notification_service(),
         )
+
+    # -- BR-ACT-11: close an open next action instead of going round it --
+
+    def test_open_own_next_action_on_opportunity_blocks_fresh_activity(self):
+        activity_repo = _make_activity_repo()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_opportunity.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        with pytest.raises(BusinessRuleViolation, match="open next action"):
+            svc.log_activity(self._data(opportunity_id=OPP_ID), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, ACTOR_ID)
+        activity_repo.create.assert_not_called()
+
+    def test_open_next_action_check_uses_the_logged_for_person(self):
+        # Plan D2: a manager logging for a rep is held to the rep's next actions.
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        reminder_repo = _make_reminder_repo()
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(self._data(opportunity_id=OPP_ID, user_id=USER_ID), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, USER_ID)
+
+    def test_hospital_level_activity_skips_open_next_action_check(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity()
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_opportunity.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(self._data(opportunity_id=None), created_by=ACTOR_ID)
+
+        reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
+        activity_repo.create.assert_called_once()
+
+    def test_manager_note_not_blocked_by_open_next_action(self):
+        activity_repo = _make_activity_repo()
+        activity_repo.create.return_value = _make_activity(activity_type="MANAGER_NOTE", user_id=USER_ID)
+        reminder_repo = _make_reminder_repo()
+        reminder_repo.has_open_for_user_on_opportunity.return_value = True
+        svc = self._svc(activity_repo=activity_repo, reminder_repo=reminder_repo)
+
+        svc.log_activity(
+            self._data(
+                opportunity_id=OPP_ID,
+                user_id=USER_ID,
+                activity_type="MANAGER_NOTE",
+                next_action_text=None,
+                next_action_due_date=None,
+            ),
+            created_by=ACTOR_ID,
+        )
+
+        reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
+        activity_repo.create.assert_called_once()
 
     def test_raises_not_found_when_account_missing(self):
         repo = _make_activity_repo()
@@ -1259,7 +1330,7 @@ class TestPatchReminder:
 
         svc.patch_reminder(
             REMINDER_ID,
-            ReminderUpdate(is_completed=True, activity_type="VISIT", activity_date=NOW, notes="Visited the hospital"),
+            ReminderUpdate(**_closing_data(activity_type="VISIT", notes="Visited the hospital")),
             updated_by=ACTOR_ID,
         )
 
@@ -1296,18 +1367,100 @@ class TestPatchReminder:
 
         activity_repo.create.assert_not_called()
 
-    def test_completing_without_follow_up_creates_no_new_reminder(self):
-        reminder = _make_reminder()
+    # -- BR-ACT-05 change: closing needs a follow-up unless exempt --------
+
+    def _no_follow_up(self, **overrides) -> ReminderUpdate:
+        return ReminderUpdate(**_closing_data(next_action_text=None, next_action_due_date=None, **overrides))
+
+    def _patch_svc(self, reminder: Reminder) -> tuple[ReminderService, MagicMock, MagicMock]:
         repo = _make_reminder_repo()
         repo.get_by_id.return_value = reminder
         repo.update.return_value = reminder
         activity_repo = _make_activity_repo()
         activity_repo.create.return_value = _make_activity(id=uuid.uuid4())
-        svc = ReminderService(repository=repo, activity_repository=activity_repo)
+        return ReminderService(repository=repo, activity_repository=activity_repo), repo, activity_repo
 
-        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
+    def test_completing_opportunity_reminder_without_follow_up_raises(self):
+        svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
 
+        with pytest.raises(BusinessRuleViolation, match="Won or Lost"):
+            svc.patch_reminder(REMINDER_ID, self._no_follow_up(), updated_by=ACTOR_ID)
+        activity_repo.create.assert_not_called()
+
+    @pytest.mark.parametrize("status_code", ["WON", "LOST"])
+    def test_completing_without_follow_up_allowed_when_opportunity_won_or_lost(self, status_code):
+        svc, repo, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
+        repo.get_opportunity_status_code.return_value = status_code
+
+        svc.patch_reminder(REMINDER_ID, self._no_follow_up(), updated_by=ACTOR_ID)
+
+        repo.get_opportunity_status_code.assert_called_once_with(OPP_ID)
+        activity_repo.create.assert_called_once()
         repo.create.assert_not_called()
+
+    def test_completing_without_follow_up_on_hold_opportunity_raises(self):
+        svc, repo, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
+        repo.get_opportunity_status_code.return_value = "ON_HOLD"
+
+        with pytest.raises(BusinessRuleViolation):
+            svc.patch_reminder(REMINDER_ID, self._no_follow_up(), updated_by=ACTOR_ID)
+
+    def test_completing_hospital_reminder_without_follow_up_raises(self):
+        svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
+
+        with pytest.raises(BusinessRuleViolation, match="new Opportunity"):
+            svc.patch_reminder(REMINDER_ID, self._no_follow_up(), updated_by=ACTOR_ID)
+        activity_repo.create.assert_not_called()
+
+    def test_completing_hospital_reminder_with_produced_opportunity_needs_no_follow_up(self):
+        produced = uuid.uuid4()
+        reminder = _make_reminder(activity=_make_activity(opportunity_id=None, account_id=ACCOUNT_ID))
+        svc, repo, activity_repo = self._patch_svc(reminder)
+        repo.opportunity_created_on_account_since.return_value = True
+
+        svc.patch_reminder(REMINDER_ID, self._no_follow_up(produced_opportunity_id=produced), updated_by=ACTOR_ID)
+
+        repo.opportunity_created_on_account_since.assert_called_once_with(produced, ACCOUNT_ID, reminder.created_at)
+        activity_repo.create.assert_called_once()
+        repo.create.assert_not_called()
+
+    def test_completing_hospital_reminder_with_unrelated_opportunity_raises(self):
+        # Wrong hospital, or an Opportunity older than the next action.
+        svc, repo, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
+        repo.opportunity_created_on_account_since.return_value = False
+
+        with pytest.raises(BusinessRuleViolation):
+            svc.patch_reminder(
+                REMINDER_ID, self._no_follow_up(produced_opportunity_id=uuid.uuid4()), updated_by=ACTOR_ID
+            )
+
+    def test_produced_opportunity_on_opportunity_reminder_raises(self):
+        svc, _, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
+
+        with pytest.raises(BusinessRuleViolation, match="hospital-level"):
+            svc.patch_reminder(
+                REMINDER_ID, self._no_follow_up(produced_opportunity_id=uuid.uuid4()), updated_by=ACTOR_ID
+            )
+
+    def test_follow_up_and_produced_opportunity_together_raises(self):
+        svc, _, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
+
+        with pytest.raises(BusinessRuleViolation, match="not both"):
+            svc.patch_reminder(
+                REMINDER_ID, ReminderUpdate(**_closing_data(produced_opportunity_id=uuid.uuid4())), updated_by=ACTOR_ID
+            )
+
+    def test_closing_activity_logged_for_given_user(self):
+        # Plan D2: a manager closing a rep's next action records it under the rep.
+        svc, repo, activity_repo = self._patch_svc(_make_reminder())
+        activity_repo.create.return_value = _make_activity(id=uuid.uuid4(), user_id=USER_ID)
+
+        svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data(user_id=USER_ID)), updated_by=ACTOR_ID)
+
+        closing = activity_repo.create.call_args[0][0]
+        assert closing.user_id == USER_ID
+        assert closing.created_by == ACTOR_ID
+        assert repo.create.call_args[0][0].assigned_to_user_id == USER_ID
 
     def test_completing_with_follow_up_creates_new_reminder_linked_to_closing_activity(self):
         reminder = _make_reminder()
@@ -1421,6 +1574,10 @@ class TestReminderUpdateValidation:
         assert data.is_completed is True
         assert data.notes == "Called the customer"
 
+    def test_produced_opportunity_when_reopening_raises(self):
+        with pytest.raises(pydantic.ValidationError):
+            ReminderUpdate(is_completed=False, produced_opportunity_id=uuid.uuid4())
+
     def test_reopening_without_closing_fields_succeeds(self):
         data = ReminderUpdate(is_completed=False)
         assert data.is_completed is False
@@ -1435,7 +1592,8 @@ class TestReminderUpdateValidation:
             ReminderUpdate(**_closing_data(next_action_due_date=NOW, next_action_text=None))
 
     def test_follow_up_omitted_entirely_succeeds(self):
-        data = ReminderUpdate(**_closing_data())
+        # The schema allows it; ReminderService decides whether it's exempt.
+        data = ReminderUpdate(**_closing_data(next_action_text=None, next_action_due_date=None))
         assert data.next_action_text is None
         assert data.next_action_due_date is None
 

@@ -2,10 +2,16 @@ import uuid
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import BusinessRuleViolation, NotFoundError
 from app.domains.activity.models import Activity, ActivityComment, Reminder
 from app.domains.activity.repository import ActivityCommentRepository, ActivityRepository, ReminderRepository
-from app.domains.activity.schemas import ActivityCommentCreate, ActivityCreate, ReminderCreate, ReminderUpdate
+from app.domains.activity.schemas import (
+    NOT_CUSTOMER_FACING_TYPES,
+    ActivityCommentCreate,
+    ActivityCreate,
+    ReminderCreate,
+    ReminderUpdate,
+)
 from app.domains.notification.service import NotificationService
 from app.domains.organization.models import UserProfile
 
@@ -25,8 +31,8 @@ def _maybe_create_next_action_reminder(
     created_by: uuid.UUID,
 ) -> Reminder | None:
     # BR-ACT-04: shared by ActivityService.log_activity (mandatory unless
-    # MANAGER_NOTE) and ReminderService.patch_reminder (optional follow-up
-    # when closing a reminder, BR-ACT-05) -- same "given an Activity, maybe
+    # MANAGER_NOTE) and ReminderService.patch_reminder (the follow-up when
+    # closing a reminder, BR-ACT-05) -- same "given an Activity, maybe
     # attach a Reminder" logic either way.
     if not (next_action_text and next_action_due_date):
         return None
@@ -153,11 +159,27 @@ class ActivityService:
             if not (visible or in_account):
                 raise NotFoundError(f"Opportunity {data.opportunity_id} not found")
 
+        activity_user_id = data.user_id if data.user_id is not None else created_by
+
+        # BR-ACT-11: while the person this activity is for (plan D2) has an
+        # open next action of their own on this Opportunity, they close it
+        # (PATCH /reminders/{id}, BR-ACT-05) instead of logging a fresh
+        # activity. Types that never carry a next action are unchanged.
+        if (
+            data.opportunity_id
+            and data.activity_type not in NOT_CUSTOMER_FACING_TYPES
+            and self.reminder_repository.has_open_for_user_on_opportunity(data.opportunity_id, activity_user_id)
+        ):
+            raise BusinessRuleViolation(
+                "There is an open next action on this Opportunity for this person. "
+                "Close it, saying what happened, instead of logging a new activity."
+            )
+
         activity = Activity(
             account_id=data.account_id,
             opportunity_id=data.opportunity_id,
             project_id=data.project_id,
-            user_id=data.user_id if data.user_id is not None else created_by,
+            user_id=activity_user_id,
             activity_type=data.activity_type,
             activity_date=data.activity_date,
             notes=data.notes,
@@ -333,11 +355,17 @@ class ReminderService:
         # they accompany.
         if data.is_completed:
             original = reminder.activity
+            if not data.next_action_text:
+                self._require_follow_up_exemption(reminder, original, data.produced_opportunity_id)
+            elif data.produced_opportunity_id:
+                raise BusinessRuleViolation(
+                    "Give either a follow-up next action or the new Opportunity this visit produced, not both."
+                )
             closing_activity = Activity(
                 account_id=original.account_id,
                 opportunity_id=original.opportunity_id,
                 project_id=original.project_id,
-                user_id=updated_by,
+                user_id=data.user_id if data.user_id is not None else updated_by,
                 activity_type=data.activity_type,
                 activity_date=data.activity_date,
                 notes=data.notes,
@@ -346,12 +374,11 @@ class ReminderService:
             closing_activity = self.activity_repository.create(closing_activity)
             reminder.closing_activity_id = closing_activity.id
 
-            # Optional follow-up discovered while closing this one out --
-            # same BR-ACT-04 mechanism as any other Activity, just optional
-            # here rather than mandatory (not every closure needs a new
-            # task). Linked to the closing Activity, not the original one,
-            # since it's a fresh commitment made now, not part of the
-            # original interaction.
+            # The follow-up (BR-ACT-05 change: required unless exempt, see
+            # _require_follow_up_exemption) -- same BR-ACT-04 mechanism as
+            # any other Activity. Linked to the closing Activity, not the
+            # original one, since it's a fresh commitment made now, not
+            # part of the original interaction.
             _maybe_create_next_action_reminder(
                 self.repository,
                 activity=closing_activity,
@@ -362,3 +389,32 @@ class ReminderService:
             )
 
         return self.repository.update(reminder)
+
+    def _require_follow_up_exemption(
+        self,
+        reminder: Reminder,
+        original: Activity,
+        produced_opportunity_id: uuid.UUID | None,
+    ) -> None:
+        # BR-ACT-05 change (next-action rules plan, point 2): closing a next
+        # action needs a follow-up, except (a) its Opportunity is Won or
+        # Lost, or (b) a hospital-level next action whose visit produced a
+        # new Opportunity on the same hospital (plan D3).
+        if original.opportunity_id:
+            if produced_opportunity_id:
+                raise BusinessRuleViolation(
+                    "A new Opportunity can only stand in for the follow-up on a hospital-level next action."
+                )
+            if self.repository.get_opportunity_status_code(original.opportunity_id) in {"WON", "LOST"}:
+                return
+            raise BusinessRuleViolation(
+                "Closing a next action needs a follow-up next action, unless the Opportunity is Won or Lost."
+            )
+        if produced_opportunity_id and self.repository.opportunity_created_on_account_since(
+            produced_opportunity_id, original.account_id, reminder.created_at
+        ):
+            return
+        raise BusinessRuleViolation(
+            "Closing a next action needs a follow-up next action, "
+            "unless this visit produced a new Opportunity on this hospital."
+        )

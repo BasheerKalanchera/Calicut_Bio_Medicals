@@ -255,15 +255,27 @@ class ReminderUpdate(BaseModel):
     activity_type: ActivityType | None = None
     activity_date: datetime | None = None
     notes: str | None = Field(default=None, min_length=1)
-    # Optional follow-up discovered while closing this reminder -- same
-    # BR-ACT-04 mechanism (Activity -> optional Reminder), just optional
-    # here rather than mandatory: not every closure produces a new task.
+    # Next-action rules plan D2: who the closing Activity is logged for --
+    # a manager closing a rep's next action on their behalf records it
+    # under the rep. Defaults to whoever closed it.
+    user_id: uuid.UUID | None = None
+    # Follow-up set while closing this reminder -- same BR-ACT-04 mechanism
+    # (Activity -> Reminder). Required by ReminderService.patch_reminder
+    # (BR-ACT-05 change) except when the Opportunity is Won or Lost, or
+    # with produced_opportunity_id below; that check needs the DB, so it
+    # lives in the service, not here.
     next_action_text: str | None = Field(default=None, min_length=1)
     next_action_due_date: datetime | None = None
-    next_action_owner_id: uuid.UUID | None = None  # defaults to whoever closed it
+    next_action_owner_id: uuid.UUID | None = None  # defaults to the closing Activity's user
+    # Next-action rules plan D3: a hospital-level next action closed by a
+    # visit that produced a new Opportunity on that hospital needs no
+    # follow-up -- the new Opportunity carries the thread forward.
+    produced_opportunity_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def _require_closing_activity_when_completing(self) -> "ReminderUpdate":
+        if not self.is_completed and self.produced_opportunity_id:
+            raise ValueError("produced_opportunity_id is only valid when closing a Next Action.")
         if self.is_completed:
             if not self.activity_type:
                 raise ValueError("Activity type is required to close a Next Action.")

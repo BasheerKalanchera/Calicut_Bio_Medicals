@@ -39,7 +39,7 @@ import { listActivitiesByOpportunity, listOpportunityReminders } from "../servic
 import { listStages, listStatuses, listUsers, listHoldReasons, listLossReasons, listLeadSources, listGateOverrideReasons } from "../services/masterData";
 import { listProducts } from "../services/products";
 import { listOpportunityDocuments, uploadOpportunityDocument, getDocumentDownloadUrl, deleteDocument } from "../services/documents";
-import type { PipelineOpportunity, PipelinePage, DocumentResponse } from "../types/api-aliases";
+import type { PipelineOpportunity, PipelinePage, DocumentResponse, ReminderResponse } from "../types/api-aliases";
 import type { DraftOpportunityItem, ProductOption } from "../types/opportunityItems";
 import { isReactivationOverdue, HIGH_CHANCE_NEEDS_CLOSURE_DATE_MSG, needsClosureDateForChance, breaksHighChanceRule } from "../utils/opportunityStatus";
 import { itemsTotal } from "../utils/opportunityItems";
@@ -48,6 +48,7 @@ import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
 import ReminderRow from "../components/ReminderRow";
+import CloseReminderModal from "../components/CloseReminderModal";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
@@ -277,14 +278,14 @@ function OverviewTab({
 }
 
 // ---------------------------------------------------------------------------
-// Next Actions tab — read-only: completing a reminder here would let anyone
-// with visibility into this opportunity (not just the assignee) close out
-// someone else's follow-up, since (unlike the standalone Next Actions
-// screen) this list isn't scoped to "reminders assigned to me". Add a
-// complete action only if a real need for it shows up.
+// Next Actions tab — Close only on the current user's own rows
+// (docs/Next-Action-Rules-Implementation-Plan.md, point 3). This list shows
+// everyone's next actions on the Opportunity, so others' rows stay
+// read-only: closing someone else's follow-up isn't offered here.
 // ---------------------------------------------------------------------------
-function NextActionsTab({ opportunityId }: { opportunityId: string }) {
+function NextActionsTab({ opportunityId, currentUserId }: { opportunityId: string; currentUserId?: string }) {
   const [includeCompleted, setIncludeCompleted] = useState(false);
+  const [closingReminder, setClosingReminder] = useState<ReminderResponse | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["opp-reminders", opportunityId, includeCompleted],
@@ -336,9 +337,21 @@ function NextActionsTab({ opportunityId }: { opportunityId: string }) {
         <EmptyPlaceholder message={includeCompleted ? "No completed next actions yet." : "No pending next actions for this opportunity."} />
       ) : (
         reminders.map((r) => (
-          <ReminderRow key={r.id} reminder={r} hideOpportunity />
+          <ReminderRow
+            key={r.id}
+            reminder={r}
+            hideOpportunity
+            onComplete={r.assigned_to_user_id === currentUserId ? setClosingReminder : undefined}
+          />
         ))
       )}
+
+      <CloseReminderModal
+        isOpen={!!closingReminder}
+        onClose={() => setClosingReminder(null)}
+        reminder={closingReminder}
+        onCompleted={() => setClosingReminder(null)}
+      />
     </Box>
   );
 }
@@ -1831,7 +1844,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
         {activeTab === "activity"     && (
           <ActivityTimeline opportunityId={opp.id} accountId={opp.account.id} onLogActivity={() => setShowLogActivity(true)} selfFetch={false} highlightActivityId={highlightActivityId} />
         )}
-        {activeTab === "next-actions" && <NextActionsTab opportunityId={opp.id} />}
+        {activeTab === "next-actions" && <NextActionsTab opportunityId={opp.id} currentUserId={(userProfile as any)?.id} />}
       </Box>
 
       {/* Edit Opportunity modal */}

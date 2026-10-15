@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Button, MenuItem, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import FormModal from "./FormModal";
+import QuickLeadModal from "./QuickLeadModal";
 import { completeReminder } from "../services/activities";
 import { listUsers } from "../services/masterData";
+import { getOpportunity } from "../services/opportunities";
 import { useAuth } from "../contexts/AuthContext";
+import { SilentModalError } from "../lib/formErrors";
 import type { ActivityType, ReminderResponse } from "../types/api-aliases";
 
 interface Props {
@@ -14,6 +17,11 @@ interface Props {
   onClose: () => void;
   reminder: ReminderResponse | null;
   onCompleted?: () => void;
+  // Plan D2 (docs/Next-Action-Rules-Implementation-Plan.md): Log Activity's
+  // "logged for" person, when a manager closes a rep's next action from
+  // there -- the closing activity is recorded under the rep. Left out,
+  // the server records it under whoever is closing.
+  loggedForUserId?: string;
 }
 
 // BR-ACT-05: what was done to close this Next Action. MANAGER_NOTE
@@ -27,6 +35,10 @@ const CLOSING_ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: "NOTE",    label: "📝 Note" },
 ];
 
+// BR-ACT-05 change: the two Opportunity statuses whose next action may
+// close with no follow-up. Matched by code, same as the server.
+const FOLLOW_UP_EXEMPT_STATUS_CODES = new Set(["WON", "LOST"]);
+
 // Local stopgap type — listUsers returns Promise<unknown> today. See
 // LogActivityModal.tsx's identical note.
 interface UserOption { id: string; display_name: string }
@@ -39,7 +51,14 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder, onCompleted }: Props) {
+function nowPlusDaysLocal(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
+export default function CloseReminderModal({ isOpen, onClose, reminder, onCompleted, loggedForUserId }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -47,14 +66,25 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
   const [activityType, setActivityType] = useState<ActivityType>("CALL");
   const [activityDate, setActivityDate] = useState(nowLocal());
   const [notes, setNotes] = useState("");
-  // Both start blank, deliberately — unlike LogActivityModal's mandatory
-  // Next Action (defaulted to "tomorrow" since it's almost always wanted),
-  // a follow-up here is optional and off by default; pre-filling the due
-  // date would make hasFollowUp look true before the user's actually asked
-  // for one.
+  // Follow-up is required (BR-ACT-05 change), so these start filled in:
+  // the closed next action's own text, for the rep to edit (plan D10),
+  // and "tomorrow", same default as Log Activity's next action.
   const [nextActionText, setNextActionText] = useState("");
   const [nextActionDueDate, setNextActionDueDate] = useState("");
   const [nextActionOwnerId, setNextActionOwnerId] = useState("");
+  // Plan D3: hospital-level next actions only.
+  const [producedNewOpportunity, setProducedNewOpportunity] = useState(false);
+  const [showNewOpportunity, setShowNewOpportunity] = useState(false);
+  const [notice, setNotice] = useState<{ severity: "info" | "error"; text: string } | null>(null);
+  // The Opportunity the create form saved. A ref as well as state: the
+  // create form calls onCreated and then its own onClose in the same
+  // tick, before a state update would be visible to that onClose.
+  const producedOpportunityRef = useRef<string | null>(null);
+  const [producedOpportunityId, setProducedOpportunityId] = useState<string | null>(null);
+
+  const opportunityId = reminder?.activity.opportunity?.id;
+  const accountId = reminder?.activity.account?.id;
+  const isHospitalLevel = !!reminder && !opportunityId;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -65,6 +95,14 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     },
   });
 
+  // Same key as the Opportunity page's own fetch, so it's usually cached.
+  const { data: opportunity } = useQuery({
+    queryKey: ["opportunity", opportunityId],
+    enabled: isOpen && !!opportunityId,
+    queryFn: () => getOpportunity(opportunityId!),
+  });
+  const followUpExempt = FOLLOW_UP_EXEMPT_STATUS_CODES.has(opportunity?.status.status_code ?? "");
+
   useEffect(() => {
     if (!isOpen) return;
     // Resets this form's fields on open; React 18 batches these into one
@@ -74,33 +112,34 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     setActivityType("CALL");
     setActivityDate(nowLocal());
     setNotes("");
-    setNextActionText("");
-    setNextActionDueDate("");
+    setNextActionText(reminder?.reminder_text ?? "");
+    setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId("");
-  }, [isOpen]);
+    setProducedNewOpportunity(false);
+    setShowNewOpportunity(false);
+    setNotice(null);
+    producedOpportunityRef.current = null;
+    setProducedOpportunityId(null);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Follow-up is optional (unlike BR-ACT-04's own next action) — presence
-  // is driven by whether the Follow-up tab was actually filled in, not by
-  // which tab happens to be active when Complete is clicked.
-  const hasFollowUp = nextActionText.trim().length > 0 || nextActionDueDate !== "";
+  // Won/Lost: a blank follow-up box means none. Otherwise it's required --
+  // unless the D3 box is ticked, which replaces it with the new Opportunity.
+  const sendsFollowUp = !producedNewOpportunity && (!followUpExempt || nextActionText.trim().length > 0);
 
-  async function handleSubmit() {
+  async function sendClose(producedId: string | null) {
     if (!reminder) return;
-    if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
-    if (!notes.trim()) { setActiveTab("details"); throw new Error("Notes describing what was done are required to close a Next Action."); }
-    if (hasFollowUp) {
-      if (!nextActionText.trim()) { setActiveTab("followUp"); throw new Error("Follow-up description is required"); }
-      if (!nextActionDueDate) { setActiveTab("followUp"); throw new Error("Follow-up due date is required"); }
-    }
     await completeReminder(reminder.id, {
       activity_type: activityType,
       activity_date: new Date(activityDate).toISOString(),
       notes: notes.trim(),
-      ...(hasFollowUp && {
-        next_action_text: nextActionText.trim(),
-        next_action_due_date: new Date(nextActionDueDate).toISOString(),
-        next_action_owner_id: nextActionOwnerId || currentUserId || undefined,
-      }),
+      ...(loggedForUserId && { user_id: loggedForUserId }),
+      ...(producedId
+        ? { produced_opportunity_id: producedId }
+        : sendsFollowUp && {
+            next_action_text: nextActionText.trim(),
+            next_action_due_date: new Date(nextActionDueDate).toISOString(),
+            next_action_owner_id: nextActionOwnerId || loggedForUserId || currentUserId || undefined,
+          }),
     });
     // The backend creates a real Activity to document this closure (BR-ACT-05)
     // — invalidate the Activity tab query it lands in, same as LogActivityModal
@@ -109,136 +148,225 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     // ActivityContextNested), but a Reminder can only ever descend from an
     // account-having Activity in practice -- the six Sales Development types
     // never carry a Next Action, so never produce one. Guarded anyway.
-    if (reminder.activity.account) {
-      queryClient.invalidateQueries({ queryKey: ["activities", "account", reminder.activity.account.id] });
+    if (accountId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "account", accountId] });
     }
-    if (reminder.activity.opportunity) {
-      queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", reminder.activity.opportunity.id] });
+    if (opportunityId) {
+      queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opportunityId] });
+      queryClient.invalidateQueries({ queryKey: ["opp-reminders", opportunityId] });
     }
     queryClient.invalidateQueries({ queryKey: ["reminders"] });
-    if (reminder.activity.opportunity) {
-      queryClient.invalidateQueries({ queryKey: ["opp-reminders", reminder.activity.opportunity.id] });
-    }
     // Same reasoning as above -- the closing Activity should show up in the
     // Daily Activity Report immediately too, not just the Activity tab.
     queryClient.invalidateQueries({ queryKey: ["activityReport"] });
     onCompleted?.();
   }
 
+  async function handleSubmit() {
+    if (!reminder) return;
+    setNotice(null);
+    if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
+    if (!notes.trim()) { setActiveTab("details"); throw new Error("Notes describing what was done are required to close a Next Action."); }
+    if (producedNewOpportunity) {
+      // Already saved on an earlier try whose close then failed: retry the
+      // close only, never a second Opportunity.
+      if (producedOpportunityId) { await sendClose(producedOpportunityId); return; }
+      // Plan D3: the close is sent only once the new Opportunity is saved.
+      setShowNewOpportunity(true);
+      throw new SilentModalError();
+    }
+    if (sendsFollowUp) {
+      if (!nextActionText.trim()) { setActiveTab("followUp"); throw new Error("Follow-up next action is required"); }
+      if (!nextActionDueDate) { setActiveTab("followUp"); throw new Error("Follow-up due date is required"); }
+    }
+    await sendClose(null);
+  }
+
+  async function handleOpportunityCreated(created: { id: string }) {
+    producedOpportunityRef.current = created.id;
+    setProducedOpportunityId(created.id);
+    try {
+      await sendClose(created.id);
+      onClose();
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
+      setNotice({
+        severity: "error",
+        text: `The new Opportunity was saved, but closing the next action failed: ${axiosErr.response?.data?.detail ?? axiosErr.message ?? "Something went wrong"}. Press Complete to try again.`,
+      });
+    }
+  }
+
+  function handleNewOpportunityClosed() {
+    setShowNewOpportunity(false);
+    if (producedOpportunityRef.current) return;
+    // Plan D3: cancelled, so no Opportunity -- back to a required follow-up.
+    setProducedNewOpportunity(false);
+    setActiveTab("followUp");
+    setNotice({ severity: "info", text: "No new Opportunity was saved, so add a follow-up next action to close this one." });
+  }
+
+  const followUpRequired = !producedNewOpportunity && !followUpExempt;
+
   return (
-    <FormModal isOpen={isOpen} onClose={onClose} title="Close Next Action" onSubmit={handleSubmit} submitLabel="Complete">
-      {reminder && (
-        <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
-          {reminder.reminder_text}
+    <>
+      <FormModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Close Next Action"
+        onSubmit={handleSubmit}
+        submitLabel="Complete"
+        disableEnforceFocus={showNewOpportunity}
+      >
+        {reminder && (
+          <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
+            {reminder.reminder_text}
+          </Box>
+        )}
+
+        {notice && <Alert severity={notice.severity}>{notice.text}</Alert>}
+
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            type="button"
+            onClick={() => setActiveTab("details")}
+            disableRipple
+            sx={{
+              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
+              borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
+              bgcolor: activeTab === "details" ? "primary.main" : "transparent",
+              color: activeTab === "details" ? "#fff" : "#9ca3af",
+              "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "#f3f4f6", color: activeTab === "details" ? "#fff" : "#4b5563" },
+            }}
+          >
+            Details
+          </Button>
+          <Button
+            type="button"
+            onClick={() => setActiveTab("followUp")}
+            disableRipple
+            sx={{
+              px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
+              borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
+              borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
+              bgcolor: activeTab === "followUp" ? "primary.main" : "transparent",
+              color: activeTab === "followUp" ? "#fff" : "#9ca3af",
+              "&:hover": { bgcolor: activeTab === "followUp" ? "primary.main" : "#f3f4f6", color: activeTab === "followUp" ? "#fff" : "#4b5563" },
+            }}
+          >
+            Follow-up{followUpRequired ? " *" : ""}
+          </Button>
         </Box>
+
+        <Box sx={{ minHeight: "16rem" }}>
+          {activeTab === "details" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <TextField
+                select
+                label="Type *"
+                value={activityType}
+                onChange={(e) => setActivityType(e.target.value as ActivityType)}
+                fullWidth
+                size="small"
+              >
+                {CLOSING_ACTIVITY_TYPES.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                ))}
+              </TextField>
+              <DateTimePicker
+                label="Date & Time *"
+                value={activityDate ? dayjs(activityDate) : null}
+                onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
+                slotProps={{ textField: { fullWidth: true, size: "small" } }}
+              />
+              <TextField
+                label="What was done? *"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                multiline
+                rows={3}
+                fullWidth
+                size="small"
+                placeholder="e.g. Called the customer, confirmed demo date for next week"
+              />
+              <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
+                Required to close this Next Action.
+              </Typography>
+            </Box>
+          )}
+
+          {activeTab === "followUp" && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {isHospitalLevel && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={producedNewOpportunity}
+                      disabled={!!producedOpportunityId}
+                      onChange={(e) => { setProducedNewOpportunity(e.target.checked); setNotice(null); }}
+                    />
+                  }
+                  label="This visit produced a new Opportunity"
+                />
+              )}
+              {producedNewOpportunity ? (
+                <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+                  {producedOpportunityId
+                    ? "The new Opportunity is saved. Press Complete to close this next action."
+                    : "Press Complete to add the new Opportunity. This next action closes once it's saved, with no follow-up."}
+                </Typography>
+              ) : (
+                <>
+                  <TextField
+                    label={followUpRequired ? "Follow-up next action *" : "Follow-up next action"}
+                    value={nextActionText}
+                    onChange={(e) => setNextActionText(e.target.value)}
+                    fullWidth
+                    size="small"
+                    placeholder="e.g. Send the quote they asked for"
+                  />
+                  <DateTimePicker
+                    label={followUpRequired ? "Due Date *" : "Due Date"}
+                    value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
+                    onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
+                    slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                  />
+                  <TextField
+                    select
+                    label="Assign To"
+                    value={nextActionOwnerId}
+                    onChange={(e) => setNextActionOwnerId(e.target.value)}
+                    fullWidth
+                    size="small"
+                    slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+                  >
+                    <MenuItem value="">{loggedForUserId && loggedForUserId !== currentUserId ? "Same person (default)" : "Me (default)"}</MenuItem>
+                    {users.map((u) => (
+                      <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
+                    ))}
+                  </TextField>
+                  <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
+                    {followUpExempt
+                      ? `Optional — this Opportunity is ${opportunity?.status.status_name}. Leave the follow-up box empty to close with no follow-up.`
+                      : "Required — every closed next action sets the next one."}
+                  </Typography>
+                </>
+              )}
+            </Box>
+          )}
+        </Box>
+      </FormModal>
+
+      {isHospitalLevel && accountId && (
+        <QuickLeadModal
+          isOpen={showNewOpportunity}
+          onClose={handleNewOpportunityClosed}
+          onCreated={handleOpportunityCreated}
+          initialAccountId={accountId}
+          lockAccount
+        />
       )}
-
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-          type="button"
-          onClick={() => setActiveTab("details")}
-          disableRipple
-          sx={{
-            px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-            borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
-            borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
-            bgcolor: activeTab === "details" ? "primary.main" : "transparent",
-            color: activeTab === "details" ? "#fff" : "#9ca3af",
-            "&:hover": { bgcolor: activeTab === "details" ? "primary.main" : "#f3f4f6", color: activeTab === "details" ? "#fff" : "#4b5563" },
-          }}
-        >
-          Details
-        </Button>
-        <Button
-          type="button"
-          onClick={() => setActiveTab("followUp")}
-          disableRipple
-          sx={{
-            px: 2, py: 1, fontSize: "0.75rem", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em",
-            borderTopLeftRadius: "0.5rem", borderTopRightRadius: "0.5rem",
-            borderBottomLeftRadius: "0.5rem", borderBottomRightRadius: "0.5rem",
-            bgcolor: activeTab === "followUp" ? "primary.main" : "transparent",
-            color: activeTab === "followUp" ? "#fff" : "#9ca3af",
-            "&:hover": { bgcolor: activeTab === "followUp" ? "primary.main" : "#f3f4f6", color: activeTab === "followUp" ? "#fff" : "#4b5563" },
-          }}
-        >
-          Follow-up{hasFollowUp ? " •" : ""}
-        </Button>
-      </Box>
-
-      <Box sx={{ minHeight: "16rem" }}>
-        {activeTab === "details" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              select
-              label="Type *"
-              value={activityType}
-              onChange={(e) => setActivityType(e.target.value as ActivityType)}
-              fullWidth
-              size="small"
-            >
-              {CLOSING_ACTIVITY_TYPES.map((t) => (
-                <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
-              ))}
-            </TextField>
-            <DateTimePicker
-              label="Date & Time *"
-              value={activityDate ? dayjs(activityDate) : null}
-              onChange={(newValue) => setActivityDate(newValue ? newValue.toISOString() : "")}
-              slotProps={{ textField: { fullWidth: true, size: "small" } }}
-            />
-            <TextField
-              label="What was done? *"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              multiline
-              rows={3}
-              fullWidth
-              size="small"
-              placeholder="e.g. Called the customer, confirmed demo date for next week"
-            />
-            <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
-              Required to close this Next Action.
-            </Typography>
-          </Box>
-        )}
-
-        {activeTab === "followUp" && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              label="Follow-up"
-              value={nextActionText}
-              onChange={(e) => setNextActionText(e.target.value)}
-              fullWidth
-              size="small"
-              placeholder="e.g. Send the quote they asked for"
-            />
-            <DateTimePicker
-              label="Due Date"
-              value={nextActionDueDate ? dayjs(nextActionDueDate) : null}
-              onChange={(newValue) => setNextActionDueDate(newValue ? newValue.toISOString() : "")}
-              slotProps={{ textField: { fullWidth: true, size: "small" } }}
-            />
-            <TextField
-              select
-              label="Assign To"
-              value={nextActionOwnerId}
-              onChange={(e) => setNextActionOwnerId(e.target.value)}
-              fullWidth
-              size="small"
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            >
-              <MenuItem value="">Me (default)</MenuItem>
-              {users.map((u) => (
-                <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
-              ))}
-            </TextField>
-            <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
-              Optional — only if this closure surfaced a new follow-up.
-            </Typography>
-          </Box>
-        )}
-      </Box>
-    </FormModal>
+    </>
   );
 }

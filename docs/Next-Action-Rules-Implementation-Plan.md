@@ -1,7 +1,8 @@
 # Next-Action Rules — Implementation Plan
 
-**Status:** Approved 2026-10-14 (Basheer). Not started; starts after
-Win Probability plan step 2 (D7).
+**Status:** Approved 2026-10-14 (Basheer). Step 1 built on Dev
+2026-10-15 (checkpoint commit, tested by unit tests only; manual E2E at
+step 5); steps 2–5 not started.
 **Traceability rows:** none (new rules BR-ACT-11, BR-OP-21, BR-OP-22,
 BR-ACC-05, the BR-ACT-05 change and the On Hold next action).
 **Design / discussion:** `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
@@ -68,6 +69,12 @@ Decided for this plan:
   scratch. Built in step 1. The My Work plan (`docs/Weekly-Follow-up-Daily-Hub-Implementation-Plan.md`,
   step 3, D13) is built after this plan and uses step 1 and this
   pre-fill as they are — Basheer, 2026-10-14
+- D11. Log Activity opened from a hospital's Customer 360 page or the top
+  bar gets an optional Opportunity picker, listing that hospital's
+  Opportunities the person can see. With one picked, the close-only rule
+  applies as on the Opportunity page; left blank, the activity is
+  hospital-level and unchanged. Built in step 1 (added at the step 1
+  check-in: today's form has no Opportunity picker there) — Basheer, 2026-10-15
 
 ## Figures and sources
 
@@ -137,6 +144,8 @@ step.
      without a follow-up, except the two cases above.
    - Log Activity form: switches to "close your next action" when that
      applies.
+   - Log Activity on Customer 360 and the top bar: optional Opportunity
+     picker (D11).
    - Next Actions screen: follow-up required in the close form; the D3
      tick box and its cancel path.
    - Opportunity page: "Close" on one's own rows in the Next Actions tab.
@@ -210,7 +219,12 @@ From a code search, 2026-10-14:
   `LogActivityModal.tsx` looks up those reminders and closes through
   `PATCH /reminders/{id}`. D10: the follow-up `next_action_text` field in
   each close form is seeded from the closed reminder's text (frontend
-  only; still editable, still required).
+  only; still editable, still required). D11: the picker reuses the existing
+  RLS-scoped `GET /accounts/{account_id}/opportunities` (`listOpportunities`,
+  the Customer 360 Opportunities tab's own list), so no new lookup was
+  needed; the BR-ACT-10 `listAccountOpportunitiesLookup` is deliberately
+  unscoped and can't be reused. D2: `ReminderUpdate` gains `user_id` so a manager
+  closing on a rep's behalf records the closing activity under the rep.
 - **Point 2 (BR-ACT-05 change):** `ReminderService.patch_reminder` requires
   `next_action_*` when `is_completed=True`, unless the Opportunity's status
   is terminal after the request, or a hospital-level reminder comes with
