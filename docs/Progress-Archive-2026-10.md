@@ -2716,3 +2716,48 @@ Checked against both tables in `docs/Process-Improvements.md`.
   stands alone, Pass; lint result ("type check clean; lint 0 errors, 16
   existing 'any' warnings") — jargon only, Fail: P3 24 → 25.
 - Open items 21 → 22 (counted).
+
+## 2026-10-15 — User Manual steps 1–2: manual and draft PDF
+
+- Plan `docs/User-Manual-And-Help-Catchup-Implementation-Plan.md`: step 1
+  checklist in section 6; step 2 rewrote `docs/UAT-User-Manual.md`.
+  Covers everything passed on Dev plus Win Probability; next-action rules
+  left out while it is being built (Basheer).
+- Part A: "How do I…" by role. Part C: rules the app enforces. Part B
+  (screen by screen): first proposed every field and message per screen;
+  Basheer: too much detail for the sales team. Kept to a few lines per
+  screen, 162 lines (counted).
+- First-draft mistakes fixed after reading each screen's code: Product
+  Performance's price and revenue are from Won only; Business Potential
+  is set on Rate Hospitals, not the hospital's Edit form; an
+  Opportunity's Next Actions tab can't close a task; Pipeline has no
+  List view.
+- Draft PDF, 11 pages (counted), printed with Chrome:
+  `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf`. The build script was a
+  scratchpad file, not kept in the project.
+- Asked, unanswered: Backlog items for deletes with no "Are you sure?"
+  (documents, stakeholder links) and the Lead Source picker showing codes
+  such as "REPEAT_ORDER".
+
+## 2026-10-15 — Retro: User Manual session
+
+Checked against both tables in `docs/Process-Improvements.md`.
+- Basheer said Part B was "a bit shallow"; the heaviest version was
+  offered first (every field and message, 600–800 lines estimated); he
+  asked for a sample, then said it was too much: P4 7 → 8.
+- Two "hasn't heard from you" prompts while writing Part B and the PDF:
+  P15 9 → 10.
+- The no-cd guard blocked a `cd` in a command: P14 25 → 26.
+- Part B said Pipeline has a List view before the Pipeline screen was
+  read; caught in this retro, fixed in the manual and PDF: P23 13 → 14
+  (repeated after merge).
+- Said Part C's "REPEAT_ORDER" was an internal code not shown on screen
+  (labelled unchecked); the code shows the picker displays it, so Part C
+  stands. Not counted.
+- Spot-check (3): "11 pages" — correct (counted in the PDF); "Part B
+  about 150–200 lines" — labelled estimate, actual 162 (counted); "no
+  file of that name in Desktop\cabio" — correct (checked before copy).
+  Pass.
+- Explanations (2): the cut-down Part B sample; the "PDF ready" report —
+  plain parts stand alone. Pass.
+- Open items 22 → 22 (counted). No new P-numbers.

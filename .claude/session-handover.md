@@ -22,9 +22,14 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 ## Before the next UAT move
 
-- User Manual and Help Catch-up plan (approved 2026-10-01, not started)
-  must land first; it now follows the "plan" wording (Frontend Standards
-  6.10). Rep plan wording (`25fbeab`, `af4b4e9`, E2E Pass 2026-10-14;
+- User Manual and Help Catch-up plan must land first: steps 1–2 done
+  2026-10-15 (checklist in plan section 6; `docs/UAT-User-Manual.md`
+  rewritten). Draft PDF for Basheer's review:
+  `Desktop\cabio\Cabio-Sales-OS-User-Manual.pdf` (11 pages). **Next:**
+  Basheer reviews the PDF, then step 3 (in-app help); check in first.
+  Open (unanswered): Backlog items for deletes with no "Are you sure?"
+  (Opportunity documents, stakeholder links) and the Lead Source picker
+  showing "REPEAT_ORDER"-style codes? Rep plan wording (`25fbeab`, `af4b4e9`, E2E Pass 2026-10-14;
   history in Progress-Archive) goes with that move.
 
 ## Harness Engineering (was Process Consolidation) — plan approved 2026-10-08, building

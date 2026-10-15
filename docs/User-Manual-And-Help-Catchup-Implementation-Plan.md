@@ -1,7 +1,7 @@
 # User Manual and In-App Help Catch-up — Implementation Plan
 
-**Status:** Approved 2026-10-01 (Basheer). Not started. Steps 1–2 can
-start any time; step 3 waits for Plan vs Actuals Tracking's screens; ships with the
+**Status:** Approved 2026-10-01 (Basheer). Steps 1–2 done 2026-10-15;
+manual waiting for Basheer's PDF review. Step 3 waits for Plan vs Actuals Tracking's screens; ships with the
 combined Hospital-wise Target Planning + Plan vs Actuals Tracking UAT move.
 **Traceability rows:** none (supports the UAT rollout; Backlog "Bring the
 user manual and in-app `?` help up to date").
@@ -113,6 +113,62 @@ settled.
   needed) and asserts `HELP_CONTENT` has a key for each.
 - **Wording source:** button labels, tab names and messages taken from the
   screen code, not from design docs (CLAUDE.md, 2026-09-30).
-- **PDF:** HTML built from the manual, printed with Edge headless, saved to
-  `C:\Backups\CabioUAT\` only after Basheer approves it (folder to confirm
-  at step 5).
+- **PDF:** HTML built from the manual, printed with Chrome headless. Draft
+  for review: `Desktop\cabio\` (Basheer, 2026-10-15). The final copy goes
+  to the team only after Basheer approves it (folder to confirm at step 5).
+
+## 6. Step 1 inventory (2026-10-15)
+
+Read from the code and git on 2026-10-15. **19 menu screens**
+(`DemoApp.tsx` nav lists; Projects is a tab inside Account Management, not
+a menu screen). 5 have help; **14 have none**; 3 more help pages cover
+pages opened from a record (Customer 360, Opportunity page, Project page),
+so **8 to refresh + 14 to write = 22 help pages**. Since the manual was
+written (`3cfa132`, 2026-08-01): 169 feature/fix commits, 117 of them
+changing screens.
+
+**Who sees which menu (code, `getNavSections`):**
+- Sales Rep, Area Manager, SBU Manager: Sales Execution (6) + Product
+  Catalog + Reports (6) = 13 screens.
+- Admin, General Manager: Sales Execution (6) + Reports (6) +
+  Administration (6, Product Catalog moves here) = 18 screens.
+- Marketing User: Marketing Leads only.
+
+**Checklist.** "Changes" = feature/fix commits touching that screen's
+file since 2026-08-01 (counted by script; one commit can touch several
+screens). Main changes are read from commit titles.
+
+| Screen (menu name) | Help | Manual | Changes | Main changes to cover |
+|---|---|---|---|---|
+| Account Management | refresh | §3 | 5 | zone filter, near-duplicate hospital warning, Projects tab |
+| ↳ Customer 360 (page) | refresh | §4 | 19 | one create form, Active-only Opportunities with Show All, WhatsApp number, activity comments |
+| ↳ Project page | refresh | §5 | 8 | one create form, editing on the Opportunity page |
+| Pipeline | refresh | §6 | 16 | zone filter, High Priority sort, report drill-downs, payment gate |
+| ↳ Opportunity page | refresh | §6 | 23 | buyback/accessories, documents, referral credit, gate override, fast-track, splits, High Priority, payment gate, chance ≥ 50 % needs a closure date |
+| Marketing Lead Queue | write | — | 4 | convert/discard/reassign, follow-up comments |
+| Next Actions | refresh | §7 | 3 | date-range filter, overdue badge, login reminders |
+| Insights Dashboard | write | — | 9 | tabs, forecast by product/brand, Target vs Actuals |
+| Target & Coverage Planning | write | — | 20 | hospital-wise plans, brand split, approval, Annual view, SBU target box, roster, "plan" wording |
+| Product Catalog | refresh | §8 | 6 | Brand/Category/Model lists, collateral links Admin/GM only |
+| Daily Activity Report | write | — | 5 | development and relationship activities, manager notes |
+| Stagnant Deals | write | — | 1 | — |
+| Opportunities On Hold | write | — | 1 | — |
+| Product Performance | write | — | 6 | brand drill-down |
+| Pipeline Report | write | — | 5 | brand and zone breakdowns, counts, drill-down, Active only |
+| Sales Report | write | — | 5 | brand and zone breakdowns, drill-down |
+| User Directory | refresh | §9 | 9 | multiple zones, deactivate/reactivate, Marketing User with no SBU |
+| Territory Map | write | — | 5 | zone hierarchy, deactivate/reactivate, coverage view |
+| Audit Log | write | — | 4 | pages by save |
+| Rate Hospitals | write | — | 3 | ratings, ₹0 warning colours |
+| Brand Target Tracking | write | — | 5 | vendor target vs team committed |
+| Marketing Leads | write | — | 3 | lead entry, follow-up comments |
+
+**Shared parts (manual §1–2, no help page):** 21 commits touch only shared
+pieces — Log Activity (relationship-support activity, activity
+comments), notifications (assignment, split participant, comments),
+login reminders, idle sign-out, landing on Pipeline, Add Hospital zone
+rule.
+
+**Step 2 coverage:** Win Probability passed its E2E on 2026-10-15 and is
+in the manual. Next-action rules is left out while it is being built
+(Basheer, 2026-10-15); add it before the manual is final (D2).
