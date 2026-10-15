@@ -10,7 +10,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
-| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 30 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) |
+| P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 31 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) — repeated after build 2026-10-15 (E2E "N of 40 steps done" lines not counted) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 12 | open |
 | P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 24 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) — repeated after build 2026-10-15 (twice) |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 7 | open |
@@ -21,12 +21,12 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P11 | Take each browser reading in one step, not refresh/wait/read | 2026-10-06 | 5 | open |
 | P12 | Starting a step of an approved plan: read the plan doc, handover and archive first; go to the code only for what they don't say (but see P39: check the handover's claims) | 2026-10-06 | 1 | merged (CLAUDE.md "Session handoff", 2026-10-08) |
 | P13 | A plan built in partial steps says, before approval, what stops working on Dev until the next step lands | 2026-10-06 | 1 | merged (plan template "Build order"; CLAUDE.md "Checkpoint commits"; CLAUDE.md "Feature planning", 2026-10-08) |
-| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 22 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) — repeated after build 2026-10-15 |
+| P14 | Use the edit tools and absolute paths from the start (shell guard rails); when a tool offers a fix, view its diff before editing | 2026-10-06 | 23 | built (no-cd guard allows the project folder and moves inside brackets; refusals logged at 300 characters; 2026-10-14) — repeated after build 2026-10-15 (twice; second: `cd backend && pytest`) |
 | P15 | During a long build, one short progress line each time a file is finished | 2026-10-06 | 8 | open |
-| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 5 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12 |
+| P16 | Update the handover note at every checkpoint within a build, not only at the end | 2026-10-06 | 6 | merged (CLAUDE.md "Session handoff", 2026-10-08) — repeated after merge 2026-10-08; repeated after merge 2026-10-09; repeated after merge 2026-10-11; repeated after merge 2026-10-12; repeated after merge 2026-10-15 (said "Next: step 14" until E2E end) |
 | P17 | When an agreement between sessions changes (e.g. commit order), write it where the other session looks — its plan's progress table or its handover section — the same turn | 2026-10-06 | 1 | merged (CLAUDE.md "Parallel sessions", 2026-10-08) |
 | P18 | When an action leaves something staged or half-done (e.g. `git mv` stages a rename), say so in the same report | 2026-10-06 | 1 | dropped (seen once, narrow; plan step D, 2026-10-10) |
-| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 8 | open |
+| P19 | A check handed to Basheer names the exact record to open and what he should see, picked from live data first | 2026-10-06 | 9 | open |
 | P20 | Before writing a query or script, look up table names and allowed values in `Physical-Schema.sql`, never guess | 2026-10-06 | 1 | merged (`cabio-db-and-scripting` skill "Scripts", 2026-10-08) |
 | P21 | If what's built differs from the wording Basheer approved, say so in the report and offer the choice | 2026-10-06 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08); repeated after merge 2026-10-09; repeated after merge 2026-10-10 |
 | P22 | A before/after check in a plan says what is recorded before the change, when, and by whom | 2026-10-06 | 4 | open |
@@ -58,7 +58,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P59 | Before promising a kind of test (e.g. a database-level RLS test), check the suite has that kind; otherwise offer the alternative (a read-only Dev check) upfront | 2026-10-09 | 1 | merged (counted as a repeat of P2, 2026-10-10) |
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
 | P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
-| P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57) | 2026-10-09 | 2 | open |
+| P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57; 2026-10-15: pre-E2E review missed the products panel's value-only save, E2E step 9) | 2026-10-09 | 3 | open |
 | P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 7 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
 | P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 3 | open |
@@ -69,6 +69,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P73 | When a reply could refer to more than one plan or thread, ask which one in a single line before editing anything (was watch-list P55; 2026-10-13: wrote only the Part A test plan when both were asked; read "the whole plan" as the duplicate plan instead of the Win Probability plan and edited 4 docs) | 2026-10-09 | 3 | open |
 | P74 | When a decision changes inside a plan, update every line of that plan that says the old wording (was watch-list 2026-10-13: step 3 still said "SBU Plan Rollup"; 2026-10-14: Process Consolidation plan still said items appear in the dropped "Most-repeated mistakes" list) | 2026-10-13 | 2 | open |
 | P75 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one (was watch-list P63; 2026-10-15: first run failed on a missing package) | 2026-10-10 | 2 | open |
+| P76 | When Basheer makes a decision conditional, or a proposal is still unanswered, never record it as decided; bring it back to him (was watch-list P48; 2026-10-15: handover wrote step 33's "use another hospital" as decided before he answered) | 2026-10-08 | 2 | open |
 
 ## Watch list
 
@@ -84,7 +85,6 @@ Rules: `harness-engineering` skill.
 | 2026-10-10 | 2026-10-07 | P32 | In PowerShell, commit from a saved message file (`git commit -F`); Windows PowerShell splits a `-m` message at its quote marks |
 | 2026-10-10 | 2026-10-07 | P40 | The E2E test-plan template says each of the four live-data lines needs text on the line itself (the save check reads only that line) |
 | 2026-10-10 | 2026-10-08 | P46 | In anything written for others, undecided ideas go under "Options" or are left out, never written as "we will" |
-| 2026-10-10 | 2026-10-08 | P48 | When Basheer makes a decision conditional ("if we find more cases"), check the condition and bring it back to him; never record it as decided or held |
 | 2026-10-10 | 2026-10-09 | P53 | A commit message matches the detail of recent commits: the why, what changed per file, test results where relevant |
 | 2026-10-10 | 2026-10-09 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection |
 | 2026-10-10 | 2026-10-09 | P56 | Every recommendation states what it leaves uncovered |
@@ -105,6 +105,7 @@ Rules: `harness-engineering` skill.
 | 2026-10-14 | 2026-10-14 | — | After every commit, one line with its hash and whether it is pushed, before starting the next step (Basheer had to ask whether `a76b02d` had gone in) |
 | 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
 | 2026-10-15 | 2026-10-15 | — | Before flagging a difference from an approved plan, quote the plan's own line (flagged "notice above the tabs" as a difference; the plan only says "on its page") |
+| 2026-10-15 | 2026-10-15 | — | Before advising how to group commits, read CLAUDE.md's batch rules: a fix that changes behaviour is always its own commit (suggested holding the step 9 fix `e1774a1` for a batch) |
 
 ## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

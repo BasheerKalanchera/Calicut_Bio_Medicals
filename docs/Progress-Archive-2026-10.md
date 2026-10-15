@@ -2647,3 +2647,26 @@ technical parts ✔.
   Lead now shows converted.
 - Traceability 1.3 already Done; no scorecard change. Goes to UAT with
   the next full promotion.
+
+## 2026-10-15 — Retro: Build & Test session (Win Probability E2E)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+- Pre-E2E review missed the products panel's value-only save (step 9
+  bug): P65 2 → 3.
+- Handover said "Next: step 14" until the E2E ended: P16 5 → 6
+  (repeated after merge).
+- Handover first recorded step 33's "use another hospital" as decided
+  before Basheer answered (corrected same session): watch-list P48 →
+  new P76, Seen 2.
+- Step 27 handed over without checking Basheer K's manager on Dev first:
+  P19 8 → 9.
+- `cd backend && pytest` blocked by the no-cd guard: P14 22 → 23.
+- Suggested holding the step 9 fix for a docs batch (a behaviour fix is
+  its own commit): new watch-list line.
+- Spot-check (3): "only Imaging installed asset on Dev is at 'another
+  hospital'" — correct (Dev query 2026-10-15); "40 steps + 3 pre-flight,
+  all Pass" — correct (counted, 43/43); running "N of 40 steps done"
+  status lines — not counted, not labelled estimates: P1 30 → 31.
+- Explanations (2): step 27 manager question, closing-paperwork list —
+  plain parts stand alone. Pass.
+- Open items 20 → 21 (counted).
