@@ -73,17 +73,20 @@ code or changing structure. On any conflict, the document wins over this file.
 - **When a fact or decision changes:** in the same commit, search the docs for
   the old wording and for the open question's title, and update every
   living-doc hit — not just the doc you're working in. *(2026-09-26)*
-- **Retros and process review:** one retro at the end of every session, and
-  the process review when the hook says it's due — load the `process-review`
+- **Retros and Harness Engineering review:** one retro at the end of every
+  session, and the Harness Engineering review (was "process review") when
+  the hook says it's due — load the `harness-engineering`
   skill for both. *(2026-10-06, 2026-10-08)*
-- **Documentation tidy-up, every alternate day:** the day after the UAT
-  data-quality check, so the two take turns. When the SessionStart hook says
+- **Documentation tidy-up, every alternate day:** counted from the last
+  tidy-up, not tied to any other task. When the SessionStart hook says
   it's due, load the `doc-integrity-sweep` skill and offer to run it.
-  *(2026-09-24, 2026-10-07)*
+  *(2026-09-24, 2026-10-07, 2026-10-15)*
 - **UAT data-quality check:** every alternate day, run by Claude under
   Basheer's supervision (still ask first, per the UAT rule). The SessionStart
   hook reminds when it's due. Steps in the `cabio-db-and-scripting` skill.
-  *(2026-09-24)*
+  **Paused** until the next-action rules feature is built (that plan's step
+  5 resumes it) — reason in `.claude/dq-check-paused`. *(2026-09-24,
+  2026-10-15)*
 - **Surfacing hook reminders:** Basheer never sees SessionStart hook output —
   only Claude does. Whenever it reports something due, the first reply of the
   session opens with a short "Due today" list, asking whether to run each item,

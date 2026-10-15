@@ -2559,3 +2559,21 @@ technical parts ✔.
 - **Explanation checks:** D1 fail (counted under P3); the pre-fill table
   pass.
 - **Items checked:** P1, P3, P4, P66, P69, watch list. Open list stays 19.
+
+## 2026-10-15 — Plan & Chore: backup, data-quality pause, review timing
+
+- UAT backup `cabio_uat_2026-10-15_0601.dump` (472 items, 651,695 bytes;
+  deleted `cabio_uat_2026-10-01.dump`, already in Google Drive).
+- Data-quality check paused until next-action rules reaches UAT
+  (Basheer). Tidy-up now every 2 days from its own last run.
+- Basheer caught that the process review was still weekly: daily was
+  decided 2026-10-08, but Process Consolidation plan steps 5–6 and the
+  review steps were never built. Built today; Basheer then set it to
+  every other day from 2026-10-16, with the 7-day rule for skipped items.
+- Cause: I described the reminder as built instead of checking the
+  plan's decision.
+- Renamed (Basheer): Process Consolidation plan → Harness Engineering
+  plan (`docs/Harness-Engineering-Implementation-Plan.md`); process review
+  → Harness Engineering review; skill `process-review` →
+  `harness-engineering`.
+

@@ -7,7 +7,7 @@ description: Cabio Sales OS checklist for the pre-E2E code review, writing or ch
 
 Origins of each rule: `docs/Process-Rules-History.md` (grep the date tag).
 Moved here word for word from CLAUDE.md on 2026-10-08
-(`docs/Process-Consolidation-Implementation-Plan.md`).
+(`docs/Harness-Engineering-Implementation-Plan.md`).
 
 ## Pre-E2E code review
 - Before manual E2E on a feature, run `/code-review` (medium by default; high for

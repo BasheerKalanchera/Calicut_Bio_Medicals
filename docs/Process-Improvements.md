@@ -1,9 +1,12 @@
 # Process Improvements — tracker
 
 One line per process suggestion from a session retro. Retros cite the
-P-number; detail stays in Progress-Archive. Reviewed weekly (Monday;
-SessionStart hook reminds): build at most 3, and drop or park with a date
-anything skipped in two reviews. Status: open · built (<commit>) · merged (<where>, <date>) · dropped (<why>).
+P-number; detail stays in Progress-Archive. Reviewed every other day (SessionStart
+hook reminds; Basheer, 2026-10-15) until mistakes fall; Basheer sets the
+frequency step by step. A repeat of a listed item adds +1 to its Seen count,
+never a new P-number. At most 10 open items once the list first gets down
+to 10; above that, process work stops until all are fixed. Review steps:
+`harness-engineering` skill. Status: open · built (<commit>) · merged (<where>, <date>) · dropped (<why>).
 
 | # | Suggestion | First seen | Seen | Status |
 |---|---|---|---|---|
@@ -70,8 +73,8 @@ anything skipped in two reviews. Status: open · built (<commit>) · merged (<wh
 
 Slips seen once. A second sighting moves the slip to the table above
 as a new P-number with Seen 2; a line with no repeat 7 days after "Added"
-is deleted at the process review (git history keeps it). Rules:
-`process-review` skill.
+is deleted at the Harness Engineering review (git history keeps it).
+Rules: `harness-engineering` skill.
 
 | Added | First seen | Was | What happened |
 |---|---|---|---|
@@ -102,6 +105,6 @@ is deleted at the process review (git history keeps it). Rules:
 | 2026-10-14 | 2026-10-14 | — | After every commit, one line with its hash and whether it is pushed, before starting the next step (Basheer had to ask whether `a76b02d` had gone in) |
 | 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
 
-## Weekly reviews
+## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.
 - 2026-10-14 — second review. Open list 22 → 18 (counted). Built P72, P1, P3, P14 — one over the limit of 3, Basheer's choice. Nothing dropped; no watch-list line was older than 7 days.

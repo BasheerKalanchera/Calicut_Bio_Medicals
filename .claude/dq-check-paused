@@ -1,0 +1,7 @@
+UAT data-quality check paused — Basheer, 2026-10-15.
+
+Reason: most of the issues it reports on UAT today are fixed by the
+next-action rules feature (docs/Next-Action-Rules-Implementation-Plan.md).
+Resume: that plan's build step 5 deletes this file and runs the check on
+UAT (ask Basheer first, UAT rule). While this file exists the SessionStart
+hook (block 2) does not remind.

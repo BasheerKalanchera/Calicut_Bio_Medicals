@@ -91,10 +91,10 @@ next sweep is due. A skipped log line means the reminder keeps firing.
 
 ## Frequency
 
-Every alternate day (Basheer, 2026-10-07; was daily): the day after the UAT
-data-quality check, so the two never share a day. Set in
-`.claude/hooks/session-start.sh` section 2c: due when the last check was
-yesterday and no sweep has run since it, or after `SWEEP_MAX_DAYS` (4)
-without a sweep. Further cuts proposed, and **Basheer decides each change**:
+Every alternate day (Basheer, 2026-10-07; was daily), counted from the
+last sweep on its own (Basheer, 2026-10-15; was tied to the UAT
+data-quality check, which is now paused). Set in
+`.claude/hooks/session-start.sh` section 2c: due when `SWEEP_EVERY_DAYS`
+(2) have passed since the last sweep-log line. Further cuts proposed, and **Basheer decides each change**:
 - after 14 days, if the last 5 sweeps each found ≤1 real issue → every 3 days
 - after 2 more quiet weeks → weekly

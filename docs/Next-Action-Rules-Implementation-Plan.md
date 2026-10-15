@@ -158,7 +158,10 @@ step.
    planned" also covers On Hold Opportunities, and "not used yet" leaves
    out hospitals with an open next action (discussion note, section 4a).
    Business rules marked built; rep message for Haroon (D8); pre-E2E
-   review and one manual E2E.
+   review and one manual E2E. After the UAT move: delete
+   `.claude/dq-check-paused` and run the UAT data-quality check (ask
+   Basheer first) to confirm most of today's issues are gone — the check
+   is paused until then (Basheer, 2026-10-15).
 
 ## 3. What could be affected
 

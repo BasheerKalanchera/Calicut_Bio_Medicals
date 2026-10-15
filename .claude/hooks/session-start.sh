@@ -16,7 +16,11 @@ fi
 
 # 2. UAT data-quality check due (every alternate day, run under Basheer's
 #    supervision; scripts/uat_data_quality_check.py appends to DQ_LOG).
-if [ -f "$DQ_LOG" ] && last=$(tail -n 1 "$DQ_LOG" | cut -c1-10) && [ -n "$last" ]; then
+#    Paused while .claude/dq-check-paused exists (reason inside; Basheer,
+#    2026-10-15: until the next-action rules feature is built).
+if [ -f .claude/dq-check-paused ]; then
+  :
+elif [ -f "$DQ_LOG" ] && last=$(tail -n 1 "$DQ_LOG" | cut -c1-10) && [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
   [ "$days" -ge 2 ] && echo "DUE TODAY: UAT data-quality check (last run $last, $days days ago). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. (UAT rule)" && echo
 else
@@ -39,36 +43,30 @@ else
 fi
 
 # 2c. Documentation tidy-up due (every alternate day, Basheer 2026-10-07):
-#     the day after the UAT data-quality check, so the two never share a
-#     day. Due when the last check was yesterday and no sweep has run since
-#     it; or, as a backstop, when SWEEP_MAX_DAYS have passed without one.
-#     See .claude/skills/doc-integrity-sweep/SKILL.md "Frequency".
-SWEEP_MAX_DAYS=4
+#     counted from the last sweep on its own, not tied to any other task
+#     (Basheer, 2026-10-15). See .claude/skills/doc-integrity-sweep/SKILL.md
+#     "Frequency".
+SWEEP_EVERY_DAYS=2
 SWEEP_LOG=docs/Doc-Integrity-Sweep-Log.md
 last=$(grep -E '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$SWEEP_LOG" 2>/dev/null | tail -n 1 | cut -c3-12)
-dq_last=$(tail -n 1 "$DQ_LOG" 2>/dev/null | cut -c1-10)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  due=
-  if [ -n "$dq_last" ]; then
-    dq_days=$(( ( $(date +%s) - $(date -d "$dq_last" +%s) ) / 86400 ))
-    [ "$dq_days" -eq 1 ] && [ "$last" \< "$dq_last" ] && due=1
-  fi
-  [ "$days" -ge "$SWEEP_MAX_DAYS" ] && due=1
-  [ -n "$due" ] && echo "DUE TODAY: documentation tidy-up (last sweep $last, $days day(s) ago; last UAT data-quality check ${dq_last:-none}). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes." && echo
+  [ "$days" -ge "$SWEEP_EVERY_DAYS" ] && echo "DUE TODAY: documentation tidy-up (last sweep $last, $days day(s) ago). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes." && echo
 else
   echo "DUE TODAY: documentation tidy-up (none recorded yet). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the doc-integrity-sweep skill only after he says yes."
   echo
 fi
 
-# 2d. Weekly process review due (Mondays, or after 7 days; last review is
-#     the newest "- YYYY-MM-DD" line in docs/Process-Improvements.md).
+# 2d. Harness Engineering review due every other day (Basheer, 2026-10-15; decided
+#     daily 2026-10-08, replacing the weekly review; he sets the frequency
+#     step by step). Last review is the newest "- YYYY-MM-DD" line in
+#     docs/Process-Improvements.md. Steps: harness-engineering skill.
 PI_LOG=docs/Process-Improvements.md
 last=$(grep -E '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$PI_LOG" 2>/dev/null | tail -n 1 | cut -c3-12)
 if [ -n "$last" ]; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  if [ "$days" -ge 7 ] || { [ "$(date +%u)" -eq 1 ] && [ "$days" -ge 1 ]; }; then
-    echo "DUE TODAY: weekly process review (last review $last, $days day(s) ago; $PI_LOG). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Then: build at most 3 items, drop or park with a date anything skipped in two reviews." && echo
+  if [ "$days" -ge 2 ]; then
+    echo "DUE TODAY: Harness Engineering review, every other day (last review $last, $days day(s) ago; $PI_LOG). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the harness-engineering skill only after he says yes." && echo
   fi
 fi
 

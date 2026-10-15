@@ -1,6 +1,7 @@
-# Process Consolidation — Implementation Plan
+# Harness Engineering — Implementation Plan
 
-**Status:** Approved, 2026-10-08 (Basheer).
+**Status:** Approved, 2026-10-08 (Basheer). Renamed from "Process
+Consolidation" 2026-10-15 (Basheer).
 **Traceability rows:** none (how Claude works, not an app feature).
 **Design / discussion:** chat 2026-10-08; tracker `docs/Process-Improvements.md`.
 
@@ -8,6 +9,9 @@
 
 - Full pass: sort all tracker items, shorten CLAUDE.md, change how retros feed the tracker, review the guard rails — Basheer, 2026-10-08
 - Process review runs daily until the process is streamlined (replaces the weekly review) — Basheer, 2026-10-08
+- Process review every other day instead of daily, first one 2026-10-16 — Basheer, 2026-10-15
+- Names: this plan is the Harness Engineering plan; the recurring review is the Harness Engineering review; its skill is `harness-engineering` (was `process-review`) — Basheer, 2026-10-15
+- With frequent reviews, an open item skipped for 7 days is dropped or parked with a date (the weekly rule said "skipped in two reviews") — Basheer, 2026-10-15
 - Frequency comes down as process adherence improves; Basheer decides each step. Claude brings the repeat counts to each review as the evidence — Basheer, 2026-10-08
 - A slip already covered by an existing rule gets +1 on that item, never a new P-number; at the review each such item gets one of two answers: "enforce with a tool" or "accept as is" — Basheer, 2026-10-08
 - Goal: Basheer's daily time on process work ("harness engineering") comes down to zero; every step is judged by that — Basheer, 2026-10-08
@@ -43,7 +47,8 @@ This pass, in order:
    a tool, template or check where possible.
 4. Drops 8 narrow one-off items.
 
-Then the process review runs every day until mistakes fall.
+Then the Harness Engineering review runs every other day until mistakes
+fall (decided daily 2026-10-08; every other day from 2026-10-16).
 
 ## 2. The sorted list
 
@@ -53,7 +58,7 @@ Then the process review runs every day until mistakes fall.
 |---|---|---|
 | "Pre-E2E code review" + "Manual E2E testing" + "Testing narration" | ~545 | new skill `cabio-e2e-testing` |
 | "Post-commit checklist" + "Scorecard integrity" + "Natural Transition Checkpoint" | ~310 | new skill `cabio-post-commit`; adds the paperwork check (new wording, shown before saving) |
-| "Retros and weekly review" | ~50 | new skill `process-review`: end-of-session retro (incl. right-pack check) and daily review (new wording, shown before saving) |
+| "Retros and weekly review" | ~50 | new skill `harness-engineering` (was `process-review`): end-of-session retro (incl. right-pack check) and daily review (new wording, shown before saving) |
 | "UAT data-quality check" details | ~90 | `cabio-db-and-scripting` skill |
 | Feature planning: environments, heavy-vs-light, no symmetry cases, "Mirroring an existing feature" | ~150 | `docs/templates/Implementation-Plan-Template.md` |
 
@@ -112,7 +117,7 @@ top 10, P21 and P43–P45 joined).
 
 ## 3. Build order
 
-1. Skills: create `cabio-e2e-testing`, `process-review` and
+1. Skills: create `cabio-e2e-testing`, `harness-engineering` (was `process-review`) and
    `cabio-post-commit`; move the step A sections in word for word; move
    the plan-writing details into the plan template.
 2. CLAUDE.md: moved sections replaced by one-line pointers; retro rule
@@ -122,11 +127,16 @@ top 10, P21 and P43–P45 joined).
    2026-10-08; tracker updated as each item was approved.
 4. Step C, items 1 → 10 in order. Item 3 (guard rails) gets its own
    approval for the loosening.
-5. Hook: `session-start.sh` section 2d becomes the daily process review.
+5. Hook: `session-start.sh` section 2d becomes the Harness Engineering
+   review.
+   Done 2026-10-15, as every other day (Basheer, 2026-10-15).
 6. Tracker: header rewritten (daily review, cap of 10, repeat rule);
    statuses written in; step D items marked dropped with their reason.
-7. Commit (own approval) at each natural pause; first daily review the
-   day after step 6.
+   Done 2026-10-15 (statuses and drops were already in; header rewritten
+   and the review steps written into the `harness-engineering` skill —
+   left out on 2026-10-08).
+7. Commit (own approval) at each natural pause; first review under the
+   new timing 2026-10-16.
 
 Every shared file: `git status` / `git diff` first; another session may
 be editing it.
@@ -146,7 +156,7 @@ Progress-Archive.
 ## 6. Technical addendum
 
 - Files: `CLAUDE.md`; `.claude/skills/cabio-e2e-testing/SKILL.md`,
-  `.claude/skills/process-review/SKILL.md`,
+  `.claude/skills/harness-engineering/SKILL.md`,
   `.claude/skills/cabio-post-commit/SKILL.md` (new);
   `.claude/hooks/session-start.sh` (2d); `.claude/hooks/shell_guard.py`,
   `cd_guard.py`, `test_plan_guard.py`; a handover save check and a

@@ -5,6 +5,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 
 - Build & Test session: ignore due-today reminders; the planning and
   chores session handles them (Basheer, 2026-10-13).
+- 2026-10-15 (Plan & Chore): UAT data-quality check paused until
+  next-action rules reaches UAT (`.claude/dq-check-paused`); tidy-up now
+  every 2 days from its own last run (hook 2c). Harness Engineering review
+  (was process review) now every other day, first 2026-10-16 (plan
+  steps 5–6 done).
 - Untracked plan doc from another session (Forecast): leave it out of commits.
   At its review, update its line 110 to BR-FIN-09.
 
@@ -22,9 +27,9 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   6.10). Rep plan wording (`25fbeab`, `af4b4e9`, E2E Pass 2026-10-14;
   history in Progress-Archive) goes with that move.
 
-## Process consolidation — plan approved 2026-10-08, building
+## Harness Engineering (was Process Consolidation) — plan approved 2026-10-08, building
 
-- Plan: `docs/Process-Consolidation-Implementation-Plan.md`. Steps 1–3
+- Plan: `docs/Harness-Engineering-Implementation-Plan.md`. Steps 1–3
   done 2026-10-08 (`baf56b4`).
 - 2026-10-14 weekly review: built P72, P1, P3, P14 (`858b4dc`, not
   pushed). The per-message reminder, the figures-and-sources check and
@@ -38,8 +43,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - **Next:** the rest of the top 10 in Pareto order (P15, reminder after
   each finished file, is next).
 - Still to write, shown first: paperwork check in `cabio-post-commit`
-  (feat/fix only, all living docs + handover); daily review procedure
-  and right-pack check in `process-review`.
+  (feat/fix only, all living docs + handover); right-pack check in
+  `harness-engineering` (its review steps written 2026-10-15).
 
 ## Target vs Actuals (Plan vs Actuals Tracking, Insights Dashboard)
 

@@ -7,7 +7,7 @@ description: Cabio Sales OS after-push steps — the 2-hour transition checkpoin
 
 Origins of each rule: `docs/Process-Rules-History.md` (grep the date tag).
 Moved here word for word from CLAUDE.md on 2026-10-08
-(`docs/Process-Consolidation-Implementation-Plan.md`).
+(`docs/Harness-Engineering-Implementation-Plan.md`).
 
 ## Natural Transition Checkpoint (2-Hour / Push Checkpoint)
 Immediately after completing a `git push` or completing a major milestone:
