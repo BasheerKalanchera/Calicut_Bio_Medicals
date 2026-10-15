@@ -158,9 +158,12 @@ From the code search, 2026-10-09 (D15–D17 came out of it):
   Opportunity or changes its stage (`accounts.ts:114 updateOpportunity`
   has no callers). The edit form also carries Lost / On Hold / Won (D16).
   The Opportunity page's products panel saves the value through the same
-  update (`OpportunityDetailScreen.tsx:420`): the server check fires only
-  when a save changes the chance, stage or closure date, so product saves
-  are never refused (D9).
+  update (`OpportunityDetailScreen.tsx:420`), sending only the value: the
+  server skips the check for a value-only save, so product saves are never
+  refused (D9). Every other save is checked (D4). (Corrected 2026-10-15:
+  this line first said the check fires only when the chance, stage or date
+  changes; the build checked every save, which refused product saves —
+  E2E step 9, fixed.)
 - (a2) Repeat Orders: every form hides the Expected Closure Date box for
   REPEAT_ORDER today (`QuickLeadModal.tsx`, `OpportunityDetailScreen.tsx:1953`,
   both inline forms); under D8 the box must show for them at 50 % or more.

@@ -1404,6 +1404,17 @@ class TestHighChanceNeedsClosureDate:
             self._service(repo).update_opportunity(OPP_ID, OpportunityUpdate(name="Renamed"), updated_by=USER_ID)
         repo.update.assert_not_called()
 
+    def test_update_value_only_from_products_panel_allowed(self):
+        # D9: the products panel's follow-up save of the total is never refused.
+        opp = _make_opportunity(win_probability=Decimal("75"))
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+
+        self._service(repo).update_opportunity(
+            OPP_ID, OpportunityUpdate(indicative_value=Decimal("12.50")), updated_by=USER_ID
+        )
+        repo.update.assert_called_once_with(opp)
+
     def test_update_adding_date_clears_it(self):
         opp = _make_opportunity(win_probability=Decimal("70"))
         repo = _make_repo()

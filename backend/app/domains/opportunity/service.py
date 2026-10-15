@@ -493,13 +493,16 @@ class OpportunityService:
 
         # BR-OP-19: on every save of the Opportunity itself, after the merged
         # values are known (D9) -- an On Hold one made Active again is held to
-        # it on that save (D16).
-        validate_high_chance_closure_date(
-            stage_order=effective_stage.display_order,
-            status_code=effective_status.status_code,
-            win_probability=opportunity.win_probability,
-            expected_closure_date=opportunity.expected_closure_date,
-        )
+        # it on that save (D16). A value-only save is the products panel
+        # syncing its total (OpportunityDetailScreen.tsx ProductsTab), which
+        # D9 says is never refused (E2E step 9, 2026-10-15).
+        if set(updates) != {"indicative_value"}:
+            validate_high_chance_closure_date(
+                stage_order=effective_stage.display_order,
+                status_code=effective_status.status_code,
+                win_probability=opportunity.win_probability,
+                expected_closure_date=opportunity.expected_closure_date,
+            )
 
         return self.repository.update(opportunity)
 
