@@ -126,5 +126,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   via a fast-track Opportunity, step D8 — Basheer). Both committed
   `d0e1f1e`. Added 2026-10-14 after approval: D10 pre-fill
   in step 1 (from the My Work plan) and pre-fill checks in E2E steps A3,
-  B2, C3, D2. **Next:** build step 1, after Win Probability
-  step 2; check in first.
+  B2, C3, D2. Step 1 built 2026-10-15 (`3d38e75`, checkpoint; D11
+  Opportunity picker added at its check-in). **Next:** quick browser
+  check of step 1 on Dev (writes permanent activities: ask Basheer
+  first, name the records), then check in before step 2 (a note on every
+  stage or status change).

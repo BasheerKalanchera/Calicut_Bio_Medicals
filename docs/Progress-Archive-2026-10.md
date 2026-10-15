@@ -2670,3 +2670,49 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Explanations (2): step 27 manager question, closing-paperwork list —
   plain parts stand alone. Pass.
 - Open items 20 → 21 (counted).
+
+## 2026-10-15 — Next-action rules step 1 built (Build & Test)
+
+- Plan `docs/Next-Action-Rules-Implementation-Plan.md`, step 1, checkpoint
+  commit `3d38e75` (not pushed). Basheer chose option (a) at the step 1
+  check-in: Log Activity from Customer 360 and the top bar gets an
+  optional Opportunity picker (new D11).
+- Built: an open next action of the logged-for person on an Opportunity
+  blocks a fresh activity there and Log Activity switches to closing it
+  (BR-ACT-11, D2); closing needs a follow-up unless the Opportunity is
+  Won or Lost, or a hospital-level visit produced a new Opportunity (the
+  BR-ACT-05 change, D3 tick box); Close on one's own rows in the
+  Opportunity page's Next Actions tab; follow-up pre-filled with the
+  closed next action's text (D10).
+- Differences reported to Basheer: the picker reuses the existing
+  hospital Opportunity list (plan said a new lookup; addendum corrected);
+  the follow-up due date also starts at tomorrow; on Won/Lost the rep
+  empties the pre-filled box to close with no follow-up.
+- Tests: backend 1,274 passed; type check clean; lint 0 errors. No
+  browser check yet: it writes permanent activities on Dev, so it waits
+  for Basheer's go-ahead. Manual E2E at plan step 5.
+
+## 2026-10-15 — Retro: Build & Test session (next-action rules step 1)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+- The no-cd guard blocked `cd backend` and `cd sales-os-app && npx tsc`:
+  P14 23 → 25.
+- An inline-typed edit script failed ("unexpected EOF") and was redone
+  from a saved file: watch-list 2026-10-14 line → new P77, Seen 2.
+- Four "hasn't heard from you" prompts during the screen build (counted
+  in this conversation after it was condensed): P15 8 → 9.
+- Handover not updated during the build, only at the commit, though the
+  conversation was condensed mid-build: P16 6 → 7 (repeated after merge).
+- The plan addendum said the D11 picker needed a new list before the code
+  was read; the existing list fits, note corrected: P23 12 → 13
+  (repeated after merge).
+- Plan Status line and D11 note edited before showing them: P45 3 → 4
+  (repeated after merge).
+- Spot-check (3): "1,274 backend tests pass" — correct (test run output);
+  "175 activity tests" — correct (test run output); "the 16 warnings are
+  the file's existing pattern" — wrong, 2 are new (Opportunity page line
+  1847, Log Activity form line 150): P1 31 → 32.
+- Explanations (2): step 1 report "What changed, by screen" — plain part
+  stands alone, Pass; lint result ("type check clean; lint 0 errors, 16
+  existing 'any' warnings") — jargon only, Fail: P3 24 → 25.
+- Open items 21 → 22 (counted).
