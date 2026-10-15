@@ -577,8 +577,9 @@ export default function QuickLeadModal({
             <TextField label="Demo End Date" type="date" value={demoEnd} onChange={(e) => setDemoEnd(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
           </>
         )}
-        {/* BR-OP-19 (plan D7): also shown before Negotiation once the chance is 50 % or more. */}
-        {((selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER") || needsClosureDateForChance(selectedStageOrder, winProb)) &&
+        {/* BR-OP-19 (plan D7): also shown before Negotiation once the chance is 50 % or more,
+            and kept while a date is typed so a hidden date is never sent. */}
+        {((selectedStageOrder >= STAGE_ORDER_NEGOTIATION && leadSourceCode !== "REPEAT_ORDER") || needsClosureDateForChance(selectedStageOrder, winProb) || closureDate !== "") &&
           !(gateOverrideChecked && selectedStageOrder >= STAGE_ORDER_ORDER) && (
           <TextField label="Expected Closure Date" type="date" value={closureDate} onChange={(e) => setClosureDate(e.target.value)} fullWidth size="small" slotProps={{ inputLabel: { shrink: true } }} />
         )}
