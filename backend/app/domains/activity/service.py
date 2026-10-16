@@ -415,6 +415,10 @@ class ReminderService:
         reminder = self.repository.get_by_id(reminder_id)
         if not reminder:
             raise NotFoundError(f"Reminder {reminder_id} not found")
+        # A retried close (the first save went through, its reply was lost)
+        # must not save the visit and its follow-up a second time.
+        if data.is_completed and reminder.is_completed:
+            raise BusinessRuleViolation("This next action is already closed.")
 
         reminder.is_completed = data.is_completed
         reminder.updated_by = updated_by
@@ -431,7 +435,7 @@ class ReminderService:
         if data.is_completed:
             original = reminder.activity
             if not data.next_action_text:
-                self._require_follow_up_exemption(reminder, original, data.produced_opportunity_id)
+                self._require_follow_up_exemption(reminder, original, data.produced_opportunity_id, updated_by)
             elif data.produced_opportunity_id:
                 raise BusinessRuleViolation(
                     "Give either a follow-up next action or the new Opportunity this visit produced, not both."
@@ -508,6 +512,7 @@ class ReminderService:
         reminder: Reminder,
         original: Activity,
         produced_opportunity_id: uuid.UUID | None,
+        closed_by: uuid.UUID,
     ) -> None:
         # BR-ACT-05 change (next-action rules plan, point 2): closing a next
         # action needs a follow-up, except (a) its Opportunity is Won or
@@ -524,7 +529,7 @@ class ReminderService:
                 "Closing a next action needs a follow-up next action, unless the Opportunity is Won or Lost."
             )
         if produced_opportunity_id and self.repository.opportunity_created_on_account_since(
-            produced_opportunity_id, original.account_id, reminder.created_at
+            produced_opportunity_id, original.account_id, reminder.created_at, created_by=closed_by
         ):
             return
         raise BusinessRuleViolation(

@@ -1380,6 +1380,16 @@ class TestPatchReminder:
         activity_repo.create.return_value = _make_activity(id=uuid.uuid4())
         return ReminderService(repository=repo, activity_repository=activity_repo), repo, activity_repo
 
+    def test_closing_an_already_closed_reminder_raises(self):
+        # A retried close must not save the visit and follow-up twice.
+        svc, repo, activity_repo = self._patch_svc(_make_reminder(is_completed=True))
+
+        with pytest.raises(BusinessRuleViolation, match="already closed"):
+            svc.patch_reminder(REMINDER_ID, ReminderUpdate(**_closing_data()), updated_by=ACTOR_ID)
+        activity_repo.create.assert_not_called()
+        repo.create.assert_not_called()
+        repo.update.assert_not_called()
+
     def test_completing_opportunity_reminder_without_follow_up_raises(self):
         svc, _, activity_repo = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=OPP_ID)))
 
@@ -1420,7 +1430,9 @@ class TestPatchReminder:
 
         svc.patch_reminder(REMINDER_ID, self._no_follow_up(produced_opportunity_id=produced), updated_by=ACTOR_ID)
 
-        repo.opportunity_created_on_account_since.assert_called_once_with(produced, ACCOUNT_ID, reminder.created_at)
+        repo.opportunity_created_on_account_since.assert_called_once_with(
+            produced, ACCOUNT_ID, reminder.created_at, created_by=ACTOR_ID
+        )
         repo.create.assert_not_called()
 
     def test_produced_opportunity_closes_with_its_first_activity_not_a_hospital_copy(self):
@@ -1451,7 +1463,8 @@ class TestPatchReminder:
         activity_repo.create.assert_not_called()
 
     def test_completing_hospital_reminder_with_unrelated_opportunity_raises(self):
-        # Wrong hospital, or an Opportunity older than the next action.
+        # Wrong hospital, an Opportunity older than the next action, or one
+        # a colleague created.
         svc, repo, _ = self._patch_svc(_make_reminder(activity=_make_activity(opportunity_id=None)))
         repo.opportunity_created_on_account_since.return_value = False
 

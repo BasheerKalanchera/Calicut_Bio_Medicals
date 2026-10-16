@@ -565,6 +565,7 @@ export default function LogActivityModal({
       onClose={() => setClosingReminder(null)}
       reminder={closingReminder}
       loggedForUserId={loggedForUserId !== currentUserId ? loggedForUserId : undefined}
+      initial={{ activity_type: activityType, activity_date: activityDate, notes: notes.trim() }}
       onCompleted={() => {
         setClosingReminder(null);
         onCreated?.();

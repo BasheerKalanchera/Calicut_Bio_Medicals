@@ -330,15 +330,17 @@ class ReminderRepository(BaseRepository[Reminder]):
         return self.db.scalar(stmt)
 
     def opportunity_created_on_account_since(
-        self, opportunity_id: uuid.UUID, account_id: uuid.UUID, since: datetime
+        self, opportunity_id: uuid.UUID, account_id: uuid.UUID, since: datetime, *, created_by: uuid.UUID
     ) -> bool:
         # Next-action rules plan D3: the "visit produced a new Opportunity"
         # exemption needs a real Opportunity on the same hospital, created
-        # after the next action it closes -- an old one can't be reused.
+        # after the next action it closes -- an old one can't be reused --
+        # and by the person closing it, not a colleague's.
         stmt = select(1).where(
             Opportunity.id == opportunity_id,
             Opportunity.account_id == account_id,
             Opportunity.created_at >= since,
+            Opportunity.created_by == created_by,
         )
         return self.db.scalar(stmt) is not None
 

@@ -22,6 +22,9 @@ interface Props {
   // there -- the closing activity is recorded under the rep. Left out,
   // the server records it under whoever is closing.
   loggedForUserId?: string;
+  // BR-ACT-11: what Log Activity already had filled in when it switched to
+  // closing the open next action, so nothing is typed twice.
+  initial?: { activity_type?: ActivityType; activity_date?: string; notes?: string };
   // Plan D14/D15: the "Why this change?" pop-up after the Opportunity Edit
   // form's Save. `reminder` is ignored; the changer picks one of their own
   // open next actions to close, or with none writes a Note. Nothing is sent
@@ -100,7 +103,7 @@ function nowPlusDaysLocal(days: number) {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, stageChange, firstActivity }: Props) {
+export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, initial: initialProp, stageChange, firstActivity }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -165,10 +168,15 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTab("details");
     setPickedReminderId(onlyOwn?.id ?? "");
-    setActivityType(noteOnly ? "NOTE" : firstActivity?.initial?.activity_type ?? "CALL");
-    setActivityDate(firstActivity?.initial?.activity_date || nowLocal());
-    setNotes(firstActivity?.initial?.notes ?? "");
-    setNextActionText((stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
+    const initial = firstActivity?.initial ?? initialProp;
+    // Only a type this form offers; Log Activity has more.
+    const initialType = CLOSING_ACTIVITY_TYPES.some((t) => t.value === initial?.activity_type)
+      ? initial?.activity_type
+      : undefined;
+    setActivityType(noteOnly ? "NOTE" : initialType ?? "CALL");
+    setActivityDate(initial?.activity_date || nowLocal());
+    setNotes(initial?.notes ?? "");
+    setNextActionText(followUpExempt ? "" : (stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId("");
     setProducedNewOpportunity(false);
@@ -177,6 +185,15 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     producedOpportunityRef.current = null;
     setProducedOpportunityId(null);
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Won/Lost needs no follow-up, so the box isn't pre-filled there (a
+  // pre-filled box would be sent as a new next action). In the plain close
+  // form the status arrives after opening, so clear the pre-fill then.
+  useEffect(() => {
+    if (!isOpen || !followUpExempt || stageChange) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNextActionText((t) => (t === (reminderProp?.reminder_text ?? "") ? "" : t));
+  }, [isOpen, followUpExempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Won/Lost: a blank follow-up box means none. Otherwise it's required --
   // unless the D3 box is ticked, which replaces it with the new Opportunity.
@@ -336,7 +353,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
             onChange={(e) => {
               const picked = ownReminders.find((r) => r.id === e.target.value);
               setPickedReminderId(e.target.value);
-              setNextActionText(picked?.reminder_text ?? "");
+              setNextActionText(followUpExempt ? "" : picked?.reminder_text ?? "");
             }}
             fullWidth
             size="small"

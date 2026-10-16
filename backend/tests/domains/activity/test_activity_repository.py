@@ -362,11 +362,12 @@ class TestNextActionRuleQueries:
         assert f"opportunity.id = '{opp_id}'" in sql
 
     def test_opportunity_created_on_account_since_filters_account_and_date(self):
-        opp_id, account_id = uuid.uuid4(), uuid.uuid4()
+        opp_id, account_id, closer_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
         sql, _ = self._sql(
-            lambda repo: repo.opportunity_created_on_account_since(opp_id, account_id, START)
+            lambda repo: repo.opportunity_created_on_account_since(opp_id, account_id, START, created_by=closer_id)
         )
 
         assert f"opportunity.id = '{opp_id}'" in sql
         assert f"opportunity.account_id = '{account_id}'" in sql
         assert "opportunity.created_at >=" in sql
+        assert f"opportunity.created_by = '{closer_id}'" in sql
