@@ -12,7 +12,7 @@ Moved here word for word from CLAUDE.md on 2026-10-08
 ## Natural Transition Checkpoint (2-Hour / Push Checkpoint)
 Immediately after completing a `git push` or completing a major milestone:
 1. If the session has been active for ~2 hours (or history exceeds ~25 turns), Claude MUST pause and NOT start the next task.
-2. Ensure `.claude/session-handover.md` has the exact next step recorded.
+2. Ensure this session's handover note (`.claude/session-handover-plan.md` or `-build.md`) has the exact next step recorded.
 3. Prompt Basheer:
    > "🔄 **Clean Transition Point Reached:** Code is pushed and handover note is saved. To reset context to a clean slate, please type `/exit` now."  *(2026-10-03)*
 
@@ -23,7 +23,7 @@ post-commit checklist." The feature/fix commit always lands first as its own
 commit; the checklist is a separate, later commit. *(2026-09-18)*
 
 Right after the push, before other work:
-1. Update `session-handover.md`: remove the finished thread (its detail goes
+1. Update this session's handover note: remove the finished thread (its detail goes
    to Progress-Archive) — don't add a "DONE" summary. *(2026-09-24)*
 2. Add a Progress-Archive entry for what shipped; its lessons go in the
    session's end-of-session retro. *(2026-10-06)*

@@ -254,5 +254,6 @@ reconcile by hand (rewire `down_revision`, or use `alembic merge`) rather than l
 - `Phase-2E-Security-Architecture.md` — RLS implementation, landed on Dev 2026-07-27
 - `Prototype-Production-Parity-Audit.md` §6 — Milestone 1/2 scoping
 - `CLAUDE.md` — current Dev Supabase project is live/shared, not disposable
-- `.claude/session-handover.md` — session-to-session handoff (renamed from
-  `active_progress.md` 2026-09-24)
+- `.claude/session-handover-plan.md` and `.claude/session-handover-build.md`
+  — session-to-session handoff, one per session type (split from
+  `session-handover.md` 2026-10-16)

@@ -40,8 +40,8 @@ and log it as partial.
    - no leftover "not yet committed / pending / in progress" claims about it
 3. **Backlog items still marked open whose work has shipped:** search the
    Backlog for the feature names in check 2's commits.
-4. **Handover file against git:** every commit hash or "uncommitted" claim
-   in `.claude/session-handover.md` is true right now.
+4. **Handover notes against git:** every commit hash or "uncommitted" claim
+   in `.claude/session-handover-plan.md` and `-build.md` is true right now.
 5. **Rotating slice:** 1–2 project-type memory notes (oldest `modified`
    first) plus 3 living docs, not reviewed recently (use the log to see
    which were covered). For each statement of current status, check it

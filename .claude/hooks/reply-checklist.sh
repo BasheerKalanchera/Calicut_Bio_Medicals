@@ -6,4 +6,11 @@
 cat <<'EOF'
 Reply checklist (P1, P3): (1) Numbers and counts: count with a tool first, or say "estimate, not counted". (2) Every figure, name or example says where it came from (Dev query + date, file, Basheer, or made-up). Quarters: run scripts/quarter.py. (3) Before saying what code, a test or a screen does, read it. (4) Plain language first, then the technical part.
 EOF
+# Session start by command (Basheer, 2026-10-16, P83): show that session's
+# handover note the moment /plan-and-chore or /build-and-test is typed.
+D=${CLAUDE_PROJECT_DIR:-.}/.claude
+case "$(cat)" in
+  *'"prompt":"/plan-and-chore'*|*'"prompt": "/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
+  *'"prompt":"/build-and-test'*|*'"prompt": "/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
+esac
 exit 0

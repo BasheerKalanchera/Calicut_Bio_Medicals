@@ -3,8 +3,14 @@
 # Claude at the start of every session. Keep it short: Claude Code truncates
 # large hook output to a ~2 KB preview.
 
-H=.claude/session-handover.md
-OLD=.claude/active_progress.md
+# One handover note per session type (Basheer, 2026-10-16, P83). The
+# every-message hook (reply-checklist.sh) shows the right one when
+# /plan-and-chore or /build-and-test is typed; block 3 re-shows it after a
+# context summary.
+HP=.claude/session-handover-plan.md
+HB=.claude/session-handover-build.md
+OLD=.claude/session-handover.md
+INPUT=$(cat)
 DQ_LOG=/c/Backups/CabioUAT/data_consistency_reports/data_quality_log.txt
 
 # Skipped reminders: when Basheer skips a due-today item, Claude adds the line
@@ -16,10 +22,10 @@ TODAY=$(date +%Y-%m-%d)
 skipped() { grep -q "^$TODAY $1" "$SKIP" 2>/dev/null; }
 skip_note() { echo "If he skips it, add the line \"$TODAY $1\" to $SKIP so a restart doesn't ask again."; }
 
-# 1. Old handover name reappeared (e.g. a session started before the
-#    2026-09-24 rename wrote to it).
+# 1. Old single handover note reappeared (e.g. a session started before the
+#    2026-10-16 split wrote to it).
 if [ -f "$OLD" ]; then
-  echo "!!! WARNING: $OLD exists again. It was renamed to $H on 2026-09-24. Merge anything current into $H, delete $OLD, and tell Basheer. !!!"
+  echo "!!! WARNING: $OLD exists again. It was split into $HP and $HB on 2026-10-16. Move anything current into the matching note, delete $OLD, and tell Basheer. !!!"
   echo
 fi
 
@@ -83,11 +89,23 @@ if [ -n "$last" ] && ! skipped harness-review; then
   fi
 fi
 
-# 3. Handover size alarm, then the handover itself.
-[ -f "$H" ] || exit 0
-n=$(wc -l < "$H")
-if [ "$n" -gt 150 ]; then
-  echo "!!! WARNING: $H is $n lines (limit 150). Before any other work, move finished threads to docs/Progress-Archive-<year>-<month>.md per CLAUDE.md Session handoff, and tell Basheer. !!!"
-  echo
-fi
-cat "$H"
+# 3. Handover size alarms. After a context summary ("source":"compact"),
+#    re-show this session's note: the first /plan-and-chore or
+#    /build-and-test in the transcript says which; if neither, show both.
+#    On a fresh start nothing is shown yet (the command isn't typed).
+for f in "$HP" "$HB"; do
+  [ -f "$f" ] || continue
+  n=$(wc -l < "$f")
+  if [ "$n" -gt 75 ]; then
+    echo "!!! WARNING: $f is $n lines (limit 75). Before any other work, move finished threads to docs/Progress-Archive-<year>-<month>.md per CLAUDE.md Session handoff, and tell Basheer. !!!"
+    echo
+  fi
+done
+case "$INPUT" in *'"source":"compact"'*|*'"source": "compact"'*) ;; *) exit 0 ;; esac
+tp=$(printf '%s' "$INPUT" | sed -n 's/.*"transcript_path": *"\([^"]*\)".*/\1/p' | sed 's#\\\\#/#g')
+kind=$(grep -o -m1 -E 'command-name>/(plan-and-chore|build-and-test)' "$tp" 2>/dev/null | head -n 1)
+case "$kind" in
+  *plan-and-chore) cat "$HP" ;;
+  *build-and-test) cat "$HB" ;;
+  *) echo "Session type unknown (no /plan-and-chore or /build-and-test found); both notes follow."; echo; cat "$HP"; echo; cat "$HB" ;;
+esac

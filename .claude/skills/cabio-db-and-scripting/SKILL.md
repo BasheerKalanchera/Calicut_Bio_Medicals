@@ -44,7 +44,7 @@ on Dev, before any other work:
   *(2026-10-06)*
 - Commit the migration and the regenerated schema together, or the schema in
   the very next commit. A migration written but not yet applied goes in
-  `.claude/session-handover.md` as an open item until it is.
+  `.claude/session-handover-build.md` as an open item until it is.
 - UAT is a separate apply with its own approval — record it separately.
 - Any migration (not only one that drops tables): say upfront, in the
   plan's approval request, that Basheer will run `alembic upgrade head`

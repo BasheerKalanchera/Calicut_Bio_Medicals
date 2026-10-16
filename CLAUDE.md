@@ -49,7 +49,13 @@ code or changing structure. On any conflict, the document wins over this file.
   skill — load it before any of those tasks.
 
 ## Session handoff
-- `.claude/session-handover.md` (renamed from `active_progress.md` 2026-09-24)
+- **Starting a session:** Basheer types `/plan-and-chore` or `/build-and-test`
+  (add `restarted` after a crash or restart). Each skill says what that
+  session does and leaves to the other. Each session has its own handover
+  note — `.claude/session-handover-plan.md` or
+  `.claude/session-handover-build.md`; the hooks show it when the command
+  is typed and again after a context summary. *(2026-10-16)*
+- Each handover note (split from `.claude/session-handover.md` 2026-10-16)
   is a handover note, not a log: the task actively in progress and its
   immediate next step, nothing else. Waiting-on-someone items go to
   Progress-Archive; unstarted work to Backlog. Once a thread resolves, its
@@ -58,14 +64,14 @@ code or changing structure. On any conflict, the document wins over this file.
   Before starting a step of an approved plan, read the plan, this note and the
   archive first. Before writing or trusting any claim in the note — commit
   status or otherwise — check it against git, the docs and the code; the note
-  is a pointer, not proof. *(2026-10-06, 2026-10-07)* Hard limit 150 lines — the SessionStart hook (`.claude/hooks/session-start.sh`)
+  is a pointer, not proof. *(2026-10-06, 2026-10-07)* Hard limit 75 lines per note — the SessionStart hook (`.claude/hooks/session-start.sh`)
   warns above that; prune before any other work. *(2026-09-24)*
 - **Documentation homes:** each kind of fact lives in one doc. Everywhere else
   links to it and never restates it. Feature status → Traceability; E2E
   result → that feature's test plan; environments/rollout/UAT→Prod gates →
   `docs/Deployment-Topology.md`; open or deferred work → Backlog; rules and
   decisions → Business-Rules / ADR; history → Progress-Archive; current task
-  → `session-handover.md`; process suggestions → `docs/Process-Improvements.md`. Rules for how Claude works go in CLAUDE.md, not
+  → that session's handover note; process suggestions → `docs/Process-Improvements.md`. Rules for how Claude works go in CLAUDE.md, not
   Claude memory; memory holds only short-lived context, never project status
   or standing rules. A `TODO`/`FIXME` note in code is only a short pointer to an open
   Backlog entry (e.g. `see docs/Backlog.md "<entry title>"`); the details

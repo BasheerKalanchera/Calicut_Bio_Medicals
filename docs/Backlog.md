@@ -1,7 +1,7 @@
 # Backlog
 
 Deferred/parked work and undecided product questions — not scheduled, not
-part of the current task. See `.claude/session-handover.md` for what's
+part of the current task. See `.claude/session-handover-plan.md` and `-build.md` for what's
 actively being worked on right now. Items here move out once picked up
 (into the active task) or once formally decided (into the relevant
 authoritative doc — ADR, Business-Rules, a standards doc — per CLAUDE.md's
