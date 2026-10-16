@@ -5,7 +5,7 @@
 (one combined run after step 5, per the plan's step 5). The pre-fill (plan
 D10, added 2026-10-14) is checked inside the four close forms' existing
 steps — A3, B2, C3 and D2 — so it needs no extra saves on Dev.
-**Built:** step 1 `3d38e75` (2026-10-15, checkpoint); steps 2–5 not yet. Commit hashes filled in after the fact.
+**Built:** step 1 `3d38e75` (2026-10-15, checkpoint); step 2 `bd92e4a` + `4fc8531` (2026-10-16, checkpoints); step 3 `c4e1ca3` (2026-10-16); steps 4–5 not yet. Commit hashes filled in after the fact.
 **Where:** Dev.
 
 ## Checked against live data
@@ -143,9 +143,12 @@ marked Lost; "Ultrasound m/c" and "usg m/c" moved on a stage;
 4. [Complex: cross-form flow, D3] Same next action, tick "This visit
    produced a new Opportunity". **Expected:** the New Opportunity form
    opens with KIMS Hospital Trivandrum filled in and fixed. Create
-   "zz NA E2E – from hospital visit" with its first activity and next
-   action. **Expected:** the Opportunity is saved, then the hospital next
-   action closes with no follow-up asked. Both read back in the app. —
+   "zz NA E2E – from hospital visit". **Expected:** the First activity
+   pop-up starts with the visit just typed in the close form (D17); add
+   its next action and Create. The Opportunity is saved, then the
+   hospital next action closes with no follow-up asked. The visit shows
+   once on the hospital's Activity timeline, as the new Opportunity's
+   activity — no second, hospital-only copy (D20). —
 5. [Complex: cancel path, D3] Close Aster MIMS Calicut "Call tomorrow
    again", tick the box, then cancel the New Opportunity form.
    **Expected:** back on the close form, the tick removed, and a

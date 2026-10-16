@@ -2,7 +2,10 @@
 
 **Status:** Approved 2026-10-14 (Basheer). Step 1 built on Dev
 2026-10-15 (`3d38e75`, checkpoint commit, tested by unit tests only; manual E2E at
-step 5); steps 2–5 not started.
+step 5). Step 2 built 2026-10-16: server `bd92e4a`, screen `4fc8531`
+(checkpoints; unit tests, type check and lint only; manual E2E at step
+5). Step 3 built 2026-10-16 (`c4e1ca3`; unit tests, type check and
+lint only; manual E2E at step 5). Steps 4–5 not started.
 **Traceability rows:** none (new rules BR-ACT-11, BR-OP-21, BR-OP-22,
 BR-ACC-05, the BR-ACT-05 change and the On Hold next action).
 **Design / discussion:** `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
@@ -88,6 +91,32 @@ Decided for this plan:
   action of one's own, the same pop-up asks for a Note and a next action
   (added at the step 2 check-in; the Edit form today has no written note
   for Lost, only Loss Reason and Competitor Name) — Basheer, 2026-10-16
+- D15. With more than one open next action of one's own on the
+  Opportunity, the "Why this change?" pop-up lets the rep pick which one
+  to close (listed soonest due first); with one, it is already picked.
+  Rare once these rules are live, but old next actions from before the
+  move and follow-ups assigned by someone else can still leave two —
+  Basheer, 2026-10-16
+- D16. A new Opportunity's first activity is recorded under the person
+  creating it; its next action's "Assign to" starts with the
+  Opportunity's owner, and can be changed (e.g. Haroon creates one owned
+  by Vivek: the activity is Haroon's, the next action Vivek's) — Basheer, 2026-10-16
+- D17. Coming from "This visit produced a new Opportunity" (D3), the
+  first activity starts with the close form's type, date and "what
+  happened", editable — Basheer, 2026-10-16
+- D18. Step 3's server and screen go in one commit, so creating an
+  Opportunity is never refused on Dev in between — Basheer, 2026-10-16
+- D19. The first activity is asked for in a "First activity" pop-up
+  after the New Opportunity form's Create, built from the same form as
+  "Why this change?" (D14), not a section of the form and not Log
+  Activity (13 types, pickers that don't apply). Nothing is saved until
+  its Save; its Cancel returns to the form — Basheer, 2026-10-16
+- D20. When a hospital visit produced a new Opportunity (D3), the visit is
+  recorded once, as that Opportunity's first activity (it shows on the
+  hospital's timeline too, which lists its Opportunities' activities).
+  Closing the hospital next action links to it instead of saving a
+  second, hospital-level copy; the close form's "what was done" only
+  pre-fills it (D17) — Basheer, 2026-10-16
 
 ## Figures and sources
 

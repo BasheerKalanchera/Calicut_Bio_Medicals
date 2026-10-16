@@ -2834,3 +2834,66 @@ Checked against both tables in `docs/Process-Improvements.md`.
   "what stops working on Dev" — plain parts stand alone. Pass.
 - Checked: P1, P3, P14, P15, P16, P21, P45, P67, P69, P71, P75, P77,
   watch list. Open items 22 → 22 (counted). No new P-numbers.
+
+## 2026-10-16 — Next-action rules step 2, part 2: "Why this change?" pop-up
+
+- Built and pushed `4fc8531` (checkpoint). Saving the Edit Opportunity
+  form with a new stage or status opens the close form as a second
+  pop-up, "Why this change?" (D14). It fetches the changer's own open
+  next actions fresh: one is picked already, none means a Note, two or
+  more are listed soonest due first to pick from. Cancel returns to the
+  Edit form with nothing saved. Removes the "needs a note" refusal
+  `bd92e4a` left on Dev.
+- D15 (Basheer): the rep picks which next action to close, instead of
+  the app closing the one due soonest. Two open at once should be rare
+  after these rules go live, but not impossible: next actions opened
+  before the UAT move stay open until closed, and anyone closing their
+  own can assign the follow-up to a rep who already has one.
+- tsc clean; eslint 0 errors (133 older warnings); backend tests 1300
+  passed (screen-only change). Not clicked through in the browser; the
+  manual E2E after step 5 covers it.
+
+## 2026-10-16 — Next-action rules step 3: a new Opportunity starts with an activity (BR-OP-21)
+
+- Built and pushed `c4e1ca3` (server and screen together, D18). Create
+  on the New Opportunity form opens a "First activity" pop-up, the "Why
+  this change?" form reused (D19); its Create saves the Opportunity, the
+  activity and its next action in one request, so a refused create
+  leaves nothing behind. The activity is the creator's; the next action
+  goes to the Opportunity's owner unless changed (D16). Pre-filled from
+  a marketing lead's note, or from the hospital close form's visit
+  (D17).
+- D20 (Basheer, before the commit): on the "This visit produced a new
+  Opportunity" path the visit was being saved twice — once as the
+  hospital next action's close, once as the Opportunity's first
+  activity. Now it is saved once, on the Opportunity (the hospital
+  timeline lists its Opportunities' activities, checked in the code),
+  and the hospital next action's close links to it. BR-ACT-05 wording
+  and the rule-tracking table updated in the same commit (the commit
+  hook refused it without the table first).
+- Backend tests 1313 passed; ruff clean; tsc clean; eslint 0 errors
+  (133 older warnings). Not clicked through in the browser; the manual
+  E2E after step 5 covers it.
+
+## 2026-10-16 — Retro, Build & Test session (next-action step 2 part 2, step 3)
+
+- Flagged the duplicate visit on the "produced a new Opportunity" path
+  as something Basheer would notice in the E2E, instead of proposing the
+  fix; he rejected the commit; fixed as D20. Watch-list 2026-10-11 line
+  moved to the open list: P79, Seen 2.
+- Commit refused: `Business-Rules.md` changed without its matrix rows.
+  Watch-list 2026-10-10 line moved to the open list: P78, Seen 2.
+- Handover said "Next: step 3, check in first" through the whole step 3
+  build and commit; updated only after the push: P16 8 → 9.
+- Three bare `cd`s blocked (the last on the retro commit itself): P14 27 → 30. Computer-wide Python first:
+  P75 3 → 4. Edit scripts typed inline at least three times (D20 tests,
+  matrix rows, paperwork): P77 3 → 4.
+- A "hasn't heard from you" prompt during post-commit checks:
+  P15 12 → 13.
+- Spot-check (3): "1,313 passed" — correct (test run); handover 88
+  lines — correct (counted); session start 10:07 am IST, about 5 h 24
+  min — correct (session log first entry 04:37 UTC; clock 10:01 UTC).
+- Explanations (2): "A safety check stopped the commit…"; the
+  "restart is due" answer — plain parts stand alone. Pass.
+- Checked: P1, P3, P14, P15, P16, P21, P45, P67, P69, P75, P77, watch
+  list. Open items 22 → 24 (counted).
