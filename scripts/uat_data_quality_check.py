@@ -304,10 +304,14 @@ def main() -> None:
         "Closed deals with item edits, close time unknown (information only)")
 
     # 7. Activities not following best practice
-    # Leaves out the Activity saved when a next action is marked done (its
-    # follow-up is optional, BR-ACT-05) and the exempt types
-    # (NOT_CUSTOMER_FACING_TYPES, backend/app/domains/activity/schemas.py).
-    # Until 2026-10-11 both were counted: 256 of the 258 found that day.
+    # Leaves out the Activity saved when a next action is marked done (it is
+    # checked from the other side: since 2026-10-16 a close needs a follow-up
+    # unless exempt, BR-ACT-05), the exempt types (NOT_CUSTOMER_FACING_TYPES,
+    # backend/app/domains/activity/schemas.py), and a Note on a Won or Lost
+    # Opportunity -- a stage or status change by someone with no open next
+    # action is saved as a Note, with no next action needed on Won/Lost
+    # (docs/Next-Action-Rules-Implementation-Plan.md D12).
+    # Until 2026-10-11 the first two were counted: 256 of the 258 found that day.
     section("7a. Fresh Activities missing a mandatory next action (BR-ACT-04, via reminder table)")
     rows_7a = run("""
         SELECT act.activity_type, a.name AS account_name, up.display_name AS rep,
@@ -321,6 +325,9 @@ def main() -> None:
                 'SALES_TRAINING', 'SEMINAR_TRADE_SHOW', 'OTHER_DEVELOPMENT')
           AND NOT EXISTS (SELECT 1 FROM reminder r WHERE r.activity_id = act.id)
           AND NOT EXISTS (SELECT 1 FROM reminder rc WHERE rc.closing_activity_id = act.id)
+          AND NOT (act.activity_type = 'NOTE' AND EXISTS (
+                SELECT 1 FROM opportunity o JOIN opportunity_status os ON os.id = o.status_id
+                WHERE o.id = act.opportunity_id AND os.status_code IN ('WON', 'LOST')))
         ORDER BY act.created_at DESC
     """, "Missing next action (fresh activities)", limit=100)
     if rows_7a:
@@ -329,9 +336,12 @@ def main() -> None:
 
     # Next actions are linked to an Opportunity through the Activity that
     # created them. "Never worked" = no Activity at all on the Opportunity.
-    section("7a-ii. Active Opportunities with no open next action")
+    # On Hold counts too: putting an Opportunity On Hold needs a next action
+    # due by its re-activation date (docs/Next-Action-Rules-Implementation-Plan.md).
+    section("7a-ii. Active or On Hold Opportunities with no open next action")
     rows_7aii = run("""
         SELECT up.display_name AS owner, a.name AS account_name, o.name AS opportunity,
+               os.status_code AS status,
                ost.stage_name AS stage, ost.display_order AS stage_order,
                o.win_probability AS chance,
                (SELECT max(x.created_at)::date FROM activity x
@@ -341,12 +351,12 @@ def main() -> None:
         JOIN opportunity_stage ost ON ost.id = o.stage_id
         JOIN account a ON a.id = o.account_id
         JOIN user_profile up ON up.id = o.owner_id
-        WHERE os.status_code = 'ACTIVE'
+        WHERE os.status_code IN ('ACTIVE', 'ON_HOLD')
           AND NOT EXISTS (SELECT 1 FROM reminder r JOIN activity x ON x.id = r.activity_id
                           WHERE x.opportunity_id = o.id AND NOT r.is_completed)
         ORDER BY (SELECT max(x.created_at) FROM activity x WHERE x.opportunity_id = o.id) IS NULL,
                  ost.display_order DESC, up.display_name, a.name
-    """, "Active Opportunities, no open next action", limit=100)
+    """, "Active or On Hold Opportunities, no open next action", limit=100)
     worked = [r for r in rows_7aii if r["last_activity"] is not None]
     counts.append(("No open next action, worked", len(worked)))
     counts.append(("No open next action, never worked", len(rows_7aii) - len(worked)))
