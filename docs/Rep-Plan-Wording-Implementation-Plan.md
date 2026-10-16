@@ -1,9 +1,10 @@
 # Rep Plan Wording ("target" → "plan") — Implementation Plan
 
-**Status:** Approved 2026-10-13 (Basheer). Step 1 built `25fbeab` +
-`af4b4e9` (review and E2E fixes); E2E all Pass on Dev 2026-10-14. Step 2
-(docs) done 2026-10-14; step 3 (Basheer's quick look) is covered by the
-E2E, which he ran himself.
+**Status:** Built — `25fbeab` + `af4b4e9` (review and E2E fixes),
+2026-10-14; E2E all Pass on Dev 2026-10-14. Approved 2026-10-13
+(Basheer). Step 2 (docs) done 2026-10-14; step 3 (Basheer's quick look)
+is covered by the E2E, which he ran himself. UAT with the next full move.
+Build steps below are complete; kept as the original plan.
 **Traceability rows:** none (wording only; supports 3.2 and 6.1).
 **Design / discussion:** chat with Basheer 2026-10-09 (Target vs Actuals
 E2E) and 2026-10-13; Backlog "App-wide: a rep's plan is called 'target' on

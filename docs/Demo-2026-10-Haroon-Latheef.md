@@ -1,6 +1,7 @@
 # Demo to Haroon and Latheef Bhai — October 2026
 
-**Date:** to be fixed by Basheer.
+**Date:** held 15 Oct 2026 on Dev (Basheer, 2026-10-16). Feedback:
+`docs/Discussion-Annual-Target-Planning-2026-10.md`.
 **Why:** everything built on Dev since their last demo (2026-09-24) is shown
 to them before it moves to UAT (Basheer, 2026-10-13; order recorded in
 `docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md` step 7).

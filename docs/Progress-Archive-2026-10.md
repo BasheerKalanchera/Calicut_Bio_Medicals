@@ -2761,3 +2761,14 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Explanations (2): the cut-down Part B sample; the "PDF ready" report —
   plain parts stand alone. Pass.
 - Open items 22 → 22 (counted). No new P-numbers.
+
+## 2026-10-16 — Plan & Chore: backup, doc tidy-up
+
+- UAT backup `cabio_uat_2026-10-16_0647.dump` (472 items, 662,089 bytes;
+  deleted `cabio_uat_2026-10-02.dump`).
+- Demo to Haroon and Latheef Bhai held 15 Oct on Dev (Basheer); feedback
+  in `docs/Discussion-Annual-Target-Planning-2026-10.md`.
+- Tidy-up: two plans marked Built (Win Probability, Rep plan wording);
+  next-action step 1's commit `3d38e75` added to its plan, test plan and
+  the business-rules table; handover cut 137 → 83 lines, finished and
+  waiting items moved out.

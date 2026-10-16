@@ -5,7 +5,7 @@
 (one combined run after step 5, per the plan's step 5). The pre-fill (plan
 D10, added 2026-10-14) is checked inside the four close forms' existing
 steps — A3, B2, C3 and D2 — so it needs no extra saves on Dev.
-**Built:** not yet; commit hashes filled in after the fact.
+**Built:** step 1 `3d38e75` (2026-10-15, checkpoint); steps 2–5 not yet. Commit hashes filled in after the fact.
 **Where:** Dev.
 
 ## Checked against live data

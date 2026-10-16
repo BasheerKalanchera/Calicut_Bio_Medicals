@@ -175,6 +175,9 @@ names) follows as a separate pass. The old build order below is superseded.
    and an outside UI/UX expert's version (`target-vs-actuals-mockup.html`,
    repo root, untracked). Whether Target vs Actuals gets its own menu
    item is asked in the same round.
+   **Demo held 15 Oct 2026** (Basheer, 2026-10-16); feedback, a yearly
+   target layer, in `docs/Discussion-Annual-Target-Planning-2026-10.md`.
+   Next: the UAT move.
 
 ### Old build order (superseded)
 

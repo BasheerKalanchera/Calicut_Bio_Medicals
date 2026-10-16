@@ -1,7 +1,7 @@
 # Next-Action Rules — Implementation Plan
 
 **Status:** Approved 2026-10-14 (Basheer). Step 1 built on Dev
-2026-10-15 (checkpoint commit, tested by unit tests only; manual E2E at
+2026-10-15 (`3d38e75`, checkpoint commit, tested by unit tests only; manual E2E at
 step 5); steps 2–5 not started.
 **Traceability rows:** none (new rules BR-ACT-11, BR-OP-21, BR-OP-22,
 BR-ACC-05, the BR-ACT-05 change and the On Hold next action).
