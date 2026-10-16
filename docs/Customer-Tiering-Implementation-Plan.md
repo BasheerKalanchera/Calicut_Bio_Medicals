@@ -1,9 +1,9 @@
 # Customer Tiering & Size Classification — Implementation Plan
 
-**Status:** DRAFT, 2026-09-24; updated 2026-09-25 after the demo (see
-"Decided at the 2026-09-24 demo"). Not approved to build. Two structural
-questions (see "Open questions", 1 and 3) are still with Latheef Bhai and Haroon.
-The build shape depends on their answers.
+**Status:** Done 2026-10-01 for the rating itself — built as Business
+Potential (High / Medium / Low) in Hospital-wise Target Planning; see
+Traceability row 1.3. Parked, not built: hospital size (not wanted for now)
+and the A/B/C/D class (Phase 2, Haroon 2026-09-14). History below.
 **Update 2026-09-28:** the **Business Potential** rating (High / Medium /
 Low / Not rated, Admin/GM set it, notes Admin/GM only — BR-ACC-04) was built
 as part of Hospital-wise planning (step 3a `72564dc`; schema `e55c112`),
@@ -14,7 +14,7 @@ Potential passed manual E2E). **Size is not wanted for now:** Latheef
 Bhai and Haroon have no use for hospital size yet (Basheer checked with
 them), so question 1's Size part is parked; revisit if they ask.
 **Scorecard rows:** Feature 5.1 "Tier 1 / Tier 2 dropdown" (1.3 Customer
-Tiering, Not started) and Feature 5.1 "Account types … A/B/C/D class"
+Tiering, Done 2026-10-01) and Feature 5.1 "Account types … A/B/C/D class"
 (1.1 Account Structure & Hierarchy, Partial; A/B/C/D parked for Phase 2 by
 Haroon 2026-09-14). See `docs/Signed-Requirements-to-PRD-Traceability.md`,
 Module 1 table.

@@ -1,5 +1,10 @@
 # Manager-Attested Stage-Gate Override — Implementation Plan
 
+**Status:** Built — `31971e4` (2026-08-25), rework `9043a50` (2026-08-27),
+BR-OP-14. Manual E2E complete 2026-08-27: 20 Pass, 2 Skipped
+(`docs/Manager-Attested-Gate-Override-Manual-E2E-Verification.md`). Build
+steps below are complete; kept as the original plan.
+
 ## Context
 
 `docs/Discussion-FastTrack-Gate-Override-2026-08.md` was decided 2026-08-25

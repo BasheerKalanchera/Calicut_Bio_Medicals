@@ -1,10 +1,13 @@
 # Hospital-Wise Target Planning — Implementation Plan
 
-**Status: Part 1 shipped on Dev 2026-10-01** — manual E2E 38/38 passed
+**Status: Parts 1 and 2 built on Dev.** Part 1 shipped 2026-10-01 — manual E2E 38/38 passed
 (`docs/Hospital-Wise-Target-Planning-Manual-E2E-Test-Plan.md`); scorecard
 rows 6.1, 1.2, 1.3 → Done (`6b4c5d8`). Commits: `e55c112`, `04c5e87`,
 `72564dc`, `467dee8`, `70e41e1`, `bfeef46`, `6a2c9ed`, `1a4843a`,
-`3907b88`, E2E fixes `cf279b7`, `3d6ca27`. UAT move with Part 2.
+`3907b88`, E2E fixes `cf279b7`, `3d6ca27`. Part 2 became Plan vs Actuals Tracking
+(`docs/Plan-vs-Actuals-Tracking-Implementation-Plan.md`), built on Dev;
+combined manual E2E finished 2026-10-13, all Pass. Both go to UAT together
+with the next full move.
 **Earlier:** Approved 2026-09-27 (choices in section 3 answered by Basheer
 the same day). Unblocked: the main → UAT move, including the Product
 Catalog clean-up, was done 2026-09-27 (`docs/UAT-Promotion-2026-09-Plan.md`).
