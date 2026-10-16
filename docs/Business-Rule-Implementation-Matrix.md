@@ -62,7 +62,7 @@ nothing enforces it yet.
 | BR-ACC-02 | Payer Behavior | `ck_account_payer_behavior` | |
 | BR-ACC-03 | Near-Duplicate Hospital Warning | `AccountRepository.find_similar_by_name`, `account/duplicate_matching.py`; `AccountService.create_account` (`force_create`, `PossibleDuplicateError` → 409); `sales-os-app/` `CustomerDirectoryScreen.tsx` | |
 | BR-ACC-04 | Hospital Business Potential Rating | `AccountService.set_business_potential`; `redact_business_potential_notes` (`account/schemas.py`) | |
-| BR-ACC-05 | A New Hospital Starts With a Next Action | Not built | `docs/Next-Action-Rules-Implementation-Plan.md`. |
+| BR-ACC-05 | A New Hospital Starts With a Next Action | Withdrawn 2026-10-16, not built | `docs/Next-Action-Rules-Implementation-Plan.md` D21. |
 | BR-ORG-01 | Manager Assignment SBU Eligibility | `UserService.create_user` / `update_user` (`domains/organization/service.py`) | |
 | BR-ORG-02 | Multi-Zone User Assignment | `user_zone` table (migration 0018); `UserService` (primary zone in `zone_ids`); `opportunity_tier_visibility`; `TEAM_SCOPE_BUILDERS["Area Manager"]` | |
 | BR-ORG-03 | Roles With No SBU | `UserService.create_user` / `update_user` (`_SBU_OPTIONAL_ROLES`, `domains/organization/service.py`); `sales-os-app/` `UserDirectoryScreen` `isSbuAgnosticRole` | |

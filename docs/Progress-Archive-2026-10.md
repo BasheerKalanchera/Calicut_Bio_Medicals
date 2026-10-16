@@ -2898,6 +2898,27 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Checked: P1, P3, P14, P15, P16, P21, P45, P67, P69, P75, P77, watch
   list. Open items 22 → 24 (counted).
 
+## 2026-10-16 — Next-action rules: step 4 dropped, BR-ACC-05 withdrawn
+
+- At the step 4 check-in, Basheer asked why cancelling a new Opportunity
+  should need a note on its hospital. Code read: the "+ Add Hospital"
+  shortcut inside the New Opportunity form saves the hospital at once
+  (`AddHospitalModal.tsx` POSTs on its own Create), so a cancelled
+  Opportunity leaves a hospital with nothing. D6's "ask on cancel" can be
+  skipped by closing the tab, refreshing or losing the connection, and
+  nothing brings the rep back.
+- Options weighed: remove the shortcut (all hospitals from Customer
+  Directory, server enforces); keep it but save hospital and Opportunity
+  together; keep D6. Basheer chose removing the shortcut, then asked
+  for a "new Opportunity" tick on the new-hospital path, which needed the
+  together-save after all.
+- Basheer then dropped step 4: Haroon was not keen on a mandatory first
+  activity for a new hospital (his next-action discussion with Basheer a
+  few days before the 15 Oct demo). Recorded as plan D21; BR-ACC-05
+  marked withdrawn (Business-Rules, matrix, discussion note); E2E test
+  plan section F removed; Backlog entry for revisiting it. No code
+  changed.
+
 ## 2026-10-16 — Retro, Plan & Chore session (Annual Target Planning plan and E2E plan)
 
 - Stall-alerts explanation: Basheer asked twice where it came from, then
@@ -2926,3 +2947,50 @@ Checked against both tables in `docs/Process-Improvements.md`.
   24 → 26 (counted; the retro draft shown in chat said 22 → 24, from the
   handover's stale count).
 
+## 2026-10-16 — Next-action rules: pre-E2E code review (steps 1–3 + script)
+
+- `/code-review` medium on `3d38e75`, `bd92e4a`, `4fc8531`, `c4e1ca3` and
+  the uncommitted data-quality script change: 10 findings. Fixed
+  (Basheer's go-ahead): (1) the follow-up box was pre-filled on Won/Lost,
+  so a save created a next action on a closed Opportunity — now starts
+  empty there; (2) a retried close could save the visit twice — the
+  server now refuses closing an already-closed next action; (3) Log
+  Activity's switch to "close it instead" lost the typed type, date and
+  notes — now carried over; (5) the "visit produced a new Opportunity"
+  close accepted a colleague's Opportunity — now only the closer's own;
+  (6) data-quality section 7a would list a manager's Note on a Won/Lost
+  Opportunity — now left out.
+- Dropped: (4) the Edit form's "blank stage box" case — the form is
+  filled from the saved Opportunity on open and the lists have no blank
+  choice, so it can't happen on screen.
+- Deferred to Backlog: the server doesn't check who closes a next action
+  (screens only offer one's own; Basheer asked how it was possible —
+  only by calling the server directly). Four tidy-ups left as is.
+- After the fixes: backend 1314 passed; ruff clean on app and tests (2
+  old findings in the script, same as HEAD); tsc clean; eslint 0 errors,
+  21 old warnings, none on changed lines. Pushed: fixes `4bec886`, script
+  `f93397f`.
+
+## 2026-10-16 — Retro, Build & Test session (next-action rules: step 4 dropped, step 5 started)
+
+- Review finding 4 (Edit Opportunity form could lose a value) was
+  impossible on screen: the form fills from the saved Opportunity. Code
+  not read before proposing it; Basheer didn't follow the explanation.
+  P23 15, P3 27.
+- The "close a colleague's next action" finding didn't say it was
+  reachable only through the server; Basheer had to ask. With finding 4,
+  a second finding with the same gap: new P82 (Seen 2).
+- Plan Status, test plan Built line, handover and archive edited after
+  the push before showing: P45 6.
+- Archive commit IDs added with an inline `sed`, not the edit tool: P77 5.
+- Handover still said the data-quality script "not committed" after
+  `f93397f`: P16 10 (fixed in this batch).
+- "Hasn't heard from you" prompt during the retro's checks: P15 14.
+- Spot-check (all correct): commit IDs `4bec886`, `f93397f` against git;
+  1314 tests passed and 21 lint warnings against the saved outputs; On
+  Hold rows with no next action — Dev 1, UAT 2 — against the saved
+  reports of 16 Oct.
+- Explanations checked: finding 4 (failed, counted under P3); the
+  "session refresh?" answer (stands on its own).
+- Items checked: P3, P4, P15, P16, P23, P45, P65, P77. Open items 26 → 27
+  (counted).

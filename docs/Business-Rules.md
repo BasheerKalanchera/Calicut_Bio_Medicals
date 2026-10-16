@@ -470,7 +470,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   Potential" at the 2026-09-24 demo; who sets it decided 2026-09-27
   (Basheer). Build: `docs/Hospital-Wise-Target-Planning-Implementation-Plan.md`.
 
-### BR-ACC-05: A New Hospital Starts With a Next Action (agreed 2026-10-12, not built)
+### BR-ACC-05: A New Hospital Starts With a Next Action (agreed 2026-10-12, withdrawn 2026-10-16, not built)
+* **Withdrawn** (Basheer, 2026-10-16): adding a hospital does not ask for
+  a first activity. Haroon was not keen on making it mandatory, and the
+  "+ Add Hospital" shortcut inside the New Opportunity form left a gap no
+  screen could close without more steps for reps. Every Opportunity still
+  starts with its first activity (BR-OP-21); unused hospitals stay in the
+  data-quality report. Reasons in
+  `docs/Next-Action-Rules-Implementation-Plan.md` D21; Backlog "A new
+  hospital starts with a next action — revisit if unused hospitals grow".
+  The text below is the rule as agreed, kept for the record.
 * **Rule:** whoever adds a hospital also logs its first activity, carrying
   the first next action (what, by when, who). Usually a Note ("Added for
   coverage; first visit planned"); a Visit, Call or similar if there has
@@ -483,8 +492,8 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`. On UAT
   36 hospitals had no Opportunity and no activity (data-quality report,
   11 and 13 Oct, section 9).
-* **Enforcement:** not built yet — see
-  `docs/Next-Action-Rules-Implementation-Plan.md` (D6, D9).
+* **Enforcement:** none — withdrawn before it was built
+  (`docs/Next-Action-Rules-Implementation-Plan.md` D21).
 
 ---
 

@@ -5,9 +5,11 @@
 step 5). Step 2 built 2026-10-16: server `bd92e4a`, screen `4fc8531`
 (checkpoints; unit tests, type check and lint only; manual E2E at step
 5). Step 3 built 2026-10-16 (`c4e1ca3`; unit tests, type check and
-lint only; manual E2E at step 5). Steps 4–5 not started.
+lint only; manual E2E at step 5). Step 4 dropped 2026-10-16 (D21).
+Step 5 in progress 2026-10-16: data-quality script `f93397f`; pre-E2E
+review fixes `4bec886`; manual E2E next.
 **Traceability rows:** none (new rules BR-ACT-11, BR-OP-21, BR-OP-22,
-BR-ACC-05, the BR-ACT-05 change and the On Hold next action).
+the BR-ACT-05 change and the On Hold next action; BR-ACC-05 withdrawn, D21).
 **Design / discussion:** `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md`
 (all questions answered 2026-10-12, section 5a).
 
@@ -31,8 +33,8 @@ Agreed in the discussion note:
   produced a new Opportunity — Basheer, 2026-10-12
 - Putting an Opportunity On Hold needs a next action due by the
   re-activation date — Basheer, 2026-10-12
-- A new hospital starts with a Note activity carrying the first next
-  action (BR-ACC-05) — Basheer, 2026-10-12
+- ~~A new hospital starts with a Note activity carrying the first next
+  action (BR-ACC-05) — Basheer, 2026-10-12~~ Withdrawn 2026-10-16 (D21)
 - A separate plan, built on the one create form — Basheer, 2026-10-12
 
 Decided for this plan:
@@ -53,18 +55,21 @@ Decided for this plan:
 - D5. A new Opportunity's first activity is a Visit, Call, Email, Meeting
   or Note, with "what happened" required; on Marketing Lead "Convert",
   "what happened" is pre-filled from the lead's notes and can be edited — Basheer, 2026-10-14
-- D6. A hospital added from inside the new-Opportunity form needs no
+- ~~D6. A hospital added from inside the new-Opportunity form needs no
   first entry of its own; the Opportunity's first activity and next
   action cover it. The hospital is saved as soon as its small form is
   saved, so if the rep then cancels the Opportunity, the app asks for the
-  hospital's Note and next action before the form closes — Basheer, 2026-10-14
+  hospital's Note and next action before the form closes — Basheer, 2026-10-14~~
+  Replaced by D21 (2026-10-16)
 - D7. The whole build starts only after Win Probability plan step 2 (the
   create-form merge); step 4 also waits for Duplicate Hospitals Part A,
-  which changes the same Add Hospital form — Basheer, 2026-10-14
+  which changes the same Add Hospital form — Basheer, 2026-10-14 (step 4
+  later dropped, D21)
 - D8. Before the UAT move, a short WhatsApp message is drafted for Haroon
   to send the team, explaining that old open next actions must be closed
   first — Basheer, 2026-10-14
 - D9. The new-hospital rule is BR-ACC-05 in Business-Rules — Basheer, 2026-10-14
+  (withdrawn, D21)
 - D10. Pre-fill (added after approval, moved here from the My Work plan's
   D11): wherever a rep closes their own next action and must set the
   follow-up, the new next-action box starts with the closed one's text
@@ -117,6 +122,19 @@ Decided for this plan:
   Closing the hospital next action links to it instead of saving a
   second, hospital-level copy; the close form's "what was done" only
   pre-fills it (D17) — Basheer, 2026-10-16
+- D21. Step 4 is dropped and BR-ACC-05 withdrawn: adding a hospital does
+  not ask for a first activity. Haroon was not keen on making it
+  mandatory (his next-action discussion with Basheer a few days before
+  the 15 Oct demo). Enforcing it showed an edge case: a hospital added
+  through "+ Add Hospital" inside the New Opportunity form is saved at
+  once, so cancelling the Opportunity leaves it with nothing, and nothing
+  can bring the rep back to it. Closing that gap meant removing the
+  shortcut or saving hospital and Opportunity together — more steps for
+  reps for a small gain. Steps 1–3 already give every Opportunity, on a
+  new hospital too, its first activity and next action. Hospitals added
+  and never used stay in the data-quality report ("not used yet",
+  step 5). Backlog: "A new hospital starts with a next action — revisit
+  if unused hospitals grow" — Basheer, 2026-10-16
 
 ## Figures and sources
 
@@ -159,16 +177,13 @@ without saying why.
 5. **A new Opportunity starts with its first activity and next action**,
    on all four ways in: the top bar "+ Lead", a hospital's Customer 360
    page, a project's page, and Marketing Lead "Convert".
-6. **A new hospital starts with a Note and a next action**, e.g. "Added for
-   coverage; first visit planned" with the first visit as the next action.
-   If there has already been contact, a Visit or Call instead. A hospital
-   added from inside the new-Opportunity form is covered by the
-   Opportunity's first activity; if that Opportunity is cancelled, the
-   app asks for the hospital's Note and next action (D6).
+6. ~~**A new hospital starts with a Note and a next action.**~~ Dropped
+   2026-10-16 (D21): adding a hospital stays as it is today.
 
-These stop new cases in four sections of the UAT data-quality report: 3
-(Opportunities with no activity), 5 (activities with no next action), 6
-(active Opportunities with nothing planned) and 9 (hospitals not used).
+These stop new cases in three sections of the UAT data-quality report: 3
+(Opportunities with no activity), 5 (activities with no next action) and 6
+(active Opportunities with nothing planned). Section 9 (hospitals not
+used) still lists new cases for managers to follow up (D21).
 They don't clean up the existing cases; reps work through those from the
 report.
 
@@ -203,11 +218,15 @@ step.
    - *Checkpoint commit.* Nothing stops working.
 3. **A new Opportunity starts with an activity (point 5)** on the one
    create form. *Checkpoint commit.*
-4. **A new hospital starts with a Note and next action (point 6)** on the
-   Add Hospital form, after Duplicate Hospitals Part A. *Checkpoint commit.*
+4. ~~**A new hospital starts with a Note and next action (point 6)** on the
+   Add Hospital form, after Duplicate Hospitals Part A. *Checkpoint commit.*~~
+   Dropped 2026-10-16 (D21).
 5. **Data-quality check, records and testing.** The check's "nothing
-   planned" also covers On Hold Opportunities, and "not used yet" leaves
-   out hospitals with an open next action (discussion note, section 4a).
+   planned" also covers On Hold Opportunities. ("Not used yet" leaving
+   out hospitals with an open next action, discussion note section 4a,
+   needed no change: every next action hangs off an activity, and that
+   section already leaves out hospitals with any activity — script and
+   schema read 2026-10-16.)
    Business rules marked built; rep message for Haroon (D8); pre-E2E
    review and one manual E2E. After the UAT move: delete
    `.claude/dq-check-paused` and run the UAT data-quality check (ask
@@ -222,9 +241,8 @@ From a code search, 2026-10-14:
   (Opportunity page, Customer 360, top bar); Next Actions screen's close
   form; Opportunity page Next Actions tab and edit-form save (the only
   place stage or status changes; the inline value edit is not affected);
-  the one new-Opportunity form (all four ways in); Add Hospital form
-  (Customer Directory, and "+ Add Hospital" inside the new-Opportunity
-  form).
+  the one new-Opportunity form (all four ways in). (The Add Hospital form
+  was on this list until step 4 was dropped, D21.)
 - (b) Reports showing the results: Daily Activity Report, Activity tabs,
   Next Actions lists — read-only, unchanged queries; checked once that new
   closing activities and Notes appear.
@@ -244,8 +262,9 @@ From a code search, 2026-10-14:
 
 ## 5. Business rules and records to update
 
-- Business-Rules: BR-ACT-11, BR-OP-21, BR-OP-22, the BR-ACT-05 change, the
-  On Hold next action and BR-ACC-05 marked built (step 5).
+- Business-Rules: BR-ACT-11, BR-OP-21, BR-OP-22, the BR-ACT-05 change and
+  the On Hold next action marked built (step 5). BR-ACC-05 marked
+  withdrawn 2026-10-16 (D21).
 - Business-Rule-Implementation-Matrix rows.
 - Discussion note status.
 - `scripts/uat_data_quality_check.py` (step 5).
@@ -285,7 +304,8 @@ From a code search, 2026-10-14:
   `first_activity` (D5 types, notes, `next_action_*`), created in
   `create_opportunity`'s transaction. Marketing-lead conversion uses the
   same endpoint, then `mark_converted`.
-- **Point 6 (BR-ACC-05):** `AccountService.create_account` gains
+- **Point 6 (BR-ACC-05) — not built, dropped 2026-10-16 (D21); kept for
+  the record:** `AccountService.create_account` would have gained
   `first_entry` (Note or a contact type, plus `next_action_*`); not
   required when the hospital is added from inside the new-Opportunity
   form (D6). `QuickLeadModal.tsx` opens `AddHospitalModal`, which saves

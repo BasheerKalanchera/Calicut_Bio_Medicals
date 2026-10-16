@@ -550,6 +550,28 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 ## Deferred / undecided items
 
+- **The server doesn't check who closes a next action (found 2026-10-16,
+  next-action rules pre-E2E review; deferred).** Every screen offers
+  "Close" only on one's own next actions (Next Actions screen, the
+  Opportunity's Next Actions tab, "Why this change?"), or on the "logged
+  for" rep's in Log Activity. But the close request itself
+  (`PATCH /reminders/{id}`, since Sprint 2) accepts any next action and
+  any "logged for" person, so someone calling the server directly could
+  close a colleague's or record the close under another name. Fixing it
+  means a server rule for who may act for whom (managers for their reps),
+  the same question as Log Activity's "logged for" — decide both together.
+- **A new hospital starts with a next action — revisit if unused hospitals
+  grow (Basheer, 2026-10-16; deferred).** BR-ACC-05 was withdrawn before
+  it was built (`docs/Next-Action-Rules-Implementation-Plan.md` D21):
+  Haroon was not keen on a mandatory first activity when a hospital is
+  added, and the "+ Add Hospital" shortcut inside the New Opportunity
+  form saves the hospital at once, so cancelling the Opportunity leaves
+  it with nothing. Ways considered: remove the shortcut (reps add
+  hospitals only from Customer Directory), or save the hospital and the
+  Opportunity together in one step. Revisit if the data-quality check's
+  "hospitals not used yet" (36 on UAT, report 13 Oct, section 9) keeps
+  growing after the next-action rules reach UAT.
+
 - **Annual view roster on Target Planning (Basheer, 2026-10-06; deferred).**
   The "who hasn't started" roster (`docs/Target-Coverage-Roster-Implementation-Plan.md`)
   shows on the Quarter view only. The Annual view already lists each

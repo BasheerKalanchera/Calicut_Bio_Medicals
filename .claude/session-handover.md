@@ -49,7 +49,7 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 26 (counted 2026-10-16, after the Plan & Chore retro).
+  `docs/Process-Improvements.md`, open list 27 (counted 2026-10-16, after the Build & Test retro).
 - **Next:** the rest of the top 10 in Pareto order (P15, reminder after
   each finished file, is next).
 - Still to write, shown first: paperwork check in `cabio-post-commit`
@@ -88,8 +88,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Steps 2 and 3 built and pushed 2026-10-16 (step 3 `c4e1ca3`: every
   new Opportunity starts with a "First activity" pop-up; D16–D20).
   Details in the plan's Status line and Progress-Archive.
-- **Next:** step 4 of the plan. Check in first.
-- Also before the E2E: check the E2E test plan's section C against
-  D12–D15.
+- Step 4 dropped 2026-10-16, BR-ACC-05 withdrawn (plan D21).
+- Step 5 started 2026-10-16 (Basheer's go-ahead): data-quality script
+  counts On Hold in "no open next action" (`f93397f`); E2E test plan
+  sections D and E checked against D12–D19 and corrected (new steps
+  D4a, E5).
+- Pre-E2E code review done 2026-10-16; fixes pushed `4bec886`, script
+  `f93397f` (Progress-Archive entry).
+- **Next:** re-check the test plan's live data on Dev (read-only, say
+  first; pick the Marketing Lead for E4), have the Dev backend
+  restarted, then the manual E2E (A–E, G; check in before the browser).
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
