@@ -249,6 +249,43 @@ class ActivityService:
         )
         return activity
 
+    def log_first_activity(
+        self,
+        *,
+        opportunity_id: uuid.UUID,
+        account_id: uuid.UUID,
+        project_id: uuid.UUID | None,
+        activity_type: str,
+        activity_date: datetime,
+        notes: str,
+        next_action_text: str,
+        next_action_due_date: datetime,
+        next_action_owner_id: uuid.UUID,
+        created_by: uuid.UUID,
+    ) -> Activity:
+        # BR-OP-21: a new Opportunity's first activity, saved with it. Not
+        # log_activity: the BR-ACT-11 check can't apply to an Opportunity
+        # created a moment ago, and the schema already fixed type and fields.
+        activity = self.repository.create(Activity(
+            account_id=account_id,
+            opportunity_id=opportunity_id,
+            project_id=project_id,
+            user_id=created_by,
+            activity_type=activity_type,
+            activity_date=activity_date,
+            notes=notes,
+            created_by=created_by,
+        ))
+        _maybe_create_next_action_reminder(
+            self.reminder_repository,
+            activity=activity,
+            next_action_text=next_action_text,
+            next_action_due_date=next_action_due_date,
+            next_action_owner_id=next_action_owner_id,
+            created_by=created_by,
+        )
+        return activity
+
 
 class ActivityCommentService:
     def __init__(self, repository: ActivityCommentRepository, notification_service: NotificationService):
@@ -399,6 +436,17 @@ class ReminderService:
                 raise BusinessRuleViolation(
                     "Give either a follow-up next action or the new Opportunity this visit produced, not both."
                 )
+            if data.produced_opportunity_id:
+                # Plan D20: the visit is recorded once, as the new
+                # Opportunity's first activity (D17 pre-fills it from this
+                # close form), so it closes this next action -- no second,
+                # hospital-level copy. The close's own type/date/notes,
+                # required by ReminderUpdate, aren't saved in this case.
+                first_activity_id = self.repository.first_activity_id_on_opportunity(data.produced_opportunity_id)
+                if first_activity_id is None:
+                    raise BusinessRuleViolation("The new Opportunity has no first activity to close this with.")
+                reminder.closing_activity_id = first_activity_id
+                return self.repository.update(reminder)
             closing_activity = Activity(
                 account_id=original.account_id,
                 opportunity_id=original.opportunity_id,

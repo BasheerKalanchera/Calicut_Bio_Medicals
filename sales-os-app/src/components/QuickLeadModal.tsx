@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Autocomplete, Box, Button, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from "@mui/material";
 import FormModal from "./FormModal";
 import AddHospitalModal from "./AddHospitalModal";
+import CloseReminderModal, { type FirstActivity } from "./CloseReminderModal";
+import { SilentModalError } from "../lib/formErrors";
+import type { ActivityType } from "../types/api-aliases";
 import OpportunityItemAddRow from "./OpportunityItemAddRow";
 import OpportunityItemsList from "./OpportunityItemsList";
 import { listAccounts, getAccount, listProjects, createOpportunity } from "../services/accounts";
@@ -65,6 +68,9 @@ interface QuickLeadModalProps {
   marketingLeadEventName?: string | null;
   marketingLeadSourceName?: string | null;
   marketingLeadId?: string;
+  // Plan D17: pre-fills the First activity pop-up -- the hospital close
+  // form's "This visit produced a new Opportunity" passes what was just typed.
+  initialFirstActivity?: { activity_type?: ActivityType; activity_date?: string; notes?: string };
 }
 
 // Local stopgap types — these services return Promise<unknown> today.
@@ -100,6 +106,7 @@ export default function QuickLeadModal({
   marketingLeadEventName,
   marketingLeadSourceName,
   marketingLeadId,
+  initialFirstActivity,
 }: QuickLeadModalProps) {
   const { userProfile } = useAuth();
   const queryClient = useQueryClient();
@@ -146,6 +153,11 @@ export default function QuickLeadModal({
   const [items, setItems]                   = useState<DraftOpportunityItem[]>([]);
   const [showItemsModal, setShowItemsModal] = useState(false);
   const [showAddHospital, setShowAddHospital] = useState(false);
+  // BR-OP-21 (plan D19): Create opens the First activity pop-up; its Save
+  // re-runs handleSubmit with the activity held here, so the Opportunity,
+  // its first activity and next action are one request.
+  const [showFirstActivity, setShowFirstActivity] = useState(false);
+  const firstActivityRef = useRef<FirstActivity | null>(null);
 
   // Searches server-side instead of preloading every account -- a plain
   // page_size bump still silently truncates once accounts exceed the
@@ -294,6 +306,7 @@ export default function QuickLeadModal({
     setIsExternalReferrer(false); setReferredByUserId(""); setReferredByNote("");
     setGateOverrideChecked(false);
     setGateOverrideApproverId(""); setGateOverrideReasonId(""); setGateOverrideNote("");
+    setShowFirstActivity(false);
   }, [isOpen, initialAccountId, initialProjectId, initialName, initialLeadSourceId]);
 
   // Falls back to the resolved initialAccountId's name only until the user
@@ -371,6 +384,12 @@ export default function QuickLeadModal({
       discount_lakhs: i.discount_lakhs,
       line_type: i.line_type,
     }));
+    // BR-OP-21: the form's own checks passed -- ask for the first activity.
+    if (!firstActivityRef.current) {
+      setShowFirstActivity(true);
+      throw new SilentModalError();
+    }
+    payload.first_activity = firstActivityRef.current;
     const created = await createOpportunity(accountId as any, payload);
     // Every list a new Opportunity appears in -- the hospital's (Customer 360
     // tab, and the Project Directory's list, which filters it), the
@@ -378,6 +397,10 @@ export default function QuickLeadModal({
     queryClient.invalidateQueries({ queryKey: ["opportunities", "byAccount", accountId] });
     queryClient.invalidateQueries({ queryKey: ["account", accountId] });
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
+    // ...and the first activity and its next action.
+    queryClient.invalidateQueries({ queryKey: ["activities", "account", accountId] });
+    queryClient.invalidateQueries({ queryKey: ["reminders"] });
+    queryClient.invalidateQueries({ queryKey: ["activityReport"] });
     // Awaited -- the Lead Convert flow's onCreated (LeadReviewQueueScreen)
     // does a second async call (markLeadConverted) that must complete, and
     // any failure there must surface through FormModal's normal error
@@ -385,9 +408,21 @@ export default function QuickLeadModal({
     await onCreated?.(created as { id: string });
   }
 
+  async function handleFirstActivitySave(activity: FirstActivity) {
+    firstActivityRef.current = activity;
+    try {
+      await handleSubmit();
+    } catch (err) {
+      firstActivityRef.current = null;
+      throw err;
+    }
+    firstActivityRef.current = null;
+    onClose();
+  }
+
   return (
     <>
-      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital}>
+      <FormModal isOpen={isOpen} onClose={onClose} title="New Opportunity" onSubmit={handleSubmit} submitLabel="Create" disableEnforceFocus={showItemsModal || showAddHospital || showFirstActivity}>
         {(marketingLeadContextNote || marketingLeadEventName || marketingLeadSourceName) && (
           <Box sx={{ p: 1.5, borderRadius: "0.75rem", bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
             <Typography sx={{ fontSize: "10px", fontWeight: 900, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.5 }}>
@@ -677,6 +712,19 @@ export default function QuickLeadModal({
         onClose={() => setShowAddHospital(false)}
         onCreated={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
         onExistingSelected={(account) => { setAccountId(account.id); setSelectedAccount(account); setProjectId(""); setShowAddHospital(false); }}
+      />
+
+      {/* BR-OP-21 (plan D19): Cancel returns to this form with nothing saved. */}
+      <CloseReminderModal
+        isOpen={showFirstActivity}
+        onClose={() => setShowFirstActivity(false)}
+        reminder={null}
+        firstActivity={{
+          ownerName: users.find((u) => u.id === ownerId)?.display_name,
+          // Plan D5: a marketing lead's note starts as "what happened".
+          initial: initialFirstActivity ?? (marketingLeadContextNote ? { notes: marketingLeadContextNote } : undefined),
+          onSave: handleFirstActivitySave,
+        }}
       />
     </>
   );

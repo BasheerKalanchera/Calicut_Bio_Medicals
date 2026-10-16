@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
@@ -222,8 +223,30 @@ class StakeholderOpportunityCountsEntry(BaseModel):
 # Create / Update
 # ------------------------------------------------------------------
 
+FirstActivityType = Literal["VISIT", "CALL", "EMAIL", "MEETING", "NOTE"]
+
+
+class FirstActivity(BaseModel):
+    """BR-OP-21: the conversation that made it an Opportunity, saved with it.
+
+    Plan D5: one of five types, "what happened" required; a next action
+    always, as BR-ACT-04 requires for all five. Recorded under the creator;
+    the next action's owner defaults to the Opportunity's owner (D16).
+    """
+
+    activity_type: FirstActivityType
+    activity_date: datetime
+    notes: str = Field(..., min_length=1)
+    next_action_text: str = Field(..., min_length=1)
+    next_action_due_date: datetime
+    next_action_owner_id: uuid.UUID | None = None
+
+
 class OpportunityCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
+    # BR-OP-21: every way in -- the New Opportunity form, Marketing Lead
+    # Convert, and a hospital visit's "produced a new Opportunity" (D3).
+    first_activity: FirstActivity
     owner_id: uuid.UUID
     stage_id: uuid.UUID
     status_id: uuid.UUID

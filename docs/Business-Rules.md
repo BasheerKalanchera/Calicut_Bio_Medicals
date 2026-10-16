@@ -619,7 +619,10 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   (Basheer, 2026-10-12 — the discussion note's second exception dropped).
   Haroon via Basheer, 2026-10-12 (discussion note, question 4 and reading
   (i)). The same applies to a hospital-level next action, unless the
-  visit produced a new Opportunity (BR-OP-21 gives it its own); and
+  visit produced a new Opportunity (BR-OP-21 gives it its own) — then
+  that Opportunity's first activity is what closes the hospital next
+  action, so the visit is recorded once (Basheer, 2026-10-16; next-action
+  rules plan D20); and
   putting an Opportunity On Hold needs a next action due by its
   re-activation date (Basheer, 2026-10-12, questions 7 and 8). Until
   built, the optional wording above describes the app.

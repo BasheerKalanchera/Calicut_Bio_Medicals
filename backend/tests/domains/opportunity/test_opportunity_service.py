@@ -29,6 +29,7 @@ from app.domains.notification.service import NotificationService
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
 from app.domains.opportunity.schemas import (
+    FirstActivity,
     ItemsBulkUpdate,
     OpportunityCreate,
     OpportunityItemCreate,
@@ -219,6 +220,19 @@ def _noted(**fields) -> OpportunityUpdate:
     return OpportunityUpdate(change_note=_note(), **fields)
 
 
+def _first_activity(**overrides) -> FirstActivity:
+    """BR-OP-21: a Visit with a next action due tomorrow, owner left to default."""
+    defaults = dict(
+        activity_type="VISIT",
+        activity_date=datetime.now(_IST),
+        notes="Met the HOD, wants a quote",
+        next_action_text="Send the quote",
+        next_action_due_date=datetime.combine(TOMORROW, time(11, 0), tzinfo=_IST),
+    )
+    defaults.update(overrides)
+    return FirstActivity(**defaults)
+
+
 def _make_create_data(**overrides) -> OpportunityCreate:
     defaults = dict(
         name="New Deal",
@@ -226,6 +240,7 @@ def _make_create_data(**overrides) -> OpportunityCreate:
         stage_id=STAGE_LEAD_ID,
         status_id=STATUS_ACTIVE_ID,
         win_probability=Decimal("5.00"),
+        first_activity=_first_activity(),
     )
     defaults.update(overrides)
     return OpportunityCreate(**defaults)
@@ -423,10 +438,82 @@ class TestCreateOpportunity:
         assert created_obj.updated_by == USER_ID
         assert created_obj.sbu_id == SBU_ID
 
+    # --- BR-OP-21: the first activity is saved with the Opportunity ---
+
+    def test_first_activity_logged_under_creator_with_next_action_to_owner(self):
+        # Plan D16: the creator had the conversation; the owner follows up.
+        repo = _make_repo()
+        service = _make_service(repo)
+        creator_id = uuid.uuid4()
+
+        opp = service.create_opportunity(
+            ACCOUNT_ID, _make_create_data(owner_id=USER_ID), created_by=creator_id, sbu_id=SBU_ID
+        )
+
+        kwargs = service.activity_service.log_first_activity.call_args.kwargs
+        assert kwargs["opportunity_id"] == opp.id
+        assert kwargs["account_id"] == ACCOUNT_ID
+        assert kwargs["activity_type"] == "VISIT"
+        assert kwargs["notes"] == "Met the HOD, wants a quote"
+        assert kwargs["next_action_text"] == "Send the quote"
+        assert kwargs["created_by"] == creator_id
+        assert kwargs["next_action_owner_id"] == USER_ID
+
+    def test_first_activity_next_action_owner_from_form_is_kept(self):
+        repo = _make_repo()
+        service = _make_service(repo)
+        other_id = uuid.uuid4()
+
+        service.create_opportunity(
+            ACCOUNT_ID,
+            _make_create_data(first_activity=_first_activity(next_action_owner_id=other_id)),
+            created_by=USER_ID,
+            sbu_id=SBU_ID,
+        )
+
+        assert service.activity_service.log_first_activity.call_args.kwargs["next_action_owner_id"] == other_id
+
+    def test_refused_create_logs_no_first_activity(self):
+        repo = _make_repo()
+        repo.get_stage.return_value = None
+        service = _make_service(repo)
+
+        with pytest.raises(NotFoundError):
+            service.create_opportunity(ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
+
+        service.activity_service.log_first_activity.assert_not_called()
+
+    def test_first_activity_required(self):
+        data = _make_create_data().model_dump()
+        del data["first_activity"]
+        with pytest.raises(ValidationError):
+            OpportunityCreate(**data)
+
+    @pytest.mark.parametrize("activity_type", ["MANAGER_NOTE", "RELATIONSHIP_SUPPORT", "CONFERENCE_EXPO"])
+    def test_first_activity_limited_to_five_types(self, activity_type):
+        # Plan D5: Visit, Call, Email, Meeting or Note only.
+        with pytest.raises(ValidationError):
+            _first_activity(activity_type=activity_type)
+
+    @pytest.mark.parametrize("field", ["notes", "next_action_text", "next_action_due_date"])
+    def test_first_activity_needs_what_happened_and_next_action(self, field):
+        fields = dict(
+            activity_type="CALL",
+            activity_date=datetime.now(_IST),
+            notes="Called the purchase head",
+            next_action_text="Visit next week",
+            next_action_due_date=datetime.combine(TOMORROW, time(11, 0), tzinfo=_IST),
+        )
+        del fields[field]
+        with pytest.raises(ValidationError):
+            FirstActivity(**fields)
+
     def test_notifies_new_owner_when_different_from_creator(self):
         repo = _make_repo()
         notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
+        service = OpportunityService(
+            repository=repo, notification_service=notification_service, activity_service=MagicMock(spec=ActivityService)
+        )
         new_owner_id = uuid.uuid4()
 
         result = service.create_opportunity(
@@ -442,7 +529,9 @@ class TestCreateOpportunity:
     def test_does_not_notify_when_owner_is_creator(self):
         repo = _make_repo()
         notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
+        service = OpportunityService(
+            repository=repo, notification_service=notification_service, activity_service=MagicMock(spec=ActivityService)
+        )
 
         service.create_opportunity(
             ACCOUNT_ID, _make_create_data(owner_id=USER_ID), created_by=USER_ID, sbu_id=SBU_ID
@@ -695,7 +784,9 @@ class TestCreateOpportunityGateOverride:
         repo.get_owner_manager_id.return_value = approver_id
         repo.get_user_role_name.return_value = "Area Manager"
         notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
+        service = OpportunityService(
+            repository=repo, notification_service=notification_service, activity_service=MagicMock(spec=ActivityService)
+        )
 
         data = self._override_data(gate_override_approver_id=approver_id)
         result = service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
@@ -709,7 +800,9 @@ class TestCreateOpportunityGateOverride:
     def test_no_override_does_not_notify(self):
         repo = _make_repo()
         notification_service = _make_notification_service()
-        service = OpportunityService(repository=repo, notification_service=notification_service)
+        service = OpportunityService(
+            repository=repo, notification_service=notification_service, activity_service=MagicMock(spec=ActivityService)
+        )
 
         service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID

@@ -342,6 +342,17 @@ class ReminderRepository(BaseRepository[Reminder]):
         )
         return self.db.scalar(stmt) is not None
 
+    def first_activity_id_on_opportunity(self, opportunity_id: uuid.UUID) -> uuid.UUID | None:
+        # Plan D20: the new Opportunity's first activity (BR-OP-21) -- the
+        # earliest saved on it, since it's created with the Opportunity.
+        stmt = (
+            select(Activity.id)
+            .where(Activity.opportunity_id == opportunity_id)
+            .order_by(Activity.created_at, Activity.id)
+            .limit(1)
+        )
+        return self.db.scalar(stmt)
+
     def list_for_user(
         self,
         user_id: uuid.UUID,

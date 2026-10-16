@@ -32,6 +32,27 @@ interface Props {
     reactivationDate?: string;
     onSave: (note: StageChangeNote) => Promise<void>;
   };
+  // Plan D19 (BR-OP-21): the "First activity" pop-up after the New
+  // Opportunity form's Create. `reminder` is ignored; a next action is
+  // always required, and goes to the Opportunity's owner unless changed
+  // (D16). Nothing is sent from here -- onSave creates the Opportunity
+  // with it. `initial` pre-fills from a marketing lead's note (D5) or the
+  // hospital close form (D17).
+  firstActivity?: {
+    ownerName?: string;
+    initial?: { activity_type?: ActivityType; activity_date?: string; notes?: string };
+    onSave: (activity: FirstActivity) => Promise<void>;
+  };
+}
+
+// Mirrors the server's FirstActivity (opportunity/schemas.py).
+export interface FirstActivity {
+  activity_type: ActivityType;
+  activity_date: string;
+  notes: string;
+  next_action_text: string;
+  next_action_due_date: string;
+  next_action_owner_id?: string;
 }
 
 // Mirrors the server's StageChangeNote (opportunity/schemas.py).
@@ -79,7 +100,7 @@ function nowPlusDaysLocal(days: number) {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, stageChange }: Props) {
+export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, stageChange, firstActivity }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -106,7 +127,9 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
   const [pickedReminderId, setPickedReminderId] = useState("");
 
   const ownReminders = stageChange?.ownReminders ?? [];
-  const reminder = stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null : reminderProp;
+  const reminder = firstActivity
+    ? null
+    : stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null : reminderProp;
   // Stage-change mode with no open next action of one's own: a Note (D14).
   const noteOnly = !!stageChange && ownReminders.length === 0;
   const opportunityId = reminder?.activity.opportunity?.id;
@@ -142,9 +165,9 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTab("details");
     setPickedReminderId(onlyOwn?.id ?? "");
-    setActivityType(noteOnly ? "NOTE" : "CALL");
-    setActivityDate(nowLocal());
-    setNotes("");
+    setActivityType(noteOnly ? "NOTE" : firstActivity?.initial?.activity_type ?? "CALL");
+    setActivityDate(firstActivity?.initial?.activity_date || nowLocal());
+    setNotes(firstActivity?.initial?.notes ?? "");
     setNextActionText((stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId("");
@@ -224,7 +247,25 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     });
   }
 
+  async function handleFirstActivitySubmit() {
+    if (!firstActivity) return;
+    if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
+    if (!notes.trim()) { setActiveTab("details"); throw new Error("Say what happened"); }
+    if (!nextActionText.trim()) { setActiveTab("followUp"); throw new Error("Next action is required"); }
+    if (!nextActionDueDate) { setActiveTab("followUp"); throw new Error("Next action due date is required"); }
+    await firstActivity.onSave({
+      activity_type: activityType,
+      activity_date: new Date(activityDate).toISOString(),
+      notes: notes.trim(),
+      next_action_text: nextActionText.trim(),
+      next_action_due_date: new Date(nextActionDueDate).toISOString(),
+      // Left out, the server gives it to the Opportunity's owner (D16).
+      ...(nextActionOwnerId && { next_action_owner_id: nextActionOwnerId }),
+    });
+  }
+
   async function handleSubmit() {
+    if (firstActivity) return handleFirstActivitySubmit();
     if (stageChange) return handleStageChangeSubmit();
     if (!reminder) return;
     setNotice(null);
@@ -276,11 +317,16 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
       <FormModal
         isOpen={isOpen}
         onClose={onClose}
-        title={stageChange ? "Why this change?" : "Close Next Action"}
+        title={firstActivity ? "First activity" : stageChange ? "Why this change?" : "Close Next Action"}
         onSubmit={handleSubmit}
-        submitLabel={stageChange ? "Save" : "Complete"}
+        submitLabel={firstActivity ? "Create" : stageChange ? "Save" : "Complete"}
         disableEnforceFocus={showNewOpportunity}
       >
+        {firstActivity && (
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            Every new Opportunity starts with the conversation that led to it, and a next action. Create saves all three together.
+          </Typography>
+        )}
         {/* Plan D15: more than one of the changer's own -- they pick which to close. */}
         {ownReminders.length > 1 && (
           <TextField
@@ -374,19 +420,23 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                 slotProps={{ textField: { fullWidth: true, size: "small" } }}
               />
               <TextField
-                label={stageChange ? "Why the change? *" : "What was done? *"}
+                label={firstActivity ? "What happened? *" : stageChange ? "Why the change? *" : "What was done? *"}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 multiline
                 rows={3}
                 fullWidth
                 size="small"
-                placeholder={stageChange
-                  ? "e.g. Demo done, the radiologist approved; quote requested"
-                  : "e.g. Called the customer, confirmed demo date for next week"}
+                placeholder={firstActivity
+                  ? "e.g. Met the radiology HOD; they want a CT quote"
+                  : stageChange
+                    ? "e.g. Demo done, the radiologist approved; quote requested"
+                    : "e.g. Called the customer, confirmed demo date for next week"}
               />
               <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
-                {stageChange
+                {firstActivity
+                  ? "Required — saved as this Opportunity's first activity."
+                  : stageChange
                   ? (noteOnly ? "Required — saved with the change as a Note." : "Required — closes this next action and saves the change.")
                   : "Required to close this Next Action."}
               </Typography>
@@ -438,13 +488,19 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                     size="small"
                     slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
                   >
-                    <MenuItem value="">{loggedForUserId && loggedForUserId !== currentUserId ? "Same person (default)" : "Me (default)"}</MenuItem>
+                    <MenuItem value="">
+                      {firstActivity
+                        ? `${firstActivity.ownerName ?? "The owner"} — Opportunity owner (default)`
+                        : loggedForUserId && loggedForUserId !== currentUserId ? "Same person (default)" : "Me (default)"}
+                    </MenuItem>
                     {users.map((u) => (
                       <MenuItem key={u.id} value={u.id}>{u.display_name}</MenuItem>
                     ))}
                   </TextField>
                   <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
-                    {followUpExempt
+                    {firstActivity
+                      ? "Required — every new Opportunity starts with a next action."
+                      : followUpExempt
                       ? `Optional — this Opportunity is ${statusName}. Leave the follow-up box empty to ${stageChange ? "save" : "close"} with no follow-up.`
                       : stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate
                         ? `Required — due on or before the re-activation date (${dayjs(stageChange.reactivationDate).format("D MMM YYYY")}).`
@@ -464,6 +520,8 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
           onCreated={handleOpportunityCreated}
           initialAccountId={accountId}
           lockAccount
+          // Plan D17: the visit just described is the new Opportunity's first activity.
+          initialFirstActivity={{ activity_type: activityType, activity_date: activityDate, notes: notes.trim() }}
         />
       )}
     </>

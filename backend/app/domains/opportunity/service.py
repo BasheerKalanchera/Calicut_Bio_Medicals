@@ -280,6 +280,25 @@ class OpportunityService:
         for item_data in data.items:
             self._create_item(opp.id, item_data, created_by=created_by)
 
+        # BR-OP-21: the first activity and its next action, in the same
+        # transaction -- refused together or saved together. The next action
+        # goes to the Opportunity's owner unless the form said otherwise (D16).
+        if self.activity_service is None:
+            raise RuntimeError("OpportunityService needs the activity service to record a first activity.")
+        first = data.first_activity
+        self.activity_service.log_first_activity(
+            opportunity_id=opp.id,
+            account_id=account_id,
+            project_id=opp.project_id,
+            activity_type=first.activity_type,
+            activity_date=first.activity_date,
+            notes=first.notes,
+            next_action_text=first.next_action_text,
+            next_action_due_date=first.next_action_due_date,
+            next_action_owner_id=first.next_action_owner_id or data.owner_id,
+            created_by=created_by,
+        )
+
         if data.owner_id != created_by:
             self.notification_service.notify_opportunity_assigned(
                 recipient_user_id=data.owner_id,

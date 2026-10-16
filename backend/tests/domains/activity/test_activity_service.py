@@ -1415,14 +1415,40 @@ class TestPatchReminder:
     def test_completing_hospital_reminder_with_produced_opportunity_needs_no_follow_up(self):
         produced = uuid.uuid4()
         reminder = _make_reminder(activity=_make_activity(opportunity_id=None, account_id=ACCOUNT_ID))
-        svc, repo, activity_repo = self._patch_svc(reminder)
+        svc, repo, _ = self._patch_svc(reminder)
         repo.opportunity_created_on_account_since.return_value = True
 
         svc.patch_reminder(REMINDER_ID, self._no_follow_up(produced_opportunity_id=produced), updated_by=ACTOR_ID)
 
         repo.opportunity_created_on_account_since.assert_called_once_with(produced, ACCOUNT_ID, reminder.created_at)
-        activity_repo.create.assert_called_once()
         repo.create.assert_not_called()
+
+    def test_produced_opportunity_closes_with_its_first_activity_not_a_hospital_copy(self):
+        # Plan D20: the visit is recorded once, on the new Opportunity.
+        produced, first_id = uuid.uuid4(), uuid.uuid4()
+        reminder = _make_reminder(activity=_make_activity(opportunity_id=None, account_id=ACCOUNT_ID))
+        svc, repo, activity_repo = self._patch_svc(reminder)
+        repo.opportunity_created_on_account_since.return_value = True
+        repo.first_activity_id_on_opportunity.return_value = first_id
+
+        svc.patch_reminder(REMINDER_ID, self._no_follow_up(produced_opportunity_id=produced), updated_by=ACTOR_ID)
+
+        repo.first_activity_id_on_opportunity.assert_called_once_with(produced)
+        assert reminder.closing_activity_id == first_id
+        assert reminder.is_completed is True
+        activity_repo.create.assert_not_called()
+
+    def test_produced_opportunity_without_first_activity_refused(self):
+        reminder = _make_reminder(activity=_make_activity(opportunity_id=None, account_id=ACCOUNT_ID))
+        svc, repo, activity_repo = self._patch_svc(reminder)
+        repo.opportunity_created_on_account_since.return_value = True
+        repo.first_activity_id_on_opportunity.return_value = None
+
+        with pytest.raises(BusinessRuleViolation, match="first activity"):
+            svc.patch_reminder(
+                REMINDER_ID, self._no_follow_up(produced_opportunity_id=uuid.uuid4()), updated_by=ACTOR_ID
+            )
+        activity_repo.create.assert_not_called()
 
     def test_completing_hospital_reminder_with_unrelated_opportunity_raises(self):
         # Wrong hospital, or an Opportunity older than the next action.
@@ -1636,6 +1662,38 @@ class TestLogStageChangeNote:
         self._log(svc)
 
         repo.create.assert_called_once()
+
+
+class TestLogFirstActivity:
+    # BR-OP-21: a new Opportunity's first activity and next action.
+    def _svc(self):
+        repo = _make_activity_repo()
+        repo.create.side_effect = lambda a: a
+        reminder_repo = _make_reminder_repo()
+        return ActivityService(repo, reminder_repo, _make_notification_service()), repo, reminder_repo
+
+    def test_creates_activity_for_creator_and_next_action_for_owner(self):
+        svc, _, reminder_repo = self._svc()
+        reminder_repo.has_open_for_user_on_opportunity.return_value = True
+
+        activity = svc.log_first_activity(
+            opportunity_id=OPP_ID, account_id=ACCOUNT_ID, project_id=PROJECT_ID,
+            activity_type="VISIT", activity_date=NOW, notes="Met the HOD",
+            next_action_text="Send the quote", next_action_due_date=NOW,
+            next_action_owner_id=USER_ID, created_by=ACTOR_ID,
+        )
+
+        assert activity.activity_type == "VISIT"
+        assert activity.user_id == ACTOR_ID
+        assert activity.opportunity_id == OPP_ID
+        assert activity.account_id == ACCOUNT_ID
+        assert activity.project_id == PROJECT_ID
+        assert activity.notes == "Met the HOD"
+        reminder = reminder_repo.create.call_args[0][0]
+        assert reminder.reminder_text == "Send the quote"
+        assert reminder.assigned_to_user_id == USER_ID
+        # Not log_activity's BR-ACT-11 check: the Opportunity is brand new.
+        reminder_repo.has_open_for_user_on_opportunity.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
