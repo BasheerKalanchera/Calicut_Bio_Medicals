@@ -1,7 +1,9 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Approved by Basheer, 2026-10-16. Not yet built; E2E test plan
-next.
+**Status:** Approved by Basheer, 2026-10-16. Not yet built. E2E test plan:
+`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`. Build order: next,
+once the Next-Action Rules build and its E2E are done (Basheer,
+2026-10-16).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 **Design / discussion:** `docs/Discussion-Annual-Target-Planning-2026-10.md`

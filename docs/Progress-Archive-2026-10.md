@@ -2897,3 +2897,32 @@ Checked against both tables in `docs/Process-Improvements.md`.
   "restart is due" answer — plain parts stand alone. Pass.
 - Checked: P1, P3, P14, P15, P16, P21, P45, P67, P69, P75, P77, watch
   list. Open items 22 → 24 (counted).
+
+## 2026-10-16 — Retro, Plan & Chore session (Annual Target Planning plan and E2E plan)
+
+- Stall-alerts explanation: Basheer asked twice where it came from, then
+  said "Too many open items in your note". P3 25 → 26, P66 8 → 9.
+- First FY 2026-27 SBU yearly-target recommendation would still have
+  shown Critical Care ₹120 L; corrected before approval (D22a), but the
+  gap was not stated. Watch-list P56 moved to the open list: P80, Seen 2.
+- Docs batch `1d57697` refused until "no matrix change" was added to
+  the message: P78 2 → 3. Test plan save refused for an empty "Existing
+  values" line: watch-list P40 moved to the open list as P81, Seen 2.
+- Partial-staging script failed in text mode (Windows line endings);
+  rewritten in bytes mode. New watch-list line.
+- Annual plan Status line and handover edited when Basheer asked to mark
+  the build order, without showing the edits first: P45 4 → 5.
+- Client scorecard republish: showed Basheer 2 changed lines; the live
+  pages differed by 4 (row 13.2 from `4c6f168` and the payment-collection
+  request had never been published). Caught before publishing; Basheer
+  approved all four; republished. New watch-list line.
+- Spot-check (3): ₹270 L = 150 + 120 and ₹260 L = 100 + 160 — correct
+  (Dev query 2026-10-16, test plan "Figures and sources"); Fahad ₹20 L —
+  sourced in the same section; 2026-Q3 = Oct–Dec — correct
+  (`scripts/quarter.py`).
+- Explanations (2): stall-alerts explanation — plain part did not stand
+  alone (counted under P3 above); "marked as next to build" reply — pass.
+- Checked: P1, P3, P45, P66, P78, watch list (P40, P56). Open items
+  24 → 26 (counted; the retro draft shown in chat said 22 → 24, from the
+  handover's stale count).
+

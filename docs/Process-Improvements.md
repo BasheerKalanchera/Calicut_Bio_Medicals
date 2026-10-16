@@ -12,7 +12,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 |---|---|---|---|---|
 | P1 | Every example and number in a plan or explanation names its source ("Dev query, 4 Oct" / "made-up example"); a quarter is given as code and months, checked against the app's quarter calculation; weekly review spot-checks | 2026-09-26 | 34 | built (per-message reminder `reply-checklist.sh`; "Figures and sources" section in both templates, checked on save by `sources_guard.py`; `scripts/quarter.py`; retro spot-checks 3 figures; 2026-10-14) — repeated after build 2026-10-15 (E2E "N of 40 steps done" lines not counted); repeated after build 2026-10-15 (said the 16 lint warnings were all existing; 2 were new); repeated after build 2026-10-16 (chat examples for D11, D13 not labelled made up); repeated after build 2026-10-16 (commit proposal said "30 new tests"; counted 26) |
 | P2 | Test plans still built on wrong assumptions after the 3 Oct template (4 Oct live-data note had wrong roles) | 2026-09-27 | 12 | open |
-| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 25 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) — repeated after build 2026-10-15 (twice); repeated after build 2026-10-15 (lint result given in jargon only) |
+| P3 | Explanations need a second, plainer pass; a plan drafted for approval opens with a plain explanation of its structural choices | 2026-09-27 | 26 | built (per-message reminder point 4; retro checks 2 explanations; plan template "In plain terms" line; 2026-10-14) — repeated after build 2026-10-15 (twice); repeated after build 2026-10-15 (lint result given in jargon only); repeated after build 2026-10-16 (stall-alerts explanation, Basheer asked twice) |
 | P4 | Heavy option offered first, or a fix proposed before asking "should this be here at all?" | 2026-09-26 | 8 | open |
 | P7 | During an incident, state only what the evidence shows; label guesses | 2026-10-05 | 2 | merged (CLAUDE.md "Verify before claiming", 2026-10-08) — repeated after merge 2026-10-08 |
 | P8 | Write an agreed design decision into the plan doc the same turn | 2026-10-05 | 1 | merged (CLAUDE.md "Standing decisions", 2026-10-08) |
@@ -50,7 +50,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P42 | Timing a screen on UAT: force a fresh load (hard refresh) every time; menu clicks within 30 s reuse the stored copy | 2026-10-08 | 1 | dropped (seen once; already in Query Load plan section 6; plan step D, 2026-10-10) |
 | P43 | When a side topic comes up during a chore, first say what is left of the chore: finish it (commit proposal included) or say plainly it is paused and what remains | 2026-10-08 | 1 | merged (CLAUDE.md "Show before you act", 2026-10-08) |
 | P44 | A small gap found in a tidy-up, with its fix already drafted, is fixed in the same sweep (with approval), not parked in the Backlog | 2026-10-08 | 1 | dropped (the gap rightly needed a decision; drift now blocked by the commit check; plan step D, 2026-10-10) |
-| P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 4 | merged (CLAUDE.md "Show before you act", 2026-10-08) — repeated after merge 2026-10-13, 2026-10-15, 2026-10-15 (plan Status line and D11 note edited before showing) |
+| P45 | Small housekeeping edits (handover note, logs) are shown before they are made, like any other edit | 2026-10-08 | 5 | merged (CLAUDE.md "Show before you act", 2026-10-08) — repeated after merge 2026-10-13, 2026-10-15, 2026-10-15 (plan Status line and D11 note edited before showing), 2026-10-16 (Annual plan Status line and handover edited before showing) |
 | P47 | A UAT script runs only the queries described when asking; anything extra is asked for first | 2026-10-08 | 1 | open |
 | P49 | When a piece of work is finished, say which file to open and what to look for, so Basheer can review it | 2026-10-08 | 1 | merged (counted as a repeat of P19, 2026-10-10) |
 | P51 | Before giving an example for a business rule, read the rules next to it (overrides, fast-tracks, exemptions); the example must not contradict them | 2026-10-09 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
@@ -59,7 +59,7 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P60 | When a decision depends on how real users use the app, offer the check on UAT (with its approval), not Dev, and say why: Dev is mostly test data | 2026-10-10 | 1 | merged (counted as a repeat of P1, 2026-10-10) |
 | P62 | When explaining a change, finding or E2E step, start with the screen (and card/tab) it affects | 2026-10-10 | 1 | built (CLAUDE.md "Show before you act", 2026-10-10) |
 | P65 | Before writing a new rule or fix, check every save path it touches — status changes, and edit forms that resend hidden fields — not only who reads the value (was watch-list P57; 2026-10-15: pre-E2E review missed the products panel's value-only save, E2E step 9) | 2026-10-09 | 3 | open |
-| P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61) | 2026-10-10 | 8 | open |
+| P66 | When several decisions are open, show the first one alone and wait; the next follows its answer (was watch-list P61; 2026-10-16: "Too many open items in your note") | 2026-10-10 | 9 | open |
 | P67 | In a long session, offer the docs batch commit again at each natural pause (was watch-list P50) | 2026-10-08 | 2 | open |
 | P68 | Before staging a shared file (handover, Backlog, Progress-Archive), check its unstaged diff for another session's lines and stage only my own; never `git add` the whole file blind (CLAUDE.md "Parallel sessions" rule exists since 2026-09-10 — 2026-10-11: Backlog caught before commit, then handover committed with the other session's line in `63b5d0f`) | 2026-09-10 | 3 | open |
 | P69 | An answer Basheer has already given is recorded straight away, not asked again as a separate edit approval (was watch-list 2026-10-11; 2026-10-12: next-action answers A, C, D held for a second "yes" twice; 2026-10-13: area-target closure held for a second "yes") | 2026-10-11 | 6 | open |
@@ -71,8 +71,10 @@ to 10; above that, process work stops until all are fixed. Review steps:
 | P75 | Run backend tests with the project's own Python (`backend/.venv`) from the start, not the computer-wide one (was watch-list P63; 2026-10-15: first run failed on a missing package; 2026-10-16: again, python-multipart; 2026-10-16: computer-wide Python again during step 3) | 2026-10-10 | 4 | open |
 | P76 | When Basheer makes a decision conditional, or a proposal is still unanswered, never record it as decided; bring it back to him (was watch-list P48; 2026-10-15: handover wrote step 33's "use another hospital" as decided before he answered) | 2026-10-08 | 2 | open |
 | P77 | Test files and edit scripts go in with the file-writing tool, never typed inline into the command line; test commands spell folders `C:/…` (was watch-list 2026-10-14; 2026-10-15: inline edit script failed with "unexpected EOF", redone from a saved file; 2026-10-16: scripted code edit blocked, redone with the edit tool; 2026-10-16: at least three edit scripts typed inline — D20 tests, matrix rows, paperwork) | 2026-10-14 | 4 | open |
-| P78 | A change to `Business-Rules.md` updates its row in `Business-Rule-Implementation-Matrix.md` in the same commit (was watch-list 2026-10-10; 2026-10-16: step 3 commit refused by the hook until the BR-OP-21 and BR-ACT-05 rows were updated) | 2026-10-10 | 2 | open |
+| P78 | A change to `Business-Rules.md` updates its row in `Business-Rule-Implementation-Matrix.md` in the same commit (was watch-list 2026-10-10; 2026-10-16: step 3 commit refused by the hook until the BR-OP-21 and BR-ACT-05 rows were updated; 2026-10-16: docs batch `1d57697` refused until "no matrix change" was added) | 2026-10-10 | 3 | open |
 | P79 | A known flaw is fixed now with a proposed fix (with approval), not left for Basheer to notice in the E2E (CLAUDE.md "adjacent design gap" rule exists; was watch-list 2026-10-11, BR-OP-06 wording; 2026-10-16: duplicate visit on the "produced a new Opportunity" path flagged as an E2E note, commit rejected, fixed as D20) | 2026-10-11 | 2 | open |
+| P80 | Every recommendation states what it leaves uncovered (was watch-list P56; 2026-10-16: first FY 2026-27 SBU-target recommendation would still have shown Critical Care ₹120 L, gap not stated; corrected as D22a) | 2026-10-09 | 2 | open |
+| P81 | Each "Checked against live data" line of a test plan has text on the line itself (was watch-list P40; 2026-10-16: Annual Target test plan refused by the save check, empty "Existing values" line) | 2026-10-07 | 2 | open |
 
 ## Watch list
 
@@ -86,11 +88,9 @@ Rules: `harness-engineering` skill.
 | 2026-10-10 | 2026-10-04 | P5 | Plans for a list/table screen state who is listed (zero rows, no-home-SBU people); test plans add "member with no activity" and "dual-role person" cases |
 | 2026-10-10 | 2026-10-04 | P6 | Before E2E, trace each plan decision to its code and test step; a decision with neither blocks E2E |
 | 2026-10-10 | 2026-10-07 | P32 | In PowerShell, commit from a saved message file (`git commit -F`); Windows PowerShell splits a `-m` message at its quote marks |
-| 2026-10-10 | 2026-10-07 | P40 | The E2E test-plan template says each of the four live-data lines needs text on the line itself (the save check reads only that line) |
 | 2026-10-10 | 2026-10-08 | P46 | In anything written for others, undecided ideas go under "Options" or are left out, never written as "we will" |
 | 2026-10-10 | 2026-10-09 | P53 | A commit message matches the detail of recent commits: the why, what changed per file, test results where relevant |
 | 2026-10-10 | 2026-10-09 | P54 | Saved output from a UAT check keeps each record's id, so a follow-up never needs another UAT connection |
-| 2026-10-10 | 2026-10-09 | P56 | Every recommendation states what it leaves uncovered |
 | 2026-10-10 | 2026-10-10 | P64 | When a save on one screen changes figures another screen shows, the pre-E2E review checks the other screen is told to reload, and the test plan checks it without a hard refresh |
 | 2026-10-10 | 2026-10-10 | — | A `!` command given to Basheer uses forward-slash paths (`/c/Users/…`); Git Bash strips Windows backslashes |
 | 2026-10-10 | 2026-10-10 | — | Before saying what a test step proved, check what that step actually did (said step 2 proved SBU clearing; its user never had one) |
@@ -106,6 +106,8 @@ Rules: `harness-engineering` skill.
 | 2026-10-14 | 2026-10-14 | — | Never write "done" in a doc before the step has run (Progress-Archive said the scorecard was regenerated, the My Work plan said the doc sweep was done; both caught and corrected same session) |
 | 2026-10-15 | 2026-10-15 | — | Before flagging a difference from an approved plan, quote the plan's own line (flagged "notice above the tabs" as a difference; the plan only says "on its page") |
 | 2026-10-15 | 2026-10-15 | — | Before advising how to group commits, read CLAUDE.md's batch rules: a fix that changes behaviour is always its own commit (suggested holding the step 9 fix `e1774a1` for a batch) |
+| 2026-10-16 | 2026-10-16 | — | A client-page republish diff compares against the live page, not the local copy (showed 2 of 4 changed lines; caught before publishing) |
+| 2026-10-16 | 2026-10-16 | — | A staging script on Windows reads and writes bytes, never text (partial-staging patch failed on line endings) |
 
 ## Reviews
 - 2026-10-06 — first fill, from the retros of 2026-09-26 to 2026-10-06.

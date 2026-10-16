@@ -41,13 +41,15 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   targets yearly only, yearly Target vs Actuals view, plan notifications
   on the bell; built before the next UAT move). E2E test plan written
   2026-10-16: `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`.
-  Neither committed yet. **Next:** build step 1 (check in first); a
-  mock-up of the yearly Target vs Actuals view comes before step 5.
+  Both committed (`1d57697`). **Next to build, once the Next-Action
+  Rules build and its E2E are done** (Basheer, 2026-10-16): step 1
+  (check in first); a mock-up of the yearly Target vs Actuals view comes
+  before step 5.
 
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 22 (counted 2026-10-16).
+  `docs/Process-Improvements.md`, open list 26 (counted 2026-10-16, after the Plan & Chore retro).
 - **Next:** the rest of the top 10 in Pareto order (P15, reminder after
   each finished file, is next).
 - Still to write, shown first: paperwork check in `cabio-post-commit`
