@@ -5,6 +5,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+from app.domains.activity.schemas import NOT_CUSTOMER_FACING_TYPES, ActivityType
+
 
 class OpportunityItemLineType(StrEnum):
     PRODUCT = "PRODUCT"
@@ -266,6 +268,35 @@ class OpportunityCreate(BaseModel):
         return self
 
 
+class StageChangeNote(BaseModel):
+    """BR-OP-22: why the stage or status changed, saved with the change.
+
+    With close_reminder_id: the changer closes their own open next action
+    (BR-ACT-05) and "what happened" is the note. Without it: a Note
+    activity. Whether a next action is required is decided in the service
+    -- it depends on the new status (Won/Lost optional, plan D12; On Hold
+    due by the re-activation date).
+    """
+
+    close_reminder_id: uuid.UUID | None = None
+    activity_type: ActivityType = "NOTE"
+    activity_date: datetime
+    notes: str = Field(..., min_length=1)
+    next_action_text: str | None = Field(default=None, min_length=1)
+    next_action_due_date: datetime | None = None
+    next_action_owner_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _check_shape(self) -> "StageChangeNote":
+        if self.close_reminder_id is None and self.activity_type != "NOTE":
+            raise ValueError("Without a next action to close, the note for a stage or status change is a Note.")
+        if self.activity_type in NOT_CUSTOMER_FACING_TYPES:
+            raise ValueError(f"{self.activity_type} is not a valid type for a stage or status change note.")
+        if bool(self.next_action_text) != bool(self.next_action_due_date):
+            raise ValueError("Next action text and due date must be given together.")
+        return self
+
+
 class OpportunityUpdate(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=255)
     owner_id: uuid.UUID | None = None
@@ -295,6 +326,9 @@ class OpportunityUpdate(BaseModel):
     # Not a column -- the service pops it and stamps full_payment_confirmed_at/_by.
     confirm_full_payment: bool = False
     full_payment_note: str | None = None
+    # BR-OP-22: required (by the service) whenever the stage or status
+    # actually changes. Not a column -- the service pops it.
+    change_note: StageChangeNote | None = None
 
     @model_validator(mode="after")
     def _check_referral_not_both(self) -> "OpportunityUpdate":

@@ -10,6 +10,8 @@ from app.api.dependencies import get_current_user
 from app.api.schemas import APIResponse, PaginatedResponse
 from app.db.session import get_db
 from app.domains.account.workspace_schemas import WorkspaceOpportunity
+from app.domains.activity.repository import ActivityRepository, ReminderRepository
+from app.domains.activity.service import ActivityService, ReminderService
 from app.domains.notification.repository import NotificationRepository
 from app.domains.notification.service import NotificationService
 from app.domains.opportunity.repository import OpportunityRepository
@@ -57,9 +59,20 @@ def _closed_bounds(
 def _get_service(
     db: Session = Depends(get_db),
 ) -> OpportunityService:
+    notification_service = NotificationService(repository=NotificationRepository(db))
     return OpportunityService(
         repository=OpportunityRepository(db),
-        notification_service=NotificationService(repository=NotificationRepository(db)),
+        notification_service=notification_service,
+        # BR-OP-22: the note saved with a stage or status change.
+        activity_service=ActivityService(
+            repository=ActivityRepository(db),
+            reminder_repository=ReminderRepository(db),
+            notification_service=notification_service,
+        ),
+        reminder_service=ReminderService(
+            repository=ReminderRepository(db),
+            activity_repository=ActivityRepository(db),
+        ),
     )
 
 

@@ -1530,6 +1530,115 @@ class TestPatchReminder:
 
 
 # ---------------------------------------------------------------------------
+# BR-OP-22 — the note saved with a stage or status change
+# ---------------------------------------------------------------------------
+
+class TestCloseForStageChange:
+    def _svc(self, reminder):
+        repo = _make_reminder_repo()
+        repo.get_by_id.return_value = reminder
+        repo.update.side_effect = lambda r: r
+        activity_repo = _make_activity_repo()
+        activity_repo.create.side_effect = lambda a: a
+        return ReminderService(repository=repo, activity_repository=activity_repo), activity_repo
+
+    def test_closes_own_open_next_action_on_this_opportunity(self):
+        reminder = _make_reminder(activity=_make_activity(opportunity_id=OPP_ID))
+        svc, activity_repo = self._svc(reminder)
+
+        svc.close_for_stage_change(
+            REMINDER_ID, opportunity_id=OPP_ID, closed_by=USER_ID, data=ReminderUpdate(**_closing_data())
+        )
+
+        assert reminder.is_completed is True
+        closing = activity_repo.create.call_args[0][0]
+        assert closing.notes == "Called the customer"
+        assert closing.opportunity_id == OPP_ID
+
+    @pytest.mark.parametrize("case", ["missing", "completed", "someone_elses", "other_opportunity"])
+    def test_refuses_anything_but_own_open_one_here(self, case):
+        here = _make_activity(opportunity_id=OPP_ID)
+        reminder = {
+            "missing": None,
+            "completed": _make_reminder(is_completed=True, activity=here),
+            "someone_elses": _make_reminder(assigned_to_user_id=ACTOR_ID, activity=here),
+            "other_opportunity": _make_reminder(activity=_make_activity(opportunity_id=uuid.uuid4())),
+        }[case]
+        svc, activity_repo = self._svc(reminder)
+
+        with pytest.raises(BusinessRuleViolation, match="open one of your own"):
+            svc.close_for_stage_change(
+                REMINDER_ID, opportunity_id=OPP_ID, closed_by=USER_ID, data=ReminderUpdate(**_closing_data())
+            )
+        activity_repo.create.assert_not_called()
+
+    def test_follow_up_still_required_unless_won_or_lost(self):
+        reminder = _make_reminder(activity=_make_activity(opportunity_id=OPP_ID))
+        svc, _ = self._svc(reminder)
+        data = ReminderUpdate(**_closing_data(next_action_text=None, next_action_due_date=None))
+
+        with pytest.raises(BusinessRuleViolation, match="follow-up"):
+            svc.close_for_stage_change(REMINDER_ID, opportunity_id=OPP_ID, closed_by=USER_ID, data=data)
+
+    def test_has_open_own_on_opportunity(self):
+        repo = _make_reminder_repo()
+        repo.has_open_for_user_on_opportunity.return_value = True
+        svc = ReminderService(repository=repo, activity_repository=_make_activity_repo())
+
+        assert svc.has_open_own_on_opportunity(OPP_ID, USER_ID) is True
+        repo.has_open_for_user_on_opportunity.assert_called_once_with(OPP_ID, USER_ID)
+
+
+class TestLogStageChangeNote:
+    def _svc(self):
+        repo = _make_activity_repo()
+        repo.create.side_effect = lambda a: a
+        reminder_repo = _make_reminder_repo()
+        return ActivityService(repo, reminder_repo, _make_notification_service()), repo, reminder_repo
+
+    def _log(self, svc, **overrides):
+        kwargs = dict(
+            opportunity_id=OPP_ID, account_id=ACCOUNT_ID, project_id=PROJECT_ID,
+            activity_date=NOW, notes="Lost on price", next_action_text=None,
+            next_action_due_date=None, next_action_owner_id=None, created_by=ACTOR_ID,
+        )
+        kwargs.update(overrides)
+        return svc.log_stage_change_note(**kwargs)
+
+    def test_creates_a_note_for_the_changer(self):
+        svc, _, reminder_repo = self._svc()
+
+        activity = self._log(svc)
+
+        assert activity.activity_type == "NOTE"
+        assert activity.user_id == ACTOR_ID
+        assert activity.opportunity_id == OPP_ID
+        assert activity.account_id == ACCOUNT_ID
+        assert activity.project_id == PROJECT_ID
+        assert activity.notes == "Lost on price"
+        reminder_repo.create.assert_not_called()
+
+    def test_with_next_action_creates_reminder(self):
+        svc, _, reminder_repo = self._svc()
+
+        self._log(svc, next_action_text="Keep in touch", next_action_due_date=NOW)
+
+        reminder = reminder_repo.create.call_args[0][0]
+        assert reminder.reminder_text == "Keep in touch"
+        assert reminder.assigned_to_user_id == ACTOR_ID
+
+    def test_skips_the_open_next_action_check(self):
+        # The opportunity service decides that (plan D13) -- this method
+        # never refuses on its own.
+        svc, repo, reminder_repo = self._svc()
+        reminder_repo.has_open_for_user_on_opportunity.return_value = True
+
+        self._log(svc)
+
+        repo.create.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
 # ReminderUpdate — BR-ACT-05 mandatory closing-activity validation
 # ---------------------------------------------------------------------------
 

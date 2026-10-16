@@ -211,6 +211,44 @@ class ActivityService:
 
         return activity, reminder
 
+    def log_stage_change_note(
+        self,
+        *,
+        opportunity_id: uuid.UUID,
+        account_id: uuid.UUID,
+        project_id: uuid.UUID | None,
+        activity_date: datetime,
+        notes: str,
+        next_action_text: str | None,
+        next_action_due_date: datetime | None,
+        next_action_owner_id: uuid.UUID | None,
+        created_by: uuid.UUID,
+    ) -> Activity:
+        # BR-OP-22: the Note saved with a stage or status change by someone
+        # with no open next action of their own on the Opportunity. Not
+        # log_activity: ActivityCreate forces a next action on every Note,
+        # but here it's optional on Won/Lost (plan D12) -- OpportunityService
+        # decides when it's required, since that depends on the new status.
+        activity = self.repository.create(Activity(
+            account_id=account_id,
+            opportunity_id=opportunity_id,
+            project_id=project_id,
+            user_id=created_by,
+            activity_type="NOTE",
+            activity_date=activity_date,
+            notes=notes,
+            created_by=created_by,
+        ))
+        _maybe_create_next_action_reminder(
+            self.reminder_repository,
+            activity=activity,
+            next_action_text=next_action_text,
+            next_action_due_date=next_action_due_date,
+            next_action_owner_id=next_action_owner_id,
+            created_by=created_by,
+        )
+        return activity
+
 
 class ActivityCommentService:
     def __init__(self, repository: ActivityCommentRepository, notification_service: NotificationService):
@@ -389,6 +427,33 @@ class ReminderService:
             )
 
         return self.repository.update(reminder)
+
+    def has_open_own_on_opportunity(self, opportunity_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        return self.repository.has_open_for_user_on_opportunity(opportunity_id, user_id)
+
+    def close_for_stage_change(
+        self,
+        reminder_id: uuid.UUID,
+        *,
+        opportunity_id: uuid.UUID,
+        closed_by: uuid.UUID,
+        data: ReminderUpdate,
+    ) -> Reminder:
+        # BR-OP-22 / plan D13: a stage or status change closes the changer's
+        # own open next action on this Opportunity -- not someone else's,
+        # and not one on another Opportunity. The closing itself is the
+        # ordinary BR-ACT-05 close (same follow-up rules).
+        reminder = self.repository.get_by_id(reminder_id)
+        if (
+            not reminder
+            or reminder.is_completed
+            or reminder.assigned_to_user_id != closed_by
+            or reminder.activity.opportunity_id != opportunity_id
+        ):
+            raise BusinessRuleViolation(
+                "The next action to close must be an open one of your own on this Opportunity."
+            )
+        return self.patch_reminder(reminder_id, data, updated_by=closed_by)
 
     def _require_follow_up_exemption(
         self,

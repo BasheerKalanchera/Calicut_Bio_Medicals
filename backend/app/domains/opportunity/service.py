@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func
 
@@ -10,6 +11,8 @@ from app.core.exceptions import (
     ConflictError,
     NotFoundError,
 )
+from app.domains.activity.schemas import ReminderUpdate
+from app.domains.activity.service import ActivityService, ReminderService
 from app.domains.notification.service import NotificationService
 from app.domains.opportunity.models import Opportunity, OpportunityItem, OpportunityStakeholder, Split
 from app.domains.opportunity.repository import OpportunityRepository
@@ -19,6 +22,7 @@ from app.domains.opportunity.schemas import (
     OpportunityItemCreate,
     OpportunityUpdate,
     SplitsBulkUpdate,
+    StageChangeNote,
     StakeholderLinkCreate,
     StakeholderLinkUpdate,
 )
@@ -30,6 +34,9 @@ from app.domains.opportunity.validators import (
     validate_status_transition,
 )
 from app.domains.organization.models import UserProfile
+
+# BR-OP-22: the On Hold next action's due date is compared as an IST day.
+_IST = ZoneInfo("Asia/Kolkata")
 
 # BR-OP-12: only these roles may create an Opportunity outside their own SBU.
 _SBU_OVERRIDE_ROLES = {"Admin", "General Manager"}
@@ -48,9 +55,20 @@ _SPLIT_EDIT_LOST_MSG = "This deal is Lost — its split can no longer be changed
 
 
 class OpportunityService:
-    def __init__(self, repository: OpportunityRepository, notification_service: NotificationService):
+    def __init__(
+        self,
+        repository: OpportunityRepository,
+        notification_service: NotificationService,
+        activity_service: ActivityService | None = None,
+        reminder_service: ReminderService | None = None,
+    ):
         self.repository = repository
         self.notification_service = notification_service
+        # BR-OP-22: record the note saved with a stage or status change.
+        # Optional only so callers that never change stage or status needn't
+        # build them; update_opportunity refuses such a change without them.
+        self.activity_service = activity_service
+        self.reminder_service = reminder_service
 
     # ------------------------------------------------------------------
     # Pipeline / list
@@ -299,6 +317,18 @@ class OpportunityService:
         # never on its own, so it can't drift from what was confirmed.
         confirm_full_payment = bool(updates.pop("confirm_full_payment", False))
         full_payment_note = updates.pop("full_payment_note", None)
+        # BR-OP-22: a stage or status change carries a note in the same save;
+        # resending the same stage or status isn't a change and takes none.
+        updates.pop("change_note", None)
+        change_note = data.change_note
+        is_stage_or_status_change = (
+            updates.get("stage_id", opportunity.stage_id) != opportunity.stage_id
+            or updates.get("status_id", opportunity.status_id) != opportunity.status_id
+        )
+        if is_stage_or_status_change and change_note is None:
+            raise BusinessRuleViolation("A stage or status change needs a note saying why.")
+        if change_note is not None and not is_stage_or_status_change:
+            raise BusinessRuleViolation("A change note is only taken with a stage or status change.")
         if not updates:
             return opportunity
 
@@ -504,7 +534,81 @@ class OpportunityService:
                 expected_closure_date=opportunity.expected_closure_date,
             )
 
-        return self.repository.update(opportunity)
+        opportunity = self.repository.update(opportunity)
+        if change_note is not None:
+            # After the flush above, so the closing's Won/Lost follow-up
+            # exemption (BR-ACT-05) reads the new status.
+            self._record_change_note(
+                opportunity,
+                change_note,
+                status_code=effective_status.status_code,
+                changed_by=updated_by,
+            )
+        return opportunity
+
+    def _record_change_note(
+        self,
+        opportunity: Opportunity,
+        note: StageChangeNote,
+        *,
+        status_code: str,
+        changed_by: uuid.UUID,
+    ) -> None:
+        if self.activity_service is None or self.reminder_service is None:
+            raise RuntimeError("OpportunityService needs the activity and reminder services to record a change note.")
+
+        # Plan D12: optional when the change is to Won or Lost; required
+        # otherwise (BR-ACT-04, BR-ACT-05).
+        if status_code not in {"WON", "LOST"} and not note.next_action_text:
+            raise BusinessRuleViolation(
+                "A stage or status change needs a next action, unless the Opportunity is now Won or Lost."
+            )
+        # BR-OP-22: On Hold -- the next action is due by the re-activation date.
+        if status_code == "ON_HOLD" and note.next_action_due_date and opportunity.reactivation_date:
+            due = note.next_action_due_date
+            due_day = (due if due.tzinfo else due.replace(tzinfo=_IST)).astimezone(_IST).date()
+            if due_day > opportunity.reactivation_date:
+                raise BusinessRuleViolation(
+                    "For an On Hold Opportunity, the next action must be due on or before the re-activation date."
+                )
+
+        if note.close_reminder_id is not None:
+            # Plan D13: the changer closes their own open next action; what
+            # happened is the note.
+            self.reminder_service.close_for_stage_change(
+                note.close_reminder_id,
+                opportunity_id=opportunity.id,
+                closed_by=changed_by,
+                data=ReminderUpdate(
+                    is_completed=True,
+                    activity_type=note.activity_type,
+                    activity_date=note.activity_date,
+                    notes=note.notes,
+                    next_action_text=note.next_action_text,
+                    next_action_due_date=note.next_action_due_date,
+                    next_action_owner_id=note.next_action_owner_id,
+                ),
+            )
+            return
+
+        # BR-ACT-11 applied here: with an open next action of one's own on
+        # this Opportunity, it is closed, not gone round with a Note. A
+        # manager with none writes a Note; the owner's stays open (D13).
+        if self.reminder_service.has_open_own_on_opportunity(opportunity.id, changed_by):
+            raise BusinessRuleViolation(
+                "You have an open next action on this Opportunity. Close it, saying why the stage or status changed."
+            )
+        self.activity_service.log_stage_change_note(
+            opportunity_id=opportunity.id,
+            account_id=opportunity.account_id,
+            project_id=opportunity.project_id,
+            activity_date=note.activity_date,
+            notes=note.notes,
+            next_action_text=note.next_action_text,
+            next_action_due_date=note.next_action_due_date,
+            next_action_owner_id=note.next_action_owner_id,
+            created_by=changed_by,
+        )
 
     # ------------------------------------------------------------------
     # Items

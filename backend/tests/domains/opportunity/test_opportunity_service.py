@@ -10,9 +10,10 @@ Repository is fully mocked — no DB required.  Tests cover:
 """
 
 import uuid
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic import ValidationError
@@ -23,6 +24,7 @@ from app.core.exceptions import (
     ConflictError,
     NotFoundError,
 )
+from app.domains.activity.service import ActivityService, ReminderService
 from app.domains.notification.service import NotificationService
 from app.domains.opportunity.models import Opportunity, OpportunityItem, Split
 from app.domains.opportunity.repository import OpportunityRepository
@@ -33,6 +35,7 @@ from app.domains.opportunity.schemas import (
     OpportunityUpdate,
     SplitCreate,
     SplitsBulkUpdate,
+    StageChangeNote,
     StakeholderLinkCreate,
     StakeholderLinkUpdate,
 )
@@ -65,6 +68,7 @@ OTHER_SBU_ID = uuid.uuid4()
 OPP_ID = uuid.uuid4()
 LEAD_SOURCE_ID = uuid.uuid4()
 TOMORROW = _today_ist() + timedelta(days=1)
+_IST = ZoneInfo("Asia/Kolkata")
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +189,36 @@ def _make_notification_service() -> MagicMock:
     return MagicMock(spec=NotificationService)
 
 
+def _make_service(repo: MagicMock) -> OpportunityService:
+    # BR-OP-22: a stage or status change records its note through these;
+    # by default the changer has no open next action of their own.
+    reminder_service = MagicMock(spec=ReminderService)
+    reminder_service.has_open_own_on_opportunity.return_value = False
+    return OpportunityService(
+        repository=repo,
+        notification_service=_make_notification_service(),
+        activity_service=MagicMock(spec=ActivityService),
+        reminder_service=reminder_service,
+    )
+
+
+def _note(**overrides) -> StageChangeNote:
+    """BR-OP-22: a Note with a next action due tomorrow (no next action to close)."""
+    defaults = dict(
+        activity_date=datetime.now(_IST),
+        notes="Customer asked to move ahead",
+        next_action_text="Call to confirm",
+        next_action_due_date=datetime.combine(TOMORROW, time(11, 0), tzinfo=_IST),
+    )
+    defaults.update(overrides)
+    return StageChangeNote(**defaults)
+
+
+def _noted(**fields) -> OpportunityUpdate:
+    """A stage or status change, with the note BR-OP-22 requires."""
+    return OpportunityUpdate(change_note=_note(), **fields)
+
+
 def _make_create_data(**overrides) -> OpportunityCreate:
     defaults = dict(
         name="New Deal",
@@ -220,7 +254,7 @@ def _won_create_data(**overrides) -> OpportunityCreate:
 class TestCreateOpportunity:
     def test_create_with_future_po_date_refused(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="future"):
             service.create_opportunity(
@@ -234,7 +268,7 @@ class TestCreateOpportunity:
     def test_raises_not_found_for_unknown_account(self):
         repo = _make_repo()
         repo.account_exists.return_value = False
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Account"):
             service.create_opportunity(
@@ -244,7 +278,7 @@ class TestCreateOpportunity:
     def test_raises_not_found_for_unknown_stage(self):
         repo = _make_repo()
         repo.get_stage.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Stage"):
             service.create_opportunity(
@@ -254,7 +288,7 @@ class TestCreateOpportunity:
     def test_raises_not_found_for_unknown_status(self):
         repo = _make_repo()
         repo.get_status.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Status"):
             service.create_opportunity(
@@ -264,7 +298,7 @@ class TestCreateOpportunity:
     def test_creates_opportunity_at_lead_stage(self):
         """Lead stage with Active status and no items requires nothing."""
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -278,7 +312,7 @@ class TestCreateOpportunity:
     def test_create_at_qualified_without_lead_source_raises(self):
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(20, "QUALIFIED")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = _make_create_data(
             stage_id=STAGE_QUALIFIED_ID,
@@ -294,7 +328,7 @@ class TestCreateOpportunity:
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = _make_create_data(
             stage_id=STAGE_DEMO_ID,
@@ -311,7 +345,7 @@ class TestCreateOpportunity:
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_lead_source.return_value = _make_lead_source("REFERRAL")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = _make_create_data(
             stage_id=STAGE_DEMO_ID,
@@ -327,7 +361,7 @@ class TestCreateOpportunity:
         repo = _make_repo()
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("LOST", is_terminal=True)
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         # On create, current_status_code="ACTIVE", so transitioning ACTIVE→LOST is validated
         data = _make_create_data(status_id=STATUS_LOST_ID)
@@ -342,7 +376,7 @@ class TestCreateOpportunity:
         repo = _make_repo()
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
         repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="can't be created as Won"):
             service.create_opportunity(ACCOUNT_ID, _won_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
@@ -350,7 +384,7 @@ class TestCreateOpportunity:
 
     def test_create_at_active_leaves_payment_confirmation_empty(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.create_opportunity(ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
 
@@ -369,7 +403,7 @@ class TestCreateOpportunity:
 
     def test_create_at_active_does_not_stamp_closed_at(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.create_opportunity(ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID)
 
@@ -378,7 +412,7 @@ class TestCreateOpportunity:
 
     def test_audit_fields_set_on_create(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -418,7 +452,7 @@ class TestCreateOpportunity:
 
     def test_create_defaults_high_priority_manual_to_false(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -428,7 +462,7 @@ class TestCreateOpportunity:
 
     def test_create_persists_high_priority_manual_true(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, _make_create_data(high_priority_manual=True), created_by=USER_ID, sbu_id=SBU_ID
@@ -444,7 +478,7 @@ class TestCreateOpportunity:
 class TestCreateOpportunityReferralCredit:
     def test_create_with_referred_by_user_id_persists(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         referrer_id = uuid.uuid4()
 
         result = service.create_opportunity(
@@ -459,7 +493,7 @@ class TestCreateOpportunityReferralCredit:
 
     def test_create_with_referred_by_note_persists(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID,
@@ -473,7 +507,7 @@ class TestCreateOpportunityReferralCredit:
 
     def test_create_with_neither_referral_field_leaves_both_none(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -497,7 +531,7 @@ class TestCreateOpportunityReferralCredit:
 class TestCreateOpportunitySbuOverride:
     def test_admin_can_create_in_other_sbu(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=OTHER_SBU_ID)
 
         result = service.create_opportunity(
@@ -508,7 +542,7 @@ class TestCreateOpportunitySbuOverride:
 
     def test_general_manager_can_create_in_other_sbu(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=OTHER_SBU_ID)
 
         result = service.create_opportunity(
@@ -521,7 +555,7 @@ class TestCreateOpportunitySbuOverride:
         """Admin/GM have no meaningful 'own' SBU -- must always explicitly choose,
         never silently defaulted to their placeholder sbu_id."""
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data()  # sbu_id left unset (None)
 
         with pytest.raises(BusinessRuleViolation, match="SBU is required"):
@@ -532,7 +566,7 @@ class TestCreateOpportunitySbuOverride:
 
     def test_general_manager_omitting_sbu_id_is_rejected(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data()  # sbu_id left unset (None)
 
         with pytest.raises(BusinessRuleViolation, match="SBU is required"):
@@ -544,7 +578,7 @@ class TestCreateOpportunitySbuOverride:
         """An explicit choice that happens to match the placeholder sbu_id is a real
         choice, not a silent default -- must succeed, not be treated as 'missing'."""
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=SBU_ID)
 
         result = service.create_opportunity(
@@ -557,7 +591,7 @@ class TestCreateOpportunitySbuOverride:
         """Setting sbu_id to the caller's own SBU is a no-op, not an override attempt —
         no role check should trip even for a role with no override rights."""
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=SBU_ID)
 
         result = service.create_opportunity(
@@ -568,7 +602,7 @@ class TestCreateOpportunitySbuOverride:
 
     def test_non_privileged_role_rejected(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=OTHER_SBU_ID)
 
         with pytest.raises(AuthorizationError, match="Admin and General Manager"):
@@ -581,7 +615,7 @@ class TestCreateOpportunitySbuOverride:
         """role_name defaults to None (router omitting it, or a caller that forgot to
         pass it) — must fail closed, the same as any other non-privileged role."""
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=OTHER_SBU_ID)
 
         with pytest.raises(AuthorizationError):
@@ -590,7 +624,7 @@ class TestCreateOpportunitySbuOverride:
     def test_nonexistent_sbu_rejected(self):
         repo = _make_repo()
         repo.sbu_exists.return_value = False
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(sbu_id=OTHER_SBU_ID)
 
         with pytest.raises(NotFoundError, match="SBU"):
@@ -603,7 +637,7 @@ class TestCreateOpportunitySbuOverride:
         repo = _make_repo()
         repo.get_product_sbu_ids.side_effect = lambda ids: dict.fromkeys(ids, OTHER_SBU_ID)
         repo.get_stage.return_value = _make_stage(20, "QUALIFIED")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         data = _make_create_data(
             sbu_id=OTHER_SBU_ID,
             stage_id=STAGE_QUALIFIED_ID,
@@ -645,7 +679,7 @@ class TestCreateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_owner_manager_id.return_value = approver_id
         repo.get_user_role_name.return_value = "Area Manager"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = self._override_data(gate_override_approver_id=approver_id)
         result = service.create_opportunity(ACCOUNT_ID, data, created_by=USER_ID, sbu_id=SBU_ID)
@@ -688,7 +722,7 @@ class TestCreateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_owner_manager_id.return_value = uuid.uuid4()  # someone else
         repo.get_user_role_name.return_value = "Sales Staff"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="immediate manager"):
             service.create_opportunity(
@@ -701,7 +735,7 @@ class TestCreateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_owner_manager_id.return_value = approver_id
         repo.get_user_role_name.return_value = "Sales Staff"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="Area Manager role"):
             service.create_opportunity(
@@ -718,7 +752,7 @@ class TestCreateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_owner_manager_id.return_value = uuid.uuid4()  # unrelated manager
         repo.get_user_role_name.return_value = "General Manager"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, self._override_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -733,7 +767,7 @@ class TestCreateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(30, "DEMO")
         repo.get_owner_manager_id.return_value = approver_id
         repo.get_user_role_name.return_value = "General Manager"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID,
@@ -746,7 +780,7 @@ class TestCreateOpportunityGateOverride:
 
     def test_no_override_leaves_audit_fields_unstamped(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.create_opportunity(
             ACCOUNT_ID, _make_create_data(), created_by=USER_ID, sbu_id=SBU_ID
@@ -771,7 +805,7 @@ class TestUpdateOpportunity:
     def test_raises_not_found_for_missing_opportunity(self):
         repo = _make_repo()
         repo.get_for_update.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.update_opportunity(OPP_ID, OpportunityUpdate(name="X"), updated_by=USER_ID)
@@ -782,7 +816,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.update_opportunity(OPP_ID, OpportunityUpdate(), updated_by=USER_ID)
 
@@ -795,7 +829,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(OPP_ID, OpportunityUpdate(name="New Name"), updated_by=USER_ID)
 
@@ -808,7 +842,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         referrer_id = uuid.uuid4()
 
         service.update_opportunity(
@@ -823,7 +857,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID,
@@ -839,7 +873,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID, OpportunityUpdate(high_priority_manual=True), updated_by=USER_ID
@@ -920,12 +954,12 @@ class TestUpdateOpportunity:
         ]
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = False
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="Lead Source"):
             service.update_opportunity(
                 OPP_ID,
-                OpportunityUpdate(stage_id=STAGE_QUALIFIED_ID),
+                _noted(stage_id=STAGE_QUALIFIED_ID),
                 updated_by=USER_ID,
             )
 
@@ -942,11 +976,11 @@ class TestUpdateOpportunity:
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.get_lead_source.return_value = _make_lead_source("REPEAT_ORDER")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.update_opportunity(
             OPP_ID,
-            OpportunityUpdate(stage_id=STAGE_DEMO_ID),
+            _noted(stage_id=STAGE_DEMO_ID),
             updated_by=USER_ID,
         )
 
@@ -959,12 +993,12 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="WON"):
             service.update_opportunity(
                 OPP_ID,
-                OpportunityUpdate(status_id=STATUS_ACTIVE_ID),
+                _noted(status_id=STATUS_ACTIVE_ID),
                 updated_by=USER_ID,
             )
 
@@ -978,12 +1012,12 @@ class TestUpdateOpportunity:
             _make_status("LOST", is_terminal=True),  # new status
         ]
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="Loss Reason"):
             service.update_opportunity(
                 OPP_ID,
-                OpportunityUpdate(status_id=STATUS_LOST_ID),
+                _noted(status_id=STATUS_LOST_ID),
                 updated_by=USER_ID,
             )
 
@@ -997,10 +1031,10 @@ class TestUpdateOpportunity:
             _make_status("WON", is_terminal=True),
         ]
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
-            OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+            OPP_ID, _noted(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
         )
 
         assert opp.closed_at is not None
@@ -1017,7 +1051,7 @@ class TestUpdateOpportunity:
             _make_status("WON", is_terminal=True),
         ]
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         return opp, repo, service
 
     def test_transition_to_won_stamps_who_and_when(self):
@@ -1025,7 +1059,7 @@ class TestUpdateOpportunity:
 
         service.update_opportunity(
             OPP_ID,
-            OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True, full_payment_note="RTGS 88231"),
+            _noted(status_id=STATUS_WON_ID, confirm_full_payment=True, full_payment_note="RTGS 88231"),
             updated_by=USER_ID,
         )
 
@@ -1037,7 +1071,7 @@ class TestUpdateOpportunity:
         opp, repo, service = self._won_update_setup(80, "PAYMENT_PENDING")
 
         with pytest.raises(BusinessRuleViolation, match="full payment"):
-            service.update_opportunity(OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID), updated_by=USER_ID)
+            service.update_opportunity(OPP_ID, _noted(status_id=STATUS_WON_ID), updated_by=USER_ID)
         repo.update.assert_not_called()
         assert opp.full_payment_confirmed_at is None
 
@@ -1047,7 +1081,7 @@ class TestUpdateOpportunity:
 
         with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
             service.update_opportunity(
-                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+                OPP_ID, _noted(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
             )
         repo.update.assert_not_called()
 
@@ -1059,7 +1093,7 @@ class TestUpdateOpportunity:
 
         with pytest.raises(BusinessRuleViolation, match="Payment Pending"):
             service.update_opportunity(
-                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+                OPP_ID, _noted(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
             )
 
     def test_payment_pending_and_won_in_one_save_refused(self):
@@ -1076,12 +1110,12 @@ class TestUpdateOpportunity:
             _make_status("WON", is_terminal=True),
         ]
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="Payment Pending stage first"):
             service.update_opportunity(
                 OPP_ID,
-                OpportunityUpdate(stage_id=uuid.uuid4(), status_id=STATUS_WON_ID, confirm_full_payment=True),
+                _noted(stage_id=uuid.uuid4(), status_id=STATUS_WON_ID, confirm_full_payment=True),
                 updated_by=USER_ID,
             )
         repo.update.assert_not_called()
@@ -1094,7 +1128,7 @@ class TestUpdateOpportunity:
 
         with pytest.raises(BusinessRuleViolation, match="PO Date is required to mark"):
             service.update_opportunity(
-                OPP_ID, OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
+                OPP_ID, _noted(status_id=STATUS_WON_ID, confirm_full_payment=True), updated_by=USER_ID
             )
         repo.update.assert_not_called()
 
@@ -1104,7 +1138,7 @@ class TestUpdateOpportunity:
 
         service.update_opportunity(
             OPP_ID,
-            OpportunityUpdate(status_id=STATUS_WON_ID, confirm_full_payment=True, po_date=date(2026, 9, 15)),
+            _noted(status_id=STATUS_WON_ID, confirm_full_payment=True, po_date=date(2026, 9, 15)),
             updated_by=USER_ID,
         )
 
@@ -1124,17 +1158,17 @@ class TestUpdateOpportunity:
         ]
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="PO Date is required to advance"):
-            service.update_opportunity(OPP_ID, OpportunityUpdate(stage_id=uuid.uuid4()), updated_by=USER_ID)
+            service.update_opportunity(OPP_ID, _noted(stage_id=uuid.uuid4()), updated_by=USER_ID)
         repo.update.assert_not_called()
 
     def test_future_po_date_refused_on_any_save(self):
         opp = _make_opportunity()
         repo = _make_repo()
         repo.get_for_update.return_value = opp
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="future"):
             service.update_opportunity(
@@ -1147,7 +1181,7 @@ class TestUpdateOpportunity:
         repo = _make_repo()
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="can't be removed"):
             service.update_opportunity(OPP_ID, OpportunityUpdate(po_date=None), updated_by=USER_ID)
@@ -1158,7 +1192,7 @@ class TestUpdateOpportunity:
         repo = _make_repo()
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(70, "DELIVERY_INSTALLATION")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(OPP_ID, OpportunityUpdate(po_date=date(2026, 9, 20)), updated_by=USER_ID)
         assert opp.po_date == date(2026, 9, 20)
@@ -1168,7 +1202,7 @@ class TestUpdateOpportunity:
         opp = _make_opportunity()
         repo = _make_repo()
         repo.get_for_update.return_value = opp
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID, OpportunityUpdate(name="Renamed", full_payment_note="sneaky"), updated_by=USER_ID
@@ -1183,10 +1217,10 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="Cannot change the stage of a WON"):
-            service.update_opportunity(OPP_ID, OpportunityUpdate(stage_id=STAGE_LEAD_ID), updated_by=USER_ID)
+            service.update_opportunity(OPP_ID, _noted(stage_id=STAGE_LEAD_ID), updated_by=USER_ID)
         repo.update.assert_not_called()
 
     def test_resending_same_stage_on_won_opportunity_allowed(self):
@@ -1196,7 +1230,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(80, "PAYMENT_PENDING")
         repo.get_status.return_value = _make_status("WON", is_terminal=True)
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID, OpportunityUpdate(stage_id=stage_id, name="Renamed"), updated_by=USER_ID
@@ -1209,7 +1243,7 @@ class TestUpdateOpportunity:
         opp = _make_opportunity()
         repo = _make_repo()
         repo.get_for_update.return_value = opp
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID, OpportunityUpdate(name="Renamed", confirm_full_payment=True), updated_by=USER_ID
@@ -1227,10 +1261,10 @@ class TestUpdateOpportunity:
             _make_status("ACTIVE"),
             _make_status("LOST", is_terminal=True),
         ]
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
-            OPP_ID, OpportunityUpdate(status_id=STATUS_LOST_ID), updated_by=USER_ID
+            OPP_ID, _noted(status_id=STATUS_LOST_ID), updated_by=USER_ID
         )
 
         assert opp.closed_at is not None
@@ -1246,10 +1280,10 @@ class TestUpdateOpportunity:
             _make_status("ACTIVE"),
             _make_status("ON_HOLD"),
         ]
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
-            OPP_ID, OpportunityUpdate(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
+            OPP_ID, _noted(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
         )
 
         assert opp.closed_at is None
@@ -1265,12 +1299,12 @@ class TestUpdateOpportunity:
             _make_status("ON_HOLD"),
         ]
         repo.has_items.return_value = False
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="future date"):
             service.update_opportunity(
                 OPP_ID,
-                OpportunityUpdate(status_id=STATUS_ON_HOLD_ID),
+                _noted(status_id=STATUS_ON_HOLD_ID),
                 updated_by=USER_ID,
             )
 
@@ -1288,11 +1322,11 @@ class TestUpdateOpportunity:
         ]
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID,
-            OpportunityUpdate(stage_id=STAGE_QUALIFIED_ID),
+            _noted(stage_id=STAGE_QUALIFIED_ID),
             updated_by=USER_ID,
         )
 
@@ -1304,7 +1338,7 @@ class TestUpdateOpportunity:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(OPP_ID, OpportunityUpdate(name="X"), updated_by=USER_ID)
 
@@ -1321,7 +1355,7 @@ _DEMO_ITEMS = [OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_pri
 
 class TestHighChanceNeedsClosureDate:
     def _service(self, repo):
-        return OpportunityService(repository=repo, notification_service=_make_notification_service())
+        return _make_service(repo)
 
     def test_create_at_50_without_date_refused_with_exact_message(self):
         repo = _make_repo()
@@ -1452,7 +1486,7 @@ class TestHighChanceNeedsClosureDate:
         repo.get_for_update.return_value = opp
         repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status("LOST", is_terminal=True)]
 
-        self._service(repo).update_opportunity(OPP_ID, OpportunityUpdate(status_id=STATUS_LOST_ID), updated_by=USER_ID)
+        self._service(repo).update_opportunity(OPP_ID, _noted(status_id=STATUS_LOST_ID), updated_by=USER_ID)
         repo.update.assert_called_once_with(opp)
 
     def test_update_putting_on_hold_never_refused(self):
@@ -1465,7 +1499,7 @@ class TestHighChanceNeedsClosureDate:
         repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status("ON_HOLD")]
 
         self._service(repo).update_opportunity(
-            OPP_ID, OpportunityUpdate(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
+            OPP_ID, _noted(status_id=STATUS_ON_HOLD_ID), updated_by=USER_ID
         )
         repo.update.assert_called_once_with(opp)
 
@@ -1478,9 +1512,163 @@ class TestHighChanceNeedsClosureDate:
 
         with pytest.raises(BusinessRuleViolation, match="expected closure date"):
             self._service(repo).update_opportunity(
-                OPP_ID, OpportunityUpdate(status_id=STATUS_ACTIVE_ID), updated_by=USER_ID
+                OPP_ID, _noted(status_id=STATUS_ACTIVE_ID), updated_by=USER_ID
             )
         repo.update.assert_not_called()
+
+
+# ===========================================================================
+# update_opportunity — BR-OP-22 a note on every stage or status change
+# ===========================================================================
+
+class TestStageChangeNote:
+    def _setup(self, *, new_status: str = "ACTIVE", **opp_overrides):
+        repo = _make_repo()
+        repo.get_for_update.return_value = _make_opportunity(**opp_overrides)
+        is_terminal = new_status in {"WON", "LOST"}
+        repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status(new_status, is_terminal=is_terminal)]
+        repo.has_items.return_value = True
+        return repo, _make_service(repo)
+
+    def _on_hold(self, reactivation_date: date):
+        _, service = self._setup(
+            new_status="ON_HOLD", hold_reason_id=HOLD_REASON_ID, reactivation_date=reactivation_date
+        )
+        return service
+
+    def _to_lost(self, note: StageChangeNote | None) -> OpportunityUpdate:
+        return OpportunityUpdate(
+            change_note=note, status_id=STATUS_LOST_ID,
+            loss_reason_id=LOSS_REASON_PRICE_ID, competitor_name="Acme",
+        )
+
+    def _to_on_hold(self, **note_overrides) -> OpportunityUpdate:
+        return OpportunityUpdate(change_note=_note(**note_overrides), status_id=STATUS_ON_HOLD_ID)
+
+    def test_status_change_without_note_refused(self):
+        repo, service = self._setup(new_status="LOST")
+        with pytest.raises(BusinessRuleViolation, match="needs a note"):
+            service.update_opportunity(
+                OPP_ID, OpportunityUpdate(status_id=STATUS_LOST_ID, loss_reason_id=LOSS_REASON_PRICE_ID),
+                updated_by=USER_ID,
+            )
+        repo.update.assert_not_called()
+
+    def test_stage_change_without_note_refused(self):
+        _, service = self._setup()
+        with pytest.raises(BusinessRuleViolation, match="needs a note"):
+            service.update_opportunity(OPP_ID, OpportunityUpdate(stage_id=STAGE_QUALIFIED_ID), updated_by=USER_ID)
+
+    def test_note_without_a_change_refused(self):
+        _, service = self._setup()
+        with pytest.raises(BusinessRuleViolation, match="only taken with a stage or status change"):
+            service.update_opportunity(
+                OPP_ID, _noted(status_id=STATUS_ACTIVE_ID, name="X"),
+                updated_by=USER_ID,
+            )
+
+    def test_note_path_logs_a_note_with_its_next_action(self):
+        _, service = self._setup(new_status="LOST")
+        note = _note()
+        service.update_opportunity(OPP_ID, self._to_lost(note), updated_by=USER_ID)
+        kwargs = service.activity_service.log_stage_change_note.call_args.kwargs
+        assert kwargs["opportunity_id"] == OPP_ID
+        assert kwargs["account_id"] == ACCOUNT_ID
+        assert kwargs["notes"] == note.notes
+        assert kwargs["next_action_text"] == "Call to confirm"
+        assert kwargs["created_by"] == USER_ID
+        service.reminder_service.close_for_stage_change.assert_not_called()
+
+    def test_lost_needs_no_next_action(self):
+        # Plan D12.
+        _, service = self._setup(new_status="LOST")
+        note = _note(next_action_text=None, next_action_due_date=None)
+        service.update_opportunity(OPP_ID, self._to_lost(note), updated_by=USER_ID)
+        service.activity_service.log_stage_change_note.assert_called_once()
+
+    def test_active_change_needs_a_next_action(self):
+        service = self._on_hold(TOMORROW + timedelta(days=30))
+        with pytest.raises(BusinessRuleViolation, match="needs a next action"):
+            service.update_opportunity(
+                OPP_ID, self._to_on_hold(next_action_text=None, next_action_due_date=None), updated_by=USER_ID
+            )
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    def test_on_hold_next_action_after_reactivation_date_refused(self):
+        reactivation = TOMORROW + timedelta(days=5)
+        service = self._on_hold(reactivation)
+        # 00:30 IST the day after is still the re-activation date in UTC --
+        # the comparison must use the IST day.
+        late = datetime.combine(reactivation + timedelta(days=1), time(0, 30), tzinfo=_IST).astimezone(UTC)
+        with pytest.raises(BusinessRuleViolation, match="re-activation date"):
+            service.update_opportunity(OPP_ID, self._to_on_hold(next_action_due_date=late), updated_by=USER_ID)
+
+    def test_on_hold_next_action_on_reactivation_date_allowed(self):
+        reactivation = TOMORROW + timedelta(days=5)
+        service = self._on_hold(reactivation)
+        on_the_day = datetime.combine(reactivation, time(23, 30), tzinfo=_IST)
+        service.update_opportunity(OPP_ID, self._to_on_hold(next_action_due_date=on_the_day), updated_by=USER_ID)
+        service.activity_service.log_stage_change_note.assert_called_once()
+
+    def test_open_own_next_action_must_be_closed_not_gone_round(self):
+        # BR-ACT-11 / plan D13.
+        _, service = self._setup(new_status="LOST")
+        service.reminder_service.has_open_own_on_opportunity.return_value = True
+        with pytest.raises(BusinessRuleViolation, match="open next action on this Opportunity"):
+            service.update_opportunity(OPP_ID, self._to_lost(_note()), updated_by=USER_ID)
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    def test_close_path_closes_the_changers_next_action(self):
+        _, service = self._setup(new_status="LOST")
+        reminder_id = uuid.uuid4()
+        note = _note(
+            close_reminder_id=reminder_id, activity_type="CALL", next_action_text=None, next_action_due_date=None
+        )
+        service.update_opportunity(OPP_ID, self._to_lost(note), updated_by=USER_ID)
+        call = service.reminder_service.close_for_stage_change.call_args
+        assert call.args == (reminder_id,)
+        assert call.kwargs["opportunity_id"] == OPP_ID
+        assert call.kwargs["closed_by"] == USER_ID
+        assert call.kwargs["data"].is_completed is True
+        assert call.kwargs["data"].activity_type == "CALL"
+        assert call.kwargs["data"].notes == note.notes
+        service.activity_service.log_stage_change_note.assert_not_called()
+
+    def test_note_recorded_after_the_change_is_flushed(self):
+        # The closing's Won/Lost follow-up exemption reads the new status.
+        repo, service = self._setup(new_status="LOST")
+        order = []
+        repo.update.side_effect = lambda obj: order.append("flush") or obj
+        service.activity_service.log_stage_change_note.side_effect = lambda **_: order.append("note")
+        service.update_opportunity(OPP_ID, self._to_lost(_note()), updated_by=USER_ID)
+        assert order == ["flush", "note"]
+
+    def test_change_refused_without_the_activity_services(self):
+        opp = _make_opportunity()
+        repo = _make_repo()
+        repo.get_for_update.return_value = opp
+        repo.get_status.side_effect = [_make_status("ACTIVE"), _make_status("LOST", is_terminal=True)]
+        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        with pytest.raises(RuntimeError):
+            service.update_opportunity(OPP_ID, self._to_lost(_note()), updated_by=USER_ID)
+
+
+class TestStageChangeNoteSchema:
+    def test_note_without_a_next_action_to_close_must_be_a_note(self):
+        with pytest.raises(ValidationError, match="is a Note"):
+            _note(activity_type="CALL")
+
+    def test_manager_note_type_refused(self):
+        with pytest.raises(ValidationError, match="not a valid type"):
+            _note(close_reminder_id=uuid.uuid4(), activity_type="MANAGER_NOTE")
+
+    def test_next_action_text_and_date_together(self):
+        with pytest.raises(ValidationError, match="together"):
+            _note(next_action_due_date=None)
+
+    def test_blank_note_refused(self):
+        with pytest.raises(ValidationError):
+            _note(notes="")
 
 
 # ===========================================================================
@@ -1497,7 +1685,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.get_owner_manager_id.return_value = approver_id
         repo.get_user_role_name.return_value = "Area Manager"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(
             OPP_ID,
@@ -1623,7 +1811,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(50, "NEGOTIATION")
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(BusinessRuleViolation, match="Expected Closure Date"):
             service.update_opportunity(
@@ -1651,7 +1839,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(50, "NEGOTIATION")
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.update_opportunity(
             OPP_ID,
@@ -1679,7 +1867,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_stage.return_value = _make_stage(20, "QUALIFIED")
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.has_items.return_value = True
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         result = service.update_opportunity(
             OPP_ID,
@@ -1697,7 +1885,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_status.return_value = _make_status("ACTIVE")
         repo.get_owner_manager_id.return_value = uuid.uuid4()  # someone else
         repo.get_user_role_name.return_value = "Sales Staff"
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(AuthorizationError, match="immediate manager"):
             service.update_opportunity(
@@ -1724,7 +1912,7 @@ class TestUpdateOpportunityGateOverride:
         repo.get_for_update.return_value = opp
         repo.get_stage.return_value = _make_stage(10, "LEAD")
         repo.get_status.return_value = _make_status("ACTIVE")
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_opportunity(OPP_ID, OpportunityUpdate(name="New Name"), updated_by=uuid.uuid4())
 
@@ -1746,7 +1934,7 @@ class TestReplaceSplits:
     def test_raises_not_found_for_missing_opportunity(self):
         repo = _make_repo()
         repo.get_for_update.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.replace_splits(
@@ -1756,7 +1944,7 @@ class TestReplaceSplits:
     def test_empty_splits_list_passes_without_sum_check(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.replace_splits(
             OPP_ID, SplitsBulkUpdate(splits=[]), updated_by=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID
@@ -1767,7 +1955,7 @@ class TestReplaceSplits:
     def test_splits_not_summing_to_100_raises(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("60")),
@@ -1779,7 +1967,7 @@ class TestReplaceSplits:
     def test_splits_summing_to_100_calls_repository(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         uid1, uid2 = uuid.uuid4(), uuid.uuid4()
         data = SplitsBulkUpdate(splits=[
@@ -1797,7 +1985,7 @@ class TestReplaceSplits:
     def test_single_100_percent_split_passes(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
@@ -1808,7 +1996,7 @@ class TestReplaceSplits:
     def test_split_audit_fields_set(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100")),
@@ -1827,7 +2015,7 @@ class TestReplaceSplits:
         uid = uuid.uuid4()
         repo.get_user_sbu_ids.side_effect = lambda ids: {uid: other_sbu}
         repo.get_user_display_names.side_effect = lambda ids: {uid: "Nishad K V"}
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=uid, split_percentage=Decimal("100"))])
         # Names the person, not their raw user id (found in the 2026-09-23 E2E).
@@ -1839,7 +2027,7 @@ class TestReplaceSplits:
     def test_new_participant_from_same_sbu_passes(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(
             splits=[SplitCreate(user_id=uuid.uuid4(), split_percentage=Decimal("100"))]
@@ -1861,7 +2049,7 @@ class TestReplaceSplits:
         # get_user_sbu_ids should never even be consulted for the legacy participant --
         # if it were, this would resolve to other_sbu and fail the check.
         repo.get_user_sbu_ids.side_effect = lambda ids: {legacy_user_id: other_sbu, **{i: SBU_ID for i in ids}}
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[
             SplitCreate(user_id=legacy_user_id, split_percentage=Decimal("100")),
@@ -1878,7 +2066,7 @@ class TestReplaceSplits:
         repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
         other_sbu = uuid.uuid4()
         repo.get_user_sbu_ids.side_effect = lambda ids: {USER_ID: other_sbu}
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
         service.replace_splits(OPP_ID, data, updated_by=USER_ID, role_name="General Manager", user_sbu_id=SBU_ID)
@@ -1893,7 +2081,7 @@ class TestReplaceSplits:
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
         repo.get_user_sbu_ids.side_effect = lambda ids: {other_user_id: other_sbu}
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(
             splits=[SplitCreate(user_id=other_user_id, split_percentage=Decimal("100"))]
@@ -1909,7 +2097,7 @@ class TestReplaceSplits:
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()  # sbu_id=SBU_ID
         repo.get_user_sbu_ids.side_effect = lambda ids: {USER_ID: other_sbu}
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = SplitsBulkUpdate(splits=[SplitCreate(user_id=USER_ID, split_percentage=Decimal("100"))])
         with pytest.raises(BusinessRuleViolation, match="SBU"):
@@ -1974,7 +2162,7 @@ def _split_edit_service(status_code: str = "ACTIVE") -> tuple[OpportunityService
     repo.get_for_update.return_value = _make_opportunity(owner_id=OWNER_ID)
     repo.get_status.return_value = _make_status(status_code, is_terminal=status_code in {"WON", "LOST"})
     repo.list_splits.return_value = [MagicMock(spec=Split, user_id=OWNER_ID)]
-    service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+    service = _make_service(repo)
     return service, repo
 
 
@@ -2098,7 +2286,7 @@ class TestSplitEditAuthority:
 
     def test_can_edit_missing_opportunity_raises_not_found(self):
         repo = _make_repo()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.can_edit_splits(OPP_ID, user_id=USER_ID, role_name="Sales Staff", user_sbu_id=SBU_ID)
 
@@ -2111,7 +2299,7 @@ class TestReplaceItems:
     def test_raises_not_found_for_missing_opportunity(self):
         repo = _make_repo()
         repo.get_for_update.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.replace_items(
@@ -2123,7 +2311,7 @@ class TestReplaceItems:
     def test_empty_items_clears_all(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.replace_items(OPP_ID, ItemsBulkUpdate(items=[]), updated_by=USER_ID)
 
@@ -2132,7 +2320,7 @@ class TestReplaceItems:
     def test_items_are_constructed_correctly(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = ItemsBulkUpdate(items=[
             OpportunityItemCreate(
@@ -2153,7 +2341,7 @@ class TestReplaceItems:
     def test_line_type_defaults_to_product(self):
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = ItemsBulkUpdate(items=[
             OpportunityItemCreate(product_id=PRODUCT_ID, quantity=1, unit_price_lakhs=Decimal("5.00")),
@@ -2168,7 +2356,7 @@ class TestReplaceItems:
         # catalog product_id.
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = ItemsBulkUpdate(items=[
             OpportunityItemCreate(
@@ -2195,7 +2383,7 @@ class TestAddItem:
         repo = _make_repo()
         repo.get_for_update.return_value = _make_opportunity()
         repo.add_item.side_effect = lambda item: item
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         data = OpportunityItemCreate(
             description="GE LOGIQ P9 ultrasound, 2018, working condition",
@@ -2236,7 +2424,7 @@ class TestAddStakeholder:
     def test_raises_not_found_for_missing_opportunity(self):
         repo = _make_repo()
         repo.get_for_update.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="Opportunity"):
             service.add_stakeholder(
@@ -2250,7 +2438,7 @@ class TestAddStakeholder:
         repo.get_for_update.return_value = _make_opportunity()
         stakeholder_id = uuid.uuid4()
         repo.get_stakeholder_link.return_value = MagicMock()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(ConflictError, match="already linked"):
             service.add_stakeholder(
@@ -2264,7 +2452,7 @@ class TestAddStakeholder:
         repo.get_for_update.return_value = _make_opportunity()
         repo.get_stakeholder_link.return_value = None
         stakeholder_id = uuid.uuid4()
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.add_stakeholder(
             OPP_ID,
@@ -2293,7 +2481,7 @@ class TestRemoveStakeholder:
     def test_raises_not_found_when_not_linked(self):
         repo = _make_repo()
         repo.get_stakeholder_link.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="not linked"):
             service.remove_stakeholder(OPP_ID, uuid.uuid4())
@@ -2302,7 +2490,7 @@ class TestRemoveStakeholder:
         repo = _make_repo()
         link = MagicMock()
         repo.get_stakeholder_link.return_value = link
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.remove_stakeholder(OPP_ID, uuid.uuid4())
 
@@ -2317,7 +2505,7 @@ class TestUpdateStakeholder:
     def test_raises_not_found_when_not_linked(self):
         repo = _make_repo()
         repo.get_stakeholder_link.return_value = None
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         with pytest.raises(NotFoundError, match="not linked"):
             service.update_stakeholder(
@@ -2328,7 +2516,7 @@ class TestUpdateStakeholder:
         repo = _make_repo()
         link = MagicMock(influence_level="LOW", decision_role="Old Role", notes="Old notes")
         repo.get_stakeholder_link.return_value = link
-        service = OpportunityService(repository=repo, notification_service=_make_notification_service())
+        service = _make_service(repo)
 
         service.update_stakeholder(
             OPP_ID, uuid.uuid4(),
