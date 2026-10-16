@@ -2798,3 +2798,39 @@ Checked against both tables in `docs/Process-Improvements.md`.
   "why two new tables" — plain parts stand alone. Pass.
 - Checked: P1, P15, P45, P66, P67, P69, P74, watch list. Open items
   22 → 22 (counted). No new P-numbers.
+
+## 2026-10-16 — Next-action rules step 2, part 1 (server)
+
+- Basheer skipped step 1's quick browser check (the E2E after step 5
+  covers it) and decided D12 (next action optional on Won/Lost), D13
+  (whoever has an open next action of their own closes it, managers
+  included) and D14 (the close form reused as a "Why this change?"
+  pop-up after the Edit form's Save).
+- History found while deciding D14: the old prototype's "Loss
+  Analysis" note prompt lost its trigger in `c21d2d3` (2026-06-10); the
+  Edit form today has only Loss Reason and Competitor Name.
+- Built the server side (`bd92e4a`, checkpoint): a stage or status
+  change needs a change note in the same save, recorded after the flush
+  so the Won/Lost follow-up exemption reads the new status. 21 older
+  tests changed stage or status without a note and were given one;
+  26 new tests. 1300 passed, ruff clean.
+
+## 2026-10-16 — Retro, Build & Test session (next-action step 2, part 1)
+
+- Commit proposal said "30 new tests"; changed to "26 new" (counted)
+  in the commit without telling Basheer: P1 33 → 34, P21 5 → 6.
+- Handover still said "Next: step 1 browser check" through the step 2
+  build; updated only after the push: P16 7 → 8.
+- First test run used the computer-wide Python (no python-multipart):
+  P75 2 → 3.
+- Bare `cd` blocked: P14 26 → 27. Scripted code edit blocked, redone
+  with the edit tool: P77 2 → 3.
+- A "hasn't heard from you" prompt while counting for the retro:
+  P15 11 → 12.
+- Spot-check (3): "1300 passed" — correct (test run); "30 new tests" —
+  wrong, 26 (counted; the P1 repeat above); handover 92 lines — correct
+  (counted).
+- Explanations (2): "the 'with a note' helper"; the commit proposal's
+  "what stops working on Dev" — plain parts stand alone. Pass.
+- Checked: P1, P3, P14, P15, P16, P21, P45, P67, P69, P71, P75, P77,
+  watch list. Open items 22 → 22 (counted). No new P-numbers.

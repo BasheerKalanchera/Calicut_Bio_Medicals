@@ -75,6 +75,19 @@ Decided for this plan:
   applies as on the Opportunity page; left blank, the activity is
   hospital-level and unchanged. Built in step 1 (added at the step 1
   check-in: today's form has no Opportunity picker there) — Basheer, 2026-10-15
+- D12. Marking Won or Lost: the stage-change Note's next action is
+  optional, as the follow-up already is when closing a next action. A rep
+  may still add one to keep the relationship going — Basheer, 2026-10-16
+- D13. Whoever has an open next action of their own on the Opportunity
+  closes it as the stage-change note, managers included. A manager with
+  none writes a Note, and the owner's next action stays open — Basheer, 2026-10-16
+- D14. The stage-change note reuses the close form as a second pop-up
+  after the Edit form's Save, titled "Why this change?". Its Save stores
+  the change, the closing (or the Note) and the follow-up together; its
+  Cancel returns to the Edit form with nothing saved. With no open next
+  action of one's own, the same pop-up asks for a Note and a next action
+  (added at the step 2 check-in; the Edit form today has no written note
+  for Lost, only Loss Reason and Competitor Name) — Basheer, 2026-10-16
 
 ## Figures and sources
 

@@ -76,9 +76,17 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 ## Next-action rules — plan approved 2026-10-14, building
 - `docs/Next-Action-Rules-Implementation-Plan.md`; E2E test plan
   `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`. Step 1 built
-  2026-10-15 (`3d38e75`, checkpoint). **Next:** quick browser check of
-  step 1 on Dev (writes permanent activities: ask Basheer first, name the
-  records), then check in before step 2 (a note on every stage or status
-  change).
+  2026-10-15 (`3d38e75`). Step 1's quick browser check skipped
+  (Basheer, 2026-10-16: the E2E after step 5 covers it).
+- Step 2 part 1 (server) built and pushed 2026-10-16 (`bd92e4a`,
+  checkpoint). Until part 2 lands, a stage or status change from the
+  Edit form is refused on Dev ("needs a note").
+- **Next:** step 2 part 2 — the "Why this change?" pop-up (D14) on the
+  Opportunity screen's Edit form: reuse `CloseReminderModal`'s fields;
+  own open next action → close it, else Note + next action (optional on
+  Won/Lost, due by re-activation date for On Hold); one PATCH with
+  `change_note`. Then tsc, lint, pytest; propose the commit.
+- Uncommitted, for the next docs batch: plan D12–D14 and BR-OP-22
+  wording (Business-Rules); check E2E test plan section C against them.
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
