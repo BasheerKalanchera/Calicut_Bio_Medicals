@@ -1,7 +1,8 @@
 # Trade-In / Buyback Intake & Outcome Tracking — Discussion Summary
 
-**Status:** Draft — for review with Fazal and Haroon before any build work
-starts. Nothing described here is built yet.
+**Status:** **Closed** (Basheer, 2026-10-16) — buyback is already built
+into the Opportunity; nothing further planned from this paper. Kept as the
+original summary.
 **Date:** 2026-08-10
 **Prepared by:** Basheer Kalanchera (with Claude)
 **Purpose:** Plain-language summary of the follow-on trade-in/buyback intake

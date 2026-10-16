@@ -17,6 +17,8 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   Open (unanswered): Backlog items for deletes with no "Are you sure?"
   (Opportunity documents, stakeholder links) and the Lead Source picker
   showing "REPEAT_ORDER"-style codes?
+- **Must land first, too:** Annual Target Planning (D17, Basheer
+  2026-10-16) — section below.
 - **The move plan** (to write, own approval) starts with Query Load plan
   section 9, steps 2–9 (UAT's fix 3 copy into `main`, remove `uat-fix3`)
   — Basheer, 2026-10-14.
@@ -34,10 +36,13 @@ items go to Progress-Archive; unstarted work goes to Backlog._
   2026-10-16). Their main ask, a yearly target layer on Brand Target
   Tracking and Target & Coverage Planning:
   `docs/Discussion-Annual-Target-Planning-2026-10.md` (all answered
-  2026-10-16). Plan drafted 2026-10-16:
-  `docs/Annual-Target-Planning-Implementation-Plan.md` (Draft; D1–D10
-  decided, D11–D17 proposed). **Next:** Basheer answers D11–D17; then
-  the E2E test plan. Build after the UAT move above.
+  2026-10-16). Plan approved 2026-10-16:
+  `docs/Annual-Target-Planning-Implementation-Plan.md` (D1–D22a — brand
+  targets yearly only, yearly Target vs Actuals view, plan notifications
+  on the bell; built before the next UAT move). E2E test plan written
+  2026-10-16: `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`.
+  Neither committed yet. **Next:** build step 1 (check in first); a
+  mock-up of the yearly Target vs Actuals view comes before step 5.
 
 ## Harness Engineering — plan approved 2026-10-08, building
 

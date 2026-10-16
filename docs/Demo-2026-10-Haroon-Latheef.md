@@ -35,12 +35,12 @@ its own page.
 
 ## To settle with them
 
-- **Stage name:** "Payment Pending" is the working name, awaiting their
-  confirmation since ~2026-10-05 (alternatives "Awaiting Payment",
-  "Collection Pending").
-- **Stall alerts** for Delivery & Installation are not live yet — tell them.
+- **Stage name:** settled — "Payment Pending", confirmed by Haroon and
+  Latheef Bhai (Basheer, 2026-10-16).
 - **Reps follow the new closing rules (PO date, payment confirmation) from
-  the day UAT moves** — who tells the team, and when.
+  the day UAT moves** — settled: Basheer demos the new features to the
+  sales leads first, then decides with Haroon and Latheef Bhai how to tell
+  the rest of the team (Basheer, 2026-10-16).
 
 ## Caution
 

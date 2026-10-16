@@ -4,8 +4,11 @@
 Bhai, and the Cabio leadership team.
 **Prepared:** 2026-09-11. **Updated:** 2026-09-14 — Latheef Bhai's voice message added
 a second problem (time-bound special pricing, §5.1), a new open question.
-**Status:** Basheer's open questions resolved 2026-09-11 (§6) — awaiting Haroon/
-Latheef Bhai's review and final sign-off. Not yet scoped, not yet built.
+**Status:** **Parked for Phase 2 (Basheer, 2026-10-16)** — not a signed
+requirement. Basheer's open questions were resolved 2026-09-11 (§6); Haroon/
+Latheef Bhai's sign-off waits for Phase 2. Product cost (BR-CAT-04) is asked
+of Haroon separately, as the signed Margin Report needs it (Backlog "Waiting
+on people"). Not scoped, not built.
 
 ---
 
@@ -212,8 +215,8 @@ since there's no fresh quoting happening.
    is scoped.
 
 **All questions from the original 2026-09-11 paper resolved; item 6 above (added
-2026-09-14) is new and still open — awaiting Haroon/Latheef Bhai's review of the paper
-as a whole before this moves to a real implementation plan.**
+2026-09-14) is new and still open. The paper as a whole is parked for Phase 2
+(Basheer, 2026-10-16).**
 
 ## 7. Recommendation (proposed, not yet decided)
 

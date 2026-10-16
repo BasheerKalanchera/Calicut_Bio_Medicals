@@ -3,7 +3,9 @@
 **Status:** Discussion — for Haroon (and Latheef Bhai) to choose the measures
 and the shape. Nothing built. Q2 answered and a Finance download asked for,
 2026-10-07 — see section 7. Parked by Basheer 2026-10-07 while Target vs
-Actuals is finished.
+Actuals is finished. **2026-10-16:** Q3 and Q4 answered; the Finance
+download (7.2–7.4) parked for Phase 2 — see section 8. Still open with
+Haroon: Q1, the measures.
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** Basheer, 2026-10-03: "Is a report of a salesperson's performance
@@ -170,6 +172,10 @@ the chat.
 
 ### 7.2 Incentives: a report Cabio can send to Finance
 
+> **Parked for Phase 2 (Basheer, 2026-10-16)** — 7.2 to 7.4 are kept as
+> written; see section 8. "Monthly" below was a drafting assumption, not
+> a decision: the frequency is undecided (Basheer leans quarterly).
+
 - **Today (Basheer):** Finance works out incentives from Haroon's inputs,
   because no system shows what each person should get.
 - **Need (Basheer):** from next month, Cabio should have a report it can
@@ -285,3 +291,16 @@ moved to UAT before the first report is due.
     'date closed'").
   - `po_date` is on Dev only.
   - UAT has 5 shared Opportunities, with Haroon on 4 of them.
+
+## 8. Decisions — 2026-10-16 (Basheer)
+
+- **Q3 (lighter or fuller):** one dedicated page.
+- **Q4 (export):** an Excel download.
+- **Finance incentive download (7.2–7.4):** not a signed requirement —
+  parked for Phase 2. Answers so far, kept for then:
+  - Cabio pays 50 % of the incentive at PO and the rest once full payment
+    is received; for a retention order, the second half when the
+    Opportunity is closed.
+  - How often the file goes to Finance: undecided; Basheer leans
+    quarterly. A question for Haroon in Phase 2.
+- **Still open:** Q1, the measures — on Backlog "Waiting on people".

@@ -50,7 +50,7 @@ Where every sales deal is tracked from first contact through to close.
 | # | Signed Feature ID | Requirement | PRD Section | Status | Notes |
 | :---: | :--- | :--- | :--- | :--- | :--- |
 | 13 | 1.1 | Lead source, campaign, region capture | 3.1 Lead Capture | Done |  |
-| 14 | 1.3 | Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category | 3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria | Partial | Deal stages and approval checkpoints are fully in place. Stage-specific time limits, so a stalled deal gets flagged sooner, are defined and scheduled to go live shortly. |
+| 14 | 1.3 | Stage pipeline (Scanning→Qualified→Demo→Negotiation→Closure) with time-in-stage limits by product category | 3.3 Opportunity Lifecycle + 3.4 Stage Exit Criteria | Partial | Opportunity stages, and the checks on what must be filled in before moving to the next stage, are fully in place. Time limits for each stage are agreed; the automatic alerts are switched off while the sales team settles into regular logging, and will be switched on later. |
 | 15 | 1.3 | Systematic + manual win probability | 3.7 Win Probability Management | Done |  |
 | 16 | 1.3 | Mandatory closure date at Negotiation | 3.4 Stage Exit Criteria → Negotiation | Done |  |
 | 17 | 1.4 | Lost deal intelligence: messages, loss analysis, competitor tagging | 3.10 Lost Deal Intelligence | Partial | Reasons and competitors are captured for every lost deal; a field for the specific competing product is still to be added. |
@@ -164,4 +164,4 @@ Proposed additions beyond the signed scope, not yet confirmed or built. Moves in
 
 | # | What's proposed | Status |
 | :---: | :--- | :--- |
-| 1 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Basheer's open questions resolved; awaiting Haroon/Latheef Bhai's review and final sign-off. `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |
+| 1 | Replace the paper "Controlled Copy" price sheet with an in-app, per-item pricing and discount-authority ladder (Staff/Manager/CEO floors), plus a formal time-bound mechanism for special/promotional pricing so an offered rate can be looked up later instead of relying on memory. | Parked for Phase 2 (Basheer, 2026-10-16). `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. |

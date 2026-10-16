@@ -38,7 +38,7 @@ Finance's territory Sales OS should reach — not just adding a field.
 
 **Visibility + an actual gate**, not a cosmetic stage:
 
-- **New stage: "Payment Pending"** (working name — see Open Questions), positioned
+- **New stage: "Payment Pending"** (name confirmed by Haroon and Latheef Bhai — Basheer, 2026-10-16), positioned
   **after Delivery & Installation** in `opportunity_stage` (`display_order`, proposed
   `80` — Delivery & Installation is currently `70`). Pure master-data addition, no
   schema change for the stage itself, consistent with `ADR-028`'s reasoning for making

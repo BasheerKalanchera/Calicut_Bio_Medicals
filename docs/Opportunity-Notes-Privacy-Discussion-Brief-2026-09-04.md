@@ -3,8 +3,9 @@
 **Date:** 2026-09-04
 **Raised by:** Haroon, after noticing Nishad and Fazal could see opportunities
 Haroon had personally entered in their zones
-**Status:** Discussion only — nothing built yet. Basheer wants Haroon's buy-in
-on the approach below before an implementation plan gets written.
+**Status:** **Settled** (Basheer, 2026-10-16). Built 2026-09-05 (`552c0ee`);
+plan `docs/Opportunity-Notes-Privacy-Implementation-Plan.md`. Kept as the
+original brief.
 
 ## The problem Haroon raised
 

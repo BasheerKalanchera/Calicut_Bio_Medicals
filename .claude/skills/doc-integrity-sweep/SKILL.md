@@ -20,7 +20,7 @@ and log it as partial.
 2. Read the last line of `docs/Doc-Integrity-Sweep-Log.md` for the date of
    the previous sweep. Everything below covers **changes since that date**.
 
-## The seven checks
+## The eight checks
 
 1. **Broken file pointers:** run `sh scripts/find_broken_doc_links.sh`. Fix
    the ones in (a) files changed since the last sweep and (b) today's
@@ -64,6 +64,15 @@ and log it as partial.
    plan's reasoning untouched. A commit marked partial or "E2E pending" is not
    Built; say so in the Status. If git can't confirm either way, list it as a
    needs-Basheer finding. *(2026-10-04: 18 plans were found stale in one sweep.)*
+8. **Questions waiting on people:** read the Backlog's "Waiting on people"
+   list. Any line asked more than 14 days ago goes to Basheer as a
+   needs-Basheer finding: "still open, or settled?". Settled → record the
+   answer in its home doc and remove the line; still open → add today's
+   date as "checked". Also: any paper or plan that says "awaiting",
+   "pending" or "to confirm" with someone must have a line in the list; if
+   it doesn't, add one. Answers given on a call change nothing in git, so
+   checks 2–7 never see them. *(2026-10-16: 18 questions found marked
+   open across a dozen docs, some months old.)*
 
 ## Reporting and fixing
 

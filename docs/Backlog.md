@@ -7,6 +7,27 @@ actively being worked on right now. Items here move out once picked up
 authoritative doc — ADR, Business-Rules, a standards doc — per CLAUDE.md's
 Session Handoff rule).
 
+## Waiting on people
+
+One line per question someone outside the team must answer: who, when
+asked, what, and where the detail lives. The detail stays in that doc;
+this is the single list to call from. When answered, record the answer in
+its home doc and delete the line. The tidy-up sweep (check 8) asks Basheer
+about any line older than 14 days (Basheer, 2026-10-16).
+
+- **Haroon** (asked 2026-10-16) — which measures go on the Salesperson
+  Performance page: results, conversion, pipeline, activity; drop or add?
+  `docs/Discussion-Salesperson-Performance-Report-2026-10.md` section 5 Q1.
+- **Haroon** (asked 2026-10-16) — product cost (approved by him
+  2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
+  date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
+  Margin Report (Traceability 11.1) depends on it.
+- **Haroon and Latheef Bhai** (to ask; added 2026-10-16) — do the vendors
+  (EDAN, SonoScape and the rest) set their yearly targets April–March,
+  like the app, or January–December? The app stays April–March (D1);
+  this only checks it. `docs/Annual-Target-Planning-Implementation-Plan.md`
+  D1 and "Calendar-year vendor targets".
+
 ## Parked initiatives
 
 ### Query load fixes — fixes 1–3 on UAT; fix 4 after the next UAT move (2026-10-06)
@@ -27,7 +48,7 @@ goes into that move's plan.
 - **If any row will miss the 11th,** say so to Basheer by Fri 2026-10-09,
   with the reason and a new date — not on Sunday.
 
-### Duplicate hospital and sale: Life Line Health Care, Mangalore — waiting on Haroon (2026-10-08)
+### Duplicate hospital and sale: Life Line Health Care, Mangalore — credit decided, clean-up plan next (2026-10-16)
 
 - **What:** one S70 sale (₹30 L) is Won twice on UAT — Haroon's at
   "Life Line Health Care BC Road Manglore" (keep) and Fahad's at "Life
@@ -35,9 +56,8 @@ goes into that move's plan.
   the duplicate warning reached UAT on 8 Sep). Counted twice in revenue
   and Target vs Actuals until cleaned up. Lookup results: Progress-Archive
   2026-10-08.
-- **Waiting on:** Haroon — credit to him, Fahad, or shared (write-up
-  `C:\Backups\CabioUAT\data_consistency_reports\drafts\Life-Line-Duplicate-Sale-2026-10-08.pdf`,
-  for Basheer to send).
+- **Credit decided:** the sale goes to Haroon (Basheer, 2026-10-16).
+  Next: the clean-up plan below, its own approval.
 - **Clean-up (needs its own plan before any change — Basheer: "figure out
   and do it carefully"):** (1) agreed credit on the kept Opportunity;
   (2) remove the duplicate Opportunity — its 3 visit notes and 2 open
@@ -460,13 +480,14 @@ Pipeline Report and Product Performance per-person views and their
 click-through lists — need a short plan, and go to UAT together with
 Target vs Actuals.
 
-### Product Catalog Brand/Category/Model: Done 2026-09-23, three minor clean-ups left
+### Product Catalog Brand/Category/Model: Done 2026-09-23, two minor clean-ups left
 
 Built `cd0d8ab`, full manual E2E pass complete 2026-09-23 (all 30 steps
 PASS, `docs/Product-Catalog-Brand-Category-Model-Manual-E2E-Test-Plan.md`),
 bugs fixed in `e1aaba4`/`bc460a4` — Feature 4.1 flipped to Done. On UAT
 since 2026-09-27. Left over, none blocking:
-1. **Haroon's spot-check of the UAT catalog — waiting on Haroon.** He
+1. ~~**Haroon's spot-check of the UAT catalog.**~~ **Done — names fixed
+   on UAT (Basheer, 2026-10-16).** He
    reviews the Brand/Category/Model lists and confirms or corrects seven
    names copied verbatim from his own corrected sheet: "Kolkatta",
    "Boyils", "Vital Signe Monitor", "IX Nelcore" vs "iM50 Nellcore",
@@ -568,7 +589,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   split-% credit answered (yes); a one-line-per-person download for
   Finance's incentive calculation is wanted from next month (first month
   still to confirm); parked until Target vs Actuals is done — detail in
-  the discussion note, section 7.
+  the discussion note, section 7. **2026-10-16 (Basheer):** one dedicated
+  page with an Excel download. The Finance incentive file (sections
+  7.2–7.4, frequency undecided) is not a signed requirement — **parked for
+  Phase 2**, with the answers so far: 50 % of incentive at PO, 50 % at
+  full payment; for a retention order, the second half at close. Open:
+  the measures (Waiting on people, above).
 
 - **Payment collection: overdue alerts, Finance list, retention, payment
   terms per order — moved to a discussion paper 2026-10-13.** Latheef Bhai
@@ -578,6 +604,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   limit, retention and "fully paid") are now its questions 3, 1–2 and 6.
   Detail: `docs/Discussion-Collections-and-Cycle-Time-2026-10.md`;
   Traceability beyond-contract row 3.
+  **Retention orders (Q6), 2026-10-16 (Basheer):** about 5 % of
+  Opportunities take almost a year to be fully paid. Starting idea: the
+  GM approves closing one as Won once everything except the agreed
+  retention is paid; amount and release date recorded, reminder on that
+  date. **Parked until "Won only after full payment" has run on UAT** —
+  field feedback may change or roll back the rule, so nothing built now.
 
 - **Stage changes only by closing a next action (Basheer, 2026-10-12;
   parked until the team is comfortable with BR-OP-22).** Today's agreed
@@ -1030,9 +1062,10 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   customer-facing quoting price this Discussion Brief is actually about, which
   stays open. Full write-up, industry comparison (Salesforce/Zoho/Dynamics),
   proposed data model, and open questions for Haroon/Latheef Bhai:
-  `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Status: DRAFT,
-  awaiting their decision on quoting price — supersedes this entry's framing,
-  not yet scoped or built.** Now also tracked in `docs/Signed-Requirements-
+  `docs/Discussion-Pricing-Discount-Authority-2026-09.md`. **Parked for
+  Phase 2 (Basheer, 2026-10-16)** — not a signed requirement; the paper
+  supersedes this entry's framing. Product cost (BR-CAT-04) is asked
+  separately (Waiting on people, above). Now also tracked in `docs/Signed-Requirements-
   to-PRD-Traceability.md`'s "Pending — proposed, not yet built" list
   (added 2026-09-17), alongside the Lead Follow-up Comments paper above.
 - **Order-stage deals closing with zero Activity logged — candidate soft-
@@ -1631,9 +1664,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   extends the same ADR-017 trigger to all six. Full design:
   `docs/Reference-Data-Management-Screen-Implementation-Plan.md`.
 
-- **Opportunity Support Attribution — discussion paper drafted 2026-09-12, core
-  shape decided by Basheer, one technical gap and several smaller questions still
-  open, awaiting a leadership discussion with Haroon/Latheef Bhai.** Raised on a
+- **Opportunity Support Attribution — parked for Phase 2 (Basheer,
+  2026-10-16); not a signed requirement. Paper drafted 2026-09-12.** Raised on a
   leadership concall: today there's no way to record that someone other than the
   deal owner helped close a sale (a colleague running the demo, a service engineer
   doing the installation/training) when that person isn't a formal co-owner
@@ -1719,6 +1751,8 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   Haroon before deciding how to build this** — not urgent (nothing
   customer-sensitive exposed in the confirmed example, but real internal
   manager-coaching and personal remarks were), not yet scoped or built.
+  **Decided 2026-10-16 (Basheer):** for a Manager Note, visibility follows
+  the rep the note is about (`user_id`), not the writer. Ready to scope.
 
 - ~~**Critical Care/Imaging manager hierarchy — UAT/Prod rollout.**~~ —
   **SUPERSEDED, confirmed 2026-08-22.** The 2026-07-30 entry (`docs/

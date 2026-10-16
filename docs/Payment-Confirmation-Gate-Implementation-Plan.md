@@ -3,9 +3,8 @@
 **Status:** Built and Dev-tested, 2026-10-03 — commits `b9e01e8`, `71f07b5`,
 `0d0133d`, `75ac199`; manual E2E 18/18 (`docs/Payment-Confirmation-Gate-Manual-E2E-Test-Plan.md`).
 Not on UAT yet: arrives with the next UAT move (migrations 0057/0058), its own
-approval. Still with Haroon and Latheef Bhai: final stage name (~2026-10-05),
-interim instruction to reps, timing vs Plan vs Actuals; tell them stall alerts
-for Delivery & Installation are NOT live.
+approval. Name, interim instruction and timing settled (Basheer,
+2026-10-16; see Decisions).
 **Traceability rows:** none directly (no signed requirement changes status); adds a
 rule beyond the signed scope — goes in "Commitment beyond contract" once shipped.
 **Design / discussion:** `docs/Discussion-Payment-Confirmation-Gate-2026-09.md`;
@@ -26,8 +25,8 @@ fhr" case (Won at stage Lead, 2026-10-03, Progress-Archive 2026-10).
   2026-09-11
 - New stage name: working name "Payment Pending" (alternatives "Awaiting Payment",
   "Collection Pending"). The name is one row of data, so the build can start now and
-  the confirmed name is filled in before Dev testing — proposed (Haroon and Latheef
-  Bhai to confirm the name, expected by ~2026-10-05)
+  the confirmed name is filled in before Dev testing — **decided: "Payment
+  Pending"**, confirmed by Haroon and Latheef Bhai (Basheer, 2026-10-16)
 - Who may confirm "full payment received": anyone who can already edit the
   Opportunity (the rep, or a manager above them); the app records who and when
   automatically — Basheer, 2026-10-03
@@ -52,11 +51,14 @@ fhr" case (Won at stage Lead, 2026-10-03, Progress-Archive 2026-10).
   MMC case) — Basheer, 2026-10-03
 - After code review: the payment note is stored only with the move to Won; a Won or
   Lost Opportunity's stage can't be changed (BR-OP-09) — Basheer, 2026-10-03
-- Interim, before the app enforces this: ask reps now to mark Won only after delivery,
-  installation and full payment — proposed (asked of Haroon and Latheef Bhai, not yet
-  answered)
-- Timing: switch this on before Plan vs Actuals Tracking goes live on UAT, so "Won"
-  only ever means one thing on that screen — proposed (asked, not yet answered)
+- Interim, before the app enforces this: no instruction to reps; the rule
+  applies once it is on UAT — Basheer, 2026-10-16
+- Timing: goes live on UAT together with Target vs Actuals (the next UAT
+  move), so "Won" only ever means one thing on that screen — Basheer,
+  2026-10-16
+- Retention orders (about 5 % take almost a year to be fully paid): no
+  exception built now; wait for field feedback once the rule is on UAT —
+  Basheer, 2026-10-16. Detail: Backlog "Payment collection".
 - An optional payment note goes with the tick (e.g. "Final payment by cheque no.
   1234"), like loss notes and fast-track notes; new column `full_payment_note`
   (migration 0058) — Basheer, 2026-10-03
@@ -118,8 +120,10 @@ Estimate: about 3–4 working days.
   (BR-OP-06) aren't built yet — they need the first scheduled background job, already
   tracked as scorecard row "Automated stagnant-deal alerts" (Partial). Until then, the
   Stagnant Deals report shows Opportunities that have gone quiet. The note sent to
-  Haroon and Latheef Bhai on 2026-10-03 said the system "will flag" these — that needs
-  correcting with them.
+  Haroon and Latheef Bhai on 2026-10-03 said the system "will flag" these; no
+  separate correction needed — the alerts are switched off by Basheer's choice
+  (2026-10-11) and the client line of Traceability rows 1.3 and 13.2 says so
+  (Basheer, 2026-10-16).
 - **Delivery date / installation site fields** (BR-OP-01's Order → Delivery gate lists
   them; not in the schema). Separate, existing gap — not needed for this rule.
 - **Partial or advance payment tracking, invoices, Tally.** Finance stays the system of

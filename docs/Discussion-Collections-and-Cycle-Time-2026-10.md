@@ -1,6 +1,7 @@
 # Discussion: Payment collection and order cycle time — 2026-10-13
 
-**Status:** Draft — questions in section 5 are proposed, not answered.
+**Status:** Draft — questions in section 5 are proposed, not answered,
+except Q6 (parked, Basheer 2026-10-16).
 **Participants:** Latheef Bhai (raised it; wants to work out the solution
 together), Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
@@ -158,6 +159,11 @@ whole time. Ask Haroon: how common are retention clauses, and should
 "fully paid" mean everything except an agreed retention amount?
 *Recommend:* answer with Q1; if retention is common, "fully paid" excludes
 the agreed retention, recorded in the payment note.
+**2026-10-16 (Basheer):** about 5 % of Opportunities take almost a year
+to be fully paid. Starting idea: the GM approves closing one as Won once
+everything except the agreed retention is paid (amount and release date
+recorded). **Parked** until "Won only after full payment" has run on UAT —
+field feedback may change or roll back the rule, so nothing is built now.
 
 ## 6. Related
 
