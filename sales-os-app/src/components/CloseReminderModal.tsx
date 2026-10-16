@@ -22,6 +22,27 @@ interface Props {
   // there -- the closing activity is recorded under the rep. Left out,
   // the server records it under whoever is closing.
   loggedForUserId?: string;
+  // Plan D14/D15: the "Why this change?" pop-up after the Opportunity Edit
+  // form's Save. `reminder` is ignored; the changer picks one of their own
+  // open next actions to close, or with none writes a Note. Nothing is sent
+  // from here -- onSave saves it with the stage or status change (BR-OP-22).
+  stageChange?: {
+    ownReminders: ReminderResponse[];
+    newStatus: { code: string; name: string };
+    reactivationDate?: string;
+    onSave: (note: StageChangeNote) => Promise<void>;
+  };
+}
+
+// Mirrors the server's StageChangeNote (opportunity/schemas.py).
+export interface StageChangeNote {
+  close_reminder_id?: string;
+  activity_type: ActivityType;
+  activity_date: string;
+  notes: string;
+  next_action_text?: string;
+  next_action_due_date?: string;
+  next_action_owner_id?: string;
 }
 
 // BR-ACT-05: what was done to close this Next Action. MANAGER_NOTE
@@ -58,7 +79,7 @@ function nowPlusDaysLocal(days: number) {
   return d.toISOString().slice(0, 16);
 }
 
-export default function CloseReminderModal({ isOpen, onClose, reminder, onCompleted, loggedForUserId }: Props) {
+export default function CloseReminderModal({ isOpen, onClose, reminder: reminderProp, onCompleted, loggedForUserId, stageChange }: Props) {
   const queryClient = useQueryClient();
   const { userProfile } = useAuth();
   const currentUserId = (userProfile as any)?.id;
@@ -81,10 +102,16 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
   // tick, before a state update would be visible to that onClose.
   const producedOpportunityRef = useRef<string | null>(null);
   const [producedOpportunityId, setProducedOpportunityId] = useState<string | null>(null);
+  // Stage-change mode: which of the changer's own open next actions to close.
+  const [pickedReminderId, setPickedReminderId] = useState("");
 
+  const ownReminders = stageChange?.ownReminders ?? [];
+  const reminder = stageChange ? ownReminders.find((r) => r.id === pickedReminderId) ?? null : reminderProp;
+  // Stage-change mode with no open next action of one's own: a Note (D14).
+  const noteOnly = !!stageChange && ownReminders.length === 0;
   const opportunityId = reminder?.activity.opportunity?.id;
   const accountId = reminder?.activity.account?.id;
-  const isHospitalLevel = !!reminder && !opportunityId;
+  const isHospitalLevel = !stageChange && !!reminder && !opportunityId;
 
   const { data: users = [] } = useQuery({
     queryKey: ["users", "assignable"],
@@ -98,21 +125,27 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
   // Same key as the Opportunity page's own fetch, so it's usually cached.
   const { data: opportunity } = useQuery({
     queryKey: ["opportunity", opportunityId],
-    enabled: isOpen && !!opportunityId,
+    enabled: isOpen && !stageChange && !!opportunityId,
     queryFn: () => getOpportunity(opportunityId!),
   });
-  const followUpExempt = FOLLOW_UP_EXEMPT_STATUS_CODES.has(opportunity?.status.status_code ?? "");
+  // Stage-change mode reads the status being saved, not the current one (D12).
+  const statusCode = stageChange ? stageChange.newStatus.code : opportunity?.status.status_code;
+  const statusName = stageChange ? stageChange.newStatus.name : opportunity?.status.status_name;
+  const followUpExempt = FOLLOW_UP_EXEMPT_STATUS_CODES.has(statusCode ?? "");
 
   useEffect(() => {
     if (!isOpen) return;
     // Resets this form's fields on open; React 18 batches these into one
     // re-render, not worth restructuring this actively-used modal for.
+    // Stage-change mode: a single own next action is picked already (D15).
+    const onlyOwn = stageChange?.ownReminders.length === 1 ? stageChange.ownReminders[0] : null;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTab("details");
-    setActivityType("CALL");
+    setPickedReminderId(onlyOwn?.id ?? "");
+    setActivityType(noteOnly ? "NOTE" : "CALL");
     setActivityDate(nowLocal());
     setNotes("");
-    setNextActionText(reminder?.reminder_text ?? "");
+    setNextActionText((stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
     setNextActionDueDate(nowPlusDaysLocal(1));
     setNextActionOwnerId("");
     setProducedNewOpportunity(false);
@@ -162,7 +195,37 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
     onCompleted?.();
   }
 
+  async function handleStageChangeSubmit() {
+    if (!stageChange) return;
+    setNotice(null);
+    if (!noteOnly && !reminder) { setActiveTab("details"); throw new Error("Pick the next action to close"); }
+    if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
+    if (!notes.trim()) { setActiveTab("details"); throw new Error("Say why the stage or status changed"); }
+    if (sendsFollowUp) {
+      if (!nextActionText.trim()) { setActiveTab("followUp"); throw new Error("Follow-up next action is required"); }
+      if (!nextActionDueDate) { setActiveTab("followUp"); throw new Error("Follow-up due date is required"); }
+      // BR-OP-22: mirrors the server's On Hold check (compared as a day).
+      if (statusCode === "ON_HOLD" && stageChange.reactivationDate
+          && dayjs(nextActionDueDate).format("YYYY-MM-DD") > stageChange.reactivationDate) {
+        setActiveTab("followUp");
+        throw new Error("For an On Hold Opportunity, the next action must be due on or before the re-activation date.");
+      }
+    }
+    await stageChange.onSave({
+      ...(reminder && { close_reminder_id: reminder.id }),
+      activity_type: noteOnly ? "NOTE" : activityType,
+      activity_date: new Date(activityDate).toISOString(),
+      notes: notes.trim(),
+      ...(sendsFollowUp && {
+        next_action_text: nextActionText.trim(),
+        next_action_due_date: new Date(nextActionDueDate).toISOString(),
+        next_action_owner_id: nextActionOwnerId || currentUserId || undefined,
+      }),
+    });
+  }
+
   async function handleSubmit() {
+    if (stageChange) return handleStageChangeSubmit();
     if (!reminder) return;
     setNotice(null);
     if (!activityDate) { setActiveTab("details"); throw new Error("Date is required"); }
@@ -213,12 +276,41 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
       <FormModal
         isOpen={isOpen}
         onClose={onClose}
-        title="Close Next Action"
+        title={stageChange ? "Why this change?" : "Close Next Action"}
         onSubmit={handleSubmit}
-        submitLabel="Complete"
+        submitLabel={stageChange ? "Save" : "Complete"}
         disableEnforceFocus={showNewOpportunity}
       >
-        {reminder && (
+        {/* Plan D15: more than one of the changer's own -- they pick which to close. */}
+        {ownReminders.length > 1 && (
+          <TextField
+            select
+            label="Next action to close *"
+            value={pickedReminderId}
+            onChange={(e) => {
+              const picked = ownReminders.find((r) => r.id === e.target.value);
+              setPickedReminderId(e.target.value);
+              setNextActionText(picked?.reminder_text ?? "");
+            }}
+            fullWidth
+            size="small"
+            sx={{ mt: 1.5 }}
+          >
+            {[...ownReminders]
+              .sort((a, b) => a.due_date.localeCompare(b.due_date))
+              .map((r) => (
+                <MenuItem key={r.id} value={r.id} sx={{ whiteSpace: "normal" }}>
+                  {r.reminder_text} — due {dayjs(r.due_date).format("D MMM YYYY")}
+                </MenuItem>
+              ))}
+          </TextField>
+        )}
+        {noteOnly && (
+          <Typography sx={{ fontSize: "0.75rem", color: "#4b5563" }}>
+            You have no open next action on this Opportunity, so this is saved as a Note.
+          </Typography>
+        )}
+        {reminder && ownReminders.length <= 1 && (
           <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
             {reminder.reminder_text}
           </Box>
@@ -267,6 +359,7 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
                 label="Type *"
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value as ActivityType)}
+                disabled={noteOnly}
                 fullWidth
                 size="small"
               >
@@ -281,17 +374,21 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
                 slotProps={{ textField: { fullWidth: true, size: "small" } }}
               />
               <TextField
-                label="What was done? *"
+                label={stageChange ? "Why the change? *" : "What was done? *"}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 multiline
                 rows={3}
                 fullWidth
                 size="small"
-                placeholder="e.g. Called the customer, confirmed demo date for next week"
+                placeholder={stageChange
+                  ? "e.g. Demo done, the radiologist approved; quote requested"
+                  : "e.g. Called the customer, confirmed demo date for next week"}
               />
               <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
-                Required to close this Next Action.
+                {stageChange
+                  ? (noteOnly ? "Required — saved with the change as a Note." : "Required — closes this next action and saves the change.")
+                  : "Required to close this Next Action."}
               </Typography>
             </Box>
           )}
@@ -348,8 +445,10 @@ export default function CloseReminderModal({ isOpen, onClose, reminder, onComple
                   </TextField>
                   <Typography sx={{ fontSize: "10px", color: "#9ca3af" }}>
                     {followUpExempt
-                      ? `Optional — this Opportunity is ${opportunity?.status.status_name}. Leave the follow-up box empty to close with no follow-up.`
-                      : "Required — every closed next action sets the next one."}
+                      ? `Optional — this Opportunity is ${statusName}. Leave the follow-up box empty to ${stageChange ? "save" : "close"} with no follow-up.`
+                      : stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate
+                        ? `Required — due on or before the re-activation date (${dayjs(stageChange.reactivationDate).format("D MMM YYYY")}).`
+                        : "Required — every closed next action sets the next one."}
                   </Typography>
                 </>
               )}

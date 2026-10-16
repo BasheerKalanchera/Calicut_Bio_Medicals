@@ -48,7 +48,8 @@ import ActivityTimeline from "../components/ActivityTimeline";
 import LogActivityModal from "../components/LogActivityModal";
 import FormModal from "../components/FormModal";
 import ReminderRow from "../components/ReminderRow";
-import CloseReminderModal from "../components/CloseReminderModal";
+import CloseReminderModal, { type StageChangeNote } from "../components/CloseReminderModal";
+import { SilentModalError } from "../lib/formErrors";
 import OpportunityItemAddRow from "../components/OpportunityItemAddRow";
 import OpportunityItemsList from "../components/OpportunityItemsList";
 import { useAuth } from "../contexts/AuthContext";
@@ -1279,6 +1280,11 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
 
   // Overview edit state
   const [showEditOpp, setShowEditOpp]             = useState(false);
+  // BR-OP-22 / plan D14: the "Why this change?" pop-up, open while it holds
+  // the changer's own open next actions on this Opportunity (fetched fresh
+  // on Save). Its note rides in changeNoteRef while the edit save re-runs.
+  const [changeNoteReminders, setChangeNoteReminders] = useState<ReminderResponse[] | null>(null);
+  const changeNoteRef = useRef<StageChangeNote | null>(null);
   const [editName, setEditName]                   = useState("");
   // The only place an Opportunity's project is changed ("" = No project) -- Customer
   // 360 and Project Directory open this page instead of their own edit forms
@@ -1614,6 +1620,20 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       payload.confirm_full_payment = true;
       payload.full_payment_note = editFullPaymentNote.trim() || null;
     }
+    // BR-OP-22: a stage or status change is saved only with its note, from
+    // the "Why this change?" pop-up, which re-runs this save with it.
+    if (editStageId !== opp.stage.id || editStatusId !== opp.status.id) {
+      if (!changeNoteRef.current) {
+        const openReminders = await queryClient.fetchQuery({
+          queryKey: ["opp-reminders", opportunityId, false],
+          queryFn:  () => listOpportunityReminders(opportunityId, false),
+          staleTime: 0,
+        });
+        setChangeNoteReminders(openReminders.filter((r) => !r.is_completed && r.assigned_to_user_id === userProfile?.id));
+        throw new SilentModalError();
+      }
+      payload.change_note = changeNoteRef.current;
+    }
     await patchOpportunity(opportunityId, payload);
     queryClient.invalidateQueries({ queryKey: ["pipeline"] });
     // Customer 360's and Project Directory's Opportunities lists (Back lands there).
@@ -1848,7 +1868,7 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
       </Box>
 
       {/* Edit Opportunity modal */}
-      <FormModal isOpen={showEditOpp} onClose={() => setShowEditOpp(false)} title="Edit Opportunity" onSubmit={handleUpdateOpp}>
+      <FormModal isOpen={showEditOpp} onClose={() => setShowEditOpp(false)} title="Edit Opportunity" onSubmit={handleUpdateOpp} disableEnforceFocus={!!changeNoteReminders}>
         <TextField label="Name *" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus fullWidth size="small" sx={{ mt: 1.5 }} />
         <TextField select label="Project" value={editProjectId} onChange={(e) => setEditProjectId(e.target.value)} fullWidth size="small" slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
           <MenuItem value="">No project</MenuItem>
@@ -2067,6 +2087,33 @@ export default function OpportunityDetailScreen({ opportunityId, initialOpportun
           </Box>
         )}
       </FormModal>
+
+      {/* Plan D14: Cancel returns to the Edit form with nothing saved. */}
+      <CloseReminderModal
+        isOpen={!!changeNoteReminders}
+        onClose={() => setChangeNoteReminders(null)}
+        reminder={null}
+        stageChange={changeNoteReminders ? {
+          ownReminders: changeNoteReminders,
+          newStatus: { code: editStatusCode ?? opp.status.status_code, name: oppStatuses.find((s) => s.id === editStatusId)?.status_name ?? opp.status.status_name },
+          reactivationDate: editStatusCode === "ON_HOLD" ? editReactivationDate : undefined,
+          onSave: async (note) => {
+            changeNoteRef.current = note;
+            try {
+              await handleUpdateOpp();
+            } finally {
+              changeNoteRef.current = null;
+            }
+            setShowEditOpp(false);
+            // The closing activity or Note, and any follow-up, land here.
+            queryClient.invalidateQueries({ queryKey: ["activities", "opportunity", opp.id] });
+            queryClient.invalidateQueries({ queryKey: ["activities", "account", opp.account.id] });
+            queryClient.invalidateQueries({ queryKey: ["opp-reminders", opp.id] });
+            queryClient.invalidateQueries({ queryKey: ["reminders"] });
+            queryClient.invalidateQueries({ queryKey: ["activityReport"] });
+          },
+        } : undefined}
+      />
 
       <LogActivityModal
         isOpen={showLogActivity}
