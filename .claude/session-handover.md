@@ -33,10 +33,11 @@ items go to Progress-Archive; unstarted work goes to Backlog._
 - Demo to Haroon and Latheef Bhai held on Dev, 15 Oct 2026 (Basheer,
   2026-10-16). Their main ask, a yearly target layer on Brand Target
   Tracking and Target & Coverage Planning:
-  `docs/Discussion-Annual-Target-Planning-2026-10.md` (Draft; Q1–Q5
-  answered for now, Q6–Q7 open). **Next:** Basheer confirms Q2 and Q4
-  with Haroon and answers Q6–Q7; then its implementation plan. Proposed
-  order: after the UAT move above.
+  `docs/Discussion-Annual-Target-Planning-2026-10.md` (all answered
+  2026-10-16). Plan drafted 2026-10-16:
+  `docs/Annual-Target-Planning-Implementation-Plan.md` (Draft; D1–D10
+  decided, D11–D17 proposed). **Next:** Basheer answers D11–D17; then
+  the E2E test plan. Build after the UAT move above.
 
 ## Harness Engineering — plan approved 2026-10-08, building
 

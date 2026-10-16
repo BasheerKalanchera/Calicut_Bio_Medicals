@@ -2772,3 +2772,29 @@ Checked against both tables in `docs/Process-Improvements.md`.
   next-action step 1's commit `3d38e75` added to its plan, test plan and
   the business-rules table; handover cut 137 → 83 lines, finished and
   waiting items moved out.
+- Annual Target Planning plan drafted
+  (`docs/Annual-Target-Planning-Implementation-Plan.md`; D1–D10 decided by
+  Basheer 2026-10-15/16, D11–D17 proposed); discussion paper answers
+  recorded (Q2 revised, Q4 settled by S3, Q6 = A, Q7, April–March year).
+
+## 2026-10-16 — Retro, Plan & Chore session
+
+- Proposed committing the plan without the discussion-paper edits,
+  though they only recorded answers Basheer had given; he asked why:
+  P69 5 → 6.
+- Put D11–D17 to Basheer all at once: P66 7 → 8.
+- A "hasn't heard from you" prompt while reading code for the plan:
+  P15 10 → 11.
+- Chat examples for D11 and D13 (Mindray ₹400 L; ₹100.01 L split
+  25.00/25.00/25.00/25.01; Imaging ₹1,300 L) not labelled made up (the
+  plan labels them): P1 32 → 33 (repeated after build).
+- Plan said "Twice a year's worth of typing becomes once"; the change is
+  four quarterly entries per brand becoming one. Fixed in the plan.
+- Spot-check (3): handover 84 lines — correct (counted); quarter dates in
+  the plan — correct (`scripts/quarter.py`); `TargetVsActualRepository`
+  — correct, but written before it was checked (confirmed in this
+  retro). Not counted.
+- Explanations (2): "why leave the discussion edits out"; the plan's
+  "why two new tables" — plain parts stand alone. Pass.
+- Checked: P1, P15, P45, P66, P67, P69, P74, watch list. Open items
+  22 → 22 (counted). No new P-numbers.

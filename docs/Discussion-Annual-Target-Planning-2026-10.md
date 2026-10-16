@@ -1,8 +1,8 @@
 # Discussion: Annual targets and the yearly planning cycle — 2026-10-15
 
-**Status:** Draft. Q1–Q5 answered by Basheer "for now" (2026-10-15, his
-recommendation accepted), to confirm with Haroon and Latheef Bhai; Q6–Q7
-proposed, not answered.
+**Status:** Answered. Q1–Q5 by Basheer 2026-10-15, Q2 and Q4 revised and
+Q6–Q7 answered 2026-10-16. Decisions carried into
+`docs/Annual-Target-Planning-Implementation-Plan.md` (D1–D10).
 **Participants:** Haroon and Latheef Bhai (raised it at the 15 Oct demo),
 Basheer (decisions), Claude (options and analysis).
 **Origin:** feedback at the demo of 15 Oct 2026 (script:
@@ -87,8 +87,8 @@ working as today.
 
 Brand Target Tracking shows the SBU's yearly total, the sum of its brands.
 That total becomes the SBU's yearly target on Target & Coverage Planning
-automatically. The GM may raise it above the brand total (a stretch
-target); the brand total stays visible next to it.
+automatically, following the brand total until the GM sets his own
+figure, higher or lower; the brand total stays visible next to it.
 
 ### 5c. The GM spreads the year across quarters (Q3)
 
@@ -99,10 +99,10 @@ year, and the GM places the difference.
 
 ### 5d. Detailed plans for the current quarter only (Q4, Q5)
 
-Reps plan hospital by hospital only for the quarter that has started (or
-is about to). Future quarters hold only the GM's quarterly SBU figure
-until their turn. Reps see the SBU's yearly and quarterly targets,
-read-only, while making their plan.
+Reps are expected to plan hospital by hospital for the quarter that has
+started (or is about to). A rep who already knows a later quarter may
+plan it in detail too; nothing is locked. Reps see the SBU's yearly and
+quarterly targets, read-only, while making their plan.
 
 ### 5e. The quarter review
 
@@ -120,9 +120,10 @@ for now):* A.
 
 **Q2. SBU target: the sum of the brands, or a separate GM figure?**
 Example (made up): Imaging's brands add up to ₹1,200 L; may the GM set
-₹1,300 L as a stretch? *Answered (Basheer, 2026-10-15, for now):* the
-brand total by default, the GM may raise it, the brand total shown next to
-it. To confirm with Haroon.
+₹1,300 L as a stretch? *Answered (Basheer, 2026-10-16):* the brand total
+by default; the GM may set it higher (Haroon does mark SBU targets above
+the vendors') or lower, the brand total shown next to it. It follows the
+brand total until the GM sets his own figure (S2).
 
 **Q3. When the GM changes one quarter, who absorbs the difference?**
 Example (made up): Q1 goes from ₹300 L to ₹250 L — spread the ₹50 L over
@@ -133,8 +134,9 @@ quarters don't add up to the year.
 **Q4. What does "high level" mean for future quarters?** Option A: reps
 enter one figure per future quarter and add hospital detail later. Option
 B: reps do nothing for future quarters; only the GM's quarterly figure
-exists until the quarter starts. *Answered (Basheer, 2026-10-15, for
-now):* B. To confirm with Haroon.
+exists until the quarter starts. *Answered (Basheer, 2026-10-16),
+settled by S3:* reps are expected to plan the current quarter; detailed
+planning of a later quarter stays available when a rep can see it.
 
 **Q5. Do reps see the SBU target?** Managers already see their SBU's
 quarterly target. *Answered (Basheer, 2026-10-15, for now):* yes, yearly
@@ -145,13 +147,15 @@ Today is in the third quarter of FY 2026-27 (Oct–Dec 2026). The next yearly
 planning is April 2027, the start of FY 2027-28. Option A: use the yearly
 layer from FY 2027-28 only; this year stays quarterly as entered. Option
 B: enter this year's yearly brand targets too, so the Annual view shows
-the full year. *Proposed:* A, so the first real use is their own April
-planning; check with Haroon whether they want this year's figures in.
+the full year. *Answered (Basheer, 2026-10-16):* A — this quarter
+(2026-Q3) and next (2026-Q4) stay quarterly; the yearly layer starts FY
+2027-28. The year is April–March, as set in the app and demoed on 15 Oct
+without objection.
 
 **Q7. Inside the signed contract, or new work?** Signed row 3.1 asks for
-"quarterly/annual tracking" and is marked Done. *Proposed:* treat the
-yearly target layer as completing row 3.1's "annual" part (Phase 1), and
-decide with Basheer before the plan is written.
+"quarterly/annual tracking" and is marked Done. *Answered (Basheer,
+2026-10-16):* treat the yearly target layer as completing row 3.1's
+"annual" part (Phase 1).
 
 ## 7. Size and order
 
@@ -168,9 +172,11 @@ decide with Basheer before the plan is written.
 
 ## 8. Next steps
 
-1. Basheer confirms Q2 and Q4 with Haroon, and answers Q6 and Q7.
-2. Then `docs/Annual-Target-Planning-Implementation-Plan.md` from the
-   template, with these answers as its decisions.
+1. Done 2026-10-16: all questions answered;
+   `docs/Annual-Target-Planning-Implementation-Plan.md` drafted with them
+   as D1–D10.
+2. Next: Basheer answers the plan's proposed D11–D17; then its E2E test
+   plan.
 
 ## 9. Related
 
