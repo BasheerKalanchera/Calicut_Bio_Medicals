@@ -4,29 +4,35 @@ lines (the startup hook warns above that). Finished threads and waiting
 items go to Progress-Archive; unstarted work goes to Backlog. Plan & Chore
 and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 `.claude/session-handover-build.md`). Only the Build session edits this
-note, always at its main-folder path, never the worktree copy._
+note. It lives in the worktree, on the build branch, and reaches `main` at
+the merge (Basheer, 2026-10-17)._
 
-- Worktree: `.claude/worktrees/build` (not created yet). Branch: not
-  created yet. Migration number claimed: none yet.
-- Merge into `main`: once, at the end of the build, after Build & Test's
-  Next-Action E2E is done and Basheer says go (Basheer, 2026-10-17).
+- Worktree: `.claude/worktrees/build`, created 2026-10-17 from
+  `origin/main`; `main` merged in up to `107bccc` the same day. Branch:
+  `worktree-build`, no code on it yet. Migration number last chosen:
+  **0062** (`main`'s latest is 0061, checked 2026-10-17).
+- Frontend packages installed with `npm ci --legacy-peer-deps` (a plain
+  `npm install` fails; Backlog "`sales-os-app` has a real
+  `typescript`/`openapi-typescript` peer dependency conflict").
+- Merge into `main`: once, at the end of a build, after the E2E running
+  at the time is done and Basheer says go (Basheer, 2026-10-17).
 
-## Annual Target Planning — next to build
+## Nothing lined up to build
 
-- Demo to Haroon and Latheef Bhai held on Dev, 15 Oct 2026 (Basheer,
-  2026-10-16). Their main ask, a yearly target layer on Brand Target
-  Tracking and Target & Coverage Planning:
-  `docs/Discussion-Annual-Target-Planning-2026-10.md` (all answered
-  2026-10-16). Plan approved 2026-10-16:
-  `docs/Annual-Target-Planning-Implementation-Plan.md` (D1–D22a — brand
-  targets yearly only, yearly Target vs Actuals view, plan notifications
-  on the bell; built before the next UAT move). E2E test plan written
-  2026-10-16: `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`.
-  Both committed (`1d57697`).
-- Moved here from the Build & Test note 2026-10-17: built in this
-  session, in parallel with the Next-Action E2E (Basheer, 2026-10-17).
-  Its E2E is run by Build & Test after the Next-Action E2E.
-- **Next:** step 1 (check in first). Step 1's migration (0062 in the
-  plan) is written and tested in the worktree, applied to Dev only after
-  the merge. A mock-up of the yearly Target vs Actuals view comes before
-  step 5.
+- Annual Target Planning was next, but its plan is **being replanned —
+  do not build** (`docs/Annual-Target-Planning-Implementation-Plan.md`
+  Status, `107bccc`, 2026-10-17: calendar-year brand targets, D23
+  onwards). Basheer, 2026-10-17: a few planning points are still not
+  decided. Step 1 not started; the read-only Dev count of existing brand
+  and SBU targets not run.
+- Waiting on Basheer, once the replan is approved — both proposed
+  2026-10-17 for step 1's migration, unanswered, and to be checked
+  against the replanned plan first:
+  - a removal rule (Admin and GM) on the yearly SBU target table only, so
+    the GM can clear the company's own figure (was D13); neither existing
+    target table allows removal today;
+  - change history (audit trigger) on the yearly SBU target table, as the
+    quarterly `sbu_target` has; none on the brand yearly table, as today.
+- **Next:** wait for Plan & Chore to finish the replan and Basheer to name
+  what this session builds; then read the plan again and check in before
+  step 1.

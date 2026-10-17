@@ -2052,8 +2052,14 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   any other clean install (a new dev machine, CI, Prod's frontend build).
   Real fix: either downgrade `typescript` to `^5.x` or wait for
   `openapi-typescript` to support the `6.x` peer range — not decided yet.
+  2026-10-17: hit again on the `/build` worktree's first install (`npm
+  install` and `npm ci` both fail with `ERESOLVE`); worked around with
+  `npm ci --legacy-peer-deps`, safe there because `/build` never runs
+  `generate:types`.
 - **`npm audit` reports 9 vulnerabilities (1 low, 8 high)** in `sales-os-app`'s
   dependency tree, surfaced during the same 2026-08-02 UAT frontend deploy.
+  2026-10-17: a clean `npm ci` in the `/build` worktree reported 15 (1 low,
+  2 moderate, 12 high).
   Pre-existing, not introduced by that deploy. Needs a proper look (`npm
   audit` for detail, then `npm audit fix` or manual upgrades) — not done
   under Monday-deadline time pressure.

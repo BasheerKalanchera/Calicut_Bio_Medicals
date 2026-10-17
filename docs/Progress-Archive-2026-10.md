@@ -3240,3 +3240,47 @@ April–March or January–December.
 - Explanations checked (2): the industry check on Zoho, Salesforce and
   Dynamics stands on its own; the Jan–Mar gap point did not (P3 above).
 - Items checked: P1, P3, P15, P24, P45, P76, watch list.
+
+## 2026-10-17 — Build session (parallel, `/build`), first run, and its retro
+
+- First `/build` run. Worktree `.claude/worktrees/build` created from
+  `origin/main` on branch `worktree-build`; `main` brought in three times
+  as Plan & Chore committed (`9fec07e`, `3cf7994`, `107bccc`), each a fast
+  forward. No code written.
+- Editing the handover note at its main-folder path was refused: Claude
+  Code keeps a worktree session inside its worktree. Basheer had Plan &
+  Chore change the set-up (`9fec07e`: all `/build` docs stay on the
+  branch); filed there as P86, not counted again here.
+- Frontend install: `npm install` and `npm ci` both failed on the known
+  typescript / openapi-typescript clash (Backlog, 2026-08-02);
+  `npm ci --legacy-peer-deps` worked and reported 15 vulnerabilities
+  (Backlog said 9). Both Backlog entries updated.
+- Annual Target Planning step 1 (migration 0062) was presented for a
+  check-in, with two proposals: a removal rule (Admin, GM) on the yearly
+  SBU target only, and change history on that table, as on `sbu_target`.
+  Not answered: the plan went back to replanning the same day (`107bccc`,
+  "do not build"). Basheer: a few planning points not yet decided. The
+  read-only Dev count of existing brand and SBU targets was not run.
+  Proposals kept in this session's handover note.
+
+**Retro**
+- Two "hasn't heard from you" prompts: while working out the refused
+  handover edit, and while the install kept failing. P15 16 → 18.
+- First reply's plain part used `npm ci --legacy-peer-deps` and "typescript
+  version clash" without saying what they mean. P3 30 → 31.
+- The `/build` skill's first-use step says `npm install`, which always
+  fails on a clean copy; three tries before the UAT workaround. New
+  watch-list line. Skill not changed: the install is a one-off and the
+  worktree is kept after each merge (Basheer, 2026-10-17).
+- Wrote an install log to `C:\Users\Basheer\GitHub` through a short
+  relative path, not the scratchpad; deleted at once. New watch-list line.
+- Three commands refused in the worktree (a folder change; a long absolute
+  path the worktree check could not verify). Guess, not confirmed: plain
+  relative paths avoid it. New watch-list line.
+- Spot-checked 3 figures, all pass: 15 vulnerabilities (1 low, 2
+  moderate, 12 high) — the `npm ci` output; Backlog "9 vulnerabilities" —
+  `docs/Backlog.md`, 2026-08-02 entry; latest migration 0061 —
+  `backend/alembic/versions` listing.
+- Explanations checked (2): the first reply's plain part did not stand on
+  its own (P3 above); the step 1 check-in did.
+- Items checked: P1, P3, P15, P86, watch list.
