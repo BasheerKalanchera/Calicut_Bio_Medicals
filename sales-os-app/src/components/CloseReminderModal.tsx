@@ -379,6 +379,10 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
         )}
         {reminder && ownReminders.length <= 1 && (
           <Box sx={{ px: 1.5, py: 1, borderRadius: "0.75rem", bgcolor: "#f9fafb", fontSize: "0.75rem", color: "#4b5563" }}>
+            <Box sx={{ fontWeight: 700, color: "#374151" }}>
+              {/* "your" only in stage-change mode: Close can be for someone else's (loggedForUserId). */}
+              Closing {stageChange ? "your" : "this"} next action (due {dayjs(reminder.due_date).format("D MMM")}):
+            </Box>
             {reminder.reminder_text}
           </Box>
         )}
@@ -525,7 +529,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
                       ? `Optional — this Opportunity is ${statusName}. Leave the follow-up box empty to ${stageChange ? "save" : "close"} with no follow-up.`
                       : stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate
                         ? `Required — due on or before the re-activation date (${dayjs(stageChange.reactivationDate).format("D MMM YYYY")}).`
-                        : "Required — every closed next action sets the next one."}
+                        : stageChange
+                          ? (noteOnly
+                            ? "Required — you have no open next action on this Opportunity, so set one now."
+                            : "Required — this change closes your next action above, so set the next step.")
+                          : "Required — every closed next action sets the next one."}
                   </Typography>
                 </>
               )}
