@@ -244,3 +244,15 @@ The backstory below is copied verbatim from each memory note's **Why:**.
 
 - **Rule:** Session handoff — Harness Engineering review (was "process review"; skill `harness-engineering`, was `process-review`; plan `docs/Harness-Engineering-Implementation-Plan.md`, was Process Consolidation) every other day (was weekly; decided daily 2026-10-08, every other day from 2026-10-16); the review's steps are in the `process-review` skill; an open item skipped for 7 days is dropped or parked. Documentation tidy-up every 2 days counted from its own last run (no longer tied to the UAT data-quality check). UAT data-quality check paused until the next-action rules feature reaches UAT (`.claude/dq-check-paused`).
   **Why:** 2026-10-15 — Basheer asked why the process review was weekly: he had decided daily on 2026-10-08 (Process Consolidation plan), but plan steps 5–6 and the daily review steps were never built, so the hook still said weekly. Once built, he chose every other day instead of daily, starting 2026-10-16, and renamed the plan and the review "Harness Engineering". The same morning he paused the data-quality check (most of its UAT findings are fixed by the next-action rules feature), which would have stalled the tidy-up timed to follow it.
+
+- **Rule:** Manual E2E test plans — every step that names an Opportunity puts its hospital beside it in brackets; an Opportunity the test creates has its hospital fixed in the plan.
+  **Why:** 2026-10-17 — Basheer: the same Opportunity name can appear under two hospitals in a filtered pipeline; the hospital makes the right row easy to pick. Applied by hand to the Next-Action Rules E2E plan the same day.
+
+- **Rule:** Show before you act — exception (trial): the handover note and Progress-Archive entries are written without asking first; Basheer sees them in the docs batch commit. Decisions, plans, rules and client pages are still shown first.
+  **Why:** 2026-10-17 — Harness Engineering review. P45 ("show housekeeping edits first", 2026-10-08) was missed 5 times, and each time it was followed, it cost Basheer an extra approval. A reminder tool was proposed, then withdrawn because it would add stops; Basheer asked for work that speeds the process up and chose to try the exception instead (this also answers his open question of 14 Oct).
+
+- **Rule:** Standing decisions — Basheer's answer to a decision is the approval to write it into its plan; no second "yes". A conditional or partial answer is not a decision.
+  **Why:** 2026-10-17 — Harness Engineering review, P69 (seen 6 times; e.g. 2026-10-12, next-action answers A, C and D held for a second "yes" twice). Basheer chose it as the third fix of the review because each repeat cost him an extra turn.
+
+- **Rule:** Harness Engineering review — watch-list lines are deleted 14 days (was 7) after their "Added" date if not seen again.
+  **Why:** 2026-10-17 — at the third review, ten 2026-10-10 lines were due for deletion. Basheer: once deleted, a later repeat would look like a first sighting and never reach the open list; keep them another week.

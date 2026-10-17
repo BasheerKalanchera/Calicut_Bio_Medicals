@@ -29,8 +29,9 @@ At most 10 open items (the cap starts once the consolidation plan brings the
 list to 10). If the open list goes over 10, process work stops until every
 open item is fixed, then the list starts fresh; app work continues in the
 parallel build session. Basheer lowers the cap step by step. *(2026-10-08)*
-At each Harness Engineering review, watch-list lines with no repeat 7 days after their
-"Added" date are deleted (git history keeps them). *(2026-10-10)*
+At each Harness Engineering review, watch-list lines with no repeat 14 days after their
+"Added" date are deleted (git history keeps them); kept that long so a
+later repeat is still recognised. *(2026-10-10, 2026-10-17)*
 Harness Engineering review when the hook says it's due. *(2026-10-06)*
 
 ## Harness Engineering review (every other day)
@@ -48,7 +49,7 @@ comes down to zero.
 4. Build at most 3 items, each shown first with its own approval. An open
    item skipped for 7 days is dropped or parked with a date — Basheer
    picks which. *(2026-10-15)*
-5. Delete watch-list lines with no repeat 7 days after their "Added" date.
+5. Delete watch-list lines with no repeat 14 days after their "Added" date.
 6. Count the open items (with a tool) and say the number.
 7. Say whether repeats went down since the last review, so Basheer can
    decide whether to review less often.

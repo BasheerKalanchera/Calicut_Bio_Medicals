@@ -35,6 +35,10 @@ multi-step, cross-screen/cross-role, or a genuine visual check). Saves to
 Dev are "Basheer clicks, Claude watches"; Claude reads the record back in
 the app.
 
+**Opportunities:** every step that names an Opportunity puts its hospital
+beside it in brackets, e.g. "usg m/c" (aster medicity). An Opportunity the
+test creates has its hospital fixed in this plan, never "any hospital".
+
 ## Pre-flight
 
 - P1. [Simple] Dev backend restarted since the feature's last backend change. —

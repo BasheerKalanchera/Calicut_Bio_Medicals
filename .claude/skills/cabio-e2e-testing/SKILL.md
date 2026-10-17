@@ -55,6 +55,12 @@ Moved here word for word from CLAUDE.md on 2026-10-08
   split, assignee) — not just role relationships. *(2026-09-24)*
 - When writing a test plan, take button labels, messages and the order of
   checks from the code, not the design doc. *(2026-09-30)*
+- Wherever a test plan step names an Opportunity, put its hospital beside it
+  in brackets, every time — e.g. "usg m/c" (aster medicity). For an
+  Opportunity the test creates, fix the hospital in the plan, never "any
+  hospital". The same Opportunity name can appear under two hospitals in a
+  filtered pipeline; the hospital makes the right row easy to pick.
+  *(2026-10-17)*
 - A test plan for any permission or visibility feature must include a
   hide-check case — a real person who must NOT see a given row, picked from
   live data — and re-run the scope check just before E2E, not only when the

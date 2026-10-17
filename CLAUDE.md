@@ -108,7 +108,9 @@ code or changing structure. On any conflict, the document wins over this file.
 - **Standing decisions** (business rule, architecture call, API shape, convention)
   go straight into the authoritative doc for that domain — never a progress file.
   An agreed design decision for a feature goes into its plan doc the same turn.
-  *(2026-10-05)*
+  *(2026-10-05)* His answer is the approval: write it in without asking a
+  second "yes" (he sees it in the docs batch). A conditional or partial
+  answer is not a decision — bring it back to him. *(2026-10-17)*
 - Write handover notes **after the fact** with real values (commit hashes, test
   counts) — never a placeholder to fill in later.
 - New generated/exported files go to the session scratchpad by explicit full path
@@ -200,7 +202,10 @@ code or changing structure. On any conflict, the document wins over this file.
 ## Show before you act
 When an action is hard to undo, spends real time/cost, or is visible to Basheer,
 show what's about to happen and wait — don't act first and narrate afterward.
-This includes small housekeeping edits (handover note, logs). *(2026-10-08)*
+Exception (trial): the handover note and Progress-Archive entries are written
+without asking first; Basheer sees every line in the docs batch commit he
+approves. Edits that change a decision, plan, rule or client page are still
+shown first. *(2026-10-08, 2026-10-17)*
 - **Investigative actions, not just writes** — say what a query or check will do,
   even read-only, before running it. UAT: ask and wait, never just announce.
   *(2026-09-18)*

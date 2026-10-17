@@ -33,9 +33,11 @@ session edits this note._
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 29 (counted 2026-10-16, after P82–P84 were added).
-- **Next:** the rest of the top 10 in Pareto order (P15, reminder after
-  each finished file, is next).
+  `docs/Process-Improvements.md`, open list 27 (counted 2026-10-17, after
+  the third review: P16 built, P45 and P69 merged; not yet committed).
+- **Next:** next review 2026-10-19; pick fixes that save Basheer's time
+  (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
+  if not seen again.
 - Still to write, shown first: paperwork check in `cabio-post-commit`
   (feat/fix only, all living docs + handover); right-pack check in
   `harness-engineering` (its review steps written 2026-10-15).
@@ -59,6 +61,5 @@ session edits this note._
   buttons). BR-OP-20 and BR-OP-06 (switched off) saved in Business-Rules.
 - **Next (Plan & Chore session):** last round, proposed D5, D7, D8, D9b,
   D10, D14; then the plan's "what could be affected" pass and approval.
-- **Open questions for Basheer (14 Oct, unanswered):** Keep the
-  pre-fill in all four close forms, or Log Activity only? Write handover
-  and archive notes without asking first (CLAUDE.md says show first)?
+- **Open question for Basheer (14 Oct, unanswered):** Keep the
+  pre-fill in all four close forms, or Log Activity only?

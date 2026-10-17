@@ -2994,3 +2994,24 @@ Checked against both tables in `docs/Process-Improvements.md`.
   "session refresh?" answer (stands on its own).
 - Items checked: P3, P4, P15, P16, P23, P45, P65, P77. Open items 26 → 27
   (counted).
+
+## 2026-10-17 — Harness Engineering review, third (Plan & Chore)
+
+- UAT backup first: `cabio_uat_2026-10-17_0626.dump` (671,948 bytes, 472
+  TOC entries); `cabio_uat_2026-10-03.dump` pruned as shown beforehand.
+- Seen counts compared against the tracker at the 14 Oct review (`858b4dc`):
+  55 repeats on listed items across the retros of 14–16 Oct, 9 new items
+  (P74–P82). Repeats not down; review stays every other day.
+- Decisions (Basheer): P16 enforced with a tool (reminder after each
+  successful commit); P14, P1, P3, P23, P21, P28, P68 accepted as is. P45:
+  the proposed reminder was withdrawn — it would have added approval stops;
+  instead the handover note and archive entries are written without asking,
+  as a trial, seen in the docs batch. P15 left out ("improve the speed of
+  the process, not the cosmetics"). P69 fixed: an answer is the approval to
+  write it into its plan.
+- Watch list: ten 2026-10-10 lines kept to 2026-10-24 instead of deleted;
+  the standing rule is now 14 days (Basheer: a deleted line hides a later
+  repeat).
+- Side rule the same session: every manual E2E test plan step that names
+  an Opportunity puts its hospital beside it in brackets (Basheer).
+- Open list 28 → 27 (counted).
