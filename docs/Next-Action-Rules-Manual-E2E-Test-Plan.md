@@ -199,18 +199,20 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    "Meet Dr Ajmal in person" ("new lead" (aster medicity)). Fill "What
    was done? *"; on the "Follow-up *" tab clear the pre-filled
    "Follow-up next action *" box; press "Complete". **Expected:** refused
-   with "Follow-up next action is required". —
+   with "Follow-up next action is required". — Pass (2026-10-17,
+   Basheer ran it as Basheer K)
 2. [Simple] Same, now with a follow-up. **Expected (pre-fill, D10):**
    when the close form opens, "Follow-up next action *" already holds
    "Meet Dr Ajmal in person"; keep the text as it is, set "Due Date *"
    and press "Complete". **Expected:** saved; the follow-up "Meet Dr
    Ajmal in person" appears on the Next Actions list with the new due
-   date. —
+   date. — Pass (2026-10-17, Basheer ran it as Basheer K; pre-fill,
+   save and new row checked by him)
 3. [Simple] Next Actions screen → "Mark to complete" on KIMS Hospital
    Trivandrum "Meet him again 1 wk from now"; fill "What was done? *",
    clear the follow-up box and leave "This visit produced a new
    Opportunity" unticked; press "Complete". **Expected:** refused, as
-   B1. —
+   B1. — Pass (2026-10-17, Basheer ran it as Basheer K)
 4. [Complex: cross-form flow, D3] Same next action, on the "Follow-up *"
    tab tick "This visit produced a new Opportunity". **Expected:** the
    follow-up boxes give way to "Press Complete to add the new
@@ -223,7 +225,15 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    Opportunity is saved, then the hospital next action closes with no
    follow-up asked. The visit shows once on the hospital's Activity
    timeline, as the new Opportunity's activity — no second, hospital-only
-   copy (D20). —
+   copy (D20). — Pass (2026-10-17, Claude drove as Basheer K, Basheer
+   pressed the three saves: hand-over message exact; KIMS Hospital
+   Trivandrum fixed on the New Opportunity form; First activity opened
+   with Call, now, "E2E B4 hospital visit - new Opportunity found" (Call
+   is the close form's default, unchanged); follow-up "zz E2E B4
+   follow-up call" due 18 Oct; after a reload "Meet him again 1 wk from
+   now" gone from Pending; hospital Activity tab shows the visit once and
+   the Opportunity's Activity tab shows the same entry. Stage Lead fills
+   Win Probability with 5.00, so typed digits append — select first)
 5. [Complex: cancel path, D3] Close Aster MIMS Calicut "Call tomorrow
    again" (linked to project "Another new project"): "Mark to complete",
    fill "What was done? *", tick the box, press "Complete", then cancel
@@ -231,7 +241,12 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    "Follow-up *" tab, the tick removed, a blue message "No new
    Opportunity was saved, so add a follow-up next action to close this
    one."; press "Complete" with a follow-up. No Opportunity was
-   created. —
+   created. — Pass (2026-10-17, Claude drove as Basheer K, Basheer
+   pressed Complete, Cancel, Complete: back on "Follow-up *", tick
+   removed, blue message word for word, follow-up pre-filled "Call
+   tomorrow again"; after a reload the 31 Jul row gone and a new one
+   due 18 Oct; hospital Activity tab shows "E2E B5 call - cancel path"
+   once; Aster MIMS Calicut Opportunities 15 before and after)
 
 ## C — Closing from the Opportunity page (hide-check)
 
@@ -267,41 +282,99 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    follow-up next action. Press Cancel. **Expected:** back on the Edit
    form; nothing saved (reload: still Lead). Save again, fill the Note and
    a next action, Save. **Expected:** stage Qualified; Activity tab shows
-   the Note; Next Actions tab shows its next action. —
+   the Note; Next Actions tab shows its next action. — Pass (2026-10-17,
+   Claude drove as Basheer K, Basheer pressed Save, Cancel, Save, Save:
+   pop-up wording exact, type fixed as Note; after Cancel and a reload
+   still Lead with no activity; after the save Qualified, Activity tab
+   shows Note "E2E D1 - budget confirmed, moving to Qualified" once, Next
+   Actions tab shows "zz E2E D1 follow-up call" due 18 Oct. Wording note
+   for the small-fixes batch: the follow-up hint "every closed next
+   action sets the next one" reads oddly when nothing is being closed)
 2. [Complex: close-as-note, D15 single] "usg m/c" (aster medicity) → Edit
    → stage Lead → Qualified → Save. **Expected:** the pop-up closes
    Basheer K's one open next action (the A3 follow-up, "Call Mr Ajman for
    the budget decision"), already picked — no "Next action to close"
    list; a follow-up is required and its box already holds that text —
    pre-fill, D10. Save. **Expected:** stage changed, next action closed,
-   follow-up open — one save. —
+   follow-up open — one save. — Pass (2026-10-17, Claude drove as
+   Basheer K, Basheer pressed Save twice: pop-up showed "Call Mr Ajman
+   for the budget decision" already picked, no list; type Call (default);
+   follow-up box pre-filled with the same text. After a reload: stage
+   Qualified (Win Probability moved 5 → 20 on its own when the stage was
+   picked); the 24 Oct next action is in Completed, "Closed via call on
+   17 Oct 2026, 11:29 am" with the reason; a new one with the same text
+   is pending, due 18 Oct; the Activity tab shows the Call once. The saved
+   reason reads "…moving to Qualifid" — Claude's typing dropped a letter,
+   permanent on Dev)
 3. [Simple] "usg m/c" (aster medicity) → Edit → change only the name,
    save. **Expected:** saved with no note asked (no stage or status
-   change). Change the name back. —
+   change). Change the name back. — Pass (2026-10-17, Basheer ran it as
+   Basheer K)
 4. [Complex: cross-user, manager with none, D13] As Haroon (no next
    action of his own on "Ultrasound m/c" (KIMS Hospital Trivandrum)),
-   open it → Edit → stage Qualified → Demo → Save. **Expected:** the
+   open it → Edit → stage Qualified → Demo, Demo Start Date today (the
+   Demo stage gate requires it) → Save. **Expected:** the
    pop-up shows the "saved as a Note" line; he writes a Note with a next
    action and saves; Basheer K's next action from D1 is not offered and
-   stays open. —
+   stays open. — Pass (2026-10-17, Basheer clicked as Haroon; first try
+   blocked by the Demo stage gate ("Demo Start Date is required…", not
+   in the plan then, now added), nothing saved; with the date: pop-up
+   "saved as a Note" line, no list to close, D1's not mentioned (Basheer).
+   Read back as Basheer K: stage Demo; Activity tab Haroon Sidheeq's Note
+   "E2E D4 Haroon - demo booked" once; Pending "zz E2E D4 Haroon
+   follow-up" (Haroon, 18 Oct) and "zz E2E D1 follow-up call" still open)
 4a. [Complex: cross-user, manager with his own, D13] As Haroon, "usg m/c"
    (aster medicity; he has the open next action he set in A5, assigned to
-   "Me (default)") → Edit → stage Qualified → Demo → Save. **Expected:**
+   "Me (default)") → Edit → stage Qualified → Demo, Demo Start Date
+   today (the Demo stage gate requires it) → Save. **Expected:**
    the pop-up closes Haroon's own A5 next action, not a Note; Basheer K's
    and Vivek's are not offered and stay open. Save with a follow-up. —
+   Pass (2026-10-17, Basheer clicked as Haroon, pop-up checked by him.
+   Read back as Basheer K: stage Demo; Completed shows "Call him again
+   tomorrow" (Haroon, due 18 Oct) "Closed via call on 17 Oct 2026, 03:42
+   pm" with "E2E D4a Haroon - demo fixed"; Activity tab shows that Call
+   once; Pending: "zz E2E D4a Haroon follow-up" (Haroon, 18 Oct), Basheer
+   K's "Call Mr Ajman for the budget decision" and Vivek's "Visit Dr
+   Ajmal with the brochure" still open. Basheer's wording finding: the
+   pop-up shows the closed next action's text with no label saying what
+   it is, and the follow-up hint "every closed next action sets the next
+   one" doesn't fit a stage change — fix proposed for the small-fixes
+   batch)
 5. [Complex: date rule] As Basheer K, "Imaging department refresh" (Baby
    Memorial Hospital) → Edit → status On Hold, a hold reason,
    re-activation date one month out. **Expected:** the note's next-action
    due date is filled with the re-activation date; moving it one day
    later is refused; one day earlier saves. Read back: On Hold, next
-   action due on that date. —
+   action due on that date. — Pass after a fix (2026-10-17, Claude
+   drove as Basheer K, Basheer pressed every Save and Cancel). First try
+   failed: the follow-up due date started at tomorrow (18 Oct), not the
+   re-activation date; cancelled, nothing saved. Fixed in
+   `CloseReminderModal.tsx` (On Hold starts the due date on the
+   re-activation date), not yet committed. Retry, Hold Reason Budget
+   Pending, re-activation 17 Nov 2026: due date filled 17 Nov 2026;
+   hint "Required — due on or before the re-activation date (17 Nov
+   2026)."; 18 Nov refused with "For an On Hold Opportunity, the next
+   action must be due on or before the re-activation date.", stayed on
+   Follow-up; 16 Nov saved. Read back after a reload: On Hold; Activity
+   tab shows Note "E2E D5 - budget on hold until next month" once;
+   Pending "zz E2E D5 check budget before reactivation" due 16 Nov
+   2026, owner Basheer K.
 6. [Complex: Lost exception, D12, D15 pick] As Basheer K, "new lead"
    (aster medicity) → Edit → status Lost with a loss reason → Save.
    **Expected:** the pop-up shows "Next action to close *" listing his two
    open ones, soonest due first — "Meeting next week" (7 Aug) above the B2
    follow-up "Meet Dr Ajmal in person" — with none picked. Pick "Meeting
    next week", leave the follow-up empty (labels have no "*"), Save.
-   **Expected:** saved as Lost; no follow-up asked. —
+   **Expected:** saved as Lost; no follow-up asked. — Pass (2026-10-17,
+   Claude drove as Basheer K, Basheer pressed Save, Save; loss reason
+   Budget Cancelled). List showed "Meeting next week — due 7 Aug 2026"
+   above "Meet Dr Ajmal in person — due 24 Oct 2026", none picked;
+   Follow-up tab and fields had no "*", hint "Optional — this
+   Opportunity is Lost. Leave the follow-up box empty to save with no
+   follow-up."; saved with the box empty, reason "E2E D6 - budget
+   cancelled, marking Lost" (Call). Read back after a reload: Lost;
+   Pending shows only "Meet Dr Ajmal in person" (24 Oct), left for
+   step 7.
 7. [Simple] Next Actions screen → close the follow-up left open on
    "new lead" (aster medicity) (from B2), no follow-up. **Expected:**
    saved — the Opportunity is Lost, so none is needed. —

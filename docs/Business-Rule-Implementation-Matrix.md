@@ -23,7 +23,7 @@ nothing enforces it yet.
 | BR-PL-09 | Same-SBU Hospital Overlap Warning | `cabio_app_plan_overlap()` (SECURITY DEFINER); `TargetPlanService` | Warn only. |
 | BR-OP-00 | Opportunity Creation Flexibility | `OpportunityService.create_opportunity` → `validate_stage_transition(current_stage_order=0)` (`domains/opportunity/validators.py`) | |
 | BR-OP-01 | Stage Transition Exit Criteria | `validate_stage_transition` (`domains/opportunity/validators.py`) | Demo → Clinical Evaluation gate, Delivery Date and Installation Site not built (no fields yet). |
-| BR-OP-02 | "On-Hold" Status Discipline | `validate_status_transition` (hold reason, future reactivation date); audit via `trg_audit_opportunity` | "Reactivation Overdue" flag not built. |
+| BR-OP-02 | "On-Hold" Status Discipline | `validate_status_transition` (hold reason, future reactivation date); audit via `trg_audit_opportunity`; next action due on or before the reactivation date: `domains/opportunity/service.py` (stage-change note); due date filled in with it: `sales-os-app/src/components/CloseReminderModal.tsx` | "Reactivation Overdue" flag not built. |
 | BR-OP-03 | Lost Status Validation | `validate_status_transition` (loss reason; competitor name when `COMPETITOR_WON`) | |
 | BR-OP-04 | Opportunity Project Association | `opportunity.project_id` nullable FK | |
 | BR-OP-05 | Status Transition Rules | `validate_status_transition` (Won needs PO Number, PO Date, products) | |

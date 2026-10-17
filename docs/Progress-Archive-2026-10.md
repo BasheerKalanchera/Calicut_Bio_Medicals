@@ -3043,6 +3043,45 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Items checked: P1, P3, P15, P16, P45, P66, P69, watch list. Open items
   27 (counted).
 
+## 2026-10-17 — Retro, Build & Test session (next-action rules E2E, part 1)
+
+- E2E part 1: pre-flight 4/4, sections A and C all Pass, 12 of 32 steps
+  (`90b7e20`). No app faults found. Finding, not a fault: the
+  Opportunity page does not refresh when another person saves; a full
+  page reload shows it (seen in A5 and C3).
+- Handover note said "re-check the data, then the E2E" for about 2 hours
+  and 12 passed steps; updated only at the break. The new P16 reminder
+  fires only after a commit, and none came mid-run: P16 10 → 11
+  (repeated after build 2026-10-17).
+- Six steps tagged Complex were one click and one read (A1, A4, A6, A7,
+  C1, C2); Basheer asked "Why are these checks complex?". New watch-list
+  line.
+- A6 said the person box shows "Me (default)"; the screen shows the
+  signed-in person's name. Missed in this morning's wording check
+  against the code: P23 15 → 16.
+- A2 first tried with "+ Log" on the Opportunity's own page, which opens
+  with the Opportunity already picked, so the pickers were never tested;
+  redone from the Pipeline. Second sighting of the 2026-10-10 watch-list
+  line ("check what a test step actually did"): new P85 (Seen 2) —
+  before running a step, check the route chosen exercises what the step
+  checks.
+- Suggested holding this retro until the E2E is finished (CLAUDE.md: one
+  retro at the end of every session). New watch-list line.
+- Asked "Shall I?" before updating the handover note, against today's
+  trial exception (written without asking). New watch-list line.
+- "Hasn't heard from you" prompt during this retro's checks: P15 15 → 16
+  (after the Plan & Chore retro's 15).
+- Spot-checked 3 figures, all pass: "12 of 32 (38%)" — counted from the
+  test plan with awk (A 9, B 5, C 3, D 9 incl. D4a, E 5, G 1; 12 Pass,
+  pre-flight 4/4); "24 messages, about 6:20 to 8:35 am" — counted from
+  the session transcript, timestamps 00:51–03:06 UTC; "`90b7e20`
+  pushed" — `git log` and `git status` (main level with origin).
+- Explanations checked (2), both stand on their own: the C3 note on the
+  page needing a reload, and the A9 instructions.
+- Items checked: P1, P3, P11, P15, P16, P19, P23, P45, P66, P67, and the
+  2026-10-10 watch-list line. Open items 27 → 28 once P85 is added
+  (counted 27 with grep).
+
 ## 2026-10-17 — Parallel Build session (`/build`) set up (Plan & Chore)
 
 - Basheer asked whether Annual Target Planning could be built while the
@@ -3209,6 +3248,18 @@ set per month or quarter under that year. None models a supplier's own
 year; Dynamics allows a goal on a custom period. Open: incentives
 April–March or January–December.
 
+### Next-action rules E2E, 2026-10-17 — D5 bug found and fixed (Build & Test)
+D5's first try found the "Why this change?" pop-up starting an On Hold
+follow-up at tomorrow, not the re-activation date that BR-OP-02 (agreed
+2026-10-12) says it starts at. Cause: `CloseReminderModal.tsx` always set
+the due date to tomorrow; the re-activation date was used only by the
+save check and the hint. Fixed (On Hold starts the due date on the
+re-activation date), not yet committed — its own `fix:` commit. Nothing
+was saved on the failed try. D5 retried and passed. Same session: two
+wording changes in that pop-up from Basheer's D1/D4a findings (a
+"Closing your next action (due …):" caption; stage-change follow-up
+hints), for the end-of-E2E wording batch.
+
 ## 2026-10-17 — Retro, Plan & Chore session part 3 (Annual Target replan, incentive options doc)
 
 - Done: Annual Target Planning plan marked "being replanned — do not
@@ -3240,3 +3291,50 @@ April–March or January–December.
 - Explanations checked (2): the industry check on Zoho, Salesforce and
   Dynamics stands on its own; the Jan–Mar gap point did not (P3 above).
 - Items checked: P1, P3, P15, P24, P45, P76, watch list.
+
+## 2026-10-17 — Next-action rules E2E part 2, paused for the day (Build & Test)
+
+- D6 Pass: "new lead" (aster medicity) saved as Lost (Budget Cancelled).
+  The pop-up listed both of Basheer K's open next actions by due date,
+  none picked; with Lost, the follow-up had no "*" and saved empty. Read
+  back after a reload: Lost, only "Meet Dr Ajmal in person" (24 Oct)
+  still pending, left for D7.
+- Paused at 24 of 32 steps (Basheer, end of day). Left: D7, D8, E1–E5,
+  G1. D7 instructions already given (Next Actions screen, close "Meet Dr
+  Ajmal in person", no follow-up).
+- Checks before the commits: backend 1314 passed; type check clean; lint
+  0 errors (133 warnings, all there before, one in `CloseReminderModal.tsx`
+  line 109).
+- Business-Rules BR-OP-02 "not built" wording updated, with its row in
+  `Business-Rule-Implementation-Matrix.md`.
+
+## 2026-10-17 — Retro, Build & Test session (next-action rules E2E, part 2)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+
+- D5 found a real bug the pre-E2E review missed: the On Hold follow-up
+  started at tomorrow, not the re-activation date BR-OP-02 asks for. The
+  watch list already had "trace each plan decision to its code and test
+  step before E2E" (P6, 2026-10-04). Moved to the open list as P87,
+  Seen 2.
+- Told Basheer twice that the new "Closing … next action" label would
+  show (D5, then D6) before reading when the pop-up shows it; neither
+  step shows it. P23 16 → 18.
+- The On Hold fix's code comment first named rule BR-OP-05; it is
+  BR-OP-02. Caught before save. P1 37 → 38.
+- The folder-change guard blocked two commands (a `cd &&` chain in the
+  E2E, a bare `cd` at this retro's start). P14 30 → 32.
+- "Hasn't heard from you" prompts twice (D6 read-back, end-of-day doc
+  updates). P15 → 19 in all, counting this morning's and Plan & Chore's sightings.
+- Not recorded: the browser tool has no "mouse_move" action (one failed
+  call, narrow).
+- Spot-checked 3, all pass: 32 steps (counted in the test plan: A 9, B 5,
+  C 3, D 9 with 4a, E 5, G 1); "Meet Dr Ajmal in person" due 24 Oct still
+  pending (page text after a reload, Basheer K); D7 will show "Closing
+  this next action" (`CloseReminderModal.tsx` line 380: the box shows
+  when there is no list, which a Close from Next Actions never has).
+- Explanations checked (2): the D6 result and the D7 instructions both
+  stand on their own.
+- Items checked: P1, P14, P15, P19, P23, P24, watch list (P6).
+- Open items counted after this retro: 29 (`| open |` rows), over the
+  cap of 10.

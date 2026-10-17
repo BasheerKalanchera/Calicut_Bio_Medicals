@@ -23,10 +23,33 @@ session edits this note._
 - Manual E2E started 2026-10-17 (re-check done, lead for E4 "New usg
   m/c needed."; A–C and G wording checked against the code; third G
   check dropped). Pre-flight 4/4, sections A and C all Pass — 12 of 32
-  steps; results in the test plan (not yet committed). Basheer K in
+  steps; results in the test plan (`90b7e20`). Retro 2026-10-17
+  written to Progress-Archive and Process-Improvements, not committed —
+  goes in the next docs batch (Basheer). Basheer K in
   Claude's tab, Haroon/Vivek in Basheer's private window; a full page
   reload is needed to see another user's save.
-- **Next:** B1 (Simple, as Basheer K), then B2–B5, D, E, G; progress
+- Section B all Pass 2026-10-17 (B4 created "zz NA E2E – from hospital
+  visit" (KIMS Hospital Trivandrum)) — 17 of 32 steps; results in the
+  test plan, not committed.
+- D1 Pass 2026-10-17 ("Ultrasound m/c" (KIMS Hospital Trivandrum) now
+  Qualified, follow-up "zz E2E D1 follow-up call"); D2 Pass ("usg m/c"
+  (aster medicity) now Qualified); D3 Pass; D4 Pass ("Ultrasound m/c"
+  now Demo); D4a Pass ("usg m/c" now Demo) — 22 of 32 steps. D4/D4a
+  wording now includes Demo Start Date (stage gate).
+- Small-fixes batch, made 2026-10-17 (Basheer's go), not committed: pop-up
+  label "Closing your/this next action (due …):" and stage-change
+  follow-up hints in `CloseReminderModal.tsx` (D1, D4a findings);
+  committed `06b41a0` at the day's pause (not pushed).
+- D5 first try 2026-10-17 found a bug (nothing saved): On Hold follow-up
+  due date started at tomorrow, not the re-activation date
+  (Business-Rules BR-OP-02). Fixed in `CloseReminderModal.tsx` (Basheer's
+  go), committed `856d041` (not pushed). D5 Pass on
+  retry ("Imaging department refresh" (Baby Memorial Hospital) now On
+  Hold); D6 Pass ("new lead" (aster medicity) now Lost) — 24 of 32
+  steps. BR-OP-02 marked built, retro part 2 in Progress-Archive.
+  Paused for the day 2026-10-17 (Basheer).
+- **Next:** D7 (Simple: Next Actions screen, close "Meet Dr Ajmal in
+  person" (aster medicity), no follow-up), D8, then E, G; progress
   line with % after each step (Basheer, 2026-10-17).
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".

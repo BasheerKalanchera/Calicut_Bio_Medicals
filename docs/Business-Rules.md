@@ -155,7 +155,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
 * **Rule:** Moving an opportunity to the "On-Hold" status is a guarded transition.
 * **Mandatory Fields:** `hold_reason_id` (Master Data) and `reactivation_date` (Date).
 * **Validation:** `reactivation_date` must be in the future.
-* **Next action (agreed 2026-10-12, not built):** putting an Opportunity On Hold also needs a next action, its due date filled in with the `reactivation_date`; the rep may move it earlier, not later (Basheer, `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` question 8; see BR-ACT-05).
+* **Next action (agreed 2026-10-12; built in the next-action rules feature, 2026-10-16, due date filled in from 2026-10-17):** putting an Opportunity On Hold also needs a next action, its due date filled in with the `reactivation_date`; the rep may move it earlier, not later (Basheer, `docs/Discussion-Next-Action-Driven-Activity-Logging-2026-10.md` question 8; see BR-ACT-05).
 * **Logic:** When `current_date >= reactivation_date`, the system must flag the opportunity as "Reactivation Overdue" in all insights views.
 * **Audit Requirement:** Changes to `hold_reason_id` or `reactivation_date` must be recorded in audit history.
 
