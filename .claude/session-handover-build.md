@@ -20,9 +20,14 @@ session edits this note._
   D4a, E5).
 - Pre-E2E code review done 2026-10-16; fixes pushed `4bec886`, script
   `f93397f` (Progress-Archive entry).
-- **Next:** re-check the test plan's live data on Dev (read-only, say
-  first; pick the Marketing Lead for E4), have the Dev backend
-  restarted, then the manual E2E (A–E, G; check in before the browser).
+- Manual E2E started 2026-10-17 (re-check done, lead for E4 "New usg
+  m/c needed."; A–C and G wording checked against the code; third G
+  check dropped). Pre-flight 4/4, sections A and C all Pass — 12 of 32
+  steps; results in the test plan (not yet committed). Basheer K in
+  Claude's tab, Haroon/Vivek in Basheer's private window; a full page
+  reload is needed to see another user's save.
+- **Next:** B1 (Simple, as Basheer K), then B2–B5, D, E, G; progress
+  line with % after each step (Basheer, 2026-10-17).
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
 
