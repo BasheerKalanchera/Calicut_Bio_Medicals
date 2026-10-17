@@ -19,5 +19,7 @@ case "$(cat)" in
   *'"prompt":"/plan-and-chore'*|*'"prompt": "/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
   *'"prompt":"/build-and-test'*|*'"prompt": "/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
   *'"prompt":"/build"'*|*'"prompt": "/build"'*|*'"prompt":"/build '*|*'"prompt": "/build '*) echo; cat "$N" ;;
+  # /test (Test session, 2026-10-17) runs in the main folder.
+  *'"prompt":"/test"'*|*'"prompt": "/test"'*|*'"prompt":"/test '*|*'"prompt": "/test '*) echo; cat "$D/session-handover-test.md" ;;
 esac
 exit 0

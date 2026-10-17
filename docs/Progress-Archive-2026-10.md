@@ -3107,3 +3107,84 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Mistake: I said the other sessions needed the build's progress
   mid-flight without checking what each one does; Basheer's question
   showed they don't (retro).
+
+## 2026-10-17 — Test session (`/test`) set up (Plan & Chore)
+
+Basheer asked for `/test` in addition to Build & Test. Decisions
+(Basheer, 2026-10-17):
+- Q1: `/test` may make small wording fixes found in a test run (the
+  "Batch small code fixes" kind: no change to what is saved or how the
+  app behaves); anything bigger goes to `/build`, or Build & Test when no
+  parallel build runs.
+- Q2: its own note, `.claude/session-handover-test.md`.
+- Q3: the Next-Action E2E carries on in Build & Test until that
+  session's next refresh, then its remaining steps move to `/test`
+  (Build & Test's note gets a pointer then, with Basheer's yes).
+- `/test` and Build & Test never run at the same time: Build & Test's
+  code edits reload the app on Dev mid-step.
+
+Built: `.claude/skills/test/SKILL.md`, the note; `reply-checklist.sh`
+shows it on `/test` and `/test …`; `session-start.sh` re-shows it after a
+summary (unknown-type fallback now lists four notes); the commit
+reminder names it; `last_session.py` gains kind `test`. The other three
+skills and CLAUDE.md Session handoff list four sessions; the build skill
+says its feature's E2E is run by `/test` (or Build & Test).
+
+Tested: `/test`, `/test restarted`, spaced JSON → the test note;
+`/testing`, "run the test" → none; `/build`, `/build restarted`,
+`/build-and-test`, `/plan-and-chore` unchanged; after-summary re-show
+for all four kinds and "none". Finder: the first version also matched
+"test session" in text and picked an older Build & Test session
+(`94076344`, which says "Build & Test session" 8 times); now matches the
+typed `/test` only, and finds none (no `/test` session yet), while
+parallel, build and plan still find theirs.
+
+## 2026-10-17 — Retro, Plan & Chore session (part 2: `/build` and `/test` set-up)
+
+Items checked in `docs/Process-Improvements.md`: P1, P14, P72, P77, P86
+(open list), the watch list (no match for the four new slips).
+
+- **Designed `/build` around a tool behaviour I never tested.** Progress
+  docs were to be edited in the main folder; Claude Code blocks a
+  worktree session from editing outside its worktree, and the session's
+  history is saved in a separate folder. Both found on the first live
+  run, fixed in `9fec07e`. New open item **P86** (Seen 1, straight to
+  the open list: nearly cost the build session's work).
+- **Claimed the other sessions needed `/build`'s progress mid-flight**
+  without checking what each does; Basheer's question showed they don't.
+  New watch-list line.
+- **Edit scripts typed inline** (Python heredocs for the skill, hooks
+  and archive). P77 5 → 6. The `/test` build afterwards used saved
+  script files throughout.
+- **Transcript print failed on a special character** (UnicodeEncodeError
+  in the Bash tool, despite the settings fix). P72 2 → 3.
+- **Said the `/build` copy and the main folder were both at `9fec07e`**
+  without checking; the copy was at `26ea5a8`. Corrected in the next
+  reply. P1 36 → 37.
+- **`/test` finder: wrote a text match ("test session") right under the
+  comment that says text matches pick the wrong session** — it matched
+  an older Build & Test session (`94076344`). Caught by my own test
+  before the commit; now the typed `/test` only. New watch-list line.
+- **A `grep -r` over `.claude` ran 2 minutes and was stopped**: it went
+  into the `/build` copy's installed packages. The search tool would
+  have been instant. New watch-list line.
+- **Went well:** the three `/test` decisions asked one at a time, each
+  with a recommendation; Q3's early "yes" checked, not recorded as
+  decided; the hooks tested with every command form before proposing
+  the commit.
+
+Spot-checks (6), all correct: "9 files" in `9fec07e` (git's count);
+session `1d771bb4` (the `/build` history file); "open list 27" in the
+handover note (27 at `HEAD`, counted with a tool; the 28th, P85, is
+Build & Test's unsaved line); "19 of 32 steps" for the Next-Action E2E
+(Build & Test's note); "8 times" for "Build & Test session" in
+`94076344` (grep count); "14 files" in the `/test` commit proposal
+(git's count).
+
+Explanations checked (3), all stand without the technical part: the
+`9fec07e` commit proposal; "Every case passes, including from inside the
+copy and after a context summary."; the `/test` plan ("What `/test`
+will do" / "What changes around it").
+
+Open list after this retro: 28 (27 at `HEAD` plus P86, counted with a
+tool); 29 once Build & Test's P85 is saved. Above the cap of 10.

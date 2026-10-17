@@ -5,11 +5,13 @@ description: Start Cabio's Build & Test session. Use when Basheer types /build-a
 
 # Build & Test session
 
-Basheer runs up to three sessions side by side: this one, Plan & Chore
-(`/plan-and-chore`) and Build (`/build`, added 2026-10-17). `/build`
-builds a plan in its own copy of the code while this session tests; its
-work reaches the main code at one merge at the end, and this session runs
-that feature's E2E afterwards. Written 2026-10-16 from his opening messages since
+Basheer runs up to four sessions: this one, Plan & Chore
+(`/plan-and-chore`), Build (`/build`, added 2026-10-17) and Test
+(`/test`, added 2026-10-17). `/build` builds a plan in its own copy of the
+code; its work reaches the main code at one merge at the end, and `/test`
+(or this session, if `/test` isn't running) runs that feature's E2E
+afterwards. This session never runs while `/test` does: its code edits
+reload the app in the middle of a test step. Written 2026-10-16 from his opening messages since
 10 Oct (P83 in `docs/Process-Improvements.md`).
 
 ## This session does

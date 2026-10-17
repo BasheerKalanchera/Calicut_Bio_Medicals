@@ -33,13 +33,19 @@ session edits this note._
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 27 (counted 2026-10-17, after
-  the third review: P16 built, P45 and P69 merged; `dd20a85`, pushed).
+  `docs/Process-Improvements.md`, open list 28 (counted 2026-10-17 after
+  the evening retro added P86; 29 once Build & Test's P85 is saved).
 - **Next:** next review 2026-10-19; pick fixes that save Basheer's time
   (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
   if not seen again.
-- Parallel `/build` session set up 2026-10-17 (`26ea5a8`, pushed); first
-  real `/build` run checks the worktree and hooks live.
+- Parallel `/build` session set up 2026-10-17 (`26ea5a8`); first real run
+  found two gaps, fixed in `9fec07e` (docs stay on its branch; finder
+  searches worktree history). Both pushed. Watch the `/build` session's
+  first merge of `main` into its branch.
+- Fourth session `/test` (testing only) built 2026-10-17, not yet
+  committed. At Build & Test's next refresh, the rest of the Next-Action
+  E2E moves to `/test` — Build & Test's note gets a pointer, with
+  Basheer's yes.
 - **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
   commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
 - Still to write, shown first: paperwork check in `cabio-post-commit`

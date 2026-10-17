@@ -1,18 +1,20 @@
-"""Find the latest past Plan & Chore, Build & Test or parallel Build (/build)
-session and write its last messages to a file. Read-only.
-Usage: last_session.py plan|build|parallel OUT"""
+"""Find the latest past Plan & Chore, Build & Test, parallel Build (/build)
+or Test (/test) session and write its last messages to a file. Read-only.
+Usage: last_session.py plan|build|parallel|test OUT"""
 import glob, json, os, re, sys
 
 DIR = os.path.expanduser(r"~\.claude\projects\C--Users-Basheer-GitHub-Calicut-Bio-Medicals")
 KIND, OUT = sys.argv[1], sys.argv[2]
 # The typed command decides the kind (2026-10-17): each skill's text names
 # the other sessions, so a text match alone can pick the wrong one.
-CMD = re.compile(r"command-name>/(plan-and-chore|build-and-test|build)<")
-CMD_KIND = {"plan-and-chore": "plan", "build-and-test": "build", "build": "parallel"}
+CMD = re.compile(r"command-name>/(plan-and-chore|build-and-test|build|test)<")
+CMD_KIND = {"plan-and-chore": "plan", "build-and-test": "build", "build": "parallel", "test": "test"}
 PAT = {
     "plan": re.compile(r"plan-and-chore|plan\s*(&|and)\s*chore|planning\s*(&|and)\s*chore", re.I),
     "build": re.compile(r"build-and-test|build\s*(&|and)\s*test", re.I),
     "parallel": re.compile(r"^/build(\s|$)|parallel\s+build", re.I),
+    # Typed command only: "test session" also matches "Build & Test session".
+    "test": re.compile(r"^/test(\s|$)", re.I),
 }[KIND]
 
 def kind_of(users):

@@ -5,9 +5,10 @@ description: Start Cabio's parallel Build session — builds an approved plan in
 
 # Build session (parallel)
 
-Basheer runs three sessions side by side: Plan & Chore (`/plan-and-chore`),
-Build & Test (`/build-and-test`) and this one. This session builds a plan
-while Build & Test is testing on Dev, without disturbing that testing.
+Basheer runs up to four sessions: Plan & Chore (`/plan-and-chore`),
+Build & Test (`/build-and-test`), Test (`/test`, added 2026-10-17) and
+this one. This session builds a plan while `/test` or Build & Test is
+testing on Dev, without disturbing that testing.
 Written 2026-10-17 (Basheer; decisions in the 2026-10-17 Progress-Archive
 entry "Parallel Build session").
 
@@ -52,8 +53,9 @@ of the build**, after Build & Test's E2E is done and Basheer says go
   restarting the servers; any write to the Dev database before the merge
   (a read-only Dev check a plan asks for is fine, announced first, with
   `cabio-db-and-scripting` loaded); UAT, as everywhere (CLAUDE.md).
-- The browser and every E2E. The feature's E2E is run by Build & Test
-  after its current E2E (Basheer, 2026-10-17). No second running copy of
+- The browser and every E2E. The feature's E2E is run by `/test` (or
+  Build & Test if `/test` isn't running) after the merge (Basheer,
+  2026-10-17). No second running copy of
   the app for now; revisit when the build reaches its first screen
   (Basheer, 2026-10-17).
 - `npm run generate:types`: it reads the main folder's running server,
