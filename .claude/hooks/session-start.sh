@@ -9,6 +9,9 @@
 # context summary.
 HP=.claude/session-handover-plan.md
 HB=.claude/session-handover-build.md
+# Parallel Build session (/build, 2026-10-17) runs in a worktree; its note
+# lives in the main folder only (git's common dir).
+HBP=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude/session-handover-build-parallel.md
 OLD=.claude/session-handover.md
 INPUT=$(cat)
 DQ_LOG=/c/Backups/CabioUAT/data_consistency_reports/data_quality_log.txt
@@ -90,10 +93,10 @@ if [ -n "$last" ] && ! skipped harness-review; then
 fi
 
 # 3. Handover size alarms. After a context summary ("source":"compact"),
-#    re-show this session's note: the first /plan-and-chore or
-#    /build-and-test in the transcript says which; if neither, show both.
+#    re-show this session's note: the first /plan-and-chore,
+#    /build-and-test or /build in the transcript says which; if none, show all.
 #    On a fresh start nothing is shown yet (the command isn't typed).
-for f in "$HP" "$HB"; do
+for f in "$HP" "$HB" "$HBP"; do
   [ -f "$f" ] || continue
   n=$(wc -l < "$f")
   if [ "$n" -gt 75 ]; then
@@ -103,9 +106,10 @@ for f in "$HP" "$HB"; do
 done
 case "$INPUT" in *'"source":"compact"'*|*'"source": "compact"'*) ;; *) exit 0 ;; esac
 tp=$(printf '%s' "$INPUT" | sed -n 's/.*"transcript_path": *"\([^"]*\)".*/\1/p' | sed 's#\\\\#/#g')
-kind=$(grep -o -m1 -E 'command-name>/(plan-and-chore|build-and-test)' "$tp" 2>/dev/null | head -n 1)
+kind=$(grep -o -m1 -E 'command-name>/(plan-and-chore|build-and-test|build)<' "$tp" 2>/dev/null | head -n 1)
 case "$kind" in
-  *plan-and-chore) cat "$HP" ;;
-  *build-and-test) cat "$HB" ;;
-  *) echo "Session type unknown (no /plan-and-chore or /build-and-test found); both notes follow."; echo; cat "$HP"; echo; cat "$HB" ;;
+  *plan-and-chore\<) cat "$HP" ;;
+  *build-and-test\<) cat "$HB" ;;
+  */build\<) cat "$HBP" ;;
+  *) echo "Session type unknown (no /plan-and-chore, /build-and-test or /build found); all three notes follow."; echo; cat "$HP"; echo; cat "$HB"; echo; cat "$HBP" ;;
 esac

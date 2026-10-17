@@ -1,13 +1,26 @@
-"""Find the latest past Plan & Chore or Build & Test session and write its
-last messages to a file. Read-only. Usage: last_session.py plan|build OUT"""
+"""Find the latest past Plan & Chore, Build & Test or parallel Build (/build)
+session and write its last messages to a file. Read-only.
+Usage: last_session.py plan|build|parallel OUT"""
 import glob, json, os, re, sys
 
 DIR = os.path.expanduser(r"~\.claude\projects\C--Users-Basheer-GitHub-Calicut-Bio-Medicals")
 KIND, OUT = sys.argv[1], sys.argv[2]
+# The typed command decides the kind (2026-10-17): each skill's text names
+# the other sessions, so a text match alone can pick the wrong one.
+CMD = re.compile(r"command-name>/(plan-and-chore|build-and-test|build)<")
+CMD_KIND = {"plan-and-chore": "plan", "build-and-test": "build", "build": "parallel"}
 PAT = {
     "plan": re.compile(r"plan-and-chore|plan\s*(&|and)\s*chore|planning\s*(&|and)\s*chore", re.I),
     "build": re.compile(r"build-and-test|build\s*(&|and)\s*test", re.I),
+    "parallel": re.compile(r"^/build(\s|$)|parallel\s+build", re.I),
 }[KIND]
+
+def kind_of(users):
+    for t in users:
+        m = CMD.search(t)
+        if m:
+            return CMD_KIND[m.group(1)] == KIND
+    return any(PAT.search(t) for t in users)
 
 def text(d):
     c = d.get("message", {}).get("content")
@@ -37,7 +50,7 @@ for path in files:
     users = [t for _, who, t in msgs if who == "user"][:3]
     if len([1 for _, who, _ in msgs if who == "user"]) < 2:
         continue  # the session just started (this one)
-    if any(PAT.search(t) for t in users):
+    if kind_of(users):
         with open(OUT, "w", encoding="utf-8") as o:
             o.write(f"Session {os.path.basename(path)}, {msgs[0][0][:16]} to {msgs[-1][0][:16]}\n\n")
             for ts, who, t in msgs[-30:]:

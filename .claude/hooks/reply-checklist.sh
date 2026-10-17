@@ -8,9 +8,13 @@ Reply checklist (P1, P3): (1) Numbers and counts: count with a tool first, or sa
 EOF
 # Session start by command (Basheer, 2026-10-16, P83): show that session's
 # handover note the moment /plan-and-chore or /build-and-test is typed.
+# /build (parallel Build session, 2026-10-17) works in a worktree, so its
+# note is read from the main folder (git's common dir), never the copy.
 D=${CLAUDE_PROJECT_DIR:-.}/.claude
+M=$(git -C "${CLAUDE_PROJECT_DIR:-.}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude
 case "$(cat)" in
   *'"prompt":"/plan-and-chore'*|*'"prompt": "/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
   *'"prompt":"/build-and-test'*|*'"prompt": "/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
+  *'"prompt":"/build"'*|*'"prompt": "/build"'*|*'"prompt":"/build '*|*'"prompt": "/build '*) echo; cat "$M/session-handover-build-parallel.md" ;;
 esac
 exit 0

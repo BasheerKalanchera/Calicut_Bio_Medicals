@@ -31,18 +31,8 @@ session edits this note._
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
 
-## Annual Target Planning — next to build
+## Annual Target Planning — being built by the `/build` session
 
-- Demo to Haroon and Latheef Bhai held on Dev, 15 Oct 2026 (Basheer,
-  2026-10-16). Their main ask, a yearly target layer on Brand Target
-  Tracking and Target & Coverage Planning:
-  `docs/Discussion-Annual-Target-Planning-2026-10.md` (all answered
-  2026-10-16). Plan approved 2026-10-16:
-  `docs/Annual-Target-Planning-Implementation-Plan.md` (D1–D22a — brand
-  targets yearly only, yearly Target vs Actuals view, plan notifications
-  on the bell; built before the next UAT move). E2E test plan written
-  2026-10-16: `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`.
-  Both committed (`1d57697`). **Next to build, once the Next-Action
-  Rules build and its E2E are done** (Basheer, 2026-10-16): step 1
-  (check in first); a mock-up of the yearly Target vs Actuals view comes
-  before step 5.
+- Moved 2026-10-17 (Basheer): built in parallel in its own copy of the
+  code; see `.claude/session-handover-build-parallel.md`. This session
+  runs its E2E after the Next-Action E2E, once the build is merged.

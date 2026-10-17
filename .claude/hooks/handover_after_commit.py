@@ -38,8 +38,9 @@ def main() -> None:
             "hookEventName": "PostToolUse",
             "additionalContext": (
                 f"Commit {sha} is on {branch}. P16: update this session's handover "
-                "note now (.claude/session-handover-plan.md or "
-                ".claude/session-handover-build.md): what this commit finished, its "
+                "note now (.claude/session-handover-plan.md, "
+                ".claude/session-handover-build.md, or for /build "
+                ".claude/session-handover-build-parallel.md in the main folder): what this commit finished, its "
                 "hash, whether it is pushed, and the real next step. No approval "
                 "needed; it goes in the next docs batch."
             ),

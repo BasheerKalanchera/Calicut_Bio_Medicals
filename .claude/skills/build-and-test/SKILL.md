@@ -5,8 +5,11 @@ description: Start Cabio's Build & Test session. Use when Basheer types /build-a
 
 # Build & Test session
 
-Basheer runs two sessions side by side: this one and Plan & Chore
-(`/plan-and-chore`). Written 2026-10-16 from his opening messages since
+Basheer runs up to three sessions side by side: this one, Plan & Chore
+(`/plan-and-chore`) and Build (`/build`, added 2026-10-17). `/build`
+builds a plan in its own copy of the code while this session tests; its
+work reaches the main code at one merge at the end, and this session runs
+that feature's E2E afterwards. Written 2026-10-16 from his opening messages since
 10 Oct (P83 in `docs/Process-Improvements.md`).
 
 ## This session does
@@ -25,6 +28,8 @@ Basheer runs two sessions side by side: this one and Plan & Chore
 - Plan decisions: if building shows a plan's shape must change, stop and
   ask (CLAUDE.md).
 - Docs batches and chores — Plan & Chore.
+- A plan Basheer has handed to `/build` (its note,
+  `.claude/session-handover-build-parallel.md`) until it is merged.
 
 ## First reply
 1. If the arguments say "restarted", do "Recovery" below first.

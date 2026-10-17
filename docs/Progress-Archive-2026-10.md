@@ -3042,3 +3042,36 @@ Checked against both tables in `docs/Process-Improvements.md`.
   both failed (counted under P3 above).
 - Items checked: P1, P3, P15, P16, P45, P66, P69, watch list. Open items
   27 (counted).
+
+## 2026-10-17 — Parallel Build session (`/build`) set up (Plan & Chore)
+
+- Basheer asked whether Annual Target Planning could be built while the
+  Next-Action E2E runs in Build & Test. Checked: the E2E's remaining
+  sections (B, D, E, G) touch no target-planning screen, Target vs Actuals
+  or the bell; the risk is the shared folder — the app on Dev reloads on
+  any file change (`uvicorn --reload`, Vite). Answer: yes, in a separate
+  copy of the code.
+- Decisions (Basheer, 2026-10-17): one merge into `main` at the end of the
+  build, after the Next-Action E2E (chose this over a merge per
+  checkpoint); the migration is written and tested in the copy, applied
+  to Dev only after the merge, and its number is claimed in the note;
+  Build & Test runs the feature's E2E; no second running copy of the app
+  for now, revisit at the first screen step. Progress docs go in the main
+  folder in `/build`'s own docs batches; feature docs travel on the branch.
+- Built: `.claude/skills/build/SKILL.md`; note
+  `.claude/session-handover-build-parallel.md` (Annual Target Planning
+  section moved from the Build & Test note, Basheer's yes); hooks
+  `reply-checklist.sh` and `session-start.sh` show it (read from the main
+  folder via git's common dir, so a worktree session sees the live note);
+  `handover_after_commit.py` names it; `last_session.py` gains kind
+  `parallel` and now picks a session by its typed command first. CLAUDE.md
+  Session handoff, both existing session skills, P83, Process-Rules-History.
+- Tested with sample input: `/build`, `/build restarted`, `{"prompt":
+  "/build"}` (spaced), and `/build` from a worktree folder show the new
+  note; `/build-and-test`, `/build-and-test restarted`, `/plan-and-chore`
+  show theirs; "build the thing" and `/buildx` show none; after-summary
+  re-show right for all three commands and "unknown"; after-commit
+  reminder names the new note; `last_session.py` finds plan and build
+  sessions and reports no earlier parallel one.
+- Not yet tried for real: `EnterWorktree` and the hooks inside a live
+  worktree session — the first `/build` session checks both.
