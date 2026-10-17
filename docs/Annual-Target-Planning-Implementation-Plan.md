@@ -1,8 +1,11 @@
 # Annual Target Planning — Implementation Plan
 
-**Status:** Approved by Basheer, 2026-10-16. Not yet built. E2E test plan:
-`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`. Build order: next,
-once the Next-Action Rules build and its E2E are done (Basheer,
+**Status:** Being replanned, 2026-10-17 — do not build (calendar-year
+brand targets, Haroon and Latheef Bhai via Basheer; D23 onwards). Was
+approved 2026-10-16; build sections below are not yet rewritten. E2E test plan:
+`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (on hold too).
+Build order: on hold until this replan is finished and approved (was
+"next, once the Next-Action Rules build and its E2E are done", Basheer,
 2026-10-16).
 **Traceability rows:** signed 3.1 ("Target splitting by product category,
 quarterly/annual tracking") — this plan finishes its "annual" part (D10).
@@ -29,8 +32,8 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 - D7. Reps are expected to plan only the quarter in progress, but may plan
   any later quarter in detail; nothing is locked (discussion S3, Q4) —
   Basheer, 2026-10-16.
-- D8. Reps see their SBU's yearly and quarterly targets, read-only
-  (discussion Q5) — Basheer, 2026-10-15.
+- D8. ~~Reps see their SBU's yearly and quarterly targets, read-only
+  (discussion Q5) — Basheer, 2026-10-15~~ — withdrawn 2026-10-17 (D26).
 - D9. The rest of FY 2026-27 (2026-Q3, 2026-Q4) stays quarter by quarter
   for the SBU target; the yearly layer is first used for FY 2027-28
   (discussion Q6) — Basheer, 2026-10-16. For brands, see D12a; for the
@@ -40,20 +43,21 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
 - D11. No automatic split anywhere: the GM types each quarter's portion of
   the SBU's yearly target by hand (D6). Applies to the SBU target only —
   Basheer, 2026-10-16.
-- D12. Brand targets are **yearly only**, because vendors give annual
+- D12. ~~Brand targets are **yearly only**, because vendors give annual
   figures: Brand Target Tracking shows and takes one yearly figure per
   brand, with no quarters. The yearly figures (brand and SBU) go in two new
   tables, not as a "yearly" row inside today's quarterly tables —
-  Basheer, 2026-10-16.
-- D12a. FY 2026-27: Brand Target Tracking shows each brand's existing four
+  Basheer, 2026-10-16~~ — withdrawn 2026-10-17 (D23–D25).
+- D12a. ~~FY 2026-27: Brand Target Tracking shows each brand's existing four
   quarterly figures added up into one yearly figure. From FY 2027-28
   (April 2027) Haroon types the yearly figure directly — Basheer,
-  2026-10-16.
+  2026-10-16~~ — withdrawn 2026-10-17 (D23–D25).
 - D13. The GM can clear the SBU's own yearly figure, which makes it follow
   the brand total again — Basheer, 2026-10-16.
-- D14. Where reps see the SBU targets (D8): a read-only line above "My
+- D14. ~~Where reps see the SBU targets (D8): a read-only line above "My
   Plan" on Target & Coverage Planning, e.g. "Imaging target FY 2027-28:
-  ₹1,300 L · this quarter: ₹325 L" — Basheer, 2026-10-16.
+  ₹1,300 L · this quarter: ₹325 L" — Basheer, 2026-10-16~~ — withdrawn
+  2026-10-17 (D26, D27).
 - D15. The app does not stop a GM entering a yearly figure for FY 2026-27;
   D9 is followed by simply not entering one — Basheer, 2026-10-16.
 - D16. Target vs Actuals on the Insights Dashboard gets a **yearly view**
@@ -85,6 +89,41 @@ quarterly/annual tracking") — this plan finishes its "annual" part (D10).
   incomplete (on Dev, 2026-10-16: Critical Care brand total ₹120 L
   against ₹270 L of quarterly targets; Imaging no brand target against
   ₹260 L). From FY 2027-28, D4/D5 apply — Basheer, 2026-10-16.
+
+**Replan, 2026-10-17** (Haroon and Latheef Bhai, via Basheer). Brands set
+targets January–December and bill Cabio a quarter of it each quarter;
+Jan–Mar is lean, Jul–Sep (monsoon) and Oct–Dec (year-end) are strong.
+Calendar quarters and the app's quarters share the same months, so each
+brand calendar quarter is exactly one app quarter (Jan–Mar 2027 = 2026-Q4,
+Apr–Jun 2027 = 2027-Q1 — `scripts/quarter.py`, 2026-10-17). Withdrawn by
+this replan: D8, D12, D12a, D14.
+
+- D23. The GM enters each brand's own January–December figure as the
+  brand sends it; only Admin and GM see it — Basheer, 2026-10-17.
+- D24. Haroon sets a stretch per brand as a percentage (up to about
+  100 %); the stretched figure is worked out and shown beside the brand's
+  own figure — Basheer, 2026-10-17.
+- D25. The stretched year is spread across the four calendar quarters by
+  one seasonal pattern per SBU per year (e.g. 15/20/30/30 %, made-up),
+  which the GM may change for a single brand — Basheer, 2026-10-17.
+- D26. Only the SBU Manager (besides Admin and GM) sees the SBU target,
+  and only the stretched figures. Reps do not see the SBU target
+  (withdraws D8, D14) — Basheer, 2026-10-17.
+- D27. The stretched SBU target is broken up into Area Manager targets.
+  Reps see only their own Area Manager's target — Basheer, 2026-10-17.
+  How it is broken up: open (who splits, per quarter or per year).
+- D28. The GM enters a calendar year's brand figures when the brands send
+  them (January). Until then, next Jan–Mar has no target; its detailed
+  planning waits, as planning is quarter by quarter anyway — Basheer,
+  2026-10-17.
+- Open: whether team incentives stay April–March or move to
+  January–December (raised by Basheer 2026-10-17; industry check in the
+  archive entry of that date). Three options (yearly April–March,
+  yearly January–December, quarterly targets and incentives) compared
+  side by side for Basheer to discuss with Haroon and Latheef Bhai:
+  private doc "Target and Incentive Year Options",
+  https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25,
+  and a PDF of it. Not decided.
 
 ## Figures and sources
 

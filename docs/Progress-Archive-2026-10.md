@@ -3188,3 +3188,55 @@ will do" / "What changes around it").
 
 Open list after this retro: 28 (27 at `HEAD` plus P86, counted with a
 tool); 29 once Build & Test's P85 is saved. Above the cap of 10.
+
+## 2026-10-17 — Annual Target Planning replan: calendar-year brand targets (Plan & Chore)
+
+Basheer spoke to Haroon and Latheef Bhai: brands set Jan–Dec targets and
+bill Cabio a quarter each quarter; Cabio wants to stretch them (up to
+about 100 %) and spread them by season, while managers see April–March.
+Plan marked "being replanned — do not build" (the `/build` session had not
+started step 1; its worktree had no changes). Decided: D23–D28 in the plan
+(D8, D12, D12a, D14 withdrawn). Key fact: calendar and financial-year
+quarters share the same months, so brand quarters drop straight into the
+app's quarters (`scripts/quarter.py`).
+
+Industry check (web search 2026-10-17, vendor help pages): Salesforce,
+Zoho CRM and Dynamics 365 each set one company fiscal year, chosen by an
+admin and hard to change later (Salesforce custom fiscal years delete
+forecast history; Zoho deletes current and future forecasts on a config
+change; Dynamics fiscal settings can't be edited once saved). Targets are
+set per month or quarter under that year. None models a supplier's own
+year; Dynamics allows a goal on a custom period. Open: incentives
+April–March or January–December.
+
+## 2026-10-17 — Retro, Plan & Chore session part 3 (Annual Target replan, incentive options doc)
+
+- Done: Annual Target Planning plan marked "being replanned — do not
+  build", D23–D28 recorded (D8, D12, D12a, D14 withdrawn); industry check
+  on fiscal years (entry above); comparison of three incentive options
+  (yearly April–March, yearly January–December, quarterly) as a private
+  doc, https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25,
+  and a 4-page PDF for Basheer to discuss with Haroon and Latheef Bhai.
+  Incentive year not decided.
+- Wrote D29 "incentives April–March" into the plan from Basheer's "What
+  if we go with…" question; he said "Please revert… The decision is not
+  made yet." Reverted to an "Open:" line. P76 2 → 3.
+- Said April–March incentives leave a January–March gap; Basheer: "I am
+  not clear on the point you are trying to make." On a re-check there is
+  no gap for paying incentives, only the yearly target showing incomplete
+  until January. P3 29 → 30.
+- Handover note reached 78 lines (limit 75) after the replan section was
+  added; trimmed in this batch. P24 5 → 6.
+- "Hasn't heard from you" prompts during the PDF exports and this retro's
+  checks. P15 +1 (19 counting Build & Test's sightings today).
+- Made-up example used Mindray, a competitor; Basheer changed it to
+  SonoScape. New watch-list line.
+- Tried to edit "Mindray" in the doc without re-reading it; Basheer had
+  already changed it and reworded other lines. New watch-list line.
+- Spot-checked 3 figures, all pass: Jan–Mar 2027 = 2026-Q4 and Jul–Sep
+  2027 = 2027-Q2 (`scripts/quarter.py`); the doc's FY 2027-28 example
+  ₹160 + ₹240 + ₹280 L = 20 / 30 / 35 % of ₹800 L (worked out; figures
+  marked made-up in the doc); PDF 4 pages (page footer "Page 1 of 4").
+- Explanations checked (2): the industry check on Zoho, Salesforce and
+  Dynamics stands on its own; the Jan–Mar gap point did not (P3 above).
+- Items checked: P1, P3, P15, P24, P45, P76, watch list.

@@ -8,6 +8,15 @@ session edits this note._
 - Untracked plan doc from another session (Forecast): leave it out of commits.
   At its review, update its line 110 to BR-FIN-09.
 
+## Annual Target Planning — being replanned (calendar-year brand targets)
+
+- 2026-10-17: plan marked "do not build"; D23–D28 recorded (D8, D12,
+  D12a, D14 withdrawn). Incentive-year options doc + PDF made for Haroon
+  and Latheef Bhai (link in the plan's "Open:" line). **Next:** Basheer's
+  answers on incentive year, Area Manager split (A1–A3), old Q5–Q7, and
+  whether D23–D28 stand; then rewrite plan sections 1–6 and the E2E
+  plan. Hold line for the `/build` note: only with Basheer's yes.
+
 ## Next full UAT move — what goes, and what must land first
 
 - **Must land first:** User Manual and Help Catch-up plan. Steps 1–2 done
@@ -17,8 +26,7 @@ session edits this note._
   Open (unanswered): Backlog items for deletes with no "Are you sure?"
   (Opportunity documents, stakeholder links) and the Lead Source picker
   showing "REPEAT_ORDER"-style codes?
-- **Must land first, too:** Annual Target Planning (D17, Basheer
-  2026-10-16) — in the Build & Test note.
+- **Must land first, too:** Annual Target Planning (D17) — replan above.
 - **The move plan** (to write, own approval) starts with Query Load plan
   section 9, steps 2–9 (UAT's fix 3 copy into `main`, remove `uat-fix3`)
   — Basheer, 2026-10-14.
@@ -38,14 +46,6 @@ session edits this note._
 - **Next:** next review 2026-10-19; pick fixes that save Basheer's time
   (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
   if not seen again.
-- Parallel `/build` session set up 2026-10-17 (`26ea5a8`); first real run
-  found two gaps, fixed in `9fec07e` (docs stay on its branch; finder
-  searches worktree history). Both pushed. Watch the `/build` session's
-  first merge of `main` into its branch.
-- Fourth session `/test` (testing only) built 2026-10-17, not yet
-  committed. At Build & Test's next refresh, the rest of the Next-Action
-  E2E moves to `/test` — Build & Test's note gets a pointer, with
-  Basheer's yes.
 - **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
   commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
 - Still to write, shown first: paperwork check in `cabio-post-commit`

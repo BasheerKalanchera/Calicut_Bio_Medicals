@@ -1,6 +1,10 @@
 <!-- e2e-template v1: checked on save by .claude/hooks/test_plan_guard.py -->
 # Annual Target Planning — Manual E2E Test Plan
 
+**On hold, 2026-10-17:** waiting for the implementation plan's replan
+(calendar-year brand targets) to be finished and approved. The steps
+below test the old plan and will be rewritten after that; don't run them.
+
 **Covers:** `docs/Annual-Target-Planning-Implementation-Plan.md`, steps 1–5
 (one combined run after step 5, as the plan's step 6 says).
 **Built:** not yet — commit hashes filled in after the fact.
