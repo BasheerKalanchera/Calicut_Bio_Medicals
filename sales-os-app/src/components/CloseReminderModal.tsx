@@ -177,7 +177,11 @@ export default function CloseReminderModal({ isOpen, onClose, reminder: reminder
     setActivityDate(initial?.activity_date || nowLocal());
     setNotes(initial?.notes ?? "");
     setNextActionText(followUpExempt ? "" : (stageChange ? onlyOwn : reminderProp)?.reminder_text ?? "");
-    setNextActionDueDate(nowPlusDaysLocal(1));
+    // BR-OP-02: On Hold starts the follow-up on the re-activation date (same time of day).
+    const onHoldDue = stageChange?.newStatus.code === "ON_HOLD" && stageChange.reactivationDate;
+    setNextActionDueDate(onHoldDue
+      ? `${stageChange.reactivationDate}${nowPlusDaysLocal(1).slice(10)}`
+      : nowPlusDaysLocal(1));
     setNextActionOwnerId("");
     setProducedNewOpportunity(false);
     setShowNewOpportunity(false);
