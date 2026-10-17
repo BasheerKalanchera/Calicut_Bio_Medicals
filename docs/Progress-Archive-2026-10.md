@@ -3075,3 +3075,35 @@ Checked against both tables in `docs/Process-Improvements.md`.
   sessions and reports no earlier parallel one.
 - Not yet tried for real: `EnterWorktree` and the hooks inside a live
   worktree session — the first `/build` session checks both.
+
+## 2026-10-17 — `/build` docs stay on its branch (Plan & Chore)
+
+- First real `/build` run (session `1d771bb4`): the hook showed the note,
+  `EnterWorktree` made `.claude/worktrees/build` on branch
+  `worktree-build` from `26ea5a8`. Two gaps found: (1) Claude Code blocks
+  a worktree session from editing files outside the worktree ("Edit the
+  worktree copy of this file instead"), so the agreed "progress docs in
+  the main folder" could not work; (2) the session's history is saved
+  under `…--claude-worktrees-build`, which `last_session.py` didn't search.
+- Decision (Basheer, 2026-10-17): all `/build` docs, its handover note
+  included, stay on its branch until the merge. He asked why other
+  sessions would need the build's progress mid-flight; checked, they
+  don't — the costs are text clashes in shared docs at the one merge and
+  the build's retros reaching the Harness review late. The only
+  cross-session item, the migration number, goes away: if the
+  experiment goes well, Build & Test becomes a testing-only `/test`
+  session (Basheer, a plan, not yet decided).
+- Changed: build skill (docs on the branch, merge steps step out with
+  `ExitWorktree keep`, first reply brings `main` into the branch); hooks
+  show the note from the worktree copy, falling back to the main copy;
+  `last_session.py` also searches worktree history folders. The
+  main-folder copy of the note is left as committed, so the merge has no
+  clash on it.
+- Tested: `/build`, `/build restarted` (from the main folder and from
+  the worktree) and the after-summary re-show read the worktree note;
+  `/build-and-test`, `/plan-and-chore` unchanged, `/buildx` none; the
+  finder, on a scratch copy of `1d771bb4` plus one reply, found it as
+  `parallel` and not as plan or build.
+- Mistake: I said the other sessions needed the build's progress
+  mid-flight without checking what each one does; Basheer's question
+  showed they don't (retro).

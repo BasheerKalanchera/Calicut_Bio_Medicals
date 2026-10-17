@@ -38,6 +38,8 @@ session edits this note._
 - **Next:** next review 2026-10-19; pick fixes that save Basheer's time
   (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
   if not seen again.
+- Parallel `/build` session set up 2026-10-17 (`26ea5a8`, pushed); first
+  real `/build` run checks the worktree and hooks live.
 - **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
   commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
 - Still to write, shown first: paperwork check in `cabio-post-commit`

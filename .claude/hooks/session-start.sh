@@ -9,9 +9,11 @@
 # context summary.
 HP=.claude/session-handover-plan.md
 HB=.claude/session-handover-build.md
-# Parallel Build session (/build, 2026-10-17) runs in a worktree; its note
-# lives in the main folder only (git's common dir).
-HBP=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude/session-handover-build-parallel.md
+# Parallel Build session (/build, 2026-10-17) keeps its note in its
+# worktree (found via git's common dir); before that exists, the main copy.
+MC=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude
+HBP=$MC/worktrees/build/.claude/session-handover-build-parallel.md
+[ -f "$HBP" ] || HBP=$MC/session-handover-build-parallel.md
 OLD=.claude/session-handover.md
 INPUT=$(cat)
 DQ_LOG=/c/Backups/CabioUAT/data_consistency_reports/data_quality_log.txt

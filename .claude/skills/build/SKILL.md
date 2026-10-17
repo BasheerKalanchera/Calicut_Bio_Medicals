@@ -26,27 +26,26 @@ of the build**, after Build & Test's E2E is done and Basheer says go
   on its branch, each shown first (CLAUDE.md "Commit approval"); pushes the
   branch.
 - Writes and tests a migration in the worktree, but **applies it to Dev
-  only after the merge**, from the main folder. It names the migration
-  number it has claimed in its handover note, so Build & Test doesn't take
-  the same number (Basheer, 2026-10-17).
-- The merge, when Basheer says go: first bring `main` into the branch and
-  re-run the tests, then merge into `main` and push, apply any migration
-  (CLAUDE.md "Migrations"), then `cabio-post-commit`.
-- Its docs, in two kinds (Basheer, 2026-10-17):
-  - **Progress docs go in the main folder**, edited at their main-folder
-    path (never the worktree copy) and committed in this session's own
-    docs batches from the main folder (`git -C <main folder>`), shown
-    first: its handover note, the plan's Status line and progress, Backlog,
-    Progress-Archive, Process-Improvements. Docs don't reload the app.
-    Stage only this session's lines in shared files.
-  - **Feature docs travel on the branch** with the code: Business-Rules,
-    ADR, Traceability, user manual, in-app help. They reach `main` at the
-    merge.
-- Its own end-of-session retro (`harness-engineering`).
+  only after the merge**. It records the migration number it last chose
+  in its handover note (Basheer, 2026-10-17).
+- **All its docs stay on the branch** until the merge, edited in the
+  worktree copy (Basheer, 2026-10-17): its handover note, the plan's
+  Status line and progress, Backlog, Progress-Archive, Process-Improvements,
+  and the feature docs (Business-Rules, ADR, Traceability, user manual,
+  in-app help). Its docs batches are commits on the branch, each shown
+  first. Claude Code blocks a worktree session from editing files outside
+  the worktree, and the other sessions don't need its progress before the
+  merge.
+- The merge, when Basheer says go: bring `main` into the branch, settle
+  any text clashes in shared docs (Backlog, Progress-Archive,
+  Process-Improvements — keep both sides' lines), re-run the tests and push
+  the branch. Then step out to the main folder (`ExitWorktree` with
+  `action: "keep"` — never "remove"), merge into `main` and push, apply
+  any migration (CLAUDE.md "Migrations"), then `cabio-post-commit`.
+- Its own end-of-session retro (`harness-engineering`), on the branch.
 - Keeps its own handover note, `.claude/session-handover-build-parallel.md`
-  in the main folder, current. Never edits the other two notes; anything
-  for those sessions goes to Basheer, or into their note only after he
-  says yes.
+  in the worktree, current; the hooks show it from there. Never edits the
+  other two notes; anything for those sessions goes to Basheer.
 
 ## It leaves alone
 - Code, config and migrations in the main folder; starting, stopping or
@@ -69,10 +68,13 @@ of the build**, after Build & Test's E2E is done and Basheer says go
 2. Move into the worktree: `EnterWorktree` with
    `path: .claude/worktrees/build` if `git worktree list` shows it,
    otherwise with `name: build` (branches from `origin/main`). Say which
-   folder and branch you are on.
+   folder and branch you are on. If `main` has commits the branch
+   doesn't, bring them in (`git merge main`) so the copy has the latest
+   skills and hooks; say so first.
 3. First use only: `npm install` in `sales-os-app/` of the worktree (a few
    minutes; say so before running it).
-4. The every-message hook has shown this session's note; check its claims
+4. The every-message hook has shown this session's note (the worktree
+   copy once it exists); check its claims
    against git (branch and `main`), and say in one or two lines what's
    next to build, which plan and step.
 5. Check in before starting it.

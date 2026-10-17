@@ -8,13 +8,16 @@ Reply checklist (P1, P3): (1) Numbers and counts: count with a tool first, or sa
 EOF
 # Session start by command (Basheer, 2026-10-16, P83): show that session's
 # handover note the moment /plan-and-chore or /build-and-test is typed.
-# /build (parallel Build session, 2026-10-17) works in a worktree, so its
-# note is read from the main folder (git's common dir), never the copy.
+# /build (parallel Build session, 2026-10-17) keeps its note in its
+# worktree, .claude/worktrees/build (found via git's common dir, so this
+# works from either folder); before the worktree exists, the main copy.
 D=${CLAUDE_PROJECT_DIR:-.}/.claude
 M=$(git -C "${CLAUDE_PROJECT_DIR:-.}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/../.claude
+N=$M/worktrees/build/.claude/session-handover-build-parallel.md
+[ -f "$N" ] || N=$M/session-handover-build-parallel.md
 case "$(cat)" in
   *'"prompt":"/plan-and-chore'*|*'"prompt": "/plan-and-chore'*) echo; cat "$D/session-handover-plan.md" ;;
   *'"prompt":"/build-and-test'*|*'"prompt": "/build-and-test'*) echo; cat "$D/session-handover-build.md" ;;
-  *'"prompt":"/build"'*|*'"prompt": "/build"'*|*'"prompt":"/build '*|*'"prompt": "/build '*) echo; cat "$M/session-handover-build-parallel.md" ;;
+  *'"prompt":"/build"'*|*'"prompt": "/build"'*|*'"prompt":"/build '*|*'"prompt": "/build '*) echo; cat "$N" ;;
 esac
 exit 0

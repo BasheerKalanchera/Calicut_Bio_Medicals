@@ -44,7 +44,11 @@ def load(path):
                     out.append((d.get("timestamp", ""), d["type"], t))
     return out
 
-files = sorted(glob.glob(os.path.join(DIR, "*.jsonl")), key=os.path.getmtime, reverse=True)
+# A session that moves into a worktree (/build) has its history saved under
+# the worktree's own project folder, e.g. "...--claude-worktrees-build"
+# (found 2026-10-17), so look there too.
+files = sorted(glob.glob(os.path.join(DIR, "*.jsonl")) + glob.glob(os.path.join(DIR + "--claude-worktrees-*", "*.jsonl")),
+               key=os.path.getmtime, reverse=True)
 for path in files:
     msgs = load(path)
     users = [t for _, who, t in msgs if who == "user"][:3]
