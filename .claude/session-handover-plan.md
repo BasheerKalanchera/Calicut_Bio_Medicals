@@ -34,10 +34,12 @@ session edits this note._
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
   `docs/Process-Improvements.md`, open list 27 (counted 2026-10-17, after
-  the third review: P16 built, P45 and P69 merged; not yet committed).
+  the third review: P16 built, P45 and P69 merged; `dd20a85`, pushed).
 - **Next:** next review 2026-10-19; pick fixes that save Basheer's time
   (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
   if not seen again.
+- **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
+  commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
 - Still to write, shown first: paperwork check in `cabio-post-commit`
   (feat/fix only, all living docs + handover); right-pack check in
   `harness-engineering` (its review steps written 2026-10-15).

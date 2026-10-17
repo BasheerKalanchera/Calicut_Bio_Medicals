@@ -3015,3 +3015,30 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Side rule the same session: every manual E2E test plan step that names
   an Opportunity puts its hospital beside it in brackets (Basheer).
 - Open list 28 → 27 (counted).
+
+## 2026-10-17 — Retro, Plan & Chore session (UAT backup, Harness review)
+
+- Recommended P15 (a progress line during long work) as the third fix by
+  Seen count; Basheer asked twice what it would do for him ("I don't
+  understand the relevance … not the cosmetics"). The P45 reminder I had
+  proposed would also have added approval stops; withdrawn. New
+  watch-list line: rank fixes by the time they save Basheer, not by Seen.
+- P3 27 → 29: the P15 explanation (above) and the "ten 10 Oct lines are
+  deleted" summary (Basheer: "What are these?") did not stand on their own.
+- P1: two slips found in the review and counted there (36): "twice on 16
+  Oct" (retros show at least three) and the P69 example dated 13 Oct (the
+  tracker says 12 Oct).
+- P15 14 → 15: a "hasn't heard from you" prompt while updating the
+  standing watch-list rule.
+- The new P16 reminder did not fire on `dd20a85`: `git commit -q` hides
+  the "[main <hash>]" line it reads. Handover updated by hand. Fix
+  proposed (also fire when the newest commit is under a minute old),
+  awaiting Basheer. New watch-list line: test a new hook with the command
+  forms actually used.
+- Spot-checked 3 figures: backup 671,948 bytes / 472 entries (script
+  output) — pass; open list 27 (counted with awk) — pass; "55 repeats"
+  (first summed by hand, recounted with a tool: 55) — pass.
+- Explanations checked (2): the P15 proposal and the watch-list summary —
+  both failed (counted under P3 above).
+- Items checked: P1, P3, P15, P16, P45, P66, P69, watch list. Open items
+  27 (counted).
