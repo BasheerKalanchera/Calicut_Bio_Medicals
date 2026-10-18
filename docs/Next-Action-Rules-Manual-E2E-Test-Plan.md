@@ -377,7 +377,13 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    step 7.
 7. [Simple] Next Actions screen → close the follow-up left open on
    "new lead" (aster medicity) (from B2), no follow-up. **Expected:**
-   saved — the Opportunity is Lost, so none is needed. —
+   saved — the Opportunity is Lost, so none is needed. — Pass
+   (2026-10-18, Basheer ran it as Basheer K; Claude read back). Pop-up
+   "Close Next Action"; Follow-up tab had no "*", box empty, hint
+   "Optional — this Opportunity is Lost. Leave the follow-up box empty to
+   close with no follow-up."; Complete closed it. Read back in Claude's
+   tab: Activity shows Call "E2E D7 - closing, Opportunity is Lost." (18
+   Oct 2026, Basheer K) once; Next Actions tab: no pending next actions.
 8. [Complex: multi-step, D4] As Basheer K, top bar "+ Lead": name
    "zz NA E2E – fast track Won", hospital Baby Memorial Hospital, lead
    source Repeat Order, stage Payment Pending, with order value, a
@@ -388,7 +394,24 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    it, D4), closing Basheer K's open next action from creation, already
    picked. Fill "Why the change?", leave the follow-up empty, Save.
    **Expected:** saved as Won; no follow-up next action asked; the payment
-   note stays optional. —
+   note stays optional. — Pass (2026-10-18, Claude drove as Basheer K,
+   Basheer pressed Create, Create, Save, Save). Made-up values: product
+   SonoScape E1 Portable USG Machine 1 × ₹5 L (value ₹5.00 L auto), PO
+   PO-E2E-D8 dated 18 Oct 2026, win probability 98 % (form's own fill);
+   Fast-Track not ticked (Repeat Order hides the demo dates). First
+   activity Call "E2E D8 - repeat order PO received, payment pending",
+   next action "zz E2E D8 collect full payment" due 19 Oct. Read back:
+   Payment Pending, Active, ₹5.0L. Edit → Won showed "I confirm full
+   payment has been received *" and "Payment Note" with no "*"; ticked,
+   note empty, Save opened "Why this change?" with "Closing your next
+   action (due 19 Oct): zz E2E D8 collect full payment"; Follow-up tab
+   no "*", box empty, hint "Optional — this Opportunity is Won. Leave the
+   follow-up box empty to save with no follow-up."; reason "E2E D8 - full
+   payment received, marking Won" (Call). Read back after a reload: Won,
+   payment confirmed by Basheer K on 18 Oct 2026; Activity (2) shows both
+   Calls once; Next Actions: no pending next actions. Note: "+ Lead"
+   opened from an Opportunity page offers only that page's hospital;
+   reopened from Pipeline (not a bug for this plan).
 
 ## E — A new Opportunity starts with an activity (BR-OP-21)
 
@@ -397,29 +420,62 @@ medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
    opens (D19) with "Every new Opportunity starts with the conversation
    that led to it, and a next action. Create saves all three together."
    Press Cancel. **Expected:** back on the New Opportunity form, nothing
-   created. —
+   created. — Pass (2026-10-18, Basheer ran it as Basheer K, name "zz NA
+   E2E – E1 cancel" (made up), stage Lead). Pop-up showed the line;
+   Cancel returned to the filled form. Claude searched the Pipeline for
+   "E1 cancel" in its own tab: no Opportunity found.
 2. [Simple] Create again; in the pop-up open "Type *". **Expected:** only
    Visit, Call, Email, Meeting and Note (D5); "Assign To" reads "<owner>
-   — Opportunity owner (default)" (D16). Cancel. —
+   — Opportunity owner (default)" (D16). Cancel. — Pass (2026-10-18,
+   Basheer ran it as Basheer K; Claude re-filled the E1 form after its
+   own read-back reload had closed it — same tab, nothing saved). Type
+   list showed exactly Visit, Call, Email, Meeting, Note; Assign To
+   "Basheer K — Opportunity owner (default)"; both cancelled. Pipeline
+   search for "E1 cancel" in Claude's tab: no Opportunity found.
 3. [Complex: save, then read back, three ways in] Create one Opportunity
    from each way in, each with its first activity and next action:
    "zz NA E2E – top bar" (Baby Memorial Hospital, from the top bar);
    "zz NA E2E – Customer 360" (aster medicity, from its Customer 360);
    "zz NA E2E – project" (Aster MIMS Calicut, from "Another new
    project"). **Expected:** each Opportunity's Activity tab and Next
-   Actions tab show them. —
+   Actions tab show them. — Pass (2026-10-18, as Basheer K; Claude
+   filled each form and pop-up, Basheer pressed both Creates). All
+   three: stage Lead, owner Basheer K, win 5 % (form's own fill), first
+   activity a Call "E2E E3 - <way in> first call", next action "zz E2E
+   E3 <way in> follow-up" due 19 Oct 2026 (text made up). Customer 360
+   form fixed the hospital; project form fixed hospital and project and
+   pre-filled the project's name (replaced). Read back in Claude's tab:
+   each Opportunity's Activity (1) shows the Call by Basheer K and its
+   Next Actions tab one pending follow-up, owner Basheer K.
 4. [Complex: cross-screen] Marketing Lead "New usg m/c needed." (picked at
    P4) → Convert, hospital KIMS Hospital Trivandrum. **Expected:** "what
    happened" is pre-filled from the lead's interest note and can be
    edited; create "zz NA E2E – converted lead" (KIMS Hospital
    Trivandrum); lead shows as converted; first activity and next action
-   read back. —
+   read back. — Pass (2026-10-18, as Basheer K; Claude filled the
+   form and pop-up, Basheer pressed both Creates). Convert on lead
+   #284D6F (Conference, Cochin, assigned to Fazal) opened the form with
+   the lead's box and Lead Source CONFERENCE; stage Lead, owner Basheer
+   K, win 5 %. "What happened?" opened as "New usg m/c needed." and took
+   an added " E2E E4 - called after conversion" (made up); next action
+   "zz E2E E4 converted lead follow-up" due 19 Oct 2026. Read back in
+   Claude's tab: lead shows "Converted 18 Oct, 08:00 pm"; Activity (1)
+   the Call with the edited text by Basheer K; Next Actions one pending,
+   owner Basheer K.
 5. [Complex: cross-user, Won/Lost with a Note, D12, D13] As Haroon, "zz
    NA E2E – top bar" (Baby Memorial Hospital; from E3; its next action is
    Basheer K's, D16) → Edit → status Lost with a loss reason → Save.
    **Expected:** the pop-up shows the "saved as a Note" line; write the
    Note, leave the next action empty (no "*"), Save. **Expected:** saved
-   as Lost with the Note; Basheer K's next action is untouched. —
+   as Lost with the Note; Basheer K's next action is untouched. — Pass
+   (2026-10-18, Basheer ran it as Haroon in his private window, loss
+   reason Budget Cancelled, Note "E2E E5 - Haroon marks Lost" (made
+   up)). Basheer saw the "saved as a Note" line with Type greyed out as
+   Note, Follow-up without "*", left empty, Save worked. Read back in
+   Claude's tab (Basheer K, after a reload): status Lost, loss reason
+   Budget Cancelled; Activity (2) has the Note by Haroon Sidheeq
+   (18 Oct 2026, 8:03 pm); Basheer K's "zz E2E E3 top bar follow-up"
+   (due 19 Oct 2026) still pending.
 
 ## F — (removed 2026-10-16)
 
@@ -434,7 +490,11 @@ match.
    dev --no-log`. **Expected:** section "7a-ii. Active or On Hold
    Opportunities with no open next action" also lists On Hold ones;
    "Imaging department refresh" (Baby Memorial Hospital) is not listed
-   there (it got one in step D5). —
+   there (it got one in step D5). — Pass (2026-10-18, Claude ran it,
+   exit 0). 7a-ii listed 41, including On Hold "New ICU Monitor deal"
+   (Aster DM, Nishad K V); "Imaging department refresh" (Baby Memorial
+   Hospital) not listed; none of today's "zz NA E2E" Opportunities
+   listed either.
 
    (A third check — a hospital whose only use is an open next action is
    not listed in "3. Accounts with zero Opportunities and zero Activity" —

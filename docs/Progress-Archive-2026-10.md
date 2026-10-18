@@ -3338,3 +3338,21 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Items checked: P1, P14, P15, P19, P23, P24, watch list (P6).
 - Open items counted after this retro: 29 (`| open |` rows), over the
   cap of 10.
+
+## 2026-10-18 — Next-action rules E2E finished, 32 of 32 Pass (Build & Test)
+
+- Basheer chose to finish the E2E here rather than hand it to `/test`.
+  D7, D8, E1–E5 and G1 all Pass; no bugs found today. Details per step in
+  `docs/Next-Action-Rules-Manual-E2E-Test-Plan.md`.
+- Test Opportunities created on Dev today (all owner Basheer K): "zz NA
+  E2E – fast track Won" (Baby Memorial Hospital, D8, Won); "zz NA E2E –
+  top bar" (Baby Memorial Hospital, E3, Lost by Haroon in E5); "zz NA
+  E2E – Customer 360" (aster medicity); "zz NA E2E – project" (Aster MIMS
+  Calicut); "zz NA E2E – converted lead" (KIMS Hospital Trivandrum, from
+  marketing lead #284D6F, now converted).
+- Slip: during E1's read-back Claude reloaded the shared tab while
+  Basheer still had the New Opportunity form open there, closing it
+  (nothing saved). E2 re-filled it. From then on, checks waited for
+  Basheer's "done".
+- G1: data-quality script on Dev (`--no-log`), exit 0; 7a-ii lists 41,
+  including On Hold ones; "Imaging department refresh" not listed.

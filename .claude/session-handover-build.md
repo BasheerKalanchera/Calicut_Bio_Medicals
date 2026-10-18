@@ -36,21 +36,27 @@ session edits this note._
   (aster medicity) now Qualified); D3 Pass; D4 Pass ("Ultrasound m/c"
   now Demo); D4a Pass ("usg m/c" now Demo) — 22 of 32 steps. D4/D4a
   wording now includes Demo Start Date (stage gate).
-- Small-fixes batch, made 2026-10-17 (Basheer's go), not committed: pop-up
+- Small-fixes batch, made 2026-10-17 (Basheer's go): pop-up
   label "Closing your/this next action (due …):" and stage-change
   follow-up hints in `CloseReminderModal.tsx` (D1, D4a findings);
-  committed `06b41a0` at the day's pause (not pushed).
+  committed `06b41a0` at the day's pause, pushed; docs batch `219c55b`, pushed.
 - D5 first try 2026-10-17 found a bug (nothing saved): On Hold follow-up
   due date started at tomorrow, not the re-activation date
   (Business-Rules BR-OP-02). Fixed in `CloseReminderModal.tsx` (Basheer's
-  go), committed `856d041` (not pushed). D5 Pass on
+  go), committed `856d041`, pushed. D5 Pass on
   retry ("Imaging department refresh" (Baby Memorial Hospital) now On
   Hold); D6 Pass ("new lead" (aster medicity) now Lost) — 24 of 32
   steps. BR-OP-02 marked built, retro part 2 in Progress-Archive.
   Paused for the day 2026-10-17 (Basheer).
-- **Next:** D7 (Simple: Next Actions screen, close "Meet Dr Ajmal in
-  person" (aster medicity), no follow-up), D8, then E, G; progress
-  line with % after each step (Basheer, 2026-10-17).
+- 2026-10-18: Basheer chose to finish this E2E here, not hand it to
+  `/test` (`/test` starts with Annual Target Planning instead).
+- D7 Pass, D8 Pass 2026-10-18 ("zz NA E2E – fast track Won" (Baby
+  Memorial Hospital) now Won) — 26 of 32 steps; results in the test
+  plan, not committed.
+- E1–E5 and G1 Pass 2026-10-18 — **E2E finished, 32 of 32 Pass**;
+  results in the test plan and Progress-Archive, not committed.
+- **Next:** docs batch commit (awaiting Basheer's approval), then the
+  feature's post-commit checklist (`cabio-post-commit`) and the retro.
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
 
