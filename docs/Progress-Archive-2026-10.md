@@ -3356,3 +3356,31 @@ Checked against both tables in `docs/Process-Improvements.md`.
   Basheer's "done".
 - G1: data-quality script on Dev (`--no-log`), exit 0; 7a-ii lists 41,
   including On Hold ones; "Imaging department refresh" not listed.
+
+## 2026-10-18 — Retro, Build & Test session (next-action rules E2E finished)
+
+Checked against both tables in `docs/Process-Improvements.md`.
+
+- E1 read-back: Claude reloaded the shared tab while Basheer still had
+  the New Opportunity form open there, closing it unsaved; E2 re-filled
+  it. Touches lost work, so straight to the open list: new item P88
+  "before any reload or page change in the shared tab, wait for
+  Basheer's 'done'", Seen 1.
+- Told Basheer the session was "well past 2 hours" without measuring;
+  the session log runs 13:13–14:50 UTC, about 1 h 37 min. P1 38 → 39.
+- The folder-change guard blocked one command (the follow-up check
+  after G1). P14 32 → 33.
+- One "hasn't heard from you" prompt, while preparing the docs commit.
+  P15 19 → 20.
+- Not recorded: a missed side-menu click and the Pipeline search box
+  keeping old text (small browser slips, fixed on the next try).
+- Spot-checked 3, all pass: "41 found" in G1's 7a-ii (script output,
+  Dev, 18 Oct); "New ICU Monitor deal" (Aster DM, Nishad K V) listed
+  On Hold (same output); "zz NA E2E – fast track Won" at Baby Memorial
+  Hospital (test plan step D8).
+- Explanations checked (2): the G1 result and the closing-paperwork
+  recommendation; both stand on their own (the second's time figure is
+  counted under P1 above).
+- Items checked: P1, P3, P14, P15, P23, P85, P87, watch list.
+- Open items: 29 (`| open |` rows, counted), 30 once P88 is added; over
+  the cap of 10.

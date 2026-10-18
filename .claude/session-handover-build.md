@@ -54,9 +54,12 @@ session edits this note._
   Memorial Hospital) now Won) — 26 of 32 steps; results in the test
   plan, not committed.
 - E1–E5 and G1 Pass 2026-10-18 — **E2E finished, 32 of 32 Pass**;
-  results in the test plan and Progress-Archive, not committed.
-- **Next:** docs batch commit (awaiting Basheer's approval), then the
-  feature's post-commit checklist (`cabio-post-commit`) and the retro.
+  results in the test plan and Progress-Archive (`2a83846`, pushed).
+  Retro 2026-10-18 done (new open item P88), in the next commit.
+- **Next (fresh session):** the feature's post-commit checklist
+  (`cabio-post-commit`): plan Status and test plan "Built" hashes,
+  remove its Backlog entry, Traceability rows, regenerate the scorecard
+  (client-visible: show Basheer the exact diff before republishing).
 - Not yet scheduled (was Win Probability's next item): the other 6 rule
   gaps, Backlog "Business rules vs code — 6 gaps awaiting decision".
 
