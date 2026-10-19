@@ -626,6 +626,16 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   or Lost in the same step (a follow-up may still be added, e.g. chasing
   payment). Another next action still being open does not exempt it
   (Basheer, 2026-10-12 — the discussion note's second exception dropped).
+  **Closing several at once (agreed 2026-10-19, not yet built):** a
+  person with more than one open next action of their own on the same
+  Opportunity may close any of them together, with one "what happened"
+  and one follow-up — so the count can come down to one in a single
+  save. Offered in the close form (Next Actions screen, the Opportunity
+  page's Next Actions tab) and in Log Activity's close-it-first warning;
+  the "Why this change?" pop-up still closes one (next-action rules plan
+  D22; Basheer, 2026-10-19, after a UAT check found 12 Active
+  Opportunities where one person had 2–5 open, mostly older ones never
+  closed).
   Haroon via Basheer, 2026-10-12 (discussion note, question 4 and reading
   (i)). The same applies to a hospital-level next action, unless the
   visit produced a new Opportunity (BR-OP-21 gives it its own) — then

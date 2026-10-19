@@ -3557,3 +3557,69 @@ P4, P68, P77, P80, P86 and the watch list.
   target-entry chain, each going to UAT when finished (D44).
 - Documentation tidy-up stopped part-way by Basheer (logged partial,
   3 fixes deferred).
+
+## 2026-10-19 — Next-action rules: demo to Haroon, UAT by Wednesday, two-next-actions gap (Build & Test)
+
+- **Demo to Haroon** on Dev, 19 Oct (Basheer): went well. Script kept in
+  the session scratchpad only (made-up "Demo –" records, Baby Memorial
+  Hospital). Haroon wants the rules on UAT by Wednesday 21 Oct; that
+  needs a full move (they depend on the one create form and Duplicate
+  Hospitals Part A, both only on `main`): 245 commits on `main` not on
+  `uat` (`git log origin/uat..origin/main`, 19 Oct), migrations
+  0055–0061. Move plan not yet written.
+- **Gap found while preparing the demo:** a person with two or more open
+  next actions of their own on one Opportunity can never get back to
+  one — closing either needs a follow-up unless the Opportunity is Won
+  or Lost (`_require_follow_up_exemption`,
+  `backend/app/domains/activity/service.py`). The E2E missed it (its one
+  two-next-action case was marked Lost). Proposed fix: follow-up optional
+  when another of that person's next actions stays open there — awaiting
+  Basheer's decision.
+- **UAT read-only check, 19 Oct** (Basheer approved; one read-only
+  transaction as Admin, rolled back): 143 open next actions on
+  Opportunities across 119 person+Opportunity pairs; 15 pairs have 2 or
+  more — 12 on Active Opportunities (Arun Adarsh 3, Fazal 3, Naeem 3,
+  Vivek 2, Haroon Sidheeq 1; most 5, Naeem on "Sonoscape E1" (Malabar
+  Hospital, Manjeri)) and 3 on Won ones (no issue: Won needs no
+  follow-up). Output in the session scratchpad.
+- **UAT listing, 19 Oct** (Basheer approved; read-only, rolled back): the
+  15 pairs hold 39 open next actions (31 on the 12 Active pairs). Nearly
+  all are piles of older ones left open when the rep logged a newer
+  activity — the pattern BR-ACT-11 now stops (e.g. Naeem, "Sonoscape E1"
+  (Malabar Hospital, Manjeri): five, 14 Sep–15 Oct, each superseded by the
+  next). Basheer's alternative: close several at once with one follow-up
+  (keeps BR-ACT-05's follow-up rule whole).
+- **Decided, 19 Oct (Basheer): the "middle way"** — close several at
+  once in the close form and Log Activity's warning; the "Why this
+  change?" pop-up keeps picking one. Written into BR-ACT-05, the plan
+  (D22) and the matrix. My earlier proposal (follow-up optional when
+  another stays open) dropped. Build plan shown in chat (server accepts
+  extra next actions to close with the same closing activity, checked
+  as open, same Opportunity, same person; no database change; about 4
+  new E2E steps; one `fix:` commit), with two small choices still
+  proposed: Log Activity starts with all ticked, the close form with the
+  others unticked; the follow-up pre-fills from the one pressed (Log
+  Activity: the most recently set). Parked to 20 Oct at Basheer's
+  request; not started.
+
+### Retro — Build & Test, second part of 2026-10-19 (demo, UAT checks, gap)
+- **Gap reached the demo unnoticed:** after the 12 Oct decision dropped
+  the "another next action open" exception, neither the plan nor the
+  E2E played through closing one of two own open next actions (the
+  E2E's only two-next-action case was marked Lost). New — one watch-list
+  line (a blocking rule is played through with 2+ records).
+- **First UAT check grouped by Opportunity name, not id:** same-named
+  Opportunities at one hospital would have merged. Counts were right
+  (the second listing, by id, agreed: 15 pairs). Touches UAT — straight
+  to the open list as P90.
+- **"Hasn't heard from you" prompt twice** (reading code for the build
+  plan; the end-of-day write-up): P15 22 → 24.
+- Items checked: P1, P3, P15, P87 (closest to the gap; not a repeat —
+  D15 had a test step, the missing case was the count coming down), P2,
+  P28, watch list.
+- Spot-checks (P1), all correct against the listing file: 31 on Active
+  (9+6+2+10+4) plus 8 on Won = 39; 12 Active groups, 2–5 each; Naeem's
+  five set 14 Sep–15 Oct.
+- Explanation checks (P3), both pass: the listing reply; the build
+  plan's "What changes for the rep".
+- Open list 30 → 31 (counted with a tool).

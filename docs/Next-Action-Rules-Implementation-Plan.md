@@ -140,6 +140,14 @@ Decided for this plan:
   and never used stay in the data-quality report ("not used yet",
   step 5). Backlog: "A new hospital starts with a next action — revisit
   if unused hospitals grow" — Basheer, 2026-10-16
+- D22. (Added after the build, 2026-10-19, before the UAT move.) Closing
+  several of one's own open next actions on the same Opportunity at
+  once, with one "what happened" and one follow-up (BR-ACT-05). In the
+  close form and Log Activity's warning only; the "Why this change?"
+  pop-up keeps D15's pick-one (the "middle way"). Reason: closing one of
+  two still needed a follow-up, so the count never came down; a UAT
+  check on 19 Oct found 12 Active Opportunities where one person had
+  2–5 open, mostly older ones never closed — Basheer, 2026-10-19
 
 ## Figures and sources
 
