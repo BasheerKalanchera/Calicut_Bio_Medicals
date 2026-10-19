@@ -3623,3 +3623,51 @@ P4, P68, P77, P80, P86 and the watch list.
 - Explanation checks (P3), both pass: the listing reply; the build
   plan's "What changes for the rep".
 - Open list 30 → 31 (counted with a tool).
+
+## 2026-10-19 — Annual Target Planning: plan rewritten as Part 1 / Part 2 (Plan & Chore)
+
+- Sections 1–6 of `docs/Annual-Target-Planning-Implementation-Plan.md`
+  rewritten as Part 1 (entering targets) and Part 2 (Year view, plan
+  notifications, brand billing line), per D44. Status back to Draft,
+  awaiting Basheer's approval (he reviews it 2026-10-20).
+- Five design questions (Q-A to Q-E) answered "as recommended" and
+  recorded as D45–D49: targets set by the person one reports to (Haroon
+  splits SBU → Area Managers while no SBU Manager exists, Backlog:1548);
+  brand quarters saved into the existing quarterly table; no separate SBU
+  yearly figure (withdraws D4, D5, D6, D11, D13, D15, D22a); Oct–Dec 2026
+  hand-typed figures handled as described; Area Managers' Target vs
+  Actuals row against their own target in Part 1.
+- New question D46a (don't overwrite brand quarters before Oct–Dec 2026)
+  — Basheer: as recommended. Whole-plan approval still open.
+
+## 2026-10-19 — Plan & Chore retro (afternoon: options doc, PDF, Annual Target replan)
+
+Shown to Basheer first; his yes to write it up. Items checked: P1, P14,
+P15, P23, P24, P76, P77 and the watch list.
+
+- P76 3 → 4: took "yes. Please update the pdf as well" as a yes to the
+  doc tidy-up too and started it, delaying the PDF ("What is going
+  on?"). Tidy-up stopped.
+- P23 18 → 19: wrote that Option 3 "adds nothing new to build" without
+  checking; the app has no per-rep target or year-so-far view. Basheer
+  asked; corrected.
+- P1 43 → 45: wrote "done by about 26 Oct" into D38 (my date, not his;
+  changed to "next week"); said the saved plan's sections 1–4 matched
+  the draft shown — section 4 had two added lines and step 2's
+  "stops working" note changed.
+- P24 6 → 8: handover note reached 76 lines twice; the new guard warned,
+  trimmed at once.
+- P14 35 → 37 (two blocked `cd`s); P77 8 → 9 (inline Python edit
+  refused).
+- P15 24 → 28: four "hasn't heard from you" prompts in the visible part
+  of the session (plan rewrite twice, retro draft, retro write-up; shown
+  to Basheer as three, the fourth came while writing it up).
+- Went well: Q-A to Q-E answered in one round; "go with D46a" recorded
+  as a decision without treating it as plan approval.
+- Spot-checks: 21 Oct 2026 is a Wednesday ✓ (Python calendar);
+  2026-Q3 = Oct–Dec 2026 ✓ (`scripts/quarter.py`); "sections 1–4 match
+  the draft" ✗ (counted under P1).
+- Explanation checks: Q-A to Q-E questions; D46a question — plain parts
+  stand alone ✓.
+- Open list 31 (counted by status). Change for next time: compare a
+  saved doc against what was shown before saying they match.

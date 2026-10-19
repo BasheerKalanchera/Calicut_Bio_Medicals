@@ -5,8 +5,7 @@ items go to Progress-Archive; unstarted work goes to Backlog. Build & Test
 keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
-- Untracked plan doc from another session (Forecast): leave it out of commits.
-  At its review, update its line 110 to BR-FIN-09.
+- Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
 
 ## Annual Target Planning — being replanned (calendar-year brand targets)
 
@@ -14,9 +13,10 @@ session edits this note._
   D12a, D14 withdrawn). 19 Oct: Haroon and Latheef Bhai chose Option 3
   (quarterly, Apr–Mar running total) — D29; reps get quarterly targets from
   their Area Manager (D30); D31–D44 (starts Oct–Dec 2026; brand years
-  vary; two parts, D44). **Next:** rewrite plan sections 1–6 as Part 1 /
-  Part 2 and the E2E plan, for approval. Hold line for the `/build` note:
-  only with Basheer's yes.
+  vary; two parts, D44) — `342dc33`, not pushed. Sections 1–6 rewritten
+  as Part 1 / Part 2 with D45–D49 (Q-A to Q-E), uncommitted. **Next:**
+  D46a decided; Basheer approves the plan; then the E2E plan for
+  Part 1. Hold line for the `/build` note: only with Basheer's yes.
 
 ## Next full UAT move — what goes, and what must land first
 
@@ -27,7 +27,7 @@ session edits this note._
   Open (unanswered): Backlog items for deletes with no "Are you sure?"
   (Opportunity documents, stakeholder links) and the Lead Source picker
   showing "REPEAT_ORDER"-style codes?
-- **Must land first, too:** Annual Target Planning (D17) — replan above.
+- **Must land first, too:** Annual Target Planning — replan above (D44).
 - **The move plan** (to write, own approval) starts with Query Load plan
   section 9, steps 2–9 (UAT's fix 3 copy into `main`, remove `uat-fix3`)
   — Basheer, 2026-10-14.
