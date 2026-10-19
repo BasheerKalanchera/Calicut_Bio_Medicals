@@ -3490,3 +3490,41 @@ Only what went wrong. Checked against both tables in
   "same for every rep" answer read on their own.
 - Left open: the name of the test hospital Basheer added on Dev; the
   scorecard republish awaits his yes.
+
+## 2026-10-19 — Plan & Chore retro (UAT backup, Harness review, commit `806aec1`)
+
+Shown to Basheer first; his yes to write it up. Items checked: P1, P3,
+P4, P68, P77, P80, P86 and the watch list.
+
+- P1 41 → 43 (on top of Build & Test's two today): said the harness
+  commit had 14 files (Git: 15); said the four skill edits "would change
+  nothing" — they are the backup if the guard steps aside; corrected
+  when Basheer asked.
+- P80 2 → 3: offered "accept as is" without saying the slip would keep
+  recurring; Basheer asked ("this will be recurring issue without a
+  solution?").
+- P4 8 → 9: proposed refusing handover saves at 75 lines first; that
+  could block the note mid-build before a restart. Basheer: warn at 75,
+  refuse above 100.
+- P68 3 → 4: staged the whole October archive, including Build & Test's
+  "Landing screen" entry, before checking; caught in the staged diff
+  and left out of `806aec1`.
+- P77 7 → 8: a `sed -i` on the archive — the new guard refused it,
+  redone with the edit tool.
+- New P89, Seen 2 (was the 17 Oct watch-list line): the new shell guard
+  refused an archive save that only mentioned `sed -i`, and rewrote the
+  words `python -I` inside it — tested with commands run before, not
+  with text that only mentions one. Fixed the same hour.
+- Watch list, new line: the length-guard test script left a fake
+  handover note between cases; two false failures.
+- Went well: P72's cause found and verified; the rewrite was tested live
+  before relying on it (P86's lesson); the P16 fix fired on its first
+  real commit (`806aec1`).
+- Spot-checks: UAT backup 682,287 bytes — matches the file in
+  `C:\Backups\CabioUAT\DB_Backups` ✓; open list 29 — counted on the
+  Status column ✓; "14 files" ✗ (15, counted as P1 above).
+- Explanation checks: P16 reminder explanation — plain part stands
+  alone ✓; "one change from what you approved" (guard fixes) — stands
+  alone, "UTF-8 switch" borderline ✓.
+- Open list 29 → 30 (counted). Change for next time: check any count or
+  claim with a tool in the same turn it is written.

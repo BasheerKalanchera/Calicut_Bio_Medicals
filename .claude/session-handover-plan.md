@@ -41,10 +41,11 @@ session edits this note._
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 29 (counted 2026-10-19).
+  `docs/Process-Improvements.md`, open list 30 (counted 2026-10-19 after
+  the session retro added P89).
 - 2026-10-19 review: built P24, P77, P72 and the P16 quiet-commit fix
-  (not yet committed — commit proposal shown). **Next review
-  2026-10-21:** P88, P87 first. P15 hits the 7-day skip limit 2026-10-24;
+  (`806aec1`, pushed; the P16 fix fired live on it). **Next review
+  2026-10-21:** P88, P87, P89 first. P15 hits the 7-day skip limit 2026-10-24;
   ten watch-list lines too.
 - Still to write, shown first: paperwork check in `cabio-post-commit`
   (feat/fix only, all living docs + handover); right-pack check in
