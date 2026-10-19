@@ -11,10 +11,11 @@ session edits this note._
   Business-Rules and the matrix updated, "Commitment beyond contract"
   row 19 added ("Being rolled out", Basheer), scorecard regenerated,
   `--check` passes.
-- **Next:** Basheer approves the commit and the republish of both
-  scorecard pages (exact diff shown 2026-10-19); then republish
+- Committed and pushed `e800556` (2026-10-19).
+- **Next:** Basheer's yes to the republish of both scorecard pages
+  (exact diff shown 2026-10-19, not yet answered); then republish
   https://claude.ai/artifact/7qRxCt4BTooYDSzvvg1xPB and
-  https://claude.ai/artifact/VcwUvDNArFv22x2Aghvx3Z, push, and this
+  https://claude.ai/artifact/VcwUvDNArFv22x2Aghvx3Z, and this
   thread moves out.
 
 ## Not yet scheduled

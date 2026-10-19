@@ -3449,3 +3449,44 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Open list 31 → 29 (counted). Nothing dropped; no watch-list line past
   14 days. Repeats about 12 a day against 18 before the last review —
   lower, short window. P88, P87 wait for the next review (21 Oct).
+
+## 2026-10-19 — Landing screen and new-hospital page (Build & Test)
+
+- Commit `508ff42`, pushed. Everyone except Marketing Users now opens on
+  Account Management instead of Pipeline (Weekly Follow-up plan D9a,
+  Haroon via Basheer 2026-10-12). Adding a hospital from Account
+  Management, including "create anyway" after the duplicate warning, opens
+  its Customer 360 page instead of returning to the list (D10, decided by
+  Basheer 2026-10-19). The Quick Lead form's add-hospital path is
+  unchanged. Built ahead of the plan's approval as its step 1; Basheer:
+  not part of My Work itself.
+- Why: the UAT log for 4–10 Oct showed reps searching for a hospital they
+  had just added 89 times (plan section 1).
+- Checks: tsc clean, lint 0 errors. Checked on Dev by Basheer as Haroon
+  (GM): Account Management opens first, a new hospital opens its page.
+  Code read for other roles: the starting screen depends only on the
+  Marketing User test, and "+ Add" has no role limit, so reps get the same.
+  The test hospital Basheer added on Dev is real data (name not recorded).
+- Backlog's 2026-08-12 "landing screen → Pipeline" entry marked reversed.
+
+## 2026-10-19 — Retro, Build & Test session (post-commit paperwork, landing-screen fix)
+
+Only what went wrong. Checked against both tables in
+`docs/Process-Improvements.md`; all four are on the open list, nothing new.
+- P1 39 → 41: twice gave a number before counting it — said the
+  post-commit commit `e800556` had 9 files (it had 11) and that My Work had
+  5 open questions (it had 6). Both corrected in the session.
+- P14 33 → 35: a folder change typed into a command twice (one blocked by
+  the no-cd guard; one inside a command the edit-script guard refused).
+- P15 20 → 22: the "hasn't heard from you" prompt twice — while reading
+  the My Work plan to record D10, and during this retro's checks.
+- P77 6 → 7: a plan edit typed inline into the command line; the new
+  shell guard (built today) refused it, redone with the edit tool. The
+  guard works; the habit remains.
+- Spot-checks (3 figures, all correct): "89 searches for a hospital just
+  added" — My Work plan line 57; commit `508ff42` — git log; lint "0
+  errors, 11 warnings" — lint output.
+- Explanation checks (2, both pass): the "what's built" report and the
+  "same for every rep" answer read on their own.
+- Left open: the name of the test hospital Basheer added on Dev; the
+  scorecard republish awaits his yes.
