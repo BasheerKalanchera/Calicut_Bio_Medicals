@@ -11,11 +11,12 @@ session edits this note._
 ## Annual Target Planning — being replanned (calendar-year brand targets)
 
 - 2026-10-17 (`107bccc`, pushed): plan and E2E plan on hold; D23–D28 (D8, D12,
-  D12a, D14 withdrawn). Incentive-year options doc + PDF made for Haroon
-  and Latheef Bhai (link in the plan's "Open:" line). **Next:** Basheer's
-  answers on incentive year, Area Manager split (A1–A3), old Q5–Q7, and
-  whether D23–D28 stand; then rewrite plan sections 1–6 and the E2E
-  plan. Hold line for the `/build` note: only with Basheer's yes.
+  D12a, D14 withdrawn). 19 Oct: Haroon and Latheef Bhai chose Option 3
+  (quarterly, Apr–Mar running total) — D29; reps get quarterly targets from
+  their Area Manager (D30); D31–D44 (starts Oct–Dec 2026; brand years
+  vary; two parts, D44). **Next:** rewrite plan sections 1–6 as Part 1 /
+  Part 2 and the E2E plan, for approval. Hold line for the `/build` note:
+  only with Basheer's yes.
 
 ## Next full UAT move — what goes, and what must land first
 

@@ -1,7 +1,8 @@
 # Annual Target Planning — Implementation Plan
 
 **Status:** Being replanned, 2026-10-17 — do not build (calendar-year
-brand targets, Haroon and Latheef Bhai via Basheer; D23 onwards). Was
+brand targets, Haroon and Latheef Bhai via Basheer; D23 onwards;
+incentive year settled 2026-10-19, D29). Was
 approved 2026-10-16; build sections below are not yet rewritten. E2E test plan:
 `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md` (on hold too).
 Build order: on hold until this replan is finished and approved (was
@@ -116,14 +117,95 @@ this replan: D8, D12, D12a, D14.
   them (January). Until then, next Jan–Mar has no target; its detailed
   planning waits, as planning is quarter by quarter anyway — Basheer,
   2026-10-17.
-- Open: whether team incentives stay April–March or move to
-  January–December (raised by Basheer 2026-10-17; industry check in the
-  archive entry of that date). Three options (yearly April–March,
-  yearly January–December, quarterly targets and incentives) compared
-  side by side for Basheer to discuss with Haroon and Latheef Bhai:
-  private doc "Target and Incentive Year Options",
-  https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25,
-  and a PDF of it. Not decided.
+- D29. Team targets and incentives follow Option 3 of "Target and
+  Incentive Year Options": each rep has a target for each quarter; each
+  quarter's result is checked against the running total for the
+  April–March year so far, so a shortfall can be made up later; part of
+  the incentive is paid each quarter and the rest settled at year-end.
+  Managers see April–March totals. How much is held back is HR's
+  decision, beside today's half at order, half at full payment. The app
+  does not calculate incentive amounts (PRD: outside Phase 1; Finance's
+  incentive file parked for Phase 2), but Option 3 needs two things it
+  lacks today: a target per rep per quarter (D30) and a year-so-far
+  view (D31) — Haroon and Latheef Bhai, via
+  Basheer, 2026-10-19. The options doc (revised 2026-10-19 after an
+  outside review; PDF of it made the same day):
+  https://claude.ai/code/artifact/c6122999-2af4-4fbc-b113-049959648e25.
+  Rejected: yearly April–March (full-year target known only in January)
+  and yearly January–December (bridging period, managers would see
+  January–December). A provisional Jan–Mar target set in April was left
+  out, as it would reverse D28.
+- D30. Each rep gets a target for each quarter, set by their Area Manager
+  by dividing up the Area Manager's own target (D27). The rep sees it;
+  their plan is how they mean to reach it. Not the approved plan used as
+  the target, because a rep would then set the target their own
+  incentive is paid on. Today the app holds only brand and SBU targets
+  (`docs/Physical-Schema.sql`). Answered together with the Area Manager
+  split (D27, A1–A3) — Basheer, 2026-10-19.
+- D31. Target vs Actuals' Year view shows the running total at each
+  quarter: won from April up to that quarter against the targets added
+  up from April (e.g. by September, Apr–Sep won against the Apr–Jun and
+  Jul–Sep targets), so each quarterly payout and the year-end settlement
+  can be read from it. Changes D22, which showed the whole year only —
+  Basheer, 2026-10-19.
+- D32. The SBU Manager divides the SBU's stretched target among its Area
+  Managers; the GM can see and change it (D27's "who splits") —
+  Basheer, 2026-10-19.
+- D33. One total per Area Manager per quarter, not per brand, typed by
+  hand, with a warning while they don't add up to the SBU's quarter. The
+  same for reps under D30: one total per rep per quarter, with a warning
+  while they don't add up to the Area Manager's target — Basheer,
+  2026-10-19.
+- D34. Area Managers no longer see the SBU target, only their own (D26);
+  they have seen it since 16 Oct (migration 0061) — Basheer, 2026-10-19.
+- D35. Reps see their own quarterly target (D30) only, not their Area
+  Manager's; changes D27's last sentence — Basheer, 2026-10-19.
+- D36. The GM may set an SBU quarter different from its brands' total;
+  the brand total is the default, always shown beside it, and clearing
+  the GM's figure returns to it (as D4, D13 for the year) — Basheer,
+  2026-10-19.
+- D37. Brand Target Tracking shows each brand's even quarterly billing
+  (a quarter of its own yearly figure) beside Cabio's seasonal split,
+  Admin and GM only; the app does not record purchases from brands, so
+  nothing checks it — Basheer, 2026-10-19.
+- D38. The new targets start from Oct–Dec 2026 (2026-Q3): Haroon enters
+  the brands' 2026 figures, stretched and spread, and the Oct–Dec share
+  is divided down to Area Managers and reps. Target setting for that
+  quarter is in progress outside the app, done by next week; the team
+  enters those figures once this build is live. Reps see them after the
+  quarter has begun; FY 2026-27's running total (D31) starts at Oct–Dec.
+  Changes D9 and D22a, which kept the rest of FY 2026-27 quarterly as
+  entered — Basheer, 2026-10-19 ("as soon this build goes live next
+  week").
+- D39. Screens show quarters as months and year (e.g. "Oct–Dec 2026"),
+  not codes like "2026-Q3", which reads as July–September in calendar
+  terms; the stored period stays `YYYY-Qn`. Year labels like "FY 2026-27"
+  stay. Done in Part 1, as it rebuilds the same screens — Basheer
+  (raised it), 2026-10-19.
+- D40. Not every brand's year runs January–December. Each brand has a
+  "year starts in" setting: January, April, July or October only, so
+  each brand quarter is still exactly one Cabio quarter. Changes D23's
+  "January–December figure" to the brand's own year — Basheer,
+  2026-10-19.
+- D41. The seasonal pattern (D25) is tied to the months (Jan–Mar lean,
+  Jul–Sep and Oct–Dec strong), not to a brand's first quarter; an
+  April–March brand uses the same pattern starting from Apr–Jun —
+  Basheer, 2026-10-19.
+- D42. The GM enters a brand's yearly figure whenever that brand sends
+  it, ahead of the brand's year; until then that brand's coming quarters
+  have no target. Changes D28's "January" — Basheer, 2026-10-19.
+- D43. Brand Target Tracking moves by calendar year (e.g. "2027"); each
+  brand shows its year that starts in it, with its months beside its
+  name (e.g. "SonoScape · Jan–Dec 2027", "Brand X · Apr 2027–Mar 2028",
+  made-up), and its four quarters by month (D39) — Basheer, 2026-10-19.
+- D44. Built in two parts. Part 1: entering targets — brand yearly
+  figures, stretch and seasonal split, SBU Manager's split to Area
+  Managers, Area Managers' split to reps, each person seeing only their
+  own target, and the month labels (D39). Part 2: the rest (Year view
+  running totals, plan notifications, brand billing line, etc.). Changes
+  D17: each part goes to UAT when it is finished; if Part 2 is finished
+  by Wednesday 21 Oct 2026, both go with the full UAT move and the other
+  items set for it — Basheer, 2026-10-19.
 
 ## Figures and sources
 

@@ -3528,3 +3528,32 @@ P4, P68, P77, P80, P86 and the watch list.
   alone, "UTF-8 switch" borderline ✓.
 - Open list 29 → 30 (counted). Change for next time: check any count or
   claim with a tool in the same turn it is written.
+
+## 2026-10-19 — Annual Target Planning: incentive year settled (Plan & Chore)
+
+- Options doc "Target and Incentive Year Options" revised after an
+  outside review Basheer brought in: Option 3 now checks each quarter
+  against the April–March running total, part paid quarterly, rest at
+  year-end (share held back left to HR); all three options need a
+  31 March set-aside; tax row dropped (same for all); a provisional
+  Jan–Mar target was left out (would reverse D28). New 5-page PDF in
+  Downloads.
+- Haroon and Latheef Bhai chose the revised Option 3 (via Basheer).
+  Recorded as D29 in the plan; the "Open:" line is gone. I first told
+  Basheer this added nothing to build; he challenged it, and it was
+  wrong: Option 3 needs a target per rep per quarter (none exists today)
+  and a year-so-far view. Basheer chose: Area Manager sets each rep's
+  quarterly target (D30), Year view shows running totals (D31).
+- The 17 Oct open questions (A1–A3, Q5–Q7) were only in that session's
+  chat; recovered from its transcript and re-asked, plus A4 (do reps see
+  their Area Manager's target, after D30). Answered as recommended:
+  D32–D37. Q6: Basheer chose to start from Oct–Dec 2026 (D38), as that
+  quarter's target setting finishes next week and he wants the build
+  live then. D23–D28 checked against Option 3: still stand (D27's last
+  sentence changed by D35).
+- Then (Basheer): month labels on screens instead of "2026-Q3" (D39);
+  not all brands use January–December, so each brand has a year start
+  month, Jan/Apr/Jul/Oct only (D40–D43); built in two parts, Part 1 the
+  target-entry chain, each going to UAT when finished (D44).
+- Documentation tidy-up stopped part-way by Basheer (logged partial,
+  3 fixes deferred).
