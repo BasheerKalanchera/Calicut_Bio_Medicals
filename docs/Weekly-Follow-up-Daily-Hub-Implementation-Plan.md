@@ -1,6 +1,8 @@
 # Weekly Follow-up (Daily Hub) — Implementation Plan
 
-**Status:** Draft, 2026-10-11.
+**Status:** Draft, 2026-10-11. Step 1 (D9a, D10) built ahead of the
+plan's approval, 2026-10-19 (Basheer: not part of My Work itself); commit
+and Dev check in Progress-Archive.
 **Traceability rows:** 11.1 Weekly Follow-up Report (Not started). Also
 touches 6.1 Beat Planning (Not started) once hospital-wise planning is on
 UAT.
@@ -33,7 +35,7 @@ in `— proposed`; once Basheer answers, change the ending to
 - D8. Act from the desk: each next-action row has "Done" (the existing close form) and each Opportunity or hospital row has "Log Activity"; no new forms — proposed
 - D9a. Landing screen now: everyone except Marketing Users lands on Account Management instead of Pipeline (step 1) — Haroon via Basheer, 2026-10-12
 - D9b. Landing screen later: once this screen is built, everyone except Marketing Users lands here instead (step 5) — proposed
-- D10. After adding a hospital from Account Management, the app opens that hospital's page instead of returning to the list (step 1) — proposed
+- D10. After adding a hospital from Account Management, the app opens that hospital's page instead of returning to the list (step 1) — Basheer, 2026-10-19
 - D11. Next-action pre-fill (the new next-action box starts with the old one's text) moved to `docs/Next-Action-Rules-Implementation-Plan.md` D10, built there — Basheer, 2026-10-14
 - D12. Which open next action the Log Activity form offers is whatever the Next-Action Rules plan builds; this plan adds no choice of its own (don't build it twice) — Basheer, 2026-10-14
 - D13. Step 3 keeps its place with reduced scope. The Next-Action Rules plan is built before this one, so showing and closing the rep's open next action in the Log Activity form (its step 1, Version C, BR-ACT-11) and the pre-fill (its D10) already exist when My Work is built; step 3 uses them and builds nothing of its own. My Work lists next actions (overdue, due this week) and its "Done" and "Log Activity" buttons open those forms. This plan's E2E tests step 3 from My Work itself (closing and logging through My Work's buttons, the lists updating afterwards); the forms' own rules are tested in the Next-Action Rules E2E plan — Basheer, 2026-10-14
