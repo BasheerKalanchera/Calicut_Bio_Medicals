@@ -10,7 +10,7 @@ session edits this note._
 
 ## Annual Target Planning — being replanned (calendar-year brand targets)
 
-- 2026-10-17: plan marked "do not build"; D23–D28 recorded (D8, D12,
+- 2026-10-17 (`107bccc`, pushed): plan and E2E plan on hold; D23–D28 (D8, D12,
   D12a, D14 withdrawn). Incentive-year options doc + PDF made for Haroon
   and Latheef Bhai (link in the plan's "Open:" line). **Next:** Basheer's
   answers on incentive year, Area Manager split (A1–A3), old Q5–Q7, and
@@ -41,13 +41,11 @@ session edits this note._
 ## Harness Engineering — plan approved 2026-10-08, building
 
 - Plan: `docs/Harness-Engineering-Implementation-Plan.md`; tracker
-  `docs/Process-Improvements.md`, open list 28 (counted 2026-10-17 after
-  the evening retro added P86; 29 once Build & Test's P85 is saved).
-- **Next:** next review 2026-10-19; pick fixes that save Basheer's time
-  (P15 left out 17 Oct as cosmetic). Ten watch-list lines drop 2026-10-24
-  if not seen again.
-- **Waiting on Basheer:** fix the P16 reminder so it also fires on a quiet
-  commit (`git commit -q` hides the line it reads) — proposed 2026-10-17.
+  `docs/Process-Improvements.md`, open list 29 (counted 2026-10-19).
+- 2026-10-19 review: built P24, P77, P72 and the P16 quiet-commit fix
+  (not yet committed — commit proposal shown). **Next review
+  2026-10-21:** P88, P87 first. P15 hits the 7-day skip limit 2026-10-24;
+  ten watch-list lines too.
 - Still to write, shown first: paperwork check in `cabio-post-commit`
   (feat/fix only, all living docs + handover); right-pack check in
   `harness-engineering` (its review steps written 2026-10-15).

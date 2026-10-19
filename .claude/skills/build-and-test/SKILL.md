@@ -42,7 +42,7 @@ reload the app in the middle of a test step. Written 2026-10-16 from his opening
 3. Check in before starting it.
 
 ## Recovery
-Run `backend/.venv/Scripts/python.exe -I .claude/tools/last_session.py build <scratchpad>/last_session.txt`
+Run `backend/.venv/Scripts/python.exe -I -X utf8 .claude/tools/last_session.py build <scratchpad>/last_session.txt`
 (full scratchpad path), read the file, and tell Basheer in plain words
 which session it was, when it stopped, and what was in progress or agreed
 last — for an E2E, the last step recorded as Pass/Fail. Check that against

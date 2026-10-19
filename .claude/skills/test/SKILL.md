@@ -53,7 +53,7 @@ the 2026-10-17 Progress-Archive entry "Test session (`/test`) set up").
 4. Check in before starting it.
 
 ## Recovery
-Run `backend/.venv/Scripts/python.exe -I .claude/tools/last_session.py test <scratchpad>/last_session.txt`
+Run `backend/.venv/Scripts/python.exe -I -X utf8 .claude/tools/last_session.py test <scratchpad>/last_session.txt`
 (full scratchpad path), read the file, and tell Basheer in plain words
 when that session stopped and what was in progress or agreed last — the
 last step recorded as Pass/Fail. Check that against `git status`,

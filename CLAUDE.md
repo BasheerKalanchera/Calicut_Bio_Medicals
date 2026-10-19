@@ -70,8 +70,10 @@ code or changing structure. On any conflict, the document wins over this file.
   Before starting a step of an approved plan, read the plan, this note and the
   archive first. Before writing or trusting any claim in the note — commit
   status or otherwise — check it against git, the docs and the code; the note
-  is a pointer, not proof. *(2026-10-06, 2026-10-07)* Hard limit 75 lines per note — the SessionStart hook (`.claude/hooks/session-start.sh`)
-  warns above that; prune before any other work. *(2026-09-24)*
+  is a pointer, not proof. *(2026-10-06, 2026-10-07)* Hard limit 75 lines per note — a save-time guard warns above 75 and
+  refuses a save above 100 unless it shortens the note; the SessionStart
+  hook warns too. Prune at the next pause (at session start, before any
+  other work). *(2026-09-24, 2026-10-19)*
 - **Documentation homes:** each kind of fact lives in one doc. Everywhere else
   links to it and never restates it. Feature status → Traceability; E2E
   result → that feature's test plan; environments/rollout/UAT→Prod gates →

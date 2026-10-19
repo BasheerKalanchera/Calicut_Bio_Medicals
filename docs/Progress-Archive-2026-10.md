@@ -3403,3 +3403,49 @@ Checked against both tables in `docs/Process-Improvements.md`.
   11 Partial, 5 Not started — unchanged).
 - No Backlog entry of its own to remove; no new deferred ideas from
   the 18 Oct run (no bugs found that day).
+
+## 2026-10-19 — Harness Engineering review, fourth (Plan & Chore)
+
+- UAT backup first: `cabio_uat_2026-10-19_0703.dump` (682,287 bytes, 472
+  TOC entries); `cabio_uat_2026-10-04_0559.dump` pruned as shown
+  beforehand. Docker needed a forced stop (script's own fallback).
+- Seen counts compared with the tracker at the last review (`dd20a85`):
+  23 repeats on 10 listed items, 4 new items (P85–P88). Open list 27 →
+  31 before today's builds. The 18 Oct retro's "30 once P88 is added"
+  missed P15 (status "open; …"); counted on the Status column, 31.
+- Basheer asked what "accept as is" meant ("this will be recurring
+  issue without a solution?"). Honest split: P14 and P15 are already
+  caught or harmless; P24, P77, P72 can be stopped by a tool; P1, P3,
+  P23, P76 are judgement slips no automatic check catches — only the P84
+  reviewer idea would.
+- Built (Basheer, each approved):
+  - P72: cause found — `python -I` ignores every `PYTHON*` variable, so
+    the settings.json UTF-8 block never reached isolated runs. The shell
+    guard now rewrites `python -I` to add `-X utf8` (PreToolUse
+    `updatedInput`, tested live in Bash and PowerShell); the four
+    "restarted" skill lines carry it too, in case the guard ever steps
+    aside. First real use also rewrote the words `python -I` inside this
+    archive entry's text (two lines, corrected by hand); fixed the same
+    hour — only python actually being run is rewritten now, not text
+    being written, a commit message or a search.
+  - P77: the shell guard refuses inline python that writes a file and
+    `sed -i`/`perl -i` outside the Temp folder; saved script files and
+    `>` redirects are fine. Live refusal checked. First real use
+    refused this archive entry (a `cat` heredoc that only mentioned
+    `sed -i`); fixed the same hour — heredoc bodies and `-m` messages
+    are now ignored for the sed/perl check.
+  - P24: `handover_length_guard.py` warns above 75 lines and refuses a
+    save above 100 unless it shortens the note (Basheer changed the
+    proposed refuse-at-75: a refusal mid-build could stop the note being
+    updated before a restart). CLAUDE.md Session handoff updated.
+    Live checks: warning at 78, refusal at 101.
+  - Tests: 14 of 14 (length guard) and 31 of 31 (shell guard) in
+    scratch scripts.
+  - P16 reminder gap (proposed 17 Oct, Basheer yes today): a quiet
+    `git commit -q` prints no "[main <hash>]" line, so the reminder
+    stayed silent. Now, without that line, it fires if the newest commit
+    is under a minute old; a failed commit leaves no new commit and stays
+    silent. 5 of 5 checks in a throwaway repo.
+- Open list 31 → 29 (counted). Nothing dropped; no watch-list line past
+  14 days. Repeats about 12 a day against 18 before the last review —
+  lower, short window. P88, P87 wait for the next review (21 Oct).
