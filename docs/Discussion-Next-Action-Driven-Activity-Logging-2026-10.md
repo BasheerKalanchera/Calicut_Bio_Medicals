@@ -4,7 +4,8 @@
 Agreed rules are in Business-Rules (BR-OP-21, BR-OP-22, BR-ACT-11,
 BR-ACT-05 change, On Hold next action; BR-ACC-05 withdrawn 2026-10-16,
 plan D21). Plan:
-`docs/Next-Action-Rules-Implementation-Plan.md` (Approved 2026-10-14).
+`docs/Next-Action-Rules-Implementation-Plan.md` (Approved 2026-10-14;
+built on Dev, manual E2E passed 2026-10-18).
 **Participants:** Basheer (decisions), Haroon / Cabio leadership (business
 sign-off), Claude (options and analysis).
 **Origin:** UAT data-quality check, 2026-10-11. Basheer: many sales staff log

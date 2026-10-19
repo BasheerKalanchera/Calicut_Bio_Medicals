@@ -3384,3 +3384,22 @@ Checked against both tables in `docs/Process-Improvements.md`.
 - Items checked: P1, P3, P14, P15, P23, P85, P87, watch list.
 - Open items: 29 (`| open |` rows, counted), 30 once P88 is added; over
   the cap of 10.
+
+## 2026-10-19 — Next-action rules: post-commit checklist (Build & Test)
+
+- Paperwork closed: plan Status marked built on Dev, manual E2E passed
+  2026-10-18 (32 of 32), E2E fixes `856d041` and `06b41a0` added to the
+  plan and the test plan's "Built" line; not yet on UAT.
+- Business-Rules: BR-OP-21, BR-OP-22, BR-ACT-11 and the BR-ACT-05
+  change marked built (they still said "not built"); BR-OP-22's "today
+  it is read-only" note corrected. Matrix: BR-OP-22's row still said
+  "server only, pop-up is step 2 part 2" — now names the "Why this
+  change?" pop-up (`4fc8531`); BR-OP-21, BR-ACT-05 and BR-ACT-11 rows
+  record the E2E pass. Discussion note's status line points at the build.
+- No signed-requirement row moves (plan: "Traceability rows: none").
+  Basheer, 2026-10-19: list it under "Commitment beyond contract" as
+  row 19, marked "Being rolled out" since it is on Dev only. Scorecard
+  regenerated: beyond-contract 18 → 19, `--check` passes (34 Done,
+  11 Partial, 5 Not started — unchanged).
+- No Backlog entry of its own to remove; no new deferred ideas from
+  the 18 Oct run (no bugs found that day).
