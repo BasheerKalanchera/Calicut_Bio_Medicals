@@ -3680,6 +3680,28 @@ P15, P23, P24, P76, P77 and the watch list.
   stop (script's own fallback). Offsite copy to Google Drive: by hand,
   Basheer.
 
+## 2026-10-20 — Next-action rules D22 built; `api.ts` had drifted (Build & Test)
+
+- D22 (close several at once) built, uncommitted: Basheer chose nothing
+  ticked, follow-up = ticked ones' text one per line, soonest due first,
+  box stops following ticks once typed in (plan D22). Backend 1323 passed.
+- `sales-os-app/src/types/api.ts` was stale: regenerating it changed
+  +556 / −89 lines (`git diff --numstat`). Still lists the stakeholders
+  "replace all" request removed in `9a6d98d` (3 Oct); lacks
+  `targets/target-vs-actuals` added in `cc4eb91` (6 Oct). Last touched
+  by `2c189d7` (6 Oct, +10/−0); its last four changes only added or
+  only removed lines — likely hand edits (a guess, not stated in the
+  commits). 10 router/schema commits since `2c189d7` didn't regenerate.
+  Likely why: nothing asks for it (standards say how, not when); a
+  regenerate copies the running server, so in `ce56c22` (3 Oct) it swept
+  in another session's unfinished change and lost the Audit Log types
+  (`b0ba088` repaired it); Backlog "Regenerate api.ts" (since ~1 Oct)
+  never acted on; hand-typed service payloads hid the drift.
+- Regenerated 20 Oct; `tsc -b` clean with it, so no screen calls a
+  request or field the server no longer has. Commit after the D22
+  `fix:` (it includes `also_close_ids`). Prevention (build from code on
+  disk + commit hook) passed to Plan & Chore with Basheer's yes.
+
 ## 2026-10-20 — Annual Target Planning approved; session order (Plan & Chore)
 
 - Plan review ended "Yes. Approved." (Basheer): D50 (an SBU pattern change
@@ -3721,3 +3743,31 @@ P15, P23, P24, P76, P77 and the watch list.
 - Explanation checks: the `api.ts` chore proposal and the three-session
   order — both plain parts stand alone. Passed.
 - Open list 32 (counted with a tool after this retro).
+
+## 2026-10-20 — D22 pre-E2E review and Build & Test retro (Build & Test)
+
+- `/code-review medium` on D22 (uncommitted): 9 findings. Five proposed
+  as fixes, not yet answered: line breaks lost where next action text
+  shows; Won/Lost keeps a ticked follow-up if ticked before the status
+  loads; follow-up box multi-line in every mode; two missing tests (Won
+  with no follow-up, manager closing a rep's several); BR-ACT-05 and the
+  matrix still say "not yet built". Four left alone: same-second double
+  close (old pattern), which ticked one is "main" (no effect), the
+  produced-Opportunity path (already refused), the 50-row cap (UAT max 5
+  per person, BR-ACT-05). Close on the Opportunity page is as agreed —
+  BR-ACT-05 names it; my earlier flag withdrawn. Detail: Build & Test
+  handover note.
+- Retro (shown to Basheer first, his OK): P7 2 → 3 (said the running
+  server had another session's unfinished code; it ran `main`); P80
+  3 → 4 (`api.ts` refresh "after the UAT move", gap unstated, withdrawn);
+  new P92, Seen 2 (was watch-list 2026-10-15: flagged a difference from
+  the approval without quoting the rule); P1 46 → 47 (handover said 10
+  new tests; 9 cases, pytest collect); P77 9 → 10 (inline edit refused);
+  P14 37 → 38 (folder change refused); P65 3 → 4 (multi-line box in
+  every mode of a shared form); P15 28 → 29 (two "hasn't heard" prompts).
+- Spot-checks: `api.ts` +556/−89 ✓ (git diff); test plan 503 lines ✓;
+  "10 new tests" ✗ (the P1 above). Explanation checks: code-review
+  findings and "how the `api.ts` drift happened" — plain parts stand
+  alone ✓.
+- Open list 33 (counted with a tool after this retro). Change for next
+  time: quote the approved line before flagging a difference.
