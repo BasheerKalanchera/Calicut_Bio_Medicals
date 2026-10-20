@@ -9,9 +9,9 @@ session edits this note._
 
 ## Annual Target Planning — approved 2026-10-20 (D1–D56)
 
-- Plan `docs/Annual-Target-Planning-Implementation-Plan.md` approved by
-  Basheer 2026-10-20; history in Progress-Archive-2026-10 (20 Oct entry).
-  `/build` note updated with his yes (build Part 1, steps 1–4).
+- Plan approved by Basheer 2026-10-20 (archive 20 Oct entry); `/build`
+  note updated with his yes (Part 1, steps 1–4). In `92cab23` + repair
+  `006f4cb`, both pushed 2026-10-20 — `/build` can take in `main` now.
 - **Next:** Part 1 E2E plan rewrite
   (`docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`, old on-hold
   version). First a read-only Dev check (users, roles, SBU, managers,
@@ -58,12 +58,6 @@ session edits this note._
 
 ## Chores
 
-- **`api.ts` drift (from Build & Test, Basheer's yes 2026-10-20):**
-  generate it from the code on disk (`app.openapi()` → JSON →
-  openapi-typescript) plus a commit hook refusing router/schema changes
-  while it's stale. Proposed 20 Oct, not started; switch the hook on only
-  after Build & Test's D22 `fix:` and `api.ts` commits. Close Backlog
-  "Regenerate api.ts" then. Why: Progress-Archive-2026-10, 20 Oct.
 - Delete Dev test data from Duplicate hospitals Part A (five "zz Test
   duplicate guard…" hospitals, "zz Test contact"); read-only check first.
   Open: deactivate the test Marketing User login (2026-10-10)?

@@ -3772,6 +3772,55 @@ P15, P23, P24, P76, P77 and the watch list.
 - Open list 33 (counted with a tool after this retro). Change for next
   time: quote the approved line before flagging a difference.
 
+## 2026-10-20 — `api.ts` built from code on disk; commit guard switched on (Plan & Chore)
+
+- Basheer: Q1 staged copy, Q2 refuse (recommendations). New
+  `scripts/export_openapi.py` (placeholder settings, never reads `.env`,
+  no DB connection) + `sales-os-app/scripts/generate-types.js`
+  (`npm run generate:types` now runs it; finds Python and
+  openapi-typescript in the main folder too, for the `/build` worktree).
+- Check: built from disk = Build & Test's server-built `api.ts`, byte for
+  byte (`diff -q`, 20 Oct); about 7 s per build (timed 6.8 s).
+- `.githooks/check-api-types.sh`: a staged `backend/app/*.py` change
+  rebuilds `api.ts` from the staged tree (`git checkout-index` into a temp
+  folder) and refuses if the staged `api.ts` differs; `--write` stages the
+  matching one. Tests 7/7 in a throwaway clone (own index, junction to
+  `node_modules`); first run 3/7 passed for the wrong reason (junction
+  failed, refusals were build errors) — tests now check the refusal text.
+- Switched on in `5ca17aa` (pushed 20 Oct), after Build & Test's
+  `60410cd` and `c9d8d2b`. Build & Test was right that the `/build`
+  worktree runs the main folder's `.githooks` (I had said it had its
+  own — wrong; `git rev-parse --git-path hooks` showed the main path), so
+  the guard now uses the generator next to it. Tests 11/11 (adds the
+  pre-commit and worktree cases). Rebuilt from `c9d8d2b`'s backend =
+  committed `api.ts`, so no `--write` change. Commit message went via a
+  file: the shell guard refused a heredoc commit message (P89 pattern).
+  ADR-033 note, `/build` skill line, `/build` note line (Basheer's yes);
+  Backlog "Regenerate api.ts" closed.
+
+### Retro (Plan & Chore, 2026-10-20 evening)
+
+- Said the `/build` worktree had its own commit hooks, as fact, untested;
+  Build & Test was right (main folder's `.githooks`). P86 1 → 2.
+- First guard test run: 3/7 "passed" on refusals from a broken set-up
+  (junction failed), not the guard; tests now check the refusal text.
+  P85 2 → 3.
+- Shell guard refused a heredoc commit message as a scripted edit;
+  redone with `-F`. P89 2 → 3. A `cd sales-os-app && …` refused: P14
+  39 → 40. Handover reached 76 lines, guard warned, trimmed: P24 8 → 9.
+  "Hasn't heard from you" prompt during this retro's checks: P15 29 → 30.
+- New watch-list lines: started a check mid-discussion without
+  announcing it (Basheer stopped it); `cmd //c mklink /J` failed under
+  Git Bash ("Invalid switch").
+- Spot-checks (P1), all correct: `5ca17aa` 9 files (`git show`);
+  Build & Test's `60410cd`, `c9d8d2b` (`git log`); 7/7 then 11/11 tests
+  (this session's test-script runs).
+- Plain-language check (P3): shell-guard note passes; the after-push
+  reply fails (file names and a hash in its plain part). P3 31 → 32.
+- Checked: P1, P3, P14, P15, P24, P85, P86, P89 and the watch list.
+- Change for next time: before saying how a tool behaves, run the
+  one-line test first.
+
 ## 2026-10-20 — D22 committed and pushed; Build & Test evening retro (Build & Test)
 
 - `60410cd` fix: close several next actions at once (D22, pre-E2E review
