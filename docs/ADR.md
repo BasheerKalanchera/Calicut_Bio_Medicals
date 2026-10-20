@@ -332,6 +332,7 @@ This document serves as the formal Architecture Decision Register for the Cabio 
   * All `.jsx` files renamed to `.tsx`; all `.js` files renamed to `.ts`.
   * `tsconfig.json` added to `sales-os-app/`.
   * `openapi-typescript` installed as a dev dependency. A `generate:types` script added to `package.json` that fetches `/openapi.json` from the running backend and outputs to `src/types/api.ts`.
+  * Amended 2026-10-20: `generate:types` builds from the backend code on disk (no running server); `.githooks/check-api-types.sh` refuses a commit whose backend and `api.ts` don't match (Basheer). See Frontend-Implementation-Standards §7.1.
   * All API service functions annotated with return types derived from generated API types.
   * All component props, state variables, and hook return values typed explicitly.
 * **Affected Modules:** All frontend source files. Build pipeline (`tsconfig.json`, `package.json` scripts).

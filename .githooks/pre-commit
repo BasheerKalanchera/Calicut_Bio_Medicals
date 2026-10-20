@@ -9,6 +9,11 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
 
+# api.ts must match a commit's backend (check-api-types.sh; Basheer,
+# 2026-10-20). Before the frontend skip below: backend-only commits are
+# exactly the ones it checks.
+sh "$(dirname "$0")/check-api-types.sh" || exit 1
+
 # Skip if this commit doesn't touch the frontend — avoids blocking backend-only
 # commits on sales-os-app/node_modules not being installed.
 if ! git diff --cached --name-only --diff-filter=ACM | grep -q '^sales-os-app/'; then

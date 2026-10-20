@@ -718,10 +718,6 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
   2026-08-31, 2026-09-26, 2026-09-30). For Basheer's talk with Haroon,
   with the UAT re-filing (Plan vs Actuals Tracking plan, step 5).
 
-- **Regenerate `sales-os-app/src/types/api.ts`** — not done after
-  Hospital-wise Target Planning (Dev backend was down; the screen uses its own
-  types). Do it with the Plan vs Actuals Tracking build.
-
 - **CLAUDE.md line "Backlog holds only work outside the Traceability
   matrix" (proposed, not decided).**
 
