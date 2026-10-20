@@ -626,7 +626,7 @@ Opportunities must satisfy specific "Gate" requirements before progressing to th
   or Lost in the same step (a follow-up may still be added, e.g. chasing
   payment). Another next action still being open does not exempt it
   (Basheer, 2026-10-12 — the discussion note's second exception dropped).
-  **Closing several at once (agreed 2026-10-19, not yet built):** a
+  **Closing several at once (agreed 2026-10-19; built on Dev 2026-10-20, not on UAT):** a
   person with more than one open next action of their own on the same
   Opportunity may close any of them together, with one "what happened"
   and one follow-up — so the count can come down to one in a single

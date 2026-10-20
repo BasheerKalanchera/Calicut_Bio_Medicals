@@ -5,6 +5,8 @@
 (one combined run after step 5, per the plan's step 5). The pre-fill (plan
 D10, added 2026-10-14) is checked inside the four close forms' existing
 steps — A3, B2, C3 and D2 — so it needs no extra saves on Dev.
+Section H (added 2026-10-20) covers plan D22, closing several at once,
+built after the 2026-10-18 run; it is run on its own.
 **Built:** step 1 `3d38e75` (2026-10-15, checkpoint); step 2 `bd92e4a` + `4fc8531` (2026-10-16, checkpoints); step 3 `c4e1ca3` (2026-10-16); step 4 dropped (plan D21); step 5: script `f93397f`, pre-E2E review fixes `4bec886` (2026-10-16); E2E fixes `856d041` (On Hold follow-up date) and `06b41a0` (pop-up wording) (2026-10-17). Run finished 2026-10-18, 32 of 32 Pass. Commit hashes filled in after the fact.
 **Where:** Dev.
 
@@ -69,6 +71,12 @@ on 2026-10-16 (steps 2–3, decisions D12–D19); A–C and G on 2026-10-17
 - Project "Another new project" — Win Probability E2E test plan (Dev
   check, 2026-10-13); re-checked 2026-10-17
 - Marketing Lead for E4 — Dev query, 2026-10-17
+- Section H records — two read-only Dev queries, 2026-10-20 (admin
+  connection): only one Opportunity on Dev had one person with two or
+  more open next actions ("New USG msg" (Aster MIMS Calicut), a test
+  user's), so H0 sets them up; open next actions on Basheer K's
+  Opportunities listed the two used in H
+- Section H next-action texts and due dates — made up for this run
 - Creating at Payment Pending is allowed; only Won is refused at create;
   Repeat Order skips the demo-date and closure-date gates —
   `OpportunityService.create_opportunity` and Business-Rules BR-OP-13,
@@ -96,7 +104,10 @@ Memorial Hospital) marked Lost (E5); six new Opportunities —
 "zz NA E2E – fast track Won" (Baby Memorial Hospital, D8, Won),
 "zz NA E2E – top bar" (Baby Memorial Hospital), "– Customer 360" (aster
 medicity), "– project" (Aster MIMS Calicut) (E3), "– converted lead"
-(KIMS Hospital Trivandrum, E4). Activities can't be deleted.
+(KIMS Hospital Trivandrum, E4). Section H adds: Haroon's four Calls
+(H0), the three closing Calls (H2–H4), the "zz E2E H …" next actions,
+two follow-ups, and Haroon's own "zz E2E H Haroon's own" left open on
+"zz NA E2E – Customer 360" (aster medicity). Activities can't be deleted.
 
 ## Pre-flight
 
@@ -501,3 +512,66 @@ match.
    was dropped 2026-10-17, Basheer: a next action always hangs on an
    activity, and section 3 lists only hospitals with no activity, so it
    could never fail.)
+
+## H — Closing several at once (BR-ACT-05, plan D22)
+
+Added 2026-10-20 (Basheer's yes). Code: `CloseReminderModal.tsx`,
+`LogActivityModal.tsx`, `ReminderRow.tsx`; `ReminderService._others_to_close`.
+Before H0, P1 again: Dev backend restarted after the D22 change.
+
+Records (Dev query, 2026-10-20):
+- "zz NA E2E – Customer 360" (aster medicity) — Lead, Active, owner
+  Basheer K; its only open next action is Basheer K's "zz E2E E3 Customer
+  360 follow-up" (due 19 Oct). Haroon has none of his own there.
+- "zz NA E2E – top bar" (Baby Memorial Hospital) — Lead, **Lost**; its
+  only open next action is Basheer K's "zz E2E E3 top bar follow-up"
+  (due 19 Oct).
+
+Not tested on Dev: a manager closing several of a rep's at once — the
+backend test `test_manager_closes_several_of_a_reps_next_actions` covers
+it, and it would add more permanent records.
+
+0. [Complex: setup, four saves, cross-user] Basheer clicks as Haroon,
+   Claude watches. On "zz NA E2E – Customer 360" (aster medicity), Log
+   Activity three times, type Call: next action "zz E2E H send brochure"
+   due 21 Oct, "Assign Next Action To" Basheer K; "zz E2E H confirm demo
+   date" due 22 Oct, Basheer K; then "zz E2E H Haroon's own", left on "Me
+   (default)" — last, as it holds Haroon on this Opportunity. On "zz NA
+   E2E – top bar" (Baby Memorial Hospital), log a Call with next action
+   "zz E2E H chase payment", assigned to Basheer K. **Expected:** all
+   four save (until the last, Haroon has no open next action of his own
+   on the Opportunity, so nothing holds him).
+1. [Simple] As Basheer K, Opportunity page "zz NA E2E – Customer 360"
+   (aster medicity) → Log Activity. **Expected:** warning "You have open
+   next actions on this Opportunity. Close them, saying what happened,
+   instead of logging a new activity.", listing his three ("zz E2E E3
+   Customer 360 follow-up", "zz E2E H send brochure", "zz E2E H confirm
+   demo date"), no Close button on any row, not Haroon's; button "Close
+   next action".
+2. [Complex: save, then read back] Press "Close next action".
+   **Expected:** the "Close Next Action" form, with "Next actions to
+   close *" listing three tick boxes, none ticked, soonest due first, not
+   Haroon's. Press "Complete" with none ticked. **Expected:** "Tick the
+   next actions to close". Tick "zz E2E H send brochure" and "zz E2E H
+   confirm demo date". **Expected:** the follow-up box holds both texts,
+   one per line, the 21 Oct one first. Fill "What was done? *" and "Due
+   Date *", press "Complete"; Basheer clicks. **Expected (read back):**
+   Next Actions tab — both under Completed, closed by the same Call; one
+   new follow-up under Pending, its text on two lines; "zz E2E E3
+   Customer 360 follow-up" and Haroon's still pending. Activity tab — one
+   closing Call.
+3. [Complex: visual check, then save] Next Actions screen → "Mark to
+   complete" on "zz E2E E3 Customer 360 follow-up" ("zz NA E2E – Customer
+   360" (aster medicity)). **Expected:** "Also close:" lists the H2
+   follow-up (both lines kept), not Haroon's. Tick it, type "zz E2E H
+   final follow-up" in the follow-up box, untick, tick again.
+   **Expected:** the typed text stays. Press "Complete"; Basheer clicks.
+   **Expected:** both closed, one follow-up added; Log Activity on the
+   Opportunity now shows the one-item warning ("You have an open next
+   action on this Opportunity…").
+4. [Complex: Lost] Next Actions screen → "Mark to complete" on "zz E2E
+   E3 top bar follow-up" ("zz NA E2E – top bar" (Baby Memorial
+   Hospital), Lost). **Expected:** the "Follow-up next action" box is
+   empty, no `*`, one line; "Also close:" lists "zz E2E H chase payment";
+   ticking it leaves the box empty. Press "Complete" with the box empty;
+   Basheer clicks. **Expected:** both closed, no follow-up added.

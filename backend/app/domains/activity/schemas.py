@@ -271,11 +271,17 @@ class ReminderUpdate(BaseModel):
     # visit that produced a new Opportunity on that hospital needs no
     # follow-up -- the new Opportunity carries the thread forward.
     produced_opportunity_id: uuid.UUID | None = None
+    # Next-action rules plan D22: the person's other open next actions on the
+    # same Opportunity, closed together with this one by the same closing
+    # Activity and follow-up. Checked by ReminderService.patch_reminder.
+    also_close_ids: list[uuid.UUID] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _require_closing_activity_when_completing(self) -> "ReminderUpdate":
         if not self.is_completed and self.produced_opportunity_id:
             raise ValueError("produced_opportunity_id is only valid when closing a Next Action.")
+        if not self.is_completed and self.also_close_ids:
+            raise ValueError("also_close_ids is only valid when closing a Next Action.")
         if self.is_completed:
             if not self.activity_type:
                 raise ValueError("Activity type is required to close a Next Action.")

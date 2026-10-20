@@ -93,8 +93,9 @@ export default function LogActivityModal({
   const [selectedOpportunityId, setSelectedOpportunityId] = useState("");
   const [activeTab, setActiveTab] = useState<"details" | "nextAction">("details");
   const [isUrgent, setIsUrgent] = useState(false);
-  // BR-ACT-11: the open next action being closed instead of logging afresh.
-  const [closingReminder, setClosingReminder] = useState<ReminderResponse | null>(null);
+  // BR-ACT-11: the open next actions to close instead of logging afresh
+  // (plan D22: with several, the close form asks which).
+  const [closingReminders, setClosingReminders] = useState<ReminderResponse[] | null>(null);
 
   const isManagerNote = activityType === "MANAGER_NOTE";
   const isSalesDevelopment = SALES_DEVELOPMENT_ACTIVITY_TYPES.has(activityType);
@@ -189,15 +190,13 @@ export default function LogActivityModal({
     setSelectedOpportunityId("");
     setActiveTab("details");
     setIsUrgent(false);
-    setClosingReminder(null);
+    setClosingReminders(null);
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit() {
     if (mustClose) {
-      if (blockingReminders.length > 1) {
-        throw new Error("Pick which open next action to close, using its Close button above.");
-      }
-      setClosingReminder(blockingReminders[0]);
+      // Plan D22: with several, the close form asks which to tick.
+      setClosingReminders(blockingReminders);
       throw new SilentModalError();
     }
     // BR-ACT-01/BR-ACT-09: Account is required for every activity_type
@@ -275,7 +274,7 @@ export default function LogActivityModal({
   return (
     <>
     <FormModal
-      isOpen={isOpen && !closingReminder}
+      isOpen={isOpen && !closingReminders}
       onClose={onClose}
       title="Log Activity"
       onSubmit={handleSubmit}
@@ -436,18 +435,13 @@ export default function LogActivityModal({
               <Alert severity="warning">
                 <Typography sx={{ fontSize: "0.8125rem", mb: 1 }}>
                   {loggedForName
-                    ? `${loggedForName} has an open next action on this Opportunity. Close it, saying what happened, instead of logging a new activity.`
-                    : "You have an open next action on this Opportunity. Close it, saying what happened, instead of logging a new activity."}
+                    ? `${loggedForName} has ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`
+                    : `You have ${blockingReminders.length > 1 ? "open next actions" : "an open next action"} on this Opportunity. Close ${blockingReminders.length > 1 ? "them" : "it"}, saying what happened, instead of logging a new activity.`}
                 </Typography>
                 {blockingReminders.map((r) => (
-                  <Box key={r.id} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mt: 0.5 }}>
-                    <Typography sx={{ fontSize: "0.75rem" }}>
-                      {r.reminder_text} — due {new Date(r.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                    </Typography>
-                    {blockingReminders.length > 1 && (
-                      <Button type="button" size="small" onClick={() => setClosingReminder(r)}>Close</Button>
-                    )}
-                  </Box>
+                  <Typography key={r.id} sx={{ fontSize: "0.75rem", mt: 0.5, whiteSpace: "pre-line" }}>
+                    {r.reminder_text} — due {new Date(r.due_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </Typography>
                 ))}
               </Alert>
             )}
@@ -561,13 +555,14 @@ export default function LogActivityModal({
     {/* BR-ACT-11: shown in place of Log Activity. Cancel goes back to it;
         once closed, both are done. */}
     <CloseReminderModal
-      isOpen={isOpen && !!closingReminder}
-      onClose={() => setClosingReminder(null)}
-      reminder={closingReminder}
+      isOpen={isOpen && !!closingReminders}
+      onClose={() => setClosingReminders(null)}
+      reminder={closingReminders?.length === 1 ? closingReminders[0] : null}
+      closeChoices={closingReminders && closingReminders.length > 1 ? closingReminders : undefined}
       loggedForUserId={loggedForUserId !== currentUserId ? loggedForUserId : undefined}
       initial={{ activity_type: activityType, activity_date: activityDate, notes: notes.trim() }}
       onCompleted={() => {
-        setClosingReminder(null);
+        setClosingReminders(null);
         onCreated?.();
         onClose();
       }}

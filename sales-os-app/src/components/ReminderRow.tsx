@@ -100,7 +100,8 @@ export default function ReminderRow({
         )}
       </Box>
 
-      <Box sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#1f2937", lineHeight: 1.375 }}>
+      {/* pre-line: a follow-up written from several closed at once (plan D22) has one per line. */}
+      <Box sx={{ fontSize: "0.875rem", fontWeight: 700, color: "#1f2937", lineHeight: 1.375, whiteSpace: "pre-line" }}>
         {reminder.reminder_text}
       </Box>
 
