@@ -3771,3 +3771,35 @@ P15, P23, P24, P76, P77 and the watch list.
   alone ✓.
 - Open list 33 (counted with a tool after this retro). Change for next
   time: quote the approved line before flagging a difference.
+
+## 2026-10-20 — D22 committed and pushed; Build & Test evening retro (Build & Test)
+
+- `60410cd` fix: close several next actions at once (D22, pre-E2E review
+  fixes 1–5, BR-ACT-05 and matrix status, E2E plan section H) and
+  `c9d8d2b` api.ts regenerated — pushed 20 Oct (006f4cb..c9d8d2b).
+  Backend 1325 passed, ruff and tsc clean, eslint old warnings only.
+  Checkpoint only: manual E2E H0–H4 on 21 Oct (Basheer's choice), then
+  the post-commit checklist.
+- Dev check for test data (read-only, 20 Oct): only "New USG msg" (Aster
+  MIMS Calicut) had one person with two or more open next actions, and
+  it belongs to a test user — so H0 makes its own: Haroon assigns two
+  next actions to Basheer K.
+- Commit order agreed with Basheer: these two first, then Plan & Chore's
+  guard (`5ca17aa`, above).
+- UAT (Basheer): no 21 Oct move; one full move after the User Manual and
+  Annual Target Part 1. Haroon still to be told the new date.
+
+### Retro (Build & Test, 2026-10-20 evening)
+- Checked against the tracker: P14 +1 (39, a `cd` refused during the
+  build); P77 +1 (11, an inline Python write refused); P68 +1 (5,
+  `92cab23` lost lines when two sessions staged at once, repaired in
+  `006f4cb`); watch-list "retro put off" seen again (I offered "now, or
+  first thing tomorrow?") → P93, Seen 2.
+- Spot-check of 3 figures: "1325 passed" = `60410cd`'s message ✓;
+  "both pushed" = git shows main level with origin/main ✓; "New USG msg
+  (Aster MIMS Calicut)" = Dev query output, 20 Oct ✓.
+- Plain-language check of 2 replies: the "Next, for Plan & Chore"
+  message stands alone, though "the guard's write command" leans on
+  earlier words ✓ (borderline); "Not done tonight" ✓.
+- Change for next time: do the retro at the end of a session without
+  offering to defer it. Open list 34 (counted with grep after this retro).
