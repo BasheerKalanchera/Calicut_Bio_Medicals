@@ -537,8 +537,7 @@ export interface paths {
         };
         /** List Opportunity Stakeholders */
         get: operations["list_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_get"];
-        /** Replace Opportunity Stakeholders */
-        put: operations["replace_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_put"];
+        put?: never;
         /** Add Opportunity Stakeholder */
         post: operations["add_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders_post"];
         delete?: never;
@@ -1441,6 +1440,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/planning/targets/target-vs-actuals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Target Vs Actual
+         * @description Target vs Actuals for one quarter (Insights Dashboard): roster rows,
+         *     PO received, Won (paid), Expected; SBU and company rows by role. Read-only.
+         */
+        get: operations["get_target_vs_actual_api_v1_planning_targets_target_vs_actuals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/targets/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Target Roster
+         * @description Target Planning's quarter roster: everyone in the caller's scope with
+         *     their plan status, and the total Target vs Actuals counts. Read-only.
+         */
+        get: operations["get_target_roster_api_v1_planning_targets_roster_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/planning/targets/eligible-accounts": {
         parameters: {
             query?: never;
@@ -1474,23 +1515,6 @@ export interface paths {
          * @description Live same-SBU overlap warnings while the plan is being edited.
          */
         get: operations["check_overlaps_api_v1_planning_targets_overlaps_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/planning/targets/rollup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Sbu Rollup */
-        get: operations["get_sbu_rollup_api_v1_planning_targets_rollup_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1590,6 +1614,31 @@ export interface paths {
         put?: never;
         /** Set Brand Vendor Target */
         post: operations["set_brand_vendor_target_api_v1_planning_brand_vendor_targets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/planning/sbu-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sbu Targets
+         * @description Admin, GM, SBU Manager and Area Manager (RLS narrows SBU and Area
+         *     Managers to their own SBU).
+         */
+        get: operations["list_sbu_targets_api_v1_planning_sbu_targets_get"];
+        put?: never;
+        /**
+         * Set Sbu Target
+         * @description Upsert, Admin/GM only. No delete -- a wrong figure is corrected, not removed.
+         */
+        post: operations["set_sbu_target_api_v1_planning_sbu_targets_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2062,20 +2111,6 @@ export interface components {
             message: string;
             data: components["schemas"]["RepActivityLevelResponse"];
         };
-        /** APIResponse[SBUTargetRollupResponse] */
-        APIResponse_SBUTargetRollupResponse_: {
-            /**
-             * Success
-             * @default true
-             */
-            success: boolean;
-            /**
-             * Message
-             * @default
-             */
-            message: string;
-            data: components["schemas"]["SBUTargetRollupResponse"];
-        };
         /** APIResponse[SalesHeadline] */
         APIResponse_SalesHeadline_: {
             /**
@@ -2103,6 +2138,20 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["SalesSummaryResponse"];
+        };
+        /** APIResponse[SbuTargetResponse] */
+        APIResponse_SbuTargetResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["SbuTargetResponse"];
         };
         /** APIResponse[SplitEditPermission] */
         APIResponse_SplitEditPermission_: {
@@ -2173,6 +2222,34 @@ export interface components {
              */
             message: string;
             data: components["schemas"]["TargetPlanResponse"];
+        };
+        /** APIResponse[TargetRosterResponse] */
+        APIResponse_TargetRosterResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["TargetRosterResponse"];
+        };
+        /** APIResponse[TargetVsActualResponse] */
+        APIResponse_TargetVsActualResponse_: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            data: components["schemas"]["TargetVsActualResponse"];
         };
         /** APIResponse[UnreadCountResponse] */
         APIResponse_UnreadCountResponse_: {
@@ -2560,6 +2637,21 @@ export interface components {
             message: string;
             /** Data */
             data: components["schemas"]["PlanWarning"][];
+        };
+        /** APIResponse[list[SbuTargetResponse]] */
+        APIResponse_list_SbuTargetResponse__: {
+            /**
+             * Success
+             * @default true
+             */
+            success: boolean;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /** Data */
+            data: components["schemas"]["SbuTargetResponse"][];
         };
         /** APIResponse[list[SplitResponse]] */
         APIResponse_list_SplitResponse__: {
@@ -3386,6 +3478,37 @@ export interface components {
             business_potential: string;
             zone: components["schemas"]["PlanAccountZoneNested"];
         };
+        /**
+         * FirstActivity
+         * @description BR-OP-21: the conversation that made it an Opportunity, saved with it.
+         *
+         *     Plan D5: one of five types, "what happened" required; a next action
+         *     always, as BR-ACT-04 requires for all five. Recorded under the creator;
+         *     the next action's owner defaults to the Opportunity's owner (D16).
+         */
+        FirstActivity: {
+            /**
+             * Activity Type
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE";
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            /** Notes */
+            notes: string;
+            /** Next Action Text */
+            next_action_text: string;
+            /**
+             * Next Action Due Date
+             * Format: date-time
+             */
+            next_action_due_date: string;
+            /** Next Action Owner Id */
+            next_action_owner_id?: string | null;
+        };
         /** GateOverrideReasonNested */
         GateOverrideReasonNested: {
             /**
@@ -3747,6 +3870,7 @@ export interface components {
         OpportunityCreate: {
             /** Name */
             name: string;
+            first_activity: components["schemas"]["FirstActivity"];
             /**
              * Owner Id
              * Format: uuid
@@ -4084,6 +4208,7 @@ export interface components {
             confirm_full_payment: boolean;
             /** Full Payment Note */
             full_payment_note?: string | null;
+            change_note?: components["schemas"]["StageChangeNote"] | null;
         };
         /** OverdueActionRow */
         OverdueActionRow: {
@@ -4654,6 +4779,11 @@ export interface components {
             /** Bid Submission Date */
             bid_submission_date?: string | null;
         };
+        /**
+         * QuarterState
+         * @enum {string}
+         */
+        QuarterState: "CURRENT" | "PAST" | "FUTURE";
         /** ReminderCreate */
         ReminderCreate: {
             /**
@@ -4724,12 +4854,18 @@ export interface components {
             activity_date?: string | null;
             /** Notes */
             notes?: string | null;
+            /** User Id */
+            user_id?: string | null;
             /** Next Action Text */
             next_action_text?: string | null;
             /** Next Action Due Date */
             next_action_due_date?: string | null;
             /** Next Action Owner Id */
             next_action_owner_id?: string | null;
+            /** Produced Opportunity Id */
+            produced_opportunity_id?: string | null;
+            /** Also Close Ids */
+            also_close_ids?: string[];
         };
         /** RepActivityLevelResponse */
         RepActivityLevelResponse: {
@@ -4758,6 +4894,13 @@ export interface components {
             /** Activity Count */
             activity_count: number;
         };
+        /**
+         * RosterStatus
+         * @description A roster member's plan for the quarter, as Target vs Actuals and the
+         *     Target Planning roster show it.
+         * @enum {string}
+         */
+        RosterStatus: "NOT_STARTED" | "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
         /** SBUNested */
         SBUNested: {
             /**
@@ -4767,20 +4910,6 @@ export interface components {
             id: string;
             /** Name */
             name: string;
-        };
-        /** SBUTargetRollupResponse */
-        SBUTargetRollupResponse: {
-            /**
-             * Sbu Id
-             * Format: uuid
-             */
-            sbu_id: string;
-            /** Planning Period */
-            planning_period: string;
-            /** Total Target Amount Lakhs */
-            total_target_amount_lakhs: string;
-            /** User Count */
-            user_count: number;
         };
         /** SalesHeadline */
         SalesHeadline: {
@@ -4820,6 +4949,35 @@ export interface components {
             /** Zone Exact */
             zone_exact?: boolean | null;
         };
+        /** SbuTargetResponse */
+        SbuTargetResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: string;
+        };
+        /** SbuTargetSet */
+        SbuTargetSet: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Target Amount Lakhs */
+            target_amount_lakhs: number | string;
+        };
         /** SplitCreate */
         SplitCreate: {
             /**
@@ -4858,6 +5016,39 @@ export interface components {
         SplitsBulkUpdate: {
             /** Splits */
             splits: components["schemas"]["SplitCreate"][];
+        };
+        /**
+         * StageChangeNote
+         * @description BR-OP-22: why the stage or status changed, saved with the change.
+         *
+         *     With close_reminder_id: the changer closes their own open next action
+         *     (BR-ACT-05) and "what happened" is the note. Without it: a Note
+         *     activity. Whether a next action is required is decided in the service
+         *     -- it depends on the new status (Won/Lost optional, plan D12; On Hold
+         *     due by the re-activation date).
+         */
+        StageChangeNote: {
+            /** Close Reminder Id */
+            close_reminder_id?: string | null;
+            /**
+             * Activity Type
+             * @default NOTE
+             * @enum {string}
+             */
+            activity_type: "VISIT" | "CALL" | "EMAIL" | "MEETING" | "NOTE" | "MANAGER_NOTE" | "CONFERENCE_EXPO" | "OEM_PRODUCT_TRAINING" | "CERTIFICATION" | "SALES_TRAINING" | "SEMINAR_TRADE_SHOW" | "OTHER_DEVELOPMENT" | "RELATIONSHIP_SUPPORT";
+            /**
+             * Activity Date
+             * Format: date-time
+             */
+            activity_date: string;
+            /** Notes */
+            notes: string;
+            /** Next Action Text */
+            next_action_text?: string | null;
+            /** Next Action Due Date */
+            next_action_due_date?: string | null;
+            /** Next Action Owner Id */
+            next_action_owner_id?: string | null;
         };
         /** StageNested */
         StageNested: {
@@ -5026,11 +5217,6 @@ export interface components {
             /** Sentiment */
             sentiment?: string | null;
         };
-        /** StakeholdersBulkUpdate */
-        StakeholdersBulkUpdate: {
-            /** Stakeholders */
-            stakeholders: components["schemas"]["StakeholderLinkCreate"][];
-        };
         /** StatusNested */
         StatusNested: {
             /**
@@ -5164,6 +5350,222 @@ export interface components {
              * @default true
              */
             submit: boolean;
+        };
+        /**
+         * TargetRosterPerson
+         * @description One row of the Target Planning roster (Target-Coverage-Roster plan).
+         */
+        TargetRosterPerson: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            /** On Team */
+            on_team: boolean;
+            plan_status: components["schemas"]["RosterStatus"];
+            /** Counted Lakhs */
+            counted_lakhs: string;
+            /** Previous Approved Total Lakhs */
+            previous_approved_total_lakhs: string | null;
+            plan: components["schemas"]["TargetPlanResponse"] | null;
+        };
+        /** TargetRosterResponse */
+        TargetRosterResponse: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            /** Total Lakhs */
+            total_lakhs: string;
+            /** Roster Count */
+            roster_count: number;
+            /** Not Submitted Count */
+            not_submitted_count: number;
+            /** People */
+            people: components["schemas"]["TargetRosterPerson"][];
+        };
+        /** TargetVsActualBrand */
+        TargetVsActualBrand: {
+            /**
+             * Brand Id
+             * Format: uuid
+             */
+            brand_id: string;
+            /** Brand Name */
+            brand_name: string;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+        };
+        /**
+         * TargetVsActualHospital
+         * @description One line per hospital on the person's plan; wins at hospitals that
+         *     aren't on the plan share a single line with account_id=None
+         *     ("Unplanned").
+         */
+        TargetVsActualHospital: {
+            /** Account Id */
+            account_id: string | null;
+            /** Account Name */
+            account_name: string;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+        };
+        /**
+         * TargetVsActualLateOpportunity
+         * @description BR-OP-16: still open past its expected closing date. Flag only.
+         *     Listed on every split participant's row (BR-FIN-09).
+         */
+        TargetVsActualLateOpportunity: {
+            /**
+             * Opportunity Id
+             * Format: uuid
+             */
+            opportunity_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Name */
+            account_name: string;
+            /**
+             * Expected Closure Date
+             * Format: date
+             */
+            expected_closure_date: string;
+            /** Value Lakhs */
+            value_lakhs: string;
+            /** Share Percentage */
+            share_percentage: string;
+            /** Share Lakhs */
+            share_lakhs: string;
+            /** Owner Name */
+            owner_name?: string | null;
+        };
+        /** TargetVsActualPerson */
+        TargetVsActualPerson: {
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Display Name */
+            display_name: string;
+            plan_status: components["schemas"]["RosterStatus"];
+            /** Previous Approved Total Lakhs */
+            previous_approved_total_lakhs: string | null;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+            /** Expected Lakhs */
+            expected_lakhs: string | null;
+            /** Likely Finish Lakhs */
+            likely_finish_lakhs: string;
+            /** Percent Of Target */
+            percent_of_target: string | null;
+            /** Undated Opportunity Count */
+            undated_opportunity_count: number;
+            /** No Po Date Count */
+            no_po_date_count: number;
+            /** Late Opportunities */
+            late_opportunities: components["schemas"]["TargetVsActualLateOpportunity"][];
+            /** Hospitals */
+            hospitals: components["schemas"]["TargetVsActualHospital"][];
+            /** Brands */
+            brands: components["schemas"]["TargetVsActualBrand"][];
+        };
+        /** TargetVsActualResponse */
+        TargetVsActualResponse: {
+            /**
+             * Sbu Id
+             * Format: uuid
+             */
+            sbu_id: string;
+            /** Planning Period */
+            planning_period: string;
+            quarter_state: components["schemas"]["QuarterState"];
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+            /** Expected Lakhs */
+            expected_lakhs: string | null;
+            /** Likely Finish Lakhs */
+            likely_finish_lakhs: string;
+            /** Percent Of Target */
+            percent_of_target: string | null;
+            /** No Po Date Count */
+            no_po_date_count: number;
+            /** Roster Count */
+            roster_count: number;
+            /** Not Submitted Count */
+            not_submitted_count: number;
+            sbu_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            company_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            team_row: components["schemas"]["TargetVsActualSummaryRow"] | null;
+            /** People */
+            people: components["schemas"]["TargetVsActualPerson"][];
+            /** Zones */
+            zones: components["schemas"]["TargetVsActualZone"][];
+            /** Brands */
+            brands: components["schemas"]["TargetVsActualBrand"][];
+        };
+        /**
+         * TargetVsActualSummaryRow
+         * @description The SBU row (SBU Manager and above), the company row (Admin/GM) or
+         *     the team row (Area Manager: their team's totals against their SBU's
+         *     target), measured against the GM-entered SBU target(s). target_lakhs is
+         *     None until a target is entered (for the company row: until every SBU
+         *     has one).
+         */
+        TargetVsActualSummaryRow: {
+            /** Target Lakhs */
+            target_lakhs: string | null;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Po Received Lakhs */
+            po_received_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
+            /** Percent Of Target */
+            percent_of_target: string | null;
+        };
+        /**
+         * TargetVsActualZone
+         * @description Grouped by the hospital's zone, not the planner's. zone_id=None is
+         *     the bucket for hospitals filed above zone level.
+         */
+        TargetVsActualZone: {
+            /** Zone Id */
+            zone_id: string | null;
+            /** Zone Name */
+            zone_name: string | null;
+            /** Planned Lakhs */
+            planned_lakhs: string;
+            /** Won Lakhs */
+            won_lakhs: string;
         };
         /** UnreadCountResponse */
         UnreadCountResponse: {
@@ -7048,43 +7450,6 @@ export interface operations {
             };
         };
     };
-    replace_opportunity_stakeholders_api_v1_opportunities__opportunity_id__stakeholders_put: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                opportunity_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["StakeholdersBulkUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["APIResponse_list_StakeholderLinkResponse__"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     add_opportunity_stakeholder_api_v1_opportunities__opportunity_id__stakeholders_post: {
         parameters: {
             query?: never;
@@ -8675,9 +9040,9 @@ export interface operations {
                 changed_by?: string | null;
                 date_from?: string | null;
                 date_to?: string | null;
+                page?: number;
                 /** @description Saves per page, not log rows */
                 page_size?: number;
-                page?: number;
             };
             header?: {
                 authorization?: string | null;
@@ -9377,6 +9742,74 @@ export interface operations {
             };
         };
     };
+    get_target_vs_actual_api_v1_planning_targets_target_vs_actuals_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetVsActualResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_target_roster_api_v1_planning_targets_roster_get: {
+        parameters: {
+            query: {
+                sbu_id: string;
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_TargetRosterResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_eligible_accounts_api_v1_planning_targets_eligible_accounts_get: {
         parameters: {
             query?: {
@@ -9432,40 +9865,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_list_PlanWarning__"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_sbu_rollup_api_v1_planning_targets_rollup_get: {
-        parameters: {
-            query: {
-                sbu_id: string;
-                planning_period: string;
-            };
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["APIResponse_SBUTargetRollupResponse_"];
                 };
             };
             /** @description Validation Error */
@@ -9710,6 +10109,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["APIResponse_BrandVendorTargetResponse_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sbu_targets_api_v1_planning_sbu_targets_get: {
+        parameters: {
+            query: {
+                planning_period: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_list_SbuTargetResponse__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_sbu_target_api_v1_planning_sbu_targets_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SbuTargetSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIResponse_SbuTargetResponse_"];
                 };
             };
             /** @description Validation Error */
