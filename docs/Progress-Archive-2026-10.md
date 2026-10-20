@@ -3671,3 +3671,53 @@ P15, P23, P24, P76, P77 and the watch list.
   stand alone ✓.
 - Open list 31 (counted by status). Change for next time: compare a
   saved doc against what was shown before saying they match.
+
+## 2026-10-20 — UAT backup (Plan & Chore)
+
+- `cabio_uat_2026-10-20_0654.dump` (684,862 bytes, 472 TOC entries);
+  `cabio_uat_2026-10-05_0832.dump` pruned as shown beforehand (14 kept,
+  counted before the run). No 18 Oct dump exists. Docker needed a forced
+  stop (script's own fallback). Offsite copy to Google Drive: by hand,
+  Basheer.
+
+## 2026-10-20 — Annual Target Planning approved; session order (Plan & Chore)
+
+- Plan review ended "Yes. Approved." (Basheer): D50 (an SBU pattern change
+  re-saves brands that follow it), D51 (current and later quarters only),
+  D52 (Part 1 goes with the full UAT move — UAT's newest migration is 0054,
+  `git ls-tree` of `uat`, so 0055–0061 must go too), D53 (SBU target =
+  brands' quarterly total, D36 withdrawn), D54 ("Brands Billing to Cabio",
+  yearly ÷ 4, shown only; per-quarter editing dropped for now), D55 (typed
+  SBU target table removed — 0060 never reached UAT, Basheer), D56
+  withdrawn. `/build` note rewritten with Basheer's yes (was stale: said
+  approved 16 Oct).
+- Overlap check with Build & Test (`git status`, 20 Oct): only shared file
+  `sales-os-app/src/types/api.ts` (regenerate at merge). Order agreed for
+  the three sessions — in Plan & Chore's handover. Open: whether Plan &
+  Chore adds "move plan includes Part 1 / 0062" to Build & Test's note.
+- `api.ts` chore proposed (generator from the code on disk + commit
+  guard, switched on only after Build & Test's D22 `fix:` and `api.ts`
+  commits, else it would refuse the D22 commit); not started.
+- Handover note trimmed 82 → 75 lines (Basheer asked to trim after the
+  planning step).
+
+### Retro (Plan & Chore, 2026-10-20)
+- Checked: P1, P3, P16, P66, P76, P24, and the watch-list line of
+  2026-10-17 "before claiming a session needs something".
+- P1 45 → 46: gave Build & Test's D22 E2E as "about 4 test steps" without
+  naming the source (its handover note says ~4).
+- P3 30 → 31: "each brand's even quarter" — Basheer didn't follow it.
+- P16 11 → 12: my note still said "Next: Basheer answers Q-F, then
+  approves" after he approved.
+- New P91 (from the watch list, Seen 2): said the Dev check for the test
+  plan should wait for the docs commit; it depends on nothing. Basheer
+  asked why.
+- Not counted: P66 (Q-F, G, H shown in one plan-review round Basheer
+  asked for); P76 (D50 kept "proposed" until answered); P24 (trim
+  deferred on Basheer's instruction).
+- Spot-checks: `107bccc` dated 17 Oct (git, correct); `api.ts` +556 / −89
+  (Build & Test's archive entry, correct); "about 4 test steps" (correct
+  per Build & Test's note, but unsourced in the reply — the P1 above).
+- Explanation checks: the `api.ts` chore proposal and the three-session
+  order — both plain parts stand alone. Passed.
+- Open list 32 (counted with a tool after this retro).

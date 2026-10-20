@@ -6,27 +6,31 @@ and Build & Test keep their own notes (`.claude/session-handover-plan.md`,
 `.claude/session-handover-build.md`). Only the Build session edits this
 note, always at its main-folder path, never the worktree copy._
 
-- Worktree: `.claude/worktrees/build` (not created yet). Branch: not
-  created yet. Migration number claimed: none yet.
+- Worktree: `.claude/worktrees/build`, branch `worktree-build` at
+  `1340e25` (main merged in up to `107bccc`; merge main again before
+  building). Migration number claimed: 0062 (Annual Target Planning).
 - Merge into `main`: once, at the end of the build, after Build & Test's
   Next-Action E2E is done and Basheer says go (Basheer, 2026-10-17).
 
 ## Annual Target Planning — next to build
 
-- Demo to Haroon and Latheef Bhai held on Dev, 15 Oct 2026 (Basheer,
-  2026-10-16). Their main ask, a yearly target layer on Brand Target
-  Tracking and Target & Coverage Planning:
-  `docs/Discussion-Annual-Target-Planning-2026-10.md` (all answered
-  2026-10-16). Plan approved 2026-10-16:
-  `docs/Annual-Target-Planning-Implementation-Plan.md` (D1–D22a — brand
-  targets yearly only, yearly Target vs Actuals view, plan notifications
-  on the bell; built before the next UAT move). E2E test plan written
-  2026-10-16: `docs/Annual-Target-Planning-Manual-E2E-Test-Plan.md`.
-  Both committed (`1d57697`).
-- Moved here from the Build & Test note 2026-10-17: built in this
-  session, in parallel with the Next-Action E2E (Basheer, 2026-10-17).
-  Its E2E is run by Build & Test after the Next-Action E2E.
-- **Next:** step 1 (check in first). Step 1's migration (0062 in the
-  plan) is written and tested in the worktree, applied to Dev only after
-  the merge. A mock-up of the yearly Target vs Actuals view comes before
-  step 5.
+_Section rewritten by Plan & Chore with Basheer's yes, 2026-10-20._
+- The 17 Oct stop is over: plan replanned and **approved 2026-10-20**
+  (D1–D56), `docs/Annual-Target-Planning-Implementation-Plan.md`. The
+  16 Oct version (D1–D22a) is superseded; build from its section 2.
+- Build **Part 1 first** (steps 1–4): brand yearly figure, stretch and
+  seasonal split saved as brand quarters; SBU target = brands' total
+  (typed SBU target table removed, D55); Team targets panel; "Your
+  target" line; month labels. Part 1 goes to UAT with the full UAT move
+  (D52); Part 2 (steps 5–7) later.
+- Built in this session, in parallel (Basheer, 2026-10-17). E2E test
+  plan being rewritten for Part 1 by Plan & Chore (2026-10-20).
+- **Next:** step 1 (check in first): read-only Dev count of brand and
+  SBU quarterly targets and of who holds the SBU Manager role, shown
+  first; then migration 0062, written and tested in the worktree,
+  applied to Dev only after the merge.
+- Order (Basheer, 2026-10-20): take in `main` once Plan & Chore's 20 Oct
+  docs commit is pushed. Only file shared with Build & Test:
+  `sales-os-app/src/types/api.ts` — at the merge, regenerate it, don't
+  merge it by hand. Once Plan & Chore's `api.ts` commit guard is on,
+  commits that change routers or schemas must carry a fresh `api.ts`.

@@ -147,7 +147,16 @@ Decided for this plan:
   pop-up keeps D15's pick-one (the "middle way"). Reason: closing one of
   two still needed a follow-up, so the count never came down; a UAT
   check on 19 Oct found 12 Active Opportunities where one person had
-  2–5 open, mostly older ones never closed — Basheer, 2026-10-19
+  2–5 open, mostly older ones never closed — Basheer, 2026-10-19.
+  How the form starts: nothing starts ticked, and the follow-up box
+  starts with the text of whichever next actions are ticked, combined
+  when more than one is ticked — Basheer, 2026-10-20. Details: from Next
+  Actions, the one pressed is always closed and only the others are
+  unticked "Also close" boxes (its text is in the follow-up from the
+  start); Log Activity can't save until at least one is ticked; the
+  combined text is one per line, soonest due first; the box follows the
+  ticks until the rep types in it, then stays as written — Basheer,
+  2026-10-20
 
 ## Figures and sources
 
