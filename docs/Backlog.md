@@ -22,11 +22,6 @@ about any line older than 14 days (Basheer, 2026-10-16).
   2026-09-14, BR-CAT-04, not built): who keeps the cost figures up to
   date, and is it needed in Phase 1 or can it wait for Phase 2? The signed
   Margin Report (Traceability 11.1) depends on it.
-- **Haroon and Latheef Bhai** (to ask; added 2026-10-16) — do the vendors
-  (EDAN, SonoScape and the rest) set their yearly targets April–March,
-  like the app, or January–December? The app stays April–March (D1);
-  this only checks it. `docs/Annual-Target-Planning-Implementation-Plan.md`
-  D1 and "Calendar-year vendor targets".
 
 ## Parked initiatives
 
@@ -680,10 +675,12 @@ Follow-up, Main Competitor, Won with PI No., Lost with Reason.
 
 - **Marketing User can't see which of their leads have new comments.**
   **Requested by Haroon and Latheef Bhai at the 2026-09-24 demo (as a
-  highlight on the lead; a bell was considered and dropped). Parked until
-  about 12 Oct 2026: the team uses lead comments (on UAT since 2026-09-27)
-  for 1–2 weeks, then a UAT usage check decides whether to build the
-  highlight — `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`.**
+  highlight on the lead; a bell was considered and dropped). Parked: a
+  UAT usage check of lead comments (on UAT since 2026-09-27) decides
+  whether to build the highlight. The check runs with the first UAT
+  data-quality check after the next full UAT move (Basheer, 2026-10-21;
+  was "about 12 Oct") —
+  `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`.**
   Listed as item 1 under "Requested
   by Cabio leadership — to be built" in
   `docs/Signed-Requirements-to-PRD-Traceability.md`. Found 2026-09-18 during Lead

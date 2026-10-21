@@ -1,6 +1,7 @@
 # Discussion: Marketing Leads — Seeing New Comments, and Whether the Feature Is Earning Its Keep — 2026-09-28
 
-**Status:** **Parked until about 12 Oct 2026.** Lead comments reached UAT on
+**Status:** **Parked until the first UAT data-quality check after the next
+full UAT move** (Basheer, 2026-10-21; was "about 12 Oct 2026"). Lead comments reached UAT on
 2026-09-27. Before building anything more, the sales team gets 1–2 weeks to
 use them, then a read-only usage check on UAT (section 5) decides what, if
 anything, gets built. Nothing is built or changed.
@@ -76,7 +77,7 @@ Basheer raised this on 2026-09-28.
 tested, and removing it would cost effort for no gain. Build nothing more on
 it until the usage check in section 5.
 
-## 5. The usage check (around 12 Oct)
+## 5. The usage check (with the first UAT data-quality check after the next full UAT move)
 
 A read-only check on UAT, run with Basheer's go-ahead under the UAT rule. It
 connects the same way as the regular data-quality check (the normal app

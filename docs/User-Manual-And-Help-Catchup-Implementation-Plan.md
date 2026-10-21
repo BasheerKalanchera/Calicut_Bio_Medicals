@@ -1,8 +1,11 @@
 # User Manual and In-App Help Catch-up — Implementation Plan
 
 **Status:** Approved 2026-10-01 (Basheer). Steps 1–2 done 2026-10-15;
-manual waiting for Basheer's PDF review. Step 3 waits for Plan vs Actuals Tracking's screens; ships with the
-combined Hospital-wise Target Planning + Plan vs Actuals Tracking UAT move.
+manual waiting for Basheer's PDF review. Step 3 (in-app help) follows that
+review and also covers the Annual Target Planning Part 1 screens; it ships
+with the single full UAT move (Annual Target plan D52) — Basheer,
+2026-10-21. (Plan vs Actuals Tracking's screens, which step 3 waited for,
+passed E2E 2026-10-13.)
 **Traceability rows:** none (supports the UAT rollout; Backlog "Bring the
 user manual and in-app `?` help up to date").
 **Design / discussion:** this plan. Original manual and help: Progress-Archive

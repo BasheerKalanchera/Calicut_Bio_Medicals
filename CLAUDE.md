@@ -90,10 +90,10 @@ code or changing structure. On any conflict, the document wins over this file.
 - **When a fact or decision changes:** in the same commit, search the docs for
   the old wording and for the open question's title, and update every
   living-doc hit — not just the doc you're working in. *(2026-09-26)*
-- **Retros and Harness Engineering review:** one retro at the end of every
-  session, and the Harness Engineering review (was "process review") when
-  the hook says it's due — load the `harness-engineering`
-  skill for both. *(2026-10-06, 2026-10-08)*
+- **Retros and Harness Engineering review:** one short retro at the end of
+  every session (the count of Basheer's corrections), and the weekly
+  Harness Engineering review when the hook says it's due — load the
+  `harness-engineering` skill for both. *(2026-10-06, 2026-10-08, 2026-10-21)*
 - **Documentation tidy-up, every alternate day:** counted from the last
   tidy-up, not tied to any other task. When the SessionStart hook says
   it's due, load the `doc-integrity-sweep` skill and offer to run it.

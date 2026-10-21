@@ -6,11 +6,6 @@ keeps its own note: `.claude/session-handover-build.md`. Only the Plan & Chore
 session edits this note._
 
 - Forecast plan (untracked, other session): not in commits; at review, line 110 → BR-FIN-09.
-- **In progress 21 Oct (Basheer):** `/build` closed. (1) docs batch
-  incl. Build & Test's D22 checklist edits; (2) merge `worktree-build`
-  (docs only, `59e3940`) into `main`, both sides' lines kept; retire
-  `session-handover-build-parallel.md`; (3) remove the worktree and
-  branch (local + GitHub), asking first. Each commit shown first.
 
 ## Annual Target Planning — approved 2026-10-20 (D1–D56)
 
@@ -22,8 +17,6 @@ session edits this note._
   among their Area Managers) — Basheer's yes. Committed and pushed in
   `7dceac8` with the retro. Part 1 is now built by Build & Test, not
   `/build` (Basheer, 21 Oct).
-- **Next after the restart (Basheer, 21 Oct):** doc tidy-up and Harness
-  Engineering review, both due today; retro already done.
 
 ## Next full UAT move — what goes, and what must land first
 
@@ -41,12 +34,10 @@ session edits this note._
 
 ## Harness Engineering
 
-- Tracker `docs/Process-Improvements.md`; open list count in the 20 Oct
-  Plan & Chore retro (Progress-Archive-2026-10). **Next review
-  2026-10-21:** P88, P87, P89 first. P15 hits the 7-day skip limit
-  2026-10-24; ten watch-list lines too.
-- Still to write, shown first: paperwork check (`cabio-post-commit`),
-  right-pack check (`harness-engineering`).
+- 21 Oct: exercise cut down (Basheer) — weekly review, retro = count of
+  his corrections; 31 judgement items accepted, open 9 (Reviews line in
+  the tracker; archive 21 Oct entry). Next review 2026-10-28.
+  The paperwork and right-pack checks are dropped with it.
 
 ## Chores
 

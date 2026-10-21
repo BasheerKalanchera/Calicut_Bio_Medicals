@@ -4029,3 +4029,42 @@ moved to after the restart (Basheer).
   Physical-Schema summary.
 - Open list 34 → 36 (counted; P96 is built, not open). The figure 37
   shown to Basheer in the retro was not counted; corrected here.
+
+## 2026-10-21 — `/build` closed; doc tidy-up; Harness Engineering cut down (Plan & Chore)
+
+- **`/build` closed (Basheer).** Docs batch with Build & Test's D22
+  checklist edits committed and pushed (`95e1389`). `worktree-build` (docs
+  only, up to `59e3940`) merged into `main` with both sides' lines kept in
+  Backlog, Process-Improvements and this archive (`d8e1d03`, pushed). The
+  worktree `.claude/worktrees/build`, the local branch and
+  `origin/worktree-build` removed after Basheer's yes. The `/build`
+  handover note is kept, trimmed to idle, for future build-only sessions
+  (Basheer: "We can keep it right"), not retired as first asked.
+- **Doc tidy-up** — 8 found, 5 fixed, 3 deferred; broken links 26 → 23
+  (`docs/Doc-Integrity-Sweep-Log.md`). Basheer's decisions: in-app help
+  (User Manual plan step 3) also covers the Annual Target Part 1 screens
+  and ships with the single full UAT move; the lead-comment usage check
+  runs with the first UAT data-quality check after that move (line added
+  to the `cabio-db-and-scripting` skill). Two stale lines in Build & Test's
+  note passed to that session via Basheer.
+- **Harness Engineering exercise reviewed (Basheer: "Can we check whether
+  we are getting value for the effort?").** Counted from git and the
+  tracker: total Seen 114 (8 Oct) → 393 (21 Oct); new repeats about 15 a
+  day 8–12 Oct, about 31 a day 19–21 Oct (partly because retros look
+  harder since the 14 Oct spot-checks); about 4 in 10 commits since 26 Sep
+  mention retros, reviews, guards or hooks (111 of 274). Guards worked;
+  rules and counting for judgement slips did not.
+- **Two trial guards, tested before switching on, both failed and were
+  deleted unused.** Guard 1 (code words in a reply's plain part, a Stop
+  hook) caught 1 of 5 past replies Basheer asked to simplify (his
+  complaints were about reasoning, not jargon) and flagged 101 of 152
+  replies he accepted. Guard 2 (a plan decision must quote Basheer) would
+  have caught none of the three recorded P76 cases (two were outside plan
+  files; one had a genuine quote from a "what if" question).
+- **Decision (Basheer):** drop the counting for judgement slips; count his
+  corrections once a week instead ("It has improved the process a bit. But
+  not as much as I expected"). Review weekly (hook block 2d: 7 days; next
+  2026-10-28); retro is the corrections count plus guard-fixable or
+  live-data/UAT/lost-work slips only; 31 tracker items accepted, not
+  counted (Claude's sorting, Basheer: "I will go with your judgement");
+  open 9 + 1 partly built. The paperwork and right-pack checks dropped.

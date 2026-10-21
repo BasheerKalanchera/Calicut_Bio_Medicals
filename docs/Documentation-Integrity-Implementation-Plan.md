@@ -41,7 +41,7 @@ to the home but must not **restate** the fact.
 | Open or deferred work, undecided questions | `docs/Backlog.md` |
 | Business rules / architecture decisions | `docs/Business-Rules.md` / `docs/ADR.md` |
 | What happened, and why | `docs/Progress-Archive-<year>-<month>.md` |
-| Task in progress right now | `.claude/session-handover.md` |
+| Task in progress right now | that session's handover note, `.claude/session-handover-<session>.md` (one per session since 2026-10-16) |
 | How Basheer likes to work | Claude memory (feedback/user notes only) |
 
 **Memory clean-up:** the 13 project-status memory notes are each removed, or
@@ -131,4 +131,4 @@ its home doc. `check_docs.py` enforces the mechanical part.
   entry.
 
 The 6 frontend code-comment pointers are fixed in Part 2's clean-up, after
-split-editing is committed (see `.claude/session-handover.md`).
+split-editing is committed (see the Plan & Chore handover note, `.claude/session-handover-plan.md`).

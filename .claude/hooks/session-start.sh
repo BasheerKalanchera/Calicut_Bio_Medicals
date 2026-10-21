@@ -83,16 +83,15 @@ else
   echo
 fi
 
-# 2d. Harness Engineering review due every other day (Basheer, 2026-10-15; decided
-#     daily 2026-10-08, replacing the weekly review; he sets the frequency
-#     step by step). Last review is the newest "- YYYY-MM-DD" line in
+# 2d. Harness Engineering review due weekly (Basheer, 2026-10-21; was every
+#     other day from 2026-10-15, daily from 2026-10-08). Last review is the newest "- YYYY-MM-DD" line in
 #     docs/Process-Improvements.md. Steps: harness-engineering skill.
 PI_LOG=docs/Process-Improvements.md
 last=$(grep -E '^- [0-9]{4}-[0-9]{2}-[0-9]{2}' "$PI_LOG" 2>/dev/null | tail -n 1 | cut -c3-12)
 if [ -n "$last" ] && ! skipped harness-review; then
   days=$(( ( $(date +%s) - $(date -d "$last" +%s) ) / 86400 ))
-  if [ "$days" -ge 2 ]; then
-    echo "DUE TODAY: Harness Engineering review, every other day (last review $last, $days day(s) ago; $PI_LOG). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the harness-engineering skill only after he says yes. $(skip_note harness-review)" && echo
+  if [ "$days" -ge 7 ]; then
+    echo "DUE TODAY: Harness Engineering review, weekly (last review $last, $days day(s) ago; $PI_LOG). Put it in the 'Due today' list in your first reply and wait for Basheer's answer; run nothing for it until he says yes. Load the harness-engineering skill only after he says yes. $(skip_note harness-review)" && echo
   fi
 fi
 

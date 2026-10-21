@@ -108,6 +108,10 @@ the UAT rule in CLAUDE.md.
 - Section 18 (look-alike hospitals): groups Basheer confirms as different places go
   into `scripts/uat_lookalike_hospitals_reviewed.json`, so they drop out of the
   open count. *(2026-10-09)*
+- First check after the next full UAT move only: also run the lead-comment
+  usage check in `docs/Discussion-Marketing-Lead-Comment-Visibility-2026-09.md`
+  section 5; it decides whether to build the comment highlight (Backlog).
+  Remove this line once done. *(2026-10-21)*
 
 ## Diagnosing failures
 - When something fails repeatedly for an unclear reason, isolate the variable

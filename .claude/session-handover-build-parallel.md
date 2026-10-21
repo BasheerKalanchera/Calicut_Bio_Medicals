@@ -9,8 +9,8 @@ the build branch, and reaches `main` at the merge (Basheer, 2026-10-17)._
 
 ## Idle — no `/build` session running
 - `/build` closed 2026-10-21 (Basheer). Its branch `worktree-build` (docs
-  only, no code) was merged into `main` by Plan & Chore; the worktree
-  `.claude/worktrees/build` and the branch are removed after Basheer's yes.
+  only, no code) was merged into `main` by Plan & Chore (`d8e1d03`); its
+  worktree and branch were removed 2026-10-21 (Basheer's yes).
 - Annual Target Planning Part 1 went to **Build & Test** (Basheer,
   2026-10-21); nothing of it was built here.
 - **Next `/build`:** start a fresh worktree from `origin/main`. Install the
