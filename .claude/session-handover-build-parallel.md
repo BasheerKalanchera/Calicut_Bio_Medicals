@@ -9,30 +9,47 @@ the merge (Basheer, 2026-10-17)._
 
 - Worktree: `.claude/worktrees/build`, created 2026-10-17 from
   `origin/main`; `main` merged in up to `107bccc` the same day. Branch:
-  `worktree-build`, no code on it yet. Migration number last chosen:
+  `worktree-build`, no code on it yet; last commit `1340e25` (docs
+  batch), pushed to `origin/worktree-build`. Migration number last chosen:
   **0062** (`main`'s latest is 0061, checked 2026-10-17).
 - Frontend packages installed with `npm ci --legacy-peer-deps` (a plain
   `npm install` fails; Backlog "`sales-os-app` has a real
   `typescript`/`openapi-typescript` peer dependency conflict").
-- Merge into `main`: once, at the end of a build, after the E2E running
-  at the time is done and Basheer says go (Basheer, 2026-10-17).
+- Merge into `main`: once, at the end of the build, after Build & Test's
+  Next-Action E2E (D22, section H) is done and Basheer says go (Basheer,
+  2026-10-17, 2026-10-20).
 
-## Nothing lined up to build
+## Bringing `main` in first (Plan & Chore, Basheer's yes 2026-10-21)
+- On 20 Oct the approval below was written into the main-folder copy of
+  this note by mistake (`92cab23`, `006f4cb`); that copy is now a frozen
+  pointer. This copy was brought up to date on 21 Oct, uncommitted.
+- So: commit this note on the branch first (shown to Basheer), then
+  `git merge main`. It will clash on this note only — keep this copy
+  (`git checkout --ours .claude/session-handover-build-parallel.md`).
 
-- Annual Target Planning was next, but its plan is **being replanned —
-  do not build** (`docs/Annual-Target-Planning-Implementation-Plan.md`
-  Status, `107bccc`, 2026-10-17: calendar-year brand targets, D23
-  onwards). Basheer, 2026-10-17: a few planning points are still not
-  decided. Step 1 not started; the read-only Dev count of existing brand
-  and SBU targets not run.
-- Waiting on Basheer, once the replan is approved — both proposed
-  2026-10-17 for step 1's migration, unanswered, and to be checked
-  against the replanned plan first:
-  - a removal rule (Admin and GM) on the yearly SBU target table only, so
-    the GM can clear the company's own figure (was D13); neither existing
-    target table allows removal today;
-  - change history (audit trigger) on the yearly SBU target table, as the
-    quarterly `sbu_target` has; none on the brand yearly table, as today.
-- **Next:** wait for Plan & Chore to finish the replan and Basheer to name
-  what this session builds; then read the plan again and check in before
-  step 1.
+## Annual Target Planning — next to build
+- Plan **approved 2026-10-20** (D1–D56),
+  `docs/Annual-Target-Planning-Implementation-Plan.md`. The 16 Oct
+  version (D1–D22a) is superseded; build from its section 2.
+- Build **Part 1 first** (steps 1–4): brand yearly figure, stretch and
+  seasonal split saved as brand quarters; SBU target = brands' total
+  (typed SBU target table removed, D55); Team targets panel; "Your
+  target" line; month labels. Part 1 goes to UAT with the full UAT move
+  (D52); Part 2 (steps 5–7) later.
+- E2E test plan for Part 1: being rewritten by Plan & Chore; the E2E runs
+  on Dev after the merge (Build & Test or `/test`), never alongside
+  another test.
+- The two step-1 proposals from 17 Oct (a removal rule on a yearly SBU
+  target table, was D13; change history on that table) look moot: D13
+  was withdrawn 2026-10-19 and D53/D55 make the SBU target the brands'
+  total, typed by no one. Check against section 2; don't treat them as
+  open or as decided — ask Basheer if the plan leaves doubt.
+- **Next:** merge `main` (above), then step 1 — check in first:
+  read-only Dev count of brand and SBU quarterly targets and of who
+  holds the SBU Manager role, shown first; then migration 0062, written
+  and tested in the worktree, applied to Dev only after the merge.
+- Only file shared with Build & Test: `sales-os-app/src/types/api.ts` —
+  at the merge, regenerate it, don't merge it by hand.
+- api.ts guard on (`5ca17aa`, 20 Oct): each backend commit carries an
+  api.ts made with
+  `sh C:/Users/Basheer/GitHub/Calicut_Bio_Medicals/.githooks/check-api-types.sh --write`.
